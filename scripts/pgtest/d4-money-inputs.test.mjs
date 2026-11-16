@@ -1252,6 +1252,11 @@ await section('review test gaps (mutants R01, R02, R05, R09, R13)', async () => 
   r = await tryIt(async () => asAdmin(`UPDATE discount_definitions SET value = 40 WHERE id=$1`, [d13]));
   ok('R13 its value while this month\'s bill is confirmed (the calculator reads a 1st-of-next-month assignment for this month): HC121 definition_in_use',
      refused(r, 'HC121', /definition_in_use/), r);
+  // R11 (the reviewer's suggested case): the register exemption takes only an enrolment override of THIS transaction
+  await att(c.s.old, k, 'Present', c.teacherUid);
+  r = await withAck({ entity: 'enrollment', op: 'pause', target: k, students: [k], tier: 3, change: { class_ids: [c.cid], student_id: k } },
+    `UPDATE attendance SET status='Excused' WHERE session_id='${c.s.old}' AND student_id='${k}'`, { sameTx: false });
+  ok('R11 a pause acknowledgement of an EARLIER transaction opens nothing on the register: HC025', r.code === 'HC025', r);
 });
 
 // ---------------------------------------------------------------- step 1b
