@@ -2,7 +2,7 @@
 
 Task B2b of `docs/MASTER_PLAN.md`. Local only: no vendor called, no token used or looked for. Aggregates and codes (S01..., L1/L2/L3) only; no transcript text, no audio, no lesson file names. All audio and derived data stay under `C:\Users\Dell\hec-audio-eval\` (work files in `work\b2b\`, written through `safe_out()`).
 
-**Where I am / next step:** 2026-11-16, config-selection runs of faster-whisper small running (under load). Next: quality runs of small / medium / large-v3-turbo, then diarization and identification timings, then the end-to-end piece.
+**Where I am / next step:** 2026-11-16, settings chosen (section 3). Running (background, one at a time): medium and large-v3-turbo on the select set, then diarization and identification timings. Then the end-to-end piece and the write-up.
 
 ## 0. READ FIRST: every timing in this file was taken UNDER LOAD
 
@@ -44,3 +44,21 @@ Note on the Windows venv: `.venv\Scripts\python.exe` is a launcher that starts t
 ## 3. Transcription: choosing the settings (faster-whisper small, "select" set, 15.4 min audio)
 
 "select" set = 2 synthetic mixes (5 % and 15 % overlap, room-degraded), 6 held-out clips (S01-S06), first 180 s of L2. B1's local row used language auto-detect and the silero VAD filter; that configuration wrote far fewer words than the vendors, so the VAD and language settings are tested first.
+
+Agreement with the B1 vendor transcripts of the same files (pooled; mean over the six vendor systems that have the file; "vendor vs vendor" = the vendors among themselves on the same files, for scale). Words ratio = local words / vendor words on the same files. UNCHECKED: agreement, not accuracy.
+
+| config (small, int8, beam 5) | synth (2 files) agreement | synth words ratio | clips (6) agreement | clips words ratio | L2 180 s agreement | L2 words ratio |
+|---|---|---|---|---|---|---|
+| B1's: language auto, silero VAD 0.5 | 0.213 | 0.20 | 0.823 | 0.87 | 0.816 | 0.92 |
+| English, silero VAD 0.5 | 0.131 | 0.08 | 0.823 | 0.87 | 0.816 | 0.92 |
+| English, no VAD | stopped: no output after 3 000 CPU-seconds on the first 187 s mix (Whisper's repetition/fallback loop on room noise); not usable | | | | | |
+| **English, silero VAD 0.25, no condition-on-previous-text** | **0.304** | **0.67** | **0.849** | **1.01** | 0.802 | 1.02 |
+| vendors among themselves, same files | 0.422 (0.29-0.54) | - | 0.863 (0.81-0.91) | - | 0.818 (0.75-0.87) | - |
+
+Reading:
+- B1's poor local row was the VAD, not Whisper: at the default silero threshold 0.5 the room-degraded mixes lose 80-92 % of their words (one 193 s mix gave 0 words with English forced). Threshold 0.25 plus `condition_on_previous_text=False` brings the words back to 2/3 of the vendors' on the mixes and to parity on clips and the lesson slice. Adopted for every later run (`--lang en --vad on --vad-thr 0.25 --cond-prev off`).
+- Language auto and English gave identical clips and lesson output (auto detected English); no Vietnamese text came out of any small configuration (diacritic share 0.0 %). B1 found only Gemini writing Vietnamese (4 % of lesson words).
+- On the clean held-out clips and on the real lesson slice, local small agrees with the vendors about as well as they agree with each other (0.80-0.85 vs 0.82-0.86). On the synthetic mixes it is clearly below (0.30 vs 0.42), and so are the vendors' own figures low there.
+- n is small (2 mixes, 6 clips, one 3-minute slice): these settle the configuration, not a ranking against vendors.
+
+Timings of these runs (all UNDER LOAD; for the record only): RTF 2.0 (B1 config) and 3.5 (adopted config) at 4 threads, other processes 84-85 % of the machine, free RAM falling to 0.02-0.13 GB; the process got 1.2-1.3 cores. Per-file RTF swung from 0.4 to 7.7 with the other agents' load, so none of these numbers is a speed figure.
