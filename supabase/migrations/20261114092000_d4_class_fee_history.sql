@@ -126,12 +126,12 @@ BEGIN
     END IF;
   END LOOP;
   IF to_regclass('public.money_change_overrides') IS NOT NULL AND NOT EXISTS (
-       SELECT 1 FROM pg_constraint k WHERE k.conrelid = 'public.money_change_overrides'::regclass
+       SELECT 1 FROM pg_constraint k WHERE k.conrelid = to_regclass('public.money_change_overrides')
           AND k.contype = 'c' AND pg_get_constraintdef(k.oid) LIKE '%''class_fee''%') THEN
     v_missing := v_missing || 'money_change_overrides.entity accepting class_fee'::text;
   END IF;
   IF to_regclass('public.money_change_events') IS NOT NULL AND NOT EXISTS (
-       SELECT 1 FROM pg_constraint k WHERE k.conrelid = 'public.money_change_events'::regclass
+       SELECT 1 FROM pg_constraint k WHERE k.conrelid = to_regclass('public.money_change_events')
           AND k.contype = 'c' AND pg_get_constraintdef(k.oid) LIKE '%''owner_lane''%') THEN
     v_missing := v_missing || 'money_change_events.kind accepting owner_lane'::text;
   END IF;
