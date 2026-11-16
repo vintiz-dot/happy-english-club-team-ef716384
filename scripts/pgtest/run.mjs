@@ -328,6 +328,11 @@ const SUITES = [
   // writer of a money input left in src, no service-key writer off the
   // allow-list, nothing in the MCP tools).
   { name: "money inputs lib", file: "money-inputs-lib.test.mjs", expect: 43, migrations: [] },
+  // D4 integration: steps 2, 3A, 3B pasted on 1a + 1b in the planned order,
+  // each alone and in every order; every later file's preflight pins still
+  // match; the fingerprint after each; the rollback chain back to 1b and to
+  // the D release. Builds its own databases (one child process per scenario).
+  { name: "d4 apply chain", file: "d4-apply-chain.test.mjs", expect: 238, migrations: [] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

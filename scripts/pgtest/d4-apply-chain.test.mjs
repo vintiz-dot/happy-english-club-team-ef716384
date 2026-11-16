@@ -185,7 +185,7 @@ async function scenario(name) {
     const del2 = await code(`DELETE FROM public.classes WHERE id = $1`, [c2]);
     ok('  a class with an enrolment (from today: tier 0, passes) is refused by 3B, HC121, with step 2 installed', enr === 'ok' && del2 === 'HC121', { enr, del2 });
     const fee = await code(`UPDATE public.classes SET session_rate_vnd = 160000 WHERE id = $1`, [c2]);
-    ok('  the fee typed on the class by the owner passes step 2\'s mirror guard (owner lane, with an event); 3B has no UPDATE trigger on classes', fee === 'ok', fee);
+    ok('  the fee typed on the class by the owner passes step 2\'s mirror guard (owner lane); 3B has no UPDATE trigger on classes', fee === 'ok', fee);
 
     // The rollback chain, newest first, back to 1b.
     for (const s of ['3B', '3A', '2']) await rollback(s);
