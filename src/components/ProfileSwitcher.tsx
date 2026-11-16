@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User, ChevronDown } from "lucide-react";
+import { useIvory } from "@/hooks/useIvory";
 
 export default function ProfileSwitcher() {
   const { studentId, setStudentId } = useStudentProfile();
@@ -20,6 +21,8 @@ export default function ProfileSwitcher() {
   const hasAutoSelectedRef = useRef(false);
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  // In the shell of every area (Layout): the system only where the route is listed.
+  const ivory = useIvory();
 
   useEffect(() => {
     async function loadStudents() {
@@ -66,12 +69,12 @@ export default function ProfileSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
-          <User className="h-4 w-4" />
+          <User className={ivory ? "h-4 w-4 shrink-0" : "h-4 w-4"} />
           <span>{currentStudent?.full_name || "Select Student"}</span>
-          <ChevronDown className="h-4 w-4 opacity-50" />
+          <ChevronDown className={ivory ? "h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4 opacity-50"} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className={ivory ? "w-72 max-w-[calc(100vw-2rem)]" : "w-56"}>
         {students.map((student) => (
           <DropdownMenuItem
             key={student.id}
@@ -81,19 +84,19 @@ export default function ProfileSwitcher() {
               queryClient.invalidateQueries({ queryKey: ["assignment-calendar"] });
               queryClient.invalidateQueries({ queryKey: ["student-assignments"] });
             }}
-            className="flex items-center gap-2"
+            className={ivory ? "flex items-start gap-2 py-2" : "flex items-center gap-2"}
           >
-            <User className="h-4 w-4" />
-            <div className="flex flex-col">
-              <span>{student.full_name}</span>
+            <User className={ivory ? "mt-1 h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4"} />
+            <div className={ivory ? "flex min-w-0 flex-1 flex-col" : "flex flex-col"}>
+              <span className={ivory ? "whitespace-normal break-words hyphens-none text-balance" : undefined}>{student.full_name}</span>
               {student.date_of_birth && (
-                <span className="text-xs text-muted-foreground">
+                <span className={ivory ? "text-hec-caption text-hec-ink-soft tabular-nums" : "text-xs text-muted-foreground"}>
                   {new Date(student.date_of_birth).toLocaleDateString()}
                 </span>
               )}
             </div>
             {student.id === studentId && (
-              <span className="ml-auto">✓</span>
+              <span className={ivory ? "ml-auto shrink-0 text-hec-brass" : "ml-auto"}>✓</span>
             )}
           </DropdownMenuItem>
         ))}
