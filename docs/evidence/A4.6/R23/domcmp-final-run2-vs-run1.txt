@@ -1,0 +1,17 @@
+dom-admin-1280-dark: <main> IDENTICAL (sha 3a10eacb457e6520 vs 3a10eacb457e6520, 21468 vs 21468 chars, mains 1) | requests same (33) | numbers same (22) | html attr null -> null
+dom-admin-1280-light: <main> IDENTICAL (sha 3a10eacb457e6520 vs 3a10eacb457e6520, 21468 vs 21468 chars, mains 1) | requests same (33) | numbers same (22) | html attr null -> null
+dom-admin-375-dark: <main> IDENTICAL (sha 3a10eacb457e6520 vs 3a10eacb457e6520, 21468 vs 21468 chars, mains 1) | requests same (33) | numbers same (22) | html attr null -> null
+dom-admin-375-light: <main> IDENTICAL (sha 3a10eacb457e6520 vs 3a10eacb457e6520, 21468 vs 21468 chars, mains 1) | requests same (33) | numbers same (22) | html attr null -> null
+dom-sdash-1280-dark: <main> IDENTICAL (sha 121ac503d8066ad9 vs 121ac503d8066ad9, 69724 vs 69724 chars, mains 1) | requests same (31) | numbers same (60) | html attr ivory -> ivory
+dom-sdash-1280-light: <main> IDENTICAL (sha 121ac503d8066ad9 vs 121ac503d8066ad9, 69724 vs 69724 chars, mains 1) | requests same (31) | numbers same (60) | html attr ivory -> ivory
+dom-sdash-375-dark: <main> IDENTICAL (sha ba0e84ecdd43d19c vs ba0e84ecdd43d19c, 57445 vs 57445 chars, mains 1) | requests same (31) | numbers same (56) | html attr ivory -> ivory
+dom-sdash-375-light: <main> IDENTICAL (sha b24b2e898fa77de4 vs b24b2e898fa77de4, 57445 vs 57445 chars, mains 1) | requests same (31) | numbers same (56) | html attr ivory -> ivory
+dom-sjournal-1280-dark: <main> IDENTICAL (sha 5f5f1e236495af12 vs 5f5f1e236495af12, 5021 vs 5021 chars, mains 1) | requests same (12) | numbers same (0) | html attr ivory -> ivory
+dom-sjournal-1280-light: <main> IDENTICAL (sha 5f5f1e236495af12 vs 5f5f1e236495af12, 5021 vs 5021 chars, mains 1) | requests same (12) | numbers same (0) | html attr ivory -> ivory
+dom-sjournal-375-dark: <main> IDENTICAL (sha 5f5f1e236495af12 vs 5f5f1e236495af12, 5021 vs 5021 chars, mains 1) | requests same (12) | numbers same (0) | html attr ivory -> ivory
+dom-sjournal-375-light: <main> IDENTICAL (sha 5f5f1e236495af12 vs 5f5f1e236495af12, 5021 vs 5021 chars, mains 1) | requests same (12) | numbers same (0) | html attr ivory -> ivory
+dom-tdash-1280-dark: <main> DIFF (sha d49c0780a4145bac vs 571bbbfd91891db2, 52098 vs 52098 chars, mains 1) | requests same (24) | numbers same (37) | html attr null -> null
+dom-tdash-1280-light: <main> DIFF (sha d49c0780a4145bac vs 571bbbfd91891db2, 52098 vs 52098 chars, mains 1) | requests same (24) | numbers same (37) | html attr null -> null
+dom-tdash-375-dark: <main> DIFF (sha 454e1c88019ead88 vs bd435efaf15f05c7, 52095 vs 52095 chars, mains 1) | requests same (24) | numbers same (36) | html attr null -> null
+dom-tdash-375-light: <main> IDENTICAL (sha 454e1c88019ead88 vs 454e1c88019ead88, 52095 vs 52095 chars, mains 1) | requests same (24) | numbers same (36) | html attr null -> null
+TOTAL 16 runs, 3 with a difference

@@ -116,6 +116,15 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   // Not listed on purpose: /teacher/recorder and /admin?tab=audit-clips (the
   // recorder and audit-clips screens stay outside the system until their
   // owners release them, DESIGN_SYSTEM s.17).
+
+  // parent + public (R23)
+  { path: "/family/dashboard" },
+  { path: "/watch/:token" },
+  { path: "/claim" },
+  { path: "/auth" },
+  { path: "/auth/reset-password" },
+  // "/" is also the teacher hub (staff area): only the family hub is in the system.
+  { path: "/", roles: ["family"] },
 ];
 
 const trimSlash = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);

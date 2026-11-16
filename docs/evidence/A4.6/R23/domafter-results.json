@@ -1,0 +1,5493 @@
+{
+ "label": "domafter",
+ "runs": {
+  "dom-sdash-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 31,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 2,
+     "from:classes:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "b24b2e898fa77de4a4454dac20182ab9a6cea15923b5bc20025f87822ae056f0",
+    "len": 57445,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/18",
+     "100",
+     "12",
+     "16",
+     "16",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2/3",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "22",
+     "23",
+     "3",
+     "3",
+     "33",
+     "33",
+     "33",
+     "35/36",
+     "4"
+    ],
+    "money": [
+     {
+      "t": "0 ₫",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": true,
+      "size": "24px"
+     }
+    ],
+    "figures": [
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "Rookie Explorer · Lv 1",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "33",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "LV 1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(247, 242, 233)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "Progress to Level 2",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "33 / 100 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "17px"
+     },
+     {
+      "t": "/ 100 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "17px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "33",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "3",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "Nov 16 – Nov 22",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0/0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0/0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Unit 4 - My Day: telling the time and talking about a mornin",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 16 Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Unit 3 - Colours",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 1 Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 12 Jan 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "48px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "2/3 completed",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "35/36 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(116, 86, 26)",
+      "brass": true,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "+1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "Complete 1 homework",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+20",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(52, 106, 27)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "+15",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(52, 106, 27)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "1/18 earned",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 16 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 18 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 23 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "20px"
+     },
+     {
+      "t": "Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     }
+    ],
+    "brassColor": "rgb(116, 86, 26)",
+    "inkColor": "rgb(19, 29, 53)"
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "domafter-dom-sdash-375-light.png",
+   "kb": 51
+  },
+  "dom-sdash-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 31,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 2,
+     "from:classes:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "ba0e84ecdd43d19c397b3faee3ff0a76a49b74fe9870d6fd787142f07a9c5e50",
+    "len": 57445,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "longName": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/18",
+     "100",
+     "12",
+     "16",
+     "16",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2/3",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "22",
+     "23",
+     "3",
+     "3",
+     "33",
+     "33",
+     "33",
+     "35/36",
+     "4"
+    ],
+    "money": [
+     {
+      "t": "0 ₫",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": true,
+      "size": "24px"
+     }
+    ],
+    "figures": [
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "Rookie Explorer · Lv 1",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "33",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "LV 1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(10, 17, 30)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "Progress to Level 2",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "33 / 100 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "17px"
+     },
+     {
+      "t": "/ 100 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "17px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "33",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "3",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "Nov 16 – Nov 22",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0/0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0/0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Unit 4 - My Day: telling the time and talking about a mornin",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 16 Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Unit 3 - Colours",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 1 Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 12 Jan 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "48px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "2/3 completed",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "35/36 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(218, 185, 114)",
+      "brass": true,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "+1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "Complete 1 homework",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+20",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(156, 208, 93)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "+15",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(156, 208, 93)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "1/18 earned",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 16 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 18 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 23 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "20px"
+     },
+     {
+      "t": "Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     }
+    ],
+    "brassColor": "rgb(218, 185, 114)",
+    "inkColor": "rgb(239, 232, 215)"
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "domafter-dom-sdash-375-dark.png",
+   "kb": 51
+  },
+  "dom-sdash-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 31,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 2,
+     "from:classes:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "121ac503d8066ad9b972d66bed10e0ec07cea575520e5a7e14c9571cce3d39f9",
+    "len": 69724,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"All\" 33x32",
+     "header:BUTTON \"Book\" 33x32",
+     "header:BUTTON \"Bolt\" 33x32",
+     "header:BUTTON \"Flame\" 33x32",
+     "header:BUTTON \"Aa\nWords\" 33x32",
+     "header:BUTTON \"Reveal\" 74x32"
+    ],
+    "longName": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/18",
+     "100",
+     "12",
+     "16",
+     "16",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2/3",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "22",
+     "23",
+     "3",
+     "3",
+     "3",
+     "33",
+     "33",
+     "33",
+     "35/36",
+     "4"
+    ],
+    "money": [
+     {
+      "t": "0 ₫",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": true,
+      "size": "24px"
+     }
+    ],
+    "figures": [
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "Rookie Explorer · Lv 1",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "33",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "LV 1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(247, 242, 233)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "Progress to Level 2",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "33 / 100 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "17px"
+     },
+     {
+      "t": "/ 100 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "17px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "33",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "3",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "Nov 16 – Nov 22",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0/0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0/0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Unit 4 - My Day: telling the time and talking about a mornin",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 16 Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Unit 3 - Colours",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 1 Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 12 Jan 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "48px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "2/3 completed",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "35/36 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(116, 86, 26)",
+      "brass": true,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "+1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "Complete 1 homework",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+20",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(52, 106, 27)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "+15",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(52, 106, 27)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "1/18 earned",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "3",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": true,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": true,
+      "size": "24px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 16 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 18 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 23 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(68, 77, 100)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "20px"
+     },
+     {
+      "t": "Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(19, 29, 53)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "Baloo 2",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "54px"
+     },
+     {
+      "t": "November 2026 · All points",
+      "font": "Andika",
+      "num": "normal",
+      "color": "rgb(78, 66, 112)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "24px"
+     }
+    ],
+    "brassColor": "rgb(116, 86, 26)",
+    "inkColor": "rgb(19, 29, 53)"
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "domafter-dom-sdash-1280-light.png",
+   "kb": 73
+  },
+  "dom-sdash-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 31,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 2,
+     "from:classes:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "121ac503d8066ad9b972d66bed10e0ec07cea575520e5a7e14c9571cce3d39f9",
+    "len": 69724,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "header:BUTTON \"All\" 33x32",
+     "header:BUTTON \"Book\" 33x32",
+     "header:BUTTON \"Bolt\" 33x32",
+     "header:BUTTON \"Flame\" 33x32",
+     "header:BUTTON \"Aa\nWords\" 33x32",
+     "header:BUTTON \"Reveal\" 74x32"
+    ],
+    "longName": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/18",
+     "100",
+     "12",
+     "16",
+     "16",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2/3",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "22",
+     "23",
+     "3",
+     "3",
+     "3",
+     "33",
+     "33",
+     "33",
+     "35/36",
+     "4"
+    ],
+    "money": [
+     {
+      "t": "0 ₫",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": true,
+      "size": "24px"
+     }
+    ],
+    "figures": [
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "Rookie Explorer · Lv 1",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "33",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "LV 1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(10, 17, 30)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "Progress to Level 2",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "13px"
+     },
+     {
+      "t": "33 / 100 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "17px"
+     },
+     {
+      "t": "/ 100 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "17px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "33",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "3",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "Nov 16 – Nov 22",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0/0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0/0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Unit 4 - My Day: telling the time and talking about a mornin",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 16 Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Unit 3 - Colours",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 1 Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed) · 12 Jan 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "48px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "2/3 completed",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "35/36 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(218, 185, 114)",
+      "brass": true,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "+1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "Complete 1 homework",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+20",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(156, 208, 93)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "+15",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(156, 208, 93)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "1/18 earned",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "3",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": true,
+      "size": "24px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": true,
+      "size": "24px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 16 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 18 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Nov 23 • 17:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "+15 XP",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(189, 185, 173)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "13px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "20px"
+     },
+     {
+      "t": "Nov 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(239, 232, 215)",
+      "brass": false,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "Baloo 2",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "54px"
+     },
+     {
+      "t": "November 2026 · All points",
+      "font": "Andika",
+      "num": "normal",
+      "color": "rgb(78, 66, 112)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "24px"
+     }
+    ],
+    "brassColor": "rgb(218, 185, 114)",
+    "inkColor": "rgb(239, 232, 215)"
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "domafter-dom-sdash-1280-dark.png",
+   "kb": 74
+  },
+  "dom-sjournal-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 12,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:journals:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "dom": {
+    "sha256": "5f5f1e236495af12b9deee039039115a9fe5f3b212c66a63ab2d1c58825cb490",
+    "len": 5021,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": [],
+    "numbers": [],
+    "money": [],
+    "figures": [],
+    "brassColor": "rgb(116, 86, 26)",
+    "inkColor": "rgb(19, 29, 53)"
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "domafter-dom-sjournal-375-light.png",
+   "kb": 29
+  },
+  "dom-sjournal-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 12,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:journals:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "dom": {
+    "sha256": "5f5f1e236495af12b9deee039039115a9fe5f3b212c66a63ab2d1c58825cb490",
+    "len": 5021,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "longName": [],
+    "numbers": [],
+    "money": [],
+    "figures": [],
+    "brassColor": "rgb(218, 185, 114)",
+    "inkColor": "rgb(239, 232, 215)"
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "domafter-dom-sjournal-375-dark.png",
+   "kb": 29
+  },
+  "dom-sjournal-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 12,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:journals:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "dom": {
+    "sha256": "5f5f1e236495af12b9deee039039115a9fe5f3b212c66a63ab2d1c58825cb490",
+    "len": 5021,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": [],
+    "numbers": [],
+    "money": [],
+    "figures": [],
+    "brassColor": "rgb(116, 86, 26)",
+    "inkColor": "rgb(19, 29, 53)"
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "domafter-dom-sjournal-1280-light.png",
+   "kb": 40
+  },
+  "dom-sjournal-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 12,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:journals:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "dom": {
+    "sha256": "5f5f1e236495af12b9deee039039115a9fe5f3b212c66a63ab2d1c58825cb490",
+    "len": 5021,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "longName": [],
+    "numbers": [],
+    "money": [],
+    "figures": [],
+    "brassColor": "rgb(218, 185, 114)",
+    "inkColor": "rgb(239, 232, 215)"
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "domafter-dom-sjournal-1280-dark.png",
+   "kb": 40
+  },
+  "dom-tdash-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "454e1c88019ead889947a70f93be92be8e10cc5d4c394e462784467801dd4a09",
+    "len": 52095,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:BUTTON \"Schedule\" 168x32",
+     "main:BUTTON \"Leaderboards\" 168x32",
+     "main:BUTTON \"Previous\" 32x32",
+     "main:BUTTON \"Today\" 58x32",
+     "main:BUTTON \"Next\" 32x32",
+     "main:BUTTON \"16 – 22 Nov\" 125x32",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"Attendance up to date\" 190x32",
+     "main:BUTTON \"Class\" 80x32",
+     "main:BUTTON \"Teacher\" 96x32",
+     "main:BUTTON \"Today\" 64x32",
+     "main:BUTTON \"Scheduled\" 89x32"
+    ],
+    "longName": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "16",
+     "16",
+     "16,",
+     "16:00",
+     "17",
+     "17:00",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:30",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "22",
+     "250,000",
+     "6"
+    ],
+    "money": [
+     {
+      "t": "250,000 ₫",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     }
+    ],
+    "figures": [
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0K",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0%",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "0K",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Monday, November 16, 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "17:30 – 18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "16 – 22 Nov",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "18px"
+     },
+     {
+      "t": "2 sessions",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "12px"
+     },
+     {
+      "t": "16",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "17",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "18",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "19",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "20",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "21",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "22",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "16:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "17:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "18:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "19:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(4, 47, 46)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "11px"
+     },
+     {
+      "t": "17:30–18:30 · 6",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "10px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(4, 47, 46)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "11px"
+     },
+     {
+      "t": "17:30–18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "10px"
+     }
+    ],
+    "brassColor": "rgb(32, 29, 48)",
+    "inkColor": "rgb(32, 29, 48)"
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".px-2.rounded-md.hover\\:glass-sm:nth-child(1)",
+       ".bg-muted\\/60 > .hover\\:bg-primary\\/90.hover\\:shadow-lg.text-primary-foreground",
+       ".px-2.rounded-md.hover\\:glass-sm:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".ring-primary\\/40",
+       ".border-l.border-border\\/40.relative:nth-child(4) > .pl-2.pr-1\\.5.py-1"
+      ]
+     }
+    ]
+   },
+   "shot": "domafter-dom-tdash-375-light.png",
+   "kb": 47
+  },
+  "dom-tdash-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "454e1c88019ead889947a70f93be92be8e10cc5d4c394e462784467801dd4a09",
+    "len": 52095,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:BUTTON \"Schedule\" 168x32",
+     "main:BUTTON \"Leaderboards\" 168x32",
+     "main:BUTTON \"Previous\" 32x32",
+     "main:BUTTON \"Today\" 58x32",
+     "main:BUTTON \"Next\" 32x32",
+     "main:BUTTON \"16 – 22 Nov\" 125x32",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"Attendance up to date\" 190x32",
+     "main:BUTTON \"Class\" 80x32",
+     "main:BUTTON \"Teacher\" 96x32",
+     "main:BUTTON \"Today\" 64x32",
+     "main:BUTTON \"Scheduled\" 89x32"
+    ],
+    "longName": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "16",
+     "16",
+     "16,",
+     "16:00",
+     "17",
+     "17:00",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:30",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "22",
+     "250,000",
+     "6"
+    ],
+    "money": [
+     {
+      "t": "250,000 ₫",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     }
+    ],
+    "figures": [
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0K",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0%",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "0K",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Monday, November 16, 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "17:30 – 18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "16 – 22 Nov",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "18px"
+     },
+     {
+      "t": "2 sessions",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "12px"
+     },
+     {
+      "t": "16",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "17",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "18",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "19",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "20",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "21",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "22",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "16:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "17:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "18:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "19:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(4, 47, 46)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "11px"
+     },
+     {
+      "t": "17:30–18:30 · 6",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "10px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(4, 47, 46)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "11px"
+     },
+     {
+      "t": "17:30–18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "10px"
+     }
+    ],
+    "brassColor": "rgb(32, 29, 48)",
+    "inkColor": "rgb(32, 29, 48)"
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".px-2.rounded-md.hover\\:glass-sm:nth-child(1)",
+       ".bg-muted\\/60 > .hover\\:bg-primary\\/90.hover\\:shadow-lg.text-primary-foreground",
+       ".px-2.rounded-md.hover\\:glass-sm:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".ring-primary\\/40",
+       ".border-l.border-border\\/40.relative:nth-child(4) > .pl-2.pr-1\\.5.py-1"
+      ]
+     }
+    ]
+   },
+   "shot": "domafter-dom-tdash-375-dark.png",
+   "kb": 47
+  },
+  "dom-tdash-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "d49c0780a4145bac045055b4933ac923add86ece55231ec30de2779e28d0db23",
+    "len": 52098,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "nav:BUTTON \"Class recorder\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:BUTTON \"Schedule\" 220x32",
+     "main:BUTTON \"Leaderboards\" 220x32",
+     "main:BUTTON \"Previous\" 32x32",
+     "main:BUTTON \"Today\" 58x32",
+     "main:BUTTON \"Next\" 32x32",
+     "main:BUTTON \"16 – 22 November 2026\" 243x32",
+     "main:BUTTON \"Month\" 83x28",
+     "main:BUTTON \"Week\" 76x28",
+     "main:BUTTON \"Day\" 67x28",
+     "main:BUTTON \"List\" 65x28",
+     "main:BUTTON \"Attendance up to date\" 190x32",
+     "main:BUTTON \"Class\" 80x32",
+     "main:BUTTON \"Teacher\" 96x32",
+     "main:BUTTON \"Today\" 64x32",
+     "main:BUTTON \"Scheduled\" 89x32"
+    ],
+    "longName": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "16",
+     "16",
+     "16,",
+     "16:00",
+     "17",
+     "17:00",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:30",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "21",
+     "22",
+     "22",
+     "250,000",
+     "6"
+    ],
+    "money": [
+     {
+      "t": "250,000 ₫",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     }
+    ],
+    "figures": [
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0K",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0%",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "0K",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Monday, November 16, 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "17:30 – 18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "16 – 22 November 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "20px"
+     },
+     {
+      "t": "2 sessions",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "12px"
+     },
+     {
+      "t": "16",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "17",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "18",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "19",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "20",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "21",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "22",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "16:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "17:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "18:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "19:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(4, 47, 46)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "11px"
+     },
+     {
+      "t": "17:30–18:30 · 6",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "10px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(4, 47, 46)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "11px"
+     },
+     {
+      "t": "17:30–18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "10px"
+     }
+    ],
+    "brassColor": "rgb(32, 29, 48)",
+    "inkColor": "rgb(32, 29, 48)"
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 4,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".ring-primary\\/40",
+       ".border-l.border-border\\/40.relative:nth-child(4) > .pl-2.pr-1\\.5.py-1"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "domafter-dom-tdash-1280-light.png",
+   "kb": 125
+  },
+  "dom-tdash-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "d49c0780a4145bac045055b4933ac923add86ece55231ec30de2779e28d0db23",
+    "len": 52098,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "nav:BUTTON \"Class recorder\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:BUTTON \"Schedule\" 220x32",
+     "main:BUTTON \"Leaderboards\" 220x32",
+     "main:BUTTON \"Previous\" 32x32",
+     "main:BUTTON \"Today\" 58x32",
+     "main:BUTTON \"Next\" 32x32",
+     "main:BUTTON \"16 – 22 November 2026\" 243x32",
+     "main:BUTTON \"Month\" 83x28",
+     "main:BUTTON \"Week\" 76x28",
+     "main:BUTTON \"Day\" 67x28",
+     "main:BUTTON \"List\" 65x28",
+     "main:BUTTON \"Attendance up to date\" 190x32",
+     "main:BUTTON \"Class\" 80x32",
+     "main:BUTTON \"Teacher\" 96x32",
+     "main:BUTTON \"Today\" 64x32",
+     "main:BUTTON \"Scheduled\" 89x32"
+    ],
+    "longName": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "16",
+     "16",
+     "16,",
+     "16:00",
+     "17",
+     "17:00",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:30",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "21",
+     "22",
+     "22",
+     "250,000",
+     "6"
+    ],
+    "money": [
+     {
+      "t": "250,000 ₫",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     }
+    ],
+    "figures": [
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0K",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0%",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "0K",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "Monday, November 16, 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "17:30 – 18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "16 – 22 November 2026",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "20px"
+     },
+     {
+      "t": "2 sessions",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "12px"
+     },
+     {
+      "t": "16",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "17",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "18",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "1",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "19",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "20",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "21",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "22",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "16:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "17:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "18:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "19:00",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgba(103, 98, 132, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "10px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(4, 47, 46)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "11px"
+     },
+     {
+      "t": "17:30–18:30 · 6",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "10px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(4, 47, 46)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "11px"
+     },
+     {
+      "t": "17:30–18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "10px"
+     }
+    ],
+    "brassColor": "rgb(32, 29, 48)",
+    "inkColor": "rgb(32, 29, 48)"
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 4,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".ring-primary\\/40",
+       ".border-l.border-border\\/40.relative:nth-child(4) > .pl-2.pr-1\\.5.py-1"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "domafter-dom-tdash-1280-dark.png",
+   "kb": 125
+  },
+  "dom-admin-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "3a10eacb457e6520e72b615d07955d12c1b16a7adf2dc1ddb09b323d1b578e15",
+    "len": 21468,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 259x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 259x40",
+     "main:INPUT \"\" 259x40",
+     "main:BUTTON \"All Students (All Classes)\" 259x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 259x40"
+    ],
+    "longName": [],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "14",
+     "16",
+     "17:30",
+     "18:30",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "6",
+     "6/7",
+     "8"
+    ],
+    "money": [],
+    "figures": [
+     {
+      "t": "Monday, November 16",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgba(255, 255, 255, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "11px"
+     },
+     {
+      "t": "14",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "2",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "2",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "8",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0.0M",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0%",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0% collected of 0.0M billed",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "1 session",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 96, 96)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "12px"
+     },
+     {
+      "t": "17:30–18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "6/7",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "6P",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Select the month to archive and reset. Current month: 2026-1",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "12px"
+     },
+     {
+      "t": "Reset Leaderboard for 2026-11",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "You can automate monthly resets using a cron job that calls ",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Reset Points for 2026-11",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     }
+    ],
+    "brassColor": "rgb(32, 29, 48)",
+    "inkColor": "rgb(32, 29, 48)"
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     }
+    ]
+   },
+   "shot": "domafter-dom-admin-375-light.png",
+   "kb": 97
+  },
+  "dom-admin-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "3a10eacb457e6520e72b615d07955d12c1b16a7adf2dc1ddb09b323d1b578e15",
+    "len": 21468,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 259x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 259x40",
+     "main:INPUT \"\" 259x40",
+     "main:BUTTON \"All Students (All Classes)\" 259x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 259x40"
+    ],
+    "longName": [],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "14",
+     "16",
+     "17:30",
+     "18:30",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "6",
+     "6/7",
+     "8"
+    ],
+    "money": [],
+    "figures": [
+     {
+      "t": "Monday, November 16",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgba(255, 255, 255, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "11px"
+     },
+     {
+      "t": "14",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "2",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "2",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "8",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0.0M",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0%",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0% collected of 0.0M billed",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "1 session",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 96, 96)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "12px"
+     },
+     {
+      "t": "17:30–18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "6/7",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "6P",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Select the month to archive and reset. Current month: 2026-1",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "12px"
+     },
+     {
+      "t": "Reset Leaderboard for 2026-11",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "You can automate monthly resets using a cron job that calls ",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Reset Points for 2026-11",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     }
+    ],
+    "brassColor": "rgb(32, 29, 48)",
+    "inkColor": "rgb(32, 29, 48)"
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     }
+    ]
+   },
+   "shot": "domafter-dom-admin-375-dark.png",
+   "kb": 97
+  },
+  "dom-admin-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "3a10eacb457e6520e72b615d07955d12c1b16a7adf2dc1ddb09b323d1b578e15",
+    "len": 21468,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "nav:BUTTON \"Class recorder\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 388x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 388x40",
+     "main:INPUT \"\" 388x40",
+     "main:BUTTON \"All Students (All Classes)\" 388x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 388x40"
+    ],
+    "longName": [],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "14",
+     "16",
+     "17:30",
+     "18:30",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "6",
+     "6/7",
+     "8"
+    ],
+    "money": [],
+    "figures": [
+     {
+      "t": "Monday, November 16",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgba(255, 255, 255, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "11px"
+     },
+     {
+      "t": "14",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "2",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "2",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "8",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0.0M",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0%",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0% collected of 0.0M billed",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "1 session",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 96, 96)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "12px"
+     },
+     {
+      "t": "17:30–18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "6/7",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "6P",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Select the month to archive and reset. Current month: 2026-1",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "12px"
+     },
+     {
+      "t": "Reset Leaderboard for 2026-11",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "You can automate monthly resets using a cron job that calls ",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Reset Points for 2026-11",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     }
+    ],
+    "brassColor": "rgb(32, 29, 48)",
+    "inkColor": "rgb(32, 29, 48)"
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "domafter-dom-admin-1280-light.png",
+   "kb": 223
+  },
+  "dom-admin-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "dom": {
+    "sha256": "3a10eacb457e6520e72b615d07955d12c1b16a7adf2dc1ddb09b323d1b578e15",
+    "len": 21468,
+    "mains": 1
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "nav:BUTTON \"Class recorder\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 388x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 388x40",
+     "main:INPUT \"\" 388x40",
+     "main:BUTTON \"All Students (All Classes)\" 388x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 388x40"
+    ],
+    "longName": [],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "14",
+     "16",
+     "17:30",
+     "18:30",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "6",
+     "6/7",
+     "8"
+    ],
+    "money": [],
+    "figures": [
+     {
+      "t": "Monday, November 16",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgba(255, 255, 255, 0.7)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "11px"
+     },
+     {
+      "t": "14",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "2",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "2",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "8",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0.0M",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0%",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "0% collected of 0.0M billed",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "1 session",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 96, 96)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "12px"
+     },
+     {
+      "t": "17:30–18:30",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Starters 1 (Mon-Wed)",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": false,
+      "size": "16px"
+     },
+     {
+      "t": "6/7",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "6P",
+      "font": "ui-sans-serif",
+      "num": "tabular-nums",
+      "color": "rgb(32, 29, 48)",
+      "brass": true,
+      "ink": true,
+      "nowrap": true,
+      "size": "16px"
+     },
+     {
+      "t": "Select the month to archive and reset. Current month: 2026-1",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "12px"
+     },
+     {
+      "t": "Reset Leaderboard for 2026-11",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     },
+     {
+      "t": "You can automate monthly resets using a cron job that calls ",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(103, 98, 132)",
+      "brass": false,
+      "ink": false,
+      "nowrap": false,
+      "size": "14px"
+     },
+     {
+      "t": "Reset Points for 2026-11",
+      "font": "ui-sans-serif",
+      "num": "normal",
+      "color": "rgb(255, 255, 255)",
+      "brass": false,
+      "ink": false,
+      "nowrap": true,
+      "size": "14px"
+     }
+    ],
+    "brassColor": "rgb(32, 29, 48)",
+    "inkColor": "rgb(32, 29, 48)"
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "domafter-dom-admin-1280-dark.png",
+   "kb": 223
+  }
+ }
+}

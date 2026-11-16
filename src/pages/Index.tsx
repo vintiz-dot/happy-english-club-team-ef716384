@@ -13,11 +13,14 @@ import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
 import { PageLoading } from "@/components/ui/loading";
+import { useIvory } from "@/hooks/useIvory";
 
 const Index = () => {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
   const { studentId } = useStudentProfile();
+  // "/" is the family hub AND the teacher hub (staff area): the system only where the route is listed.
+  const ivory = useIvory();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -27,7 +30,7 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={ivory ? "min-h-screen flex items-center justify-center bg-hec-paper" : "min-h-screen flex items-center justify-center"}>
         <PageLoading />
       </div>
     );
@@ -43,7 +46,7 @@ const Index = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 sm:space-y-8">
+      <div className={ivory ? "space-y-8 lg:space-y-12" : "space-y-6 sm:space-y-8"}>
         <PageHero
           eyebrow={role === "teacher" ? "Teacher hub" : "Family hub"}
           title={role === "teacher" ? "Welcome back, teacher" : "Hello, family"}
@@ -56,8 +59,8 @@ const Index = () => {
         />
 
         {role === "teacher" && (
-          <div className="space-y-6">
-            <div className="grid gap-5 lg:grid-cols-2">
+          <div className={ivory ? "space-y-8" : "space-y-6"}>
+            <div className={ivory ? "grid gap-4 lg:grid-cols-2" : "grid gap-5 lg:grid-cols-2"}>
               <AttendanceMarking />
               <AssignmentUpload />
             </div>
@@ -83,7 +86,7 @@ const Index = () => {
         )}
 
         {role === "family" && studentId && (
-          <div className="space-y-6">
+          <div className={ivory ? "space-y-8" : "space-y-6"}>
             <TuitionCard studentId={studentId} />
             <div>
               <SectionHeader title="Schedule" />
