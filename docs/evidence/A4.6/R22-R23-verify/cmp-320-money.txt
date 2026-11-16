@@ -1,0 +1,62 @@
+﻿## Before (conductor 2e88891a) vs after (parent-release)
+auth-320-light: no before run
+auth-forgot-320-light: no before run
+auth-signup-320-light: no before run
+claim-320-light: no before run
+claim-error-320-light: no before run
+fdash-320-light: no before run
+fdash-switch-320-light: no before run
+index-family1-320-dark: req same, numbers same; attr null->ivory
+index-family1-320-light: req same, numbers same; attr null->ivory
+index-family13-320-dark: req same, numbers same; attr null->ivory
+index-family13-320-light: req same, numbers same; attr null->ivory
+picker-320-light: no before run
+reset-320-light: no before run
+reset-typed-320-light: no before run
+watch-320-light: no before run
+watch-expired-320-light: no before run
+
+requests identical 4/4, numbers identical 4/4
+
+## Money (every element showing an amount with ₫), after
+index-family1-320-dark: 6 amounts, off-rule 0 | 1.440.000 ₫ | -144.000 ₫ | -50.000 ₫ | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family1-320-light: 6 amounts, off-rule 0 | 1.440.000 ₫ | -144.000 ₫ | -50.000 ₫ | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family13-320-dark: 2 amounts, off-rule 0 | 1.800.000 ₫ | 1.800.000 ₫
+index-family13-320-light: 2 amounts, off-rule 0 | 1.800.000 ₫ | 1.800.000 ₫
+
+## Money, before (for reference)
+index-family1-320-dark: 1.440.000 ₫ | Sibling discount: -144.000 ₫10%Applied to one clas | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family1-320-light: 1.440.000 ₫ | Sibling discount: -144.000 ₫10%Applied to one clas | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family13-320-dark: 1.800.000 ₫ | 1.800.000 ₫
+index-family13-320-light: 1.800.000 ₫ | 1.800.000 ₫
+
+## axe critical/serious, after
+fdash-switch-320-light: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+
+## axe critical/serious, before
+index-family1-320-dark: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2) || serious color-contrast x1 (in main 1) @ .border-t > .text-success
+index-family1-320-light: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2) || serious color-contrast x1 (in main 1) @ .border-t > .text-success
+index-family13-320-dark: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+index-family13-320-light: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+
+## axe critical/serious, after 320
+
+## overflow / off-screen / long name / small targets, after
+auth-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"\" 16x16"]
+auth-forgot-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-error-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+fdash-320-light: overflow false (320/320), offscreen 0, long name 2 shown / 0 clipped, lines [2,3], small 0
+fdash-switch-320-light: overflow false (320/320), offscreen 0, long name 3 shown / 0 clipped, lines [2,3,2], small 0
+index-family1-320-dark: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family1-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family13-320-dark: overflow false (320/320), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+index-family13-320-light: overflow false (320/320), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+picker-320-light: overflow false (320/320), offscreen 0, long name 2 shown / 0 clipped, lines [2,3], small 0
+reset-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-typed-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-320-light: overflow false (320/320), offscreen 0, long name 1 shown / 0 clipped, lines [3], small 0
+watch-expired-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+
+## overflow / off-screen / long name / small targets, after 320
