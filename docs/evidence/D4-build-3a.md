@@ -1,6 +1,6 @@
 # D4 build - step 3A (lessons: who is paid, P1-P7, G-1 to G-7)
 
-**Where I am / next step:** built and tested; full-suite run, mutation run and fingerprint in progress - see "Checks" below for what was finished. Next step is not mine: the independent review of 3A, then the conductor's live apply (migration, then manage-session / bulk-cancel-sessions / schedule-sessions, then the screens, in one sitting).
+**Where I am / next step:** COMPLETE: built and tested (65 suites green, app typecheck exit 0, bun 166/0, 40 of 41 mutants caught, fingerprint regenerated). Next step is not mine: the independent review of 3A, then the conductor's live apply (migration, then manage-session / bulk-cancel-sessions / schedule-sessions, then the screens, in one sitting).
 
 Implementer only: nothing pushed, nothing deployed, nothing applied to any database. Branch `d4-3a-lessons`, based on `claude/hec-conductor-setup-efbaa5` at c132bf7b (the worktree's own branch was older; a new branch was cut from the conductor branch rather than merging, which conflicted on files outside this step).
 
@@ -63,7 +63,7 @@ Beyond the design, both fail-closed and both needed by real writes (flagged belo
 
 ## Checks
 
-- `node scripts/pgtest/run.mjs`: RUNALL_LINE. The three new suites: d4 lesson pay 130, d4 functions lessons 57, d4 stars interplay 19 (pinned). Every D2 / 1a / 1b suite green, incl. session guard functions 135/135 (after decision 18), d4 rollback 26 (it runs `guard-fingerprint.mjs --release d4 --check`, `--check-unchanged` and `--after-rollback` 66/66 with rollback 4), d4 register 140, d4 deployed functions 37, edge functions typecheck 5 (the three changed functions type-check), mirrors 19.
+- `node scripts/pgtest/run.mjs`: 6318 assertions across 65 suites, 1 suite failed - session guard functions 134/135, run BEFORE decision 18's assertion change (it had already run when the assertion was changed); re-run alone after the change: 135 passed, 0 failed. So: 65 of 65 green, 6319 assertions. The three new suites: d4 lesson pay 130, d4 functions lessons 57, d4 stars interplay 19 (pinned). Every D2 / 1a / 1b suite green, incl. session guard functions 135/135 (after decision 18), d4 rollback 26 (it runs `guard-fingerprint.mjs --release d4 --check`, `--check-unchanged` and `--after-rollback` 66/66 with rollback 4), d4 register 140, d4 deployed functions 37, edge functions typecheck 5 (the three changed functions type-check), mirrors 19.
 - `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0 (and the suite "app typecheck").
 - `npm run test:bun`: 166 pass, 0 fail, 13 files (bun from the local npx cache).
 
