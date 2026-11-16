@@ -191,10 +191,10 @@ export function PayrollTab() {
   // that nobody worked this month.
   if (payrollError) {
     return (
-      <Card className="border-destructive/60">
+      <Card className="border-hec-danger/30">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+          <CardTitle className="flex items-center gap-2 text-hec-h3">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-hec-danger" />
             Payroll could not be calculated
           </CardTitle>
           <CardDescription>
@@ -219,7 +219,7 @@ export function PayrollTab() {
 
       <div className="flex items-center justify-between flex-wrap gap-2">
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]" aria-label="Month">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -228,7 +228,7 @@ export function PayrollTab() {
             ))}
           </SelectContent>
         </Select>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={() => addToExpendituresMutation.mutate()} variant="outline" size="sm" disabled={!bookingAllowed || addToExpendituresMutation.isPending || !payrollData?.some(p => p.totalEarned > 0)}>
             <Receipt className="h-4 w-4 mr-2" />
             Add to Expenditures
@@ -254,28 +254,28 @@ export function PayrollTab() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Earned (Held Sessions)</CardDescription>
-            <CardTitle className="text-3xl">{grandTotalEarned.toLocaleString()} ₫</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{grandTotalEarned.toLocaleString()} ₫</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Projected (Held + Scheduled)</CardDescription>
-            <CardTitle className="text-3xl text-primary">{grandTotalProjected.toLocaleString()} ₫</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{grandTotalProjected.toLocaleString()} ₫</CardTitle>
           </CardHeader>
         </Card>
         {/* The same month with every wrong-length session re-costed at the
             length its day is scheduled for. When this differs from Projected,
             a session runs a length its class never holds, and either the
             times or the weekly schedule is wrong. */}
-        <Card className={grandVariance !== 0 ? "border-warning/60" : undefined}>
+        <Card className={grandVariance !== 0 ? "border-hec-warn/30" : undefined}>
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5">
-              {grandVariance !== 0 && <AlertTriangle className="h-3.5 w-3.5 text-warning" />}
+              {grandVariance !== 0 && <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-hec-warn" />}
               Projected at scheduled lengths
             </CardDescription>
-            <CardTitle className="text-3xl">{grandTotalExpected.toLocaleString()} ₫</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{grandTotalExpected.toLocaleString()} ₫</CardTitle>
             {grandVariance !== 0 && (
-              <p className="pt-1 text-xs font-medium text-warning">
+              <p className="pt-1 text-hec-caption font-medium tabular-nums text-hec-warn">
                 {grandVariance > 0 ? "+" : "−"}
                 {Math.abs(grandVariance).toLocaleString()} ₫ against the scheduled lengths
               </p>
@@ -285,10 +285,10 @@ export function PayrollTab() {
       </div>
 
       {allMismatches.length > 0 && (
-        <Card className="border-warning/60 bg-warning/5">
+        <Card className="border-hec-warn/30 bg-hec-warn-tint">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-warning" />
+            <CardTitle className="flex items-start gap-2 text-hec-h3">
+              <AlertTriangle className="mt-1 h-4 w-4 shrink-0 text-hec-warn" />
               {allMismatches.length} session{allMismatches.length === 1 ? "" : "s"} do not match their
               class length
             </CardTitle>
@@ -296,7 +296,7 @@ export function PayrollTab() {
               {grandVariance !== 0 ? (
                 <>
                   For staff paid by the hour these change this month's total by{" "}
-                  <strong className="text-foreground">
+                  <strong className="whitespace-nowrap tabular-nums text-hec-ink">
                     {grandVariance > 0 ? "+" : "−"}
                     {Math.abs(grandVariance).toLocaleString()} ₫
                   </strong>
@@ -318,16 +318,16 @@ export function PayrollTab() {
               {allMismatches.map((m) => (
                 <div
                   key={m.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-background/70 px-3 py-1.5 text-xs"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-hec-sm bg-hec-surface px-3 py-1.5 text-hec-caption text-hec-ink"
                 >
-                  <span className="font-medium">
+                  <span className="min-w-0 break-words font-medium">
                     {dayjs(m.date).format("ddd D MMM")} · {m.className}
                   </span>
-                  <span className="text-muted-foreground">{m.staffName}</span>
+                  <span className="min-w-0 break-words text-hec-ink-soft">{m.staffName}</span>
                   <span className="tabular-nums">
                     {formatMinutes(m.actualMinutes)} vs {formatMinutes(m.expectedMinutes)} set
                   </span>
-                  <span className="font-semibold tabular-nums text-warning">
+                  <span className="whitespace-nowrap font-semibold tabular-nums text-hec-warn">
                     {formatSignedMinutes(m.deltaMinutes)}
                     {/* No money shown for per-session staff: "+0 ₫" would
                         read as a rounding artefact rather than as "the
@@ -339,7 +339,7 @@ export function PayrollTab() {
                         {Math.abs(m.deltaAmount).toLocaleString()} ₫
                       </>
                     ) : (
-                      <span className="font-normal text-muted-foreground"> · no cost</span>
+                      <span className="font-normal text-hec-ink-soft"> · no cost</span>
                     )}
                   </span>
                 </div>
@@ -356,7 +356,7 @@ export function PayrollTab() {
         </CardHeader>
         <CardContent>
           {!payrollData || payrollData.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">No payroll data available</p>
+            <p className="py-8 text-center text-hec-body text-hec-ink-soft">No payroll data available</p>
           ) : (
             <Table>
               <TableHeader>
@@ -375,10 +375,10 @@ export function PayrollTab() {
               <TableBody>
                 {payrollData.map((payroll) => (
                   <TableRow key={`${payroll.staffType}-${payroll.staff.id}`}>
-                    <TableCell className="font-medium">
+                    <TableCell className="min-w-40 whitespace-normal break-words font-medium">
                       {payroll.staff.full_name}
                       {payroll.staff.is_active === false && (
-                        <Badge variant="outline" className="ml-2 text-[10px] font-normal">
+                        <Badge variant="outline" className="ml-2 font-normal">
                           Archived
                         </Badge>
                       )}
@@ -388,7 +388,7 @@ export function PayrollTab() {
                         {payroll.staffType === "ta" ? "TA" : "Teacher"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+                    <TableCell className="whitespace-nowrap text-hec-caption text-hec-ink-soft tabular-nums">
                       {describeRate(payroll.staff)}
                     </TableCell>
                     <TableCell className="text-center">
@@ -397,19 +397,19 @@ export function PayrollTab() {
                     <TableCell className="text-center">
                       <Badge variant="secondary">{payroll.scheduledSessions}</Badge>
                     </TableCell>
-                    <TableCell className="text-right">{payroll.totalEarned.toLocaleString()} ₫</TableCell>
-                    <TableCell className="text-right text-muted-foreground">
+                    <TableCell className="whitespace-nowrap text-right tabular-nums">{payroll.totalEarned.toLocaleString()} ₫</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
                       +{payroll.projectedEarnings.toLocaleString()} ₫
                     </TableCell>
-                    <TableCell className="text-right font-semibold">
+                    <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums">
                       {payroll.totalProjected.toLocaleString()} ₫
                     </TableCell>
                     <TableCell className="text-right">
                       {payroll.mismatchedSessions.length === 0 ? (
-                        <span className="text-xs text-muted-foreground">matches</span>
+                        <span className="text-hec-caption text-hec-ink-soft">matches</span>
                       ) : !payroll.lengthCostsMoney ? (
                         <span
-                          className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                          className="inline-flex items-center gap-1 whitespace-nowrap text-hec-caption text-hec-ink-soft"
                           title={`${payroll.mismatchedSessions.length} session(s) differ from the configured class length, but this person is paid per session so the pay is unaffected`}
                         >
                           <AlertTriangle className="h-3 w-3" />
@@ -417,7 +417,7 @@ export function PayrollTab() {
                         </span>
                       ) : (
                         <span
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-warning"
+                          className="inline-flex items-center gap-1 whitespace-nowrap text-hec-caption font-semibold tabular-nums text-hec-warn"
                           title={`${payroll.mismatchedSessions.length} session(s) differ from the configured class length`}
                         >
                           <AlertTriangle className="h-3 w-3" />
@@ -428,24 +428,24 @@ export function PayrollTab() {
                     </TableCell>
                   </TableRow>
                 ))}
-                <TableRow className="font-bold bg-muted/50">
+                <TableRow className="border-t-2 border-hec-ink font-semibold">
                   <TableCell colSpan={3}>Total</TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center tabular-nums">
                     {payrollData.reduce((sum, p) => sum + p.heldSessions, 0)}
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center tabular-nums">
                     {payrollData.reduce((sum, p) => sum + p.scheduledSessions, 0)}
                   </TableCell>
-                  <TableCell className="text-right">{grandTotalEarned.toLocaleString()} ₫</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{grandTotalEarned.toLocaleString()} ₫</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">
                     +{(grandTotalProjected - grandTotalEarned).toLocaleString()} ₫
                   </TableCell>
-                  <TableCell className="text-right">{grandTotalProjected.toLocaleString()} ₫</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{grandTotalProjected.toLocaleString()} ₫</TableCell>
                   <TableCell className="text-right">
                     {grandVariance === 0 ? (
-                      <span className="text-xs font-normal text-muted-foreground">matches</span>
+                      <span className="text-hec-caption font-normal text-hec-ink-soft">matches</span>
                     ) : (
-                      <span className="text-warning">
+                      <span className="whitespace-nowrap tabular-nums text-hec-warn">
                         {grandVariance > 0 ? "+" : "−"}
                         {Math.abs(grandVariance).toLocaleString()} ₫
                       </span>
