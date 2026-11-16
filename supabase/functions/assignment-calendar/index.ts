@@ -117,7 +117,14 @@ serve(async (req) => {
     if (!user) throw new Error("Unauthorized");
 
     // Check user role
-    const userRole = user.user_metadata?.role;
+    // From user_roles (the caller's own rows, under RLS), never from
+    // user_metadata, which the account holder can edit (audit F-13). An
+    // account holding several roles is taken at its widest staff role; one
+    // holding none gets the student branch, which needs a student_id and
+    // reads only what RLS shows it.
+    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    const held = new Set((roleRows ?? []).map((r: { role: string }) => String(r.role)));
+    const userRole = held.has("admin") ? "admin" : held.has("teacher") ? "teacher" : "student";
     
     let query = supabase
       .from("homeworks")

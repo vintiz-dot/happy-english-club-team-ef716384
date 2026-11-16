@@ -467,6 +467,59 @@ const SUITES = [
   // F-02: the nine AI / speech / image-search functions, handler by handler:
   // no session, wrong role, right role, the per-account limit.
   { name: "ai spend gate (F-02)", file: "ai-gate.test.mjs", migrations: [] },
+  // S2 (docs/evidence/S2-audit-medium-low.md): the medium and low findings.
+  // Each migration suite installs the rollback block from the evidence file
+  // as production's "before", pastes the fix twice, runs the rollback, pastes
+  // again. Each pins its assertion count.
+  {
+    name: "teacher reads (F-06)",
+    file: "s2-f06-teacher-reads.test.mjs",
+    expect: 42,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116092000_teacher_reads_own_classes_profiles.sql"],
+  },
+  {
+    name: "staff pay reads (F-17)",
+    file: "s2-f17-staff-pay.test.mjs",
+    expect: 60,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261021090000_staff_pay_rate_history.sql", "20261116093000_staff_pay_not_for_every_account.sql"],
+  },
+  {
+    name: "teacher storage (F-18)",
+    file: "s2-f18-teacher-storage.test.mjs",
+    expect: 48,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116094000_teacher_storage_by_class.sql"],
+  },
+  {
+    name: "homework grade (F-05)",
+    file: "s2-f05-homework-grade.test.mjs",
+    expect: 35,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116095000_homework_grade_staff_only.sql"],
+  },
+  {
+    name: "child writes (F-19)",
+    file: "s2-f19-child-writes.test.mjs",
+    expect: 32,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116096000_child_writes_own_rows_only.sql"],
+  },
+  {
+    name: "hardening (F-20)",
+    file: "s2-f20-hardening.test.mjs",
+    expect: 30,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116097000_hardening_anon_and_null_uid.sql"],
+  },
+  // The S2 edge-function and browser fixes (F-03, F-04, F-07..F-13, F-17's
+  // and F-23's browser half): each real function before (5594ca32) and after.
+  { name: "S2 edge functions", file: "s2-edge-functions.test.mjs", expect: 107, migrations: [] },
+  // The independent review's probes (docs/evidence/S2-review.md), flipped by
+  // the fix round: R-1 refused, R-2 rows identical and timing near before-S2,
+  // R-3 avatars by their bytes, R-4 the sentence cache key.
+  {
+    name: "S2 review probes",
+    file: "s2-review-probes.test.mjs",
+    expect: 20,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261021090000_staff_pay_rate_history.sql",
+      "20261116093000_staff_pay_not_for_every_account.sql", "20261116094000_teacher_storage_by_class.sql", "20261113140000_creator_rows_need_class_staff.sql"],
+  },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

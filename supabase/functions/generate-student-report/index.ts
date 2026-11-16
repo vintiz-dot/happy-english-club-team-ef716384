@@ -21,7 +21,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { authenticateUser } from "../_lib/auth.ts";
+import { authenticateUser, callerHoldsClass } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,6 +77,12 @@ Deno.serve(async (req) => {
       .eq("id", reportId)
       .single();
     if (repErr || !report) return respond({ success: false, error: "report row not found" }, 404);
+    // Staff of the report's own class only (audit F-04): the role alone let
+    // any teacher or TA rebuild, and read back, any child's report by id. A
+    // report with no class (admin reports) is an admin's.
+    if (!(await callerHoldsClass(sb, caller, report.class_id))) {
+      return respond({ success: false, error: "Not a class you teach" }, 403);
+    }
 
     const since = report.period_start ?? new Date(Date.now() - 90 * 86400_000).toISOString().slice(0, 10);
     const until = report.period_end ?? new Date().toISOString().slice(0, 10);

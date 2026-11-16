@@ -24,6 +24,15 @@ import { requireSpender, type SpendGate } from "../_lib/ai-gate.ts";
 // A signed-in account holding a role, and no more than 40 calls per
 // account in each window: OpenAI gpt-4o-mini per uncached word.
 const GATE: SpendGate = { name: "word-enrichment", limit: 40, windowMs: 5 * 60_000 };
+// Input caps (audit F-03): a word is a word, a context is one sentence.
+const MAX_WORD = 60;
+const MAX_CONTEXT = 300;
+
+/** Hex sha256 of a string (the cache key of a sentence). */
+async function sha256Hex(s: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -262,6 +271,23 @@ Deno.serve(async (req) => {
 
     const cleanWord = word.trim().toLowerCase();
     const targetCefr = normalizeCefr(target_cefr, "A1");
+    // An answer shaped by one caller's free-text sentence must not become
+    // everyone's definition (audit F-03). So a plain look-up keeps the plain
+    // key (the word), and a look-up with a sentence has its own key: level +
+    // sha256 of the sentence + word (S2 review R-4) - served again only for
+    // that same sentence, so repeated clicks reuse it without reaching anyone
+    // else. A word is capped; a context is cut to one sentence's length, so a
+    // long paste still gets an answer.
+    if (cleanWord.length > MAX_WORD) {
+      return new Response(
+        JSON.stringify({ error: `word is limited to ${MAX_WORD} characters` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const cleanContext = typeof context === "string" ? context.trim().slice(0, MAX_CONTEXT) : "";
+    const cacheKey = cleanContext === ""
+      ? cleanWord
+      : `ctx1:${targetCefr}:${await sha256Hex(cleanContext.replace(/\s+/g, " "))}:${cleanWord}`;
 
     // ── Check vocab_cache DB first ──
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -275,7 +301,7 @@ Deno.serve(async (req) => {
         const { data: cached } = await sb
           .from("vocab_cache")
           .select("payload")
-          .eq("word", cleanWord)
+          .eq("word", cacheKey)
           .maybeSingle();
 
         if (cached?.payload && hasNewFields(cached.payload)) {
@@ -302,8 +328,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const userMessage = context
-      ? `Word: "${cleanWord}"\nSentence context: "${context}"`
+    const userMessage = cleanContext
+      ? `Word: "${cleanWord}"\nSentence context: "${cleanContext}"`
       : `Word: "${cleanWord}"`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -390,12 +416,13 @@ Deno.serve(async (req) => {
       usages: Array.isArray(parsed.usages) ? parsed.usages.slice(0, 3) : [],
     };
 
-    // Persist to vocab_cache (best-effort).
+    // Persist to vocab_cache (best-effort), under the key it was looked up
+    // by: a sentence-shaped answer lands under its own sentence's key (F-03).
     if (sb) {
       try {
         await sb
           .from("vocab_cache")
-          .upsert({ word: cleanWord, payload: result }, { onConflict: "word" });
+          .upsert({ word: cacheKey, payload: result }, { onConflict: "word" });
       } catch (e) {
         console.error("vocab_cache upsert failed:", e);
       }

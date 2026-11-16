@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0'
+import { tempPassword as makeTempPassword } from '../_lib/temp-password.ts'
 
 /** What a teacher is paid when the form leaves the rate blank. */
 const DEFAULT_TEACHER_RATE = 200000;
@@ -66,7 +67,7 @@ Deno.serve(async (req) => {
     console.log('Creating teacher user:', email);
 
     // Generate a temporary password
-    const tempPassword = Math.random().toString(36).slice(-8) + "!Aa1";
+    const tempPassword = makeTempPassword();
 
     // Create auth user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({

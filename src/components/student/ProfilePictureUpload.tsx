@@ -6,6 +6,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAvatarUrl } from "@/lib/avatars";
+import { avatarUploadFile } from "@/lib/avatarFile";
 import { useIvory } from "@/hooks/useIvory";
 
 interface ProfilePictureUploadProps {
@@ -26,11 +27,14 @@ export function ProfilePictureUpload({
   const queryClient = useQueryClient();
 
   const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      // Client-side validation
-      if (!file.type.startsWith("image/")) {
+    mutationFn: async (picked: File) => {
+      // Client-side validation. An empty type (some systems give HEIC none)
+      // goes on: the server decides by the bytes.
+      if (picked.type && !picked.type.startsWith("image/")) {
         throw new Error("Please upload an image file");
       }
+      // A HEIC the browser can decode becomes a JPEG; one it cannot is refused here.
+      const file = await avatarUploadFile(picked);
 
       if (file.size > 5 * 1024 * 1024) {
         throw new Error("Image must be less than 5MB");

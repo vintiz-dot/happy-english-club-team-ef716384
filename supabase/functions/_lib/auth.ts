@@ -26,6 +26,22 @@ export interface CallerIdentity {
 }
 
 /**
+ * Compare a presented key with the real one without stopping at the first
+ * differing character (audit F-08), so the time taken says nothing about how
+ * much of a guess was right. The same walk as secretsMatch in
+ * stars-sync-core.ts, restated because this file imports nothing local.
+ */
+export function keysMatch(given: string, expected: string): boolean {
+  if (typeof given !== "string" || typeof expected !== "string" || expected.length === 0) return false;
+  const a = new TextEncoder().encode(given);
+  const b = new TextEncoder().encode(expected);
+  let diff = a.length ^ b.length;
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i++) diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
+  return diff === 0;
+}
+
+/**
  * Resolve and verify the caller from the Authorization header.
  * Returns null when there is no valid identity — respond 401.
  */
@@ -39,7 +55,7 @@ export async function authenticateUser(
 
   // An internal call presenting the service-role key has no end user.
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (serviceKey && token === serviceKey) {
+  if (serviceKey && keysMatch(token, serviceKey)) {
     return { userId: "", roles: new Set(["service_role"]), isServiceRole: true };
   }
 
