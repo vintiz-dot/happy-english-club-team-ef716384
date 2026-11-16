@@ -1,7 +1,7 @@
 # F-23: Content-Security-Policy (report-only first)
 
-Where I am / next step: policy written (`public/_headers`, report-only), endpoint `functions/csp-report.js`, guard test
-`scripts/pgtest/csp-headers.test.mjs` (34 pass). Next: browser runs on the built app with the fake client, counting violations.
+Where I am / next step: policy, endpoint and guard test committed; probe experiments done (below: report-to dropped, the
+service worker exempted, eval detection proven). Next: full screen run, report-only and enforcing, then the ship plan.
 
 ## How the site is served
 
@@ -59,3 +59,28 @@ Not loaded, so not allowed:
   so that path cannot work today. Left out; if it is ever wanted, the report will name it.
 - **`https://cdnjs.cloudflare.com` (pdfobject)**: inside jsPDF's `output("pdfobjectnewwindow")`, which the app never calls.
 - **`https://picsum.photos`**: a placeholder image URL saved by `VocabularyCreator` - covered by `img-src https:`.
+
+## Experiments on the policy itself (harness, made-up data)
+
+Harness: `C:\Users\Dell\hec-tools\r21-harness\csp\setup.mjs` builds the REAL app (`src/main.tsx`, `index.html` with LF endings,
+`public/`) in production mode with only `@/integrations/supabase/client` swapped for the fake client; `run.mjs` serves `dist/`
+with exactly the headers Cloudflare would attach (`scripts/csp/cfHeaders.mjs`, the documented `_headers` rules incl. `! ` detach),
+passes `POST /csp-report` through the real `functions/csp-report.js`, and drives Chrome with a `securitypolicyviolation`
+listener in every frame. Every request leaving 127.0.0.1 is answered by the harness or aborted; every websocket is closed.
+
+1. **report-to drops reports.** With `report-uri /csp-report; report-to csp` + `Reporting-Endpoints`, Chrome used the Reporting
+   API only and delivered NOTHING in 80 s (relative or absolute endpoint). With `report-uri` alone the report arrived in 1 s.
+   Firefox and Safari use `report-uri` anyway. So the policy reports by `report-uri` only.
+2. **The service worker needs its own exemption.** With the page policy also on `/service-worker.js`, the worker's `fetch()` of
+   a page image from `static.arasaac.org` and from an unlisted https host was reported as `connect-src` from
+   `service-worker.js:83`: enforcing that would break every ARASAAC picture and image-search result for anyone with the PWA
+   installed. With both header names detached for `/service-worker.js`: no reports.
+3. **The policy refuses what it should** (refused probe, report-only and enforcing): injected inline `<script>`, `onerror=`
+   attribute, `javascript:` URL, remote `<script src>`, `eval` and `new Function` from a same-origin script, `fetch` to an
+   unlisted host, `<object>`, `<base href>` to another site, an `http:` image, a form posting to another site.
+   (DevTools-evaluated code is exempt from the eval check, so eval had to be probed from a served file.)
+4. **The policy allows what the app needs but the fake client never reaches** (allowed probe, zero violations): Supabase REST,
+   auth, functions, storage (fetch, img, video, PDF iframe), realtime `wss:`, Azure `wss://southeastasia.stt.speech.microsoft.com`,
+   ARASAAC API and pictures, dictionary fetch and mp3, translation, the printer, `data:` and `blob:` fetches, a Google Fonts
+   stylesheet and font file, a `style=""` attribute, YouTube-nocookie and Google Slides iframes, a `blob:` PDF in an iframe
+   (Chrome's PDF viewer works under `object-src 'none'`), a `blob:` worker and a `blob:` AudioWorklet module.
