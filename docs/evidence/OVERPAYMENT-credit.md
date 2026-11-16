@@ -2,7 +2,7 @@
 
 Owner's decision (MONEY: YES): money a family pays beyond what the chosen bills owe shows as CREDIT on the family's next bill, instead of being recorded only in the ledger as "unapplied cash" that never appears on any bill.
 
-**Where I am / next step:** BUILT AND TESTED. Nothing deployed, pushed or applied; no database touched; no migration. Next (conductor): deploy `family-payment` and `smart-family-payment` (section 6), push, and add the AGENTS.md text in section 7.
+**Where I am / next step:** BUILT AND TESTED, all checks green. Nothing deployed, pushed or applied; no database touched; no migration. Next (conductor): deploy `family-payment` and `smart-family-payment` (section 6), push, and add the AGENTS.md text in section 7.
 
 Branch `worktree-agent-ad03528fde8502451`, fast-forwarded to `claude/hec-conductor-setup-efbaa5` @ 4cd6151e before the first commit.
 
@@ -87,7 +87,7 @@ What the owner could do later (a separate decision, not done here): for each row
 | `node scripts/pgtest/edge-functions.test.mjs` | 5 passed (106 function files loaded and type-checked) |
 | `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 |
 | `npm run test:bun` | 190 pass, 0 fail, 808 expect() calls, 16 files |
-| `node scripts/pgtest/run.mjs` | RUN_ALL_RESULT |
+| `node scripts/pgtest/run.mjs` | **6295 assertions across 65 suites, 0 suite(s) failed**, exit 0. Invoice status 294 (golden compared, golden file unchanged), removed money features 37, family payment month 6, shared-module mirrors 19, edge functions typecheck 5, app typecheck 3 |
 
 ## 5. Deploy order
 
