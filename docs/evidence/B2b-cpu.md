@@ -113,11 +113,12 @@ Reading: local diarization is cheap on CPU (own diarizer about 1/20 of real time
 | model | threads | wall RTF | CPU-s per audio s | cores it got | others' CPU (mean, p10-p90) | free RAM min / mean | peak working set / private | words |
 |---|---|---|---|---|---|---|---|---|
 | small | 8 | 1.07 | 3.08 | 2.87 | 64 % (49-79) | 0.30 / 3.97 GB | 1.03 / 3.14 GB | 738 |
-| small | 4 | see 6.3 | | | | | | |
+| small | 4 | **0.53** | **1.45** | 2.73 | 66 % (57-76) | 2.71 / 6.20 GB | 1.03 / 3.14 GB | 738 |
 | large-v3-turbo | 8 | 4.50 | 9.48 | 2.11 | 74 % (60-87) | 0.05 / 1.18 GB | 1.90 / 4.01 GB | 808 |
 | large-v3-turbo | 4 | 6.07 | 6.38 | 1.05 | 87 % (72-96) | 0.01 / 2.93 GB | 1.90 / 4.01 GB | 807 |
 
-With other agents on the machine, 8 threads get more of it (2.1 vs 1.05 cores for turbo) and finish sooner, but each CPU-second does less (9.5 vs 6.4 CPU-s per audio second): on 4 cores / 8 threads, hyper-threads share the cores' units. On a quiet machine the expected order is the usual one (8 threads somewhat faster than 4, far from twice); that is for the quiet-time rerun to show.
+8 threads never paid for themselves in CPU: each CPU-second did about half the work (small 3.08 vs 1.45, turbo 9.5 vs 6.4 CPU-s per audio second; on 4 cores / 8 threads the hyper-threads share the cores' units, and the other agents held the rest). In wall time small at 4 threads was twice as fast as at 8 under similar CPU load (0.53 vs 1.07; the 8-thread run also had 0.3 GB free RAM against 2.7 GB); turbo at 8 threads finished sooner only because it grabbed more of a machine the others were fighting for. Default for this laptop: 4 threads. The quiet-time rerun (section 7) settles it.
+The small 4-thread run is the least-loaded measurement in this file (free RAM never under 2.7 GB): 1.45 CPU-s per audio second on real lesson audio. The select set cost small 2.6-4.3 CPU-s per audio second because the room-degraded synthetic mixes trigger Whisper's temperature fallbacks; real lesson audio is cheaper.
 
 ### 6.2 End to end: L2, first 20 minutes, large-v3-turbo 8 threads + own diarizer + ECAPA matching
 
@@ -138,7 +139,7 @@ A full lesson was not run: under this load a 90-minute turbo run would occupy th
 
 | pipeline for 90 min of audio | measured under load (this file) | projected on the same laptop when quiet (ASSUMPTION: the lowest CPU-s per audio s measured here, spread over 3.5 busy cores at 4 threads) |
 |---|---|---|
-| small + own diarizer + ECAPA | 1.6-5.2 h transcription (RTF 1.07-3.5) + 0.1-0.2 h diarization + ~0.2 h matching | about 1.1-1.3 h transcription (2.55-3.1 CPU-s/s / 3.5) + ~5 min + ~5-10 min: **about 1.5 h** |
+| small + own diarizer + ECAPA | 0.8 h transcription at the lightest load seen (RTF 0.53 on lesson audio), up to 5.2 h at the heaviest (RTF 3.5 on the select set) + 0.1-0.2 h diarization + ~0.2 h matching | about 0.6 h transcription (1.45 CPU-s/s / 3.5) + ~5 min + ~5-10 min: **about 1 h** |
 | large-v3-turbo + own diarizer + ECAPA | 6.8-10.8 h transcription (RTF 4.5-7.2) + same | about 2.4 h transcription (5.6 CPU-s/s / 3.5) + ~5 min + ~5-10 min: **about 2.5-3 h** |
 
 Uncertainty: the quiet projection rests on CPU-seconds measured under contention, which this file shows can be inflated by up to 2x; the true quiet figure is more likely at or below the projection than above it, but it is a projection until the section 7 commands are run.
