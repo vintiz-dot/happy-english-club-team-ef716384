@@ -15,14 +15,14 @@ const Teachers = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Teachers & Admins</h1>
-          <p className="text-muted-foreground">Manage teaching staff, assistants, admin users, and leaderboard</p>
+          <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Teachers & Admins</h1>
+          <p className="text-hec-small text-hec-ink-soft">Manage teaching staff, assistants, admin users, and leaderboard</p>
         </div>
 
         <Tabs defaultValue="teachers" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="h-auto w-full flex-wrap">
             <TabsTrigger value="teachers">Teachers</TabsTrigger>
             <TabsTrigger value="assistants">Teaching Assistants</TabsTrigger>
             <TabsTrigger value="transfer">Schedule Transfer</TabsTrigger>
