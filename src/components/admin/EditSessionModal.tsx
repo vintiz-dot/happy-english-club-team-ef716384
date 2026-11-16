@@ -19,9 +19,13 @@ import { format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
 import { SessionTASelector } from "@/components/admin/SessionTASelector";
 import { SessionTimeFields } from "@/components/admin/SessionTimeFields";
-import { GuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import { GuardDialog, PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
 import { manageSession } from "@/components/admin/session-guard/api";
 import { errorText } from "@/lib/sessionGuard";
+import { payDialogFrom, payOpFromDbError, type PayOp } from "@/lib/lessonPayGuard";
+
+/** What saveRest still has to do after a lesson-pay check (D4 step 3A). */
+interface SaveSteps { skipTeacher?: boolean; skipStaff?: boolean }
 import { configuredLengths, expectedLengthFor, parseWeeklySlots } from "@/lib/classSchedule";
 
 interface EditSessionModalProps {
@@ -38,6 +42,10 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
   const [selectedTAIds, setSelectedTAIds] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
+  // D4 step 3A: a held lesson's time, teacher or assistants outside the free
+  // week are refused by the database; the lesson-pay check opens, and when it
+  // is done the rest of the save continues from `next`.
+  const [pay, setPay] = useState<{ op: PayOp; args: Record<string, unknown>; next: SaveSteps | null } | null>(null);
 
   const { data: teachers } = useQuery({
     queryKey: ["teachers-active-list"],
@@ -87,7 +95,7 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
     queryFn: async () => {
       const { data, error } = await supabase
         .from("session_participants")
-        .select("teaching_assistant_id")
+        .select("teaching_assistant_id, attended")
         .eq("session_id", session.id)
         .eq("participant_type", "teaching_assistant");
       if (error) throw error;
@@ -118,14 +126,27 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
       return;
     }
     if (timeChanged) {
+      // A held lesson's time is pay (the lesson-pay check, free in its first
+      // week); any other lesson's time is D2's move check, as before.
+      if (session.status === "Held") {
+        setPay({ op: "retime", args: { session_id: session.id, start_time: `${startTime}:00`, end_time: `${endTime}:00` }, next: {} });
+        return;
+      }
       setMoveOpen(true);
       return;
     }
     await saveRest();
   };
 
+  /** The assistant list as it will be saved, keeping each one's `attended` (an absence is never undone by a save). */
+  const participantsAsSaved = () =>
+    selectedTAIds.map((id) => ({
+      teaching_assistant_id: id,
+      attended: (existingParticipants as any[] | undefined)?.find((p) => p.teaching_assistant_id === id)?.attended !== false,
+    }));
+
   /** Teacher, notes and assistants. Times never go through here. */
-  const saveRest = async () => {
+  const saveRest = async (steps: SaveSteps = {}) => {
     setProcessing(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -142,11 +163,25 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
       // admin). The lesson's date and times are NOT written here: a time change
       // was already made by the checked "move" step.
       const fields: Record<string, unknown> = {};
-      if (teacherId && teacherId !== session.teacher_id) fields.teacher_id = teacherId;
+      if (!steps.skipTeacher && teacherId && teacherId !== session.teacher_id) fields.teacher_id = teacherId;
       if ((notes || null) !== (session.notes || null)) fields.notes = notes || null;
       if (Object.keys(fields).length > 0) {
         const res = await manageSession("update", { id: session.id, ...fields });
-        if (!res.ok) throw new Error(errorText(res.error.code, res.error.message));
+        if (!res.ok) {
+          // A held lesson's teacher: the check opens; nothing was saved yet.
+          const d = payDialogFrom(res.error);
+          if (d) {
+            setPay({ op: d.op, args: d.plan.args ?? { session_id: session.id, teacher_id: teacherId }, next: { ...steps, skipTeacher: true } });
+            return;
+          }
+          throw new Error(errorText(res.error.code, res.error.message));
+        }
+      }
+      if (steps.skipStaff) {
+        toast.success("Session updated");
+        onSuccess();
+        onClose();
+        return;
       }
 
       // Update session participants (TAs).
@@ -167,6 +202,12 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
       const { error: removeError } = selectedTAIds.length > 0
         ? await removal.not("teaching_assistant_id", "in", `(${selectedTAIds.join(",")})`)
         : await removal;
+      // A held lesson's assistants: the check opens with the whole list as it
+      // will be saved (each one's absence kept); nothing was changed.
+      if (removeError && payOpFromDbError(removeError) === "restaff") {
+        setPay({ op: "restaff", args: { session_id: session.id, participants: participantsAsSaved() }, next: { ...steps, skipTeacher: true, skipStaff: true } });
+        return;
+      }
       if (removeError) throw removeError;
 
       if (selectedTAIds.length > 0) {
@@ -182,6 +223,10 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
             onConflict: "session_id,teaching_assistant_id",
             ignoreDuplicates: true,
           });
+        if (addError && payOpFromDbError(addError) === "restaff") {
+          setPay({ op: "restaff", args: { session_id: session.id, participants: participantsAsSaved() }, next: { ...steps, skipTeacher: true, skipStaff: true } });
+          return;
+        }
         if (addError) throw addError;
       }
 
@@ -215,6 +260,25 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
     }
   };
 
+  // The lesson-pay check (D4 step 3A). Keeping things as they are returns to this form.
+  if (pay) {
+    return (
+      <PayGuardDialog
+        open
+        session={session}
+        op={pay.op}
+        args={pay.args}
+        names={Object.fromEntries((teachers ?? []).map((t: any) => [t.id, t.full_name]))}
+        onClose={() => setPay(null)}
+        onDone={() => {
+          const next = pay.next;
+          setPay(null);
+          if (next) void saveRest(next);
+        }}
+      />
+    );
+  }
+
   // A time change is checked first. Keeping the lesson as it is returns to this form.
   if (moveOpen) {
     return (
@@ -227,6 +291,17 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
         onDone={() => {
           setMoveOpen(false);
           void saveRest();
+        }}
+        // A lesson that ended more than a week ago is pay even while
+        // Scheduled (review S-1): its time is refused here with the money
+        // preview, and the lesson-pay check takes over, then the rest saves.
+        onPayCheck={(d) => {
+          setMoveOpen(false);
+          setPay({
+            op: d.op,
+            args: d.plan.args ?? { session_id: session.id, start_time: `${startTime}:00`, end_time: `${endTime}:00` },
+            next: {},
+          });
         }}
       />
     );

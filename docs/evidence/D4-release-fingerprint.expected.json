@@ -345,6 +345,22 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._money_exec__session(p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "cabd2db1f4023cba61bf8d38780d4e34",
+      "proname": "_money_exec__session",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._money_month_is_past(p_month text)",
       "identity_arguments": "p_month text",
       "md5_prosrc": "c7c81434cf2d4519f0252a8a4887d338",
@@ -365,6 +381,22 @@
       "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
       "md5_prosrc": "2a0bbcd0f17ba5a75dcda1baa3947021",
       "proname": "_money_plan__attendance",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_plan__session(p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "e21f34e1392c0dd6f34f21b133271b87",
+      "proname": "_money_plan__session",
       "security_definer": true,
       "volatility": "s"
     },
@@ -457,6 +489,86 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._session_insert_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "ede7f558c2e089a3acdd214d550bfbf2",
+      "proname": "_session_insert_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_pay_sentence(p_kind text)",
+      "identity_arguments": "p_kind text",
+      "md5_prosrc": "37a9f2460683b1837d99355f483734f8",
+      "proname": "_session_pay_sentence",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_pay_tier(p_kind text, o sessions, n sessions)",
+      "identity_arguments": "p_kind text, o sessions, n sessions",
+      "md5_prosrc": "13dfc790cfafffbffc108ab656e00e24",
+      "proname": "_session_pay_tier",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_staff_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "19a597ce8b0fd93c159f7c43d27689b2",
+      "proname": "_session_staff_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_ta_rows(p_session_id uuid)",
+      "identity_arguments": "p_session_id uuid",
+      "md5_prosrc": "dc0e044990548a79d45ff64718abb5d8",
+      "proname": "_session_ta_rows",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._transcript_evidence_keep()",
       "identity_arguments": "",
       "md5_prosrc": "6874f3d1d42b899885b3589f1919bbcf",
@@ -491,7 +603,7 @@
       },
       "identity": "public.d4_guard_status()",
       "identity_arguments": "",
-      "md5_prosrc": "df2b7052707d4a8d06bdc307e6fe96a9",
+      "md5_prosrc": "932bc6aa9eded89d1faa16bdb3f54577",
       "proname": "d4_guard_status",
       "security_definer": true,
       "volatility": "s"
@@ -623,6 +735,38 @@
       "proname": "session_effective_level",
       "security_definer": true,
       "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_pay_change_kind(o sessions, n sessions)",
+      "identity_arguments": "o sessions, n sessions",
+      "md5_prosrc": "a67936d64bff4c046159768b4718ceef",
+      "proname": "session_pay_change_kind",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_pay_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "f69bcfb3f69fc7206f8aaabe62db09ac",
+      "proname": "session_pay_guard",
+      "security_definer": true,
+      "volatility": "v"
     },
     {
       "config": [
@@ -1544,11 +1688,35 @@
     },
     {
       "enabled": "O",
+      "function": "_session_staff_guard",
+      "md5_def": "fe26026f304672fe4cc8682e35ebdf96",
+      "name": "zz_session_staff_guard",
+      "table": "session_participants",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
       "function": "_session_evidence_keep_trg",
       "md5_def": "0886607a6e0dc5e58ef6498e6771e540",
       "name": "zz0_session_evidence_keep",
       "table": "sessions",
       "tgtype": 19
+    },
+    {
+      "enabled": "O",
+      "function": "session_pay_guard",
+      "md5_def": "627eb5d6e28b91e44f5d997cc30f4686",
+      "name": "zz2_session_pay_guard",
+      "table": "sessions",
+      "tgtype": 19
+    },
+    {
+      "enabled": "O",
+      "function": "_session_insert_guard",
+      "md5_def": "c33edb0a689b2c4fe1a351bf27c74a56",
+      "name": "zz_session_insert_guard",
+      "table": "sessions",
+      "tgtype": 7
     }
   ]
 }

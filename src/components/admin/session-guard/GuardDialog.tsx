@@ -18,10 +18,23 @@ import {
   type GuardOp,
   type GuardPreview,
 } from "@/lib/sessionGuard";
+import {
+  canSubmitPay,
+  PAY_COPY,
+  payChangeLines,
+  payErrorText,
+  payEvidencePreview,
+  payMeaning,
+  payNotes,
+  oneChangeText,
+  payRequirements,
+  type PayOp,
+  type PayPlan,
+} from "@/lib/lessonPayGuard";
 import { EvidenceCards } from "./EvidenceCards";
 import { ConsequenceTable, useStudentNames } from "./ConsequenceTable";
 import { ConfirmTick, ReasonField, TypedDateField } from "./Fields";
-import { useGuardedChange, type GuardSuccess, type MoveChange } from "./useGuardedChange";
+import { useGuardedChange, useGuardedPayChange, type GuardSuccess, type MoveChange } from "./useGuardedChange";
 
 export interface GuardSessionInfo {
   id: string;
@@ -46,6 +59,8 @@ interface Props {
   /** Delete refused because the lesson has evidence: lets the admin switch to Cancel rather than hit a dead end. */
   onCancelInstead?: () => void;
   figures?: boolean;
+  /** D4 step 3A: the change was refused for lesson pay; the caller opens the lesson-pay check (PayGuardDialog). */
+  onPayCheck?: (d: { op: PayOp; plan: PayPlan }) => void;
 }
 
 const hm = (t?: string) => (t ? t.slice(0, 5) : "");
@@ -58,8 +73,8 @@ const DONE_TITLE: Record<GuardOp, string> = { cancel: "Lesson cancelled", delete
  * server what the evidence says; nothing is changed until the admin has read
  * it, written a reason and (for strong evidence) typed the lesson's date.
  */
-export function GuardDialog({ open, session, op, change, onClose, onDone, onCancelInstead, figures }: Props) {
-  const g = useGuardedChange({ open, sessionId: session.id, op, change, figures });
+export function GuardDialog({ open, session, op, change, onClose, onDone, onCancelInstead, figures, onPayCheck }: Props) {
+  const g = useGuardedChange({ open, sessionId: session.id, op, change, figures, onPayCheck });
   const { phase, preview, consequences, error, stale, staleNonce, success, retry } = g;
 
   const [reason, setReason] = useState("");
@@ -171,7 +186,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
             <ErrorBanner
               id="sg-error"
               title={error.outcome_unknown ? "Not confirmed" : "The check could not be completed"}
-              text={error.outcome_unknown ? OUTCOME_UNKNOWN_TEXT : errorText(error.code, error.message)}
+              text={error.outcome_unknown ? OUTCOME_UNKNOWN_TEXT : (oneChangeText(error) ?? errorText(error.code, error.message))}
               code={error.code}
             />
           )}
@@ -257,7 +272,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                 </div>
               )}
 
-              {error && <ErrorBanner id="sg-error" title="Nothing was changed" text={errorText(error.code, error.message)} code={error.code} />}
+              {error && <ErrorBanner id="sg-error" title="Nothing was changed" text={oneChangeText(error) ?? errorText(error.code, error.message)} code={error.code} />}
             </>
           )}
         </div>
@@ -301,6 +316,228 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                     {busy ? "Working..." : label}
                   </Button>
                 )}
+              </div>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * D4 step 3A: "Check before ..." for who is paid for a lesson - taking a lesson
+ * off Held, marking it Held without a register, changing the teacher, the
+ * times or the assistants of a held lesson, or adding a lesson after it
+ * started. It opens by asking the server (money_change_preview through
+ * manage-session) what the change reaches; nothing is changed until the admin
+ * has read it and given what the server asks for. No pay figure is shown:
+ * pay is worked out by Payroll after the change.
+ */
+export function PayGuardDialog({ open, session, op, args, names, onClose, onDone }: {
+  open: boolean;
+  session: GuardSessionInfo;
+  op: PayOp;
+  args: Record<string, unknown>;
+  names?: Record<string, string>;
+  onClose: () => void;
+  onDone?: (s: GuardSuccess) => void;
+}) {
+  const g = useGuardedPayChange({ open, op, args });
+  const { phase, plan, error, stale, staleNonce, success } = g;
+  const [reason, setReason] = useState("");
+  const [confirm, setConfirm] = useState(false);
+  const [correctionReason, setCorrectionReason] = useState("");
+  const keepRef = useRef<HTMLButtonElement>(null);
+  const doneRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setReason("");
+      setConfirm(false);
+      setCorrectionReason("");
+    }
+  }, [open]);
+  useEffect(() => {
+    if (staleNonce > 0) {
+      setConfirm(false);
+      keepRef.current?.focus();
+    }
+  }, [staleNonce]);
+  useEffect(() => {
+    if (!open) return;
+    if (phase === "done") doneRef.current?.focus();
+    else if (phase === "failed") keepRef.current?.focus();
+  }, [open, phase]);
+
+  const req = payRequirements(plan);
+  const form = { reason, confirm, correctionReason };
+  const busy = phase === "submitting";
+  const ready = (phase === "ready" || phase === "submitting") && !!plan;
+  const blocked = ready && plan ? !plan.allowed : false;
+  const canGo = ready && plan ? canSubmitPay(plan, form) : false;
+  const evidence = payEvidencePreview(plan);
+  const className = session.classes?.name ?? session.class_name;
+  const teacherName = session.teachers?.full_name ?? session.teacher_name;
+  const blockingError = error && BLOCKING_CODES.has(error.code);
+
+  const close = () => {
+    if (busy) return;
+    if (phase === "done" && success) onDone?.(success);
+    onClose();
+  };
+
+  const missing: string[] = [];
+  if (ready && plan && !blocked) {
+    if (req.reason && !checkReason(reason, req.reasonMin).ok) missing.push("write a reason");
+    if (req.correctionReason && !checkReason(correctionReason, req.reasonMin).ok) missing.push("write the correction reason");
+    if (req.confirm && !confirm) missing.push("tick the confirmation");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && close()}>
+      <DialogContent
+        className="inset-0 m-auto flex h-fit max-h-[92dvh] w-[calc(100vw-1rem)] max-w-xl translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden !bg-background p-0 sm:max-h-[90dvh]"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          (phase === "done" ? doneRef.current : keepRef.current)?.focus();
+        }}
+        onInteractOutside={(e) => {
+          if (busy) e.preventDefault();
+        }}
+        aria-busy={phase === "loading" || busy}
+      >
+        <DialogHeader className="space-y-1 border-b border-border p-4 pr-12 text-left sm:p-5 sm:pr-12">
+          <DialogTitle className="text-lg leading-snug">{phase === "done" ? PAY_COPY.done[op] : PAY_COPY.titles[op]}</DialogTitle>
+          <DialogDescription className="break-words">
+            {className ? <span className="font-medium text-foreground">{className}</span> : null}
+            {className ? " - " : ""}
+            {session.date ? longDate(session.date) : ""}
+            {session.start_time ? `, ${hm(session.start_time)}${session.end_time ? `-${hm(session.end_time)}` : ""}` : ""}
+            {teacherName ? ` - ${teacherName}` : ""}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
+          {phase === "loading" && <LoadingBody />}
+
+          {phase === "failed" && error && (
+            <ErrorBanner
+              id="pg-error"
+              title={error.outcome_unknown ? "Not confirmed" : "The check could not be completed"}
+              text={error.outcome_unknown ? OUTCOME_UNKNOWN_TEXT : payErrorText(error.code, errorText(error.code, error.message))}
+              code={error.code}
+            />
+          )}
+
+          {phase === "done" && success && (
+            <p className="flex items-start gap-2 text-sm">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+              <span>
+                Done: {PAY_COPY.done[op].toLowerCase()}. It is recorded with your name{success.result?.tier ? " and your reason" : ""}.
+                {success.result?.review_required ? ` ${PAY_COPY.reviewNote}` : ""} {PAY_COPY.payNote}
+              </span>
+            </p>
+          )}
+
+          {ready && plan && (
+            <>
+              {stale && (
+                <div role="alert" className="space-y-2 rounded-xl border border-warning/60 bg-warning/10 p-3 text-sm">
+                  <p className="flex items-center gap-2 font-semibold">
+                    <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {COPY.stale}
+                  </p>
+                  <p className="text-muted-foreground">{COPY.stalePrompt}</p>
+                </div>
+              )}
+
+              {blocked && (
+                <ErrorBanner id="pg-refusal" title="This change is not allowed" text={payErrorText(plan.refuse_code ?? "bad_change")} code={plan.refuse_code ?? "bad_change"} />
+              )}
+
+              <section aria-labelledby="pg-change-h" className="space-y-2 rounded-xl border border-border p-3 text-sm">
+                <h3 id="pg-change-h" className="font-semibold">
+                  What changes
+                </h3>
+                <ul className="list-disc space-y-1 pl-5">
+                  {payChangeLines(plan, names).map((l) => (
+                    <li key={l} className="break-words">
+                      {l}
+                    </li>
+                  ))}
+                </ul>
+                <p>{payMeaning(op, plan)}</p>
+              </section>
+
+              {evidence && <EvidenceCards preview={evidence} />}
+
+              {payNotes(plan).length > 0 && (
+                <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                  {payNotes(plan).map((n) => (
+                    <p key={n}>{n}</p>
+                  ))}
+                </div>
+              )}
+
+              {!blocked && req.reason && (
+                <div className="space-y-4">
+                  <ReasonField label="Reason (required)" value={reason} onChange={setReason} min={req.reasonMin} disabled={busy} />
+                  {req.correctionReason && (
+                    <ReasonField
+                      label="Correction reason (required)"
+                      help="This lesson is in a closed payroll month, or already billed and paid. Explain what is being corrected and why."
+                      value={correctionReason}
+                      onChange={setCorrectionReason}
+                      min={req.reasonMin}
+                      disabled={busy}
+                    />
+                  )}
+                  {req.confirm && (
+                    <ConfirmTick checked={confirm} onChange={setConfirm} disabled={busy}>
+                      {PAY_COPY.confirm[op]}
+                    </ConfirmTick>
+                  )}
+                </div>
+              )}
+
+              {error && <ErrorBanner id="pg-error" title="Nothing was changed" text={payErrorText(error.code, errorText(error.code, error.message))} code={error.code} />}
+            </>
+          )}
+        </div>
+
+        <div className="border-t border-border bg-background p-4 sm:p-5">
+          {phase === "done" ? (
+            <Button ref={doneRef} size="lg" className="min-h-12 w-full sm:w-auto sm:min-w-32" onClick={close}>
+              Done
+            </Button>
+          ) : (
+            <>
+              {missing.length > 0 && !busy && (
+                <p id="pg-missing" className="mb-3 text-xs text-muted-foreground">
+                  To enable the button: {missing.join(", ")}.
+                </p>
+              )}
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                <Button ref={keepRef} size="lg" className="min-h-12 w-full sm:w-auto sm:min-w-40" onClick={close} disabled={busy}>
+                  {phase === "failed" ? "Close" : PAY_COPY.keep[op]}
+                </Button>
+                {phase === "failed" && !blockingError && (
+                  <Button variant="outline" size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => void g.reload()}>
+                    Check again
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="min-h-12 w-full border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive sm:w-auto"
+                  disabled={!canGo || busy || phase === "loading" || phase === "failed" || !!blockingError}
+                  aria-describedby={[missing.length && !busy ? "pg-missing" : "", error ? "pg-error" : ""].filter(Boolean).join(" ") || undefined}
+                  onClick={() => void g.submit(form)}
+                >
+                  {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
+                  {busy ? "Working..." : PAY_COPY.action[op]}
+                </Button>
               </div>
             </>
           )}

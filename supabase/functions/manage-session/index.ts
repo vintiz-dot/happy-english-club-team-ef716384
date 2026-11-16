@@ -7,6 +7,7 @@ import {
   guardError, isUuid, json, mapDbError, preview, readReason, refreshAndRecord, refreshDone, rpc,
   type GuardError,
 } from '../_lib/session-guard.ts';
+import { moneyConfirm, moneyPreview, readAck as readMoneyAck, refreshMoneyChange } from '../_lib/money-guard.ts';
 
 // Cancel, un-cancel, delete and move go through the checked RPCs of
 // 20261112091000_session_cancel_guard.sql, called WITH THE ADMIN'S OWN JWT
@@ -15,12 +16,43 @@ import {
 // The service-role client only reads, writes the named audit_log entry and
 // invokes calculate-tuition / calculate-payroll. Contract for the screens:
 // docs/evidence/D2-edge-build.md "Contract for the dialogs (D3)".
+//
+// D4 step 3A (docs/evidence/D4-design.md (d), docs/evidence/D4-build-3a.md):
+// who is paid for a lesson. The database (20261114093000) refuses a held
+// lesson's un-hold, a hold without a register, and the teacher / times /
+// assistants of a held lesson outside the free week, unless they come
+// through money_change_checked('session', ...) on the caller's own client.
+//   - change-status Held <-> Scheduled, update (teacher), move (same-day
+//     time), create: the plain write is tried AS THE CALLER, exactly as
+//     before; when the database answers HC020 with one of the pay kinds the
+//     function answers 409 requires_checked_path with `kind`, `use_action`
+//     and the money preview. Nothing is written. With the token, reason and
+//     confirmation in the body the same action (or the named one) runs the
+//     checked op.
+//   - set-teacher, set-time, set-staff: the checked ops themselves (a T0
+//     change is done at once, still leaving its override row).
+//   - pay-preview: the read-only money preview for one of the ops.
+// `update` no longer writes `status`; a new lesson is always Scheduled.
+// Nothing here prices pay: no figure is read from calculate-payroll.
 
 const SessionActionSchema = z.object({
   action: z.enum(['preview', 'update', 'move', 'cancel', 'force-cancel', 'change-status', 'uncancel',
-                  'bulk-delete', 'delete', 'refresh-tuition', 'create']),
+                  'bulk-delete', 'delete', 'refresh-tuition', 'create',
+                  'set-teacher', 'set-time', 'set-staff', 'pay-preview']),
   data: z.record(z.any()),
 });
+
+/** The pay kinds of 20261114093000 (HC020 DETAIL "kind=...") and the action that does each through the checked op. */
+const PAY_KIND_ACTION: Record<string, string> = {
+  unhold: 'change-status', hold: 'change-status', reteach: 'set-teacher', retime: 'set-time', restaff: 'set-staff',
+  create_past: 'create',
+};
+const PAY_OPS = ['unhold', 'hold', 'reteach', 'retime', 'restaff', 'create'];
+const payKindOf = (e: GuardError): string | null => {
+  if (e.sqlstate !== 'HC020') return null;
+  const m = /kind=([a-z_]+)/.exec(String(e.detail ?? ''));
+  return m && PAY_KIND_ACTION[m[1]] ? m[1] : null;
+};
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^\d{2}:\d{2}(:\d{2})?$/;
@@ -91,7 +123,8 @@ Deno.serve(async (req) => {
     const { action, data } = validationResult.data;
 
     // Every guarded write goes through this client: auth.uid() is the admin.
-    if (!anonKey && action !== 'create') {
+    // (D4 3A: `create` too - a lesson is no longer inserted with the service key.)
+    if (!anonKey) {
       return fail(guardError(503, 'misconfigured', 'SUPABASE_ANON_KEY is not set for this function. Nothing was changed.'));
     }
     const asCaller = anonKey ? callerClient(createClient, supabaseUrl, anonKey, authHeader) : null;
@@ -150,6 +183,114 @@ Deno.serve(async (req) => {
     const correction = (): string | null =>
       typeof data.correction_reason === 'string' && data.correction_reason.trim() !== ''
         ? data.correction_reason.replace(/\s+/g, ' ').trim() : null;
+
+    // ------------------------------------------------ D4 3A: who is paid
+    /** The checked op's arguments, from the request body. Validation is the database's. */
+    const payArgs = (op: string): Record<string, unknown> => {
+      if (op === 'create') {
+        return { class_id: data.class_id, date: data.date,
+                 start_time: TIME.test(data.start_time ?? '') ? hhmmss(data.start_time) : data.start_time,
+                 end_time: TIME.test(data.end_time ?? '') ? hhmmss(data.end_time) : data.end_time,
+                 teacher_id: data.teacher_id, notes: data.notes || null, rate_override_vnd: data.rate_override_vnd || null };
+      }
+      const a: Record<string, unknown> = { session_id: data.id };
+      if (op === 'reteach') a.teacher_id = data.teacher_id;
+      if (op === 'retime') {
+        a.start_time = TIME.test(data.start_time ?? '') ? hhmmss(data.start_time) : data.start_time;
+        a.end_time = TIME.test(data.end_time ?? '') ? hhmmss(data.end_time) : data.end_time;
+      }
+      if (op === 'restaff') a.participants = Array.isArray(data.participants) ? data.participants : null;
+      return a;
+    };
+
+    /**
+     * The checked op ('session', op) on the caller's client. With a token in
+     * the body: confirm it (reason, confirmation, correction reason as sent).
+     * Without one: preview it; T0 is done at once (one override row, no
+     * reason needed), T1+ answers 409 requires_checked_path with the preview
+     * and writes nothing.
+     */
+    const payChecked = async (op: string, args: Record<string, unknown>, auditAction: string,
+                              after?: (result: any) => Promise<Record<string, unknown>>): Promise<Response> => {
+      const ack = readMoneyAck({ reason: data.reason, token: data.token, confirm: data.confirm,
+                                 correction_reason: data.correction_reason })!;
+      if (!ack.token) {
+        const p = await moneyPreview(asCaller, 'session', op, args);
+        if ('error' in p) return fail(p.error);
+        if (!p.data?.allowed) {
+          return fail(mapDbError({ code: 'HC015', message: p.data?.refuse_code ?? 'bad_change' }), { preview: p.data });
+        }
+        if ((p.data.tier ?? 3) >= 1) {
+          return fail(guardError(409, 'requires_checked_path',
+            'This change needs a reason: look at what it affects, then confirm.', 'HC020', `kind=${p.data.kind ?? op}`),
+            { kind: p.data.kind ?? op, op, use_action: action, preview: p.data });
+        }
+        ack.token = p.data.token;
+      }
+      const r = await moneyConfirm(asCaller, 'session', op, args, ack, { attached: { source: 'manage-session', via_action: action } });
+      if ('error' in r) {
+        if (r.error.code === 'token_stale') {
+          const fresh = await moneyPreview(asCaller, 'session', op, args);
+          return fail(r.error, { preview: 'data' in fresh ? fresh.data : null });
+        }
+        return fail(r.error);
+      }
+      // Committed from here on: the after-work never reports a failed change.
+      let tuition: any = { status: 'none', results: [] };
+      if (Array.isArray(r.data?.refresh_pairs) && r.data.refresh_pairs.length > 0) {
+        try {
+          const t = await refreshMoneyChange(supabase, asCaller, r.data.override_id);
+          tuition = 'error' in t ? { status: 'failed', results: [], error: t.error.code } : t;
+        } catch (e) {
+          tuition = { status: 'failed', results: [], error: String((e as Error)?.message ?? e) };
+        }
+      }
+      let extra: Record<string, unknown> = {};
+      try { if (after) extra = await after(r.data); } catch { /* the change stands */ }
+      try {
+        await audit(auditAction, typeof args.session_id === 'string' ? args.session_id : null,
+          { override_id: r.data?.override_id, op, tier: r.data?.tier, reason: ack.reason ?? null,
+            review_required: r.data?.review_required, args });
+      } catch (e) {
+        console.error('audit entry after a committed change failed:', (e as Error)?.message ?? e);
+      }
+      return json({ ok: true, result: r.data, tuition, ...extra });
+    };
+
+    /** A plain write the database refused for a pay kind -> 409 with the money preview, nothing written. */
+    const payRefused = async (e: GuardError, op: string, args: Record<string, unknown>): Promise<Response | null> => {
+      const kind = payKindOf(e);
+      if (!kind) return null;
+      const p = await moneyPreview(asCaller, 'session', op, args);
+      const sentence = String(e.detail ?? '').replace(/^kind=[a-z_]+;\s*/, '');
+      return fail({ ...e, message: sentence || e.message }, {
+        kind, op, use_action: PAY_KIND_ACTION[kind],
+        preview: 'data' in p ? p.data : null, preview_error: 'error' in p ? p.error.code : undefined });
+    };
+    const hasToken = () => typeof data.token === 'string' && data.token !== '';
+
+    // ------------------------------------------------------ pay-preview
+    if (action === 'pay-preview') {
+      const op = String(data.op ?? '');
+      if (!PAY_OPS.includes(op)) return fail(guardError(400, 'bad_action', `op must be one of ${PAY_OPS.join(', ')}.`));
+      if (op !== 'create') { const bad = needId(); if (bad) return fail(bad); }
+      const p = await moneyPreview(asCaller, 'session', op, payArgs(op));
+      if ('error' in p) return fail(p.error);
+      return json({ ok: true, preview: p.data });
+    }
+
+    // ------------------------------------- set-teacher / set-time / set-staff
+    if (action === 'set-teacher' || action === 'set-time' || action === 'set-staff') {
+      const bad = needId(); if (bad) return fail(bad);
+      const op = action === 'set-teacher' ? 'reteach' : action === 'set-time' ? 'retime' : 'restaff';
+      if (op === 'reteach' && !isUuid(data.teacher_id)) return fail(guardError(400, 'bad_request', 'teacher_id is required.'));
+      if (op === 'retime' && (!TIME.test(data.start_time ?? '') || !TIME.test(data.end_time ?? ''))) {
+        return fail(guardError(400, 'bad_change', 'A time change needs start_time and end_time HH:MM.'));
+      }
+      if (op === 'restaff' && !Array.isArray(data.participants)) return fail(guardError(400, 'bad_request', 'participants is required.'));
+      return payChecked(op, payArgs(op), op === 'reteach' ? 'session_teacher_change'
+        : op === 'retime' ? 'session_time_change' : 'session_staff_change');
+    }
 
     // ----------------------------------------------------------- preview
     if (action === 'preview') {
@@ -239,10 +380,17 @@ Deno.serve(async (req) => {
       }
       if (oldSession.status === status) return json({ ok: true, unchanged: true });
 
-      // Scheduled <-> Held: not a guarded kind. Unchanged behaviour, but the
-      // write is the admin's own (no service key on sessions).
+      // Scheduled <-> Held. D4 3A: an un-hold, and a hold without a register
+      // (or in a locked payroll month), are refused by the database unless
+      // checked. With a token: the checked op. Without: the plain write as the
+      // admin, exactly as before; refused -> 409 with the money preview.
+      const payOp = status === 'Scheduled' ? 'unhold' : 'hold';
+      if (hasToken()) return payChecked(payOp, { session_id: id }, 'session_status_change');
       const { error } = await asCaller.from('sessions').update({ status, updated_by: user.id }).eq('id', id);
-      if (error) return fail(mapDbError(error));
+      if (error) {
+        const m = mapDbError(error);
+        return (await payRefused(m, payOp, { session_id: id })) ?? fail(m);
+      }
       await audit('session_status_change', id, {
         old_status: oldSession.status, new_status: status, reason: data.reason ?? null,
         note: 'Admin override for mistake correction',
@@ -266,9 +414,21 @@ Deno.serve(async (req) => {
         if (change.date !== s.date || change.end_time <= change.start_time || s.status === 'Canceled') {
           return fail(guardError(400, 'bad_change', 'That change is not valid for this lesson.'));
         }
+        // D4 3A: a Held lesson's time outside the free week is `retime`, and
+        // so is the time of any lesson that ended more than a week ago
+        // (review S-1). D2 sends no token for a move it does not guard, so a
+        // token here is the lesson-pay acknowledgement, whatever the status.
+        if (hasToken()) {
+          return payChecked('retime', { session_id: data.id, start_time: change.start_time, end_time: change.end_time },
+            'session_time_change');
+        }
         const { error } = await asCaller.from('sessions')
           .update({ start_time: change.start_time, end_time: change.end_time, updated_by: user.id }).eq('id', data.id);
-        if (error) return fail(mapDbError(error));
+        if (error) {
+          const m = mapDbError(error);
+          return (await payRefused(m, 'retime', { session_id: data.id, start_time: change.start_time, end_time: change.end_time }))
+            ?? fail(m);
+        }
         await audit('session_update', data.id, { before: s, after: change, kind: null });
         return json({ ok: true, kind: null, applied: 'plain_update' });
       }
@@ -306,6 +466,12 @@ Deno.serve(async (req) => {
       if (timeChanged) {
         return fail(guardError(409, 'requires_checked_path', 'Date and time changes go through Move.'), { use_action: 'move' });
       }
+      // D4 3A: `update` no longer writes the status. Held <-> Scheduled is
+      // Change status (the database judges an un-hold and a hold).
+      if (status !== undefined && status !== null && status !== oldSession.status) {
+        return fail(guardError(409, 'requires_checked_path',
+          'Mark a lesson Held or Scheduled with Change status, not with Edit.'), { use_action: 'change-status' });
+      }
 
       // Detect if manual edit (teacher or time change)
       const isManualEdit = teacher_id !== undefined && teacher_id !== oldSession?.teacher_id;
@@ -313,14 +479,17 @@ Deno.serve(async (req) => {
       const { error } = await asCaller.from('sessions').update({
         teacher_id: teacher_id !== undefined ? teacher_id : oldSession?.teacher_id,
         rate_override_vnd: rate_override_vnd !== undefined ? rate_override_vnd : oldSession?.rate_override_vnd,
-        status: status || oldSession?.status,
         notes: notes !== undefined ? notes : oldSession?.notes,
         is_manual: is_manual !== undefined ? is_manual : (isManualEdit || oldSession?.is_manual),
         manual_reason: manual_reason || (isManualEdit ? 'Manual teacher reassignment' : oldSession?.manual_reason),
         updated_by: user.id,
       }).eq('id', id);
 
-      if (error) return fail(mapDbError(error));
+      if (error) {
+        // A held lesson's teacher outside the free week: set-teacher, with a reason.
+        const m = mapDbError(error);
+        return (await payRefused(m, 'reteach', { session_id: id, teacher_id })) ?? fail(m);
+      }
 
       await audit('session_update', id, { before: oldSession, after: data });
       return json({ ok: true });
@@ -425,13 +594,27 @@ Deno.serve(async (req) => {
 
     // ------------------------------------------------------------ create
     if (action === 'create') {
-      const { class_id, date, start_time, end_time, teacher_id, rate_override_vnd, notes, status, is_manual, manual_reason } = data;
+      const { class_id, date, start_time, end_time, teacher_id, rate_override_vnd, notes, is_manual, manual_reason } = data;
 
-      const { data: newSession, error } = await supabase.from('sessions').insert({
+      // D4 3A: a lesson that has already started is created through the
+      // checked op ('session','create'): its register will be seeded Present
+      // and billed. With a token that is what happens here.
+      if (hasToken()) {
+        const args = payArgs('create');
+        return payChecked('create', args, 'session_create', async () => {
+          const { data: made } = await asCaller.from('sessions').select('*').eq('class_id', args.class_id)
+            .eq('date', args.date).eq('start_time', args.start_time).neq('status', 'Canceled').maybeSingle();
+          return { session: made ?? null };
+        });
+      }
+
+      // The insert is the admin's own (no service key), and a new lesson is
+      // always Scheduled: the register makes it Held.
+      const { data: newSession, error } = await asCaller.from('sessions').insert({
         class_id, date, start_time, end_time, teacher_id,
         rate_override_vnd: rate_override_vnd || null,
         notes: notes || null,
-        status: status || 'Scheduled',
+        status: 'Scheduled',
         is_manual: is_manual || true, // Ad-hoc sessions are manual by default
         manual_reason: manual_reason || 'Admin ad-hoc creation',
         created_by: user.id,
@@ -439,7 +622,13 @@ Deno.serve(async (req) => {
 
       // A taken slot is the admin's to fix, not a server error (D-review-3 F-6).
       if (error?.code === '23505') return fail(mapDbError(error));
-      if (error) throw error;
+      if (error) {
+        const m = mapDbError(error);
+        const refused = await payRefused(m, 'create', payArgs('create'));
+        if (refused) return refused;
+        if (m.code !== 'unexpected') return fail(m);
+        throw error;
+      }
 
       await supabase.from('audit_log').insert({
         action: 'session_create',
