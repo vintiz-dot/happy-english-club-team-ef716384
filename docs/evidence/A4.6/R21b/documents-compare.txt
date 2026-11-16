@@ -1,0 +1,18 @@
+﻿document vs base-live/light | base-live/dark | after-live/light | after-live/dark | after-flip/light | after-flip/dark | base-flip/light | base-flip/dark
+report-stage | SAME | SAME | SAME | SAME | SAME | DIFF 27620 px | DIFF 34867 px
+report-raster | SAME | SAME | SAME | SAME | SAME | DIFF 109439 px | DIFF 109439 px
+access-stage | SAME | SAME | SAME | DIFF 14724 px | DIFF 14724 px | DIFF 14724 px | DIFF 14724 px
+access-raster | SAME | SAME | SAME | SAME | SAME | SAME | SAME
+invoice-stage | SAME | SAME | SAME | DIFF 29600 px | DIFF 29600 px | DIFF 30330 px | DIFF 30330 px
+invoice-raster | SAME | SAME | SAME | SAME | SAME | DIFF 2920 px | DIFF 2920 px
+ai-print | SAME | SAME | SAME | DIFF 826880 px | DIFF 826880 px | DIFF 895282 px | DIFF 895559 px
+statement-print | SAME | SAME | SAME | DIFF 1493760 px | DIFF 1493760 px | DIFF 1495024 px | DIFF 1495024 px
+ai-printdoc | SAME | SAME | SAME | SAME | SAME | size 1280x954 vs 1280x961 | size 1280x954 vs 1280x961
+statement-printdoc | SAME | SAME | SAME | SAME | SAME | DIFF 1264 px | DIFF 1264 px
+
+HEC Docs HTML handed to the printer, vs base-live/light:
+hec-access-card | identical | identical | identical | identical | identical | identical | identical
+hec-homework | identical | identical | identical | identical | identical | identical | identical
+hec-invoice | identical | identical | identical | identical | identical | identical | identical
+hec-progress-report | identical | identical | identical | identical | identical | identical | identical
+hec-statement | identical | identical | identical | identical | identical | identical | identical

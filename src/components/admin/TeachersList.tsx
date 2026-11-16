@@ -60,8 +60,8 @@ export function TeachersList() {
           className="pt-2"
         >
           <TabsList>
-            <TabsTrigger value="active">On the staff</TabsTrigger>
-            <TabsTrigger value="archived" className="gap-1.5">
+            <TabsTrigger value="active" aria-controls="teachers-list">On the staff</TabsTrigger>
+            <TabsTrigger value="archived" className="gap-1.5" aria-controls="teachers-list">
               <Archive className="h-3.5 w-3.5" />
               Archived
               {archivedCount > 0 && (
@@ -71,7 +71,7 @@ export function TeachersList() {
           </TabsList>
         </Tabs>
       </CardHeader>
-      <CardContent>
+      <CardContent id="teachers-list">
         {teachers?.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
             {showArchived ? "Nobody has been archived." : "No teachers found"}
@@ -92,7 +92,7 @@ export function TeachersList() {
                     {teacher.phone && (
                       <p className="text-sm text-muted-foreground">📱 {teacher.phone}</p>
                     )}
-                    <p className="text-sm font-medium text-primary">
+                    <p className="text-sm font-medium tabular-nums text-primary">
                       {describeRate(teacher)}
                     </p>
                   </div>

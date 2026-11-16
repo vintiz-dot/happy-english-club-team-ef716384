@@ -96,7 +96,7 @@ export function SetMonitorControl({ classId, roster }: SetMonitorDialogProps) {
 
       <div className="flex gap-2">
         <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-          <SelectTrigger className="flex-1 h-9 text-sm">
+          <SelectTrigger className="flex-1 h-9 text-sm" aria-label="Class Monitor">
             <SelectValue placeholder="Select student..." />
           </SelectTrigger>
           <SelectContent>

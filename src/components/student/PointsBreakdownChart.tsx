@@ -131,7 +131,7 @@ export function PointsBreakdownChart({ studentId, classId }: PointsBreakdownChar
           </h3>
         </div>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px]" aria-label="Month">
             <SelectValue placeholder="Select month" />
           </SelectTrigger>
           <SelectContent>
@@ -148,7 +148,7 @@ export function PointsBreakdownChart({ studentId, classId }: PointsBreakdownChar
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Points</CardDescription>
-            <CardTitle className="text-3xl">{totalPoints}</CardTitle>
+            <CardTitle className="font-sans text-3xl tabular-nums">{totalPoints}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground">
@@ -161,7 +161,7 @@ export function PointsBreakdownChart({ studentId, classId }: PointsBreakdownChar
           <Card key={item.type}>
             <CardHeader className="pb-2">
               <CardDescription className="capitalize">{item.type}</CardDescription>
-              <CardTitle className="text-3xl">{item.points}</CardTitle>
+              <CardTitle className="font-sans text-3xl tabular-nums">{item.points}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
