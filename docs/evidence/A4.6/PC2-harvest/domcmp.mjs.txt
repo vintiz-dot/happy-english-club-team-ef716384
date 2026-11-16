@@ -1,0 +1,13 @@
+// Byte-compare the normalised outerHTML of each part, routes unlisted: before (c83ccde9) vs after (this branch).
+import fs from 'node:fs';
+const dir = 'C:/Users/Dell/hec-tools/pc2h-out/';
+const a = JSON.parse(fs.readFileSync(dir + 'before/beforeL-results.json', 'utf8')).runs;
+const b = JSON.parse(fs.readFileSync(dir + 'after/afterL-results.json', 'utf8')).runs;
+for (const k of Object.keys(a).sort()) {
+  const x = a[k].dom ?? '', y = b[k]?.dom ?? '';
+  if (x === y) { console.log(`${k}: IDENTICAL (${x.length} bytes, data-hec-theme ${a[k].attr}/${b[k].attr})`); continue; }
+  const cx = x.match(/class="[^"]*"/g) || [], cy = y.match(/class="[^"]*"/g) || [];
+  const diff = []; for (let i = 0; i < Math.max(cx.length, cy.length); i++) if (cx[i] !== cy[i]) diff.push(`- ${cx[i]}\n    + ${cy[i]}`);
+  const strip = (s) => s.replace(/class="[^"]*"/g, 'class=""');
+  console.log(`${k}: DIFFERS (${x.length} -> ${y.length} bytes); outside class attributes: ${strip(x) === strip(y) ? 'identical' : 'DIFFERENT'}; class attrs changed:\n    ${[...new Set(diff)].join('\n    ')}`);
+}
