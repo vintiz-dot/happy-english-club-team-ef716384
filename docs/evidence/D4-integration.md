@@ -1,6 +1,6 @@
 # D4 integration: steps 2 -> 3A -> 3B in one tree
 
-Where I am / next step: merges done and committed; apply-chain suite and brief written; running the checks (full run, typecheck, bun, mutants, screens-alone). Then this file's results, commit.
+Where I am / next step: merges, chain suite, brief, oracle stand-in fix, screens-alone proof done and committed. Running: mutants (step 2 + 3A runner, then 3B's two), then bun and the final full run.
 
 Branch `d4-integration` = conductor `claude/hec-conductor-setup-efbaa5` 344cbf38 (it already carries 3A, `d4-3a-fix` 965a9f0c, on top of everything live) + `git merge worktree-agent-a36ad2752b190053b` (step 2, 2ef7adab) + `git merge d4-3b-fix` (3B, 4e5b70f8). Pglite only: nothing applied, deployed or pushed; no live database contacted; no real data.
 
@@ -32,6 +32,14 @@ Merge 2 (3B). 3B was cut from 02b571e6; the conductor changed one of its files s
 
 No step replaces a body another step pins (table in the brief). 3A pins 1b's `d4_guard_status`; neither step 2 nor 3B pins or replaces it, so no pin needed fixing. 3B's pin of `_money_enrollment_rpc_call` accepts 1b's or its own body. Proved by `scripts/pgtest/d4-apply-chain.test.mjs` (registered in `run.mjs`).
 
+## A real interaction found by the merged run, and its fix
+
+First full run on the merged tree (before the fix): every suite green except two.
+- `d4 reach oracle` (3B) 20 / 101: with step 2 merged, the REAL `calculate-tuition` / `compute-sibling-discounts` the oracle bundles read `class_fee_history` (directly and through `_lib/projected-per-class.ts`). The oracle's database does not load 092000 and runs each edit inside a transaction; the stand-in's failed SELECT (42P01, which `isMissingFeeHistory` rightly reads as "no table") aborted that transaction (25P02), so every later read failed. Not a product fault: on live each PostgREST request is its own statement and a missing table aborts nothing. Fix (7529263d, test stand-in only): when the table is absent the stand-in answers an empty history (every lesson at the mirror, exactly what a missing table does). Re-run alone: **200 passed, 0 failed** (3B's pin). No guard, calculator or migration changed.
+- `d4 floors` (1a) 212 / 2: "C-1 move: the fixture call succeeds" and the floor case after it - the known clock edge (`clock(0, 3)` + 1 hour crosses midnight after 20:00 Hanoi; the run was at ~20:15). Not changed. Re-run alone with the process clock moved back 8 hours (scratch `--import` preload; pglite reads the JS clock): **213 passed, 0 failed**.
+
 ## Results
 
-(filled in below as each check finishes)
+- `d4 apply chain` (new, `scripts/pgtest/d4-apply-chain.test.mjs`, pinned 238): **238 passed, 0 failed** - plan order with every later preflight's pins checked before each paste; each step alone; all six orders; plan order as CRLF; second pastes; fingerprint after each paste; step 2 + 3B together on `classes`; rollbacks 5, 4, 3 -> 1b (only `d4_guard_status` / `_money_enrollment_rpc_call` differ, by design), 1b re-paste -> exact, re-install, rollbacks 5..1 + D2 -> D release identical; each step's own rollback after it alone.
+- Fingerprint: `--release d4` regenerated (99 functions, 46 triggers, 7 relations); `--release d4 --check` up to date; `--check` (D release) up to date; `--check-unchanged` only the two 1a-replaced functions differ; `--check-unchanged --after-rollback` (rollbacks 5, 4, 3, 2, 1 + D2) 66 of 66.
+- Screens alone (`tsc --noEmit -p tsconfig.app.json` with the other steps' `src/` files at their pre-step text, new files removed, then `git checkout HEAD -- src`): only step 2's screens (46 files reverted) exit 0; only 3A's (32 reverted) exit 0; only 3B's (22 reverted) exit 0; none of them (50 reverted) exit 0; ~900 src files loaded each time; src clean after each.
