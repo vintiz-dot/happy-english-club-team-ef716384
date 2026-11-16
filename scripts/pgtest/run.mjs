@@ -276,6 +276,9 @@ const SUITES = [
   // teacher, an admin, a TA, a parent and nobody call it.
   { name: "teacher payroll view", file: "teacher-payroll-view.test.mjs", migrations: [] },
   { name: "teacher payroll function", file: "teacher-payroll.test.mjs", migrations: [] },
+  // TA-PAY: a teaching assistant reads their own row (JWT-scoped), and the
+  // TA screens show calculate-payroll's figures, open and closed month.
+  { name: "TA payroll function", file: "ta-payroll.test.mjs", migrations: [] },
   {
     name: "pay-rate history",
     file: "payhist.mjs",
