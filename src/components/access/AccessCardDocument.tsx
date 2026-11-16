@@ -30,7 +30,7 @@ export function AccessCardDocument({
   });
 
   return (
-    <div className="bg-white text-black" style={{ fontFamily: "system-ui, sans-serif" }}>
+    <div data-hec-document="" className="bg-white text-black" style={{ fontFamily: "system-ui, sans-serif" }}>
       <div className="border-2 border-violet-600 rounded-2xl overflow-hidden">
         {/* Letterhead */}
         <div className="flex items-center gap-3 px-5 py-4 bg-violet-600 text-white">
