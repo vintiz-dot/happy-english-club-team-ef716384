@@ -106,6 +106,7 @@ function setup() {
   // prompt that ignores piped input; record the key and passphrase directly.
   console.log(ares("ares-novacom", ["--device", DEVICE, "--getkey"], { input: `${passphrase}\n`, allowFail: true, timeout: 60000 }));
   ares("ares-setup-device", ["--modify", DEVICE, "--info", `privatekey=${DEVICE}_webos`, "--info", `passphrase=${passphrase}`]);
+  cfg.devPassphrase = passphrase; saveCfg(); // the daily dev-mode renewal unlocks the key with it
   console.log(ares("ares-device", ["-i", "-d", DEVICE]));
 }
 
@@ -198,6 +199,36 @@ function wake() {
   });
 }
 
+// ------------------------------------------------------------------ Developer Mode timer
+// The current LG CLI has no ares-extend-dev. It did two things, done here:
+// read the TV's dev-mode session token over the dev SSH link (the key from
+// `setup`), then ask LG's server to reset that session's 50-hour timer.
+async function extendDevMode() {
+  const { createRequire } = await import("node:module");
+  const req = createRequire(join(TOOLS, "node_modules", "@webos-tools", "cli", "package.json"));
+  const { Client } = req("ssh2");
+  if (!cfg.devPassphrase) throw new Error("No Developer Mode passphrase saved. Run: node scripts/reception-tv.mjs setup <PASSPHRASE>");
+  const token = await new Promise((ok, fail) => {
+    const c = new Client();
+    const timer = setTimeout(() => { c.end(); fail(new Error("TV did not answer on the dev port")); }, 30000);
+    c.on("ready", () => c.exec("cat /var/luna/preferences/devmode_enabled", (e, s) => {
+      if (e) { clearTimeout(timer); c.end(); return fail(e); }
+      let out = "";
+      s.on("data", (d) => (out += d)).on("close", () => { clearTimeout(timer); c.end(); ok(out.trim()); });
+    }))
+      .on("error", (e) => { clearTimeout(timer); fail(e); })
+      .connect({
+        host: cfg.tvIp, port: 9922, username: "prisoner", readyTimeout: 20000,
+        privateKey: readFileSync(join(homedir(), ".ssh", `${DEVICE}_webos`)),
+        passphrase: cfg.devPassphrase,
+      });
+  });
+  if (!/^[A-Za-z0-9]{16,128}$/.test(token)) throw new Error("No dev-mode session on the TV (is Developer Mode still on?)");
+  const res = await fetch(`https://developer.lge.com/secure/ResetDevModeSession.dev?sessionToken=${token}`);
+  const text = await res.text();
+  if (!res.ok || !/"result"\s*:\s*"success"/.test(text)) throw new Error(`LG refused the renewal (${res.status}): ${text.slice(0, 120)}`);
+}
+
 // ------------------------------------------------------------------ the helper
 const hanoiNow = () => new Date(Date.now() + 7 * 3600 * 1000);
 function openNow() {
@@ -233,7 +264,7 @@ async function check() {
   }
   // Developer Mode lapses after 50 hours; renew it once a day.
   if (state.extendedOn !== day) {
-    try { ares("ares-extend-dev", ["--device", DEVICE], { timeout: 60000 }); state.extendedOn = day; log("Developer Mode renewed"); }
+    try { await extendDevMode(); state.extendedOn = day; log("Developer Mode renewed"); }
     catch (e) { log(`Developer Mode renewal failed: ${e.message.split("\n")[0]}`); }
   }
   state.lastCheck = new Date().toISOString();
@@ -257,14 +288,18 @@ function autostart() {
   if (platform() === "win32") {
     // wscript runs node with no console window.
     const vbs = join(HOME, "helper.vbs");
-    writeFileSync(vbs, `CreateObject("WScript.Shell").Run """${process.execPath}"" ""${dest}"" watch", 0, False
-
-`);
-    const task = "HEC Reception TV helper";
-    execFileSync("schtasks", ["/Create", "/TN", task, "/SC", "ONLOGON", "/RL", "LIMITED", "/F", "/TR", `wscript.exe "${vbs}"`], { stdio: "inherit" });
-    execFileSync("schtasks", ["/Run", "/TN", task], { stdio: "inherit" });
-    console.log(`Helper installed: starts at every logon. Log: ${LOG}
-Remove with: schtasks /Delete /TN "${task}" /F`);
+    writeFileSync(vbs, `CreateObject("WScript.Shell").Run """${process.execPath}"" ""${dest}"" watch", 0, False\r\n`);
+    // The user's own Startup folder: no administrator rights needed (a logon
+    // task in Task Scheduler needs them).
+    const startup = join(process.env.APPDATA ?? join(homedir(), "AppData", "Roaming"), "Microsoft", "Windows", "Start Menu", "Programs", "Startup");
+    const link = join(startup, "HEC Reception TV helper.vbs");
+    cpSync(vbs, link);
+    // Start it now unless one is already running.
+    const running = spawnSync("powershell", ["-NoProfile", "-Command",
+      "(Get-CimInstance Win32_Process -Filter \"name='node.exe'\" | Where-Object { $_.CommandLine -like '*reception-tv.mjs* watch*' }).Count"], { encoding: "utf8" });
+    if (!(Number(running.stdout?.trim()) > 0)) spawnSync("wscript.exe", [vbs]);
+    console.log(`Helper installed: starts whenever you sign in to Windows. Log: ${LOG}
+Remove it by deleting: ${link}`);
   } else {
     console.log(`Helper copied to ${dest}. On a Raspberry Pi, save this as /etc/systemd/system/hec-reception.service and run
   sudo systemctl enable --now hec-reception
