@@ -116,7 +116,7 @@ Then by hand: a teacher opens Smart Upload, uploads a photo and opens it in revi
 | image-generate | `image-generate/index.ts`, `_lib/ai-gate.ts`, `_lib/auth.ts`, `_lib/rate-limit.ts` | true |
 | save-word (fix round) | `save-word/index.ts`, `_lib/auth.ts` | true |
 
-The browser build carries `src/components/student/ClassCatalog.tsx` (F-17), `src/lib/sanitize.ts` + the two grading screens (F-23), `src/lib/avatarFile.ts` + `src/components/student/ProfilePictureUpload.tsx` (R-3). Each works against the database before and after the migrations.
+The browser build carries `src/components/student/ClassCatalog.tsx` (F-17), `src/lib/avatarFile.ts` + `src/components/student/ProfilePictureUpload.tsx` (R-3). Each works against the database before and after the migrations.
 
 `_lib/auth.ts` changed (F-08) and goes with every function above that imports it; other functions that import it pick it up whenever they are next deployed (no behaviour change for them). Rollback for any: redeploy the snapshot taken before (S1 practice), not `origin/main`. Owner, separately: delete the live `generate-sessions` function (dashboard).
 
