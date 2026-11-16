@@ -2,7 +2,7 @@
 
 **DONE - waiting for the conductor's review**
 
-**Fix round 1 - where I am:** on branch `d4-3b-fix` (from `review-3b` 6390acf8, = the builder's 3b09300f + the review). Done and committed: B-1, B-2, M-1, N-1, N-2 (database), N-5. In progress: N-2 screens, N-4 wording, mutants, fingerprints, full run. N-3 is the calculator's and is not touched. Details: section "Fix round 1" at the end.
+**Fix round 1 - where I am:** COMPLETE on branch `d4-3b-fix` (from `review-3b` 6390acf8, = the builder's 3b09300f + the review). B-1, B-2, M-1, N-1, N-2, N-4, N-5 and the test gaps fixed; N-3 (calculator) noted, not touched. Full run 6726 / 66 / 0 failed; mutants: reviewer's 11 of 13 caught (R07, R12 equivalent), builder's 69 of 69. Nothing applied, deployed or pushed. Next step is not mine: a short re-review of the delta. Details: section "Fix round 1" at the end.
 
 **Where I am / next step (build):** COMPLETE - built, tested, mutants run (57 of 57 caught), full run green (6658 assertions, 66 suites, 0 failed). Pushed. Next step is not mine: the conductor's review.
 
@@ -308,6 +308,57 @@ The reviewer's probes are pinned in the permanent suites (not by registering `re
 | P7a/b direct `end_enrollment` backdated | P0001 / HC120 | unchanged |
 
 Oracle probes (in `d4-reach-oracle`, with the real calculate-tuition / compute-sibling-discounts): O1 HC121, O3 HC120, O4 HC120, O5 HC120; with the guard on nothing past or signed off moves; with only that guard switched off each moves at least one such bill.
+
+### Mutants after fix round 1
+
+Both runners with `MUTANT_JOBS=2` (this laptop is short of memory), over the final file and suites (commit 0f9c062f).
+
+**Reviewer's 13** (`node scripts/pgtest/review3b-mutants.mjs`): first run 10 caught, 3 survived (R07, R11, R12). The R11 case was then added and `review3b-mutants.mjs R11` re-run: CAUGHT ("R11 a pause acknowledgement of an EARLIER transaction opens nothing on the register: HC025"). Final: **11 caught, 2 survived, both equivalent**:
+- R01 (unknown lane passes like the owner) CAUGHT by "R01 the unknown lane ...: HC120, no owner_lane event"; R02 (bill floor ignored by the shortcut) CAUGHT by "R02 a rate on that enrolment: HC120 - the floor marks ..."; R05 (re-pointed definition is nothing priced) CAUGHT by "R05 ..."; R09 (mirror ignores per_session) CAUGHT by "R09 ..."; R13 (definition_in_use loses the lead day) CAUGHT by "R13 ..."; R03, R04, R06, R08, R10 CAUGHT as before.
+- **R07 equivalent**: a definition's `cadence` is read by neither calculator (`calculate-tuition/index.ts:369-376` uses `type`, `value`, `is_active`, `name`; -bulk the same), so guarding it over-protects and dropping it moves no figure.
+- **R12 equivalent** (now, not just "defence in depth"): after N-5 an INSERT under a discount acknowledgement must also have `target_id` = the inserted row's child, and only `assign` targets a child (`set_end` / `edit` / `remove` target the row id), so "any op covers an INSERT" admits exactly the writes "assign covers an INSERT" does.
+- R11 was marked near-equivalent by the reviewer (the flag is transaction-local and only `_money_change_apply` sets it); it is caught anyway now, so it is not counted as equivalent.
+
+**Builder's runner** (`node scripts/pgtest/d4-mutants-3b.mjs`, now 69: the builder's 57 with S04 / S23 / S24 / S45 re-pointed at the changed text - the same mutation, the old text no longer exists - plus S46-S56 and F13 for this round's guards): **69 caught, 0 survived or bad.** The function mutants left every file byte for byte as it was (`git status` clean afterwards).
+
+| New mutant | Breaks | Caught by |
+|---|---|---|
+| S46 | created_at not identity | inputs (B-1 created_at, admin lane) |
+| S47 | delete guard never fires | inputs (B-2 deletes) |
+| S48 | re-key guard as `UPDATE OF` (refuses the calculator) | inputs (calculate-tuition's upsert of a frozen bill passes) |
+| S49 | re-key guard ignores month | inputs (B-2 moves to another month) |
+| S50 | lone-child shortcut ignores a stored winner | inputs (M-1 stored sibling state) |
+| S51 | lone-child shortcut ignores the other children | inputs (moving a child with a paid past month to another family) |
+| S52 | families.is_active unguarded | inputs (N-2 probe P4a) |
+| S53 | students.is_active unguarded | inputs (N-2 deactivating a child whose sibling ...) |
+| S54 | set_sibling_percent covers is_active | inputs (N-2 acknowledged set_sibling_percent) |
+| S55 | enrolment acknowledgement covers any child | inputs (N-5 probe P6) |
+| S56 | discount assign acknowledgement covers any child | inputs (N-5 discount assign) |
+| F13 | link-student-user ignores a refused link | lib (link-student-user reports its family writes) |
+
+### Checks (fix round 1, this PC, Node 24.15.0)
+
+| Check | Result |
+|---|---|
+| `node scripts/pgtest/run.mjs` | **6726 assertions across 66 suites, 0 suite(s) failed** (the review's run: 6659; +67 this round). This step's: d4 money inputs 308 (was 257), d4 reach oracle 200 (was 187), money inputs lib 43 (was 40), d4 functions inputs 62 (unchanged); each pinned with `expect`. Green beside them: d4 floors 213, D2 carry-over 275, d4 deployed functions 37, d4 rollback 26, d4 register 140, d4 functions register 34, money guard lib 45, invoice status 268, session cancel guard 266, AI admin actions 79, stars sync engine 172. (A first full run was discarded: after the network drop a replayed copy of the same command wrote to the same output file, so its lines interleaved; the figures here are from one clean run.) |
+| `tsc --noEmit -p tsconfig.app.json` | exit 0 (the `app typecheck` suite, which asserts it loaded the source) |
+| edge-function typecheck | green (`edge functions typecheck` suite: 5/5) |
+| `npm run test:bun` | **runs on this PC**: 13 files, 166 pass, 0 fail (bun 1.4.4 via npx) |
+| reviewer's mutants | 11 of 13 caught; R07, R12 equivalent (above) |
+| builder's mutants | 69 of 69 caught |
+
+### Notes for the conductor
+
+- **Operability cost of N-2, said plainly.** Deactivating a child who has a sibling, or a family, reaches every month of that family from the first enrolment, so with any confirmed past month it is a T3 dialog (reason + correction reason, reviewed) and its refresh re-runs calculate-tuition over those months. That is the true reach (the sibling count is not dated: a recomputed family state for any month counts only active children), and it fails closed; a child with no sibling stays T0 (M-1). A narrower rule ("only months whose family discount is unresolved or recomputed") is a design change for the owner, not a guard change.
+- **A student delete can now meet the frozen-bill delete guard**: where invoices cascade from students (not checked against live; the pglite prelude has no such FK), deleting a child whose only history is a frozen bill with no money is HC120 at the bill (before: allowed). Fail closed; deactivate instead. Not tested.
+- **`admin-data-import`** still upserts `students` / `families` with the service key: a row that changes `is_active` over billed months now fails that table's import (fail closed, reported per table), as for the family link before.
+- `link-student-user` still writes `students.family_id` with the service key (pre-existing; the money guard judges it like any lane). Moving it to the caller's JWT is a separate change.
+- N-3 is left for the calculator fix (see the table).
+- `review3b-oracle.mjs` / `review3b-probes.mjs` still run as the reviewer left them; the generated `.review3b-*.gen.mjs` files are scratch and were removed.
+
+### Not verified (this round)
+
+The live database (by the rules); in particular whether `audit_teachers` / `audit_teaching_assistants` exist there (the file handles both cases) and whether invoices cascade from students. The three screens changed this round (`StudentsList`, `StudentEditDrawer`, `FamiliesList`) and `StudentLinkDialog` were type-checked, not rendered. `link-student-user` was not driven end to end (static check only; its database half is tested). Concurrency (pglite is one connection).
 
 ### Function and trigger fingerprints after fix round 1 (they supersede the build table above)
 
