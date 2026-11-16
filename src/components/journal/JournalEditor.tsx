@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
+import { RichTextEditor } from "@/components/rich-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,11 +8,6 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIvory } from "@/hooks/useIvory";
-
-// Ivory: Quill paints its toolbar icons a fixed dark grey and its picker menu white, unreadable in dark. These selectors are one class
-// more specific than quill.snow.css's own, so they win without !important and Quill's hover / active / open states
-// (more specific still) keep showing. Same treatment as ExamReportEditor (PC2-harvest).
-const IVORY_QUILL = "rounded-hec-md bg-hec-raised [&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint";
 
 type JournalType = "personal" | "student" | "class" | "collab_student_teacher";
 
@@ -38,18 +32,6 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
   const [students, setStudents] = useState<Array<{ id: string; full_name: string }>>([]);
   const [classes, setClasses] = useState<Array<{ id: string; name: string }>>([]);
   const [teachers, setTeachers] = useState<Array<{ id: string; full_name: string; user_id: string }>>([]);
-
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ color: [] }, { background: [] }],
-      [{ align: [] }],
-      ["link"],
-      ["clean"],
-    ],
-  };
 
   useEffect(() => {
     loadOptions();
@@ -278,19 +260,18 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
         </div>
 
         <div className="space-y-2">
-          <Label>Content</Label>
-          <div className={ivory ? `min-h-[300px] ${IVORY_QUILL}` : "min-h-[300px]"}>
-            <ReactQuill
-              theme="snow"
-              value={content}
-              onChange={setContent}
-              modules={modules}
-              className="h-[250px]"
-            />
-          </div>
+          <Label id="journal-editor-content-label" htmlFor="journal-editor-content">Content</Label>
+          <RichTextEditor
+            id="journal-editor-content"
+            ariaLabelledBy="journal-editor-content-label"
+            toolbar="full"
+            value={content}
+            onChange={setContent}
+            minHeight="250px"
+          />
         </div>
 
-        <div className={ivory ? "flex flex-wrap gap-2 pt-12" : "flex gap-2 pt-12"}>
+        <div className={ivory ? "flex flex-wrap gap-2 pt-2" : "flex gap-2 pt-2"}>
           <Button onClick={handleSave} disabled={loading}>
             {loading ? "Saving..." : "Save Entry"}
           </Button>

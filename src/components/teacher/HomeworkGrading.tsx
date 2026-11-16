@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Undo, ArrowLeft } from "lucide-react";
 import { dayjs } from "@/lib/date";
-import { sanitizeHtml, sanitizeSubmittedHtml } from "@/lib/sanitize";
+import { RichTextView } from "@/components/rich-text";
 import { useAuth } from "@/hooks/useAuth";
 import { VideoReviewPanel } from "@/components/video-homework/VideoReviewPanel";
 
@@ -426,9 +426,9 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
               {homework?.body && (
                 <div className="mb-3 space-y-2 border-b border-hec-line pb-3">
                   <Label className="text-hec-small font-semibold text-hec-ink">Assignment Instructions</Label>
-                  <div 
+                  <RichTextView
                     className="prose prose-sm max-w-none break-words rounded-hec-md bg-hec-sunken p-3 text-hec-small text-hec-ink-soft [&_p]:text-hec-ink-soft [&_strong]:text-hec-ink [&_em]:text-hec-ink [&_ul]:text-hec-ink-soft [&_ol]:text-hec-ink-soft [&_li]:text-hec-ink-soft"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(homework.body) }}
+                    html={homework.body}
                   />
                 </div>
               )}
@@ -436,9 +436,9 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
               <div className="mb-3 space-y-2 border-b border-hec-line pb-3">
                 <Label className="text-hec-small font-semibold text-hec-ink">Student Submission</Label>
                 {selectedSubmission?.submission?.submission_text ? (
-                  <div 
+                  <RichTextView
                     className="prose prose-sm max-w-none break-words rounded-hec-md border border-hec-line bg-hec-surface p-3 text-hec-small text-hec-ink [&_p]:text-hec-ink [&_strong]:text-hec-ink [&_em]:text-hec-ink [&_ul]:text-hec-ink [&_ol]:text-hec-ink [&_li]:text-hec-ink"
-                    dangerouslySetInnerHTML={{ __html: sanitizeSubmittedHtml(selectedSubmission.submission.submission_text) }}
+                    html={selectedSubmission.submission.submission_text}
                   />
                 ) : (
                   <div className="rounded-hec-md border border-dashed border-hec-line-strong bg-hec-sunken p-3 text-hec-small text-hec-ink-soft">

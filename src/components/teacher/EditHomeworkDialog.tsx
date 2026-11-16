@@ -1,20 +1,13 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import "react-quill-new/dist/quill.snow.css";
 import { Loader2 } from "lucide-react";
 import { useIvory } from "@/hooks/useIvory";
-
-// Ivory: Quill paints its toolbar icons a fixed dark grey and its picker menu white, unreadable in dark. These selectors are one class
-// more specific than quill.snow.css's own, so they win without !important and Quill's hover / active / open states
-// (more specific still) keep showing. Same treatment as ExamReportEditor (PC2-harvest).
-const IVORY_QUILL = "rounded-hec-md bg-hec-raised [&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint";
-
-const ReactQuill = lazy(() => import("react-quill-new"));
+import { RichTextEditor } from "@/components/rich-text";
 
 interface EditHomeworkDialogProps {
   homeworkId: string | null;
@@ -165,29 +158,16 @@ export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: E
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Suspense fallback={<div className={ivory ? "flex h-40 items-center justify-center rounded-hec-md border border-hec-line-strong text-hec-ink-faint" : "h-40 border rounded-md flex items-center justify-center text-muted-foreground"}><Loader2 className="h-5 w-5 animate-spin mr-2" />Loading editor...</div>}>
-                <div className={ivory ? IVORY_QUILL : undefined}>
-                <ReactQuill
-                  theme="snow"
-                  value={body}
-                  onChange={setBody}
-                  placeholder="Assignment instructions and details..."
-                  modules={{
-                    toolbar: [
-                      [{ header: [1, 2, 3, false] }],
-                      ["bold", "italic", "underline", "strike"],
-                      [{ color: [] }, { background: [] }],
-                      [{ list: "ordered" }, { list: "bullet" }],
-                      [{ script: "sub" }, { script: "super" }],
-                      [{ align: [] }],
-                      ["link", "image"],
-                      ["clean"],
-                    ],
-                  }}
-                />
-                </div>
-              </Suspense>
+              <Label id="edit-description-label" htmlFor="edit-description">Description</Label>
+              <RichTextEditor
+                id="edit-description"
+                ariaLabelledBy="edit-description-label"
+                toolbar="full"
+                value={body}
+                onChange={setBody}
+                placeholder="Assignment instructions and details..."
+                fallback={<div className={ivory ? "flex h-40 items-center justify-center rounded-hec-md border border-hec-line-strong text-hec-ink-faint" : "h-40 border rounded-md flex items-center justify-center text-muted-foreground"}><Loader2 className="h-5 w-5 animate-spin mr-2" />Loading editor...</div>}
+              />
             </div>
 
             <div className="space-y-2">

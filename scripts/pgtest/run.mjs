@@ -502,7 +502,7 @@ const SUITES = [
   },
   // The S2 edge-function and browser fixes (F-03, F-04, F-07..F-13, F-17's
   // and F-23's browser half): each real function before (5594ca32) and after.
-  { name: "S2 edge functions", file: "s2-edge-functions.test.mjs", expect: 108, migrations: [] },
+  { name: "S2 edge functions", file: "s2-edge-functions.test.mjs", expect: 107, migrations: [] },
   // The independent review's probes (docs/evidence/S2-review.md), flipped by
   // the fix round: R-1 refused, R-2 rows identical and timing near before-S2,
   // R-3 avatars by their bytes, R-4 the sentence cache key.

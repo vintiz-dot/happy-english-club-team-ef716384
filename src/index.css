@@ -173,35 +173,7 @@ html, body {
 All colors MUST be HSL.
 */
 
-/* Rich text editor styling */
-.ql-container {
-  font-family: inherit;
-  font-size: inherit;
-}
-
-.ql-editor {
-  min-height: 150px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.quill {
-  background: hsl(var(--background));
-  border-radius: 0.5rem;
-  border: 1px solid hsl(var(--border));
-}
-
-.ql-toolbar {
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
-  background: hsl(var(--muted));
-  border-bottom: 1px solid hsl(var(--border)) !important;
-}
-
-.ql-container {
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
-}
+/* Rich text editor styling: src/components/rich-text (rich-text.css, view.css). */
 
 @layer base {
   :root, [data-hec-board], [data-hec-document], #hec-print-report {
@@ -1050,43 +1022,6 @@ All colors MUST be HSL.
 }
 .hw-rich pre { padding: 0.7em 0.9em; }
 .hw-rich a { overflow-wrap: anywhere; }
-
-/* The student's answer box: one rounded card, 16px+ text so iOS never
-   zooms in when it gets focus, a toolbar that wraps instead of overflowing. */
-.hw-answer-editor .quill { border: 0; background: transparent; border-radius: 0; }
-.hw-answer-editor .ql-toolbar.ql-snow {
-  border: 2px solid hsl(var(--border));
-  border-bottom: 1px solid hsl(var(--border));
-  border-radius: 1.5rem 1.5rem 0 0;
-  background: hsl(var(--muted) / 0.5);
-  padding: 6px 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-}
-.hw-answer-editor .ql-toolbar.ql-snow .ql-formats { margin-right: 6px; }
-.hw-answer-editor .ql-toolbar.ql-snow button { width: 34px; height: 34px; padding: 6px; }
-.hw-answer-editor .ql-container.ql-snow {
-  border: 2px solid hsl(var(--border));
-  border-top: 0;
-  border-radius: 0 0 1.5rem 1.5rem;
-  background: hsl(var(--card));
-  font-size: 1.0625rem;
-}
-.hw-answer-editor .ql-editor {
-  min-height: 9rem;
-  line-height: 1.65;
-  padding: 0.9rem 1rem;
-  overflow-wrap: break-word;
-}
-.hw-answer-editor .ql-editor.ql-blank::before {
-  font-style: normal;
-  color: hsl(var(--muted-foreground));
-  left: 1rem;
-  right: 1rem;
-}
-.hw-answer-editor:focus-within .ql-container.ql-snow,
-.hw-answer-editor:focus-within .ql-toolbar.ql-snow { border-color: hsl(var(--primary) / 0.6); }
 
 /* Safety-net utility: never allow horizontal overflow */
 .no-x-overflow {

@@ -1,5 +1,4 @@
 import DOMPurify from 'dompurify';
-import { cleanRichHtml } from './richText';
 
 // Force all <a> tags to open in a new tab safely.
 // Hook is registered once at module load.
@@ -31,16 +30,3 @@ export const sanitizeHtml = (html: string): string => {
     ALLOW_DATA_ATTR: false,
   });
 };
-
-/**
- * HTML a child or a family wrote (a homework submission, and the
- * instructions copy a submission carries), shown to a teacher.
- *
- * sanitizeHtml keeps any `style` and `class`, so a child could lay CSS over
- * the grading screen (audit F-23; no script). This first applies the rich-
- * text cleaner's style and class filter (meaning kept: colour, bold, lists,
- * alignment; layout dropped), then sanitizeHtml as before, so links still
- * open in a new tab.
- */
-export const sanitizeSubmittedHtml = (html: string | null | undefined): string =>
-  sanitizeHtml(cleanRichHtml(html));

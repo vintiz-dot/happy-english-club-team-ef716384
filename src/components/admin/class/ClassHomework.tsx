@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sanitizeHtml } from "@/lib/sanitize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,13 +8,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { FileText, Upload, Trash2, Edit } from "lucide-react";
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
-
-// Staff only (/admin/classes/:id?tab=homework). Quill paints its toolbar icons a fixed dark grey and its picker menu white, unreadable in
-// dark. These selectors are one class more specific than quill.snow.css's own, so they win without !important and
-// Quill's hover / active / open states (more specific still) keep showing. Same treatment as ExamReportEditor.
-const IVORY_QUILL = "rounded-hec-md bg-hec-raised [&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint";
+// Staff only (/admin/classes/:id?tab=homework). The shared editor draws itself from the hec tokens, light and dark.
+import { RichTextEditor, RichTextView } from "@/components/rich-text";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const ClassHomework = ({ classId }: { classId: string }) => {
@@ -237,24 +231,15 @@ const ClassHomework = ({ classId }: { classId: string }) => {
           </div>
 
           <div className="space-y-2">
-            <Label>Notes</Label>
-            <div className={IVORY_QUILL}>
-            <ReactQuill
-              theme="snow"
+            <Label id="class-homework-notes-label" htmlFor="class-homework-notes">Notes</Label>
+            <RichTextEditor
+              id="class-homework-notes"
+              ariaLabelledBy="class-homework-notes-label"
+              toolbar="homework"
               value={body}
               onChange={setBody}
               placeholder="Optional instructions or notes..."
-              modules={{
-                toolbar: [
-                  [{ header: [1, 2, 3, false] }],
-                  ["bold", "italic", "underline", "strike"],
-                  [{ list: "ordered" }, { list: "bullet" }],
-                  ["link", "image"],
-                  ["clean"],
-                ],
-              }}
             />
-            </div>
           </div>
 
           <div className="space-y-2">
@@ -317,9 +302,9 @@ const ClassHomework = ({ classId }: { classId: string }) => {
             </CardHeader>
             <CardContent className="space-y-4">
               {hw.body && (
-                <div 
+                <RichTextView
                   className="prose prose-sm max-w-none break-words text-hec-small text-hec-ink-soft"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(hw.body) }}
+                  html={hw.body}
                 />
               )}
 

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Download, Star, Undo } from "lucide-react";
-import { sanitizeSubmittedHtml } from "@/lib/sanitize";
+import { RichTextView } from "@/components/rich-text";
 import { dayjs } from "@/lib/date";
 import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
 import { PagedListControls, usePagedList } from "@/components/shared/PagedListControls";
@@ -372,9 +372,9 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
               {selectedSubmission?.assignment_instructions && (
                 <div className="mb-4 space-y-2 border-b border-hec-line pb-4">
                   <Label className="text-hec-small font-semibold text-hec-ink">Original Assignment Instructions</Label>
-                  <div 
+                  <RichTextView
                     className="prose prose-sm max-w-none break-words rounded-hec-md bg-hec-sunken p-4 text-hec-ink-soft [&_p]:text-hec-ink-soft [&_strong]:text-hec-ink [&_em]:text-hec-ink [&_ul]:text-hec-ink-soft [&_ol]:text-hec-ink-soft [&_li]:text-hec-ink-soft"
-                    dangerouslySetInnerHTML={{ __html: sanitizeSubmittedHtml(selectedSubmission.assignment_instructions) }}
+                    html={selectedSubmission.assignment_instructions}
                   />
                 </div>
               )}
@@ -382,9 +382,9 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
               {selectedSubmission?.submission_text && (
                 <div className="mb-4 space-y-2 border-b border-hec-line pb-4">
                   <Label className="text-hec-small font-semibold text-hec-ink">Student Submission</Label>
-                  <div 
+                  <RichTextView
                     className="prose prose-sm max-w-none break-words rounded-hec-md border border-hec-line bg-hec-surface p-4 text-hec-ink [&_p]:text-hec-ink [&_strong]:text-hec-ink [&_em]:text-hec-ink [&_ul]:text-hec-ink [&_ol]:text-hec-ink [&_li]:text-hec-ink"
-                    dangerouslySetInnerHTML={{ __html: sanitizeSubmittedHtml(selectedSubmission.submission_text) }}
+                    html={selectedSubmission.submission_text}
                   />
                 </div>
               )}

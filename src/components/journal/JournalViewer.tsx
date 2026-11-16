@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { RichTextView } from "@/components/rich-text";
 
 interface JournalEntry {
   id: string;
@@ -30,9 +30,9 @@ export function JournalViewer({ entry, onClose }: JournalViewerProps) {
             {entry.updated_at !== entry.created_at && " (edited)"}
           </p>
         </DialogHeader>
-        <div
+        <RichTextView
           className="prose prose-sm max-w-none mt-4"
-          dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.content_rich) }}
+          html={entry.content_rich}
         />
       </DialogContent>
     </Dialog>

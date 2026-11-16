@@ -389,12 +389,17 @@ console.log("=== browser ===");
   ok("ClassCatalog reads teachers through get_class_catalog_teachers, with the table as fallback", /get_class_catalog_teachers/.test(cat) && /from\("teachers"\)/.test(cat));
   const g = readFileSync(resolve(repo, "src", "components", "teacher", "HomeworkGrading.tsx"), "utf8");
   const gl = readFileSync(resolve(repo, "src", "components", "teacher", "HomeworkGradingList.tsx"), "utf8");
-  ok("HomeworkGrading: the child's text goes through sanitizeSubmittedHtml", /sanitizeSubmittedHtml\(selectedSubmission\.submission\.submission_text\)/.test(g));
-  ok("HomeworkGradingList: the child's text and the instructions copy the child wrote go through it",
-    /sanitizeSubmittedHtml\(selectedSubmission\.submission_text\)/.test(gl) && /sanitizeSubmittedHtml\(selectedSubmission\.assignment_instructions\)/.test(gl));
-  ok("no grading screen renders child-written HTML through bare sanitizeHtml", !/sanitizeHtml\(selectedSubmission/.test(g + gl));
-  const s = readFileSync(resolve(repo, "src", "lib", "sanitize.ts"), "utf8");
-  ok("sanitizeSubmittedHtml = sanitizeHtml(cleanRichHtml(...))", /sanitizeHtml\(cleanRichHtml\(html\)\)/.test(s));
+  // F-23 is now carried by the rich-text rebuild (merged from the conductor):
+  // the grading screens render child-written HTML through RichTextView, whose
+  // render-mode sanitiser narrows class and style. S2's own helper was dropped
+  // in the merge in its favour.
+  ok("HomeworkGrading: the child's text is rendered by RichTextView, not dangerouslySetInnerHTML",
+    /html=\{selectedSubmission\.submission\.submission_text\}/.test(g) && !/dangerouslySetInnerHTML/.test(g));
+  ok("HomeworkGradingList: the child's text and the instructions copy it wrote likewise",
+    /html=\{selectedSubmission\.submission_text\}/.test(gl) && /html=\{selectedSubmission\.assignment_instructions\}/.test(gl) && !/dangerouslySetInnerHTML/.test(gl));
+  const view = readFileSync(resolve(repo, "src", "components", "rich-text", "RichTextView.tsx"), "utf8");
+  const rs = readFileSync(resolve(repo, "src", "components", "rich-text", "sanitize.ts"), "utf8");
+  ok("RichTextView sanitises in render mode, and that sanitiser narrows class and style", /sanitizeRichHtml\(html, "render"/.test(view) && /narrows class, style/.test(rs));
 }
 
 console.log(`${pass} passed, ${fail} failed`);
