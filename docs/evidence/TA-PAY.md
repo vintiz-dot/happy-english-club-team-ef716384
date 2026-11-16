@@ -1,8 +1,10 @@
+DONE - waiting for the conductor's review
+
 # TA-PAY - Teaching-assistant pay screens read calculate-payroll
 
 MONEY: yes. Branch `pc2/ta-pay` from `origin/conductor/work` (2e88891a). Build and test only: nothing deployed, no migration, no database touched, no Supabase/Lovable/Cloudflare tool used.
 
-**Where I am / next step:** code, tests and evidence written; final checks running. Next: record the counts, then mark DONE.
+**Where I am / next step:** DONE. Next: conductor's review, then redeploy `calculate-payroll`.
 
 ## 1. Screens that show a TA's pay (at 2e88891a)
 
@@ -75,7 +77,11 @@ An old deploy answers a TA 403: the dashboard cards and rate show "Figure unavai
 
 ## 5. Checks
 
-(filled in below when run)
+- `node scripts/pgtest/run.mjs`: **6682 assertions across 70 suites, 1 suite failed - not from this branch.** Payroll suites: shared-module mirrors 19/0, edge functions typecheck 5/0, app typecheck 3/0, payroll session rules 27/0, payroll screen rows 69/0, teacher payroll view 94/0, teacher payroll function 124/0, **TA payroll function 108/0**, payroll month locking 55/0.
+  - The one failure: "ai spend gate (F-02)" 249/1 - `only the two functions that must be public still opt out of the gateway check`: got `parent-video-page, reception-feed, redeem-access-code`. `supabase/config.toml` has `[functions.reception-feed] verify_jwt = false` on `origin/conductor/work` itself (Reception TV commits c44b2461 / e2873c44); this branch's diff against 2e88891a does not touch `config.toml`, `reception-feed` or `ai-gate.test.mjs`. Left for the conductor / the Reception owner: either `ai-gate.test.mjs` is told reception-feed is meant to be public, or the function changes.
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0.
+- `npm run test:bun`: npm ran with install scripts disabled, so `bun`'s postinstall never replaced `node_modules/bun/bin/bun.exe` (the placeholder errors "not compatible with this version of Windows"). Ran the same 18 files the script lists with the real binary from the same package (`@oven/bun-windows-x64`, bun 1.4.4): **250 pass, 0 fail** (1801 expect calls), `payrollCalculation.test.ts` included.
+- Edge-function typecheck: green (in run.mjs, above).
 
 ## 6. For the reviewer / owner
 
