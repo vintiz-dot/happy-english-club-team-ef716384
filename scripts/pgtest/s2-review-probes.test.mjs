@@ -55,7 +55,8 @@ console.log("=== R-1 F-18: a row in my class can name another class's file ===")
   ok("S1's policy lets teacher A file a class-A row (no child) naming class B's path", claim.err === null && claim.n === 1, claim);
   const after = await as(P.TEA, `SELECT count(*)::int n FROM storage.objects WHERE name = $1`, [bPath]);
   const del = await as(P.TEA, `DELETE FROM storage.objects WHERE name = $1`, [bPath]);
-  ok("RESIDUAL (LOW): teacher A now reads, and could delete, class B's photo by its name", after.rows[0]?.n === 1 && del.n === 1, { after, del });
+  // FLIPPED by the S2 fix round: a students/<child>/ name needs <child> enrolled in the row's class.
+  ok("R-1 FIXED: teacher A still cannot read, nor delete, class B's photo after filing that row", after.rows[0]?.n === 0 && del.n === 0, { after, del });
 }
 
 // ------------------------------------------------------------------ R-2 (F-17)
@@ -144,18 +145,22 @@ console.log("=== R-3 F-13: avatar uploads the app can send ===");
   const run = async (l, bytes, type, name) => {
     reset(base());
     const r = await call(h, "update-student-avatar", { token: tokenOf(U.admin), form: form(bytes, type, name) });
-    return { l, status: r.status, stored: world.log.some((e) => e.storage === "upload") };
+    return { l, status: r.status, stored: world.log.some((e) => e.storage === "upload"), error: r.json?.error };
   };
   const jpg = await run("JPEG from iPhone Safari (HEIC converted)", JPEG, "image/jpeg", "image.jpg");
   ok("a JPEG as iPhone Safari sends it is accepted", jpg.status === 200 && jpg.stored, jpg);
   const jpgAlias = await run("JPEG declared image/jpg", JPEG, "image/jpg", "a.jpg");
   ok("image/jpg is accepted as JPEG", jpgAlias.status === 200 && jpgAlias.stored, jpgAlias);
+  // FLIPPED by the S2 fix round (R-3): the bytes decide, the browser's label does not.
   const mis = await run("WebP bytes named .jpg", WEBP, "image/jpeg", "saved.jpg");
-  ok("RESIDUAL (LOW): a real WebP the browser labels image/jpeg is refused (400)", mis.status === 400 && !mis.stored, mis);
+  const misUp = world.log.find((e) => e.storage === "upload");
+  ok("R-3 FIXED: a real WebP the browser labels image/jpeg is stored, as image/webp .webp", mis.status === 200 && mis.stored && misUp?.contentType === "image/webp" && /\.webp$/.test(misUp?.p ?? ""), { mis, misUp });
   const heic = await run("HEIC from Files / a Mac", HEIC, "image/heic", "IMG_0001.HEIC");
-  ok("RESIDUAL (LOW): a HEIC file (iOS Files app, macOS) is refused (400); before S2 it was stored", heic.status === 400 && !heic.stored, heic);
+  ok("R-3 FIXED: a HEIC file is refused (400) with its own message, nothing stored", heic.status === 400 && !heic.stored && /HEIC format/.test(heic.error ?? ""), heic);
+  const heicNoType = await run("HEIC with no declared type", HEIC, "", "IMG_0002");
+  ok("R-3 FIXED: so is a HEIC with no declared type", heicNoType.status === 400 && /HEIC format/.test(heicNoType.error ?? ""), heicNoType);
   const empty = await run("JPEG with no declared type", JPEG, "", "photo");
-  ok("RESIDUAL (LOW): a JPEG with an empty declared type is refused (it was refused before too)", empty.status === 400, empty);
+  ok("R-3 FIXED: a JPEG with an empty declared type is stored (as image/jpeg)", empty.status === 200 && empty.stored, empty);
 }
 
 // ------------------------------------------------------------------ R-4 (F-03)

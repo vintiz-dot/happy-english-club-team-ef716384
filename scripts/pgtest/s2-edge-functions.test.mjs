@@ -274,10 +274,17 @@ console.log("=== F-13 small items ===");
   reset({ ...base(), students: [{ id: "A1", avatar_url: null, full_name: "A1", linked_user_id: U.kid }] });
   const b = await call(f.before, "update-student-avatar", { token: tokenOf(U.admin), form: form(SVG, "image/svg+xml", "a.svg") });
   ok("BEFORE: an SVG declared image/svg+xml is accepted and stored", world.log.some((e) => e.storage === "upload"), b);
-  for (const [l, bytes, type, name] of [["an SVG", SVG, "image/svg+xml", "a.svg"], ["an SVG declared image/png", SVG, "image/png", "a.png"], ["PNG bytes declared image/svg+xml", PNG, "image/svg+xml", "a.svg"]]) {
+  for (const [l, bytes, type, name] of [["an SVG", SVG, "image/svg+xml", "a.svg"], ["an SVG declared image/png", SVG, "image/png", "a.png"], ["an SVG with no declared type", SVG, "", "a"]]) {
     reset({ ...base(), students: [{ id: "A1", avatar_url: null, full_name: "A1", linked_user_id: U.kid }] });
     const r = await call(f.after, "update-student-avatar", { token: tokenOf(U.admin), form: form(bytes, type, name) });
     ok(`${l}: 400, nothing stored`, r.status === 400 && !world.log.some((e) => e.storage === "upload"), r);
+  }
+  {
+    // Review R-3: the bytes decide; the stored type is the sniffed one, never the label.
+    reset({ ...base(), students: [{ id: "A1", avatar_url: null, full_name: "A1", linked_user_id: U.kid }] });
+    const r = await call(f.after, "update-student-avatar", { token: tokenOf(U.admin), form: form(PNG, "image/svg+xml", "a.svg") });
+    const up = world.log.find((e) => e.storage === "upload");
+    ok("PNG bytes labelled image/svg+xml are stored as image/png .png (the label is ignored)", r.status === 200 && up?.contentType === "image/png" && /\.png$/.test(up?.p ?? ""), { r, up });
   }
   reset({ ...base(), students: [{ id: "A1", avatar_url: null, full_name: "A1", linked_user_id: U.kid }] });
   const g = await call(f.after, "update-student-avatar", { token: tokenOf(U.admin), form: form(PNG, "image/png", "photo.HTML") });
@@ -317,6 +324,37 @@ console.log("=== F-13 small items ===");
   world.fetchAnswer = null;
 }
 ok("assignment-calendar takes the role from user_roles, never from user_metadata", !/user\.user_metadata/.test(src("assignment-calendar")) && /from\("user_roles"\)/.test(src("assignment-calendar")));
+
+// ================================================================ R-3 browser half
+console.log("=== R-3 src/lib/avatarFile.ts: HEIC becomes a JPEG where the browser can decode it ===");
+{
+  const out = await build({ entryPoints: [resolve(repo, "src", "lib", "avatarFile.ts")], bundle: true, format: "esm", platform: "neutral", write: false, logLevel: "silent" });
+  const m = await import("data:text/javascript;base64," + Buffer.from(out.outputFiles[0].text).toString("base64"));
+  const HEIC = new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0, 0, 0, 0]);
+  const MIF1 = new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x69, 0x66, 0x31, 0, 0, 0, 0]);
+  const MP4 = new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d, 0, 0, 0, 0]);
+  const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
+  eq("looksHeic: heic and mif1 brands yes; an MP4 (isom) and a JPEG no", [m.looksHeic(HEIC), m.looksHeic(MIF1), m.looksHeic(MP4), m.looksHeic(JPEG)], [true, true, false, false]);
+  const jpgFile = new File([JPEG], "a.jpg", { type: "image/jpeg" });
+  ok("a JPEG goes up untouched (same object)", (await m.avatarUploadFile(jpgFile)) === jpgFile);
+  // A browser that can decode HEIC (Safari): createImageBitmap succeeds.
+  let drawn = null;
+  globalThis.createImageBitmap = async () => ({ width: 4032, height: 3024, close() {} });
+  globalThis.document = { createElement: () => ({ width: 0, height: 0, getContext: () => ({ drawImage: (_b, _x, _y, w, h) => { drawn = [w, h]; } }),
+    toBlob: (done, type) => done(new Blob([new Uint8Array([0xff, 0xd8, 0xff])], { type })) }) };
+  const conv = await m.avatarUploadFile(new File([HEIC], "IMG_0001.HEIC", { type: "image/heic" }));
+  eq("Safari-like: the HEIC becomes a JPEG named .jpg, scaled to 1024 on its long side", [conv.type, conv.name, drawn], ["image/jpeg", "IMG_0001.jpg", [1024, 768]]);
+  // A browser that cannot (Chrome on Windows): the HEIC message, no upload.
+  globalThis.createImageBitmap = async () => { throw new Error("The source image could not be decoded."); };
+  let msg = null;
+  try { await m.avatarUploadFile(new File([HEIC], "IMG_0002.heic", { type: "" })); } catch (e) { msg = e.message; }
+  eq("cannot decode: refused before upload with the server's own HEIC message", msg, m.HEIC_MESSAGE);
+  ok("the message is the one the brief asked for", m.HEIC_MESSAGE === "This photo is in HEIC format. Please choose a JPEG or PNG, or take a screenshot of it.");
+  ok("the server answers HEIC with the same words", src("update-student-avatar").includes(m.HEIC_MESSAGE));
+  delete globalThis.createImageBitmap; delete globalThis.document;
+  const pp = readFileSync(resolve(repo, "src", "components", "student", "ProfilePictureUpload.tsx"), "utf8");
+  ok("ProfilePictureUpload uploads avatarUploadFile(picked), and lets an empty type through to the server", /await avatarUploadFile\(picked\)/.test(pp) && /picked\.type && !picked\.type\.startsWith\("image\/"\)/.test(pp));
+}
 
 // ================================================================ F-09
 console.log("=== F-09 dead entries ===");
