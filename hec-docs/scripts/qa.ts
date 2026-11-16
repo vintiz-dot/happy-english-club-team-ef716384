@@ -198,12 +198,18 @@ for (const [type, entry] of registry) {
 
     rows.push({ type, fixture: name, variant: r.variant, filename: r.filename, pages: r.pages, bytes: r.bytes, ms: r.ms, gates });
     const failed = Object.entries(gates).filter(([, g]) => !g.ok).map(([k]) => k);
-    console.log(`${failed.length ? "FAIL" : "ok  "} ${type}/${name} (${r.variant}) ${r.pages}p ${(r.bytes / 1024).toFixed(0)} KB ${r.ms} ms${failed.length ? "  -> " + failed.join(", ") : ""}`);
+    const hard = failed.filter((k) => k !== "performance");
+    console.log(`${hard.length ? "FAIL" : failed.length ? "flag" : "ok  "} ${type}/${name} (${r.variant}) ${r.pages}p ${(r.bytes / 1024).toFixed(0)} KB ${r.ms} ms${failed.length ? "  -> " + failed.join(", ") : ""}`);
   }
 }
 await closeBrowser();
 
-const failing = rows.filter((r) => Object.values(r.gates).some((g) => !g.ok));
+// Performance is a flag (spec: "flag anything over 1.5 MB or over 3 s"), not
+// a failing gate: wall time depends on the machine. Every other gate fails.
+const ADVISORY = new Set(["performance"]);
+const failing = rows.filter((r) => Object.entries(r.gates).some(([k, g]) => !g.ok && !ADVISORY.has(k)));
+const flagged = rows.filter((r) => r.gates.performance && !r.gates.performance.ok);
+const annotate = !!process.env.GITHUB_ACTIONS;
 const reportName = values.only ? `report-${values.only}` : "report";
 await writeFile(path.join(QA, `${reportName}.json`), JSON.stringify({ generatedBy: "scripts/qa.ts", rows }, null, 2) + "\n");
 const md = [
@@ -219,12 +225,23 @@ const md = [
   }),
   "",
   failing.length ? `**${failing.length} fixture(s) failing.** Details in qa/report.json.` : "All gates pass.",
+  flagged.length ? `Flagged for speed or size (over 3 s or 1.5 MB on this machine): ${flagged.map((r) => `${r.type}/${r.fixture}`).join(", ")}.` : "No document over 3 s or 1.5 MB.",
   "",
 ];
 if (!values.only) await writeFile(path.join(QA, "REPORT.md"), md.join("\n"));
+for (const r of flagged) {
+  const msg = `${r.type}/${r.fixture} performance: ${JSON.stringify(r.gates.performance.detail)}`;
+  console.log(`  flag ${msg}`);
+  if (annotate) console.log(`::warning title=qa flag::${msg}`);
+}
 if (failing.length) {
   for (const r of failing) {
-    for (const [k, g] of Object.entries(r.gates)) if (!g.ok) console.log(`  ${r.type}/${r.fixture} ${k}: ${JSON.stringify(g.detail)}`);
+    for (const [k, g] of Object.entries(r.gates)) {
+      if (g.ok || ADVISORY.has(k)) continue;
+      const msg = `${r.type}/${r.fixture} ${k}: ${JSON.stringify(g.detail)}`;
+      console.log(`  ${msg}`);
+      if (annotate) console.log(`::error title=qa ${k}::${msg.slice(0, 900)}`);
+    }
   }
   process.exitCode = 1;
 }
