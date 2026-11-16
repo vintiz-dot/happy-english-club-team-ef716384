@@ -23,9 +23,10 @@ import { toast } from "sonner";
 import { AlertTriangle, Ban, Trash2, Edit, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { EditSessionModal } from "./EditSessionModal";
-import { GuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import { GuardDialog, PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
 import { manageSession } from "@/components/admin/session-guard/api";
 import { checkReason, cleanReason, errorText, isSessionRelatedQuery, type GuardOp } from "@/lib/sessionGuard";
+import { payDialogFrom, type PayOp } from "@/lib/lessonPayGuard";
 
 interface SessionActionsModalProps {
   session: any;
@@ -49,6 +50,9 @@ export const SessionActionsModal = ({ session, onClose, onSuccess }: SessionActi
   const [newStatus, setNewStatus] = useState<string>("");
   const [processing, setProcessing] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+  // D4 step 3A: taking a lesson off Held (or a hold the database refuses)
+  // goes through the lesson-pay check, PayGuardDialog. The server decides.
+  const [pay, setPay] = useState<{ op: PayOp; args: Record<string, unknown> } | null>(null);
 
   const isCanceled = session.status === "Canceled";
 
@@ -73,6 +77,21 @@ export const SessionActionsModal = ({ session, onClose, onSuccess }: SessionActi
       />
     );
   }
+  if (pay) {
+    return (
+      <PayGuardDialog
+        open
+        session={session}
+        op={pay.op}
+        args={pay.args}
+        onClose={() => setPay(null)}
+        onDone={() => {
+          onSuccess();
+          onClose();
+        }}
+      />
+    );
+  }
   if (action === "cancel") return guard("cancel");
   if (action === "uncancel") return guard("uncancel");
   if (action === "delete") return guard("delete", { onCancelInstead: () => setAction("cancel") });
@@ -92,6 +111,10 @@ export const SessionActionsModal = ({ session, onClose, onSuccess }: SessionActi
       setAction("uncancel");
       return;
     }
+    if (session.status === "Held" && newStatus === "Scheduled") {
+      setPay({ op: "unhold", args: { session_id: session.id } });
+      return;
+    }
     if (!reasonCheck.ok) {
       setStatusError(reasonCheck.message);
       return;
@@ -100,6 +123,11 @@ export const SessionActionsModal = ({ session, onClose, onSuccess }: SessionActi
     const res = await manageSession("change-status", { id: session.id, status: newStatus, reason: cleanReason(reason) });
     setProcessing(false);
     if (!res.ok) {
+      const d = payDialogFrom(res.error);
+      if (d) {
+        setPay({ op: d.op, args: d.plan.args ?? { session_id: session.id } });
+        return;
+      }
       setStatusError(errorText(res.error.code, res.error.message));
       return;
     }
@@ -110,7 +138,8 @@ export const SessionActionsModal = ({ session, onClose, onSuccess }: SessionActi
   };
 
   if (action === "change-status") {
-    const toCanceled = newStatus === "Canceled" || (isCanceled && newStatus === "Scheduled");
+    const toCanceled = newStatus === "Canceled" || (isCanceled && newStatus === "Scheduled")
+      || (session.status === "Held" && newStatus === "Scheduled");
     return (
       <Dialog open={true} onOpenChange={onClose}>
         <DialogContent>

@@ -130,6 +130,19 @@ Deno.serve(async (req) => {
       attached: { source: 'bulk-cancel-sessions', criteria: { date_from, date_to, class_id, teacher_id }, include_held: !!include_held },
     });
     const refused = [...outsideRefused, ...dbRefused];
+    // D4 (design (d) step 3A, (e) R-12): a batch that needs a second
+    // administrator is ONE request for the whole batch. HC060 is not in the
+    // bulk RPC's per-item list, so it stops the chunk; the answer names every
+    // lesson of the batch that is not done and offers one request for them.
+    // Approval ships switched off (step 4), so today this never fires.
+    if (chunkError?.code === 'approval_required') {
+      return fail(chunkError, {
+        success: false, done: done.map(({ refresh_pairs: _p, ...d }: any) => d), not_attempted, batch_id: batchId,
+        approval: { required: true, one_request: true, kind: 'session', rpc: 'cancel_sessions_checked_bulk',
+                    batch_id: batchId, reason: rr.reason,
+                    items: not_attempted.map((n: any) => n.id) },
+      });
+    }
     if (chunkError && done.length === 0 && refused.length === 0) {
       return fail(chunkError, { success: false, not_attempted });
     }

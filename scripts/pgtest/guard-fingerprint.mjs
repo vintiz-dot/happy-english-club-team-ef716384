@@ -39,7 +39,7 @@ const AUDIT = '20261009130000_audit_every_admin_action.sql';
 const CANCEL = '20261027090000_cancelled_lesson_attendance_guard.sql';
 const D1 = '20261112090000_session_held_evidence.sql';
 const D2 = '20261112091000_session_cancel_guard.sql';
-const D4_FILES = ['20261114090000_d4_floors.sql', '20261114091000_d4_core_register.sql'];   // each D4 step appends its file here
+const D4_FILES = ['20261114090000_d4_floors.sql', '20261114091000_d4_core_register.sql', '20261114093000_d4_lesson_pay_guard.sql'];   // each D4 step appends its file here
 const ENROL = '20261106090000_attendance_enrollment_guard.sql';   // student_enrolled_on, read by D4 file 2
 const ROLES = ['anon', 'authenticated', 'service_role'];
 
@@ -241,7 +241,7 @@ if (isMain) {
   if (process.argv.includes('--check-unchanged') && process.argv.includes('--after-rollback')) {
     // D4 rollback (design f.7): every D4 rollback script, newest first, then
     // 20261112091000 pasted again -> the 66 objects must all match.
-    const rollbacks = ['scripts/ROLLBACK-d4-2-register.sql', 'scripts/ROLLBACK-d4-1-floors.sql'];   // newest first
+    const rollbacks = ['scripts/ROLLBACK-d4-4-lesson-pay.sql', 'scripts/ROLLBACK-d4-2-register.sql', 'scripts/ROLLBACK-d4-1-floors.sql'];   // newest first
     const { total, diff } = await checkUnchanged({ after: async (x) => {
       for (const r of rollbacks) await x.exec(readFileSync(resolve(root, r), 'utf8'));
       await x.exec(mig(D2));

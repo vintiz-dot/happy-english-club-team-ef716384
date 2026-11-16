@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { GuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import { GuardDialog, PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
 import { manageSession } from "@/components/admin/session-guard/api";
 import { errorText, type GuardOp } from "@/lib/sessionGuard";
+import { payDialogFrom, type PayOp } from "@/lib/lessonPayGuard";
 
 interface EditSessionModalProps {
   session: {
@@ -31,6 +32,8 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
   const [saving, setSaving] = useState(false);
   // Status into or out of Canceled is a checked change: it opens the guard dialog.
   const [guardOp, setGuardOp] = useState<GuardOp | null>(null);
+  // D4 step 3A: the lesson-pay check (a held lesson's teacher; Held <-> Scheduled).
+  const [pay, setPay] = useState<{ op: PayOp; args: Record<string, unknown>; resume: boolean } | null>(null);
 
   const { data: teachers } = useQuery({
     queryKey: ["teachers"],
@@ -45,7 +48,7 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
     },
   });
 
-  const handleSave = async () => {
+  const handleSave = async (skipTeacher = false) => {
     const from = session.status || "Scheduled";
     if (from === "Canceled" && status !== "Canceled" && status !== "Scheduled") {
       toast.error("A cancelled lesson can only be restored to Scheduled.");
@@ -58,14 +61,34 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
     try {
       const data: Record<string, unknown> = {
         id: session.id,
-        teacher_id: teacherId || null,
         rate_override_vnd: rate ? parseInt(rate) : null,
         notes: notes || null,
       };
-      // Any status change except into/out of Canceled is a plain update.
-      if (!cancelling && !restoring && status !== from) data.status = status;
+      if (!skipTeacher) data.teacher_id = teacherId || null;
       const res = await manageSession("update", data);
-      if (!res.ok) throw new Error(errorText(res.error.code, res.error.message));
+      if (!res.ok) {
+        // D4 3A: a held lesson's teacher -> the lesson-pay check; nothing was saved yet.
+        const d = payDialogFrom(res.error);
+        if (d) {
+          setPay({ op: d.op, args: d.plan.args ?? { session_id: session.id, teacher_id: teacherId }, resume: true });
+          return;
+        }
+        throw new Error(errorText(res.error.code, res.error.message));
+      }
+      // D4 3A: Held <-> Scheduled is Change status (update no longer writes
+      // the status); the database decides whether it needs the check.
+      if (!cancelling && !restoring && status !== from) {
+        const sr = await manageSession("change-status", { id: session.id, status });
+        if (!sr.ok) {
+          const d = payDialogFrom(sr.error);
+          if (d) {
+            toast.success("Other changes saved. Now check the status change.");
+            setPay({ op: d.op, args: d.plan.args ?? { session_id: session.id }, resume: false });
+            return;
+          }
+          throw new Error(errorText(sr.error.code, sr.error.message));
+        }
+      }
       if (cancelling || restoring) {
         // The other fields are saved; the status itself waits for the check.
         toast.success("Other changes saved. Now check the status change.");
@@ -81,6 +104,26 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
       setSaving(false);
     }
   };
+
+  if (pay) {
+    return (
+      <PayGuardDialog
+        open
+        session={{ id: session.id }}
+        op={pay.op}
+        args={pay.args}
+        names={Object.fromEntries((teachers ?? []).map((t: any) => [t.id, t.full_name]))}
+        onClose={() => setPay(null)}
+        onDone={() => {
+          const resume = pay.resume;
+          setPay(null);
+          // the teacher is changed; save the rest (and any status change) without it
+          if (resume) void handleSave(true);
+          else onSaved();
+        }}
+      />
+    );
+  }
 
   if (guardOp) {
     return (
@@ -157,7 +200,7 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={() => void handleSave(false)} disabled={saving}>
             {saving ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>

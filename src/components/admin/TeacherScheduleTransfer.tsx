@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowRightLeft, AlertTriangle, CheckCircle2, Calendar, Clock, Users, Loader2, ArrowRight, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { dayjs } from "@/lib/date";
+import { payOpFromDbError } from "@/lib/lessonPayGuard";
 
 interface Session {
   id: string;
@@ -171,6 +172,17 @@ export function TeacherScheduleTransfer() {
       setStep("done");
     },
     onError: (err: any) => {
+      // D4 step 3A: this screen moves Scheduled lessons only. The database
+      // refuses a teacher change on a held lesson, or on one that ended more
+      // than a week ago (HC020 kind=reteach): say what to do instead.
+      if (payOpFromDbError(err) === "reteach") {
+        // Review N-7: reloading shows the same old lessons, which fail again;
+        // the way through is a date range that starts within the last week.
+        toast.error("Transfer stopped: the list includes a lesson that ended more than a week ago (or is already held). "
+          + "Start the date range within the last week and transfer again; an older lesson's teacher is changed "
+          + "from that lesson's Actions menu, with a reason.");
+        return;
+      }
       toast.error(`Transfer failed: ${err.message}`);
     },
   });
