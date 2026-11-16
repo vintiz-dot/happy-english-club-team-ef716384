@@ -1,7 +1,9 @@
 /**
  * calculate-payroll's answer for ONE person, in the shape the teacher's own
  * payroll page (/teacher/payroll, with its calendar) and the admin's view of
- * a teacher (/teachers/:id, Payroll tab) draw.
+ * a teacher (/teachers/:id, Payroll tab) draw. Since TA-PAY also the
+ * teaching assistant's: the same page and the dashboard's pay cards for a
+ * signed-in TA, and the admin's TA drawer (TAProfileDrawer, Payroll tab).
  *
  * WHY THIS FILE EXISTS. Both screens used to price lessons themselves:
  * `sessionPayVnd(teacher row, minutes)` per session for the calendar's day
@@ -58,6 +60,8 @@ export interface TeacherPayrollFunctionRow {
   staffType?: string | null;
   /** The basis the month's headline figures are on (the frozen line's when closed). */
   payRateType?: string | null;
+  /** The month's headline rate, in the unit payRateType names. */
+  hourlyRate?: number | null;
   sessionsCountActual?: number | null;
   sessionsCountProjected?: number | null;
   totalHoursActual?: number | null;
@@ -124,6 +128,12 @@ export interface TeacherPayrollView {
   answered: boolean;
   /** "hourly" / "per_session" as the function reports the month; null = unknown. */
   payBasis: "hourly" | "per_session" | null;
+  /**
+   * The month's rate as the function reports it (in force on the month's
+   * last day; the frozen line's when closed), in the unit `payBasis` names.
+   * Null when either is missing.
+   */
+  rateVnd: number | null;
   /** The month is closed and these totals are what it was closed at. */
   closed: boolean;
   /**
@@ -194,6 +204,7 @@ const EMPTY: TeacherPayrollView = {
   found: false,
   answered: false,
   payBasis: null,
+  rateVnd: null,
   closed: false,
   monthLocked: false,
   heldSessions: 0,
@@ -299,10 +310,12 @@ export function teacherPayrollView(
       };
 
   const hours = figure(row.totalHoursActual);
+  const payBasis = row.payRateType === "hourly" || row.payRateType === "per_session" ? row.payRateType : null;
   return {
     found: true,
     answered,
-    payBasis: row.payRateType === "hourly" || row.payRateType === "per_session" ? row.payRateType : null,
+    payBasis,
+    rateVnd: payBasis === null ? null : figure(row.hourlyRate),
     closed,
     monthLocked: response?.locked === true,
     heldSessions,
