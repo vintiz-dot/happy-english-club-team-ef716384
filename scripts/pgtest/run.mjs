@@ -423,6 +423,12 @@ const SUITES = [
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116096000_child_writes_own_rows_only.sql"],
   },
   {
+    name: "hardening (F-20)",
+    file: "s2-f20-hardening.test.mjs",
+    expect: 30,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116097000_hardening_anon_and_null_uid.sql"],
+  },
+  {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
     migrations: ["20261022090000_assistant_absence_on_a_session.sql"],

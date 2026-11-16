@@ -113,3 +113,36 @@ CREATE POLICY "vocab_update_own_or_linked" ON public.student_vocabulary_entries
 UPDATE storage.buckets SET file_size_limit = NULL WHERE id IN ('homework', 'submissions') AND file_size_limit = 52428800;
 COMMIT;
 ```
+
+<!-- rollback F-20 -->
+```sql
+-- video_staff_for_class as 20261109090000 defines it, PUBLIC's EXECUTE back
+-- on the helpers and recompute_student_points, payroll_periods readable by
+-- every signed-in account (20261021093000). THIS REOPENS F-20 (a-d).
+BEGIN;
+CREATE OR REPLACE FUNCTION public.video_staff_for_class(p_class uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT auth.uid() IS NULL
+      OR public.has_role(auth.uid(), 'admin'::app_role)
+      OR public.is_teacher_of_class(auth.uid(), p_class);
+$$;
+GRANT EXECUTE ON FUNCTION public.is_enrolled_in_class(uuid, uuid), public.is_linked_student(uuid, uuid) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION public.recompute_student_points(uuid, uuid, text) TO PUBLIC;
+DO $ls$
+DECLARE f text;
+BEGIN
+  FOREACH f IN ARRAY ARRAY['public.language_support_staff_for_class(uuid)', 'public.language_support_family_can_read(uuid)',
+                           'public.language_support_staff_can_read(uuid)'] LOOP
+    IF to_regprocedure(f) IS NOT NULL THEN EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO PUBLIC', f); END IF;
+  END LOOP;
+END
+$ls$;
+DROP POLICY IF EXISTS "Staff can see which months are closed" ON public.payroll_periods;
+CREATE POLICY "Staff can see which months are closed" ON public.payroll_periods FOR SELECT TO authenticated USING (true);
+COMMIT;
+```
