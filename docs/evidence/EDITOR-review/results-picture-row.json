@@ -1,0 +1,13 @@
+{
+ "pictureRow": {
+  "editorHtml": "<p>Look at the picture:</p><p><br class=\"ProseMirror-trailingBreak\"></p><p>Write three sentences.</p>",
+  "payloads": [
+   {
+    "table": "homeworks",
+    "method": "update",
+    "body": "<p>Look at the picture:</p><p><br></p><p>Write three sentences. Thanks.</p>"
+   }
+  ],
+  "errors": []
+ }
+}

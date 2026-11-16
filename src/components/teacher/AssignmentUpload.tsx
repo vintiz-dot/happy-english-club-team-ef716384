@@ -1,6 +1,6 @@
-import { useState, lazy, Suspense } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { RichTextEditor, RichTextView } from "@/components/rich-text";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Eye, Calendar, FileText, Edit, Users, Loader2, Video, ListChecks } from "lucide-react";
-import "react-quill-new/dist/quill.snow.css";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -18,8 +17,6 @@ import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
 import { useAuth } from "@/hooks/useAuth";
 import { VideoRubricEditor } from "@/components/video-homework/VideoRubricEditor";
 import { HomeworkVideosDialog } from "@/components/video-homework/VideoReviewQueue";
-
-const ReactQuill = lazy(() => import("react-quill-new"));
 
 interface Class {
   id: string;
@@ -363,31 +360,16 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Suspense fallback={<div className="flex h-40 items-center justify-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised text-hec-body text-hec-ink-faint"><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />Loading editor...</div>}>
-                <ReactQuill
-                  // Quill paints its toolbar #444, its placeholder near-black and its picker menu white: unreadable in
-                  // dark. One class more specific than quill.snow.css, so no !important and Quill's hover / active /
-                  // open states still show.
-                  className="[&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint"
-                  theme="snow"
-                  value={formData.description}
-                  onChange={(value) => setFormData({ ...formData, description: value })}
-                  placeholder="Assignment instructions and details..."
-                  modules={{
-                    toolbar: [
-                      [{ header: [1, 2, 3, false] }],
-                      ["bold", "italic", "underline", "strike"],
-                      [{ color: [] }, { background: [] }],
-                      [{ list: "ordered" }, { list: "bullet" }],
-                      [{ script: "sub" }, { script: "super" }],
-                      [{ align: [] }],
-                      ["link", "image"],
-                      ["clean"],
-                    ],
-                  }}
-                />
-              </Suspense>
+              <Label id="description-label" htmlFor="description">Description</Label>
+              <RichTextEditor
+                id="description"
+                ariaLabelledBy="description-label"
+                toolbar="full"
+                value={formData.description}
+                onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
+                placeholder="Assignment instructions and details..."
+                fallback={<div className="flex h-40 items-center justify-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised text-hec-body text-hec-ink-faint"><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />Loading editor...</div>}
+              />
             </div>
 
             <div className="space-y-2">
@@ -476,9 +458,9 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                     </div>
 
                     {hw.body && (
-                      <div
+                      <RichTextView
                         className="prose prose-sm max-w-none break-words text-hec-small text-hec-ink-soft line-clamp-2"
-                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(hw.body) }}
+                        html={hw.body}
                       />
                     )}
 
