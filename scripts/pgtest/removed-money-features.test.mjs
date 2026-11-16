@@ -9,10 +9,12 @@
 //   2. Nothing left in the app or the functions can CREATE a voluntary
 //      contribution or a settlement (a read-only grep over the source).
 //   3. The assumption behind removing the calculators' write-off reader
-//      later: zero 'settlement-writeoff-' rows. The preflight
+//      (removed since, FOLLOWUPS-writeoff-payroll): zero
+//      'settlement-writeoff-' rows. The preflight
 //      scripts/CHECK-writeoff-reader-removal.sql counts them (run here on a
 //      copy of the two tables, empty and with one such row), and the golden
-//      tuition figures contain no write-off at all.
+//      tuition figures contain no write-off at all. Nothing reads
+//      settlements any more.
 //
 // The payment paths themselves (the old option refused with 400, a leftover
 // kept as unapplied cash) run on the real handlers in invoice-status.test.mjs,
@@ -115,13 +117,12 @@ console.log('\nNothing in the app or the functions can create a voluntary contri
   ok('no file writes the settlements table (insert / upsert / update after from("settlements"))',
      hits(/from\(\s*['"]settlements['"]\s*\)[\s\S]{0,300}?\.(insert|upsert|update)\(/).length === 0,
      hits(/from\(\s*['"]settlements['"]\s*\)[\s\S]{0,300}?\.(insert|upsert|update)\(/));
-  ok('  the only readers left are the two calculators (the write-off reader, a follow-up)',
-     JSON.stringify(hits(/['"]settlements['"]/).sort()) === JSON.stringify(['supabase/functions/calculate-tuition-bulk/index.ts', 'supabase/functions/calculate-tuition/index.ts'].sort()),
-     hits(/['"]settlements['"]/));
+  ok('  and no file reads it either: the calculators\' write-off reader is removed',
+     hits(/['"]settlements['"]/).length === 0, hits(/['"]settlements['"]/));
   ok('no file posts a ledger key for a contribution or a settlement (tx_key `...contribution...` / `settlement-...`)',
      hits(/tx_key:\s*`[^`]*(contribution|settlement-)/).length === 0, hits(/tx_key:\s*`[^`]*(contribution|settlement-)/));
-  ok('  and nothing puts WRITE_OFF_KEY_PREFIX into a key any more (it was settle-bill\'s alone)',
-     hits(/\$\{WRITE_OFF_KEY_PREFIX\}/).length === 0, hits(/\$\{WRITE_OFF_KEY_PREFIX\}/));
+  ok('  and nothing names WRITE_OFF_KEY_PREFIX, WRITE_OFF_NAME or settledWriteOff any more (key, reader and line all gone)',
+     hits(/WRITE_OFF_KEY_PREFIX|WRITE_OFF_NAME|settledWriteOff/).length === 0, hits(/WRITE_OFF_KEY_PREFIX|WRITE_OFF_NAME|settledWriteOff/));
   ok('no ledger leg is posted to REVENUE by a payment function (the contribution legs were the only ones)',
      hits(/accountMap\.get\(\s*['"]REVENUE['"]\s*\)/, fns).length === 0, hits(/accountMap\.get\(\s*['"]REVENUE['"]\s*\)/, fns));
   ok('no screen calls settle-bill', hits(/invoke\(\s*['"`]settle-bill/, app).length === 0, hits(/invoke\(\s*['"`]settle-bill/, app));
@@ -209,9 +210,9 @@ console.log('\nThe write-off reader can go only while live holds no settlement-w
   const golden = read('scripts/pgtest/fixtures/tuition-figures.golden.json');
   ok('the golden tuition figures hold no write-off: no "Settle Bill write-off" line, no settlement-writeoff- key, no settlement discount',
      golden.length > 1000 && !/Settle Bill write-off|settlement-writeoff|isSettlement/.test(golden));
-  const lib = read('supabase/functions/_lib/invoice-status.ts');
-  ok('the key the reader looks for is still settlement-writeoff- (so the preflight counts the right thing)',
-     /export const WRITE_OFF_KEY_PREFIX = "settlement-writeoff-";/.test(lib) && /export const WRITE_OFF_KEY_PREFIX = "settlement-writeoff-";/.test(read('src/lib/invoiceStatus.ts')));
+  ok('the reader is gone from both invoice-status copies (no settledWriteOff / WRITE_OFF_*), and the preflight still counts the key it used, settlement-writeoff-',
+     ['supabase/functions/_lib/invoice-status.ts', 'src/lib/invoiceStatus.ts'].every((f) => !/settledWriteOff|WRITE_OFF_KEY_PREFIX|WRITE_OFF_NAME/.test(read(f)))
+       && /LIKE 'settlement-writeoff-%'/.test(sql));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

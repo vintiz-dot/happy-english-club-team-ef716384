@@ -44,8 +44,8 @@ export interface ChargedFigures {
 // ---------------------------------------------------------------- paid label
 //
 // ONE rule for invoices.status, for every writer of it: the edge functions
-// (calculate-tuition, family-payment, smart-family-payment, settle-bill,
-// delete-payment) through this file; the admin screens (RecordPaymentDialog,
+// (calculate-tuition, family-payment, smart-family-payment, delete-payment)
+// through this file; the admin screens (RecordPaymentDialog,
 // QuickPayPanel, BatchPaymentDialog, RecordedPaymentManager,
 // PaymentIntegrityRepair, InvoiceStatusManager) through its mirror
 // src/lib/invoiceStatus.ts; ai_action_apply / ai_action_undo through
@@ -73,7 +73,7 @@ export interface ChargedFigures {
 //   - credit carried in that covers the month: paid, with or without money
 //     recorded in the month (before T4: issued / partial, which read to a
 //     person as "still owes");
-//   - a charge written off in full by Settle Bill, or discounted to 0: paid;
+//   - a charge discounted to 0: paid;
 //   - a frozen bill: the same rule on its saved figures.
 // The label is a label. Never branch on it for money.
 
@@ -144,46 +144,6 @@ export function labelForPayment(
 ): PaidLabel | undefined {
   if (storedStatus === "credit") return undefined;
   return paidLabel(recordedPayment, payable, charged);
-}
-
-// ---------------------------------------------------------- settle bill
-//
-// A Settle Bill write-off (settlement_type 'discount') lowers what the month
-// charges: both calculators add it as one more discount line, after every
-// other discount, never below 0.
-//
-// Only write-offs posted by the T4 settle-bill count, and they are known by
-// what that function writes, not by a date: their ledger transaction's key
-// starts WRITE_OFF_KEY_PREFIX. The settle-bill before T4 keyed its write-offs
-// 'settlement-discount-...', sized them from cumulative paid_amount and never
-// put them on a bill; those stay ledger-only whenever they were made (owner's
-// default: counting the four old ones would create credit on bills that
-// show no debt). A date cutoff would also count any write-off the OLD
-// function makes between the cutoff and the deploy.
-export const WRITE_OFF_KEY_PREFIX = "settlement-writeoff-";
-export const WRITE_OFF_NAME = "Settle Bill write-off";
-
-/**
- * The month's write-off: the sum of its 'discount' settlements whose ledger
- * transaction carries the T4 key. This is the ONLY place that filter is
- * applied - the calculators read settlements and their ledger legs unfiltered.
- */
-export function settledWriteOff(
-  settlements: Array<{ settlement_type?: unknown; amount?: unknown; tx_id?: unknown }> | null | undefined,
-  ledgerLegs: Array<{ tx_id?: unknown; tx_key?: unknown }> | null | undefined,
-): number {
-  const marked = new Set<string>();
-  for (const leg of ledgerLegs ?? []) {
-    if (String(leg?.tx_key ?? "").startsWith(WRITE_OFF_KEY_PREFIX)) marked.add(String(leg?.tx_id));
-  }
-  let sum = 0;
-  for (const s of settlements ?? []) {
-    if (s?.settlement_type !== "discount") continue;
-    if (!marked.has(String(s?.tx_id))) continue;
-    const a = amount(s?.amount);
-    if (a > 0) sum += a;
-  }
-  return sum;
 }
 
 export interface InvoiceLabelFields {
