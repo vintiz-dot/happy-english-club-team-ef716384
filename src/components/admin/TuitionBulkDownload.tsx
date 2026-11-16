@@ -12,6 +12,7 @@ import JSZip from "jszip";
 
 import type { InvoiceData, BankInfo } from "@/lib/invoice/types";
 import { fetchInvoiceData } from "@/lib/invoice/fetchInvoiceData";
+import { tryMakeDocument, invoiceDocData } from "@/lib/hecDocs";
 import { InvoicePrintView } from "@/components/invoice/InvoicePrintView";
 import { useIvory } from "@/hooks/useIvory";
 
@@ -254,8 +255,20 @@ export function TuitionBulkDownload({ month }: { month: string }) {
       setBuilding(true);
       setProgress({ done: 0, total: pairs.length });
 
+      // HEC Docs first (premium, text-based, paginated invoices). If it fails
+      // once, the rest of this run uses the previous generator directly.
+      let useHecDocs = true;
       for (const pair of pairs) {
         const sid = pair.invoice.student.id;
+        if (useHecDocs) {
+          const doc = await tryMakeDocument("invoice", await invoiceDocData(pair.invoice, pair.bankInfo, month), { bulk: true });
+          if (doc) {
+            pdfMapRef.current.set(sid, doc.blob);
+            setProgress((p) => ({ done: Math.min(p.done + 1, p.total), total: p.total }));
+            continue;
+          }
+          useHecDocs = false;
+        }
         const node = pageRefs.current[sid];
         if (!node) {
           setProgress((p) => ({ done: Math.min(p.done + 1, p.total), total: p.total }));

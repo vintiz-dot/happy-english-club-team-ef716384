@@ -6,6 +6,7 @@ import { getAvatarUrl } from "@/lib/avatars";
 import { getLevelTitle } from "@/lib/levelUtils";
 import { Share2, Download, Star, Zap, Flame } from "lucide-react";
 import { toast } from "sonner";
+import { tryMakeDocument, imageAsPngDataUri } from "@/lib/hecDocs";
 
 interface ProfileShareCardProps {
   name: string;
@@ -31,12 +32,32 @@ export function ProfileShareCard({
     if (!cardRef.current) return;
     setSaving(true);
     try {
-      const { default: html2canvas } = await import("html2canvas");
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: null,
-        scale: 2,
+      // HEC Docs first (the keepsake card from the shared templates); the
+      // on-screen capture below stays as the fallback.
+      const doc = await tryMakeDocument("profile-card", {
+        name,
+        avatarUrl: await imageAsPngDataUri(getAvatarUrl(avatarUrl ?? null) || null),
+        level,
+        totalXp,
+        currentStreak,
+        statusMessage: statusMessage ?? null,
       });
-      const dataUrl = canvas.toDataURL("image/png");
+      let dataUrl: string;
+      if (doc) {
+        dataUrl = await new Promise<string>((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(String(fr.result));
+          fr.onerror = () => reject(fr.error);
+          fr.readAsDataURL(doc.blob);
+        });
+      } else {
+        const { default: html2canvas } = await import("html2canvas");
+        const canvas = await html2canvas(cardRef.current, {
+          backgroundColor: null,
+          scale: 2,
+        });
+        dataUrl = canvas.toDataURL("image/png");
+      }
 
       // Try native share first, fallback to download
       if (navigator.share && navigator.canShare) {

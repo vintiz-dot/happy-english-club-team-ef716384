@@ -3,7 +3,7 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["node_modules", "out", ".out", "dist", "qa/out", "fonts"] },
+  { ignores: ["node_modules", "out", ".out", "dist", "qa/out", "fonts", "app/generated", "worker/node_modules", "worker/.wrangler"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.ts", "**/*.mjs", "**/*.js"],

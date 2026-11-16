@@ -16,7 +16,7 @@
 // What the browser may reach: the session is created with Cloudflare's
 // guardrails, so it can load nothing but the app's own origin (fonts, styles,
 // logo). The HTML also carries a CSP. No other network access at render time.
-import { launch, connect, sessions, type Browser } from "@cloudflare/playwright";
+import { launch, acquire, connect, sessions, limits, type Browser } from "@cloudflare/playwright";
 
 export interface Env {
   BROWSER: Fetcher;
@@ -30,7 +30,14 @@ export interface Env {
 }
 
 const MAX_HTML = 2 * 1024 * 1024;
-const KEEP_ALIVE_MS = 20_000; // a reused session lives this long when idle (bulk runs)
+// Free plan: 10 minutes of browser time a day (an idle open browser counts),
+// 3 browsers at once, and a NEW browser only once every 20 seconds. So:
+// reuse an open browser when there is one; otherwise wait for the next start
+// slot; close straight after a single document; keep it open (10 s, the
+// minimum) only between the documents of a bulk run.
+const KEEP_ALIVE_MS = 15_000;
+const MAX_WAIT_FOR_LAUNCH_MS = 22_000;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function corsHeaders(origin: string | null, env: Env): Record<string, string> {
   if (!origin || !originAllowed(origin, env)) return {};
@@ -67,13 +74,18 @@ async function signedIn(req: Request, env: Env): Promise<boolean> {
 }
 
 /** Reuse an idle session of ours if there is one, otherwise start one. */
-async function getBrowser(env: Env): Promise<Browser> {
+async function getBrowser(env: Env, keep: boolean): Promise<Browser> {
   try {
-    const free = (await sessions(env.BROWSER)).filter((s) => !s.connectionId);
+    const all = await sessions(env.BROWSER);
+    console.log("sessions", JSON.stringify(all.map((x) => ({ id: x.sessionId.slice(0, 8), conn: !!x.connectionId }))));
+    const free = all.filter((s) => !s.connectionId);
     for (const s of free) {
       try {
-        return await connect(env.BROWSER, s.sessionId);
-      } catch {
+        const b = await connect(env.BROWSER, s.sessionId);
+        console.log("reused", s.sessionId.slice(0, 8));
+        return b;
+      } catch (e) {
+        console.log("connect failed", String(e).slice(0, 120));
         // taken by a concurrent request; try the next one
       }
     }
@@ -81,11 +93,37 @@ async function getBrowser(env: Env): Promise<Browser> {
     // listing failed; launch instead
   }
   const host = new URL(env.ASSET_ORIGIN).hostname;
-  return launch(env.BROWSER, { keep_alive: KEEP_ALIVE_MS, guardrails: { allowedDomains: [host] } });
+  const deadline = Date.now() + MAX_WAIT_FOR_LAUNCH_MS;
+  for (;;) {
+    try {
+      const l = await limits(env.BROWSER);
+      if (l.allowedBrowserAcquisitions === 0 && l.timeUntilNextAllowedBrowserAcquisition > 0) {
+        if (Date.now() + l.timeUntilNextAllowedBrowserAcquisition > deadline) throw new Error("429: no browser available in time");
+        await sleep(l.timeUntilNextAllowedBrowserAcquisition + 250);
+      }
+    } catch (e) {
+      if (/429/.test(String(e))) throw e;
+      // limits endpoint unavailable: just try to launch
+    }
+    try {
+      const opts = { keep_alive: KEEP_ALIVE_MS, guardrails: { allowedDomains: [host] } };
+      if (!keep) return await launch(env.BROWSER, opts);
+      // Bulk: reserve the browser, then attach to it. Closing an attached
+      // browser only detaches, so the next document can reuse it.
+      const { sessionId } = await acquire(env.BROWSER, opts);
+      console.log("acquired", sessionId.slice(0, 8));
+      return await connect(env.BROWSER, sessionId);
+    } catch (e) {
+      // Another request took the start slot; wait for the next one.
+      console.log("launch failed", String(e).slice(0, 120));
+      if (!/429/.test(String(e)) || Date.now() + 4_000 > deadline) throw e;
+      await sleep(4_000);
+    }
+  }
 }
 
 async function print(env: Env, html: string, kind: "pdf" | "png", png: { width: number; height: number; scale: number } | undefined, keep: boolean): Promise<Uint8Array> {
-  const browser = await getBrowser(env);
+  const browser = await getBrowser(env, keep);
   try {
     const context = await browser.newContext({
       viewport: png ? { width: png.width, height: png.height } : undefined,
@@ -98,7 +136,7 @@ async function print(env: Env, html: string, kind: "pdf" | "png", png: { width: 
       const page = await context.newPage();
       // Open a blank page on the app's own site first, so the document has
       // that origin and its fonts, styles and logo load as same-origin files.
-      await page.goto(`${env.ASSET_ORIGIN}/hec-docs/blank.html`, { waitUntil: "load", timeout: 15_000 });
+      await page.goto(`${env.ASSET_ORIGIN}/hec-docs/blank`, { waitUntil: "load", timeout: 15_000 });
       await page.setContent(html, { waitUntil: "load", timeout: 20_000 });
       await page.evaluate(() => document.fonts.ready.then(() => undefined));
       if (kind === "png") {
@@ -111,9 +149,11 @@ async function print(env: Env, html: string, kind: "pdf" | "png", png: { width: 
       await context.close().catch(() => {});
     }
   } finally {
-    // During a bulk run the app asks to keep the session for the next
-    // document (saves the start-up); otherwise end it to save browser time.
-    if (!keep) await browser.close().catch(() => {});
+    // A single document: close() ends the browser now, so no idle time is
+    // spent. A bulk run (x-hec-keep: 1) attached with connect(), where close()
+    // only detaches: the browser stays for the next document and ends itself
+    // after KEEP_ALIVE_MS of inactivity.
+    await browser.close().catch(() => {});
   }
 }
 
@@ -157,7 +197,7 @@ export default {
     } catch (err) {
       const msg = String((err as Error)?.message ?? err);
       // Daily free browser time used up, or all 3 browsers busy.
-      const limited = /429|rate limit|limit exceeded|Too many/i.test(msg);
+      const limited = /429|rate limit|limit exceeded|Too many|time limit/i.test(msg);
       return json(limited ? 429 : 502, { error: limited ? "browser_limit" : "print_failed", detail: msg.slice(0, 300) }, cors);
     }
   },
