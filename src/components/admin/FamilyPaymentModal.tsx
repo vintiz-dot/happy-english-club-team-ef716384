@@ -56,9 +56,10 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
     occurredAt: new Date().toISOString().slice(0, 10),
     memo: "",
     allocationMode: "oldest-first" as "oldest-first" | "pro-rata" | "manual",
-    // The one thing done with money beyond what the bills owe (voluntary
-    // contributions were removed, D-23).
-    leftoverHandling: "unapplied_cash" as const,
+    // The one thing done with money beyond what the bills owe: it goes on
+    // the first selected student's bill and shows as credit on their next
+    // bill (OVERPAYMENT; voluntary contributions were removed, D-23).
+    leftoverHandling: "credit_next_bill" as const,
   });
 
   const [manualAllocations, setManualAllocations] = useState<Record<string, string>>({});
@@ -177,8 +178,13 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
   const getPreview = () => {
     const totalAmount = parseInt(formData.amount) || 0;
     const totalBalance = getTotalBalance();
-    const leftover = Math.max(0, totalAmount - totalBalance);
-    
+    // A Manual split puts each typed amount on that student's bill; only
+    // what is not split out is left over (the function does the same).
+    const manualTotal = Array.from(selectedSiblings).reduce((sum, sid) => sum + (parseInt(manualAllocations[sid]) || 0), 0);
+    const leftover = formData.allocationMode === "manual"
+      ? Math.max(0, totalAmount - manualTotal)
+      : Math.max(0, totalAmount - totalBalance);
+
     return {
       totalAmount,
       totalBalance,
@@ -265,7 +271,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
       occurredAt: new Date().toISOString().slice(0, 10),
       memo: "",
       allocationMode: "oldest-first",
-      leftoverHandling: "unapplied_cash",
+      leftoverHandling: "credit_next_bill",
     });
     setManualAllocations({});
   };
@@ -492,9 +498,14 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                         Leftover amount: {preview.leftover.toLocaleString()} ₫
                       </p>
                       <p>
-                        It will be kept as unapplied cash: recorded in the ledger as a credit on{" "}
+                        The extra {preview.leftover.toLocaleString()} ₫ will show as credit on{" "}
                         {siblings.find((s) => s.id === Array.from(selectedSiblings)[0])?.full_name ?? "the first selected student"}'s
-                        {" "}account. It is not put on any bill, so the bills and their balances will not show it.
+                        {" "}next bill.
+                      </p>
+                      <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
+                        It is recorded on that student's {formData.month} bill (the first selected student), and their
+                        next bill starts with it as credit. They need a {formData.month} bill: open their tuition for that
+                        month first if they have none.
                       </p>
                     </div>
                   </AlertDescription>
