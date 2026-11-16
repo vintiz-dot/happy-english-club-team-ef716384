@@ -1,0 +1,680 @@
+{
+ "label": "w320",
+ "runs": {
+  "students-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"\" 44x24",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "14",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "button[aria-controls=\"radix-:ri:\"]",
+       "button[aria-controls=\"radix-:rj:\"]",
+       "button[aria-controls=\"radix-:rk:\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-students-320-light.png",
+   "kb": 36
+  },
+  "ta-drawer-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "120,000",
+     "13",
+     "2026",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-ta-drawer-320-light.png",
+   "kb": 38
+  },
+  "ta-sessions-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "13",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "30",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-ta-sessions-320-light.png",
+   "kb": 42
+  },
+  "xp-add-quest-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "15"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-xp-add-quest-320-light.png",
+   "kb": 35
+  },
+  "access-confirm-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1/5/2026",
+     "1/5/2026",
+     "1/5/2026",
+     "1/5/2026",
+     "2",
+     "4"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 8,
+      "t": [
+       "button[aria-controls=\"radix-:r11:\"]",
+       "button[aria-controls=\"radix-:r1a:\"]",
+       "button[aria-controls=\"radix-:r1d:\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-access-confirm-320-light.png",
+   "kb": 42
+  },
+  "audit-roster-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "304.000",
+     "304.000"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-audit-roster-320-light.png",
+   "kb": 37
+  },
+  "audit-month-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "-13",
+     "-202609",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.290.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "150.000",
+     "150.000",
+     "150.000",
+     "160.000",
+     "160.000",
+     "160.000",
+     "17:12",
+     "2",
+     "2",
+     "2.730.000",
+     "2.730.000",
+     "2.880.000",
+     "2.880.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "27",
+     "28",
+     "304.000",
+     "304.000",
+     "5",
+     "5",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-audit-month-320-light.png",
+   "kb": 36
+  },
+  "reports-bulk-roster-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.shadow-hec-1.rounded-hec-lg"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-reports-bulk-roster-320-light.png",
+   "kb": 40
+  },
+  "student-link-users-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "-2"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-student-link-users-320-light.png",
+   "kb": 44
+  },
+  "ai-report-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "90"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-ai-report-320-light.png",
+   "kb": 41
+  }
+ }
+}

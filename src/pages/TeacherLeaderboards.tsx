@@ -129,23 +129,23 @@ export default function TeacherLeaderboards() {
     <Layout title="Class Leaderboards">
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
-              <Trophy className="h-6 w-6 text-amber-500" />
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="h-12 w-12 shrink-0 rounded-full bg-hec-sunken flex items-center justify-center">
+              <Trophy className="h-6 w-6 text-hec-brass" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">Class Leaderboards</h1>
-              <p className="text-muted-foreground">Track student progress and achievements</p>
+            <div className="min-w-0">
+              <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Class Leaderboards</h1>
+              <p className="text-hec-small text-hec-ink-soft">Track student progress and achievements</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {activeClasses && activeClasses.length > 1 && (
               <Select
                 value={displayClassId || ""}
                 onValueChange={setSelectedClassId}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[220px]" aria-label="Class">
                   <SelectValue placeholder="Select class" />
                 </SelectTrigger>
                 <SelectContent>
@@ -159,12 +159,13 @@ export default function TeacherLeaderboards() {
             )}
 
             {/* View Mode Toggle */}
-            <div className="flex rounded-lg border border-border overflow-hidden">
+            <div className="flex rounded-hec-md border border-hec-line-strong overflow-hidden">
               <Button
                 variant={viewMode === "standard" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("standard")}
-                className="rounded-none gap-1.5"
+                className="rounded-none gap-2"
+                aria-label="Standard"
               >
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Standard</span>
@@ -175,22 +176,24 @@ export default function TeacherLeaderboards() {
                 <TooltipTrigger asChild>
                   <span
                     tabIndex={canUseLiveMode ? undefined : 0}
-                    className="flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    className="flex focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring"
                   >
                   <Button
                     variant={viewMode === "live" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => canUseLiveMode && setViewMode("live")}
-                    className="rounded-none gap-1.5"
+                    className="rounded-none gap-2"
                     disabled={!canUseLiveMode}
-                    aria-label={canUseLiveMode && remainingTime ? `Live, ${remainingTime} left` : "Live"}
                   >
+                    {/* The name comes from the content (no aria-label): "Live" is read at every width, and the
+                        visible time is part of it, so the name always contains what is on the button. */}
                     <Zap className="h-4 w-4" />
-                    <span className="hidden sm:inline">Live</span>
+                    <span className="sr-only sm:not-sr-only">Live</span>
                     {canUseLiveMode && remainingTime && (
-                      <span className="flex items-center gap-1 text-[10px] bg-primary/20 text-primary-foreground px-1.5 py-0.5 rounded-full ml-1">
-                        <Clock className="h-2.5 w-2.5" />
+                      <span className="ml-1 flex items-center gap-1 whitespace-nowrap rounded-full border border-current px-2 text-hec-caption tabular-nums">
+                        <Clock className="h-3 w-3" />
                         {remainingTime}
+                        <span className="sr-only"> left</span>
                       </span>
                     )}
                   </Button>
@@ -208,7 +211,7 @@ export default function TeacherLeaderboards() {
 
         {isLoading ? (
           <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
+            <CardContent className="py-12 text-center text-hec-body text-hec-ink-soft">
               Loading classes...
             </CardContent>
           </Card>
@@ -217,9 +220,9 @@ export default function TeacherLeaderboards() {
             {displayClassId && viewMode === "standard" && (
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-amber-500" />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <CardTitle className="flex min-w-0 items-center gap-2">
+                      <Trophy className="h-5 w-5 shrink-0 text-hec-brass" />
                       {activeClasses.find((c: any) => c.id === displayClassId)?.name}
                     </CardTitle>
                     <ManualPointsDialog classId={displayClassId} />
@@ -234,13 +237,13 @@ export default function TeacherLeaderboards() {
             {displayClassId && viewMode === "live" && activeSessionForClass && (
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-amber-500" />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <CardTitle className="flex min-w-0 items-center gap-2">
+                      <Zap className="h-5 w-5 shrink-0 text-hec-brass" />
                       Live Assessment — {activeClasses.find((c: any) => c.id === displayClassId)?.name}
                     </CardTitle>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-hec-small text-hec-ink-soft">
                     Tap a student to quickly award skills. Absent students are grayed out.
                   </p>
                 </CardHeader>
@@ -255,7 +258,7 @@ export default function TeacherLeaderboards() {
           </div>
         ) : (
           <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
+            <CardContent className="py-12 text-center text-hec-body text-hec-ink-soft">
               No classes found. You will see leaderboards here once you are assigned to teach classes.
             </CardContent>
           </Card>

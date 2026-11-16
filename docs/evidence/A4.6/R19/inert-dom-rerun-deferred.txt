@@ -1,0 +1,7 @@
+tools-att-375-dark sheet identical except mount timing -> board: mounted in before only
+tools-att-375-light sheet identical except mount timing -> board: mounted in before only
+tools-select-375-dark sheet identical (68949 chars)
+tools-select-375-dark popper identical (2680 chars)
+tools-select-375-light sheet identical except mount timing -> attendance: mounted in afterL2 only
+tools-select-375-light popper identical (2680 chars)
+afterL2 vs before: 3 identical, 3 identical except a Deferred tool's mount timing, 0 differ, 0 missing

@@ -1,0 +1,61 @@
+{
+ "when": "2026-11-13T02:26:14.780Z",
+ "base": "vite dev server + fake Supabase client + local stand-in book (NOT production, NOT the real book hosts)",
+ "cpu": "4x (CDP Emulation.setCPUThrottlingRate)",
+ "network": "Fast 3G-like (CDP Network.emulateNetworkConditions latency 562.5 ms, 180 KB/s down, 84 KB/s up) applied after the app shell has loaded, plus a 562 ms delay on every book.html request",
+ "checks": [
+  {
+   "id": "CT.click-through",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "taps": [
+     "speaking:1",
+     "speaking:7"
+    ],
+    "writes": [
+     "from:skill_assessments:insert",
+     "from:point_transactions:insert",
+     "from:point_transactions:insert"
+    ]
+   },
+   "detail": "onTap calls [speaking:1, speaking:7]; fake-client writes [from:skill_assessments:insert, from:point_transactions:insert, from:point_transactions:insert]"
+  },
+  {
+   "id": "CT.click-through.taps",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": [
+    "speaking:1",
+    "speaking:7"
+   ],
+   "detail": "SkillButton onTap calls [\"speaking:1\",\"speaking:7\"] (expected speaking:1, speaking:7)"
+  },
+  {
+   "id": "CT.r16",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "r16": [
+     "SAP Present: function:mark-attendance:select",
+     "SAP Quick +5: from:point_transactions:insert",
+     "SAP flag: from:student_error_log:insert, from:srs_cards:insert",
+     "Panel Speaking +2: from:skill_assessments:insert, from:point_transactions:insert",
+     "Panel correction -3: from:point_transactions:insert",
+     "Bulk bar Focus +1: from:skill_assessments:insert, from:point_transactions:insert",
+     "Economy approve: from:economy_transactions:update, from:students:update",
+     "Log spend 3: from:economy_transactions:insert, from:students:update",
+     "Bulk dialog +10 Speaking: from:skill_assessments:insert, from:point_transactions:insert",
+     "Manual sheet -1 correction: from:point_transactions:insert",
+     "RT dialog score 9: from:point_transactions:insert",
+     "Attendance mark + save: from:attendance:upsert, from:sessions:update"
+    ],
+    "taps": [
+     "speaking:1",
+     "speaking:7"
+    ]
+   },
+   "detail": "SAP Present: function:mark-attendance:select | SAP Quick +5: from:point_transactions:insert | SAP flag: from:student_error_log:insert, from:srs_cards:insert | Panel Speaking +2: from:skill_assessments:insert, from:point_transactions:insert | Panel correction -3: from:point_transactions:insert | Bulk bar Focus +1: from:skill_assessments:insert, from:point_transactions:insert | Economy approve: from:economy_transactions:update, from:students:update | Log spend 3: from:economy_transactions:insert, from:students:update | Bulk dialog +10 Speaking: from:skill_assessments:insert, from:point_transactions:insert | Manual sheet -1 correction: from:point_transactions:insert | RT dialog score 9: from:point_transactions:insert | Attendance mark + save: from:attendance:upsert, from:sessions:update"
+  }
+ ]
+}

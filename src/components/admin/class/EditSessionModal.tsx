@@ -134,7 +134,7 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
           </div>
 
           <div className="space-y-2">
-            <Label>Price Override (VND)</Label>
+            <Label>Price Override (VND) - not used for staff pay</Label>
             <Input
               type="number"
               value={rate}

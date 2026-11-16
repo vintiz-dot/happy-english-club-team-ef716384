@@ -146,7 +146,7 @@ const DataTab = () => {
       />
 
       <Tabs defaultValue="export">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="export">Export</TabsTrigger>
           <TabsTrigger value="import">Import</TabsTrigger>
           <TabsTrigger value="integrity">Integrity</TabsTrigger>
@@ -197,6 +197,7 @@ const DataTab = () => {
                 <Input
                   type="file"
                   accept=".json"
+                  aria-label="JSON file to import"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) importData(file);
@@ -206,8 +207,8 @@ const DataTab = () => {
               </div>
 
               {importResult && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <pre className="text-xs overflow-auto max-h-64">
+                <div className="rounded-hec-md bg-hec-sunken p-4">
+                  <pre className="max-h-64 overflow-auto text-hec-caption text-hec-ink">
                     {JSON.stringify(importResult, null, 2)}
                   </pre>
                 </div>
@@ -237,12 +238,12 @@ const DataTab = () => {
                     {Object.entries(integrityResult.summary).map(([key, count]: [string, any]) => (
                       <Card key={key}>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium">
+                          <CardTitle className="break-words font-sans text-hec-small font-medium text-hec-ink-soft">
                             {key.replace(/_/g, ' ')}
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className={`text-2xl font-bold ${count > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                          <div className={`font-sans text-hec-h1 font-semibold tabular-nums ${count > 0 ? 'text-hec-danger' : 'text-hec-leaf'}`}>
                             {count}
                           </div>
                         </CardContent>
@@ -250,9 +251,9 @@ const DataTab = () => {
                     ))}
                   </div>
 
-                  <div className="p-4 bg-muted rounded-lg">
-                    <p className="font-medium mb-2">Detailed Issues:</p>
-                    <pre className="text-xs overflow-auto max-h-96">
+                  <div className="rounded-hec-md bg-hec-sunken p-4">
+                    <p className="mb-2 font-medium text-hec-ink">Detailed Issues:</p>
+                    <pre className="max-h-96 overflow-auto text-hec-caption text-hec-ink">
                       {JSON.stringify(integrityResult.issues, null, 2)}
                     </pre>
                   </div>
@@ -272,15 +273,16 @@ const DataTab = () => {
               <CardDescription>View recent system activities and changes</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Input
                   placeholder="Filter by action..."
                   value={logQuery}
                   onChange={(e) => setLogQuery(e.target.value)}
-                  className="flex-1"
+                  className="min-w-0 flex-1 basis-48"
+                  aria-label="Filter by action"
                 />
                 <Select value={logLimit} onValueChange={setLogLimit}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32" aria-label="How many entries">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -297,7 +299,7 @@ const DataTab = () => {
               </div>
 
               {logs.length > 0 && (
-                <div className="border rounded-lg overflow-auto max-h-[600px]">
+                <div className="max-h-[600px] overflow-auto rounded-hec-md border border-hec-line">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -311,16 +313,16 @@ const DataTab = () => {
                     <TableBody>
                       {logs.map((log) => (
                         <TableRow key={log.id}>
-                          <TableCell className="text-xs">
+                          <TableCell className="whitespace-nowrap text-hec-caption tabular-nums">
                             {new Date(log.occurred_at).toLocaleString()}
                           </TableCell>
                           <TableCell className="font-medium">{log.action}</TableCell>
                           <TableCell>{log.entity}</TableCell>
-                          <TableCell className="text-xs font-mono">{log.entity_id?.slice(0, 8)}</TableCell>
+                          <TableCell className="font-mono text-hec-caption">{log.entity_id?.slice(0, 8)}</TableCell>
                           <TableCell>
                             <details className="cursor-pointer">
-                              <summary className="text-xs text-muted-foreground">View</summary>
-                              <pre className="text-xs mt-2 p-2 bg-muted rounded">
+                              <summary className="flex min-h-hec-target items-center rounded-hec-sm text-hec-caption text-hec-brass focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">View</summary>
+                              <pre className="mt-2 rounded-hec-sm bg-hec-sunken p-2 text-hec-caption text-hec-ink">
                                 {JSON.stringify(log.diff, null, 2)}
                               </pre>
                             </details>

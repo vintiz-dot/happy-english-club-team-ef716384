@@ -1,0 +1,52 @@
+{
+ "label": "smoke2-arcade",
+ "legacy": false,
+ "runs": {
+  "board-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "boardInherits": "rgb(19, 29, 53)",
+    "frameColor": "rgb(19, 29, 53)",
+    "boardTop": 73,
+    "textColours": {
+     "rgb(255, 255, 255)": 17,
+     "rgb(255, 225, 77)": 5,
+     "rgb(20, 16, 43)": 54,
+     "svg:rgb(20, 16, 43)/rgb(255, 194, 26)/rgb(255, 194, 26)": 1,
+     "svg:rgb(20, 16, 43)/rgb(20, 16, 43)/none": 20,
+     "svg:rgb(20, 16, 43)/none/rgb(0, 0, 0)": 1,
+     "svg:rgb(255, 255, 255)/none/rgb(0, 0, 0)": 1,
+     "svg:rgb(255, 225, 77)/none/rgb(0, 0, 0)": 1,
+     "svg:rgb(242, 67, 127)/none/rgb(0, 0, 0)": 1,
+     "border:rgb(20, 16, 43)": 76
+    }
+   },
+   "overflow": false,
+   "shot": "smoke2-arcade-board-1280-light.png"
+  },
+  "board-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "boardInherits": "rgb(239, 232, 215)",
+    "frameColor": "rgb(239, 232, 215)",
+    "boardTop": 73,
+    "textColours": {
+     "rgb(255, 255, 255)": 17,
+     "rgb(255, 225, 77)": 5,
+     "rgb(20, 16, 43)": 54,
+     "svg:rgb(20, 16, 43)/rgb(255, 194, 26)/rgb(255, 194, 26)": 1,
+     "svg:rgb(20, 16, 43)/rgb(20, 16, 43)/none": 20,
+     "svg:rgb(20, 16, 43)/none/rgb(0, 0, 0)": 1,
+     "svg:rgb(255, 255, 255)/none/rgb(0, 0, 0)": 1,
+     "svg:rgb(255, 225, 77)/none/rgb(0, 0, 0)": 1,
+     "svg:rgb(242, 67, 127)/none/rgb(0, 0, 0)": 1,
+     "border:rgb(20, 16, 43)": 76
+    }
+   },
+   "overflow": false,
+   "shot": "smoke2-arcade-board-1280-dark.png"
+  }
+ }
+}

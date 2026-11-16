@@ -34,6 +34,7 @@ import { ProposalCard } from "./ProposalCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, Loader2, RotateCcw, ShieldCheck } from "lucide-react";
 
@@ -116,6 +117,9 @@ export function AssistantChat({ className }: { className?: string }) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  // The panel renders in the student area (listed), the family area and the
+  // classroom tools: the system's classes only on a listed route.
+  const ivory = useIvory();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -283,26 +287,38 @@ export function AssistantChat({ className }: { className?: string }) {
   return (
     <div className={cn("flex flex-col min-h-0", className)}>
       {/* Transcript */}
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
+      {/* Ivory: the scrolling transcript can be reached and scrolled with the keyboard. */}
+      <div
+        ref={scrollRef}
+        className={ivory ? "flex-1 min-h-0 overflow-y-auto space-y-3 rounded-hec-sm pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring" : "flex-1 min-h-0 overflow-y-auto space-y-3 pr-1"}
+        tabIndex={ivory ? 0 : undefined}
+        role={ivory ? "log" : undefined}
+        aria-label={ivory ? "Conversation" : undefined}
+      >
         {loadingHistory && messages.length === 0 && (
-          <div className="flex items-center justify-center py-10 text-muted-foreground gap-2">
+          <div className={ivory ? "flex items-center justify-center gap-2 py-12 text-hec-ink-soft" : "flex items-center justify-center py-10 text-muted-foreground gap-2"}>
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-xs">Loading your conversation…</span>
+            <span className={ivory ? "text-hec-small" : "text-xs"}>Loading your conversation…</span>
           </div>
         )}
         {!loadingHistory && messages.length === 0 && (
           <div className="py-6 text-center space-y-3">
-            <div className="mx-auto h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-md">
-              <Sparkles className="h-6 w-6 text-white" />
+            {/* Ivory: a quiet sunken tile with a brass mark, no gradient. */}
+            <div className={ivory ? "mx-auto grid h-11 w-11 place-items-center rounded-hec-md bg-hec-sunken text-hec-brass" : "mx-auto h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-md"}>
+              <Sparkles className={ivory ? "h-6 w-6" : "h-6 w-6 text-white"} />
             </div>
-            <p className="text-sm font-semibold">Hi! I'm the HEC assistant.</p>
-            <p className="text-xs text-muted-foreground max-w-[280px] mx-auto">{copy.intro}</p>
-            <div className="flex flex-wrap gap-1.5 justify-center pt-1">
+            <p className={ivory ? "text-hec-body font-semibold text-hec-ink" : "text-sm font-semibold"}>Hi! I'm the HEC assistant.</p>
+            <p className={ivory ? "mx-auto max-w-[280px] text-hec-small text-hec-ink-soft" : "text-xs text-muted-foreground max-w-[280px] mx-auto"}>{copy.intro}</p>
+            <div className={ivory ? "flex flex-wrap justify-center gap-2 pt-1" : "flex flex-wrap gap-1.5 justify-center pt-1"}>
               {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="text-[11px] rounded-full border px-3 py-1.5 hover:bg-muted/60 transition-colors text-muted-foreground"
+                  className={
+                    ivory
+                      ? "min-h-hec-target rounded-full border border-hec-line-strong bg-hec-raised px-4 py-2 text-hec-small text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                      : "text-[11px] rounded-full border px-3 py-1.5 hover:bg-muted/60 transition-colors text-muted-foreground"
+                  }
                 >
                   {s}
                 </button>
@@ -320,12 +336,22 @@ export function AssistantChat({ className }: { className?: string }) {
               className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
             >
               <div
-                className={cn(
-                  "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
-                  m.role === "user"
-                    ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-br-md"
-                    : "bg-muted/60 ring-1 ring-border/50 rounded-bl-md",
-                )}
+                className={
+                  ivory
+                    ? cn(
+                        // The person's words in ink, the assistant's on a surface with a hairline.
+                        "max-w-[85%] whitespace-pre-wrap break-words rounded-hec-lg px-4 py-2 text-hec-small",
+                        m.role === "user"
+                          ? "rounded-br-hec-sm bg-hec-action text-hec-on-action"
+                          : "rounded-bl-hec-sm border border-hec-line bg-hec-surface text-hec-ink",
+                      )
+                    : cn(
+                        "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+                        m.role === "user"
+                          ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-br-md"
+                          : "bg-muted/60 ring-1 ring-border/50 rounded-bl-md",
+                      )
+                }
               >
                 {m.content}
               </div>
@@ -345,15 +371,15 @@ export function AssistantChat({ className }: { className?: string }) {
 
         {busy && (
           <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-md bg-muted/60 ring-1 ring-border/50 px-3.5 py-2.5">
-              <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+            <div className={ivory ? "rounded-hec-lg rounded-bl-hec-sm border border-hec-line bg-hec-surface px-4 py-2" : "rounded-2xl rounded-bl-md bg-muted/60 ring-1 ring-border/50 px-3.5 py-2.5"}>
+              <Loader2 className={ivory ? "h-4 w-4 animate-spin text-hec-ink-soft" : "h-4 w-4 animate-spin text-violet-500"} />
             </div>
           </div>
         )}
       </div>
 
       {/* Composer */}
-      <div className="pt-3 space-y-1.5">
+      <div className={ivory ? "space-y-2 pt-3" : "pt-3 space-y-1.5"}>
         <div className="flex gap-2 items-end">
           <Textarea
             ref={inputRef}
@@ -366,17 +392,22 @@ export function AssistantChat({ className }: { className?: string }) {
               }
             }}
             placeholder={copy.placeholder}
-            className="min-h-[44px] max-h-32 resize-none text-sm"
+            // Ivory: as tall as the two stacked buttons beside it (96 px), so a placeholder that wraps
+            // to two lines at 375 ("Ask me anything about your learning…") is not cut.
+            className={ivory ? "min-h-24 max-h-32 resize-none" : "min-h-[44px] max-h-32 resize-none text-sm"}
             rows={1}
             disabled={busy}
           />
-          <div className="flex flex-col gap-1">
+          {/* Ivory: Send sits at the bottom, level with the field; "new conversation" above it. */}
+          <div className={ivory ? "flex flex-col-reverse gap-2" : "flex flex-col gap-1"}>
             <Button
               size="icon"
-              className="h-9 w-9 shrink-0 bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
+              // Ivory: the primary (ink) button, 44 px, named; no gradient.
+              className={ivory ? "shrink-0" : "h-9 w-9 shrink-0 bg-gradient-to-r from-violet-600 to-indigo-600 text-white"}
               disabled={busy || !input.trim()}
               onClick={() => send(input)}
               title="Send"
+              aria-label={ivory ? "Send" : undefined}
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -384,9 +415,10 @@ export function AssistantChat({ className }: { className?: string }) {
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-9 w-9 shrink-0"
+                className={ivory ? "shrink-0" : "h-9 w-9 shrink-0"}
                 onClick={startNew}
                 title="New conversation"
+                aria-label={ivory ? "New conversation" : undefined}
                 disabled={busy}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -394,8 +426,8 @@ export function AssistantChat({ className }: { className?: string }) {
             )}
           </div>
         </div>
-        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-          <ShieldCheck className="h-3 w-3 shrink-0" />
+        <p className={ivory ? "flex items-start gap-2 text-hec-caption font-normal text-hec-ink-soft" : "text-[10px] text-muted-foreground flex items-center gap-1"}>
+          <ShieldCheck className={ivory ? "mt-0.5 h-4 w-4 shrink-0" : "h-3 w-3 shrink-0"} />
           {role === "admin" ? "Changes only when you confirm" : "Read-only"} · private to you · {copy.scope} · AI can make mistakes
         </p>
       </div>

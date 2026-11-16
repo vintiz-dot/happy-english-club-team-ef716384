@@ -73,7 +73,7 @@ export function EnrollmentRequestsManager() {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loader2 className="h-6 w-6 animate-spin text-hec-ink-faint" aria-hidden />
         </CardContent>
       </Card>
     );
@@ -84,29 +84,31 @@ export function EnrollmentRequestsManager() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Inbox className="h-5 w-5" />
+        <CardTitle className="flex flex-wrap items-center gap-2">
+          <Inbox className="h-5 w-5 shrink-0" aria-hidden />
           Enrollment Requests
-          <Badge variant="destructive" className="ml-2">{requests.length}</Badge>
+          <Badge variant="warning" className="font-sans tabular-nums">{requests.length}</Badge>
         </CardTitle>
         <CardDescription>Students requesting to join classes</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent>
+        <ul className="rounded-hec-lg border border-hec-line bg-hec-surface">
         {requests.map((req: any) => (
-          <div key={req.id} className="flex items-center justify-between p-4 border rounded-lg gap-4">
-            <div className="space-y-1 min-w-0 flex-1">
-              <p className="font-medium truncate">{req.students?.full_name}</p>
-              <p className="text-sm text-muted-foreground">
-                Wants to join <span className="font-medium text-foreground">{req.classes?.name}</span>
+          <li key={req.id} className="flex flex-col gap-3 border-b border-hec-line px-4 py-3 last:border-b-0 sm:flex-row sm:items-start">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{req.students?.full_name}</p>
+              <p className="text-hec-small text-hec-ink-soft">
+                Wants to join <span className="break-words font-medium text-hec-ink">{req.classes?.name}</span>
               </p>
               {req.message && (
-                <p className="text-xs text-muted-foreground italic">"{req.message}"</p>
+                <p className="break-words text-hec-caption italic text-hec-ink-soft">"{req.message}"</p>
               )}
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div className="flex shrink-0 gap-2">
               <Button
                 size="sm"
                 variant="outline"
+                aria-label={`Decline ${req.students?.full_name ?? "request"}`}
                 onClick={() => resolveMutation.mutate({
                   requestId: req.id,
                   action: "declined",
@@ -115,7 +117,7 @@ export function EnrollmentRequestsManager() {
                 })}
                 disabled={resolveMutation.isPending}
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" aria-hidden />
               </Button>
               <Button
                 size="sm"
@@ -127,12 +129,13 @@ export function EnrollmentRequestsManager() {
                 })}
                 disabled={resolveMutation.isPending}
               >
-                <Check className="h-4 w-4 mr-1" />
+                <Check className="h-4 w-4" aria-hidden />
                 Approve
               </Button>
             </div>
-          </div>
+          </li>
         ))}
+        </ul>
       </CardContent>
     </Card>
   );

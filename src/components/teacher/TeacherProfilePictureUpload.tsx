@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useIvory } from "@/hooks/useIvory";
 
 interface TeacherProfilePictureUploadProps {
   teacherId: string;
@@ -19,6 +20,8 @@ export function TeacherProfilePictureUpload({
 }: TeacherProfilePictureUploadProps) {
   const [uploading, setUploading] = useState(false);
   const queryClient = useQueryClient();
+  // Also rendered on the admin's /teachers/:id: old classes until the staff area is listed (R21).
+  const ivory = useIvory();
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -99,12 +102,12 @@ export function TeacherProfilePictureUpload({
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative group">
-        <Avatar className="h-32 w-32 ring-4 ring-primary/10 transition-all group-hover:ring-primary/20">
+        <Avatar className={ivory ? "h-32 w-32 ring-1 ring-hec-line" : "h-32 w-32 ring-4 ring-primary/10 transition-all group-hover:ring-primary/20"}>
           <AvatarImage src={currentAvatarUrl || undefined} alt={teacherName} />
-          <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/20 to-primary/10">{initials}</AvatarFallback>
+          <AvatarFallback className={ivory ? "text-hec-h2 bg-hec-sunken text-hec-ink-soft" : "text-2xl bg-gradient-to-br from-primary/20 to-primary/10"}>{initials}</AvatarFallback>
         </Avatar>
-        <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Camera className="h-8 w-8 text-white" />
+        <div className={ivory ? "absolute inset-0 bg-hec-ink/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-hec-1 ease-hec flex items-center justify-center" : "absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"}>
+          <Camera className={ivory ? "h-8 w-8 text-hec-paper" : "h-8 w-8 text-white"} />
         </div>
       </div>
       
@@ -124,18 +127,18 @@ export function TeacherProfilePictureUpload({
             size="lg"
             disabled={uploading}
             onClick={() => document.getElementById("teacher-avatar-upload")?.click()}
-            className="w-full font-semibold"
+            className={ivory ? "w-full" : "w-full font-semibold"}
             asChild
           >
             <span>
               {uploading ? (
                 <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  <Loader2 className={ivory ? "h-5 w-5 animate-spin" : "h-5 w-5 mr-2 animate-spin"} />
                   Uploading...
                 </>
               ) : (
                 <>
-                  <Camera className="h-5 w-5 mr-2" />
+                  <Camera className={ivory ? "h-5 w-5" : "h-5 w-5 mr-2"} />
                   Edit Profile Picture
                 </>
               )}
@@ -143,8 +146,8 @@ export function TeacherProfilePictureUpload({
           </Button>
         </label>
       </div>
-      
-      <p className="text-xs text-muted-foreground text-center">
+
+      <p className={ivory ? "text-hec-caption text-hec-ink-soft text-center" : "text-xs text-muted-foreground text-center"}>
         Maximum file size: 5MB<br />
         Supported formats: JPG, PNG, WEBP
       </p>

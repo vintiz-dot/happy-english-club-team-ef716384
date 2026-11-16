@@ -22,8 +22,11 @@ import { TeacherLinkDialog } from "@/components/admin/TeacherLinkDialog";
 import { TeacherProfileEdit } from "@/components/teacher/TeacherProfileEdit";
 import { PdfExportLogCard } from "@/components/teacher/PdfExportLogCard";
 import { describeRate } from "@/lib/payRate";
+import { useIvory } from "@/hooks/useIvory";
 
 const TeacherProfile = () => {
+  // Admin route (/teachers/:id): keeps its old classes until the staff area is listed (R21).
+  const ivory = useIvory();
   const { id } = useParams<{ id: string }>();
   const [showEditDrawer, setShowEditDrawer] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
@@ -75,7 +78,7 @@ const TeacherProfile = () => {
     return (
       <Layout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold">Teacher not found</h2>
+          <h2 className={ivory ? "font-display text-hec-h2 font-medium text-hec-ink" : "text-2xl font-bold"}>Teacher not found</h2>
         </div>
       </Layout>
     );
@@ -87,33 +90,33 @@ const TeacherProfile = () => {
         {/* Header */}
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4">
-                <Avatar className="w-16 h-16 ring-2 ring-border">
+            <div className={ivory ? "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between" : "flex items-start justify-between"}>
+              <div className={ivory ? "flex min-w-0 items-start gap-4" : "flex items-start gap-4"}>
+                <Avatar className={ivory ? "w-16 h-16 shrink-0 ring-1 ring-hec-line" : "w-16 h-16 ring-2 ring-border"}>
                   <AvatarImage src={getAvatarUrl(teacher.avatar_url) || undefined} alt={teacher.full_name} className="object-cover" />
-                  <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/20 to-primary/10">
+                  <AvatarFallback className={ivory ? "text-hec-h2 bg-hec-sunken text-hec-ink-soft" : "text-2xl bg-gradient-to-br from-primary/20 to-primary/10"}>
                     {teacher.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-3xl font-bold">{teacher.full_name}</h1>
-                    <Badge variant={teacher.is_active ? "default" : "secondary"} className={teacher.is_active ? "bg-green-500" : ""}>
+                <div className={ivory ? "min-w-0 space-y-2" : "space-y-2"}>
+                  <div className={ivory ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2"}>
+                    <h1 className={ivory ? "min-w-0 whitespace-normal break-words font-display text-hec-h1 font-medium text-hec-ink" : "text-3xl font-bold"}>{teacher.full_name}</h1>
+                    <Badge variant={teacher.is_active ? "default" : "secondary"} className={ivory ? (teacher.is_active ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : "") : (teacher.is_active ? "bg-green-500" : "")}>
                       {teacher.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                   <div className="flex flex-col gap-1">
                     {teacher.user_id && teacher.linkedUserEmail && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">Registered Email:</span>
-                        <span className="font-medium text-foreground">{teacher.linkedUserEmail}</span>
-                        <Badge variant="outline" className="text-xs">
+                      <div className={ivory ? "flex flex-wrap items-center gap-2 text-hec-small" : "flex items-center gap-2 text-sm"}>
+                        <span className={ivory ? "text-hec-ink-soft" : "text-muted-foreground"}>Registered Email:</span>
+                        <span className={ivory ? "min-w-0 break-all font-medium text-hec-ink" : "font-medium text-foreground"}>{teacher.linkedUserEmail}</span>
+                        <Badge variant="outline" className={ivory ? undefined : "text-xs"}>
                           Linked
                         </Badge>
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col gap-1 text-muted-foreground">
+                  <div className={ivory ? "flex flex-col gap-1 text-hec-small text-hec-ink-soft" : "flex flex-col gap-1 text-muted-foreground"}>
                     {teacher.email && (
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4" />
@@ -131,18 +134,18 @@ const TeacherProfile = () => {
                       <span>{describeRate(teacher)}</span>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className={ivory ? "text-hec-small text-hec-ink-soft tabular-nums" : "text-sm text-muted-foreground"}>
                     Last updated: {new Date(teacher.updated_at).toLocaleDateString()}
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className={ivory ? "flex shrink-0 flex-col gap-2 sm:flex-row" : "flex gap-2"}>
                 <Button variant="outline" onClick={() => setShowLinkDialog(true)}>
-                  <Link className="h-4 w-4 mr-2" />
+                  <Link className={ivory ? "h-4 w-4" : "h-4 w-4 mr-2"} />
                   {teacher.user_id ? 'Manage Link' : 'Connect to User'}
                 </Button>
                 <Button variant="outline" onClick={() => setShowEditDrawer(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className={ivory ? "h-4 w-4" : "h-4 w-4 mr-2"} />
                   Edit
                 </Button>
               </div>
@@ -152,7 +155,7 @@ const TeacherProfile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className={ivory ? "w-full" : "grid w-full grid-cols-8"}>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
             <TabsTrigger value="classes">Classes</TabsTrigger>
@@ -176,7 +179,7 @@ const TeacherProfile = () => {
           </TabsContent>
 
           <TabsContent value="payroll">
-            <TeacherProfilePayroll teacherId={teacher.id} selectedMonth={selectedMonth} payRate={teacher} onMonthChange={setSelectedMonth} />
+            <TeacherProfilePayroll teacherId={teacher.id} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
           </TabsContent>
 
           <TabsContent value="profile">

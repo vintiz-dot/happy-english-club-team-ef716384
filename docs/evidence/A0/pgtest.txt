@@ -1,0 +1,32 @@
+  ok    family payment month     6 passed, 0 failed
+  ok    dated enrollment discounts 22 passed, 0 failed
+  ok    cancelled lessons        25 passed, 0 failed
+  ok    shared-module mirrors    13 passed, 0 failed
+  ok    edge functions typecheck 5 passed, 0 failed
+  ok    app typecheck            3 passed, 0 failed
+  ok    chat assistant           201 passed, 0 failed
+  ok    AI admin actions         71 passed, 0 failed
+  ok    payroll session rules    27 passed, 0 failed
+  ok    payroll screen rows      69 passed, 0 failed
+  ok    pay-rate history         38 passed, 0 failed
+  ok    payroll month locking    55 passed, 0 failed
+  ok    stars sync               46 passed, 0 failed
+  ok    stars sync engine        172 passed, 0 failed
+  ok    stars sync upgrade       17 passed, 0 failed
+  ok    stars sync homework      138 passed, 0 failed
+  ok    stars sync core          75 passed, 0 failed
+  ok    stars link tool          94 passed, 0 failed
+  ok    stars records            126 passed, 0 failed
+  ok    homework grading         27 passed, 0 failed
+  ok    video homework rules     26 passed, 0 failed
+  ok    language support lib     49 passed, 0 failed
+  ok    language support         27 passed, 0 failed
+  ok    video homework           55 passed, 0 failed
+  ok    audit clips lib          27 passed, 0 failed
+  ok    audit clips              33 passed, 0 failed
+  ok    ta standing assignments  10 passed, 0 failed
+  ok    assistant absence        15 passed, 0 failed
+  ok    recurring expenditures   24 passed, 0 failed
+  ok    class overhead           115 passed, 0 failed
+
+1611 assertions across 30 suites, 0 suite(s) failed

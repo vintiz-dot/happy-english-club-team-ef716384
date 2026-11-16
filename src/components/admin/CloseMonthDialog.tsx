@@ -17,6 +17,7 @@ import { Lock, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMonthSnapshots } from "@/hooks/useMonthlyFinanceSnapshots";
 import { fetchBilledStudentIds } from "@/lib/finance/studentsInMonth";
+import { useIvory } from "@/hooks/useIvory";
 
 interface CloseMonthDialogProps {
   open: boolean;
@@ -34,6 +35,8 @@ function chunk<T>(arr: T[], size: number): T[][] {
 
 export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps) {
   const queryClient = useQueryClient();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const [closeReason, setCloseReason] = useState("");
   const [allowSupersede, setAllowSupersede] = useState(false);
   const [supersedeReason, setSupersedeReason] = useState("");
@@ -130,22 +133,22 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 text-sm">
+        <div className={iv("space-y-4 text-hec-small text-hec-ink", "space-y-3 text-sm")}>
           {loadingTargets ? (
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className={iv("flex items-center gap-2 text-hec-ink-soft", "flex items-center gap-2 text-muted-foreground")}>
               <Loader2 className="h-4 w-4 animate-spin" />
               Counting targets…
             </div>
           ) : (
-            <div className="rounded-md border bg-muted/30 p-3 space-y-1">
-              <Row label="Active students with enrollments" value={totalTargets} />
-              <Row label="Already closed" value={alreadyClosedCount} hint="Skipped unless re-close is enabled" />
-              <Row label="To be snapshotted" value={willActuallyWrite} bold />
+            <div className={iv("space-y-2 rounded-hec-md border border-hec-line bg-hec-sunken p-4", "rounded-md border bg-muted/30 p-3 space-y-1")}>
+              <Row label="Active students with enrollments" value={totalTargets} ivory={ivory} />
+              <Row label="Already closed" value={alreadyClosedCount} hint="Skipped unless re-close is enabled" ivory={ivory} />
+              <Row label="To be snapshotted" value={willActuallyWrite} bold ivory={ivory} />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="close-reason" className="text-xs">
+            <Label htmlFor="close-reason" className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>
               Close reason (optional)
             </Label>
             <Input
@@ -158,16 +161,16 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
           </div>
 
           {alreadyClosedCount > 0 && (
-            <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-3 space-y-2">
-              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 text-xs font-medium">
-                <AlertTriangle className="h-4 w-4" />
+            <div className={iv("space-y-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4", "rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-3 space-y-2")}>
+              <div className={iv("flex items-center gap-2 text-hec-small font-medium text-hec-warn", "flex items-center gap-2 text-amber-800 dark:text-amber-300 text-xs font-medium")}>
+                <AlertTriangle className="h-4 w-4 shrink-0" />
                 {alreadyClosedCount} student{alreadyClosedCount === 1 ? "" : "s"} already snapshotted
               </div>
-              <label className="flex items-start gap-2 text-xs cursor-pointer">
+              <label className={iv("flex min-h-hec-target cursor-pointer items-start gap-3 text-hec-small text-hec-ink", "flex items-start gap-2 text-xs cursor-pointer")}>
                 <Checkbox
                   checked={allowSupersede}
                   onCheckedChange={(v) => setAllowSupersede(!!v)}
-                  className="mt-0.5"
+                  className={iv("mt-1", "mt-0.5")}
                 />
                 <span>
                   Re-close anyway. Existing snapshots will be marked superseded (kept for audit) and a new
@@ -176,7 +179,7 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
               </label>
               {allowSupersede && (
                 <div className="space-y-1">
-                  <Label htmlFor="supersede-reason" className="text-xs">
+                  <Label htmlFor="supersede-reason" className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>
                     Supersede reason (required)
                   </Label>
                   <Input
@@ -193,10 +196,13 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose} disabled={closeMutation.isPending}>
+          {/* Ivory: the safe way out is the secondary (outline) button; closing the
+              month writes immutable snapshots, so it is the one red fill. */}
+          <Button variant={ivory ? "outline" : "ghost"} onClick={onClose} disabled={closeMutation.isPending}>
             Cancel
           </Button>
           <Button
+            variant={ivory ? "destructive" : "default"}
             onClick={() => closeMutation.mutate()}
             disabled={
               closeMutation.isPending ||
@@ -211,7 +217,7 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
             ) : (
               <CheckCircle2 className="h-4 w-4" />
             )}
-            Close Month
+            {ivory && closeMutation.isPending ? "Closing month..." : "Close Month"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -219,7 +225,19 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
   );
 }
 
-function Row({ label, value, hint, bold }: { label: string; value: number; hint?: string; bold?: boolean }) {
+function Row({ label, value, hint, bold, ivory }: { label: string; value: number; hint?: string; bold?: boolean; ivory?: boolean }) {
+  if (ivory) {
+    // The one total of the panel sits under the 2 px ink rule (DESIGN_SYSTEM s.14).
+    return (
+      <div className={`flex items-baseline justify-between gap-4 ${bold ? "border-t-2 border-hec-ink pt-3" : ""}`}>
+        <div className="min-w-0">
+          <div className={bold ? "font-semibold text-hec-ink" : "text-hec-ink-soft"}>{label}</div>
+          {hint && <div className="text-hec-caption text-hec-ink-soft">{hint}</div>}
+        </div>
+        <div className={`shrink-0 whitespace-nowrap font-sans tabular-nums text-hec-ink ${bold ? "text-hec-h3 font-semibold" : ""}`}>{value}</div>
+      </div>
+    );
+  }
   return (
     <div className="flex items-center justify-between gap-3">
       <div>

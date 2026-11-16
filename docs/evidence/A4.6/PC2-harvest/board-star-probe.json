@@ -1,0 +1,68 @@
+{
+ "label": "smoke2-star",
+ "legacy": false,
+ "runs": {
+  "board-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "boardInherits": "rgb(19, 29, 53)",
+    "frameColor": "rgb(19, 29, 53)",
+    "boardTop": 73,
+    "textColours": {
+     "rgb(32, 29, 48)": 28,
+     "rgb(78, 66, 112)": 1,
+     "rgb(255, 255, 255)": 16,
+     "rgb(57, 80, 138)": 1,
+     "rgb(122, 82, 0)": 1,
+     "rgb(138, 61, 18)": 1,
+     "rgb(20, 84, 58)": 5,
+     "rgb(25, 134, 83)": 1,
+     "rgb(75, 69, 102)": 1,
+     "rgb(91, 63, 209)": 1,
+     "rgb(107, 99, 133)": 4,
+     "svg:rgb(32, 29, 48)/none/rgb(0, 0, 0)": 19,
+     "svg:rgb(255, 255, 255)/none/rgb(0, 0, 0)": 1,
+     "svg:rgb(25, 134, 83)/none/rgb(0, 0, 0)": 2,
+     "svg:rgb(91, 63, 209)/none/rgb(0, 0, 0)": 1,
+     "border:rgb(255, 255, 255)": 9,
+     "border:rgba(42, 33, 64, 0)": 4,
+     "border:rgba(42, 33, 64, 0.2)": 2
+    }
+   },
+   "overflow": false,
+   "shot": "smoke2-star-board-1280-light.png"
+  },
+  "board-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "boardInherits": "rgb(239, 232, 215)",
+    "frameColor": "rgb(239, 232, 215)",
+    "boardTop": 73,
+    "textColours": {
+     "rgb(32, 29, 48)": 28,
+     "rgb(78, 66, 112)": 1,
+     "rgb(255, 255, 255)": 16,
+     "rgb(57, 80, 138)": 1,
+     "rgb(122, 82, 0)": 1,
+     "rgb(138, 61, 18)": 1,
+     "rgb(20, 84, 58)": 5,
+     "rgb(25, 134, 83)": 1,
+     "rgb(75, 69, 102)": 1,
+     "rgb(91, 63, 209)": 1,
+     "rgb(107, 99, 133)": 4,
+     "svg:rgb(32, 29, 48)/none/rgb(0, 0, 0)": 19,
+     "svg:rgb(255, 255, 255)/none/rgb(0, 0, 0)": 1,
+     "svg:rgb(25, 134, 83)/none/rgb(0, 0, 0)": 2,
+     "svg:rgb(91, 63, 209)/none/rgb(0, 0, 0)": 1,
+     "border:rgb(255, 255, 255)": 9,
+     "border:rgba(42, 33, 64, 0)": 4,
+     "border:rgba(42, 33, 64, 0.2)": 2
+    }
+   },
+   "overflow": false,
+   "shot": "smoke2-star-board-1280-dark.png"
+  }
+ }
+}

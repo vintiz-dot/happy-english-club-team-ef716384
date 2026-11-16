@@ -103,7 +103,7 @@ export function AdminSecurityCard() {
             {/* ------------------------------------------------- devices */}
             <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Devices</h3>
+                <h3 className="text-hec-h3 font-semibold text-hec-ink">Devices</h3>
                 {canUseBiometrics && (
                   <Button
                     size="sm"
@@ -123,21 +123,21 @@ export function AdminSecurityCard() {
               </div>
 
               {passkeys.length === 0 ? (
-                <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                <p className="rounded-hec-md border border-dashed border-hec-line p-3 text-hec-small text-hec-ink-soft">
                   {canUseBiometrics
                     ? "No devices yet. Adding this one means Face ID, Touch ID or Windows Hello instead of typing a passcode."
                     : "This browser cannot do biometrics, so the passcode below is how you get in here."}
                 </p>
               ) : (
-                <ul className="divide-y rounded-lg border">
+                <ul className="divide-y divide-hec-line rounded-hec-md border border-hec-line">
                   {passkeys.map((key) => (
                     <li key={key.id} className="flex items-center gap-3 p-3">
-                      <Fingerprint className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <Fingerprint className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">
+                        <span className="block whitespace-normal break-words text-hec-small font-medium text-hec-ink">
                           {key.device_label}
                         </span>
-                        <span className="block text-xs text-muted-foreground">
+                        <span className="block text-hec-caption tabular-nums text-hec-ink-soft">
                           Added {dayjs(key.created_at).format("D MMM YYYY")}
                           {key.last_used_at
                             ? ` · last used ${dayjs(key.last_used_at).format("D MMM, HH:mm")}`
@@ -146,8 +146,8 @@ export function AdminSecurityCard() {
                       </span>
                       <Button
                         size="sm"
-                        variant="ghost"
-                        className="shrink-0 text-destructive hover:text-destructive"
+                        variant="destructive-quiet"
+                        className="shrink-0"
                         disabled={!canRemoveDevice || removeDevice.isPending}
                         title={
                           canRemoveDevice
@@ -166,14 +166,14 @@ export function AdminSecurityCard() {
               {/* When enrolment fails, this is what makes the failure
                   reportable: the three facts that decide whether a passkey
                   can work on this machine at all. */}
-              <details className="rounded-lg border bg-muted/30 text-sm">
-                <summary className="cursor-pointer select-none p-3 text-xs font-medium text-muted-foreground">
+              <details className="rounded-hec-md border border-hec-line bg-hec-sunken/60 text-hec-small">
+                <summary className="flex min-h-hec-target cursor-pointer select-none items-center rounded-hec-md px-3 text-hec-caption font-medium text-hec-ink-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
                   Why is this device not working?
                 </summary>
-                <dl className="space-y-1.5 border-t p-3 text-xs">
+                <dl className="space-y-2 border-t border-hec-line p-3 text-hec-caption">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Built-in biometrics</dt>
-                    <dd className="font-medium">
+                    <dt className="text-hec-ink-soft">Built-in biometrics</dt>
+                    <dd className="text-right font-medium text-hec-ink">
                       {canUseBiometrics === undefined
                         ? "checking…"
                         : canUseBiometrics
@@ -182,17 +182,17 @@ export function AdminSecurityCard() {
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Passkeys bound to</dt>
-                    <dd className="font-mono font-medium">{status?.rpId ?? "—"}</dd>
+                    <dt className="text-hec-ink-soft">Passkeys bound to</dt>
+                    <dd className="break-all text-right font-mono font-medium text-hec-ink">{status?.rpId ?? "—"}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Secure connection</dt>
-                    <dd className="font-medium">
+                    <dt className="text-hec-ink-soft">Secure connection</dt>
+                    <dd className="text-right font-medium text-hec-ink">
                       {typeof window !== "undefined" && window.isSecureContext ? "yes" : "no — passkeys need HTTPS"}
                     </dd>
                   </div>
                 </dl>
-                <p className="border-t p-3 text-xs text-muted-foreground">
+                <p className="border-t border-hec-line p-3 text-hec-caption text-hec-ink-soft">
                   A passkey only works on the address it was created for. If you
                   reach this app on more than one address, add this device once
                   on each — or use the passcode, which works everywhere.
@@ -210,7 +210,7 @@ export function AdminSecurityCard() {
             {/* ------------------------------------------------ passcode */}
             <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Passcode</h3>
+                <h3 className="text-hec-h3 font-semibold text-hec-ink">Passcode</h3>
                 <Button
                   size="sm"
                   variant="outline"
@@ -223,12 +223,12 @@ export function AdminSecurityCard() {
               </div>
 
               {status?.hasPasscode ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-hec-small text-hec-ink-soft">
                   Set. Used when biometrics are unavailable or fail.
                 </p>
               ) : passkeys.length > 0 ? (
-                <p className="flex items-start gap-2 rounded-lg border border-amber-400/40 bg-amber-50 p-3 text-sm dark:bg-amber-950/30">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+                <p className="flex items-start gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-small text-hec-ink">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-hec-warn" aria-hidden />
                   <span>
                     <strong>Set a passcode.</strong> Your only way in is the device
                     above. If Windows Hello stops working, or that machine is
@@ -237,14 +237,14 @@ export function AdminSecurityCard() {
                   </span>
                 </p>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-hec-small text-hec-ink-soft">
                   Not set. Without one, a device that cannot do biometrics has no way in.
                 </p>
               )}
 
               {showPasscodeForm && (
                 <form
-                  className="space-y-2 rounded-lg border p-3"
+                  className="space-y-2 rounded-hec-md border border-hec-line p-3"
                   onSubmit={(e) => {
                     e.preventDefault();
                     changePasscode.mutate();

@@ -180,10 +180,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Assign student role
+    // Assign student role. An upsert: the auth.users trigger (handle_new_user)
+    // has already given a new account `student`, and a plain insert then hit
+    // UNIQUE (user_id, role) and this function deleted the account it had
+    // just made - every time.
     const { error: roleErr } = await admin
       .from("user_roles")
-      .insert({ user_id: newUserId, role: "student" });
+      .upsert({ user_id: newUserId, role: "student" }, { onConflict: "user_id,role" });
     if (roleErr) {
       // Best-effort cleanup
       await admin.auth.admin.deleteUser(newUserId).catch(() => {});

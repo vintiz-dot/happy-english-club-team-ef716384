@@ -55,8 +55,13 @@ verify_jwt = true
 [functions.smart-dictation]
 verify_jwt = true
 
+# F-02: the four dictionary / pronunciation functions below used to opt out
+# of the gateway check. Every caller in src/ is a signed-in page calling
+# supabase.functions.invoke, which always sends a token, so they are on like
+# everything else. The gateway check only proves the caller has the public
+# key; the real door is requireSpender (_lib/ai-gate.ts) inside each one.
 [functions.pronounce-syllables]
-verify_jwt = false
+verify_jwt = true
 
 # Awards points to the CALLER (identity from the JWT), so it must be authenticated.
 [functions.record-practice]
@@ -67,13 +72,13 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.pronounce-viseme]
-verify_jwt = false
+verify_jwt = true
 
 [functions.image-search]
-verify_jwt = false
+verify_jwt = true
 
 [functions.word-enrichment]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ocr-student-work]
 verify_jwt = true
@@ -147,10 +152,11 @@ verify_jwt = true
 # role check at all; the check is now in the function, and the setting
 # says so here too.
 #
-# The five functions above that opt out of JWT verification are
-# deliberate and unchanged. Written this way rather than with the literal
-# setting so that grepping this file for opted-out functions returns only
-# real entries.
+# Two functions opt out of JWT verification, both by necessity:
+# redeem-access-code (the person is locked out) and parent-video-page (a
+# parent opening a private link). Written this way rather than with the
+# literal setting so that grepping this file for opted-out functions
+# returns only real entries.
 # ---------------------------------------------------------------------
 
 [functions.admin-data-export]
@@ -190,6 +196,9 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.get-speech-token]
+verify_jwt = true
+
+[functions.guarded-change-refresh]
 verify_jwt = true
 
 [functions.image-generate]
@@ -250,6 +259,9 @@ verify_jwt = true
 
 [functions.parent-video-page]
 verify_jwt = false
+
+[functions.audit-eval-proxy]
+verify_jwt = true
 
 # Class recorder retention: the nightly job (runner token) or an admin only.
 [functions.recorder-retention]

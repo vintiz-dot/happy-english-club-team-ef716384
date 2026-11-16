@@ -10,6 +10,7 @@ import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButto
 import { useState, useMemo, useEffect } from "react";
 import { siblingRetryDelayMs } from "@/lib/siblingRetry";
 import { useNavigate } from "react-router-dom";
+import { useIvory } from "@/hooks/useIvory";
 
 interface TuitionData {
   studentId: string;
@@ -37,6 +38,10 @@ interface TuitionData {
 
 export function StudentTuitionOverview() {
   const navigate = useNavigate();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
+  // Ivory: amounts are ink, sans, tabular and never wrap (DESIGN_SYSTEM s.14).
+  const amount = "whitespace-nowrap text-right font-sans tabular-nums text-hec-ink";
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -202,7 +207,7 @@ export function StudentTuitionOverview() {
   if (studentsLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className={iv("h-6 w-6 animate-spin text-hec-ink-soft", "h-6 w-6 animate-spin text-muted-foreground")} />
       </div>
     );
   }
@@ -210,14 +215,14 @@ export function StudentTuitionOverview() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className={iv("flex flex-wrap items-center justify-between gap-4", "flex items-center justify-between")}>
+          <div className={iv("min-w-0", "")}>
             <CardTitle>Student Tuition Overview</CardTitle>
             <CardDescription>View tuition details for all active students</CardDescription>
           </div>
-          <div className="flex items-center gap-3">
+          <div className={iv("flex flex-wrap items-center gap-3", "flex items-center gap-3")}>
             <div className="flex items-center gap-2">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+              <ArrowUpDown className={iv("h-4 w-4 text-hec-ink-soft", "h-4 w-4 text-muted-foreground")} />
               <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue />
@@ -248,7 +253,7 @@ export function StudentTuitionOverview() {
       <CardContent>
         {tuitionLoading ? (
           <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className={iv("h-6 w-6 animate-spin text-hec-ink-soft", "h-6 w-6 animate-spin text-muted-foreground")} />
           </div>
         ) : (
           <Table>
@@ -282,35 +287,35 @@ export function StudentTuitionOverview() {
                 return (
                   <TableRow
                     key={student.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className={iv("cursor-pointer hover:bg-hec-sunken/60", "cursor-pointer hover:bg-muted/50")}
                     onClick={() => navigate(`/students/${student.id}`)}
                   >
-                    <TableCell className="font-medium">{student.full_name}</TableCell>
-                    <TableCell className="text-muted-foreground">{student.family?.name || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className={iv("whitespace-normal break-words font-medium text-hec-ink", "font-medium")}>{student.full_name}</TableCell>
+                    <TableCell className={iv("whitespace-normal break-words text-hec-ink-soft", "text-muted-foreground")}>{student.family?.name || "—"}</TableCell>
+                    <TableCell className={iv("whitespace-normal break-words text-hec-ink-soft", "text-muted-foreground")}>
                       {enrollments?.get(student.id)?.join(", ") || "—"}
                     </TableCell>
-                    <TableCell className="text-right">{tuition?.sessionCount || 0}</TableCell>
-                    <TableCell className="text-right">{tuition ? formatVND(tuition.baseAmount) : "—"}</TableCell>
-                    <TableCell className="text-right text-green-600">
+                    <TableCell className={iv(amount, "text-right")}>{tuition?.sessionCount || 0}</TableCell>
+                    <TableCell className={iv(amount, "text-right")}>{tuition ? formatVND(tuition.baseAmount) : "—"}</TableCell>
+                    <TableCell className={iv(amount, "text-right text-green-600")}>
                       {tuition && tuition.totalDiscount > 0 ? `-${formatVND(tuition.totalDiscount)}` : "—"}
                     </TableCell>
-                    <TableCell className="text-right font-semibold">
+                    <TableCell className={iv(`${amount} font-semibold`, "text-right font-semibold")}>
                       {tuition ? formatVND(tuition.totalAmount) : "—"}
                     </TableCell>
-                    <TableCell className="text-right font-medium text-blue-600">
+                    <TableCell className={iv(amount, "text-right font-medium text-blue-600")}>
                       {recordedPay > 0 ? formatVND(recordedPay) : "—"}
                     </TableCell>
                     <TableCell>
                       {balanceStatus === "credit" && balanceAmount > 0 && (
-                        <Badge variant="default" className="bg-green-600">
+                        <Badge variant={ivory ? "secondary" : "default"} className={iv("whitespace-nowrap tabular-nums", "bg-green-600")}>
                           Credit: {formatVND(balanceAmount)}
                         </Badge>
                       )}
                       {balanceStatus === "debt" && balanceAmount > 0 && (
-                        <Badge variant="destructive">Balance Due: {formatVND(balanceAmount)}</Badge>
+                        <Badge variant="destructive" className={iv("whitespace-nowrap tabular-nums", "")}>Balance Due: {formatVND(balanceAmount)}</Badge>
                       )}
-                      {balanceStatus === "settled" && <Badge variant="secondary">Settled</Badge>}
+                      {balanceStatus === "settled" && <Badge variant={ivory ? "success" : "secondary"}>Settled</Badge>}
                     </TableCell>
                     <TableCell>
                       {tuition?.siblingState?.status === "assigned" && tuition.siblingState.isWinner && (
@@ -320,12 +325,12 @@ export function StudentTuitionOverview() {
                         </Badge>
                       )}
                       {tuition?.siblingState?.status === "pending" && (
-                        <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                        <Badge variant={ivory ? "warning" : "outline"} className={iv("", "text-yellow-600 border-yellow-600")}>
                           Pending
                         </Badge>
                       )}
                       {tuition?.siblingState?.status === "unresolved" && (
-                        <Badge variant="outline" title={tuition.siblingState.reason}>
+                        <Badge variant={ivory ? "warning" : "outline"} title={tuition.siblingState.reason}>
                           Family discount calculating — updating automatically
                         </Badge>
                       )}

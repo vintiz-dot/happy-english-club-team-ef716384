@@ -1,0 +1,7301 @@
+{
+ "label": "before",
+ "runs": {
+  "ov-top-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-top-375-light.png",
+   "kb": 99
+  },
+  "ov-top-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-top-375-dark.png",
+   "kb": 99
+  },
+  "ov-top-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-top-1280-light.png",
+   "kb": 245
+  },
+  "ov-top-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-top-1280-dark.png",
+   "kb": 246
+  },
+  "ov-agenda-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-agenda-375-light.png",
+   "kb": 58
+  },
+  "ov-agenda-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-agenda-375-dark.png",
+   "kb": 58
+  },
+  "ov-agenda-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-agenda-1280-light.png",
+   "kb": 140
+  },
+  "ov-agenda-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-agenda-1280-dark.png",
+   "kb": 140
+  },
+  "ov-alerts-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-alerts-375-light.png",
+   "kb": 54
+  },
+  "ov-alerts-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-alerts-375-dark.png",
+   "kb": 54
+  },
+  "ov-alerts-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-alerts-1280-light.png",
+   "kb": 140
+  },
+  "ov-alerts-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-alerts-1280-dark.png",
+   "kb": 140
+  },
+  "ov-actions-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-actions-375-light.png",
+   "kb": 48
+  },
+  "ov-actions-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-actions-375-dark.png",
+   "kb": 48
+  },
+  "ov-actions-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-actions-1280-light.png",
+   "kb": 140
+  },
+  "ov-actions-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ov-actions-1280-dark.png",
+   "kb": 140
+  },
+  "banner-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Looks right\" 125x36",
+     "main:BUTTON \"Undo all of it\" 139x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"1 more to check\" 126x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "10",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2027",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-banner-375-light.png",
+   "kb": 97
+  },
+  "banner-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Looks right\" 125x36",
+     "main:BUTTON \"Undo all of it\" 139x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"1 more to check\" 126x36",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 263x40",
+     "main:INPUT \"\" 263x40",
+     "main:BUTTON \"All Students (All Classes)\" 263x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 263x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "10",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2027",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     }
+    ]
+   },
+   "shot": "before-banner-375-dark.png",
+   "kb": 97
+  },
+  "banner-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Looks right\" 125x36",
+     "main:BUTTON \"Undo all of it\" 139x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"1 more to check\" 126x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "10",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2027",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-banner-1280-light.png",
+   "kb": 234
+  },
+  "banner-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 3,
+     "from:classes:select": 2,
+     "from:enrollments:select": 4,
+     "from:expenditures:select": 1,
+     "from:families:select": 3,
+     "from:homework_submissions:select": 1,
+     "from:invoices:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Looks right\" 125x36",
+     "main:BUTTON \"Undo all of it\" 139x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"1 more to check\" 126x36",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"Reset Leaderboard for 2026-11\" 396x40",
+     "main:INPUT \"\" 396x40",
+     "main:BUTTON \"All Students (All Classes)\" 396x40",
+     "main:BUTTON \"Reset Points for 2026-11\" 396x40"
+    ],
+    "numbers": [
+     "-11",
+     "-11",
+     "-11",
+     "0",
+     "0",
+     "0.0",
+     "0.0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.440.000",
+     "10",
+     "12",
+     "14",
+     "18:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2027",
+     "7",
+     "8/8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".text-rose-500",
+       ".hover\\:bg-primary",
+       ".text-emerald-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-banner-1280-dark.png",
+   "kb": 235
+  },
+  "proposal-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Timer\" 77x30",
+     "header:BUTTON \"Dice\" 70x30",
+     "header:BUTTON \"Number\" 91x30",
+     "header:BUTTON \"Music\" 78x30",
+     "header:BUTTON \"Spinner\" 88x30",
+     "header:BUTTON \"Coin\" 71x30",
+     "header:BUTTON \"Voice\" 75x30",
+     "header:BUTTON \"Chime\" 81x30",
+     "header:BUTTON \"Noise\" 77x30",
+     "header:BUTTON \"Teams\" 80x30",
+     "header:BUTTON \"Attendance\" 108x30",
+     "header:BUTTON \"Board\" 78x30",
+     "header:BUTTON \"Ask AI\" 80x30",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"1m\" 53x32",
+     "other:BUTTON \"3m\" 53x32",
+     "other:BUTTON \"5m\" 53x32",
+     "other:BUTTON \"10m\" 53x32",
+     "other:BUTTON \"15m\" 53x32",
+     "other:BUTTON \"Custom length…\" 98x16",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"One die\" 91x32",
+     "other:BUTTON \"Two dice\" 91x32",
+     "other:BUTTON \"Three\" 91x32",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"Decrease Up to\" 40x42",
+     "other:INPUT \"Up to\" 58x24",
+     "other:BUTTON \"Increase Up to\" 40x42",
+     "other:BUTTON \"Decrease In steps of\" 40x42",
+     "other:INPUT \"In steps of\" 58x24",
+     "other:BUTTON \"Increase In steps of\" 40x42",
+     "other:BUTTON \"Stereo\" 105x32",
+     "other:BUTTON \"Mono\" 105x32",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"Edit names (6)\" 86x16",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"Silent\" 91x40",
+     "other:BUTTON \"Whisper\" 91x40",
+     "other:BUTTON \"Talk\" 91x40",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"Number of teams\" 139x32",
+     "other:BUTTON \"Team size\" 139x32",
+     "other:BUTTON \"2\" 53x40",
+     "other:BUTTON \"3\" 53x40",
+     "other:BUTTON \"4\" 53x40",
+     "other:BUTTON \"5\" 53x40",
+     "other:BUTTON \"6\" 53x40",
+     "other:BUTTON \"Confirm\" 75x36",
+     "other:BUTTON \"Change\" 74x36",
+     "other:BUTTON \"Cancel\" 66x36",
+     "other:BUTTON \"\" 36x36",
+     "other:BUTTON \"\" 36x36",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "180.000",
+     "2",
+     "2",
+     "200.000",
+     "210,000",
+     "210,000",
+     "260,000",
+     "6",
+     "60",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-input-field-name",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       "span[aria-valuemin=\"0\"]",
+       "span[aria-label=\"Bass\"] > span:nth-child(2) > .border-2[aria-valuemin=\"-12\"][ari",
+       "span[aria-label=\"Treble\"] > span:nth-child(2) > .border-2[aria-valuemin=\"-12\"][a"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".focus\\:ring-0"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(1) > .pt-0.p-6 > .gap-2.flex",
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(2) > .pt-0.p-6 > .gap-2.flex"
+      ]
+     }
+    ]
+   },
+   "shot": "before-proposal-375-light.png",
+   "kb": 55
+  },
+  "proposal-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Timer\" 77x30",
+     "header:BUTTON \"Dice\" 70x30",
+     "header:BUTTON \"Number\" 91x30",
+     "header:BUTTON \"Music\" 78x30",
+     "header:BUTTON \"Spinner\" 88x30",
+     "header:BUTTON \"Coin\" 71x30",
+     "header:BUTTON \"Voice\" 75x30",
+     "header:BUTTON \"Chime\" 81x30",
+     "header:BUTTON \"Noise\" 77x30",
+     "header:BUTTON \"Teams\" 80x30",
+     "header:BUTTON \"Attendance\" 108x30",
+     "header:BUTTON \"Board\" 78x30",
+     "header:BUTTON \"Ask AI\" 80x30",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"1m\" 53x32",
+     "other:BUTTON \"3m\" 53x32",
+     "other:BUTTON \"5m\" 53x32",
+     "other:BUTTON \"10m\" 53x32",
+     "other:BUTTON \"15m\" 53x32",
+     "other:BUTTON \"Custom length…\" 98x16",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"One die\" 91x32",
+     "other:BUTTON \"Two dice\" 91x32",
+     "other:BUTTON \"Three\" 91x32",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"Decrease Up to\" 40x42",
+     "other:INPUT \"Up to\" 58x24",
+     "other:BUTTON \"Increase Up to\" 40x42",
+     "other:BUTTON \"Decrease In steps of\" 40x42",
+     "other:INPUT \"In steps of\" 58x24",
+     "other:BUTTON \"Increase In steps of\" 40x42",
+     "other:BUTTON \"Stereo\" 105x32",
+     "other:BUTTON \"Mono\" 105x32",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"Edit names (6)\" 86x16",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"Silent\" 91x40",
+     "other:BUTTON \"Whisper\" 91x40",
+     "other:BUTTON \"Talk\" 91x40",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "header:BUTTON \"Show on Class screen\" 40x36",
+     "other:BUTTON \"Number of teams\" 139x32",
+     "other:BUTTON \"Team size\" 139x32",
+     "other:BUTTON \"2\" 53x40",
+     "other:BUTTON \"3\" 53x40",
+     "other:BUTTON \"4\" 53x40",
+     "other:BUTTON \"5\" 53x40",
+     "other:BUTTON \"6\" 53x40",
+     "header:BUTTON \"Previous day\" 36x36",
+     "header:BUTTON \"Next day\" 36x36",
+     "other:BUTTON \"Confirm\" 75x36",
+     "other:BUTTON \"Change\" 74x36",
+     "other:BUTTON \"Cancel\" 66x36",
+     "other:BUTTON \"\" 36x36",
+     "other:BUTTON \"\" 36x36",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "180.000",
+     "2",
+     "2",
+     "200.000",
+     "210,000",
+     "210,000",
+     "260,000",
+     "6",
+     "60",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-input-field-name",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       "span[aria-valuemin=\"0\"]",
+       "span[aria-label=\"Bass\"] > span:nth-child(2) > .border-2[aria-valuemin=\"-12\"][ari",
+       "span[aria-label=\"Treble\"] > span:nth-child(2) > .border-2[aria-valuemin=\"-12\"][a"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".focus\\:ring-0"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(1) > .pt-0.p-6 > .gap-2.flex",
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(2) > .pt-0.p-6 > .gap-2.flex"
+      ]
+     }
+    ]
+   },
+   "shot": "before-proposal-375-dark.png",
+   "kb": 55
+  },
+  "proposal-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Timer\" 77x30",
+     "header:BUTTON \"Dice\" 70x30",
+     "header:BUTTON \"Number\" 91x30",
+     "header:BUTTON \"Music\" 78x30",
+     "header:BUTTON \"Spinner\" 88x30",
+     "header:BUTTON \"Coin\" 71x30",
+     "header:BUTTON \"Voice\" 75x30",
+     "header:BUTTON \"Chime\" 81x30",
+     "header:BUTTON \"Noise\" 77x30",
+     "header:BUTTON \"Teams\" 80x30",
+     "header:BUTTON \"Attendance\" 108x30",
+     "header:BUTTON \"Board\" 78x30",
+     "header:BUTTON \"Ask AI\" 80x30",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"1m\" 64x32",
+     "other:BUTTON \"3m\" 64x32",
+     "other:BUTTON \"5m\" 64x32",
+     "other:BUTTON \"10m\" 64x32",
+     "other:BUTTON \"15m\" 64x32",
+     "other:BUTTON \"Custom length…\" 98x16",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"One die\" 109x32",
+     "other:BUTTON \"Two dice\" 109x32",
+     "other:BUTTON \"Three\" 109x32",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"Decrease Up to\" 40x42",
+     "other:INPUT \"Up to\" 84x24",
+     "other:BUTTON \"Increase Up to\" 40x42",
+     "other:BUTTON \"Decrease In steps of\" 40x42",
+     "other:INPUT \"In steps of\" 84x24",
+     "other:BUTTON \"Increase In steps of\" 40x42",
+     "other:BUTTON \"Stereo\" 131x32",
+     "other:BUTTON \"Mono\" 131x32",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"Edit names (6)\" 86x16",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"Silent\" 109x40",
+     "other:BUTTON \"Whisper\" 109x40",
+     "other:BUTTON \"Talk\" 109x40",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"Number of teams\" 123x32",
+     "other:BUTTON \"Team size\" 123x32",
+     "other:BUTTON \"2\" 47x40",
+     "other:BUTTON \"3\" 47x40",
+     "other:BUTTON \"4\" 47x40",
+     "other:BUTTON \"5\" 47x40",
+     "other:BUTTON \"6\" 47x40",
+     "header:BUTTON \"Previous day\" 36x36",
+     "header:BUTTON \"Next day\" 36x36",
+     "other:BUTTON \"Confirm\" 75x36",
+     "other:BUTTON \"Change\" 74x36",
+     "other:BUTTON \"Cancel\" 66x36",
+     "other:BUTTON \"\" 36x36",
+     "other:BUTTON \"\" 36x36",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "180.000",
+     "2",
+     "2",
+     "200.000",
+     "210,000",
+     "210,000",
+     "260,000",
+     "6",
+     "60",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-input-field-name",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       "span[aria-valuemin=\"0\"]",
+       "span[aria-label=\"Bass\"] > span:nth-child(2) > .border-2[aria-valuemin=\"-12\"][ari",
+       "span[aria-label=\"Treble\"] > span:nth-child(2) > .border-2[aria-valuemin=\"-12\"][a"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".focus\\:ring-0"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(1) > .pt-0.p-6 > .gap-2.flex",
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(2) > .pt-0.p-6 > .gap-2.flex",
+       "#radix-\\:rj\\:"
+      ]
+     }
+    ]
+   },
+   "shot": "before-proposal-1280-light.png",
+   "kb": 89
+  },
+  "proposal-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Timer\" 77x30",
+     "header:BUTTON \"Dice\" 70x30",
+     "header:BUTTON \"Number\" 91x30",
+     "header:BUTTON \"Music\" 78x30",
+     "header:BUTTON \"Spinner\" 88x30",
+     "header:BUTTON \"Coin\" 71x30",
+     "header:BUTTON \"Voice\" 75x30",
+     "header:BUTTON \"Chime\" 81x30",
+     "header:BUTTON \"Noise\" 77x30",
+     "header:BUTTON \"Teams\" 80x30",
+     "header:BUTTON \"Attendance\" 108x30",
+     "header:BUTTON \"Board\" 78x30",
+     "header:BUTTON \"Ask AI\" 80x30",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"1m\" 64x32",
+     "other:BUTTON \"3m\" 64x32",
+     "other:BUTTON \"5m\" 64x32",
+     "other:BUTTON \"10m\" 64x32",
+     "other:BUTTON \"15m\" 64x32",
+     "other:BUTTON \"Custom length…\" 98x16",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"One die\" 109x32",
+     "other:BUTTON \"Two dice\" 109x32",
+     "other:BUTTON \"Three\" 109x32",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"Decrease Up to\" 40x42",
+     "other:INPUT \"Up to\" 84x24",
+     "other:BUTTON \"Increase Up to\" 40x42",
+     "other:BUTTON \"Decrease In steps of\" 40x42",
+     "other:INPUT \"In steps of\" 84x24",
+     "other:BUTTON \"Increase In steps of\" 40x42",
+     "other:BUTTON \"Stereo\" 131x32",
+     "other:BUTTON \"Mono\" 131x32",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"Edit names (6)\" 86x16",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"Silent\" 109x40",
+     "other:BUTTON \"Whisper\" 109x40",
+     "other:BUTTON \"Talk\" 109x40",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "header:BUTTON \"Show on Class screen\" 111x36",
+     "other:BUTTON \"Number of teams\" 123x32",
+     "other:BUTTON \"Team size\" 123x32",
+     "other:BUTTON \"2\" 47x40",
+     "other:BUTTON \"3\" 47x40",
+     "other:BUTTON \"4\" 47x40",
+     "other:BUTTON \"5\" 47x40",
+     "other:BUTTON \"6\" 47x40",
+     "header:BUTTON \"Previous day\" 36x36",
+     "header:BUTTON \"Next day\" 36x36",
+     "other:BUTTON \"Confirm\" 75x36",
+     "other:BUTTON \"Change\" 74x36",
+     "other:BUTTON \"Cancel\" 66x36",
+     "other:BUTTON \"\" 36x36",
+     "other:BUTTON \"\" 36x36",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "180.000",
+     "2",
+     "2",
+     "200.000",
+     "210,000",
+     "210,000",
+     "260,000",
+     "6",
+     "60",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-input-field-name",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       "span[aria-valuemin=\"0\"]",
+       "span[aria-label=\"Bass\"] > span:nth-child(2) > .border-2[aria-valuemin=\"-12\"][ari",
+       "span[aria-label=\"Treble\"] > span:nth-child(2) > .border-2[aria-valuemin=\"-12\"][a"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".focus\\:ring-0"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(1) > .pt-0.p-6 > .gap-2.flex",
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(2) > .pt-0.p-6 > .gap-2.flex",
+       "#radix-\\:rj\\:"
+      ]
+     }
+    ]
+   },
+   "shot": "before-proposal-1280-dark.png",
+   "kb": 89
+  },
+  "ai-actions-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Looks right\" 125x36",
+     "main:BUTTON \"Undo all of it\" 139x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"1 more to check\" 126x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Open the student\" 135x36"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.296.000",
+     "10",
+     "10",
+     "10",
+     "10",
+     "11",
+     "16:00",
+     "16:00",
+     "16:00",
+     "16:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "2026,",
+     "2026,",
+     "2026,",
+     "2027",
+     "2027",
+     "2027",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "before-ai-actions-375-light.png",
+   "kb": 47
+  },
+  "ai-actions-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Looks right\" 125x36",
+     "main:BUTTON \"Undo all of it\" 139x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"1 more to check\" 126x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Open the student\" 135x36"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.296.000",
+     "10",
+     "10",
+     "10",
+     "10",
+     "11",
+     "16:00",
+     "16:00",
+     "16:00",
+     "16:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "2026,",
+     "2026,",
+     "2026,",
+     "2027",
+     "2027",
+     "2027",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "before-ai-actions-375-dark.png",
+   "kb": 47
+  },
+  "ai-actions-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Looks right\" 125x36",
+     "main:BUTTON \"Undo all of it\" 139x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"1 more to check\" 126x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Open the student\" 135x36"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.296.000",
+     "10",
+     "10",
+     "10",
+     "10",
+     "11",
+     "16:00",
+     "16:00",
+     "16:00",
+     "16:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "2026,",
+     "2026,",
+     "2026,",
+     "2027",
+     "2027",
+     "2027",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ai-actions-1280-light.png",
+   "kb": 127
+  },
+  "ai-actions-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Looks right\" 125x36",
+     "main:BUTTON \"Undo all of it\" 139x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"1 more to check\" 126x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Undo\" 91x36",
+     "main:BUTTON \"Open the student\" 135x36",
+     "main:BUTTON \"Open the student\" 135x36"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.296.000",
+     "10",
+     "10",
+     "10",
+     "10",
+     "11",
+     "16:00",
+     "16:00",
+     "16:00",
+     "16:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "2026,",
+     "2026,",
+     "2026,",
+     "2027",
+     "2027",
+     "2027",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ai-actions-1280-dark.png",
+   "kb": 127
+  },
+  "classes-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 293x40",
+     "main:BUTTON \"Select Teacher\" 293x40",
+     "main:BUTTON \"210,000 VND\" 293x40",
+     "main:INPUT \"\" 139x40",
+     "main:INPUT \"\" 139x40",
+     "main:BUTTON \"Add Session\" 131x36",
+     "main:BUTTON \"Create Class\" 293x40",
+     "main:BUTTON \"Rename\" 143x36",
+     "main:BUTTON \"Delete\" 143x36",
+     "main:BUTTON \"Rename\" 143x36",
+     "main:BUTTON \"Delete\" 143x36"
+    ],
+    "numbers": [
+     "1",
+     "180.000",
+     "2",
+     "2",
+     "200.000",
+     "210,000",
+     "210,000",
+     "260,000",
+     "6",
+     "60",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rg:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(1) > .pt-0.p-6 > .gap-2.flex",
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(2) > .pt-0.p-6 > .gap-2.flex"
+      ]
+     }
+    ]
+   },
+   "shot": "before-classes-375-light.png",
+   "kb": 53
+  },
+  "classes-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 293x40",
+     "main:BUTTON \"Select Teacher\" 293x40",
+     "main:BUTTON \"210,000 VND\" 293x40",
+     "main:INPUT \"\" 139x40",
+     "main:INPUT \"\" 139x40",
+     "main:BUTTON \"Add Session\" 131x36",
+     "main:BUTTON \"Create Class\" 293x40",
+     "main:BUTTON \"Rename\" 143x36",
+     "main:BUTTON \"Delete\" 143x36",
+     "main:BUTTON \"Rename\" 143x36",
+     "main:BUTTON \"Delete\" 143x36"
+    ],
+    "numbers": [
+     "1",
+     "180.000",
+     "2",
+     "2",
+     "200.000",
+     "210,000",
+     "210,000",
+     "260,000",
+     "6",
+     "60",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rg:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(1) > .pt-0.p-6 > .gap-2.flex",
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(2) > .pt-0.p-6 > .gap-2.flex"
+      ]
+     }
+    ]
+   },
+   "shot": "before-classes-375-dark.png",
+   "kb": 53
+  },
+  "classes-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 942x40",
+     "main:BUTTON \"Select Teacher\" 942x40",
+     "main:BUTTON \"210,000 VND\" 942x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 463x40",
+     "main:BUTTON \"Add Session\" 131x36",
+     "main:BUTTON \"Create Class\" 942x40",
+     "main:BUTTON \"Rename\" 131x36",
+     "main:BUTTON \"Delete\" 131x36",
+     "main:BUTTON \"Rename\" 131x36",
+     "main:BUTTON \"Delete\" 131x36"
+    ],
+    "numbers": [
+     "1",
+     "180.000",
+     "2",
+     "2",
+     "200.000",
+     "210,000",
+     "210,000",
+     "260,000",
+     "6",
+     "60",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rg:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(1) > .pt-0.p-6 > .gap-2.flex",
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(2) > .pt-0.p-6 > .gap-2.flex"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-classes-1280-light.png",
+   "kb": 107
+  },
+  "classes-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 942x40",
+     "main:BUTTON \"Select Teacher\" 942x40",
+     "main:BUTTON \"210,000 VND\" 942x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 463x40",
+     "main:BUTTON \"Add Session\" 131x36",
+     "main:BUTTON \"Create Class\" 942x40",
+     "main:BUTTON \"Rename\" 131x36",
+     "main:BUTTON \"Delete\" 131x36",
+     "main:BUTTON \"Rename\" 131x36",
+     "main:BUTTON \"Delete\" 131x36"
+    ],
+    "numbers": [
+     "1",
+     "180.000",
+     "2",
+     "2",
+     "200.000",
+     "210,000",
+     "210,000",
+     "260,000",
+     "6",
+     "60",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rg:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(1) > .pt-0.p-6 > .gap-2.flex",
+       ".surface-2.lift.hover\\:border-primary\\/40:nth-child(2) > .pt-0.p-6 > .gap-2.flex"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-classes-1280-dark.png",
+   "kb": 107
+  },
+  "automation-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Bulk Operations\" 126x32",
+     "main:BUTTON \"Repair & Debug\" 126x32",
+     "main:BUTTON \"Gamification\" 105x32",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \"Generate Schedule\" 261x40",
+     "main:BUTTON \"Check Status\" 139x36"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "before-automation-375-light.png",
+   "kb": 77
+  },
+  "automation-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Bulk Operations\" 126x32",
+     "main:BUTTON \"Repair & Debug\" 126x32",
+     "main:BUTTON \"Gamification\" 105x32",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \"Generate Schedule\" 261x40",
+     "main:BUTTON \"Check Status\" 139x36"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "before-automation-375-dark.png",
+   "kb": 76
+  },
+  "automation-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Bulk Operations\" 126x32",
+     "main:BUTTON \"Repair & Debug\" 126x32",
+     "main:BUTTON \"Gamification\" 105x32",
+     "main:INPUT \"\" 910x40",
+     "main:BUTTON \"Generate Schedule\" 910x40",
+     "main:BUTTON \"Check Status\" 139x36"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-automation-1280-light.png",
+   "kb": 148
+  },
+  "automation-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Bulk Operations\" 126x32",
+     "main:BUTTON \"Repair & Debug\" 126x32",
+     "main:BUTTON \"Gamification\" 105x32",
+     "main:INPUT \"\" 910x40",
+     "main:BUTTON \"Generate Schedule\" 910x40",
+     "main:BUTTON \"Check Status\" 139x36"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-automation-1280-dark.png",
+   "kb": 148
+  },
+  "automation-repair-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Bulk Operations\" 126x32",
+     "main:BUTTON \"Repair & Debug\" 126x32",
+     "main:BUTTON \"Gamification\" 105x32",
+     "main:BUTTON \"Select student\" 123x40",
+     "main:BUTTON \"Select class\" 123x40",
+     "main:INPUT \"\" 123x40",
+     "main:INPUT \"\" 123x40",
+     "main:BUTTON \"Present\" 261x40",
+     "main:BUTTON \"Preview\" 185x40",
+     "main:BUTTON \"Reset\" 68x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "button[aria-controls=\"radix-:r11:\"]",
+       "button[aria-controls=\"radix-:r12:\"]",
+       "button[aria-controls=\"radix-:r13:\"]"
+      ]
+     },
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".space-y-2:nth-child(3) > input",
+       ".space-y-2:nth-child(4) > input"
+      ]
+     }
+    ]
+   },
+   "shot": "before-automation-repair-375-light.png",
+   "kb": 77
+  },
+  "automation-repair-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Bulk Operations\" 126x32",
+     "main:BUTTON \"Repair & Debug\" 126x32",
+     "main:BUTTON \"Gamification\" 105x32",
+     "main:BUTTON \"Select student\" 123x40",
+     "main:BUTTON \"Select class\" 123x40",
+     "main:INPUT \"\" 123x40",
+     "main:INPUT \"\" 123x40",
+     "main:BUTTON \"Present\" 261x40",
+     "main:BUTTON \"Preview\" 185x40",
+     "main:BUTTON \"Reset\" 68x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "button[aria-controls=\"radix-:r11:\"]",
+       "button[aria-controls=\"radix-:r12:\"]",
+       "button[aria-controls=\"radix-:r13:\"]"
+      ]
+     },
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".space-y-2:nth-child(3) > input",
+       ".space-y-2:nth-child(4) > input"
+      ]
+     }
+    ]
+   },
+   "shot": "before-automation-repair-375-dark.png",
+   "kb": 77
+  },
+  "automation-repair-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Bulk Operations\" 126x32",
+     "main:BUTTON \"Repair & Debug\" 126x32",
+     "main:BUTTON \"Gamification\" 105x32",
+     "main:BUTTON \"Select student\" 447x40",
+     "main:BUTTON \"Select class\" 447x40",
+     "main:INPUT \"\" 447x40",
+     "main:INPUT \"\" 447x40",
+     "main:BUTTON \"Present\" 910x40",
+     "main:BUTTON \"Preview\" 834x40",
+     "main:BUTTON \"Reset\" 68x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "button[aria-controls=\"radix-:r11:\"]",
+       "button[aria-controls=\"radix-:r12:\"]",
+       "button[aria-controls=\"radix-:r13:\"]"
+      ]
+     },
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".space-y-2:nth-child(3) > input",
+       ".space-y-2:nth-child(4) > input"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-automation-repair-1280-light.png",
+   "kb": 146
+  },
+  "automation-repair-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Bulk Operations\" 126x32",
+     "main:BUTTON \"Repair & Debug\" 126x32",
+     "main:BUTTON \"Gamification\" 105x32",
+     "main:BUTTON \"Select student\" 447x40",
+     "main:BUTTON \"Select class\" 447x40",
+     "main:INPUT \"\" 447x40",
+     "main:INPUT \"\" 447x40",
+     "main:BUTTON \"Present\" 910x40",
+     "main:BUTTON \"Preview\" 834x40",
+     "main:BUTTON \"Reset\" 68x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "button[aria-controls=\"radix-:r11:\"]",
+       "button[aria-controls=\"radix-:r12:\"]",
+       "button[aria-controls=\"radix-:r13:\"]"
+      ]
+     },
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".space-y-2:nth-child(3) > input",
+       ".space-y-2:nth-child(4) > input"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-automation-repair-1280-dark.png",
+   "kb": 146
+  },
+  "data-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"Export to JSON\" 161x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "before-data-375-light.png",
+   "kb": 48
+  },
+  "data-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"Export to JSON\" 161x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "before-data-375-dark.png",
+   "kb": 46
+  },
+  "data-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"Export to JSON\" 161x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-1280-light.png",
+   "kb": 106
+  },
+  "data-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"Export to JSON\" 161x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-1280-dark.png",
+   "kb": 100
+  },
+  "data-integrity-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"Run Scan\" 126x41"
+    ],
+    "numbers": [
+     "-0003",
+     "-0004",
+     "0",
+     "2"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".z-\\[100\\]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-integrity-375-light.png",
+   "kb": 73
+  },
+  "data-integrity-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"Run Scan\" 126x41"
+    ],
+    "numbers": [
+     "-0003",
+     "-0004",
+     "0",
+     "2"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".z-\\[100\\]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-integrity-375-dark.png",
+   "kb": 73
+  },
+  "data-integrity-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"Run Scan\" 126x41"
+    ],
+    "numbers": [
+     "-0003",
+     "-0004",
+     "0",
+     "2"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 3,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".z-\\[100\\]",
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-integrity-1280-light.png",
+   "kb": 118
+  },
+  "data-integrity-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"Run Scan\" 126x41"
+    ],
+    "numbers": [
+     "-0003",
+     "-0004",
+     "0",
+     "2"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 3,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".z-\\[100\\]",
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-integrity-1280-dark.png",
+   "kb": 128
+  },
+  "data-logs-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:INPUT \"\" 47x40",
+     "main:BUTTON \"100\" 129x40",
+     "main:BUTTON \"Load\" 98x41"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "100",
+     "11/10/2026,",
+     "11/8/2026,",
+     "11/9/2026,",
+     "3:00:00",
+     "3:00:00",
+     "4:30:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ":root",
+       ":root"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".right-2",
+       ".border-input"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".z-\\[100\\]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-logs-375-light.png",
+   "kb": 59
+  },
+  "data-logs-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:INPUT \"\" 47x40",
+     "main:BUTTON \"100\" 129x40",
+     "main:BUTTON \"Load\" 98x41"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "100",
+     "11/10/2026,",
+     "11/8/2026,",
+     "11/9/2026,",
+     "3:00:00",
+     "3:00:00",
+     "4:30:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".right-2",
+       ".border-input"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".z-\\[100\\]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-logs-375-dark.png",
+   "kb": 66
+  },
+  "data-logs-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:INPUT \"\" 702x40",
+     "main:BUTTON \"100\" 129x40",
+     "main:BUTTON \"Load\" 98x41"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "100",
+     "11/10/2026,",
+     "11/8/2026,",
+     "11/9/2026,",
+     "3:00:00",
+     "3:00:00",
+     "4:30:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 3,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".right-2",
+       ".border-input"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".z-\\[100\\]",
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-logs-1280-light.png",
+   "kb": 127
+  },
+  "data-logs-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:INPUT \"\" 702x40",
+     "main:BUTTON \"100\" 129x40",
+     "main:BUTTON \"Load\" 98x41"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "100",
+     "11/10/2026,",
+     "11/8/2026,",
+     "11/9/2026,",
+     "3:00:00",
+     "3:00:00",
+     "4:30:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 3,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".right-2",
+       ".border-input"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".z-\\[100\\]",
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-logs-1280-dark.png",
+   "kb": 124
+  },
+  "data-demo-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"\" 28x24",
+     "main:INPUT \"\" 210x40",
+     "main:BUTTON \"Suggest\" 78x36",
+     "main:BUTTON \"Update password\" 168x40",
+     "main:BUTTON \"Switch off demo\" 163x40"
+    ],
+    "numbers": [
+     "11/1/2026,",
+     "3:00:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".h-6"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-demo-375-light.png",
+   "kb": 66
+  },
+  "data-demo-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"\" 28x24",
+     "main:INPUT \"\" 210x40",
+     "main:BUTTON \"Suggest\" 78x36",
+     "main:BUTTON \"Update password\" 168x40",
+     "main:BUTTON \"Switch off demo\" 163x40"
+    ],
+    "numbers": [
+     "11/1/2026,",
+     "3:00:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".h-6"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-demo-375-dark.png",
+   "kb": 66
+  },
+  "data-demo-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"\" 28x24",
+     "main:INPUT \"\" 857x40",
+     "main:BUTTON \"Suggest\" 77x36",
+     "main:BUTTON \"Update password\" 166x40",
+     "main:BUTTON \"Switch off demo\" 161x40"
+    ],
+    "numbers": [
+     "11/1/2026,",
+     "3:00:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".h-6"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-demo-1280-light.png",
+   "kb": 135
+  },
+  "data-demo-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Export\" 66x32",
+     "main:BUTTON \"Import\" 68x32",
+     "main:BUTTON \"Integrity\" 78x32",
+     "main:BUTTON \"Activity Logs\" 105x32",
+     "main:BUTTON \"Users\" 59x32",
+     "main:BUTTON \"Account Management\" 165x32",
+     "main:BUTTON \"Demo Access\" 108x32",
+     "main:BUTTON \"\" 28x24",
+     "main:INPUT \"\" 857x40",
+     "main:BUTTON \"Suggest\" 77x36",
+     "main:BUTTON \"Update password\" 166x40",
+     "main:BUTTON \"Switch off demo\" 161x40"
+    ],
+    "numbers": [
+     "11/1/2026,",
+     "3:00:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".h-6"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-data-demo-1280-dark.png",
+   "kb": 135
+  },
+  "activity-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-activity-logs:select": 1,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"Search the activity log\" 293x40",
+     "main:BUTTON \"Filter by person\" 293x40",
+     "main:BUTTON \"Filter by record type\" 293x40",
+     "main:BUTTON \"Filter by kind of change\" 293x40",
+     "main:BUTTON \"Previous\" 80x36",
+     "main:BUTTON \"Next\" 56x36"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "1",
+     "10",
+     "15:00",
+     "15:00",
+     "16:30",
+     "3",
+     "3",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "before-activity-375-light.png",
+   "kb": 50
+  },
+  "activity-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-activity-logs:select": 1,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"Search the activity log\" 293x40",
+     "main:BUTTON \"Filter by person\" 293x40",
+     "main:BUTTON \"Filter by record type\" 293x40",
+     "main:BUTTON \"Filter by kind of change\" 293x40",
+     "main:BUTTON \"Previous\" 80x36",
+     "main:BUTTON \"Next\" 56x36"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "1",
+     "10",
+     "15:00",
+     "15:00",
+     "16:30",
+     "3",
+     "3",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "before-activity-375-dark.png",
+   "kb": 50
+  },
+  "activity-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-activity-logs:select": 1,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"Search the activity log\" 230x40",
+     "main:BUTTON \"Filter by person\" 230x40",
+     "main:BUTTON \"Filter by record type\" 230x40",
+     "main:BUTTON \"Filter by kind of change\" 230x40",
+     "main:BUTTON \"Previous\" 80x36",
+     "main:BUTTON \"Next\" 56x36"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "1",
+     "10",
+     "15:00",
+     "15:00",
+     "16:30",
+     "3",
+     "3",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-activity-1280-light.png",
+   "kb": 102
+  },
+  "activity-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-activity-logs:select": 1,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"Search the activity log\" 230x40",
+     "main:BUTTON \"Filter by person\" 230x40",
+     "main:BUTTON \"Filter by record type\" 230x40",
+     "main:BUTTON \"Filter by kind of change\" 230x40",
+     "main:BUTTON \"Previous\" 80x36",
+     "main:BUTTON \"Next\" 56x36"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "1",
+     "10",
+     "15:00",
+     "15:00",
+     "16:30",
+     "3",
+     "3",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-activity-1280-dark.png",
+   "kb": 102
+  },
+  "activity-open-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-activity-logs:select": 1,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"Search the activity log\" 296x40",
+     "main:BUTTON \"Filter by person\" 296x40",
+     "main:BUTTON \"Filter by record type\" 296x40",
+     "main:BUTTON \"Filter by kind of change\" 296x40",
+     "main:BUTTON \"Previous\" 81x36",
+     "main:BUTTON \"Next\" 57x36"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "0",
+     "1",
+     "1.296.000",
+     "10",
+     "10.0.0.1",
+     "15:00",
+     "15:00",
+     "16:30",
+     "3",
+     "3",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "before-activity-open-375-light.png",
+   "kb": 50
+  },
+  "activity-open-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-activity-logs:select": 1,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"Search the activity log\" 296x40",
+     "main:BUTTON \"Filter by person\" 296x40",
+     "main:BUTTON \"Filter by record type\" 296x40",
+     "main:BUTTON \"Filter by kind of change\" 296x40",
+     "main:BUTTON \"Previous\" 81x36",
+     "main:BUTTON \"Next\" 57x36"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "0",
+     "1",
+     "1.296.000",
+     "10",
+     "10.0.0.1",
+     "15:00",
+     "15:00",
+     "16:30",
+     "3",
+     "3",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "before-activity-open-375-dark.png",
+   "kb": 50
+  },
+  "activity-open-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-activity-logs:select": 1,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"Search the activity log\" 232x40",
+     "main:BUTTON \"Filter by person\" 232x40",
+     "main:BUTTON \"Filter by record type\" 232x40",
+     "main:BUTTON \"Filter by kind of change\" 232x40",
+     "main:BUTTON \"Previous\" 81x36",
+     "main:BUTTON \"Next\" 57x36"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "0",
+     "1",
+     "1.296.000",
+     "10",
+     "10.0.0.1",
+     "15:00",
+     "15:00",
+     "16:30",
+     "3",
+     "3",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-activity-open-1280-light.png",
+   "kb": 108
+  },
+  "activity-open-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-activity-logs:select": 1,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"Search the activity log\" 232x40",
+     "main:BUTTON \"Filter by person\" 232x40",
+     "main:BUTTON \"Filter by record type\" 232x40",
+     "main:BUTTON \"Filter by kind of change\" 232x40",
+     "main:BUTTON \"Previous\" 81x36",
+     "main:BUTTON \"Next\" 57x36"
+    ],
+    "numbers": [
+     "-0001",
+     "-0013",
+     "-05",
+     "0",
+     "1",
+     "1.296.000",
+     "10",
+     "10.0.0.1",
+     "15:00",
+     "15:00",
+     "16:30",
+     "3",
+     "3",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-activity-open-1280-dark.png",
+   "kb": 108
+  },
+  "account-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:bank_info:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 259x40",
+     "main:BUTTON \"Save\" 53x36",
+     "main:BUTTON \"Add this device\" 146x36",
+     "main:BUTTON \"Change\" 96x36",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:BUTTON \"Save Changes\" 293x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       "input[type=\"file\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-account-375-light.png",
+   "kb": 49
+  },
+  "account-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:bank_info:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 259x40",
+     "main:BUTTON \"Save\" 53x36",
+     "main:BUTTON \"Add this device\" 146x36",
+     "main:BUTTON \"Change\" 96x36",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:BUTTON \"Save Changes\" 293x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       "input[type=\"file\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-account-375-dark.png",
+   "kb": 49
+  },
+  "account-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:bank_info:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 908x40",
+     "main:BUTTON \"Save\" 53x36",
+     "main:BUTTON \"Add this device\" 146x36",
+     "main:BUTTON \"Change\" 96x36",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 942x40",
+     "main:BUTTON \"Save Changes\" 119x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       "input[type=\"file\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-account-1280-light.png",
+   "kb": 106
+  },
+  "account-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:bank_info:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 908x40",
+     "main:BUTTON \"Save\" 53x36",
+     "main:BUTTON \"Add this device\" 146x36",
+     "main:BUTTON \"Change\" 96x36",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 942x40",
+     "main:BUTTON \"Save Changes\" 119x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       "input[type=\"file\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-account-1280-dark.png",
+   "kb": 106
+  },
+  "account-keys-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:bank_info:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 259x40",
+     "main:BUTTON \"Save\" 53x36",
+     "main:BUTTON \"Add this device\" 146x36",
+     "main:BUTTON \"Remove Front-desk laptop (Wind\" 40x36",
+     "main:BUTTON \"Set one\" 96x36",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:BUTTON \"Save Changes\" 293x40"
+    ],
+    "numbers": [
+     "1",
+     "10",
+     "16:30",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       "input[type=\"file\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-account-keys-375-light.png",
+   "kb": 58
+  },
+  "account-keys-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:bank_info:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:INPUT \"\" 259x40",
+     "main:BUTTON \"Save\" 53x36",
+     "main:BUTTON \"Add this device\" 146x36",
+     "main:BUTTON \"Remove Front-desk laptop (Wind\" 40x36",
+     "main:BUTTON \"Set one\" 96x36",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:BUTTON \"Save Changes\" 293x40"
+    ],
+    "numbers": [
+     "1",
+     "10",
+     "16:30",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       "input[type=\"file\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-account-keys-375-dark.png",
+   "kb": 58
+  },
+  "account-keys-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:bank_info:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 908x40",
+     "main:BUTTON \"Save\" 53x36",
+     "main:BUTTON \"Add this device\" 146x36",
+     "main:BUTTON \"Remove Front-desk laptop (Wind\" 40x36",
+     "main:BUTTON \"Set one\" 96x36",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 942x40",
+     "main:BUTTON \"Save Changes\" 119x40"
+    ],
+    "numbers": [
+     "1",
+     "10",
+     "16:30",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       "input[type=\"file\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-account-keys-1280-light.png",
+   "kb": 116
+  },
+  "account-keys-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:bank_info:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:INPUT \"\" 908x40",
+     "main:BUTTON \"Save\" 53x36",
+     "main:BUTTON \"Add this device\" 146x36",
+     "main:BUTTON \"Remove Front-desk laptop (Wind\" 40x36",
+     "main:BUTTON \"Set one\" 96x36",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 463x40",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 942x40",
+     "main:BUTTON \"Save Changes\" 119x40"
+    ],
+    "numbers": [
+     "1",
+     "10",
+     "16:30",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "label",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       "input[type=\"file\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-account-keys-1280-dark.png",
+   "kb": 116
+  },
+  "gate-locked-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 8,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 293x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 2
+    },
+    "rules": []
+   },
+   "shot": "before-gate-locked-375-light.png",
+   "kb": 13
+  },
+  "gate-locked-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 8,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 293x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 2
+    },
+    "rules": []
+   },
+   "shot": "before-gate-locked-375-dark.png",
+   "kb": 13
+  },
+  "gate-locked-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 8,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 334x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 2
+    },
+    "rules": []
+   },
+   "shot": "before-gate-locked-1280-light.png",
+   "kb": 16
+  },
+  "gate-locked-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 8,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 334x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 2
+    },
+    "rules": []
+   },
+   "shot": "before-gate-locked-1280-dark.png",
+   "kb": 16
+  },
+  "gate-enrol-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 8,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 293x40",
+     "other:INPUT \"\" 293x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 2
+    },
+    "rules": []
+   },
+   "shot": "before-gate-enrol-375-light.png",
+   "kb": 27
+  },
+  "gate-enrol-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 8,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 293x40",
+     "other:INPUT \"\" 293x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 2
+    },
+    "rules": []
+   },
+   "shot": "before-gate-enrol-375-dark.png",
+   "kb": 27
+  },
+  "gate-enrol-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 8,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 334x40",
+     "other:INPUT \"\" 334x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 2
+    },
+    "rules": []
+   },
+   "shot": "before-gate-enrol-1280-light.png",
+   "kb": 32
+  },
+  "gate-enrol-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 8,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 334x40",
+     "other:INPUT \"\" 334x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 2
+    },
+    "rules": []
+   },
+   "shot": "before-gate-enrol-1280-dark.png",
+   "kb": 32
+  }
+ }
+}

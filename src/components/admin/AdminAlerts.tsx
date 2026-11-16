@@ -221,13 +221,13 @@ export function AdminAlerts() {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" /> Alerts
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-hec-ink-soft" aria-hidden /> Alerts
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-2">
-            {[1, 2].map((i) => <div key={i} className="h-10 bg-muted rounded-lg" />)}
+            {[1, 2].map((i) => <div key={i} className="h-11 rounded-hec-md bg-hec-sunken" />)}
           </div>
         </CardContent>
       </Card>
@@ -236,33 +236,33 @@ export function AdminAlerts() {
 
   if (!alerts || alerts.length === 0) {
     return (
-      <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+      <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-              <AlertTriangle className="h-4 w-4 text-white" />
+          <CardTitle className="flex items-center gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md bg-hec-leaf-tint text-hec-leaf">
+              <AlertTriangle className="h-5 w-5" aria-hidden />
             </div>
             Alerts
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-4">All clear — no issues! ✅</p>
+          <p className="py-4 text-center text-hec-small text-hec-ink-soft">All clear — no issues! ✅</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+    <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center">
-              <AlertTriangle className="h-4 w-4 text-white" />
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md bg-hec-danger-tint text-hec-danger">
+              <AlertTriangle className="h-5 w-5" aria-hidden />
             </div>
             Alerts
           </CardTitle>
-          <Badge variant="destructive" className="text-xs">
+          <Badge variant="destructive" className="tabular-nums">
             {alerts.length}
           </Badge>
         </div>
@@ -273,35 +273,43 @@ export function AdminAlerts() {
           const content = (
             <motion.div
               key={alert.id}
-              initial={{ opacity: 0, x: -10 }}
+              initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
               className={cn(
-                "flex items-start gap-3 p-3 rounded-lg border transition-colors",
-                alert.link && "cursor-pointer hover:bg-muted/60",
-                alert.severity === "high" && "bg-destructive/5 border-destructive/20",
-                alert.severity === "medium" && "bg-warning/5 border-warning/20",
-                alert.severity === "low" && "bg-muted/40 border-border/50",
+                "flex min-h-hec-target items-start gap-3 rounded-hec-md border p-3 transition-shadow duration-hec-1 ease-hec",
+                alert.link && "cursor-pointer hover:shadow-hec-1",
+                alert.severity === "high" && "border-hec-danger/30 bg-hec-danger-tint",
+                alert.severity === "medium" && "border-hec-warn/30 bg-hec-warn-tint",
+                alert.severity === "low" && "border-hec-line bg-hec-sunken",
               )}
             >
-              <Icon className={cn(
-                "h-4 w-4 mt-0.5 shrink-0",
-                alert.severity === "high" && "text-destructive",
-                alert.severity === "medium" && "text-warning",
-                alert.severity === "low" && "text-muted-foreground",
+              <Icon aria-hidden className={cn(
+                "mt-0.5 h-4 w-4 shrink-0",
+                alert.severity === "high" && "text-hec-danger",
+                alert.severity === "medium" && "text-hec-warn",
+                alert.severity === "low" && "text-hec-ink-soft",
               )} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">{alert.title}</p>
-                <p className="text-xs text-muted-foreground">{alert.detail}</p>
+                <p className="whitespace-normal break-words text-hec-small font-medium text-hec-ink">{alert.title}</p>
+                <p className="break-words text-hec-caption tabular-nums text-hec-ink-soft">{alert.detail}</p>
               </div>
               {alert.link && (
-                <ChevronRight className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
               )}
             </motion.div>
           );
 
           if (alert.link) {
-            return <Link key={alert.id} to={alert.link}>{content}</Link>;
+            return (
+              <Link
+                key={alert.id}
+                to={alert.link}
+                className="block rounded-hec-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+              >
+                {content}
+              </Link>
+            );
           }
           return content;
         })}

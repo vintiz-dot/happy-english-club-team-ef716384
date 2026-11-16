@@ -1,0 +1,577 @@
+{
+ "label": "w320",
+ "runs": {
+  "asg-list-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 2,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:SPAN \"\" 98x24",
+     "main:BUTTON \"bold\" 28x24",
+     "main:BUTTON \"italic\" 28x24",
+     "main:BUTTON \"underline\" 28x24",
+     "main:BUTTON \"strike\" 28x24",
+     "main:SPAN \"\" 28x24",
+     "main:SPAN \"\" 28x24",
+     "main:BUTTON \"list: ordered\" 28x24",
+     "main:BUTTON \"list: bullet\" 28x24",
+     "main:BUTTON \"script: sub\" 28x24",
+     "main:BUTTON \"script: super\" 28x24",
+     "main:SPAN \"\" 28x24",
+     "main:BUTTON \"link\" 28x24",
+     "main:BUTTON \"image\" 28x24",
+     "main:BUTTON \"clean\" 28x24"
+    ],
+    "numbers": [
+     "01,",
+     "1",
+     "1",
+     "1",
+     "15,",
+     "16,",
+     "2",
+     "20,",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "3",
+     "3",
+     "3:00",
+     "3:00",
+     "5"
+    ],
+    "dialogNumbers": []
+   },
+   "shot": "w320-asg-list-320-light.png",
+   "kb": 48
+  },
+  "asg-grade-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 2,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "22",
+     "25,",
+     "25,",
+     "25,",
+     "27,",
+     "27,",
+     "3",
+     "3",
+     "3",
+     "3",
+     "5,"
+    ],
+    "dialogNumbers": []
+   },
+   "shot": "w320-asg-grade-320-light.png",
+   "kb": 42
+  },
+  "asg-offline-form-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 2,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "01,",
+     "1",
+     "1",
+     "1",
+     "15,",
+     "16,",
+     "2",
+     "20,",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "3",
+     "3",
+     "3:00",
+     "3:00",
+     "5"
+    ],
+    "dialogNumbers": [
+     "-100",
+     "100"
+    ]
+   },
+   "shot": "w320-asg-offline-form-320-light.png",
+   "kb": 44
+  },
+  "asg-rubric-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 2,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "01,",
+     "1",
+     "1",
+     "1",
+     "15,",
+     "16,",
+     "2",
+     "20,",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "3",
+     "3",
+     "3:00",
+     "3:00",
+     "5"
+    ],
+    "dialogNumbers": [
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "shot": "w320-asg-rubric-320-light.png",
+   "kb": 39
+  },
+  "res-list-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 18,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:resource_class_access:select": 1,
+     "from:resources:select": 2,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0.3",
+     "0.8",
+     "1",
+     "1",
+     "11/1/2026",
+     "11/2/2026",
+     "11/3/2026",
+     "11/4/2026",
+     "2",
+     "2.3",
+     "3",
+     "4"
+    ],
+    "dialogNumbers": []
+   },
+   "shot": "w320-res-list-320-light.png",
+   "kb": 37
+  },
+  "res-upload-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 18,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:resource_class_access:select": 1,
+     "from:resources:select": 2,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 44x24",
+     "other:BUTTON \"\" 44x24",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0.3",
+     "0.8",
+     "1",
+     "1",
+     "11/1/2026",
+     "11/2/2026",
+     "11/3/2026",
+     "11/4/2026",
+     "2",
+     "2.3",
+     "3",
+     "4"
+    ],
+    "dialogNumbers": [
+     "1",
+     "2"
+    ]
+   },
+   "shot": "w320-res-upload-320-light.png",
+   "kb": 41
+  },
+  "vid-students-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0/1",
+     "0/1",
+     "0/1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1,",
+     "1/1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2,",
+     "3",
+     "4,",
+     "5:00",
+     "5:00",
+     "5:00",
+     "78",
+     "78",
+     "84",
+     "86",
+     "86"
+    ],
+    "dialogNumbers": []
+   },
+   "shot": "w320-vid-students-320-light.png",
+   "kb": 39
+  },
+  "vid-review-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"Track this gap\" 16x16"
+    ],
+    "numbers": [
+     "0/1",
+     "0/1",
+     "0/1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1,",
+     "1/1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2,",
+     "3",
+     "4,",
+     "5:00",
+     "5:00",
+     "5:00",
+     "78",
+     "78",
+     "84",
+     "86",
+     "86"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "0",
+     "0:04",
+     "0:10.",
+     "0:21",
+     "0:40",
+     "0:58",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "4",
+     "4",
+     "4",
+     "69",
+     "69/100",
+     "70",
+     "75",
+     "82"
+    ]
+   },
+   "shot": "w320-vid-review-320-light.png",
+   "kb": 45
+  },
+  "exam-teacher-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 18,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:exam_reports:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1,",
+     "15/20.",
+     "18/20.",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "28,",
+     "30,",
+     "4,",
+     "5,"
+    ],
+    "dialogNumbers": []
+   },
+   "shot": "w320-exam-teacher-320-light.png",
+   "kb": 40
+  },
+  "exam-new-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 18,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:exam_reports:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:SPAN \"\" 98x24",
+     "other:BUTTON \"bold\" 28x24",
+     "other:BUTTON \"italic\" 28x24",
+     "other:BUTTON \"underline\" 28x24",
+     "other:BUTTON \"strike\" 28x24",
+     "other:BUTTON \"list: ordered\" 28x24",
+     "other:BUTTON \"list: bullet\" 28x24",
+     "other:BUTTON \"link\" 28x24",
+     "other:BUTTON \"blockquote\" 28x24",
+     "other:BUTTON \"clean\" 28x24",
+     "other:INPUT \"\" 1x1"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1,",
+     "15/20.",
+     "18/20.",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "28,",
+     "30,",
+     "4,",
+     "5,"
+    ],
+    "dialogNumbers": [
+     "10"
+    ]
+   },
+   "shot": "w320-exam-new-320-light.png",
+   "kb": 37
+  }
+ }
+}

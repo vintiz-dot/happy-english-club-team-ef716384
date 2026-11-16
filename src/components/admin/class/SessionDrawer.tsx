@@ -10,6 +10,21 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { SessionActionsModal } from "@/components/admin/SessionActionsModal";
+import { useIvory } from "@/hooks/useIvory";
+
+// Ivory chips (DESIGN_SYSTEM s.14). Same statuses; the word says which.
+const IVORY_STATUS: Record<string, string> = {
+  Scheduled: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+  Held: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+  Canceled: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
+  Holiday: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+};
+const IVORY_ATTENDANCE: Record<string, string> = {
+  Present: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+  Absent: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
+  Excused: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+};
+const IVORY_NEUTRAL = "border-hec-line bg-hec-sunken text-hec-ink-soft";
 
 interface SessionDrawerProps {
   session: any;
@@ -21,6 +36,9 @@ interface SessionDrawerProps {
 const SessionDrawer = ({ session, onClose, onEdit, onRefresh }: SessionDrawerProps) => {
   const { role } = useAuth();
   const [showActions, setShowActions] = useState(false);
+  // Opened from GlobalCalendar, which also renders on "/" (not listed yet):
+  // old look there.
+  const ivory = useIvory();
   const { data: studentAttendance } = useQuery({
     queryKey: ["session-student-attendance", session?.id],
     queryFn: async () => {
@@ -77,6 +95,7 @@ const SessionDrawer = ({ session, onClose, onEdit, onRefresh }: SessionDrawerPro
 
 
   const statusColor = (status: string) => {
+    if (ivory) return IVORY_STATUS[status] || IVORY_NEUTRAL;
     switch (status) {
       case 'Scheduled': return 'bg-green-100 text-green-800';
       case 'Held': return 'bg-gray-100 text-gray-800';
@@ -87,6 +106,7 @@ const SessionDrawer = ({ session, onClose, onEdit, onRefresh }: SessionDrawerPro
   };
 
   const attendanceColor = (status: string) => {
+    if (ivory) return IVORY_ATTENDANCE[status] || IVORY_NEUTRAL;
     switch (status) {
       case 'Present': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
       case 'Absent': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
@@ -118,7 +138,7 @@ const SessionDrawer = ({ session, onClose, onEdit, onRefresh }: SessionDrawerPro
       <Sheet open={true} onOpenChange={onClose}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>
-            <div className="flex items-center justify-between">
+            <div className={ivory ? "flex flex-wrap items-center justify-between gap-2" : "flex items-center justify-between"}>
               <SheetTitle>Session Details</SheetTitle>
               <div className="flex gap-2">
                 {role === "admin" && (
@@ -146,28 +166,28 @@ const SessionDrawer = ({ session, onClose, onEdit, onRefresh }: SessionDrawerPro
 
         <div className="space-y-6 mt-6">
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className={ivory ? "flex items-center gap-2 text-hec-small text-hec-ink" : "flex items-center gap-2 text-sm"}>
+              <Calendar className={ivory ? "h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4 text-muted-foreground"} />
               <span className="font-medium">
                 {format(new Date(session.date), "EEEE, MMMM d, yyyy")}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>
+            <div className={ivory ? "flex items-center gap-2 text-hec-small text-hec-ink" : "flex items-center gap-2 text-sm"}>
+              <Clock className={ivory ? "h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4 text-muted-foreground"} />
+              <span className={ivory ? "tabular-nums" : undefined}>
                 {session.start_time?.slice(0, 5)} - {session.end_time?.slice(0, 5)}
               </span>
             </div>
 
             {session.teacher && (
-              <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span>{session.teacher.full_name}</span>
+              <div className={ivory ? "flex items-start gap-2 text-hec-small text-hec-ink" : "flex items-center gap-2 text-sm"}>
+                <User className={ivory ? "mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4 text-muted-foreground"} />
+                <span className={ivory ? "min-w-0 whitespace-normal break-words" : undefined}>{session.teacher.full_name}</span>
               </div>
             )}
 
-            <div className="flex items-center gap-2">
+            <div className={ivory ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2"}>
               <Badge className={statusColor(session.status)}>
                 {session.status}
               </Badge>
@@ -180,17 +200,17 @@ const SessionDrawer = ({ session, onClose, onEdit, onRefresh }: SessionDrawerPro
           </div>
 
           {homework && homework.length > 0 && (
-            <div className="border-t pt-4">
-              <h3 className="font-semibold flex items-center gap-2 mb-3">
-                <FileText className="h-4 w-4" />
+            <div className={ivory ? "border-t border-hec-line pt-4" : "border-t pt-4"}>
+              <h3 className={ivory ? "mb-3 flex items-center gap-2 text-hec-h3 text-hec-ink" : "font-semibold flex items-center gap-2 mb-3"}>
+                <FileText className={ivory ? "h-4 w-4 text-hec-ink-soft" : "h-4 w-4"} />
                 Recent Homework ({homework.length})
               </h3>
               <div className="space-y-2 max-h-[200px] overflow-y-auto">
                 {homework.map((hw: any) => (
-                  <div key={hw.id} className="p-3 border rounded-lg">
-                    <div className="font-medium">{hw.title}</div>
+                  <div key={hw.id} className={ivory ? "rounded-hec-md border border-hec-line bg-hec-surface p-4" : "p-3 border rounded-lg"}>
+                    <div className={ivory ? "whitespace-normal break-words text-hec-body font-medium text-hec-ink" : "font-medium"}>{hw.title}</div>
                     {hw.due_date && (
-                      <div className="text-xs text-muted-foreground mt-1">
+                      <div className={ivory ? "mt-1 text-hec-caption text-hec-ink-soft" : "text-xs text-muted-foreground mt-1"}>
                         Due: {format(new Date(hw.due_date), "MMM d, yyyy")}
                       </div>
                     )}
@@ -201,9 +221,10 @@ const SessionDrawer = ({ session, onClose, onEdit, onRefresh }: SessionDrawerPro
                             key={file.id}
                             variant="outline"
                             size="sm"
+                            className={ivory ? "h-auto max-w-full whitespace-normal break-all py-2 text-left" : undefined}
                             onClick={() => downloadFile(file.storage_key, file.file_name)}
                           >
-                            <Download className="h-3 w-3 mr-1" />
+                            <Download className={ivory ? "h-4 w-4 mr-1" : "h-3 w-3 mr-1"} />
                             {file.file_name}
                           </Button>
                         ))}

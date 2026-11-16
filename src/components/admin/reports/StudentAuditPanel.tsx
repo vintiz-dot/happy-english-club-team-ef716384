@@ -53,10 +53,10 @@ const monthLabel = (m: string) => dayjs(`${m}-01`).format("MMM YYYY");
 
 /** Money, signed and coloured: ahead is good, owing is not. */
 function Signed({ value, className }: { value: number; className?: string }) {
-  if (value === 0) return <span className={cn("text-muted-foreground", className)}>0 ₫</span>;
+  if (value === 0) return <span className={cn("whitespace-nowrap tabular-nums text-hec-ink-soft", className)}>0 ₫</span>;
   const ahead = value > 0;
   return (
-    <span className={cn("font-semibold tabular-nums", ahead ? "text-emerald-600" : "text-red-600", className)}>
+    <span className={cn("whitespace-nowrap font-semibold tabular-nums", ahead ? "text-hec-leaf" : "text-hec-danger", className)}>
       {ahead ? "+" : "−"}
       {formatVND(Math.abs(value))} ₫
     </span>
@@ -67,10 +67,11 @@ function Money({ value, tone, className }: { value: number; tone?: "charge" | "p
   return (
     <span
       className={cn(
-        "tabular-nums",
-        tone === "charge" && value > 0 && "text-red-600",
-        tone === "paid" && value > 0 && "text-emerald-600",
-        value === 0 && "text-muted-foreground",
+        // A charge is not a failure, so it stays ink (DS s.14: red only
+        // for what is owed after a failure); money received is leaf.
+        "whitespace-nowrap tabular-nums text-hec-ink",
+        tone === "paid" && value > 0 && "text-hec-leaf",
+        value === 0 && "text-hec-ink-soft",
         className,
       )}
     >
@@ -82,8 +83,8 @@ function Money({ value, tone, className }: { value: number; tone?: "charge" | "p
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm">{children}</span>
+      <span className="min-w-0 text-hec-caption text-hec-ink-soft">{label}</span>
+      <span className="shrink-0 text-hec-small">{children}</span>
     </div>
   );
 }
@@ -91,13 +92,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 /** Where a figure came from, since not all of them are equally solid. */
 function ProvenanceBadge({ event }: { event: AuditEvent }) {
   const map = {
-    payments: { label: "payment record", tone: "border-emerald-500/40 text-emerald-700 dark:text-emerald-400" },
-    ledger: { label: "ledger", tone: "border-sky-500/40 text-sky-700 dark:text-sky-400" },
-    audit_log: { label: "from audit trail", tone: "border-amber-500/40 text-amber-700 dark:text-amber-400" },
+    payments: { label: "payment record", tone: "border-hec-leaf/30 text-hec-leaf" },
+    ledger: { label: "ledger", tone: "border-hec-line text-hec-ink-soft" },
+    audit_log: { label: "from audit trail", tone: "border-hec-warn/30 text-hec-warn" },
   }[event.provenance];
 
   return (
-    <Badge variant="outline" className={cn("h-5 shrink-0 px-1.5 text-[10px] font-normal", map.tone)}>
+    <Badge variant="outline" className={cn("shrink-0", map.tone)}>
       {map.label}
     </Badge>
   );
@@ -111,19 +112,19 @@ function EventRow({ event, audit }: { event: AuditEvent; audit: StudentAudit }) 
   const enteredOn = dayjs(event.recordedAt).format("D MMM YYYY, HH:mm");
 
   return (
-    <li className="flex flex-wrap items-start gap-x-3 gap-y-1 border-b py-2 last:border-0">
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+    <li className="flex flex-wrap items-start gap-x-3 gap-y-1 border-b border-hec-line py-3 last:border-0">
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium">{event.label}</span>
+          <span className="text-hec-small font-medium text-hec-ink">{event.label}</span>
           <ProvenanceBadge event={event} />
           {!event.exact && (
-            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-normal text-muted-foreground">
+            <Badge variant="outline" className="text-hec-ink-soft">
               amount inferred
             </Badge>
           )}
         </span>
 
-        <span className="text-xs text-muted-foreground">
+        <span className="text-hec-caption tabular-nums text-hec-ink-soft">
           {/* The two dates are genuinely different facts and conflating
               them is how a reconciliation goes wrong. */}
           {paidOn ? <>Paid {paidOn} · </> : null}
@@ -131,18 +132,18 @@ function EventRow({ event, audit }: { event: AuditEvent; audit: StudentAudit }) 
           {event.method ? <> · {event.method}</> : null}
         </span>
 
-        <span className={cn("text-xs", event.actorId ? "text-muted-foreground" : "italic text-amber-600")}>
+        <span className={cn("text-hec-caption", event.actorId ? "text-hec-ink-soft" : "italic text-hec-warn")}>
           by {who}
         </span>
 
-        {event.memo && <span className="text-xs italic text-muted-foreground">“{event.memo}”</span>}
+        {event.memo && <span className="break-words text-hec-caption italic text-hec-ink-soft">“{event.memo}”</span>}
       </span>
 
       <span className="shrink-0 text-right">
         {event.amount == null ? (
-          <span className="text-sm text-muted-foreground">—</span>
+          <span className="text-hec-small text-hec-ink-soft">—</span>
         ) : (
-          <Money value={Math.abs(event.amount)} tone={event.amount >= 0 ? "paid" : "charge"} className="text-sm font-semibold" />
+          <Money value={Math.abs(event.amount)} tone={event.amount >= 0 ? "paid" : "charge"} className="text-hec-small font-semibold" />
         )}
       </span>
     </li>
@@ -175,77 +176,77 @@ function MonthRow({
   return (
     <>
       <tr
-        className={cn("cursor-pointer border-b transition-colors hover:bg-muted/50", open && "bg-muted/40")}
+        className={cn("cursor-pointer border-b border-hec-line transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60", open && "bg-hec-sunken/60")}
         onClick={() => setOpen((v) => !v)}
       >
         <td className="py-2 pl-2 pr-1">
           {open ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <ChevronDown className="h-4 w-4 text-hec-ink-soft" aria-hidden />
           ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <ChevronRight className="h-4 w-4 text-hec-ink-soft" aria-hidden />
           )}
         </td>
-        <td className="py-2 pr-3 text-sm font-medium whitespace-nowrap">
+        <td className="whitespace-nowrap py-3 pr-3 text-hec-small font-medium text-hec-ink">
           {monthLabel(month.month)}
           {month.source === "snapshot" && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Lock className="ml-1.5 inline h-3 w-3 text-muted-foreground" aria-hidden />
+                  <Lock className="ml-1.5 inline h-3 w-3 text-hec-ink-soft" aria-hidden />
                 </TooltipTrigger>
                 <TooltipContent>Closed and frozen — this figure will not change</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
         </td>
-        <td className="py-2 pr-3 text-right text-sm tabular-nums">
+        <td className="py-3 pr-3 text-right text-hec-small tabular-nums text-hec-ink">
           {att ? (
-            <span className={cn(countsDisagree && "text-amber-600")}>
+            <span className={cn(countsDisagree && "text-hec-warn")}>
               {billed}
-              {att.excused > 0 && <span className="text-muted-foreground"> +{att.excused}e</span>}
+              {att.excused > 0 && <span className="text-hec-ink-soft"> +{att.excused}e</span>}
             </span>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-hec-ink-soft">—</span>
           )}
         </td>
-        <td className="py-2 pr-3 text-right text-sm">
+        <td className="py-3 pr-3 text-right text-hec-small">
           <Money value={month.charged} tone="charge" />
         </td>
-        <td className="py-2 pr-3 text-right text-sm">
+        <td className="py-3 pr-3 text-right text-hec-small">
           {month.discountAmount > 0 ? (
-            <span className="tabular-nums text-sky-600">−{formatVND(month.discountAmount)} ₫</span>
+            <span className="whitespace-nowrap tabular-nums text-hec-ink">−{formatVND(month.discountAmount)} ₫</span>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-hec-ink-soft">—</span>
           )}
         </td>
-        <td className="py-2 pr-3 text-right text-sm">
+        <td className="py-3 pr-3 text-right text-hec-small">
           <Money value={month.paid} tone="paid" />
         </td>
-        <td className="py-2 pr-2 text-right text-sm">
+        <td className="py-3 pr-2 text-right text-hec-small">
           <Signed value={runningBalance} />
         </td>
       </tr>
 
       {open && (
-        <tr className="border-b bg-muted/20">
+        <tr className="border-b border-hec-line bg-hec-sunken/40">
           <td colSpan={7} className="px-4 py-4">
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2">
               {/* ------------------------------------- what was charged */}
               <section>
-                <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h4 className="mb-2 flex items-center gap-2 text-hec-caption font-semibold uppercase tracking-wider text-hec-ink-soft">
                   <Receipt className="h-3.5 w-3.5" aria-hidden />
                   What was billed
                 </h4>
 
                 {month.classes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No class breakdown recorded for this month.</p>
+                  <p className="text-hec-small text-hec-ink-soft">No class breakdown recorded for this month.</p>
                 ) : (
                   <ul className="mb-2 space-y-1">
                     {month.classes.map((c) => (
-                      <li key={c.classId || c.className} className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="min-w-0 truncate">
+                      <li key={c.classId || c.className} className="flex items-baseline justify-between gap-3 text-hec-small text-hec-ink">
+                        <span className="min-w-0 break-words">
                           {c.className}
-                          <span className="ml-1.5 text-xs text-muted-foreground">
+                          <span className="ml-2 text-hec-caption tabular-nums text-hec-ink-soft">
                             {c.sessionsCountStored} session{c.sessionsCountStored === 1 ? "" : "s"}
                           </span>
                         </span>
@@ -255,13 +256,13 @@ function MonthRow({
                   </ul>
                 )}
 
-                <div className="border-t pt-1">
+                <div className="border-t border-hec-line pt-1">
                   <Field label="Gross">{<Money value={month.baseAmount} />}</Field>
                   <Field label="Discounts">
                     {month.discountAmount > 0 ? (
-                      <span className="tabular-nums text-sky-600">−{formatVND(month.discountAmount)} ₫</span>
+                      <span className="whitespace-nowrap tabular-nums text-hec-ink">−{formatVND(month.discountAmount)} ₫</span>
                     ) : (
-                      <span className="text-muted-foreground">none</span>
+                      <span className="text-hec-ink-soft">none</span>
                     )}
                   </Field>
                   <Field label="Charged this month">
@@ -270,8 +271,8 @@ function MonthRow({
                 </div>
 
                 {countsDisagree && (
-                  <p className="mt-2 flex items-start gap-1.5 rounded-md border border-amber-400/40 bg-amber-50 p-2 text-xs dark:bg-amber-950/30">
-                    <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+                  <p className="mt-2 flex items-start gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-caption text-hec-ink">
+                    <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-hec-warn" aria-hidden />
                     <span>
                       The invoice counts <strong>{stored}</strong> billed session
                       {stored === 1 ? "" : "s"} but attendance shows <strong>{billed}</strong>. A
@@ -284,28 +285,28 @@ function MonthRow({
 
               {/* ------------------------------------ attendance detail */}
               <section>
-                <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h4 className="mb-2 flex items-center gap-2 text-hec-caption font-semibold uppercase tracking-wider text-hec-ink-soft">
                   <Clock className="h-3.5 w-3.5" aria-hidden />
                   Attendance
                 </h4>
                 {att ? (
                   <>
-                    <div className="mb-2 flex flex-wrap gap-1.5">
-                      <Badge variant="outline" className="border-emerald-500/40">{att.present} present</Badge>
-                      {att.late > 0 && <Badge variant="outline" className="border-amber-500/40">{att.late} late</Badge>}
-                      {att.absent > 0 && <Badge variant="outline" className="border-red-500/40">{att.absent} absent</Badge>}
-                      {att.excused > 0 && <Badge variant="outline" className="border-sky-500/40">{att.excused} excused</Badge>}
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      <Badge variant="success" className="tabular-nums">{att.present} present</Badge>
+                      {att.late > 0 && <Badge variant="warning" className="tabular-nums">{att.late} late</Badge>}
+                      {att.absent > 0 && <Badge variant="destructive" className="tabular-nums">{att.absent} absent</Badge>}
+                      {att.excused > 0 && <Badge variant="secondary" className="tabular-nums">{att.excused} excused</Badge>}
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-hec-caption text-hec-ink-soft">
                       <strong>{att.billedSessions}</strong> billed
                       {att.excused > 0 && <> · <strong>{att.excused}</strong> excused and not charged</>}
                     </p>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No attendance recorded for this month.</p>
+                  <p className="text-hec-small text-hec-ink-soft">No attendance recorded for this month.</p>
                 )}
 
-                <h4 className="mb-2 mt-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h4 className="mb-2 mt-4 flex items-center gap-2 text-hec-caption font-semibold uppercase tracking-wider text-hec-ink-soft">
                   <Wallet className="h-3.5 w-3.5" aria-hidden />
                   Balance
                 </h4>
@@ -325,12 +326,12 @@ function MonthRow({
             </div>
 
             {/* ------------------------------------------ money events */}
-            <section className="mt-4 border-t pt-3">
-              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <section className="mt-4 border-t border-hec-line pt-3">
+              <h4 className="mb-1 text-hec-caption font-semibold uppercase tracking-wider text-hec-ink-soft">
                 Payments and changes in {monthLabel(month.month)}
               </h4>
               {monthEvents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-hec-small text-hec-ink-soft">
                   {month.paid > 0
                     ? "This month shows money received, but no individual payment record survives for it — only the running total on the invoice."
                     : "Nothing recorded."}
@@ -345,7 +346,7 @@ function MonthRow({
             </section>
 
             {/* ------------------------------------------- provenance */}
-            <section className="mt-3 flex flex-wrap gap-x-5 gap-y-1 border-t pt-2 text-xs text-muted-foreground">
+            <section className="mt-3 flex flex-wrap gap-x-6 gap-y-1 border-t border-hec-line pt-2 text-hec-caption text-hec-ink-soft">
               <span>
                 Source: {month.source === "snapshot" ? "closed snapshot" : "live invoice"}
                 {month.closedAt && <> · closed {dayjs(month.closedAt).format("D MMM YYYY")} by {actorName(audit.actors, month.closedBy)}</>}
@@ -380,7 +381,7 @@ export function StudentAuditPanel({
 
   if (error) {
     return (
-      <p className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+      <p className="flex items-start gap-2 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 text-hec-small text-hec-danger">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         <span>{(error as Error).message}</span>
       </p>
@@ -391,7 +392,7 @@ export function StudentAuditPanel({
 
   if (audit.months.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+      <p className="rounded-hec-md border border-dashed border-hec-line p-4 text-hec-small text-hec-ink-soft">
         No invoices exist for this student yet, so there is nothing to audit. A month only appears
         here once tuition has been calculated for it.
       </p>
@@ -413,60 +414,65 @@ export function StudentAuditPanel({
     <div className="space-y-3">
       {/* ------------------------------------------------------ totals */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-        <span className="text-sm">
-          <span className="text-muted-foreground">Charged </span>
+        <span className="text-hec-small">
+          <span className="text-hec-ink-soft">Charged </span>
           <Money value={audit.totals.charged} tone="charge" className="font-semibold" />
         </span>
-        <span className="text-sm">
-          <span className="text-muted-foreground">Paid </span>
+        <span className="text-hec-small">
+          <span className="text-hec-ink-soft">Paid </span>
           <Money value={audit.totals.paid} tone="paid" className="font-semibold" />
         </span>
-        <span className="text-sm">
-          <span className="text-muted-foreground">Balance </span>
+        <span className="text-hec-small">
+          <span className="text-hec-ink-soft">Balance </span>
           <Signed value={audit.totals.balance} />
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-hec-caption tabular-nums text-hec-ink-soft">
           {audit.totals.months} month{audit.totals.months === 1 ? "" : "s"} on record
         </span>
 
         {onPrint && (
-          <Button size="sm" variant="outline" className="ml-auto gap-1.5" onClick={() => onPrint(audit)}>
-            <Printer className="h-3.5 w-3.5" aria-hidden />
+          <Button size="sm" variant="outline" className="ml-auto" onClick={() => onPrint(audit)}>
+            <Printer className="h-4 w-4" aria-hidden />
             Statement
           </Button>
         )}
       </div>
 
       {/* ------------------------------------------------- the months */}
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Months on record"
+        className="overflow-x-auto rounded-hec-lg border border-hec-line bg-hec-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+      >
         <table className="w-full min-w-[640px] text-left">
           <thead>
-            <tr className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+            <tr className="border-b border-hec-line text-hec-caption uppercase tracking-wider text-hec-ink-soft">
               <th className="w-8" />
-              <th className="py-2 pr-3 font-medium">Month</th>
-              <th className="py-2 pr-3 text-right font-medium">Sessions</th>
-              <th className="py-2 pr-3 text-right font-medium">Charged</th>
-              <th className="py-2 pr-3 text-right font-medium">Discount</th>
-              <th className="py-2 pr-3 text-right font-medium">Paid</th>
-              <th className="py-2 pr-2 text-right font-medium">Balance</th>
+              <th className="py-3 pr-3 font-medium">Month</th>
+              <th className="py-3 pr-3 text-right font-medium">Sessions</th>
+              <th className="py-3 pr-3 text-right font-medium">Charged</th>
+              <th className="py-3 pr-3 text-right font-medium">Discount</th>
+              <th className="py-3 pr-3 text-right font-medium">Paid</th>
+              <th className="py-3 pr-2 text-right font-medium">Balance</th>
             </tr>
           </thead>
           <tbody>
             {rows.map(({ month, runningBalance }) => (
               <MonthRow key={month.month} month={month} audit={audit} runningBalance={runningBalance} />
             ))}
-            <tr className="bg-muted/40 font-semibold">
+            <tr className="border-t-2 border-hec-ink font-semibold text-hec-ink">
               <td />
-              <td className="py-2 pr-3 text-sm">Total</td>
-              <td className="py-2 pr-3" />
-              <td className="py-2 pr-3 text-right text-sm">
+              <td className="py-3 pr-3 text-hec-small">Total</td>
+              <td className="py-3 pr-3" />
+              <td className="py-3 pr-3 text-right text-hec-small">
                 <Money value={audit.totals.charged} tone="charge" />
               </td>
-              <td className="py-2 pr-3" />
-              <td className="py-2 pr-3 text-right text-sm">
+              <td className="py-3 pr-3" />
+              <td className="py-3 pr-3 text-right text-hec-small">
                 <Money value={audit.totals.paid} tone="paid" />
               </td>
-              <td className="py-2 pr-2 text-right text-sm">
+              <td className="py-3 pr-2 text-right text-hec-small">
                 <Signed value={audit.totals.balance} />
               </td>
             </tr>
@@ -474,15 +480,15 @@ export function StudentAuditPanel({
         </table>
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-hec-caption text-hec-ink-soft">
         Sessions counts billed lessons; <span className="font-medium">+Ne</span> is excused lessons,
         which are not charged. Balance is cumulative — a running total, not the month on its own.
       </p>
 
       {/* ------------------------------------------------- the caveat */}
       {unattributed > 0 && (
-        <p className="flex items-start gap-2 rounded-lg border border-amber-400/40 bg-amber-50 p-2.5 text-xs dark:bg-amber-950/30">
-          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+        <p className="flex items-start gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-caption text-hec-ink">
+          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-hec-warn" aria-hidden />
           <span>
             {unattributed} entr{unattributed === 1 ? "y has" : "ies have"} no recorded author.
             Attribution only began when the audit trail was switched on, and payments entered as a

@@ -1,0 +1,33 @@
+fam-1280-dark identical (53169 chars)
+fam-1280-light identical (53169 chars)
+fam-375-dark identical (53169 chars)
+fam-375-light identical (53169 chars)
+tdash-profile-1280-dark identical (8949 chars)
+tdash-profile-1280-light identical (8949 chars)
+tdash-profile-375-dark identical (8949 chars)
+tdash-profile-375-light identical (8949 chars)
+tp-1280-dark DIFF at 20 
+  A: <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-auto"><div class="space-y-6"><div class="glass rounded-xl text-card-foreg 
+  B: <main class="flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8"><div class="space-y-6"><div class="ro
+tp-1280-light DIFF at 20 
+  A: <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-auto"><div class="space-y-6"><div class="glass rounded-xl text-card-foreg 
+  B: <main class="flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8"><div class="space-y-6"><div class="ro
+tp-375-dark DIFF at 20 
+  A: <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-auto"><div class="space-y-6"><div class="glass rounded-xl text-card-foreg 
+  B: <main class="flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8"><div class="space-y-6"><div class="ro
+tp-375-light DIFF at 20 
+  A: <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-auto"><div class="space-y-6"><div class="glass rounded-xl text-card-foreg 
+  B: <main class="flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8"><div class="space-y-6"><div class="ro
+tp-profile-1280-dark DIFF at 20 
+  A: <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-auto"><div class="space-y-6"><div class="glass rounded-xl text-card-foreg 
+  B: <main class="flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8"><div class="space-y-6"><div class="ro
+tp-profile-1280-light DIFF at 20 
+  A: <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-auto"><div class="space-y-6"><div class="glass rounded-xl text-card-foreg 
+  B: <main class="flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8"><div class="space-y-6"><div class="ro
+tp-profile-375-dark DIFF at 20 
+  A: <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-auto"><div class="space-y-6"><div class="glass rounded-xl text-card-foreg 
+  B: <main class="flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8"><div class="space-y-6"><div class="ro
+tp-profile-375-light DIFF at 20 
+  A: <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-auto"><div class="space-y-6"><div class="glass rounded-xl text-card-foreg 
+  B: <main class="flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8"><div class="space-y-6"><div class="ro
+before vs after: 8 identical, 8 differ, 0 missing

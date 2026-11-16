@@ -89,11 +89,11 @@ export function AdminUnlockGate({ children }: { children: ReactNode }) {
     return (
       <>
         {error && phase === "open" && (
-          <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-400/40 bg-amber-50 p-3 text-sm dark:bg-amber-950/30">
-            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+          <div className="mb-3 flex items-start gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-small text-hec-ink">
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-hec-warn" aria-hidden />
             <span>
               The sign-in gate could not be checked, so it has been left open.{" "}
-              <span className="text-muted-foreground">{error}</span>
+              <span className="break-words text-hec-ink-soft">{error}</span>
             </span>
           </div>
         )}
@@ -105,7 +105,7 @@ export function AdminUnlockGate({ children }: { children: ReactNode }) {
   if (phase === "checking") {
     return (
       <div className="grid min-h-[60vh] place-items-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
+        <Loader2 className="h-6 w-6 animate-spin text-hec-ink-soft" aria-hidden />
         <span className="sr-only">Checking the sign-in gate</span>
       </div>
     );
@@ -115,20 +115,20 @@ export function AdminUnlockGate({ children }: { children: ReactNode }) {
 
   return (
     <div className="grid min-h-[70vh] place-items-center px-4">
-      <div className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-lg">
+      <div className="w-full max-w-sm rounded-hec-lg border border-hec-line bg-hec-raised p-6 text-hec-ink shadow-hec-2">
         <div className="mb-5 flex flex-col items-center text-center">
           <span
             className={cn(
-              "mb-3 grid h-12 w-12 place-items-center rounded-2xl",
-              enrolling ? "bg-primary/10 text-primary" : "bg-muted text-foreground",
+              "mb-3 grid h-12 w-12 place-items-center rounded-hec-md",
+              enrolling ? "bg-hec-sunken text-hec-brass" : "bg-hec-sunken text-hec-ink",
             )}
           >
             {enrolling ? <ShieldCheck className="h-6 w-6" aria-hidden /> : <Lock className="h-6 w-6" aria-hidden />}
           </span>
-          <h1 className="text-lg font-bold">
+          <h1 className="font-display text-hec-h2 font-medium text-hec-ink">
             {enrolling ? "Secure this account" : "Confirm it's you"}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 break-words text-hec-small text-hec-ink-soft">
             {enrolling
               ? "Set this up once. After that the admin area asks for it a single time per browser session."
               : "Signed in as " + (user.email ?? "this account") + "."}
@@ -138,7 +138,7 @@ export function AdminUnlockGate({ children }: { children: ReactNode }) {
         {error && (
           <p
             role="alert"
-            className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-sm text-destructive"
+            className="mb-4 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 text-hec-small text-hec-danger"
           >
             {error}
           </p>
@@ -163,7 +163,7 @@ export function AdminUnlockGate({ children }: { children: ReactNode }) {
               // No fallback exists, so if the device is broken this screen is
               // a dead end. Say what the way out is rather than leaving them
               // pressing a button that will not work.
-              <p className="text-center text-xs text-muted-foreground">
+              <p className="text-center text-hec-caption text-hec-ink-soft">
                 No passcode is set on this account. If this device will not
                 verify, the passkey has to be cleared from the database before
                 you can get back in.
@@ -194,7 +194,7 @@ export function AdminUnlockGate({ children }: { children: ReactNode }) {
               />
             </div>
             {status?.passcodeLockedUntil && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-hec-caption text-hec-ink-soft">
                 Locked after too many attempts. Try again later, or use your device instead.
               </p>
             )}
@@ -228,17 +228,17 @@ export function AdminUnlockGate({ children }: { children: ReactNode }) {
                   {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Fingerprint className="h-5 w-5" aria-hidden />}
                   Use this device
                 </Button>
-                <p className="text-center text-xs text-muted-foreground">
+                <p className="text-center text-hec-caption text-hec-ink-soft">
                   Face ID, Touch ID or Windows Hello. Nothing leaves the device.
                 </p>
               </div>
             )}
 
             <div className="relative py-1 text-center">
-              <span className="relative z-10 bg-card px-2 text-xs uppercase tracking-wider text-muted-foreground">
+              <span className="relative z-10 bg-hec-raised px-2 text-hec-caption uppercase tracking-wider text-hec-ink-soft">
                 {canUseBiometrics ? "or set a passcode" : "set a passcode"}
               </span>
-              <span className="absolute inset-x-0 top-1/2 -z-0 h-px bg-border" aria-hidden />
+              <span className="absolute inset-x-0 top-1/2 -z-0 h-px bg-hec-line" aria-hidden />
             </div>
 
             <form
@@ -263,7 +263,7 @@ export function AdminUnlockGate({ children }: { children: ReactNode }) {
                   onChange={(e) => setPasscodeValue(e.target.value)}
                   disabled={busy}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-hec-caption text-hec-ink-soft">
                   At least six characters, and not 123456.
                 </p>
               </div>

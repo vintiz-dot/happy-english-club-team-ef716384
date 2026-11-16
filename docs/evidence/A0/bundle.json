@@ -1,0 +1,850 @@
+{
+ "entryTags": [
+  "index-lDZDr1uY.js",
+  "index-CEIBNdKR.css"
+ ],
+ "modulepreloads": [],
+ "initialJs": [
+  {
+   "file": "index-lDZDr1uY.js",
+   "raw": 711172,
+   "gzip": 221532
+  }
+ ],
+ "initialJsTotal": {
+  "raw": 711172,
+  "gzip": 221532
+ },
+ "jsTotal": {
+  "raw": 5153580,
+  "gzip": 1510093
+ },
+ "cssTotal": {
+  "raw": 307027,
+  "gzip": 45395
+ },
+ "initialCss": [
+  {
+   "file": "index-CEIBNdKR.css",
+   "raw": 307027,
+   "gzip": 45395,
+   "ext": ".css"
+  }
+ ],
+ "heavyIn": {
+  "quill": [
+   "index-DwBFokjN.js"
+  ],
+  "recharts": [
+   "Layout-C6kXVtG6.js",
+   "StudentDashboard-BtxsVJYw.js",
+   "StudentDetail-J53gEBh3.js",
+   "StudentProfileEdit-CzaTOX71.js"
+  ],
+  "jspdf": [
+   "Layout-C6kXVtG6.js"
+  ],
+  "html2canvas": [
+   "Layout-C6kXVtG6.js"
+  ],
+  "pdfjs": [
+   "Layout-C6kXVtG6.js"
+  ],
+  "date_fns": [
+   "Layout-C6kXVtG6.js"
+  ]
+ },
+ "chunkCount": 158,
+ "rows": [
+  {
+   "file": "Layout-C6kXVtG6.js",
+   "raw": 1413476,
+   "gzip": 401316
+  },
+  {
+   "file": "index-lDZDr1uY.js",
+   "raw": 711172,
+   "gzip": 221532
+  },
+  {
+   "file": "Admin-ta8GU85f.js",
+   "raw": 540068,
+   "gzip": 139493
+  },
+  {
+   "file": "microsoft.cognitiveservices.speech.sdk-BHxAY8Yr.js",
+   "raw": 382214,
+   "gzip": 82684
+  },
+  {
+   "file": "index-CEIBNdKR.css",
+   "raw": 307027,
+   "gzip": 45395
+  },
+  {
+   "file": "index-DwBFokjN.js",
+   "raw": 209530,
+   "gzip": 62607
+  },
+  {
+   "file": "index.es-B6ykoAna.js",
+   "raw": 150759,
+   "gzip": 51425
+  },
+  {
+   "file": "StudentDetail-J53gEBh3.js",
+   "raw": 140354,
+   "gzip": 35990
+  },
+  {
+   "file": "StudentDashboard-BtxsVJYw.js",
+   "raw": 138247,
+   "gzip": 35735
+  },
+  {
+   "file": "BulkReportExport-DpFyyk8c.js",
+   "raw": 109055,
+   "gzip": 34724
+  },
+  {
+   "file": "Vocabulary-aWp9Abbc.js",
+   "raw": 90487,
+   "gzip": 26068
+  },
+  {
+   "file": "GlobalCalendar-Jty9zQWS.js",
+   "raw": 88321,
+   "gzip": 27539
+  },
+  {
+   "file": "avatar-003-h8EJUyPv.png",
+   "raw": 63412,
+   "gzip": 63450
+  },
+  {
+   "file": "avatar-055-Cxbl81lh.png",
+   "raw": 62524,
+   "gzip": 62562
+  },
+  {
+   "file": "avatar-054-1iFO2Q6x.png",
+   "raw": 61974,
+   "gzip": 62012
+  },
+  {
+   "file": "avatar-051-g5SP41F9.png",
+   "raw": 61668,
+   "gzip": 61706
+  },
+  {
+   "file": "avatar-007-YEdLNRWu.png",
+   "raw": 61347,
+   "gzip": 61385
+  },
+  {
+   "file": "avatar-050-C2kNki0D.png",
+   "raw": 60912,
+   "gzip": 60950
+  },
+  {
+   "file": "avatar-018-BvB7VQKQ.png",
+   "raw": 60351,
+   "gzip": 60389
+  },
+  {
+   "file": "avatar-025-CKp9TPzX.png",
+   "raw": 60193,
+   "gzip": 60231
+  },
+  {
+   "file": "avatar-006-DmSK3g6k.png",
+   "raw": 59978,
+   "gzip": 60016
+  },
+  {
+   "file": "avatar-009-jRYjeaO_.png",
+   "raw": 59774,
+   "gzip": 59812
+  },
+  {
+   "file": "ClassDetail-5bZEs3oC.js",
+   "raw": 49008,
+   "gzip": 13146
+  },
+  {
+   "file": "TeacherTranscripts-Jz6eGjma.js",
+   "raw": 47057,
+   "gzip": 11962
+  },
+  {
+   "file": "Teachers-E82X9zeI.js",
+   "raw": 45965,
+   "gzip": 11252
+  },
+  {
+   "file": "ClassBoardWindow-WyorB0lL.js",
+   "raw": 42151,
+   "gzip": 14439
+  },
+  {
+   "file": "StudentProfileEdit-CzaTOX71.js",
+   "raw": 34285,
+   "gzip": 10959
+  },
+  {
+   "file": "calendar-FWToLH7a.js",
+   "raw": 33783,
+   "gzip": 10724
+  },
+  {
+   "file": "TeacherProfile-CCNFwB-T.js",
+   "raw": 32068,
+   "gzip": 8770
+  },
+  {
+   "file": "TeacherClassDetail-CbS2qJ0T.js",
+   "raw": 30371,
+   "gzip": 9073
+  },
+  {
+   "file": "HighScores-BceODYFH.js",
+   "raw": 29070,
+   "gzip": 7758
+  },
+  {
+   "file": "NightLeague-COxUj_pl.js",
+   "raw": 28645,
+   "gzip": 7632
+  },
+  {
+   "file": "TeacherSmartUpload-CdVLh9TU.js",
+   "raw": 27879,
+   "gzip": 8478
+  },
+  {
+   "file": "AssignmentUpload-aA_1HcP0.js",
+   "raw": 25629,
+   "gzip": 7305
+  },
+  {
+   "file": "StarBoard-6KByQl58.js",
+   "raw": 25616,
+   "gzip": 7058
+  },
+  {
+   "file": "fuse-CMLop-UK.js",
+   "raw": 24379,
+   "gzip": 8654
+  },
+  {
+   "file": "checkbox-B_MU3T3r.js",
+   "raw": 22983,
+   "gzip": 8648
+  },
+  {
+   "file": "TuitionReviewQueue-CIGJaiPZ.js",
+   "raw": 22278,
+   "gzip": 6787
+  },
+  {
+   "file": "TeacherDashboard-BZvCGADj.js",
+   "raw": 22247,
+   "gzip": 5459
+  },
+  {
+   "file": "select-CJGjPSvf.js",
+   "raw": 22034,
+   "gzip": 7733
+  },
+  {
+   "file": "VideoHomeworkSubmission-Cuk1d1dW.js",
+   "raw": 20748,
+   "gzip": 7819
+  },
+  {
+   "file": "SmartFamilyPaymentModal-BE-79uEC.js",
+   "raw": 19928,
+   "gzip": 6160
+  },
+  {
+   "file": "Index-LrgFhlOg.js",
+   "raw": 18777,
+   "gzip": 5996
+  },
+  {
+   "file": "VideoReviewQueue-Br2FR75c.js",
+   "raw": 18596,
+   "gzip": 5832
+  },
+  {
+   "file": "YAxis-CHYmfmsQ.js",
+   "raw": 17741,
+   "gzip": 4775
+  },
+  {
+   "file": "TeacherResources-BUTyRiZr.js",
+   "raw": 17217,
+   "gzip": 5276
+  },
+  {
+   "file": "lexicon-D3BlFt87.js",
+   "raw": 17086,
+   "gzip": 6820
+  },
+  {
+   "file": "TeacherLanguageSupport-l08Gxg7I.js",
+   "raw": 17075,
+   "gzip": 6187
+  },
+  {
+   "file": "TeacherAssignments-CpU5QQvk.js",
+   "raw": 16224,
+   "gzip": 5022
+  },
+  {
+   "file": "TeacherBooks-CRxK-LyQ.js",
+   "raw": 15549,
+   "gzip": 5170
+  },
+  {
+   "file": "Tuition-DuFZzAUR.js",
+   "raw": 14701,
+   "gzip": 4674
+  },
+  {
+   "file": "date-DzcbezHj.js",
+   "raw": 13765,
+   "gzip": 5678
+  },
+  {
+   "file": "TeacherPayroll-BinqD1eb.js",
+   "raw": 13602,
+   "gzip": 4725
+  },
+  {
+   "file": "Auth-ClpbFoct.js",
+   "raw": 12977,
+   "gzip": 4241
+  },
+  {
+   "file": "HomeworkSubmission-DD6pVvUV.js",
+   "raw": 12404,
+   "gzip": 4320
+  },
+  {
+   "file": "InvoiceDownloadButton-BQ1T0JIx.js",
+   "raw": 12385,
+   "gzip": 3618
+  },
+  {
+   "file": "Students-CW9MK5Tf.js",
+   "raw": 12379,
+   "gzip": 4115
+  },
+  {
+   "file": "StudentAssignments-CwftEYxK.js",
+   "raw": 12347,
+   "gzip": 4639
+  },
+  {
+   "file": "TeacherVocabularyAudit-CzmZnGwP.js",
+   "raw": 12266,
+   "gzip": 3954
+  },
+  {
+   "file": "FamilyDetail-BnDC9JPy.js",
+   "raw": 11696,
+   "gzip": 3583
+  },
+  {
+   "file": "StudentLessonDetail-90ulTAkH.js",
+   "raw": 11321,
+   "gzip": 3502
+  },
+  {
+   "file": "ExamReportsManager-DHzutKjU.js",
+   "raw": 11312,
+   "gzip": 3925
+  },
+  {
+   "file": "PictureStrip-DMYhdgvb.js",
+   "raw": 10652,
+   "gzip": 4732
+  },
+  {
+   "file": "ModifyEnrollmentModal-lTwmbDGC.js",
+   "raw": 10186,
+   "gzip": 3129
+  },
+  {
+   "file": "Classes-JstxyV-5.js",
+   "raw": 9624,
+   "gzip": 3247
+  },
+  {
+   "file": "ClassAdminActions-CQ8HsXZD.js",
+   "raw": 9592,
+   "gzip": 3323
+  },
+  {
+   "file": "Families-BFz2aoZa.js",
+   "raw": 9527,
+   "gzip": 2975
+  },
+  {
+   "file": "JournalViewer--3Yh0JO4.js",
+   "raw": 9226,
+   "gzip": 3237
+  },
+  {
+   "file": "CelebrationOverlay-C_jCrJaZ.js",
+   "raw": 9121,
+   "gzip": 3623
+  },
+  {
+   "file": "StudentRecord-B_7Y6vJn.js",
+   "raw": 9090,
+   "gzip": 3753
+  },
+  {
+   "file": "AssignmentCalendar-BuuCfT16.js",
+   "raw": 8915,
+   "gzip": 3186
+  },
+  {
+   "file": "StudentResources-IG6Fwvr0.js",
+   "raw": 8731,
+   "gzip": 3029
+  },
+  {
+   "file": "StudentDefendLevel-DYWltH1X.js",
+   "raw": 8645,
+   "gzip": 3358
+  },
+  {
+   "file": "useResources-DfI4XWGh.js",
+   "raw": 8459,
+   "gzip": 2629
+  },
+  {
+   "file": "LeaderboardResetControl-C3U6YIRc.js",
+   "raw": 8414,
+   "gzip": 2850
+  },
+  {
+   "file": "PayRateHistory-vrAEg2Ma.js",
+   "raw": 8220,
+   "gzip": 3123
+  },
+  {
+   "file": "SessionGenerator-BuNQK323.js",
+   "raw": 8021,
+   "gzip": 2522
+  },
+  {
+   "file": "SignedVideo-CKdjh7sk.js",
+   "raw": 7845,
+   "gzip": 3574
+  },
+  {
+   "file": "StudentVideos-D7aP71z-.js",
+   "raw": 6978,
+   "gzip": 2825
+  },
+  {
+   "file": "ResetPassword-Cf-KLA2g.js",
+   "raw": 6940,
+   "gzip": 2204
+  },
+  {
+   "file": "EditDiscountModal-CoGZW72q.js",
+   "raw": 6887,
+   "gzip": 2425
+  },
+  {
+   "file": "FamilyDashboard-Dy1mdZXG.js",
+   "raw": 6868,
+   "gzip": 2630
+  },
+  {
+   "file": "ReportDocument-xpuJiLuS.js",
+   "raw": 6192,
+   "gzip": 1787
+  },
+  {
+   "file": "TeacherProfileEdit-Bk_kQCXK.js",
+   "raw": 5692,
+   "gzip": 2120
+  },
+  {
+   "file": "TeacherBankingInfo-DI7KxEUF.js",
+   "raw": 5298,
+   "gzip": 1634
+  },
+  {
+   "file": "TeacherVideoDashboard-CtH4ceTr.js",
+   "raw": 5238,
+   "gzip": 2284
+  },
+  {
+   "file": "TeacherLeaderboards-aoLgcrUY.js",
+   "raw": 5211,
+   "gzip": 2123
+  },
+  {
+   "file": "StudentMyWork-DMbAZZGx.js",
+   "raw": 4523,
+   "gzip": 1920
+  },
+  {
+   "file": "ClassForm-BQV8jpzn.js",
+   "raw": 4508,
+   "gzip": 1752
+  },
+  {
+   "file": "ClassBoardSettings-DUgeZwYr.js",
+   "raw": 4299,
+   "gzip": 1965
+  },
+  {
+   "file": "TeacherJournal-D1AfnKWP.js",
+   "raw": 4217,
+   "gzip": 1510
+  },
+  {
+   "file": "radio-group-DQEMgdKx.js",
+   "raw": 4207,
+   "gzip": 1914
+  },
+  {
+   "file": "ClaimAccess-GpU6_qVP.js",
+   "raw": 4026,
+   "gzip": 1853
+  },
+  {
+   "file": "AddSessionModal-BM8_zt9B.js",
+   "raw": 3978,
+   "gzip": 1778
+  },
+  {
+   "file": "StudentLessons-D2Sh-cMj.js",
+   "raw": 3673,
+   "gzip": 1568
+  },
+  {
+   "file": "StudentPictureReader-BAin8qrw.js",
+   "raw": 3472,
+   "gzip": 1434
+  },
+  {
+   "file": "soundManager-DNS7YcJp.js",
+   "raw": 2643,
+   "gzip": 1064
+  },
+  {
+   "file": "switch-CyfVNojO.js",
+   "raw": 2529,
+   "gzip": 1269
+  },
+  {
+   "file": "StudentJournal-qUgSll_V.js",
+   "raw": 2399,
+   "gzip": 985
+  },
+  {
+   "file": "ParentVideos-CVKA8wbn.js",
+   "raw": 2299,
+   "gzip": 1042
+  },
+  {
+   "file": "useStudentMonthFinance-D9e75FNK.js",
+   "raw": 2154,
+   "gzip": 1005
+  },
+  {
+   "file": "tuitionStatus-C16xN3Nn.js",
+   "raw": 1788,
+   "gzip": 861
+  },
+  {
+   "file": "ShareVideoButton-CWdrMK-x.js",
+   "raw": 1722,
+   "gzip": 1006
+  },
+  {
+   "file": "Schedule-RlLR_qxd.js",
+   "raw": 1643,
+   "gzip": 808
+  },
+  {
+   "file": "TeacherExamReports-DODuTfLZ.js",
+   "raw": 1549,
+   "gzip": 783
+  },
+  {
+   "file": "table-DYyHo4N1.js",
+   "raw": 1503,
+   "gzip": 524
+  },
+  {
+   "file": "PageHero-JL5XUh6l.js",
+   "raw": 1375,
+   "gzip": 629
+  },
+  {
+   "file": "DurationVarianceNotice-Cvj5yx8s.js",
+   "raw": 1357,
+   "gzip": 730
+  },
+  {
+   "file": "payRate-CE9oy4Wo.js",
+   "raw": 1182,
+   "gzip": 520
+  },
+  {
+   "file": "trending-up-Ce8a2pXU.js",
+   "raw": 1174,
+   "gzip": 510
+  },
+  {
+   "file": "MonthPicker-CJSqldtE.js",
+   "raw": 1068,
+   "gzip": 607
+  },
+  {
+   "file": "brain-CgZ1gSZm.js",
+   "raw": 903,
+   "gzip": 463
+  },
+  {
+   "file": "party-popper-D-cc_Ekr.js",
+   "raw": 898,
+   "gzip": 517
+  },
+  {
+   "file": "kidVideo-CZ_hBYA4.js",
+   "raw": 755,
+   "gzip": 504
+  },
+  {
+   "file": "separator-CrEKnksz.js",
+   "raw": 668,
+   "gzip": 399
+  },
+  {
+   "file": "image-off-WaGS1KHa.js",
+   "raw": 639,
+   "gzip": 401
+  },
+  {
+   "file": "EmptyState-DcMv5Q7q.js",
+   "raw": 620,
+   "gzip": 356
+  },
+  {
+   "file": "NotFound-BBBicCAh.js",
+   "raw": 618,
+   "gzip": 376
+  },
+  {
+   "file": "TeacherAttendance-Cz037mxI.js",
+   "raw": 615,
+   "gzip": 385
+  },
+  {
+   "file": "useRestPaging-DLY9yMRS.js",
+   "raw": 613,
+   "gzip": 347
+  },
+  {
+   "file": "eye-off-C8YCcOG9.js",
+   "raw": 598,
+   "gzip": 378
+  },
+  {
+   "file": "phone-BLSFPxSb.js",
+   "raw": 563,
+   "gzip": 357
+  },
+  {
+   "file": "calendar-clock-BvkouvEs.js",
+   "raw": 551,
+   "gzip": 356
+  },
+  {
+   "file": "gift-QmB5ZyFH.js",
+   "raw": 525,
+   "gzip": 354
+  },
+  {
+   "file": "share-2-C_1uME2r.js",
+   "raw": 525,
+   "gzip": 337
+  },
+  {
+   "file": "Dashboard-CbcGeuNV.js",
+   "raw": 455,
+   "gzip": 310
+  },
+  {
+   "file": "lightbulb-v9mt8pHC.js",
+   "raw": 455,
+   "gzip": 326
+  },
+  {
+   "file": "coins-B07fUcRL.js",
+   "raw": 448,
+   "gzip": 326
+  },
+  {
+   "file": "list-checks-DawaiOZU.js",
+   "raw": 447,
+   "gzip": 293
+  },
+  {
+   "file": "SectionHeader-CwymI-uq.js",
+   "raw": 445,
+   "gzip": 278
+  },
+  {
+   "file": "image-DFyqs_bT.js",
+   "raw": 438,
+   "gzip": 324
+  },
+  {
+   "file": "map-pin-DyNOJyol.js",
+   "raw": 427,
+   "gzip": 326
+  },
+  {
+   "file": "upload-CfUufJEQ.js",
+   "raw": 426,
+   "gzip": 319
+  },
+  {
+   "file": "eye-B24A1fOq.js",
+   "raw": 425,
+   "gzip": 305
+  },
+  {
+   "file": "link-BZOxn_kw.js",
+   "raw": 425,
+   "gzip": 297
+  },
+  {
+   "file": "message-square-text--oGGAzc2.js",
+   "raw": 424,
+   "gzip": 299
+  },
+  {
+   "file": "archive-DbpLCz8A.js",
+   "raw": 422,
+   "gzip": 310
+  },
+  {
+   "file": "compass-BQtSbwE1.js",
+   "raw": 420,
+   "gzip": 311
+  },
+  {
+   "file": "cloud-upload-8I5oAs8a.js",
+   "raw": 419,
+   "gzip": 311
+  },
+  {
+   "file": "camera-l21hVILZ.js",
+   "raw": 417,
+   "gzip": 311
+  },
+  {
+   "file": "arrow-right-left-DOhF5Mpy.js",
+   "raw": 415,
+   "gzip": 297
+  },
+  {
+   "file": "endOfWeek-DMSBX4YO.js",
+   "raw": 415,
+   "gzip": 264
+  },
+  {
+   "file": "heart-POS6WPKd.js",
+   "raw": 414,
+   "gzip": 313
+  },
+  {
+   "file": "link-2-BX-DxIkQ.js",
+   "raw": 410,
+   "gzip": 307
+  },
+  {
+   "file": "pen-DVl_m5WX.js",
+   "raw": 404,
+   "gzip": 308
+  },
+  {
+   "file": "mail-B6pfT7zf.js",
+   "raw": 384,
+   "gzip": 302
+  },
+  {
+   "file": "circle-x-CYyXt181.js",
+   "raw": 375,
+   "gzip": 281
+  },
+  {
+   "file": "credit-card-apWvj_BH.js",
+   "raw": 375,
+   "gzip": 291
+  },
+  {
+   "file": "circle-check-big-B-LjqSDc.js",
+   "raw": 361,
+   "gzip": 282
+  },
+  {
+   "file": "circle-check-C3Kk1boi.js",
+   "raw": 346,
+   "gzip": 272
+  },
+  {
+   "file": "arrow-left-BTo49twP.js",
+   "raw": 333,
+   "gzip": 266
+  },
+  {
+   "file": "arrow-right-DR-4r6Mj.js",
+   "raw": 333,
+   "gzip": 265
+  },
+  {
+   "file": "filter-BCDZixXi.js",
+   "raw": 330,
+   "gzip": 262
+  },
+  {
+   "file": "eachDayOfInterval-DyeUlvtT.js",
+   "raw": 271,
+   "gzip": 217
+  },
+  {
+   "file": "sessionStatus-CCQK8CiH.js",
+   "raw": 252,
+   "gzip": 210
+  },
+  {
+   "file": "isSameMonth-CzsL8tjG.js",
+   "raw": 222,
+   "gzip": 169
+  },
+  {
+   "file": "use-reduced-motion-nk9ftJQP.js",
+   "raw": 139,
+   "gzip": 139
+  },
+  {
+   "file": "isToday-B6aXU15Q.js",
+   "raw": 130,
+   "gzip": 132
+  }
+ ]
+}

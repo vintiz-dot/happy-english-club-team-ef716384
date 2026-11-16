@@ -27,6 +27,7 @@ import { StudentAnalyticsModal } from "@/components/student/StudentAnalyticsModa
 import { type BoardEntry } from "@/components/shared/PodiumBoard";
 import { StyledClassBoard } from "@/components/leaderboard/StyledClassBoard";
 import { useClassMonitor } from "@/hooks/useClassMonitor";
+import { useIvory } from "@/hooks/useIvory";
 
 interface StudentClassLeaderboardProps {
   classId: string;
@@ -73,8 +74,13 @@ export function StudentClassLeaderboard({
   classId,
   className,
   currentStudentId,
-  ivory = false,
+  ivory: ivoryFrame = false,
 }: StudentClassLeaderboardProps) {
+  // The system frame when the caller asks for it (the student dashboard) or
+  // when the route is in the system (useIvory: the admin's /students/:id once
+  // the staff area is listed). Elsewhere the studio frame, as before.
+  const ivoryScope = useIvory();
+  const ivory = ivoryFrame || ivoryScope;
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [analyticsStudent, setAnalyticsStudent] = useState<{
     id: string;

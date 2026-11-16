@@ -96,6 +96,93 @@ const SUITES = [
       "20261112091000_session_cancel_guard.sql",
     ],
   },
+  // D4 step 1a (docs/evidence/D4-design.md f.2): the two floors, D2's own
+  // suite re-run with them, the functions as deployed today against them,
+  // and the rollback back to the D release. Each pins its assertion count.
+  {
+    name: "d4 floors",
+    file: "d4-floors.test.mjs",
+    expect: 213,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261114090000_d4_floors.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+    ],
+  },
+  {
+    name: "d4 D2 carry-over",
+    file: "d4-d2-carryover.test.mjs",
+    expect: 275,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261114090000_d4_floors.sql",
+    ],
+  },
+  {
+    name: "d4 deployed functions",
+    file: "d4-deployed-functions.test.mjs",
+    expect: 37,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261114090000_d4_floors.sql",
+    ],
+  },
+  {
+    name: "d4 rollback",
+    file: "d4-rollback.test.mjs",
+    expect: 26,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261114090000_d4_floors.sql",
+    ],
+    args: ["scripts/ROLLBACK-d4-1-floors.sql"],
+  },
+  // D4 step 1b: the money guard's core and the register (G-11, G-12, DQ-1),
+  // the three functions driven per role, and the pure helpers.
+  {
+    name: "d4 register",
+    file: "d4-register.test.mjs",
+    expect: 140,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+    ],
+    args: ["scripts/ROLLBACK-d4-2-register.sql"],
+  },
+  {
+    name: "d4 functions register",
+    file: "d4-functions-register.test.mjs",
+    expect: 34,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+    ],
+  },
+  { name: "money guard lib", file: "money-guard-lib.test.mjs", expect: 45, migrations: [] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
@@ -129,6 +216,11 @@ const SUITES = [
   // calculate-payroll instead of recomputing the month, and this is the
   // mapping that stands between the two.
   { name: "payroll screen rows", file: "payroll-rows.test.mjs", migrations: [] },
+  // The teacher's own payroll page and the admin's view of one teacher read
+  // calculate-payroll too (T5): the mapping, and the function itself as a
+  // teacher, an admin, a TA, a parent and nobody call it.
+  { name: "teacher payroll view", file: "teacher-payroll-view.test.mjs", migrations: [] },
+  { name: "teacher payroll function", file: "teacher-payroll.test.mjs", migrations: [] },
   {
     name: "pay-rate history",
     file: "payhist.mjs",
@@ -228,6 +320,7 @@ const SUITES = [
     file: "audit-clips.test.mjs",
     migrations: ["20261111090000_audit_voice_clips.sql", "20261111100000_audit_clips_youtube_links.sql"],
   },
+  { name: "audit eval proxy (TEMP)", file: "audit-eval.test.mjs", migrations: ["20261112110000_audit_eval_bucket.sql"] },
   {
     name: "ta standing assignments",
     file: "ta-standing.test.mjs",
@@ -245,6 +338,52 @@ const SUITES = [
   // 20260717090000 first: the existing class-recordings bucket and its policy,
   // so the suite proves the recorder leaves them alone (C1 critic 2, N1).
   { name: "class recorder", file: "recorder.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql"] },
+  // Teacher Transcripts' audio scoped to the class's own staff (D-14), with
+  // the recorder pasted after it to prove its preflight still accepts.
+  { name: "transcribe gate", file: "transcribe-gate.test.mjs", migrations: [] },
+  { name: "class recordings scope", file: "class-recordings-scope.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112120000_class_recordings_scope.sql", "20261112100000_class_recorder.sql"] },
+  // S1 security fixes (docs/evidence/S1-security-fixes.md). One migration
+  // per finding, each pasted on top of the state production is in.
+  // F-01: a sign-up never gets a role because the browser asked for it.
+  {
+    name: "signup role (F-01)",
+    file: "signup-role.test.mjs",
+    migrations: ["20260312152157_350b3a18-08dd-4115-afc0-a78b318339eb.sql", "20261113100000_signup_role_from_server_only.sql"],
+  },
+  // F-14: the homework bucket. The 36 production policies come from
+  // docs/evidence/S1-F14-rollback.sql, which is both the "before" and the
+  // rollback under test.
+  {
+    name: "homework bucket (F-14)",
+    file: "homework-bucket-scope.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113110000_homework_bucket_scope.sql"],
+  },
+  // F-15: pause_enrollment asks for an admin. The "before" is the live
+  // function, kept as the rollback block in the evidence file.
+  { name: "pause enrollment (F-15)", file: "pause-enrollment.test.mjs", migrations: ["20261113120000_pause_enrollment_admin_only.sql"] },
+  // F-16: classmates' rows. The four production policies come from
+  // docs/evidence/S1-F16-rollback.sql ("before" and rollback under test).
+  {
+    name: "classmate rows (F-16)",
+    file: "classmate-rows.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113130000_classmate_rows_private.sql"],
+  },
+  // The same suite with 20261113150000 pasted on top: class skill figures
+  // for a family as a summary that names no child.
+  {
+    name: "class skill summary",
+    file: "classmate-rows.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113130000_classmate_rows_private.sql", "20261113150000_class_skill_summary_without_names.sql"],
+  },
+  // F-21: creator-owned write policies, and what a stored link may be.
+  {
+    name: "creator rows (F-21)",
+    file: "creator-rows.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql"],
+  },
+  // F-02: the nine AI / speech / image-search functions, handler by handler:
+  // no session, wrong role, right role, the per-account limit.
+  { name: "ai spend gate (F-02)", file: "ai-gate.test.mjs", migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
@@ -271,11 +410,17 @@ const SUITES = [
   },
 ];
 
+// D4 (docs/evidence/D4-design.md f.1): a suite may pin `expect`, the number
+// of assertions it must report; FEWER is a failure, because a suite that
+// silently loaded nothing passes with nothing. `args` are extra files,
+// relative to the repo root, passed after the migrations.
+const repoRoot = resolve(here, "..", "..");
+
 const run = (suite) =>
   new Promise((done) => {
     const child = spawn(
       process.execPath,
-      [join(here, suite.file), ...suite.migrations.map(m)],
+      [join(here, suite.file), ...suite.migrations.map(m), ...(suite.args ?? []).map((a) => join(repoRoot, a))],
       { stdio: ["ignore", "pipe", "pipe"] },
     );
     let out = "";
@@ -292,7 +437,11 @@ for (const suite of SUITES) {
   const summary = r.out.trim().split("\n").pop() ?? "";
   const counted = /^(\d+) passed, (\d+) failed$/.exec(summary);
   if (counted) total += Number(counted[1]);
-  if (r.code === 0) {
+  const short = suite.expect !== undefined && (!counted || Number(counted[1]) < suite.expect);
+  if (short && r.code === 0) {
+    failed += 1;
+    console.log(`  FAIL  ${suite.name.padEnd(24)} ${summary} (expected at least ${suite.expect} passing assertions)`);
+  } else if (r.code === 0) {
     console.log(`  ok    ${suite.name.padEnd(24)} ${summary}`);
   } else {
     failed += 1;

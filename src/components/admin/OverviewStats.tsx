@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, UserCog, BookOpen, Calendar, TrendingUp, TrendingDown, Sparkles, DollarSign } from "lucide-react";
+import { Users, UserCog, BookOpen, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { dayjs } from "@/lib/date";
@@ -81,8 +81,6 @@ export function OverviewStats() {
       value: stats?.students || 0,
       icon: Users,
       description: "Currently enrolled students",
-      gradient: "from-blue-500 to-cyan-500",
-      bgGlow: "bg-blue-500/20",
       trend: stats?.studentDelta !== undefined ? `${stats.studentDelta >= 0 ? "+" : ""}${stats.studentDelta}%` : "—",
       trendUp: stats?.studentDelta !== undefined ? (stats.studentDelta > 0 ? true : stats.studentDelta < 0 ? false : null) : null,
       displayValue: null as string | null,
@@ -92,8 +90,6 @@ export function OverviewStats() {
       value: stats?.teachers || 0,
       icon: UserCog,
       description: "Teaching staff members",
-      gradient: "from-amber-500 to-orange-500",
-      bgGlow: "bg-amber-500/20",
       trend: null,
       trendUp: null,
       displayValue: null as string | null,
@@ -103,8 +99,6 @@ export function OverviewStats() {
       value: stats?.classes || 0,
       icon: BookOpen,
       description: "Running classes",
-      gradient: "from-emerald-500 to-teal-500",
-      bgGlow: "bg-emerald-500/20",
       trend: null,
       trendUp: null,
       displayValue: null as string | null,
@@ -114,8 +108,6 @@ export function OverviewStats() {
       value: stats?.upcomingSessions || 0,
       icon: Calendar,
       description: "Scheduled ahead",
-      gradient: "from-slate-600 to-slate-800",
-      bgGlow: "bg-slate-500/20",
       trend: null,
       trendUp: null,
       displayValue: null as string | null,
@@ -125,8 +117,6 @@ export function OverviewStats() {
       value: financeSummary?.totalCollected || 0,
       icon: DollarSign,
       description: `${financeSummary?.collectionRate || 0}% collected of ${((financeSummary?.totalTuition || 0) / 1000000).toFixed(1)}M billed`,
-      gradient: "from-rose-500 to-sky-500",
-      bgGlow: "bg-rose-500/20",
       trend: financeSummary?.collectionRate !== undefined ? `${financeSummary.collectionRate}%` : null,
       trendUp: financeSummary?.collectionRate !== undefined ? (financeSummary.collectionRate >= 80 ? true : financeSummary.collectionRate < 50 ? false : null) : null,
       displayValue: `${((financeSummary?.totalCollected || 0) / 1000000).toFixed(1)}M`,
@@ -137,15 +127,15 @@ export function OverviewStats() {
     return (
       <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         {[...Array(5)].map((_, i) => (
-          <Card key={i} className="relative overflow-hidden">
-            <CardContent className="p-6">
+          <Card key={i}>
+            <CardContent className="p-4 sm:p-6">
               <div className="animate-pulse space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="h-4 w-24 bg-muted rounded" />
-                  <div className="h-10 w-10 bg-muted rounded-xl" />
+                  <div className="h-4 w-24 rounded-hec-sm bg-hec-sunken" />
+                  <div className="h-10 w-10 rounded-hec-md bg-hec-sunken" />
                 </div>
-                <div className="h-8 w-16 bg-muted rounded" />
-                <div className="h-3 w-32 bg-muted rounded" />
+                <div className="h-8 w-16 rounded-hec-sm bg-hec-sunken" />
+                <div className="h-3 w-32 rounded-hec-sm bg-hec-sunken" />
               </div>
             </CardContent>
           </Card>
@@ -161,49 +151,36 @@ export function OverviewStats() {
         return (
           <motion.div
             key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
+            transition={{ duration: 0.24, delay: index * 0.05 }}
+            className="h-full"
           >
-            <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-500 border-border/50 bg-card/80 backdrop-blur-sm">
-              <div className={cn(
-                "absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-                stat.bgGlow
-              )} />
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <Sparkles className="h-4 w-4 text-muted-foreground/50" />
-              </div>
-              <CardContent className="p-6 relative">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold tracking-tight">
+            <Card className="h-full">
+              <CardContent className="p-4 sm:p-6">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-hec-small font-medium text-hec-ink-soft">{stat.title}</p>
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <span className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">
                         {stat.displayValue || stat.value.toLocaleString()}
                       </span>
                       {stat.trend && stat.trendUp !== null && (
                         <span className={cn(
-                          "flex items-center text-xs font-medium",
-                          stat.trendUp ? "text-emerald-500" : "text-rose-500"
+                          "flex items-center gap-1 whitespace-nowrap text-hec-caption font-medium tabular-nums",
+                          stat.trendUp ? "text-hec-leaf" : "text-hec-danger"
                         )}>
-                          {stat.trendUp ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
+                          {stat.trendUp ? <TrendingUp className="h-4 w-4" aria-hidden /> : <TrendingDown className="h-4 w-4" aria-hidden />}
                           {stat.trend}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className={cn(
-                    "h-12 w-12 rounded-xl flex items-center justify-center shadow-lg bg-gradient-to-br",
-                    stat.gradient
-                  )}>
-                    <Icon className="h-6 w-6 text-white" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken text-hec-ink-soft">
+                    <Icon className="h-5 w-5" aria-hidden />
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
-                <div className={cn(
-                  "absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-                  stat.gradient
-                )} />
+                <p className="text-hec-caption text-hec-ink-soft">{stat.description}</p>
               </CardContent>
             </Card>
           </motion.div>

@@ -77,7 +77,7 @@ export function DemoAccessManager() {
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-violet-500" />
+              <KeyRound className="h-5 w-5 text-hec-ink-soft" aria-hidden />
               Demo access
             </CardTitle>
             <CardDescription>
@@ -86,12 +86,12 @@ export function DemoAccessManager() {
           </div>
           {!isLoading && (
             status?.enabled ? (
-              <Badge className="bg-emerald-500/15 text-emerald-600 gap-1">
-                <ShieldCheck className="h-3 w-3" />Enabled
+              <Badge variant="success" className="gap-1">
+                <ShieldCheck className="h-3 w-3" aria-hidden />Enabled
               </Badge>
             ) : (
               <Badge variant="secondary" className="gap-1">
-                <ShieldOff className="h-3 w-3" />Disabled
+                <ShieldOff className="h-3 w-3" aria-hidden />Disabled
               </Badge>
             )
           )}
@@ -100,7 +100,7 @@ export function DemoAccessManager() {
       <CardContent className="space-y-4">
         <Alert>
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="text-xs">
+          <AlertDescription className="text-hec-small">
             This is a live system with real student and family records. Demo access is limited to a
             <strong> student</strong> account enrolled only in the fictional “Demo Class” — it cannot
             see real students, families or finances. Admin, teacher and family demo logins have been
@@ -109,22 +109,22 @@ export function DemoAccessManager() {
         </Alert>
 
         {isLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+          <div className="flex items-center gap-2 py-2 text-hec-small text-hec-ink-soft">
             <Loader2 className="h-4 w-4 animate-spin" />Loading…
           </div>
         ) : (
           <>
-            <div className="text-xs text-muted-foreground space-y-1">
+            <div className="space-y-1 text-hec-caption text-hec-ink-soft">
               <p>
-                Demo sign-in email: <span className="font-mono font-semibold">{status?.demo_email}</span>
+                Demo sign-in email: <span className="break-all font-mono font-semibold text-hec-ink">{status?.demo_email}</span>
                 <Button
-                  variant="ghost" size="sm" className="h-6 px-1.5 ml-1"
+                  variant="ghost" size="sm" className="ml-1" aria-label="Copy the demo email"
                   onClick={() => {
                     navigator.clipboard.writeText(status?.demo_email || "");
                     toast.success("Email copied");
                   }}
                 >
-                  <Copy className="h-3 w-3" />
+                  <Copy className="h-4 w-4" aria-hidden />
                 </Button>
               </p>
               <p>
@@ -149,7 +149,7 @@ export function DemoAccessManager() {
                 />
                 <Button variant="outline" size="sm" onClick={suggest}>Suggest</Button>
               </div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-hec-caption text-hec-ink-soft">
                 Visitors type this on the login page. It is set directly on the account and never
                 stored in the database — if you forget it, just set a new one.
               </p>
@@ -157,7 +157,7 @@ export function DemoAccessManager() {
 
             <div className="flex items-center gap-2 flex-wrap">
               <Button
-                className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
+                className="gap-2"
                 disabled={pw.length < 10 || setPasswordMutation.isPending}
                 onClick={() => setPasswordMutation.mutate()}
               >

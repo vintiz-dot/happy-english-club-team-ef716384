@@ -1,0 +1,132 @@
+// The checked money path (D4), shared by repair-attendance, mark-attendance
+// and guarded-change-refresh. Contract: docs/evidence/D4-design.md c.2, (d)
+// "Step 1b", and docs/evidence/D4-build-1b.md.
+//
+// RULES THIS FILE EXISTS TO KEEP
+// - A person-initiated change is made through money_change_preview /
+//   money_change_checked on a client built from the CALLER'S OWN
+//   Authorization header. The service-role client only reads and refreshes
+//   tuition; it never writes a guarded table for a person.
+// - Nothing here prices anything: refreshes run calculate-tuition, at most
+//   REFRESH_PER_CALL pairs a call (it allows 30 calls a minute), and what is
+//   left stays in the pending view until the same call is made again.
+// - A missing RPC is 503 guard_not_installed, with no fallback write.
+//
+// Imports only the session guard's error mapping and refresh (both
+// dependency-free), so it type-checks and bundles on its own.
+import { guardError, mapDbError, refreshPairs, type GuardError, type PairResult } from './session-guard.ts';
+
+export const REFRESH_PER_CALL = 25;
+
+export interface MoneyAck {
+  reason?: string | null;
+  token?: string | null;
+  confirm?: boolean;
+  correction_reason?: string | null;
+}
+
+export async function moneyPreview(asCaller: any, entity: string, op: string, args: Record<string, unknown>):
+  Promise<{ data: any } | { error: GuardError }> {
+  const { data, error } = await asCaller.rpc('money_change_preview', { p_entity: entity, p_op: op, p_args: args });
+  if (error) return { error: mapDbError(error) };
+  return { data };
+}
+
+export async function moneyConfirm(asCaller: any, entity: string, op: string, args: Record<string, unknown>,
+  ack: MoneyAck = {}, context: Record<string, unknown> = {}): Promise<{ data: any } | { error: GuardError }> {
+  const { data, error } = await asCaller.rpc('money_change_checked', {
+    p_entity: entity, p_op: op, p_args: args,
+    p_reason: typeof ack.reason === 'string' && ack.reason.trim() !== '' ? ack.reason : null,
+    p_token: typeof ack.token === 'string' ? ack.token : null,
+    p_confirm: ack.confirm === true,
+    p_correction_reason: typeof ack.correction_reason === 'string' && ack.correction_reason.trim() !== '' ? ack.correction_reason : null,
+    p_context: context,
+  });
+  if (error) return { error: mapDbError(error) };
+  return { data };
+}
+
+/** Reads an `ack` object from a request body: only strings and a boolean pass. */
+export function readAck(raw: unknown): MoneyAck | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const a = raw as Record<string, unknown>;
+  return {
+    reason: typeof a.reason === 'string' ? a.reason : null,
+    token: typeof a.token === 'string' ? a.token : null,
+    confirm: a.confirm === true,
+    correction_reason: typeof a.correction_reason === 'string' ? a.correction_reason : null,
+  };
+}
+
+/** The pairs already refreshed for an override, from its tuition_refreshed / _failed events. */
+export function pairsDone(events: any[]): Set<string> {
+  const done = new Set<string>();
+  for (const e of events ?? []) {
+    const results = e?.payload?.attached?.results;
+    if (!Array.isArray(results)) continue;
+    for (const r of results) if (r?.ok && r.student_id && r.month) done.add(`${r.student_id}:${r.month}`);
+  }
+  return done;
+}
+
+/**
+ * Refresh an override's (student, month) pairs through calculate-tuition, at
+ * most REFRESH_PER_CALL of the ones not yet refreshed, and record the result
+ * as the caller: tuition_refreshed when nothing is left and every pair of
+ * this call was ok, tuition_refresh_failed otherwise. The override and its
+ * events are read AS THE CALLER (admin RLS).
+ */
+export async function refreshMoneyChange(service: any, asCaller: any, overrideId: string) {
+  const { data: o, error } = await asCaller.from('money_change_overrides')
+    .select('id, refresh_pairs').eq('id', overrideId).maybeSingle();
+  if (error) return { error: mapDbError(error) };
+  if (!o) return { error: guardError(404, 'not_found', 'That change was not found.') };
+  const { data: ev, error: evErr } = await asCaller.from('money_change_events')
+    .select('kind, payload').eq('override_id', overrideId);
+  if (evErr) return { error: mapDbError(evErr) };
+  const done = pairsDone(ev ?? []);
+  const all: Array<{ student_id: string; month: string }> = Array.isArray(o.refresh_pairs) ? o.refresh_pairs : [];
+  const todo = all.filter((p) => p?.student_id && p?.month && !done.has(`${p.student_id}:${p.month}`));
+  const batch = todo.slice(0, REFRESH_PER_CALL);
+  const results: PairResult[] = batch.length ? await refreshPairs(service, batch) : [];
+  const remaining = todo.length - results.filter((r) => r.ok).length;
+  const allOk = results.every((r) => r.ok) && remaining === 0;
+  let event_recorded = false;
+  let event_error: string | undefined;
+  if (batch.length > 0) {
+    const { error: e } = await asCaller.rpc('record_money_change_event', {
+      p_override_id: overrideId,
+      p_kind: allOk ? 'tuition_refreshed' : 'tuition_refresh_failed',
+      p_payload: { source: 'edge', results, remaining },
+    });
+    event_recorded = !e;
+    if (e) event_error = mapDbError(e).code;
+  }
+  return {
+    status: all.length === 0 ? 'none' : allOk ? 'refreshed' : remaining > 0 && results.every((r) => r.ok) ? 'partial' : 'failed',
+    results,
+    remaining,
+    failed: results.filter((r) => !r.ok).map((r) => ({ student_id: r.student_id, month: r.month, error: r.error })),
+    event_recorded,
+    event_error,
+  };
+}
+
+/** The register's free week, in the function (G-11 rule 6 for teachers): did
+ *  the lesson end more than 7 days ago? Hanoi = UTC+7, no DST. */
+export function lessonEndedMoreThanAWeekAgo(date: string, start: string, end: string, now: Date = new Date()): boolean {
+  const endIso = `${date}T${String(end).slice(0, 8).padEnd(8, ':00')}+07:00`;
+  let endMs = Date.parse(endIso);
+  if (String(end).slice(0, 5) <= String(start).slice(0, 5)) endMs += 24 * 3600 * 1000;
+  if (!Number.isFinite(endMs)) return true;                       // unknown: treat as old (closed)
+  return endMs < now.getTime() - 7 * 24 * 3600 * 1000;
+}
+
+/** "Past" month as the database decides it: before the month of (now in Hanoi - 7 days). */
+export function monthIsPast(month: string, now: Date = new Date()): boolean {
+  const t = new Date(now.getTime() + 7 * 3600 * 1000 - 7 * 24 * 3600 * 1000);   // Hanoi clock, minus 7 days
+  const cur = `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}`;
+  return String(month) < cur;
+}
+
+export const BILLABLE = new Set(['Present', 'Absent', 'Late']);

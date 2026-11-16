@@ -322,7 +322,7 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileDown className="h-5 w-5 text-violet-500" />
+          <FileDown className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
           Bulk report export
         </CardTitle>
         <CardDescription>
@@ -334,14 +334,14 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
       <CardContent className="space-y-4">
         {/* Class picker (admin only) */}
         {!fixedClassId && (
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground mb-1.5">Class</p>
+          <div className="flex flex-col gap-2">
+            <p id="bulk-report-class" className="text-hec-small font-medium text-hec-ink">Class</p>
             <Select
               value={classId}
               onValueChange={(v) => { setClassId(v); setSelected(new Set()); }}
               disabled={busy}
             >
-              <SelectTrigger className="max-w-sm">
+              <SelectTrigger className="max-w-sm" aria-labelledby="bulk-report-class">
                 <SelectValue placeholder="Select a class" />
               </SelectTrigger>
               <SelectContent>
@@ -355,22 +355,22 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
 
         {/* Roster */}
         {!classId ? (
-          <p className="text-sm text-muted-foreground py-6 text-center">
+          <p className="py-6 text-center text-hec-small text-hec-ink-soft">
             Choose a class to see its students.
           </p>
         ) : rosterLoading ? (
-          <p className="text-sm text-muted-foreground py-6 text-center flex items-center justify-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />Loading the roster…
+          <p className="flex items-center justify-center gap-2 py-6 text-center text-hec-small text-hec-ink-soft">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />Loading the roster…
           </p>
         ) : roster.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-6 text-center">
+          <p className="py-6 text-center text-hec-small text-hec-ink-soft">
             No active students are enrolled in this class.
           </p>
         ) : (
           <>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary" className="gap-1 font-normal">
-                <Users className="h-3 w-3" />
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="tabular-nums">
+                <Users className="h-3 w-3" aria-hidden />
                 {selected.size} of {roster.length} selected
               </Badge>
               <Button variant="ghost" size="sm" onClick={selectAll} disabled={busy}>All</Button>
@@ -380,15 +380,15 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
               </Button>
             </div>
 
-            <div className="rounded-xl border divide-y max-h-[320px] overflow-y-auto">
+            <div className="max-h-[320px] divide-y divide-hec-line overflow-y-auto rounded-hec-lg border border-hec-line bg-hec-surface">
               {roster.map((s) => {
                 const rep = reportsByStudent[s.id];
                 return (
                   <label
                     key={s.id}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors",
-                      selected.has(s.id) ? "bg-violet-500/5" : "hover:bg-muted/50",
+                      "flex min-h-hec-target cursor-pointer items-start gap-3 px-4 py-3 transition-colors duration-hec-1 ease-hec",
+                      selected.has(s.id) ? "bg-hec-sunken" : "hover:bg-hec-sunken/60",
                       busy && "cursor-not-allowed opacity-70",
                     )}
                   >
@@ -396,15 +396,16 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
                       checked={selected.has(s.id)}
                       onCheckedChange={() => toggle(s.id)}
                       disabled={busy}
+                      className="mt-1"
                     />
-                    <span className="flex-1 min-w-0 text-sm font-medium truncate">{s.full_name}</span>
+                    <span className="min-w-0 flex-1 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{s.full_name}</span>
                     {rep ? (
-                      <Badge variant="outline" className="gap-1 font-normal text-[10px] shrink-0">
-                        <FileText className="h-3 w-3" />
+                      <Badge variant="outline" className="shrink-0 tabular-nums">
+                        <FileText className="h-3 w-3" aria-hidden />
                         {new Date(rep.created_at).toLocaleDateString()}
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="font-normal text-[10px] shrink-0">
+                      <Badge variant="secondary" className="shrink-0">
                         no report yet
                       </Badge>
                     )}
@@ -414,7 +415,7 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
             </div>
 
             {/* Generate toggle */}
-            <div className="flex items-start gap-3 rounded-xl border p-3">
+            <label className="flex cursor-pointer items-start gap-3 rounded-hec-md border border-hec-line bg-hec-surface p-4">
               <Switch
                 checked={generateMissing}
                 onCheckedChange={setGenerateMissing}
@@ -422,49 +423,49 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
                 className="mt-0.5"
               />
               <div className="min-w-0">
-                <p className="text-sm font-semibold">Generate reports that are missing first</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-hec-small font-semibold text-hec-ink">Generate reports that are missing first</p>
+                <p className="text-hec-caption text-hec-ink-soft">
                   Runs the AI profiling engine for selected students who have no report yet. This
                   takes roughly half a minute each and uses your OpenAI quota. Students who already
                   have a report are never regenerated.
                   {missingCount > 0 && (
-                    <span className="text-amber-600 font-medium">
+                    <span className="font-medium text-hec-warn">
                       {" "}{missingCount} of your selection {missingCount === 1 ? "has" : "have"} no report yet.
                     </span>
                   )}
                 </p>
               </div>
-            </div>
+            </label>
 
             {/* Progress. Narrowed on run.phase rather than the `busy` alias
                 so TypeScript can see done/total exist on this variant. */}
             {run.phase !== "idle" && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-500" />
+                <div className="flex items-start justify-between gap-3 text-hec-caption text-hec-ink">
+                  <span className="flex min-w-0 items-start gap-2 break-words font-medium">
+                    <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-hec-ink-soft" aria-hidden />
                     {run.phase === "generating" ? "Generating" : "Building PDF"} — {run.current}
                   </span>
-                  <span className="text-muted-foreground tabular-nums">
+                  <span className="shrink-0 whitespace-nowrap tabular-nums text-hec-ink-soft">
                     {run.done}/{run.total}
                   </span>
                 </div>
-                <Progress value={progressPct} className="h-1.5" />
+                <Progress value={progressPct} className="h-2" />
               </div>
             )}
 
             <Button
               onClick={start}
               disabled={busy || selected.size === 0}
-              className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
+              className="w-full sm:w-auto"
             >
               {busy ? (
-                <><Loader2 className="h-4 w-4 animate-spin" />Working…</>
+                <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Working…</>
               ) : (
                 <>
                   {generateMissing && missingCount > 0
-                    ? <Sparkles className="h-4 w-4" />
-                    : <FileDown className="h-4 w-4" />}
+                    ? <Sparkles className="h-4 w-4" aria-hidden />
+                    : <FileDown className="h-4 w-4" aria-hidden />}
                   Export {selected.size || ""} report{selected.size === 1 ? "" : "s"}
                 </>
               )}
@@ -472,22 +473,22 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
 
             {/* Outcome */}
             {failures.length > 0 && !busy && (
-              <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-1.5">
-                <p className="text-sm font-semibold text-amber-600 flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
+              <div className="space-y-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4">
+                <p className="flex items-center gap-2 text-hec-small font-semibold text-hec-warn">
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
                   {failures.length} student{failures.length === 1 ? "" : "s"} not exported
                 </p>
                 {failures.map((f, i) => (
-                  <p key={i} className="text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">{f.name}</span> — {f.reason}
+                  <p key={i} className="break-words text-hec-caption text-hec-ink-soft">
+                    <span className="font-medium text-hec-ink">{f.name}</span> — {f.reason}
                   </p>
                 ))}
               </div>
             )}
 
             {!busy && failures.length === 0 && selected.size > 0 && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              <p className="flex items-start gap-2 text-hec-caption text-hec-ink-soft">
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-hec-leaf" aria-hidden />
                 {selected.size - missingCount} of {selected.size} selected already have a report
                 ready to export.
               </p>

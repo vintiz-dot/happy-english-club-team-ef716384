@@ -165,7 +165,7 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
     <Card>
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" aria-hidden />
               Student accounts
@@ -177,7 +177,7 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
           </div>
 
           {owing.length > 0 && (
-            <Badge variant="outline" className="shrink-0 gap-1.5 border-red-500/40 py-1 text-red-600">
+            <Badge variant="destructive" className="shrink-0 whitespace-nowrap tabular-nums">
               <TriangleAlert className="h-3.5 w-3.5" aria-hidden />
               {owing.length} owing · {formatVND(Math.abs(totalOwed))} ₫
             </Badge>
@@ -187,17 +187,18 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
         {/* -------------------------------------------------- controls */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <div className="relative min-w-[200px] flex-1">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint" aria-hidden />
             <Input
+              aria-label="Search a student or class"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search a student or class…"
-              className="pl-8"
+              className="pl-9"
             />
           </div>
 
           <Select value={show} onValueChange={(v) => setShow(v as typeof show)}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-full sm:w-[180px]" aria-label="Show">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -208,9 +209,11 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
           </Select>
 
           <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-            <SelectTrigger className="w-[160px]">
-              <ArrowDownUp className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-              <SelectValue />
+            <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort">
+              <span className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                <ArrowDownUp className="h-4 w-4 shrink-0" aria-hidden />
+                <SelectValue />
+              </span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="balance">Most owed first</SelectItem>
@@ -226,15 +229,15 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
         {isLoading ? (
           <PlaceholderCard rows={5} />
         ) : error ? (
-          <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+          <p className="rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 text-hec-small text-hec-danger">
             {(error as Error).message}
           </p>
         ) : visible.length === 0 ? (
-          <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+          <p className="rounded-hec-md border border-dashed border-hec-line p-6 text-center text-hec-small text-hec-ink-soft">
             {query ? "Nobody matches that search." : "No students to show."}
           </p>
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="divide-y divide-hec-line rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1">
             {visible.map((r) => {
               const open = openId === r.id;
               return (
@@ -243,27 +246,27 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
                     type="button"
                     aria-expanded={open}
                     className={cn(
-                      "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/50",
-                      open && "bg-muted/40",
+                      "flex min-h-hec-target w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring",
+                      open && "bg-hec-sunken/60",
                     )}
                     onClick={() => setOpenId(open ? null : r.id)}
                   >
                     {open ? (
-                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
                     ) : (
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
                     )}
 
                     <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="truncate text-sm font-medium">{r.name}</span>
+                      <span className="flex flex-wrap items-start gap-2">
+                        <span className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{r.name}</span>
                         {!r.isActive && (
-                          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-normal">
+                          <Badge variant="secondary" className="shrink-0">
                             inactive
                           </Badge>
                         )}
                       </span>
-                      <span className="block truncate text-xs text-muted-foreground">
+                      <span className="block break-words text-hec-small text-hec-ink-soft">
                         {r.classes.length > 0 ? r.classes.join(" · ") : "No class"}
                         {r.months > 0 && r.lastMonth && (
                           <> · {r.months} month{r.months === 1 ? "" : "s"} to {dayjs(`${r.lastMonth}-01`).format("MMM YYYY")}</>
@@ -272,23 +275,23 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
                     </span>
 
                     <span className="hidden shrink-0 text-right sm:block">
-                      <span className="block text-xs text-muted-foreground">charged</span>
-                      <span className="block text-sm tabular-nums">{formatVND(r.charged)} ₫</span>
+                      <span className="block text-hec-caption text-hec-ink-soft">charged</span>
+                      <span className="block whitespace-nowrap text-hec-small tabular-nums text-hec-ink">{formatVND(r.charged)} ₫</span>
                     </span>
 
                     <span className="hidden shrink-0 text-right md:block">
-                      <span className="block text-xs text-muted-foreground">paid</span>
-                      <span className="block text-sm tabular-nums">{formatVND(r.paid)} ₫</span>
+                      <span className="block text-hec-caption text-hec-ink-soft">paid</span>
+                      <span className="block whitespace-nowrap text-hec-small tabular-nums text-hec-ink">{formatVND(r.paid)} ₫</span>
                     </span>
 
-                    <span className="w-28 shrink-0 text-right">
-                      <span className="block text-xs text-muted-foreground">balance</span>
+                    <span className="min-w-[7rem] shrink-0 text-right">
+                      <span className="block text-hec-caption text-hec-ink-soft">balance</span>
                       <span
                         className={cn(
-                          "block text-sm font-semibold tabular-nums",
-                          r.balance > 0 && "text-emerald-600",
-                          r.balance < 0 && "text-red-600",
-                          r.balance === 0 && "text-muted-foreground",
+                          "block whitespace-nowrap text-hec-small font-semibold tabular-nums",
+                          r.balance > 0 && "text-hec-leaf",
+                          r.balance < 0 && "text-hec-danger",
+                          r.balance === 0 && "text-hec-ink-soft",
                         )}
                       >
                         {r.balance === 0
@@ -299,7 +302,7 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
                   </button>
 
                   {open && (
-                    <div className="border-t bg-muted/20 px-3 py-4">
+                    <div className="border-t border-hec-line bg-hec-sunken/40 px-4 py-4">
                       <StudentAuditPanel studentId={r.id} onPrint={onPrint} />
                     </div>
                   )}
@@ -310,7 +313,7 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
         )}
 
         {!isLoading && !error && (
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-3 text-hec-caption text-hec-ink-soft">
             Showing {visible.length} of {rows?.length ?? 0}. Totals cover every month that has an
             invoice — a month tuition was never calculated for does not appear.
           </p>

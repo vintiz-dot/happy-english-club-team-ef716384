@@ -14,19 +14,23 @@ import {
 import { TeacherBankingInfo } from "@/components/teacher/TeacherBankingInfo";
 import { School, TrendingUp } from "lucide-react";
 import { MonthPicker } from "@/components/MonthPicker";
-import { payRateTypeOf, sessionPayVnd, type StaffPayRate } from "@/lib/payRate";
-import { durationMinutes } from "@/lib/sessionDuration";
+import { teacherPayrollView } from "@/lib/teacherPayrollView";
 
 interface TeacherProfilePayrollProps {
   teacherId: string;
   selectedMonth: string;
-  /** The teacher's whole pay rate, so a per-session teacher is not costed
-      as though their fee scaled with the clock. */
-  payRate: StaffPayRate;
   onMonthChange?: (month: string) => void;
 }
 
-export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMonthChange }: TeacherProfilePayrollProps) {
+/**
+ * The admin's view of one teacher's month. Every figure is calculate-payroll's
+ * (through teacherPayrollView): this used to price each lesson itself at the
+ * teacher row's rate of today, applying sessions.rate_override_vnd that the
+ * function - and so the actual pay - ignores, and read a `sessions` field the
+ * function does not return, so its table was always empty. The class summary
+ * is grouped from the same response, so it counts exactly the lessons paid.
+ */
+export function TeacherProfilePayroll({ teacherId, selectedMonth, onMonthChange }: TeacherProfilePayrollProps) {
   const { data: payrollData } = useQuery({
     queryKey: ["teacher-payroll-detail", teacherId, selectedMonth],
     queryFn: async () => {
@@ -34,86 +38,19 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
         body: { month: selectedMonth, teacherId },
       });
       if (error) throw error;
-      return data?.payrollData?.[0];
+      return teacherPayrollView(data, teacherId);
     },
   });
 
-  // Fetch class breakdown summary
-  const { data: classBreakdown } = useQuery({
-    queryKey: ["teacher-class-breakdown", teacherId, selectedMonth],
-    queryFn: async () => {
-      const monthStart = `${selectedMonth}-01`;
-      const nextMonth = new Date(selectedMonth + "-01");
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-      const monthEnd = nextMonth.toISOString().slice(0, 10);
-
-      const { data: sessions, error } = await supabase
-        .from("sessions")
-        .select("id, status, classes(id, name)")
-        .eq("teacher_id", teacherId)
-        .gte("date", monthStart)
-        .lt("date", monthEnd)
-        .in("status", ["Held", "Scheduled"]);
-
-      if (error) throw error;
-
-      // Group by class
-      const classMap = new Map<string, { name: string; held: number; scheduled: number }>();
-      
-      for (const session of sessions || []) {
-        const classId = session.classes?.id;
-        const className = session.classes?.name || "Unknown";
-        
-        if (!classId) continue;
-        
-        if (!classMap.has(classId)) {
-          classMap.set(classId, { name: className, held: 0, scheduled: 0 });
-        }
-        
-        const entry = classMap.get(classId)!;
-        if (session.status === "Held") {
-          entry.held++;
-        } else if (session.status === "Scheduled") {
-          entry.scheduled++;
-        }
-      }
-
-      // Sort by total sessions descending
-      return Array.from(classMap.entries())
-        .map(([id, data]) => ({ id, ...data, total: data.held + data.scheduled }))
-        .sort((a, b) => b.total - a.total);
-    },
-  });
-
-  const calculateSessionAmount = (session: any) => {
-    const minutes = durationMinutes(session.start_time, session.end_time) ?? 0;
-    const override = session.rate_override_vnd;
-    if (!override) return sessionPayVnd(payRate, minutes);
-    // sessions.rate_override_vnd is read inconsistently across the app -
-    // as an hourly rate here, as a flat session cost in
-    // ClassCalendarEnhanced - and calculate-payroll, which produces the
-    // figure actually paid, ignores it entirely. Not settling that here.
-    // The override is applied in whatever unit the teacher is paid in,
-    // which keeps this screen unchanged for hourly teachers and is the
-    // only reading that makes sense for per-session ones.
-    return sessionPayVnd(
-      {
-        pay_rate_type: payRateTypeOf(payRate),
-        hourly_rate_vnd: override,
-        per_session_rate_vnd: override,
-      },
-      minutes,
-    );
-  };
-
+  const classBreakdown = payrollData?.classes;
   const totalClasses = classBreakdown?.length || 0;
   const totalSessions = classBreakdown?.reduce((sum, c) => sum + c.total, 0) || 0;
 
   return (
     <div className="space-y-4">
       {/* Month Picker Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Payroll Summary</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-display text-hec-h2 font-medium text-hec-ink">Payroll Summary</h2>
         {onMonthChange && (
           <MonthPicker value={selectedMonth} onChange={onMonthChange} />
         )}
@@ -125,18 +62,18 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Projected Total</CardDescription>
-            <CardTitle className="text-3xl">
-              {(payrollData?.totalAmountProjected || 0).toLocaleString()} ₫
+            <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">
+              {(payrollData?.projectedTotal || 0).toLocaleString()} ₫
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p className="text-xs text-muted-foreground">
-              Based on {payrollData?.sessionsCountProjected || 0} scheduled sessions
+            <p className="text-hec-small tabular-nums text-hec-ink-soft">
+              Based on {(payrollData?.heldSessions || 0) + (payrollData?.scheduledSessions || 0)} scheduled sessions
             </p>
             <DurationVarianceNotice
               variant="block"
               count={payrollData?.discrepancyCount || 0}
-              varianceAmount={payrollData?.varianceAmountProjected}
+              varianceAmount={payrollData?.varianceAmount}
             />
           </CardContent>
         </Card>
@@ -144,34 +81,44 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Current (Actual)</CardDescription>
-            <CardTitle className="text-3xl">
-              {(payrollData?.totalAmountActual || 0).toLocaleString()} ₫
+            <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">
+              {(payrollData?.earned || 0).toLocaleString()} ₫
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              From {payrollData?.sessionsCountActual || 0} held sessions
+          <CardContent className="space-y-1">
+            <p className="text-hec-small tabular-nums text-hec-ink-soft">
+              From {payrollData?.heldSessions || 0} held sessions
             </p>
+            {payrollData?.closed && (
+              <p className="text-hec-small text-hec-ink-soft">
+                Month closed: this is what it was paid at. Corrections since are on the Payroll tab.
+              </p>
+            )}
+            {payrollData?.monthLocked && !payrollData.closed && (
+              <p className="text-hec-small text-hec-ink-soft">
+                Month closed with no line for this teacher: this figure is calculated now, not what was paid.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Class Teaching Summary Card */}
-      <Card className="overflow-hidden border-slate-200 dark:border-slate-800/50">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/30 dark:to-slate-800/30 border-b border-slate-200 dark:border-slate-800/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50">
-                <School className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+      <Card>
+        <CardHeader className="border-b border-hec-line">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="shrink-0 rounded-hec-md bg-hec-sunken p-2">
+                <School className="h-5 w-5 text-hec-ink-soft" />
               </div>
-              <div>
-                <CardTitle className="text-lg">Class Teaching Summary</CardTitle>
+              <div className="min-w-0">
+                <CardTitle className="text-hec-h2">Class Teaching Summary</CardTitle>
                 <CardDescription>Sessions per class this month</CardDescription>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalSessions}</p>
-              <p className="text-xs text-muted-foreground">across {totalClasses} classes</p>
+            <div className="shrink-0 text-right">
+              <p className="font-sans text-2xl font-bold tabular-nums text-hec-ink">{totalSessions}</p>
+              <p className="whitespace-nowrap text-hec-caption text-hec-ink-soft">across {totalClasses} classes</p>
             </div>
           </div>
         </CardHeader>
@@ -183,34 +130,34 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
                 return (
                   <div
                     key={cls.id}
-                    className="group relative p-4 rounded-xl border bg-card hover:shadow-md transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-700"
+                    className="relative rounded-hec-md border border-hec-line bg-hec-surface p-4"
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">#{index + 1}</span>
-                        <h4 className="font-semibold text-sm truncate max-w-[120px]" title={cls.name}>
+                    <div className="mb-3 flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 flex-1 items-start gap-2">
+                        <span className="shrink-0 text-hec-caption text-hec-ink-soft tabular-nums">#{index + 1}</span>
+                        <h4 className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-small font-semibold text-hec-ink" title={cls.name}>
                           {cls.name}
                         </h4>
                       </div>
-                      <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                        <TrendingUp className="h-3 w-3" />
-                        <span className="text-lg font-bold">{cls.total}</span>
+                      <div className="flex shrink-0 items-center gap-1 text-hec-ink">
+                        <TrendingUp className="h-3 w-3 text-hec-ink-soft" />
+                        <span className="text-lg font-bold tabular-nums">{cls.total}</span>
                       </div>
                     </div>
                     
                     {/* Progress bar */}
-                    <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-900/30 overflow-hidden mb-2">
+                    <div className="mb-2 h-2 overflow-hidden rounded-full bg-hec-sunken">
                       <div 
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
+                        className="h-full rounded-full bg-hec-leaf"
                         style={{ width: `${heldPercent}%` }}
                       />
                     </div>
                     
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-green-600 dark:text-green-400 font-medium">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-hec-caption tabular-nums">
+                      <span className="font-medium text-hec-leaf">
                         {cls.held} held
                       </span>
-                      <span className="text-muted-foreground">
+                      <span className="text-hec-ink-soft">
                         {cls.scheduled} scheduled
                       </span>
                     </div>
@@ -219,7 +166,7 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
               })}
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-hec-ink-soft">
               <School className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No sessions recorded this month</p>
             </div>
@@ -229,40 +176,42 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
 
       <Card>
         <CardHeader>
-          <CardTitle>Session Details</CardTitle>
+          <CardTitle className="text-hec-h2">Session Details</CardTitle>
           <CardDescription>Per-session earnings breakdown</CardDescription>
         </CardHeader>
         <CardContent>
-          {payrollData?.sessions && payrollData.sessions.length > 0 ? (
+          {payrollData && payrollData.sessions.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="px-2 sm:px-4">Date</TableHead>
+                  <TableHead className="px-2 sm:px-4">Time</TableHead>
+                  <TableHead className="px-2 sm:px-4">Duration</TableHead>
+                  <TableHead className="px-2 sm:px-4">Status</TableHead>
+                  <TableHead className="px-2 sm:px-4 text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payrollData.sessions.map((session: any) => {
-                  const amount = calculateSessionAmount(session);
+                {payrollData.sessions.map((session) => {
+                  const amount = session.amount;
                   return (
                     <TableRow key={session.id}>
-                      <TableCell>{new Date(session.date).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
+                      <TableCell className="px-2 sm:px-4">{new Date(session.date).toLocaleDateString()}</TableCell>
+                      <TableCell className="px-2 sm:px-4">
+                        {session.startTime.slice(0, 5)} - {session.endTime.slice(0, 5)}
                       </TableCell>
-                      <TableCell>
-                        {(session.durationMinutes / 60).toFixed(1)}h
+                      <TableCell className="px-2 sm:px-4">
+                        {session.minutes === null ? "—" : `${(session.minutes / 60).toFixed(1)}h`}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={session.status === "Held" ? "default" : "secondary"} className={session.status === "Held" ? "bg-green-500" : ""}>
+                      <TableCell className="px-2 sm:px-4">
+                        <Badge variant={session.status === "Held" ? "default" : "secondary"} className={session.status === "Held" ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : ""}>
                           {session.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {amount.toLocaleString()} ₫
+                      <TableCell className="px-2 sm:px-4 whitespace-nowrap text-right font-medium tabular-nums">
+                        {amount === null
+                          ? <span title="Figure unavailable"><span aria-hidden="true">—</span><span className="sr-only">Figure unavailable</span></span>
+                          : `${amount.toLocaleString()} ₫`}
                       </TableCell>
                     </TableRow>
                   );
@@ -270,7 +219,7 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
               </TableBody>
             </Table>
           ) : (
-            <p className="text-center py-8 text-muted-foreground">No sessions this month</p>
+            <p className="text-center py-8 text-hec-ink-soft">No sessions this month</p>
           )}
         </CardContent>
       </Card>

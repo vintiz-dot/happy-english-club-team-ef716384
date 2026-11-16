@@ -1,0 +1,1873 @@
+{
+ "label": "after",
+ "runs": {
+  "v-explore-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "10",
+     "10",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank",
+       "#radix-\\:r6\\:-trigger-fixit"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-explore-375-light.png",
+   "kb": 34
+  },
+  "v-explore-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "10",
+     "10",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank",
+       "#radix-\\:r6\\:-trigger-fixit"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-explore-375-dark.png",
+   "kb": 34
+  },
+  "v-explore-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "10",
+     "10",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-explore-1280-light.png",
+   "kb": 51
+  },
+  "v-explore-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "10",
+     "10",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-explore-1280-dark.png",
+   "kb": 51
+  },
+  "v-classpick-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "10",
+     "10"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-classpick-375-light.png",
+   "kb": 59
+  },
+  "v-classpick-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "10",
+     "10"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-classpick-375-dark.png",
+   "kb": 56
+  },
+  "v-classpick-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "10",
+     "10"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-classpick-1280-light.png",
+   "kb": 77
+  },
+  "v-classpick-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "10",
+     "10"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-classpick-1280-dark.png",
+   "kb": 72
+  },
+  "v-classpick-long-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "10",
+     "10"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-classpick-long-375-light.png",
+   "kb": 59
+  },
+  "v-classpick-long-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "10",
+     "10"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-classpick-long-375-dark.png",
+   "kb": 56
+  },
+  "v-classpick-long-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "10",
+     "10"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-classpick-long-1280-light.png",
+   "kb": 77
+  },
+  "v-classpick-long-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "10",
+     "10"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-classpick-long-1280-dark.png",
+   "kb": 72
+  },
+  "v-practice-idle-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "5",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank",
+       "#radix-\\:r6\\:-trigger-fixit"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-idle-375-light.png",
+   "kb": 47
+  },
+  "v-practice-idle-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "5",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank",
+       "#radix-\\:r6\\:-trigger-fixit"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-idle-375-dark.png",
+   "kb": 47
+  },
+  "v-practice-idle-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "5",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-practice-idle-1280-light.png",
+   "kb": 65
+  },
+  "v-practice-idle-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "5",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-practice-idle-1280-dark.png",
+   "kb": 65
+  },
+  "v-practice-q-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank",
+       "#radix-\\:r6\\:-trigger-fixit"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-q-375-light.png",
+   "kb": 41
+  },
+  "v-practice-q-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank",
+       "#radix-\\:r6\\:-trigger-fixit"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-q-375-dark.png",
+   "kb": 41
+  },
+  "v-practice-q-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-practice-q-1280-light.png",
+   "kb": 59
+  },
+  "v-practice-q-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-practice-q-1280-dark.png",
+   "kb": 58
+  },
+  "v-practice-right-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "4",
+     "4",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank",
+       "#radix-\\:r6\\:-trigger-fixit"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-right-375-light.png",
+   "kb": 42
+  },
+  "v-practice-right-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "4",
+     "4",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank",
+       "#radix-\\:r6\\:-trigger-fixit"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-right-375-dark.png",
+   "kb": 41
+  },
+  "v-practice-right-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "4",
+     "4",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-practice-right-1280-light.png",
+   "kb": 59
+  },
+  "v-practice-right-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "4",
+     "4",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-practice-right-1280-dark.png",
+   "kb": 59
+  },
+  "v-practice-wrong-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".right-2",
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-wrong-375-light.png",
+   "kb": 44
+  },
+  "v-practice-wrong-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".right-2",
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-wrong-375-dark.png",
+   "kb": 45
+  },
+  "v-practice-wrong-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-wrong-1280-light.png",
+   "kb": 63
+  },
+  "v-practice-wrong-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "5",
+     "5",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-wrong-1280-dark.png",
+   "kb": 65
+  },
+  "v-practice-done-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "10",
+     "4",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".right-2",
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-done-375-light.png",
+   "kb": 41
+  },
+  "v-practice-done-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "10",
+     "4",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".right-2",
+       "#radix-\\:r6\\:-trigger-explore",
+       "#radix-\\:r6\\:-trigger-bank"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-done-375-dark.png",
+   "kb": 42
+  },
+  "v-practice-done-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "10",
+     "4",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-done-1280-light.png",
+   "kb": 60
+  },
+  "v-practice-done-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "10",
+     "4",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "after-v-practice-done-1280-dark.png",
+   "kb": 60
+  },
+  "v-pick-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "4",
+     "4",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-pick-375-light.png",
+   "kb": 50
+  },
+  "v-pick-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "4",
+     "4",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-pick-375-dark.png",
+   "kb": 48
+  },
+  "v-pick-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "4",
+     "4",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-pick-1280-light.png",
+   "kb": 76
+  },
+  "v-pick-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:count_vocab_saves_today:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2",
+     "4",
+     "4",
+     "5",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-v-pick-1280-dark.png",
+   "kb": 67
+  }
+ }
+}

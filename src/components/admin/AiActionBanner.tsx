@@ -68,33 +68,33 @@ export function AiActionBanner() {
   };
 
   return (
-    <div className="mb-5 rounded-2xl border border-violet-300/70 bg-violet-50/80 dark:bg-violet-950/30 dark:border-violet-800 p-4">
+    <div className="mb-6 rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-hec-ink shadow-hec-1">
       <div className="flex items-start gap-3">
-        <div className="h-8 w-8 shrink-0 rounded-xl bg-violet-600 text-white flex items-center justify-center">
-          <Bot className="h-4 w-4" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken text-hec-ink-soft">
+          <Bot className="h-5 w-5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-sm font-semibold">Set up by the assistant. Check it looks right.</p>
-          <ul className="text-sm space-y-0.5 list-disc pl-5">
+          <p className="text-hec-body font-semibold text-hec-ink">Set up by the assistant. Check it looks right.</p>
+          <ul className="list-disc space-y-1 pl-5 text-hec-small text-hec-ink">
             {action.summary.map((line) => (
-              <li key={line}>{line}</li>
+              <li key={line} className="break-words">{line}</li>
             ))}
           </ul>
           {action.nudges.length > 0 && (
-            <div className="text-xs text-muted-foreground space-y-0.5">
-              <p className="font-medium text-foreground/80">To finish:</p>
+            <div className="space-y-1 text-hec-caption text-hec-ink-soft">
+              <p className="font-medium text-hec-ink">To finish:</p>
               {action.nudges.map((n) => (
                 <p key={n}>→ {n}</p>
               ))}
             </div>
           )}
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button size="sm" onClick={looksRight} disabled={!!working} className="bg-violet-600 hover:bg-violet-700 text-white">
-              {working === "review" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Check className="h-3.5 w-3.5 mr-1.5" />}
+            <Button size="sm" onClick={looksRight} disabled={!!working}>
+              {working === "review" ? <Loader2 className="animate-spin" aria-hidden /> : <Check aria-hidden />}
               Looks right
             </Button>
             <Button size="sm" variant="outline" onClick={undo} disabled={!!working}>
-              {working === "undo" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Undo2 className="h-3.5 w-3.5 mr-1.5" />}
+              {working === "undo" ? <Loader2 className="animate-spin" aria-hidden /> : <Undo2 aria-hidden />}
               Undo all of it
             </Button>
             {action.student_exists && !onStudentPage && (

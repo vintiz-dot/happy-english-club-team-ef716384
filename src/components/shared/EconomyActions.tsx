@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Minus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useIvory } from "@/hooks/useIvory";
 
 interface PendingTransaction {
   id: string;
@@ -25,6 +26,7 @@ interface EconomyActionsProps {
 
 export function EconomyActions({ classId, pendingTransactions }: EconomyActionsProps) {
   const queryClient = useQueryClient();
+  const ivory = useIvory();
 
   const processMutation = useMutation({
     mutationFn: async ({ txId, status }: { txId: string; status: "approved" | "rejected" }) => {
@@ -132,11 +134,13 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
   return (
     <div className="space-y-2">
       {pendingTransactions.map((tx) => (
-        <div key={tx.id} className="flex items-center gap-2 p-2 rounded-lg bg-warning/10 border border-warning/30 text-xs">
-          <div className="flex-1 min-w-0">
-            <span className="font-medium">{tx.student_name}</span>
-            <span className="text-muted-foreground ml-1">
-              {tx.type === "convert_to_cash" ? `withdraw ${tx.cash_impact} cash` : 
+        <div key={tx.id} className={ivory
+          ? "flex items-start gap-2 p-3 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint text-hec-small text-hec-ink"
+          : "flex items-center gap-2 p-2 rounded-lg bg-warning/10 border border-warning/30 text-xs"}>
+          <div className={ivory ? "flex-1 min-w-0 self-center" : "flex-1 min-w-0"}>
+            <span className={ivory ? "font-medium whitespace-normal break-words hyphens-none" : "font-medium"}>{tx.student_name}</span>
+            <span className={ivory ? "text-hec-ink-soft ml-1" : "text-muted-foreground ml-1"}>
+              {tx.type === "convert_to_cash" ? `withdraw ${tx.cash_impact} cash` :
                tx.type === "deposit_cash" ? `deposit ${Math.abs(tx.cash_impact)} cash` :
                `spend ${Math.abs(tx.cash_impact)} cash`}
             </span>
@@ -144,20 +148,22 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
           <Button
             size="icon"
             variant="ghost"
-            className="h-6 w-6 text-green-600 hover:bg-green-100"
+            className={ivory ? "shrink-0 text-hec-leaf hover:bg-hec-leaf-tint hover:text-hec-leaf" : "h-6 w-6 text-green-600 hover:bg-green-100"}
             onClick={() => processMutation.mutate({ txId: tx.id, status: "approved" })}
             disabled={processMutation.isPending}
+            aria-label={ivory ? `Approve ${tx.student_name}'s request` : undefined}
           >
-            <Check className="h-3.5 w-3.5" />
+            <Check className={ivory ? "h-5 w-5" : "h-3.5 w-3.5"} />
           </Button>
           <Button
             size="icon"
             variant="ghost"
-            className="h-6 w-6 text-red-500 hover:bg-red-100"
+            className={ivory ? "shrink-0 text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger" : "h-6 w-6 text-red-500 hover:bg-red-100"}
             onClick={() => processMutation.mutate({ txId: tx.id, status: "rejected" })}
             disabled={processMutation.isPending}
+            aria-label={ivory ? `Reject ${tx.student_name}'s request` : undefined}
           >
-            <X className="h-3.5 w-3.5" />
+            <X className={ivory ? "h-5 w-5" : "h-3.5 w-3.5"} />
           </Button>
         </div>
       ))}
@@ -178,6 +184,7 @@ export function LogSpendButton({ studentId, classId, studentName, cashOnHand }: 
   const [amount, setAmount] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  const ivory = useIvory();
 
   const handleSpend = async () => {
     if (amount < 1 || amount > cashOnHand) return;
@@ -224,21 +231,23 @@ export function LogSpendButton({ studentId, classId, studentName, cashOnHand }: 
       <Button
         size="icon"
         variant="ghost"
-        className="h-6 w-6 text-red-500 hover:bg-red-100"
+        className={ivory ? "text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger" : "h-6 w-6 text-red-500 hover:bg-red-100"}
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
         title="Log Spend"
+        aria-label={ivory ? `Log spend for ${studentName}` : undefined}
       >
-        <Minus className="h-3.5 w-3.5" />
+        <Minus className={ivory ? "h-5 w-5" : "h-3.5 w-3.5"} />
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-xs" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
-            <DialogTitle>Log Spend — {studentName}</DialogTitle>
+            <DialogTitle className={ivory ? "break-words" : undefined}>Log Spend — {studentName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Cash on hand: <strong>{cashOnHand}</strong></p>
+            <p className={ivory ? "text-hec-small text-hec-ink-soft" : "text-sm text-muted-foreground"}>Cash on hand: <strong className={ivory ? "tabular-nums text-hec-ink" : undefined}>{cashOnHand}</strong></p>
             <Input
+              aria-label={ivory ? "Amount to deduct" : undefined}
               type="number"
               min={1}
               max={cashOnHand}

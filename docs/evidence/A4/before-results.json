@@ -1,0 +1,2254 @@
+{
+ "label": "before",
+ "when": "2026-11-12T02:51:09.890Z",
+ "base": "vite dev server :5342, fake client (NOT production)",
+ "runs": {
+  "dashboard-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/3",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "20/36",
+     "9"
+    ],
+    "mainText": "Dashboard Homework Lessons Record More Hey Nguyễn! All homework done! You rock! ⭐ 🎉 1 ✨ ⭐ 🌅 Good Morning, Nguyễn Rookie Explorer · Lv 1 A brand new day of adventure awaits! NM LV 1 Rookie Explorer 20 ✨ ✨ ✨ ✨ ✨ ✨ PROGRESS TO LEVEL 2 20 / 100 XP DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 0 📊 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 1/3 completed 20/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view 📝 My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! 🚀 Next classes Schedule 🎓 Class Nov 16 • 17:30 +15 XP 🎓 Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": false
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".h-2 | aria-label attribute does not exist or is empty"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       "button[aria-controls=\"radix-:r0:\"] | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 7,
+      "targets": [
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(1) > .bg-warning\\/10.px-2.p | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(1) > .bg-warning\\/10.px-2.p | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".text-success.break-words.font-semibold | Element has insufficient color contrast of 1.94 (foreground color: #1dc981, background color: #e6f7f1, font si",
+       ".bg-success\\/20.text-success.px-2 > .font-bold.text-xs | Element has insufficient color contrast of 1.68 (foreground color: #1dc981, background color: #beeeda, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".mb-5 > div:nth-child(2) > h3 | Heading order invalid"
+      ]
+     }
+    ]
+   },
+   "shot": "before-student-dashboard-375-light.png",
+   "shotKB": 171
+  },
+  "dashboard-375-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/3",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "20/36",
+     "9"
+    ],
+    "mainText": "Dashboard Homework Lessons Record More Hey Nguyễn! All homework done! You rock! ⭐ 🎉 1 ✨ ⭐ 🌅 Good Morning, Nguyễn Rookie Explorer · Lv 1 A brand new day of adventure awaits! NM LV 1 Rookie Explorer 20 ✨ ✨ ✨ ✨ ✨ ✨ PROGRESS TO LEVEL 2 20 / 100 XP DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 0 📊 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 1/3 completed 20/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view 📝 My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! 🚀 Next classes Schedule 🎓 Class Nov 16 • 17:30 +15 XP 🎓 Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": false
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".h-2 | aria-label attribute does not exist or is empty"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       "button[aria-controls=\"radix-:r0:\"] | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 8,
+      "targets": [
+       ".gap-0\\.5.pb-1\\.5.min-w-\\[64px\\]:nth-child(5) > .font-semibold.text-\\[10px\\] | Element has insufficient color contrast of 4.43 (foreground color: #737b8c, background color: #111115, font si",
+       ".space-y-5.relative > .justify-between.gap-3.items-center > .min-w-0.gap-3.items-center >  | Element has insufficient color contrast of 4.28 (foreground color: #737b8c, background color: #15151a, font si",
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(1) > .flex-1.min-w-0 > .bre | Element has insufficient color contrast of 4.12 (foreground color: #737b8c, background color: #19191d, font si",
+       ".bg-success\\/10 > .flex-1.min-w-0 > .break-words.leading-snug.text-sm | Element has insufficient color contrast of 3.79 (foreground color: #737b8c, background color: #182323, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".mb-5 > div:nth-child(2) > h3 | Heading order invalid"
+      ]
+     }
+    ]
+   },
+   "shot": "before-student-dashboard-375-dark.png",
+   "shotKB": 161
+  },
+  "dashboard-1280-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 170x36",
+     "header:button \"Sign Out\" 114x36",
+     "nav:button \"🏠 Dashboard\" 120x32",
+     "nav:button \"📝 Homework\" 121x32",
+     "nav:button \"📚 Lessons\" 100x32",
+     "nav:button \"🎬 Record\" 95x32",
+     "nav:button \"📅 My Classes\" 120x32",
+     "nav:button \"📄 Reports\" 100x32",
+     "nav:button \"📖 Journal\" 98x32",
+     "nav:button \"💰 Tuition\" 95x32",
+     "nav:button \"🏆 Achievements\" 140x32",
+     "nav:button \"📚 Resources\" 115x32",
+     "nav:button \"✨ Vocabulary\" 122x32",
+     "nav:button \"🖼️ My Work\" 109x32",
+     "nav:button \"🎥 My Videos\" 118x32",
+     "nav:button \"🛡️ Defend My Level\" 158x32",
+     "nav:button \"Scroll navigation right\" 28x28"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/3",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "20/36",
+     "9"
+    ],
+    "mainText": "🏠 Dashboard 📝 Homework 📚 Lessons 🎬 Record 📅 My Classes 📄 Reports 📖 Journal 💰 Tuition 🏆 Achievements 📚 Resources ✨ Vocabulary 🖼️ My Work 🎥 My Videos 🛡️ Defend My Level Hey Nguyễn! All homework done! You rock! ⭐ 🎉 1 ✨ ⭐ 🌅 Good Morning, Nguyễn Rookie Explorer · Lv 1 A brand new day of adventure awaits! NM LV 1 Rookie Explorer 20 ✨ ✨ ✨ ✨ ✨ ✨ PROGRESS TO LEVEL 2 20 / 100 XP DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 0 📊 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 1/3 completed 20/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned UPCOMING ADVENTURES 2 Classes this week ACTIVE QUESTS 0 Homework to complete BALANCE 0 ₫ November - tap to view 📝 My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! 🚀 Next classes Schedule 🎓 Class Nov 16 • 17:30 +15 XP 🎓 Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": false
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".h-2 | aria-label attribute does not exist or is empty"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "targets": [
+       "button[aria-controls=\"radix-:r0:\"] | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 7,
+      "targets": [
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(1) > .bg-warning\\/10.px-2.p | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(1) > .bg-warning\\/10.px-2.p | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".text-success.break-words.leading-snug | Element has insufficient color contrast of 1.94 (foreground color: #1dc981, background color: #e6f7f1, font si",
+       ".bg-success\\/20.text-success.px-2 > .font-bold.text-xs | Element has insufficient color contrast of 1.68 (foreground color: #1dc981, background color: #beeeda, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".mb-5 > div:nth-child(2) > h3 | Heading order invalid"
+      ]
+     }
+    ]
+   },
+   "shot": "before-student-dashboard-1280-light.png",
+   "shotKB": 347
+  },
+  "dashboard-1280-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 170x36",
+     "header:button \"Sign Out\" 114x36",
+     "nav:button \"🏠 Dashboard\" 120x32",
+     "nav:button \"📝 Homework\" 121x32",
+     "nav:button \"📚 Lessons\" 100x32",
+     "nav:button \"🎬 Record\" 95x32",
+     "nav:button \"📅 My Classes\" 120x32",
+     "nav:button \"📄 Reports\" 100x32",
+     "nav:button \"📖 Journal\" 98x32",
+     "nav:button \"💰 Tuition\" 95x32",
+     "nav:button \"🏆 Achievements\" 140x32",
+     "nav:button \"📚 Resources\" 115x32",
+     "nav:button \"✨ Vocabulary\" 122x32",
+     "nav:button \"🖼️ My Work\" 109x32",
+     "nav:button \"🎥 My Videos\" 118x32",
+     "nav:button \"🛡️ Defend My Level\" 158x32",
+     "nav:button \"Scroll navigation right\" 28x28"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/3",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "20/36",
+     "9"
+    ],
+    "mainText": "🏠 Dashboard 📝 Homework 📚 Lessons 🎬 Record 📅 My Classes 📄 Reports 📖 Journal 💰 Tuition 🏆 Achievements 📚 Resources ✨ Vocabulary 🖼️ My Work 🎥 My Videos 🛡️ Defend My Level Hey Nguyễn! All homework done! You rock! ⭐ 🎉 1 ✨ ⭐ 🌅 Good Morning, Nguyễn Rookie Explorer · Lv 1 A brand new day of adventure awaits! NM LV 1 Rookie Explorer 20 ✨ ✨ ✨ ✨ ✨ ✨ PROGRESS TO LEVEL 2 20 / 100 XP DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 0 📊 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 1/3 completed 20/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned UPCOMING ADVENTURES 2 Classes this week ACTIVE QUESTS 0 Homework to complete BALANCE 0 ₫ November - tap to view 📝 My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! 🚀 Next classes Schedule 🎓 Class Nov 16 • 17:30 +15 XP 🎓 Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": false
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".h-2 | aria-label attribute does not exist or is empty"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "targets": [
+       "button[aria-controls=\"radix-:r0:\"] | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 20,
+      "targets": [
+       ".md\\:block | Element has insufficient color contrast of 4.32 (foreground color: #737b8c, background color: #141418, font si",
+       ".flex-col.leading-tight > .tracking-wide.text-\\[10px\\].uppercase | Element has insufficient color contrast of 4.24 (foreground color: #737b8c, background color: #16161b, font si",
+       ".hover\\:bg-muted\\/70.md\\:px-3\\.5.md\\:text-sm:nth-child(2) > .z-10.relative | Element has insufficient color contrast of 4.32 (foreground color: #737b8c, background color: #141418, font si",
+       ".hover\\:bg-muted\\/70.md\\:px-3\\.5.md\\:text-sm:nth-child(3) > .z-10.relative | Element has insufficient color contrast of 4.32 (foreground color: #737b8c, background color: #141418, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".mb-5 > div:nth-child(2) > h3 | Heading order invalid"
+      ]
+     }
+    ]
+   },
+   "shot": "before-student-dashboard-1280-dark.png",
+   "shotKB": 355
+  },
+  "leaderboard-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+5",
+     "+50",
+     "+50",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-100",
+     "0",
+     "0/18",
+     "1",
+     "1",
+     "100",
+     "20",
+     "5",
+     "5",
+     "5"
+    ],
+    "mainText": "Dashboard Homework Lessons Record More Achievements 0/18 earned Tap an earned badge to feature it! ⭐ 📸 Your Profile Card NM Nguyễn Minh Anh Rookie Explorer LV 1 20 Total XP 1 Level 0 Streak Happy English Club ✨ Share Profile Card How to Earn XP! Level up by doing awesome things! 🌟 Daily Activities ✅ Daily Check-In Visit your homework page (automatic!) +1 XP 🎓 Class Participation 🗣️ Speaking Answer questions, good pronunciation +1-10 XP 👂 Listening Follow instructions, active listening +1-10 XP 📖 Reading Read aloud with expression +1-10 XP ✏️ Writing Neat handwriting, creative writing +1-10 XP 📚 Homework 📝 Complete Homework Turn in your assignments (max 100 pts) +1-100 XP ⏰ Early Submission Submit before due date +5 XP bonus ⭐ Good Behaviors 🎯 Focus Points Stay on task, no distractions +1-10 XP 🤝 Teamwork Help classmates, collaborate +1-10 XP 🔥 Attendance Bonus 🏆 5-Class Streak Attend 5 consecutive classes +50 Focus XP 📕 Reading & Theory 📊 Quizzes & Exercises Complete theory work (no limit!) Unlimited 💡 Pro Tips! Check your homework page every day to earn your daily XP! Attend all your scheduled classes to build up your attendance streak! Participate in class - speaking and listening earns points! Every 5 classes you attend in a row = +50 Focus XP bonus!",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      161,
+      411,
+      149,
+      64
+     ],
+     "scrollW": 149,
+     "clientW": 149,
+     "font": "ui-sans-serif, -apple-system, BlinkMacSy",
+     "size": "24px"
+    }
+   },
+   "requests": {
+    "count": 30,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 4,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       "html | Page must have a level-one heading"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".max-h-\\[60vh\\] | Element should have focusable content"
+      ]
+     }
+    ]
+   },
+   "shot": "before-student-leaderboard-375-light.png",
+   "shotKB": 82
+  },
+  "leaderboard-375-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+5",
+     "+50",
+     "+50",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-100",
+     "0",
+     "0/18",
+     "1",
+     "1",
+     "100",
+     "20",
+     "5",
+     "5",
+     "5"
+    ],
+    "mainText": "Dashboard Homework Lessons Record More Achievements 0/18 earned Tap an earned badge to feature it! ⭐ 📸 Your Profile Card NM Nguyễn Minh Anh Rookie Explorer LV 1 20 Total XP 1 Level 0 Streak Happy English Club ✨ Share Profile Card How to Earn XP! Level up by doing awesome things! 🌟 Daily Activities ✅ Daily Check-In Visit your homework page (automatic!) +1 XP 🎓 Class Participation 🗣️ Speaking Answer questions, good pronunciation +1-10 XP 👂 Listening Follow instructions, active listening +1-10 XP 📖 Reading Read aloud with expression +1-10 XP ✏️ Writing Neat handwriting, creative writing +1-10 XP 📚 Homework 📝 Complete Homework Turn in your assignments (max 100 pts) +1-100 XP ⏰ Early Submission Submit before due date +5 XP bonus ⭐ Good Behaviors 🎯 Focus Points Stay on task, no distractions +1-10 XP 🤝 Teamwork Help classmates, collaborate +1-10 XP 🔥 Attendance Bonus 🏆 5-Class Streak Attend 5 consecutive classes +50 Focus XP 📕 Reading & Theory 📊 Quizzes & Exercises Complete theory work (no limit!) Unlimited 💡 Pro Tips! Check your homework page every day to earn your daily XP! Attend all your scheduled classes to build up your attendance streak! Participate in class - speaking and listening earns points! Every 5 classes you attend in a row = +50 Focus XP bonus!",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      161,
+      411,
+      149,
+      64
+     ],
+     "scrollW": 149,
+     "clientW": 149,
+     "font": "ui-sans-serif, -apple-system, BlinkMacSy",
+     "size": "24px"
+    }
+   },
+   "requests": {
+    "count": 30,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 4,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 7,
+      "targets": [
+       ".gap-0\\.5.pt-2.pb-1\\.5:nth-child(1) > .text-\\[10px\\].transition-colors.font-semibold | Element has insufficient color contrast of 4.43 (foreground color: #737b8c, background color: #111115, font si",
+       ".gap-0\\.5.pt-2.pb-1\\.5:nth-child(2) > .text-\\[10px\\].transition-colors.font-semibold | Element has insufficient color contrast of 4.43 (foreground color: #737b8c, background color: #111115, font si",
+       ".gap-0\\.5.pt-2.pb-1\\.5:nth-child(3) > .text-\\[10px\\].transition-colors.font-semibold | Element has insufficient color contrast of 4.43 (foreground color: #737b8c, background color: #111115, font si",
+       ".gap-0\\.5.pt-2.pb-1\\.5:nth-child(4) > .text-\\[10px\\].transition-colors.font-semibold | Element has insufficient color contrast of 4.43 (foreground color: #737b8c, background color: #111115, font si"
+      ]
+     },
+     {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       "html | Page must have a level-one heading"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".max-h-\\[60vh\\] | Element should have focusable content"
+      ]
+     }
+    ]
+   },
+   "shot": "before-student-leaderboard-375-dark.png",
+   "shotKB": 75
+  },
+  "leaderboard-1280-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 170x36",
+     "header:button \"Sign Out\" 114x36",
+     "nav:button \"Scroll navigation left\" 28x28",
+     "nav:button \"🏠 Dashboard\" 120x32",
+     "nav:button \"📝 Homework\" 121x32",
+     "nav:button \"📚 Lessons\" 100x32",
+     "nav:button \"🎬 Record\" 95x32",
+     "nav:button \"📅 My Classes\" 120x32",
+     "nav:button \"📄 Reports\" 100x32",
+     "nav:button \"📖 Journal\" 98x32",
+     "nav:button \"💰 Tuition\" 95x32",
+     "nav:button \"🏆 Achievements\" 140x32",
+     "nav:button \"📚 Resources\" 115x32",
+     "nav:button \"✨ Vocabulary\" 122x32",
+     "nav:button \"🖼️ My Work\" 109x32",
+     "nav:button \"🎥 My Videos\" 118x32",
+     "nav:button \"🛡️ Defend My Level\" 158x32",
+     "nav:button \"Scroll navigation right\" 28x28"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+5",
+     "+50",
+     "+50",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-100",
+     "0",
+     "0/18",
+     "1",
+     "1",
+     "100",
+     "20",
+     "5",
+     "5",
+     "5"
+    ],
+    "mainText": "🏠 Dashboard 📝 Homework 📚 Lessons 🎬 Record 📅 My Classes 📄 Reports 📖 Journal 💰 Tuition 🏆 Achievements 📚 Resources ✨ Vocabulary 🖼️ My Work 🎥 My Videos 🛡️ Defend My Level Achievements 0/18 earned Tap an earned badge to feature it! ⭐ 📸 Your Profile Card NM Nguyễn Minh Anh Rookie Explorer LV 1 20 Total XP 1 Level 0 Streak Happy English Club ✨ Share Profile Card How to Earn XP! Level up by doing awesome things! 🌟 Daily Activities ✅ Daily Check-In Visit your homework page (automatic!) +1 XP 🎓 Class Participation 🗣️ Speaking Answer questions, good pronunciation +1-10 XP 👂 Listening Follow instructions, active listening +1-10 XP 📖 Reading Read aloud with expression +1-10 XP ✏️ Writing Neat handwriting, creative writing +1-10 XP 📚 Homework 📝 Complete Homework Turn in your assignments (max 100 pts) +1-100 XP ⏰ Early Submission Submit before due date +5 XP bonus ⭐ Good Behaviors 🎯 Focus Points Stay on task, no distractions +1-10 XP 🤝 Teamwork Help classmates, collaborate +1-10 XP 🔥 Attendance Bonus 🏆 5-Class Streak Attend 5 consecutive classes +50 Focus XP 📕 Reading & Theory 📊 Quizzes & Exercises Complete theory work (no limit!) Unlimited 💡 Pro Tips! Check your homework page every day to earn your daily XP! Attend all your scheduled classes to build up your attendance streak! Participate in class - speaking and listening earns points! Every 5 classes you attend in a row = +50 Focus XP bonus!",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      161,
+      498,
+      1054,
+      32
+     ],
+     "scrollW": 1054,
+     "clientW": 1054,
+     "font": "ui-sans-serif, -apple-system, BlinkMacSy",
+     "size": "24px"
+    }
+   },
+   "requests": {
+    "count": 30,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 4,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".gap-2.items-center.flex > .text-lg | Heading order invalid"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".max-h-\\[60vh\\] | Element should have focusable content"
+      ]
+     }
+    ]
+   },
+   "shot": "before-student-leaderboard-1280-light.png",
+   "shotKB": 189
+  },
+  "leaderboard-1280-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 170x36",
+     "header:button \"Sign Out\" 114x36",
+     "nav:button \"Scroll navigation left\" 28x28",
+     "nav:button \"🏠 Dashboard\" 120x32",
+     "nav:button \"📝 Homework\" 121x32",
+     "nav:button \"📚 Lessons\" 100x32",
+     "nav:button \"🎬 Record\" 95x32",
+     "nav:button \"📅 My Classes\" 120x32",
+     "nav:button \"📄 Reports\" 100x32",
+     "nav:button \"📖 Journal\" 98x32",
+     "nav:button \"💰 Tuition\" 95x32",
+     "nav:button \"🏆 Achievements\" 140x32",
+     "nav:button \"📚 Resources\" 115x32",
+     "nav:button \"✨ Vocabulary\" 122x32",
+     "nav:button \"🖼️ My Work\" 109x32",
+     "nav:button \"🎥 My Videos\" 118x32",
+     "nav:button \"🛡️ Defend My Level\" 158x32",
+     "nav:button \"Scroll navigation right\" 28x28"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+5",
+     "+50",
+     "+50",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-100",
+     "0",
+     "0/18",
+     "1",
+     "1",
+     "100",
+     "20",
+     "5",
+     "5",
+     "5"
+    ],
+    "mainText": "🏠 Dashboard 📝 Homework 📚 Lessons 🎬 Record 📅 My Classes 📄 Reports 📖 Journal 💰 Tuition 🏆 Achievements 📚 Resources ✨ Vocabulary 🖼️ My Work 🎥 My Videos 🛡️ Defend My Level Achievements 0/18 earned Tap an earned badge to feature it! ⭐ 📸 Your Profile Card NM Nguyễn Minh Anh Rookie Explorer LV 1 20 Total XP 1 Level 0 Streak Happy English Club ✨ Share Profile Card How to Earn XP! Level up by doing awesome things! 🌟 Daily Activities ✅ Daily Check-In Visit your homework page (automatic!) +1 XP 🎓 Class Participation 🗣️ Speaking Answer questions, good pronunciation +1-10 XP 👂 Listening Follow instructions, active listening +1-10 XP 📖 Reading Read aloud with expression +1-10 XP ✏️ Writing Neat handwriting, creative writing +1-10 XP 📚 Homework 📝 Complete Homework Turn in your assignments (max 100 pts) +1-100 XP ⏰ Early Submission Submit before due date +5 XP bonus ⭐ Good Behaviors 🎯 Focus Points Stay on task, no distractions +1-10 XP 🤝 Teamwork Help classmates, collaborate +1-10 XP 🔥 Attendance Bonus 🏆 5-Class Streak Attend 5 consecutive classes +50 Focus XP 📕 Reading & Theory 📊 Quizzes & Exercises Complete theory work (no limit!) Unlimited 💡 Pro Tips! Check your homework page every day to earn your daily XP! Attend all your scheduled classes to build up your attendance streak! Participate in class - speaking and listening earns points! Every 5 classes you attend in a row = +50 Focus XP bonus!",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      161,
+      498,
+      1054,
+      32
+     ],
+     "scrollW": 1054,
+     "clientW": 1054,
+     "font": "ui-sans-serif, -apple-system, BlinkMacSy",
+     "size": "24px"
+    }
+   },
+   "requests": {
+    "count": 30,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 4,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 14,
+      "targets": [
+       ".md\\:block | Element has insufficient color contrast of 4.32 (foreground color: #737b8c, background color: #141418, font si",
+       ".uppercase | Element has insufficient color contrast of 4.24 (foreground color: #737b8c, background color: #16161b, font si",
+       ".hover\\:bg-muted\\/70.px-2\\.5.md\\:px-3\\.5:nth-child(4) > .z-10 | Element has insufficient color contrast of 4.32 (foreground color: #737b8c, background color: #141418, font si",
+       ".hover\\:bg-muted\\/70.px-2\\.5.md\\:px-3\\.5:nth-child(5) > .z-10 | Element has insufficient color contrast of 4.32 (foreground color: #737b8c, background color: #141418, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".gap-2.items-center.flex > .text-lg | Heading order invalid"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".max-h-\\[60vh\\] | Element should have focusable content"
+      ]
+     }
+    ]
+   },
+   "shot": "before-student-leaderboard-1280-dark.png",
+   "shotKB": 153
+  },
+  "long-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "12",
+     "15",
+     "17",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2/3",
+     "3",
+     "35/36",
+     "56",
+     "56",
+     "56",
+     "9"
+    ],
+    "mainText": "Dashboard Homework Lessons Record More Hey Nguyễn! All homework done! You rock! ⭐ 🎉 1 ✨ ⭐ 🌅 Good Morning, Nguyễn Rookie Explorer · Lv 1 A brand new day of adventure awaits! NH LV 1 Rookie Explorer 56 ✨ ✨ ✨ ✨ ✨ ✨ PROGRESS TO LEVEL 2 56 / 100 XP DAY STREAK 0 TOTAL XP 56 CLASSES THIS WEEK 3 OPEN QUESTS 0 📊 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 2/3 completed 35/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view 📝 My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! 🚀 Next classes Schedule 🎓 Class Nov 12 • 18:00 Today! +15 XP 🎓 Class Nov 17 • 18:00 +15 XP 🎓 Class Nov 19 • 18:00 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": false
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".h-2 | aria-label attribute does not exist or is empty"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       "button[aria-controls=\"radix-:r0:\"] | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 8,
+      "targets": [
+       ".bg-warning\\/10 > .font-bold.text-xs | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-warning\\/10 > .text-xs:nth-child(2) | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-success\\/10.border-success\\/20.sm\\:gap-4:nth-child(2) > .flex-1.min-w-0 > .gap-2.items | Element has insufficient color contrast of 1.94 (foreground color: #1dc981, background color: #e6f7f1, font si",
+       ".bg-success\\/10.border-success\\/20.sm\\:gap-4:nth-child(2) > .px-2.bg-success\\/20.py-1 > .f | Element has insufficient color contrast of 1.68 (foreground color: #1dc981, background color: #beeeda, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".mb-5 > div:nth-child(2) > h3 | Heading order invalid"
+      ]
+     }
+    ]
+   },
+   "shot": "before-long-375-light.png",
+   "shotKB": 169
+  },
+  "long-320-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 320,
+    "clientWidth": 320,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [
+     "main:span \"CLASSES THIS WEEK\" 81x15 [w 100>81]",
+     "main:h3 \"My Homework\" 87x28 [w 126>87]",
+     "main:h3 \"Next classes\" 72x28 [w 104>72]"
+    ],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "12",
+     "15",
+     "17",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2/3",
+     "3",
+     "35/36",
+     "56",
+     "56",
+     "56",
+     "9"
+    ],
+    "mainText": "Dashboard Homework Lessons Record More Hey Nguyễn! All homework done! You rock! ⭐ 🎉 1 ✨ ⭐ 🌅 Good Morning, Nguyễn Rookie Explorer · Lv 1 A brand new day of adventure awaits! NH LV 1 Rookie Explorer 56 ✨ ✨ ✨ ✨ ✨ ✨ PROGRESS TO LEVEL 2 56 / 100 XP DAY STREAK 0 TOTAL XP 56 CLASSES THIS WEEK 3 OPEN QUESTS 0 📊 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 2/3 completed 35/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view 📝 My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! 🚀 Next classes Schedule 🎓 Class Nov 12 • 18:00 Today! +15 XP 🎓 Class Nov 17 • 18:00 +15 XP 🎓 Class Nov 19 • 18:00 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": false
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".h-2 | aria-label attribute does not exist or is empty"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       "button[aria-controls=\"radix-:r0:\"] | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 8,
+      "targets": [
+       ".bg-warning\\/10 > .font-bold.text-xs | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-warning\\/10 > .text-xs:nth-child(2) | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-success\\/10.border-success\\/20.sm\\:gap-4:nth-child(2) > .flex-1.min-w-0 > .gap-2.items | Element has insufficient color contrast of 1.94 (foreground color: #1dc981, background color: #e6f7f1, font si",
+       ".bg-success\\/10.border-success\\/20.sm\\:gap-4:nth-child(2) > .px-2.bg-success\\/20.py-1 > .f | Element has insufficient color contrast of 1.68 (foreground color: #1dc981, background color: #beeeda, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".mb-5 > div:nth-child(2) > h3 | Heading order invalid"
+      ]
+     }
+    ]
+   },
+   "shot": "before-long-320-light.png",
+   "shotKB": 147
+  },
+  "young-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "12",
+     "15",
+     "17",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2/3",
+     "3",
+     "35/36",
+     "59",
+     "59",
+     "59",
+     "9"
+    ],
+    "mainText": "Dashboard Homework Lessons Record More Hey Lê! All homework done! You rock! ⭐ 🎉 1 ✨ ⭐ 🌅 Good Morning, Lê Rookie Explorer · Lv 1 A brand new day of adventure awaits! LB LV 1 Rookie Explorer 59 ✨ ✨ ✨ ✨ ✨ ✨ PROGRESS TO LEVEL 2 59 / 100 XP DAY STREAK 0 TOTAL XP 59 CLASSES THIS WEEK 3 OPEN QUESTS 0 📊 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 2/3 completed 35/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view 📝 My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! 🚀 Next classes Schedule 🎓 Class Nov 12 • 18:00 Today! +15 XP 🎓 Class Nov 17 • 18:00 +15 XP 🎓 Class Nov 19 • 18:00 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": false
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".h-2 | aria-label attribute does not exist or is empty"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       "button[aria-controls=\"radix-:r0:\"] | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 8,
+      "targets": [
+       ".bg-warning\\/10 > .font-bold.text-xs | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-warning\\/10 > .text-xs:nth-child(2) | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-success\\/10.border-success\\/20.sm\\:gap-4:nth-child(2) > .flex-1.min-w-0 > .gap-2.items | Element has insufficient color contrast of 1.94 (foreground color: #1dc981, background color: #e6f7f1, font si",
+       ".bg-success\\/10.border-success\\/20.sm\\:gap-4:nth-child(2) > .px-2.bg-success\\/20.py-1 > .f | Element has insufficient color contrast of 1.68 (foreground color: #1dc981, background color: #beeeda, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".mb-5 > div:nth-child(2) > h3 | Heading order invalid"
+      ]
+     }
+    ]
+   },
+   "shot": "before-young-375-light.png",
+   "shotKB": 171
+  },
+  "homework-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "0/3",
+     "0/36",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "3",
+     "4",
+     "9"
+    ],
+    "mainText": "Dashboard Homework Lessons Record More Hey Nguyễn! You've got this! Let's finish that homework! 💪 1 ✨ ⭐ 🌅 Good Morning, Nguyễn Rookie Explorer · Lv 1 A brand new day of adventure awaits! NM LV 1 Rookie Explorer 20 ✨ ✨ ✨ ✨ ✨ ✨ PROGRESS TO LEVEL 2 20 / 100 XP DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 2 📊 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 0/3 completed 0/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view 📝 My Homework See all Starters 1 (Mon-Wed) 📝 To do Unit 3 - Colours worksheet Due Sunday Start Movers 2 (Tue-Thu) 📝 To do Unit 4 - My Day (speaking) Due Sunday Start 🚀 Next classes Schedule 🎓 Class Nov 16 • 17:30 +15 XP 🎓 Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": false
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".h-2 | aria-label attribute does not exist or is empty"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       "button[aria-controls=\"radix-:r0:\"] | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "targets": [
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(1) > .bg-warning\\/10.px-2.r | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(1) > .bg-warning\\/10.px-2.r | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(2) > .bg-warning\\/10.px-2.r | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si",
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(2) > .bg-warning\\/10.px-2.r | Element has insufficient color contrast of 1.74 (foreground color: #f9a91f, background color: #f9f1e5, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".mb-5 > div:nth-child(2) > h3 | Heading order invalid"
+      ]
+     }
+    ]
+   },
+   "shot": "before-homework-375-light.png",
+   "shotKB": 170
+  },
+  "homework-375-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "0/3",
+     "0/36",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "3",
+     "4",
+     "9"
+    ],
+    "mainText": "Dashboard Homework Lessons Record More Hey Nguyễn! You've got this! Let's finish that homework! 💪 1 ✨ ⭐ 🌅 Good Morning, Nguyễn Rookie Explorer · Lv 1 A brand new day of adventure awaits! NM LV 1 Rookie Explorer 20 ✨ ✨ ✨ ✨ ✨ ✨ PROGRESS TO LEVEL 2 20 / 100 XP DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 2 📊 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 0/3 completed 0/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view 📝 My Homework See all Starters 1 (Mon-Wed) 📝 To do Unit 3 - Colours worksheet Due Sunday Start Movers 2 (Tue-Thu) 📝 To do Unit 4 - My Day (speaking) Due Sunday Start 🚀 Next classes Schedule 🎓 Class Nov 16 • 17:30 +15 XP 🎓 Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": false
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "targets": [
+       ".h-2 | aria-label attribute does not exist or is empty"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       "button[aria-controls=\"radix-:r0:\"] | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "targets": [
+       ".gap-0\\.5.pb-1\\.5.min-w-\\[64px\\]:nth-child(5) > .font-semibold.text-\\[10px\\] | Element has insufficient color contrast of 4.43 (foreground color: #737b8c, background color: #111115, font si",
+       ".space-y-5.relative > .justify-between.gap-3.items-center > .gap-3.min-w-0.items-center >  | Element has insufficient color contrast of 4.28 (foreground color: #737b8c, background color: #15151a, font si",
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(1) > .flex-1.min-w-0 > .bre | Element has insufficient color contrast of 4.12 (foreground color: #737b8c, background color: #19191d, font si",
+       ".bg-muted\\/30.hover\\:bg-muted\\/50.border-transparent:nth-child(2) > .flex-1.min-w-0 > .bre | Element has insufficient color contrast of 4.12 (foreground color: #737b8c, background color: #19191d, font si"
+      ]
+     },
+     {
+      "id": "heading-order",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       ".mb-5 > div:nth-child(2) > h3 | Heading order invalid"
+      ]
+     }
+    ]
+   },
+   "shot": "before-homework-375-dark.png",
+   "shotKB": 160
+  },
+  "motion-reduced-375-light": {
+   "errors": [],
+   "motion": {
+    "cssAnimLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV.gemini-glow-1 absolute -top-36 -right-32 h-[30rem] w-[30rem]"
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "H1.text-base md:text-xl font-bold text-shimmer"
+     },
+     "main": {
+      "ms": 0.01,
+      "el": "DIV.absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-"
+     }
+    },
+    "cssTransLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV."
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "HEADER.sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[back"
+     },
+     "nav": {
+      "ms": 0.01,
+      "el": "NAV.fixed bottom-0 left-0 right-0 z-[100] bg-background/85 backd"
+     },
+     "main": {
+      "ms": 0.01,
+      "el": "MAIN.container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 "
+     }
+    },
+    "waapi": [
+     {
+      "where": "main",
+      "dur": 8000,
+      "it": null,
+      "el": "DIV.absolute top-20 left-20 w-[40rem] h-[40rem] bg-pri"
+     },
+     {
+      "where": "main",
+      "dur": 10000,
+      "it": null,
+      "el": "DIV.absolute bottom-20 right-20 w-[35rem] h-[35rem] bg"
+     },
+     {
+      "where": "main",
+      "dur": 4709.533401366388,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2178.260907665825,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4171.881369967243,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3344.906309889457,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4563.003285878208,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4669.235171826823,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3550.4284747992842,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2205.8827454126267,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2707.2091782973052,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4857.77110323296,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3809.3407856792983,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2807.153573094987,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2323.4643539428002,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2526.8685233362057,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3870.290555152298,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2710.319052281995,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2932.698978161766,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3466.7485789995844,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     }
+    ],
+    "jsStyleAnimating": {
+     "main": 55
+    },
+    "fromLoad": {
+     "main": [
+      "SECTION.holo-card relative overflow-hidden p-4 s x9",
+      "DIV. x8",
+      "DIV. x8",
+      "DIV.holo-card p-4 sm:p-6 x8",
+      "DIV.holo-card overflow-hidden x8",
+      "DIV.holo-card overflow-hidden x8",
+      "DIV. x6",
+      "DIV.relative flex items-end gap-2 x6"
+     ]
+    }
+   }
+  },
+  "motion-reduced-375-dark": {
+   "errors": [],
+   "motion": {
+    "cssAnimLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV.gemini-glow-1 absolute -top-36 -right-32 h-[30rem] w-[30rem]"
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "H1.text-base md:text-xl font-bold text-shimmer"
+     },
+     "main": {
+      "ms": 0.01,
+      "el": "DIV.absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-"
+     }
+    },
+    "cssTransLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV."
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "HEADER.sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[back"
+     },
+     "nav": {
+      "ms": 0.01,
+      "el": "NAV.fixed bottom-0 left-0 right-0 z-[100] bg-background/85 backd"
+     },
+     "main": {
+      "ms": 0.01,
+      "el": "MAIN.container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 "
+     }
+    },
+    "waapi": [
+     {
+      "where": "main",
+      "dur": 8000,
+      "it": null,
+      "el": "DIV.absolute top-20 left-20 w-[40rem] h-[40rem] bg-pri"
+     },
+     {
+      "where": "main",
+      "dur": 10000,
+      "it": null,
+      "el": "DIV.absolute bottom-20 right-20 w-[35rem] h-[35rem] bg"
+     },
+     {
+      "where": "main",
+      "dur": 4533.961555650295,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2542.984873516249,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2528.766206088572,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2664.0523539615333,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4550.334353364108,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3997.7888801784025,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4512.1066852431895,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4561.52674513104,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3108.0322214380913,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4318.136160677998,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4905.558021948108,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2369.0492909656928,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3846.818977953514,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2517.750262223726,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2505.68142327935,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4228.197942497853,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4280.849167433136,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3124.4594977535285,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     }
+    ],
+    "jsStyleAnimating": {
+     "main": 55
+    },
+    "fromLoad": {
+     "main": [
+      "SECTION.holo-card relative overflow-hidden p-4 s x8",
+      "DIV. x7",
+      "DIV. x7",
+      "DIV.holo-card p-4 sm:p-6 x7",
+      "DIV.holo-card overflow-hidden x7",
+      "DIV.holo-card overflow-hidden x8",
+      "DIV. x6",
+      "DIV.relative flex items-end gap-2 x6"
+     ]
+    }
+   }
+  },
+  "motion-normal-375-light": {
+   "errors": [],
+   "motion": {
+    "cssAnimLongest": {
+     "other": {
+      "ms": 14000,
+      "el": "DIV.gemini-glow-2 absolute -bottom-44 -left-36 h-[34rem] w-[34re"
+     },
+     "header": {
+      "ms": 6000,
+      "el": "H1.text-base md:text-xl font-bold text-shimmer"
+     },
+     "main": {
+      "ms": 9000,
+      "el": "SPAN.aurora-text"
+     }
+    },
+    "cssTransLongest": {
+     "other": {
+      "ms": 200,
+      "el": "DIV."
+     },
+     "header": {
+      "ms": 200,
+      "el": "HEADER.sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[back"
+     },
+     "nav": {
+      "ms": 200,
+      "el": "NAV.fixed bottom-0 left-0 right-0 z-[100] bg-background/85 backd"
+     },
+     "main": {
+      "ms": 420,
+      "el": "SECTION.holo-card relative overflow-hidden p-4 sm:p-6 md:p-8"
+     }
+    },
+    "waapi": [
+     {
+      "where": "main",
+      "dur": 300,
+      "it": 1,
+      "el": "DIV.glass p-3 sm:p-4 rounded-2xl flex justify-between "
+     },
+     {
+      "where": "main",
+      "dur": 300,
+      "it": 1,
+      "el": "DIV.glass p-3 sm:p-4 rounded-2xl flex justify-between "
+     },
+     {
+      "where": "other",
+      "dur": 25000,
+      "it": null,
+      "el": "BODY."
+     },
+     {
+      "where": "other",
+      "dur": 10000,
+      "it": null,
+      "el": "DIV.gemini-glow-1 absolute -top-36 -right-32 h-[30rem]"
+     },
+     {
+      "where": "other",
+      "dur": 14000,
+      "it": null,
+      "el": "DIV.gemini-glow-2 absolute -bottom-44 -left-36 h-[34re"
+     },
+     {
+      "where": "other",
+      "dur": 12000,
+      "it": null,
+      "el": "DIV.gemini-glow-3 absolute top-1/3 left-1/2 -translate"
+     },
+     {
+      "where": "main",
+      "dur": 9000,
+      "it": null,
+      "el": "SPAN.aurora-text"
+     },
+     {
+      "where": "main",
+      "dur": 2600,
+      "it": null,
+      "el": "DIV.energy-meter absolute inset-y-0 left-0 rounded-ful"
+     },
+     {
+      "where": "main",
+      "dur": 8000,
+      "it": null,
+      "el": "DIV.absolute top-20 left-20 w-[40rem] h-[40rem] bg-pri"
+     },
+     {
+      "where": "main",
+      "dur": 10000,
+      "it": null,
+      "el": "DIV.absolute bottom-20 right-20 w-[35rem] h-[35rem] bg"
+     },
+     {
+      "where": "main",
+      "dur": 4914.22564023807,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3638.382680099845,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2483.5243537004567,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 3743.0107139631473,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2606.986325420554,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2935.5185437591745,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4140.324772334473,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 2211.6025022561053,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4435.653786025213,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     },
+     {
+      "where": "main",
+      "dur": 4608.903771471626,
+      "it": null,
+      "el": "DIV.absolute rounded-full bg-foreground/20"
+     }
+    ],
+    "jsStyleAnimating": {
+     "main": 54
+    },
+    "fromLoad": {
+     "main": [
+      "SECTION.holo-card relative overflow-hidden p-4 s x8",
+      "DIV. x7",
+      "DIV. x6",
+      "DIV.holo-card p-4 sm:p-6 x6",
+      "DIV.holo-card overflow-hidden x6",
+      "DIV.holo-card overflow-hidden x7",
+      "DIV. x5",
+      "DIV.relative flex items-end gap-2 x5"
+     ]
+    }
+   }
+  }
+ }
+}

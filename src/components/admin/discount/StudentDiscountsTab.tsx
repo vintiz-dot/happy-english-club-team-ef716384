@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PlaceholderCard } from "@/components/ui/loading";
+import { useIvory } from "@/hooks/useIvory";
 
 interface StudentDiscountsTabProps {
   studentId: string;
@@ -42,6 +43,8 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
   const [editingEnrollment, setEditingEnrollment] = useState<any | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["student-discount-assignments", studentId],
@@ -163,8 +166,8 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5" />
-            <div>
+            <GraduationCap className={iv("h-5 w-5 shrink-0 text-hec-ink-soft", "h-5 w-5")} />
+            <div className={iv("min-w-0", "")}>
               <CardTitle>Enrollment Discounts</CardTitle>
               <CardDescription>
                 Discounts applied at the enrollment level for specific classes
@@ -177,7 +180,7 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
             <PlaceholderCard rows={3} />
           ) : !enrollments || enrollments.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No enrollments found</p>
+              <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>No enrollments found</p>
             </div>
           ) : (
             <Table>
@@ -200,9 +203,9 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
                   
                   return (
                     <TableRow key={enrollment.id}>
-                      <TableCell className="font-medium">{enrollment.classes.name}</TableCell>
+                      <TableCell className={iv("font-medium whitespace-normal break-words hyphens-none", "font-medium")}>{enrollment.classes.name}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1 text-sm">
+                        <div className={iv("flex items-center gap-1 whitespace-nowrap text-hec-small tabular-nums", "flex items-center gap-1 text-sm")}>
                           <Calendar className="h-3 w-3" />
                           {enrollment.start_date}
                           {enrollment.end_date && ` to ${enrollment.end_date}`}
@@ -211,15 +214,15 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
                       <TableCell>
                         {hasRateOverride ? (
                           <div className="space-y-1">
-                            <Badge variant="default" className="bg-blue-600">
+                            <Badge variant="default" className={iv("whitespace-nowrap border-hec-line bg-transparent text-hec-ink tabular-nums", "bg-blue-600")}>
                               {enrollment.rate_override_vnd.toLocaleString('vi-VN')} ₫
                             </Badge>
-                            <p className="text-xs text-muted-foreground">
+                            <p className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>
                               Custom rate
                             </p>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-sm">Default rate</span>
+                          <span className={iv("text-hec-ink-soft text-hec-small", "text-muted-foreground text-sm")}>Default rate</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -228,17 +231,17 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
                             {enrollment.discount_type === "percent" ? "Percentage" : "Fixed Amount"}
                           </Badge>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className={iv("text-hec-ink-soft", "text-muted-foreground")}>—</span>
                         )}
                       </TableCell>
                       <TableCell>
                         {enrollment.discount_value ? (
-                          <span>
+                          <span className={iv("whitespace-nowrap tabular-nums", "")}>
                             {enrollment.discount_value}
                             {enrollment.discount_type === "percent" ? "%" : " VND"}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className={iv("text-hec-ink-soft", "text-muted-foreground")}>—</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -247,7 +250,7 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
                             {enrollment.discount_cadence === "once" ? "Per Session" : "Monthly"}
                           </Badge>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className={iv("text-hec-ink-soft", "text-muted-foreground")}>—</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -256,6 +259,7 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
                           size="sm"
                           onClick={() => setEditingEnrollment(enrollment)}
                           title="Edit enrollment discount"
+                          aria-label={ivory ? "Edit enrollment discount" : undefined}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -271,8 +275,8 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className={iv("flex flex-wrap items-start justify-between gap-3", "flex items-center justify-between")}>
+            <div className={iv("min-w-0 flex-1 basis-60", "")}>
               <CardTitle>Special Discounts</CardTitle>
               <CardDescription>
                 Assigned special discounts for this student. These are separate from enrollment-level and sibling discounts.
@@ -289,8 +293,8 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
           <PlaceholderCard rows={3} />
         ) : !assignments || assignments.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No special discounts assigned yet</p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>No special discounts assigned yet</p>
+            <p className={iv("text-hec-small text-hec-ink-soft mt-2", "text-sm text-muted-foreground mt-2")}>
               Click "Add Discount" to assign a special discount to this student
             </p>
           </div>
@@ -312,33 +316,34 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
                 const isActive = status.label === "Active";
                 return (
                   <TableRow key={assignment.id}>
-                    <TableCell className="font-medium">{assignment.discount_def.name}</TableCell>
-                    <TableCell>
+                    <TableCell className={iv("font-medium whitespace-normal break-words", "font-medium")}>{assignment.discount_def.name}</TableCell>
+                    <TableCell className={ivory ? "tabular-nums" : undefined}>
                       {assignment.discount_def.value}
                       {assignment.discount_def.type === "percent" ? "%" : " VND"} - {assignment.discount_def.cadence}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
+                      <div className={iv("flex items-center gap-1 whitespace-nowrap text-hec-small tabular-nums", "flex items-center gap-1 text-sm")}>
                         <Calendar className="h-3 w-3" />
                         {assignment.effective_from}
                         {assignment.effective_to && ` to ${assignment.effective_to}`}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={status.variant} className={status.label === "Active" ? "bg-green-500" : status.label === "Scheduled" ? "bg-blue-500" : ""}>
+                      <Badge variant={status.variant} className={ivory ? (status.label === "Active" ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : status.label === "Scheduled" ? "border-hec-line bg-hec-sunken text-hec-ink" : "border-hec-line bg-hec-sunken text-hec-ink-soft") : status.label === "Active" ? "bg-green-500" : status.label === "Scheduled" ? "bg-blue-500" : ""}>
                         {status.label}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
+                    <TableCell className={iv("text-hec-small text-hec-ink-soft max-w-xs truncate", "text-sm text-muted-foreground max-w-xs truncate")}>
                       {assignment.note || "-"}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className={iv("flex gap-2", "flex gap-1")}>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setEditingAssignment(assignment)}
                           title="Edit this discount"
+                          aria-label={ivory ? "Edit this discount" : undefined}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -348,6 +353,7 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
                             size="sm"
                             onClick={() => setEndingAssignment(assignment.id)}
                             title="End this discount now"
+                            aria-label={ivory ? "End this discount now" : undefined}
                           >
                             <XCircle className="h-4 w-4" />
                           </Button>
@@ -357,6 +363,8 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
                           size="sm"
                           onClick={() => setRemovingAssignment(assignment.id)}
                           title="Remove this assignment"
+                          aria-label={ivory ? "Remove this assignment" : undefined}
+                          className={ivory ? "text-hec-danger hover:bg-hec-danger-tint" : undefined}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -386,9 +394,12 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => endingAssignment && endAssignmentMutation.mutate(endingAssignment)}>
-              End Now
+            <AlertDialogCancel>{ivory ? "Keep the discount" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className={ivory ? "bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90" : undefined}
+              onClick={() => endingAssignment && endAssignmentMutation.mutate(endingAssignment)}
+            >
+              {ivory ? "End the discount" : "End Now"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -403,12 +414,12 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{ivory ? "Keep the assignment" : "Cancel"}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => removingAssignment && removeAssignmentMutation.mutate(removingAssignment)}
-              className="bg-destructive text-destructive-foreground"
+              className={iv("bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90", "bg-destructive text-destructive-foreground")}
             >
-              Remove
+              {ivory ? "Remove the assignment" : "Remove"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

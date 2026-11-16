@@ -344,24 +344,24 @@ export function DeleteClassDialog({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 py-4 text-hec-small text-hec-ink-soft" role="status">
             <Loader2 className="h-4 w-4 animate-spin" />
             Counting records…
           </div>
         ) : canHardDelete ? (
           <div className="space-y-4">
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-              <p className="flex items-center gap-2 font-medium text-destructive">
-                <AlertTriangle className="h-4 w-4" />
+            <div className="rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-4 text-hec-small text-hec-ink">
+              <p className="flex items-center gap-2 font-medium text-hec-danger">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
                 This cannot be undone.
               </p>
-              <p className="mt-1 text-muted-foreground">
+              <p className="mt-1 text-hec-ink-soft">
                 Type the class name to confirm. Prefer archiving if you might want it back.
               </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="class-delete-confirm">
-                Type <span className="font-semibold text-foreground">{classLabel}</span>
+                Type <span className="whitespace-normal break-words font-semibold text-hec-ink">{classLabel}</span>
               </Label>
               <Input
                 id="class-delete-confirm"
@@ -373,16 +373,16 @@ export function DeleteClassDialog({
             </div>
           </div>
         ) : (
-          <div className="space-y-3 text-sm">
-            <p className="text-muted-foreground">
+          <div className="space-y-3 text-hec-small">
+            <p className="text-hec-ink-soft">
               Archiving hides the class from every list — schedules, enrolment pickers,
               the student app — while leaving its records untouched, so past invoices and
               payroll stay correct. You can restore it later.
             </p>
             {breakdown.length > 0 && (
-              <div className="rounded-lg border bg-muted/40 p-3">
-                <p className="mb-1.5 font-medium">This class holds:</p>
-                <ul className="space-y-0.5 text-muted-foreground">
+              <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-ink">
+                <p className="mb-2 font-medium">This class holds:</p>
+                <ul className="space-y-1 text-hec-ink-soft">
                   {breakdown.map((row) => (
                     <li key={row.label} className="tabular-nums">
                       {row.n.toLocaleString()} {row.label}
@@ -396,7 +396,7 @@ export function DeleteClassDialog({
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            Cancel
+            Keep the class
           </Button>
           {canHardDelete ? (
             <>
@@ -509,12 +509,9 @@ export function ClassAdminActions({
           Rename
         </Button>
         <Button
-          variant="outline"
+          variant="destructive-quiet"
           size={size}
-          className={cn(
-            "text-destructive hover:text-destructive hover:bg-destructive/10",
-            stretch && "flex-1",
-          )}
+          className={cn(stretch && "flex-1")}
           onClick={guard(() => setDeleteOpen(true))}
         >
           <Trash2 className="h-4 w-4 mr-1.5" />
@@ -567,18 +564,19 @@ export function ArchivedClassesSection() {
   if (isLoading || !archived || archived.length === 0) return null;
 
   return (
-    <div className="rounded-xl border bg-muted/30 p-4">
+    <div className="rounded-hec-lg border border-hec-line bg-hec-sunken p-4">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between text-left"
+        aria-expanded={expanded}
+        className="flex min-h-hec-target w-full items-center justify-between gap-3 rounded-hec-sm text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
       >
-        <span className="flex items-center gap-2 text-sm font-medium">
-          <Archive className="h-4 w-4 text-muted-foreground" />
+        <span className="flex items-center gap-2 text-hec-small font-medium text-hec-ink">
+          <Archive className="h-4 w-4 text-hec-ink-soft" />
           Archived classes
-          <span className="text-muted-foreground tabular-nums">({archived.length})</span>
+          <span className="text-hec-ink-soft tabular-nums">({archived.length})</span>
         </span>
-        <span className="text-xs text-muted-foreground">{expanded ? "Hide" : "Show"}</span>
+        <span className="text-hec-caption text-hec-ink-soft">{expanded ? "Hide" : "Show"}</span>
       </button>
 
       {expanded && (
@@ -586,12 +584,13 @@ export function ArchivedClassesSection() {
           {archived.map((cls) => (
             <li
               key={cls.id}
-              className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2"
+              className="flex items-start justify-between gap-3 rounded-hec-md border border-hec-line bg-hec-surface px-4 py-3"
             >
-              <span className="truncate text-sm">{cls.name}</span>
+              <span className="min-w-0 flex-1 self-center whitespace-normal break-words text-hec-small text-hec-ink">{cls.name}</span>
               <Button
                 variant="outline"
                 size="sm"
+                className="shrink-0"
                 disabled={restore.isPending}
                 onClick={() => restore.mutate({ classId: cls.id, name: cls.name })}
               >

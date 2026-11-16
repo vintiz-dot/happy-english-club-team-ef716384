@@ -245,10 +245,19 @@ export default function TeacherDashboard() {
     }
   };
 
+  // DS s.9: one slow fade with at most an 8 px rise
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const } }
+    hidden: { opacity: 0, y: 8 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] as const } }
   };
+
+  // Ivory class strings for this page (DS s.15)
+  const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+  const LINK_CARD = `block rounded-hec-lg ${FOCUS}`;
+  const CARD_HOVER = "group relative overflow-hidden transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2";
+  const ICON_TILE = "flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken";
+  const STAT_VALUE = "font-sans text-hec-h1 font-semibold tabular-nums whitespace-nowrap text-hec-ink";
+  const SECTION_TITLE = "font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2";
 
   const quickActions = [
     { 
@@ -256,32 +265,24 @@ export default function TeacherDashboard() {
       icon: CheckCircle2, 
       title: "Attendance", 
       description: "Mark student attendance",
-      gradient: "from-emerald-500/20 to-teal-500/20",
-      iconColor: "text-emerald-500"
     },
     { 
       to: "/teacher/assignments", 
       icon: FileText, 
       title: "Assignments", 
       description: "Manage homework & grading",
-      gradient: "from-blue-500/20 to-indigo-500/20",
-      iconColor: "text-blue-500"
     },
     { 
       to: "/teacher/journal", 
       icon: BookOpen, 
       title: "Journal", 
       description: "Student progress notes",
-      gradient: "from-blue-500/20 to-indigo-500/20",
-      iconColor: "text-blue-500"
     },
     { 
       to: "/teacher/payroll", 
       icon: DollarSign, 
       title: "Payroll", 
       description: "View earnings & sessions",
-      gradient: "from-amber-500/20 to-orange-500/20",
-      iconColor: "text-amber-500"
     },
   ];
 
@@ -297,69 +298,61 @@ export default function TeacherDashboard() {
         {/* Hero Profile Section */}
         {teacherProfile && (
           <motion.div variants={itemVariants}>
-            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-card via-card to-card/80 shadow-2xl">
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary/10 via-accent/5 to-transparent rounded-full blur-2xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-secondary/10 to-transparent rounded-full blur-2xl" />
-              
-              <CardContent className="relative p-8">
+            <Card className="relative overflow-hidden">
+              <CardContent className="relative p-4 sm:p-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                  {/* Avatar with glow */}
-                  <div className="relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-secondary rounded-full blur opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
-                    <Avatar className="relative h-24 w-24 ring-4 ring-background shadow-xl">
-                      <AvatarImage src={getAvatarUrl(teacherProfile.avatar_url) || undefined} alt={teacherProfile.full_name} className="object-cover" />
-                      <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-primary/20 to-accent/20">
-                        {teacherProfile.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  
+                  <Avatar className="h-20 w-20 shrink-0 sm:h-24 sm:w-24">
+                    <AvatarImage src={getAvatarUrl(teacherProfile.avatar_url) || undefined} alt={teacherProfile.full_name} className="object-cover" />
+                    <AvatarFallback className="bg-hec-sunken text-hec-h2 font-semibold text-hec-ink-soft">
+                      {teacherProfile.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+
                   {/* Profile Info */}
-                  <div className="flex-1 space-y-3">
+                  <div className="min-w-0 flex-1 space-y-3">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">
+                      <h1 className="min-w-0 whitespace-normal break-words hyphens-none text-balance font-display text-hec-display font-medium text-hec-ink">
                         {teacherProfile.full_name}
                       </h1>
-                      <Badge 
-                        variant={teacherProfile.is_active ? "default" : "secondary"} 
-                        className={`${teacherProfile.is_active ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0" : ""} px-3 py-1`}
+                      <Badge
+                        variant={teacherProfile.is_active ? "success" : "secondary"}
+                        className="shrink-0"
                       >
-                        <Sparkles className="h-3 w-3 mr-1" />
+                        <Sparkles className="h-3.5 w-3.5" />
                         {teacherProfile.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </div>
-                    
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-hec-small text-hec-ink-soft">
                       {teacherProfile.email && (
-                        <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                        <span className="flex min-w-0 items-center gap-2 break-all">
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-hec-line-strong" />
                           {teacherProfile.email}
                         </span>
                       )}
                       {teacherProfile.phone && (
-                        <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-accent/50" />
+                        <span className="flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-hec-line-strong" />
                           {teacherProfile.phone}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-lg font-semibold">
-                      <DollarSign className="h-5 w-5 text-primary" />
-                      <span>{effectiveRateVnd(teacherProfile).toLocaleString()} ₫</span>
-                      <span className="text-sm font-normal text-muted-foreground">
+                    <div className="flex flex-wrap items-baseline gap-2 text-hec-h3 font-semibold text-hec-ink">
+                      <DollarSign className="h-5 w-5 shrink-0 self-center text-hec-ink-soft" />
+                      <span className="whitespace-nowrap tabular-nums">{effectiveRateVnd(teacherProfile).toLocaleString()} ₫</span>
+                      <span className="text-hec-small font-normal text-hec-ink-soft">
                         /{rateUnit(teacherProfile)}
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Edit Button */}
-                  <Button 
-                    onClick={() => setShowEditProfile(true)} 
-                    variant="outline" 
+                  <Button
+                    onClick={() => setShowEditProfile(true)}
+                    variant="outline"
                     size="lg"
-                    className="shrink-0 gap-2 border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-300"
+                    className="w-full shrink-0 gap-2 sm:w-auto"
                   >
                     <Edit className="h-4 w-4" />
                     Edit Profile
@@ -381,95 +374,87 @@ export default function TeacherDashboard() {
         {/* Stats Grid */}
         <motion.div variants={itemVariants} className="grid gap-4 grid-cols-2 lg:grid-cols-5">
           {/* Today's Sessions */}
-          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardContent className="p-5 relative">
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/10">
-                  <Calendar className="h-5 w-5 text-blue-500" />
+          <Card className="relative overflow-hidden">
+            <CardContent className="p-4 relative">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className={ICON_TILE}>
+                  <Calendar className="h-5 w-5 text-hec-ink-soft" />
                 </div>
-                <Badge variant="secondary" className="text-xs">Today</Badge>
+                <Badge variant="secondary">Today</Badge>
               </div>
               <div className="space-y-1">
-                <p className="text-3xl font-bold">{todaySessions?.length || 0}</p>
-                <p className="text-sm text-muted-foreground">Sessions</p>
+                <p className={STAT_VALUE}>{todaySessions?.length || 0}</p>
+                <p className="text-hec-small text-hec-ink-soft">Sessions</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Active Classes */}
-          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardContent className="p-5 relative">
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/10">
-                  <GraduationCap className="h-5 w-5 text-blue-500" />
+          <Card className="relative overflow-hidden">
+            <CardContent className="p-4 relative">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className={ICON_TILE}>
+                  <GraduationCap className="h-5 w-5 text-hec-ink-soft" />
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-3xl font-bold">{activeClasses?.length || 0}</p>
-                <p className="text-sm text-muted-foreground">Active Classes</p>
+                <p className={STAT_VALUE}>{activeClasses?.length || 0}</p>
+                <p className="text-hec-small text-hec-ink-soft">Active Classes</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Pending Grading */}
-          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardContent className="p-5 relative">
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10">
-                  <AlertCircle className="h-5 w-5 text-amber-500" />
+          <Card className="relative overflow-hidden">
+            <CardContent className="p-4 relative">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className={ICON_TILE}>
+                  <AlertCircle className={(pendingGrading || 0) > 0 ? "h-5 w-5 text-hec-warn" : "h-5 w-5 text-hec-ink-soft"} />
                 </div>
                 {(pendingGrading || 0) > 0 && (
-                  <span className="flex h-2.5 w-2.5 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
-                  </span>
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-hec-warn" aria-hidden />
                 )}
               </div>
               <div className="space-y-1">
-                <p className="text-3xl font-bold">{pendingGrading || 0}</p>
-                <p className="text-sm text-muted-foreground">Pending Grading</p>
+                <p className={STAT_VALUE}>{pendingGrading || 0}</p>
+                <p className="text-hec-small text-hec-ink-soft">Pending Grading</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Earned Amount */}
-          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardContent className="p-5 relative">
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10">
-                  <TrendingUp className="h-5 w-5 text-emerald-500" />
+          <Card className="relative overflow-hidden">
+            <CardContent className="p-4 relative">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className={ICON_TILE}>
+                  <TrendingUp className="h-5 w-5 text-hec-ink-soft" />
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-2xl font-bold">{((payrollData?.totalAmountActual || 0) / 1000).toFixed(0)}K</p>
-                <p className="text-sm text-muted-foreground">Earned (VND)</p>
+                <p className={STAT_VALUE}>{((payrollData?.totalAmountActual || 0) / 1000).toFixed(0)}K</p>
+                <p className="text-hec-small text-hec-ink-soft">Earned (VND)</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Projected Total */}
-          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 col-span-2 lg:col-span-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardContent className="p-5 relative">
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10">
-                  <Zap className="h-5 w-5 text-primary" />
+          <Card className="relative overflow-hidden col-span-2 lg:col-span-1">
+            <CardContent className="p-4 relative">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className={ICON_TILE}>
+                  <Zap className="h-5 w-5 text-hec-ink-soft" />
                 </div>
-                <span className="text-xs text-muted-foreground">{progressPercent}%</span>
+                <span className="text-hec-caption tabular-nums text-hec-ink-soft">{progressPercent}%</span>
               </div>
               <div className="space-y-2">
-                <p className="text-2xl font-bold">{((payrollData?.totalAmountProjected || 0) / 1000).toFixed(0)}K</p>
+                <p className={STAT_VALUE}>{((payrollData?.totalAmountProjected || 0) / 1000).toFixed(0)}K</p>
                 <DurationVarianceNotice
                   className="mt-1"
                   count={payrollData?.discrepancyCount || 0}
                   varianceAmount={payrollData?.varianceAmountProjected}
                 />
-                <p className="text-sm text-muted-foreground mb-2">Projected (VND)</p>
-                <Progress value={progressPercent} className="h-1.5" />
+                <p className="text-hec-small text-hec-ink-soft mb-2">Projected (VND)</p>
+                <Progress value={progressPercent} className="h-2" aria-label="Sessions held of those projected this month" />
               </div>
             </CardContent>
           </Card>
@@ -479,31 +464,30 @@ export default function TeacherDashboard() {
         {activeClasses && activeClasses.length > 0 && (
           <motion.div variants={itemVariants}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-primary" />
+              <h3 className={SECTION_TITLE}>
+                <GraduationCap className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                 My Classes
               </h3>
             </div>
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {activeClasses.map((classData: any, index: number) => (
                 <motion.div
                   key={classData.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Link to={`/teacher/classes/${classData.id}`}>
-                    <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/90 shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-1 cursor-pointer">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <CardContent className="p-5 relative flex items-center gap-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 shrink-0">
-                          <BookOpen className="h-5 w-5 text-primary" />
+                  <Link to={`/teacher/classes/${classData.id}`} className={LINK_CARD}>
+                    <Card className={`${CARD_HOVER} cursor-pointer`}>
+                      <CardContent className="p-4 relative flex items-center gap-4">
+                        <div className={ICON_TILE}>
+                          <BookOpen className="h-5 w-5 text-hec-ink-soft" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold truncate">{classData.name}</h4>
-                          <p className="text-sm text-muted-foreground">Calendar · Roster · Leaderboard</p>
+                          <h4 className="whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{classData.name}</h4>
+                          <p className="text-hec-small text-hec-ink-soft">Calendar · Roster · Leaderboard</p>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all shrink-0" />
+                        <ChevronRight className="h-5 w-5 text-hec-ink-faint group-hover:text-hec-ink transition-colors duration-hec-1 shrink-0" />
                       </CardContent>
                     </Card>
                   </Link>
@@ -517,12 +501,12 @@ export default function TeacherDashboard() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Today's Agenda */}
           <motion.div variants={itemVariants} className="lg:col-span-2">
-            <Card className="h-full border-0 bg-gradient-to-br from-card to-card/90 shadow-lg">
+            <Card className="h-full">
               <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10">
-                      <Clock className="h-5 w-5 text-primary" />
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className={ICON_TILE}>
+                      <Clock className="h-5 w-5 text-hec-ink-soft" />
                     </div>
                     <div>
                       <CardTitle>Today's Agenda</CardTitle>
@@ -545,81 +529,81 @@ export default function TeacherDashboard() {
                       return (
                          <motion.div
                           key={session.id}
-                          initial={{ opacity: 0, x: -20 }}
+                          initial={{ opacity: 0, x: -8 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.1 }}
                           onClick={() => classId && navigate(`/teacher/classes/${classId}`)}
-                          className={`group relative flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 hover:shadow-md cursor-pointer ${
-                            timeStatus === "ongoing" 
-                              ? "bg-gradient-to-r from-primary/10 via-card to-card border-primary/30 shadow-md" 
+                          className={`group relative flex flex-wrap items-center gap-3 p-4 rounded-hec-md border transition-colors duration-hec-1 ease-hec cursor-pointer ${
+                            timeStatus === "ongoing"
+                              ? "border-hec-brass bg-hec-sunken"
                               : timeStatus === "completed"
-                              ? "bg-muted/30 opacity-60"
-                              : "bg-card hover:bg-muted/30"
+                              ? "border-hec-line bg-hec-sunken/60 text-hec-ink-soft"
+                              : "border-hec-line bg-hec-surface hover:bg-hec-sunken/60"
                           }`}
                         >
                           {/* Timeline indicator */}
-                          <div className="flex flex-col items-center gap-1">
+                          <div className="flex flex-col items-center gap-1 self-stretch">
                             <div className={`w-3 h-3 rounded-full ${
-                              timeStatus === "ongoing" ? "bg-primary animate-pulse" :
-                              timeStatus === "completed" ? "bg-muted-foreground" : "bg-accent"
+                              timeStatus === "ongoing" ? "bg-hec-brass" :
+                              timeStatus === "completed" ? "bg-hec-ink-faint" : "bg-hec-line-strong"
                             }`} />
                             {index < todaySessions.length - 1 && (
-                              <div className="w-0.5 h-8 bg-border" />
+                              <div className="w-0.5 flex-1 min-h-8 bg-hec-line" />
                             )}
                           </div>
-                          
+
                           {/* Session Details */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-semibold truncate">{session.classes.name}</h4>
+                          <div className="flex-1 min-w-[10rem]">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <h4 className="min-w-0 whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{session.classes.name}</h4>
                               {timeStatus === "ongoing" && (
-                                <Badge className="bg-primary/20 text-primary border-0 text-xs">
+                                <Badge variant="brass">
                                   In Progress
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-hec-small tabular-nums text-hec-ink-soft">
                               {session.start_time.slice(0, 5)} – {session.end_time.slice(0, 5)}
                             </p>
                           </div>
-                          
+
                           {/* Quick-Mark Attendance Button */}
                           {(timeStatus === "ongoing" || timeStatus === "upcoming") && session.status === "Scheduled" && (
                             <Button
                               size="sm"
                               variant="outline"
-                              className="shrink-0 gap-1 text-xs"
+                              className="shrink-0 gap-2"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/teacher/attendance?session=${session.id}`);
                               }}
                             >
-                              <CheckCircle2 className="h-3 w-3" />
+                              <CheckCircle2 className="h-4 w-4" />
                               Attendance
                             </Button>
                           )}
 
                           {/* Status Badge */}
-                          <Badge 
-                            variant={session.status === "Held" ? "default" : "secondary"}
-                            className={session.status === "Held" ? "bg-emerald-500/20 text-emerald-600 border-0" : ""}
+                          <Badge
+                            variant={session.status === "Held" ? "success" : "secondary"}
+                            className="shrink-0"
                           >
-                            {session.status === "Held" ? <CheckCircle2 className="h-3 w-3 mr-1" /> : null}
+                            {session.status === "Held" ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
                             {session.status}
                           </Badge>
 
-                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                          <ChevronRight className="h-5 w-5 shrink-0 text-hec-ink-faint group-hover:text-hec-ink transition-colors duration-hec-1" />
                         </motion.div>
                       );
                     })}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="p-4 rounded-full bg-muted/50 mb-4">
-                      <Calendar className="h-8 w-8 text-muted-foreground" />
+                    <div className="p-4 rounded-full bg-hec-sunken mb-4">
+                      <Calendar className="h-8 w-8 text-hec-ink-faint" />
                     </div>
-                    <p className="text-lg font-medium mb-1">No sessions today</p>
-                    <p className="text-sm text-muted-foreground mb-4">Enjoy your free day!</p>
+                    <p className="text-hec-h3 font-semibold text-hec-ink mb-1">No sessions today</p>
+                    <p className="text-hec-small text-hec-ink-soft mb-4">Enjoy your free day!</p>
                     <Link to="/schedule">
                       <Button variant="outline">View Full Schedule</Button>
                     </Link>
@@ -631,29 +615,28 @@ export default function TeacherDashboard() {
 
           {/* Quick Actions */}
           <motion.div variants={itemVariants} className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
+            <h3 className={SECTION_TITLE}>
+              <Sparkles className="h-5 w-5 shrink-0 text-hec-ink-soft" />
               Quick Actions
             </h3>
             <div className="grid gap-3">
               {quickActions.map((action, index) => (
-                <Link key={action.to} to={action.to}>
+                <Link key={action.to} to={action.to} className={LINK_CARD}>
                   <motion.div
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/90 shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-1 cursor-pointer">
-                      <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                    <Card className={`${CARD_HOVER} cursor-pointer`}>
                       <CardContent className="p-4 relative flex items-center gap-4">
-                        <div className={`p-3 rounded-xl bg-gradient-to-br ${action.gradient}`}>
-                          <action.icon className={`h-5 w-5 ${action.iconColor}`} />
+                        <div className={ICON_TILE}>
+                          <action.icon className="h-5 w-5 text-hec-ink-soft" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold">{action.title}</h4>
-                          <p className="text-sm text-muted-foreground truncate">{action.description}</p>
+                          <h4 className="text-hec-body font-semibold text-hec-ink">{action.title}</h4>
+                          <p className="text-hec-small text-hec-ink-soft">{action.description}</p>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="h-5 w-5 shrink-0 text-hec-ink-faint group-hover:text-hec-ink transition-colors duration-hec-1" />
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -666,22 +649,22 @@ export default function TeacherDashboard() {
         {/* Schedule & Leaderboards Tabs */}
         <motion.div variants={itemVariants}>
           <Tabs defaultValue="schedule" className="w-full">
-            <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 bg-muted/50 p-1 rounded-xl">
-              <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <Calendar className="h-4 w-4 mr-2" />
+            <TabsList className="w-full max-w-md mx-auto grid grid-cols-2">
+              <TabsTrigger value="schedule" className="gap-2">
+                <Calendar className="h-4 w-4" />
                 Schedule
               </TabsTrigger>
-              <TabsTrigger value="leaderboards" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <Trophy className="h-4 w-4 mr-2" />
+              <TabsTrigger value="leaderboards" className="gap-2">
+                <Trophy className="h-4 w-4" />
                 Leaderboards
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="schedule" className="mt-6">
-              <Card className="border-0 bg-gradient-to-br from-card to-card/90 shadow-lg">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-primary" />
+                    <Calendar className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                     Teaching Schedule
                   </CardTitle>
                   <CardDescription>Your upcoming and recent classes</CardDescription>
@@ -695,16 +678,15 @@ export default function TeacherDashboard() {
             <TabsContent value="leaderboards" className="mt-6 space-y-6">
               {activeClasses && activeClasses.length > 0 ? (
                 activeClasses.map((classData: any) => (
-                  <Card key={classData.id} className="border-0 bg-gradient-to-br from-card to-card/90 shadow-lg overflow-hidden">
+                  <Card key={classData.id} className="overflow-hidden">
                     <CardHeader className="relative">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-2xl" />
-                      <div className="flex items-center justify-between relative">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10">
-                            <Trophy className="h-5 w-5 text-amber-500" />
+                      <div className="flex flex-wrap items-center justify-between gap-3 relative">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className={ICON_TILE}>
+                            <Trophy className="h-5 w-5 text-hec-brass" />
                           </div>
-                          <div>
-                            <CardTitle>{classData.name}</CardTitle>
+                          <div className="min-w-0">
+                            <CardTitle className="break-words">{classData.name}</CardTitle>
                             <CardDescription>Class Rankings & Points</CardDescription>
                           </div>
                         </div>
@@ -717,13 +699,13 @@ export default function TeacherDashboard() {
                   </Card>
                 ))
               ) : (
-                <Card className="border-0 bg-gradient-to-br from-card to-card/90 shadow-lg">
+                <Card>
                   <CardContent className="py-16 text-center">
-                    <div className="p-4 rounded-full bg-muted/50 inline-block mb-4">
-                      <Users className="h-8 w-8 text-muted-foreground" />
+                    <div className="p-4 rounded-full bg-hec-sunken inline-block mb-4">
+                      <Users className="h-8 w-8 text-hec-ink-faint" />
                     </div>
-                    <p className="text-lg font-medium mb-1">No active classes</p>
-                    <p className="text-sm text-muted-foreground">Classes will appear here when you have scheduled sessions</p>
+                    <p className="text-hec-h3 font-semibold text-hec-ink mb-1">No active classes</p>
+                    <p className="text-hec-small text-hec-ink-soft">Classes will appear here when you have scheduled sessions</p>
                   </CardContent>
                 </Card>
               )}

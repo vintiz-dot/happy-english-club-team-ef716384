@@ -186,7 +186,7 @@ export function StudentAccessManager({ className }: { className?: string }) {
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <KeyRound className="h-5 w-5 text-violet-500" />
+          <KeyRound className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
           Student access &amp; recovery
         </CardTitle>
         <CardDescription>
@@ -200,35 +200,36 @@ export function StudentAccessManager({ className }: { className?: string }) {
         {!selected && (
           <>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint" aria-hidden />
               <Input
                 autoFocus
+                aria-label="Student's name"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Type the student's name…"
                 className="pl-9"
               />
               {searching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-hec-ink-faint" aria-hidden />
               )}
             </div>
 
             {hits.length > 0 && (
-              <div className="rounded-xl border divide-y max-h-[320px] overflow-y-auto">
+              <div className="max-h-[320px] divide-y divide-hec-line overflow-y-auto rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1">
                 {hits.map((h) => (
                   <button
                     key={h.id}
                     onClick={() => pick(h)}
-                    className="w-full text-left px-3 py-2.5 hover:bg-muted/60 transition-colors flex items-center gap-3"
+                    className="flex min-h-hec-target w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate">{h.full_name}</p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{h.full_name}</p>
+                      <p className="break-words text-hec-small text-hec-ink-soft">
                         {h.classes.length ? h.classes.join(", ") : "No class"}
                         {h.login_email ? ` · ${h.login_email}` : ""}
                       </p>
                     </div>
-                    <Badge variant={h.has_account ? "outline" : "secondary"} className="shrink-0 font-normal text-[10px]">
+                    <Badge variant={h.has_account ? "outline" : "secondary"} className="shrink-0">
                       {h.has_account ? "has account" : "no account"}
                     </Badge>
                   </button>
@@ -237,7 +238,7 @@ export function StudentAccessManager({ className }: { className?: string }) {
             )}
 
             {query.trim().length >= 2 && !searching && hits.length === 0 && (
-              <p className="text-sm text-muted-foreground py-4 text-center">
+              <p className="py-4 text-center text-hec-small text-hec-ink-soft">
                 No active student matches “{query}”.
               </p>
             )}
@@ -249,33 +250,33 @@ export function StudentAccessManager({ className }: { className?: string }) {
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
-                <p className="text-base font-black leading-tight">{selected.full_name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="whitespace-normal break-words hyphens-none text-balance text-hec-h3 font-semibold text-hec-ink">{selected.full_name}</p>
+                <p className="break-words text-hec-small text-hec-ink-soft">
                   {selected.classes.length ? selected.classes.join(", ") : "No class"}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" onClick={reset} title="Choose someone else">
-                <X className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="shrink-0" onClick={reset} title="Choose someone else" aria-label="Choose someone else">
+                <X className="h-5 w-5" aria-hidden />
               </Button>
             </div>
 
             {!status ? (
-              <p className="text-sm text-muted-foreground flex items-center gap-2 py-4">
-                <Loader2 className="h-4 w-4 animate-spin" />Checking this account…
+              <p className="flex items-center gap-2 py-4 text-hec-small text-hec-ink-soft">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />Checking this account…
               </p>
             ) : status.blocked ? (
               /* Staff accounts are refused by the server; say why plainly. */
-              <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 flex gap-2">
-                <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                <p className="text-xs text-destructive">{status.blocked_reason}</p>
+              <div className="flex gap-2 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-4">
+                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-hec-danger" aria-hidden />
+                <p className="text-hec-small text-hec-danger">{status.blocked_reason}</p>
               </div>
             ) : (
               <>
-                <div className="rounded-xl border p-3 space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-2 rounded-hec-md border border-hec-line bg-hec-surface p-4 text-hec-small text-hec-ink">
+                  <div className="flex items-start gap-2">
                     {status.has_account
-                      ? <RefreshCw className="h-4 w-4 text-amber-500 shrink-0" />
-                      : <UserPlus className="h-4 w-4 text-emerald-500 shrink-0" />}
+                      ? <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
+                      : <UserPlus className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />}
                     <span className="font-semibold">
                       {status.has_account
                         ? "Has an account — this will issue a fresh code"
@@ -283,17 +284,17 @@ export function StudentAccessManager({ className }: { className?: string }) {
                     </span>
                   </div>
                   {status.login_email && (
-                    <p className="text-xs text-muted-foreground">
-                      Current login: <span className="font-mono">{status.login_email}</span>
+                    <p className="text-hec-caption text-hec-ink-soft">
+                      Current login: <span className="break-all font-mono">{status.login_email}</span>
                     </p>
                   )}
                   {status.siblings.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="break-words text-hec-caption text-hec-ink-soft">
                       One login covers the whole family — also: {status.siblings.join(", ")}
                     </p>
                   )}
                   {status.outstanding_code && (
-                    <p className="text-xs text-amber-600">
+                    <p className="text-hec-caption text-hec-warn">
                       A card is already outstanding (expires{" "}
                       {new Date(status.outstanding_code.expires_at).toLocaleString()}). Issuing a new
                       one cancels it.
@@ -302,9 +303,9 @@ export function StudentAccessManager({ className }: { className?: string }) {
                 </div>
 
                 <div>
-                  <Label htmlFor="override" className="text-xs">
+                  <Label htmlFor="override" className="text-hec-small font-medium text-hec-ink">
                     Login address{" "}
-                    <span className="font-normal text-muted-foreground">
+                    <span className="break-all font-normal text-hec-ink-soft">
                       — leave blank to use {status.suggested_email}
                     </span>
                   </Label>
@@ -313,9 +314,9 @@ export function StudentAccessManager({ className }: { className?: string }) {
                     value={overrideEmail}
                     onChange={(e) => setOverrideEmail(e.target.value)}
                     placeholder={status.suggested_email ?? ""}
-                    className="mt-1"
+                    className="mt-2"
                   />
-                  <p className="text-[11px] text-muted-foreground mt-1">
+                  <p className="mt-2 text-hec-caption text-hec-ink-soft">
                     Enter the family's real email only if they have one and can read it — that also
                     turns on normal “forgot password” for them.
                   </p>
@@ -324,11 +325,11 @@ export function StudentAccessManager({ className }: { className?: string }) {
                 <Button
                   onClick={issue}
                   disabled={issuing}
-                  className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white w-full"
+                  className="w-full"
                 >
                   {issuing
-                    ? <><Loader2 className="h-4 w-4 animate-spin" />Working…</>
-                    : <><KeyRound className="h-4 w-4" />Issue access code</>}
+                    ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Working…</>
+                    : <><KeyRound className="h-4 w-4" aria-hidden />Issue access code</>}
                 </Button>
               </>
             )}
@@ -338,36 +339,35 @@ export function StudentAccessManager({ className }: { className?: string }) {
         {/* ── Step 3: the code, once ─────────────────────────────────── */}
         {issued && (
           <div className="space-y-4">
-            <div className="rounded-xl border-2 border-violet-500/50 bg-violet-500/5 p-4 space-y-3">
-              <p className="text-sm font-semibold flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <div className="space-y-3 rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1">
+              <p className="flex items-start gap-2 text-hec-body font-semibold text-hec-ink">
+                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-hec-leaf" aria-hidden />
                 {issued.created_account ? "Account created" : "New code issued"} for {issued.student_name}
               </p>
 
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Login</p>
-                  <p className="text-sm font-mono font-bold break-all">{issued.login_email}</p>
+                  <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">Login</p>
+                  <p className="break-all font-mono text-hec-small font-semibold text-hec-ink">{issued.login_email}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">One-time code</p>
-                  <p className="text-2xl font-black font-mono tracking-widest">{issued.code}</p>
+                  <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">One-time code</p>
+                  <p className="font-mono text-hec-h1 font-semibold tracking-widest text-hec-ink">{issued.code}</p>
                 </div>
               </div>
 
-              <p className="text-[11px] text-amber-600">
+              <p className="text-hec-caption text-hec-warn">
                 This code is shown once and cannot be retrieved later — print the card now, or copy
                 it. Expires {new Date(issued.expires_at).toLocaleString()}.
               </p>
             </div>
 
-            <div className="flex gap-2 flex-wrap">
-              <Button onClick={printCard} className="gap-2">
-                <Printer className="h-4 w-4" />Print card (PDF)
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={printCard}>
+                <Printer className="h-4 w-4" aria-hidden />Print card (PDF)
               </Button>
               <Button
                 variant="outline"
-                className="gap-2"
                 onClick={() => {
                   navigator.clipboard.writeText(
                     `Login: ${issued.login_email}\nCode: ${issued.code}\n${window.location.origin}/claim`,
@@ -375,9 +375,9 @@ export function StudentAccessManager({ className }: { className?: string }) {
                   toast.success("Copied");
                 }}
               >
-                <Copy className="h-4 w-4" />Copy
+                <Copy className="h-4 w-4" aria-hidden />Copy
               </Button>
-              <Button variant="ghost" onClick={reset} className="gap-2">
+              <Button variant="ghost" onClick={reset}>
                 Next student
               </Button>
             </div>

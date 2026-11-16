@@ -1,0 +1,217 @@
+{
+ "when": "2026-11-12T03:09:31.158Z",
+ "base": "vite dev server + fake Supabase client + local stand-in book (NOT production, NOT the real book hosts)",
+ "cpu": "4x (CDP Emulation.setCPUThrottlingRate)",
+ "network": "Fast 3G-like (CDP Network.emulateNetworkConditions latency 562.5 ms, 180 KB/s down, 84 KB/s up) applied after the app shell has loaded, plus a 562 ms delay on every book.html request",
+ "checks": [
+  {
+   "id": "M5.control.SkillButton-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): SkillButton-popover visible"
+  },
+  {
+   "id": "M5.control.StudentActionPopover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): StudentActionPopover visible"
+  },
+  {
+   "id": "M5.control.ui-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-popover visible"
+  },
+  {
+   "id": "M5.control.ui-select",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-select visible"
+  },
+  {
+   "id": "M5.control.ui-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-dropdown-menu visible"
+  },
+  {
+   "id": "M5.control.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-alert-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-sheet",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-sheet visible"
+  },
+  {
+   "id": "M5.control.ui-tooltip",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-tooltip visible"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": false,
+    "where": "outside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, outside the fullscreen element, visible false"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "inDom": true,
+    "vis": false,
+    "where": "portalled outside the fullscreen element (DIV child of body)"
+   },
+   "detail": "in fullscreen: SkillButton-popover opened=true, portalled outside the fullscreen element (DIV child of body), visible=false"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "inDom": true,
+    "vis": false,
+    "where": "portalled outside the fullscreen element (DIV child of body)"
+   },
+   "detail": "in fullscreen: StudentActionPopover opened=true, portalled outside the fullscreen element (DIV child of body), visible=false"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "inDom": true,
+    "vis": false,
+    "where": "portalled outside the fullscreen element (DIV child of body)"
+   },
+   "detail": "in fullscreen: ui-popover opened=true, portalled outside the fullscreen element (DIV child of body), visible=false"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "inDom": true,
+    "vis": false,
+    "where": "portalled outside the fullscreen element (DIV child of body)"
+   },
+   "detail": "in fullscreen: ui-select opened=true, portalled outside the fullscreen element (DIV child of body), visible=false"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "inDom": true,
+    "vis": false,
+    "where": "portalled outside the fullscreen element (DIV child of body)"
+   },
+   "detail": "in fullscreen: ui-dialog opened=true, portalled outside the fullscreen element (DIV child of body), visible=false"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "inDom": true,
+    "vis": false,
+    "where": "portalled outside the fullscreen element (DIV child of body)"
+   },
+   "detail": "in fullscreen: ui-dropdown-menu opened=true, portalled outside the fullscreen element (DIV child of body), visible=false"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "inDom": true,
+    "vis": false,
+    "where": "portalled outside the fullscreen element (DIV child of body)"
+   },
+   "detail": "in fullscreen: ui-alert-dialog opened=true, portalled outside the fullscreen element (DIV child of body), visible=false"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-sheet opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "inDom": true,
+    "vis": false,
+    "where": "portalled outside the fullscreen element (DIV child of body)"
+   },
+   "detail": "in fullscreen: ui-tooltip opened=true, portalled outside the fullscreen element (DIV child of body), visible=false"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "v0": false,
+    "v1": true,
+    "d1": true,
+    "conn": true
+   },
+   "detail": "tooltip open in fullscreen (visible false), fullscreen ends: still open, connected true, visible true"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  }
+ ]
+}

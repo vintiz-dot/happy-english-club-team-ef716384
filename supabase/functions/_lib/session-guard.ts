@@ -68,6 +68,18 @@ const SQLSTATE: Record<string, [number, string, string]> = {
   HC021: [409, 'reclass_not_supported', 'A lesson cannot be moved to another class.'],
   HC022: [409, 'one_change_at_a_time', 'Make one change at a time (cancel, move or class change).'],
   HC050: [503, 'guard_broken', 'The cancellation guard in the database is not working. Nothing was changed.'],
+  // D4 (docs/evidence/D4-design.md b.8): every new code, once, here.
+  HC023: [409, 'born_status', 'A lesson is created as Scheduled. Create it, then take the register.'],
+  HC024: [409, 'attendance_identity', 'A register mark cannot be moved to another lesson or child. Change the mark instead.'],
+  HC025: [409, 'attendance_requires_checked_path', 'This register change needs a reason (or an administrator). Nothing was changed.'],
+  HC060: [409, 'approval_required', 'This needs a second administrator. Nothing was changed.'],
+  HC061: [403, 'self_approval', 'You asked for this; another administrator approves it.'],
+  HC062: [409, 'request_not_pending', 'Already dealt with. Open the Approvals list.'],
+  HC063: [409, 'approval_already_pending', 'A request for this is already waiting.'],
+  HC064: [410, 'request_expired', 'This request is too old. Ask again.'],
+  HC065: [409, 'approval_setting_locked', 'This approval setting needs the other administrator.'],
+  HC120: [409, 'money_requires_checked_path', 'This change reaches months already billed: make it from its screen, with a reason. Nothing was changed.'],
+  HC121: [409, 'money_change_refused', 'This change is not allowed this way. Nothing was changed.'],
   '23505': [409, 'slot_taken', 'Another lesson of this class already sits in that slot.'],
   '23514': [400, 'rejected_by_database', 'The database refused the request (a value is too large or not allowed).'],
   '40P01': [503, 'retry', 'The database was busy. Nothing was changed; try again.'],
@@ -82,7 +94,16 @@ const SQLSTATE: Record<string, [number, string, string]> = {
 const HC015: Record<string, number> = {
   already_canceled: 409, not_canceled: 409, bad_change: 400, bad_action: 400,
   bad_kind: 400, bad_items: 400, bad_payload: 400,
+  // D4 money guard (HC015 refuse codes)
+  not_installed: 503, bad_entity: 400, bad_op: 400, bad_args: 400, bad_range: 400, lesson_canceled: 409,
+  too_many_marks: 413, too_many: 413, no_enrollment: 409, nothing_to_change: 409,
 };
+
+/** HC025's DETAIL starts "kind=<kind>": which register refusal it was (b.8). */
+export function attendanceRefusalKind(detail: unknown): string | null {
+  const m = /kind=([a-z_]+)/.exec(String(detail ?? ''));
+  return m ? m[1] : null;
+}
 
 /** A PostgREST error from an RPC or query -> what the UI renders. */
 export function mapDbError(err: any): GuardError {

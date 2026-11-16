@@ -1,0 +1,338 @@
+{
+ "cal-week-375-light": {
+  "before": "5e2d85a5b3705f69 (74089 chars)",
+  "afteru": "5e2d85a5b3705f69 (74089 chars)"
+ },
+ "cal-week-375-dark": {
+  "before": "5e2d85a5b3705f69 (74089 chars)",
+  "afteru": "5e2d85a5b3705f69 (74089 chars)"
+ },
+ "cal-week-1280-light": {
+  "before": "5295180b974fedd2 (74304 chars)",
+  "afteru": "5295180b974fedd2 (74304 chars)"
+ },
+ "cal-week-1280-dark": {
+  "before": "5295180b974fedd2 (74304 chars)",
+  "afteru": "5295180b974fedd2 (74304 chars)"
+ },
+ "cal-day-375-light": {
+  "before": "5c72cea1e4690289 (27520 chars)",
+  "afteru": "5c72cea1e4690289 (27520 chars)"
+ },
+ "cal-day-375-dark": {
+  "before": "5c72cea1e4690289 (27520 chars)",
+  "afteru": "5c72cea1e4690289 (27520 chars)"
+ },
+ "cal-day-1280-light": {
+  "before": "ad504da046d9f250 (27738 chars)",
+  "afteru": "ad504da046d9f250 (27738 chars)"
+ },
+ "cal-day-1280-dark": {
+  "before": "ad504da046d9f250 (27738 chars)",
+  "afteru": "ad504da046d9f250 (27738 chars)"
+ },
+ "cal-month-375-light": {
+  "before": "fb14b2a79d3fca96 (94504 chars)",
+  "afteru": "fb14b2a79d3fca96 (94504 chars)"
+ },
+ "cal-month-375-dark": {
+  "before": "fb14b2a79d3fca96 (94504 chars)",
+  "afteru": "fb14b2a79d3fca96 (94504 chars)"
+ },
+ "cal-month-1280-light": {
+  "before": "8696fc6f4abb52c7 (95265 chars)",
+  "afteru": "8696fc6f4abb52c7 (95265 chars)"
+ },
+ "cal-month-1280-dark": {
+  "before": "8696fc6f4abb52c7 (95265 chars)",
+  "afteru": "8696fc6f4abb52c7 (95265 chars)"
+ },
+ "cal-agenda-375-light": {
+  "before": "754467aa127eabe8 (82894 chars)",
+  "afteru": "754467aa127eabe8 (82894 chars)"
+ },
+ "cal-agenda-375-dark": {
+  "before": "754467aa127eabe8 (82894 chars)",
+  "afteru": "754467aa127eabe8 (82894 chars)"
+ },
+ "cal-agenda-1280-light": {
+  "before": "4055a3f7c060db87 (83059 chars)",
+  "afteru": "4055a3f7c060db87 (83059 chars)"
+ },
+ "cal-agenda-1280-dark": {
+  "before": "4055a3f7c060db87 (83059 chars)",
+  "afteru": "4055a3f7c060db87 (83059 chars)"
+ },
+ "cal-mini-375-light": {
+  "before": "16cc746e652fa3fd (85028 chars)",
+  "afteru": "16cc746e652fa3fd (85028 chars)"
+ },
+ "cal-mini-375-dark": {
+  "before": "16cc746e652fa3fd (85028 chars)",
+  "afteru": "16cc746e652fa3fd (85028 chars)"
+ },
+ "cal-mini-1280-light": {
+  "before": "72063b985cfcc1a7 (85243 chars)",
+  "afteru": "72063b985cfcc1a7 (85243 chars)"
+ },
+ "cal-mini-1280-dark": {
+  "before": "72063b985cfcc1a7 (85243 chars)",
+  "afteru": "72063b985cfcc1a7 (85243 chars)"
+ },
+ "cal-filter-375-light": {
+  "before": "485936cfbc037aee (2293 chars)",
+  "afteru": "485936cfbc037aee (2293 chars)"
+ },
+ "cal-filter-375-dark": {
+  "before": "485936cfbc037aee (2293 chars)",
+  "afteru": "485936cfbc037aee (2293 chars)"
+ },
+ "cal-filter-1280-light": {
+  "before": "1588e257c6f67bb3 (2296 chars)",
+  "afteru": "1588e257c6f67bb3 (2296 chars)"
+ },
+ "cal-filter-1280-dark": {
+  "before": "1588e257c6f67bb3 (2296 chars)",
+  "afteru": "1588e257c6f67bb3 (2296 chars)"
+ },
+ "cal-more-375-light": {
+  "before": "6835a5d5aa9a052e (3356 chars)",
+  "afteru": "6835a5d5aa9a052e (3356 chars)"
+ },
+ "cal-more-375-dark": {
+  "before": "6835a5d5aa9a052e (3356 chars)",
+  "afteru": "6835a5d5aa9a052e (3356 chars)"
+ },
+ "cal-more-1280-light": {
+  "before": "6835a5d5aa9a052e (3356 chars)",
+  "afteru": "6835a5d5aa9a052e (3356 chars)"
+ },
+ "cal-more-1280-dark": {
+  "before": "6835a5d5aa9a052e (3356 chars)",
+  "afteru": "6835a5d5aa9a052e (3356 chars)"
+ },
+ "cal-teacher-375-light": {
+  "before": "c19b214aad1b7c44 (53188 chars)",
+  "afteru": "c19b214aad1b7c44 (53188 chars)"
+ },
+ "cal-teacher-375-dark": {
+  "before": "c19b214aad1b7c44 (53188 chars)",
+  "afteru": "c19b214aad1b7c44 (53188 chars)"
+ },
+ "cal-teacher-1280-light": {
+  "before": "3c5958971b417e37 (53343 chars)",
+  "afteru": "3c5958971b417e37 (53343 chars)"
+ },
+ "cal-teacher-1280-dark": {
+  "before": "3c5958971b417e37 (53343 chars)",
+  "afteru": "3c5958971b417e37 (53343 chars)"
+ },
+ "cal-family-375-light": {
+  "before": "297c1c18f00563c3 (58321 chars)",
+  "afteru": "297c1c18f00563c3 (58321 chars)"
+ },
+ "cal-family-375-dark": {
+  "before": "297c1c18f00563c3 (58321 chars)",
+  "afteru": "297c1c18f00563c3 (58321 chars)"
+ },
+ "cal-family-1280-light": {
+  "before": "109f808c427f11dd (58476 chars)",
+  "afteru": "109f808c427f11dd (58476 chars)"
+ },
+ "cal-family-1280-dark": {
+  "before": "109f808c427f11dd (58476 chars)",
+  "afteru": "109f808c427f11dd (58476 chars)"
+ },
+ "cal-family-m-375-light": {
+  "before": "8139ae6369969f94 (70921 chars)",
+  "afteru": "8139ae6369969f94 (70921 chars)"
+ },
+ "cal-family-m-375-dark": {
+  "before": "8139ae6369969f94 (70921 chars)",
+  "afteru": "8139ae6369969f94 (70921 chars)"
+ },
+ "cal-family-m-1280-light": {
+  "before": "c77929436e8fc93d (71622 chars)",
+  "afteru": "c77929436e8fc93d (71622 chars)"
+ },
+ "cal-family-m-1280-dark": {
+  "before": "c77929436e8fc93d (71622 chars)",
+  "afteru": "c77929436e8fc93d (71622 chars)"
+ },
+ "cal-student-375-light": {
+  "before": "5a406806fe29ebd4 (80812 chars)",
+  "afteru": "5a406806fe29ebd4 (80812 chars)"
+ },
+ "cal-student-375-dark": {
+  "before": "5a406806fe29ebd4 (80812 chars)",
+  "afteru": "5a406806fe29ebd4 (80812 chars)"
+ },
+ "cal-student-1280-light": {
+  "before": "57fe04b0d2be4c9f (80977 chars)",
+  "afteru": "57fe04b0d2be4c9f (80977 chars)"
+ },
+ "cal-student-1280-dark": {
+  "before": "57fe04b0d2be4c9f (80977 chars)",
+  "afteru": "57fe04b0d2be4c9f (80977 chars)"
+ },
+ "fam-375-light": {
+  "before": "32a323760b7b28e7 (53952 chars)",
+  "afteru": "32a323760b7b28e7 (53952 chars)"
+ },
+ "fam-375-dark": {
+  "before": "32a323760b7b28e7 (53952 chars)",
+  "afteru": "32a323760b7b28e7 (53952 chars)"
+ },
+ "fam-1280-light": {
+  "before": "32a323760b7b28e7 (53952 chars)",
+  "afteru": "32a323760b7b28e7 (53952 chars)"
+ },
+ "fam-1280-dark": {
+  "before": "32a323760b7b28e7 (53952 chars)",
+  "afteru": "32a323760b7b28e7 (53952 chars)"
+ },
+ "lb-375-light": {
+  "before": "8f712c0f3056d3d3 (31111 chars)",
+  "afteru": "8f712c0f3056d3d3 (31111 chars)"
+ },
+ "lb-375-dark": {
+  "before": "8f712c0f3056d3d3 (31111 chars)",
+  "afteru": "8f712c0f3056d3d3 (31111 chars)"
+ },
+ "lb-1280-light": {
+  "before": "8f712c0f3056d3d3 (31111 chars)",
+  "afteru": "8f712c0f3056d3d3 (31111 chars)"
+ },
+ "lb-1280-dark": {
+  "before": "8f712c0f3056d3d3 (31111 chars)",
+  "afteru": "8f712c0f3056d3d3 (31111 chars)"
+ },
+ "cls-lb-375-light": {
+  "before": "4b0453364d2edbdf (33725 chars)",
+  "afteru": "4b0453364d2edbdf (33725 chars)"
+ },
+ "cls-lb-375-dark": {
+  "before": "4b0453364d2edbdf (33725 chars)",
+  "afteru": "4b0453364d2edbdf (33725 chars)"
+ },
+ "cls-lb-1280-light": {
+  "before": "4b0453364d2edbdf (33725 chars)",
+  "afteru": "4b0453364d2edbdf (33725 chars)"
+ },
+ "cls-lb-1280-dark": {
+  "before": "4b0453364d2edbdf (33725 chars)",
+  "afteru": "4b0453364d2edbdf (33725 chars)"
+ },
+ "cls-lb-empty-375-light": {
+  "before": "6d2c913a405ef9d1 (14031 chars)",
+  "afteru": "6d2c913a405ef9d1 (14031 chars)"
+ },
+ "cls-lb-empty-375-dark": {
+  "before": "6d2c913a405ef9d1 (14031 chars)",
+  "afteru": "6d2c913a405ef9d1 (14031 chars)"
+ },
+ "cls-lb-empty-1280-light": {
+  "before": "6d2c913a405ef9d1 (14031 chars)",
+  "afteru": "6d2c913a405ef9d1 (14031 chars)"
+ },
+ "cls-lb-empty-1280-dark": {
+  "before": "6d2c913a405ef9d1 (14031 chars)",
+  "afteru": "6d2c913a405ef9d1 (14031 chars)"
+ },
+ "stu-detail-375-light": {
+  "before": "7cf7541c29a58905 (127957 chars)",
+  "afteru": "7cf7541c29a58905 (127957 chars)"
+ },
+ "stu-detail-375-dark": {
+  "before": "7cf7541c29a58905 (127957 chars)",
+  "afteru": "7cf7541c29a58905 (127957 chars)"
+ },
+ "stu-detail-1280-light": {
+  "before": "d55afb386dd523ff (134336 chars)",
+  "afteru": "d55afb386dd523ff (134336 chars)"
+ },
+ "stu-detail-1280-dark": {
+  "before": "d55afb386dd523ff (134336 chars)",
+  "afteru": "d55afb386dd523ff (134336 chars)"
+ },
+ "sdash-375-light": {
+  "before": "a9b98875c10b375b (65264 chars)",
+  "afteru": "a9b98875c10b375b (65264 chars)"
+ },
+ "sdash-375-dark": {
+  "before": "a9b98875c10b375b (65264 chars)",
+  "afteru": "a9b98875c10b375b (65264 chars)"
+ },
+ "sdash-1280-light": {
+  "before": "a9b98875c10b375b (65264 chars)",
+  "afteru": "a9b98875c10b375b (65264 chars)"
+ },
+ "sdash-1280-dark": {
+  "before": "a9b98875c10b375b (65264 chars)",
+  "afteru": "a9b98875c10b375b (65264 chars)"
+ },
+ "sdash-self-375-light": {
+  "before": "b20c22e7bb31816f (60736 chars)",
+  "afteru": "b20c22e7bb31816f (60736 chars)"
+ },
+ "sdash-self-375-dark": {
+  "before": "b20c22e7bb31816f (60736 chars)",
+  "afteru": "b20c22e7bb31816f (60736 chars)"
+ },
+ "sdash-self-1280-light": {
+  "before": "b20c22e7bb31816f (60736 chars)",
+  "afteru": "b20c22e7bb31816f (60736 chars)"
+ },
+ "sdash-self-1280-dark": {
+  "before": "b20c22e7bb31816f (60736 chars)",
+  "afteru": "b20c22e7bb31816f (60736 chars)"
+ },
+ "famdetail-375-light": {
+  "before": "4a755446a692b16d (20361 chars)",
+  "afteru": "4a755446a692b16d (20361 chars)"
+ },
+ "famdetail-375-dark": {
+  "before": "4a755446a692b16d (20361 chars)",
+  "afteru": "4a755446a692b16d (20361 chars)"
+ },
+ "famdetail-1280-light": {
+  "before": "4a755446a692b16d (20361 chars)",
+  "afteru": "4a755446a692b16d (20361 chars)"
+ },
+ "famdetail-1280-dark": {
+  "before": "4a755446a692b16d (20361 chars)",
+  "afteru": "4a755446a692b16d (20361 chars)"
+ },
+ "ov-fam-375-light": {
+  "before": "dc7fc1b9f6e82e68 (6739 chars)",
+  "afteru": "dc7fc1b9f6e82e68 (6739 chars)"
+ },
+ "ov-fam-375-dark": {
+  "before": "dc7fc1b9f6e82e68 (6739 chars)",
+  "afteru": "dc7fc1b9f6e82e68 (6739 chars)"
+ },
+ "ov-fam-1280-light": {
+  "before": "dc7fc1b9f6e82e68 (6739 chars)",
+  "afteru": "dc7fc1b9f6e82e68 (6739 chars)"
+ },
+ "ov-fam-1280-dark": {
+  "before": "dc7fc1b9f6e82e68 (6739 chars)",
+  "afteru": "dc7fc1b9f6e82e68 (6739 chars)"
+ },
+ "ov-fam-done-375-light": {
+  "before": "1ff8e3c3da67667c (9220 chars)",
+  "afteru": "1ff8e3c3da67667c (9220 chars)"
+ },
+ "ov-fam-done-375-dark": {
+  "before": "1ff8e3c3da67667c (9220 chars)",
+  "afteru": "1ff8e3c3da67667c (9220 chars)"
+ },
+ "ov-fam-done-1280-light": {
+  "before": "1ff8e3c3da67667c (9220 chars)",
+  "afteru": "1ff8e3c3da67667c (9220 chars)"
+ },
+ "ov-fam-done-1280-dark": {
+  "before": "1ff8e3c3da67667c (9220 chars)",
+  "afteru": "1ff8e3c3da67667c (9220 chars)"
+ }
+}

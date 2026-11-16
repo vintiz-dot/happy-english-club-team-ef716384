@@ -1,0 +1,222 @@
+{
+ "r03-schedule-375-light": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   10,
+   0
+  ],
+  "axeBefore": {
+   "critical": 1,
+   "serious": 1,
+   "moderate": 2
+  },
+  "axeAfter": {
+   "critical": 1,
+   "moderate": 2
+  }
+ },
+ "r03-schedule-375-dark": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   10,
+   0
+  ],
+  "axeBefore": {
+   "critical": 1,
+   "serious": 1,
+   "moderate": 2
+  },
+  "axeAfter": {
+   "critical": 1,
+   "moderate": 2
+  }
+ },
+ "r03-schedule-1280-light": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {
+   "critical": 1,
+   "serious": 1,
+   "moderate": 1
+  },
+  "axeAfter": {
+   "critical": 1,
+   "moderate": 1
+  }
+ },
+ "r03-schedule-1280-dark": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {
+   "critical": 1,
+   "serious": 1,
+   "moderate": 1
+  },
+  "axeAfter": {
+   "critical": 1,
+   "moderate": 1
+  }
+ },
+ "r03-reports-375-light": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {
+   "moderate": 1
+  },
+  "axeAfter": {
+   "moderate": 1
+  }
+ },
+ "r03-reports-375-dark": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {
+   "moderate": 1
+  },
+  "axeAfter": {
+   "moderate": 1
+  }
+ },
+ "r03-reports-1280-light": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {},
+  "axeAfter": {}
+ },
+ "r03-reports-1280-dark": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {},
+  "axeAfter": {}
+ },
+ "r03-achievements-375-light": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {
+   "moderate": 1
+  },
+  "axeAfter": {
+   "moderate": 1
+  }
+ },
+ "r03-achievements-375-dark": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {
+   "moderate": 1
+  },
+  "axeAfter": {
+   "moderate": 1
+  }
+ },
+ "r03-achievements-1280-light": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {},
+  "axeAfter": {}
+ },
+ "r03-achievements-1280-dark": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {},
+  "axeAfter": {}
+ },
+ "r03-profile-375-light": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {},
+  "axeAfter": {}
+ },
+ "r03-profile-375-dark": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {},
+  "axeAfter": {}
+ },
+ "r03-profile-1280-light": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {},
+  "axeAfter": {}
+ },
+ "r03-profile-1280-dark": {
+  "reqEqual": true,
+  "numbersEqual": true,
+  "overflow": false,
+  "smallTargets": [
+   0,
+   0
+  ],
+  "axeBefore": {},
+  "axeAfter": {}
+ }
+}

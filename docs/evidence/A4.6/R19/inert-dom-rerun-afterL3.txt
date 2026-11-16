@@ -1,0 +1,9 @@
+admin-1280-dark topbar identical (4222 chars)
+admin-1280-dark pwa identical (1093 chars)
+admin-1280-dark fab identical (789 chars)
+admin-1280-light topbar identical (4222 chars)
+admin-1280-light pwa MISSING A 
+admin-1280-light fab identical (789 chars)
+tools-spin-1280-dark sheet identical (60153 chars)
+tools-spin-1280-light sheet identical (60153 chars)
+afterL3 vs before: 7 identical, 0 identical except a Deferred tool's mount timing, 0 differ, 1 missing

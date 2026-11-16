@@ -42,16 +42,16 @@ export const SessionGeneratorConfirm = ({
 
         <div className="space-y-4 py-4">
           <RadioGroup value={mode} onValueChange={(v: any) => setMode(v)}>
-            <div className="flex items-start space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
-              <RadioGroupItem value="future-only" id="future-only" />
-              <div className="flex-1">
+            <div className="flex cursor-pointer items-start gap-3 rounded-hec-md border border-hec-line-strong p-4 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken has-[button[data-state=checked]]:border-hec-brass">
+              <RadioGroupItem value="future-only" id="future-only" className="mt-1" />
+              <div className="min-w-0 flex-1">
                 <Label htmlFor="future-only" className="cursor-pointer">
                   <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-blue-500" />
-                    <span className="font-semibold">Future sessions only (Recommended)</span>
+                    <Info className="h-4 w-4 shrink-0 text-hec-ink-soft" />
+                    <span className="text-hec-body font-semibold text-hec-ink">Future sessions only (Recommended)</span>
                   </div>
                 </Label>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="mt-1 text-hec-small text-hec-ink-soft">
                   Only create/update/remove future Scheduled sessions. Past Held sessions remain unchanged.
                   Safe for payroll and tuition integrity.
                 </p>
@@ -59,18 +59,18 @@ export const SessionGeneratorConfirm = ({
             </div>
 
             {isAdmin && (
-              <div className="flex items-start space-x-3 p-3 border border-amber-300 rounded-lg cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-950/20">
-                <RadioGroupItem value="include-held" id="include-held" />
-                <div className="flex-1">
+              <div className="flex cursor-pointer items-start gap-3 rounded-hec-md border border-hec-warn/30 p-4 transition-colors duration-hec-1 ease-hec hover:bg-hec-warn-tint has-[button[data-state=checked]]:border-hec-warn has-[button[data-state=checked]]:bg-hec-warn-tint">
+                <RadioGroupItem value="include-held" id="include-held" className="mt-1" />
+                <div className="min-w-0 flex-1">
                   <Label htmlFor="include-held" className="cursor-pointer">
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" />
-                      <span className="font-semibold text-amber-700 dark:text-amber-400">
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-hec-warn" />
+                      <span className="text-hec-body font-semibold text-hec-warn">
                         Also update past Held (Admin only)
                       </span>
                     </div>
                   </Label>
-                  <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                  <p className="mt-1 text-hec-small text-hec-ink">
                     Allows time edits on past Held sessions for exact-date matches. Status stays Held.
                     ⚠️ Warning: Affects retroactive payroll and tuition calculations.
                   </p>
@@ -80,10 +80,10 @@ export const SessionGeneratorConfirm = ({
           </RadioGroup>
 
           {mode === "include-held" && (
-            <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded">
-              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-amber-800 dark:text-amber-300">
-                <p className="font-semibold">Caution: Retroactive Changes</p>
+            <div className="flex items-start gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4" role="alert">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-hec-warn" />
+              <div className="min-w-0 text-hec-small text-hec-ink">
+                <p className="font-semibold text-hec-warn">Caution: Retroactive Changes</p>
                 <p className="mt-1">
                   This will allow time edits on already-held sessions, which may affect historical
                   payroll and tuition records. Use only when correcting data entry errors.

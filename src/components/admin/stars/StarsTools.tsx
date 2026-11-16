@@ -77,10 +77,10 @@ function useStoredSet(key: string) {
 const shortDate = (date: string | null) => (date ? dayjs(date).format("D MMM") : "");
 
 function sureness(confidence: number): { label: string; tone: string } {
-  if (confidence >= 0.85) return { label: "Very likely", tone: "text-success" };
-  if (confidence >= 0.6) return { label: "Likely", tone: "text-success" };
-  if (confidence >= 0.3) return { label: "Possible", tone: "text-warning" };
-  return { label: "Long shot", tone: "text-muted-foreground" };
+  if (confidence >= 0.85) return { label: "Very likely", tone: "text-hec-leaf" };
+  if (confidence >= 0.6) return { label: "Likely", tone: "text-hec-leaf" };
+  if (confidence >= 0.3) return { label: "Possible", tone: "text-hec-warn" };
+  return { label: "Long shot", tone: "text-hec-ink-soft" };
 }
 
 function ReasonList({ reasons }: { reasons: Reason[] }) {
@@ -88,11 +88,11 @@ function ReasonList({ reasons }: { reasons: Reason[] }) {
   return (
     <ul className="space-y-1">
       {reasons.map((reason) => (
-        <li key={reason.text} className="flex items-start gap-1.5 text-xs">
-          {reason.sign > 0 && <Check className="mt-0.5 h-3 w-3 shrink-0 text-success" />}
-          {reason.sign < 0 && <X className="mt-0.5 h-3 w-3 shrink-0 text-destructive" />}
-          {reason.sign === 0 && <Minus className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />}
-          <span className="text-muted-foreground">{reason.text}</span>
+        <li key={reason.text} className="flex items-start gap-2 text-hec-small">
+          {reason.sign > 0 && <Check className="mt-1 h-4 w-4 shrink-0 text-hec-leaf" />}
+          {reason.sign < 0 && <X className="mt-1 h-4 w-4 shrink-0 text-hec-danger" />}
+          {reason.sign === 0 && <Minus className="mt-1 h-4 w-4 shrink-0 text-hec-ink-faint" />}
+          <span className="min-w-0 break-words text-hec-ink-soft">{reason.text}</span>
         </li>
       ))}
     </ul>
@@ -103,8 +103,8 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
   const sure = sureness(confidence);
   return (
     <div className="flex items-center gap-2">
-      <Progress value={Math.round(confidence * 100)} className="h-1.5 w-24" aria-label={`${sure.label}, ${Math.round(confidence * 100)} percent`} />
-      <span className={cn("text-xs font-medium", sure.tone)}>{sure.label}</span>
+      <Progress value={Math.round(confidence * 100)} className="h-2 w-24 bg-hec-sunken" aria-label={`${sure.label}, ${Math.round(confidence * 100)} percent`} />
+      <span className={cn("text-hec-caption font-medium", sure.tone)}>{sure.label}</span>
     </div>
   );
 }
@@ -114,7 +114,7 @@ function WhatPixelPalSays({ question }: { question: LinkQuestion }) {
   const { waiting, classNames } = question;
   if (waiting.records === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-hec-small text-hec-ink-soft">
         No records are waiting on this child{classNames.length ? ` in ${classNames.join(" or ")}` : ""} yet.
         Linking now means none will.
       </p>
@@ -138,8 +138,8 @@ function WhatPixelPalSays({ question }: { question: LinkQuestion }) {
     ? `on ${shortDate(waiting.firstDate)}`
     : `from ${shortDate(waiting.firstDate)} to ${shortDate(waiting.lastDate)}`;
   return (
-    <p className="text-sm text-muted-foreground">
-      A yes applies <strong className="font-medium text-foreground">{parts.join(" and ")}</strong> {span}
+    <p className="text-hec-small text-hec-ink-soft">
+      A yes applies <strong className="font-medium tabular-nums text-hec-ink">{parts.join(" and ")}</strong> {span}
       {classNames.length ? ` in ${classNames.join(" or ")}` : ""}, on the next run.
     </p>
   );
@@ -154,8 +154,8 @@ function ChildSearch({ hecChildren, linkedTo, classNames, onPick, placeholder }:
   placeholder: string;
 }) {
   return (
-    <Command filter={(value, search) => (value.includes(foldText(search)) ? 1 : 0)} className="rounded-lg border">
-      <CommandInput placeholder={placeholder} />
+    <Command filter={(value, search) => (value.includes(foldText(search)) ? 1 : 0)} className="rounded-hec-md border border-hec-line-strong">
+      <CommandInput placeholder={placeholder} aria-label={placeholder} />
       <CommandList className="max-h-64">
         <CommandEmpty>Nobody by that name.</CommandEmpty>
         <CommandGroup>
@@ -168,13 +168,13 @@ function ChildSearch({ hecChildren, linkedTo, classNames, onPick, placeholder }:
                 value={foldText(`${child.name} ${child.id}`)}
                 disabled={Boolean(taken)}
                 onSelect={() => onPick(child.id)}
-                className="flex items-center justify-between gap-2"
+                className="flex min-h-hec-target items-start justify-between gap-2 py-2"
               >
-                <span className="min-w-0">
-                  <span className="block truncate">{child.name}</span>
-                  {classes && <span className="block truncate text-[11px] text-muted-foreground">{classes}</span>}
+                <span className="min-w-0 flex-1">
+                  <span className="block whitespace-normal break-words hyphens-none text-hec-body text-hec-ink">{child.name}</span>
+                  {classes && <span className="block whitespace-normal break-words hyphens-none text-hec-caption text-hec-ink-soft">{classes}</span>}
                 </span>
-                {taken && <span className="shrink-0 text-[11px] text-muted-foreground">Already Pixel Pal no. {taken}</span>}
+                {taken && <span className="shrink-0 text-hec-caption tabular-nums text-hec-ink-soft">Already Pixel Pal no. {taken}</span>}
               </CommandItem>
             );
           })}
@@ -512,21 +512,21 @@ export function StarsTools({
         <SectionHeader title="Find and link children" subtitle="Answer a question at a time. Nothing links until you say so." />
 
         {evidence.isLoading ? (
-          <Card><CardContent className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+          <Card><CardContent className="flex items-center gap-2 py-8 text-hec-small text-hec-ink-soft">
             <Loader2 className="h-4 w-4 animate-spin" /> Working out who is who…
           </CardContent></Card>
         ) : evidence.error ? (
-          <Card className="border-destructive/60"><CardContent className="py-6 text-sm">
-            <p className="font-medium">HEC's side of this could not be read.</p>
-            <p className="mt-1 text-muted-foreground">{evidence.error instanceof Error ? evidence.error.message : ""}</p>
+          <Card className="border-hec-danger/30 bg-hec-danger-tint"><CardContent className="py-6 text-hec-small text-hec-ink">
+            <p className="font-medium text-hec-danger">HEC's side of this could not be read.</p>
+            <p className="mt-1 break-words text-hec-ink-soft">{evidence.error instanceof Error ? evidence.error.message : ""}</p>
           </CardContent></Card>
         ) : !current ? (
           <Card>
             <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-              <PartyPopper className="h-8 w-8 text-success" />
+              <PartyPopper className="h-8 w-8 text-hec-leaf" aria-hidden="true" />
               <div>
-                <p className="font-medium">Every Pixel Pal child with a record is linked.</p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="text-hec-body font-medium text-hec-ink">Every Pixel Pal child with a record is linked.</p>
+                <p className="mt-1 text-hec-small text-hec-ink-soft">
                   {linkedNow.length > 0
                     ? `You linked ${linkedNow.length} just now. Their waiting records apply on the next run, or now if you prefer.`
                     : "Nothing is waiting on a link."}
@@ -544,15 +544,15 @@ export function StarsTools({
           <div className="grid gap-4 lg:grid-cols-[17rem_1fr]">
             {/* who is left */}
             <Card className="order-2 lg:order-1">
-              <CardContent className="space-y-3 pt-5">
-                <div className="space-y-1.5">
-                  <div className="flex items-baseline justify-between text-xs">
-                    <span className="font-medium">{queue.length} to go</span>
-                    {waitingTotal > 0 && <span className="text-muted-foreground">{waitingTotal} record{waitingTotal === 1 ? "" : "s"} waiting</span>}
+              <CardContent className="space-y-4 pt-4 sm:pt-6">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 text-hec-small tabular-nums">
+                    <span className="font-medium text-hec-ink">{queue.length} to go</span>
+                    {waitingTotal > 0 && <span className="text-hec-ink-soft">{waitingTotal} record{waitingTotal === 1 ? "" : "s"} waiting</span>}
                   </div>
-                  <Progress value={total > 0 ? (linkedNow.length / total) * 100 : 0} className="h-1.5" aria-label="Children linked so far" />
+                  <Progress value={total > 0 ? (linkedNow.length / total) * 100 : 0} className="h-2 bg-hec-sunken" aria-label="Children linked so far" />
                 </div>
-                <ul className="-mx-1 max-h-[26rem] space-y-0.5 overflow-y-auto">
+                <ul className="-mx-1 max-h-[26rem] space-y-1 overflow-y-auto p-1">
                   {queue.map((q) => {
                     const on = q.child.ref === current.child.ref;
                     const top = q.candidates[0];
@@ -563,17 +563,17 @@ export function StarsTools({
                           aria-current={on}
                           onClick={() => setCurrentRef(q.child.ref)}
                           className={cn(
-                            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted",
-                            on && "bg-primary/10",
+                            "flex min-h-hec-target w-full items-start gap-2 rounded-hec-md border border-transparent px-2 py-2 text-left text-hec-small text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                            on && "border-hec-brass bg-hec-sunken",
                           )}
                         >
                           <span className={cn(
-                            "h-2 w-2 shrink-0 rounded-full",
-                            q.mode === "confirm" ? "bg-success" : q.mode === "choose" ? "bg-warning" : "bg-muted-foreground/40",
+                            "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                            q.mode === "confirm" ? "bg-hec-leaf" : q.mode === "choose" ? "bg-hec-warn" : "bg-hec-line-strong",
                           )} />
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate">{displayName(q.child)}</span>
-                            <span className="block truncate text-[11px] text-muted-foreground">
+                            <span className="block whitespace-normal break-words hyphens-none text-hec-body font-medium">{displayName(q.child)}</span>
+                            <span className="block whitespace-normal break-words hyphens-none text-hec-caption text-hec-ink-soft">
                               {q.mode === "class_first" ? "Class not linked"
                                 : q.mode === "confirm" ? `Probably ${top.name}`
                                 : q.mode === "choose" && q.child.name ? `${top.name} or another`
@@ -582,7 +582,7 @@ export function StarsTools({
                             </span>
                           </span>
                           {q.waiting.records > 0 && (
-                            <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{q.waiting.records}</span>
+                            <span className="shrink-0 text-hec-caption tabular-nums text-hec-ink-soft">{q.waiting.records}</span>
                           )}
                         </button>
                       </li>
@@ -590,7 +590,7 @@ export function StarsTools({
                   })}
                 </ul>
                 {setAsideChildren.length > 0 && (
-                  <button type="button" className="w-full text-left text-[11px] text-muted-foreground hover:text-foreground"
+                  <button type="button" className="min-h-hec-target w-full rounded-hec-sm text-left text-hec-caption text-hec-brass underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                     onClick={() => setSetAside(new Set())}>
                     {setAsideChildren.length} set aside as not in HEC. Ask again
                   </button>
@@ -599,33 +599,33 @@ export function StarsTools({
             </Card>
 
             {/* the question */}
-            <Card className="order-1 border-primary/30 lg:order-2">
-              <CardContent className="space-y-4 pt-6">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <Badge variant="outline" className="font-normal">Pixel Pal no. {current.child.ref}</Badge>
-                  {current.classNames.map((name) => <Badge key={name} variant="outline" className="font-normal">{name}</Badge>)}
+            <Card className="order-1 lg:order-2">
+              <CardContent className="space-y-4 pt-4 sm:pt-6">
+                <div className="flex flex-wrap items-center gap-2 text-hec-caption text-hec-ink-soft">
+                  <Badge variant="outline" className="font-normal tabular-nums">Pixel Pal no. {current.child.ref}</Badge>
+                  {current.classNames.map((name) => <Badge key={name} variant="outline" className="whitespace-normal break-words font-normal">{name}</Badge>)}
                   {current.ruledOut > 0 && <span>{current.ruledOut} ruled out</span>}
                 </div>
 
-                <h3 className="text-xl font-semibold leading-snug sm:text-2xl">{current.question}</h3>
-                {current.hint && <p className="text-sm text-muted-foreground">{current.hint}</p>}
+                <h3 className="whitespace-normal break-words hyphens-none text-balance font-display text-hec-h2 font-medium text-hec-ink">{current.question}</h3>
+                {current.hint && <p className="text-hec-small text-hec-ink-soft">{current.hint}</p>}
                 <WhatPixelPalSays question={current} />
 
                 {current.mode === "confirm" && current.candidates[0] && (
-                  <div className="space-y-3 rounded-lg border p-3">
+                  <div className="space-y-4 rounded-hec-md border border-hec-line p-4">
                     <ConfidenceBar confidence={current.candidates[0].confidence} />
                     <ReasonList reasons={current.candidates[0].reasons} />
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      <Button disabled={link.isPending} onClick={() => answerYes(current, current.candidates[0])}>
+                    <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap">
+                      <Button className="w-full sm:w-auto" disabled={link.isPending} onClick={() => answerYes(current, current.candidates[0])}>
                         {link.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
                         Yes, that is them
                       </Button>
-                      <Button variant="outline" disabled={link.isPending} onClick={() => answerNo(current, current.candidates[0])}>
+                      <Button variant="outline" className="w-full sm:w-auto" disabled={link.isPending} onClick={() => answerNo(current, current.candidates[0])}>
                         No
                       </Button>
                     </div>
                     {current.candidates.length > 1 && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="break-words text-hec-small text-hec-ink-soft">
                         If not, next most likely: {current.candidates.slice(1, 3).map((c) => c.name).join(", ")}.
                       </p>
                     )}
@@ -635,13 +635,13 @@ export function StarsTools({
                 {current.mode === "choose" && (
                   <ul className="space-y-2">
                     {(showAll ? current.candidates : current.candidates.slice(0, 5)).map((candidate) => (
-                      <li key={candidate.studentId} className="space-y-2 rounded-lg border p-3">
+                      <li key={candidate.studentId} className="space-y-2 rounded-hec-md border border-hec-line p-4">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="font-medium">{candidate.name}</p>
+                          <div className="min-w-0 flex-1 basis-48">
+                            <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{candidate.name}</p>
                             <ConfidenceBar confidence={candidate.confidence} />
                           </div>
-                          <div className="flex shrink-0 gap-1.5">
+                          <div className="flex shrink-0 gap-2">
                             <Button size="sm" disabled={link.isPending} onClick={() => answerYes(current, candidate)}>This is them</Button>
                             <Button size="sm" variant="ghost" disabled={link.isPending} aria-label={`Not ${candidate.name}`} onClick={() => answerNo(current, candidate)}>
                               Not them
@@ -678,17 +678,17 @@ export function StarsTools({
                   />
                 )}
 
-                <div className="flex flex-wrap items-center gap-1 border-t pt-3">
+                <div className="flex flex-wrap items-center gap-2 border-t border-hec-line pt-4">
                   {current.mode !== "search" && current.mode !== "class_first" && (
-                    <Button size="sm" variant="ghost" className="h-8 gap-1 text-xs" onClick={() => setSearching((on) => !on)}>
-                      <Search className="h-3 w-3" /> Someone else
+                    <Button size="sm" variant="ghost" className="gap-1" onClick={() => setSearching((on) => !on)}>
+                      <Search className="h-4 w-4" /> Someone else
                     </Button>
                   )}
-                  <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => skip(current)}>Skip for now</Button>
-                  <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => notInHec(current)}>Not in HEC</Button>
-                  <Button size="sm" variant="ghost" className="ml-auto h-8 gap-1 text-xs"
+                  <Button size="sm" variant="ghost" onClick={() => skip(current)}>Skip for now</Button>
+                  <Button size="sm" variant="ghost" onClick={() => notInHec(current)}>Not in HEC</Button>
+                  <Button size="sm" variant="ghost" className="gap-1 sm:ml-auto"
                     onClick={() => onShowRecords({ children: [current.child.ref] })}>
-                    <BookOpen className="h-3 w-3" /> See their records
+                    <BookOpen className="h-4 w-4" /> See their records
                   </Button>
                 </div>
               </CardContent>
@@ -698,25 +698,25 @@ export function StarsTools({
 
         {linkedNow.length > 0 && current && (
           <Card>
-            <CardContent className="space-y-2 pt-5">
+            <CardContent className="space-y-2 pt-4 sm:pt-6">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium">Linked just now ({linkedNow.length})</p>
-                <Button size="sm" variant="outline" className="h-8 text-xs" onClick={onRunNow} disabled={running || !canRun}>
-                  {running ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : <Play className="mr-1.5 h-3 w-3" />}
+                <p className="text-hec-body font-medium tabular-nums text-hec-ink">Linked just now ({linkedNow.length})</p>
+                <Button size="sm" variant="outline" onClick={onRunNow} disabled={running || !canRun}>
+                  {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
                   Apply waiting records now
                 </Button>
               </div>
-              <ul className="divide-y">
+              <ul className="divide-y divide-hec-line">
                 {linkedNow.map((entry) => (
-                  <li key={entry.ref} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
-                    <span><span className="text-muted-foreground">{entry.label}</span> is <strong className="font-medium">{entry.studentName}</strong></span>
-                    <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" disabled={unlink.isPending} onClick={() => unlink.mutate(entry.ref)}>
-                      <Undo2 className="h-3 w-3" /> Undo
+                  <li key={entry.ref} className="flex flex-wrap items-center justify-between gap-2 py-2 text-hec-small">
+                    <span className="min-w-0 flex-1 basis-48 whitespace-normal break-words hyphens-none"><span className="text-hec-ink-soft">{entry.label}</span> is <strong className="font-medium text-hec-ink">{entry.studentName}</strong></span>
+                    <Button size="sm" variant="ghost" className="gap-1" disabled={unlink.isPending} onClick={() => unlink.mutate(entry.ref)}>
+                      <Undo2 className="h-4 w-4" /> Undo
                     </Button>
                   </li>
                 ))}
               </ul>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-hec-caption text-hec-ink-soft">
                 Undo stops anything further reaching that child. Marks and points a run has already applied stay.
               </p>
             </CardContent>
@@ -725,16 +725,16 @@ export function StarsTools({
 
         {freeInClass.length > 0 && (
           <Collapsible>
-            <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-              <ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]:rotate-90" />
-              <Users className="h-3 w-3" />
+            <CollapsibleTrigger className="group flex min-h-hec-target items-center gap-2 rounded-hec-sm text-left text-hec-small tabular-nums text-hec-ink-soft hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
+              <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-hec-1 ease-hec group-data-[state=open]:rotate-90" />
+              <Users className="h-4 w-4 shrink-0" aria-hidden="true" />
               Children in HEC with no Pixel Pal link ({freeInClass.reduce((sum, g) => sum + g.children.length, 0)})
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <CollapsibleContent className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {freeInClass.map((group) => (
-                <div key={group.classId} className="rounded-lg border p-3">
-                  <p className="text-xs font-medium">{group.name}</p>
-                  <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                <div key={group.classId} className="rounded-hec-md border border-hec-line bg-hec-surface p-4">
+                  <p className="break-words text-hec-small font-medium text-hec-ink">{group.name}</p>
+                  <ul className="mt-2 space-y-1 break-words text-hec-small text-hec-ink-soft">
                     {group.children.map((name) => <li key={name}>{name}</li>)}
                   </ul>
                 </div>
@@ -749,34 +749,34 @@ export function StarsTools({
         <div ref={classToolRef} className="scroll-mt-20 space-y-3">
           <SectionHeader title="Link classes" subtitle="Pixel Pal classes HEC does not know yet. Their children cannot be placed until this is done." />
           <Card>
-            <CardContent className="divide-y pt-3">
+            <CardContent className="divide-y divide-hec-line pt-2 sm:pt-4">
               {unmappedClasses.map((c) => {
                 const suggestion = suggestClass(c.name, freeClasses);
                 const picked = classPicks[c.ref] ?? suggestion?.id ?? "";
                 return (
-                  <div key={c.ref} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{c.name ?? `Pixel Pal class no. ${c.ref}`}</p>
-                      <p className="text-xs text-muted-foreground">
+                  <div key={c.ref} className="flex flex-wrap items-center justify-between gap-4 py-4">
+                    <div className="min-w-0 flex-1 basis-60">
+                      <p className="whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink">{c.name ?? `Pixel Pal class no. ${c.ref}`}</p>
+                      <p className="break-words text-hec-small tabular-nums text-hec-ink-soft">
                         Pixel Pal no. {c.ref}
                         {c.records > 0 ? ` · ${c.records} record${c.records === 1 ? "" : "s"} waiting` : ""}
                         {suggestion ? ` · probably ${suggestion.name}` : ""}
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                       <Select value={picked} onValueChange={(v) => setClassPicks((p) => ({ ...p, [c.ref]: v }))}>
-                        <SelectTrigger aria-label={`HEC class for ${c.name ?? c.ref}`} className="h-8 w-[200px] text-xs">
+                        <SelectTrigger aria-label={`HEC class for ${c.name ?? c.ref}`} className="w-full text-hec-small sm:w-[220px]">
                           <SelectValue placeholder="Choose the HEC class" />
                         </SelectTrigger>
                         <SelectContent className="max-h-72">
                           {freeClasses.map((option) => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      <Button size="sm" className="h-8 text-xs" disabled={!picked || linkClass.isPending}
+                      <Button size="sm" disabled={!picked || linkClass.isPending}
                         onClick={() => linkClass.mutate({ ref: c.ref, classId: picked })}>
                         Link
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-8 text-xs"
+                      <Button size="sm" variant="ghost"
                         onClick={() => setIgnoredClasses(new Set(ignoredClasses).add(c.ref))}>
                         Not ours
                       </Button>
@@ -793,25 +793,25 @@ export function StarsTools({
       {audits.length > 0 && (
         <div className="space-y-3">
           <SectionHeader title="Links worth a second look" subtitle="A wrong link moves one child's marks and points onto another." />
-          <Card className="border-warning/50">
-            <CardContent className="divide-y pt-3">
+          <Card className="border-hec-warn/30">
+            <CardContent className="divide-y divide-hec-line pt-2 sm:pt-4">
               {audits.map((a) => {
                 const key = `${a.ref}:${a.studentId}:${a.worry}`;
                 return (
-                  <div key={key} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-1.5 text-sm font-medium">
-                        <AlertTriangle className="h-3.5 w-3.5 text-warning" />
-                        {a.pixelPalName ?? `Pixel Pal no. ${a.ref}`} is linked to {a.studentName}
+                  <div key={key} className="flex flex-wrap items-center justify-between gap-4 py-4">
+                    <div className="min-w-0 flex-1 basis-60">
+                      <p className="flex items-start gap-2 text-hec-body font-medium text-hec-ink">
+                        <AlertTriangle className="mt-1 h-4 w-4 shrink-0 text-hec-warn" aria-hidden="true" />
+                        <span className="min-w-0 whitespace-normal break-words hyphens-none">{a.pixelPalName ?? `Pixel Pal no. ${a.ref}`} is linked to {a.studentName}</span>
                       </p>
-                      <p className="text-xs text-muted-foreground">{a.detail}</p>
+                      <p className="break-words pl-6 text-hec-small text-hec-ink-soft">{a.detail}</p>
                     </div>
-                    <div className="flex shrink-0 gap-1.5">
-                      <Button size="sm" variant="ghost" className="h-8 text-xs"
+                    <div className="flex shrink-0 gap-2">
+                      <Button size="sm" variant="ghost"
                         onClick={() => setCheckedLinks(new Set(checkedLinks).add(key))}>
                         It is right
                       </Button>
-                      <Button size="sm" variant="outline" className="h-8 text-xs" disabled={unlink.isPending}
+                      <Button size="sm" variant="destructive-quiet" disabled={unlink.isPending}
                         onClick={() => unlink.mutate(a.ref)}>
                         Unlink
                       </Button>
@@ -833,7 +833,7 @@ export function StarsTools({
       <AlertDialog open={outsideClass !== null} onOpenChange={(open) => { if (!open) setOutsideClass(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{outsideClass?.name} is not enrolled in this class</AlertDialogTitle>
+            <AlertDialogTitle className="break-words">{outsideClass?.name} is not enrolled in this class</AlertDialogTitle>
             <AlertDialogDescription>
               You can still link {outsideClass?.label} to them. Their records will keep waiting until
               {" "}{outsideClass?.name} is enrolled in the class for those dates, because the sync only
@@ -869,15 +869,15 @@ function NamesSource({ state, fetchedAt, hasNames, pasted, onPaste, pasteError, 
   const [open, setOpen] = useState(false);
   if (state === "loading") {
     return (
-      <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Loader2 className="h-3 w-3 animate-spin" /> Asking Pixel Pal for names…
+      <p className="flex items-center gap-2 text-hec-small text-hec-ink-soft">
+        <Loader2 className="h-4 w-4 animate-spin" /> Asking Pixel Pal for names…
       </p>
     );
   }
   if (state === "live") {
     return (
-      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+      <p className="flex items-start gap-2 text-hec-small text-hec-ink-soft">
+        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-hec-leaf" aria-hidden="true" />
         Names come straight from Pixel Pal{fetchedAt ? `, as of ${dayjs(fetchedAt).tz().format("HH:mm")}` : ""}. They are not saved in HEC.
       </p>
     );
@@ -888,10 +888,10 @@ function NamesSource({ state, fetchedAt, hasNames, pasted, onPaste, pasteError, 
       ? "Pixel Pal did not answer when asked for its names."
       : "Pixel Pal cannot send HEC its children's names yet.";
   return (
-    <Card className={hasNames ? "" : "border-warning/50 bg-warning/5"}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <ClipboardPaste className="h-4 w-4" />
+    <Card className={hasNames ? "" : "border-hec-warn/30 bg-hec-warn-tint"}>
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-start gap-2 font-sans text-hec-h3 font-semibold tabular-nums">
+          <ClipboardPaste className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
           {hasNames ? `Using the list you pasted: ${pastedCount} children` : "This tool works far better with names"}
         </CardTitle>
         <CardDescription>
@@ -903,8 +903,8 @@ function NamesSource({ state, fetchedAt, hasNames, pasted, onPaste, pasteError, 
       <CardContent>
         <Collapsible open={open || !hasNames} onOpenChange={setOpen}>
           {hasNames && (
-            <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-              <ChevronRight className={cn("h-3 w-3 transition-transform", open && "rotate-90")} /> Paste a newer list
+            <CollapsibleTrigger className="flex min-h-hec-target items-center gap-2 rounded-hec-sm text-hec-small text-hec-ink-soft hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
+              <ChevronRight className={cn("h-4 w-4 transition-transform duration-hec-1 ease-hec", open && "rotate-90")} /> Paste a newer list
             </CollapsibleTrigger>
           )}
           <CollapsibleContent className="space-y-2 pt-1">
@@ -913,9 +913,9 @@ function NamesSource({ state, fetchedAt, hasNames, pasted, onPaste, pasteError, 
               value={pasted}
               onChange={(e) => onPaste(e.target.value)}
               placeholder='{ "classes": { … }, "students": { … }, "student_classes": { … } }'
-              className="min-h-[72px] font-mono text-xs"
+              className="min-h-[96px] font-mono text-hec-small"
             />
-            {pasteError && <p className="text-xs text-destructive">{pasteError}</p>}
+            {pasteError && <p className="break-words text-hec-caption text-hec-danger">{pasteError}</p>}
           </CollapsibleContent>
         </Collapsible>
       </CardContent>
@@ -948,31 +948,31 @@ function HomeworkCheck({ homework, engine, onShowRecords }: {
       : `${homework.applied} applied so far. Anything else is listed in Records.`;
   return (
     <Card>
-      <CardContent className="space-y-3 pt-5">
+      <CardContent className="space-y-4 pt-4 sm:pt-6">
         <div className="flex items-start gap-2">
           {none || (homework.parked > 0 && !engine)
-            ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-            : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />}
-          <div>
-            <p className="text-sm font-medium">{headline}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
+            ? <AlertTriangle className="mt-1 h-4 w-4 shrink-0 text-hec-warn" aria-hidden="true" />
+            : <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-hec-leaf" aria-hidden="true" />}
+          <div className="min-w-0">
+            <p className="break-words text-hec-body font-medium tabular-nums text-hec-ink">{headline}</p>
+            <p className="mt-1 break-words text-hec-small text-hec-ink-soft">{detail}</p>
           </div>
         </div>
-        <ul className="space-y-1 border-t pt-3 text-xs text-muted-foreground">
+        <ul className="space-y-2 border-t border-hec-line pt-4 text-hec-small text-hec-ink-soft">
           <li>
-            <strong className="font-medium text-foreground">{homework.awards}</strong> point award{homework.awards === 1 ? "" : "s"} labelled homework:
+            <strong className="font-medium tabular-nums text-hec-ink">{homework.awards}</strong> point award{homework.awards === 1 ? "" : "s"} labelled homework:
             {" "}{homework.awardsApplied} applied, {homework.awardsStuck} stuck. These count toward homework points on the
             leaderboard, but belong to no assignment, so they do not appear under Homework.
           </li>
           {homework.lookalikes > 0 && (
             <li>
-              <strong className="font-medium text-foreground">{homework.lookalikes}</strong> award{homework.lookalikes === 1 ? "" : "s"} read
+              <strong className="font-medium tabular-nums text-hec-ink">{homework.lookalikes}</strong> award{homework.lookalikes === 1 ? "" : "s"} read
               {" "}like homework but arrived as something else, because the teacher's wording did not say "homework".
             </li>
           )}
         </ul>
-        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => onShowRecords({ homeworkOnly: true })}>
-          <BookOpen className="mr-1.5 h-3 w-3" /> See homework records
+        <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => onShowRecords({ homeworkOnly: true })}>
+          <BookOpen className="h-4 w-4" /> See homework records
         </Button>
       </CardContent>
     </Card>

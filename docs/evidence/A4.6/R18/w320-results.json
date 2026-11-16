@@ -1,0 +1,1527 @@
+{
+ "label": "w320",
+ "runs": {
+  "su-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "storage:sign:select": 4
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 4,
+     "clipped": [
+      "clamp:P"
+     ]
+    },
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-su-320-light.png",
+   "kb": 36
+  },
+  "su-team-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "storage:sign:select": 4
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 6,
+     "clipped": [
+      "clamp:P"
+     ]
+    },
+    "numbers": [
+     "1",
+     "2",
+     "2",
+     "3",
+     "5",
+     "92"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-su-team-320-light.png",
+   "kb": 39
+  },
+  "su-pipeline-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "storage:sign:select": 4
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 6,
+     "clipped": [
+      "clamp:P"
+     ]
+    },
+    "numbers": [
+     "+6",
+     "+6",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12.",
+     "2",
+     "3",
+     "3",
+     "4",
+     "5",
+     "92",
+     "92"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-su-pipeline-320-light.png",
+   "kb": 42
+  },
+  "su-queue-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "storage:sign:select": 4
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 4,
+     "clipped": [
+      "clamp:P"
+     ]
+    },
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-su-queue-320-light.png",
+   "kb": 38
+  },
+  "su-assign-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "storage:sign:select": 4
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 5,
+     "clipped": [
+      "clamp:P"
+     ]
+    },
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-su-assign-320-light.png",
+   "kb": 35
+  },
+  "tr-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "25",
+     "45",
+     "60"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-tr-320-light.png",
+   "kb": 35
+  },
+  "tr-lesson-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 5,
+     "clipped": []
+    },
+    "numbers": [
+     "+1",
+     "+2",
+     "+3",
+     "+5",
+     "-07",
+     "-1",
+     "-10",
+     "-11",
+     "-11",
+     "-11",
+     "-12",
+     "-13",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "12",
+     "13",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "3",
+     "3",
+     "3",
+     "31",
+     "38",
+     "4",
+     "4",
+     "45",
+     "5",
+     "60",
+     "7"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-tr-lesson-320-light.png",
+   "kb": 40
+  },
+  "tr-points-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 5,
+     "clipped": []
+    },
+    "numbers": [
+     "+1",
+     "+2",
+     "+3",
+     "+5",
+     "-07",
+     "-1",
+     "-10",
+     "-11",
+     "-11",
+     "-11",
+     "-12",
+     "-13",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "12",
+     "13",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "3",
+     "3",
+     "3",
+     "31",
+     "38",
+     "4",
+     "4",
+     "45",
+     "5",
+     "60",
+     "7"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-tr-points-320-light.png",
+   "kb": 38
+  },
+  "tr-engage-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 5,
+     "clipped": []
+    },
+    "numbers": [
+     "+1",
+     "+2",
+     "+3",
+     "+5",
+     "-07",
+     "-1",
+     "-10",
+     "-11",
+     "-11",
+     "-11",
+     "-12",
+     "-13",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "12",
+     "13",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "3",
+     "3",
+     "3",
+     "31",
+     "38",
+     "4",
+     "4",
+     "45",
+     "5",
+     "60",
+     "7"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-tr-engage-320-light.png",
+   "kb": 40
+  },
+  "tr-cards-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 5,
+     "clipped": []
+    },
+    "numbers": [
+     "+1",
+     "+2",
+     "+3",
+     "+5",
+     "-07",
+     "-1",
+     "-10",
+     "-11",
+     "-11",
+     "-11",
+     "-12",
+     "-13",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "12",
+     "13",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "3",
+     "3",
+     "3",
+     "31",
+     "38",
+     "4",
+     "4",
+     "45",
+     "5",
+     "60",
+     "7"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-tr-cards-320-light.png",
+   "kb": 31
+  },
+  "tr-edit-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 5,
+     "clipped": []
+    },
+    "numbers": [
+     "+1",
+     "+2",
+     "+3",
+     "+5",
+     "-07",
+     "-1",
+     "-10",
+     "-11",
+     "-11",
+     "-11",
+     "-12",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "3",
+     "3",
+     "31",
+     "38",
+     "4",
+     "4",
+     "45",
+     "5",
+     "60",
+     "7"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-tr-edit-320-light.png",
+   "kb": 33
+  },
+  "va-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 1,
+     "clipped": []
+    },
+    "numbers": [
+     "+0",
+     "+2",
+     "+3",
+     "+4",
+     "-11",
+     "0",
+     "0/0",
+     "0/1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/1",
+     "2",
+     "2",
+     "2/3",
+     "2026",
+     "3",
+     "3",
+     "3",
+     "4",
+     "60",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-va-320-light.png",
+   "kb": 43
+  },
+  "va-micro-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "-11",
+     "0",
+     "0",
+     "1",
+     "1",
+     "2026",
+     "3"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-va-micro-320-light.png",
+   "kb": 39
+  },
+  "books-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "1",
+     "1",
+     "12",
+     "15,",
+     "3"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-books-320-light.png",
+   "kb": 30
+  },
+  "books-manage-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "1",
+     "1",
+     "12",
+     "15,",
+     "3"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-books-manage-320-light.png",
+   "kb": 32
+  },
+  "books-dialog-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "1",
+     "1",
+     "12",
+     "15,",
+     "3"
+    ],
+    "dialogNumbers": [
+     "1",
+     "2"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-books-dialog-320-light.png",
+   "kb": 41
+  },
+  "ls-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "3",
+     "3",
+     "3:"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-ls-320-light.png",
+   "kb": 29
+  },
+  "ls-edit-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"The\" 35x44",
+     "main:BUTTON \"the\" 32x44",
+     "main:BUTTON \".\" 15x44",
+     "main:BUTTON \"Two\" 37x44",
+     "main:BUTTON \"the\" 32x44",
+     "main:BUTTON \"sky\" 32x44",
+     "main:BUTTON \".\" 15x44",
+     "main:BUTTON \"The\" 35x44",
+     "main:BUTTON \"zorbl\" 43x44",
+     "main:BUTTON \"a\" 19x44",
+     "main:BUTTON \".\" 15x44",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4
+    },
+    "rules": []
+   },
+   "shot": "w320-ls-edit-320-light.png",
+   "kb": 33
+  },
+  "ls-classes-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"The\" 35x44",
+     "main:BUTTON \"the\" 32x44",
+     "main:BUTTON \".\" 15x44",
+     "main:BUTTON \"Two\" 37x44",
+     "main:BUTTON \"the\" 32x44",
+     "main:BUTTON \"sky\" 32x44",
+     "main:BUTTON \".\" 15x44",
+     "main:BUTTON \"The\" 35x44",
+     "main:BUTTON \"zorbl\" 43x44",
+     "main:BUTTON \"a\" 19x44",
+     "main:BUTTON \".\" 15x44",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4
+    },
+    "rules": []
+   },
+   "shot": "w320-ls-classes-320-light.png",
+   "kb": 35
+  },
+  "ls-picker-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-ls-picker-320-light.png",
+   "kb": 38
+  },
+  "lb-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 29,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:economy_transactions:select": 1,
+     "from:enrollments:select": 3,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 1,
+     "clipped": []
+    },
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "12"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-lb-320-light.png",
+   "kb": 42
+  },
+  "lb-std-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 29,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:economy_transactions:select": 1,
+     "from:enrollments:select": 3,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20"
+    ],
+    "longName": {
+     "shown": 1,
+     "clipped": []
+    },
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "12000",
+     "2026",
+     "36000",
+     "4"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.group > .pb-3.p",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.group > .pb-3.p",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.group > .pb-3.p"
+      ]
+     },
+     {
+      "id": "image-alt",
+      "impact": "critical",
+      "n": 7,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.group > .pb-3.p",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.group > .pb-3.p",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.group > .pb-3.p"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-lb-std-320-light.png",
+   "kb": 69
+  },
+  "tp-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1/5/2026",
+     "2026",
+     "2026",
+     "250,000"
+    ],
+    "dialogNumbers": []
+   },
+   "dom": "<main class=\"flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8\"><div class=\"space-y-6\"><div class=\"rounded-hec-lg border border-hec-line bg-hec-surface text-hec-ink shadow-hec-1\"><div class=\"flex flex-col gap-2 p-4 sm:p-6\"><div class=\"flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between\"><div class=\"flex min-w-0 items-start gap-4\"><span class=\"relative flex overflow-hidden rounded-full w-16 h-16 shrink-0 ring-1 ring-hec-line\"><span class=\"flex h-full w-full items-center justify-center rounded-full text-hec-h2 bg-hec-sunken text-hec-ink-soft\">TT</span></span><div class=\"min-w-0 space-y-2\"><div class=\"flex flex-wrap items-center gap-2\"><h1 class=\"min-w-0 whitespace-normal break-words font-display text-hec-h1 font-medium text-hec-ink\">Trịnh Thu Hà</h1><div class=\"inline-flex items-center gap-1 rounded-full border px-3 py-1 text-hec-caption font-medium border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf\">Active</div></div><div class=\"flex flex-col gap-1\"></div><div class=\"flex flex-col gap-1 text-hec-small text-hec-ink-soft\"><div class=\"flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-mail h-4 w-4\"><rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"></rect><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"></path></svg><span>ha.teacher@example.test</span></div><div class=\"flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-dollar-sign h-4 w-4\"><line x1=\"12\" x2=\"12\" y1=\"2\" y2=\"22\"></line><path d=\"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\"></path></svg><span>250,000 ₫ / session</span></div></div><p class=\"text-hec-small text-hec-ink-soft tabular-nums\">Last updated: 1/5/2026</p></div></div><div class=\"flex shrink-0 flex-col gap-2 sm:flex-row\"><button class=\"inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-md font-medium transition-colors duration-hec-1 ease-hec disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring border border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken px-4 py-2 text-hec-body\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-link h-4 w-4\"><path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"></path><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"></path></svg>Manage Link</button><button class=\"inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-md font-medium transition-colors duration-hec-1 ease-hec disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring border border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken px-4 py-2 text-hec-body\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-square-pen h-4 w-4\"><path d=\"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"></path><path d=\"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z\"></path></svg>Edit</button></div></div></div></div><div dir=\"ltr\" data-orientation=\"horizontal\" class=\"w-full\"><div role=\"tablist\" aria-orientation=\"horizontal\" class=\"inline-flex max-w-full items-center justify-start gap-1 overflow-x-auto rounded-hec-md bg-hec-sunken p-1 text-hec-ink-soft w-full\" tabindex=\"0\" data-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" aria-selected=\"true\" data-state=\"active\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Overview</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Schedule</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Classes</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Payroll</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Profile</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Files &amp; Notes</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Audit</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Diagnostics</button></div><div data-state=\"active\" data-orientation=\"horizontal\" role=\"tabpanel\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"><div class=\"space-y-4\"><div class=\"flex justify-end\"><button type=\"button\" role=\"combobox\" aria-expanded=\"false\" aria-autocomplete=\"none\" dir=\"ltr\" data-state=\"closed\" class=\"flex min-h-hec-target items-center justify-between gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 py-2 text-left text-hec-body text-hec-ink data-[placeholder]:text-hec-ink-faint disabled:cursor-not-allowed disabled:bg-hec-sunken disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring [&amp;&gt;span]:min-w-0 [&amp;&gt;span]:break-words w-48\"><span>November 2026</span><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-chevron-down h-4 w-4 shrink-0 text-hec-ink-soft\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"></path></svg></button></div><div class=\"grid gap-4 md:grid-cols-2 lg:grid-cols-4\"><div class=\"rounded-hec-lg border border-hec-line bg-hec-surface text-hec-ink shadow-hec-1\"><div class=\"flex flex-col gap-2 p-4 sm:p-6 pb-2\"><p class=\"text-hec-small text-hec-ink-soft flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-calendar h-4 w-4\"><path d=\"M8 2v4\"></path><path d=\"M16 2v4\"></path><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"></rect><path d=\"M3 10h18\"></path></svg>Scheduled Sessions</p><h3 class=\"font-display font-medium text-hec-ink text-3xl\">0</h3></div><div class=\"p-4 pt-0 sm:p-6 sm:pt-0\"><p class=\"text-xs text-muted-foreground\">Total sessions planned</p></div></div><div class=\"rounded-hec-lg border border-hec-line bg-hec-surface text-hec-ink shadow-hec-1\"><div class=\"flex flex-col gap-2 p-4 sm:p-6 pb-2\"><p class=\"text-hec-small text-hec-ink-soft flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-circle-check h-4 w-4\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"m9 12 2 2 4-4\"></path></svg>Held Sessions</p><h3 class=\"font-display font-medium text-hec-ink text-3xl\">0</h3></div><div class=\"p-4 pt-0 sm:p-6 sm:pt-0\"><p class=\"text-xs text-muted-foreground\">Sessions completed</p></div></div><div class=\"rounded-hec-lg border border-hec-line bg-hec-surface text-hec-ink shadow-hec-1\"><div class=\"flex flex-col gap-2 p-4 sm:p-6 pb-2\"><p class=\"text-hec-small text-hec-ink-soft flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock h-4 w-4\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><polyline points=\"12 6 12 12 16 14\"></polyline></svg>Scheduled Hours</p><h3 class=\"font-display font-medium text-hec-ink text-3xl\">0</h3></div><div class=\"p-4 pt-0 sm:p-6 sm:pt-0\"><p class=\"text-xs text-muted-foreground\">Total hours planned</p></div></div><div class=\"rounded-hec-lg border border-hec-line bg-hec-surface text-hec-ink shadow-hec-1\"><div class=\"flex flex-col gap-2 p-4 sm:p-6 pb-2\"><p class=\"text-hec-small text-hec-ink-soft flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-calendar-clock h-4 w-4\"><path d=\"M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5\"></path><path d=\"M16 2v4\"></path><path d=\"M8 2v4\"></path><path d=\"M3 10h5\"></path><path d=\"M17.5 17.5 16 16.3V14\"></path><circle cx=\"16\" cy=\"16\" r=\"6\"></circle></svg>Held Hours</p><h3 class=\"font-display font-medium text-hec-ink text-3xl\">0</h3></div><div class=\"p-4 pt-0 sm:p-6 sm:pt-0\"><p class=\"text-xs text-muted-foreground\">Hours completed</p></div></div></div><div class=\"rounded-hec-lg border border-hec-line bg-hec-surface text-hec-ink shadow-hec-1\"><div class=\"flex flex-col gap-2 p-4 sm:p-6\"><h3 class=\"font-display text-hec-h2 font-medium text-hec-ink\">Monthly Summary</h3><p class=\"text-hec-small text-hec-ink-soft\">November 2026</p></div><div class=\"p-4 pt-0 sm:p-6 sm:pt-0\"><div class=\"space-y-2\"><div class=\"flex justify-between\"><span class=\"text-muted-foreground\">Completion Rate:</span><span class=\"font-medium\">0%</span></div><div class=\"flex justify-between\"><span class=\"text-muted-foreground\">Avg Session Duration:</span><span class=\"font-medium\">0 min</span></div></div></div></div></div></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div></div></div></main>",
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tp-320-light.png",
+   "kb": 33
+  },
+  "tp-profile-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "longName": {
+     "shown": 0,
+     "clipped": []
+    },
+    "numbers": [
+     "1/5/2026",
+     "250,000",
+     "5"
+    ],
+    "dialogNumbers": []
+   },
+   "dom": "<main class=\"flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8\"><div class=\"space-y-6\"><div class=\"rounded-hec-lg border border-hec-line bg-hec-surface text-hec-ink shadow-hec-1\"><div class=\"flex flex-col gap-2 p-4 sm:p-6\"><div class=\"flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between\"><div class=\"flex min-w-0 items-start gap-4\"><span class=\"relative flex overflow-hidden rounded-full w-16 h-16 shrink-0 ring-1 ring-hec-line\"><span class=\"flex h-full w-full items-center justify-center rounded-full text-hec-h2 bg-hec-sunken text-hec-ink-soft\">TT</span></span><div class=\"min-w-0 space-y-2\"><div class=\"flex flex-wrap items-center gap-2\"><h1 class=\"min-w-0 whitespace-normal break-words font-display text-hec-h1 font-medium text-hec-ink\">Trịnh Thu Hà</h1><div class=\"inline-flex items-center gap-1 rounded-full border px-3 py-1 text-hec-caption font-medium border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf\">Active</div></div><div class=\"flex flex-col gap-1\"></div><div class=\"flex flex-col gap-1 text-hec-small text-hec-ink-soft\"><div class=\"flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-mail h-4 w-4\"><rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"></rect><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"></path></svg><span>ha.teacher@example.test</span></div><div class=\"flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-dollar-sign h-4 w-4\"><line x1=\"12\" x2=\"12\" y1=\"2\" y2=\"22\"></line><path d=\"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\"></path></svg><span>250,000 ₫ / session</span></div></div><p class=\"text-hec-small text-hec-ink-soft tabular-nums\">Last updated: 1/5/2026</p></div></div><div class=\"flex shrink-0 flex-col gap-2 sm:flex-row\"><button class=\"inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-md font-medium transition-colors duration-hec-1 ease-hec disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring border border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken px-4 py-2 text-hec-body\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-link h-4 w-4\"><path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"></path><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"></path></svg>Manage Link</button><button class=\"inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-md font-medium transition-colors duration-hec-1 ease-hec disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring border border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken px-4 py-2 text-hec-body\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-square-pen h-4 w-4\"><path d=\"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"></path><path d=\"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z\"></path></svg>Edit</button></div></div></div></div><div dir=\"ltr\" data-orientation=\"horizontal\" class=\"w-full\"><div role=\"tablist\" aria-orientation=\"horizontal\" class=\"inline-flex max-w-full items-center justify-start gap-1 overflow-x-auto rounded-hec-md bg-hec-sunken p-1 text-hec-ink-soft w-full\" tabindex=\"0\" data-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Overview</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Schedule</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Classes</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Payroll</button><button type=\"button\" role=\"tab\" aria-selected=\"true\" data-state=\"active\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"0\" data-orientation=\"horizontal\">Profile</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Files &amp; Notes</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Audit</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" data-state=\"inactive\" class=\"inline-flex min-h-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-sm px-3 text-hec-small font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-hec-raised data-[state=active]:text-hec-ink data-[state=active]:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" tabindex=\"-1\" data-orientation=\"horizontal\">Diagnostics</button></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" hidden=\"\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"active\" data-orientation=\"horizontal\" role=\"tabpanel\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"><div class=\"space-y-6\"><div class=\"rounded-hec-lg border border-hec-line bg-hec-surface text-hec-ink shadow-hec-1\"><div class=\"flex flex-col gap-2 p-4 sm:p-6\"><h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-user h-5 w-5\"><path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>Profile Picture</h3><p class=\"text-hec-small text-hec-ink-soft\">Upload or change your profile picture</p></div><div class=\"p-4 pt-0 sm:p-6 sm:pt-0\"><div class=\"flex flex-col items-center gap-4\"><div class=\"relative group\"><span class=\"relative flex shrink-0 overflow-hidden rounded-full h-32 w-32 ring-1 ring-hec-line\"><span class=\"flex h-full w-full items-center justify-center rounded-full text-hec-h2 bg-hec-sunken text-hec-ink-soft\">TT</span></span><div class=\"absolute inset-0 bg-hec-ink/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-hec-1 ease-hec flex items-center justify-center\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-camera h-8 w-8 text-hec-paper\"><path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\"></path><circle cx=\"12\" cy=\"13\" r=\"3\"></circle></svg></div></div><div class=\"w-full max-w-xs\"><input type=\"file\" accept=\"image/*\" class=\"hidden\"><label class=\"w-full\"><span class=\"inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-md font-medium transition-colors duration-hec-1 ease-hec disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring bg-hec-action text-hec-on-action hover:bg-hec-action/90 active:bg-hec-action/80 px-6 text-hec-body w-full\" type=\"button\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-camera h-5 w-5\"><path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\"></path><circle cx=\"12\" cy=\"13\" r=\"3\"></circle></svg>Edit Profile Picture</span></label></div><p class=\"text-hec-caption text-hec-ink-soft text-center\">Maximum file size: 5MB<br>Supported formats: JPG, PNG, WEBP</p></div></div></div><div class=\"rounded-hec-lg border border-hec-line bg-hec-surface text-hec-ink shadow-hec-1\"><div class=\"flex flex-col gap-2 p-4 sm:p-6\"><h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-mail h-5 w-5\"><rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"></rect><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"></path></svg>Contact Information</h3><p class=\"text-hec-small text-hec-ink-soft\">Update your contact details and bio</p></div><div class=\"p-4 pt-0 sm:p-6 sm:pt-0\"><form class=\"space-y-4\"><div class=\"space-y-2\"><label class=\"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-mail h-4 w-4 inline mr-2\"><rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"></rect><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"></path></svg>Email</label><input type=\"email\" class=\"flex min-h-hec-target w-full rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 py-2 text-hec-body text-hec-ink placeholder:text-hec-ink-faint file:border-0 file:bg-transparent file:text-hec-small file:font-medium file:text-hec-ink aria-[invalid=true]:border-hec-danger disabled:cursor-not-allowed disabled:bg-hec-sunken disabled:opacity-50 transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" placeholder=\"your.email@example.com\" value=\"ha.teacher@example.test\"></div><div class=\"space-y-2\"><label class=\"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-phone h-4 w-4 inline mr-2\"><path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\"></path></svg>Phone Number</label><input type=\"tel\" class=\"flex min-h-hec-target w-full rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 py-2 text-hec-body text-hec-ink placeholder:text-hec-ink-faint file:border-0 file:bg-transparent file:text-hec-small file:font-medium file:text-hec-ink aria-[invalid=true]:border-hec-danger disabled:cursor-not-allowed disabled:bg-hec-sunken disabled:opacity-50 transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\" placeholder=\"+1 (555) 123-4567\" value=\"\"></div><div class=\"space-y-2\"><label class=\"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-file-text h-4 w-4 inline mr-2\"><path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"></path><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"></path><path d=\"M10 9H8\"></path><path d=\"M16 13H8\"></path><path d=\"M16 17H8\"></path></svg>Bio</label><textarea class=\"flex w-full rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 py-2 text-hec-body text-hec-ink placeholder:text-hec-ink-faint file:border-0 file:bg-transparent file:text-hec-small file:font-medium file:text-hec-ink aria-[invalid=true]:border-hec-danger disabled:cursor-not-allowed disabled:bg-hec-sunken disabled:opacity-50 transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring min-h-[80px]\" placeholder=\"Tell us about yourself...\" rows=\"4\"></textarea></div><button class=\"inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-md font-medium transition-colors duration-hec-1 ease-hec disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring bg-hec-action text-hec-on-action hover:bg-hec-action/90 active:bg-hec-action/80 px-4 py-2 text-hec-body w-full\" type=\"submit\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-save h-4 w-4 mr-2\"><path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\"></path><path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\"></path><path d=\"M7 3v4a1 1 0 0 0 1 1h7\"></path></svg>Save Changes</button></form></div></div></div></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div><div data-state=\"inactive\" data-orientation=\"horizontal\" role=\"tabpanel\" hidden=\"\" tabindex=\"0\" class=\"mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring\"></div></div></div></main>",
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-tp-profile-320-light.png",
+   "kb": 35
+  }
+ }
+}

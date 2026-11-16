@@ -1,0 +1,857 @@
+{
+ "label": "C",
+ "checks": [
+  {
+   "id": "fab-visible",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "teams-select-option",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "sheet-after-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "teams-dealt",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "music-mood",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "music-slider",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "attendance-row",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "ai-chat-input",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "spinner-picked",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "books-fs-then-class-screen",
+   "size": "1024x768",
+   "status": "INFO",
+   "v": {
+    "classScreen": {
+     "found": false
+    },
+    "sheetStillOpen": true,
+    "fs": null
+   }
+  },
+  {
+   "id": "teams-class-screen",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen",
+    "fsIsScreen": true
+   }
+  },
+  {
+   "id": "teams-class-screen-name",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "teams-class-screen-exit",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "teams-class-screen-closed",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "sheet-open-after-exit",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "spinner-class-screen",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "spinner-class-screen-spin",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "spinner-class-screen-winner",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "spinner-class-screen-closed-by-escape",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "page-errors",
+   "size": "1024x768",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "fab-visible",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "sheet",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "teams-select-option",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "sheet-after-select",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "teams-dealt",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "music-mood",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "music-slider",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "attendance-row",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "ai-chat-input",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "spinner-picked",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "books-fs-then-class-screen",
+   "size": "768x1024",
+   "status": "INFO",
+   "v": {
+    "classScreen": {
+     "found": false
+    },
+    "sheetStillOpen": true,
+    "fs": null
+   }
+  },
+  {
+   "id": "teams-class-screen",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen",
+    "fsIsScreen": true
+   }
+  },
+  {
+   "id": "teams-class-screen-name",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "teams-class-screen-exit",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "teams-class-screen-closed",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "sheet-open-after-exit",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "spinner-class-screen",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "spinner-class-screen-spin",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "spinner-class-screen-winner",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "spinner-class-screen-closed-by-escape",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "page-errors",
+   "size": "768x1024",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "fab-visible",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "sheet",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "teams-select-option",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "sheet-after-select",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "teams-dealt",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "music-mood",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "music-slider",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "attendance-row",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "ai-chat-input",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "spinner-picked",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "DIV"
+   }
+  },
+  {
+   "id": "books-fs-then-class-screen",
+   "size": "375x812",
+   "status": "INFO",
+   "v": {
+    "classScreen": {
+     "found": false
+    },
+    "sheetStillOpen": true,
+    "fs": null
+   }
+  },
+  {
+   "id": "teams-class-screen",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen",
+    "fsIsScreen": true
+   }
+  },
+  {
+   "id": "teams-class-screen-name",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "teams-class-screen-exit",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "teams-class-screen-closed",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "sheet-open-after-exit",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "spinner-class-screen",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "spinner-class-screen-spin",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "spinner-class-screen-winner",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {
+    "found": true,
+    "inFs": true,
+    "onScreen": true,
+    "top": true,
+    "fs": "class-screen"
+   }
+  },
+  {
+   "id": "spinner-class-screen-closed-by-escape",
+   "size": "375x812",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "page-errors",
+   "size": "375x812",
+   "status": "PASS",
+   "v": []
+  }
+ ],
+ "dom": {
+  "sheet@1024x768": "115635 chars (not kept)",
+  "teams-screen@1024x768": "4271 chars (not kept)",
+  "spinner-screen@1024x768": "7023 chars (not kept)",
+  "sheet-dash@1024x768": null,
+  "sheet@768x1024": "115608 chars (not kept)",
+  "teams-screen@768x1024": "4271 chars (not kept)",
+  "spinner-screen@768x1024": "7100 chars (not kept)",
+  "sheet-dash@768x1024": null,
+  "sheet@375x812": "115635 chars (not kept)",
+  "teams-screen@375x812": "4271 chars (not kept)",
+  "spinner-screen@375x812": "6519 chars (not kept)",
+  "sheet-dash@375x812": null
+ },
+ "small": {
+  "fab-visible@1024x768": [],
+  "sheet@1024x768": [],
+  "teams-select-option@1024x768": [],
+  "sheet-after-select@1024x768": [],
+  "teams-dealt@1024x768": [],
+  "music-mood@1024x768": [],
+  "music-slider@1024x768": [],
+  "attendance-row@1024x768": [],
+  "ai-chat-input@1024x768": [],
+  "spinner-picked@1024x768": [],
+  "teams-class-screen@1024x768": [],
+  "teams-class-screen-name@1024x768": [],
+  "teams-class-screen-exit@1024x768": [],
+  "spinner-class-screen@1024x768": [],
+  "spinner-class-screen-spin@1024x768": [],
+  "spinner-class-screen-winner@1024x768": [],
+  "fab-visible@768x1024": [],
+  "sheet@768x1024": [],
+  "teams-select-option@768x1024": [],
+  "sheet-after-select@768x1024": [],
+  "teams-dealt@768x1024": [],
+  "music-mood@768x1024": [],
+  "music-slider@768x1024": [],
+  "attendance-row@768x1024": [],
+  "ai-chat-input@768x1024": [],
+  "spinner-picked@768x1024": [],
+  "teams-class-screen@768x1024": [],
+  "teams-class-screen-name@768x1024": [],
+  "teams-class-screen-exit@768x1024": [],
+  "spinner-class-screen@768x1024": [],
+  "spinner-class-screen-spin@768x1024": [],
+  "spinner-class-screen-winner@768x1024": [],
+  "fab-visible@375x812": [],
+  "sheet@375x812": [],
+  "teams-select-option@375x812": [],
+  "sheet-after-select@375x812": [],
+  "teams-dealt@375x812": [],
+  "music-mood@375x812": [],
+  "music-slider@375x812": [],
+  "attendance-row@375x812": [],
+  "ai-chat-input@375x812": [],
+  "spinner-picked@375x812": [],
+  "teams-class-screen@375x812": [],
+  "teams-class-screen-name@375x812": [],
+  "teams-class-screen-exit@375x812": [],
+  "spinner-class-screen@375x812": [],
+  "spinner-class-screen-spin@375x812": [],
+  "spinner-class-screen-winner@375x812": []
+ },
+ "requests": {
+  "1024x768": [
+   "from:announcement_dismissals:select",
+   "from:attendance:select",
+   "from:attendance:select",
+   "from:classes:select",
+   "from:families:select",
+   "from:families:select",
+   "from:homework_submissions:select",
+   "from:homeworks:select",
+   "from:notifications:select",
+   "from:profiles:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:site_announcements:select",
+   "from:students:select",
+   "from:students:select",
+   "from:students:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:user_roles:select",
+   "from:user_roles:select",
+   "from:video_submissions:select",
+   "function:calculate-payroll:select"
+  ],
+  "768x1024": [
+   "from:announcement_dismissals:select",
+   "from:attendance:select",
+   "from:attendance:select",
+   "from:classes:select",
+   "from:families:select",
+   "from:families:select",
+   "from:homework_submissions:select",
+   "from:homeworks:select",
+   "from:notifications:select",
+   "from:profiles:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:site_announcements:select",
+   "from:students:select",
+   "from:students:select",
+   "from:students:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:user_roles:select",
+   "from:user_roles:select",
+   "from:video_submissions:select",
+   "function:calculate-payroll:select"
+  ],
+  "375x812": [
+   "from:announcement_dismissals:select",
+   "from:attendance:select",
+   "from:classes:select",
+   "from:families:select",
+   "from:families:select",
+   "from:homework_submissions:select",
+   "from:homeworks:select",
+   "from:notifications:select",
+   "from:profiles:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:sessions:select",
+   "from:site_announcements:select",
+   "from:students:select",
+   "from:students:select",
+   "from:students:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:teachers:select",
+   "from:user_roles:select",
+   "from:user_roles:select",
+   "from:video_submissions:select",
+   "function:calculate-payroll:select"
+  ]
+ }
+}

@@ -60,7 +60,7 @@ export function ScheduleStatusCard({ month }: { month?: string }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Schedule Status
@@ -80,7 +80,7 @@ export function ScheduleStatusCard({ month }: { month?: string }) {
       {report && (
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4 flex-wrap">
-            <Badge variant={report.success ? "default" : "destructive"}>
+            <Badge variant={report.success ? "success" : "destructive"}>
               {report.success ? (
                 <>
                   <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -93,61 +93,61 @@ export function ScheduleStatusCard({ month }: { month?: string }) {
                 </>
               )}
             </Badge>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-hec-small tabular-nums text-hec-ink-soft">
               Month: {report.month}
             </span>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <div className="text-2xl font-bold">{report.created?.length || 0}</div>
-              <div className="text-xs text-muted-foreground">Created</div>
+              <div className="font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{report.created?.length || 0}</div>
+              <div className="text-hec-caption text-hec-ink-soft">Created</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">{report.normalized || 0}</div>
-              <div className="text-xs text-muted-foreground">Normalized</div>
+              <div className="font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{report.normalized || 0}</div>
+              <div className="text-hec-caption text-hec-ink-soft">Normalized</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">{report.skippedConflicts?.length || 0}</div>
-              <div className="text-xs text-muted-foreground">Conflicts</div>
+              <div className="font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{report.skippedConflicts?.length || 0}</div>
+              <div className="text-hec-caption text-hec-ink-soft">Conflicts</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">
+              <div className="font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">
                 {(report.attention?.noTeacherExpected?.length || 0) + 
                  (report.attention?.noTeacherExisting?.length || 0)}
               </div>
-              <div className="text-xs text-muted-foreground">Attention Needed</div>
+              <div className="text-hec-caption text-hec-ink-soft">Attention Needed</div>
             </div>
           </div>
 
           {report.perTeacher && report.perTeacher.length > 0 && (
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-between">
+                <Button variant="ghost" className="w-full justify-between gap-2">
                   <span className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
                     Teacher Schedule ({report.perTeacher.length})
                   </span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-hec-small text-hec-ink-soft">
                     {isOpen ? 'Hide' : 'Show'} details
                   </span>
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-3 mt-3">
                 {report.perTeacher.map((teacher) => (
-                  <div key={teacher.teacher_id || 'unassigned'} className="border rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium">{teacher.teacher_name}</div>
-                      <Badge variant="secondary">{teacher.sessions.length} sessions</Badge>
+                  <div key={teacher.teacher_id || 'unassigned'} className="rounded-hec-md border border-hec-line bg-hec-surface p-4">
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div className="min-w-0 whitespace-normal break-words text-hec-body font-medium text-hec-ink">{teacher.teacher_name}</div>
+                      <Badge variant="secondary" className="shrink-0 tabular-nums">{teacher.sessions.length} sessions</Badge>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2 text-hec-small text-hec-ink">
                       <div>
-                        <span className="text-muted-foreground">Scheduled:</span>{' '}
-                        <span className="font-medium">{formatHours(teacher.scheduled_minutes)}</span>
+                        <span className="text-hec-ink-soft">Scheduled:</span>{' '}
+                        <span className="font-medium tabular-nums">{formatHours(teacher.scheduled_minutes)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Held:</span>{' '}
-                        <span className="font-medium">{formatHours(teacher.held_minutes)}</span>
+                        <span className="text-hec-ink-soft">Held:</span>{' '}
+                        <span className="font-medium tabular-nums">{formatHours(teacher.held_minutes)}</span>
                       </div>
                     </div>
                   </div>
@@ -159,20 +159,20 @@ export function ScheduleStatusCard({ month }: { month?: string }) {
           {report.attention && (
             (report.attention.noTeacherExpected?.length > 0 || 
              report.attention.noTeacherExisting?.length > 0) && (
-              <div className="border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950 p-3 rounded">
+              <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-hec-warn" />
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 font-medium text-hec-warn">
                       Attention Required
                     </div>
                     {report.attention.noTeacherExpected?.length > 0 && (
-                      <div className="text-sm text-yellow-700 dark:text-yellow-300">
+                      <div className="text-hec-small text-hec-ink">
                         {report.attention.noTeacherExpected.length} template slots have no teacher assigned
                       </div>
                     )}
                     {report.attention.noTeacherExisting?.length > 0 && (
-                      <div className="text-sm text-yellow-700 dark:text-yellow-300">
+                      <div className="text-hec-small text-hec-ink">
                         {report.attention.noTeacherExisting.length} existing sessions need teacher assignment
                       </div>
                     )}
@@ -186,7 +186,7 @@ export function ScheduleStatusCard({ month }: { month?: string }) {
 
       {!report && !isLoading && (
         <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="py-4 text-center text-hec-small text-hec-ink-soft">
             Click "Check Status" to view the current schedule state
           </p>
         </CardContent>
