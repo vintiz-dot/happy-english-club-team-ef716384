@@ -229,8 +229,13 @@ def load_whisper(size: str, threads: int):
                         download_root=str(MODELS / "faster-whisper"))
 
 
-def transcribe(m, x: np.ndarray, lang: str, vad: bool, beam: int):
-    kw = {"beam_size": beam, "word_timestamps": True, "vad_filter": vad}
+def transcribe(m, x: np.ndarray, lang: str, vad: bool, beam: int, vad_thr: float = 0.5, cond_prev: bool = True):
+    """vad_thr: silero speech threshold (faster-whisper default 0.5; B2 measured it missing 27-90 % of the
+    children's speech in the room mixes). cond_prev False stops one window's text steering the next, the
+    usual guard against Whisper's repetition loops on noisy audio."""
+    kw = {"beam_size": beam, "word_timestamps": True, "vad_filter": vad, "condition_on_previous_text": cond_prev}
+    if vad:
+        kw["vad_parameters"] = {"threshold": vad_thr}
     if lang == "multi":
         kw.update(language=None, multilingual=True)
     else:
@@ -245,7 +250,8 @@ def transcribe(m, x: np.ndarray, lang: str, vad: bool, beam: int):
 
 
 def tag_of(a) -> str:
-    return f"fw-{a.size}-{a.lang}-vad{a.vad}-b{a.beam}-t{a.threads}-{a.set}"
+    v = f"vad{a.vad}" + (f"{a.vad_thr:g}" if a.vad == "on" and a.vad_thr != 0.5 else "")
+    return f"fw-{a.size}-{a.lang}-{v}{'' if a.cond_prev == 'on' else '-nocp'}-b{a.beam}-t{a.threads}-{a.set}"
 
 
 def cmd_asr(a) -> int:
@@ -259,7 +265,7 @@ def cmd_asr(a) -> int:
     with Monitor() as mon:
         for r in ins:
             t0 = time.perf_counter()
-            words, lang = transcribe(m, r["audio"], a.lang, a.vad == "on", a.beam)
+            words, lang = transcribe(m, r["audio"], a.lang, a.vad == "on", a.beam, a.vad_thr, a.cond_prev == "on")
             el = time.perf_counter() - t0
             files.append({"file_id": r["file_id"], "duration_s": round(r["duration"], 3), "words": words, "turns": [],
                           "language": lang})
@@ -267,7 +273,8 @@ def cmd_asr(a) -> int:
                         "wall_s": round(el, 1), "rtf": round(el / r["duration"], 3), "words": len(words)})
             print(f"{r['file_id']}: {r['duration']:.0f} s, {len(words)} words, RTF {el / r['duration']:.2f}", flush=True)
     s = mon.summary()
-    metrics = {"tag": tag, "size": a.size, "threads": a.threads, "lang": a.lang, "vad": a.vad, "beam": a.beam,
+    metrics = {"tag": tag, "size": a.size, "threads": a.threads, "lang": a.lang, "vad": a.vad, "vad_thr": a.vad_thr,
+               "cond_prev": a.cond_prev, "beam": a.beam,
                "set": a.set, "audio_s": round(audio_s, 1), "load_model_s": round(mon_load.wall, 1),
                "rtf": round(s["wall_s"] / audio_s, 3), "load": load_label(s), **s, "per_file": per,
                "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
@@ -275,6 +282,7 @@ def cmd_asr(a) -> int:
     result = {"schema": "hec-lesson-eval/1",
               "system": {"name": tag, "kind": "local", "model": f"faster-whisper {a.size} int8 CPU",
                          "settings": {"language": a.lang, "beam": a.beam, "vad_filter": a.vad == "on",
+                                      "vad_threshold": a.vad_thr, "condition_on_previous_text": a.cond_prev == "on",
                                       "word_timing": "vendor", "price_usd_per_min": 0.0}},
               "run": {"started_at": metrics["at"], "wall_s": s["wall_s"], "audio_s": round(audio_s, 1)},
               "files": files}
@@ -392,7 +400,7 @@ def cmd_e2e(a) -> int:
     st = {}
     with Monitor() as mon:
         m = load_whisper(a.size, a.threads)
-        words, _ = transcribe(m, x, a.lang, a.vad == "on", a.beam)
+        words, _ = transcribe(m, x, a.lang, a.vad == "on", a.beam, a.vad_thr, a.cond_prev == "on")
     st["asr"] = {**mon.summary(), "words": len(words)}
     del m
     print("asr", st["asr"]["wall_s"], flush=True)
@@ -426,7 +434,7 @@ def cmd_e2e(a) -> int:
     print("ident", st["ident"]["wall_s"], flush=True)
     total = sum(v["wall_s"] for v in st.values())
     res = {"lesson": a.lesson, "minutes": round(secs / 60, 1), "size": a.size, "threads": a.threads, "lang": a.lang,
-           "vad": a.vad, "beam": a.beam, "diar": f"own {a.diar_model} thr {a.diar_threshold}",
+           "vad": a.vad, "vad_thr": a.vad_thr, "cond_prev": a.cond_prev, "beam": a.beam, "diar": f"own {a.diar_model} thr {a.diar_threshold}",
            "ident": f"{a.id_model} {a.id_config} T {a.threshold}", "stages": st, "total_wall_s": round(total, 1),
            "rtf_total": round(total / secs, 3),
            "projected_90min_h": round(total / secs * 5400 / 3600, 2),
@@ -509,6 +517,8 @@ def main(argv=None) -> int:
     p.add_argument("--lang", choices=["auto", "en", "multi"], default="en")
     p.add_argument("--vad", choices=["on", "off"], default="off")
     p.add_argument("--beam", type=int, default=5)
+    p.add_argument("--vad-thr", type=float, default=0.5)
+    p.add_argument("--cond-prev", choices=["on", "off"], default="on")
     p.add_argument("--set", choices=sorted(SETS), default="quality")
     p.set_defaults(fn=cmd_asr)
     p = sub.add_parser("diar")
@@ -534,6 +544,8 @@ def main(argv=None) -> int:
     p.add_argument("--lang", choices=["auto", "en", "multi"], default="en")
     p.add_argument("--vad", choices=["on", "off"], default="off")
     p.add_argument("--beam", type=int, default=5)
+    p.add_argument("--vad-thr", type=float, default=0.5)
+    p.add_argument("--cond-prev", choices=["on", "off"], default="on")
     p.add_argument("--diar-model", default="3ds_campp")
     p.add_argument("--diar-threshold", type=float, default=0.1)
     p.add_argument("--id-model", default="ecapa")

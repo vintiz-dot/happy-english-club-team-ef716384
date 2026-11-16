@@ -30,3 +30,17 @@ pyannote community-1: NOT set up (pyannote.audio is not installed and no token e
 - Diarization and identification quality: B2's measures (DER with collar 0.25 s on the synthetic mixes; identification error rates on B2's units). The local diarizer and ECAPA are exactly what B2 measured, so B2's quality figures stand and only speed and RAM are new here; DER is recomputed alongside the timing as a check.
 
 Results follow as they are measured.
+
+Models (faster-whisper int8, CTranslate2; downloaded once from the Hugging Face id that faster-whisper 1.2.1 itself maps each size to, into `C:\Users\Dell\hec-audio-eval\models\faster-whisper\`):
+
+| size | Hugging Face id | on disk |
+|---|---|---|
+| small | Systran/faster-whisper-small (B0) | 464 MB |
+| medium | Systran/faster-whisper-medium | 1530.6 MB |
+| large-v3-turbo | mobiuslabsgmbh/faster-whisper-large-v3-turbo (there is no Systran build of turbo; this is the id in faster-whisper's own size table) | 1621.7 MB |
+
+Note on the Windows venv: `.venv\Scripts\python.exe` is a launcher that starts the real interpreter as a child process; the monitor runs inside the child, so its figures are the real interpreter's.
+
+## 3. Transcription: choosing the settings (faster-whisper small, "select" set, 15.4 min audio)
+
+"select" set = 2 synthetic mixes (5 % and 15 % overlap, room-degraded), 6 held-out clips (S01-S06), first 180 s of L2. B1's local row used language auto-detect and the silero VAD filter; that configuration wrote far fewer words than the vendors, so the VAD and language settings are tested first.
