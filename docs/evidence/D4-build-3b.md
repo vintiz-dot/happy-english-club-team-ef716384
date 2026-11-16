@@ -308,3 +308,29 @@ The reviewer's probes are pinned in the permanent suites (not by registering `re
 | P7a/b direct `end_enrollment` backdated | P0001 / HC120 | unchanged |
 
 Oracle probes (in `d4-reach-oracle`, with the real calculate-tuition / compute-sibling-discounts): O1 HC121, O3 HC120, O4 HC120, O5 HC120; with the guard on nothing past or signed off moves; with only that guard switched off each moves at least one such bill.
+
+### Function and trigger fingerprints after fix round 1 (they supersede the build table above)
+
+Recomputed the way the build did: pglite, file 5 pasted over D1, D2, files 1 and 2 and the enrolment RPC migrations, LF text, md5 of the CR-stripped body, md5(pg_get_triggerdef). 41 new functions (the build's 40 + `_invoice_frozen_keep_guard()`), 1 replaced (`_money_enrollment_rpc_call()`, still b63e90a3, so the preflight literal holds). Changed since the build: `_discount_money_guard`, `_enrollment_money_guard`, `_family_link_guard`, `_money_exec__family_link`, `_money_family_reach`, `_money_plan__enrollment`, `_money_plan__family_link`; triggers: both `zz_family_link_guard` (is_active in the WHEN) and six new (two invoice guards, four audit). Every other value equals the build's table. `docs/evidence/D4-release-fingerprint.*` and `guard-fingerprint.mjs` are still not extended to file 5 (shared tooling the conductor regenerates per step, as the build said); these are the values it should produce.
+
+| Function (changed or new this round) | md5 (CR-stripped body) | definer | volatility | authenticated / service_role |
+|---|---|---|---|---|
+| `_discount_money_guard()` | 8601d68d00941ba3ee5b13fdb6b6b21a | yes | v | - / - |
+| `_enrollment_money_guard()` | 85725992e44837ba7f3b93fe088b3613 | yes | v | - / - |
+| `_family_link_guard()` | 29a38090c85537663bb4868d2a7c1ba1 | yes | v | - / - |
+| `_invoice_frozen_keep_guard()` (new) | 22bd4fd7da333584e8c5c74ea8ed163a | yes | v | - / - |
+| `_money_exec__family_link(jsonb,uuid)` | 5ac3ff6c97445e46ab6d9f2a32e60388 | yes | v | - / - |
+| `_money_family_reach(uuid,uuid,uuid)` | 75113876321f7576e1049ef7149baacd | yes | s | - / - |
+| `_money_plan__enrollment(text,jsonb,uuid)` | cb9e129ee5485021c3137d3aee2e5fe9 | yes | s | - / - |
+| `_money_plan__family_link(text,jsonb,uuid)` | 8bdd8a7a760b08ed65fd6beb69097dfd | yes | s | - / - |
+
+| Trigger (changed or new this round) | function | md5(pg_get_triggerdef) | enabled |
+|---|---|---|---|
+| `discount_definitions.audit_discount_definitions` | `audit_row_change` | f0d9fc0039f39f56d722fda6125cc17e | O |
+| `families.zz_family_link_guard` | `_family_link_guard` | def4276f02d1888ccceb45ae0ded57de | O |
+| `invoices.zz_invoice_frozen_delete_guard` | `_invoice_frozen_keep_guard` | fed9ce823091c82a3f346d507794286b | O |
+| `invoices.zz_invoice_frozen_keep_guard` | `_invoice_frozen_keep_guard` | bfe5edef7f7a7baf8821a06b10ebaee8 | O |
+| `referral_bonuses.audit_referral_bonuses` | `audit_row_change` | 5d2204a3c40ea01d082fb945a1d31495 | O |
+| `students.zz_family_link_guard` | `_family_link_guard` | bae6c54edf90cd5a60a5b79f80e2b0f7 | O |
+| `teachers.audit_teachers` (only where missing) | `audit_row_change` | 578e421d4f6c80c3a143375924f66dba | O |
+| `teaching_assistants.audit_teaching_assistants` (only where missing) | `audit_row_change` | 06ae6615e6a8ceb18ca3c980989be7c3 | O |
