@@ -162,7 +162,7 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
                   {mmss(it.band.t)}-{mmss(it.band.e)} · {WORDING.unwritten(duration(it.band.seconds))}
                 </li>
               ) : (
-                <li key={`l${i}`} className={cn("flex gap-2 text-hec-small", it.line.uncertain ? "text-hec-ink-faint" : "text-hec-ink", it.line.faded && "opacity-60")}>
+                <li key={`l${i}`} className={cn("flex items-baseline gap-2 text-hec-small", it.line.uncertain ? "text-hec-ink-faint" : "text-hec-ink", it.line.faded && "opacity-60")}>
                   <button type="button" onClick={() => player.play(it.line.t)} aria-label={`Play ${mmss(it.line.t)}`}
                     className="shrink-0 tabular-nums text-hec-brass underline-offset-2 hover:underline min-w-[3.5rem] text-left">{mmss(it.line.t)}</button>
                   {it.line.teacher && <span className="shrink-0 font-medium" title="Your microphone carried this line">{WORDING.teacherMic}</span>}
@@ -187,7 +187,8 @@ function Words({ view, player }: { view: ReportView; player: Player }) {
       <ul className="flex flex-wrap gap-2">
         {view.words.map((w) => (
           <li key={w.word} className={cn("rounded-hec-sm px-2 py-1 text-hec-caption", w.heard ? "bg-hec-leaf-tint text-hec-leaf" : "bg-hec-sunken text-hec-ink-soft")}>
-            {w.word}: {w.heard ? <>heard {w.times.slice(0, 3).map((t) => <PlayAt key={t} t={t} player={player} />)}</> : WORDING.notWritten}
+            {w.word}: {w.heard ? <>heard {w.times.slice(0, 3).map((t) => <PlayAt key={t} t={t} player={player} />)}
+              {w.teacherMic !== null && w.room !== null && <span className="text-hec-ink-soft"> (your microphone {w.teacherMic}, room {w.room})</span>}</> : WORDING.notWritten}
           </li>
         ))}
       </ul>
