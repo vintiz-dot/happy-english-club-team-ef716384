@@ -14,7 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useIvory } from "@/hooks/useIvory";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { RichTextView } from "@/components/rich-text";
 import { PlaceholderCard } from "@/components/ui/loading";
 
 interface ExamReportsManagerProps {
@@ -165,9 +165,9 @@ export function ExamReportsManager({
               </CardHeader>
               {r.content_html && (
                 <CardContent className="pt-0">
-                  <div
+                  <RichTextView
                     className={iv("prose prose-sm max-w-none break-words text-hec-ink", "prose prose-sm max-w-none dark:prose-invert text-foreground")}
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(r.content_html) }}
+                    html={r.content_html}
                   />
                 </CardContent>
               )}

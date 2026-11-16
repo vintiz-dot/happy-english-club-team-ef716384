@@ -1,0 +1,151 @@
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list"
+  ],
+  "all": [
+   "Heading 1",
+   "Heading 2",
+   "Heading 3",
+   "Bold",
+   "Italic",
+   "Underline",
+   "Strikethrough",
+   "Text colour",
+   "Highlight",
+   "Bulleted list",
+   "Numbered list",
+   "Outdent",
+   "Indent",
+   "Subscript",
+   "Superscript",
+   "Align left",
+   "Align centre",
+   "Align right",
+   "Justify",
+   "Link",
+   "Quote",
+   "Undo",
+   "Redo",
+   "Clear formatting"
+  ],
+  "disabled": [
+   "Outdent",
+   "Undo",
+   "Redo"
+  ],
+  "small": 0,
+  "overflow": false,
+  "afterOutdent": {
+   "active": "DIV",
+   "tabStops": [
+    {
+     "label": "Outdent",
+     "disabled": true
+    }
+   ]
+  },
+  "errors": []
+ },
+ "student-light": {
+  "fontSize": "16px",
+  "overflow": false,
+  "errors": []
+ },
+ "assign-dark": {
+  "seen": [
+   "Heading 1",
+   "Heading 2",
+   "Heading 3",
+   "Bold",
+   "Italic",
+   "Underline",
+   "Strikethrough",
+   "Text colour",
+   "Highlight",
+   "Bulleted list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list",
+   "Numbered list"
+  ],
+  "all": [
+   "Heading 1",
+   "Heading 2",
+   "Heading 3",
+   "Bold",
+   "Italic",
+   "Underline",
+   "Strikethrough",
+   "Text colour",
+   "Highlight",
+   "Bulleted list",
+   "Numbered list",
+   "Outdent",
+   "Indent",
+   "Subscript",
+   "Superscript",
+   "Align left",
+   "Align centre",
+   "Align right",
+   "Justify",
+   "Link",
+   "Quote",
+   "Undo",
+   "Redo",
+   "Clear formatting"
+  ],
+  "disabled": [
+   "Outdent",
+   "Undo",
+   "Redo"
+  ],
+  "small": 0,
+  "overflow": false,
+  "afterOutdent": {
+   "active": "DIV",
+   "tabStops": [
+    {
+     "label": "Outdent",
+     "disabled": true
+    }
+   ]
+  },
+  "errors": []
+ },
+ "student-dark": {
+  "fontSize": "16px",
+  "overflow": false,
+  "errors": []
+ },
+ "pictureRow": {
+  "notFound": true,
+  "n": 1,
+  "errors": []
+ }
+}
+

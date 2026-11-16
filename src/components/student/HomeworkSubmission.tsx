@@ -1,12 +1,12 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useId } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Upload, FileText, Heart } from "lucide-react";
-import "react-quill-new/dist/quill.snow.css";
 import { format } from "date-fns";
+import { RichTextEditor } from "@/components/rich-text";
 import { RichText } from "@/components/homework/RichText";
 import { dayjs } from "@/lib/date";
 import { soundManager } from "@/lib/soundManager";
@@ -14,8 +14,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SubmitCheckmark } from "./SubmitCheckmark";
 import { useIvory } from "@/hooks/useIvory";
 import VideoHomeworkSubmission, { useVideoHomework } from "@/components/video-homework/VideoHomeworkSubmission";
-
-const ReactQuill = lazy(() => import("react-quill-new"));
 
 interface HomeworkSubmissionProps {
   homeworkId: string;
@@ -49,6 +47,7 @@ function WrittenHomeworkSubmission({
   const [thanked, setThanked] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
   const queryClient = useQueryClient();
+  const answerId = useId();
   // "Ivory" design system (DS s.15) on a listed route; today's classes elsewhere (the `/` page shares this form).
   const ivory = useIvory();
   const c = (next: string, old: string) => (ivory ? next : old);
@@ -350,22 +349,16 @@ function WrittenHomeworkSubmission({
             )}
 
             <div className="hw-answer-editor min-w-0">
-              <Label htmlFor="submission-text" className="sr-only">Your answer</Label>
-              <Suspense fallback={<div className={c("flex h-40 items-center justify-center rounded-hec-lg border border-hec-line text-hec-ink-soft", "flex h-40 items-center justify-center rounded-3xl border-2 text-muted-foreground")}>Getting the answer box ready…</div>}>
-                <ReactQuill
-                  theme="snow"
-                  value={submissionText}
-                  onChange={setSubmissionText}
-                  placeholder="Write your answer here…"
-                  modules={{
-                    toolbar: [
-                      ["bold", "italic", "underline"],
-                      [{ list: "ordered" }, { list: "bullet" }],
-                      ["clean"],
-                    ],
-                  }}
-                />
-              </Suspense>
+              <Label id={`${answerId}-label`} htmlFor={`${answerId}-text`} className="sr-only">Your answer</Label>
+              <RichTextEditor
+                id={`${answerId}-text`}
+                ariaLabelledBy={`${answerId}-label`}
+                toolbar="minimal"
+                value={submissionText}
+                onChange={setSubmissionText}
+                placeholder="Write your answer here…"
+                fallback={<div className={c("flex h-40 items-center justify-center rounded-hec-lg border border-hec-line text-hec-ink-soft", "flex h-40 items-center justify-center rounded-3xl border-2 text-muted-foreground")}>Getting the answer box ready…</div>}
+              />
             </div>
 
             {/* Photo or file */}
