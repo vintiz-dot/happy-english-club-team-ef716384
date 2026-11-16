@@ -1,6 +1,7 @@
-﻿# F-23: Content-Security-Policy (report-only first)
+# F-23: Content-Security-Policy (report-only first)
 
-Where I am / next step: inventory done (below). Next: write `public/_headers` in report-only mode and the report endpoint.
+Where I am / next step: policy written (`public/_headers`, report-only), endpoint `functions/csp-report.js`, guard test
+`scripts/pgtest/csp-headers.test.mjs` (34 pass). Next: browser runs on the built app with the fake client, counting violations.
 
 ## How the site is served
 

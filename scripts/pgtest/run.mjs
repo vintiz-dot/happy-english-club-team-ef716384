@@ -409,6 +409,9 @@ const SUITES = [
   // F-02: the nine AI / speech / image-search functions, handler by handler:
   // no session, wrong role, right role, the per-account limit.
   { name: "ai spend gate (F-02)", file: "ai-gate.test.mjs", migrations: [] },
+  // F-23: public/_headers (the inline-script hash, the hosts the code fetches from, the service
+  // worker's exemption) and the /csp-report Pages Function. docs/evidence/CSP.md.
+  { name: "content security policy (F-23)", file: "csp-headers.test.mjs", migrations: [], expect: 30 },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
