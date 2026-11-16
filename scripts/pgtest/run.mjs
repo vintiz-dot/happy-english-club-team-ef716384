@@ -343,6 +343,8 @@ const SUITES = [
   // file 6, real files); OFF is proved by running one scenario with and
   // without file 6 and comparing; then ON; rollback 6 is the argument.
   { name: "d4 approvals", file: "d4-approvals.test.mjs", expect: 139, migrations: [], args: ["scripts/ROLLBACK-d4-6-approvals.sql"] },
+  // The wording and the requests of src/lib/approvals.ts, and the step 4 screens (static).
+  { name: "approvals lib", file: "approvals-lib.test.mjs", expect: 35, migrations: [] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

@@ -15,6 +15,8 @@ import {
 } from "@/lib/sessionGuard";
 import { payDialogFrom, payPreviewRequest, payRequest, type PayForm, type PayOp, type PayPlan } from "@/lib/lessonPayGuard";
 import { manageSession, payPreview } from "./api";
+import { approvalErrorText, canRequestSessionApproval, sessionApprovalRequest } from "@/lib/approvals";
+import { requestApproval as requestApprovalRpc } from "@/components/admin/approvals/api";
 
 export interface MoveChange {
   date: string;
@@ -223,7 +225,28 @@ export function useGuardedChange({ open, sessionId, op, change, figures, onPayCh
     invalidate();
   }, [success, invalidate]);
 
-  return { phase, preview, consequences, error, stale, staleNonce, success, retry, reload: load, submit, retryRefresh, invalidate };
+  /**
+   * D4 step 4: the change was refused with approval_required (HC060: a second
+   * administrator must approve it). Sends D2's own checked function with the
+   * arguments as typed and this preview's token to request_change_approval;
+   * the lesson is not touched until the other administrator approves.
+   */
+  const [approval, setApproval] = useState<{ busy: boolean; sent?: string; error?: string } | null>(null);
+  const requestApproval = useCallback(async (form: GuardForm) => {
+    const p = previewRef.current;
+    const built = p ? sessionApprovalRequest(op, sessionId, form, op === "move" ? change ?? null : null) : null;
+    if (!p || !built || !canRequestSessionApproval(form)) return;
+    setApproval({ busy: true });
+    const r = await requestApprovalRpc("session", built.rpc, built.params, p.token ?? null);
+    if ("error" in r) setApproval({ busy: false, error: approvalErrorText(r.error.code, r.error.detail) });
+    else setApproval({ busy: false, sent: r.data.request_id });
+    invalidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [op, sessionId, change?.date, change?.start_time, change?.end_time, invalidate]);
+  useEffect(() => { if (!open) setApproval(null); }, [open]);
+
+  return { phase, preview, consequences, error, stale, staleNonce, success, retry, reload: load, submit, retryRefresh, invalidate,
+           requestApproval, approval };
 }
 
 /**

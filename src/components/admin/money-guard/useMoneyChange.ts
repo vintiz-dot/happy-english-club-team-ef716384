@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
 import { canSubmitMoney, moneyAck, moneyErrorText, type MoneyForm, type MoneyPlan } from "@/lib/moneyGuard";
 import { confirmMoneyChange, previewMoneyChange, refreshMoneyChange, type MoneyError } from "./api";
+import { approvalErrorText, canRequestMoneyApproval, moneyApprovalParams } from "@/lib/approvals";
+import { requestApproval as requestApprovalRpc } from "@/components/admin/approvals/api";
 
 export interface MoneyRequest {
   entity: string;
@@ -71,5 +73,28 @@ export function useMoneyChange(onDone?: (result: any) => void) {
     close();
   }, [request, plan, form, onDone, close]);
 
-  return { request, plan, form, setForm, busy, error, notice, open, close, submit, canSubmit: canSubmitMoney(plan, form) };
+  /**
+   * D4 step 4: the preview says a second administrator must approve. Sends
+   * the change as typed (reason, tick, correction reason, the preview's
+   * token) to request_change_approval; nothing is changed until the other
+   * administrator approves it. Only offered while approval is switched on.
+   */
+  const requestApproval = useCallback(async () => {
+    if (!request || !plan || !canRequestMoneyApproval(plan, form)) return;
+    setBusy(true);
+    setError(null);
+    const r = await requestApprovalRpc("money", "money_change_checked",
+      moneyApprovalParams(request.entity, request.op, request.args, plan, form), plan.token ?? null);
+    setBusy(false);
+    if ("error" in r) {
+      setError(approvalErrorText(r.error.code, r.error.detail));
+      return;
+    }
+    // Not onDone: nothing was changed, so the screen must not report a save.
+    setNotice("approval_sent");
+    close();
+  }, [request, plan, form, close]);
+
+  return { request, plan, form, setForm, busy, error, notice, open, close, submit, canSubmit: canSubmitMoney(plan, form),
+           requestApproval, canRequestApproval: canRequestMoneyApproval(plan, form) };
 }

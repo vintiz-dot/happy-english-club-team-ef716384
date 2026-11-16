@@ -643,6 +643,11 @@ await section('ON: pay carried forward (A-4) and the admin role (A-18)', async (
   const direct = await C.rpc(A1, `SELECT public.grant_admin_role($1,$2) r`, [A2, R]);
   ok('grant_admin_role is not callable by an administrator directly (no grant)', direct.code === '42501', direct);
   await su(`DELETE FROM user_roles WHERE user_id = $1 AND role = 'admin'`, [A3]);
+  // the same grant again later (same fingerprint: A3 is not an admin again), claiming the old approved request by hand
+  const replay = await script(A1, 'authenticated', 'authenticated',
+    `SELECT set_config('hec.change_request_ok', '${r3.ok?.request_id}', true); INSERT INTO user_roles VALUES ('${A3}', 'admin')`);
+  ok('an approval is used once: claiming an earlier transaction\'s approved request by hand for the same change: HC060',
+     replay?.code === 'HC060' && !(await q1(`SELECT public.has_role($1,'admin') h`, [A3])).h, replay);
 });
 
 await section('ON: the setting - loosening needs the other administrator; solo release (A-17)', async () => {

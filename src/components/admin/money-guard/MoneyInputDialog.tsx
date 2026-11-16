@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmTick, ReasonField } from "@/components/admin/session-guard/Fields";
 import { moneyRequirements, type MoneyForm, type MoneyPlan } from "@/lib/moneyGuard";
 import { INPUT_TEXT, inputChangeLines, inputCopy, inputIntro, payReachLines } from "@/lib/moneyInputs";
+import { reasonSentence } from "@/lib/approvals";
 import { ReachTable } from "./ReachTable";
 import type { useMoneyChange } from "./useMoneyChange";
 
@@ -24,6 +25,9 @@ interface ViewProps {
   subject?: string;
   /** Extra lines the screen adds under the change (a list of enrolments, say). */
   extraLines?: string[];
+  /** D4 step 4: when the preview says a second administrator must approve, the button sends the request instead. */
+  onRequestApproval?: () => void;
+  canRequestApproval?: boolean;
 }
 
 /**
@@ -34,7 +38,9 @@ interface ViewProps {
  * below binds it to useMoneyChange, and a screen whose change is made by an
  * edge function (Create Family) feeds it directly.
  */
-export function MoneyInputDialogView({ open, plan, form, setForm, busy, error, canSubmit, onClose, onSubmit, names, subject, extraLines }: ViewProps) {
+export function MoneyInputDialogView({ open, plan, form, setForm, busy, error, canSubmit, onClose, onSubmit, names, subject, extraLines,
+  onRequestApproval, canRequestApproval }: ViewProps) {
+  const needsApproval = !!plan?.approval?.required && !!onRequestApproval;
   const copy = inputCopy(plan?.entity, plan?.op);
   const req = moneyRequirements(plan);
   const lines = [...inputChangeLines(plan), ...(extraLines ?? [])];
@@ -81,7 +87,7 @@ export function MoneyInputDialogView({ open, plan, form, setForm, busy, error, c
               </ConfirmTick>
             )}
             {plan.review_required && <p className="text-sm text-muted-foreground">{INPUT_TEXT.review}</p>}
-            {plan.approval?.required && <p className="text-sm font-medium">{INPUT_TEXT.approval}</p>}
+            {plan.approval?.required && <p className="text-sm font-medium">{reasonSentence(plan.approval.reasons)} It waits, unchanged, until another administrator approves it.</p>}
           </div>
         )}
 
@@ -93,7 +99,9 @@ export function MoneyInputDialogView({ open, plan, form, setForm, busy, error, c
 
         <div className="flex flex-wrap justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onClose} disabled={busy}>{INPUT_TEXT.keep}</Button>
-          <Button onClick={onSubmit} disabled={!canSubmit || busy}>{copy.submit}</Button>
+          {needsApproval
+            ? <Button onClick={onRequestApproval} disabled={!canRequestApproval || busy}>Send for approval</Button>
+            : <Button onClick={onSubmit} disabled={!canSubmit || busy}>{copy.submit}</Button>}
         </div>
       </DialogContent>
     </Dialog>
@@ -113,6 +121,8 @@ export function MoneyInputDialog({ guard, names, subject }: { guard: Guard; name
       canSubmit={guard.canSubmit}
       onClose={guard.close}
       onSubmit={guard.submit}
+      onRequestApproval={() => void guard.requestApproval()}
+      canRequestApproval={guard.canRequestApproval}
       names={names}
       subject={subject}
     />

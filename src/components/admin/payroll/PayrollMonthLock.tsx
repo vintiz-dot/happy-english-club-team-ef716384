@@ -32,6 +32,9 @@ import { Label } from "@/components/ui/label";
 import { Lock, LockOpen, TriangleAlert, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { dayjs } from "@/lib/date";
+import { approvalErrorText, isApprovalRequired, payApprovalParams, type PayAdjustmentRow } from "@/lib/approvals";
+import { requestApproval } from "@/components/admin/approvals/api";
+import { PendingApprovalBadge } from "@/components/admin/approvals/PendingApprovalBadge";
 
 export interface LiveStaffTotal {
   id: string;
@@ -149,6 +152,9 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Could not update the period"),
   });
 
+  // D4 step 4: the rows a refused carry would have inserted, waiting to be sent for approval
+  const [needsApproval, setNeedsApproval] = useState<PayAdjustmentRow[] | null>(null);
+  const [approvalSent, setApprovalSent] = useState(false);
   const carry = useMutation({
     mutationFn: async () => {
       const target = nextOpenMonth(month);
@@ -161,14 +167,37 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
         reason: `Correction to ${dayjs(`${month}-01`).format("MMM YYYY")} found after close`,
       }));
       const { error } = await supabase.from("payroll_adjustments").insert(rows);
-      if (error) throw error;
+      if (error) {
+        // D4 step 4: with approval switched on, carrying pay forward needs a
+        // second administrator (HC060). Nothing was inserted; offer the request.
+        if (isApprovalRequired(String((error as any).code ?? ""), (error as any).details)) {
+          setNeedsApproval(rows);
+          return null;
+        }
+        throw error;
+      }
       return target;
     },
     onSuccess: (target) => {
+      if (!target) return;
       toast.success(`Carried into ${dayjs(`${target}-01`).format("MMMM YYYY")}`);
       invalidate();
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Could not carry the correction"),
+  });
+
+  const askApproval = useMutation({
+    mutationFn: async () => {
+      if (!needsApproval) return null;
+      const r = await requestApproval("money", "carry_payroll_adjustments", payApprovalParams(needsApproval), null);
+      if ("error" in r) throw new Error(approvalErrorText(r.error.code, r.error.detail));
+      return r.data;
+    },
+    onSuccess: () => {
+      setApprovalSent(true);
+      toast.success("Sent for approval: the correction is carried when another administrator approves it.");
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Could not send it for approval"),
   });
 
   const earned = live.reduce((n, s) => n + s.totalEarned, 0);
@@ -266,12 +295,29 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
             {label} keeps what it was paid at. The difference is paid in{" "}
             {dayjs(`${nextOpenMonth(month)}-01`).format("MMMM YYYY")}.
           </p>
-          <Button size="sm" variant="outline" disabled={carry.isPending} onClick={() => carry.mutate()}>
-            <ArrowRightLeft className="mr-2 h-4 w-4" />
-            {carry.isPending ? "Carrying…" : `Carry into ${dayjs(`${nextOpenMonth(month)}-01`).format("MMM YYYY")}`}
-          </Button>
+          {needsApproval ? (
+            <div className="space-y-2" role="status">
+              <p className="text-hec-small text-hec-ink">
+                Carrying pay forward needs a second administrator. Nothing was carried.
+              </p>
+              {approvalSent ? (
+                <p className="text-hec-small text-hec-ink-soft">Sent. It is carried when another administrator approves it.</p>
+              ) : (
+                <Button size="sm" variant="outline" disabled={askApproval.isPending} onClick={() => askApproval.mutate()}>
+                  {askApproval.isPending ? "Sending…" : "Send for approval"}
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" disabled={carry.isPending} onClick={() => carry.mutate()}>
+              <ArrowRightLeft className="mr-2 h-4 w-4" />
+              {carry.isPending ? "Carrying…" : `Carry into ${dayjs(`${nextOpenMonth(month)}-01`).format("MMM YYYY")}`}
+            </Button>
+          )}
         </div>
       )}
+
+      {locked && <PendingApprovalBadge />}
 
       {locked && drift.length === 0 && (
         <p className="text-hec-small text-hec-ink-soft">
