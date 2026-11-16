@@ -86,3 +86,13 @@ DROP FUNCTION IF EXISTS public.lesson_resource_file_staff_can(text);
 DROP FUNCTION IF EXISTS public.exam_report_file_staff_may_upload(text);
 COMMIT;
 ```
+
+<!-- rollback F-05 -->
+```sql
+-- Removes the grade guard: homework_submissions back to its policies alone.
+-- THIS REOPENS F-05. No row is changed.
+BEGIN;
+DROP TRIGGER IF EXISTS homework_submissions_grade_guard ON public.homework_submissions;
+DROP FUNCTION IF EXISTS public.homework_submissions_grade_guard();
+COMMIT;
+```

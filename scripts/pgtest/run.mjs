@@ -411,6 +411,12 @@ const SUITES = [
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116094000_teacher_storage_by_class.sql"],
   },
   {
+    name: "homework grade (F-05)",
+    file: "s2-f05-homework-grade.test.mjs",
+    expect: 35,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116095000_homework_grade_staff_only.sql"],
+  },
+  {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
     migrations: ["20261022090000_assistant_absence_on_a_session.sql"],
