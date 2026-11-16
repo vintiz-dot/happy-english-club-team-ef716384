@@ -17,6 +17,7 @@ import { Suspense, lazy } from "react";
 import { lazyRetry } from "./lib/lazyRetry";
 import { AppLoader } from "./components/AppLoader";
 const AnnouncementRenderer = lazyRetry(() => import("./components/announcements/AnnouncementRenderer").then((m) => ({ default: m.AnnouncementRenderer })));
+const RecorderBoot = lazyRetry(() => import("./components/recorder/RecorderBoot").then((m) => ({ default: m.RecorderBoot })));
 import { AuthProvider } from "@/hooks/useAuth";
 import { IvoryScope } from "@/components/theme/IvoryScope";
 
@@ -102,6 +103,7 @@ function AppContent() {
             <IvoryScope>
             <ProfilePicker />
             <Suspense fallback={null}><AnnouncementRenderer /></Suspense>
+            <Suspense fallback={null}><RecorderBoot /></Suspense>
             <StartupGuard>
               <Suspense fallback={<AppLoader />}>
                 <Routes>

@@ -1,0 +1,16 @@
+Happy English ClubSố 12 ngõ 45 phố Ví Dụ, phường Mẫu, Hà Nội
+Hotline: 0900 000 000INVOICE #INV-2026-11-11111111ISSUE DATENov 13, 2026BILLING PERIODNovember 2026Bill To:Parents/Guardians of Nguyễn Thị Minh AnhGia đình Nguyễn Văn HùngDear Parents,This invoice includes all scheduled sessions for the month.Class BreakdownClassSessionsGrossNetMovers B – Thứ 3/561.200.000 ₫1.080.000 ₫Phonics Fun – Thứ 74700.000 ₫700.000 ₫Subtotal1.900.000 ₫1.780.000 ₫Sibling discount 10% (Movers B – Thứ 3/5)-120.000 ₫Current Month Charges1.780.000 ₫Prior Balance (Debt)-350.000 ₫Final Payable2.130.000 ₫Current Month Recorded Payment1.000.000 ₫Outstanding Balance1.130.000 ₫Session DetailsDateClassStatusUnit PriceLine Total03/11/2026Movers B – Thứ 3/5Present200.000 ₫200.000 ₫05/11/2026Movers B – Thứ 3/5Present200.000 ₫200.000 ₫07/11/2026Phonics Fun – Thứ 7Present175.000 ₫175.000 ₫10/11/2026Movers B – Thứ 3/5Absent200.000 ₫200.000 ₫12/11/2026Movers B – Thứ 3/5Present200.000 ₫200.000 ₫14/11/2026Phonics Fun – Thứ 7Present175.000 ₫175.000 ₫17/11/2026Movers B – Thứ 3/5Scheduled200.000 ₫200.000 ₫19/11/2026Movers B – Thứ 3/5Scheduled200.000 ₫200.000 ₫21/11/2026Phonics Fun – Thứ 7Scheduled175.000 ₫175.000 ₫28/11/2026Phonics Fun – Thứ 7Scheduled175.000 ₫175.000 ₫Payment Instructions:Bank Name: Ngân hàng TMCP Ví Dụ (Example Bank)Account Number: 0000 1234 5678Account Name: CONG TY TNHH HAPPY ENGLISH CLUB (VI DU)Số 12 ngõ 45 phố Ví Dụ, phường Mẫu, Hà Nội
+Hotline: 0900 000 000 • This is a computer-generated invoice.
+        @media print {
+          .invoice-print-view {
+            margin: 0;
+            padding: 20%;
+            padding-top: 20%;
+            max-width: 100%;
+          }
+          @page {
+            size: A4;
+            margin: 0;
+          }
+        }
+      

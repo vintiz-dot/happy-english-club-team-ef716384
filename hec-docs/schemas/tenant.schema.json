@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hec-docs.invalid/schemas/tenant.schema.json",
+  "title": "HEC Docs tenant theme",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "locale", "timeZone", "logo", "tagline", "footer", "qr", "signOff", "encouragement", "reassurance", "tokens"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "subtitle": { "type": "string", "maxLength": 80 },
+    "locale": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" },
+    "timeZone": { "type": "string", "minLength": 1 },
+    "logo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "alt"],
+      "properties": {
+        "file": { "type": "string", "pattern": "^[\\w./ -]+\\.(svg|png)$" },
+        "alt": { "type": "string", "minLength": 1 }
+      }
+    },
+    "tagline": { "type": "string", "maxLength": 120 },
+    "footer": { "type": "string", "maxLength": 160 },
+    "qr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "label"],
+      "properties": {
+        "target": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "label": { "type": "string", "maxLength": 60 }
+      }
+    },
+    "signOff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "role", "closing"],
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "closing": { "type": "string" },
+        "closingVi": { "type": "string" }
+      }
+    },
+    "encouragement": { "type": "array", "minItems": 1, "items": { "type": "string", "maxLength": 120 } },
+    "reassurance": { "type": "object", "additionalProperties": { "type": "string", "maxLength": 240 } },
+    "tokens": { "type": "object" }
+  }
+}

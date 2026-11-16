@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hec-docs.invalid/schemas/access-card/1.0.0",
+  "title": "Access card input",
+  "description": "Mirrors AccessCardDocumentProps (the manage-student-access issue response plus the first class and the claim URL).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["studentName", "loginEmail", "code", "expiresAt", "claimUrl"],
+  "properties": {
+    "variant": { "enum": ["standard", "bilingual-split"] },
+    "studentName": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "className": { "type": ["string", "null"], "maxLength": 200, "description": "The student's first class; omitted when none." },
+    "siblings": { "type": "array", "maxItems": 12, "items": { "type": "string", "minLength": 1, "maxLength": 200 }, "description": "Other students covered by this login." },
+    "loginEmail": { "type": "string", "minLength": 1, "maxLength": 254 },
+    "code": { "type": "string", "minLength": 1, "maxLength": 32, "description": "The one-time code, printed as given." },
+    "expiresAt": { "type": "string", "format": "date-time", "description": "ISO 8601; printed en-US as e.g. Nov 20, 2026, 10:30 AM in Asia/Ho_Chi_Minh." },
+    "claimUrl": { "type": "string", "minLength": 1, "maxLength": 500, "description": "Where the family enters the code (origin + /claim)." }
+  }
+}

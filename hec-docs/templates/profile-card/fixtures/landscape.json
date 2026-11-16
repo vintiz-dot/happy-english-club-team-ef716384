@@ -1,0 +1,13 @@
+{
+  "$comment": "Same made-up values as qa/before/share-card. The original avatar path is an app asset, so none is embedded: initials show.",
+  "before": "share-card",
+  "generatedAt": "2026-11-13T10:00:00+07:00",
+  "data": {
+    "variant": "landscape",
+    "name": "Nguyễn Thị Minh Anh",
+    "level": 5,
+    "totalXp": 1240,
+    "currentStreak": 12,
+    "statusMessage": "Mình thích học tiếng Anh! I love English 📚"
+  }
+}

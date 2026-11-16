@@ -1,0 +1,32 @@
+Happy English Club
+
+hanoienglish.com
+
+Access Card
+
+STUDENT
+
+Nguyễn Thị Minh Anh
+
+Movers B – Thứ 3/5
+
+This login also covers: Nguyễn Đức Bảo
+
+YOUR LOGIN
+
+minhanh.nguyen@hec.example.test
+
+ONE-TIME CODE
+
+K7QM-4XPA
+
+1. Go to http://127.0.0.1:5199/claim
+2. Enter the one-time code above
+3. Choose your own password — then sign in with your login
+
+Truy cập http://127.0.0.1:5199/claim, nhập mã một lần ở trên, rồi tự đặt mật khẩu của bạn. Mã chỉ dùng được một lần.
+
+!
+
+Keep this card private — it works once and expires on Nov 20, 2026, 10:30 AM. The school never knows your password. If you lose it, ask us for a new card.
+Giữ riêng thẻ này. Mã dùng một lần và hết hạn ngày Nov 20, 2026, 10:30 AM.

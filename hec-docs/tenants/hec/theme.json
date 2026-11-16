@@ -1,0 +1,37 @@
+{
+  "$schema": "../../schemas/tenant.schema.json",
+  "id": "hec",
+  "name": "Happy English Club",
+  "subtitle": "Câu lạc bộ Tiếng Anh",
+  "locale": "en-GB",
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "logo": {
+    "file": "assets/logo.svg",
+    "alt": "Happy English Club logo"
+  },
+  "tagline": "Learning, an endless journey to perfection",
+  "footer": "Happy English Club · hanoienglish.com",
+  "qr": {
+    "target": "https://hanoienglish.com",
+    "label": "hanoienglish.com"
+  },
+  "signOff": {
+    "name": "Teacher Victor",
+    "role": "Happy English Club",
+    "closing": "With warm regards,",
+    "closingVi": "Thân mến,"
+  },
+  "encouragement": [
+    "Every lesson is a step forward.",
+    "Small steps every week add up to big progress.",
+    "Curiosity is the best study habit.",
+    "Mistakes are how good English is made.",
+    "Keep going: confidence grows with practice.",
+    "Proud of the effort you bring to every class."
+  ],
+  "reassurance": {
+    "tuition": "Questions about this bill? Reply to us on Zalo or ask at the front desk; we are always happy to help.",
+    "report": "This report celebrates progress and points to next steps. Your child's teachers are glad to talk it through with you."
+  },
+  "tokens": {}
+}

@@ -1,0 +1,30 @@
+Happy English Club
+
+Hanoi English · hanoienglish.com
+
+Account Statement
+
+Nguyễn Thị Minh Anh · Aug 2026 → Nov 2026
+
+August 2026 to November 2026
+
+Month	Sessions	Gross	Discount	Charged	Paid	Balance
+Aug 2026	8	1.600.000 ₫	—	1.600.000 ₫	1.600.000 ₫	0 ₫
+Sep 2026	7 (+1 exc.)	1.400.000 ₫	−140.000 ₫	1.260.000 ₫	1.000.000 ₫	−260.000 ₫
+Oct 2026	9	1.800.000 ₫	−180.000 ₫	1.620.000 ₫	1.500.000 ₫	−380.000 ₫
+Nov 2026	10	1.900.000 ₫	−120.000 ₫	1.780.000 ₫	1.000.000 ₫	−1.160.000 ₫
+Total				6.260.000 ₫	5.100.000 ₫	−1.160.000 ₫
+
+Balance is cumulative. A positive figure means the account is in credit; a negative figure is the amount outstanding at the end of that month.
+
+Payments received
+Paid on	Entered	Method	Recorded by	Amount
+5 Aug 2026	5 Aug 2026	Bank transfer	Phạm Quỳnh Trang	1.600.000 ₫
+8 Sep 2026	9 Sep 2026	Cash	Đỗ Minh Khôi	1.000.000 ₫
+—	12 Oct 2026	Bank transfer	Not recorded	1.500.000 ₫
+15 Oct 2026	15 Oct 2026	—	Phạm Quỳnh Trang	50.000 ₫
+6 Nov 2026	7 Nov 2026	Bank transfer	Đỗ Minh Khôi	1.000.000 ₫
+
+Some entries predate this system’s record of who entered them and are shown as “not recorded”.
+
+Happy English Club · hanoienglish.com · statement for Nguyễn Thị Minh Anh

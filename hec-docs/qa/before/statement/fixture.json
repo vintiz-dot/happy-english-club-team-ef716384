@@ -1,0 +1,275 @@
+{
+  "_note": "Made-up. A StudentAudit (shape of the student-audit function / useStudentAudit) as StudentStatementPrint receives it from ReportsTab.print().",
+  "audit": {
+    "student": {
+      "id": "11111111-1111-4111-8111-000000000001",
+      "name": "Nguyễn Thị Minh Anh",
+      "familyId": "33333333-3333-4333-8333-000000000001"
+    },
+    "months": [
+      {
+        "month": "2026-08",
+        "invoiceId": "inv-2026-08",
+        "invoiceNumber": "INV-2026-08-11111111",
+        "source": "snapshot",
+        "closedAt": "2026-08-28T17:00:00+07:00",
+        "closedBy": "88888888-8888-4888-8888-000000000001",
+        "baseAmount": 1600000,
+        "discountAmount": 0,
+        "charged": 1600000,
+        "paid": 1600000,
+        "carryInCredit": 0,
+        "carryInDebt": 0,
+        "carryOutCredit": 0,
+        "carryOutDebt": 0,
+        "status": "paid",
+        "confirmationStatus": "confirmed",
+        "confirmedAt": "2026-08-02T10:00:00+07:00",
+        "confirmedBy": "88888888-8888-4888-8888-000000000001",
+        "updatedAt": "2026-08-20T10:00:00+07:00",
+        "updatedBy": "88888888-8888-4888-8888-000000000002",
+        "classes": [
+          {
+            "classId": "22222222-2222-4222-8222-0000000000a1",
+            "className": "Movers B – Thứ 3/5",
+            "sessionsCountStored": 8,
+            "amount": 1600000
+          }
+        ],
+        "attendance": {
+          "present": 7,
+          "absent": 1,
+          "late": 0,
+          "excused": 0,
+          "billedSessions": 8,
+          "rows": []
+        }
+      },
+      {
+        "month": "2026-09",
+        "invoiceId": "inv-2026-09",
+        "invoiceNumber": "INV-2026-09-11111111",
+        "source": "snapshot",
+        "closedAt": "2026-09-28T17:00:00+07:00",
+        "closedBy": "88888888-8888-4888-8888-000000000001",
+        "baseAmount": 1400000,
+        "discountAmount": 140000,
+        "charged": 1260000,
+        "paid": 1000000,
+        "carryInCredit": 0,
+        "carryInDebt": 0,
+        "carryOutCredit": 0,
+        "carryOutDebt": 260000,
+        "status": "partial",
+        "confirmationStatus": "confirmed",
+        "confirmedAt": "2026-09-02T10:00:00+07:00",
+        "confirmedBy": "88888888-8888-4888-8888-000000000001",
+        "updatedAt": "2026-09-20T10:00:00+07:00",
+        "updatedBy": "88888888-8888-4888-8888-000000000002",
+        "classes": [
+          {
+            "classId": "22222222-2222-4222-8222-0000000000a1",
+            "className": "Movers B – Thứ 3/5",
+            "sessionsCountStored": 7,
+            "amount": 1400000
+          }
+        ],
+        "attendance": {
+          "present": 6,
+          "absent": 1,
+          "late": 0,
+          "excused": 1,
+          "billedSessions": 7,
+          "rows": []
+        }
+      },
+      {
+        "month": "2026-10",
+        "invoiceId": "inv-2026-10",
+        "invoiceNumber": "INV-2026-10-11111111",
+        "source": "snapshot",
+        "closedAt": "2026-10-28T17:00:00+07:00",
+        "closedBy": "88888888-8888-4888-8888-000000000001",
+        "baseAmount": 1800000,
+        "discountAmount": 180000,
+        "charged": 1620000,
+        "paid": 1500000,
+        "carryInCredit": 0,
+        "carryInDebt": 260000,
+        "carryOutCredit": 0,
+        "carryOutDebt": 380000,
+        "status": "partial",
+        "confirmationStatus": "confirmed",
+        "confirmedAt": "2026-10-02T10:00:00+07:00",
+        "confirmedBy": "88888888-8888-4888-8888-000000000001",
+        "updatedAt": "2026-10-20T10:00:00+07:00",
+        "updatedBy": "88888888-8888-4888-8888-000000000002",
+        "classes": [
+          {
+            "classId": "22222222-2222-4222-8222-0000000000a1",
+            "className": "Movers B – Thứ 3/5",
+            "sessionsCountStored": 9,
+            "amount": 1800000
+          }
+        ],
+        "attendance": {
+          "present": 8,
+          "absent": 1,
+          "late": 0,
+          "excused": 0,
+          "billedSessions": 9,
+          "rows": []
+        }
+      },
+      {
+        "month": "2026-11",
+        "invoiceId": "inv-2026-11",
+        "invoiceNumber": "INV-2026-11-11111111",
+        "source": "invoice",
+        "closedAt": null,
+        "closedBy": null,
+        "baseAmount": 1900000,
+        "discountAmount": 120000,
+        "charged": 1780000,
+        "paid": 1000000,
+        "carryInCredit": 0,
+        "carryInDebt": 380000,
+        "carryOutCredit": 0,
+        "carryOutDebt": 1160000,
+        "status": "partial",
+        "confirmationStatus": "confirmed",
+        "confirmedAt": "2026-11-02T10:00:00+07:00",
+        "confirmedBy": "88888888-8888-4888-8888-000000000001",
+        "updatedAt": "2026-11-20T10:00:00+07:00",
+        "updatedBy": "88888888-8888-4888-8888-000000000002",
+        "classes": [
+          {
+            "classId": "22222222-2222-4222-8222-0000000000a1",
+            "className": "Movers B – Thứ 3/5",
+            "sessionsCountStored": 10,
+            "amount": 1900000
+          }
+        ],
+        "attendance": {
+          "present": 9,
+          "absent": 1,
+          "late": 0,
+          "excused": 0,
+          "billedSessions": 10,
+          "rows": []
+        }
+      }
+    ],
+    "events": [
+      {
+        "id": "ev1",
+        "kind": "payment",
+        "label": "Payment",
+        "amount": 1600000,
+        "occurredAt": "2026-08-05T09:00:00+07:00",
+        "recordedAt": "2026-08-05T09:10:00+07:00",
+        "month": "2026-08",
+        "method": "Bank transfer",
+        "memo": null,
+        "actorId": "88888888-8888-4888-8888-000000000001",
+        "provenance": "payments",
+        "exact": true
+      },
+      {
+        "id": "ev2",
+        "kind": "payment",
+        "label": "Payment",
+        "amount": 1000000,
+        "occurredAt": "2026-09-08T18:30:00+07:00",
+        "recordedAt": "2026-09-09T08:00:00+07:00",
+        "month": "2026-09",
+        "method": "Cash",
+        "memo": "Mẹ nộp tại quầy",
+        "actorId": "88888888-8888-4888-8888-000000000002",
+        "provenance": "payments",
+        "exact": true
+      },
+      {
+        "id": "ev3",
+        "kind": "payment",
+        "label": "Payment",
+        "amount": 1500000,
+        "occurredAt": null,
+        "recordedAt": "2026-10-12T11:00:00+07:00",
+        "month": "2026-10",
+        "method": "Bank transfer",
+        "memo": null,
+        "actorId": null,
+        "provenance": "ledger",
+        "exact": false
+      },
+      {
+        "id": "ev4",
+        "kind": "correction",
+        "label": "Correction",
+        "amount": -50000,
+        "occurredAt": "2026-10-15T10:00:00+07:00",
+        "recordedAt": "2026-10-15T10:05:00+07:00",
+        "month": "2026-10",
+        "method": null,
+        "memo": "Duplicate fee reversed",
+        "actorId": "88888888-8888-4888-8888-000000000001",
+        "provenance": "ledger",
+        "exact": true
+      },
+      {
+        "id": "ev5",
+        "kind": "payment",
+        "label": "Payment",
+        "amount": 1000000,
+        "occurredAt": "2026-11-06T19:45:00+07:00",
+        "recordedAt": "2026-11-07T08:30:00+07:00",
+        "month": "2026-11",
+        "method": "Bank transfer",
+        "memo": null,
+        "actorId": "88888888-8888-4888-8888-000000000002",
+        "provenance": "payments",
+        "exact": true
+      },
+      {
+        "id": "ev6",
+        "kind": "confirmation",
+        "label": "Confirmed",
+        "amount": null,
+        "occurredAt": null,
+        "recordedAt": "2026-11-02T10:00:00+07:00",
+        "month": "2026-11",
+        "method": null,
+        "memo": null,
+        "actorId": "88888888-8888-4888-8888-000000000001",
+        "provenance": "audit_log",
+        "exact": true
+      }
+    ],
+    "actors": {
+      "88888888-8888-4888-8888-000000000001": {
+        "name": "Phạm Quỳnh Trang",
+        "email": "trang.admin@hec.example.test",
+        "known": true
+      },
+      "88888888-8888-4888-8888-000000000002": {
+        "name": "Đỗ Minh Khôi",
+        "email": "khoi.desk@hec.example.test",
+        "known": true
+      }
+    },
+    "totals": {
+      "charged": 6260000,
+      "paid": 5100000,
+      "balance": -1160000,
+      "outstanding": 1160000,
+      "credit": 0,
+      "months": 4
+    },
+    "caveats": {
+      "scalarPayments": true,
+      "auditOnlyEvents": 1,
+      "unattributedEvents": 1
+    }
+  }
+}

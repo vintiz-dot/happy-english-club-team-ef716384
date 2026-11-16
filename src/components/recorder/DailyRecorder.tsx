@@ -19,16 +19,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
-  boardAdd, boardClear, boardShow, clock, hanoiDate, type BoardEntry, hhmm, lessonHeadline, lessonPhase, lessonTimes, nextAfter, pickLesson, stopConfirmText,
+  boardAdd, boardClear, boardForScreen, clock, hanoiDate, type BoardEntry, hhmm, lessonHeadline, lessonPhase, pickLesson, stopConfirmText,
   trackName, uploadMbps, uploadSpeedLine, uploadStatus, addMinutes, type LessonLike,
 } from "@/lib/recorderUi";
 import type { ChunkMeta, DeviceProfile, HeldAudio, Level, ProfileResolution, RecorderError, RecorderState, TrackRole, UploadProgress, MarkerKind } from "@/lib/recorder";
 import { useRecorderDeps } from "./RecorderDeps";
 import type { RecorderLike } from "./engine";
-import { fetchClassSwitch, fetchEnrolled, fetchRecorderSettings, fetchTodayLessons } from "./data";
+import { dayDeps, fetchClassSwitch, fetchEnrolled, fetchRecorderSettings, fetchTodayLessons } from "./data";
 import { LevelMeter, MicTick, Notice, Status } from "./pieces";
 import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
-import { adopt, attachScreen, CAPTURING_STATES, detachScreen, sessionFor, setLessonLabel } from "./session";
+import { adopt, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
 
 // `stalled` is a capturing state: Stop stays, the screen must not be left (C2 review 2, item 1).
 const CAPTURING: RecorderState[] = CAPTURING_STATES;   // one list, shared with the floating bar (tested)
@@ -77,12 +77,15 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const [startingSince, setStartingSince] = useState<number | null>(null);
   const [notDurable, setNotDurable] = useState(false);
   // C3-b: the page prepares by itself (uploads of earlier audio resume without a click); arming waits for the click.
-  const [clicked, setClicked] = useState(false);
+  // R4-2: the click is kept for the day (session.ts readyFor): it survives leaving the page and a reload,
+  // and the SESSION arms each lesson, wherever the teacher is in the app.
+  const [clicked, setClicked] = useState(() => !!readyFor(userId, hanoiDate(now())));
+  const [soundOk, setSoundOk] = useState(true);
   const autoPrep = useRef(false);
+  const autoDone = useRef(false);
   const [unplugged, setUnplugged] = useState<Set<TrackRole>>(new Set());
   const [lost, setLost] = useState<Set<TrackRole>>(new Set());
   const [stopAsked, setStopAsked] = useState<string | null>(null);
-  const [armedFor, setArmedFor] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [marks, setMarks] = useState<MarkerNote[]>([]);
   const [speed, setSpeed] = useState<number | null>(null);
@@ -134,6 +137,8 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     const r = { on: ((k: any, fn: any) => { offs.current.push(r0.on(k, fn)); }) as unknown as RecorderLike["on"] };
     r.on("state", ({ state: s }) => {
       setState(s);
+      // A new lesson armed (by the session): this screen's notes of the last one go.
+      if (s === "armed") { setStartedAt(null); setMarks([]); setUpload(null); setUnplugged(new Set()); setLost(new Set()); setStopAsked(null); setBoard([]); setClipping({ teacher: false, room: false }); }
       if (s === "recording" || s === "starting") setStartedAt((v) => v ?? now());
       setStartingSince((v) => (s === "starting" ? v ?? now() : null));
       if (s === "recording") clearErrors(["capture_stalled", "server_unavailable"]);
@@ -175,7 +180,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
 
   const ready = async (byClick = true) => {
     setBusy(true);
-    if (byClick) { setBoard([]); setClicked(true); }
+    if (byClick) { setBoard([]); setClicked(true); pressReady(userId, today); }
     try {
       let r = rec.current;
       if (!r) {
@@ -187,6 +192,9 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
       }
       const p = await r.prepare();
       setDevices(p.devices);
+      setSoundOk(p.contextRunning);
+      setPrepared({ contextRunning: p.contextRunning, devicesOk: p.devices.status === "ok" });
+      startDay(dayDeps(client, userId, now));
       setNotDurable(r.durable === false);
       await r.recover();
       setStuck((await r.heldAudio().catch(() => [] as HeldAudio[])).filter((h) => h.overLimit || !!h.deleteAt));
@@ -196,25 +204,9 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     } finally { setBusy(false); }
   };
 
-  // Arm the lesson once its arm window opens (the server refuses anything earlier anyway).
+  // R4-2: arming lives in the session (session.ts armTick), not in this page.
   const phase = lesson ? lessonPhase(lesson, tick, w) : null;
   const switchOn = switchQ.data === true;
-  const devicesOk = devices?.status === "ok";
-  useEffect(() => {
-    const r = rec.current;
-    // Armed only after the teacher's "Ready for today" (the page also prepares by itself, for uploads).
-    if (!r || !lesson || !switchOn || !devicesOk || busy || notDurable || !clicked) return;
-    if (armedFor === lesson.sessionId) return;
-    if (phase !== "arming" && phase !== "capturing") return;
-    // `error` (the server refused to start) may arm the NEXT lesson; armedFor stops a retry of this one.
-    if (r.state !== "ready" && r.state !== "complete" && r.state !== "abandoned" && r.state !== "error") return;
-    setArmedFor(lesson.sessionId);
-    const next = nextAfter(lesson, lessons.data ?? [], w);
-    const stopAt = next ? lessonTimes(next, w).start : undefined;
-    setStartedAt(null); setMarks([]); setUpload(null); setUnplugged(new Set()); setLost(new Set()); setStopAsked(null); setBoard([]); setClipping({ teacher: false, room: false });
-    r.arm({ sessionId: lesson.sessionId, classId: lesson.classId, className: lesson.className, date: lesson.date, startTime: lesson.startTime, endTime: lesson.endTime, status: lesson.status ?? undefined }, { stopAt })
-      .catch((e: RecorderError) => showError(e));
-  }, [lesson, switchOn, devicesOk, phase, armedFor, busy, state, notDurable, clicked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addMarker = async (kind: MarkerKind, text: string, studentId?: string) => {
     const r = rec.current;
@@ -235,7 +227,8 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   // earlier audio need no click and resume even on a day without a lesson);
   // arming still waits for "Ready for today".
   useEffect(() => {
-    if (rec.current || !profile || lessons.isLoading) return;
+    if (autoDone.current || !profile || lessons.isLoading) return;
+    autoDone.current = true;
     autoPrep.current = true;
     void ready(false).finally(() => { autoPrep.current = false; });
   }, [profile, lessons.isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -255,7 +248,8 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
       bothMicsGone={unplugged.size + lost.size >= 2} onStop={() => setConfirmStop(true)} />
   ) : null;
 
-  const shown = boardShow(board, tick);
+  // The start failure is said once, by the notice below, on the error screen (C2 review 5).
+  const shown = boardForScreen(board, tick, state);
   const errorBox = shown.length ? (
     <div className="space-y-3">
       {shown.map((e) => (
@@ -342,6 +336,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   }
 
   const switchOff = switchQ.isSuccess && !switchOn;
+  const ss = sessionState();
 
   return (
     <div className={cn("space-y-5", capturing && "pb-28")}>
@@ -382,21 +377,34 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
             ) : null}
           </section>
 
-          {!clicked && !capturing && !SAVING.includes(state) ? (
+          {(!clicked || !soundOk) && !capturing && !SAVING.includes(state) ? (
             <div className="space-y-2">
               <Button size="lg" className="min-h-14 w-full sm:w-auto text-lg px-8" onClick={() => void ready()} disabled={busy}>
                 {busy ? <Loader2 className="h-5 w-5 mr-2 motion-safe:animate-spin" aria-hidden /> : <Mic className="h-5 w-5 mr-2" aria-hidden />}
-                Ready for today
+                {clicked ? "Allow sound" : "Ready for today"}
               </Button>
-              <p className="text-sm text-muted-foreground">One click lets the browser use sound. Then leave this page open; recording starts by itself.</p>
+              <p className="text-sm text-muted-foreground">{clicked
+                ? "The browser has not allowed sound yet: one more click lets it. Without it the next lesson is not recorded."
+                : "One click lets the browser use sound. Then recording starts by itself for each of today's lessons, on any page of this tab."}</p>
             </div>
           ) : null}
 
-          {clicked && (state === "ready" || state === "armed") && lesson ? (
+          {/* R5-1: what the session found while arming (it arms on any page; the page only reads it, every second). */}
+          {ss?.refusal ? (
+            <Notice tone="error" title={`This lesson will NOT be recorded: ${ss.refusal.reason}`} role="alert">
+              {`${ss.refusal.className}: the school's server refused to get it ready. Use the backup recorder for this lesson.`}
+            </Notice>
+          ) : null}
+          {!ss?.refusal && ss?.notArmed && state === "ready" ? (
+            <Notice tone="warn" title="Not armed yet - retrying" role="status">
+              {`The recorder could not get the lesson ready (${ss.notArmed}). It keeps trying by itself. If this stays until the lesson starts, use the backup recorder.`}
+            </Notice>
+          ) : null}
+          {clicked && (state === "ready" || state === "armed") && lesson && !ss?.refusal && !(ss?.notArmed && state === "ready") ? (
             <Status
               live
               line={{ tone: "ok", text: state === "armed"
-                ? `Ready. Recording starts by itself at ${addMinutes(lesson.startTime, -w.preRoll)}. Keep this page open and the laptop plugged in.`
+                ? `Armed. Recording starts by itself at ${addMinutes(lesson.startTime, -w.preRoll)}. You can open other pages; keep this tab open and the laptop plugged in.`
                 : phase === "later" ? `Ready. The recorder gets this lesson ready at ${addMinutes(lesson.startTime, -w.armWindow)}.` : "Getting the lesson ready..." }}
             />
           ) : null}

@@ -161,6 +161,15 @@ const FINAL_START_REFUSALS: ServerRefusal[] = ["window_closed", "switch_off", "c
 /** A stated "this lesson must not be recorded": what was captured before it is deleted at once (R3-M2). */
 const DELETE_ON_NO: ServerRefusal[] = ["switch_off", "consent_missing", "session_canceled", "not_teacher"];
 /** Stop refusals the server actually stated: final. Anything else is retried (B4). */
+/**
+ * C2 round 5 (review 4 minor): the server's own abandon reasons that mean "the
+ * school said no" - exactly the codes its abandon paths write
+ * (`set_config('recorder.server_write', 'abandon:<reason>')` in the migration;
+ * a test reads them from there). Audio the server did not take is purged.
+ */
+export const SAID_NO_ABANDON_REASONS: string[] = ["switch_off", "session_canceled"];
+/** C2 round 5 (R4-1): the only answers to the pre-start statement that end a recording - texts the server STATES. */
+export const FINAL_PRE_START_REFUSALS: ServerRefusal[] = ["pre_start_refused", "recording_closed", "not_your_recording"];
 const FINAL_STOP_REFUSALS: ServerRefusal[] = ["window_closed", "recording_closed", "not_your_recording", "no_longer_teaching"];
 
 export class Recorder {
@@ -1092,26 +1101,39 @@ export class Recorder {
   private async sendPreStart(rec: LocalRecording): Promise<boolean> {
     if (rec.preStartAcked || !rec.preStartMs) return true;
     if (!this.o.backend.setPreStart) { rec.preStartAcked = true; await this.saveRec(rec); return true; }
+    // Given up already (a stated refusal): never asked again, never said twice.
+    if (rec.phase === "abandoned") return false;
+    // R4-1: an answer that was not a stated refusal is retried with backoff.
+    if ((rec.preStartNextAt ?? 0) > this.serverNow()) return false;
     try {
       await this.o.backend.setPreStart(rec.id, rec.preStartMs);
       rec.preStartAcked = true;
     } catch (e) {
       const err = toRecorderError(e);
+      if (err.code === "not_signed_in") await this.refreshAuth();
       const row = err.code === "offline" ? null : await this.o.backend.getRecording(rec.id).catch(() => null);
       if (row && (row as any).pre_start_ms === rec.preStartMs) rec.preStartAcked = true;
       else {
-        // R3-B1: a statement the server REFUSES (not a network failure) is not
-        // retried for ever with the recording shown as running: after three,
-        // this recording is said to be impossible to send, capture ends, the
-        // row is given up, the audio stays listed on the laptop.
-        if (err.code === "server_refused" && !err.retryable) rec.preStartRefusals = (rec.preStartRefusals ?? 0) + 1;
-        if ((rec.preStartRefusals ?? 0) >= 3) { await this.preStartImpossible(rec, err.message); return false; }
+        // C2 round 5 (R4-1): ONLY a refusal the server STATED ends this
+        // recording: the trigger's own pre-start text, or the server saying
+        // the row takes no more audio / is not this teacher's. A 429, "no
+        // rows" while the session is briefly anonymous, a timeout, anything
+        // unclassified: capture carries on, every chunk stays on this laptop,
+        // and the statement is retried with backoff for as long as it takes.
+        const stated = err.code === "server_refused" && !!err.refusal && FINAL_PRE_START_REFUSALS.includes(err.refusal);
+        if (stated) { await this.preStartImpossible(rec, err.message); return false; }
+        rec.preStartAttempts = (rec.preStartAttempts ?? 0) + 1;
+        rec.preStartNextAt = this.serverNow() + backoffDelay(rec.preStartAttempts, { maxMs: 60000 });
         await this.saveRec(rec);
-        if (this.active?.rec.id === rec.id) this.active.rec.preStartRefusals = rec.preStartRefusals;
-        this.events.emit("error", err);
+        if (this.active?.rec.id === rec.id) { this.active.rec.preStartAttempts = rec.preStartAttempts; this.active.rec.preStartNextAt = rec.preStartNextAt; }
+        if (err.code === "offline") this.events.emit("error", err);
+        else this.events.emit("error", new RecorderError("server_unavailable",
+          `The school server has not yet confirmed when this recording started (${err.message}). It is asked again; recording carries on and every piece is kept on this laptop.`,
+          { retryable: true, detail: { attempts: rec.preStartAttempts } }));
         return false;
       }
     }
+    rec.preStartAttempts = 0; rec.preStartNextAt = 0;
     await this.saveRec(rec);
     // Minor (review 3): the in-memory copy learns it too, or the next save writes `false` back.
     if (this.active?.rec.id === rec.id) {
@@ -1136,13 +1158,13 @@ export class Recorder {
       this.releaseWakeLock();
     }
     const fresh = a?.rec.id === rec.id ? a.rec : ((await this.o.store.getRecording(rec.id)) ?? rec);
-    fresh.preStartRefusals = rec.preStartRefusals;
     fresh.phase = "abandoned"; fresh.stopPending = false;
+    fresh.abandonedAt = fresh.abandonedAt ?? this.o.now();
     await this.o.backend.abandon(rec.id, "the server would not take the audio captured before its start").catch(() => null);
     fresh.serverStatus = "abandoned";
     await this.saveRec(fresh);
     const kept = Math.round((await this.o.store.listChunks(rec.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
-    this.events.emit("error", new RecorderError("start_failed", `This recording CANNOT be sent to the school server (${why}). Recording has stopped; the ${kept} s recorded are kept on this laptop and listed there.`, { detail: { keptMs: kept * 1000 } }));
+    this.events.emit("error", new RecorderError("start_failed", `This recording CANNOT be sent to the school server: the server refused it (${why}). Recording has stopped; use the backup recorder for this lesson. The ${kept} s recorded are kept on this laptop for ${Math.round(this.o.abandonedKeepMs / 86_400_000)} days and listed there.`, { detail: { keptMs: kept * 1000 } }));
     if (a?.rec.id === rec.id) { a.rec.phase = "abandoned"; this.setState("error"); }
   }
 
@@ -1807,7 +1829,7 @@ export class Recorder {
       await this.saveRec(a.rec);
       // R3-M2: the server gave it up because the school said no (switch-off,
       // consent, cancellation): nothing it did not take may stay here.
-      if (/switch|consent|cancel/i.test(row.abandon_reason ?? "")) {
+      if (SAID_NO_ABANDON_REASONS.includes(row.abandon_reason ?? "")) {
         await this.o.store.purgeRecording(a.rec.id, { allowUnconfirmed: true }).catch(() => null);
         this.events.emit("error", new RecorderError("start_failed", "The school switched recording off for this lesson: whatever was not on the server yet has been DELETED from this laptop.", { refusal: "switch_off", detail: { keptMs: 0 } }));
       }

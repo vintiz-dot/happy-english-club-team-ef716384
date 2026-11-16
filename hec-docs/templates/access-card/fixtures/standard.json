@@ -1,0 +1,17 @@
+{
+  "$comment": "Same made-up values as qa/before/access-card.",
+  "before": "access-card",
+  "generatedAt": "2026-11-13T10:00:00+07:00",
+  "data": {
+    "variant": "standard",
+    "studentName": "Nguyễn Thị Minh Anh",
+    "className": "Movers B – Thứ 3/5",
+    "siblings": [
+      "Nguyễn Đức Bảo"
+    ],
+    "loginEmail": "minhanh.nguyen@hec.example.test",
+    "code": "K7QM-4XPA",
+    "expiresAt": "2026-11-20T10:30:00+07:00",
+    "claimUrl": "http://127.0.0.1:5199/claim"
+  }
+}

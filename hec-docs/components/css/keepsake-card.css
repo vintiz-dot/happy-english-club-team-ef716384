@@ -1,0 +1,51 @@
+/* keepsake-card: a light, fixed-size card for sharing as an image. Ivory
+   paper, an inset gold frame, a short yellow bar. Used inside [data-capture]. */
+.keepsake {
+  position: relative; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--color-paper); color: var(--color-ink);
+  box-sizing: border-box;
+}
+.keepsake::before {
+  content: ""; position: absolute; inset: 7px; pointer-events: none;
+  border: var(--border-hairline) solid var(--color-gold);
+}
+.keepsake__main { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+.keepsake__text { min-width: 0; }
+.keepsake__name {
+  font-family: var(--font-family-display); font-weight: var(--font-weight-bold);
+  font-size: var(--size-2xl); line-height: 1.05; margin: 0; color: var(--color-ink);
+  overflow-wrap: anywhere; text-wrap: balance;
+}
+.keepsake__bar { width: 28px; height: 3px; background: var(--color-accent-deep); margin: 6px 0; }
+.keepsake__status { margin: 0; font-style: italic; font-size: var(--size-sm); line-height: 1.35; color: var(--color-ink-soft); overflow-wrap: anywhere; }
+.keepsake__rank { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-top: 8px; }
+.keepsake__title { font-weight: var(--font-weight-semibold); font-size: var(--size-base); color: var(--color-ink); }
+.keepsake__lv { font-size: var(--size-xs); font-weight: var(--font-weight-semibold); letter-spacing: 0.04em; color: var(--color-gold-ink); font-variant-numeric: tabular-nums; border: var(--border-hairline) solid var(--color-gold); border-radius: 99pt; padding: 0 6px; }
+.keepsake__stats { border-top: var(--border-hairline) solid var(--color-gold); padding-top: 10px; }
+.keepsake__foot { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+.keepsake__logo { width: 24px; height: auto; display: block; }
+.keepsake__wm { font-family: var(--font-family-display); font-weight: var(--font-weight-semibold); font-size: var(--size-base); letter-spacing: 0.06em; color: var(--color-ink); line-height: 1.1; }
+.keepsake__tag { font-family: var(--font-family-display); font-style: italic; font-weight: var(--font-weight-medium); font-size: var(--size-xs); color: var(--color-ink-soft); line-height: 1.2; }
+.keepsake__brand { text-align: left; }
+
+.keepsake--landscape { width: 388px; height: 304px; padding: 22px 24px 18px; }
+.keepsake--landscape .keepsake__main { gap: 14px; align-items: center; }
+.keepsake--landscape .keepsake__name { font-size: var(--size-xl); }
+.keepsake--landscape .keepsake__stats { margin-top: 10px; }
+
+.keepsake--square { width: 540px; height: 540px; padding: 30px 40px 26px; }
+.keepsake--square .keepsake__main { flex-direction: column; align-items: center; text-align: center; gap: 10px; justify-content: center; }
+.keepsake--square .keepsake__name { font-size: 28pt; }
+.keepsake--square .keepsake__bar { margin: 8px auto; width: 40px; height: 4px; }
+.keepsake--square .keepsake__status { font-size: var(--size-base); }
+.keepsake--square .keepsake__rank { justify-content: center; }
+.keepsake--square .keepsake__title { font-size: var(--size-md); }
+.keepsake--square .keepsake__lv { font-size: var(--size-sm); }
+.keepsake--square .keepsake__stats { padding-top: 14px; margin-top: 8px; }
+.keepsake--square .stat-tile__icon { width: 24px; height: 24px; }
+.keepsake--square .stat-tile__value { font-size: var(--size-2xl); }
+.keepsake--square .stat-tile__label { font-size: var(--size-base); }
+.keepsake--square .keepsake__foot { margin-top: 14px; gap: 12px; }
+.keepsake--square .keepsake__logo { width: 34px; }
+.keepsake--square .keepsake__wm { font-size: var(--size-lg); }
+.keepsake--square .keepsake__tag { font-size: var(--size-sm); }

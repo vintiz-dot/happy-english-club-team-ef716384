@@ -1,9 +1,9 @@
 # C2 review 5 - delta review of round 5 (`git diff 596ce69d..309c26a6`, recorder files only) and the first look at the screens
 
-Reviewed commit: 309c26a6 (`worktree-agent-a4803c8e10a251526`). Code read and run in the detached worktree `.claude/worktrees/c2r2`; this file is committed on `claude/hec-conductor-setup-efbaa5`.
+Reviewed commit: 309c26a6 (`worktree-agent-a4803c8e10a251526`). Sections a-e were written by the first reviewer (code run in `.claude/worktrees/c2r2`, committed on `claude/hec-conductor-setup-efbaa5` as 37fa20c6 / 9dadf20d); it stopped at a usage limit during section f. A second reviewer took over on branch `c2-review-5` (from the conductor branch), re-ran R5-1's probe and did section f and the verdict in a fresh detached worktree `.claude/worktrees/c2r5` at 309c26a6.
 Review only: no product code changed, nothing pushed, deployed or applied. Synthetic audio only.
 
-**Where I am / next step:** set up. Next: sections a-b (engine and session delta).
+**Where I am / next step:** DONE - verdict PASS WITH CHANGES, fit for the owner's hardware checks on live (see the end). Next: part 2, `release/recorder-1` (`docs/evidence/RECORDER-release.md`).
 
 ## a. R4-1: what ends a recording at the pre-start statement
 
@@ -35,6 +35,18 @@ consent missing on arm | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"
 ```
 One "Too Many Requests" (or PostgREST's "no rows") to the arm insert: the lesson is not recorded, nothing says so, and because it is stored, a reload or a second press of Ready does not bring it back that day (signing out and in does: it clears Ready). And a STATED no (consent missing, not your class) is just as silent: the teacher pressed Ready and is never told why nothing records. This is review 2's N-B2 and review 4's R4-1 a third time, in the newest code, and this time with no message at all. Fix (small): final only for the stated list (`switch_off`, `consent_missing`, `session_canceled`, `not_teacher`, `no_longer_teaching`, `window_closed`, `already_live`, `session_invalid`), everything else retried in 30 s as the other branch already does; in both cases set `d.problem` and show the refusal's own view on the bar and the page. Test: the probe above.
 
+Re-probed by the second reviewer (scratchpad `probe-r51.mjs`: the real `session.ts`, and the arm error built by the real `toRecorderError` from the raw answer, so the classification is the engine's own; Ready at 09:45 for a 10:00 lesson, a pass, then a pass 60 s later):
+```
+429 Too Many Requests on the arm insert  | code server_refused/unknown retryable false         | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"]} | problem null | bar not shown
+PostgREST no rows (PGRST116)             | code server_refused/unknown retryable false         | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"]} | problem null | bar not shown
+stated: consent missing                  | code server_refused/consent_missing retryable false | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"]} | problem null | bar not shown
+stated: switched off                     | code server_refused/switch_off retryable false      | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"]} | problem null | bar not shown
+503 (control)                            | code server_unavailable/- retryable true            | arm calls 2 | stored {"date":"2026-11-13","armed":[]}     | problem null | bar "Ready for today - Starters 1 records from 09:55 by itself. ..."
+```
+Confirmed. One more consequence: the PAGE does not know either. `DailyRecorder` picks its lesson with `pickLesson` without reading `armed[]`, and the engine stays `ready`, so in the arm window the page shows "Getting the lesson ready..." until the lesson is over. (Round 4's page called `showError` on a failed arm; round 5 removed that effect and nothing replaced the message.) Note also the 503 row: while arming keeps failing, the bar keeps saying "records from 09:55 by itself" with no problem set; after the arm window that is not true. The fix above (`d.problem` on every failed arm) covers it.
+
+R5-1 fails SAFE for the children (nothing is recorded, nothing is kept, no audio goes anywhere); it fails the teacher (a lesson silently not recorded). See the verdict.
+
 ## c. Full screen
 
 `redraw()` appends the bar to `document.fullscreenElement ?? document.body` and listens for `fullscreenchange` (and the webkit name); the model is drawn even while the recorder screen is attached when something is full screen; z-index max and `pointer-events: auto`. Stop is two-step inside the bar: "Stop" -> "Keep recording" / "Yes, stop recording" for 8 seconds, no `window.confirm` (which would leave full screen). "Open the recorder" is hidden in full screen. Seen in a browser: section f (the two-step Stop). Limits, for the hardware list: if the full-screen element is a `<video>`, `<canvas>` or `<iframe>` a child bar is not drawn (it works when a page puts a `<div>` in full screen); the tests check the source text for this, not a real full-screen change.
@@ -61,3 +73,109 @@ Who can reach audio (unchanged since review 2, re-read):
 - READ an object or a recording's rows: an admin, a standing teacher of that class, the teacher of that recording's own session (`recorder_can_listen`); the recorder for their own OPEN recording's rows. Nothing once the recording is `deleted`.
 - **No family or student path**: no policy names a parent, student or TA; `recorder_is_class_teacher` reads only `classes.default_teacher_id` and the weekly slots' teachers; the consents table is admin-read only.
 - **Service role**: not used by the browser. Used only by `recorder-retention` (gate: the runner token or an admin's own JWT; `verify_jwt = true`) to list / remove objects under `{class}/{recording}/` for recordings the database lists as due, and to call the migration's functions - none of which a caller could do under RLS.
+
+## f. Suites, mutants, screens
+
+Run by the second reviewer in `.claude/worktrees/c2r5` (detached at 309c26a6, `node_modules` a junction to the main checkout's, removed afterwards).
+
+| Suite | Result |
+|---|---|
+| `node scripts/pgtest/run.mjs` | **5141 assertions across 53 suites, 0 failed**, exit 0 (the author's figure exactly) |
+| - recorder engine (`scripts/recorder/unit.test.mjs`) | 504 / 0 |
+| - recorder screens logic / render | 30 / 0, 74 / 0 |
+| - class recorder SQL / class recordings scope / retention / cron | 423 / 0, 89 / 0, 37 / 0, 22 / 0 |
+| - edge functions typecheck / app typecheck (inside run.mjs) | 5 / 0, 3 / 0 |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 |
+
+Mutants of my own - **5 of 5 CAUGHT**. Engine mutants are copies under `c2r5/.probe/` run with `RECORDER_SRC`; session mutants were made in place in `c2r5` and restored by copy (sha256 of `session.ts` before = after = `1cddc2b160999362...`).
+
+| # | Mutant | Result |
+|---|---|---|
+| Y1 | `FINAL_PRE_START_REFUSALS` gains `"unknown"`: an unclassified answer (a 429, "no rows") ends the recording at the pre-start statement | CAUGHT 475 / 29 ("R4-1 429 x 8: after 40 s still capturing", "never 'cannot be sent'", ...) |
+| Y2 | a stated pre-start refusal PURGES the local audio instead of holding it (`purgeRecording` after the abandon) - the "silently dropped" question | CAUGHT 502 / 2 ("the audio is not dropped: kept on the laptop, listed, with its deletion date") |
+| Y3 | pre-start backoff ceiling 60 s -> 300 s | CAUGHT 500 / 4 (gaps `[5,5,5,10,14,26,34,94]` > 60 s + one pass) |
+| Y4 | `readyFor` ignores the date (a Ready from yesterday counts today) | CAUGHT 73 / 1 ("and per day (tomorrow it is not set)") - one assertion on `readyFor` only; no test drives a session through midnight. Minor. |
+| Y5 | `followUser` does not clear the previous teacher's Ready on a change of user (shared laptop) | CAUGHT 71 / 3 |
+
+Not run: `scripts/recorder/browser.test.mjs` (real Chrome with fake devices; not in run.mjs). R5-1 has no test (by construction: the suite's arm-failure case throws `server_unavailable`, the one shape that is retried).
+
+### The screens, seen in a browser (first time)
+
+Harness `C:\Users\Dell\hec-tools\c2r5b-harness` (a copy of the first reviewer's `c2r5-harness`, extended): Vite on 127.0.0.1:5372 serving the REAL `src/pages/TeacherRecorder.tsx` inside the REAL staff `Layout` (with the app's Timer / NoiseMeter / StudentProfile providers), the Supabase client aliased to a fake holding made-up names, `@/hooks/useAuth` aliased to a fake teacher (or admin), and a scripted fake engine (no microphone; the only audio is a synthesised tone in the wizard). No sign-in, no network beyond localhost, no real child, no real lesson file. "Another staff page" is a route rendered in the same Layout without the recorder screen. Playwright Chromium, 375x812 and 1280x800, axe-core and a 44 px target probe. Screenshots and `c3-results.json` in `C:\Users\Dell\hec-tools\c2r5b-harness\shots\` (not committed). The first reviewer's run of the bare component (`c2r5-harness\out`) had a blank first screenshot: Vite's first-load dependency reload; the copy warms up first.
+
+Reached (both sizes, no page error, no horizontal overflow at 375, axe: nothing critical/serious in the recorder's own content):
+
+| State | What it shows |
+|---|---|
+| setup needed | "Set up the microphones first" + button |
+| microphone wizard (start) | step 1 |
+| before Ready / Ready | lesson headline, both microphones ready, "Ready for today"; then "Ready. The recorder gets this lesson ready at 08:40" |
+| armed | "Armed. Recording starts by itself at 08:55. You can open other pages ..." |
+| starting > 5 s | "Saving on this laptop" alert, no red dot |
+| recording | red dot, timer, meters, markers, Stop |
+| stalled | NOT RECORDING alert, Stop |
+| error (switched off) | "This lesson is not being recorded ... DELETED" |
+| cannot be sent | "This recording CANNOT be sent ... use the backup recorder ... kept on this laptop for 14 days" |
+| no sound after Ready | "Allow sound" button |
+| admin panel | classes, consent gaps, switch |
+| R5-1 (arm answered 429) | page: "Getting the lesson ready..." for ever; other page: NO bar at all |
+| bar on another staff page | Ready (records from 08:55), Armed, Recording, NOT RECORDING, Stop asked ("Keep recording" / "Yes, stop recording"), Allow sound |
+| full screen (1280) | the app's root put in real full screen by a click: `fullscreen: true, barInside: true`, bar "Recording - Starters 1 - Stop", "Open the recorder" hidden |
+
+Render faults found:
+1. **R5-2 (minor, real): the Armed bar gives the wrong time.** Seen as "Armed - Starters 1 (Mon-Wed) - recording starts at the lesson's start by itself" (no time). Cause: once a lesson is armed it is in `armed[]`, so the next 5-second `armTick` sets `d.next` to the lesson AFTER it (or null), and the bar prints that. Probe (`.probe/probe-r52.mjs`, lessons A 10:00 and B 14:00): at the arming pass "Armed - recording starts at 09:55", five seconds later "Armed - recording starts at 13:55" - the next lesson's time under the armed lesson's name. The author's test reads the bar only on the arming pass. Fix: keep the armed lesson's start for the armed state (e.g. `d.armedAt` set in the arm branch).
+2. The "This lesson is not being recorded" notice is drawn TWICE on the error and cannot-be-sent screens (the message board at the top, and `NotRecordedNotice` lower down). Cosmetic.
+3. Phone (375): the page header puts the title, subtitle and "Microphones" button on one row; the subtitle is squeezed to a one-word column. Admin panel at 375: the class card's name and status share a row with "Switch on..." (label cut to "Switch on..."). Legible, cramped.
+4. The bar prefixes calm states (Ready, Armed, Saving) with the warning sign; only alerts should carry it.
+5. The Layout's own round launcher (bottom right) sits under the bar at 1280 and over page text at 375 - the shell's, not the recorder's, but the two collide while the bar shows.
+6. The "Allow sound" help text always says "The page was reloaded"; it also shows when the first click itself did not get sound.
+
+axe "serious" on the other-page shots are the Layout breadcrumb's `list` / `listitem` rules, and every sub-44 px target is the Layout's (sidebar 36 px rows, bell 40 px, Change Password 36 px): the shell's, not this change. The recorder's own buttons and bar are all >= 44 px.
+
+Not reached: the phone-size full screen (the harness's trigger button sat under the Layout header; 1280 proves the mechanism); a page reloaded mid-lesson ("The page was reloaded during the lesson"); Saving / Saved on the bar; "NOT armed: a microphone is not plugged in"; storage low; offline; the wizard's later steps; anything with real microphones, a real sleep or a real lid (hardware list).
+
+## Verdict
+
+**PASS WITH CHANGES. Fit to go on LIVE for the owner's hardware checks**, on these grounds: R4-1 and R4-2 are done as asked and hold under 5 of 5 new mutants; nothing reaches audio that should not (section e, unchanged since review 4); every failure found fails toward NOT recording, never toward recording without the switch and consent or toward losing or exposing audio; the hardware checks use a test class with no children and the quick recorder alongside.
+
+Changes, in order:
+1. **R5-1 (MAJOR) before any lesson depends on the recorder**: a failed or refused arm is silent and a 429 / "no rows" ends the lesson for the day. Final only for the stated list; everything else retried in 30 s; `d.problem` set either way and shown on the bar and the page. Add the probe as a test.
+2. R5-2: the Armed bar's time.
+3. The doubled notice; the phone header; the warning sign on calm states.
+4. Minors from a-b: tie the other final texts to the migration as `pre_start_refused` is; `abandonedAt` from the server clock; the session's "today" from `serverNow()`; a test through midnight; runbook line "if a lesson is moved after Armed, press Stop and Ready again".
+
+For the hardware list, add: (21) switch a test class OFF (or leave a child without consent) and press Ready: today nothing records and NOTHING says why (R5-1) - confirm, then check again after the fix; (22) laptop date and time correct before Ready.
+
+**Where I am / next step:** review 5 DONE. Next: part 2, `release/recorder-1`.
+
+## Round 6 (6db0d8f9) - delta check
+
+`git diff 309c26a6..6db0d8f9`, recorder paths only (the rest is the conductor branch merged in): `session.ts`, `DailyRecorder.tsx`, `RecordingBar.tsx`, `RecorderHeader.tsx` (new), `RecorderAdminPanel.tsx`, `TeacherRecorder.tsx`, `recorderUi.ts`, `screens.test.mjs`, the runbook, the checklist, `C2-round6.md`; 11 files, +292 / -43. No change to the engine (`src/lib/recorder`), either migration or `recorder-retention`. Run in a fresh detached worktree `.claude/worktrees/c2r6`.
+
+**R5-1 - closed.** `armTick` now ends a lesson for the day only on `FINAL_ARM_REFUSALS` (switch_off, consent_missing, session_canceled, not_teacher, no_longer_teaching, window_closed, already_live, session_invalid), all texts the insert trigger states. Everything else gets `armAttempts` and the shared backoff (1 s doubling, 60 s cap) for as long as the lesson lasts, with `notArmed` set; a stated refusal is written into the day's Ready record (`refused: {sessionId: plain-words reason}`, no names) and shown until that lesson is over. My probe (`scratchpad/probe-r6.mjs`, the real `session.ts` and `toRecorderError`):
+```
+429 x6 then ok        t+0s "Not armed yet - retrying (the school server has not confirmed it) - Class A should record from 09:55" [alert]; ARMED at t+65s after 7 calls
+'no rows' x6 then ok  the same; ARMED at t+60s
+504 timeout x6        the same; ARMED at t+55s
+unclassified x6       the same; ARMED at t+75s
+stated (consent)      "This lesson will NOT be recorded: Waiting for parents' permission - Class A. Use the backup recorder." [alert]; 1 call, not retried
+  10 min later        the same
+  after a reload      (new session, same storage) the same, 0 calls
+  after A is over     "Ready for today - Class B records from 13:55 by itself."
+```
+One 429, "no rows" or timeout never drops a lesson silently; a stated refusal is said, survives a reload, and the bar shows something throughout. On the page: "Not armed yet - retrying" (warn notice) and "This lesson will NOT be recorded: <reason>" (error notice), seen in the browser below.
+
+**R5-2 - closed.** `armedAt` holds the armed lesson's own capture start; probe: "Armed - recording starts at 09:55" at the arming pass, +5 s and +10 min (lesson B at 14:00 present).
+
+**Render faults - closed.** `boardForScreen` leaves the start failure out of the list on the error screen (seen: one notice); `RecorderHeader` stacks on a phone (seen at 375: title and line on their own rows, "Microphones" below); the admin class card stacks on a phone; the bar and `RecordingBar` carry the warning sign only on alerts (seen: "Armed - ..." with no sign); the "Allow sound" help no longer says "reloaded".
+
+Suites at 6db0d8f9: screens render 118 / 0, screens logic 30 / 0 (the engine, SQL and the rest are unchanged from round 5 and are re-run in full on the release branch: section "Round 6 release" of `RECORDER-release.md`).
+
+Seen in a browser (harness `c2r5b-harness`, shots in `C:\Users\Dell\hec-tools\c2r5b-harness\shots-r6\`, 375 and 1280, no page error, no overflow, nothing critical / serious from axe in the recorder's content): arm answered 429 - page "Not armed yet - retrying", other page bar "Not armed yet - retrying (...) - Starters 1 should record from 08:55" as an alert; arm refused (consent) - page error notice, other page bar "This lesson will NOT be recorded: Waiting for parents' permission - Starters 1. Use the backup recorder.", and the same notice after a real page reload; armed bar "recording starts at 08:55"; error and cannot-be-sent with one notice; header at 375 fixed; admin panel at 375.
+
+New minors (none blocks):
+- R6-1: `notArmed` is cleared only by a success or a stated refusal. If lesson A's whole window passes while retrying, the next lesson inherits it: probe at 11:11, "Not armed yet - retrying (...) - Class B should record from 13:55" although B has not been tried. Loud, not silent; it clears at B's first successful arm. Fix: clear `notArmed` when the lesson it was about is no longer the one being armed.
+- R6-2: a lesson that is never armed during its window ends without a final "was not recorded" line (the bar said "retrying" throughout, so the teacher was told).
+- R6-3: the page shows "Not armed yet" only in state `ready`; after a first lesson completes (state `complete`) with the page open, a failing arm of the next lesson shows on neither the page nor the bar (the bar is hidden while the page is attached). Rare; the page's own Status line also stays hidden.
+
+**Round 6 verdict: PASS. Fit to go on live for the owner's hardware checks.** R6-1..3 go to the next round.

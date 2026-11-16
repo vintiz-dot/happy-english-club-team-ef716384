@@ -55,6 +55,16 @@ export async function fetchTodayLessons(client: Client, userId: string, date: st
   });
 }
 
+/** What the session needs to arm the day's lessons by itself (session.ts startDay). */
+export function dayDeps(client: Client, userId: string, now: () => number) {
+  return {
+    lessons: (date: string) => fetchTodayLessons(client, userId, date),
+    window: async (): Promise<WindowMinutes> => { const s = await fetchRecorderSettings(client); return { preRoll: s.preRoll, grace: s.grace, armWindow: s.armWindow }; },
+    switchOn: (classId: string) => fetchClassSwitch(client, classId),
+    now,
+  };
+}
+
 /** The class switch. No row, an error or anything unclear reads as OFF. */
 export async function fetchClassSwitch(client: Client, classId: string): Promise<boolean> {
   const { data, error } = await client.from("class_recording_settings").select("recording_enabled").eq("class_id", classId).maybeSingle();

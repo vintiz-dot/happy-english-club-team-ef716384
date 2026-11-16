@@ -1,0 +1,260 @@
+{
+  "_note": "Made-up. TuitionBulkDownload month=2026-11, scope=all (students where is_active). Per student a students row and a calculate-tuition response; one shared bank_info row.",
+  "month": "2026-11",
+  "classes": [
+    {
+      "id": "22222222-2222-4222-8222-0000000000a1",
+      "name": "Movers B – Thứ 3/5"
+    },
+    {
+      "id": "22222222-2222-4222-8222-0000000000b2",
+      "name": "Phonics Fun – Thứ 7"
+    }
+  ],
+  "families": [
+    {
+      "id": "33333333-3333-4333-8333-000000000001",
+      "name": "Gia đình Nguyễn Văn Hùng"
+    }
+  ],
+  "students": [
+    {
+      "id": "11111111-1111-4111-8111-000000000001",
+      "full_name": "Nguyễn Thị Minh Anh",
+      "is_active": true,
+      "family_id": "33333333-3333-4333-8333-000000000001",
+      "family": {
+        "name": "Gia đình Nguyễn Văn Hùng"
+      }
+    },
+    {
+      "id": "11111111-1111-4111-8111-000000000002",
+      "full_name": "Nguyễn Đức Bảo",
+      "is_active": true,
+      "family_id": "33333333-3333-4333-8333-000000000001",
+      "family": {
+        "name": "Gia đình Nguyễn Văn Hùng"
+      }
+    }
+  ],
+  "calculateTuition": {
+    "11111111-1111-4111-8111-000000000001": {
+      "studentId": "11111111-1111-4111-8111-000000000001",
+      "month": "2026-11",
+      "sessionCount": 10,
+      "sessionDetails": [
+        {
+          "date": "2026-11-03",
+          "rate": 200000,
+          "status": "Present",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-05",
+          "rate": 200000,
+          "status": "Present",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-07",
+          "rate": 175000,
+          "status": "Present",
+          "class_id": "22222222-2222-4222-8222-0000000000b2",
+          "class_name": "Phonics Fun – Thứ 7"
+        },
+        {
+          "date": "2026-11-10",
+          "rate": 200000,
+          "status": "Absent",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-12",
+          "rate": 200000,
+          "status": "Present",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-14",
+          "rate": 175000,
+          "status": "Present",
+          "class_id": "22222222-2222-4222-8222-0000000000b2",
+          "class_name": "Phonics Fun – Thứ 7"
+        },
+        {
+          "date": "2026-11-17",
+          "rate": 200000,
+          "status": "Scheduled",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-19",
+          "rate": 200000,
+          "status": "Scheduled",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-21",
+          "rate": 175000,
+          "status": "Scheduled",
+          "class_id": "22222222-2222-4222-8222-0000000000b2",
+          "class_name": "Phonics Fun – Thứ 7"
+        },
+        {
+          "date": "2026-11-28",
+          "rate": 175000,
+          "status": "Scheduled",
+          "class_id": "22222222-2222-4222-8222-0000000000b2",
+          "class_name": "Phonics Fun – Thứ 7"
+        }
+      ],
+      "baseAmount": 1900000,
+      "discounts": [
+        {
+          "name": "Sibling discount 10% (Movers B – Thứ 3/5)",
+          "type": "percent",
+          "value": 10,
+          "amount": 120000,
+          "class_id": "22222222-2222-4222-8222-0000000000a1"
+        }
+      ],
+      "totalDiscount": 120000,
+      "totalAmount": 1780000,
+      "payments": {
+        "priorPayments": 4200000,
+        "monthPayments": 1000000,
+        "cumulativePaidAmount": 5200000
+      },
+      "carry": {
+        "carryInCredit": 0,
+        "carryInDebt": 350000,
+        "carryOutCredit": 0,
+        "carryOutDebt": 1130000,
+        "payable": 2130000,
+        "settledInMonth": false,
+        "status": "debt",
+        "message": ""
+      },
+      "siblingState": {
+        "status": "resolved"
+      },
+      "siblingUnresolved": false,
+      "invoiceSaved": true,
+      "tuitionFrozen": false,
+      "breakdown": {
+        "classes": [
+          {
+            "class_id": "22222222-2222-4222-8222-0000000000a1",
+            "class_name": "Movers B – Thứ 3/5",
+            "amount_vnd": 1200000,
+            "net_amount_vnd": 1080000,
+            "sessions_count": 6,
+            "session_rate_vnd": 200000
+          },
+          {
+            "class_id": "22222222-2222-4222-8222-0000000000b2",
+            "class_name": "Phonics Fun – Thứ 7",
+            "amount_vnd": 700000,
+            "net_amount_vnd": 700000,
+            "sessions_count": 4,
+            "session_rate_vnd": 175000
+          }
+        ]
+      }
+    },
+    "11111111-1111-4111-8111-000000000002": {
+      "studentId": "11111111-1111-4111-8111-000000000002",
+      "month": "2026-11",
+      "sessionCount": 5,
+      "sessionDetails": [
+        {
+          "date": "2026-11-03",
+          "rate": 200000,
+          "status": "Present",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-05",
+          "rate": 200000,
+          "status": "Present",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-10",
+          "rate": 200000,
+          "status": "Absent",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-12",
+          "rate": 200000,
+          "status": "Present",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        },
+        {
+          "date": "2026-11-17",
+          "rate": 200000,
+          "status": "Scheduled",
+          "class_id": "22222222-2222-4222-8222-0000000000a1",
+          "class_name": "Movers B – Thứ 3/5"
+        }
+      ],
+      "baseAmount": 1000000,
+      "discounts": [],
+      "totalDiscount": 0,
+      "totalAmount": 1000000,
+      "payments": {
+        "priorPayments": 3000000,
+        "monthPayments": 500000,
+        "cumulativePaidAmount": 3500000
+      },
+      "carry": {
+        "carryInCredit": 0,
+        "carryInDebt": 0,
+        "carryOutCredit": 0,
+        "carryOutDebt": 500000,
+        "payable": 1000000,
+        "settledInMonth": false,
+        "status": "debt",
+        "message": ""
+      },
+      "siblingState": {
+        "status": "resolved"
+      },
+      "siblingUnresolved": false,
+      "invoiceSaved": true,
+      "tuitionFrozen": false,
+      "breakdown": {
+        "classes": [
+          {
+            "class_id": "22222222-2222-4222-8222-0000000000a1",
+            "class_name": "Movers B – Thứ 3/5",
+            "amount_vnd": 1000000,
+            "net_amount_vnd": 1000000,
+            "sessions_count": 5,
+            "session_rate_vnd": 200000
+          }
+        ]
+      }
+    }
+  },
+  "bank_info": {
+    "id": "44444444-4444-4444-8444-000000000001",
+    "org_name": "Happy English Club",
+    "org_address": "Số 12 ngõ 45 phố Ví Dụ, phường Mẫu, Hà Nội\nHotline: 0900 000 000",
+    "bank_name": "Ngân hàng TMCP Ví Dụ (Example Bank)",
+    "account_number": "0000 1234 5678",
+    "account_name": "CONG TY TNHH HAPPY ENGLISH CLUB (VI DU)",
+    "vietqr_storage_key": "fake/vietqr-placeholder.png"
+  }
+}

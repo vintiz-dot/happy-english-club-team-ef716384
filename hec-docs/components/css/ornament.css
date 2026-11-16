@@ -1,0 +1,2 @@
+/* Ornament: a small typographic mark (separator dot, flourish) set in gold ink. */
+.ornament { color: var(--color-gold-ink); font-weight: var(--font-weight-bold); }

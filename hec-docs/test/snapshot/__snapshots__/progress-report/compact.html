@@ -1,0 +1,297 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Progress Report</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "Nguyễn Thị Minh Anh · Progress Report";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--progress-report variant--compact">
+
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+      <div class="hdr__sub">Hanoi English · hanoienglish.com</div>
+    </div>
+  </div>
+  <div class="hdr__doc">
+    <div class="hdr__title">Progress Report</div>
+  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+  <section class="ident" aria-label="Student">
+  <div class="ident__who">
+    <div class="ident__name">Nguyễn Thị Minh Anh</div>
+  </div>
+  <dl class="ident__rows">
+<div class="kv"><dt><span class="ornament">·</span> Reporting period</dt><dd>2026-08-15 → 2026-11-12</dd></div>  </dl>
+</section>
+
+
+
+<section class="level" aria-label="Estimated CEFR level">
+  <div class="level__mark">A2</div>
+  <div class="level__body">
+    <p class="level__title">Estimated CEFR level <span class="level__aside">· 78% confidence</span></p>
+    <p class="level__note">Minh Anh sustains short exchanges about familiar topics, uses past simple with growing accuracy and reads graded texts at Movers level with little support.</p>
+  </div>
+</section>
+
+
+<section aria-label="Skill matrix">
+  <h2 class="sec sec--2">Skill matrix</h2>
+
+  <div class="skills skills--3">
+      <div class="skills__item">
+        <div class="meter">
+  <div class="meter__head"><span class="meter__label">Speaking</span><span class="meter__value">3.5/5</span></div>
+  <div class="meter__track" aria-hidden="true"><div class="meter__fill" style="width: 70%"></div></div>
+</div>
+
+<p class="skills__note">Answers in full sentences; still pauses to find past forms.</p>      </div>
+      <div class="skills__item">
+        <div class="meter">
+  <div class="meter__head"><span class="meter__label">Listening</span><span class="meter__value">4/5</span></div>
+  <div class="meter__track" aria-hidden="true"><div class="meter__fill" style="width: 80%"></div></div>
+</div>
+
+<p class="skills__note">Follows multi-step instructions in class without translation.</p>      </div>
+      <div class="skills__item">
+        <div class="meter">
+  <div class="meter__head"><span class="meter__label">Reading</span><span class="meter__value">3.5/5</span></div>
+  <div class="meter__track" aria-hidden="true"><div class="meter__fill" style="width: 70%"></div></div>
+</div>
+
+<p class="skills__note">Reads Movers stories aloud with good phrasing.</p>      </div>
+      <div class="skills__item">
+        <div class="meter">
+  <div class="meter__head"><span class="meter__label">Writing</span><span class="meter__value">3/5</span></div>
+  <div class="meter__track" aria-hidden="true"><div class="meter__fill" style="width: 60%"></div></div>
+</div>
+
+<p class="skills__note">Writes 5–6 linked sentences; spelling of -ed endings inconsistent.</p>      </div>
+      <div class="skills__item">
+        <div class="meter">
+  <div class="meter__head"><span class="meter__label">Grammar</span><span class="meter__value">3/5</span></div>
+  <div class="meter__track" aria-hidden="true"><div class="meter__fill" style="width: 60%"></div></div>
+</div>
+
+<p class="skills__note">Past simple regular verbs secure; irregular verbs developing.</p>      </div>
+      <div class="skills__item">
+        <div class="meter">
+  <div class="meter__head"><span class="meter__label">Vocabulary</span><span class="meter__value">4/5</span></div>
+  <div class="meter__track" aria-hidden="true"><div class="meter__fill" style="width: 80%"></div></div>
+</div>
+
+<p class="skills__note">Active vocabulary of ~620 words, strong on family and food topics.</p>      </div>
+  </div>
+</section>
+
+
+<div class="split findings">
+  <section class="panel ev-panel" aria-label="Strengths">
+    <h3 class="sec sec--3">Strengths</h3>
+
+    <ul class="ev">
+      <li class="ev__item">
+        <p class="ev__area">Confident speaking</p>
+        <p class="ev__detail">Volunteered answers in 9 of 11 lessons; led a pair role-play on 5 Nov.</p>
+      </li>
+      <li class="ev__item">
+        <p class="ev__area">Vocabulary retention</p>
+        <p class="ev__detail">92% recall on spaced-review cards over the last 30 days.</p>
+      </li>
+    </ul>
+  </section>
+  <section class="panel panel--outline ev-panel" aria-label="Growth areas">
+    <h3 class="sec sec--3">Growth areas</h3>
+
+    <ul class="ev">
+      <li class="ev__item">
+        <p class="ev__area">Irregular past forms</p>
+        <p class="ev__detail">“goed”, “eated” logged 7 times in October homework.</p>
+<p class="ev__next">→ Short daily drill of 10 irregular verbs with picture cards.</p>      </li>
+      <li class="ev__item">
+        <p class="ev__area">Final consonant sounds</p>
+        <p class="ev__detail">Drops /t/ and /d/ endings in 40% of recorded sentences.</p>
+<p class="ev__next">→ Minimal-pair listening games, 5 minutes per lesson.</p>      </li>
+    </ul>
+  </section>
+</div>
+
+
+<div class="split findings-pair">
+  <section aria-label="Learning styles">
+    <h2 class="sec sec--2">Learning styles</h2>
+
+    <ul class="chips">
+<li class="chip">Visual</li><li class="chip">Kinaesthetic</li><li class="chip">Learns well in pairs</li>    </ul>
+  </section>
+  <section class="ev-steps" aria-label="Next steps for the teacher">
+    <h2 class="sec sec--2">Next steps for the teacher</h2>
+
+    <ol class="steps">
+<li class="steps__item"><span class="steps__n">1.</span><span>Pair Minh Anh with a quieter partner to model full answers.</span></li><li class="steps__item"><span class="steps__n">2.</span><span>Use picture cards for irregular verbs at the start of each lesson.</span></li><li class="steps__item"><span class="steps__n">3.</span><span>Encourage reading one graded reader per week at home.</span></li>    </ol>
+  </section>
+</div>
+
+
+<section aria-label="Report narrative">
+  <h2 class="sec sec--2">Report narrative</h2>
+
+  <div class="prose">
+<p>Minh Anh has made steady progress this term. She enjoys speaking activities and often helps her classmates during pair work. Cô giáo rất vui khi thấy con tự tin phát biểu trong lớp.</p>
+<p>Her next step is accuracy with irregular past verbs and clear final sounds. A few minutes of practice at home each day – reading aloud and using the vocabulary app – will make a real difference before the end-of-term test.</p>
+  </div>
+</section>
+
+<p class="ev-summary">Evidence: 14 transcript metrics · 23 errors · 618 words · 6 work samples · 22 attendance records</p>
+
+<div class="closing">
+<aside class="callout callout--praise">
+  <div class="callout__body">This report celebrates progress and points to next steps. Your child&#39;s teachers are glad to talk it through with you.</div>
+</aside>
+  <p class="encourage">Keep going: confidence grows with practice.</p>
+
+  <div class="closing-row">
+    <div class="sign">
+  <div class="sign__closing">With warm regards,</div>
+  <div class="sign__name">Teacher Victor</div>
+  <div class="sign__role">Happy English Club</div>
+</div>
+
+    <footer class="qrf">
+  <div class="qrf__code"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><path stroke="#14213D" d="M0 0.5h7m2 0h2m1 0h2m2 0h1m1 0h7M0 1.5h1m5 0h1m3 0h3m2 0h1m2 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h4m2 0h3m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h1m1 0h5m3 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h2m1 0h1m1 0h1m1 0h2m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h5m1 0h1m1 0h1M0 8.5h1m1 0h5m6 0h3m2 0h5M0 9.5h5m4 0h3m1 0h1m2 0h1m2 0h1m3 0h1M0 10.5h2m2 0h1m1 0h3m1 0h2m3 0h1m2 0h1m2 0h1m1 0h2M2 11.5h4m1 0h2m7 0h3m1 0h1m3 0h1M0 12.5h1m2 0h2m1 0h1m1 0h1m4 0h1m3 0h2m1 0h1m1 0h3M0 13.5h3m4 0h1m1 0h1m2 0h2m2 0h1m2 0h1m1 0h1m1 0h1M0 14.5h1m1 0h7m4 0h5m1 0h3m1 0h2M0 15.5h1m1 0h1m1 0h1m7 0h1m2 0h2m2 0h2m3 0h1M0 16.5h1m2 0h1m1 0h6m1 0h9m1 0h1M8 17.5h2m5 0h2m3 0h2M0 18.5h7m2 0h1m1 0h3m2 0h1m1 0h1m1 0h1m1 0h3M0 19.5h1m5 0h1m1 0h2m1 0h1m2 0h1m1 0h1m3 0h2m2 0h1M0 20.5h1m1 0h3m1 0h1m1 0h1m2 0h10m1 0h1M0 21.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h2m3 0h2m1 0h5M0 22.5h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m4 0h2m1 0h1M0 23.5h1m5 0h1m2 0h1m4 0h4m1 0h3m2 0h1M0 24.5h7m1 0h7m2 0h1m1 0h6"/></svg>
+</div>
+  <div class="qrf__text">
+    <div class="qrf__site">hanoienglish.com</div>
+  </div>
+</footer>
+
+  </div>
+<div class="colophon">Generated by Happy English Club · hanoienglish.com · 11/13/2026</div>
+</div>
+</body>
+</html>

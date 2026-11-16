@@ -1,0 +1,120 @@
+{#
+  HEC Docs component library. Import with:
+    {% import "ui.njk" as ui %}
+  Every component styles itself from hec.css; templates add no CSS of their
+  own beyond layout of components (grid columns), so documents stay one family.
+  Arguments are escaped by autoescape; only `ui.rich` accepts HTML (sanitised).
+#}
+
+{# Logo lockup + document title. The fixed brand header on page 1. #}
+{% macro header(tenant, eyebrow, title, meta=[]) %}
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/{{ tenant.logo.file }}" alt="{{ tenant.logo.alt }}">
+    <div class="hdr__brand">
+      <div class="hdr__name">{{ tenant.name }}</div>
+      {% if tenant.subtitle %}<div class="hdr__sub" lang="vi">{{ tenant.subtitle }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="hdr__doc">
+    {% if eyebrow %}<div class="eyebrow">{{ eyebrow }}</div>{% endif %}
+    {% if title %}<div class="hdr__title">{{ title }}</div>{% endif %}
+    {% for m in meta %}<div class="hdr__meta">{{ m }}</div>{% endfor %}
+  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+{% endmacro %}
+
+{# Student identity: the name is the hero. rows: [{label, value}] #}
+{% macro identity(name, rows=[], label="Student", kicker="") %}
+<section class="ident" aria-label="{{ label }}">
+  <div class="ident__who">
+    {% if kicker %}<div class="eyebrow">{{ kicker }}</div>{% endif %}
+    <div class="ident__name">{{ name }}</div>
+  </div>
+  {% if rows | length %}
+  <dl class="ident__rows">
+    {% for r in rows %}<div class="kv"><dt>{{ r.label }}</dt><dd>{{ r.value }}</dd></div>{% endfor %}
+  </dl>
+  {% endif %}
+</section>
+{% endmacro %}
+
+{# Key/value grid. cols: 1-3 #}
+{% macro kv(rows, cols=2, cls="") %}
+<dl class="kvgrid kvgrid--{{ cols }} {{ cls }}">
+  {% for r in rows %}<div class="kv"><dt>{{ r.label }}</dt><dd{% if r.cls %} class="{{ r.cls }}"{% endif %}>{{ r.value }}</dd></div>{% endfor %}
+</dl>
+{% endmacro %}
+
+{# Section heading. level 2 or 3. #}
+{% macro section(title, eyebrow="", level=2, id="") %}
+<h{{ level }} class="sec sec--{{ level }}"{% if id %} id="{{ id }}"{% endif %}>{% if eyebrow %}<span class="eyebrow">{{ eyebrow }}</span>{% endif %}{{ title }}</h{{ level }}>
+{% endmacro %}
+
+{# Callout. kind: note | warn | praise #}
+{% macro callout(kind="note", title="") %}
+<aside class="callout callout--{{ kind }}">
+  {% if title %}<div class="callout__title">{{ title }}</div>{% endif %}
+  <div class="callout__body">{{ caller() }}</div>
+</aside>
+{% endmacro %}
+
+{# Ruled writing space. #}
+{% macro answer_lines(n=8, label="") %}
+<div class="lines" role="presentation">
+  {% if label %}<div class="lines__label">{{ label }}</div>{% endif %}
+  {% for i in range(n) %}<div class="lines__line"></div>{% endfor %}
+</div>
+{% endmacro %}
+
+{# Checklist. items: [string] or [{text, done}] #}
+{% macro checklist(items) %}
+<ul class="check">
+  {% for it in items %}<li class="check__item{% if it.done %} is-done{% endif %}"><span class="check__box" aria-hidden="true"></span>{{ it.text if it.text is defined else it }}</li>{% endfor %}
+</ul>
+{% endmacro %}
+
+{# Progress meter. Shows value/max as a bar; the label text is the caller's. #}
+{% macro meter(value, max, label, valueText) %}
+{% set pct = ((value / max) * 100) if max else 0 %}
+<div class="meter">
+  <div class="meter__head"><span class="meter__label">{{ label }}</span><span class="meter__value">{{ valueText }}</span></div>
+  <div class="meter__track" aria-hidden="true"><div class="meter__fill" style="width: {{ [0, [pct, 100] | min] | max }}%"></div></div>
+</div>
+{% endmacro %}
+
+{# Personal sign-off. bilingual adds the Vietnamese closing. #}
+{% macro signature(tenant, bilingual=false) %}
+<div class="sign">
+  <div class="sign__closing">{{ tenant.signOff.closing }}{% if bilingual and tenant.signOff.closingVi %} <span lang="vi">/ {{ tenant.signOff.closingVi }}</span>{% endif %}</div>
+  <div class="sign__name">{{ tenant.signOff.name }}</div>
+  <div class="sign__role">{{ tenant.signOff.role }}</div>
+</div>
+{% endmacro %}
+
+{# Encouragement line (brand layer, rotates deterministically per document). #}
+{% macro encourage(brand) %}
+<p class="encourage">{{ brand.encouragement }}</p>
+{% endmacro %}
+
+{# QR footer: closing brand block at the end of the document. #}
+{% macro qr_footer(brand, note="") %}
+<footer class="qrf">
+  <div class="qrf__code">{{ brand.qr }}</div>
+  <div class="qrf__text">
+    {% if note %}<p class="qrf__note">{{ note }}</p>{% endif %}
+    <div class="qrf__site">{{ brand.tenant.qr.label }}</div>
+  </div>
+</footer>
+{% endmacro %}
+
+{# Teacher-authored rich text (sanitised allow-list). #}
+{% macro rich(html) %}
+<div class="rich">{{ html | rich }}</div>
+{% endmacro %}
+
+{# Original "generated" footer line, kept verbatim as document content. #}
+{% macro colophon() %}
+<div class="colophon">{{ caller() }}</div>
+{% endmacro %}

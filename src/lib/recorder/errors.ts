@@ -59,6 +59,7 @@ export type ServerRefusal =
   | "complete_refused"       // finalize preconditions
   | "marker_refused"
   | "device_profile"
+  | "pre_start_refused"      // C2 round 5 (R4-1): the trigger's own text - the pre-start offset can never be stated now
   | "unknown";
 
 export class RecorderError extends Error {
@@ -78,6 +79,8 @@ export class RecorderError extends Error {
 
 /** Map a database message (the migration's RAISE texts) to a refusal. Order matters. */
 const PATTERNS: [RegExp, ServerRefusal][] = [
+  // The update trigger's one text for pre_start_ms (20261112100000_class_recorder.sql); tied by a test.
+  [/before the server'?s start can be stated once, before any chunk/i, "pre_start_refused"],
   [/asked to stop/i, "stop_requested"],
   [/switched off/i, "switch_off"],
   [/consent/i, "consent_missing"],

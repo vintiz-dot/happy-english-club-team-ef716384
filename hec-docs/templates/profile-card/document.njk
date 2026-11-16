@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="{{ doc.lang }}">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>{{ doc.title }}</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>{{ tenant.css | safe }}</style>
+<link rel="stylesheet" href="/components/hec.css">
+{% for s in componentStyles %}<link rel="stylesheet" href="/components/css/{{ s }}">
+{% endfor %}
+</head>
+<body class="doc doc--{{ doc.type }} variant--{{ variant }}">
+{% import "ui/stat-tile.njk" as st %}
+{% set square = variant == "square" %}
+{% set hasAvatar = data.avatarUrl is defined and data.avatarUrl %}
+<div class="keepsake keepsake--{{ variant }}"  data-capture>
+  <div class="keepsake__main" data-qa-fit="profile-card">
+    <div class="avatar{% if square %} avatar--lg{% endif %}{% if hasAvatar %} avatar--image{% endif %}" data-initials="{{ data.name | avatarInitials }}">{% if hasAvatar %}<img class="avatar__img" src="{{ data.avatarUrl }}" alt="">{% endif %}</div>
+    <div class="keepsake__text">
+      <h1 class="keepsake__name">{{ data.name }}</h1>
+      <div class="keepsake__bar" aria-hidden="true"></div>
+      {% if data.statusMessage %}<p class="keepsake__status">"{{ data.statusMessage }}"</p>{% endif %}
+      <div class="keepsake__rank">
+        <span class="keepsake__title">{{ data.level | levelTitle }}</span>
+        <span class="keepsake__lv">LV {{ data.level }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="keepsake__stats stat-row">
+    {{ st.stat_tile(data.totalXp, "Total XP", "bolt") }}
+    {{ st.stat_tile(data.level, "Level", "star") }}
+    {{ st.stat_tile(data.currentStreak, "Streak", "flame") }}
+  </div>
+  <div class="keepsake__foot">
+    <img class="keepsake__logo" src="/tenant/{{ tenant.logo.file }}" alt="{{ tenant.logo.alt }}">
+    <div class="keepsake__brand">
+      <div class="keepsake__wm">Happy English Club ✨</div>
+      <div class="keepsake__tag">{{ tenant.tagline }}</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

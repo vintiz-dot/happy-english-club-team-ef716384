@@ -326,6 +326,7 @@ const SUITES = [
     file: "ta-standing.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql"],
   },
+  // The class recorder (C1-C5).
   { name: "recorder retention", file: "recorder-retention.test.mjs", migrations: [] },
   // The recorder engine (src/lib/recorder) against the contract-enforcing fake
   // server: synthetic audio, no browser. Slow (minutes): it encodes real FLAC.

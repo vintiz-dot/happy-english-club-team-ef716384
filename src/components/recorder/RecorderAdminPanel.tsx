@@ -149,7 +149,8 @@ function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged }: {
 
   return (
     <article className="rounded-xl border border-border p-4 space-y-3" aria-labelledby={`cls-${cls.id}`}>
-      <div className="flex flex-wrap items-start gap-3">
+      {/* On a phone the switch button goes under the class name and status (C2 review 5: one cramped row). */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start" data-class-card-head="">
         <div className="min-w-0 flex-1 space-y-1">
           <h3 id={`cls-${cls.id}`} className="text-lg font-semibold break-words">{cls.name}</h3>
           {on ? (
@@ -160,9 +161,9 @@ function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged }: {
           {on && cls.switch?.consent_note ? <p className="text-sm text-muted-foreground break-words">Signed forms: {cls.switch.consent_note}</p> : null}
         </div>
         {on ? (
-          <Button variant="outline" className="min-h-11" onClick={() => { setServerSaid(null); setOpenOff(true); }}><PowerOff className="h-4 w-4 mr-2" aria-hidden /> Switch off</Button>
+          <Button variant="outline" className="min-h-11 self-start shrink-0" onClick={() => { setServerSaid(null); setOpenOff(true); }}><PowerOff className="h-4 w-4 mr-2" aria-hidden /> Switch off</Button>
         ) : (
-          <Button className="min-h-11" onClick={() => { setServerSaid(null); setOpenOn(true); }}><Power className="h-4 w-4 mr-2" aria-hidden /> Switch on...</Button>
+          <Button className="min-h-11 self-start shrink-0" onClick={() => { setServerSaid(null); setOpenOn(true); }}><Power className="h-4 w-4 mr-2" aria-hidden /> Switch on...</Button>
         )}
       </div>
 

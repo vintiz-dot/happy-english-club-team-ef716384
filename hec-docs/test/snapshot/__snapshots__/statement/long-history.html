@@ -1,0 +1,770 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Account Statement</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "Trần Bảo Châu";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--statement variant--standard">
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+<div class="hdr__title">Account Statement</div>  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+
+<h1 class="doc-title">Trần Bảo Châu <span class="doc-title__aside">&middot; Jul 2024 → Dec 2026</span></h1>
+<p class="doc-lede">July 2024 to December 2026</p>
+
+<table class="t t--money">
+  <thead>
+    <tr>
+      <th scope="col">Month</th>
+      <th scope="col" class="num">Sessions</th>
+      <th scope="col" class="num">Gross</th>
+      <th scope="col" class="num">Discount</th>
+      <th scope="col" class="num">Charged</th>
+      <th scope="col" class="num">Paid</th>
+      <th scope="col" class="num">Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="t__label">Jul 2024</td>
+      <td class="num">6</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num num--strong">0 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Aug 2024</td>
+      <td class="num">7</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">−140.000 ₫</td>
+      <td class="num">1.260.000 ₫</td>
+      <td class="num">1.260.000 ₫</td>
+      <td class="num num--strong">0 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Sep 2024</td>
+      <td class="num">8</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num num--strong">0 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Oct 2024</td>
+      <td class="num">9<span class="num__aside"> (+1 exc.)</span></td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num num--strong">0 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Nov 2024</td>
+      <td class="num">10</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num num--strong">0 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Dec 2024</td>
+      <td class="num">6</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">−120.000 ₫</td>
+      <td class="num">1.080.000 ₫</td>
+      <td class="num">820.000 ₫</td>
+      <td class="num num--strong">−260.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Jan 2025</td>
+      <td class="num">7</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num num--strong">−260.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Feb 2025</td>
+      <td class="num">8</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num num--strong">−260.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Mar 2025</td>
+      <td class="num">9</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num num--strong">−260.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Apr 2025</td>
+      <td class="num">10</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">−200.000 ₫</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num num--strong">−260.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">May 2025</td>
+      <td class="num">6<span class="num__aside"> (+1 exc.)</span></td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num num--strong">−260.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Jun 2025</td>
+      <td class="num">7</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">1.140.000 ₫</td>
+      <td class="num num--strong">−520.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Jul 2025</td>
+      <td class="num">8</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num num--strong">−520.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Aug 2025</td>
+      <td class="num">9</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">−180.000 ₫</td>
+      <td class="num">1.620.000 ₫</td>
+      <td class="num">1.620.000 ₫</td>
+      <td class="num num--strong">−520.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Sep 2025</td>
+      <td class="num">10</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num num--strong">−520.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Oct 2025</td>
+      <td class="num">6</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num num--strong">−520.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Nov 2025</td>
+      <td class="num">7</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num num--strong">−520.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Dec 2025</td>
+      <td class="num">—</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">−160.000 ₫</td>
+      <td class="num">1.440.000 ₫</td>
+      <td class="num">1.180.000 ₫</td>
+      <td class="num num--strong">−780.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Jan 2026</td>
+      <td class="num">9</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num num--strong">−780.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Feb 2026</td>
+      <td class="num">10</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num num--strong">−780.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Mar 2026</td>
+      <td class="num">6</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num num--strong">−780.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Apr 2026</td>
+      <td class="num">7</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">−140.000 ₫</td>
+      <td class="num">1.260.000 ₫</td>
+      <td class="num">1.260.000 ₫</td>
+      <td class="num num--strong">−780.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">May 2026</td>
+      <td class="num">8</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num num--strong">−780.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Jun 2026</td>
+      <td class="num">9</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">1.540.000 ₫</td>
+      <td class="num num--strong">−1.040.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Jul 2026</td>
+      <td class="num">10<span class="num__aside"> (+1 exc.)</span></td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num num--strong">−1.040.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Aug 2026</td>
+      <td class="num">6</td>
+      <td class="num">1.200.000 ₫</td>
+      <td class="num">−120.000 ₫</td>
+      <td class="num">1.080.000 ₫</td>
+      <td class="num">1.080.000 ₫</td>
+      <td class="num num--strong">−1.040.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Sep 2026</td>
+      <td class="num">7</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num">1.400.000 ₫</td>
+      <td class="num num--strong">−1.040.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Oct 2026</td>
+      <td class="num">8</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num">1.600.000 ₫</td>
+      <td class="num num--strong">−1.040.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Nov 2026</td>
+      <td class="num">9</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">—</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num num--strong">−1.040.000 ₫</td>
+    </tr>
+    <tr>
+      <td class="t__label">Dec 2026</td>
+      <td class="num">10</td>
+      <td class="num">2.000.000 ₫</td>
+      <td class="num">−200.000 ₫</td>
+      <td class="num">1.800.000 ₫</td>
+      <td class="num">1.540.000 ₫</td>
+      <td class="num num--strong">−1.300.000 ₫</td>
+    </tr>
+    <tr class="t__total">
+      <td class="t__label">Total</td>
+      <td colspan="3"></td>
+      <td class="num">46.740.000 ₫</td>
+      <td class="num">45.440.000 ₫</td>
+      <td class="num">−1.300.000 ₫</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="table-note">Balance is cumulative. A positive figure means the account is in credit; a negative figure is the amount outstanding at the end of that month.</p>
+
+<section class="stmt-payments">
+  <h3 class="sec sec--3">Payments received</h3>
+
+  <table class="t t--money">
+    <thead>
+      <tr>
+        <th scope="col">Paid on</th>
+        <th scope="col">Entered</th>
+        <th scope="col">Method</th>
+        <th scope="col">Recorded by</th>
+        <th scope="col" class="num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="t__label">3 Jul 2024</td>
+        <td class="t__label">4 Jul 2024</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">600.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">9 Jul 2024</td>
+        <td class="t__label">10 Jul 2024</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">600.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">4 Aug 2024</td>
+        <td class="t__label">5 Aug 2024</td>
+        <td>—</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">1.260.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">5 Sep 2024</td>
+        <td class="t__label">6 Sep 2024</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">1.600.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">6 Oct 2024</td>
+        <td class="t__label">7 Oct 2024</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">900.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">12 Oct 2024</td>
+        <td class="t__label">13 Oct 2024</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">900.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">7 Nov 2024</td>
+        <td class="t__label">8 Nov 2024</td>
+        <td>—</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">2.000.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">3 Dec 2024</td>
+        <td class="t__label">4 Dec 2024</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">820.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">4 Jan 2025</td>
+        <td class="t__label">5 Jan 2025</td>
+        <td>Cash</td>
+        <td>Not recorded</td>
+        <td class="num">700.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">10 Jan 2025</td>
+        <td class="t__label">11 Jan 2025</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">700.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">—</td>
+        <td class="t__label">6 Feb 2025</td>
+        <td>—</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">1.600.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">6 Mar 2025</td>
+        <td class="t__label">7 Mar 2025</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">1.800.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">7 Apr 2025</td>
+        <td class="t__label">8 Apr 2025</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">900.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">13 Apr 2025</td>
+        <td class="t__label">14 Apr 2025</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">900.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">3 May 2025</td>
+        <td class="t__label">4 May 2025</td>
+        <td>—</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">1.200.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">4 Jun 2025</td>
+        <td class="t__label">5 Jun 2025</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">1.140.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">5 Jul 2025</td>
+        <td class="t__label">6 Jul 2025</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">800.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">11 Jul 2025</td>
+        <td class="t__label">12 Jul 2025</td>
+        <td>Bank transfer</td>
+        <td>Not recorded</td>
+        <td class="num">800.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">20 Jul 2025</td>
+        <td class="t__label">20 Jul 2025</td>
+        <td>—</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">50.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">6 Aug 2025</td>
+        <td class="t__label">7 Aug 2025</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">1.620.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">7 Sep 2025</td>
+        <td class="t__label">8 Sep 2025</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">2.000.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">—</td>
+        <td class="t__label">4 Oct 2025</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">600.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">9 Oct 2025</td>
+        <td class="t__label">10 Oct 2025</td>
+        <td>—</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">600.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">4 Nov 2025</td>
+        <td class="t__label">5 Nov 2025</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">1.400.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">5 Dec 2025</td>
+        <td class="t__label">6 Dec 2025</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">1.180.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">6 Jan 2026</td>
+        <td class="t__label">7 Jan 2026</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">900.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">12 Jan 2026</td>
+        <td class="t__label">13 Jan 2026</td>
+        <td>—</td>
+        <td>Not recorded</td>
+        <td class="num">900.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">7 Feb 2026</td>
+        <td class="t__label">8 Feb 2026</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">2.000.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">3 Mar 2026</td>
+        <td class="t__label">4 Mar 2026</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">1.200.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">4 Apr 2026</td>
+        <td class="t__label">5 Apr 2026</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">630.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">10 Apr 2026</td>
+        <td class="t__label">11 Apr 2026</td>
+        <td>—</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">630.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">5 May 2026</td>
+        <td class="t__label">6 May 2026</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">1.600.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">—</td>
+        <td class="t__label">7 Jun 2026</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">1.540.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">7 Jul 2026</td>
+        <td class="t__label">8 Jul 2026</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">1.000.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">13 Jul 2026</td>
+        <td class="t__label">14 Jul 2026</td>
+        <td>—</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">1.000.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">3 Aug 2026</td>
+        <td class="t__label">4 Aug 2026</td>
+        <td>Bank transfer</td>
+        <td>Not recorded</td>
+        <td class="num">1.080.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">4 Sep 2026</td>
+        <td class="t__label">5 Sep 2026</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">1.400.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">5 Oct 2026</td>
+        <td class="t__label">6 Oct 2026</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">800.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">11 Oct 2026</td>
+        <td class="t__label">12 Oct 2026</td>
+        <td>—</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">800.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">6 Nov 2026</td>
+        <td class="t__label">7 Nov 2026</td>
+        <td>Bank transfer</td>
+        <td>Phạm Quỳnh Trang</td>
+        <td class="num">1.800.000 ₫</td>
+      </tr>
+      <tr>
+        <td class="t__label">7 Dec 2026</td>
+        <td class="t__label">8 Dec 2026</td>
+        <td>Cash</td>
+        <td>Đỗ Minh Khôi</td>
+        <td class="num">1.540.000 ₫</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<p class="table-note">Some entries predate this system&rsquo;s record of who entered them and are shown as &ldquo;not recorded&rdquo;.</p>
+
+<div class="closing">
+<aside class="callout callout--note">
+  <div class="callout__body">Questions about this bill? Reply to us on Zalo or ask at the front desk; we are always happy to help.</div>
+</aside>
+  <div class="closing-row">
+    <div class="sign">
+  <div class="sign__closing">With warm regards,</div>
+  <div class="sign__name">Teacher Victor</div>
+  <div class="sign__role">Happy English Club</div>
+</div>
+
+    <footer class="qrf">
+  <div class="qrf__code"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><path stroke="#14213D" d="M0 0.5h7m2 0h2m1 0h2m2 0h1m1 0h7M0 1.5h1m5 0h1m3 0h3m2 0h1m2 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h4m2 0h3m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h1m1 0h5m3 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h2m1 0h1m1 0h1m1 0h2m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h5m1 0h1m1 0h1M0 8.5h1m1 0h5m6 0h3m2 0h5M0 9.5h5m4 0h3m1 0h1m2 0h1m2 0h1m3 0h1M0 10.5h2m2 0h1m1 0h3m1 0h2m3 0h1m2 0h1m2 0h1m1 0h2M2 11.5h4m1 0h2m7 0h3m1 0h1m3 0h1M0 12.5h1m2 0h2m1 0h1m1 0h1m4 0h1m3 0h2m1 0h1m1 0h3M0 13.5h3m4 0h1m1 0h1m2 0h2m2 0h1m2 0h1m1 0h1m1 0h1M0 14.5h1m1 0h7m4 0h5m1 0h3m1 0h2M0 15.5h1m1 0h1m1 0h1m7 0h1m2 0h2m2 0h2m3 0h1M0 16.5h1m2 0h1m1 0h6m1 0h9m1 0h1M8 17.5h2m5 0h2m3 0h2M0 18.5h7m2 0h1m1 0h3m2 0h1m1 0h1m1 0h1m1 0h3M0 19.5h1m5 0h1m1 0h2m1 0h1m2 0h1m1 0h1m3 0h2m2 0h1M0 20.5h1m1 0h3m1 0h1m1 0h1m2 0h10m1 0h1M0 21.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h2m3 0h2m1 0h5M0 22.5h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m4 0h2m1 0h1M0 23.5h1m5 0h1m2 0h1m4 0h4m1 0h3m2 0h1M0 24.5h7m1 0h7m2 0h1m1 0h6"/></svg>
+</div>
+  <div class="qrf__text">
+    <div class="qrf__site">hanoienglish.com</div>
+  </div>
+</footer>
+
+  </div>
+<div class="colophon">Hanoi English &middot; hanoienglish.com<br>Happy English Club · hanoienglish.com &middot; statement for Trần Bảo Châu</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hec-docs.invalid/schemas/invoice/1.0.0",
+  "title": "Tuition invoice input",
+  "description": "Mirrors { invoice: InvoiceData, bankInfo: BankInfo | null } from src/lib/invoice/types.ts, as fetchInvoiceData() returns them (mapUpstreamToInvoice already applied). Two additions: invoice.month (the month the screen asked for, used by the bulk ZIP filename) and bankInfo.vietqr_image (the VietQR PNG bytes; nothing is fetched at render time).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["invoice", "bankInfo"],
+  "properties": {
+    "variant": { "enum": ["standard", "summary-first"] },
+    "invoice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invoice_number", "issue_date", "billing_period", "month", "student", "classes", "discounts",
+        "subtotal_vnd", "total_due_vnd", "paid_to_date_vnd", "final_payable_vnd", "balance_vnd", "sessions"
+      ],
+      "properties": {
+        "invoice_number": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "issue_date": { "type": "string", "minLength": 1, "description": "ISO date-time; printed formatDate(issue_date, 'en-US'), e.g. \"Nov 13, 2026\"." },
+        "billing_period": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}$", "description": "YYYY-MM; printed formatMonth, e.g. \"November 2026\"." },
+        "month": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}$", "description": "The month TuitionBulkDownload was given; only names the file (<student>_<month>.pdf)." },
+        "student": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "full_name"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "full_name": { "type": "string", "minLength": 1, "maxLength": 200 }
+          }
+        },
+        "family": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": ["string", "null"], "maxLength": 200 }
+          }
+        },
+        "bill_to_text": { "type": ["string", "null"], "maxLength": 2000, "description": "Printed under the family name; the adapter defaults it to \"Dear Parents,\"." },
+        "classes": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["class_name", "sessions_count", "amount_vnd"],
+            "properties": {
+              "class_name": { "type": "string", "maxLength": 200 },
+              "sessions_count": { "type": "number" },
+              "amount_vnd": { "type": "number", "description": "Gross." },
+              "net_amount_vnd": { "type": ["number", "null"], "description": "After class-specific discounts; absent means equal to gross." }
+            }
+          }
+        },
+        "discounts": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "amount_vnd"],
+            "properties": {
+              "label": { "type": "string", "maxLength": 300 },
+              "amount_vnd": { "type": "number", "description": "Negative, as the adapter writes it." }
+            }
+          }
+        },
+        "subtotal_vnd": { "type": "number" },
+        "total_due_vnd": { "type": "number", "description": "Current month charges." },
+        "paid_to_date_vnd": { "type": "number", "description": "Prior balance: credit positive, debt negative. The adapter writes -0 for no prior balance, which prints \"(Credit) -0 ₫\"." },
+        "final_payable_vnd": { "type": "number" },
+        "balance_vnd": { "type": "number", "description": "Outstanding balance after this month's payments." },
+        "recorded_payment_vnd": { "type": ["number", "null"], "description": "This month's recorded payment; missing prints 0." },
+        "sessions": {
+          "type": "array",
+          "maxItems": 400,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["date", "status", "unit_price_vnd", "line_total_vnd", "class_name"],
+            "properties": {
+              "date": { "type": "string", "description": "YYYY-MM-DD; printed formatDate(date), e.g. \"03/11/2026\"." },
+              "status": { "type": "string", "maxLength": 50 },
+              "unit_price_vnd": { "type": "number" },
+              "line_total_vnd": { "type": "number" },
+              "class_name": { "type": "string", "maxLength": 200 }
+            }
+          }
+        }
+      }
+    },
+    "bankInfo": {
+      "description": "The bank_info row (without its id), or null when it is not configured.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bank_name", "account_number", "account_name"],
+          "properties": {
+            "org_name": { "type": ["string", "null"], "maxLength": 200 },
+            "org_address": { "type": ["string", "null"], "maxLength": 1000, "description": "Multi-line; line breaks are kept." },
+            "bank_name": { "type": "string", "maxLength": 200 },
+            "account_number": { "type": "string", "maxLength": 100 },
+            "account_name": { "type": "string", "maxLength": 200 },
+            "vietqr_storage_key": { "type": ["string", "null"], "maxLength": 500, "description": "Kept for parity with BankInfo; not read. Send the image itself in vietqr_image." },
+            "vietqr_image": {
+              "type": ["string", "null"],
+              "maxLength": 700000,
+              "pattern": "^data:image/png;base64,[A-Za-z0-9+/]+={0,2}$",
+              "description": "The VietQR PNG from the qr-codes bucket as a data: URI. Shown when present (the app showed it when vietqr_storage_key was set)."
+            }
+          }
+        }
+      ]
+    }
+  }
+}

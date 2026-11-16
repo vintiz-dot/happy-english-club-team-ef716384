@@ -1,0 +1,21 @@
+/*
+  bilingual: a block that says the same thing in two languages.
+  Stacked (default): the second language sits beneath the first.
+  .bilingual--split: the two sit side by side as equal columns.
+  Mark the second language lang="..." in the markup.
+*/
+.bilingual { display: grid; grid-template-columns: 1fr; gap: var(--space-1); break-inside: avoid; }
+.bilingual > * { min-width: 0; }
+.bilingual__sub { color: var(--color-ink-soft); font-size: var(--size-sm); line-height: var(--leading-body); margin: 0; }
+.bilingual--split { grid-template-columns: 1fr 1fr; gap: 0; font-size: var(--size-md); }
+.bilingual--split > * { padding: 0 var(--space-2); }
+.bilingual--split > :first-child { padding-left: 0; border-right: var(--border-hairline) solid var(--color-gold); }
+.bilingual--split > :last-child { padding-right: 0; }
+.bilingual--split .bilingual__sub { font-size: inherit; color: var(--color-ink); }
+.bilingual__mark {
+  display: inline-block; flex: none; width: 5mm; height: 5mm; border-radius: 50%;
+  background: var(--color-accent-deep); color: var(--color-ink);
+  font-weight: var(--font-weight-bold); font-size: var(--size-sm); line-height: 5mm; text-align: center;
+}
+.bilingual__lead { display: flex; gap: var(--space-1); align-items: flex-start; }
+.bilingual__lead > p { margin: 0; }

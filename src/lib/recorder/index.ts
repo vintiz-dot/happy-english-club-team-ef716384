@@ -91,7 +91,7 @@ export { Chunker } from "./chunker";
 export { MemoryStore, openIdbStore, type RecorderStore } from "./store";
 export { supabaseBackend, BUCKET, type RecorderBackend, type SupabaseLike } from "./backend";
 export { Uploader, type UploadProgress } from "./uploader";
-export { Recorder, type RecorderOptions } from "./controller";
+export { Recorder, SAID_NO_ABANDON_REASONS, FINAL_PRE_START_REFUSALS, type RecorderOptions } from "./controller";
 export { BrowserCaptureSource, type CaptureSource } from "./captureSource";
 export { inlineEncoder, workerEncoder, type ChunkEncoder, type EncodedChunk, type WorkerLike } from "./encoderClient";
 export type { RecorderEvents, HeldAudio } from "./events";

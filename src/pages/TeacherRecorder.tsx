@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Mic, Settings2 } from "lucide-react";
 import Layout from "@/components/Layout";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { DailyRecorder } from "@/components/recorder/DailyRecorder";
 import { SetupWizard } from "@/components/recorder/SetupWizard";
 import { RecorderAdminPanel } from "@/components/recorder/RecorderAdminPanel";
+import { RecorderHeader } from "@/components/recorder/RecorderHeader";
 
 /**
  * /teacher/recorder - the class recorder. A teacher sees today's lesson and
@@ -24,19 +23,8 @@ export default function TeacherRecorder() {
   return (
     <Layout title="Class recorder">
       <div className="max-w-3xl mx-auto p-4 md:p-6 space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center"><Mic className="h-6 w-6 text-primary" aria-hidden /></div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold">Class recorder</h1>
-            <p className="text-sm text-muted-foreground">Records your lesson with two microphones. It only records; nothing is analysed here.</p>
-          </div>
-          {view === "daily" && !active ? (
-            <Button variant="outline" className="min-h-11" onClick={() => setView("setup")}><Settings2 className="h-4 w-4 mr-2" aria-hidden /> Microphones</Button>
-          ) : null}
-          {role === "admin" ? (
-            <Button variant="outline" className="min-h-11" onClick={() => setView(view === "admin" ? "daily" : "admin")}>{view === "admin" ? "Teacher screen" : "Admin panel"}</Button>
-          ) : null}
-        </div>
+        <RecorderHeader showMicrophones={view === "daily" && !active} isAdmin={role === "admin"} adminView={view === "admin"}
+          onMicrophones={() => setView("setup")} onToggleAdmin={() => setView(view === "admin" ? "daily" : "admin")} />
         {view === "admin" ? <RecorderAdminPanel /> : null}
         {view === "setup" ? (
           <SetupWizard userId={user.id} onCancel={() => setView("daily")} onDone={() => { setKey((k) => k + 1); setView("daily"); }} />

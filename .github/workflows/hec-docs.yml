@@ -1,0 +1,140 @@
+name: hec-docs
+
+on:
+  push:
+    paths: ["hec-docs/**", ".github/workflows/hec-docs.yml"]
+  pull_request:
+    paths: ["hec-docs/**", ".github/workflows/hec-docs.yml"]
+
+permissions:
+  contents: read
+
+env:
+  REFRESH_BRANCH: hec-docs/refresh-baselines
+
+jobs:
+  check:
+    # Same pinned browser as the Dockerfile, so rasters match the committed
+    # qa/baselines/linux. Not run on the refresh branch, which has none yet.
+    if: github.ref != 'refs/heads/hec-docs/refresh-baselines'
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
+      options: --user 1001 --ipc=host
+    defaults:
+      run:
+        working-directory: hec-docs
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      HEC_DOCS_SILENT: "1"
+      # Docker's default seccomp profile blocks the namespaces Chromium's
+      # sandbox needs. CI renders only the repo's own fixtures, so it runs
+      # without it; production keeps it on (see README, Security).
+      HEC_DOCS_CHROMIUM_SANDBOX: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: hec-docs/package-lock.json
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type-check
+        run: npm run typecheck
+      - name: Unit + snapshot tests
+        run: npm run test:unit && npm run test:snapshot
+      - name: End-to-end (CLI + HTTP API)
+        # On failure, surface the tail of the output as an annotation, which is
+        # readable without signing in to GitHub.
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! npm run test:e2e 2>&1 | tee e2e.log; then
+            echo "::error title=e2e::$(grep -E 'not ok|Error|error|expected|actual|✖' e2e.log | tail -40 | tr '\n' ' ' | cut -c1-3500)"
+            exit 1
+          fi
+      - name: Quality gates (parity, a11y, fonts, regression, determinism)
+        # Fails on any unreviewed visual diff against qa/baselines/linux.
+        run: npm run qa
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: Upload QA output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hec-docs-qa
+          path: |
+            hec-docs/qa/out
+            hec-docs/qa/report.json
+  image:
+    runs-on: ubuntu-24.04
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test the image
+        # On failure the tail of the build output becomes an annotation,
+        # readable without signing in to GitHub.
+        shell: bash
+        run: |
+          set -o pipefail
+          for target in test runtime; do
+            if ! docker build --progress=plain --target "$target" -t "hec-docs:$target" hec-docs 2>&1 | tee "build-$target.log"; then
+              echo "::error title=docker build $target::$(grep -vE '^#[0-9]+ (sha256|extracting|resolve|DONE|CACHED)' "build-$target.log" | tail -30 | tr '\n' ' ' | cut -c1-3500)"
+              exit 1
+            fi
+          done
+      - name: Smoke-test the runtime image
+        shell: bash
+        run: |
+          docker run -d --name hd -p 8787:8787 --cap-add=SYS_ADMIN hec-docs:runtime
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8787/healthz && exit 0; sleep 2; done
+          echo "::error title=image smoke test::$(docker logs hd 2>&1 | tail -20 | tr '\n' ' ')"
+          exit 1
+
+  # Linux regression baselines are produced here, in the pinned container,
+  # never on a developer machine. To refresh them: push any commit to the
+  # branch hec-docs/refresh-baselines. This job renders every fixture and
+  # commits qa/baselines/linux back to THAT branch. Review the images, then
+  # bring the commit to main; until then main's check keeps failing on the diff.
+  refresh-baselines:
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/hec-docs/refresh-baselines' &&
+      !contains(github.event.head_commit.message, '[baselines-generated]')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
+      options: --user 1001 --ipc=host
+    defaults:
+      run:
+        working-directory: hec-docs
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      HEC_DOCS_SILENT: "1"
+      HEC_DOCS_CHROMIUM_SANDBOX: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: hec-docs/package-lock.json
+      - run: npm ci
+      - name: Render Linux baselines
+        run: node scripts/qa.ts --update-baselines
+      - name: Check the gates against them
+        run: npm run qa
+      - name: Commit qa/baselines/linux to this branch
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name "hec-docs-ci"
+          git config user.email "hec-docs-ci@users.noreply.github.com"
+          git add qa/baselines/linux
+          if git diff --cached --quiet; then echo "baselines unchanged"; exit 0; fi
+          git commit -m "HEC Docs: Linux regression baselines [baselines-generated]"
+          git push origin "HEAD:$REFRESH_BRANCH"
