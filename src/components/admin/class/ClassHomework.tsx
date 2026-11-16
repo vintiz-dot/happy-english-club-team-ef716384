@@ -342,9 +342,10 @@ const ClassHomework = ({ classId }: { classId: string }) => {
               )}
 
               <div className="space-y-2">
-                <Label>Add File (Max 5MB)</Label>
-                <div className="flex gap-2">
+                <Label htmlFor={`class-homework-file-${hw.id}`}>Add File (Max 5MB)</Label>
+                <div className="flex min-w-0 gap-2">
                   <Input
+                    id={`class-homework-file-${hw.id}`}
                     type="file"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
