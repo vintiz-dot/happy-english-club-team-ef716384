@@ -51,9 +51,11 @@ export default function MiniCalendar({
       transition={ivory ? { duration: 0.24, ease: [0.22, 1, 0.36, 1] } : undefined}
       className={cn(
         // At 375 the anchor sits mid-row, so the panel is placed on the
-        // viewport (16 px gutters) instead of hanging off the right edge.
+        // viewport (16 px gutters) instead of hanging off the right edge,
+        // just under the top bar: left at its static place it opened mid-screen
+        // and, being fixed, its last rows ran off the bottom out of reach.
         ivory
-          ? "max-sm:fixed max-sm:inset-x-4 w-auto rounded-hec-md border border-hec-line bg-hec-raised p-2 text-hec-ink shadow-hec-2 sm:w-[22rem]"
+          ? "max-sm:fixed max-sm:inset-x-4 max-sm:top-16 w-auto rounded-hec-md border border-hec-line bg-hec-raised p-2 text-hec-ink shadow-hec-2 sm:w-[22rem]"
           : "glass-sm rounded-2xl p-3 w-[240px]",
         ivory ? undefined : "shadow-xl border border-border/50",
         className
