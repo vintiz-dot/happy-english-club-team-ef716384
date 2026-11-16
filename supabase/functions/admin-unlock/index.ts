@@ -196,6 +196,23 @@ Deno.serve(async (req) => {
       if (![ES256, RS256].includes(Number(publicKeyAlg))) {
         return json({ error: "This device uses an algorithm we do not support" }, 400);
       }
+      // Adding a device to an account that is already secured needs the gate
+      // passed first (audit F-07). Otherwise anyone holding an admin session
+      // - the stolen or unattended one the gate exists for - enrols their
+      // own key and is handed an unlock. The first enrolment (nothing on the
+      // account yet) stays open, or the first admin could never get in;
+      // passcode/set already follows the same rule for the passcode.
+      const [{ data: existingKeys, error: keysErr }, { data: existingCode, error: codeErr }] = await Promise.all([
+        db.from("admin_passkeys").select("id").eq("user_id", user.id).limit(1),
+        db.from("admin_passcodes").select("user_id").eq("user_id", user.id).maybeSingle(),
+      ]);
+      if (keysErr || codeErr) return json({ error: "Could not check this account's devices." }, 500);
+      if ((existingKeys?.length ?? 0) > 0 || existingCode) {
+        const held = await requireUnlock(db, user.id, req.headers.get("x-admin-unlock"));
+        if (!held.valid) {
+          return json({ error: "Confirm it's you before adding a device." }, 403);
+        }
+      }
       if (!(await consumeChallenge("register", String(challenge)))) {
         return json({ error: "That enrolment expired. Please try again." }, 400);
       }

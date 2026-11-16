@@ -66,9 +66,10 @@ Deno.serve(async (req) => {
       const text = await r.text();
       console.error("OpenAI image error", r.status, text);
       return new Response(
-        JSON.stringify({ error: "OpenAI image generation failed", detail: text }),
+        // The vendor's own text stays in the log, not in the answer (audit F-13).
+        JSON.stringify({ error: "OpenAI image generation failed" }),
         {
-          status: r.status,
+          status: r.status >= 500 ? 502 : r.status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );

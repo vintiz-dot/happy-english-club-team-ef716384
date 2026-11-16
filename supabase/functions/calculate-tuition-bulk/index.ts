@@ -99,11 +99,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Auth + role: only admin or teacher may see financial data. An
-    // internal call holding the service-role key also passes - the schedule
-    // generator makes one after every rebuild to keep invoices in step with
-    // the timetable, and it has no person behind it.
-    const gate = await requireRole(req, supabase, ["admin", "teacher"], corsHeaders);
+    // Auth + role: only an admin may see financial data. An internal call
+    // holding the service-role key also passes - the schedule generator makes
+    // one after every rebuild to keep invoices in step with the timetable,
+    // and it has no person behind it. Teachers were let through until S2
+    // (audit F-04): any teacher or TA could read any child's bill, discount,
+    // payments and carry for up to 200 ids. Every browser caller is an admin
+    // screen (AdminTuitionList*, QuickPayPanel, CloseMonthDialog,
+    // useFinanceOverview).
+    const gate = await requireRole(req, supabase, ["admin"], corsHeaders);
     if (gate instanceof Response) return gate;
 
     const InputSchema = z.object({
