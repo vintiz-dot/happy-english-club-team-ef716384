@@ -182,8 +182,27 @@ Deno.serve(async (req) => {
       .eq("id", row.id);
 
     // Throw out anyone already holding a session on this account.
+    //
+    // auth.admin.signOut takes the user's ACCESS TOKEN, not their id (audit
+    // F-12): called with the id it returned an error - in `error`, never
+    // thrown - so no session was ever ended. The function knows the new
+    // password, so it signs in once on a throw-away client and ends every
+    // session of the account, that one included ("global"). Best effort,
+    // as before: the code is already burnt and the password already set.
     try {
-      await sb.auth.admin.signOut(row.user_id, "global");
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+      if (!anonKey || !row.login_email) throw new Error("no anon key or login email");
+      const once = createClient(Deno.env.get("SUPABASE_URL")!, anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: signedIn, error: inErr } = await once.auth.signInWithPassword({
+        email: String(row.login_email),
+        password: newPassword,
+      });
+      const token = signedIn?.session?.access_token;
+      if (inErr || !token) throw new Error(inErr?.message ?? "no session to end with");
+      const { error: outErr } = await sb.auth.admin.signOut(token, "global");
+      if (outErr) throw new Error(outErr.message);
     } catch (e) {
       console.warn("could not revoke existing sessions:", (e as Error).message);
     }
