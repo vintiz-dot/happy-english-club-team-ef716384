@@ -649,6 +649,23 @@ await section('G-13 bulk (BulkEnrollmentDateSetter) and HC050', async () => {
   r = await tryIt(async () => go('enrollment', 'set_rate', { enrollment_id: id, rate_override_vnd: 5 }));
   await db.exec(`ALTER TABLE enrollments ENABLE TRIGGER zz_enrollment_money_guard`);
   ok('guard trigger disabled: the checked path refuses to work, HC050, nothing written', r.code === 'HC050' && (await enr(id)).rate_override_vnd === null, r);
+
+  // families pay in advance: a bill already SIGNED OFF for next month is inside an open-ended reach
+  const k2 = await mkKid();
+  const id2 = await enrol(k2, c, TODAY);
+  await inv(k2, NEXT_MONTH_1.slice(0, 7), { conf: 'confirmed' });
+  r = await tryIt(async () => asAdmin(`UPDATE enrollments SET rate_override_vnd = 5 WHERE id=$1`, [id2]));
+  ok('an enrolment that began today, with NEXT month\'s bill already confirmed: a raw rate is HC120 tier=2 (an open-ended reach runs to the last billed month)',
+     refused(r, 'HC120', /tier=2/), r);
+
+  // the exec re-reads the row it was shown, locked, before writing
+  const k3 = await mkKid();
+  const id3 = await enrol(k3, c);
+  const p = await preview('enrollment', 'set_rate', { enrollment_id: id3, rate_override_vnd: 111 });
+  await asSuper(`UPDATE enrollments SET allowed_days = '{1}' WHERE id=$1`, [id3]);
+  r = await tryIt(async () => asSuper(`SELECT public._money_exec__enrollment($1::jsonb, $2)`, [JSON.stringify(p), ADMIN]));
+  ok('the exec refuses a plan whose enrolment changed since it was previewed: HC011, nothing written',
+     r.code === 'HC011' && (await enr(id3)).rate_override_vnd === null, r);
 });
 
 // ---------------------------------------------------------------- G-15
