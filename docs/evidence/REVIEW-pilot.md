@@ -72,7 +72,7 @@ of them and reaches Victor only through an unmanaged copy; the extra exposure (s
 keeps for 30 days in the same project) is small, provided M-1 is fixed so transcripts really expire.
 
 ## 4. What I ran
-- `node scripts/pgtest/run.mjs` (full): see the totals in the hand-back message.
+- `node scripts/pgtest/run.mjs` (full, started at 06:30 Hanoi without the clock-back shim): the pilot suites pass (lesson monitor pilot 168 passed 0 failed; lesson monitor view 35 passed 0 failed, both also run directly). One unrelated failure seen: "d4 money inputs" 307 passed, 1 failed (N-2, enrolment-ended-today), the known clock-edge flake before 08:00 Hanoi; not in the pilot path. The full run had not finished when this was written.
 - Pilot suites inside it: lesson-monitor.test.mjs (117 assertions) and lesson-monitor-view.test.mjs.
 - `python -m pytest scripts/lesson-monitor/tests` in the hec-audio-eval venv: **35 passed in 74.9 s** (fake transport, no audio).
 - My probe: scripts/pgtest/lesson-monitor-review.test.mjs, **17 passed, 0 failed** (P1 readable after kill switch, P2 expiry hides
