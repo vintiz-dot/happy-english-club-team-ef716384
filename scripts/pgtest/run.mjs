@@ -97,6 +97,10 @@ const SUITES = [
   // D5: the sibling-discount hold rule (_lib/sibling-hold.ts), its fail-closed
   // read (only 42703 means "column missing", G-10) and its two callers.
   { name: "sibling hold", file: "sibling-hold.test.mjs", expect: 22, migrations: [] },
+  // D5 G-11: 20261117111000 - the ledger is append-only for every role, its
+  // preflight fails closed, six money tables audited (it loads the real audit
+  // migration itself, then the file under test).
+  { name: "ledger append-only", file: "ledger-append-only.test.mjs", expect: 26, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
