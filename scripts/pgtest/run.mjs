@@ -289,6 +289,18 @@ const SUITES = [
   // Not a database test: the edge function's own decisions, and the
   // after-effects of a mark that mark-attendance and the sync share.
   { name: "stars sync core", file: "stars-sync-core.test.mjs", migrations: [] },
+  // Attendance streaks read from the register, the bonus once per child per
+  // lesson (docs/evidence/FIX-streaks-bank-uploads.md, item 1): the real
+  // attendance-effects.ts over pglite, the migration, and the repair script
+  // (dry run, back-pay of missed bonuses, rebuilt counters) on a
+  // hand-computed fixture and against the TS rule.
+  {
+    name: "attendance streaks",
+    file: "attendance-streaks.test.mjs",
+    migrations: ["20261116091000_attendance_streak_rule.sql"],
+    args: ["scripts/REPAIR-attendance-streaks.sql"],
+    expect: 102,
+  },
   // Nor these: the admin screens' reasoning, without the screens. Who a
   // Pixel Pal child probably is, and how the record log is read and sliced.
   { name: "stars link tool", file: "stars-link.test.mjs", migrations: [] },
@@ -384,6 +396,15 @@ const SUITES = [
     name: "creator rows (F-21)",
     file: "creator-rows.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql"],
+  },
+  // bank_info: a family's primary login reads the school's bank details
+  // (docs/evidence/FIX-streaks-bank-uploads.md, item 2). The live policy is
+  // the rollback block in that file, "before" and rollback under test.
+  {
+    name: "bank info family logins",
+    file: "bank-info-family.test.mjs",
+    migrations: ["20261116090000_bank_info_family_logins.sql"],
+    expect: 27,
   },
   // F-02: the nine AI / speech / image-search functions, handler by handler:
   // no session, wrong role, right role, the per-account limit.
