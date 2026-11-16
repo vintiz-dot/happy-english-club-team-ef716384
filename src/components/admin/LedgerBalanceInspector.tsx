@@ -56,8 +56,6 @@ export function LedgerBalanceInspector() {
   const [reversingPayment, setReversingPayment] = useState<string | null>(null);
   const [deleteReason, setDeleteReason] = useState("");
   const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [reversingContribution, setReversingContribution] = useState<string | null>(null);
-  const [contributionReason, setContributionReason] = useState("");
 
   useEffect(() => {
     loadStudents();
@@ -196,41 +194,16 @@ export function LedgerBalanceInspector() {
     }
   };
 
-  const handleReverseContribution = async (txId: string) => {
-    if (!contributionReason.trim()) {
-      toast.error("Please provide a reason for reversing this contribution");
-      return;
-    }
-
-    try {
-      // Delete all ledger entries with this tx_id (reverses the contribution)
-      const { error } = await supabase
-        .from("ledger_entries")
-        .delete()
-        .eq("tx_id", txId);
-
-      if (error) throw error;
-
-      toast.success("Contribution reversed successfully");
-      setReversingContribution(null);
-      setContributionReason("");
-      loadContributions();
-      if (selectedAccount) loadEntries();
-    } catch (error: any) {
-      toast.error(error.message);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Voluntary Contributions
+            Voluntary contributions (no longer offered)
           </CardTitle>
           <CardDescription>
-            View and reverse voluntary contributions
+            History only: contributions recorded before they were removed. They stay in the ledger as they are.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -243,13 +216,12 @@ export function LedgerBalanceInspector() {
                   <TableHead>Month</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Memo</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {contributions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       No contributions found
                     </TableCell>
                   </TableRow>
@@ -264,15 +236,6 @@ export function LedgerBalanceInspector() {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {contribution.memo || "—"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setReversingContribution(contribution.tx_id)}
-                        >
-                          <Undo2 className="h-4 w-4" />
-                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -416,35 +379,6 @@ export function LedgerBalanceInspector() {
                     disabled={!deleteReason.trim()}
                   >
                     Reverse Payment
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            <AlertDialog open={!!reversingContribution} onOpenChange={() => setReversingContribution(null)}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Reverse Contribution</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will delete all ledger entries related to this contribution. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="space-y-2 py-4">
-                  <Label>Reason for reversal (required)</Label>
-                  <Textarea
-                    value={contributionReason}
-                    onChange={(e) => setContributionReason(e.target.value)}
-                    placeholder="Explain why this contribution is being reversed..."
-                    rows={3}
-                  />
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setContributionReason("")}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => reversingContribution && handleReverseContribution(reversingContribution)}
-                    disabled={!contributionReason.trim()}
-                  >
-                    Reverse Contribution
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
