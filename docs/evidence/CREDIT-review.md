@@ -55,7 +55,15 @@ Everything else asked for, held:
 
 ## Counts
 
-COUNTS_PLACEHOLDER
+| command | result |
+|---|---|
+| `node scripts/pgtest/run.mjs` (once, on review-credit @ 6918f0d0) | **6994 assertions across 78 suites, 2 suites failed, both the known ones**: `d4 lesson pay` 142/1 ("a time change that makes a started lesson not started" - run at 00:4x Hanoi, the clock-edge flake); `ai spend gate (F-02)` 249/1, its only failure `reception-feed` in the opt-out list (fixed on the conductor branch). Same totals as the builder's section 11. Of note: past leftover credit 29/0, invoice status 317/0, d4 floors 213/0, d4 register 140/0, edge functions typecheck 5/0, app typecheck 3/0, mirrors 19/0 |
+| `node scripts/pgtest/past-leftover-credit.test.mjs` (alone) | 29 passed, 0 failed |
+| edge-function typecheck (`edge-functions.test.mjs`, inside run.mjs) | 5 passed, 0 failed |
+| `node docs/evidence/CREDIT-review-probes.mjs` (script as built) | **52 passed, 1 failed** - the failure is R7a = F1 |
+| `CREDIT_SCRIPT=<script + F1 patch> node docs/evidence/CREDIT-review-probes.mjs` | **53 passed, 0 failed** |
+
+(Two earlier probe runs had failures that were mine, not the code's: R8a compared ledger keys holding a per-run payment id and `Date.now()`, R9a expected the wrong residue, R1c counted the register's own `guard_installed` row. Fixed in the probe; the figures quoted above are from the final run.)
 
 ## Could not check
 
