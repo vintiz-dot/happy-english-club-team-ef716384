@@ -326,6 +326,18 @@ await section('G-13 an enrolment keeps its child and its class (HC121, every lan
   }
   const r = await tryIt(async () => asAdmin(`UPDATE enrollments SET class_id = $2 WHERE id=$1`, [id, c2.cid]));
   ok('class_id changed: HC121', refused(r, 'HC121', /enrollment_identity/), r);
+  // Review B-1: where two rows of one class overlap, the one CREATED FIRST
+  // prices the lesson (both calculators order by created_at, then id), so
+  // created_at and id are identity too.
+  const before = JSON.stringify(await enr(id));
+  for (const [lane, run] of [['admin', asAdmin], ['service', asService], ['owner', asSuper]]) {
+    const r2 = await tryIt(async () => run(`UPDATE enrollments SET created_at = created_at - interval '3 days' WHERE id=$1`, [id]));
+    ok(`B-1 created_at changed (which overlapping row prices a lesson), ${lane} lane: HC121 enrollment_identity`,
+       refused(r2, 'HC121', /code=enrollment_identity; .*End it and start a new one/), r2);
+  }
+  const r3 = await tryIt(async () => asSuper(`UPDATE enrollments SET id = gen_random_uuid() WHERE id=$1`, [id]));
+  ok('B-1 id changed, owner lane: HC121 enrollment_identity', refused(r3, 'HC121', /enrollment_identity/), r3);
+  ok('  nothing changed', JSON.stringify(await enr(id)) === before);
 });
 
 await section('G-13 the checked path: enroll, set_start_date, set_rate, set_discount, delete', async () => {

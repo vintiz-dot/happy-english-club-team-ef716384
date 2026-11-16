@@ -105,7 +105,8 @@ BEGIN
       ('money_change_overrides', ARRAY['id','txid','entity','op','target_id','student_ids','reach_from','reach_to','tier','change']),
       ('money_change_events',  ARRAY['kind','payload','actor_user_id']),
       ('enrollments',          ARRAY['id','student_id','class_id','start_date','end_date','allowed_days','rate_override_vnd',
-                                     'discount_type','discount_value','discount_cadence','created_by','updated_by','updated_at']),
+                                     'discount_type','discount_value','discount_cadence','created_by','updated_by','updated_at',
+                                     'created_at']),
       ('discount_assignments', ARRAY['id','student_id','discount_def_id','effective_from','effective_to','note']),
       ('referral_bonuses',     ARRAY['id','student_id','type','value','cadence','effective_from','effective_to','note']),
       ('discount_definitions', ARRAY['id','type','value','cadence','start_month','end_month','amortize_yearly','is_active']),
@@ -499,9 +500,14 @@ DECLARE
   v_op text;
   v_ok boolean := false;
 BEGIN
-  IF TG_OP = 'UPDATE' AND (NEW.student_id IS DISTINCT FROM OLD.student_id OR NEW.class_id IS DISTINCT FROM OLD.class_id) THEN
+  -- created_at (then id) decides which of two overlapping rows of one class
+  -- prices a lesson (_lib/enrollment-discounts.ts, calculate-tuition and
+  -- -bulk order a child's enrolments by them): identity, not a note. No
+  -- writer changes either.
+  IF TG_OP = 'UPDATE' AND (NEW.student_id IS DISTINCT FROM OLD.student_id OR NEW.class_id IS DISTINCT FROM OLD.class_id
+                            OR NEW.id IS DISTINCT FROM OLD.id OR NEW.created_at IS DISTINCT FROM OLD.created_at) THEN
     RAISE EXCEPTION 'money_change_refused' USING ERRCODE = 'HC121',
-      DETAIL = 'code=enrollment_identity; An enrolment keeps its child and its class. End it and start a new one.';
+      DETAIL = 'code=enrollment_identity; An enrolment keeps its child, its class, its id and when it was created. End it and start a new one.';
   END IF;
   sp := public._money_span(CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE to_jsonb(OLD) END,
                            CASE WHEN TG_OP = 'DELETE' THEN NULL ELSE to_jsonb(NEW) END,
