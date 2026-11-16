@@ -1,0 +1,17 @@
+/* Meta stack (ui/meta-stack.njk): reference figures, right-aligned. */
+.mstack { margin: 0 0 var(--space-2); text-align: right; display: grid; gap: var(--space-1); justify-items: end; }
+.mstack__row { margin: 0; break-inside: avoid; }
+.mstack__row dt {
+  font-size: var(--size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  color: var(--color-gold-ink);
+}
+.mstack__row dd { margin: 1pt 0 0; font-size: var(--size-base); color: var(--color-ink); font-variant-numeric: tabular-nums lining-nums; }
+.mstack__row--lead dd {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--size-lg);
+  line-height: var(--leading-tight);
+  letter-spacing: 0.01em;
+}

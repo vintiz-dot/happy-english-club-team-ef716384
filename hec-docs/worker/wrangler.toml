@@ -1,0 +1,22 @@
+# HEC Docs printer (Cloudflare Workers, free plan).
+# Free plan: 10 ms CPU per request and 10 minutes of browser time per day,
+# 3 browsers at once. This Worker therefore does as little as possible: the
+# app renders and finishes the document; the Worker only prints it.
+name = "hec-docs-printer"
+main = "src/index.ts"
+compatibility_date = "2026-03-16"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[browser]
+binding = "BROWSER"
+
+[vars]
+SUPABASE_URL = "https://aswgmbefikhsnhogtryv.supabase.co"
+# Public (publishable) key, already shipped in the web app.
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzd2dtYmVmaWtoc25ob2d0cnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MzQwNTYsImV4cCI6MjA5MzMxMDA1Nn0.ELWucKWBlB-SSW5XfewHiNeHWpIkzHe2W_gQYlJc2Gw"
+# Pages that may call the printer, and the only origin the page's fonts,
+# styles and logo may load from (enforced again by the page's own CSP).
+ALLOWED_ORIGINS = "https://user.hanoienglish.com,https://user.hanoienglish.vip,http://localhost:8080,http://localhost:5173"
+ALLOWED_ORIGIN_SUFFIX = ".happy-class-mate.pages.dev"
+ASSET_ORIGIN = "https://user.hanoienglish.com"

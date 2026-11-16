@@ -1,0 +1,79 @@
+/* Money summary (ui/money-summary.njk): labelled figures stacked under a
+   breakdown, right-aligned tabular numbers, the amount due set apart. */
+.msum {
+  margin: 0 0 var(--space-3) auto;
+  width: 64%;
+  font-size: var(--size-sm);
+  break-inside: avoid;
+  break-before: avoid; /* stay with the table it totals */
+}
+.msum__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 4pt var(--space-1);
+  border-bottom: var(--border-hairline) solid var(--color-rule);
+  break-inside: avoid;
+}
+.msum__label { margin: 0; color: var(--color-ink); }
+.msum__value {
+  margin: 0;
+  font-variant-numeric: tabular-nums lining-nums;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--color-ink);
+}
+.msum__row--line .msum__label,
+.msum__row--line .msum__value { color: var(--color-ink-soft); }
+.msum__row--strong { font-weight: var(--font-weight-semibold); }
+.msum__row--sub .msum__label,
+.msum__row--sub .msum__value { color: var(--color-ink-soft); }
+.msum__row--credit .msum__label,
+.msum__row--credit .msum__value { color: var(--color-positive); }
+.msum__row--total {
+  font-size: var(--size-base);
+  font-weight: var(--font-weight-bold);
+  border-top: var(--border-rule) solid var(--color-ink);
+  border-bottom: var(--border-rule) solid var(--color-ink);
+  padding-top: 6pt;
+  padding-bottom: 6pt;
+}
+.msum__row--due {
+  margin-top: var(--space-1);
+  padding-top: 7pt;
+  padding-bottom: 7pt;
+  font-size: var(--size-md);
+  font-weight: var(--font-weight-bold);
+  background: var(--color-surface);
+  border-bottom: none;
+  border-left: var(--border-strong) solid var(--color-accent-deep);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+.msum__row--due .msum__value { font-family: var(--font-family-display); font-size: var(--size-lg); }
+
+/* Hero: a standalone panel (e.g. beside payment details at the top). */
+.msum--hero {
+  width: auto;
+  margin: 0;
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  border: var(--border-hairline) solid var(--color-gold);
+  border-top: var(--border-strong) solid var(--color-ink);
+  border-radius: var(--border-radius);
+  background: var(--color-paper);
+  break-before: auto;
+}
+.msum--hero .msum__row { padding-left: 0; padding-right: 0; }
+.msum--hero .msum__row--due {
+  display: block;
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+}
+.msum--hero .msum__row--due .msum__label { font-size: var(--size-sm); font-weight: var(--font-weight-semibold); color: var(--color-ink-soft); }
+.msum--hero .msum__row--due .msum__value {
+  display: block;
+  text-align: left;
+  margin-top: 2pt;
+  font-size: var(--size-2xl);
+  line-height: var(--leading-tight);
+}

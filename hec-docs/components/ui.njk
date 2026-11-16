@@ -10,7 +10,7 @@
 {% macro header(tenant, eyebrow, title, meta=[]) %}
 <header class="hdr" role="banner">
   <div class="hdr__lockup">
-    <img class="hdr__logo" src="/tenant/{{ tenant.logo.file }}" alt="{{ tenant.logo.alt }}">
+    <img class="hdr__logo" src="{{ assetBase }}/tenant/{{ tenant.logo.file }}" alt="{{ tenant.logo.alt }}">
     <div class="hdr__brand">
       <div class="hdr__name">{{ tenant.name }}</div>
       {% if tenant.subtitle %}<div class="hdr__sub" lang="vi">{{ tenant.subtitle }}</div>{% endif %}

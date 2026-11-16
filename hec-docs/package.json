@@ -26,7 +26,8 @@
     "baseline:update": "node scripts/qa.ts --update-baselines",
     "contact-sheet": "node scripts/contact-sheet.ts",
     "test:snapshot": "node --test \"test/snapshot/*.test.ts\"",
-    "bench": "node scripts/bench.ts 3"
+    "bench": "node scripts/bench.ts 3",
+    "build:app": "node scripts/build-app-engine.ts"
   },
   "dependencies": {
     "ajv": "8.17.1",
@@ -48,12 +49,13 @@
     "@types/nunjucks": "3.2.6",
     "@types/pngjs": "6.0.5",
     "@types/qrcode": "1.5.5",
+    "@types/sanitize-html": "2.16.0",
+    "esbuild": "0.28.2",
     "eslint": "9.32.0",
     "pdfjs-dist": "4.10.38",
     "pixelmatch": "7.1.0",
     "pngjs": "7.0.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.46.0",
-    "@types/sanitize-html": "2.16.0"
+    "typescript-eslint": "8.46.0"
   }
 }
