@@ -75,6 +75,10 @@ const SUITES = [
   // D5: scripts/CHECK-past-cancellations-with-evidence.sql on the real audit,
   // cancelled-lesson guard, D1 and D2 (it loads them itself, in paste order).
   { name: "past cancellations check", file: "past-cancellations-check.test.mjs", expect: 20, migrations: [] },
+  // D5: every write path to the money tables and every RPC, pinned; no browser
+  // writes of payments / ledger / payroll; recorded_payment only by
+  // compare-and-set; labels from the one rule; no NEW browser pricing.
+  { name: "money write paths", file: "money-write-paths.test.mjs", expect: 19, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },

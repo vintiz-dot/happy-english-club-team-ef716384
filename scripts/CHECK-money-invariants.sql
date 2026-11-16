@@ -194,7 +194,7 @@ SELECT 'M11', 'label_disagrees_with_rule', 'report', count(*)::bigint, NULL,
   FROM labels WHERE stored <> by_rule
 UNION ALL
 SELECT 'M12', 'label_disagrees_written_since_t4', 'report', count(*)::bigint, NULL,
-       'of M11, bills last written after the payments release (13 Nov 08:00): a hand-set label (InvoiceStatusManager, gap G-5) or a carry change (G-4); a writer with its own rule would show here'
+       'of M11, bills last written after the payments release (13 Nov 08:00): a carry change moved the payable (G-4); a writer with a rule of its own would also show here'
   FROM labels, params WHERE stored <> by_rule AND labels.updated_at >= params.t4_live
 
 -- --------------------------------------------------------- frozen bills
