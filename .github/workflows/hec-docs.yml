@@ -73,8 +73,25 @@ jobs:
     needs: check
     steps:
       - uses: actions/checkout@v4
-      - run: docker build --target test hec-docs
-      - run: docker build --target runtime -t hec-docs:${{ github.sha }} hec-docs
+      - name: Build and test the image
+        # On failure the tail of the build output becomes an annotation,
+        # readable without signing in to GitHub.
+        shell: bash
+        run: |
+          set -o pipefail
+          for target in test runtime; do
+            if ! docker build --progress=plain --target "$target" -t "hec-docs:$target" hec-docs 2>&1 | tee "build-$target.log"; then
+              echo "::error title=docker build $target::$(grep -vE '^#[0-9]+ (sha256|extracting|resolve|DONE|CACHED)' "build-$target.log" | tail -30 | tr '\n' ' ' | cut -c1-3500)"
+              exit 1
+            fi
+          done
+      - name: Smoke-test the runtime image
+        shell: bash
+        run: |
+          docker run -d --name hd -p 8787:8787 --cap-add=SYS_ADMIN hec-docs:runtime
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8787/healthz && exit 0; sleep 2; done
+          echo "::error title=image smoke test::$(docker logs hd 2>&1 | tail -20 | tr '\n' ' ')"
+          exit 1
 
   # Linux regression baselines are produced here, in the pinned container,
   # never on a developer machine. To refresh them: push any commit to the
