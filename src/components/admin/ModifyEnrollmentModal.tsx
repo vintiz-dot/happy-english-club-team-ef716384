@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -26,6 +26,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, ArrowRightLeft, Pause, StopCircle, Settings } from "lucide-react";
 import { format } from "date-fns";
 import { rpcErrorText } from "@/lib/moneyGuard";
+import { INPUT_TEXT } from "@/lib/moneyInputs";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
+import type { MoneyRequest } from "@/components/admin/money-guard/useMoneyChange";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -137,186 +141,161 @@ export function ModifyEnrollmentModal({
   });
 
 
-  // Transfer mutation
-  const transferMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.rpc("modify_enrollment_transfer", {
-        p_student_id: enrollment.student_id,
-        p_old_class_id: enrollment.class_id,
-        p_new_class_id: newClassId,
-        p_effective_date: transferDate,
-      });
-      
-      if (error) throw error;
-      const result = data as any;
-      
-      // Trigger tuition recalculation for affected months
-      await supabase.functions.invoke("calculate-tuition", {
-        body: {
-          studentId: enrollment.student_id,
-          month: result.effective_month,
-        },
-      });
-      
-      await supabase.functions.invoke("calculate-tuition", {
-        body: {
-          studentId: enrollment.student_id,
-          month: result.next_month,
-        },
-      });
-      
-      return result;
-    },
-    onSuccess: (data: any) => {
-      toast.success(
-        `Transferred successfully. ${data.deleted_future_attendance} attendance rows deleted, ${data.seeded_attendance} new rows created.`
-      );
-      queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
-      queryClient.invalidateQueries({ queryKey: ["class-enrollments"] });
-      queryClient.invalidateQueries({ queryKey: ["student-tuition"] });
-      onOpenChange(false);
-    },
-    onError: (error: any) => {
-      toast.error(rpcErrorText(error, "Failed to transfer enrollment"));
-    },
-  });
+  // D4 step 3B (G-13, G-14): every change here goes through the checked
+  // path as the signed-in admin (money_change_preview -> money_change_checked).
+  // The server works out which billed months the change reaches. From this
+  // month on that is nothing: the change is made at once and one row records
+  // it. When it reaches a billed month the dialog asks for a reason first.
+  // Steps still to run after the one in hand (a rate, then weekdays).
+  const steps = useRef<Array<() => Promise<MoneyRequest | null>>>([]);
+  const finished = useRef<() => void>(() => {});
 
-  // Pause mutation
-  const pauseMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.rpc("pause_enrollment", {
-        p_student_id: enrollment.student_id,
-        p_class_id: enrollment.class_id,
-        p_from_date: pauseFrom,
-        p_to_date: pauseTo,
-        p_memo: pauseMemo || null,
-      });
-      
-      if (error) throw error;
-      const result = data as any;
-      
-      // Trigger tuition recalculation
-      await supabase.functions.invoke("calculate-tuition", {
-        body: {
-          studentId: enrollment.student_id,
-          month: result.effective_month,
-        },
-      });
-      
-      return result;
-    },
-    onSuccess: (data: any) => {
-      toast.success(
-        `Paused successfully. ${data.excused_attendance} sessions marked as Excused.`
-      );
-      queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
-      queryClient.invalidateQueries({ queryKey: ["student-tuition"] });
-      queryClient.invalidateQueries({ queryKey: ["pause-windows"] });
-      onOpenChange(false);
-    },
-    onError: (error: any) => {
-      toast.error(rpcErrorText(error, "Failed to pause enrollment"));
-    },
-  });
+  const recalc = async (months: string[]) => {
+    for (const month of [...new Set(months)]) {
+      await supabase.functions.invoke("calculate-tuition", { body: { studentId: enrollment.student_id, month } });
+    }
+  };
+  const monthAfter = (date: string) => format(new Date(Number(date.slice(0, 4)), Number(date.slice(5, 7)), 1), "yyyy-MM");
 
-  // End mutation
-  const endMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.rpc("end_enrollment", {
-        p_student_id: enrollment.student_id,
-        p_class_id: enrollment.class_id,
-        p_end_date: endDate,
-      });
-      
-      if (error) throw error;
-      const result = data as any;
-      
-      // Trigger tuition recalculation
-      await supabase.functions.invoke("calculate-tuition", {
-        body: {
-          studentId: enrollment.student_id,
-          month: result.effective_month,
-        },
-      });
-      
-      return result;
-    },
-    onSuccess: (data: any) => {
-      toast.success(
-        `Ended successfully. ${data.deleted_future_attendance} future attendance rows deleted.`
-      );
-      queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
-      queryClient.invalidateQueries({ queryKey: ["student-tuition"] });
-      onOpenChange(false);
-    },
-    onError: (error: any) => {
-      toast.error(rpcErrorText(error, "Failed to end enrollment"));
-    },
-  });
+  /** The enrolment of this child in this class that covers a date (a dated change may have split it). */
+  const enrollmentOn = async (date: string): Promise<string> => {
+    const { data } = await supabase
+      .from("enrollments")
+      .select("id, start_date, end_date")
+      .eq("student_id", enrollment.student_id)
+      .eq("class_id", enrollment.class_id)
+      .lte("start_date", date)
+      .order("start_date", { ascending: false });
+    return (data ?? []).find((e) => !e.end_date || e.end_date >= date)?.id ?? enrollment.id;
+  };
 
-  // Settings mutation
-  const settingsMutation = useMutation({
-    mutationFn: async () => {
-      // Determine if allowed_days should be null (all days) or specific days
-      const sortedAllowed = [...allowedDays].sort((a, b) => a - b);
-      const sortedClassDays = [...classDays].sort((a, b) => a - b);
-      const isAllDays = sortedAllowed.length === sortedClassDays.length &&
-        sortedAllowed.every((d, i) => d === sortedClassDays[i]);
-
-      const oldDays = [...(enrollmentDetails?.allowed_days || classDays)].sort((a, b) => a - b);
-      const daysChanged = oldDays.join(",") !== sortedAllowed.join(",");
-
-      const { error } = await supabase
-        .from("enrollments")
-        .update({
-          rate_override_vnd: rateOverride ? parseInt(rateOverride) : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", enrollment.id);
-      if (error) throw error;
-
-      // Weekdays are date-aware: lessons before `daysFrom` keep the old days.
-      if (daysChanged) {
-        const { error: daysError } = await supabase.rpc("change_enrollment_days", {
-          p_enrollment_id: enrollment.id,
-          p_allowed_days: isAllDays ? [] : sortedAllowed,
-          p_effective_date: daysFrom,
-        });
-        if (daysError) throw daysError;
+  const runNext = async (): Promise<"done" | "waiting" | "stopped"> => {
+    while (steps.current.length > 0) {
+      const request = await steps.current.shift()!();
+      if (!request) continue;
+      const r = await money.run(request);
+      if (r.status === "dialog") return "waiting";     // the dialog's confirmation calls runNext again
+      if (r.status === "refused") {
+        steps.current = [];
+        toast.error(r.message);
+        return "stopped";
       }
-
-      // Trigger tuition recalculation for current month
-      const currentMonth = daysChanged ? daysFrom.slice(0, 7) : format(new Date(), "yyyy-MM");
-      await supabase.functions.invoke("calculate-tuition", {
-        body: {
-          studentId: enrollment.student_id,
-          month: currentMonth,
-        },
-      });
-
-      return { isAllDays };
-    },
-    onSuccess: () => {
-      toast.success("Enrollment settings updated");
-      queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
-      queryClient.invalidateQueries({ queryKey: ["enrollment-details"] });
-      queryClient.invalidateQueries({ queryKey: ["student-tuition"] });
-      onOpenChange(false);
-    },
-    onError: (error: any) => {
-      toast.error(rpcErrorText(error, "Failed to update settings"));
-    },
+    }
+    finished.current();
+    return "done";
+  };
+  const money = useMoneyInput(() => {
+    void runNext();
   });
+
+  const start = async (list: Array<() => Promise<MoneyRequest | null>>, done: () => void | Promise<void>) => {
+    steps.current = list;
+    finished.current = () => { void done(); };
+    setWorking(true);
+    try {
+      await runNext();
+    } catch (error: any) {
+      toast.error(rpcErrorText(error, "Failed to change the enrollment"));
+    } finally {
+      setWorking(false);
+    }
+  };
+  const [working, setWorking] = useState(false);
+
+  const afterChange = async (message: string, months: string[], keys: string[]) => {
+    try {
+      await recalc(months);
+    } catch {
+      // the change is made; the bills are worked out the next time they are opened
+    }
+    toast.success(message);
+    for (const k of keys) queryClient.invalidateQueries({ queryKey: [k] });
+    onOpenChange(false);
+  };
+
+  const transfer = () => start([async () => ({
+    entity: "enrollment",
+    op: "transfer",
+    args: { student_id: enrollment.student_id, old_class_id: enrollment.class_id, new_class_id: newClassId, effective_date: transferDate },
+  })], () => afterChange("Transferred successfully.", [transferDate.slice(0, 7), monthAfter(transferDate)],
+    ["student-enrollments", "class-enrollments", "student-tuition"]));
+
+  const pause = () => start([async () => ({
+    entity: "enrollment",
+    op: "pause",
+    args: { student_id: enrollment.student_id, class_id: enrollment.class_id, from: pauseFrom, to: pauseTo, memo: pauseMemo || null },
+  })], () => afterChange("Paused successfully. The lessons in that window are Excused.", [pauseFrom.slice(0, 7)],
+    ["student-enrollments", "student-tuition", "pause-windows"]));
+
+  const end = () => start([async () => ({
+    entity: "enrollment",
+    op: "end",
+    args: { student_id: enrollment.student_id, class_id: enrollment.class_id, end_date: endDate },
+  })], () => afterChange("Ended successfully.", [endDate.slice(0, 7)], ["student-enrollments", "class-enrollments", "student-tuition"]));
+
+  const settingsChanges = () => {
+    // Determine if allowed_days should be null (all days) or specific days
+    const sortedAllowed = [...allowedDays].sort((a, b) => a - b);
+    const sortedClassDays = [...classDays].sort((a, b) => a - b);
+    const isAllDays = sortedAllowed.length === sortedClassDays.length &&
+      sortedAllowed.every((d, i) => d === sortedClassDays[i]);
+    const oldDays = [...(enrollmentDetails?.allowed_days || classDays)].sort((a, b) => a - b);
+    const daysChanged = oldDays.join(",") !== sortedAllowed.join(",");
+    const newRate = rateOverride ? parseInt(rateOverride) : null;
+    const rateChanged = newRate !== (enrollmentDetails?.rate_override_vnd ?? null);
+    return { sortedAllowed, isAllDays, daysChanged, newRate, rateChanged };
+  };
+
+  /** The default: rate and weekdays change FROM THE DATE. The past keeps what it was charged. */
+  const saveSettings = () => {
+    const { sortedAllowed, isAllDays, daysChanged, newRate, rateChanged } = settingsChanges();
+    const list: Array<() => Promise<MoneyRequest | null>> = [];
+    if (rateChanged) {
+      list.push(async () => ({
+        entity: "enrollment",
+        op: "set_terms_from",
+        args: { enrollment_id: await enrollmentOn(daysFrom), terms: { rate_override_vnd: newRate }, effective_date: daysFrom },
+      }));
+    }
+    if (daysChanged) {
+      list.push(async () => ({
+        entity: "enrollment",
+        op: "set_days",
+        args: { enrollment_id: await enrollmentOn(daysFrom), allowed_days: isAllDays ? [] : sortedAllowed, effective_date: daysFrom },
+      }));
+    }
+    if (list.length === 0) {
+      toast.message("Nothing was changed");
+      return;
+    }
+    void start(list, () => afterChange("Enrollment settings updated", [daysFrom.slice(0, 7)],
+      ["student-enrollments", "enrollment-details", "student-tuition", "class-enrollments"]));
+  };
+
+  /** The second button: the rate was wrong all along. Reaches every month of the enrolment. */
+  const correctRate = () => {
+    const { newRate, rateChanged } = settingsChanges();
+    if (!rateChanged) {
+      toast.message("The rate is the same as before");
+      return;
+    }
+    void start([async () => ({
+      entity: "enrollment",
+      op: "set_rate",
+      args: { enrollment_id: enrollment.id, rate_override_vnd: newRate },
+    })], () => afterChange("Rate corrected for the whole enrollment", [format(new Date(), "yyyy-MM")],
+      ["student-enrollments", "enrollment-details", "student-tuition", "class-enrollments"]));
+  };
 
   const handleConfirm = () => {
     if (activeTab === "transfer") {
-      transferMutation.mutate();
+      void transfer();
     } else if (activeTab === "pause") {
-      pauseMutation.mutate();
+      void pause();
     } else if (activeTab === "end") {
-      endMutation.mutate();
+      void end();
     } else if (activeTab === "settings") {
-      settingsMutation.mutate();
+      saveSettings();
     }
   };
 
@@ -326,8 +305,7 @@ export function ModifyEnrollmentModal({
     );
   };
 
-  const isPending = transferMutation.isPending || pauseMutation.isPending || 
-    endMutation.isPending || settingsMutation.isPending;
+  const isPending = working || money.running || money.guard.busy;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -499,10 +477,10 @@ export function ModifyEnrollmentModal({
             </div>
 
             <div className="space-y-2">
-              <Label>Days change from *</Label>
+              <Label>Changes apply from *</Label>
               <Input type="date" value={daysFrom} onChange={(e) => setDaysFrom(e.target.value)} />
               <p className="text-sm text-muted-foreground">
-                Lessons before this date keep the old days. Only lessons from this date on follow the new days.
+                Lessons before this date keep the old days and the old rate. Only lessons from this date on follow the new ones.
               </p>
             </div>
 
@@ -529,9 +507,22 @@ export function ModifyEnrollmentModal({
             >
               {isPending ? "Saving..." : "Save Settings"}
             </Button>
+            <Button
+              onClick={correctRate}
+              disabled={isPending}
+              variant="outline"
+              className="w-full whitespace-normal h-auto min-h-10"
+            >
+              {INPUT_TEXT.wholeEnrollment} (rate)
+            </Button>
           </TabsContent>
         </Tabs>
       </DialogContent>
+      <MoneyInputDialog
+        guard={money.guard}
+        subject={`${enrollment.students.full_name} - ${enrollment.classes.name}`}
+        names={{ [enrollment.student_id]: enrollment.students.full_name }}
+      />
     </Dialog>
   );
 }
