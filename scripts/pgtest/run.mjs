@@ -61,6 +61,10 @@ const SUITES = [
       "20261106120000_invoice_tuition_freeze.sql",
     ],
   },
+  // Voluntary contributions and Settle Bill are removed (D-23): settle-bill
+  // is a 410 stub that touches nothing, nothing can create either any more,
+  // and the preflight for dropping the write-off reader counts zero.
+  { name: "removed money features", file: "removed-money-features.test.mjs", expect: 35, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
