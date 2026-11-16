@@ -272,6 +272,17 @@ export const MUTANTS = [
     "  if (code === \"42P01\" || code === \"PGRST205\") return true;", "  if (false) return true;", ['fee'], 'supabase/functions/_lib/class-fee.ts'],
   ['K32', "the class breakdown reports the mirror, not the month's fee",
     "      const sessionRate = classFeeOn(feeHistory, classId, startDate, Number(classData?.session_rate_vnd ?? 0));", "      const sessionRate = Number(classData?.session_rate_vnd ?? 0);", ['fee'], 'supabase/functions/calculate-tuition/index.ts'],
+  // D4-2 independent review (docs/evidence/D4-2-review.md): things the review thought were not pinned
+  ['V01', "the reach's tier is taken over the FIRST reached month only (a later confirmed month ignored)",
+    "public.tuition_reach(v_kids, p_class, v_min, v_max)", "public.tuition_reach(v_kids, p_class, v_min, v_min)", ['fee'], FEE],
+  ['V02', "an Absent mark (billable) is not counted as reached",
+    "AND a.status::text IN ('Present', 'Absent', 'Late');", "AND a.status::text IN ('Present', 'Late');", ['fee'], FEE],
+  ['V03', "the trigger does not check the acknowledged month (an ack for an earlier month writes a later one)",
+    " AND (o.change ->> 'effective_from')::date = v_from", "", ['fee'], FEE],
+  ['V04', "any trigger-made DELETE passes (not only the cascade of a deleted class)",
+    "IF TG_OP = 'DELETE' AND NOT EXISTS (SELECT 1 FROM public.classes c WHERE c.id = OLD.class_id) THEN", "IF TG_OP = 'DELETE' THEN", ['fee'], FEE],
+  ['V05', "the trigger's tier fails open on a NULL",
+    "v_tier := COALESCE((v_reach ->> 'tier')::int, 3);", "v_tier := COALESCE((v_reach ->> 'tier')::int, 0);", ['fee'], FEE],
 ];
 
 const D4_LITERALS = [/('[0-9a-f]{32}'\) THEN\s+-- this file)/g];

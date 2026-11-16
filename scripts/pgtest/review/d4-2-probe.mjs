@@ -160,6 +160,19 @@ await section('P9 the mirror after a month turn (stale "fee now")', async () => 
   ok('a teacher writing the mirror -> refused (HC120 or no row)', r.code === 'HC120' || r.code === '42501' || (r.ok && r.ok.rowCount === 0) || r.ok?.affectedRows === 0, r);
 });
 
+await section('P11 UPDATE OF session_rate_vnd does not see a change made by an earlier BEFORE trigger', async () => {
+  const c = await mkClass(100000);
+  await db.exec(`CREATE OR REPLACE FUNCTION public.aa_probe_fee() RETURNS trigger LANGUAGE plpgsql AS $f$
+    BEGIN IF NEW.name = 'probe-reprice' THEN NEW.session_rate_vnd := 1; END IF; RETURN NEW; END $f$;
+    DROP TRIGGER IF EXISTS aa_probe_fee ON public.classes;
+    CREATE TRIGGER aa_probe_fee BEFORE UPDATE ON public.classes FOR EACH ROW EXECUTE FUNCTION public.aa_probe_fee();`);
+  const r = await tryIt(() => asService(`UPDATE classes SET name = 'probe-reprice' WHERE id=$1`, [c]));
+  const v = (await asSuper(`SELECT session_rate_vnd v FROM classes WHERE id=$1`, [c])).rows[0].v;
+  if (r.ok !== undefined && v === 1) note('a hypothetical BEFORE trigger on classes that rewrites session_rate_vnd is not judged by zz_class_fee_mirror_guard (column list); none exists on live today', { v });
+  else ok('the mirror guard judged a change made by another trigger', r.code === 'HC120', r);
+  await db.exec(`DROP TRIGGER aa_probe_fee ON public.classes; DROP FUNCTION public.aa_probe_fee();`);
+});
+
 // ---------------------------------------------- the calculators, fed from what the checked path wrote
 const handlers = {};
 let fixture = {};
