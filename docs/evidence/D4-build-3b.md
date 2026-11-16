@@ -1,6 +1,6 @@
 # D4 build - step 3B (money inputs)
 
-**Where I am / next step:** IN PROGRESS - everything is built; the mutation run and the full `run.mjs` are being finished and their numbers written below. Next step after that is not mine: the conductor's review.
+**Where I am / next step:** COMPLETE - built, tested, mutants run (57 of 57 caught), full run green (6658 assertions, 66 suites, 0 failed). Pushed. Next step is not mine: the conductor's review.
 
 Builder on PC2, branch `pc2/d4-3b` from origin/conductor/work 02b571e6 (steps 1a and 1b in it, both live). Nothing applied to any database, nothing deployed, no Supabase / Lovable / Cloudflare tool used; every test runs against the in-process Postgres of `scripts/pgtest`. No real user data.
 
@@ -63,17 +63,149 @@ Suite `d4-money-inputs` unless said. "raw" = the write a screen used to make, as
 
 ## Mutants
 
-<!--MUTANTS-->
+`node scripts/pgtest/d4-mutants-3b.mjs` - each mutant is one textual change to the migration (45) or to one of the four functions (12), run against the named suites.
+
+| Mutant | Breaks | Verdict |
+|---|---|---|
+| S01 | the gate lets everything through (every money-input guard dead) | CAUGHT by inputs: P13 start date moved a month later over a PAID past month, raw: HC120 entity=enrollment tier=2, with the next step |
+| S02 | the service lane passes like the owner (one mutant for every trigger: they share the gate) | CAUGHT by inputs: service lane is refused where a person would need a reason: HC120 |
+| S03 | the owner lane leaves no event | CAUGHT by inputs: owner lane (SQL editor): passes, and ONE owner_lane event names the table, the row and the tier |
+| S04 | enrollment_identity dropped (an enrolment may change child or class) | CAUGHT by inputs: student_id changed, admin lane: HC121 enrollment_identity "end it and start a new one" |
+| S05 | discount_identity dropped (R-5: a discount may be re-pointed at another child) | CAUGHT by inputs: R-5 an assignment re-pointed at another child, admin lane: HC121 discount_identity |
+| S06 | the family reach leaves out the children of the NEW family (R-14) | CAUGHT by inputs: a child joining a family whose other child has a CONFIRMED past month: T3 - every child of the NEW family is in reach |
+| S07 | days entering an enrolment of a class taught in a past month are tier 0 (backdated enrol of a new child) | CAUGHT by inputs: days ENTERING an enrolment of a class that was taught in a past month: T1 (the child is not enrolled yet) |
+| S08 | a discount dated the 1st does not reach the month before (the calculator reads it there) | CAUGHT by inputs: a discount dated the 1st of NEXT month reaches THIS month's confirmed bill (calculate-tuition reads effective_from <= next month's first day): HC120 |
+| S09 | a rate / discount / weekday change is judged like a date-only change (reaches no day) | CAUGHT by inputs: _money_span a rate changed: the whole span (it is not dated) |
+| S10 | the acknowledgement ignores the class (a transfer covers the child's third enrolment) | CAUGHT by inputs: but not a third, unrelated enrolment of the same child in that transaction: HC120 |
+| S11 | the acknowledgement ignores the kind of change (a set_rate covers a start date) | CAUGHT by inputs: nor another KIND of change to the same row (a start date under a set_rate): HC120 |
+| S12 | the acknowledgement skips step 1b's _money_ack (child, window, tier: A-8) | CAUGHT by inputs: A-8: stored at T1 while the trigger finds T2 (a payment landed in between): HC011 token_stale |
+| S13 | a definition may be switched off while in use (is_active not a pricing column) | CAUGHT by inputs: switching it off (the calculator skips an inactive definition for every month): HC121 |
+| S14 | a definition in use may be deleted (definition guard on UPDATE only) | CAUGHT by inputs: deleting it: HC121 |
+| S15 | definition_in_use ignores the reach (never refuses) | CAUGHT by inputs: the value of a definition whose assignment reaches a paid past month: HC121 definition_in_use, "create a new discount" |
+| S16 | the mirror columns pay nobody whatever the history (mirror guard always tier 0) | CAUGHT by inputs: someone with taught lessons and no dated rate: the mirror IS the rate - a raw edit is HC120, "from the pay-rate history, from a date" |
+| S17 | a pay-rate acknowledgement for one person covers another's row | CAUGHT by inputs: an acknowledgement for ANOTHER person does not cover this one's row: HC120 |
+| S18 | the pay plan ignores what moving "the rate now" reaches (first dated rate of someone with no history) | CAUGHT by inputs: section "G-17 pay rates (P18)" ran to the end without an unexpected error |
+| S19 | an UPDATE of a pay rate is always "only the note" | CAUGHT by inputs: that future row re-dated into the past, raw: HC120 |
+| S20 | unfreezing a paid or confirmed bill is T2, not T3 | CAUGHT by inputs: preview unfreeze of a bill with money on it: T3 (correction mode), the bill and its state shown |
+| S21 | the unfreeze tier ignores the bill floor (reset the payment, then unfreeze at T2) | CAUGHT by inputs: G-9 under it: the payment reset to 0 first does not lower the tier (the bill floor): still T3 |
+| S22 | any acknowledged unfreeze unfreezes any bill | CAUGHT by inputs: an acknowledgement for another bill does not unfreeze this one: HC120 |
+| S23 | families.sibling_percent_override is not guarded | CAUGHT by inputs: P20 the sibling percentage of a family with a paid past month, raw: HC120 |
+| S24 | students.sibling_discount_from is not guarded | CAUGHT by inputs: a sibling-discount hold typed raw: HC120 |
+| S25 | a student whose only history is a person's mark may be deleted | CAUGHT by inputs: a student whose only history is one mark made by a person: HC121 |
+| S26 | the student delete guard ignores the bill floor | CAUGHT by inputs: the payment reset to 0 first: still HC121 (the bill floor remembers) |
+| S27 | class_has_history dropped | CAUGHT by inputs: a class with an enrolment, admin lane: HC121 class_has_history "archive it instead" |
+| S28 | a direct pause_enrollment over billed months is still let through (not judged once its checked path exists) | CAUGHT by inputs: pause_enrollment called directly over a paid past month: refused by the register guard, HC025 (its checked path now exists) |
+| S29 | ANY enrolment acknowledgement opens the register (not only end / transfer / pause) | SURVIVED the first run (the case only tried to bill a child back, which the row filter refuses anyway); a case added (an old billed mark set to Excused under a set_rate acknowledgement); re-run: CAUGHT by inputs |
+| S30 | the checked end / transfer / pause cannot write their register rows (the helper does not answer for them) | CAUGHT by inputs: section "G-13 end / transfer / pause / set_days go through the live dated RPCs" ran to the end without an unexpected error |
+| S31 | change_enrollment_terms open to any signed-in user | CAUGHT by inputs: by a teacher: 42501 |
+| S32 | change_enrollment_terms granted to the service role | CAUGHT by inputs: grants: change_enrollment_terms for authenticated only (not anon, not service_role); every other new function: nobody  -- ["change_enrollment_terms(uuid,jsonb,date)" |
+| S33 | change_enrollment_terms accepts any column (a start date as a "term") | CAUGHT by inputs: a term that is not a rate or a discount (start_date): 22023, nothing changed |
+| S34 | A-6 dropped from the pause plan (a person's Present un-billed at tier 0) | CAUGHT by inputs: A-6 in the plan: a pause that un-bills a mark a PERSON made as Late, after the week, is at least T1 whatever the bill (a placeholder: T0) |
+| S35 | the exec does not check the enrolment is still the one previewed | CAUGHT by inputs: the exec refuses a plan whose enrolment changed since it was previewed: HC011, nothing written |
+| S36 | enroll_new can be applied with no child | CAUGHT by inputs: it cannot be APPLIED without the child: HC015 student_required, no row |
+| S37 | an open-ended reach stops at today (a bill already signed off for NEXT month is not reached) | CAUGHT by inputs: an enrolment that began today, with NEXT month's bill already confirmed: a raw rate is HC120 tier=2 (an open-ended reach runs to the last billed month) |
+| S38 | the preflight no longer checks the step 1a / 1b bodies | CAUGHT by inputs: a tuition_month_state that is not the reviewed 1b body -> refused, naming it, nothing installed  -- null |
+| S39 | deleting an enrolment is not guarded | CAUGHT by inputs: P15 deleted raw: HC120 |
+| S40 | referral bonuses are not guarded | CAUGHT by inputs: every trigger that existed is unchanged; added: the nine guards (on twelve tables) and audit_families  -- ["classes.zz_class_delete_guard","discount_assignments.zz_d |
+| S41 | the reach skips the first month that has a bill (narrowing off by a month) | CAUGHT by oracle: enrolment start moved to 2026-07-15: the oracle ran  -- "25P02 current transaction is aborted, commands ignored until end of transaction block" |
+| S42 | a family change reaches only from today, not from the child's first enrolment | CAUGHT by oracle: sibling held out of the family discount until 2026-09-01 [family_link.set_sibling_from] T0: 1 past / signed-off bill(s) moved, each in the reach |
+| S43 | a new enrolment row reaches only its first day (INSERT span collapsed) | CAUGHT by oracle: discount assigned from 2026-07-01 [discount_assignment.assign] T3: 3 past / signed-off bill(s) moved, each in the reach |
+| S44 | the first pay rate of a person can be removed (earlier dates fall to the mirror) | CAUGHT by inputs: the person's first rate cannot be removed: first_rate |
+| S45 | the family guard accepts an acknowledgement of the other kind (a hold covers a move) | CAUGHT by inputs: an acknowledged set_sibling_from does not cover moving the child to another family: HC120 |
+| F01 | update-enrollment-rate goes on to the write at tier 1+ without an ack | CAUGHT by fn: P14 the whole-enrolment rate over a PAID past month, no ack: 409 money_requires_checked_path with the preview, NOTHING written |
+| F02 | update-enrollment-rate writes the rate with the service key (the old way) | CAUGHT by fn: an enrolment that began today (T0): 200, the rate is set, no dialog |
+| F03 | update-enrollment-rate does not check the enrolment is that child's | CAUGHT by fn: an enrolment that is not that child's: 400, nothing written |
+| F04 | create-family creates the family before asking for the reason | CAUGHT by fn: start date last month, no ack: 409 preview_required with the preview (tier 1, both enrolments listed) |
+| F05 | create-family does not compare the token | CAUGHT by fn: a wrong token: 409 token_stale, nothing created |
+| F06 | create-family writes the family with the service key | CAUGHT by fn: every row was written on the caller's client (families, students, and the enrolment by money_change_checked): no service-key write at all |
+| F07 | create-family inserts the enrolment raw with the service key (the old way) | CAUGHT by fn: no start date (today): 200 - family, child and enrolment created, nothing asked |
+| F08 | manage-demo-student ignores the guard's refusal and enables the demo | CAUGHT by fn: the demo child in a real class over a PAID past month: 409 demo_reset_needs_owner; nothing is exempted for this function |
+| F09 | admin-data-import imports enrolments again | CAUGHT by lib: admin-data-import: none of the five money tables is importable, and the fee is stripped from class rows  -- "'families', 'students', 'teachers', 'classes', 'bank_inf |
+| F10 | admin-data-import imports the register again | CAUGHT by fn: dry run: every table is still counted, and the five money tables are named as not imported |
+| F11 | admin-data-import keeps the class fee in imported rows | CAUGHT by fn: a class's fee is dropped from imported class rows (it has its own dated history) |
+| F12 | admin-data-import: the screen's dry-run box is ignored (a ticked dry run imports) | SURVIVED the first run (no case sent the box in the body); a case added; re-run: CAUGHT by fn |
+
+**57 mutants: 55 caught on the first run, 2 survivors (S29, F12), each caught after one new case; 57 of 57 caught.** Equivalent mutants deliberately not listed, because step 1b re-checks the same thing: the acknowledgement's transaction id and tier (step 1b's `_money_ack`), the family widening inside `tuition_reach`, and "update-enrollment-rate accepts the service key" (the RPC then has no caller and answers 42501).
 
 ## Checks
 
-<!--RUN-->
+Run on this PC (Windows, Node 26.13.1) at the branch tip, nothing else changed afterwards.
+
+| Check | Result |
+|---|---|
+| `node scripts/pgtest/run.mjs` | **6658 assertions across 66 suites, 0 suite(s) failed.** This step's suites: d4 money inputs 257, d4 functions inputs 62, d4 reach oracle 187, money inputs lib 40 (each pinned with `expect`). Unchanged and green with file 5's code in the tree: d4 floors 213, d4 D2 carry-over 275, d4 deployed functions 37, d4 rollback 26, d4 register 140, d4 functions register 34, money guard lib 45, session cancel guard 266, session guard functions 135, invoice status 268, edge functions typecheck 5 (105 files), app typecheck 3. |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 |
+| `npm run test:bun` | **Could not be run on this PC**: the bun binary `npx` fetches does not start ("This version of ...\bun.exe is not compatible with the version of Windows you're running"), so the script exits non-zero before any test. The same 13 files (`scripts/*.test.ts`) were run under node with a small stand-in for `bun:test` (scratch only, not committed): 13 files, **166 tests pass, 0 fail**. None of them imports a file this step changed. The conductor should run `npm run test:bun` on the other computer. |
+| mutants | 57 of 57 caught (table above) |
+| lint | eslint over every changed `src` file: no error other than the repo's existing `no-explicit-any`; no rules-of-hooks error |
+
+Two things about the first full run, for honesty:
+- `cancelled lessons` (a suite and a file this branch does not touch) failed with `ENOENT ... C:\tmp\tuition-session.<pid>.mjs`: it writes its bundle to `/tmp`, which did not exist on this PC. I created `C:\tmp` and ran the whole suite again; that is the green run above. The folder is still there (removing it was refused by the tool's safety check): two small `.mjs` temp files of that suite, and a `Log.log` I did not create.
+- `money guard lib` (step 1b's) failed its source check "ModifyEnrollmentModal: every failure toast goes through rpcErrorText" (it pins exactly four). The modal was changed to keep its four `rpcErrorText` toasts; the 1b test file was not edited.
 
 ## Function fingerprints (md5 of the body with CR removed, as `D4-release-fingerprint.sql` computes it)
 
 Computed in pglite after pasting the file over D1, D2, files 1 and 2 (LF text). 40 new functions, 1 replaced. `docs/evidence/D4-release-fingerprint.*` and `guard-fingerprint.mjs` are NOT regenerated here (shared tooling; the conductor regenerates per step) - these are the values it should produce for file 5.
 
-<!--FINGERPRINT-->
+| Function | md5 (CR-stripped body) | definer | volatility | authenticated / service_role |
+|---|---|---|---|---|
+| `_class_delete_guard()` | e09b027a2c1eae98a5161e8bc8ee3595 | yes | v | - / - |
+| `_discount_definition_guard()` | 8ed3b4f73189a1468c4681c614b80a3b | yes | v | - / - |
+| `_discount_money_guard()` | fd385aa1558b69518037eac6a084f9ca | yes | v | - / - |
+| `_enrollment_money_guard()` | 1657fcf356d000be17c701a1a53b164c | yes | v | - / - |
+| `_family_link_guard()` | 85747b452655aaf91c188575c6bb24c1 | yes | v | - / - |
+| `_invoice_unfreeze_guard()` | a66d21b14fe5149e2bcb77d37f7370bc | yes | v | - / - |
+| `_money_date(text)` | b84d745998882ed916f3411cfed11e33 | no | i | - / - |
+| `_money_enrollment_rpc_call()` (REPLACED, was 8796eb026e4187149b639f7efa82e81d) | b63e90a3ef684c6e32c800401194e809 | no | s | - / - |
+| `_money_enrollment_terms(jsonb)` | 0b87e3d1554fc90518cbafd89cb7135a | no | i | - / - |
+| `_money_exec__discount(text,jsonb,uuid)` | 2f5a3a5c5406e23b47b21809f0fc63df | yes | v | - / - |
+| `_money_exec__discount_assignment(jsonb,uuid)` | 10721fdfe402fcf709e81fd9f7c85b04 | yes | v | - / - |
+| `_money_exec__enrollment(jsonb,uuid)` | dd3d4ecefbadfe5d485ce0af834bd9b7 | yes | v | - / - |
+| `_money_exec__family_link(jsonb,uuid)` | e72bf143739d75861b7892f4cf59c8ab | yes | v | - / - |
+| `_money_exec__invoice_freeze(jsonb,uuid)` | 6e30c1f6745a93c404acf1bcad6a9b0a | yes | v | - / - |
+| `_money_exec__pay_rate(jsonb,uuid)` | 0c2a5c26ab8ad254f8a3f0f29b504e05 | yes | v | - / - |
+| `_money_exec__referral_bonus(jsonb,uuid)` | 6a57df845845894019213e11bd6d38a0 | yes | v | - / - |
+| `_money_family_kids(uuid[])` | f294a6bc9bcb1a0e2826cf0d23d8046e | yes | s | - / - |
+| `_money_family_reach(uuid,uuid,uuid)` | c72cdb226c9aa52d1e819a7dc2009d2b | yes | s | - / - |
+| `_money_input_ack(text,uuid,date,date,integer)` | 9473b3313d861f5b41546690d2ef524c | yes | s | - / - |
+| `_money_input_gate(text,text,text,uuid,integer,boolean,text)` | 014b577b5d2e8dddcdd17b5ee4611a05 | yes | v | - / - |
+| `_money_input_plan(text,text,uuid,jsonb,jsonb,jsonb,integer,text)` | e871a3b8a0be185559b7d81bd33b15cd | no | s | - / - |
+| `_money_pay_combine(jsonb,jsonb)` | 9973dbcad0e1d5b00e275f8a71090956 | no | i | - / - |
+| `_money_pay_mirror_reach(uuid,uuid,date)` | 389c5c400866670c497f5661290cc559 | yes | s | - / - |
+| `_money_pay_rate_on(uuid,uuid,date,uuid,jsonb)` | 0616e5bdb8067f96d105851fe89a77f6 | yes | s | - / - |
+| `_money_pay_reach(uuid,uuid,date,date)` | a80f0b195ebef60f89da152ca83ec1a2 | yes | s | - / - |
+| `_money_pay_row_reach(uuid,uuid,date,uuid)` | 9e0414e22a32ed3f366c4e2f992b3411 | yes | s | - / - |
+| `_money_plan__discount(text,text,jsonb)` | 8839b4bc6d395110225b0ca1c35d00aa | yes | s | - / - |
+| `_money_plan__discount_assignment(text,jsonb,uuid)` | 1aed03a81e566fa6a756ee2fbf436d3c | yes | s | - / - |
+| `_money_plan__enrollment(text,jsonb,uuid)` | 0248b6518f1dd554bb35db7bc12c2ca7 | yes | s | - / - |
+| `_money_plan__family_link(text,jsonb,uuid)` | ec091aa27440c3110f93e40b0a94fbb6 | yes | s | - / - |
+| `_money_plan__invoice_freeze(text,jsonb,uuid)` | 9c4f583e0d0f729689c08bce2ea62a5e | yes | s | - / - |
+| `_money_plan__pay_rate(text,jsonb,uuid)` | aa28af8b81495574af464d95444978a3 | yes | s | - / - |
+| `_money_plan__referral_bonus(text,jsonb,uuid)` | 0156ce9527177b37aab481f4e0869440 | yes | s | - / - |
+| `_money_span(jsonb,jsonb,text,text,text[],integer)` | 608318266bf25a46ac5a4de896319e9c | no | i | - / - |
+| `_money_tuition_reach(uuid[],uuid,date,date)` | 1b134afbddd2c82f35e24768101146c1 | yes | s | - / - |
+| `_money_unfreeze_tier(uuid)` | 226e22c1c0715645fe69fc46c5e7e805 | yes | s | - / - |
+| `_money_uuid(text)` | 22dcde6a13fd3802135d90e986dc35a4 | no | i | - / - |
+| `_pay_rate_money_guard()` | c5638802659cb1ca21037bcbdcc0f59b | yes | v | - / - |
+| `_staff_pay_mirror_guard()` | cac197dfb3e26ebe30b5c19bbc29185a | yes | v | - / - |
+| `_student_delete_guard()` | 72ec5875fda2471e3c973b4339459603 | yes | v | - / - |
+| `change_enrollment_terms(uuid,jsonb,date)` | 0d25fcb5cb723cf23ebcc365a78bbb0b | yes | v | EXECUTE / - |
+
+| Trigger | function | md5(pg_get_triggerdef) | enabled |
+|---|---|---|---|
+| `classes.zz_class_delete_guard` | `_class_delete_guard` | 2f790ddfb3c181634b51b25e9715d0c7 | O |
+| `discount_assignments.zz_discount_money_guard` | `_discount_money_guard` | c5ef1e99461576ab85b838e1312f6fe2 | O |
+| `discount_definitions.zz_discount_definition_guard` | `_discount_definition_guard` | 26aa5a51423fa572043933933e6da6f4 | O |
+| `enrollments.zz_enrollment_money_guard` | `_enrollment_money_guard` | ef2e1a821049fe1e085db7e231cb6798 | O |
+| `families.audit_families` | `audit_row_change` | 40b8ba1f06ea44a7524802940705ed40 | O |
+| `families.zz_family_link_guard` | `_family_link_guard` | b5c8c9d2d8c5e8be521816871a284b28 | O |
+| `invoices.zz_invoice_unfreeze_guard` | `_invoice_unfreeze_guard` | 67aeafe4f55e261d9a730df57483c036 | O |
+| `referral_bonuses.zz_discount_money_guard` | `_discount_money_guard` | f6cfee33a2bce332863b3c66b44d7ca7 | O |
+| `staff_pay_rates.zz_pay_rate_money_guard` | `_pay_rate_money_guard` | 036bd8e68eb35416a545f5b9bfe9e55e | O |
+| `students.zz_family_link_guard` | `_family_link_guard` | c1cf5719b0cbf0d96bbfc60310d53201 | O |
+| `students.zz_student_delete_guard` | `_student_delete_guard` | 6f6043e2332c453f5a03d4d6116b88b5 | O |
+| `teachers.zz_staff_pay_mirror_guard` | `_staff_pay_mirror_guard` | f1db8ec0f6227ae8f3dc753af3ce15a9 | O |
+| `teaching_assistants.zz_staff_pay_mirror_guard` | `_staff_pay_mirror_guard` | 0bf37a3d1b7a8e8f56c89fb4edf19748 | O |
 
 Every new function pins `search_path=public`. No new table, view, policy or grant on a table.
 
