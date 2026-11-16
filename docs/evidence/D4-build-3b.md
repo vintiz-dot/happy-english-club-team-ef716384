@@ -1,5 +1,7 @@
 # D4 build - step 3B (money inputs)
 
+**DONE - waiting for the conductor's review**
+
 **Where I am / next step:** COMPLETE - built, tested, mutants run (57 of 57 caught), full run green (6658 assertions, 66 suites, 0 failed). Pushed. Next step is not mine: the conductor's review.
 
 Builder on PC2, branch `pc2/d4-3b` from origin/conductor/work 02b571e6 (steps 1a and 1b in it, both live). Nothing applied to any database, nothing deployed, no Supabase / Lovable / Cloudflare tool used; every test runs against the in-process Postgres of `scripts/pgtest`. No real user data.
