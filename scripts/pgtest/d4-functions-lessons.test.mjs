@@ -8,8 +8,11 @@
 // whole timetable schema): the include-held HC020 branch reports and logs.
 import { PGlite } from '@electric-sql/pglite';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { build } from 'esbuild';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { harness, makeDb, repo } from './d4-prelude.mjs';
 import { functionsHarness } from './d4-functions-harness.mjs';
 
@@ -271,7 +274,47 @@ await section('schedule-sessions include-held: refused time updates are reported
   ok('  the nightly timer still never runs include-held', /isTimerRun \? 'future-only'/.test(src));
   const gen = readFileSync(resolve(repo, 'src/components/admin/SessionGenerator.tsx'), 'utf8') +
               readFileSync(resolve(repo, 'src/components/admin/SessionGeneratorConfirm.tsx'), 'utf8');
-  ok('the generator screens no longer offer include-held', !/include-held/.test(gen));
+  ok('the generator screens no longer offer include-held (no such mode is sent or offered)', !/["']include-held["']/.test(gen) && /onConfirm\("future-only"\)/.test(gen));
+});
+
+// ---------------------------------------------------------------- src/lib/lessonPayGuard.ts (pure)
+await section('lessonPayGuard: the dialog asks what the server says, and sends back what was previewed', async () => {
+  const out = await build({
+    entryPoints: [resolve(repo, 'src/lib/lessonPayGuard.ts')], bundle: true, format: 'esm', platform: 'neutral', write: false,
+    logLevel: 'silent', alias: { '@': resolve(repo, 'src') },
+  });
+  const p = resolve(tmpdir(), `lpg.${process.pid}.mjs`);
+  writeFileSync(p, out.outputFiles[0].text);
+  const lib = await import(pathToFileURL(p).href);
+  const plan = (o = {}) => ({ entity: 'session', op: 'reteach', kind: 'reteach', tier: 1, allowed: true, token: 'tok',
+    requires: { reason_min: 15, reason: true, confirm: true, correction_reason: false },
+    args: { session_id: 's1', teacher_id: 't2' }, change: { old_teacher_id: 't1', new_teacher_id: 't2', minutes: 90 }, ...o });
+  const good = { reason: 'The cover teacher taught it', confirm: true, correctionReason: '' };
+  ok('requirements from the plan; a T1+ plan with no "requires" still asks (fail closed)',
+     lib.payRequirements(plan()).reason && lib.payRequirements(plan({ requires: {} })).confirm && lib.payRequirements(plan({ tier: 3, requires: {} })).correctionReason);
+  ok('canSubmit: complete -> yes; no tick / short reason / refused plan -> no', lib.canSubmitPay(plan(), good) &&
+     !lib.canSubmitPay(plan(), { ...good, confirm: false }) && !lib.canSubmitPay(plan(), { ...good, reason: 'short' }) &&
+     !lib.canSubmitPay(plan({ allowed: false }), good));
+  const req = lib.payRequest(plan(), good);
+  ok('payRequest: set-teacher with the PREVIEWED args, the token, the reason and the tick', req.action === 'set-teacher' &&
+     req.data.id === 's1' && req.data.teacher_id === 't2' && req.data.token === 'tok' && req.data.confirm === true && req.data.reason === good.reason, req);
+  const u = lib.payRequest(plan({ op: 'unhold', args: { session_id: 's1' } }), good);
+  ok('payRequest: an un-hold is change-status to Scheduled', u.action === 'change-status' && u.data.status === 'Scheduled', u);
+  const c = lib.payRequest(plan({ op: 'create', args: { class_id: 'c', date: '2026-10-01', start_time: '08:00:00', end_time: '09:00:00', teacher_id: 't' } }), good);
+  ok('payRequest: a backdated lesson is create with its fields', c.action === 'create' && c.data.class_id === 'c' && c.data.date === '2026-10-01', c);
+  ok('payDialogFrom: a 409 requires_checked_path with a pay kind and a session preview opens the dialog',
+     lib.payDialogFrom({ code: 'requires_checked_path', kind: 'create_past', preview: { entity: 'session', op: 'create' } })?.op === 'create' &&
+     lib.payDialogFrom({ code: 'requires_checked_path', kind: 'move', preview: { entity: 'session' } }) === null &&
+     lib.payDialogFrom({ code: 'token_stale', kind: 'reteach', preview: { entity: 'session' } }) === null);
+  const lines = lib.payChangeLines(plan(), { t1: 'Ms A', t2: 'Mr B' });
+  ok('payChangeLines: from whom to whom and the minutes, no money', lines[0] === 'From Ms A to Mr B' && /90 minutes/.test(lines[1]) &&
+     !/[0-9][.,]?000|vnd|₫/i.test(lines.join(' ')), lines);
+  ok('payNotes: a closed month says so; the pay note says no figure is shown', lib.payNotes(plan({ impact: { closed_payroll: true } }))
+     .some((x) => /payroll month is closed/.test(x)) && lib.payNotes(plan()).some((x) => /no figure is shown/.test(x)));
+  ok('every refusal text says what to do (or that nothing changed)', Object.values(lib.PAY_ERROR_TEXT).every((t) => /\.|Restore|reason/.test(t)) &&
+     /Nothing was changed/.test(lib.payErrorText('x', 'Server said no.')));
+  const src = readFileSync(resolve(repo, 'src/lib/lessonPayGuard.ts'), 'utf8');
+  ok('the module imports no client and prices nothing', !/supabase|calculate-payroll'|fetch\(/.test(src.replace(/\/\/[^\n]*/g, '')));
 });
 
 await db.close();
