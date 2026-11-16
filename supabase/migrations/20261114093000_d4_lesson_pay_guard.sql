@@ -186,7 +186,7 @@ BEGIN
   v_d2 := public.session_change_kind(o, n);
   IF cardinality(v_kinds) > 1 OR v_d2 IS NOT NULL THEN
     RAISE EXCEPTION 'one change at a time' USING ERRCODE = 'HC022',
-      DETAIL = 'kinds=' || array_to_string(v_kinds || COALESCE(v_d2, ARRAY[]::text[]), ',');
+      DETAIL = 'kinds=' || array_to_string(v_kinds || CASE WHEN v_d2 IS NULL THEN ARRAY[]::text[] ELSE ARRAY[v_d2] END, ',');
   END IF;
   RETURN v_kinds[1];
 END $fn$;
@@ -614,7 +614,8 @@ BEGIN
     IF v_t IS NULL THEN RETURN jsonb_build_object('refuse_code', 'bad_args'); END IF;
     IF v_refuse IS NULL AND v_t = s.teacher_id THEN v_refuse := 'nothing_to_change'; END IF;
     n.teacher_id := v_t;
-    v_change := jsonb_build_object('session_id', s.id, 'old_teacher_id', s.teacher_id, 'new_teacher_id', v_t);
+    v_change := jsonb_build_object('session_id', s.id, 'old_teacher_id', s.teacher_id, 'new_teacher_id', v_t,
+                  'minutes', (EXTRACT(EPOCH FROM (s.end_time - s.start_time)) / 60)::int);
   ELSIF p_op = 'retime' THEN
     BEGIN
       v_start := (p_args ->> 'start_time')::time;
