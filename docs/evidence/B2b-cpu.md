@@ -143,3 +143,34 @@ A full lesson was not run: under this load a 90-minute turbo run would occupy th
 | large-v3-turbo + own diarizer + ECAPA | 6.8-10.8 h transcription (RTF 4.5-7.2) + same | about 2.4 h transcription (5.6 CPU-s/s / 3.5) + ~5 min + ~5-10 min: **about 2.5-3 h** |
 
 Uncertainty: the quiet projection rests on CPU-seconds measured under contention, which this file shows can be inflated by up to 2x; the true quiet figure is more likely at or below the projection than above it, but it is a projection until the section 7 commands are run.
+
+## 7. Quiet-time timing runs (for the conductor; nothing else heavy running)
+
+Run from the repo root of this branch, one after another, in a terminal (PowerShell). `PY` = `C:\Users\Dell\hec-audio-eval\.venv\Scripts\python.exe`. Before starting, check the load: Task Manager CPU under 10 % and at least 6 GB free. Each run writes its own load figures; a run counts as quiet only when its JSON says `"load": "quiet"` (others under 10 % of the machine and at least 4 GB free throughout).
+
+```powershell
+$PY = "C:\Users\Dell\hec-audio-eval\.venv\Scripts\python.exe"
+$C = "--lang en --vad on --vad-thr 0.25 --cond-prev off"
+# 1. transcription speed, L2 first 10 min: small / large-v3-turbo / medium x 4 and 8 threads (about 1.5-2 h in total when quiet)
+foreach ($s in "small","large-v3-turbo","medium") { foreach ($t in 4,8) {
+  & $PY scripts\lesson-eval\b2b_bench.py asr --size $s --threads $t $C.Split(" ") --set timing } }
+# 2. diarization and identification speed (about 10 min)
+& $PY scripts\lesson-eval\b2b_bench.py diar --engine own --threads 4 --timing-only
+& $PY scripts\lesson-eval\b2b_bench.py ident --threads 4
+# 3. the full-lesson figure: L2 is 84.5 min, the nearest to 90 (about 1 h with small, 2.5-3 h with turbo when quiet)
+& $PY scripts\lesson-eval\b2b_bench.py e2e --lesson L2 --minutes 0 --size small --threads 4 $C.Split(" ")
+& $PY scripts\lesson-eval\b2b_bench.py e2e --lesson L2 --minutes 0 --size large-v3-turbo --threads 4 $C.Split(" ")
+```
+
+Results land in `C:\Users\Dell\hec-audio-eval\work\b2b\asr\*timing\metrics_*.json`, `work\b2b\diar\*-timing.json`, `work\b2b\ident\`, `work\b2b\e2e\` (aggregates only; the asr folders also hold the transcripts, which stay there). The same commands re-run overwrite the under-load files of the same name, so copy `work\b2b\` aside first if the under-load figures are to be kept.
+
+## 8. Cost per 90-minute lesson
+
+| route | per lesson | basis |
+|---|---|---|
+| this laptop, small pipeline | about 1 h of laptop time (quiet, projected); electricity about 0.03 kWh = about VND 100, under USD 0.01 | ASSUMED wall power 30 W while busy (15 W-class U processor, not measured: Windows here exposes no power meter) and an ASSUMED tariff of about VND 3 000-3 500 per kWh (EVN retail range, not checked for 2026) |
+| this laptop, turbo pipeline | about 2.5-3 h (quiet, projected); about 0.08-0.09 kWh = about VND 300, about USD 0.01 | same assumptions |
+| B1 vendors (transcription only; diarization included where the vendor gives it) | azure-fast USD 1.50; openai gpt-4o-transcribe USD 0.54; openai gpt-transcribe USD 0.41; gemini USD 0.27 | B1 "USD per audio hour" estimates x 1.5 h; most vendor prices UNCONFIRMED (B0-vendors); identification is local in every route |
+| a rented CPU server instead of the laptop | Hetzner CPX32 (4 vCPU, 8 GB) EUR 30-36 per month whatever the volume; a 4-vCPU box as fast as this laptop when quiet would do about 8 small-pipeline or 3 turbo-pipeline lessons in an 8-hour night (vCPU speed not measured) | B0-vendors section 7 prices; per-lesson cost depends on how many lessons a month: at 60 lessons about EUR 0.5-0.6 each |
+
+Electricity is negligible either way; the real local costs are the machine's time (one lesson occupies it for 1-3 hours) and that it must be on and free overnight. The laptop is also the machine the staff use: a dedicated box (B0 named an N100 mini PC, USD 160-340) would be slower per core than this i7 (not measured) but could run every night.
