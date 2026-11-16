@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchBilledStudentIds } from "@/lib/finance/studentsInMonth";
 import { salaryForNet, splitExpenditures } from "@/lib/finance/expenditureSplit";
+import { forgoneTuition } from "@/lib/lostLessonsView";
 
 /**
  * Drives the rebuilt Admin Finance Summary widget.
@@ -76,7 +77,8 @@ export interface FinanceOverviewData {
   payrollExpenditures: number;
   /** totalExpenditures - payrollExpenditures. What net subtracts on top of salary. */
   operatingExpenditures: number;
-  excusedLoss: number;
+  /** calculate-tuition-bulk's excusedLessons summed; null = figure unavailable. */
+  excusedLoss: number | null;
 
   // Net profit computed from billed revenue (accrual). Keeps parity with
   // the previous widget's net definition.
@@ -175,8 +177,8 @@ export function useFinanceOverview(month: string) {
       const enrolledIds = await fetchBilledStudentIds(month);
 
       let liveMetrics = emptyMetrics();
+      const liveRows: any[] = [];
       if (enrolledIds.length > 0) {
-        const liveRows: any[] = [];
         for (const ids of chunk(enrolledIds, BULK_CHUNK)) {
           const { data, error } = await supabase.functions.invoke(
             "calculate-tuition-bulk",
@@ -254,21 +256,13 @@ export function useFinanceOverview(month: string) {
         .lt("date", nextMonthStart);
       const spend = splitExpenditures(expenditures ?? []);
 
-      const { data: excused } = await supabase
-        .from("attendance")
-        .select(
-          `id,
-           sessions!inner (date, class_id,
-             classes (session_rate_vnd)
-           )`,
-        )
-        .eq("status", "Excused")
-        .gte("sessions.date", monthStart)
-        .lt("sessions.date", nextMonthStart);
-      const excusedLoss = (excused ?? []).reduce(
-        (s, a: any) => s + Number(a.sessions?.classes?.session_rate_vnd ?? 0),
-        0,
-      );
+      // What excused lessons forgo, from the same calculate-tuition-bulk
+      // answer as the revenue above (excusedLessons, BROWSER-PRICING): each
+      // on the student's own enrollment and rate. This used to price every
+      // excused mark at the class's list fee of today. Null = figure
+      // unavailable (the function predates the field, or a student was not
+      // answered).
+      const excusedLoss = forgoneTuition(liveRows, "excusedLessons", enrolledIds).total;
 
       // Net = displayed (canonical) revenue − salary − everything else.
       //

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { PriorBalanceBreakdown } from "./PriorBalanceBreakdown";
 import { BillFreezePanel, useBillFreeze } from "./BillFreezePanel";
 import { Lock } from "lucide-react";
+import { siblingDiscountFor } from "@/lib/tuitionFigures";
 
 // Ivory (A4.6) strings. This tab renders on the admin student page only, so it keeps
 // the old classes until the staff area flips (useIvory). Amounts: ink, sans, tabular,
@@ -353,8 +354,10 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
                 // Check if this is the winner class for sibling discount
                 const isWinnerClass = tuitionData.siblingState?.isWinner && 
                                      tuitionData.siblingState?.winnerClassId === classItem.class_id;
-                const siblingDiscountAmount = isWinnerClass 
-                  ? Math.round(classItem.amount_vnd * ((tuitionData.siblingState?.percent || 0) / 100))
+                // The sibling discount calculate-tuition applied to this class
+                // (its `discounts` line), not re-priced here as amount x percent.
+                const siblingDiscountAmount = isWinnerClass
+                  ? siblingDiscountFor(tuitionData.discounts, classItem.class_id)
                   : 0;
                 const finalAmount = classItem.amount_vnd - siblingDiscountAmount;
 
@@ -412,7 +415,13 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
           <CardContent>
             {/* The total: the largest figure, the one under a 2 px ink rule (DS s.14). */}
             <p className={cn(ivory ? "whitespace-nowrap border-t-2 border-hec-ink pt-2 text-hec-h1 font-semibold tabular-nums text-hec-ink" : "text-2xl font-bold text-primary")}>
-              {formatVND(tuitionData.totalAmount + (tuitionData.carryInDebt - tuitionData.carryInCredit))}
+              {/* calculate-tuition's carry.payable, not added up here. */}
+              {tuitionData.payable === null ? (
+                <>
+                  <span aria-hidden>—</span>
+                  <span className="sr-only">Figure unavailable</span>
+                </>
+              ) : formatVND(tuitionData.payable)}
             </p>
             <p className={cn(ivory ? CAPTION : "text-xs text-muted-foreground mt-1")}>
               Current + Prior Balance

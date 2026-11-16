@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Users, DollarSign, Calendar as CalendarIcon, Plus, LayoutGrid, CalendarDays } from "lucide-react";
 import AttendanceDrawer from "./AttendanceDrawer";
 import AddSessionModal from "@/components/admin/AddSessionModal";
+import { classPayFrom } from "@/lib/finance/classPayroll";
 import {
   format,
   startOfMonth,
@@ -112,12 +113,25 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
     return filtered;
   }, [sessions, statusFilter, studentSearch, enrolledStudents]);
 
+  // What this class's teaching costs this month: calculate-payroll's figure,
+  // split by class (projected while open, what was paid once closed). This
+  // card used to add up sessions.rate_override_vnd, a column the payroll
+  // ignores, so it showed a cost nobody was paid. Null = figure unavailable.
+  const { data: classPay } = useQuery({
+    queryKey: ["class-calendar-pay", classId, format(month, "yyyy-MM")],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("calculate-payroll", {
+        body: { month: format(month, "yyyy-MM") },
+      });
+      return error ? null : classPayFrom(data, classId);
+    },
+  });
+
   const monthStats = useMemo(() => {
-    if (!sessions) return { total: 0, enrolled: 0, cost: 0 };
+    if (!sessions) return { total: 0, enrolled: 0 };
     return {
       total: sessions.length,
       enrolled: enrolledStudents?.length || 0,
-      cost: sessions.reduce((sum, s) => sum + (s.rate_override_vnd || 0), 0)
     };
   }, [sessions, enrolledStudents]);
 
@@ -210,12 +224,20 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
               <span className="text-hec-small font-medium tabular-nums text-hec-ink">{monthStats.enrolled} students</span>
             </div>
           </Card>
-          {monthStats.cost > 0 && (
+          {classPay !== undefined && (classPay === null || classPay > 0) && (
             <Card className="px-4 py-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" title="Staff pay for this class this month (from payroll)">
                 <DollarSign className="h-4 w-4 text-hec-ink-soft" />
+                <span className="sr-only">Staff pay this month:</span>
                 <span className="whitespace-nowrap text-hec-small font-medium tabular-nums text-hec-ink">
-                  {monthStats.cost.toLocaleString('vi-VN')} ₫
+                  {classPay === null ? (
+                    <>
+                      <span aria-hidden>—</span>
+                      <span className="sr-only">Figure unavailable</span>
+                    </>
+                  ) : (
+                    `${classPay.toLocaleString('vi-VN')} ₫`
+                  )}
                 </span>
               </div>
             </Card>

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { siblingRetryDelayMs } from "@/lib/siblingRetry";
+import { payableFrom } from "@/lib/tuitionFigures";
 
 /**
  * Shared finance data selector - single source of truth
@@ -63,7 +64,9 @@ export interface StudentMonthFinanceData {
   carryOutCredit: number;
   carryOutDebt: number;
   settledInMonth: string | null;
-  
+  /** calculate-tuition's carry.payable; null = figure unavailable. */
+  payable: number | null;
+
   // Discount details
   discounts: Array<{
     name: string;
@@ -174,7 +177,9 @@ export function useStudentMonthFinance(
         carryOutCredit: data.carry?.carryOutCredit ?? 0,
         carryOutDebt: data.carry?.carryOutDebt ?? 0,
         settledInMonth: data.carry?.settledInMonth ?? null,
-        
+        // The function's own figure; null = figure unavailable (older deploy).
+        payable: payableFrom(data.carry),
+
         // Discounts
         discounts: data.discounts ?? [],
         

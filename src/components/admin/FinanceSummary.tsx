@@ -266,7 +266,12 @@ export function FinanceSummary() {
             </CardHeader>
             <CardContent>
               <div className="whitespace-nowrap font-sans text-2xl font-bold tabular-nums text-hec-ink">
-                {isLoading ? "..." : formatVND(data?.excusedLoss ?? 0)}
+                {isLoading ? "..." : data?.excusedLoss === null ? (
+                  <>
+                    <span aria-hidden>—</span>
+                    <span className="sr-only">Figure unavailable</span>
+                  </>
+                ) : formatVND(data?.excusedLoss ?? 0)}
               </div>
               <p className="mt-1 text-hec-small text-hec-ink-soft">
                 Revenue forgone to excused absences • not a cost
