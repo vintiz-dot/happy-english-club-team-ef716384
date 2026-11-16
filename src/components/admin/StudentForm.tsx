@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
 import { format } from "date-fns";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 export function StudentForm({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
@@ -49,6 +51,19 @@ export function StudentForm({ onSuccess }: { onSuccess?: () => void }) {
       if (error) throw error;
       return data;
     },
+  });
+
+  // D4 step 3B (G-13): the enrolments of a new child are checked changes made
+  // as the signed-in admin. From today on they are tier 0 and made at once; a
+  // start date in a month already taught asks for a reason, class by class.
+  const waiting = useRef(0);
+  const money = useMoneyInput((_result, request) => {
+    const classId = String(request.args.class_id ?? "");
+    queryClient.invalidateQueries({ queryKey: ["classes"] });
+    queryClient.invalidateQueries({ queryKey: ["class-enrollments", classId] });
+    queryClient.invalidateQueries({ queryKey: ["available-students", classId] });
+    waiting.current -= 1;
+    if (waiting.current <= 0) onSuccess?.();
   });
 
   const toggleClass = (id: string) =>
@@ -91,17 +106,19 @@ export function StudentForm({ onSuccess }: { onSuccess?: () => void }) {
       // enrolment not — rather than as a blanket error that would have the
       // admin create the child a second time.
       let enrolErrorMessage: string | null = null;
+      let needReason = 0;
+      let enrolledCount = 0;
       if (classIds.length > 0) {
-        const { error: enrolError } = await supabase.from("enrollments").insert(
-          classIds.map((classId) => ({
-            class_id: classId,
-            student_id: created.id,
-            start_date: startDate,
-          })),
-        );
-        if (enrolError) {
-          enrolErrorMessage = enrolError.message;
-        } else {
+        const out = await money.runMany(classIds.map((classId) => ({
+          entity: "enrollment",
+          op: "enroll",
+          args: { class_id: classId, student_id: created.id, start_date: startDate },
+        })));
+        needReason = out.needReason.length;
+        enrolledCount = out.done;
+        if (out.error) enrolErrorMessage = out.error;
+        else if (out.refused.length > 0) enrolErrorMessage = out.refused[0].message;
+        if (out.done > 0) {
           // So the class roster and enrolment counts show the new student
           // without a reload.
           queryClient.invalidateQueries({ queryKey: ["classes"] });
@@ -118,12 +135,17 @@ export function StudentForm({ onSuccess }: { onSuccess?: () => void }) {
           description: `Add the class from the class's Enrollments tab. (${enrolErrorMessage})`,
           variant: "destructive",
         });
+      } else if (needReason > 0) {
+        toast({
+          title: `${fullName} was created`,
+          description: `${needReason} enrolment${needReason === 1 ? "" : "s"} start in a month already taught: give the reason to finish.`,
+        });
       } else {
         toast({
           title: "Success",
           description:
             classIds.length > 0
-              ? `Student created and enrolled in ${classIds.length} class${classIds.length === 1 ? "" : "es"}`
+              ? `Student created and enrolled in ${enrolledCount} class${enrolledCount === 1 ? "" : "es"}`
               : "Student created successfully",
         });
       }
@@ -136,7 +158,9 @@ export function StudentForm({ onSuccess }: { onSuccess?: () => void }) {
       setFamilyId("");
       setNotes("");
       setClassIds([]);
-      onSuccess?.();
+      // With a reason dialog still open the form stays until it is answered.
+      waiting.current = needReason;
+      if (needReason === 0) onSuccess?.();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -282,6 +306,10 @@ export function StudentForm({ onSuccess }: { onSuccess?: () => void }) {
           </Button>
         </form>
       </CardContent>
+      <MoneyInputDialog
+        guard={money.guard}
+        subject={classes?.find((c) => c.id === money.guard.request?.args?.class_id)?.name}
+      />
     </Card>
   );
 }

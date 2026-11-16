@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/table";
 import { PlaceholderCard } from "@/components/ui/loading";
 import { useIvory } from "@/hooks/useIvory";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface StudentDiscountsTabProps {
   studentId: string;
@@ -80,34 +82,39 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
     },
   });
 
+  // D4 step 3B (G-15): ending or removing an assignment is a checked change
+  // made as the signed-in admin. Ending it from today reaches nothing billed
+  // (tier 0); removing one that covered billed months asks for a reason.
+  const changed = (op: string) => {
+    queryClient.invalidateQueries({ queryKey: ["student-discount-assignments", studentId] });
+    toast({
+      title: "Success",
+      description: op === "remove" ? "Discount assignment removed" : "Discount assignment ended",
+    });
+    setEndingAssignment(null);
+    setRemovingAssignment(null);
+  };
+  const money = useMoneyInput((_result, request) => changed(request.op));
+  const change = async (op: "set_end" | "remove", args: Record<string, unknown>) => {
+    const r = await money.run({ entity: "discount_assignment", op, args });
+    if (r.status === "refused") throw new Error(r.message);
+    if (r.status === "dialog") {
+      // the confirmation dialog steps aside for the reason dialog
+      setEndingAssignment(null);
+      setRemovingAssignment(null);
+    }
+    return r.status;
+  };
+
   const endAssignmentMutation = useMutation({
     mutationFn: async (assignmentId: string) => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const effectiveTo = yesterday.toISOString().slice(0, 10);
-
-      const { error } = await supabase
-        .from("discount_assignments")
-        .update({ effective_to: effectiveTo })
-        .eq("id", assignmentId);
-
-      if (error) throw error;
-
-      // Audit log
-      await supabase.from("audit_log").insert({
-        entity: "discount_assignment",
-        entity_id: assignmentId,
-        action: "end",
-        diff: { effective_to: effectiveTo },
-      });
+      return change("set_end", { id: assignmentId, effective_to: effectiveTo });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-discount-assignments", studentId] });
-      toast({
-        title: "Success",
-        description: "Discount assignment ended",
-      });
-      setEndingAssignment(null);
+    onSuccess: (status) => {
+      if (status === "done") changed("set_end");
     },
     onError: (error: any) => {
       toast({
@@ -119,25 +126,9 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
   });
 
   const removeAssignmentMutation = useMutation({
-    mutationFn: async (assignmentId: string) => {
-      const { error } = await supabase.from("discount_assignments").delete().eq("id", assignmentId);
-
-      if (error) throw error;
-
-      // Audit log
-      await supabase.from("audit_log").insert({
-        entity: "discount_assignment",
-        entity_id: assignmentId,
-        action: "delete",
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-discount-assignments", studentId] });
-      toast({
-        title: "Success",
-        description: "Discount assignment removed",
-      });
-      setRemovingAssignment(null);
+    mutationFn: async (assignmentId: string) => change("remove", { id: assignmentId }),
+    onSuccess: (status) => {
+      if (status === "done") changed("remove");
     },
     onError: (error: any) => {
       toast({
@@ -450,6 +441,7 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
           studentId={studentId}
         />
       )}
+      <MoneyInputDialog guard={money.guard} />
     </Card>
     </div>
   );

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Check, X, Inbox, Loader2 } from "lucide-react";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 export function EnrollmentRequestsManager() {
   const { toast } = useToast();
@@ -24,45 +27,71 @@ export function EnrollmentRequestsManager() {
     },
   });
 
+  const markResolved = async (requestId: string, action: "approved" | "declined") => {
+    const { error } = await supabase
+      .from("enrollment_requests" as any)
+      .update({
+        status: action,
+        resolved_at: new Date().toISOString(),
+        resolved_by: user?.id,
+      })
+      .eq("id", requestId);
+    if (error) throw error;
+  };
+  const announce = (action: "approved" | "declined") => {
+    toast({
+      title: action === "approved" ? "Student Enrolled ✅" : "Request Declined",
+      description: action === "approved"
+        ? "The student has been enrolled in the class."
+        : "The request has been declined.",
+    });
+    queryClient.invalidateQueries({ queryKey: ["admin-enrollment-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["students"] });
+  };
+
+  // D4 step 3B (G-13): approving enrols through the checked path as the
+  // signed-in admin, from today. That is tier 0 unless a bill of this month is
+  // already signed off for the family; then the dialog asks for a reason. The
+  // request is marked approved only AFTER the child is enrolled.
+  const approving = useRef<string | null>(null);
+  const money = useMoneyInput(async () => {
+    const requestId = approving.current;
+    approving.current = null;
+    if (!requestId) return;
+    try {
+      await markResolved(requestId, "approved");
+      announce("approved");
+    } catch (err: any) {
+      toast({ title: "Enrolled, but the request is still listed", description: err.message, variant: "destructive" });
+    }
+  });
+
   const resolveMutation = useMutation({
     mutationFn: async ({ requestId, action, studentId, classId }: {
       requestId: string;
       action: "approved" | "declined";
       studentId: string;
       classId: string;
-    }) => {
-      // Update request status
-      const { error: updateError } = await supabase
-        .from("enrollment_requests" as any)
-        .update({
-          status: action,
-          resolved_at: new Date().toISOString(),
-          resolved_by: user?.id,
-        })
-        .eq("id", requestId);
-      if (updateError) throw updateError;
-
-      // If approved, create enrollment
-      if (action === "approved") {
-        const { error: enrollError } = await supabase
-          .from("enrollments")
-          .insert({
-            student_id: studentId,
-            class_id: classId,
-            start_date: new Date().toISOString().split("T")[0],
-          });
-        if (enrollError) throw enrollError;
+    }): Promise<"done" | "dialog"> => {
+      if (action === "declined") {
+        await markResolved(requestId, action);
+        return "done";
       }
-    },
-    onSuccess: (_, vars) => {
-      toast({
-        title: vars.action === "approved" ? "Student Enrolled ✅" : "Request Declined",
-        description: vars.action === "approved"
-          ? "The student has been enrolled in the class."
-          : "The request has been declined.",
+      const r = await money.run({
+        entity: "enrollment",
+        op: "enroll",
+        args: { student_id: studentId, class_id: classId, start_date: new Date().toISOString().split("T")[0] },
       });
-      queryClient.invalidateQueries({ queryKey: ["admin-enrollment-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["students"] });
+      if (r.status === "refused") throw new Error(r.message);
+      if (r.status === "dialog") {
+        approving.current = requestId;
+        return "dialog";
+      }
+      await markResolved(requestId, action);
+      return "done";
+    },
+    onSuccess: (state, vars) => {
+      if (state === "done") announce(vars.action);
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -137,6 +166,10 @@ export function EnrollmentRequestsManager() {
         ))}
         </ul>
       </CardContent>
+      <MoneyInputDialog
+        guard={money.guard}
+        names={Object.fromEntries((requests ?? []).map((r: any) => [r.student_id, r.students?.full_name ?? "A child"]))}
+      />
     </Card>
   );
 }

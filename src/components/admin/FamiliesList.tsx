@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Users, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,17 +37,25 @@ export function FamiliesList() {
     },
   });
 
+  const deactivated = () => {
+    queryClient.invalidateQueries({ queryKey: ["families-list"] });
+    toast.success("Family deleted successfully");
+  };
+  // D4-3B review N-2: "delete" marks the family inactive, and the family
+  // discount counts only active families' children, for every month it is
+  // worked out for. So the change goes through ('family_link', 'set_active')
+  // as the signed-in admin: at once when nothing billed is reached, with a
+  // reason dialog when it is.
+  const money = useMoneyInput(() => deactivated());
+
   const deleteMutation = useMutation({
-    mutationFn: async (familyId: string) => {
-      const { error } = await supabase
-        .from("families")
-        .update({ is_active: false })
-        .eq("id", familyId);
-      if (error) throw error;
+    mutationFn: async (familyId: string): Promise<"done" | "dialog"> => {
+      const r = await money.run({ entity: "family_link", op: "set_active", args: { family_id: familyId, is_active: false } });
+      if (r.status === "refused") throw new Error(r.message);
+      return r.status === "dialog" ? "dialog" : "done";
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["families-list"] });
-      toast.success("Family deleted successfully");
+    onSuccess: (state) => {
+      if (state === "done") deactivated();
     },
     onError: (error) => {
       toast.error("Failed to delete family: " + error.message);
@@ -126,6 +136,10 @@ export function FamiliesList() {
           </div>
         )}
       </CardContent>
+      <MoneyInputDialog
+        guard={money.guard}
+        subject={families?.find((f) => f.id === money.guard.request?.args?.family_id)?.name}
+      />
     </Card>
   );
 }

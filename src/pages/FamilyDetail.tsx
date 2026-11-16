@@ -13,6 +13,8 @@ import { FamilyMembersManager } from "@/components/admin/FamilyMembersManager";
 import { toast } from "sonner";
 import { useIvory } from "@/hooks/useIvory";
 import { ConfirmDestructiveDialog } from "@/components/ConfirmDestructiveDialog";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 const FamilyDetail = () => {
   const ivory = useIvory();
@@ -22,19 +24,24 @@ const FamilyDetail = () => {
   // The child whose "Remove" was pressed: taken out of the family only on confirm.
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; full_name: string } | null>(null);
 
-  // Unchanged: what "Remove" did straight away before it asked first.
+  // D4 step 3B (G-19): removing a child from the family is a checked change
+  // made as the signed-in admin; it asks for a reason when a billed month of
+  // the child or a sibling is reached. Asked first (the confirm above), then
+  // the checked change: tier 0 is done at once, tier 1+ opens the reason dialog.
+  const removed = () => {
+    toast.success("Student removed from family");
+    queryClient.invalidateQueries({ queryKey: ["family-detail", id] });
+    queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
+  };
+  const money = useMoneyInput(removed);
   const removeFromFamily = async (student: { id: string }) => {
-    const { error } = await supabase
-      .from("students")
-      .update({ family_id: null })
-      .eq("id", student.id);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Student removed from family");
-      queryClient.invalidateQueries({ queryKey: ["family-detail", id] });
-      queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
-    }
+    const r = await money.run({
+      entity: "family_link",
+      op: "set_family",
+      args: { student_id: student.id, family_id: null },
+    });
+    if (r.status === "refused") toast.error(r.message);
+    else if (r.status === "done") removed();
   };
 
   // Children whose sibling discount is on hold, and until when. Its own
@@ -273,13 +280,20 @@ const FamilyDetail = () => {
           description={
             // What the code does: family_id is cleared, nothing is recalculated now. calculate-tuition
             // then finds no family for this child; sibling-state never reassigns a month already worked out.
+            // D4 step 3B: when the change reaches a month already taught or billed, the reason dialog follows.
             `${confirmRemove?.full_name ?? ""}'s bills lose the family's sibling discount from the next time their tuition is worked out (a frozen bill keeps its figures). ` +
-            `For the other children, months already worked out stay as they are; later months leave ${confirmRemove?.full_name ?? "this child"} out.`
+            `For the other children, months already worked out stay as they are; later months leave ${confirmRemove?.full_name ?? "this child"} out. ` +
+            `If this reaches a month already taught or billed, you are asked for a reason next.`
           }
           keepLabel="Keep them in the family"
           actionLabel="Remove from the family"
           busyLabel="Removing..."
           onConfirm={() => (confirmRemove ? removeFromFamily(confirmRemove) : undefined)}
+        />
+
+        <MoneyInputDialog
+          guard={money.guard}
+          names={Object.fromEntries(((family as any)?.students ?? []).map((s: any) => [s.id, s.full_name]))}
         />
 
         {showLinkDialog && (

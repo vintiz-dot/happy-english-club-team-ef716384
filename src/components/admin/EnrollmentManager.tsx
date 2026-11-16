@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Users, X, Calendar } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface Student {
   id: string;
@@ -52,6 +54,17 @@ export function EnrollmentManager() {
   const [discountCadence, setDiscountCadence] = useState<"" | "once" | "monthly">("");
   const [allowedDays, setAllowedDays] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  // D4 step 3B (G-13): enrolling and ending an enrolment are checked changes
+  // made as the signed-in admin. From today they are tier 0 (no dialog, one
+  // row written); a date in a month already billed asks for a reason.
+  const money = useMoneyInput((_result, request) => {
+    toast({
+      title: "Success",
+      description: request.op === "end" ? "Enrollment ended" : "Student enrolled successfully",
+    });
+    if (request.op !== "end") resetForm();
+    loadData();
+  });
   const { toast } = useToast();
 
   // Get class schedule days
@@ -148,9 +161,22 @@ export function EnrollmentManager() {
         enrollmentData.allowed_days = allowedDays;
       }
 
-      const { error } = await supabase.from("enrollments" as any).insert(enrollmentData);
-
-      if (error) throw error;
+      const r = await money.run({
+        entity: "enrollment",
+        op: "enroll",
+        args: {
+          student_id: enrollmentData.student_id,
+          class_id: enrollmentData.class_id,
+          start_date: enrollmentData.start_date,
+          ...(enrollmentData.discount_type
+            ? { discount_type: enrollmentData.discount_type, discount_value: enrollmentData.discount_value,
+                discount_cadence: enrollmentData.discount_cadence }
+            : {}),
+          ...(enrollmentData.allowed_days ? { allowed_days: enrollmentData.allowed_days } : {}),
+        },
+      });
+      if (r.status === "refused") throw new Error(r.message);
+      if (r.status === "dialog") return;      // the reason dialog is open; confirming it finishes
 
       toast({
         title: "Success",
@@ -159,14 +185,7 @@ export function EnrollmentManager() {
           : "Student enrolled successfully",
       });
 
-      // Reset form
-      setSelectedStudent("");
-      setSelectedClass("");
-      setStartDate("");
-      setDiscountType("");
-      setDiscountValue("");
-      setDiscountCadence("");
-      setAllowedDays([]);
+      resetForm();
       loadData();
     } catch (error: any) {
       toast({
@@ -179,16 +198,29 @@ export function EnrollmentManager() {
     }
   };
 
+  const resetForm = () => {
+    setSelectedStudent("");
+    setSelectedClass("");
+    setStartDate("");
+    setDiscountType("");
+    setDiscountValue("");
+    setDiscountCadence("");
+    setAllowedDays([]);
+  };
+
   const handleUnenroll = async (enrollmentId: string) => {
     if (!confirm("Are you sure you want to end this enrollment?")) return;
 
     try {
-      const { error } = await supabase
-        .from("enrollments" as any)
-        .update({ end_date: new Date().toISOString().split("T")[0] })
-        .eq("id", enrollmentId);
-
-      if (error) throw error;
+      const row = enrollments.find((e) => e.id === enrollmentId);
+      if (!row) return;
+      const r = await money.run({
+        entity: "enrollment",
+        op: "end",
+        args: { student_id: row.student_id, class_id: row.class_id, end_date: new Date().toISOString().split("T")[0] },
+      });
+      if (r.status === "refused") throw new Error(r.message);
+      if (r.status === "dialog") return;
 
       toast({
         title: "Success",
@@ -381,6 +413,11 @@ export function EnrollmentManager() {
           </div>
         </CardContent>
       </Card>
+      <MoneyInputDialog
+        guard={money.guard}
+        names={Object.fromEntries(students.map((s) => [s.id, s.full_name]))}
+        subject={students.find((s) => s.id === money.guard.request?.args?.student_id)?.full_name}
+      />
     </div>
   );
 }

@@ -65,8 +65,10 @@ const DataTab = () => {
       const text = await file.text();
       const data = JSON.parse(text);
 
+      // D4 step 3B (G-20): the box is sent WITH the request (it used to stay
+      // in the browser, so a ticked "Dry run" still imported).
       const { data: result, error } = await supabase.functions.invoke('admin-data-import', {
-        body: data,
+        body: { ...data, dryRun },
       });
 
       if (error) throw error;
@@ -192,6 +194,11 @@ const DataTab = () => {
                 />
                 <Label htmlFor="dryRun">Dry run (validate only, don't apply)</Label>
               </div>
+              <p className="text-hec-small text-hec-ink-soft">
+                Families, students, teachers, classes and bank details are imported. Enrolments, lessons, attendance and
+                discounts are not: they decide bills and pay, so they are entered from their own screens. A class's fee is
+                not imported either.
+              </p>
 
               <div>
                 <Input

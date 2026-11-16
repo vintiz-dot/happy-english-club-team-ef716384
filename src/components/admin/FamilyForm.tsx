@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Plus, X, UserPlus } from "lucide-react";
+import { canSubmitMoney, moneyAck, type MoneyForm, type MoneyPlan } from "@/lib/moneyGuard";
+import { functionErrorBody, functionErrorText, needsInputDialogBody } from "@/lib/moneyInputs";
+import { MoneyInputDialogView } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface StudentEnrollment {
   classId: string;
@@ -37,6 +40,13 @@ export function FamilyForm({ onSuccess }: { onSuccess?: () => void }) {
   const [address, setAddress] = useState("");
   const [students, setStudents] = useState<FamilyStudent[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // D4 step 3B (b.5): create-family previews every enrolment before it
+  // creates anything. A start date in a month already taught comes back as
+  // 409 with the preview; this dialog collects the reason and the same
+  // request is sent again with it. Nothing is decided in the browser.
+  const [ackPlan, setAckPlan] = useState<(MoneyPlan & { items?: any[] }) | null>(null);
+  const [ackForm, setAckForm] = useState<MoneyForm>({ reason: "", confirm: false, correctionReason: "" });
+  const [ackError, setAckError] = useState<string | null>(null);
 
   const { data: classes } = useQuery({
     queryKey: ["classes-active"],
@@ -106,19 +116,9 @@ export function FamilyForm({ onSuccess }: { onSuccess?: () => void }) {
     setStudents(updated);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in family name",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const create = async (ack?: ReturnType<typeof moneyAck>) => {
     setIsSubmitting(true);
+    setAckError(null);
     try {
       const { data, error } = await supabase.functions.invoke("create-family", {
         body: {
@@ -127,16 +127,41 @@ export function FamilyForm({ onSuccess }: { onSuccess?: () => void }) {
           phone: phone || null,
           address: address || null,
           students: students.length > 0 ? students : undefined,
+          ...(ack ? { ack } : {}),
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        const body = await functionErrorBody(error);
+        if (needsInputDialogBody(body)) {
+          // nothing was created: ask for the reason (again, with the fresh preview, when it went stale)
+          if (ackPlan) setAckError(functionErrorText(body, "Check the dates and confirm again."));
+          setAckPlan(body.preview);
+          return;
+        }
+        if (ackPlan && body?.preview) setAckPlan(body.preview);
+        const message = functionErrorText(body, error.message);
+        if (ackPlan) setAckError(message);
+        else throw new Error(message);
+        return;
+      }
       if (data?.error) throw new Error(data.error);
 
-      toast({
-        title: "Success",
-        description: `Family created successfully${students.length > 0 ? ` with ${students.length} student(s)` : ""}`,
-      });
+      setAckPlan(null);
+      if (data?.partial) {
+        const failed = (data.enrollment_errors ?? []) as Array<{ student_name?: string; message?: string }>;
+        toast({
+          title: "The family was created, but not every enrolment",
+          description: failed.map((f) => `${f.student_name ?? "A child"}: ${f.message ?? "not enrolled"}`).join(" ")
+            + " Enrol them from the class's Enrollments tab.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Family created successfully${students.length > 0 ? ` with ${students.length} student(s)` : ""}`,
+        });
+      }
 
       // Reset form
       setName("");
@@ -154,6 +179,21 @@ export function FamilyForm({ onSuccess }: { onSuccess?: () => void }) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in family name",
+        variant: "destructive",
+      });
+      return;
+    }
+    setAckForm({ reason: "", confirm: false, correctionReason: "" });
+    await create();
   };
 
   return (
@@ -415,6 +455,20 @@ export function FamilyForm({ onSuccess }: { onSuccess?: () => void }) {
           </Button>
         </form>
       </CardContent>
+      <MoneyInputDialogView
+        open={!!ackPlan}
+        plan={ackPlan}
+        form={ackForm}
+        setForm={setAckForm}
+        busy={isSubmitting}
+        error={ackError}
+        canSubmit={canSubmitMoney(ackPlan, ackForm)}
+        onClose={() => { setAckPlan(null); setAckError(null); }}
+        onSubmit={() => { if (ackPlan) void create(moneyAck(ackPlan, ackForm)); }}
+        subject={name}
+        extraLines={(ackPlan?.items ?? []).filter((i: any) => Number(i.tier ?? 0) >= 1).map((i: any) =>
+          `${i.student_name ?? "A child"}: ${classes?.find((c) => c.id === i.class_id)?.name ?? "a class"} from ${i.start_date}.`)}
+      />
     </Card>
   );
 }

@@ -65,19 +65,41 @@ export const AI_ACTIONS_KEY = ["ai-actions"] as const;
 // them from the live schema, so the calls go untyped until then.
 const rpc = (name: string, args: Record<string, unknown>) => (supabase as any).rpc(name, args);
 
+/**
+ * D4 (money guard). A plan is applied or undone as a whole or not at all, and
+ * the database refuses it when one of its steps reaches months that are
+ * already billed (HC120), would re-point or erase a record (HC121) or would
+ * change old register marks of a billed month (HC025). Nothing was changed;
+ * the sentence says where to do it instead, with a reason. Any other error
+ * keeps the database's own message.
+ */
+export function aiActionErrorText(error: { code?: string; message?: string } | null | undefined): string {
+  const code = String(error?.code ?? "");
+  if (code === "HC120") {
+    return "This reaches months already billed. Do it from the enrolment screen, with a reason. Nothing was changed.";
+  }
+  if (code === "HC121") {
+    return "Part of this is not allowed this way (a record would change child, or a child or class with history would be deleted). Nothing was changed.";
+  }
+  if (code === "HC025" || code === "HC024") {
+    return "This would change register marks of a month already billed. Do it from the enrolment screen, with a reason. Nothing was changed.";
+  }
+  return String(error?.message ?? "The action could not be completed.");
+}
+
 export async function applyProposal(p: AiProposal): Promise<ApplyResult> {
   const { data, error } = await rpc("ai_action_apply", {
     p_proposal_id: p.proposal_id,
     p_instruction: p.instruction,
     p_plan: p.plan,
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(aiActionErrorText(error));
   return data as ApplyResult;
 }
 
 export async function undoAiAction(actionId: string): Promise<UndoResult> {
   const { data, error } = await rpc("ai_action_undo", { p_action_id: actionId });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(aiActionErrorText(error));
   return data as UndoResult;
 }
 
