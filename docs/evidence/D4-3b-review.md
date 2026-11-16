@@ -123,7 +123,9 @@ The migration rewrites no row. New paths never rewrite the past: `change_enrollm
 
 ## 7. Runs
 
-(filled in below)
+- `node scripts/pgtest/run.mjs` on 3b09300f (mine, this PC): **6659 assertions across 66 suites, 0 suite(s) failed** (builder: 6658/66/0). This step's: d4 money inputs 257, d4 functions inputs 62, d4 reach oracle 187, money inputs lib 40; unchanged and green beside them: d4 floors 213, D2 carry-over 275, d4 deployed functions 37, d4 rollback 26, d4 register 140, d4 functions register 34, money guard lib 45, AI admin actions 79, stars sync engine 172, pause enrollment 37, edge functions typecheck 5, app typecheck (`tsc -p tsconfig.app.json`) green.
+- Over my patched copy (`docs/evidence/D4-3b-review-fixed-migration.sql` = the file + B-1 + B-2): `d4-money-inputs` 256/257 - the only failure is the trigger inventory ("added: the nine guards ..."), which must list the two new invoice triggers; `d4-reach-oracle` 187/187 (calculate-tuition still saves frozen bills); my probes P1/P2 and O1-O5 all refused, controls unchanged.
+- Builder's mutation runner: see below (section 9 tail).
 
 ## 8. Apply-ability, preflight, rollback
 
@@ -133,7 +135,25 @@ The migration rewrites no row. New paths never rewrite the past: `change_enrollm
 
 ## 9. Mutants
 
-(filled in below)
+My 13 (`review3b-mutants.mjs`, the builder's engine with my list; migration mutants against `d4-money-inputs` and, where named, the oracle):
+
+| Mutant | Breaks | Verdict |
+|---|---|---|
+| R01 | an unknown lane (anon, a role with no user) passes like the owner | SURVIVED - no case for the `unknown` lane on a money input (anon has no grant through RLS, so near-equivalent; add one case) |
+| R02 | the reach shortcut ignores the bill floor | see below |
+| R03 | the pay reach shortcut ignores lessons | CAUGHT (P18 backdated rate) |
+| R04 | the reach shortcut off by one day | CAUGHT (discount dated the 1st of next month) |
+| R05 | a discount assignment re-pointed at another definition is "nothing priced" (trigger) | SURVIVED - no raw `discount_def_id` change case, and the oracle has none. A real hole if it regressed: add `UPDATE discount_assignments SET discount_def_id = <other>` over a paid month -> HC120 |
+| R06 | a referral bonus value change is "nothing priced" | CAUGHT |
+| R07 | a definition's cadence may change while in use | SURVIVED - equivalent: calculate-tuition does not read a definition's cadence |
+| R08 | a pay-rate row's hourly rate change is "only the note" | CAUGHT |
+| R09 | the teachers mirror guard ignores `per_session_rate_vnd` | SURVIVED - the mirror cases use hourly rates only; add a per-session one |
+| R10 | a student with only a payment may be deleted | CAUGHT |
+| R11 | the register exemption takes an enrolment override of ANOTHER transaction | SURVIVED - near-equivalent (the flag is transaction-local and only `_money_change_apply` sets it); add `withAck(..., { sameTx: false })` for op `end` on the register |
+| R12 | an acknowledgement of any discount op covers an INSERT | SURVIVED - defence in depth (N-5) |
+| R13 | `definition_in_use` loses the lead day | SURVIVED - add a definition whose only assignment starts on the 1st after a paid past month |
+
+The builder's 57 (`d4-mutants-3b.mjs`, re-run by me): see section 7.
 
 ## 10. Not checked
 
