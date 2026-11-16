@@ -277,8 +277,9 @@ export const MUTANTS = [
     "     OR OLD.start_time IS DISTINCT FROM NEW.start_time)\n  EXECUTE FUNCTION public.session_pay_guard();", ['lesson'], LESSON],
   ['L33', "an owner-lane pass leaves no owner_lane event (A-1)",
     "    VALUES ('owner_lane', jsonb_build_object('table', 'sessions', 'kind', v_kind", "    VALUES ('reviewed', jsonb_build_object('table', 'sessions', 'kind', v_kind", ['lesson'], LESSON],
-  ['L34', "the session plan / exec callable by any signed-in user",
-    "  public._money_exec__session(jsonb, uuid)\nFROM PUBLIC, anon, authenticated, service_role;", "  public._money_exec__session(jsonb, uuid)\nFROM PUBLIC, anon;", ['lesson'], LESSON],
+  // (first form, "REVOKE ... FROM PUBLIC, anon" only, SURVIVED as an equivalent mutant: authenticated never had a grant)
+  ['L34', "the session exec callable by any signed-in user (a GRANT added)",
+    "  public._money_exec__session(jsonb, uuid)\nFROM PUBLIC, anon, authenticated, service_role;", "  public._money_exec__session(jsonb, uuid)\nFROM PUBLIC, anon, authenticated, service_role;\nGRANT EXECUTE ON FUNCTION public._money_exec__session(jsonb, uuid) TO authenticated;", ['lesson'], LESSON],
   ['L35', "preflight no longer checks the 1b bodies",
     "IS DISTINCT FROM r.want THEN", "IS DISTINCT FROM r.want AND false THEN", ['lesson'], LESSON],
   ['L36', "the exec writes without re-reading the lesson under its lock (the tier may have risen)",
