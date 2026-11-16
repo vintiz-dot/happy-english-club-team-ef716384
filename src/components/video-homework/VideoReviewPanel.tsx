@@ -425,7 +425,7 @@ export function VideoReviewPanel({
           {a?.transcript_segments?.length > 0 && (
             <div className="rounded-hec-md border border-hec-line">
               <button type="button" onClick={() => setShowTranscript((s) => !s)} aria-expanded={showTranscript} className="flex min-h-hec-target w-full items-center justify-between rounded-hec-md px-3 text-hec-small font-medium text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
-                Transcript
+                {a?.models?.transcript_source === "gemini" ? "Transcript (written by the video model, not speech recognition - check it)" : "Transcript"}
                 <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform duration-hec-2 ease-hec ${showTranscript ? "rotate-180" : ""}`} />
               </button>
               {showTranscript && (
