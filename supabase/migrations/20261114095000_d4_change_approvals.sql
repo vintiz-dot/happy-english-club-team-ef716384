@@ -1428,12 +1428,18 @@ CREATE TRIGGER zz_pay_adjustment_approval BEFORE INSERT ON public.payroll_adjust
   FOR EACH ROW EXECUTE FUNCTION public._pay_adjustment_approval();
 
 -- ---------------------------------------------------------------- 9
--- The queue (admin-only through the tables' RLS: security_invoker).
+-- The queue (admin-only through the tables' RLS: security_invoker). The
+-- status is worked out inline, as _approval_request_status does: the view
+-- runs as its reader, who has no EXECUTE on the definer helpers.
 
 CREATE OR REPLACE VIEW public.change_approval_queue WITH (security_invoker = true) AS
 SELECT r.id AS request_id, r.created_at, r.requested_by, r.kind, r.rpc, r.target_keys, r.batch, r.impact, r.reasons,
        r.preview, r.expires_at,
-       public._approval_request_status(r.id, r.expires_at) AS status,
+       COALESCE((SELECT CASE WHEN e.kind IN ('approved', 'released_alone') THEN 'applied' ELSE e.kind END
+                   FROM public.change_approval_events e
+                  WHERE e.request_id = r.id AND e.kind IN ('applied', 'rejected', 'withdrawn', 'stale', 'approved', 'released_alone')
+                  ORDER BY CASE e.kind WHEN 'applied' THEN 0 ELSE 1 END, e.created_at DESC, e.id DESC LIMIT 1),
+                CASE WHEN now() >= r.expires_at THEN 'expired' ELSE 'pending' END) AS status,
        d.actor_user_id AS decided_by, d.created_at AS decided_at, d.kind AS decision, d.payload ->> 'note' AS decision_note,
        EXISTS (SELECT 1 FROM public.change_approval_events e WHERE e.request_id = r.id AND e.kind = 'released_alone') AS released_alone,
        EXISTS (SELECT 1 FROM public.change_approval_events e WHERE e.request_id = r.id AND e.kind = 'acknowledged') AS acknowledged,

@@ -433,6 +433,9 @@ await section('ON: the requester cannot approve; the other administrator can', a
   const up = await tryIt(() => su(`UPDATE change_approval_events SET kind = 'rejected' WHERE request_id = $1`, [paidReq]));
   const del = await tryIt(() => su(`DELETE FROM change_approval_requests WHERE id = $1`, [paidReq]));
   ok('requests and events are append-only, for the owner too (HC040)', up.code === 'HC040' && del.code === 'HC040', { up, del });
+  const asA1 = await tryIt(() => as(A1, 'authenticated', 'authenticated', `SELECT status, decided_by FROM change_approval_queue WHERE request_id=$1`, [paidReq]).then((r) => r.rows[0]));
+  ok('an administrator reads the queue through the API role (security_invoker view: no definer function in it)',
+     asA1.ok?.status === 'applied' && asA1.ok.decided_by === A2, asA1);
   const q = await q1(`SELECT * FROM change_approval_queue WHERE request_id=$1`, [paidReq]);
   ok('the queue shows it applied, decided by the approver, with the override ids', q.status === 'applied' && q.decided_by === A2 &&
      q.decision === 'approved' && q.override_ids[0] === o?.id, q);
