@@ -40,3 +40,8 @@ export declare function prepare(
 ): Promise<Prepared>;
 
 export declare function finishPdf(raw: Uint8Array, meta: PdfMeta): Promise<{ pdf: Uint8Array; pages: number }>;
+
+export declare function appendPdfs(
+  base: Uint8Array,
+  extras: { name: string; bytes: Uint8Array }[],
+): Promise<{ pdf: Uint8Array; pages: number; appended: string[]; skipped: string[] }>;

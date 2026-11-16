@@ -55,6 +55,44 @@ function loadEngine(): Promise<Engine> {
   return enginePromise;
 }
 
+/**
+ * Append a homework's attached PDFs (homework_files, "homework" bucket) after
+ * the downloaded document. Works offline from the printer: the merge runs in
+ * this browser. Files that cannot be downloaded or read are skipped and
+ * named in `skipped`; with nothing to append the original blob comes back.
+ */
+export async function appendHomeworkAttachments(
+  blob: Blob,
+  homeworkId: string,
+): Promise<{ blob: Blob; pages: number | null; appended: string[]; skipped: string[] }> {
+  const { data: files, error } = await supabase
+    .from("homework_files")
+    .select("file_name, storage_key, created_at")
+    .eq("homework_id", homeworkId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  const pdfs = (files ?? []).filter((f) => /\.pdf$/i.test(f.file_name) || /\.pdf$/i.test(f.storage_key));
+  if (!pdfs.length) return { blob, pages: null, appended: [], skipped: [] };
+
+  const extras: { name: string; bytes: Uint8Array }[] = [];
+  const skipped: string[] = [];
+  for (const f of pdfs) {
+    const { data, error: dlErr } = await supabase.storage.from("homework").download(f.storage_key);
+    if (dlErr || !data) skipped.push(f.file_name);
+    else extras.push({ name: f.file_name, bytes: new Uint8Array(await data.arrayBuffer()) });
+  }
+  if (!extras.length) return { blob, pages: null, appended: [], skipped };
+
+  const engine = await loadEngine();
+  const merged = await engine.appendPdfs(new Uint8Array(await blob.arrayBuffer()), extras);
+  return {
+    blob: merged.appended.length ? new Blob([merged.pdf], { type: "application/pdf" }) : blob,
+    pages: merged.pages,
+    appended: merged.appended,
+    skipped: [...skipped, ...merged.skipped],
+  };
+}
+
 /** Drop undefined fields and turn Dates into strings, as JSON would. */
 function plain<T>(v: T): T {
   return JSON.parse(JSON.stringify(v ?? null));

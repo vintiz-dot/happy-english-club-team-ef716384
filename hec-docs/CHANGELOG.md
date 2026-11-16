@@ -5,6 +5,11 @@ All notable changes to HEC Docs: the engine, and each template with its own semv
 - **Minor:** new variant or optional field.
 - **Patch:** visual change with the same data.
 
+## 2026-11-16: homework attachments
+
+- **A homework download now includes its attached PDFs.** The engine's `appendPdfs` adds them after the instructions, in upload order, for both the new and the fallback generator. A file that cannot be read (encrypted, damaged) is skipped with a warning; the instructions still download.
+- **"Download Invoice" downloads the PDF directly.** The old preview opens only when the new PDF cannot be made.
+
 ## 2026-11-16: live in the app (Cloudflare, free plan)
 
 - **Printer Worker** (`worker/`): prints document HTML with Cloudflare Browser Rendering for signed-in users only. The browser session is locked to the app's own origin. It reuses an open browser and waits for a launch slot to stay inside the free plan's limits.

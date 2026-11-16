@@ -202,3 +202,30 @@ export async function prepare(type: string, data: Record<string, unknown>, opts:
 export async function finishPdf(raw: Uint8Array, meta: PdfMeta): Promise<{ pdf: Uint8Array; pages: number }> {
   return finalize(raw, meta);
 }
+
+// ---- Attachments -------------------------------------------------------------
+// Appends other PDFs (a homework's attached worksheets) after the generated
+// document, pages in order. An attachment that cannot be read (encrypted,
+// damaged, not a PDF) is skipped and reported, so the document itself is
+// never lost because of one bad file.
+export async function appendPdfs(
+  base: Uint8Array,
+  extras: { name: string; bytes: Uint8Array }[],
+): Promise<{ pdf: Uint8Array; pages: number; appended: string[]; skipped: string[] }> {
+  const { PDFDocument } = await import("pdf-lib");
+  const out = await PDFDocument.load(base);
+  const appended: string[] = [];
+  const skipped: string[] = [];
+  for (const x of extras) {
+    try {
+      const src = await PDFDocument.load(x.bytes);
+      const pages = await out.copyPages(src, src.getPageIndices());
+      for (const p of pages) out.addPage(p);
+      appended.push(x.name);
+    } catch {
+      skipped.push(x.name);
+    }
+  }
+  if (!appended.length) return { pdf: base, pages: out.getPageCount(), appended, skipped };
+  return { pdf: await out.save(), pages: out.getPageCount(), appended, skipped };
+}

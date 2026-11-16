@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { logPdfEvent, newExportId } from "@/lib/pdfExportLog";
 import { cleanRichHtml } from "@/lib/richText";
-import { tryMakeDocument } from "@/lib/hecDocs";
+import { tryMakeDocument, appendHomeworkAttachments } from "@/lib/hecDocs";
 import { useIvory } from "@/hooks/useIvory";
 
 interface HomeworkPdfDownloadProps {
@@ -154,7 +154,7 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       });
       if (doc) {
         log("info", "hecdocs.done", { pages: doc.pages, sizeBytes: doc.blob.size });
-        deliver(doc.blob, doc.filename, doc.pages);
+        await deliver(doc.blob, doc.filename, doc.pages);
         return;
       }
 
@@ -352,7 +352,7 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       // Build a Blob and route the save in a way that works on iOS Safari,
       // where pdf.save() can silently fail if the user gesture has been
       // consumed by upstream awaits (Supabase fetch, html2canvas, etc.).
-      deliver(pdf.output("blob") as Blob, fileName, pageIndex);
+      await deliver(pdf.output("blob") as Blob, fileName, pageIndex);
     } catch (err: any) {
       console.error("PDF generation error:", err);
       log("error", "export.fatal", { message: err?.message, stack: err?.stack });
@@ -363,7 +363,21 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
     }
 
     // Hand the finished PDF to the user: one more tap on phones, a download elsewhere.
-    function deliver(blob: Blob, fileName: string, pageIndex: number) {
+    async function deliver(blob: Blob, fileName: string, pageIndex: number) {
+      // The homework's attached PDFs go after the instructions, in one file.
+      // If that fails, the instructions alone still download.
+      try {
+        const merged = await appendHomeworkAttachments(blob, homework.id);
+        if (merged.appended.length && merged.pages) {
+          blob = merged.blob;
+          pageIndex = merged.pages;
+        }
+        if (merged.appended.length || merged.skipped.length) log("info", "attachments.appended", merged.appended.length ? { appended: merged.appended, skipped: merged.skipped } : { skipped: merged.skipped });
+        if (merged.skipped.length) toast.warning(`Could not add ${merged.skipped.join(", ")} to the PDF`);
+      } catch (e: any) {
+        log("warn", "attachments.failed", { message: e?.message });
+        toast.warning("Could not add the attached PDFs to this file");
+      }
       const mobile = isMobileWebKit();
       const blobUrl = URL.createObjectURL(blob);
       const total = Math.round(performance.now() - t0);
