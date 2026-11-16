@@ -263,6 +263,10 @@ verify_jwt = false
 [functions.audit-eval-proxy]
 verify_jwt = true
 
+# The reception TV has no session: its display token is checked in the function.
+[functions.reception-feed]
+verify_jwt = false
+
 # Class recorder retention: the nightly job (runner token) or an admin only.
 [functions.recorder-retention]
 verify_jwt = true
