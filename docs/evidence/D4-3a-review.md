@@ -21,7 +21,7 @@ Nice to have (wording / operability; none changes what is paid):
 - N-5 Stars withdrawal in a LOCKED month (P4): the un-hold is kept Held with an `automation_refused` event and no raise (correct), but the engine's next statement deletes the `stars_sync_held_flips` row and its note says "...so it is Scheduled again" unconditionally (`20261028090000:609-611`). The engine is out of D4's scope; say it in the release note (the money review screen's event is the true record).
 - N-6 `PAY_COPY.meaning.hold` (`lessonPayGuard.ts`) says "Nobody has taken the register" also when the hold is asked for because the month is locked or after a checked un-hold (the server's sentence already says "(or the payroll month is closed)").
 - N-7 `TeacherScheduleTransfer.tsx:174-182`: "Reload the list and transfer the rest" - reloading shows the same old Scheduled lessons, which fail again (A-5); the sentence should say "start the date range within the last week".
-- N-8 Decision 18: add one positive assertion beside the changed one (a `sessions` insert by the user client exists), so the count of 0 cannot pass because `create` stopped writing.
+- N-8 Decision 18: the count of 0 is not vacuous - `d4-functions-lessons.test.mjs:196-198` asserts the create's insert IS on the user client (`sessionWrites('user').length === 1`). Optional: the same positive assertion inside `session-guard-functions` itself.
 - N-9 `_session_insert_guard`'s slot match (decision 7) also passes a lesson born `Canceled` at a taken slot without HC023 or an event (P2b, P2c). No money (a cancelled lesson is neither paid nor billed; on live the seed writes Excused). Tighten to `s.id = NEW.id OR (slot AND NEW.status IS DISTINCT FROM 'Canceled')` if wanted.
 - N-10 Design residual, stated: on the service lane a hold is always allowed (b.1 G-2), so a teacher's register through `mark-attendance` holds a lesson with no register at all in a LOCKED payroll month and nothing is recorded in `money_change_events` (P7). The Payroll screen's `live` drift is the only trace. An event (`service_hold_locked`) would make it reviewable.
 
@@ -46,6 +46,7 @@ Why it matters: on live, a lesson nobody took the register for stays Scheduled a
 
 Proposed fix (same shape as A-5 for the teacher): in `session_pay_change_kind`, `:177`, make the retime condition
 `(o.status = 'Held' OR NOT COALESCE(public._lesson_in_free_week(o.date, o.start_time, o.end_time), false)) AND NOT v_free AND (times differ) AND public.session_change_kind(o, n) IS NULL`.
+Executed: that one-line change (scratch copy of the file) against the builder's `d4-lesson-pay` -> 129 passed, 1 failed, and the one is the builder's own pin of this gap as intended: `d4-lesson-pay.test.mjs:424-426` "a Scheduled (unpaid) old lesson: not this guard's (D2 judges it as before)" - D2 does NOT judge a same-day time change of a not-moved lesson, so "as before" means "free". Everything else stays green, so the fix is local; that case would be re-stated as HC020 kind=retime. The build doc does not list this as a decision; the conductor should rule.
 Knock-on to check: `manage-session move` same-day path already maps HC020 kind=retime to 409 + `set-time`, but `EditSessionModal` sends a non-Held lesson's time change to D2's Move dialog, which would then receive that 409 - it needs the same `payDialogFrom` hand-off as the Held branch. The rebuild only touches future lessons; `schedule-sessions include-held` only Held ones. Cases: P1b/P1c refused (HC020 retime), inside the week free, the checked retime of an old Scheduled lesson.
 
 ### S-2 the exec's tier re-check (L36) is load-bearing; the token does not cover it
@@ -133,7 +134,7 @@ Stars sync: no guard raises on the sync's lane (the only raises there are reteac
 ## 4. Decision 18 and every change to existing tests
 
 Changes to existing files under `scripts/pgtest/` (diff c132bf7b..856e493d):
-1. `session-guard-functions.test.mjs:1052-1058` - the one assertion, `ins.length === 1` -> `=== 0`, with a comment. Right per design (d) step 3A ("`create`: ... the service key leaves this action") and the house rule. Not vacuous today: the same suite's "create is unchanged" (`:941-947`) still asserts a 200 with a new lesson, so a create runs and its insert is on the user client. Nothing else in the file changed; F21 (`:883-899`, anon key missing -> 503) does not exercise `create`, so the removal of create's exemption from that check (`manage-session` `if (!anonKey)`) is covered only by `d4-functions-lessons`. N-8 suggests one positive assertion.
+1. `session-guard-functions.test.mjs:1052-1058` - the one assertion, `ins.length === 1` -> `=== 0`, with a comment. Right per design (d) step 3A ("`create`: ... the service key leaves this action") and the house rule. Not vacuous today: the same suite's "create is unchanged" (`:941-947`) still asserts a 200 with a new lesson, so a create runs and its insert is on the user client. Nothing else in the file changed; F21 (`:883-899`, anon key missing -> 503) does not exercise `create`, so the removal of create's exemption from that check (`manage-session` `if (!anonKey)`) is covered by `d4-functions-lessons` (which also asserts the create's insert is on the user client, `:196-198`).
 2. `run.mjs` - three new entries with pinned counts (130 / 57 / 19); no existing entry changed.
 3. `d4-mutants.mjs` - 41 mutants added; existing entries unchanged.
 4. `guard-fingerprint.mjs` - file 4 appended to `D4_FILES`; rollback 4 prepended to the after-rollback list.
@@ -168,7 +169,8 @@ No pay or tuition computed in the browser. Wording checked against the SQL: the 
 
 - `d4-lesson-pay` alone on 856e493d: 130 passed, 0 failed (42 s).
 - Probes: 25 run; outputs above.
-- Full `node scripts/pgtest/run.mjs` on 856e493d (one run): RESULT_PLACEHOLDER
+- Full `node scripts/pgtest/run.mjs` on 856e493d (one run): **6319 assertions across 65 suites, 0 failed** - d4 lesson pay 130, d4 functions lessons 57, d4 stars interplay 19, session guard functions 135, d4 floors 213, d4 D2 carry-over 275, d4 deployed functions 37, d4 rollback 26 (fingerprint `--check`, `--check-unchanged`, `--after-rollback` 66/66 with rollback 4), d4 register 140, d4 functions register 34, shared-module mirrors 19, edge functions typecheck 5, app typecheck 3 (`tsc -p tsconfig.app.json` loaded the source). Matches the builder's count.
+- S-1 fix trial: `d4-lesson-pay` on the patched copy 129/1 (the one is the gap's own pin, see S-1).
 
 ## 11. Merge risk
 
@@ -199,7 +201,7 @@ After the merge: `D4_FILES` in migration order (09000, 91000, 92000, 93000, 9400
 | 15 | include-held kept in the schema, retired from the screen; D2's logger | **Accept.** |
 | 16 | Stars "take theirs" in a locked month refused until held through the check | **Accept the behaviour; word it (N-1).** |
 | 17 | admin register save in a locked month leaves the lesson Scheduled silently | **Accept fail-closed; follow-up message (N-2).** |
-| 18 | `session-guard-functions` assertion 1 -> 0 | **Accept**; N-8 optional positive assertion. |
+| 18 | `session-guard-functions` assertion 1 -> 0 | **Accept.** Right per design (d); not vacuous (N-8). |
 
 ## What I could not check
 
