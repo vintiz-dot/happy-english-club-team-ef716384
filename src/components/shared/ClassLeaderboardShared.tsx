@@ -27,6 +27,12 @@ import { StyledClassBoard } from "@/components/leaderboard/StyledClassBoard";
 import { useClassBoardStyle } from "@/components/leaderboard/useClassBoardStyle";
 import { isDisplayBoard } from "@/components/leaderboard/types";
 import { useClassMonitor } from "@/hooks/useClassMonitor";
+import { useIvory } from "@/hooks/useIvory";
+import { cn } from "@/lib/utils";
+
+/** The `FOCUS` ring of docs/DESIGN_SYSTEM.md s.15. */
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
 interface ClassLeaderboardSharedProps {
   classId: string;
@@ -55,6 +61,7 @@ export function ClassLeaderboardShared({
   // controls by omission. Every caller that should have them now says so.
   canManagePoints = false,
 }: ClassLeaderboardSharedProps) {
+  const ivory = useIvory();
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(
     null
@@ -315,7 +322,7 @@ export function ClassLeaderboardShared({
 
   if (isLoading) {
     return (
-      <div className="studio-surface flex min-h-[300px] items-center justify-center rounded-3xl border border-studio p-8 text-center text-sm text-ink-soft">
+      <div className={ivory ? "flex min-h-[300px] items-center justify-center rounded-hec-lg border border-hec-line bg-hec-surface p-8 text-center text-hec-small text-hec-ink-soft" : "studio-surface flex min-h-[300px] items-center justify-center rounded-3xl border border-studio p-8 text-center text-sm text-ink-soft"}>
         Counting up this month's points…
       </div>
     );
@@ -332,23 +339,24 @@ export function ClassLeaderboardShared({
   });
 
   return (
-    <div className="studio-surface relative min-h-[460px] overflow-hidden rounded-3xl border border-studio shadow-studio">
+    <div className={ivory ? "relative min-h-[460px] overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1" : "studio-surface relative min-h-[460px] overflow-hidden rounded-3xl border border-studio shadow-studio"}>
       {/* Controls — month picker + bulk selection toggle */}
-      <div className="relative z-20 flex items-center justify-between gap-2 px-3 pb-2 pt-4 sm:px-6">
+      <div className={ivory ? "relative z-20 flex flex-wrap items-center justify-between gap-3 px-4 pb-3 pt-4 sm:px-6" : "relative z-20 flex items-center justify-between gap-2 px-3 pb-2 pt-4 sm:px-6"}>
         <div className="flex min-w-0 items-center gap-2">
           <Trophy
-            className="h-5 w-5 shrink-0 text-[hsl(var(--studio-butter-ink))]"
+            className={ivory ? "h-5 w-5 shrink-0 text-hec-brass" : "h-5 w-5 shrink-0 text-[hsl(var(--studio-butter-ink))]"}
             aria-hidden
           />
-          <h2 className="studio-title truncate text-xl">Leaderboard</h2>
+          <h2 className={ivory ? "min-w-0 font-display text-hec-h2 font-medium text-hec-ink" : "studio-title truncate text-xl"}>Leaderboard</h2>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className={ivory ? "flex min-w-0 flex-wrap items-center gap-2" : "flex shrink-0 items-center gap-2"}>
           {/* Only offered when there is actually a swap to make: the class
               uses a display board AND this person can award points. */}
           {canSwapBoard && (
             <Button
               size="sm"
               variant="outline"
+              aria-label={ivory ? (showClassicBoard ? "Class view" : "Award points") : undefined}
               className="gap-1.5"
               onClick={() => {
                 setShowClassicBoard((v) => {
@@ -376,6 +384,7 @@ export function ClassLeaderboardShared({
             <Button
               size="sm"
               variant="outline"
+              aria-label={ivory ? "New window" : undefined}
               className="gap-1.5"
               onClick={() => openClassBoardWindow(classId)}
               title="Open the class view in its own window for the extended screen"
@@ -385,7 +394,10 @@ export function ClassLeaderboardShared({
             </Button>
           )}
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-full border-studio bg-studio-card text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0 sm:min-w-[170px]">
+            <SelectTrigger
+              aria-label={ivory ? "Month" : undefined}
+              className={ivory ? "min-h-hec-target w-auto min-w-[10rem] rounded-hec-md text-hec-small text-hec-ink" : "h-9 w-auto min-w-[130px] rounded-full border-studio bg-studio-card text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0 sm:min-w-[170px]"}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -406,10 +418,10 @@ export function ClassLeaderboardShared({
               variant="outline"
               size="sm"
               onClick={allSelected ? clearSelection : selectAll}
-              className="h-9 rounded-full border-studio bg-studio-card text-ink hover:bg-[hsl(var(--studio-ink)/0.06)] hover:text-ink"
+              className={ivory ? "gap-2" : "h-9 rounded-full border-studio bg-studio-card text-ink hover:bg-[hsl(var(--studio-ink)/0.06)] hover:text-ink"}
             >
-              <CheckSquare className="mr-1.5 h-4 w-4" />
-              <span className="text-xs sm:text-sm">
+              <CheckSquare className={ivory ? "h-4 w-4" : "mr-1.5 h-4 w-4"} />
+              <span className={ivory ? "text-hec-small" : "text-xs sm:text-sm"}>
                 {allSelected ? "Deselect" : "Select all"}
               </span>
             </Button>
@@ -450,9 +462,9 @@ export function ClassLeaderboardShared({
 
       {/* Pending economy requests (only when economy mode + manager) */}
       {isEconomyMode && canManagePoints && (pendingTransactions as any[]).length > 0 && (
-        <div className="relative z-10 mx-3 mb-4 rounded-2xl border border-studio bg-studio-card p-4 sm:mx-6">
-          <h3 className="studio-title mb-3 flex items-center gap-2 text-base">
-            <Clock className="h-4 w-4" aria-hidden />
+        <div className={ivory ? "relative z-10 mx-4 mb-4 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4 sm:mx-6" : "relative z-10 mx-3 mb-4 rounded-2xl border border-studio bg-studio-card p-4 sm:mx-6"}>
+          <h3 className={ivory ? "mb-3 flex items-center gap-2 text-hec-h3 tabular-nums text-hec-ink" : "studio-title mb-3 flex items-center gap-2 text-base"}>
+            <Clock className={ivory ? "h-4 w-4 text-hec-warn" : "h-4 w-4"} aria-hidden />
             Pending requests ({(pendingTransactions as any[]).length})
           </h3>
           <EconomyActions
@@ -464,18 +476,24 @@ export function ClassLeaderboardShared({
 
       {/* Floating bulk-action bar */}
       {canManagePoints && hasSelection && (
-        <div className="animate-in slide-in-from-bottom-4 fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-[hsl(var(--studio-ink))] px-4 py-3 shadow-studio-lg">
-          <div className="flex items-center gap-2 text-[hsl(var(--studio-card))]">
+        <div
+          className={
+            ivory
+              ? "fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-hec-action py-1 pl-4 pr-1 shadow-hec-2 animate-in fade-in"
+              : "animate-in slide-in-from-bottom-4 fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-[hsl(var(--studio-ink))] px-4 py-3 shadow-studio-lg"
+          }
+        >
+          <div className={ivory ? "flex items-center gap-2 whitespace-nowrap text-hec-on-action" : "flex items-center gap-2 text-[hsl(var(--studio-card))]"}>
             <Users className="h-4 w-4" aria-hidden />
-            <span className="text-sm font-semibold">{selectedStudents.size} selected</span>
+            <span className={ivory ? "text-hec-small font-semibold tabular-nums" : "text-sm font-semibold"}>{selectedStudents.size} selected</span>
           </div>
-          <div className="h-6 w-px bg-[hsl(var(--studio-card)/0.3)]" />
+          <div className={ivory ? "h-6 w-px bg-hec-on-action/30" : "h-6 w-px bg-[hsl(var(--studio-card)/0.3)]"} />
           <Button
             size="sm"
             onClick={() => setShowBulkDialog(true)}
-            className="rounded-full bg-[hsl(var(--studio-butter))] text-[hsl(var(--studio-butter-ink))] hover:bg-[hsl(var(--studio-butter))] hover:brightness-105"
+            className={ivory ? "rounded-full bg-hec-brass-fill text-hec-on-brass hover:bg-hec-brass-fill/90" : "rounded-full bg-[hsl(var(--studio-butter))] text-[hsl(var(--studio-butter-ink))] hover:bg-[hsl(var(--studio-butter))] hover:brightness-105"}
           >
-            <Trophy className="mr-1 h-4 w-4" aria-hidden />
+            <Trophy className={ivory ? "h-4 w-4" : "mr-1 h-4 w-4"} aria-hidden />
             Add points
           </Button>
           <Button
@@ -483,7 +501,7 @@ export function ClassLeaderboardShared({
             variant="ghost"
             onClick={clearSelection}
             aria-label="Clear selection"
-            className="rounded-full text-[hsl(var(--studio-card))] hover:bg-[hsl(var(--studio-card)/0.15)] hover:text-[hsl(var(--studio-card))]"
+            className={ivory ? cn("rounded-full text-hec-on-action hover:bg-hec-on-action/15 hover:text-hec-on-action", FOCUS) : "rounded-full text-[hsl(var(--studio-card))] hover:bg-[hsl(var(--studio-card)/0.15)] hover:text-[hsl(var(--studio-card))]"}
           >
             <X className="h-4 w-4" aria-hidden />
           </Button>
