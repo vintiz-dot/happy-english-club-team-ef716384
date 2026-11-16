@@ -9,9 +9,14 @@ on:
 permissions:
   contents: read
 
+env:
+  REFRESH_BRANCH: hec-docs/refresh-baselines
+
 jobs:
   check:
-    # Same pinned browser as the Dockerfile, so rasters match the committed baselines.
+    # Same pinned browser as the Dockerfile, so rasters match the committed
+    # qa/baselines/linux. Not run on the refresh branch, which has none yet.
+    if: github.ref != 'refs/heads/hec-docs/refresh-baselines'
     runs-on: ubuntu-24.04
     container:
       image: mcr.microsoft.com/playwright:v1.58.2-noble
@@ -51,7 +56,7 @@ jobs:
             exit 1
           fi
       - name: Quality gates (parity, a11y, fonts, regression, determinism)
-        # Fails on any unreviewed visual diff against qa/baselines.
+        # Fails on any unreviewed visual diff against qa/baselines/linux.
         run: npm run qa
       - name: Dependency audit
         run: npm audit --omit=dev --audit-level=high
@@ -70,3 +75,49 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build --target test hec-docs
       - run: docker build --target runtime -t hec-docs:${{ github.sha }} hec-docs
+
+  # Linux regression baselines are produced here, in the pinned container,
+  # never on a developer machine. To refresh them: push any commit to the
+  # branch hec-docs/refresh-baselines. This job renders every fixture and
+  # commits qa/baselines/linux back to THAT branch. Review the images, then
+  # bring the commit to main; until then main's check keeps failing on the diff.
+  refresh-baselines:
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/hec-docs/refresh-baselines' &&
+      !contains(github.event.head_commit.message, '[baselines-generated]')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
+      options: --user 1001 --ipc=host
+    defaults:
+      run:
+        working-directory: hec-docs
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      HEC_DOCS_SILENT: "1"
+      HEC_DOCS_CHROMIUM_SANDBOX: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: hec-docs/package-lock.json
+      - run: npm ci
+      - name: Render Linux baselines
+        run: node scripts/qa.ts --update-baselines
+      - name: Check the gates against them
+        run: npm run qa
+      - name: Commit qa/baselines/linux to this branch
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name "hec-docs-ci"
+          git config user.email "hec-docs-ci@users.noreply.github.com"
+          git add qa/baselines/linux
+          if git diff --cached --quiet; then echo "baselines unchanged"; exit 0; fi
+          git commit -m "HEC Docs: Linux regression baselines [baselines-generated]"
+          git push origin "HEAD:$REFRESH_BRANCH"

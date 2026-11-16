@@ -143,11 +143,18 @@ Send `generatedAt` in production calls. If it is omitted, it defaults to now.
 |---|---|
 | Text parity | Ordered LCS diff of the new reading-order text against the original generator's DOM text (`qa/before/*/dom.txt`), plus every original word present in the PDF's extracted text. Only registered brand strings may be added. Case, digits and diacritics count. |
 | Visual QA | Overflow markers, bundled-fonts-only (a fallback font means a missing glyph), A4 page boxes, manual review of rasters |
-| Regression | pixelmatch against `qa/baselines/**` (committed); CI fails on any unreviewed diff |
+| Regression | Per platform: `qa/baselines/linux` (CI, Docker) and `qa/baselines/win32` (local Windows). A byte-identical PDF passes outright; otherwise pixelmatch against the committed PNGs. CI fails on any unreviewed diff. |
 | Accessibility | Tagged PDF, StructTreeRoot, `/Lang`, Title shown in the title bar, every Figure (logo) has alt text; WCAG AA token contrast in unit tests |
 | Print | Grayscale rasters; luminance separation of structural colours in unit tests; A4 with safe margins |
 | Performance | Render ms and bytes per document; flags over 3 s or 1.5 MB |
 | Determinism | Two renders, same sha256 |
+
+**Refreshing the Linux baselines** after an intended visual change:
+1. Push the commit to the branch `hec-docs/refresh-baselines`. The CI job renders every fixture in the pinned container and commits `qa/baselines/linux` back to that branch.
+2. Review the images in that commit.
+3. Bring the commit to main.
+
+Locally, `npm run qa -- --update-baselines` refreshes your own platform's set.
 
 veraPDF is not bundled (it needs Java). To run it on the outputs:
 `docker run --rm -v "$PWD/qa/out:/data" verapdf/cli --flavour ua1 /data`. The built-in check covers the structural subset listed above.

@@ -36,7 +36,11 @@ const { values } = parseArgs({
 
 const QA = path.join(ROOT, "qa");
 const OUT = path.join(QA, "out");
-const BASE = path.join(QA, "baselines");
+// Baselines are per platform: the PDF bytes and pdf.js rasters differ slightly
+// between Chromium's Windows and Linux builds. CI and the Docker image use
+// qa/baselines/linux, produced in the pinned container by the
+// refresh-baselines job (see README, "Quality gates").
+const BASE = path.join(QA, "baselines", process.env.HEC_DOCS_BASELINE_PLATFORM ?? process.platform);
 const SAMPLES = path.join(QA, "samples");
 const DPI = 60; // regression raster: small, stable, enough to catch layout drift
 const MAX_DIFF_RATIO = 0.002; // 0.2% of pixels
