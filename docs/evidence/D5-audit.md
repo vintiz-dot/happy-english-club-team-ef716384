@@ -1,6 +1,6 @@
 # D5 - Money invariant audit
 
-**Where I am / next step:** DONE on branch `claude/d5-money-audit` (from conductor efcb3a64). Built: this audit, `scripts/CHECK-money-invariants.sql` (40 checks), `scripts/CHECK-past-cancellations-with-evidence.sql`, and four suites registered in `scripts/pgtest/run.mjs` (money invariants check 99, past cancellations check 20, money write paths 19, sibling hold 18). Next step is the conductor's: run the two CHECK scripts on live (read-only) and read the numbers against section 4. No product code, migration or function was changed.
+**Where I am / next step:** FIX ROUND 1 DONE (17 Nov) on branch `claude/d5-money-audit`; see section 6 for what the live run showed and what changed. Built in round 0: this audit, `scripts/CHECK-money-invariants.sql` (now 42 checks), `scripts/CHECK-past-cancellations-with-evidence.sql`, suites in `run.mjs`. Round 1 added two migrations (NOT applied: 20261117110000 G-4, 20261117111000 G-11), the G-10 and G-9 code fixes, `scripts/CHECK-label-relabel-impact.sql`. Next: the conductor reviews, pastes the two migrations, redeploys compute-sibling-discounts and watch-sibling-threshold (G-10), pushes the G-9 deletion; G-1, G-2, G-7 are scheduled by the conductor (section 6.4).
 
 Scope: everything live on 17 Nov 2026 (MASTER_PLAN log to "D4 STEP 2 DATABASE LIVE") plus D4 steps 3A / 3B, which are in this tree but NOT live. Method: read the plan, D0, D1, D2, D4, root and `supabase/` AGENTS.md; read every write path (section 3, found by a scan that is now a test); for each invariant, name the enforcing object and the test that proves it; write a data check where the data can show a violation.
 
@@ -54,6 +54,7 @@ Each gap: what, evidence, risk, proposed fix (NOT built), and the test that pins
 **G-3 (closed in D5, was "untested") - the carry chain had no data check.** M09/M10 now recompute it on live. Residual R-1: `invoices_carry_sync` returns early at `pg_trigger_depth() > 1`, so an invoices write made from inside another trigger would leave the chain stale. No such writer exists today (checked: the freeze and floor triggers do not write invoices rows); M09 would show one.
 
 **G-4 - A bill's label is not re-derived when the carry moves its payable.** The carry trigger rewrites carry_in of every later month when an earlier month changes, but `status` is re-derived only when that later bill is itself written (payment, calculate-tuition). Example proven on the real triggers (`money-invariants-check` section 6): November is overpaid by 700,000; December's payable becomes -100,000 with 200,000 recorded, the rule says "paid", the bill still says "partial". Money is right (amounts owed read recorded_payment and the carry); the label is wrong, and the D2/D4 settled tests read labels. Risk: low-medium. Fix (migration, owner): in `refresh_invoice_carry`, also set `status = invoice_paid_label(...)` on rows whose carry changed, leaving `credit` and `draft` alone. Pinned: the section-6 case asserts the stale label (it will fail when fixed - then flip it); M11/M12 count it on live.
+**Fix round 1: FIXED (not applied)** by `supabase/migrations/20261117110000_carry_refresh_relabels.sql` (section 6.2).
 
 **G-5 (closed - not a gap).** The R09/T4 note that InvoiceStatusManager hand-sets labels is out of date: it offers only `credit` and "follow the payments" (`invoicePaidLabel`). `money-write-paths` section 5 now holds that.
 
@@ -64,10 +65,13 @@ Each gap: what, evidence, risk, proposed fix (NOT built), and the test that pins
 **G-8 - Browser pricing still on some screens.** `OperationalReports.tsx` prices lost tuition / payroll with `sessionPayVnd` and `splitPayrollByClass`; per the unfinished browser-pricing task (`origin/pc2/browser-pricing` 3a679306, not in this tree) also `FinanceSummary` (Excused Loss), `ClassCalendarEnhanced` (cost card), `StudentTuitionTab` (sibling line, Final Payable), `useFinanceOverview`, `useFinanceSummary`, `useStudentMonthFinance`. Display only (nothing is billed or paid from them) but against the money rule. Fix: that branch (functions report `excusedLessons` / `cancelledLessons`; screens read them). Pinned: `money-write-paths` section 6 is a RATCHET - no new importer of a pricing function outside `src/lib`; it does NOT catch inline arithmetic such as `rate * count` in a hook, which is why the hooks are listed here by hand.
 
 **G-9 - Dead generic importer in the browser.** `src/components/admin/DataImportExport.tsx` upserts CSV rows into students, teachers, families, classes or enrollments from the browser (RLS: admins). It is not mounted. The edge-function import has the D4 G-20 whitelist; this file has none. Fix: delete it. Pinned: `money-write-paths` (dynamic writers).
+**Fix round 1: FIXED** - the file is deleted (nothing imported it: grep of src, supabase, scripts, docs; app typecheck clean).
 
 **G-10 - The sibling-hold read fails OPEN on some errors.** `_lib/sibling-hold.ts` returns "nobody on hold" for 42703 (column missing - the column is live now) AND for any error whose message mentions `sibling_discount_from`, e.g. a permission error on that column. A held child's family would then get the discount. Risk: low (no such policy today). Fix: keep only `error.code === '42703'`, or drop the fallback (the column is live). Pinned: `sibling-hold` asserts today's behaviour on a 42501 and is labelled KNOWN GAP.
+**Fix round 1: FIXED** - only code 42703 means "column missing"; every other error throws (42501, PGRST204, a message naming the column, 42P01 - all in `sibling-hold`). Not mirrored (no src copy). Needs a redeploy of compute-sibling-discounts and watch-sibling-threshold.
 
 **G-11 - The ledger is neither append-only nor audited.** `ledger_entries` has an admin `FOR ALL` policy (20251012023454:134), no immutability trigger and no audit trigger; so do `ledger_accounts`. An admin token can edit or delete a leg through PostgREST and nothing records it. Also not audited: hand-entered `expenditures`, `settlements`, `sibling_discount_state`, `discount_definitions`, `monthly_finance_snapshots`. Fix (migration, owner): BEFORE UPDATE/DELETE trigger on `ledger_entries` refusing every lane but the owner (corrections are new reversing rows - what every function already does), plus `audit_row_change` on the listed tables. Pinned: M01/M02 catch an unbalanced edit, not a balanced one.
+**Fix round 1: FIXED (not applied)** by `supabase/migrations/20261117111000_ledger_append_only_and_audit.sql` (section 6.3).
 
 **G-12 - A frozen bill can be deleted and re-created unfrozen.** The freeze trigger is BEFORE UPDATE only. D4 3B review B-2 found it; the fix is in 3B (not live). Also 3B B-1 (`enrollments.created_at` / `id` unguarded though "created first prices the lesson"). Both close when 3B is applied. Pinned: M15 (a frozen bill with no freeze record) and the bill floor (`ever_frozen`) remember it; `d4-money-inputs` holds the fix.
 
@@ -132,7 +136,7 @@ One SELECT, 40 rows: `check_id, check_name, kind, violations, total_vnd, meaning
 
 | Id | Check | Kind | Means |
 |---|---|---|---|
-| M01 | ledger_transactions_unbalanced | must be 0 | a tx_id whose debits and credits differ |
+| M01 | ledger_transactions_unbalanced | must be 0 | a tx_id whose debits and credits differ, except the pre-key history counted in M41 |
 | M02 | ledger_entries_malformed | must be 0 | a leg negative, two-sided or empty |
 | M03 | bill_shows_more_than_ledger_cash | report | G-1: bill money with no CASH/BANK leg (expected > 0: screens, AI action, pre-ledger history) |
 | M04 | ledger_cash_not_on_bill | report | ledger received money the bill does not show (G-2, a hand-lowered bill) |
@@ -144,8 +148,8 @@ One SELECT, 40 rows: `check_id, check_name, kind, violations, total_vnd, meaning
 | M10 | carry_out_is_not_next_carry_in | must be 0 | the chain breaks between two bills |
 | M11 | label_disagrees_with_rule | report | stored label is not `invoice_paid_label` (G-4, old labels) |
 | M12 | label_disagrees_written_since_t4 | report | of M11, written after 13 Nov 08:00 |
-| M13 | frozen_figures_changed_while_frozen | must be 0 | audit shows a frozen bill's figures moving |
-| M14 | frozen_bill_differs_from_when_frozen | must be 0 | a frozen bill now differs from its freeze record |
+| M13 | frozen_figures_changed_while_frozen | must be 0 | audit shows a frozen bill's figures moving (the one 9 Nov restore is in M42) |
+| M14 | frozen_bill_differs_from_when_frozen | must be 0 | a frozen bill now differs from its freeze record (or from the exempt restore after it) |
 | M15 | frozen_bill_without_freeze_record | report | frozen with no audit of the freeze (M14 cannot check it) |
 | M16 | bill_unfrozen_not_by_admin | must be 0 | unfrozen by a non-admin (the SQL editor counts) |
 | M17 | billable_mark_on_cancelled_lesson | must be 0 | a cancelled lesson still bills someone |
@@ -172,6 +176,8 @@ One SELECT, 40 rows: `check_id, check_name, kind, violations, total_vnd, meaning
 | M38 | bills_lowered_from_floor | report | recorded payment below the highest ever recorded |
 | M39 | finance_snapshot_differs_from_bill | report | a closed-month snapshot no longer matches its bill |
 | M40 | guard_installed | report | 1 = the D2 guard event exists (0: M20-M22 checked nothing) |
+| M41 | ledger_unbalanced_before_keys | report | unbalanced transactions wholly from before the first keyed ledger write (round 1) |
+| M42 | frozen_bill_restored_to_pre_wipe_total | report | the 9 Nov no-actor restore of a frozen bill to its pre-28-Oct total (round 1) |
 
 Expected on live: every `must be 0` at 0; M40 = 1; M05 = 3 (708,000); M03 and M11 above 0 (history and G-1 / G-4). The "payroll_lines of closed months unchanged vs snapshots" item of the brief is M31 + M32: `payroll_lines` IS the snapshot taken at the close (there is no other copy), so the check is that nothing wrote it after the close and that it equals the cost booked with it.
 
@@ -190,3 +196,42 @@ Asked for by D1 7.4 and D2 7.4. One SELECT; for each cancelled lesson it reads t
 - The browser-pricing remnants (G-8) other than OperationalReports are taken from the unfinished branch's commit list, not re-read file by file here.
 - MCP tools (`src/lib/mcp/`) are inside the scan; the generated `supabase/functions/mcp` is not (it is regenerated by Lovable).
 - Full `node scripts/pgtest/run.mjs` (clock moved back 8 h, run at 649da826): 8329 assertions across 89 suites, 0 failed. Added after that run and run alone: `sibling hold` 18/0 and five more cases in `money invariants check` (99/0); the full run was not repeated with them.
+
+---
+
+## 6. Fix round 1 (17 Nov 2026)
+
+### 6.1 What the live run showed (conductor, read-only, counts only)
+
+Every `must be 0` check was 0 except **M01 = 3 (920,000)** and **M13 = 1 / M14 = 1 (1,620,000)**. Expected rows as expected: M05 = 3 / 708,000, M40 = 1. Report rows: M03 495 / 761,659,602; M04 18 / 19,289,200; M11 449; M12 0; M18 34; M19 4; every other 0.
+
+- **M01 explained:** three single-leg AR credits (500,000, 220,000, 200,000), month 2025-10, created 13-14 Oct 2025, no tx_key - history from before keyed ledger writes existed (tx_key arrived with 20251024050029, 24 Oct 2025).
+- **M13 / M14 explained:** one July 2026 bill. 28 Oct a service-key reprice took it 1,620,000 -> 0 (the bulk-cancel wipe); 6 Nov frozen at 0; 9 Nov 01:22 UTC the owner's July restore in the SQL editor (no actor) put 1,620,000 back while frozen. The intended restore, not a bypass.
+- M12 = 0 says no writer since T4 labels by a rule of its own; M11 = 449 is G-4 plus old labels.
+
+### 6.2 Changes to the check script (step 1)
+
+- **M01 / M41.** A transaction is "before keys" only if EVERY leg is unkeyed AND every leg was created before the first keyed ledger write (`min(created_at) WHERE tx_key IS NOT NULL`; with no keyed row at all that time is -infinity, so everything counts in M01 - fails closed). Why this rule and not "tx_key IS NULL": every writer since 24 Oct 2025 keys at least one leg, but a future unkeyed writer must not hide in the history row - the time bound catches it (an unkeyed unbalanced transaction made today is M01, tested). The "every leg unkeyed" part is implied by the time bound (a keyed leg is never older than the first keyed write) and is kept as a second statement of the rule; its mutant survives as an equivalent. New report row **M41** counts the history (expected on live: 3 / 920,000).
+- **M13 / M14 / M42.** Exempt exactly: an audit row where the bill stayed frozen and a figure moved, written with NO actor, between 2026-11-09 00:00 and 2026-11-10 00:00 Hanoi, whose new total equals the total the bill's LAST audit image before 2026-10-28 00:00 Hanoi showed. M13 counts every other such row; M14 compares a frozen bill with the latest of its freeze record and any exempt restore after it. New report row **M42** counts the exempt restores (expected: 1 / 1,620,000). Also fixed: M14 compares the class breakdown with jsonb_strip_nulls applied, as the audit image stores it.
+- Cases added (suite 120): an old single-leg AR credit reports in M41 and not M01; a new unkeyed unbalanced transaction alarms; an old-dated transaction that carries a key alarms; an old leg completed by a new leg alarms; with no keyed row at all an old one alarms; the restore pattern does not alarm; the same restore by a person, on 11 Nov, an hour before the window, or to 1,700,000 alarms; a later change after the restore alarms.
+- Mutation pass on the changed checks: 12 mutants, see the hand-back for the final count; the survivors of the first pass were "no key -> -infinity" (killed by the new no-keys case) and two equivalent mutants (the redundant every-leg-unkeyed test; the restore-after-freeze join condition, redundant because the latest image wins).
+
+### 6.3 The two migrations (NOT applied; the owner pastes)
+
+**`20261117110000_carry_refresh_relabels.sql` (G-4).** `refresh_invoice_carry` is replaced by the same carry arithmetic (character for character) plus `status = invoice_paid_label(recorded, total + new debt in - new credit in, base, total)` in the same UPDATE; `credit` and `draft` are never touched; a row is written only when its carry or its label differs. No figure column is in the SET list. Preflight fails closed without invoice_paid_label, the function, the trigger or the enum. It updates no row on install. Proof: `invoice-status` runs twice now - as live, and with 20261113090000 + this file loaded (`invoice status + G-4`, 317/0, every figure equal to fixtures/tuition-figures.golden.json; the three history fixtures that write an old stale label now do so with the carry trigger off, the audit trigger on); `money-invariants-check` section 6: install changes no row, the next write for the child relabels the stale December, no figure of any bill moves (md5 over every money column), credit and draft kept.
+**How many of the 449 it relabels:** none when pasted. It relabels a child's stale bills the next time ANY bill of that child is written (payment, calculation, freeze, an earlier month's carry refresh). Because live M09 = 0 (stored carry = recomputed carry), the bills it would relabel are exactly M11's 449; `scripts/CHECK-label-relabel-impact.sql` (READ-ONLY, one SELECT) gives them by transition (from -> to), children and past / current month, and is tested to predict exactly what the trigger then relabels (section 7 of the suite). A one-off relabel is NOT needed for money (labels are labels; every amount owed reads recorded_payment and the carry) - it is the owner's choice for the screens and for the D2/D4 "settled" tiers, which read labels; none is written here.
+
+**`20261117111000_ledger_append_only_and_audit.sql` (G-11).** BEFORE UPDATE / DELETE (row) and BEFORE TRUNCATE (statement) triggers on ledger_entries refuse for every role with HC130; no escape inside the trigger (no live path updates or deletes the ledger: every TypeScript use is insert or select, no SQL file in the repo updates / deletes / truncates it, delete-payment reverses by inserting); the only way past is the table owner disabling the trigger in plain sight. Side effect on purpose: deleting a student or ledger account that HAS ledger rows is refused (the ON DELETE CASCADE meets the trigger); one with none deletes as before. Plus audit_row_change on ledger_accounts, expenditures, settlements, sibling_discount_state, discount_definitions, monthly_finance_snapshots. Preflight fails closed if audit_row_change or any of the seven tables is missing, or if any installed function's body updates / deletes / truncates ledger_entries (names it). Updates no row. Suite `ledger-append-only` (26).
+
+md5 (LF line endings, as committed): 20261117110000 `7c089526f8303f7c30ead8515712da8a`; 20261117111000 `3498f7688712cfd7f9760824f4d3b457`.
+
+### 6.4 Not this round - what each needs (for the conductor to schedule)
+
+- **G-1 (money on a bill with no payment row / ledger):** a new admin-only edge function `record-payment` (single child): validate month + amount, insert the payments row, post DR CASH|BANK / CR AR (case-insensitive method), then the compare-and-set bill write with `labelAfterPayment`, conflict -> 409; point RecordPaymentDialog, QuickPayPanel, BatchPaymentDialog and the correction mode of RecordedPaymentManager at it (a correction = reversal legs + CAS down, refusing below 0); ai_action_apply's payment step either calls the same SQL in-transaction or is documented as bill-only. Tests: invoice-status case per screen path, concurrency, M03 stops growing; delete-payment must then accept these payments. Needs a deploy + screen release together.
+- **G-2 (modify-payment):** decide delete vs rebuild. Recommended: delete the function and the unmounted ModifyPaymentModal (no caller); if kept, rebuild as delete-payment + a new payment through the payment paths so the bill moves with the ledger, with `method.toLowerCase()` and every insert checked. With G-11 applied it already cannot edit ledger rows (it only inserts).
+- **G-7 (re-close leaves stale lines / costs):** in close-payroll-month, while the month is still open and before the lock: delete that month's payroll_lines and `source_kind = 'payroll'` expenditures whose subject is not in the new earning set (the triggers allow it because the month is open), in the same request, with an audit entry naming who was removed and why. Tests in paylock / class-overhead: close, reopen, drop a person, close -> no line, no cost for them; M33 = 0.
+
+### 6.5 Gates (fix round 1)
+
+See the hand-back report for the numbers: full `node scripts/pgtest/run.mjs` with the clock moved back 8 h, `tsc --noEmit -p tsconfig.app.json`, `npm run test:bun`.
+
