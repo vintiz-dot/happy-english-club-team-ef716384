@@ -2,7 +2,7 @@
 
 Owner's decision (MONEY: YES): money a family pays beyond what the chosen bills owe shows as CREDIT on the family's next bill, instead of being recorded only in the ledger as "unapplied cash" that never appears on any bill.
 
-**Where I am / next step:** BUILT AND TESTED, all checks green. Nothing deployed, pushed or applied; no database touched; no migration. Next (conductor): deploy `family-payment` and `smart-family-payment` (section 6), push, and add the AGENTS.md text in section 7.
+**Where I am / next step:** BUILT AND TESTED, review fix round and the past-leftover script done (sections 9-11). Next (conductor): deploy family-payment, smart-family-payment, delete-payment; then the owner pastes scripts/CREDIT-past-unapplied-cash.sql once. Nothing deployed, pushed or applied; no database touched; no migration. Next (conductor): deploy `family-payment` and `smart-family-payment` (section 6), push, and add the AGENTS.md text in section 7.
 
 Branch `worktree-agent-ad03528fde8502451`, fast-forwarded to `claude/hec-conductor-setup-efbaa5` @ 4cd6151e before the first commit.
 
@@ -159,6 +159,15 @@ D4: the invoice floor (`zz_invoice_state_floor`, 1a) records only lowerings; thi
 Tests: `scripts/pgtest/past-leftover-credit.test.mjs` (registered, expect 29): pglite with live's ledger/payment tables, the real carry/freeze/audit/confirmation migrations and `invoice_paid_label`; the real smart-family-payment and delete-payment over a PostgREST stand-in on the same database. Fixture shaped like live (3 children, 200,000 + 258,000 + 250,000 = 708,000; one current bill paid, one current bill FROZEN, one child with no current bill). Before/after per child (ledger nets, bills, carry, next bill), old rows byte-identical, 12 new legs, idempotency, equivalence with the new code, delete-after-credit, delete-before-credit (skipped: 2 / 450,000), four refusals with not one row changed.
 
 The owner must know: run it once after the deploy, check the result row reads 3 / 708000 / 0; the three families each get the amount as credit on their next bill; their bills for the old months do not change; the ledger's cash/bank accounts rise by 708,000 in total in this month (that money was received back then but never posted to them).
+
+## 11. Checks after the fix round and the past-leftover script (merged tree, conductor @ 21c8c82a)
+
+| command | result |
+|---|---|
+| `node scripts/pgtest/run.mjs` (once) | **6994 assertions across 78 suites, 2 suites failed, neither touched by this branch**: `d4 lesson pay` 142/1 ("a time change that makes a started lesson not started" - the case retimes to now+1h / now+2h in Hanoi; run at 23:40 Hanoi, the times wrap past midnight - the same clock edge as the known d4 floors C-1 flake; d4 floors itself passed 213/0 this time); `ai spend gate (F-02)` 249/1 ("only the two functions that must be public still opt out of the gateway check": got also `reception-feed`, from the Reception display merged into the conductor branch - its `verify_jwt = false` is not in that suite's allow-list). `git diff --stat claude/hec-conductor-setup-efbaa5...HEAD` lists only this branch's 14 files; neither suite nor `supabase/config.toml` is among them. Mine: invoice status 317, removed money features 37, past leftover credit 29, family payment month 6, shared-module mirrors 19, edge functions typecheck 5, app typecheck 3 |
+| `npm run test:bun` | 250 pass, 0 fail, 1801 expect() calls, 18 files |
+| `node docs/evidence/OVERPAYMENT-review-probes.mjs` | 24 passed, 0 failed (P3m-wording, P5b, P5c, P9 now assert the fixes) |
+| app `tsc --noEmit -p tsconfig.app.json` | green inside run.mjs (app typecheck 3/3) with the node_modules of a worktree that has the @tiptap editor packages; with the main checkout's node_modules it reports 29 errors, all "Cannot find module '@tiptap/...'" in `src/components/rich-text/` (the main checkout lacks the editor's packages: `npm install` there) |
 
 ## 8. Not verified
 
