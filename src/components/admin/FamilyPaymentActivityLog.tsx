@@ -275,7 +275,7 @@ export function FamilyPaymentActivityLog({ selectedMonth }: FamilyPaymentActivit
                             <span className="font-medium">{formatVND(summary.leftover.amount)}</span>
                             <Badge variant="secondary">
                               {summary.leftover.type === "voluntary_contribution" 
-                                ? "Contribution" 
+                                ? "Voluntary contribution (no longer offered)" 
                                 : "Credit"
                               }
                             </Badge>
