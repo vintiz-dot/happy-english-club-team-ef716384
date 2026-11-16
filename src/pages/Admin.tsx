@@ -17,10 +17,14 @@ import StarsSyncTab from "@/components/admin/tabs/StarsSyncTab";
 import AiActionsTab from "@/components/admin/tabs/AiActionsTab";
 import AuditClipsTab from "@/components/admin/tabs/AuditClipsTab";
 import { motion, AnimatePresence } from "framer-motion";
+import { useIvory } from "@/hooks/useIvory";
 
 const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
   const [searchParams] = useSearchParams();
   const tab = defaultTab || searchParams.get("tab") || "overview";
+  // Every tab but audit clips is in the system (R21): there the tab change is
+  // one 8 px rise in 240 ms (DESIGN_SYSTEM s.9); audit clips keeps today's.
+  const ivory = useIvory();
 
   const renderContent = () => {
     switch (tab) {
@@ -64,10 +68,10 @@ const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
       <AnimatePresence mode="wait">
         <motion.div
           key={tab}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: ivory ? 8 : 20 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
+          exit={{ opacity: 0, y: ivory ? -8 : -20 }}
+          transition={{ duration: ivory ? 0.24 : 0.3 }}
         >
           {renderContent()}
         </motion.div>
