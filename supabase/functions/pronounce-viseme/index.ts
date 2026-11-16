@@ -82,7 +82,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const selectedVoice = voice || DEFAULT_VOICE;
+    // A voice name goes into an SSML attribute: only a real voice-name shape
+    // (letters, digits, '-', ':'), else the default (audit F-13).
+    const selectedVoice = (typeof voice === "string" && /^[A-Za-z0-9:-]{2,80}$/.test(voice.trim()) && voice.trim()) || DEFAULT_VOICE;
     const rate = sentence ? "-10%" : "-20%";
 
     // SSML with mstts:viseme type="FacialExpression" → blend-shape animation track

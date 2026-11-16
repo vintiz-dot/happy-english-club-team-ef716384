@@ -26,14 +26,15 @@ Deno.serve(async (req) => {
 
     if (userError || !user) throw new Error('Unauthorized');
 
-    // Check admin role
-    const { data: roleData } = await supabase
+    // Check admin role. Every role row, not .single(): an admin who also
+    // holds teacher or student has two rows and .single() errored, so a real
+    // admin could not record a payment (audit F-11).
+    const { data: roleRows } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
-      .single();
+      .eq('user_id', user.id);
 
-    if (roleData?.role !== 'admin') {
+    if (!(roleRows || []).some((r: { role: string }) => r.role === 'admin')) {
       throw new Error('Unauthorized: Admin access required');
     }
 

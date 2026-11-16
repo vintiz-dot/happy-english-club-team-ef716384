@@ -509,20 +509,11 @@ Deno.serve(async (req) => {
       entryId = inserted.id;
     }
 
-    // ── Refresh vocab_cache (community lookup) ──
-    sb.from("vocab_cache")
-      .upsert(
-        {
-          word: cleanWord,
-          root_word: resolvedRoot,
-          payload,
-          image_urls: image_url ? { picked: image_url } : null,
-        },
-        { onConflict: "word" },
-      )
-      .then(({ error }) => {
-        if (error) console.warn("vocab_cache upsert:", error.message);
-      });
+    // vocab_cache is NOT written here any more (audit F-03, found in the S2
+    // fix round): the payload is the caller's own request body, and the
+    // shared cache is served to every child by word-enrichment - a saved
+    // word would make one account's text everyone's definition. Only
+    // word-enrichment fills the cache, from its own model answer.
 
     // ── Award points (only first save earns) ──
     let pointsAwarded = 0;

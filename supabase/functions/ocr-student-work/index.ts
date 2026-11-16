@@ -21,7 +21,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { visionDocumentOcr } from "../_lib/google.ts";
-import { authenticateUser } from "../_lib/auth.ts";
+import { authenticateUser, callerHoldsClass } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,6 +104,12 @@ Deno.serve(async (req) => {
       .eq("id", workId)
       .single();
     if (workErr || !work) return respond({ success: false, error: "work row not found" }, 404);
+    // Staff of the work's own class only (audit F-04): the role alone let any
+    // teacher or TA read any child's work photo and re-route it. A row with
+    // no class is an admin's.
+    if (!(await callerHoldsClass(sb, caller, work.class_id))) {
+      return respond({ success: false, error: "Not a class you teach" }, 403);
+    }
 
     // ── 1. Download + OCR ────────────────────────────────────────────────
     const { data: file, error: dlErr } = await sb.storage

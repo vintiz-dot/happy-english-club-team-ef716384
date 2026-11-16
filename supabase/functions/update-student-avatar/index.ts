@@ -67,8 +67,36 @@ Deno.serve(async (req) => {
     }
 
     // Validate file
-    if (!file.type.startsWith('image/')) {
-      return new Response(JSON.stringify({ error: 'File must be an image' }), {
+    // PNG, JPEG, WebP or GIF, decided by the BYTES (audit F-13): "image/"
+    // let image/svg+xml through - a file that can carry script - into a
+    // PUBLIC bucket, on a type the browser declared. The browser's own label
+    // is not compared (S2 review R-3: a real WebP saved as .jpg, or a file
+    // with no type, is still a picture); the stored type is the sniffed one.
+    const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    // HEIC / HEIF (iPhone, Samsung "high efficiency", a Mac): ISO-BMFF
+    // 'ftyp' at offset 4 with an HEIF brand. Browsers outside Safari cannot
+    // show it, so it gets its own answer rather than the generic one.
+    const brand = String.fromCharCode(...head.slice(8, 12));
+    const isHeic = head[4] === 0x66 && head[5] === 0x74 && head[6] === 0x79 && head[7] === 0x70
+      && ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1'].includes(brand);
+    if (isHeic) {
+      return new Response(JSON.stringify({
+        error: 'This photo is in HEIC format. Please choose a JPEG or PNG, or take a screenshot of it.',
+        code: 'heic',
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const looksLike =
+      (head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47) ? 'image/png'
+      : (head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) ? 'image/jpeg'
+      : (head[0] === 0x47 && head[1] === 0x49 && head[2] === 0x46) ? 'image/gif'
+      : (head[0] === 0x52 && head[1] === 0x49 && head[2] === 0x46 && head[3] === 0x46
+         && head[8] === 0x57 && head[9] === 0x45 && head[10] === 0x42 && head[11] === 0x50) ? 'image/webp'
+      : null;
+    if (!looksLike) {
+      return new Response(JSON.stringify({ error: 'File must be a PNG, JPEG, WebP or GIF image' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -149,14 +177,15 @@ Deno.serve(async (req) => {
     }
 
     // Upload new avatar
-    const fileExt = file.name.split('.').pop() || 'jpg';
+    // The extension follows the checked bytes, not the browser's file name.
+    const fileExt = looksLike.slice('image/'.length).replace('jpeg', 'jpg');
     const fileName = `${Date.now()}.${fileExt}`;
     const filePath = `${student.id}/${fileName}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const { error: uploadError } = await serviceClient.storage
       .from('student-avatars')
-      .upload(filePath, arrayBuffer, { contentType: file.type, upsert: true });
+      .upload(filePath, arrayBuffer, { contentType: looksLike, upsert: true });
 
     if (uploadError) {
       return new Response(JSON.stringify({ error: 'Failed to upload file' }), {
