@@ -1,5 +1,7 @@
 # Brief: apply D4 step 3A (who is paid for a lesson) on the LIVE project (exact steps; stop on anything unexpected)
 
+**SUPERSEDED by `D4-2-3A-3B-live-apply-brief.md` (D4 integration, 16 Nov).** Two things here are stale: mark-attendance is live v5 (the streak fix, 8a4b0e4e), not v4 - its rollback copy is `docs/evidence/D4-int-rollback-before/mark-attendance/index.ts.txt` and the 3A file to deploy is f1b5067c (v5 + N-2); and the screens revert to `eaa9a050^1`, not `c132bf7b` (`StarsSyncTab.tsx` changed in between). Use the new brief.
+
 Not authorised by this file. The conductor runs this only after the owner's go-ahead, from the commit that carries fix round 1 of 3A (branch `d4-3a-fix`, merged with steps 2 / 3B as "Merge note" below says), and only once steps 1a and 1b are live and verified (they are: `D4-1b-live-apply.md`, 16 Nov). Live project id: `aswgmbefikhsnhogtryv`. Production database, real children, real money: lessons drive tuition and teacher pay. Do EXACTLY these steps, in this order, and nothing else. If any check differs from what is expected, STOP immediately, change nothing further, and report.
 
 What step 3A is (`docs/evidence/D4-build-3a.md`, review `D4-3a-review.md`, fix round 1 at the end of the build doc):

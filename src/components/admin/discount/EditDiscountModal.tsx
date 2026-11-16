@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface EditDiscountModalProps {
   open: boolean;
@@ -67,80 +69,51 @@ export function EditDiscountModal({
     }
   }, [open, assignment, isReferralBonus]);
 
+  // D4 step 3B (G-15): the dates (and, for a referral bonus, its value) are
+  // changed through the checked path as the signed-in admin. A change that
+  // only moves days of this month is tier 0; one that reaches a billed month
+  // asks for a reason. A discount never changes child.
+  const updated = () => {
+    queryClient.invalidateQueries({ queryKey: ["student-discount-assignments", studentId] });
+    queryClient.invalidateQueries({ queryKey: ["special-discount-assignments"] });
+    queryClient.invalidateQueries({ queryKey: ["referral-bonuses"] });
+    queryClient.invalidateQueries({ queryKey: ["student-tuition"] });
+    toast({
+      title: "Success",
+      description: "Discount updated successfully",
+    });
+    onOpenChange(false);
+  };
+  const money = useMoneyInput(updated);
+
   const updateMutation = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (isReferralBonus) {
-        // Update referral bonus (can edit value)
-        const { error } = await supabase
-          .from("referral_bonuses" as any)
-          .update({
-            effective_from: effectiveFrom,
-            effective_to: effectiveTo || null,
-            note: note || null,
-            type: discountType,
-            value: parseInt(discountValue),
-            cadence: discountCadence,
-            updated_by: user?.id,
-          })
-          .eq("id", assignment.id);
-
-        if (error) throw error;
-
-        // Audit log
-        await supabase.from("audit_log" as any).insert({
-          actor_user_id: user?.id,
-          action: "update",
-          entity: "referral_bonus",
-          entity_id: assignment.id,
-          diff: {
-            effective_from: effectiveFrom,
-            effective_to: effectiveTo || null,
-            note: note || null,
-            type: discountType,
-            value: parseInt(discountValue),
-            cadence: discountCadence,
-          },
-        });
-      } else {
-        // Update discount assignment (dates and notes only)
-        const { error } = await supabase
-          .from("discount_assignments" as any)
-          .update({
-            effective_from: effectiveFrom,
-            effective_to: effectiveTo || null,
-            note: note || null,
-            updated_by: user?.id,
-          })
-          .eq("id", assignment.id);
-
-        if (error) throw error;
-
-        // Audit log
-        await supabase.from("audit_log" as any).insert({
-          actor_user_id: user?.id,
-          action: "update",
-          entity: "discount_assignment",
-          entity_id: assignment.id,
-          diff: {
-            effective_from: effectiveFrom,
-            effective_to: effectiveTo || null,
-            note: note || null,
-          },
-        });
-      }
+      const r = await money.run(isReferralBonus
+        ? {
+            entity: "referral_bonus",
+            op: "edit",
+            args: {
+              id: assignment.id,
+              effective_from: effectiveFrom,
+              effective_to: effectiveTo || null,
+              note: note || null,
+              type: discountType,
+              value: parseInt(discountValue),
+              cadence: discountCadence,
+            },
+          }
+        : {
+            entity: "discount_assignment",
+            op: "edit",
+            args: { id: assignment.id, effective_from: effectiveFrom, effective_to: effectiveTo || null, note: note || null },
+          });
+      if (r.status === "refused") throw new Error(r.message);
+      return r;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-discount-assignments", studentId] });
-      queryClient.invalidateQueries({ queryKey: ["special-discount-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["referral-bonuses"] });
-      queryClient.invalidateQueries({ queryKey: ["student-tuition"] });
-      toast({
-        title: "Success",
-        description: "Discount updated successfully",
-      });
-      onOpenChange(false);
+    onSuccess: (r) => {
+      if (r.status === "done" && r.unchanged) onOpenChange(false);
+      else if (r.status === "done") updated();
+      // "dialog": the reason dialog is open; confirming it calls updated()
     },
     onError: (error: any) => {
       console.error("Error updating discount:", error);
@@ -276,6 +249,7 @@ export function EditDiscountModal({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <MoneyInputDialog guard={money.guard} subject={discountName} />
     </Dialog>
   );
 }

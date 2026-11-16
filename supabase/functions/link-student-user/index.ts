@@ -314,22 +314,28 @@ Deno.serve(async (req) => {
     }
 
     let emailWarning = null;
+    // A family step that fails is reported, never swallowed (D4-3B review
+    // M-1): the account is linked by now either way, but the admin is told
+    // the family was not set up, and why.
+    let familyError: string | null = null;
 
     // Handle family information update
     if (validated.updateFamilyEmail && student.family_id) {
       const family = Array.isArray(student.family) ? student.family[0] : student.family;
-      
+
       if (family) {
         const currentEmail = family.email;
-        
+
         if (!currentEmail || currentEmail.trim() === '') {
           // Update family with user's email
-          await supabase
+          const { error: emailErr } = await supabase
             .from('families')
             .update({ email: userEmail })
             .eq('id', family.id);
-
-          await supabase.from('audit_log').insert({
+          if (emailErr) {
+            console.error('Family email update failed:', emailErr);
+            familyError = `The family's email could not be set: ${emailErr.message}`;
+          } else await supabase.from('audit_log').insert({
             entity: 'family',
             entity_id: family.id,
             action: 'update_email',
@@ -347,7 +353,7 @@ Deno.serve(async (req) => {
       }
     } else if (validated.updateFamilyEmail && !student.family_id) {
       // Student has no family - create one
-      const { data: newFamily, error: familyError } = await supabase
+      const { data: newFamily, error: familyInsertErr } = await supabase
         .from('families')
         .insert({
           name: `${student.full_name}'s Family`,
@@ -358,14 +364,24 @@ Deno.serve(async (req) => {
         .select()
         .single();
 
-      if (!familyError && newFamily) {
-        // Link student to new family
-        await supabase
+      if (familyInsertErr || !newFamily) {
+        console.error('Family creation failed:', familyInsertErr);
+        familyError = `No family was created: ${familyInsertErr?.message ?? 'no row returned'}`;
+      } else {
+        // Link student to new family. The money guard judges this write
+        // (students.family_id): a child alone in an empty family moves no
+        // figure and passes; anything else is refused and reported here.
+        const { error: linkErr } = await supabase
           .from('students')
           .update({ family_id: newFamily.id })
           .eq('id', validated.studentId);
-
-        await supabase.from('audit_log').insert({
+        if (linkErr) {
+          console.error('Linking the student to the new family failed:', linkErr);
+          // the family was created for this child alone and has no member: take it away again
+          const { error: cleanupErr } = await supabase.from('families').delete().eq('id', newFamily.id);
+          familyError = `The family was not set up: ${linkErr.message}` +
+            (cleanupErr ? ` (and the empty family "${newFamily.name}" could not be removed: ${cleanupErr.message})` : '');
+        } else await supabase.from('audit_log').insert({
           entity: 'family',
           entity_id: newFamily.id,
           action: 'create',
@@ -408,6 +424,8 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       warning: emailWarning,
+      // set when the family step failed: the account IS linked, the family is not
+      familyError,
       siblingsLinked,
       vocabClaimed
     }), {

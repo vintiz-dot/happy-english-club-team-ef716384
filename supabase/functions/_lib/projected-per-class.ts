@@ -1,4 +1,5 @@
 import { siblingHolds } from './sibling-hold.ts'
+import { classFeeOn, readClassFeeHistory } from './class-fee.ts'
 
 // Get per-class tuition breakdown for a family
 export async function projectedByFamilyPerClass(supabase: any, familyId: string, ym: string) {
@@ -27,6 +28,10 @@ export async function projectedByFamilyPerClass(supabase: any, familyId: string,
   if (!enrollments || enrollments.length === 0) {
     return [];
   }
+
+  // The classes' fee history, read once (D4 step 2): each lesson at the fee in
+  // force on its date; no table yet -> the class's session_rate_vnd, as before.
+  const feeHistory = await readClassFeeHistory(supabase, enrollments.map((e: any) => e.class_id))
   
   const result = [];
   
@@ -51,15 +56,16 @@ export async function projectedByFamilyPerClass(supabase: any, familyId: string,
       
       const { data: classSessions } = await supabase
         .from('sessions')
-        .select('id')
+        .select('id, date')
         .eq('class_id', enrollment.class_id)
         .gte('date', monthStart)
         .lte('date', monthEnd)
         .neq('status', 'Canceled');
       
       const classSessionCount = classSessions?.length || 0;
-      const classRate = enrollment.classes?.session_rate_vnd || 0;
-      const classProjectedBase = classSessionCount * classRate;
+      const classRate = classFeeOn(feeHistory, enrollment.class_id, monthStart, enrollment.classes?.session_rate_vnd || 0);
+      const classProjectedBase = (classSessions ?? []).reduce((sum: number, s: any) =>
+        sum + classFeeOn(feeHistory, enrollment.class_id, s.date, enrollment.classes?.session_rate_vnd || 0), 0);
       
       result.push({
         student_id: enrollment.student_id,

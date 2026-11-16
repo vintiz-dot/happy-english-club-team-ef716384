@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -17,6 +17,9 @@ import { Loader2, Calendar } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { INPUT_TEXT, functionErrorBody, functionErrorText, needsInputDialogBody } from "@/lib/moneyInputs";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface EnrollmentRateEditorProps {
   studentId: string;
@@ -31,6 +34,14 @@ export function EnrollmentRateEditor({ studentId, month, onClose }: EnrollmentRa
   const [allowedDaysMap, setAllowedDaysMap] = useState<Map<string, number[] | null>>(new Map());
   const [reason, setReason] = useState("");
   const queryClient = useQueryClient();
+  // D4 step 3B (G-13 / G-14): a rate or the weekdays change FROM A DATE by
+  // default - the months before it keep what they were charged. The first of
+  // the month being looked at, or of this month when that one is past.
+  const thisMonth = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 7);
+  const [fromDate, setFromDate] = useState<string>(`${month >= thisMonth ? month : thisMonth}-01`);
+  const [whole, setWhole] = useState(false);
+  // what is still to do after the change in hand (one rate or weekday change per enrolment)
+  const queue = useRef<Array<() => Promise<"next" | "dialog">>>([]);
 
   const { data: enrollments, isLoading } = useQuery({
     queryKey: ["student-enrollments", studentId, month],
@@ -68,61 +79,108 @@ export function EnrollmentRateEditor({ studentId, month, onClose }: EnrollmentRa
     },
   });
 
+  const finish = async () => {
+    // The month on screen is worked out again only when the change reaches it.
+    if (whole || month >= fromDate.slice(0, 7)) {
+      await supabase.functions.invoke("calculate-tuition", { body: { studentId, month } });
+    }
+    toast.success("Enrollment settings updated");
+    queryClient.invalidateQueries({ queryKey: ["tuition-review-queue"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-tuition-list"] });
+    queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
+    onClose();
+  };
+  const pump = async () => {
+    try {
+      while (queue.current.length > 0) {
+        if ((await queue.current.shift()!()) === "dialog") return;   // confirming the dialog pumps again
+      }
+      await finish();
+    } catch (error: any) {
+      queue.current = [];
+      toast.error(error?.message || "Failed to update settings");
+    }
+  };
+  const money = useMoneyInput(() => {
+    void pump();
+  });
+
+  /** The enrolment of this class that covers a date (a dated change may have split it). */
+  const enrollmentOn = async (classId: string, date: string, fallback: string): Promise<string> => {
+    const { data } = await supabase
+      .from("enrollments")
+      .select("id, start_date, end_date")
+      .eq("student_id", studentId)
+      .eq("class_id", classId)
+      .lte("start_date", date)
+      .order("start_date", { ascending: false });
+    return (data ?? []).find((e) => !e.end_date || e.end_date >= date)?.id ?? fallback;
+  };
+
   const updateMutation = useMutation({
     mutationFn: async () => {
-      const updates = [];
+      const list: Array<() => Promise<"next" | "dialog">> = [];
       for (const enrollment of enrollments || []) {
         const override = rateOverrides.get(enrollment.id);
         const allowedDays = allowedDaysMap.get(enrollment.id);
-        
-        const rateChanged = override !== enrollment.rate_override_vnd;
-        const daysChanged = JSON.stringify(allowedDays) !== JSON.stringify(enrollment.allowed_days);
-        
-        if (rateChanged || daysChanged) {
-          // Update rate via edge function
-          if (rateChanged) {
-            const { data, error } = await supabase.functions.invoke("update-enrollment-rate", {
+
+        const rateChanged = (override || null) !== (enrollment.rate_override_vnd || null);
+        const daysChanged = JSON.stringify(allowedDays ?? null) !== JSON.stringify(enrollment.allowed_days ?? null);
+
+        // The rate, through the edge function (the admin's own session). A
+        // 409 with a preview means it reaches billed months: the dialog asks why.
+        if (rateChanged) {
+          list.push(async () => {
+            const rate = override || null;
+            const { error } = await supabase.functions.invoke("update-enrollment-rate", {
               body: {
                 enrollmentId: enrollment.id,
-                rateOverrideVnd: override || null,
-                reason,
+                rateOverrideVnd: rate,
+                reason: reason || undefined,
                 studentId,
                 month,
+                ...(whole ? {} : { effectiveDate: fromDate }),
               },
             });
-            if (error) throw error;
-            updates.push(data);
-          }
-          
-          // Update allowed_days directly
-          if (daysChanged) {
-            const { error } = await supabase
-              .from("enrollments")
-              .update({ allowed_days: allowedDays || null })
-              .eq("id", enrollment.id);
-            if (error) throw error;
-          }
+            if (!error) return "next";
+            const body = await functionErrorBody(error);
+            if (needsInputDialogBody(body)) {
+              money.openDialog(whole
+                ? { entity: "enrollment", op: "set_rate", args: { enrollment_id: enrollment.id, rate_override_vnd: rate } }
+                : { entity: "enrollment", op: "set_terms_from",
+                    args: { enrollment_id: enrollment.id, terms: { rate_override_vnd: rate }, effective_date: fromDate } },
+                body.preview);
+              return "dialog";
+            }
+            throw new Error(functionErrorText(body, "Failed to update the rate"));
+          });
+        }
+
+        // The weekdays, dated (never written in place): lessons before the
+        // date keep the old days.
+        if (daysChanged) {
+          list.push(async () => {
+            const date = whole ? enrollment.start_date : fromDate;
+            const r = await money.run({
+              entity: "enrollment",
+              op: "set_days",
+              args: {
+                enrollment_id: await enrollmentOn(enrollment.class_id, date, enrollment.id),
+                allowed_days: allowedDays || [],
+                effective_date: date,
+              },
+            });
+            if (r.status === "refused") throw new Error(r.message);
+            return r.status === "dialog" ? "dialog" : "next";
+          });
         }
       }
-      
-      // Recalculate tuition if days changed
-      const anyDaysChanged = enrollments?.some(e => 
-        JSON.stringify(allowedDaysMap.get(e.id)) !== JSON.stringify(e.allowed_days)
-      );
-      if (anyDaysChanged) {
-        await supabase.functions.invoke("calculate-tuition", {
-          body: { studentId, month }
-        });
+      if (list.length === 0) {
+        onClose();
+        return;
       }
-      
-      return updates;
-    },
-    onSuccess: () => {
-      toast.success("Enrollment settings updated");
-      queryClient.invalidateQueries({ queryKey: ["tuition-review-queue"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-tuition-list"] });
-      queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
-      onClose();
+      queue.current = list;
+      await pump();
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update settings");
@@ -308,6 +366,26 @@ export function EnrollmentRateEditor({ studentId, month, onClose }: EnrollmentRa
           })}
 
           <div className="space-y-2">
+            <Label htmlFor="rate-editor-from">Changes apply from</Label>
+            <Input
+              id="rate-editor-from"
+              type="date"
+              value={fromDate}
+              disabled={whole}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Lessons before this date keep the rate and the days they had.
+            </p>
+            <div className="flex items-start space-x-2">
+              <Checkbox id="rate-editor-whole" checked={whole} onCheckedChange={(v) => setWhole(v === true)} />
+              <label htmlFor="rate-editor-whole" className="text-sm leading-snug">
+                {INPUT_TEXT.wholeEnrollment}
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="reason">Reason for Changes (Optional)</Label>
             <Textarea
               id="reason"
@@ -329,6 +407,7 @@ export function EnrollmentRateEditor({ studentId, month, onClose }: EnrollmentRa
           </Button>
         </DialogFooter>
       </DialogContent>
+      <MoneyInputDialog guard={money.guard} />
     </Dialog>
   );
 }

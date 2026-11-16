@@ -1,0 +1,1554 @@
+{
+  "functions": [
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._attendance_billable(p_status text)",
+      "identity_arguments": "p_status text",
+      "md5_prosrc": "64f04a93a4a49a44f66eb6895bbe58af",
+      "proname": "_attendance_billable",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._attendance_evidence_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "0348195c51404b1da3185e8626361946",
+      "proname": "_attendance_evidence_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._attendance_money_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "1fdb26b35d8efba25f5b253952be83b4",
+      "proname": "_attendance_money_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._caller_lane()",
+      "identity_arguments": "",
+      "md5_prosrc": "66001c3b6eb716a6380e4155fba75409",
+      "proname": "_caller_lane",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._change_request_claim(p_kind text, p_fingerprint text)",
+      "identity_arguments": "p_kind text, p_fingerprint text",
+      "md5_prosrc": "7c84af305cfb366c6a8bb20e6f1bc6d8",
+      "proname": "_change_request_claim",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_causes_push(a jsonb, c jsonb)",
+      "identity_arguments": "a jsonb, c jsonb",
+      "md5_prosrc": "e2dc36c5617b4ae8d6a10d839c4d4139",
+      "proname": "_floor_causes_push",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_families_or(a jsonb, b jsonb)",
+      "identity_arguments": "a jsonb, b jsonb",
+      "md5_prosrc": "fa920fcd0ebd6f3dd4b2b281835e30e5",
+      "proname": "_floor_families_or",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_mark_level(p_status text, p_marked_by uuid)",
+      "identity_arguments": "p_status text, p_marked_by uuid",
+      "md5_prosrc": "ed25e62b64c592f1ee6a026596eb11d0",
+      "proname": "_floor_mark_level",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_point_level(p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_date date, r_session uuid, r_type text, r_points integer, r_created_by uuid)",
+      "identity_arguments": "p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_date date, r_session uuid, r_type text, r_points integer, r_created_by uuid",
+      "md5_prosrc": "dad4fd7df357fb823b5fcfd9db0d5921",
+      "proname": "_floor_point_level",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_table_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "79be4d195d4dbb559094061b90f7f5fd",
+      "proname": "_floor_table_guard",
+      "security_definer": false,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_transcript_level(p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_session uuid, r_tdate date, r_created timestamp with time zone, r_status text, r_audio text)",
+      "identity_arguments": "p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_session uuid, r_tdate date, r_created timestamp with time zone, r_status text, r_audio text",
+      "md5_prosrc": "3c8c752f920eeab0611b6fe33cc66101",
+      "proname": "_floor_transcript_level",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._homework_evidence_keep()",
+      "identity_arguments": "",
+      "md5_prosrc": "2639cb97dfbad79959c8295ffef922fd",
+      "proname": "_homework_evidence_keep",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._invoice_state_floor()",
+      "identity_arguments": "",
+      "md5_prosrc": "3eb44221c7f4a9f81cef3451be5bf62f",
+      "proname": "_invoice_state_floor",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._lesson_in_free_week(p_date date, p_start time without time zone, p_end time without time zone)",
+      "identity_arguments": "p_date date, p_start time without time zone, p_end time without time zone",
+      "md5_prosrc": "4e8eac6021039710f90d12805c2c041d",
+      "proname": "_lesson_in_free_week",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_ack(p_entities text[], p_target uuid, p_student uuid, p_from date, p_to date, p_tier integer)",
+      "identity_arguments": "p_entities text[], p_target uuid, p_student uuid, p_from date, p_to date, p_tier integer",
+      "md5_prosrc": "471a55638387068f1279a2d7c669c4c4",
+      "proname": "_money_ack",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_change_apply(p_entity text, p_op text, p_args jsonb, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb, p_via text, p_batch_id uuid)",
+      "identity_arguments": "p_entity text, p_op text, p_args jsonb, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb, p_via text, p_batch_id uuid",
+      "md5_prosrc": "7f03dfffb2532174d6d8ed9733f5fd7f",
+      "proname": "_money_change_apply",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_change_exec(p_entity text, p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_entity text, p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "b5efef0f546d40e397daa3fd0648db06",
+      "proname": "_money_change_exec",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_change_full_plan(p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text)",
+      "identity_arguments": "p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text",
+      "md5_prosrc": "8f8b9abdec600f4365979c8798ec801c",
+      "proname": "_money_change_full_plan",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_change_plan(p_entity text, p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_entity text, p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "3efa9ebcb79c47c65947f2636e07edd0",
+      "proname": "_money_change_plan",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_enrollment_rpc_call()",
+      "identity_arguments": "",
+      "md5_prosrc": "8796eb026e4187149b639f7efa82e81d",
+      "proname": "_money_enrollment_rpc_call",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_exec__attendance(p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "06892532e541e2228c377bcddd54c390",
+      "proname": "_money_exec__attendance",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_month_is_past(p_month text)",
+      "identity_arguments": "p_month text",
+      "md5_prosrc": "c7c81434cf2d4519f0252a8a4887d338",
+      "proname": "_money_month_is_past",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_plan__attendance(p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "2a0bbcd0f17ba5a75dcda1baa3947021",
+      "proname": "_money_plan__attendance",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._point_evidence_keep()",
+      "identity_arguments": "",
+      "md5_prosrc": "0003dc7cfe5783c02b3d7875deba5751",
+      "proname": "_point_evidence_keep",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_change_assess(s sessions, p_action text, p_change jsonb, p_uid uuid)",
+      "identity_arguments": "s sessions, p_action text, p_change jsonb, p_uid uuid",
+      "md5_prosrc": "6c1b8c86c47d3193d42f13adf56dcdc2",
+      "proname": "_session_change_assess",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_erased_recently(p_session_id uuid)",
+      "identity_arguments": "p_session_id uuid",
+      "md5_prosrc": "5f58916650251e14a89a45455746fd6f",
+      "proname": "_session_erased_recently",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_evidence_keep(p_session_id uuid, p_cause jsonb, p_own_level text, p_own_family text)",
+      "identity_arguments": "p_session_id uuid, p_cause jsonb, p_own_level text, p_own_family text",
+      "md5_prosrc": "e2f854c4b223039803fe2fccb39c842b",
+      "proname": "_session_evidence_keep",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_evidence_keep_trg()",
+      "identity_arguments": "",
+      "md5_prosrc": "8c2cfa6ad9ef61853ffc8b07134dcc8b",
+      "proname": "_session_evidence_keep_trg",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._transcript_evidence_keep()",
+      "identity_arguments": "",
+      "md5_prosrc": "6874f3d1d42b899885b3589f1919bbcf",
+      "proname": "_transcript_evidence_keep",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.change_approval_needed(p_impact jsonb, p_actor uuid)",
+      "identity_arguments": "p_impact jsonb, p_actor uuid",
+      "md5_prosrc": "4b477e5155181f35119d0f7a225ec7ce",
+      "proname": "change_approval_needed",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.d4_guard_status()",
+      "identity_arguments": "",
+      "md5_prosrc": "df2b7052707d4a8d06bdc307e6fe96a9",
+      "proname": "d4_guard_status",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.invoice_floor_state(p_student uuid, p_month text)",
+      "identity_arguments": "p_student uuid, p_month text",
+      "md5_prosrc": "84301619d6d062bd3cd05e68d72b2fa5",
+      "proname": "invoice_floor_state",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": true
+      },
+      "identity": "public.log_money_automation_refused(p_entity text, p_target uuid, p_source text)",
+      "identity_arguments": "p_entity text, p_target uuid, p_source text",
+      "md5_prosrc": "f2c13e67c03d8ee934368127b8027ea4",
+      "proname": "log_money_automation_refused",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.money_change_checked(p_entity text, p_op text, p_args jsonb, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb)",
+      "identity_arguments": "p_entity text, p_op text, p_args jsonb, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb",
+      "md5_prosrc": "fcf5a03f8f07a6a2ab40080737aec3ab",
+      "proname": "money_change_checked",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.money_change_preview(p_entity text, p_op text, p_args jsonb)",
+      "identity_arguments": "p_entity text, p_op text, p_args jsonb",
+      "md5_prosrc": "d19e2ff603ab7cf7f02c2b5b3c918df0",
+      "proname": "money_change_preview",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.money_changes_checked_bulk(p_items jsonb, p_reason text, p_batch_id uuid, p_context jsonb)",
+      "identity_arguments": "p_items jsonb, p_reason text, p_batch_id uuid, p_context jsonb",
+      "md5_prosrc": "96596fa8e6df104c9a587f84aadaa620",
+      "proname": "money_changes_checked_bulk",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.payroll_reach(p_teacher uuid, p_assistant uuid, p_from date, p_to date)",
+      "identity_arguments": "p_teacher uuid, p_assistant uuid, p_from date, p_to date",
+      "md5_prosrc": "5ccecd82b3d859cb5ec37f4b0ac7973f",
+      "proname": "payroll_reach",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.record_money_change_event(p_override_id uuid, p_kind text, p_payload jsonb)",
+      "identity_arguments": "p_override_id uuid, p_kind text, p_payload jsonb",
+      "md5_prosrc": "79551a87ded2424d7839067ec555393b",
+      "proname": "record_money_change_event",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_effective_level(p_session_id uuid, p_d1 jsonb)",
+      "identity_arguments": "p_session_id uuid, p_d1 jsonb",
+      "md5_prosrc": "b66e757e4a26fd7d0177c48e76b9e404",
+      "proname": "session_effective_level",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.tuition_month_state(p_student uuid, p_month text)",
+      "identity_arguments": "p_student uuid, p_month text",
+      "md5_prosrc": "733840210ed1f3360fb9c3122d5466b9",
+      "proname": "tuition_month_state",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.tuition_reach(p_students uuid[], p_class uuid, p_from date, p_to date)",
+      "identity_arguments": "p_students uuid[], p_class uuid, p_from date, p_to date",
+      "md5_prosrc": "d48607bb917eb05de1acd586e0c83b4f",
+      "proname": "tuition_reach",
+      "security_definer": true,
+      "volatility": "s"
+    }
+  ],
+  "informational": {
+    "view_definitions_md5": {
+      "money_change_review_queue": "33ebb7cc7b89ce8d860c821dcee072a8",
+      "money_change_tuition_pending": "e1fc4bef637fca19a1cf5229cd7afd2b"
+    },
+    "view_options": {
+      "money_change_review_queue": [
+        "security_invoker=true"
+      ],
+      "money_change_tuition_pending": [
+        "security_invoker=true"
+      ]
+    }
+  },
+  "relations": {
+    "invoice_state_floor": {
+      "columns": [
+        {
+          "default": null,
+          "name": "student_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "month",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": "false",
+          "name": "ever_paid",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "false",
+          "name": "ever_signed",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "false",
+          "name": "ever_frozen",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "0",
+          "name": "max_recorded_payment",
+          "not_null": true,
+          "type": "numeric"
+        },
+        {
+          "default": "now()",
+          "name": "first_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "now()",
+          "name": "last_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "'[]'::jsonb",
+          "name": "causes",
+          "not_null": true,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "1c2abbe99fe1278510ece8197edf6ae2",
+          "name": "invoice_state_floor_causes_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "f24f077676b9468ec8c5b6f72169481d",
+          "name": "invoice_state_floor_pkey",
+          "type": "p"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "invoice_state_floor_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
+    "money_change_events": {
+      "columns": [
+        {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": "now()",
+          "name": "created_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "override_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "kind",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": "'{}'::jsonb",
+          "name": "payload",
+          "not_null": true,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "0ffdb5ec9b3755a17186cf1dde9decc4",
+          "name": "money_change_events_kind_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "baa614116b1cbde37a898469805194cc",
+          "name": "money_change_events_override_id_fkey",
+          "type": "f"
+        },
+        {
+          "md5_def": "ab4afefbe79477595f0173ab5d3bdb78",
+          "name": "money_change_events_payload_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "4c6419b3704337bbfe50f018842a9ad3",
+          "name": "money_change_events_pkey",
+          "type": "p"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "money_change_events_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
+    "money_change_overrides": {
+      "columns": [
+        {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": "now()",
+          "name": "created_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "txid_current()",
+          "name": "txid",
+          "not_null": true,
+          "type": "bigint"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "entity",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "op",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "target_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": "'{}'::uuid[]",
+          "name": "student_ids",
+          "not_null": true,
+          "type": "uuid[]"
+        },
+        {
+          "default": null,
+          "name": "reach_from",
+          "not_null": false,
+          "type": "date"
+        },
+        {
+          "default": null,
+          "name": "reach_to",
+          "not_null": false,
+          "type": "date"
+        },
+        {
+          "default": null,
+          "name": "via",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "batch_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "tier",
+          "not_null": true,
+          "type": "integer"
+        },
+        {
+          "default": null,
+          "name": "correction_mode",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "reason",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "correction_reason",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "confirmed",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "token",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "row_before",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "change",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "reach",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "evidence",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "invoices_before",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "refresh_pairs",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "impact",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "review_required",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "'{}'::jsonb",
+          "name": "attached",
+          "not_null": true,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "2a42b82f457e6db4b248159e1d45bb4d",
+          "name": "money_change_overrides_attached_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "083947ebc160f79164f7b56d9dbe89f7",
+          "name": "money_change_overrides_correction",
+          "type": "c"
+        },
+        {
+          "md5_def": "52034687c3f4329ab7a3cf5e60689f62",
+          "name": "money_change_overrides_entity_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "4c6419b3704337bbfe50f018842a9ad3",
+          "name": "money_change_overrides_pkey",
+          "type": "p"
+        },
+        {
+          "md5_def": "e3360b38e23733215db02fcf88737d48",
+          "name": "money_change_overrides_reason",
+          "type": "c"
+        },
+        {
+          "md5_def": "0a4c8fc7dfb1aa14c6eaa028fe7ee97b",
+          "name": "money_change_overrides_tier_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "3f2d4739b65d5f012d5ec31990811408",
+          "name": "money_change_overrides_via_check",
+          "type": "c"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "money_change_overrides_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
+    "money_change_review_queue": {
+      "columns": [
+        {
+          "default": null,
+          "name": "override_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "not_null": false,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "entity",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "op",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "target_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "student_ids",
+          "not_null": false,
+          "type": "uuid[]"
+        },
+        {
+          "default": null,
+          "name": "reach_from",
+          "not_null": false,
+          "type": "date"
+        },
+        {
+          "default": null,
+          "name": "reach_to",
+          "not_null": false,
+          "type": "date"
+        },
+        {
+          "default": null,
+          "name": "via",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "batch_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "tier",
+          "not_null": false,
+          "type": "integer"
+        },
+        {
+          "default": null,
+          "name": "correction_mode",
+          "not_null": false,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "reason",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "correction_reason",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "change",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "invoices_before",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "refresh_pairs",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "impact",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "attached",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "tuition_state",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "age",
+          "not_null": false,
+          "type": "interval"
+        }
+      ],
+      "constraints": [],
+      "force_row_level_security": false,
+      "kind": "v",
+      "policies": [],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT"
+        ]
+      },
+      "row_level_security": false
+    },
+    "money_change_tuition_pending": {
+      "columns": [
+        {
+          "default": null,
+          "name": "override_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "not_null": false,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "entity",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "op",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "refresh_pairs",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "last_tuition_event",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "age",
+          "not_null": false,
+          "type": "interval"
+        }
+      ],
+      "constraints": [],
+      "force_row_level_security": false,
+      "kind": "v",
+      "policies": [],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT"
+        ]
+      },
+      "row_level_security": false
+    },
+    "session_evidence_floor": {
+      "columns": [
+        {
+          "default": null,
+          "name": "session_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "level",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": "'{}'::jsonb",
+          "name": "families",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": "now()",
+          "name": "first_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "now()",
+          "name": "last_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "'[]'::jsonb",
+          "name": "causes",
+          "not_null": true,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "1c2abbe99fe1278510ece8197edf6ae2",
+          "name": "session_evidence_floor_causes_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "a737bd2aa6226d11fe3c32f373753193",
+          "name": "session_evidence_floor_level_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "11548a038bec24612dac663cd1deeebd",
+          "name": "session_evidence_floor_pkey",
+          "type": "p"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "session_evidence_floor_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    }
+  },
+  "triggers": [
+    {
+      "enabled": "O",
+      "function": "_attendance_evidence_guard",
+      "md5_def": "c549c6cb9cc88724f8c713bead7711d8",
+      "name": "zz_attendance_evidence_guard",
+      "table": "attendance",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_attendance_money_guard",
+      "md5_def": "6efdc5cf3206b0ab707d6c2c33828882",
+      "name": "zz_attendance_money_guard",
+      "table": "attendance",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
+      "function": "_transcript_evidence_keep",
+      "md5_def": "93d9bd56bf5d06b094a1b0d1b5ef4ce2",
+      "name": "zz_transcript_evidence_keep",
+      "table": "class_transcripts",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_homework_evidence_keep",
+      "md5_def": "6d350cd10049b56fa962b37319dc437e",
+      "name": "zz_homework_evidence_keep",
+      "table": "homework_submissions",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_homework_evidence_keep",
+      "md5_def": "06cf1c8f068cb73b34546a80806ac9bf",
+      "name": "zz_homework_evidence_keep",
+      "table": "homeworks",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_floor_table_guard",
+      "md5_def": "fcebe4fe947f1bb4d23726f4f5835ebd",
+      "name": "invoice_state_floor_guard",
+      "table": "invoice_state_floor",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
+      "function": "_floor_table_guard",
+      "md5_def": "a2840097fe5a129e4a62b56285ea3aa9",
+      "name": "invoice_state_floor_no_truncate",
+      "table": "invoice_state_floor",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "_invoice_state_floor",
+      "md5_def": "a7b36725c6d00981621d2642776f5e38",
+      "name": "zz_invoice_state_floor",
+      "table": "invoices",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "md5_def": "058f5c88ad2bdec9851defb768a8d803",
+      "name": "money_change_events_append_only",
+      "table": "money_change_events",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_insert_guard",
+      "md5_def": "0c26cfb3541426a38ac02ae574e342c8",
+      "name": "money_change_events_insert_guard",
+      "table": "money_change_events",
+      "tgtype": 7
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "md5_def": "c4a62985ecbd8f6c6db2ffdd46a668e5",
+      "name": "money_change_events_no_truncate",
+      "table": "money_change_events",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "md5_def": "b1575eda3811fa9308088f76478fb1c5",
+      "name": "money_change_overrides_append_only",
+      "table": "money_change_overrides",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_insert_guard",
+      "md5_def": "b17bf813d735956c50c3bed33cbe2986",
+      "name": "money_change_overrides_insert_guard",
+      "table": "money_change_overrides",
+      "tgtype": 7
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "md5_def": "dfb9216dab73d54d0fd1d96c6ee0750a",
+      "name": "money_change_overrides_no_truncate",
+      "table": "money_change_overrides",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "audit_row_change",
+      "md5_def": "363bb3a1fdda8534cb5c569712c780ec",
+      "name": "audit_point_transactions",
+      "table": "point_transactions",
+      "tgtype": 25
+    },
+    {
+      "enabled": "O",
+      "function": "_point_evidence_keep",
+      "md5_def": "995e44005575c574c0ddf006f368660f",
+      "name": "zz_point_evidence_keep",
+      "table": "point_transactions",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_floor_table_guard",
+      "md5_def": "4abb4fb178d587b038182404ca0e4ddc",
+      "name": "session_evidence_floor_guard",
+      "table": "session_evidence_floor",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
+      "function": "_floor_table_guard",
+      "md5_def": "af78eb2a78387b3cdec0131779be49c6",
+      "name": "session_evidence_floor_no_truncate",
+      "table": "session_evidence_floor",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "_session_evidence_keep_trg",
+      "md5_def": "0886607a6e0dc5e58ef6498e6771e540",
+      "name": "zz0_session_evidence_keep",
+      "table": "sessions",
+      "tgtype": 19
+    }
+  ]
+}

@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Loading } from "@/components/ui/loading";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface Props {
   familyId: string;
@@ -35,17 +37,27 @@ export function FamilyMembersManager({ familyId, onChanged }: Props) {
     },
   });
 
+  // D4 step 3B (G-19): linking a child to a family is a checked change made
+  // as the signed-in admin. A child with nothing billed is linked at once
+  // (tier 0); when the child, or a child of either family, has billed months
+  // the dialog asks for a reason - the sibling discount of all of them can move.
+  const linked = () => {
+    toast.success("Student added to family");
+    queryClient.invalidateQueries({ queryKey: ["family-detail"] });
+    queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
+    queryClient.invalidateQueries({ queryKey: ["students"] });
+    onChanged?.();
+  };
+  const money = useMoneyInput(linked);
+
   const linkMutation = useMutation({
     mutationFn: async (studentId: string) => {
-      const { error } = await supabase.from("students").update({ family_id: familyId }).eq("id", studentId);
-      if (error) throw error;
+      const r = await money.run({ entity: "family_link", op: "set_family", args: { student_id: studentId, family_id: familyId } });
+      if (r.status === "refused") throw new Error(r.message);
+      return r.status;
     },
-    onSuccess: () => {
-      toast.success("Student added to family");
-      queryClient.invalidateQueries({ queryKey: ["family-detail"] });
-      queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      onChanged?.();
+    onSuccess: (status) => {
+      if (status === "done") linked();
     },
     onError: (e: any) => toast.error(e.message || "Failed to add student"),
   });
@@ -87,6 +99,11 @@ export function FamilyMembersManager({ familyId, onChanged }: Props) {
           <p className="text-sm text-muted-foreground">No matching students.</p>
         )}
       </CardContent>
+      <MoneyInputDialog
+        guard={money.guard}
+        subject={(candidates ?? []).find((s: any) => s.id === money.guard.request?.args?.student_id)?.full_name}
+        names={Object.fromEntries((candidates ?? []).map((s: any) => [s.id, s.full_name]))}
+      />
     </Card>
   );
 }
