@@ -1,6 +1,6 @@
 // S2 independent review - probes for what the builder's suites do not pin
-// (docs/evidence/S2-review.md). Not in run.mjs: some of these assert a
-// residual the review reports, and are meant to flip when it is fixed.
+// (docs/evidence/S2-review.md). The residuals the review reported (R-1..R-4)
+// were flipped by the S2 fix round; the suite is now in run.mjs.
 //
 //   node scripts/pgtest/s2-review-probes.test.mjs \
 //     supabase/migrations/20261111110000_ta_standing_assignments_and_homework_upload.sql \

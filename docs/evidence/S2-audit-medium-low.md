@@ -114,6 +114,9 @@ Then by hand: a teacher opens Smart Upload, uploads a photo and opens it in revi
 | pronounce-syllables | `pronounce-syllables/index.ts`, `_lib/ai-gate.ts`, `_lib/auth.ts`, `_lib/rate-limit.ts` | true |
 | pronounce-viseme | `pronounce-viseme/index.ts`, `_lib/ai-gate.ts`, `_lib/auth.ts`, `_lib/rate-limit.ts` | true |
 | image-generate | `image-generate/index.ts`, `_lib/ai-gate.ts`, `_lib/auth.ts`, `_lib/rate-limit.ts` | true |
+| save-word (fix round) | `save-word/index.ts`, `_lib/auth.ts` | true |
+
+The browser build carries `src/components/student/ClassCatalog.tsx` (F-17), `src/lib/sanitize.ts` + the two grading screens (F-23), `src/lib/avatarFile.ts` + `src/components/student/ProfilePictureUpload.tsx` (R-3). Each works against the database before and after the migrations.
 
 `_lib/auth.ts` changed (F-08) and goes with every function above that imports it; other functions that import it pick it up whenever they are next deployed (no behaviour change for them). Rollback for any: redeploy the snapshot taken before (S1 practice), not `origin/main`. Owner, separately: delete the live `generate-sessions` function (dashboard).
 
@@ -121,9 +124,25 @@ Then by hand: a teacher opens Smart Upload, uploads a photo and opens it in revi
 
 - Nothing was run against live: the "before" states are the repository's and the audit's. The preflights exist for exactly that gap; a refusal names the unknown policy.
 - No browser run: ClassCatalog, the grading screens and the uploads are tested by reading and by SQL / handler tests, not in a browser.
-- The Storage API itself (stand-in is `storage.objects` with RLS; `owner` is assumed set to the uploader, as the Storage API does). A real teacher upload and signed URL after F-18 is the proof.
-- iPhone HEIC avatars: the avatar check refuses HEIC bytes (Safari normally converts to JPEG on upload; not tested on a device).
+- The Storage API itself (stand-in is `storage.objects` with RLS; `owner` / `owner_id` assumed set to the uploader, as the Storage API does). A real teacher upload and signed URL after F-18 is the proof.
+- HEIC avatars: the server refuses HEIC bytes with its own message; the browser re-encodes a HEIC it can decode (canvas, tested with stubs only - not on a device or in Safari).
 - F-12's sign-in-then-sign-out depends on GoTrue accepting `admin.signOut(accessToken, 'global')` as documented; driven against a stand-in only.
+
+## Fix round after the independent review (`docs/evidence/S2-review.md`)
+
+Migrations were not applied anywhere, so 093000 and 094000 were edited in place.
+
+| Item | Change | Proof |
+|---|---|---|
+| R-2 (093000) | `can_view_teacher` driven from the caller's own children (the reviewer's body) | probe R-2: all 12 logins get exactly the first S2 body's rows; family `SELECT teachers` 380 ms vs 128 ms before S2 (first S2 body 5663 ms), asserted under 3x + 250 ms; F-17 suite 60 unchanged |
+| R-1 (094000) | `student_work_file_staff_can`: a `students/<child>/...` name also needs `<child>` enrolled in the row's class (compared as text, so a malformed folder is just no match). Chosen over a storage_path trigger: the browser only ever files `incoming/` / `teams/` paths and ocr-student-work routes only to that class's roster, so no upload or read path changes | F-18 suite 48: the reviewer's case refused (read and delete), class B still reads its own, routed photo still read by class teacher / TA / cover, malformed folder no error; probe R-1 flipped |
+| R-6 (094000) | own-upload branch is `storage_object_is_mine(owner, owner_id)`; preflight refuses a Storage without `owner_id` | F-18 suite: an upload with only `owner_id` is read by its uploader, not by another teacher |
+| R-3 (update-student-avatar, browser) | bytes decide, the label is ignored, the sniffed type is stored; HEIC/HEIF gets "This photo is in HEIC format. Please choose a JPEG or PNG, or take a screenshot of it."; `src/lib/avatarFile.ts` re-encodes a HEIC the browser can decode (canvas, long side 1024, JPEG 0.9) before upload, else refuses with the same words | S2 edge suite: WebP labelled jpeg / PNG labelled svg stored as their real type, SVG refused with any label, HEIC refused with the message; helper: looksHeic brands, JPEG untouched, decodable HEIC -> `IMG_0001.jpg` 1024x768, undecodable -> message; probes R-3 flipped |
+| R-4 (word-enrichment) | a look-up with a sentence is cached under `ctx1:<level>:<sha256(sentence)>:<word>` (read and write); plain look-ups keep the word key | S2 edge suite: same sentence again = hit with no vendor call; other sentence / other level / plain = miss with its own entry; the plain entry never touched by a sentence; probe R-4 flipped |
+| F-03, new | `save-word` upserted the request's own payload into the shared `vocab_cache` - a second planting path. Removed (only word-enrichment fills the cache) | S2 edge suite: before has the write, after has none. Redeploy save-word |
+| R-5, R-7 | no change: old access tokens live until expiry (front desk: "within the hour"); the journal teacher picker lists only the child's own teachers | - |
+
+The reviewer's probes (`s2-review-probes.test.mjs`) are now in `run.mjs`, flipped where fixed.
 
 ## Owner decisions
 

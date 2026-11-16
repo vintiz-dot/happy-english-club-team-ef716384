@@ -503,6 +503,16 @@ const SUITES = [
   // The S2 edge-function and browser fixes (F-03, F-04, F-07..F-13, F-17's
   // and F-23's browser half): each real function before (5594ca32) and after.
   { name: "S2 edge functions", file: "s2-edge-functions.test.mjs", expect: 108, migrations: [] },
+  // The independent review's probes (docs/evidence/S2-review.md), flipped by
+  // the fix round: R-1 refused, R-2 rows identical and timing near before-S2,
+  // R-3 avatars by their bytes, R-4 the sentence cache key.
+  {
+    name: "S2 review probes",
+    file: "s2-review-probes.test.mjs",
+    expect: 20,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261021090000_staff_pay_rate_history.sql",
+      "20261116093000_staff_pay_not_for_every_account.sql", "20261116094000_teacher_storage_by_class.sql", "20261113140000_creator_rows_need_class_staff.sql"],
+  },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
