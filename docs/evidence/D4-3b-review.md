@@ -2,7 +2,7 @@
 
 Independent reviewer. Reviewed `origin/pc2/d4-3b` at 3b09300f (built on `origin/conductor/work` 02b571e6), checked out as `review-3b`. pglite only: nothing applied, deployed or pushed; no live database contacted. Reviewer probes are committed on this branch: `scripts/pgtest/review3b-probes.mjs`, `review3b-oracle.mjs` (the builder's oracle, its school and the REAL bundled calculate-tuition / compute-sibling-discounts, with my edits), `review3b-mutants.mjs` (the builder's runner with my list).
 
-**Where I am / next step:** findings written and fixes proven in pglite; full suite and mutation runs in progress (counts filled in below when done).
+**Where I am / next step:** REVIEW COMPLETE (verdict below). Next step is not mine: the builder applies B-1, B-2 (a tested copy is `docs/evidence/D4-3b-review-fixed-migration.sql`), M-1 and the test cases; then a short re-review of the delta.
 
 ## Verdict: APPLY WITH CHANGES
 
@@ -125,7 +125,7 @@ The migration rewrites no row. New paths never rewrite the past: `change_enrollm
 
 - `node scripts/pgtest/run.mjs` on 3b09300f (mine, this PC): **6659 assertions across 66 suites, 0 suite(s) failed** (builder: 6658/66/0). This step's: d4 money inputs 257, d4 functions inputs 62, d4 reach oracle 187, money inputs lib 40; unchanged and green beside them: d4 floors 213, D2 carry-over 275, d4 deployed functions 37, d4 rollback 26, d4 register 140, d4 functions register 34, money guard lib 45, AI admin actions 79, stars sync engine 172, pause enrollment 37, edge functions typecheck 5, app typecheck (`tsc -p tsconfig.app.json`) green.
 - Over my patched copy (`docs/evidence/D4-3b-review-fixed-migration.sql` = the file + B-1 + B-2): `d4-money-inputs` 256/257 - the only failure is the trigger inventory ("added: the nine guards ..."), which must list the two new invoice triggers; `d4-reach-oracle` 187/187 (calculate-tuition still saves frozen bills); my probes P1/P2 and O1-O5 all refused, controls unchanged.
-- Builder's mutation runner: see below (section 9 tail).
+- Builder's mutation runner: 57/57 caught (section 9).
 
 ## 8. Apply-ability, preflight, rollback
 
@@ -140,7 +140,7 @@ My 13 (`review3b-mutants.mjs`, the builder's engine with my list; migration muta
 | Mutant | Breaks | Verdict |
 |---|---|---|
 | R01 | an unknown lane (anon, a role with no user) passes like the owner | SURVIVED - no case for the `unknown` lane on a money input (anon has no grant through RLS, so near-equivalent; add one case) |
-| R02 | the reach shortcut ignores the bill floor | see below |
+| R02 | the reach shortcut ignores the bill floor (`_money_tuition_reach` `v_first`) | SURVIVED - near-equivalent in practice (the class's first lesson usually precedes any bill), but nothing pins it: add a child whose only past bill was deleted (floor row left) and whose class has no earlier lesson in reach |
 | R03 | the pay reach shortcut ignores lessons | CAUGHT (P18 backdated rate) |
 | R04 | the reach shortcut off by one day | CAUGHT (discount dated the 1st of next month) |
 | R05 | a discount assignment re-pointed at another definition is "nothing priced" (trigger) | SURVIVED - no raw `discount_def_id` change case, and the oracle has none. A real hole if it regressed: add `UPDATE discount_assignments SET discount_def_id = <other>` over a paid month -> HC120 |
@@ -153,7 +153,11 @@ My 13 (`review3b-mutants.mjs`, the builder's engine with my list; migration muta
 | R12 | an acknowledgement of any discount op covers an INSERT | SURVIVED - defence in depth (N-5) |
 | R13 | `definition_in_use` loses the lead day | SURVIVED - add a definition whose only assignment starts on the 1st after a paid past month |
 
-The builder's 57 (`d4-mutants-3b.mjs`, re-run by me): see section 7.
+Mine: 4 caught, 9 survived (R07 equivalent, R12 and R11 near-equivalent; R01, R02, R05, R09, R13 are real test gaps - add one case each; none is a code defect today).
+
+The builder's 57 (`d4-mutants-3b.mjs`, re-run by me on 3b09300f): **57 caught, 0 survived** - matches the builder's table. `git status` clean afterwards (function mutants restored byte for byte).
+
+What no mutant could catch, because the code was never there: B-1 and B-2 (section 1). The oracle has no `created_at` edit and no bill delete / re-key; add O1, O3, O4 to its EDITS when the fixes land.
 
 ## 10. Not checked
 
