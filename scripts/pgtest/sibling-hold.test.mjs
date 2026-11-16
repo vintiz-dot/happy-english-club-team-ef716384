@@ -11,9 +11,9 @@
 //   3. both deciders ask it and drop held children before working out the
 //      family: compute-sibling-discounts and projectedByFamilyPerClass
 //      (behind watch-sibling-threshold); no other edge function restates it.
-//   KNOWN GAP G-10 (pinned below, proposed fix in D5-audit.md): any error
-//   whose MESSAGE mentions sibling_discount_from also reads as "nobody on
-//   hold" - e.g. a permission error on that column - which fails open.
+//   G-10 (fixed in D5 fix round 1): an error whose MESSAGE mentioned
+//   sibling_discount_from used to read as "nobody on hold" - a permission
+//   error on that column failed open. Now only code 42703 does.
 import { transform } from 'esbuild';
 import { mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -73,9 +73,19 @@ console.log('\n2. siblingHolds against a stand-in client');
   let threw = null;
   try { await siblingHolds(fake(null, { code: '57014', message: 'canceling statement due to statement timeout' }).client, ['f'], '2026-11'); } catch (e) { threw = e; }
   ok('any other read error throws (fails closed: no guessed discount)', !!threw, threw);
-  // G-10, pinned: a permission error that names the column is swallowed.
-  const perm = await siblingHolds(fake(null, { code: '42501', message: 'permission denied for column sibling_discount_from' }).client, ['f'], '2026-11');
-  ok('KNOWN GAP G-10 pinned: an error whose message names the column (42501 here) reads as "nobody on hold" - fails open', perm.size === 0);
+  // G-10 (fixed in D5 fix round 1): only 42703 means "the column is missing".
+  for (const err of [
+    { code: '42501', message: 'permission denied for column sibling_discount_from' },
+    { code: 'PGRST204', message: "Could not find the 'sibling_discount_from' column of 'students' in the schema cache" },
+    { code: undefined, message: 'column students.sibling_discount_from does not exist' },
+    { code: '42P01', message: 'relation "students" does not exist' },
+  ]) {
+    let t = null;
+    try { await siblingHolds(fake(null, err).client, ['f'], '2026-11'); } catch (e) { t = e; }
+    ok(`G-10 fixed: ${err.code ?? 'no code'} "${err.message.slice(0, 50)}..." throws (fails closed), even when it names the column`, t === err, t);
+  }
+  ok('  the source accepts exactly one code as "column missing": 42703',
+     /if \(error\.code === "42703"\) return new Set\(\);/.test(lib) && !/sibling_discount_from\/\.test/.test(lib));
 }
 
 console.log('\n3. the deciders use it, and nothing else restates it');

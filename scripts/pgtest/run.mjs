@@ -80,8 +80,8 @@ const SUITES = [
   // compare-and-set; labels from the one rule; no NEW browser pricing.
   { name: "money write paths", file: "money-write-paths.test.mjs", expect: 19, migrations: [] },
   // D5: the sibling-discount hold rule (_lib/sibling-hold.ts), its fail-closed
-  // read and its two callers; gap G-10 pinned.
-  { name: "sibling hold", file: "sibling-hold.test.mjs", expect: 18, migrations: [] },
+  // read (only 42703 means "column missing", G-10) and its two callers.
+  { name: "sibling hold", file: "sibling-hold.test.mjs", expect: 22, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },

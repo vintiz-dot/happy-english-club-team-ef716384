@@ -18,9 +18,11 @@ export function heldOutOfSiblingDiscount(from: string | null | undefined, month:
  * The children of these families who are on hold for `month`.
  *
  * Tolerates the column not existing yet: migrations are pasted by hand and
- * this may deploy first, and with no column nobody can be on hold. Any
- * other failure throws, because guessing "nobody" would give a held
- * child's family a discount it should not have.
+ * this may deploy first, and with no column nobody can be on hold. That is
+ * Postgres code 42703 (undefined_column) and nothing else: any other
+ * failure throws, a permission error that happens to name the column
+ * included, because guessing "nobody" would give a held child's family a
+ * discount it should not have (D5 gap G-10).
  */
 export async function siblingHolds(supabase: any, familyIds: string[], month: string): Promise<Set<string>> {
   const ids = [...new Set(familyIds.filter(Boolean))];
@@ -31,7 +33,7 @@ export async function siblingHolds(supabase: any, familyIds: string[], month: st
     .in("family_id", ids)
     .not("sibling_discount_from", "is", null);
   if (error) {
-    if (error.code === "42703" || /sibling_discount_from/.test(String(error.message ?? ""))) return new Set();
+    if (error.code === "42703") return new Set();
     throw error;
   }
   return new Set(
