@@ -393,6 +393,44 @@ await section('review P7 / P8: an acknowledgement of one month, and another trig
   await db.exec(`DROP TABLE zz_del_relay; DROP FUNCTION zz_del_relay_trg()`);
 });
 
+// OQ-1 (owner's ruling): a fee change that reaches a bill with money on it
+// asks for a reason in any month - the review's P4 and P5 now ask.
+await section('OQ-1: a bill with money on it asks for a reason, this month and next month too', async () => {
+  const c4 = await mkClass(100000, 'P4');
+  const k4 = await kid(c4);
+  await att(await lesson(c4, months.next_lesson, 'Scheduled'), k4, 'Present', null);   // seeded placeholder
+  await inv(k4, M(months.next), { recorded: 600000 });                                   // paid in advance
+  const p4 = await preview('set', { class_id: c4, effective_from: months.next, session_rate_vnd: 130000 });
+  ok('P4: a fee from next month when next month is already billed AND paid -> T1, a reason asked, the bill shown and refreshed',
+     p4.tier === 1 && p4.requires.reason && (p4.invoices_before ?? []).length === 1 && monthsOf(p4.refresh_pairs).includes(M(months.next)), { tier: p4.tier });
+  let r = await tryIt(() => checked('set', { class_id: c4, effective_from: months.next, session_rate_vnd: 130000 }, { token: p4.token }));
+  ok('  without a reason -> HC010; nothing written', r.code === 'HC010' && !(await hist(c4)).some((x) => x.f === months.next), r);
+  r = await must('P4 with a reason', () => checked('set', { class_id: c4, effective_from: months.next, session_rate_vnd: 130000 }, { reason: R, token: p4.token, confirm: true }));
+  ok('  with a reason and the tick -> done at T1, the reason kept', r.tier === 1 &&
+     (await asSuper(`SELECT reason FROM money_change_overrides WHERE id=$1`, [r.override_id])).rows[0].reason === R, r);
+  const c5 = await mkClass(100000, 'P5');
+  const k5 = await kid(c5);
+  const curLesson = (await db.query(`SELECT to_char(date_trunc('month', now() AT TIME ZONE 'Asia/Ho_Chi_Minh') + interval '2 days', 'YYYY-MM-DD') d`)).rows[0].d;
+  await att(await lesson(c5, curLesson), k5, 'Present', TEACHER);
+  await inv(k5, M(months.cur), { recorded: 600000 });
+  const p5 = await preview('set', { class_id: c5, effective_from: months.cur, session_rate_vnd: 130000 });
+  ok('P5: a fee from THIS month reaching a paid (not confirmed) bill of this month -> T1, a reason asked', p5.tier === 1 && p5.requires.reason &&
+     monthsOf(p5.refresh_pairs).includes(M(months.cur)), { tier: p5.tier });
+  const c6 = await mkClass(100000, 'P5b');
+  const k6 = await kid(c6);
+  await att(await lesson(c6, curLesson), k6, 'Present', TEACHER);
+  await inv(k6, M(months.cur), {});                                                       // issued, nothing paid
+  const p6 = await preview('set', { class_id: c6, effective_from: months.cur, session_rate_vnd: 130000 });
+  ok('control: this month\'s bill issued with nothing paid -> T0 (no reason), but the bill is in the plan, so the screen shows it (S-2)',
+     p6.tier === 0 && (p6.invoices_before ?? []).length === 1 && monthsOf(p6.refresh_pairs).includes(M(months.cur)), { tier: p6.tier });
+  const ev0 = (await events('owner_lane')).length;
+  await asSuper(`INSERT INTO class_fee_history(class_id, effective_from, session_rate_vnd) VALUES ($1,$2,140000)`, [c5, months.next]);
+  await asSuper(`DELETE FROM class_fee_history WHERE class_id=$1 AND effective_from=$2`, [c5, months.next]);
+  ok('  the trigger agrees: the owner\'s T0 writes of a month with no bill leave no event', (await events('owner_lane')).length === ev0);
+  const e = await tryIt(() => asService(`INSERT INTO class_fee_history(class_id, effective_from, session_rate_vnd) VALUES ($1,$2,140000)`, [c5, months.cur]));
+  ok('  and the raw write that reaches the paid bill is judged at T1', e.code === 'HC120' && /tier=1/.test(e.detail ?? ''), e);
+});
+
 await section('remove', async () => {
   let p = await preview('remove', { class_id: C, effective_from: '1900-01-01' });
   ok('the 1900 row: not allowed (baseline_row)', p.allowed === false && p.refuse_code === 'baseline_row', p.refuse_code);

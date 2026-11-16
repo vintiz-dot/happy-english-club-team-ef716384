@@ -49,7 +49,10 @@
 -- a billable mark on a lesson of the class from the row's month up to the
 -- next row (widened to their families), through tuition_month_state. A fee
 -- from next month reaches nothing: T0. A row dated in a past month is a
--- correction: T1-T3. refresh_pairs never holds a month before the row's.
+-- correction: T1-T3. Any change that reaches a bill with money on it (paid,
+-- part-paid, confirmed, adjusted, frozen) is at least T1 in ANY month (owner's
+-- ruling, OQ-1 of the D4-2 review). refresh_pairs never holds a month before
+-- the row's.
 --
 -- REPLACES NOTHING of D1, D2, D4 file 1 or D4 file 2. No existing row is
 -- changed. Safe to paste twice.
@@ -237,6 +240,17 @@ BEGIN
                             'impact', jsonb_build_object('families', 0, 'paid_vnd', 0, 'closed_payroll', false));
   ELSE
     v := public.tuition_reach(v_kids, p_class, v_min, v_max);
+    -- Owner's ruling on OQ-1 (D4-2 review): a fee change that reaches a bill
+    -- with money on it - paid or part-paid (recorded payment, a paid label or
+    -- the bill floor's ever_paid), confirmed / adjusted, or frozen - asks for a
+    -- reason in ANY month, the current one and next month included: at least
+    -- T1. (The register's "a paid current month is T0", b.0, is for the daily
+    -- register, R-8; a fee changes a few times a year.)
+    IF COALESCE((v ->> 'tier')::int, 3) < 1
+       AND EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(v -> 'pairs', '[]'::jsonb)) x
+                    WHERE x ->> 'state' IN ('paid', 'signed', 'frozen')) THEN
+      v := v || jsonb_build_object('tier', 1, 'money_on_bill', true);
+    END IF;
   END IF;
   RETURN v || jsonb_build_object(
     'window_from', p_from, 'window_to', v_to, 'moves', v_moves, 'lessons', COALESCE(v_n, 0),
