@@ -3,7 +3,7 @@
  * page that only shows rich text never downloads ProseMirror.
  */
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { useEditor, EditorContent, useEditorState, type Editor } from "@tiptap/react";
+import { Editor } from "@tiptap/core";
 import {
   AlignCenter, AlignJustify, AlignLeft, AlignRight, Baseline, Bold, Heading1, Heading2, Heading3, Highlighter,
   ImagePlus, IndentDecrease, IndentIncrease, Italic, Link2, List, ListOrdered, Quote, Redo2, RemoveFormatting, Strikethrough,
@@ -88,37 +88,58 @@ function shortcutText(id: ItemId): string | undefined {
 }
 
 /** Pressed / available state the toolbar draws, read once per transaction. */
-function useToolbarState(editor: Editor | null) {
-  return useEditorState({
-    editor,
-    selector: ({ editor: e }) => {
-      if (!e) return null;
-      const align = (["center", "right", "justify"] as Align[]).find((a) => e.isActive({ align: a })) ?? "left";
-      return {
-        bold: e.isActive("bold"),
-        italic: e.isActive("italic"),
-        underline: e.isActive("underline"),
-        strike: e.isActive("strike"),
-        h1: e.isActive("heading", { level: 1 }),
-        h2: e.isActive("heading", { level: 2 }),
-        h3: e.isActive("heading", { level: 3 }),
-        bulletList: e.isActive("bulletList"),
-        orderedList: e.isActive("orderedList"),
-        quote: e.isActive("blockquote"),
-        link: e.isActive("link"),
-        sub: e.isActive("subscript"),
-        sup: e.isActive("superscript"),
-        colour: (e.getAttributes("textStyle").color as string | undefined) ?? null,
-        highlight: (e.getAttributes("textStyle").backgroundColor as string | undefined) ?? null,
-        align,
-        canUndo: e.can().undo(),
-        canRedo: e.can().redo(),
-        canIndent: e.can().indent(),
-        canOutdent: e.can().outdent(),
-        characters: e.storage.characterCount?.characters?.() ?? 0,
-      };
-    },
-  });
+function readToolbar(e: Editor) {
+  const align = (["center", "right", "justify"] as Align[]).find((a) => e.isActive({ align: a })) ?? "left";
+  return {
+    bold: e.isActive("bold"),
+    italic: e.isActive("italic"),
+    underline: e.isActive("underline"),
+    strike: e.isActive("strike"),
+    h1: e.isActive("heading", { level: 1 }),
+    h2: e.isActive("heading", { level: 2 }),
+    h3: e.isActive("heading", { level: 3 }),
+    bulletList: e.isActive("bulletList"),
+    orderedList: e.isActive("orderedList"),
+    quote: e.isActive("blockquote"),
+    link: e.isActive("link"),
+    sub: e.isActive("subscript"),
+    sup: e.isActive("superscript"),
+    colour: (e.getAttributes("textStyle").color as string | undefined) ?? null,
+    highlight: (e.getAttributes("textStyle").backgroundColor as string | undefined) ?? null,
+    align,
+    canUndo: e.can().undo(),
+    canRedo: e.can().redo(),
+    canIndent: e.can().indent(),
+    canOutdent: e.can().outdent(),
+    characters: (e.storage as any).characterCount?.characters?.() ?? 0,
+  };
+}
+type ToolbarState = ReturnType<typeof readToolbar>;
+
+function sameState(a: ToolbarState | null, b: ToolbarState): boolean {
+  if (!a) return false;
+  for (const k of Object.keys(b) as Array<keyof ToolbarState>) if (a[k] !== b[k]) return false;
+  return true;
+}
+
+// The React binding, in a few lines instead of @tiptap/react (which brings
+// node-view portals, menus and a deep-equal library this editor does not use).
+function useToolbarState(editor: Editor | null): ToolbarState | null {
+  const [state, setState] = useState<ToolbarState | null>(null);
+  useEffect(() => {
+    if (!editor) return;
+    const read = () => {
+      if (editor.isDestroyed) return;
+      const next = readToolbar(editor);
+      setState((prev) => (sameState(prev, next) ? prev : next));
+    };
+    read();
+    editor.on("transaction", read);
+    return () => {
+      editor.off("transaction", read);
+    };
+  }, [editor]);
+  return state;
 }
 
 type Panel = null | "link" | "colour" | "highlight";
@@ -183,29 +204,43 @@ export default function EditorImpl({
   if (placeholder) contentAttributes["aria-placeholder"] = placeholder;
   if (disabled) contentAttributes["aria-disabled"] = "true";
 
-  const editor = useEditor(
-    {
+  const mountRef = useRef<HTMLDivElement>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const live = useRef({ disabled, autoFocus, onBlur, contentAttributes });
+  live.current = { disabled, autoFocus, onBlur, contentAttributes };
+  const [editor, setEditor] = useState<Editor | null>(null);
+  // Created before paint, into our own element. A new schema (pictures on or
+  // off, a different limit) needs a new editor; everything else updates in place.
+  useLayoutEffect(() => {
+    const opts = live.current;
+    const mount = mountRef.current;
+    const start = valueRef.current;
+    lastHtml.current = start;
+    const e = new Editor({
+      element: mount,
       extensions: editorExtensions({ images, maxLength, placeholder: () => placeholderRef.current ?? "" }),
-      content: prepareForEditor(sanitizeRichHtml(value, "store", { allowImages: images })),
-      editable: !disabled,
-      autofocus: autoFocus ? "end" : false,
-      immediatelyRender: true,
-      shouldRerenderOnTransaction: false,
+      content: prepareForEditor(sanitizeRichHtml(start, "store", { allowImages: images })),
+      editable: !opts.disabled,
+      autofocus: opts.autoFocus ? "end" : false,
       editorProps: {
-        attributes: contentAttributes,
+        attributes: opts.contentAttributes,
         transformPastedHTML: (html) => sanitizeRichHtml(preparePaste(html), "paste", { allowImages: images }),
       },
-      onUpdate: ({ editor: e }) => {
-        const html = e.isEmpty ? "" : sanitizeRichHtml(e.getHTML(), "store", { allowImages: images });
+      onUpdate: ({ editor: ed }) => {
+        const html = ed.isEmpty ? "" : sanitizeRichHtml(ed.getHTML(), "store", { allowImages: images });
         lastHtml.current = html;
         onChangeRef.current(html);
       },
-      onBlur: () => onBlur?.(),
-    },
-    // A new schema needs a new editor; everything else is updated in place.
-    [images, maxLength],
-  );
-
+      onBlur: () => live.current.onBlur?.(),
+    });
+    setEditor(e);
+    return () => {
+      e.destroy();
+      mount?.replaceChildren();
+      setEditor(null);
+    };
+  }, [images, maxLength]);
   // A value from outside (a row loaded after mount, a form reset) replaces the
   // content; the editor's own echo does not.
   useEffect(() => {
@@ -542,7 +577,7 @@ export default function EditorImpl({
         />
       )}
 
-      <EditorContent editor={editor} className="rte-body" />
+      <div ref={mountRef} className="rte-body" />
 
       {(maxLength || uploading !== "idle") && (
         <div className="rte-footer">

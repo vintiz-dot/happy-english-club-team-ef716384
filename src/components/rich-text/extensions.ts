@@ -6,7 +6,7 @@
  *
  * Only MIT Tiptap packages; no Pro extensions, no cloud service.
  */
-import { Extension, type AnyExtension } from "@tiptap/core";
+import { Extension, Mark, mergeAttributes, type AnyExtension } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
@@ -19,13 +19,20 @@ import CodeBlock from "@tiptap/extension-code-block";
 import Heading from "@tiptap/extension-heading";
 import Blockquote from "@tiptap/extension-blockquote";
 import HardBreak from "@tiptap/extension-hard-break";
-import { BulletList, OrderedList, ListItem, ListKeymap } from "@tiptap/extension-list";
-import Link from "@tiptap/extension-link";
+// Subpath imports: the package indexes also pull in task lists, drop/gap cursors and more.
+import { BulletList } from "@tiptap/extension-list/bullet-list";
+import { OrderedList } from "@tiptap/extension-list/ordered-list";
+import { ListItem } from "@tiptap/extension-list/item";
+import { ListKeymap } from "@tiptap/extension-list/keymap";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
-import { TextStyle, Color, BackgroundColor } from "@tiptap/extension-text-style";
+import { TextStyle } from "@tiptap/extension-text-style/text-style";
+import { Color } from "@tiptap/extension-text-style/color";
+import { BackgroundColor } from "@tiptap/extension-text-style/background-color";
 import Image from "@tiptap/extension-image";
-import { Placeholder, CharacterCount, UndoRedo } from "@tiptap/extensions";
+import { Placeholder } from "@tiptap/extensions/placeholder";
+import { CharacterCount } from "@tiptap/extensions/character-count";
+import { UndoRedo } from "@tiptap/extensions/undo-redo";
 import { safeHttpUrl } from "@/lib/safeUrl";
 import { STORE_MAX_INDENT } from "./sanitize";
 
@@ -33,6 +40,10 @@ export type Align = "left" | "center" | "right" | "justify";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
+    safeLink: {
+      setLink: (attrs: { href: string }) => ReturnType;
+      unsetLink: () => ReturnType;
+    };
     blockFormat: {
       /** In a list: nest the item. Elsewhere: one Quill indent step. */
       indent: () => ReturnType;
@@ -148,6 +159,45 @@ export const BlockFormat = Extension.create({
   },
 });
 
+/**
+ * A link mark that only ever holds an http(s) address (checked by safeUrl on
+ * read, on paste and on set). Written here rather than taken from
+ * @tiptap/extension-link: that one brings linkifyjs (about 30 kB) for
+ * auto-linking, which the old editor never did either.
+ */
+export const SafeLink = Mark.create({
+  name: "link",
+  priority: 1000,
+  keepOnSplit: false,
+  inclusive: false,
+  exitable: true,
+
+  addAttributes() {
+    return { href: { default: null, parseHTML: (el) => safeHttpUrl((el as HTMLElement).getAttribute("href")) ?? null } };
+  },
+
+  parseHTML() {
+    return [{ tag: "a[href]", getAttrs: (el) => (safeHttpUrl((el as HTMLElement).getAttribute("href")) ? null : false) }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["a", mergeAttributes(HTMLAttributes, { target: "_blank", rel: "noopener noreferrer" }), 0];
+  },
+
+  addCommands() {
+    return {
+      setLink:
+        (attrs: { href: string }) =>
+        ({ chain }: any) =>
+          safeHttpUrl(attrs.href) ? chain().setMark(this.name, { href: safeHttpUrl(attrs.href) }).run() : false,
+      unsetLink:
+        () =>
+        ({ chain }: any) =>
+          chain().unsetMark(this.name, { extendEmptyMarkRange: true }).run(),
+    };
+  },
+});
+
 export interface SchemaOptions {
   /** Include the image node (only when the host passes an upload adapter). */
   images?: boolean;
@@ -186,15 +236,8 @@ export function schemaExtensions({ images = false }: SchemaOptions = {}): AnyExt
     TextStyle,
     Color,
     BackgroundColor,
-    Link.configure({
-      openOnClick: false,
-      autolink: true,
-      linkOnPaste: true,
-      defaultProtocol: "https",
-      isAllowedUri: (url) => allowedLink(url),
-      shouldAutoLink: (url) => allowedLink(/^https?:\/\//i.test(url) ? url : `https://${url}`),
-      HTMLAttributes: { target: "_blank", rel: "noopener noreferrer", class: null },
-    }),
+    SafeLink,
+
     BlockFormat,
   ];
   if (images) list.push(Image.configure({ inline: false, allowBase64: false }));
