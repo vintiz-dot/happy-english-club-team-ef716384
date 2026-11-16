@@ -196,7 +196,7 @@ export function ReportDocument({ studentName, report, latest, className }: {
   className?: string;
 }) {
   return (
-    <div className={`bg-white text-black ${className ?? ""}`}>
+    <div data-hec-document="" className={`bg-white text-black ${className ?? ""}`}>
       <div className="space-y-4">
         <BrandHeader
           studentName={studentName}
