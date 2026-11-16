@@ -1,6 +1,6 @@
 # FIX: attendance streaks, family bank details, long phone videos
 
-Where I am / next step: all three items written, tested and committed; full checks run (results at the end). Next step is the conductor's review and apply, in the order under "What the conductor applies".
+Where I am / next step: done - all three items written, tested and committed, including the owner's back-pay ruling; checks green (below). Next step is the conductor's review and apply, in the order under "What the conductor applies".
 
 Branch: worktree-agent-ae3a47575e6e4c362, started from the conductor branch `claude/hec-conductor-setup-efbaa5` at 946eb6d1. Built and tested only: nothing connected to the live database, nothing applied, deployed or pushed.
 
@@ -114,3 +114,8 @@ Option (a) (extract the audio in the browser before upload) was not taken becaus
    - `analyze-video-submission`: `analyze-video-submission/index.ts`, `_lib/claude-json.ts`, `_lib/speech-file.ts`, `_lib/gemini-transcript.ts`, `_lib/video-homework.ts`.
    (`_lib/*` above import nothing relative beyond what is listed; remote imports are esm.sh / deno.land / npm.)
 5. Publish the app for the review panel's label (optional; the function works without it).
+
+## Checks (16 Nov 2026, on the final code)
+- `node scripts/pgtest/run.mjs`: 6213 assertions across 64 suites, 0 suite(s) failed (attendance streaks 83, bank info family logins 27, stars sync core 65, edge functions typecheck 5, app typecheck 3, d4 functions register 34 - it loads the real mark-attendance).
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0.
+- `npm run test:bun`: 180 pass, 0 fail across 14 files (geminiTranscript.test.ts: 14).
