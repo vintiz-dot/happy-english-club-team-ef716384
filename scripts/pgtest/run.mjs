@@ -213,7 +213,7 @@ const SUITES = [
   {
     name: "reception display",
     file: "reception-display.test.mjs",
-    migrations: ["20261116090000_reception_display.sql"],
+    migrations: ["20261116090000_reception_display.sql", "20261116100000_reception_media.sql"],
   },
   {
     name: "language support",

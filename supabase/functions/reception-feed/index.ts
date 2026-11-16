@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         .lte("start_date", t.today).or(`end_date.is.null,end_date.gte.${t.today}`).limit(5000),
       db.from("student_points").select("student_id, class_id, total_points, homework_points, participation_points").eq("month", t.month).limit(5000),
       db.from("monthly_leaders").select("student_id, class_id, total_points").eq("month", t.prevMonth).limit(500),
-      db.from("reception_items").select("id, kind, title_en, title_vi, body_en, body_vi, stat_value, image_url, student_id, starts_on, ends_on, sort_order")
+      db.from("reception_items").select("id, kind, title_en, title_vi, body_en, body_vi, stat_value, image_url, student_id, starts_on, ends_on, sort_order, images, video_source, video_url, youtube_id, play_seconds, sound")
         .eq("is_active", true).or(`ends_on.is.null,ends_on.gte.${t.today}`)
         .order("sort_order").order("created_at", { ascending: false }).limit(200),
       db.from("reception_feedback").select("name, relation, rating, message, approved_at").eq("may_show", true)
@@ -176,10 +176,18 @@ Deno.serve(async (req) => {
       i.kind === "event"
         ? (i.ends_on ?? i.starts_on ?? t.today) >= t.today
         : !i.starts_on || i.starts_on <= t.today;
-    const items = (itemsRes.data ?? []).filter(showing).map((i) => {
-      const k = i.student_id ? kids.get(i.student_id) : null;
-      return { ...i, student_id: undefined, student: k ? { name: k.name, photo: k.photo } : null };
-    });
+    const shown = (itemsRes.data ?? []).filter(showing);
+    // YouTube cannot play inside the TV app (its 2016 browser): those go to
+    // the helper, which plays them in the TV's YouTube app between loops.
+    const youtube = shown
+      .filter((i) => i.kind === "video" && i.video_source === "youtube" && i.youtube_id)
+      .map((i) => ({ id: i.id, title: i.title_en, youtube_id: i.youtube_id, play_seconds: i.play_seconds, sound: i.sound }));
+    const items = shown
+      .filter((i) => !(i.kind === "video" && i.video_source === "youtube"))
+      .map((i) => {
+        const k = i.student_id ? kids.get(i.student_id) : null;
+        return { ...i, student_id: undefined, youtube_id: undefined, student: k ? { name: k.name, photo: k.photo } : null };
+      });
 
     const attTotal = attTotalRes.count ?? 0;
     const stats = {
@@ -206,13 +214,14 @@ Deno.serve(async (req) => {
       today: t.today,
       month: t.month,
       champions_month: t.prevMonth,
-      settings: { scene_seconds: settings.scene_seconds, sections: settings.sections },
+      settings: { scene_seconds: settings.scene_seconds, sections: settings.sections, youtube_every_minutes: settings.youtube_every_minutes ?? 10 },
       stats,
       leaderboard: top,
       class_boards: classBoards,
       champions,
       courses,
       items,
+      youtube,
       feedback: (feedbackRes.data ?? []).map((f) => ({ name: f.name, relation: f.relation, rating: f.rating, message: f.message })),
       qr: { feedback: feedbackQr, zalo: zaloQr, google: googleQr },
     });

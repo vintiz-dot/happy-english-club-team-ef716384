@@ -267,6 +267,10 @@ verify_jwt = true
 [functions.reception-feed]
 verify_jwt = false
 
+# Admin > Reception: copies a Drive video into reception-video as the calling admin.
+[functions.reception-drive-import]
+verify_jwt = true
+
 # Class recorder retention: the nightly job (runner token) or an admin only.
 [functions.recorder-retention]
 verify_jwt = true

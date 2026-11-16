@@ -105,5 +105,23 @@ ok("an admin uploads a photo", (await tryAs(ADMIN, "admin", "authenticated", () 
 ok("a parent cannot", (await tryAs(PARENT, "family", "authenticated", () => db.query(
   `INSERT INTO storage.objects (bucket_id, name) VALUES ('reception','b.jpg')`))) !== null);
 
+if (MIGS.some((m) => m.includes("reception_media"))) {
+  console.log("=== albums and videos ===");
+  const add = (cols, vals) => tryAs(ADMIN, "admin", "authenticated", () => db.query(`INSERT INTO public.reception_items (${cols}) VALUES (${vals})`));
+  ok("an album with pictures is saved", (await add("kind, title_en, images", `'album','Summer Camp','[{"url":"https://x/a.jpg","caption":"Day 1"}]'`)) === null);
+  ok("an album with no pictures is refused", (await add("kind, title_en", `'album','Empty'`)) !== null);
+  ok("an uploaded video is saved", (await add("kind, title_en, video_source, video_url, sound", `'video','Showcase','upload','https://x/v.mp4',true`)) === null);
+  ok("a video with no file or link is refused", (await add("kind, title_en, video_source", `'video','Nothing','upload'`)) !== null);
+  ok("a YouTube video with its id and play time is saved", (await add("kind, title_en, video_source, youtube_id, play_seconds", `'video','Interview','youtube','aqz-KE-bpKQ',90`)) === null);
+  ok("a YouTube video without a play time is refused", (await add("kind, title_en, video_source, youtube_id", `'video','Interview','youtube','aqz-KE-bpKQ'`)) !== null);
+  ok("a malformed YouTube id is refused", (await add("kind, title_en, video_source, youtube_id, play_seconds", `'video','Bad','youtube','not-an-id',60`)) !== null);
+  ok("an http (not https) video address is refused", (await add("kind, title_en, video_source, video_url", `'video','Bad','upload','http://x/v.mp4'`)) !== null);
+  ok("a play time under 5 seconds is refused", (await add("kind, title_en, video_source, video_url, play_seconds", `'video','Short','upload','https://x/v.mp4',2`)) !== null);
+  eq("YouTube breaks default to every 10 minutes", (await one(`SELECT youtube_every_minutes FROM public.reception_settings`)).youtube_every_minutes, 10);
+  ok("the video bucket takes 250 MB files", Number((await one(`SELECT file_size_limit FROM storage.buckets WHERE id='reception-video'`)).file_size_limit) === 262144000);
+  ok("an admin uploads a video", (await tryAs(ADMIN, "admin", "authenticated", () => db.query(`INSERT INTO storage.objects (bucket_id, name) VALUES ('reception-video','v.mp4')`))) === null);
+  ok("a parent cannot", (await tryAs(PARENT, "family", "authenticated", () => db.query(`INSERT INTO storage.objects (bucket_id, name) VALUES ('reception-video','w.mp4')`))) !== null);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
