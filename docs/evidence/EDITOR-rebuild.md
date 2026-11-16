@@ -44,7 +44,7 @@ Added to the harness (nothing existing changed): `editor-patch.mjs` (builds `pre
 - `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0.
 - `npm run test:bun`: 207 pass, 0 fail, 14 files (41 of them the new editor suite).
 - `node scripts/design-tokens-check.mjs`: PASS.
-- `node scripts/pgtest/run.mjs`: PGTEST_RESULT
+- `node scripts/pgtest/run.mjs`: exit 0, 6113 assertions across 62 suites, 0 failed (includes the app typecheck suite).
 
 ## Not verified
 
