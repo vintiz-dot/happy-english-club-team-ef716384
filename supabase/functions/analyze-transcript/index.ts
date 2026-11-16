@@ -10,22 +10,45 @@
  *   1. Parse the transcript (WebVTT / SRT / "Name: line" plain text).
  *   2. Compute deterministic per-speaker metrics locally: utterances,
  *      words, questions, vocabulary richness, participation share.
- *   3. Match speakers to the class roster (diacritic-insensitive).
- *   4. One LLM pass per transcript extracts, per student: grammar/vocab
+ *   3. SUGGEST who each speaker is (_lib/speaker-suggestion.ts), with
+ *      low / medium / high confidence. A suggestion is never a decision.
+ *   4. One LLM pass per transcript extracts, per speaker: grammar/vocab
  *      errors (with corrections + CEFR topic), a CEFR estimate, and
  *      notable highlights — plus a lesson summary.
- *   5. Persist: transcript_speaker_metrics, student_error_log (+ SRS cards
- *      for spaced repetition), cefr_assessments, transcript summary.
+ *   5. Persist DRAFTS that only the class's staff can read (D-26):
+ *      transcript_speaker_metrics with NO child linked,
+ *      transcript_speaker_suggestions (the suggested child, the drafted
+ *      errors and CEFR estimate), class_transcripts.overview_draft, and the
+ *      point-award suggestions. Nothing reaches a child or a family here:
+ *      student_error_log, srs_cards, cefr_assessments and lesson_overviews
+ *      are written only by approve_transcript_analysis, with the teacher's
+ *      own choices (supabase/migrations/20261117100000).
  *
- * Input:  { transcript_id: string }
- * Output: { success, transcript_id, speakers, matched_students,
- *           errors_logged, summary }
+ * Input:  { transcript_id: string, background?: boolean }
+ * Output: { success, transcript_id, speakers, suggested_students,
+ *           errors_drafted, summary }
+ *
+ * Spend gate: a browser call starts with requireSpender (staff, per-account
+ * limit). transcribe-lesson-audio hands off with the service-role key after
+ * its own staff + class check; that is the one caller let past without it.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { fireProfileRefresh } from "../_lib/profile.ts";
 import { safeParseJson, chunkOnLines } from "../_lib/text.ts";
-import { callerHoldsClass, requireRole } from "../_lib/auth.ts";
+import { callerHoldsClass, keysMatch, requireRole, type CallerIdentity } from "../_lib/auth.ts";
+import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
+import { speakerKey, suggestSpeaker, type SpeakerSuggestion } from "../_lib/speaker-suggestion.ts";
+
+// Each run is up to ~30 OpenAI calls (diarization chunks, report, per-student,
+// point awards); a teacher re-analysing a lesson needs a handful.
+const GATE: SpendGate = { name: "analyze-transcript", roles: STAFF_ROLES, limit: 10, windowMs: 10 * 60_000 };
+
+/** The internal hand-off from transcribe-lesson-audio (service-role key). */
+function isServiceRoleCall(req: Request): boolean {
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  return !!token && !!serviceKey && keysMatch(token, serviceKey);
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,13 +66,9 @@ interface Utterance {
   text: string;
 }
 
-function stripDiacritics(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "");
-}
-
-function normName(s: string): string {
-  return stripDiacritics(s).toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
-}
+// One normalisation for labels, roster names and aliases (shared with the
+// suggestion rule and stored as transcript_speaker_suggestions.speaker_key).
+const normName = speakerKey;
 
 /**
  * "Unknown" is unattributable audio (overlapping chatter, mislabeled mono
@@ -514,7 +533,13 @@ async function runAnalysis(sb: any, tr: any): Promise<Record<string, unknown>> {
     // names called out in class.
     let utterances = parseTranscript(tr.raw_text);
     const distinctSpeakers = new Set(utterances.map((u) => normName(u.speaker))).size;
+    // Who wrote the labels? A recording's labels were produced by a model
+    // (transcribe-lesson-audio's diarizer, or llmDiarize below); a Zoom /
+    // Teams / "Name:" paste carries the source's own. A model's label is
+    // never better than a medium-confidence suggestion.
+    let labelsFromModel = tr.source_format === "audio";
     if (!utterances.length || distinctSpeakers < 2) {
+      labelsFromModel = true;
       utterances = await llmDiarize(
         tr.raw_text,
         roster.map((s) => s.full_name),
@@ -524,27 +549,17 @@ async function runAnalysis(sb: any, tr: any): Promise<Record<string, unknown>> {
     if (!utterances.length) throw new Error("could not attribute any speaker turns in the transcript");
     const stats = computeStats(utterances);
 
-    const matchStudent = (label: string) => {
-      const n = normName(label);
-      if (!n) return null;
-      // A teacher's past manual correction beats fuzzy name matching.
-      const aliased = aliasMap.get(n);
-      if (aliased) return aliased;
-      let best: { id: string; score: number } | null = null;
-      for (const s of roster) {
-        const rn = normName(s.full_name);
-        let score = 0;
-        if (rn === n) score = 1;
-        else if (rn.includes(n) || n.includes(rn)) score = 0.9;
-        else {
-          const nTok = new Set(n.split(" "));
-          const rTok = rn.split(" ");
-          const hits = rTok.filter((t) => nTok.has(t)).length;
-          score = hits / Math.max(rTok.length, 1);
-        }
-        if (!best || score > best.score) best = { id: s.id, score };
+    // A SUGGESTION of who each label is - never a link. Only the teacher's
+    // choice in approve_transcript_analysis puts a line on a child.
+    const suggestionCache = new Map<string, SpeakerSuggestion>();
+    const suggest = (label: string, fromModel = labelsFromModel): SpeakerSuggestion => {
+      const k = `${fromModel ? "m" : "t"}|${label}`;
+      let hit = suggestionCache.get(k);
+      if (!hit) {
+        hit = suggestSpeaker(label, roster, aliasMap, fromModel);
+        suggestionCache.set(k, hit);
       }
-      return best && best.score >= 0.5 ? best.id : null;
+      return hit;
     };
 
     const speakers = [...stats.values()];
@@ -554,7 +569,7 @@ async function runAnalysis(sb: any, tr: any): Promise<Record<string, unknown>> {
 
     // ── 4. LLM analysis over matched students (Unknown excluded) ─────────
     const studentSpeakers = speakers
-      .map((s) => ({ ...s, studentId: matchStudent(s.label), isTeacher: teacherNames.has(normName(s.label)) }))
+      .map((s) => ({ ...s, studentId: suggest(s.label).studentId, isTeacher: teacherNames.has(normName(s.label)) }))
       .filter((s) => !s.isTeacher && !isUnknownLabel(s.label));
 
     const llmInput = studentSpeakers
@@ -704,23 +719,29 @@ async function runAnalysis(sb: any, tr: any): Promise<Record<string, unknown>> {
       (editedRows || []).map((r: any) => [normName(String(r.speaker_label || "")), r]),
     );
 
-    await sb.from("transcript_speaker_metrics").delete().eq("transcript_id", transcriptId);
+    // Drafts only, from here on. transcript_speaker_metrics rows carry NO
+    // child (the table's link guard refuses one anyway); who a speaker
+    // probably is goes into transcript_speaker_suggestions, staff-only.
+    const { error: delErr } = await sb.from("transcript_speaker_metrics").delete().eq("transcript_id", transcriptId);
+    if (delErr) throw new Error(`could not replace the previous draft: ${delErr.message}`);
 
-    let errorsLogged = 0;
-    let matchedCount = 0;
+    let errorsDrafted = 0;
+    let suggestedCount = 0;
 
     for (const s of speakers) {
       const isTeacher = teacherNames.has(normName(s.label));
       const isUnknown = isUnknownLabel(s.label);
-      const studentId = isTeacher || isUnknown ? null : matchStudent(s.label);
-      if (studentId) matchedCount++;
+      const suggestion: SpeakerSuggestion = isTeacher || isUnknown
+        ? { studentId: null, confidence: "low", basis: "none" }
+        : suggest(s.label);
+      if (suggestion.studentId) suggestedCount++;
       const ai = byName.get(normName(s.label));
       const keep = preserved.get(normName(s.label));
 
-      await sb.from("transcript_speaker_metrics").insert({
+      const { data: metricRow, error: metricErr } = await sb.from("transcript_speaker_metrics").insert({
         transcript_id: transcriptId,
         class_id: tr.class_id,
-        student_id: studentId,
+        student_id: null,
         speaker_label: s.label,
         is_teacher: isTeacher,
         utterance_count: s.utterances.length,
@@ -741,56 +762,42 @@ async function runAnalysis(sb: any, tr: any): Promise<Record<string, unknown>> {
         recommendation:
           keep?.recommendation ?? (ai?.recommendation ? String(ai.recommendation).slice(0, 400) : null),
         edited_by_teacher: !!keep,
+      }).select("id").single();
+      if (metricErr || !metricRow?.id) {
+        throw new Error(`could not save the draft for "${s.label}": ${metricErr?.message ?? "no row returned"}`);
+      }
+      if (isTeacher) continue;
+
+      // The draft the teacher reviews: errors and a CEFR estimate, held
+      // here (staff-only) and published only as the teacher sends them.
+      const draftErrors = (Array.isArray(ai?.errors) ? ai.errors : [])
+        .filter((err: any) => err?.error_text && err?.corrected_text)
+        .slice(0, 5)
+        .map((err: any) => ({
+          error_text: String(err.error_text).slice(0, 500),
+          corrected_text: String(err.corrected_text).slice(0, 500),
+          error_type: ["grammar", "vocabulary", "pronunciation", "spelling", "syntax", "other"].includes(err.error_type)
+            ? err.error_type
+            : "grammar",
+          cefr_topic: err.cefr_topic ? String(err.cefr_topic).slice(0, 80) : null,
+        }));
+      errorsDrafted += draftErrors.length;
+      const cefr = ai?.cefr_estimate && CEFR_SCORE[ai.cefr_estimate] !== undefined ? String(ai.cefr_estimate) : null;
+      const { error: sugErr } = await sb.from("transcript_speaker_suggestions").insert({
+        metric_id: metricRow.id,
+        transcript_id: transcriptId,
+        class_id: tr.class_id,
+        speaker_key: normName(s.label),
+        suggested_student_id: suggestion.confidence === "low" ? null : suggestion.studentId,
+        confidence: suggestion.confidence,
+        basis: suggestion.basis,
+        labels_from_model: labelsFromModel,
+        draft_errors: draftErrors,
+        cefr_estimate: cefr,
+        cefr_confidence: cefr && typeof ai?.confidence === "number" ? ai.confidence : null,
+        cefr_evidence: cefr && ai?.evidence ? String(ai.evidence).slice(0, 500) : null,
       });
-
-      if (!studentId || !ai) continue;
-
-      // Error log + auto SRS cards
-      for (const err of ai.errors ?? []) {
-        if (!err?.error_text || !err?.corrected_text) continue;
-        const { data: errRow } = await sb
-          .from("student_error_log")
-          .insert({
-            student_id: studentId,
-            class_id: tr.class_id,
-            source: "transcript",
-            source_id: transcriptId,
-            error_text: String(err.error_text).slice(0, 500),
-            corrected_text: String(err.corrected_text).slice(0, 500),
-            error_type: ["grammar", "vocabulary", "pronunciation", "spelling", "syntax", "other"].includes(err.error_type)
-              ? err.error_type
-              : "grammar",
-            cefr_topic: err.cefr_topic ? String(err.cefr_topic).slice(0, 80) : null,
-          })
-          .select("id")
-          .single();
-        if (errRow) {
-          errorsLogged++;
-          await sb.from("srs_cards").insert({
-            student_id: studentId,
-            source: "error",
-            error_log_id: errRow.id,
-            front: `Fix this sentence:\n“${String(err.error_text).slice(0, 300)}”`,
-            back: String(err.corrected_text).slice(0, 300),
-            hint: err.cefr_topic ? `Topic: ${err.cefr_topic}` : null,
-          });
-        }
-      }
-
-      // CEFR trajectory point
-      if (ai.cefr_estimate && CEFR_SCORE[ai.cefr_estimate] !== undefined) {
-        await sb.from("cefr_assessments").insert({
-          student_id: studentId,
-          class_id: tr.class_id,
-          source: "transcript",
-          level: ai.cefr_estimate,
-          level_score: CEFR_SCORE[ai.cefr_estimate],
-          confidence: typeof ai.confidence === "number" ? ai.confidence : null,
-          evidence: ai.evidence ? String(ai.evidence).slice(0, 500) : null,
-          assessed_at: tr.transcript_date,
-          source_id: transcriptId,
-        });
-      }
+      if (sugErr) throw new Error(`could not save the suggestion for "${s.label}": ${sugErr.message}`);
     }
 
     // ── 6. Decipher teacher-announced point awards ("5 stars Kiki!") ─────
@@ -849,7 +856,10 @@ async function runAnalysis(sb: any, tr: any): Promise<Record<string, unknown>> {
           );
 
           for (const award of awards) {
-            const studentId = matchStudent(award.student_name);
+            // The name is one the model extracted, so this is a suggestion
+            // of at most medium confidence; a low one names nobody and the
+            // screen offers no Apply. A teacher still applies each award.
+            const studentId = suggest(award.student_name, true).studentId;
             const attendanceStatus = studentId
               ? attMap.get(studentId) ?? (sessionIds.length ? "unmarked" : "no_session")
               : "unmarked";
@@ -873,11 +883,30 @@ async function runAnalysis(sb: any, tr: any): Promise<Record<string, unknown>> {
       console.warn("point-award extraction failed (analysis continues):", (e as Error)?.message);
     }
 
-    await sb
+    // ── 7. The DRAFT lesson overview (summary, materials/pages, homework).
+    // It lives on class_transcripts (admin + the class's teachers only);
+    // approve_transcript_analysis copies it into lesson_overviews, which
+    // children and families read. A draft the teacher edited is kept.
+    const { data: draftRow } = await sb
+      .from("class_transcripts")
+      .select("overview_draft")
+      .eq("id", transcriptId)
+      .maybeSingle();
+    const teacherDraft = draftRow?.overview_draft?.edited_by_teacher ? draftRow.overview_draft : null;
+    const overviewDraft = teacherDraft ?? {
+      summary: analysis.summary ?? null,
+      materials: Array.isArray(analysis.materials) ? analysis.materials.slice(0, 10) : [],
+      homework: analysis.homework ? String(analysis.homework).slice(0, 1000) : null,
+      edited_by_teacher: false,
+    };
+    analysis.drafted_for_review = true;
+
+    const { error: doneErr } = await sb
       .from("class_transcripts")
       .update({
         status: "analyzed",
         summary: analysis.summary ?? null,
+        overview_draft: overviewDraft,
         analysis,
         title_covered:
           typeof analysis.title_coverage?.covered === "boolean"
@@ -893,56 +922,20 @@ async function runAnalysis(sb: any, tr: any): Promise<Record<string, unknown>> {
         processing_stage: "completed",
       })
       .eq("id", transcriptId);
+    if (doneErr) throw new Error(`could not save the analysis: ${doneErr.message}`);
 
-    // ── 7. Publish the student-safe lesson overview ──────────────────────
-    // Summary + materials/pages + homework, visible to every enrolled
-    // student (separate table: students must never see raw transcripts or
-    // classmates' error analyses). Best-effort.
-    try {
-      // Never overwrite an overview the teacher has corrected by hand.
-      const { data: existingOv } = await sb
-        .from("lesson_overviews")
-        .select("edited_by_teacher")
-        .eq("transcript_id", transcriptId)
-        .maybeSingle();
-
-      if (existingOv?.edited_by_teacher) {
-        console.log("lesson overview was teacher-edited — leaving it untouched");
-      } else {
-        const { error: ovErr } = await sb.from("lesson_overviews").upsert(
-          {
-            transcript_id: transcriptId,
-            class_id: tr.class_id,
-            lesson_date: tr.transcript_date,
-            title: tr.title ?? null,
-            summary: analysis.summary ?? null,
-            materials: Array.isArray(analysis.materials) ? analysis.materials.slice(0, 10) : [],
-            homework: analysis.homework ? String(analysis.homework).slice(0, 1000) : null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "transcript_id" },
-        );
-        if (ovErr) console.warn("lesson_overviews upsert failed:", ovErr.message);
-      }
-    } catch (e) {
-      console.warn("lesson overview publish failed (analysis continues):", (e as Error)?.message);
-    }
-
-    // Keep every matched student's living profile current (background).
-    fireProfileRefresh(
-      speakers
-        .map((s) => (teacherNames.has(normName(s.label)) ? null : matchStudent(s.label)))
-        .filter((id): id is string => !!id),
-    );
+    // Nothing is published here, so no child's profile changes: the screen
+    // refreshes the profiles of the children a teacher approves.
 
     return {
       success: true,
       transcript_id: transcriptId,
       speakers: speakers.length,
-      matched_students: matchedCount,
-      errors_logged: errorsLogged,
+      suggested_students: suggestedCount,
+      errors_drafted: errorsDrafted,
       points_suggested: pointsSuggested,
       summary: analysis.summary ?? null,
+      needs_approval: true,
     };
   }
 }
@@ -954,6 +947,14 @@ Deno.serve(async (req) => {
       status,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
+  // The spend gate comes first: nothing is read, and nothing is spent, for a
+  // caller it refuses. The one exception is transcribe-lesson-audio's
+  // hand-off, which presents the service-role key after its own staff and
+  // class check (and is the call that already spent on Whisper).
+  const internal = isServiceRoleCall(req);
+  const spender = internal ? null : await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
 
   const sb = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -979,7 +980,7 @@ Deno.serve(async (req) => {
 
     const { data: tr, error: trErr } = await sb
       .from("class_transcripts")
-      .select("id, class_id, raw_text, uploaded_by, transcript_date, title, lesson_context")
+      .select("id, class_id, raw_text, uploaded_by, transcript_date, title, lesson_context, source_format")
       .eq("id", transcriptId)
       .single();
     if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
@@ -989,10 +990,32 @@ Deno.serve(async (req) => {
     // dozen service-role writes off the back of it, from a transcript_id
     // in the body with no check on the caller. transcribe-lesson-audio
     // calls it internally and passes as service role.
-    const gate = await requireRole(req, sb, ["admin", "teacher"], corsHeaders);
-    if (gate instanceof Response) return gate;
+    let gate: CallerIdentity | Response;
+    if (spender) {
+      gate = spender;
+    } else {
+      gate = await requireRole(req, sb, ["admin", "teacher"], corsHeaders);
+      if (gate instanceof Response) return gate;
+    }
     if (!(await callerHoldsClass(sb, gate, tr.class_id))) {
       return respond({ success: false, error: "That transcript belongs to a class you do not hold." }, 403);
+    }
+
+    // An approved lesson is shared with families: its drafts are not
+    // rebuilt under it. Withdraw the approval first (the screen offers it);
+    // the metric rows' guard refuses the same in the database. Fail closed:
+    // if the approval cannot be read, do not analyse.
+    const { data: approval, error: apErr } = await sb
+      .from("transcript_approvals")
+      .select("transcript_id, withdrawn_at")
+      .eq("transcript_id", transcriptId)
+      .maybeSingle();
+    if (apErr) return respond({ success: false, error: "Could not check whether this lesson is approved. Try again." }, 503);
+    if (approval && !approval.withdrawn_at) {
+      return respond({
+        success: false,
+        error: "This lesson's analysis is approved and shared with families. Withdraw the approval before analysing it again.",
+      }, 409);
     }
 
     if (body.background === true) {
