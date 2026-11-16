@@ -56,8 +56,9 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
     occurredAt: new Date().toISOString().slice(0, 10),
     memo: "",
     allocationMode: "oldest-first" as "oldest-first" | "pro-rata" | "manual",
-    leftoverHandling: "unapplied_cash" as "voluntary_contribution" | "unapplied_cash" | undefined,
-    consentGiven: false,
+    // The one thing done with money beyond what the bills owe (voluntary
+    // contributions were removed, D-23).
+    leftoverHandling: "unapplied_cash" as const,
   });
 
   const [manualAllocations, setManualAllocations] = useState<Record<string, string>>({});
@@ -209,11 +210,6 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
       return;
     }
 
-    if (formData.leftoverHandling === "voluntary_contribution" && !formData.consentGiven) {
-      toast.error("Parent consent required for voluntary contribution");
-      return;
-    }
-
     setLoading(true);
     try {
       const payload: any = {
@@ -226,7 +222,6 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
         memo: formData.memo,
         allocationMode: formData.allocationMode,
         leftoverHandling: preview.leftover > 0 ? formData.leftoverHandling : undefined,
-        consentGiven: formData.consentGiven,
       };
 
       if (formData.allocationMode === "manual") {
@@ -271,7 +266,6 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
       memo: "",
       allocationMode: "oldest-first",
       leftoverHandling: "unapplied_cash",
-      consentGiven: false,
     });
     setManualAllocations({});
   };
@@ -497,38 +491,11 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                       <p className="font-medium">
                         Leftover amount: {preview.leftover.toLocaleString()} ₫
                       </p>
-                      <RadioGroup
-                        value={formData.leftoverHandling}
-                        onValueChange={(v: any) => setFormData({ ...formData, leftoverHandling: v })}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="unapplied_cash" id="leftover-unapplied" />
-                          <label htmlFor="leftover-unapplied" className="cursor-pointer">
-                            Keep as Unapplied Cash (Recommended)
-                          </label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="voluntary_contribution" id="leftover-contribution" />
-                          <label htmlFor="leftover-contribution" className="cursor-pointer">
-                            Voluntary Contribution (requires consent)
-                          </label>
-                        </div>
-                      </RadioGroup>
-
-                      {formData.leftoverHandling === "voluntary_contribution" && (
-                        <div className="flex items-center space-x-2 pt-2">
-                          <Checkbox
-                            id="leftover-consent"
-                            checked={formData.consentGiven}
-                            onCheckedChange={(checked) =>
-                              setFormData({ ...formData, consentGiven: checked as boolean })
-                            }
-                          />
-                          <label htmlFor="leftover-consent" className="text-sm cursor-pointer">
-                            Parent has given explicit consent for voluntary contribution (non-refundable)
-                          </label>
-                        </div>
-                      )}
+                      <p>
+                        It will be kept as unapplied cash: recorded in the ledger as a credit on{" "}
+                        {siblings.find((s) => s.id === Array.from(selectedSiblings)[0])?.full_name ?? "the first selected student"}'s
+                        {" "}account. It is not put on any bill, so the bills and their balances will not show it.
+                      </p>
                     </div>
                   </AlertDescription>
                 </Alert>

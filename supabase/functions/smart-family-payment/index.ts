@@ -4,6 +4,10 @@ import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-lim
 import { labelAfterPayment, monthCharged, paidLabel } from '../_lib/invoice-status.ts';
 import { addToRecordedPayment, BILL_COLUMNS } from '../_lib/recorded-payment-write.ts';
 
+const VOLUNTARY_REMOVED =
+  'Voluntary contributions have been removed. Money paid beyond what the bills owe is kept as unapplied cash. '
+  + 'Nothing was recorded: reload the page and post the payment again.';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -79,20 +83,28 @@ Deno.serve(async (req) => {
       occurredAt: z.string().datetime(),
       memo: z.string().max(500).optional(),
       month: z.string().regex(/^\d{4}-\d{2}$/),
-      leftoverHandling: z.enum(['voluntary_contribution', 'unapplied_cash']).optional(),
-      consentGiven: z.boolean().optional(),
+      // Money beyond what the family owes has one outcome: unapplied cash
+      // (below). Voluntary contributions were removed (D-23).
+      leftoverHandling: z.enum(['unapplied_cash']).optional(),
     });
 
     const body = await req.json();
+    // A tab opened before the removal may still send the old option. Refuse
+    // it, before anything is written (the audit row included), rather than
+    // quietly treat the family's money as something else.
+    if (body?.leftoverHandling === 'voluntary_contribution') {
+      return new Response(
+        JSON.stringify({ error: VOLUNTARY_REMOVED }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const {
       familyId,
       amount,
       method,
       occurredAt,
       memo,
-      month,
-      leftoverHandling,
-      consentGiven
+      month
     } = SmartPaymentSchema.parse(body);
 
     console.log('Processing smart family payment:', { familyId, amount, month });
@@ -378,71 +390,62 @@ Deno.serve(async (req) => {
       remaining -= applied;
     }
 
-    // Handle leftover amount
+    // Handle leftover amount: unapplied cash, the one outcome. It is posted
+    // to the ledger as customer credit (DR AR / CR CREDIT) on the accounts of
+    // the sibling listed first (highest debt). It is NOT put on any bill:
+    // recorded_payment, the carry and the label do not change.
     let leftoverResult = null;
     if (remaining > 0) {
       const primaryStudentId = siblingBalances[0]?.id || siblings[0].id;
-      
+
+      // That sibling may have had nothing applied, so its accounts may not
+      // exist yet (an insert with no account id used to fail silently).
+      for (const code of ['AR', 'CREDIT']) {
+        await supabase
+          .from('ledger_accounts')
+          .upsert(
+            { student_id: primaryStudentId, code },
+            { onConflict: 'student_id,code', ignoreDuplicates: true }
+          );
+      }
       const { data: accounts } = await supabase
         .from('ledger_accounts')
         .select('id, code')
         .eq('student_id', primaryStudentId);
 
       const accountMap = new Map(accounts?.map(a => [a.code, a.id]));
+      if (!accountMap.get('AR') || !accountMap.get('CREDIT')) {
+        throw new Error(`Payment posted, but the ${remaining} left over could not be recorded as unapplied cash: the student's ledger accounts are missing`);
+      }
       const leftoverTxId = crypto.randomUUID();
 
-      if (leftoverHandling === 'voluntary_contribution' && consentGiven) {
-        await supabase.from('ledger_entries').insert([
-          {
-            tx_id: leftoverTxId,
-            tx_key: `smart-family-contribution-${parentPaymentId}-${Date.now()}`,
-            account_id: method.toLowerCase() === 'cash' ? accountMap.get('CASH') : accountMap.get('BANK'),
-            debit: 0,
-            credit: remaining,
-            occurred_at: occurredAt,
-            memo: `Voluntary contribution from smart family payment`,
-            month,
-            created_by: user.id
-          },
-          {
-            tx_id: leftoverTxId,
-            account_id: accountMap.get('REVENUE'),
-            debit: remaining,
-            credit: 0,
-            occurred_at: occurredAt,
-            memo: `Voluntary contribution - direct to revenue`,
-            month,
-            created_by: user.id
-          }
-        ]);
-        leftoverResult = { type: 'voluntary_contribution', amount: remaining };
-      } else {
-        // Default to unapplied cash (credit)
-        await supabase.from('ledger_entries').insert([
-          {
-            tx_id: leftoverTxId,
-            tx_key: `smart-family-credit-${parentPaymentId}-${Date.now()}`,
-            account_id: accountMap.get('AR'),
-            debit: remaining,
-            credit: 0,
-            occurred_at: occurredAt,
-            memo: `Unapplied cash from smart family payment`,
-            month,
-            created_by: user.id
-          },
-          {
-            tx_id: leftoverTxId,
-            account_id: accountMap.get('CREDIT'),
-            debit: 0,
-            credit: remaining,
-            occurred_at: occurredAt,
-            memo: `Customer credit for future use`,
-            month,
-            created_by: user.id
-          }
-        ]);
-        leftoverResult = { type: 'unapplied_cash', amount: remaining };
+      const { error: leftoverError } = await supabase.from('ledger_entries').insert([
+        {
+          tx_id: leftoverTxId,
+          tx_key: `smart-family-credit-${parentPaymentId}-${Date.now()}`,
+          account_id: accountMap.get('AR'),
+          debit: remaining,
+          credit: 0,
+          occurred_at: occurredAt,
+          memo: `Unapplied cash from smart family payment`,
+          month,
+          created_by: user.id
+        },
+        {
+          tx_id: leftoverTxId,
+          account_id: accountMap.get('CREDIT'),
+          debit: 0,
+          credit: remaining,
+          occurred_at: occurredAt,
+          memo: `Customer credit for future use`,
+          month,
+          created_by: user.id
+        }
+      ]);
+      if (leftoverError) {
+        throw new Error(`Payment posted, but the ${remaining} left over could not be recorded as unapplied cash: ${leftoverError.message}`);
       }
+      leftoverResult = { type: 'unapplied_cash', amount: remaining };
     }
 
     // Log completion
