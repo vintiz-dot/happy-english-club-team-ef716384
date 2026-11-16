@@ -42,7 +42,7 @@ const OPS = {
   referral_bonus: ['assign', 'set_end', 'edit', 'remove'],
   pay_rate: ['set', 'remove'],
   invoice_freeze: ['unfreeze'],
-  family_link: ['set_family', 'set_sibling_from', 'set_sibling_percent'],
+  family_link: ['set_family', 'set_sibling_from', 'set_sibling_percent', 'set_active'],   // set_active: review N-2
 };
 ok('every entity and op of design b.4 has a dialog title and a button of its own',
    Object.entries(OPS).every(([e, ops]) => ops.every((o) => lib.INPUT_COPY[e]?.[o]?.title && lib.INPUT_COPY[e][o].submit)) &&
@@ -72,7 +72,11 @@ ok('a pay-rate plan shows what it reaches (lessons taught, closed months)',
    lib.payReachLines(plan({ reach: { payroll: { held_lessons: 4, locked_months: ['2026-09'] } } })).join(' ').includes('2026-09'));
 ok('the intro names payroll for a pay rate and the frozen figures for an unfreeze',
    /payroll/.test(lib.inputIntro(plan({ entity: 'pay_rate' }))) && /frozen bill/.test(lib.inputIntro(plan({ entity: 'invoice_freeze' })))
-   && /already billed/.test(lib.inputIntro(plan({ entity: 'enrollment' }))));
+   // review N-4: a T1 can reach a month already TAUGHT that has no bill yet
+   && /already taught or billed/.test(lib.inputIntro(plan({ entity: 'enrollment' }))));
+ok('  the active flag says child or family, and what it does to the family discount (review N-2)',
+   /The child is made inactive\..*family discount/.test(line({ entity: 'family_link', op: 'set_active', change: { student_id: 'x', is_active: false } })) &&
+   /The family is made active again/.test(line({ entity: 'family_link', op: 'set_active', change: { family_id: 'f', is_active: true } })));
 ok('needsInputDialog: tier 0 with nothing required -> no dialog; tier 1 -> yes; an unreadable plan -> yes (fail closed)',
    lib.needsInputDialog({ tier: 0, requires: { reason: false, confirm: false } }) === false && lib.needsInputDialog({ tier: 1 }) === true
    && lib.needsInputDialog(null) === true && lib.needsInputDialog({ requires: {} }) === true);
@@ -143,13 +147,19 @@ ok('no screen writes families.sibling_percent_override, students.family_id in an
    grepSrc(/tuition_frozen:\s*false/).length === 0 && grepSrc(/sibling_discount_from:\s*[^,}]*\}\s*\)\s*\.eq/).length === 0,
    [grepSrc(/\.update\(\s*\{[^}]*sibling_percent_override/), grepSrc(/\.update\(\s*\{[^}]*\bfamily_id\b/), grepSrc(/tuition_frozen:\s*false/)]);
 ok('the one upsert on a pay-rate conflict target is gone (owner question 5)', grepSrc(/onConflict:\s*`\$\{subject\},effective_from`/).length === 0);
+ok('no screen writes students.is_active or families.is_active raw (review N-2: both feed the sibling count)',
+   grepSrc(/\.from\(\s*["'](students|families)["']\s*\)\s*\.update\(\s*\{[^}]*\bis_active\b/).length === 0 &&
+   !/is_active/.test(read('src/components/admin/StudentEditDrawer.tsx').match(/const payload = \{[^}]*\}/)?.[0] ?? 'is_active') &&
+   /op: "set_active"/.test(read('src/components/admin/StudentEditDrawer.tsx')) && /op: "set_active"/.test(read('src/components/admin/StudentsList.tsx')) &&
+   /op: "set_active"/.test(read('src/components/admin/FamiliesList.tsx')),
+   grepSrc(/\.from\(\s*["'](students|families)["']\s*\)\s*\.update\(\s*\{[^}]*\bis_active\b/));
 const SCREENS = ['components/admin/BulkEnrollmentDateSetter.tsx', 'components/admin/class/ClassEnrollments.tsx', 'components/admin/ModifyEnrollmentModal.tsx',
   'components/admin/discount/EditEnrollmentDiscountModal.tsx', 'components/admin/EnrollmentRateEditor.tsx', 'components/admin/EnrollStudentDialog.tsx',
   'components/admin/StudentForm.tsx', 'components/admin/EnrollmentRequestsManager.tsx', 'components/admin/StudentsList.tsx',
   'components/admin/discount/AssignDiscountModal.tsx', 'components/admin/discount/StudentDiscountsTab.tsx', 'components/admin/discount/EditDiscountModal.tsx',
   'components/admin/DiscountManager.tsx', 'components/admin/staff/PayRateHistory.tsx', 'components/student/BillFreezePanel.tsx',
   'components/admin/SiblingDiscountCompute.tsx', 'pages/FamilyDetail.tsx', 'components/admin/FamilyMembersManager.tsx',
-  'components/admin/EnrollmentManager.tsx', 'components/admin/StudentEditDrawer.tsx'];
+  'components/admin/EnrollmentManager.tsx', 'components/admin/StudentEditDrawer.tsx', 'components/admin/FamiliesList.tsx'];
 const notMoved = SCREENS.filter((f) => !/useMoneyInput\(/.test(read(`src/${f}`)) || !/<MoneyInputDialog\b/.test(read(`src/${f}`)));
 ok(`the ${SCREENS.length} screens that change a money input all go through useMoneyInput (useMoneyChange under it) and mount the reason dialog`, notMoved.length === 0, notMoved);
 ok('useMoneyInput is built on useMoneyChange and the two checked RPC wrappers; it holds no write of its own',
@@ -189,6 +199,14 @@ const importable = /const IMPORTABLE = \[([^\]]*)\]/.exec(imp)?.[1] ?? '';
 ok('admin-data-import: none of the five money tables is importable, and the fee is stripped from class rows',
    ['enrollments', 'sessions', 'attendance', 'discount_definitions', 'discount_assignments'].every((t) => !importable.includes(`'${t}'`)) &&
    importable.includes("'families'") && /classes: \['session_rate_vnd'\]/.test(imp), importable);
+// Review M-1. Not driven end to end (its embedded family select and the Auth
+// admin API are outside the functions harness); the database half - a lone
+// child into an empty family is T0 - is d4-money-inputs' "review M-1" section.
+const lsu = read('supabase/functions/link-student-user/index.ts');
+ok('link-student-user reports its family writes: the family insert, the email update and the link are each checked, an empty family it made is removed, familyError is returned and the dialog shows it (review M-1)',
+   /error: familyInsertErr/.test(lsu) && /if \(familyInsertErr \|\| !newFamily\)/.test(lsu) && /error: linkErr/.test(lsu) && /if \(linkErr\) \{/.test(lsu) &&
+   /error: emailErr/.test(lsu) && /if \(emailErr\) \{/.test(lsu) && /\.from\('families'\)\.delete\(\)\.eq\('id', newFamily\.id\)/.test(lsu) &&
+   /\n\s*familyError,\r?\n/.test(lsu) && /data\?\.familyError/.test(read('src/components/admin/StudentLinkDialog.tsx')));
 const mcp = walk(resolve(repo, 'src', 'lib', 'mcp'));
 ok(`the MCP tools (${mcp.length} files) write nothing: no insert / update / delete / upsert / rpc`,
    mcp.length > 0 && mcp.every((p) => !new RegExp(String.raw`${WRITE}|\.rpc\(`).test(readFileSync(p, 'utf8'))), mcp.map(rel));

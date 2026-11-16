@@ -53,6 +53,7 @@ export const INPUT_COPY: Record<string, Record<string, OpCopy>> = {
     set_family: { title: "Move a child to another family", submit: "Change the family" },
     set_sibling_from: { title: "Change the sibling-discount hold", submit: "Change the hold" },
     set_sibling_percent: { title: "Change the family's sibling discount", submit: "Change the percentage" },
+    set_active: { title: "Make active or inactive", submit: "Save" },
   },
 };
 
@@ -68,7 +69,8 @@ export function inputIntro(plan: MoneyPlan | null | undefined): string {
   if (plan?.entity === "invoice_freeze") {
     return "A frozen bill keeps the figures it was charged at. Unfreezing lets the next calculation change them. It is kept with your reason.";
   }
-  return "This change reaches months that are already billed. It is kept with your reason, and those bills are worked out again afterwards.";
+  // N-4: a reach can be a month already taught with no bill yet (days entering an enrolment)
+  return "This change reaches months that are already taught or billed. It is kept with your reason, and any bills in those months are worked out again afterwards.";
 }
 
 export const INPUT_TEXT = {
@@ -153,6 +155,12 @@ export function inputChangeLines(plan: MoneyPlan | null | undefined): string[] {
       return [c.sibling_discount_from ? `Left out of the sibling discount until ${day(c.sibling_discount_from)}.` : "Counted for the sibling discount again."];
     case "family_link.set_sibling_percent":
       return [`Sibling discount: ${c.old_percent ?? "the default"}${c.old_percent !== null && c.old_percent !== undefined ? "%" : ""} -> ${c.percent ?? "the default"}${c.percent !== null && c.percent !== undefined ? "%" : ""}.`];
+    case "family_link.set_active": {
+      const who = c.student_id ? "The child" : "The family";
+      return [c.is_active
+        ? `${who} is made active again and counts for the sibling discount.`
+        : `${who} is made inactive. Any family discount worked out again counts ${c.student_id ? "the child" : "its children"} as gone.`];
+    }
     default:
       return [];
   }

@@ -13,8 +13,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { inputDbErrorText, isCheckedPathRefusal } from "@/lib/moneyInputs";
+import { inputDbErrorText } from "@/lib/moneyInputs";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import type { MoneyRequest } from "@/components/admin/money-guard/useMoneyChange";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 const NO_FAMILY = "__none__";
@@ -91,13 +92,15 @@ export function StudentEditDrawer({ student, open, onOpenChange }: any) {
   // through the checked path as the signed-in admin first - at once when
   // nothing billed is reached, with a reason when it is - and the other
   // fields are saved after it.
+  // The active flag is a money input as well (review N-2: the family discount
+  // counts only active children), so it is not in this payload: a change of
+  // it goes through ('family_link', 'set_active') below, like the family.
   const saveFields = async () => {
     const payload = {
       full_name: formData.full_name.trim(),
       email: formData.email.trim() || null,
       phone: formData.phone.trim() || null,
       notes: formData.notes.trim() || null,
-      is_active: formData.is_active,
       date_of_birth: formData.date_of_birth ? format(formData.date_of_birth, "yyyy-MM-dd") : null,
     };
 
@@ -106,15 +109,38 @@ export function StudentEditDrawer({ student, open, onOpenChange }: any) {
       .update(payload)
       .eq("id", student.id)
       .select("id");
-    if (error) {
-      // deactivating ends the child's enrolments; with this month's bill signed off that needs a reason
-      throw new Error(isCheckedPathRefusal(error) && !formData.is_active
-        ? "This child's bill for this month is already signed off. Deactivate them from the Students list, where the reason is asked for."
-        : inputDbErrorText(error, "Failed to update student"));
-    }
+    if (error) throw new Error(inputDbErrorText(error, "Failed to update student"));
     if (!data || data.length === 0) {
       throw new Error("No changes were saved — your account may not have permission to edit this student.");
     }
+  };
+  /** The money inputs this form changes, in order; each goes through the checked path. */
+  const moneySteps = (): MoneyRequest[] => {
+    const out: MoneyRequest[] = [];
+    const family = formData.family_id === NO_FAMILY ? null : formData.family_id;
+    if (family !== (student.family_id ?? null)) {
+      out.push({ entity: "family_link", op: "set_family", args: { student_id: student.id, family_id: family } });
+    }
+    if (formData.is_active !== (student.is_active ?? true)) {
+      out.push({ entity: "family_link", op: "set_active", args: { student_id: student.id, is_active: formData.is_active } });
+    }
+    return out;
+  };
+  /** Run the money inputs from step i on; a dialog pauses the run, its confirmation continues it. */
+  const runFrom = async (i: number): Promise<"done" | "dialog"> => {
+    const steps = moneySteps();
+    for (let j = i; j < steps.length; j++) {
+      const r = await money.run(steps[j]);
+      if (r.status === "refused") {
+        // deactivating ends the child's enrolments; with this month's bill signed off that needs its own reason first
+        throw new Error(steps[j].op === "set_active" && !formData.is_active
+          ? `${r.message} If this month's bill is already signed off, deactivate the child from the Students list, where the enrolments are ended with a reason first.`
+          : r.message);
+      }
+      if (r.status === "dialog") return "dialog";       // confirming the dialog continues from the next step
+    }
+    await saveFields();
+    return "done";
   };
   const saved = () => {
     toast.success("Student updated successfully");
@@ -126,26 +152,18 @@ export function StudentEditDrawer({ student, open, onOpenChange }: any) {
     queryClient.invalidateQueries({ queryKey: ["family-detail"] });
     onOpenChange(false);
   };
-  const money = useMoneyInput(async () => {
+  const money = useMoneyInput(async (_result, request) => {
     try {
-      await saveFields();
-      saved();
+      // the dialog confirmed this step: go on with the ones after it, then the other fields
+      const next = moneySteps().findIndex((s) => s.op === request.op) + 1;
+      if ((await runFrom(next)) === "done") saved();
     } catch (error: any) {
-      toast.error(error.message || "The family was changed, but the other fields were not saved");
+      toast.error(error.message || "The change was made, but the other fields were not saved");
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (): Promise<"done" | "dialog"> => {
-      const family = formData.family_id === NO_FAMILY ? null : formData.family_id;
-      if (family !== (student.family_id ?? null)) {
-        const r = await money.run({ entity: "family_link", op: "set_family", args: { student_id: student.id, family_id: family } });
-        if (r.status === "refused") throw new Error(r.message);
-        if (r.status === "dialog") return "dialog";     // confirming the dialog saves the other fields
-      }
-      await saveFields();
-      return "done";
-    },
+    mutationFn: async (): Promise<"done" | "dialog"> => runFrom(0),
     onSuccess: (state) => {
       if (state === "done") saved();
     },

@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
-import { inputDbErrorText, inputErrorText, needsInputDialog } from "@/lib/moneyInputs";
+import { inputErrorText, needsInputDialog } from "@/lib/moneyInputs";
 import { previewMoneyChange } from "@/components/admin/money-guard/api";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
@@ -109,25 +109,37 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
   // child is deactivated as before. When this month's bill is already signed
   // off, the dialog asks for a reason, ends the enrolments through the
   // checked path, and only then deactivates.
-  const setInactive = async (studentId: string) => {
-    const { error } = await supabase
-      .from("students")
-      .update({ is_active: false })
-      .eq("id", studentId);
-    if (error) throw new Error(inputDbErrorText(error, "The student could not be deactivated."));
+  // The active flag itself is a money input too (review N-2: the family
+  // discount counts only active children, for every month it is worked out
+  // for), so it goes through ('family_link', 'set_active') as the signed-in
+  // admin: at once when nothing billed is reached - a child with no sibling,
+  // the usual case - and with its own reason dialog when it is.
+  const setActive = async (studentId: string, isActive: boolean): Promise<"done" | "dialog"> => {
+    const r = await money.run({ entity: "family_link", op: "set_active", args: { student_id: studentId, is_active: isActive } });
+    if (r.status === "refused") throw new Error(r.message);
+    return r.status === "dialog" ? "dialog" : "done";
   };
   const deactivated = () => {
     queryClient.invalidateQueries({ queryKey: ["students-list"] });
     toast.success("Student deactivated successfully");
   };
+  const reactivated = () => {
+    queryClient.invalidateQueries({ queryKey: ["students-list"] });
+    toast.success("Student reactivated successfully");
+  };
   const deactivating = useRef<string | null>(null);
-  const money = useMoneyInput(async () => {
+  const money = useMoneyInput(async (_result, request) => {
+    if (request.entity === "family_link") {
+      // the active flag, confirmed in its own dialog
+      if (request.args?.is_active === true) reactivated(); else deactivated();
+      return;
+    }
+    // the enrolments were ended through the checked path: now the flag
     const studentId = deactivating.current;
     deactivating.current = null;
     if (!studentId) return;
     try {
-      await setInactive(studentId);
-      deactivated();
+      if ((await setActive(studentId, false)) === "done") deactivated();
     } catch (error: any) {
       toast.error("The enrolments were ended, but the student is still active: " + error.message);
     }
@@ -143,9 +155,8 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
         money.openDialog(request, p.plan);
         return "dialog";
       }
-      // nothing billed is reached (or there is no open enrolment): as before
-      await setInactive(studentId);
-      return "done";
+      // nothing billed is reached by ending the enrolments (or there is none open): the flag
+      return setActive(studentId, false);
     },
     onSuccess: (state) => {
       if (state === "done") deactivated();
@@ -156,16 +167,9 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
   });
 
   const reactivateMutation = useMutation({
-    mutationFn: async (studentId: string) => {
-      const { error } = await supabase
-        .from("students")
-        .update({ is_active: true })
-        .eq("id", studentId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students-list"] });
-      toast.success("Student reactivated successfully");
+    mutationFn: async (studentId: string) => setActive(studentId, true),
+    onSuccess: (state) => {
+      if (state === "done") reactivated();
     },
     onError: (error) => {
       toast.error("Failed to reactivate student: " + error.message);

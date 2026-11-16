@@ -2,7 +2,7 @@
 
 **DONE - waiting for the conductor's review**
 
-**Fix round 1 - where I am:** STARTED on branch `d4-3b-fix` (from `review-3b` 6390acf8, = the builder's 3b09300f + the review). Fixing B-1, B-2, M-1, N-1, N-2, N-4, N-5 and the reviewer's test gaps (R01, R02, R05, R09, R13) in place; N-3 is the calculator's and is not touched. Next: B-1.
+**Fix round 1 - where I am:** on branch `d4-3b-fix` (from `review-3b` 6390acf8, = the builder's 3b09300f + the review). Done and committed: B-1, B-2, M-1, N-1, N-2 (database), N-5. In progress: N-2 screens, N-4 wording, mutants, fingerprints, full run. N-3 is the calculator's and is not touched. Details: section "Fix round 1" at the end.
 
 **Where I am / next step (build):** COMPLETE - built, tested, mutants run (57 of 57 caught), full run green (6658 assertions, 66 suites, 0 failed). Pushed. Next step is not mine: the conductor's review.
 

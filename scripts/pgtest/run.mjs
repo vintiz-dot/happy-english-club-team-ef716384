@@ -191,7 +191,7 @@ const SUITES = [
   {
     name: "d4 money inputs",
     file: "d4-money-inputs.test.mjs",
-    expect: 306,
+    expect: 307,
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",
@@ -252,7 +252,7 @@ const SUITES = [
   // The wording of the money-input dialogs, and the static scans (no raw
   // writer of a money input left in src, no service-key writer off the
   // allow-list, nothing in the MCP tools).
-  { name: "money inputs lib", file: "money-inputs-lib.test.mjs", expect: 40, migrations: [] },
+  { name: "money inputs lib", file: "money-inputs-lib.test.mjs", expect: 43, migrations: [] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

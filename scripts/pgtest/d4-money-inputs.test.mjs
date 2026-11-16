@@ -1104,6 +1104,9 @@ await section('review M-1: a child alone in an empty family moves no figure', as
   ok('M-1   link-student-user\'s write (service lane, raw): passes', r.ok !== undefined && (await q1(`SELECT family_id f FROM students WHERE id=$1`, [lone])).f === empty, r);
   r = await tryIt(async () => asAdmin(`UPDATE students SET family_id = NULL WHERE id=$1`, [lone]));
   ok('M-1   and out of it again (the family had no one else): passes', r.ok !== undefined, r);
+  r = await tryIt(async () => asAdmin(`UPDATE students SET family_id = $2 WHERE id=$1`, [lone, empty]));
+  ok('M-1 (probe P3b) an admin making the same link raw: passes', r.ok !== undefined, r);
+  await asSuper(`UPDATE students SET family_id = NULL WHERE id=$1`, [lone]);
   // a real sibling case still asks
   const fam = await mkFamily();
   const a = await mkKid(fam), b = await mkKid(fam);

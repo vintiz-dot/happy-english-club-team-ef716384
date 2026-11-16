@@ -45,9 +45,10 @@ export const MUTANTS = [
   ['S03', 'the owner lane leaves no event',
     "    VALUES ('owner_lane', jsonb_build_object('table', p_table, 'op', p_tg_op, 'row_id', p_row_id, 'entity', p_entity, 'tier', v_tier));\n    RETURN;",
     "    SELECT 'owner_lane', '{}'::jsonb WHERE false;\n    RETURN;", ['inputs']],
+  // fix round 1: the identity condition gained id / created_at (B-1); S04 drops only child and class, as before
   ['S04', 'enrollment_identity dropped (an enrolment may change child or class)',
-    "  IF TG_OP = 'UPDATE' AND (NEW.student_id IS DISTINCT FROM OLD.student_id OR NEW.class_id IS DISTINCT FROM OLD.class_id) THEN",
-    "  IF false THEN", ['inputs']],
+    "NEW.student_id IS DISTINCT FROM OLD.student_id OR NEW.class_id IS DISTINCT FROM OLD.class_id\n                            OR NEW.id",
+    "false\n                            OR NEW.id", ['inputs']],
   ['S05', 'discount_identity dropped (R-5: a discount may be re-pointed at another child)',
     "  IF TG_OP = 'UPDATE' AND (o -> 'student_id') IS DISTINCT FROM (n -> 'student_id') THEN", "  IF false THEN", ['inputs']],
   ['S06', 'the family reach leaves out the children of the NEW family (R-14)',
@@ -91,11 +92,12 @@ export const MUTANTS = [
     "                  OR COALESCE(f.ever_paid, false) OR COALESCE(f.ever_signed, false) THEN 3 ELSE 2 END", "                  THEN 3 ELSE 2 END", ['inputs']],
   ['S22', 'any acknowledged unfreeze unfreezes any bill',
     "    a IS NOT NULL AND a ->> 'op' = 'unfreeze' AND a ->> 'target_id' = OLD.id::text,", "    a IS NOT NULL,", ['inputs']],
+  // fix round 1: both WHENs gained is_active (N-2); S23 / S24 still drop only their own column
   ['S23', 'families.sibling_percent_override is not guarded',
-    "  FOR EACH ROW WHEN (OLD.sibling_percent_override IS DISTINCT FROM NEW.sibling_percent_override)", "  FOR EACH ROW WHEN (false)", ['inputs', 'oracle']],
+    "  FOR EACH ROW WHEN (OLD.sibling_percent_override IS DISTINCT FROM NEW.sibling_percent_override\n", "  FOR EACH ROW WHEN (false\n", ['inputs', 'oracle']],
   ['S24', 'students.sibling_discount_from is not guarded',
-    "  WHEN (OLD.family_id IS DISTINCT FROM NEW.family_id OR OLD.sibling_discount_from IS DISTINCT FROM NEW.sibling_discount_from)",
-    "  WHEN (OLD.family_id IS DISTINCT FROM NEW.family_id)", ['inputs', 'oracle']],
+    " OR OLD.sibling_discount_from IS DISTINCT FROM NEW.sibling_discount_from\n        OR OLD.is_active",
+    "\n        OR OLD.is_active", ['inputs', 'oracle']],
   ['S25', 'a student whose only history is a person\'s mark may be deleted',
     "     OR EXISTS (SELECT 1 FROM public.attendance a WHERE a.student_id = OLD.id AND a.marked_by IS NOT NULL) THEN", "     THEN", ['inputs']],
   ['S26', 'the student delete guard ignores the bill floor',
@@ -144,9 +146,43 @@ export const MUTANTS = [
     "                              'from', COALESCE(os, ns) - p_lead, 'to', COALESCE(os, ns),\n                              'open', false);", ['oracle', 'inputs']],
   ['S44', 'the first pay rate of a person can be removed (earlier dates fall to the mirror)',
     "  IF p_op = 'remove' AND v_first = x.effective_from THEN", "  IF false THEN", ['inputs']],
+  // fix round 1: the op checks gained is_active / set_active (N-2); S45 still drops all of them
   ['S45', 'the family guard accepts an acknowledgement of the other kind (a hold covers a move)',
-    "              AND ((a ->> 'op' = 'set_family' AND NEW.sibling_discount_from IS NOT DISTINCT FROM OLD.sibling_discount_from)\n                OR (a ->> 'op' = 'set_sibling_from' AND NEW.family_id IS NOT DISTINCT FROM OLD.family_id));",
+    "              AND ((a ->> 'op' = 'set_family' AND NEW.sibling_discount_from IS NOT DISTINCT FROM OLD.sibling_discount_from\n" +
+    "                    AND NEW.is_active IS NOT DISTINCT FROM OLD.is_active)\n" +
+    "                OR (a ->> 'op' = 'set_sibling_from' AND NEW.family_id IS NOT DISTINCT FROM OLD.family_id\n" +
+    "                    AND NEW.is_active IS NOT DISTINCT FROM OLD.is_active)\n" +
+    "                OR (a ->> 'op' = 'set_active' AND NEW.family_id IS NOT DISTINCT FROM OLD.family_id\n" +
+    "                    AND NEW.sibling_discount_from IS NOT DISTINCT FROM OLD.sibling_discount_from));",
     "              ;", ['inputs']],
+  // ---- fix round 1 (docs/evidence/D4-3b-review.md): one mutant per new guard
+  ['S46', 'B-1: created_at is not identity (which overlapping enrolment prices a lesson may be swapped)',
+    " OR NEW.created_at IS DISTINCT FROM OLD.created_at) THEN", ") THEN", ['inputs', 'oracle']],
+  ['S47', 'B-2: a frozen bill may be deleted (delete guard never fires)',
+    "  FOR EACH ROW WHEN (OLD.tuition_frozen)\n  EXECUTE FUNCTION public._invoice_frozen_keep_guard();",
+    "  FOR EACH ROW WHEN (false)\n  EXECUTE FUNCTION public._invoice_frozen_keep_guard();", ['inputs', 'oracle']],
+  ['S48', 'B-2: the re-key guard uses UPDATE OF (refuses the calculator\'s own upsert of every frozen bill)',
+    "CREATE TRIGGER zz_invoice_frozen_keep_guard BEFORE UPDATE ON public.invoices\n  FOR EACH ROW WHEN (OLD.tuition_frozen AND (OLD.student_id IS DISTINCT FROM NEW.student_id OR OLD.month IS DISTINCT FROM NEW.month))",
+    "CREATE TRIGGER zz_invoice_frozen_keep_guard BEFORE UPDATE OF student_id, month ON public.invoices\n  FOR EACH ROW WHEN (OLD.tuition_frozen)", ['inputs', 'oracle']],
+  ['S49', 'B-2: a frozen bill may be moved to another month (re-key guard ignores month)',
+    " OR OLD.month IS DISTINCT FROM NEW.month))", "))", ['inputs', 'oracle']],
+  ['S50', 'M-1: the lone-child shortcut ignores a stored sibling state that still names the child the winner',
+    "WHERE d.winner_student_id = p_child AND d.status = 'assigned'", "WHERE false AND d.winner_student_id = p_child AND d.status = 'assigned'", ['inputs']],
+  ['S51', 'M-1: the lone-child shortcut ignores the other children (every family move is T0)',
+    "     AND NOT EXISTS (SELECT 1 FROM public.students s WHERE s.id <> p_child", "     AND NOT EXISTS (SELECT 1 FROM public.students s WHERE false AND s.id <> p_child", ['inputs', 'oracle']],
+  ['S52', 'N-2: families.is_active is not guarded',
+    "\n                     OR OLD.is_active IS DISTINCT FROM NEW.is_active)", ")", ['inputs']],
+  ['S53', 'N-2: students.is_active is not guarded',
+    "\n        OR OLD.is_active IS DISTINCT FROM NEW.is_active)", ")", ['inputs']],
+  ['S54', 'N-2: an acknowledged set_sibling_percent also covers deactivating the family',
+    "              AND ((a ->> 'op' = 'set_sibling_percent' AND NEW.is_active IS NOT DISTINCT FROM OLD.is_active)",
+    "              AND ((a ->> 'op' = 'set_sibling_percent')", ['inputs']],
+  ['S55', 'N-5: an enrolment acknowledgement covers any child of the family',
+    "      v_ok := v_ok AND COALESCE(a -> 'change' ->> 'student_id', a -> 'change' -> 'row' ->> 'student_id') = v_kid::text;\n", "", ['inputs']],
+  ['S56', 'N-5: a discount assign acknowledgement covers any child of the family',
+    "        v_ok := v_ok AND a ->> 'target_id' = v_kid::text;\n", "", ['inputs']],
+  ['F13', 'link-student-user ignores a refused link (family made, child not linked, success)',
+    "        if (linkErr) {", "        if (false) {", ['lib'], 'supabase/functions/link-student-user/index.ts'],
   // the four functions
   ['F01', 'update-enrollment-rate goes on to the write at tier 1+ without an ack',
     "    if (plan.tier >= 1 && !ack) {", "    if (false) {", ['fn'], RATE],
@@ -220,7 +256,8 @@ async function migrationMutant([id, what, find, repl, suites]) {
 }
 {
   const queue = wanted.filter((m) => !m[5]);
-  await Promise.all(Array.from({ length: 4 }, async () => { while (queue.length > 0) await migrationMutant(queue.shift()); }));
+  // MUTANT_JOBS=2 on a machine short of memory (each job is its own database)
+  await Promise.all(Array.from({ length: Number(process.env.MUTANT_JOBS ?? 4) }, async () => { while (queue.length > 0) await migrationMutant(queue.shift()); }));
 }
 for (const [id, what, find, repl, suites, file] of wanted.filter((m) => m[5])) {
   let verdict;
