@@ -49,7 +49,7 @@ export const StudentsPageFilters = ({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger>
+          <SelectTrigger aria-label="Sort by">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
@@ -61,7 +61,7 @@ export const StudentsPageFilters = ({
         </Select>
 
         <Select value={filterClass} onValueChange={onFilterClassChange}>
-          <SelectTrigger>
+          <SelectTrigger aria-label="Filter by class">
             <SelectValue placeholder="Filter by class" />
           </SelectTrigger>
           <SelectContent>

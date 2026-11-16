@@ -248,7 +248,7 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
             </Button>
 
             <Select value={confirmationFilter} onValueChange={setConfirmationFilter}>
-              <SelectTrigger className={iv("w-full sm:w-[200px]", "w-[200px]")}>
+              <SelectTrigger className={iv("w-full sm:w-[200px]", "w-[200px]")} aria-label="Confirmations">
                 <SelectValue placeholder="All Confirmations" />
               </SelectTrigger>
               <SelectContent>
@@ -271,7 +271,7 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
               <ArrowUpDown className={iv("h-4 w-4 text-hec-ink-soft", "h-4 w-4 text-muted-foreground")} />
               <span className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Sort by:</span>
               <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label="Sort by">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

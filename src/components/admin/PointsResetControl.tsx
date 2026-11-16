@@ -127,7 +127,7 @@ export function PointsResetControl() {
         <div className="space-y-2">
           <Label>Reset Scope</Label>
           <Select value={resetScope} onValueChange={(value: any) => setResetScope(value)}>
-            <SelectTrigger>
+            <SelectTrigger aria-label="Reset Scope">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -142,7 +142,7 @@ export function PointsResetControl() {
           <div className="space-y-2">
             <Label>Select Class</Label>
             <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Select Class">
                 <SelectValue placeholder="Choose a class" />
               </SelectTrigger>
               <SelectContent>
@@ -160,7 +160,7 @@ export function PointsResetControl() {
           <div className="space-y-2">
             <Label>Select Student</Label>
             <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Select Student">
                 <SelectValue placeholder="Choose a student" />
               </SelectTrigger>
               <SelectContent>

@@ -228,7 +228,7 @@ export function AccountInfoManager() {
         </div>
 
         <div className="space-y-2">
-          <Label>VietQR Code</Label>
+          <Label htmlFor="vietqr-file">VietQR Code</Label>
           <div className="flex flex-col gap-3">
             {qrPreviewUrl ? (
               <div className="relative inline-block">
@@ -250,6 +250,7 @@ export function AccountInfoManager() {
             ) : (
               <div className="flex items-center gap-2">
                 <Input
+                  id="vietqr-file"
                   type="file"
                   accept="image/*"
                   onChange={handleQrUpload}
