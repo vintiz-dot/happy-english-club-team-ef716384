@@ -1,7 +1,9 @@
 /**
  * calculate-payroll's answer for ONE person, in the shape the teacher's own
  * payroll page (/teacher/payroll, with its calendar) and the admin's view of
- * a teacher (/teachers/:id, Payroll tab) draw.
+ * a teacher (/teachers/:id, Payroll tab) draw. Since TA-PAY also the
+ * teaching assistant's: the same page and the dashboard's pay cards for a
+ * signed-in TA, and the admin's TA drawer (TAProfileDrawer, Payroll tab).
  *
  * WHY THIS FILE EXISTS. Both screens used to price lessons themselves:
  * `sessionPayVnd(teacher row, minutes)` per session for the calendar's day
@@ -56,6 +58,10 @@ export interface PayrollSessionDetail {
 export interface TeacherPayrollFunctionRow {
   teacherId?: string | null;
   staffType?: string | null;
+  /** The basis the month's headline figures are on (the frozen line's when closed). */
+  payRateType?: string | null;
+  /** The month's headline rate, in the unit payRateType names. */
+  hourlyRate?: number | null;
   sessionsCountActual?: number | null;
   sessionsCountProjected?: number | null;
   totalHoursActual?: number | null;
@@ -114,6 +120,20 @@ export interface TeacherPayrollClass {
 export interface TeacherPayrollView {
   /** The function returned a row for this person. */
   found: boolean;
+  /**
+   * The function answered with a list at all. True with `found` false means
+   * it answered and has nothing for this person this month (a TA with no
+   * lessons gets no row) - not that the figure is unavailable.
+   */
+  answered: boolean;
+  /** "hourly" / "per_session" as the function reports the month; null = unknown. */
+  payBasis: "hourly" | "per_session" | null;
+  /**
+   * The month's rate as the function reports it (in force on the month's
+   * last day; the frozen line's when closed), in the unit `payBasis` names.
+   * Null when either is missing.
+   */
+  rateVnd: number | null;
   /** The month is closed and these totals are what it was closed at. */
   closed: boolean;
   /**
@@ -182,6 +202,9 @@ export function pickPayrollRow(
 
 const EMPTY: TeacherPayrollView = {
   found: false,
+  answered: false,
+  payBasis: null,
+  rateVnd: null,
   closed: false,
   monthLocked: false,
   heldSessions: 0,
@@ -203,8 +226,9 @@ export function teacherPayrollView(
   response: TeacherPayrollResponse | null | undefined,
   staffId: string | null | undefined,
 ): TeacherPayrollView {
+  const answered = Array.isArray(response?.payrollData);
   const row = pickPayrollRow(response?.payrollData, staffId);
-  if (!row) return { ...EMPTY, monthLocked: response?.locked === true, earnedByDate: new Map() };
+  if (!row) return { ...EMPTY, answered, monthLocked: response?.locked === true, earnedByDate: new Map() };
 
   const earned = num(row.totalAmountActual);
   const heldSessions = num(row.sessionsCountActual);
@@ -286,8 +310,12 @@ export function teacherPayrollView(
       };
 
   const hours = figure(row.totalHoursActual);
+  const payBasis = row.payRateType === "hourly" || row.payRateType === "per_session" ? row.payRateType : null;
   return {
     found: true,
+    answered,
+    payBasis,
+    rateVnd: payBasis === null ? null : figure(row.hourlyRate),
     closed,
     monthLocked: response?.locked === true,
     heldSessions,
