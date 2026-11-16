@@ -7,6 +7,12 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import "react-quill-new/dist/quill.snow.css";
 import { Loader2 } from "lucide-react";
+import { useIvory } from "@/hooks/useIvory";
+
+// Ivory: Quill paints its toolbar #444 and its picker menu white, unreadable in dark. These selectors are one class
+// more specific than quill.snow.css's own, so they win without !important and Quill's hover / active / open states
+// (more specific still) keep showing. Same treatment as ExamReportEditor (PC2-harvest).
+const IVORY_QUILL = "rounded-hec-md bg-hec-raised [&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint";
 
 const ReactQuill = lazy(() => import("react-quill-new"));
 
@@ -18,6 +24,7 @@ interface EditHomeworkDialogProps {
 }
 
 export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: EditHomeworkDialogProps) {
+  const ivory = useIvory();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -143,7 +150,7 @@ export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: E
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className={ivory ? "h-8 w-8 animate-spin text-hec-ink-faint" : "h-8 w-8 animate-spin"} />
           </div>
         ) : (
           <div className="space-y-4">
@@ -159,7 +166,8 @@ export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: E
 
             <div className="space-y-2">
               <Label htmlFor="edit-description">Description</Label>
-              <Suspense fallback={<div className="h-40 border rounded-md flex items-center justify-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" />Loading editor...</div>}>
+              <Suspense fallback={<div className={ivory ? "flex h-40 items-center justify-center rounded-hec-md border border-hec-line-strong text-hec-ink-faint" : "h-40 border rounded-md flex items-center justify-center text-muted-foreground"}><Loader2 className="h-5 w-5 animate-spin mr-2" />Loading editor...</div>}>
+                <div className={ivory ? IVORY_QUILL : undefined}>
                 <ReactQuill
                   theme="snow"
                   value={body}
@@ -178,6 +186,7 @@ export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: E
                     ],
                   }}
                 />
+                </div>
               </Suspense>
             </div>
 
@@ -191,12 +200,12 @@ export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: E
               />
             </div>
 
-            <div className="flex gap-2 pt-4">
+            <div className={ivory ? "flex flex-wrap gap-2 pt-4" : "flex gap-2 pt-4"}>
               <Button onClick={handleSave} disabled={saving} className="flex-1">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Save Changes
               </Button>
-              <Button onClick={handleDelete} disabled={saving} variant="destructive">
+              <Button onClick={handleDelete} disabled={saving} variant={ivory ? "destructive-quiet" : "destructive"}>
                 Delete
               </Button>
               <Button onClick={onClose} variant="outline" disabled={saving}>
