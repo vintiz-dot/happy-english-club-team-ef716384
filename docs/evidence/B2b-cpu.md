@@ -1,0 +1,222 @@
+# B2b - CPU-only performance of the monitor's speech pieces (evidence)
+
+Task B2b of `docs/MASTER_PLAN.md`. Local only: no vendor called, no token used or looked for. Aggregates and codes (S01..., L1/L2/L3) only; no transcript text, no audio, no lesson file names. All audio and derived data stay under `C:\Users\Dell\hec-audio-eval\` (work files in `work\b2b\`, written through `safe_out()`).
+
+**Where I am / next step:** 2026-11-17, DONE for the under-load measurements. Next step (conductor): the quiet-time runs in section 7, which replace the projected speed figures with measured ones.
+
+**Headline (all timings UNDER LOAD; quiet figures are projections):** large-v3-turbo int8 greedy, 4 threads, transcribes real lesson audio at RTF 1.11 (1.7 h per 90 min) with other processes at 54 % of the machine, about 2 h per lesson projected when quiet, and agrees with the B1 vendors about as well as they agree with each other (clips 0.873 vs 0.863; 10 min of a lesson 0.786 vs 0.812). small: RTF 0.38-0.53, about 1 h per lesson, 2-4 points lower. Local diarization: about 5 min per lesson but DER 0.57-0.66 (B1 vendors 0.26-0.69 on the same room mixes). ECAPA identification: about 10 min per lesson. Peak memory 4 GB committed for turbo. Electricity under USD 0.01 per lesson vs USD 0.27-1.50 for the B1 transcription vendors. Recommendation in section 9.
+
+## 0. READ FIRST: every timing in this file was taken UNDER LOAD
+
+The conductor reported (2026-11-16) about eight other agents running on this laptop. Measured at the start: machine CPU 100 %, other processes 92 % of the machine, 1.0-4.5 GB RAM free of 15.8 GB. Every timing row carries the load measured during that run (other processes' share of the whole machine, minimum free RAM). These timings OVERSTATE the real-time factor; the quality figures do not depend on load. The final timing runs are a separate step for the conductor at a quiet time (section 7 gives the exact commands).
+
+## 1. The laptop (from the OS, 2026-11-16)
+
+| item | value | source |
+|---|---|---|
+| model | Dell Latitude 5400 | Win32_ComputerSystem |
+| CPU | Intel Core i7-8665U @ 1.90 GHz, 4 cores / 8 threads, max clock 2112 MHz reported, L2 1 MB, L3 8 MB | Win32_Processor |
+| RAM | 16 GB installed (1 x 16 GB, 2667 MT/s), 15.8 GB visible | Win32_PhysicalMemory, Win32_OperatingSystem |
+| GPU | Intel UHD 620 only; no CUDA (B0 `hardware.py`) | |
+| OS / power | Windows 11 Pro 10.0.26300, "Balanced" power plan, on AC | powercfg, Win32_Battery |
+| software | Python 3.13 venv: faster-whisper 1.2.1 / CTranslate2 4.9.0, torch 2.15.0+cpu, SpeechBrain 1.1.2, sherpa-onnx 2.0.1, onnxruntime 1.31.1 | pip list |
+
+pyannote community-1: NOT set up (pyannote.audio is not installed and no token exists in the harness); not tried, as instructed. whisper.cpp: not in the harness; faster-whisper (CTranslate2 int8) is what the harness supports, so all transcription rows are faster-whisper.
+
+## 2. Method
+
+- Script: `scripts/lesson-eval/b2b_bench.py` (subcommands `asr`, `diar`, `ident`, `e2e`, `score`). One configuration per process, so peak RAM is that configuration's own peak.
+- Load monitor (Windows API via ctypes, no extra package): every second, the machine's CPU %, this process's CPU % and the difference (= other processes), free RAM. CPU % is a share of the WHOLE machine (8 logical CPUs = 100 %). Peak RAM = the process's peak working set and peak private (committed) memory; under memory pressure the working set can be trimmed, so the private figure is the safer one.
+- RTF = wall seconds / audio seconds, model load excluded (load time reported separately).
+- Transcription quality: there is still NO human reference for any audio (B1). The measure is B1's: word AGREEMENT with the vendor transcripts of the same files (difflib matching blocks over B1's normaliser, compared over the shorter duration), plus, for scale, how well the vendors agree with each other on the same files. Agreement is not accuracy.
+- Diarization and identification quality: B2's measures (DER with collar 0.25 s on the synthetic mixes; identification error rates on B2's units). The local diarizer and ECAPA are exactly what B2 measured, so B2's quality figures stand and only speed and RAM are new here; DER is recomputed alongside the timing as a check.
+
+Results follow as they are measured.
+
+Models (faster-whisper int8, CTranslate2; downloaded once from the Hugging Face id that faster-whisper 1.2.1 itself maps each size to, into `C:\Users\Dell\hec-audio-eval\models\faster-whisper\`):
+
+| size | Hugging Face id | on disk |
+|---|---|---|
+| small | Systran/faster-whisper-small (B0) | 464 MB |
+| medium | Systran/faster-whisper-medium | 1530.6 MB |
+| large-v3-turbo | mobiuslabsgmbh/faster-whisper-large-v3-turbo (there is no Systran build of turbo; this is the id in faster-whisper's own size table) | 1621.7 MB |
+
+Note on the Windows venv: `.venv\Scripts\python.exe` is a launcher that starts the real interpreter as a child process; the monitor runs inside the child, so its figures are the real interpreter's.
+
+## 3. Transcription: choosing the settings (faster-whisper small, "select" set, 15.4 min audio)
+
+"select" set = 2 synthetic mixes (5 % and 15 % overlap, room-degraded), 6 held-out clips (S01-S06), first 180 s of L2. B1's local row used language auto-detect and the silero VAD filter; that configuration wrote far fewer words than the vendors, so the VAD and language settings are tested first.
+
+Agreement with the B1 vendor transcripts of the same files (pooled; mean over the six vendor systems that have the file; "vendor vs vendor" = the vendors among themselves on the same files, for scale). Words ratio = local words / vendor words on the same files. UNCHECKED: agreement, not accuracy.
+
+| config (small, int8, beam 5) | synth (2 files) agreement | synth words ratio | clips (6) agreement | clips words ratio | L2 180 s agreement | L2 words ratio |
+|---|---|---|---|---|---|---|
+| B1's: language auto, silero VAD 0.5 | 0.213 | 0.20 | 0.823 | 0.87 | 0.816 | 0.92 |
+| English, silero VAD 0.5 | 0.131 | 0.08 | 0.823 | 0.87 | 0.816 | 0.92 |
+| English, no VAD | stopped: no output after 3 000 CPU-seconds on the first 187 s mix (Whisper's repetition/fallback loop on room noise); not usable | | | | | |
+| **English, silero VAD 0.25, no condition-on-previous-text** | **0.304** | **0.67** | **0.849** | **1.01** | 0.802 | 1.02 |
+| vendors among themselves, same files | 0.422 (0.29-0.54) | - | 0.863 (0.81-0.91) | - | 0.815 (0.76-0.87) | - |
+
+Reading:
+- B1's poor local row was the VAD, not Whisper: at the default silero threshold 0.5 the room-degraded mixes lose 80-92 % of their words (one 193 s mix gave 0 words with English forced). Threshold 0.25 plus `condition_on_previous_text=False` brings the words back to 2/3 of the vendors' on the mixes and to parity on clips and the lesson slice. Adopted for every later run (`--lang en --vad on --vad-thr 0.25 --cond-prev off`).
+- Language auto and English gave identical clips and lesson output (auto detected English); no Vietnamese text came out of any small configuration (diacritic share 0.0 %). B1 found only Gemini writing Vietnamese (4 % of lesson words).
+- On the clean held-out clips and on the real lesson slice, local small agrees with the vendors about as well as they agree with each other (0.80-0.85 vs 0.82-0.86; vendor figure on the lesson slice measured over the same 180 s). On the synthetic mixes it is clearly below (0.30 vs 0.42), and so are the vendors' own figures low there.
+- n is small (2 mixes, 6 clips, one 3-minute slice): these settle the configuration, not a ranking against vendors.
+
+Timings of these runs (all UNDER LOAD; for the record only): RTF 2.0 (B1 config) and 3.5 (adopted config) at 4 threads, other processes 84-85 % of the machine, free RAM falling to 0.02-0.13 GB; the process got 1.2-1.3 cores. Per-file RTF swung from 0.4 to 7.7 with the other agents' load, so none of these numbers is a speed figure.
+
+## 4. Transcription: model size (select set, adopted settings, 4 threads, int8, beam 5)
+
+Quality (agreement with the B1 vendors, UNCHECKED, same files as section 3):
+
+| model | synth (2) agreement | synth words ratio | clips (6) agreement | L2 180 s agreement | Vietnamese text |
+|---|---|---|---|---|---|
+| small | 0.304 | 0.67 | 0.849 | 0.802 | 0 % |
+| medium | 0.339 | 0.59 | 0.854 | 0.827 | 0 % |
+| large-v3-turbo | 0.336 | 0.50 | **0.874** | **0.841** | 0 % |
+| large-v3-turbo, greedy (beam 1), 8 threads | 0.348 | 0.59 | 0.873 | 0.848 | 0 % |
+| vendors among themselves, same files | 0.422 (0.29-0.54) | - | 0.863 (0.81-0.91) | 0.815 (0.76-0.87) | Gemini only (B1) |
+
+A longer real-lesson check (L2, first 600 s, the timing piece; vendor figures over the same 600 s): small 0.772 (words ratio 0.91), large-v3-turbo 0.795 (0.99-1.00), vendors among themselves 0.812 (0.77-0.87). On ten minutes of real classroom audio turbo sits inside the vendors' range, small at its lower edge. Thread count does not change the output (4 and 8 threads gave the same agreement to three decimals).
+
+Greedy decoding (beam 1) gave turbo the same agreement as beam 5 (clips 0.873 vs 0.874, lesson slice 0.848 vs 0.841, mixes 0.348 vs 0.336) for fewer CPU-seconds (4.77 vs 5.64 per audio second, measured at lighter load: others 47 %, free RAM >= 2.1 GB, 4.25 cores; wall RTF 1.12). On this evidence beam 5 buys nothing here.
+
+Cost (UNDER LOAD - see the load columns; wall RTF is not a speed figure):
+
+| model | wall RTF | process CPU-seconds per audio second | cores it got | others' CPU (mean, p10-p90) | free RAM min / mean | peak working set | peak private (committed) | model load s |
+|---|---|---|---|---|---|---|---|---|
+| small (B1 config) | 2.00 | 2.55 | 1.28 | 84 % (74-92) | 0.02 / 3.75 GB | 1.04 GB | 3.14 GB | 70 |
+| small, English VAD 0.5 (same output as above) | 3.74 | 3.09 | 0.83 | 90 % (81-95) | 0.00 / 2.66 GB | 1.04 GB | 3.15 GB | 43 |
+| small (adopted) | 3.46 | 4.25 | 1.23 | 85 % (76-92) | 0.13 / 4.48 GB | 1.05 GB | 3.15 GB | 49 |
+| medium (adopted) | 7.85 | 7.72 | 0.98 | 88 % (79-94) | 0.00 / 2.35 GB | 2.21 GB | 6.04 GB | 64 |
+| large-v3-turbo (adopted) | 4.47 | 5.64 | 1.26 | 84 % (72-95) | 0.00 / 3.39 GB | 1.93 GB | 4.03 GB | 33 |
+
+Reading:
+- large-v3-turbo is the best local model on every real-speech input (clips 0.874, lesson slice 0.841: at or above the vendors' own mutual agreement), and cheaper than medium (5.6 vs 7.7 CPU-seconds per audio second). Medium is dominated: slower than turbo and not better. On the synthetic mixes turbo writes fewer words (half the vendors'); all local models stay below the vendors there.
+- CPU-seconds per audio second are steadier than wall RTF under load, but NOT load-free: the same small configuration with identical output cost 2.55 and 3.09 CPU-s/s in two runs (hyper-thread siblings and caches shared with other agents make each CPU-second do less work). Treat them as upper bounds with about +-25 % noise.
+- Peak private memory (3-6 GB) is far above the working set (1-2 GB) because free RAM hit zero during every run and Windows trimmed the process; the private figure is what a server must reserve. An 8 GB machine runs turbo; 4 GB would be tight.
+
+## 5. Diarization and identification (4 threads, UNDER LOAD)
+
+Quality on B2's inputs (the six tuning mixes seed7_ov05_s500 + seed7_ov15_s500, 26.1 min, collar 0.25 s), recomputed in the same run as the timing: both reproduce B2 exactly.
+
+| diarizer | DER mean (B2) | DER pooled: miss / false alarm / confusion | clusters found vs true (6 mixes) | wall RTF on the mixes | CPU-s per audio s | others' CPU | free RAM min | peak working set / private |
+|---|---|---|---|---|---|---|---|---|
+| own: energy VAD + 1.5 s chunks + 3D-Speaker CAM++ + AHC, threshold 0.1 (B2's best) | **0.579** (0.579) | 0.568: 0.203 / 0.000 / 0.365 | 4/3, 4/3, 4/4, 5/3, 4/4, 5/5 | 0.095 | 0.17 | 77 % | 7.65 GB | 0.26 / 0.67 GB |
+| sherpa-onnx: pyannote segmentation-3.0 ONNX + WeSpeaker CAM++ + fast clustering, threshold 0.5 | 0.663 (0.663) | 0.684: 0.031 / 0.050 / 0.604 | 5/3, 16/3, 15/4, 6/3, 14/4, 15/5 | 0.749 | 1.99 | 75 % | 4.04 GB | 0.35 / 0.78 GB |
+| B1 vendors on the 5 % / 15 % room mixes, for comparison | azure-multilingual 0.297 / 0.452, azure en-vi 0.267 / 0.499, gemini 0.263 / 0.562, gpt-4o-diarize 0.516 / 0.691 (pooled DER by condition, B1 table a) | | | | | | | |
+
+On a real lesson (L2, first 10 min, UNVERIFIED - no reference): own diarizer 28 s wall (RTF 0.047, 0.15 CPU-s/s, 3.1 cores, others 61 %), 6 clusters (5 with >= 10 s); sherpa 348 s (RTF 0.58, 1.67 CPU-s/s), 31 clusters (9 with >= 10 s). Sherpa's native call holds the Python lock, so the per-second sampler got no samples in that run; its load figures are missing (the script now falls back to start/end counters).
+
+Identification (SpeechBrain ECAPA, B2's chosen model): embedding 132 turn-like spans (>= 1 s, <= 6 s) from L2's first 10 min = 383.7 s of speech took 474.6 s wall (RTF 1.24 per turn-second, 1.58 CPU-s per turn-second, 1.3 cores, others 84 %), peak 0.54 / 1.32 GB, model load 110 s. Scoring against 21 voiceprints with AS-norm is negligible next to that. No embedding was saved.
+Quality is B2's and unchanged (same model, same code, same units): closed-set top-1 68.4 %; at T = 6.0 (1 % false accept) about 18.5 % of single turns and about half of 10-s clusters named, the rest UNKNOWN; real-lesson clusters 0 named at T 6.0 (UNVERIFIED). Nothing in B2b changes that verdict; CPU is not the limit for identification, the enrolment audio is.
+
+Reading: local diarization is cheap on CPU (own diarizer about 1/20 of real time even under load) but poor (DER 0.57-0.66 vs 0.26-0.69 for the B1 vendors on the same conditions, Azure and Gemini 0.26-0.30 at 5 % overlap). The diarizer, not the CPU, is the weak link of a local pipeline. Identification costs about one CPU-second and a half per second of cluster speech embedded; B2's matcher embeds at most 60 turns per cluster, so its cost is bounded per cluster, not per lesson minute.
+
+## 6. Speed on a real lesson: threads, and one 20-minute end-to-end piece (UNDER LOAD)
+
+### 6.1 Threads 4 vs 8 on the timing piece (L2, first 600 s, adopted settings)
+
+| model | threads | wall RTF | CPU-s per audio s | cores it got | others' CPU (mean, p10-p90) | free RAM min / mean | peak working set / private | words |
+|---|---|---|---|---|---|---|---|---|
+| small | 8 | 1.07 | 3.08 | 2.87 | 64 % (49-79) | 0.30 / 3.97 GB | 1.03 / 3.14 GB | 738 |
+| small | 4 | **0.53** | **1.45** | 2.73 | 66 % (57-76) | 2.71 / 6.20 GB | 1.03 / 3.14 GB | 738 |
+| large-v3-turbo | 8 | 4.50 | 9.48 | 2.11 | 74 % (60-87) | 0.05 / 1.18 GB | 1.90 / 4.01 GB | 808 |
+| large-v3-turbo | 4 | 6.07 | 6.38 | 1.05 | 87 % (72-96) | 0.01 / 2.93 GB | 1.90 / 4.01 GB | 807 |
+| small, greedy (beam 1) | 4 | **0.38** | 1.16 | 3.07 | 60 % (53-69) | 6.50 / 7.33 GB | 1.04 / 3.14 GB | 803 |
+| large-v3-turbo, greedy (beam 1) | 4 | **1.11** | 3.79 | 3.41 | 54 % (43-64) | 6.11 / 7.02 GB | 1.90 / 4.01 GB | 796 |
+
+Agreement with the vendors on this 600 s (vendors among themselves 0.812, range 0.77-0.87): small beam 5 0.772, small greedy 0.728; turbo beam 5 0.795, turbo greedy 0.786. Greedy costs turbo almost nothing and small a clear 4 points.
+The two greedy runs were taken at night with free RAM never under 6 GB and other processes at 54-60 % of the machine: the lightest load of the whole task, still not quiet.
+
+8 threads never paid for themselves in CPU: each CPU-second did about half the work (small 3.08 vs 1.45, turbo 9.5 vs 6.4 CPU-s per audio second; on 4 cores / 8 threads the hyper-threads share the cores' units, and the other agents held the rest). In wall time small at 4 threads was twice as fast as at 8 under similar CPU load (0.53 vs 1.07; the 8-thread run also had 0.3 GB free RAM against 2.7 GB); turbo at 8 threads finished sooner only because it grabbed more of a machine the others were fighting for. Default for this laptop: 4 threads. The quiet-time rerun (section 7) settles it.
+The small 4-thread run is the least-loaded measurement in this file (free RAM never under 2.7 GB): 1.45 CPU-s per audio second on real lesson audio. The select set cost small 2.6-4.3 CPU-s per audio second because the room-degraded synthetic mixes trigger Whisper's temperature fallbacks; real lesson audio is cheaper.
+
+### 6.2 End to end: L2, first 20 minutes, large-v3-turbo 8 threads + own diarizer + ECAPA matching
+
+`b2b_bench.py e2e --lesson L2 --minutes 20 --size large-v3-turbo --threads 8 --lang en --vad on --vad-thr 0.25 --cond-prev off` (2026-11-16 22:44-01:19 local, one stage after another in one process; nothing per child written):
+
+| stage | wall s | CPU s | cores | others' CPU (mean, p10-p90) | free RAM min | output |
+|---|---|---|---|---|---|---|
+| transcription (turbo) | 8 658 | 22 389 | 2.59 | 68 % (60-78) | 0.01 GB | 1 696 words |
+| diarization (own) | 107 | 387 | 3.62 | 55 % (37-98) | 2.10 GB | 6 clusters |
+| identification (ECAPA, <= 60 turns per cluster >= 10 s) | 469 | 1 375 | 2.93 | 63 % (49-93) | 0.59 GB | 5 clusters matched, 0 named at T 6.0 (same as B2: UNVERIFIED) |
+| total | 9 234 (RTF 7.7) | | | | | peak 1.93 GB working set, 4.41 GB private |
+
+Transcription is 94 % of the time. Its CPU-seconds per audio second here (18.7) are twice the timing piece's (9.5) at the same settings while free RAM sat at zero: memory pressure and hyper-thread contention, not the audio, so this run is a worst case, not an estimate.
+
+### 6.3 What a 90-minute lesson takes (EXTRAPOLATED from 10- and 20-minute pieces; no full lesson was run)
+
+A full lesson was not run: under this load a 90-minute turbo run would occupy the laptop for 7-12 hours, against the instruction to keep it usable. The harness allows it (B2 processed lesson audio locally); the command is in section 7 for a quiet time.
+
+| pipeline for 90 min of audio | measured under load (this file) | projected on the same laptop when quiet (ASSUMPTION: the lowest CPU-s per audio s measured here, spread over 3.5 busy cores at 4 threads) |
+|---|---|---|
+| small (beam 5) + own diarizer + ECAPA | 0.8 h transcription at a light load (RTF 0.53 on lesson audio), up to 5.2 h at the heaviest (RTF 3.5 on the select set) + 0.1-0.2 h diarization + ~0.2 h matching | about 0.6 h transcription (1.45 CPU-s/s / 3.5) + ~5 min + ~5-10 min: **about 1 h** |
+| **large-v3-turbo greedy** + own diarizer + ECAPA | **1.7 h transcription (RTF 1.11, others at 54 %, 6 GB free)** + same | about 1.6 h transcription (3.79 CPU-s/s / 3.5; it already had 3.4 cores) + ~5 min + ~5-10 min: **about 1.75-2 h** |
+| large-v3-turbo beam 5 + own diarizer + ECAPA | 6.8-10.8 h transcription (RTF 4.5-7.2, both under heavy memory pressure) + same | about 2 h transcription (ASSUMED beam 5 costs 1.25x greedy, the ratio small showed at a similar load: 1.45 vs 1.16) + ~15 min: **about 2-2.5 h** |
+
+Uncertainty: the quiet projection rests on CPU-seconds measured under contention, which this file shows can be inflated by up to 2x; the true quiet figure is more likely at or below the projection than above it, but it is a projection until the section 7 commands are run.
+
+## 7. Quiet-time timing runs (for the conductor; nothing else heavy running)
+
+Run from the repo root of this branch, one after another, in a terminal (PowerShell). `PY` = `C:\Users\Dell\hec-audio-eval\.venv\Scripts\python.exe`. Before starting, check the load: Task Manager CPU under 10 % and at least 6 GB free. Each run writes its own load figures; a run counts as quiet only when its JSON says `"load": "quiet"` (others under 10 % of the machine and at least 4 GB free throughout).
+
+```powershell
+$PY = "C:\Users\Dell\hec-audio-eval\.venv\Scripts\python.exe"
+$C = "--lang en --vad on --vad-thr 0.25 --cond-prev off"
+# 1. transcription speed, L2 first 10 min: small / large-v3-turbo / medium x 4 and 8 threads (about 1.5-2 h in total when quiet)
+foreach ($s in "small","large-v3-turbo","medium") { foreach ($t in 4,8) {
+  & $PY scripts\lesson-eval\b2b_bench.py asr --size $s --threads $t $C.Split(" ") --set timing } }
+foreach ($s in "small","large-v3-turbo") {
+  & $PY scripts\lesson-eval\b2b_bench.py asr --size $s --threads 4 --beam 1 $C.Split(" ") --set timing }
+# 2. diarization and identification speed (about 10 min)
+& $PY scripts\lesson-eval\b2b_bench.py diar --engine own --threads 4 --timing-only
+& $PY scripts\lesson-eval\b2b_bench.py ident --threads 4
+# 3. the full-lesson figure: L2 is 84.5 min, the nearest to 90 (about 2 h with greedy turbo, 1 h with small, when quiet)
+& $PY scripts\lesson-eval\b2b_bench.py e2e --lesson L2 --minutes 0 --size large-v3-turbo --beam 1 --threads 4 $C.Split(" ")
+& $PY scripts\lesson-eval\b2b_bench.py e2e --lesson L2 --minutes 0 --size small --threads 4 $C.Split(" ")
+```
+
+Results land in `C:\Users\Dell\hec-audio-eval\work\b2b\asr\*timing\metrics_*.json`, `work\b2b\diar\*-timing.json`, `work\b2b\ident\`, `work\b2b\e2e\` (aggregates only; the asr folders also hold the transcripts, which stay there). The same commands re-run overwrite the under-load files of the same name, so copy `work\b2b\` aside first if the under-load figures are to be kept.
+
+## 8. Cost per 90-minute lesson
+
+| route | per lesson | basis |
+|---|---|---|
+| this laptop, small pipeline | about 1 h of laptop time (quiet, projected); electricity about 0.03 kWh = about VND 100, under USD 0.01 | ASSUMED wall power 30 W while busy (15 W-class U processor, not measured: Windows here exposes no power meter) and an ASSUMED tariff of about VND 3 000-3 500 per kWh (EVN retail range, not checked for 2026) |
+| this laptop, turbo (greedy) pipeline | about 2 h (quiet, projected; 1.9 h at the light night-time load measured); about 0.06 kWh = about VND 200, under USD 0.01 | same assumptions |
+| B1 vendors (transcription only; diarization included where the vendor gives it) | azure-fast USD 1.50; openai gpt-4o-transcribe USD 0.54; openai gpt-transcribe USD 0.41; gemini USD 0.27 | B1 "USD per audio hour" estimates x 1.5 h; most vendor prices UNCONFIRMED (B0-vendors); identification is local in every route |
+| a rented CPU server instead of the laptop | Hetzner CPX32 (4 vCPU, 8 GB) EUR 30-36 per month whatever the volume; a 4-vCPU box as fast as this laptop when quiet would do about 8 small-pipeline or 4 turbo-pipeline lessons in an 8-hour night (vCPU speed not measured) | B0-vendors section 7 prices; per-lesson cost depends on how many lessons a month: at 60 lessons about EUR 0.5-0.6 each |
+
+Electricity is negligible either way; the real local costs are the machine's time (one lesson occupies it for 1-3 hours) and that it must be on and free overnight. The laptop is also the machine the staff use: a dedicated box (B0 named an N100 mini PC, USD 160-340) would be slower per core than this i7 (not measured) but could run every night.
+
+## 9. Recommendation
+
+**Yes, the speech pieces can run on this CPU-only laptop overnight; transcription can stay local at about vendor-level agreement; local speaker separation cannot replace a vendor's.**
+
+1. Transcription: faster-whisper **large-v3-turbo, int8, greedy (beam 1), 4 threads, English, silero VAD threshold 0.25, condition_on_previous_text off**. About 2 h per 90-minute lesson when the laptop is quiet (projected; 1.7 h measured at a light night-time load). Agreement with the vendors on real speech (clips 0.873, lesson 0.786-0.848) is inside the vendors' own spread; it writes no Vietnamese (only Gemini did in B1). small is the fallback when time matters (about 1 h, agreement 2-4 points lower); medium is never worth it here.
+   Reasoning: transcription is 94 % of the pipeline's time, and turbo greedy costs about 3.8 CPU-seconds per audio second; beam 5 bought nothing measurable. The setting that matters is the VAD threshold: B1's local row looked unusable only because the default VAD discarded most of the children's speech.
+2. Speaker separation: the local diarizers are cheap (own diarizer about 5 minutes per lesson) but poor (DER 0.57-0.66 on the mixes vs 0.26-0.69 for the vendors in B1, Azure and Gemini best at 0.26-0.30 with 5 % overlap and themselves weak at 15 %). If speaker turns matter, take them from a vendor's diarization (Azure or Gemini in B1); if the school wants nothing to leave the building, local diarization gives voice groups that a teacher must treat as "possibly several children". CPU is not the limit; the method is.
+3. Identification: ECAPA is about 10 minutes per lesson on CPU. Its limit is the enrolment audio (B2), not speed. Unchanged: every name is a teacher's decision; UNKNOWN is the common answer.
+4. Where: the laptop works but is the staff machine and is RAM-bound (peak 4 GB committed for turbo; it ran at zero free RAM whenever other work was open). A dedicated always-on box with 8-16 GB, or a small CPU VPS (EUR 30-36 per month) if data may leave the school, runs 3-4 lessons a night. A GPU is not needed.
+
+Uncertainty (stated once, applies to every number above):
+- No timing in this file was taken on a quiet machine; the lightest runs still had other processes using 54-66 % of it. Speed figures for a quiet laptop are projections (section 6.3) until the section 7 commands are run; I expect them at or below the projection.
+- Quality is agreement with vendors, not accuracy (no human transcript exists); the select set is small (2 mixes, 6 clips, one 3-minute slice) and the longer real-lesson check is one 10-minute piece of one lesson.
+- No full 90-minute lesson was run end to end; the estimate is extrapolated from 10- and 20-minute pieces of L2.
+- Electricity is from assumed wall power and an assumed tariff, not measured.
+
+## 10. Data handled, and deletion
+
+- B2b wrote no voiceprint and no embedding to disk (identification embeddings were discarded in memory). The voiceprints it read are B2's, under `C:\Users\Dell\hec-audio-eval\work\voiceprints\`; deleting all enrolment artefacts in one command: `C:\Users\Dell\hec-audio-eval\.venv\Scripts\python.exe scripts\lesson-eval\delete_voiceprints.py --yes`.
+- B2b's own work files (local transcripts of children's speech, the cut input pieces, per-run metrics, logs) are all under `C:\Users\Dell\hec-audio-eval\work\b2b\`; delete with `Remove-Item -Recurse -Force C:\Users\Dell\hec-audio-eval\work\b2b` (or everything derived with `delete_all_derived.py --yes`).
+- Nothing in the repo holds audio, transcript text, a name or a voiceprint: this file and `b2b_bench.py` hold aggregates and codes only. key.txt files were never opened. No vendor was called; no token was used or looked for.
+
+## 11. Not measured
+
+- Quiet-machine timings (section 7 is ready to run).
+- A full 90-minute lesson end to end (command in section 7).
+- whisper.cpp (not in the harness); pyannote community-1 (not set up: no token, not installed); WhisperX.
+- The "quality" set (4 mixes, 17 clips, three lesson slices) on every model: dropped for time under load; the select set plus the 10-minute lesson piece stand in.
+- Wall power (no meter); RAM below what the OS reported as committed (peak private).
+- Another machine (N100 mini PC, VPS vCPU speed).
