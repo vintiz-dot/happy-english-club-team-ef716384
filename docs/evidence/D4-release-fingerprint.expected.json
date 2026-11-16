@@ -155,7 +155,7 @@
       },
       "identity": "public._class_fee_reach(p_class uuid, p_from date, p_fee_before integer, p_fee_after integer)",
       "identity_arguments": "p_class uuid, p_from date, p_fee_before integer, p_fee_after integer",
-      "md5_prosrc": "dc3dad43d1353a3dcf36e520d68c7bf7",
+      "md5_prosrc": "b7fe1e41baf0e4ac3885a03f3d61c610",
       "proname": "_class_fee_reach",
       "security_definer": true,
       "volatility": "s"
@@ -882,9 +882,9 @@
       "policies": [
         {
           "cmd": "SELECT",
-          "md5_qual": "3dea7b437d2f1f4f0719fbdb1b5e8d0f",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
           "md5_with_check": null,
-          "name": "class_fee_history_staff_read",
+          "name": "class_fee_history_admin_read",
           "roles": [
             "authenticated"
           ]
@@ -1692,7 +1692,7 @@
     {
       "enabled": "O",
       "function": "_class_fee_mirror_guard",
-      "md5_def": "8e019118e4fde353129d0dec5f5d7951",
+      "md5_def": "ebf1bd33b96da6dc97d67da86b06aafe",
       "name": "zz_class_fee_mirror_guard",
       "table": "classes",
       "tgtype": 19
