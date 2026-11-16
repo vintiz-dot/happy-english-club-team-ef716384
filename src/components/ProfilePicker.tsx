@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { loadMyStudents, clearShellCache } from "@/hooks/useShellQueries";
+import { useIvory } from "@/hooks/useIvory";
 
 export default function ProfilePicker() {
   const { studentId, setStudentId } = useStudentProfile();
@@ -14,6 +15,8 @@ export default function ProfilePicker() {
   const [loading, setLoading] = useState(true);
   const hasAutoSelectedRef = useRef(false);
   const queryClient = useQueryClient();
+  // Rendered over every route (App.tsx): the system only where the route is listed.
+  const ivory = useIvory();
 
   useEffect(() => {
     async function loadStudents() {
@@ -95,10 +98,13 @@ export default function ProfilePicker() {
   }
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-      <Card className="w-[400px]">
+    <div className={ivory ? "fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-hec-scrim/60 px-4 py-8" : "fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50"}>
+      <Card
+        className={ivory ? "w-full max-w-md max-h-[85dvh] overflow-y-auto bg-hec-raised shadow-hec-3" : "w-[400px]"}
+        {...(ivory ? { role: "dialog", "aria-modal": true, "aria-labelledby": "profile-picker-title" } : {})}
+      >
         <CardHeader>
-          <CardTitle>Select Student Profile</CardTitle>
+          <CardTitle id={ivory ? "profile-picker-title" : undefined}>Select Student Profile</CardTitle>
           <CardDescription>
             This account has multiple students. Please select one to continue.
           </CardDescription>
@@ -108,17 +114,17 @@ export default function ProfilePicker() {
             <Button
               key={student.id}
               variant="outline"
-              className="w-full justify-start"
+              className={ivory ? "w-full h-auto justify-start whitespace-normal py-3 text-left" : "w-full justify-start"}
               onClick={() => {
                 setStudentId(student.id);
                 queryClient.invalidateQueries({ queryKey: ["assignment-calendar"] });
                 queryClient.invalidateQueries({ queryKey: ["student-assignments"] });
               }}
             >
-              <div className="text-left">
-                <div className="font-medium">{student.full_name}</div>
+              <div className={ivory ? "min-w-0 text-left" : "text-left"}>
+                <div className={ivory ? "whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink" : "font-medium"}>{student.full_name}</div>
                 {student.date_of_birth && (
-                  <div className="text-xs text-muted-foreground">
+                  <div className={ivory ? "text-hec-small text-hec-ink-soft tabular-nums" : "text-xs text-muted-foreground"}>
                     DOB: {new Date(student.date_of_birth).toLocaleDateString()}
                   </div>
                 )}
