@@ -7,7 +7,9 @@
  *
  *   node scripts/run-bun-tests.mjs   (or: npm run test:bun)
  */
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
+// jsdom + Tiptap import in beforeAll can take longer than bun's 5 s default on a loaded machine.
+setDefaultTimeout(120_000);
 import { installDom } from "./fixtures/rich-text/dom";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
