@@ -336,6 +336,11 @@ const SUITES = [
   // match; the fingerprint after each; the rollback chain back to 1b and to
   // the D release. Builds its own databases (one child process per scenario).
   { name: "d4 apply chain", file: "d4-apply-chain.test.mjs", expect: 238, migrations: [] },
+  // D4 step 4: two-administrator approval, built OFF. Builds its databases
+  // from guard-fingerprint.mjs D4_BUILD (D1, D2, every D4 file 1a..3B and
+  // file 6, real files); OFF is proved by running one scenario with and
+  // without file 6 and comparing; then ON; rollback 6 is the argument.
+  { name: "d4 approvals", file: "d4-approvals.test.mjs", expect: 134, migrations: [], args: ["scripts/ROLLBACK-d4-6-approvals.sql"] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

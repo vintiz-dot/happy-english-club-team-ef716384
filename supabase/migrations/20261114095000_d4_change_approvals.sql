@@ -199,7 +199,8 @@ CREATE INDEX IF NOT EXISTS change_approval_requests_targets_idx ON public.change
 
 CREATE TABLE IF NOT EXISTS public.change_approval_events (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at    timestamptz NOT NULL DEFAULT now(),
+  created_at    timestamptz NOT NULL DEFAULT clock_timestamp(),   -- the decision and the change share one transaction: keep their order
+
   request_id    uuid REFERENCES public.change_approval_requests(id) ON DELETE RESTRICT,
   txid          bigint NOT NULL DEFAULT txid_current(),
   actor_user_id uuid,
