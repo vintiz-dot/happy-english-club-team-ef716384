@@ -6,13 +6,58 @@ Branch: `editor-rebuild` (from `claude/hec-conductor-setup-efbaa5` at d35ba69a; 
 
 ## Where I am / next step
 
-Steps 0-4 done (editor built, every caller and renderer switched, Quill removed, lockfiles agree, unit tests green). Next: harness proof (before/after), final bundle sizes, the full check run.
+Done: editor built, every caller and renderer switched, Quill removed, lockfiles agree, unit tests, harness before/after, bundle sizes, checks (see below). Next: the conductor reviews and merges; nothing pushed.
 
 ## Technology: Tiptap 3.32.2 (ProseMirror), MIT packages only
 
 - 3.32.2 is the newest 3.x published at least two weeks before today (30 Oct 2026; 3.32.3+ are from 5 Nov on). Exact versions, no Pro extensions, no Tiptap Cloud, no collaboration.
 - Why not Lexical: the stored format. Every row in the database is Quill HTML (classes `ql-indent-N`, `ql-align-*`, Quill 2's `<ol><li data-list="bullet">`), and five renderers plus the homework PDF read it. Tiptap's schema reads arbitrary HTML through per-extension `parseHTML` rules and writes plain semantic HTML through `renderHTML`, so the new editor stores the same vocabulary Quill did (classes, `<p><br></p>` empty lines, `<li>text</li>`) and no renderer had to learn a new format. Lexical's HTML export writes its own markup (`<span style="white-space: pre-wrap;">` around every run, `class`/`dir` on blocks) unless every node's `exportDOM` is overridden, which would change what every existing renderer reads. Lexical is smaller (not measured here); the size cost of Tiptap is reported below and is paid only on screens that edit.
-- Trimmed to what the screens use: subpath imports (no task lists, drop/gap cursors), a 40-line safe link mark instead of `@tiptap/extension-link` (which ships linkifyjs, ~30 kB, for auto-linking Quill never did), and a 40-line React binding instead of `@tiptap/react` (node-view portals, menus and a deep-equal library unused here). Editor chunk 440 kB -> 376 kB minified before those two cuts were taken out.
+- Trimmed to what the screens use: subpath imports (no task lists, drop/gap cursors), a 40-line safe link mark instead of `@tiptap/extension-link` (which ships linkifyjs, ~30 kB, for auto-linking Quill never did), and a 40-line React binding instead of `@tiptap/react` (node-view portals, menus and a deep-equal library unused here). Those cuts took the editor chunk from 440 kB to 378 kB minified (136 -> 114 kB gzip). Dependencies (exact): `@tiptap/core`, `@tiptap/pm`, `@tiptap/extension-{document,paragraph,text,bold,italic,underline,strike,code,code-block,heading,blockquote,hard-break,list,subscript,superscript,text-style,image}`, `@tiptap/extensions`, all 3.32.2; dev: `jsdom` 30.1.3. Removed: `react-quill-new`. `npm install` and `bun install --lockfile-only` both run; `package-lock.json` and `bun.lock` committed and contain no Quill.
+
+## Bundle sizes (`node node_modules/vite/bin/vite.js build`, kB raw / gzip)
+
+| | Before (Quill) | After |
+| --- | --- | --- |
+| Editor code (lazy chunk) | `react-quill-new`+Quill 204.6 / 61.3 | `EditorImpl` 377.8 / 114.1 |
+| Editor CSS | `quill.snow.css` 23.8 / 3.6, linked by every chunk that imported it (HomeworkSubmission, AssignmentUpload, EditHomeworkDialog, ExamReportEditor, ClassHomework, JournalEditor) - so it loaded on reading pages too | `EditorImpl.css` 8.5 / 2.0, only with the editor |
+| Reader | `sanitizeHtml`/`cleanRichHtml` inside each page chunk | `RichTextView` 7.7 / 3.6 + 1.8 / 0.6 css (shared; DOMPurify included) |
+| Entry `index.js` / `index.css` | 544.9 / 166.7, 256.6 / 41.3 | 544.9 / 166.7, 254.1 / 40.9 (Quill rules gone) |
+| All assets | 5862 / 1703 | 6024 / 1757 |
+
+Plainly: the editor itself is about 53 kB gzip heavier than Quill. It is downloaded once (hashed, immutable asset) and only when a screen with an editor opens; reading pages ship no editor code and no Quill CSS any more. ClassHomework and JournalEditor imported Quill statically, so their routes used to pull the whole Quill chunk on load; now they load the editor lazily. `preloadRichTextEditor()` exists if a screen wants the chunk fetched before the editor appears (no caller uses it yet).
+
+## Harness proof (`C:\Users\Dell\hec-tools\r21-harness`, made-up data, fake Supabase client, no network)
+
+Added to the harness (nothing existing changed): `editor-patch.mjs` (builds `preview-editor/` from `preview/`: old-Quill HTML rows for two homeworks, a journal entry, an exam report and a graded answer; every write's payload recorded), `editor.mjs` (the run), `editor-compare.mjs`. Before = an export of the conductor branch (`C:\Users\Dell\hec-tools\editor-before`, node_modules junction to the main checkout's); After = this branch. Output and screenshots: `C:\Users\Dell\hec-tools\editor-out` (`before-*`, `after-*`, `compare.jsonl`).
+
+8 screens x 375/1280 x light/dark = 32 runs each side: ClassHomework new, ClassHomework editing an old Quill row, AssignmentUpload, EditHomeworkDialog (old row), ExamReportEditor new and editing an old row, the student's journal (JournalEditor), the student's homework submission. Each run: page-load requests, open the editor, screenshot, type a sentence with the long name, Ctrl+B, "- " bullet list, Tab / Shift+Tab nesting, Ctrl+K link, toolbar Indent/Outdent, paste of Word clipboard HTML, screenshot, axe on the editor, save.
+
+- Old Quill rows load with their bullets, numbers, nested depth, indents, alignment, colours, highlight, links, headings, quote (screenshots `after-class-hw-old-*`, `after-assign-edit-*`, `after-exam-edit-*`).
+- Requests: page-load multiset identical in all 32 pairs; whole-run multiset identical in 29. The 3 others: `assign-edit-1280-light` one extra `video_submissions` select (a background refetch; the other three sizes/themes are identical), and `journal-375-*` where BEFORE could not save at all (Quill's fixed-height box overflowed onto the Save button at 375 px; the click timed out) and AFTER saved with the same journals insert as both 1280 runs.
+- Save payloads: same tables, methods, keys and value types in every pair that saved on both sides (homeworks insert/update, homework_submissions upsert + point_transactions + early_submission_rewards, journals insert). `submission_text` / `body` are HTML strings as before.
+- axe, critical + serious, inside the editor: before 1-2 on every teacher screen in both themes (`aria-command-name`: Quill's unnamed toolbar buttons; `color-contrast` in dark). After: 0 in all 16 light runs; 1 in each dark run, and in every case it is the AUTHOR'S colour in the content (the pasted Word "Bring the book!" in #C00000, or the old row's red "Due Friday!") on the dark surface - the editor's own controls have none. The student's box had the same 1 in dark before.
+- Editor checks in every after run: textbox role, multiline, named by its label ("Your answer", "Notes", "Description", "Report content (optional)", "Content"); toolbar labelled, exactly one tab stop, arrow keys move; Bold reports `aria-pressed="true"`; 0 unnamed buttons; 0 targets under 44 px; caret on screen after typing; no horizontal overflow; Word paste becomes a real nested list with no black text (before: "·  Read page 4" typed-bullet paragraphs and `color: black`).
+- Seen in screenshots: dark mode toolbar readable (before: Quill's icons on a near-black bar, highlight text white on yellow); 375 px toolbars wrap (full preset 4 rows, student's 1 row).
+
+## Checks
+
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0.
+- `npm run test:bun`: 207 pass, 0 fail, 14 files (41 of them the new editor suite).
+- `node scripts/design-tokens-check.mjs`: PASS.
+- `node scripts/pgtest/run.mjs`: PGTEST_RESULT
+
+## Not verified
+
+- A real iPhone (Safari keyboard + caret) and a real Android phone: the harness is desktop Chrome at 375 px with touch emulation. The visualViewport scroll-margin logic is in place but unproven on a device.
+- Screen readers (VoiceOver/TalkBack/NVDA) - axe and the ARIA attributes only.
+- Paste from the real Word / Google Docs apps: tested with representative clipboard HTML, not the live clipboard.
+- The colour palette's dark-mode contrast for coloured TEXT chosen by a teacher (content, not controls); see axe above.
+- Old rows in production: the fixtures are invented; no production row was read.
+- Today's renderers number a Quill 2 numbered list that has bullet items between its numbers by counting the bullets too ("4." after 1 + 2 bullets); unchanged, as asked ("renders the same as today").
+
+## Overlap check
+
+Start and finish: no file on this branch is changed by `worktree-agent-a2e9e781ed074eebd`, `worktree-agent-a691e69d8dce8ffe6`, `worktree-agent-abb38f42ad67d0fe0`, `worktree-agent-ae3a47575e6e4c362`, `origin/pc2/d4-3b`, `origin/pc2/r22-r23` or `d4-3a-lessons`.
 
 ## What was built
 
