@@ -53,8 +53,13 @@ const ok = (name, value, extra) => {
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 const files = process.argv.slice(2);
-if (files.length !== 4) {
-  console.error('usage: invoice-status.test.mjs <20251117061416> <20261009120000> <20261009130000> <20261106120000>');
+// D5 G-4: with 20261117110000 loaded, the carry refresh relabels every bill it touches.
+const RELABELS = files.some((f) => /20261117110000_carry_refresh_relabels/.test(f));
+// D5 fix round 1: optionally followed by more migrations loaded in order
+// (run.mjs runs it a second time with 20261113090000 + 20261117110000, the
+// carry refresh that relabels, to prove every figure is unchanged by it).
+if (files.length < 4) {
+  console.error('usage: invoice-status.test.mjs <20251117061416> <20261009120000> <20261009130000> <20261106120000> [later migrations...]');
   process.exit(2);
 }
 
@@ -1029,7 +1034,8 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
   // ---- bills paid before any of this (labelled "issued" by the old reset)
   await withHistory();
   await editRecorded(MONTH, 400000);
-  ok('(a bill paid before the fix: 400,000 recorded, still labelled issued)', (await bill())?.status === 'issued');
+  if (RELABELS) ok('(G-4 loaded: the same payment is labelled paid by the carry refresh at once - no stale label to wait for)', (await bill())?.status === 'paid');
+  else ok('(a bill paid before the fix: 400,000 recorded, still labelled issued)', (await bill())?.status === 'issued');
   await calc();
   ok('the next ordinary recalculation of that bill labels it paid - no back-fill, no figure moved',
      (await bill())?.status === 'paid' && (await bill())?.recorded_payment === 400000);
@@ -2016,10 +2022,16 @@ console.log('\nscripts/CHECK-invoice-status-resets.sql finds bills the old behav
   await pay(b.id, 400000, 'paid');
   // What calculate-tuition did before T1, written the way it wrote it
   // (service role, so no actor): labels reset, figures untouched...
+  // (With G-4 loaded these rows are HISTORY - written before the carry refresh relabelled -
+  // so they go in with the carry trigger off and the audit trigger on; the figures end as they began.)
+  if (RELABELS) await db.exec('ALTER TABLE public.invoices DISABLE TRIGGER invoices_carry_sync');
   await db.query(`UPDATE public.invoices SET confirmation_status = 'auto_approved', status = 'issued' WHERE id = $1`, [b.id]);
+  if (RELABELS) await db.exec('ALTER TABLE public.invoices ENABLE TRIGGER invoices_carry_sync');
   // ...and what it saved when the read of the bill failed.
+  if (RELABELS) await db.exec('ALTER TABLE public.invoices DISABLE TRIGGER invoices_carry_sync');
   await db.query(`UPDATE public.invoices SET recorded_payment = 0 WHERE id = $1`, [b.id]);
   await db.query(`UPDATE public.invoices SET recorded_payment = 400000 WHERE id = $1`, [b.id]);
+  if (RELABELS) await db.exec('ALTER TABLE public.invoices ENABLE TRIGGER invoices_carry_sync');
   const counts = async () => (await db.query(
     `SELECT (SELECT count(*) FROM public.invoices)::int i, (SELECT count(*) FROM public.audit_log)::int a,
             (SELECT md5(string_agg(t::text, '|' ORDER BY id)) FROM public.invoices t) h`)).rows[0];

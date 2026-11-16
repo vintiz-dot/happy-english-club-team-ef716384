@@ -61,6 +61,21 @@ const SUITES = [
       "20261106120000_invoice_tuition_freeze.sql",
     ],
   },
+  // D5 G-4: the same suite with the carry refresh that relabels
+  // (20261117110000) loaded on top: every figure still equals the golden file.
+  {
+    name: "invoice status + G-4",
+    file: "invoice-status.test.mjs",
+    expect: 317,
+    migrations: [
+      "20251117061416_2afa5f4f-f2a4-48ba-9c52-9939e4ece5e9.sql",
+      "20261009120000_keep_invoice_carry_balances_correct.sql",
+      "20261009130000_audit_every_admin_action.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261113090000_invoice_paid_label.sql",
+      "20261117110000_carry_refresh_relabels.sql",
+    ],
+  },
   // Voluntary contributions and Settle Bill are removed (D-23): settle-bill
   // is a 410 stub that touches nothing, nothing can create either any more,
   // and the preflight for dropping the write-off reader counts zero.
@@ -71,7 +86,7 @@ const SUITES = [
   // D5: scripts/CHECK-money-invariants.sql, the owner's read-only check of the
   // money invariants on live data - one broken row per check, each caught;
   // read-only; the fixture columns are the live ones; on the real triggers.
-  { name: "money invariants check", file: "money-invariants-check.test.mjs", expect: 109, migrations: [] },
+  { name: "money invariants check", file: "money-invariants-check.test.mjs", expect: 120, migrations: [] },
   // D5: scripts/CHECK-past-cancellations-with-evidence.sql on the real audit,
   // cancelled-lesson guard, D1 and D2 (it loads them itself, in paste order).
   { name: "past cancellations check", file: "past-cancellations-check.test.mjs", expect: 20, migrations: [] },

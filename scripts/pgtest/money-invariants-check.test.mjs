@@ -306,6 +306,9 @@ const CASES = [
   ['M01 (fix round 1) an old unkeyed leg completed by a NEW leg that leaves it unbalanced still alarms',
    `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES
       ('${tx(113)}', ${acct(S1, 'AR')}, 0, 500000, '2025-10', '2025-10-13T03:00:00Z'), ('${tx(113)}', ${acct(S1, 'REVENUE')}, 100, 0, '2025-10', now())`, ['M01']],
+  ['M01 (fix round 1, isolated) with NO keyed ledger row at all, an old unbalanced transaction counts in M01, not M41 (fails closed)',
+   `UPDATE public.ledger_entries SET tx_key = NULL;
+    INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES ('${tx(114)}', ${acct(S1, 'AR')}, 0, 500000, '2025-10', '2025-10-13T03:00:00Z')`, ['M01', 'M07']],
   ['M42 (restore) the 9 Nov restore to the pre-wipe total, no actor: reports, M13 / M14 do not alarm', restoreCase(), ['M42']],
   ['M13/M14 (restore) the same restore made BY A PERSON still alarms', restoreCase({ actor: ADMIN }), ['M13', 'M14']],
   ['M13/M14 (restore) the same restore on ANOTHER DAY (11 Nov) still alarms', restoreCase({ at: '2026-11-11T01:22:00Z' }), ['M13', 'M14']],
@@ -468,7 +471,7 @@ console.log('\n5. everything broken at once, read-only: every "must be 0" check 
 {
   await db.exec('BEGIN');
   for (const [label, sql, expect] of CASES) {
-    if (expect.length === 0 || label.startsWith('M40') || label.startsWith('M14') || label.includes('(restore)')) continue;
+    if (expect.length === 0 || label.startsWith('M40') || label.startsWith('M14') || label.includes('(restore)') || label.includes('isolated')) continue;
     await db.exec(sql).catch((e) => ok(`${label}: applies in the combined world`, false, e.message));
   }
   await db.exec(`UPDATE public.invoices SET total_amount = total_amount + 1 WHERE id = '${B_SEP}'`);   // M14 by total, with the rest
@@ -543,7 +546,71 @@ console.log('\n6. on the real triggers: ordinary writes keep every "must be 0" a
      g4.M11.n === before.M11.n + 1 && dec.status === 'partial' && rule === 'paid', { dec, rule, M11: g4.M11 });
   ok('  and every "must be 0" check is still 0 - the label gap is a report, not a guard failure',
      Object.entries(g4).filter(([id, v]) => v.kind === 'must be 0' && v.n !== 0 && id !== 'M20').length === 0);
+
+  // G-4 fix (20261117110000): install it over the same database. It updates no
+  // row by itself; the next write for the child relabels the whole chain and
+  // moves no figure.
+  const money = async () => (await t.query(`SELECT md5(string_agg(concat_ws(':', id, month, base_amount, discount_amount, total_amount,
+      recorded_payment, paid_amount, carry_in_credit, carry_in_debt, carry_out_credit, carry_out_debt, tuition_frozen, class_breakdown::text), '|' ORDER BY id)) h,
+      string_agg(status::text, ',' ORDER BY id) s FROM public.invoices`)).rows[0];
+  const m0 = await money();
+  await t.exec(mig('20261117110000_carry_refresh_relabels.sql'));
+  const m1 = await money();
+  ok('G-4 migration: installing it changes no row (figures and labels as before)', m0.h === m1.h && m0.s === m1.s, { m0, m1 });
+  await t.exec(`UPDATE public.invoices SET recorded_payment = recorded_payment WHERE id = '${B_NOV}'`);
+  const m2 = await money();
+  const dec2 = (await t.query(`SELECT status::text FROM public.invoices WHERE id = '${DEC}'`)).rows[0].status;
+  const fixed = await runCheck(t);
+  ok(`G-4 migration: the next write for the child relabels December "${dec2}" (the rule's label), M11 ${g4.M11.n} -> ${fixed.M11.n}`,
+     dec2 === 'paid' && fixed.M11.n === before.M11.n, { dec2, M11: fixed.M11 });
+  ok('G-4 migration: and no money figure of any bill moved (base, discount, total, recorded, paid, carry, freeze, breakdown)', m2.h === m1.h, { m1: m1.h, m2: m2.h });
+  ok('G-4 migration: every "must be 0" check still 0', Object.entries(fixed).filter(([id, v]) => v.kind === 'must be 0' && v.n !== 0 && id !== 'M20').length === 0);
+  // credit and draft are left alone.
+  await t.exec(`UPDATE public.invoices SET status = 'credit' WHERE id = '${B_OCT}'; UPDATE public.invoices SET status = 'draft' WHERE id = '${B_SEP}';`);
+  await pay(B_NOV, 1000); await cashLeg(203, S1, '2026-11', 1000);
+  const kept = (await t.query(`SELECT id, status::text s FROM public.invoices WHERE id IN ('${B_OCT}', '${B_SEP}') ORDER BY id`)).rows;
+  ok('G-4 migration: a carry refresh leaves an admin\'s "credit" and a "draft" alone', kept.find((r) => r.id === B_OCT)?.s === 'credit' && kept.find((r) => r.id === B_SEP)?.s === 'draft', kept);
   await t.close();
+}
+
+// =================================================================== 7
+console.log('\n7. scripts/CHECK-label-relabel-impact.sql predicts what the G-4 carry refresh relabels');
+{
+  const IMPACT = readFileSync(join(repo, 'scripts', 'CHECK-label-relabel-impact.sql'), 'utf8');
+  const stripped = IMPACT.replace(/--[^\n]*/g, ' ').replace(/'(?:[^']|'')*'/g, "''");
+  ok('one read-only statement (no write / DDL keyword; only invoice_paid_label called)',
+     !/\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|DO|CALL|SET|PERFORM|EXECUTE)\b/i.test(stripped)
+       && stripped.split(';').filter((s) => s.trim()).length === 1
+       && [...new Set(stripped.match(/\bpublic\.[a-z_]+\s*\(/g))].join() === 'public.invoice_paid_label(');
+  const d = new PGlite();
+  await d.exec(SCHEMA); await d.exec(BASELINE);
+  for (const f of ['20261009120000_keep_invoice_carry_balances_correct.sql', '20261113090000_invoice_paid_label.sql']) await d.exec(mig(f));
+  // Stale labels as history left them: three on S1, one 'credit' and one 'draft' that must stay.
+  await d.exec(`INSERT INTO public.invoices(student_id, month, status, base_amount, total_amount, recorded_payment) VALUES
+      ('${S2}', '2026-08', 'issued', 300000, 300000, 300000), ('${S2}', '2026-09', 'credit', 300000, 300000, 0), ('${S2}', '2026-10', 'draft', 0, 0, 0)`);
+  await d.exec(`ALTER TABLE public.invoices DISABLE TRIGGER invoices_carry_sync;
+    UPDATE public.invoices SET status = 'issued' WHERE id IN ('${B_SEP}', '${B_OCT}');
+    UPDATE public.invoices SET status = 'paid' WHERE id = '${B_NOV}';
+    ALTER TABLE public.invoices ENABLE TRIGGER invoices_carry_sync;`);
+  await d.exec('BEGIN READ ONLY');
+  let rows;
+  try { rows = (await d.query(IMPACT)).rows; } finally { await d.exec('ROLLBACK'); }
+  const predicted = rows.reduce((s, r) => s + Number(r.bills), 0);
+  const kids = rows.reduce((s, r) => s + Number(r.children), 0);
+  ok(`it runs read-only and predicts 4 relabels (S1: issued->paid x2, paid->partial; S2: issued->paid), credit and draft left out`,
+     predicted === 4 && rows.some((r) => r.from_label === 'paid' && r.to_label === 'partial') && !rows.some((r) => ['credit', 'draft'].includes(r.from_label)), rows);
+  ok('  and it equals CHECK-money-invariants M11 on the same data (carry consistent)', (await runCheck(d)).M11.n === predicted);
+  const statuses = async () => (await d.query(`SELECT id, status::text s FROM public.invoices ORDER BY id`)).rows;
+  const s0 = await statuses();
+  await d.exec(mig('20261117110000_carry_refresh_relabels.sql'));
+  ok('installing the migration relabels nothing by itself', JSON.stringify(await statuses()) === JSON.stringify(s0));
+  // Touch one bill per child (an ordinary no-op write): the trigger relabels each chain.
+  await d.exec(`UPDATE public.invoices SET recorded_payment = recorded_payment WHERE id = '${B_SEP}';
+                UPDATE public.invoices SET recorded_payment = recorded_payment WHERE student_id = '${S2}' AND month = '2026-08'`);
+  const s1 = await statuses();
+  const changed = s1.filter((r, i) => r.s !== s0[i].s).length;
+  ok(`after one write per child, exactly the predicted ${predicted} bills are relabelled (${changed}), and M11 is 0`, changed === predicted && (await runCheck(d)).M11.n === 0, { s0, s1 });
+  await d.close();
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
