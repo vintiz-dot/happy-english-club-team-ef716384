@@ -92,7 +92,7 @@ export function TeachersList() {
                     {teacher.phone && (
                       <p className="text-sm text-muted-foreground">📱 {teacher.phone}</p>
                     )}
-                    <p className="text-sm font-medium text-primary">
+                    <p className="text-sm font-medium tabular-nums text-primary">
                       {describeRate(teacher)}
                     </p>
                   </div>
