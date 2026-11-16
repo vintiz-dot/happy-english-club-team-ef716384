@@ -18,7 +18,8 @@
 //
 // Settings and secrets live OUTSIDE the repo, in ~/.hec-reception/config.json:
 //   { "tvIp": "192.168.1.204", "tvMac": "a0:6f:aa:46:d1:30", "token": "<display token>",
-//     "open": "07:30", "close": "21:45", "days": [0,1,2,3,4,5,6], "clientKey": "<from pair>" }
+//     "schedule": { "1": [["17:15","21:20"]], "6": [["07:30","11:00"],["16:00","18:00"]], ... },
+//     "clientKey": "<from pair>" }   (schedule: Hanoi time, 0 = Sunday, any number of windows a day)
 // Node 22+ (built-in WebSocket). Runs the same on Windows and a Raspberry Pi.
 import { execFileSync, spawnSync } from "node:child_process";
 import { createSocket } from "node:dgram";
@@ -40,8 +41,16 @@ const LOG = join(HOME, "helper.log");
 
 mkdirSync(HOME, { recursive: true });
 const readJson = (p, d) => { try { return JSON.parse(readFileSync(p, "utf8")); } catch { return d; } };
-const defaults = { tvIp: "192.168.1.204", tvMac: "a0:6f:aa:46:d1:30", token: "", open: "07:30", close: "21:45", days: [0, 1, 2, 3, 4, 5, 6] };
+const defaults = { tvIp: "192.168.1.204", tvMac: "a0:6f:aa:46:d1:30", token: "",
+  // The centre's hours (owner, 16 Nov 2026).
+  schedule: {
+    "0": [["07:30", "11:00"], ["18:45", "21:30"]],
+    "1": [["17:15", "21:20"]], "2": [["17:15", "21:20"]], "3": [["17:15", "21:20"]], "4": [["17:15", "21:20"]], "5": [["17:15", "21:20"]],
+    "6": [["07:30", "11:00"], ["16:00", "18:00"]],
+  },
+};
 const cfg = { ...defaults, ...readJson(CONFIG, {}) };
+if ("open" in cfg || "close" in cfg || "days" in cfg) { delete cfg.open; delete cfg.close; delete cfg.days; writeFileSync(CONFIG, JSON.stringify(cfg, null, 2)); }
 const saveCfg = () => writeFileSync(CONFIG, JSON.stringify(cfg, null, 2));
 const state = readJson(STATE, {});
 const saveState = () => writeFileSync(STATE, JSON.stringify(state, null, 2));
@@ -231,23 +240,32 @@ async function extendDevMode() {
 
 // ------------------------------------------------------------------ the helper
 const hanoiNow = () => new Date(Date.now() + 7 * 3600 * 1000);
-function openNow() {
-  const d = hanoiNow();
-  const hm = d.getUTCHours() * 60 + d.getUTCMinutes();
-  const at = (s) => { const [h, m] = s.split(":").map(Number); return h * 60 + m; };
-  return { open: cfg.days.includes(d.getUTCDay()) && hm >= at(cfg.open) && hm < at(cfg.close), day: d.toISOString().slice(0, 10) };
+// cfg.schedule: Hanoi times the screen is on, per weekday (0 = Sunday), any
+// number of windows a day: { "1": [["17:15", "21:20"]], "6": [["07:30", "11:00"], ["16:00", "18:00"]] }.
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const minutes = (s) => { const [h, m] = s.split(":").map(Number); return h * 60 + m; };
+function openNow(at = hanoiNow()) {
+  const hm = at.getUTCHours() * 60 + at.getUTCMinutes();
+  const day = at.toISOString().slice(0, 10);
+  const windows = cfg.schedule?.[String(at.getUTCDay())] ?? [];
+  const w = windows.find(([from, to]) => hm >= minutes(from) && hm < minutes(to));
+  return { open: !!w, day, window: w ? `${day} ${w[0]}-${w[1]}` : null };
 }
+const describeSchedule = () =>
+  DAY_NAMES.map((n, i) => `${n} ${(cfg.schedule?.[String(i)] ?? []).map((w) => w.join("-")).join(", ") || "off"}`).join("; ");
 
 async function check() {
-  const { open, day } = openNow();
+  const { open, window, day } = openNow();
   if (!open) {
-    if (state.offOn !== day && state.lastOpenDay === day) {
-      try { await ssap([["ssap://system/turnOff"]]); log("closing time: TV switched off"); } catch (e) { log(`closing time: could not switch off (${e.message})`); }
-      state.offOn = day; saveState();
+    // A window just ended: switch the TV off once for it.
+    if (state.lastWindow && state.offFor !== state.lastWindow) {
+      try { await ssap([["ssap://system/turnOff"]]); log(`closing time (${state.lastWindow}): TV switched off`); }
+      catch (e) { log(`closing time (${state.lastWindow}): could not switch off (${e.message})`); }
+      state.offFor = state.lastWindow; saveState();
     }
     return;
   }
-  state.lastOpenDay = day;
+  state.lastWindow = window;
   let front = null;
   try {
     const [info] = await ssap([["ssap://com.webos.applicationManager/getForegroundAppInfo"]]);
@@ -272,7 +290,7 @@ async function check() {
 }
 
 async function watch() {
-  log(`helper started (TV ${cfg.tvIp}, open ${cfg.open}-${cfg.close} Hanoi time)`);
+  log(`helper started (TV ${cfg.tvIp}; on, Hanoi time: ${describeSchedule()})`);
   for (;;) {
     try { await check(); } catch (e) { log(`check failed: ${e.message}`); }
     await new Promise((r) => setTimeout(r, 3 * 60 * 1000));
@@ -335,7 +353,9 @@ try {
   else if (cmd === "check") await check();
   else if (cmd === "watch") await watch();
   else if (cmd === "autostart") autostart();
-  else if (cmd === "status") console.log(JSON.stringify({ config: { ...cfg, token: cfg.token ? "(set)" : "(missing)", clientKey: cfg.clientKey ? "(paired)" : "(not paired)" }, state, open: openNow() }, null, 2));
+  else if (cmd === "status") console.log(JSON.stringify({ config: { ...cfg, token: cfg.token ? "(set)" : "(missing)", clientKey: cfg.clientKey ? "(paired)" : "(not paired)" }, state, schedule: describeSchedule(),
+    // `status 2026-11-21T16:30` checks a Hanoi local time instead of now.
+    open: openNow(process.argv[3] ? new Date(`${process.argv[3]}Z`) : undefined) }, null, 2));
   else console.log(readFileSync(fileURLToPath(import.meta.url), "utf8").split("\n").slice(1, 20).map((l) => l.replace(/^\/\/ ?/, "")).join("\n"));
 } catch (e) {
   console.error(e.message);
