@@ -219,7 +219,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Class A1 â€” Morning"
+                  placeholder="e.g. Class A1 — Morning"
                 />
                 <p className="text-xs text-muted-foreground">
                   Shown everywhere: schedules, reports, invoices and the student app.
@@ -258,7 +258,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
                       running two lengths. The weekly schedule now decides. */}
                   <p className="text-xs text-muted-foreground">
                     {weeklyPattern
-                      ? `Each day is checked against its own slot â€” this class runs ${weeklyPattern}. Used only for a one-off on a day the class doesn't normally run.`
+                      ? `Each day is checked against its own slot — this class runs ${weeklyPattern}. Used only for a one-off on a day the class doesn't normally run.`
                       : "Used for sessions on days this class has no weekly slot for. Set the weekly schedule to have each day checked against its own length."}
                   </p>
                 </div>
@@ -325,7 +325,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
               <Separator className="my-4" />
 
               {/* Economy Mode */}
-              <h3 className="text-lg font-semibold">ðŸ¦ Classroom Economy</h3>
+              <h3 className="text-lg font-semibold">🏦 Classroom Economy</h3>
               <p className="text-sm text-muted-foreground">Enable banking and currency system for this class</p>
 
               <div className="flex items-center justify-between">
