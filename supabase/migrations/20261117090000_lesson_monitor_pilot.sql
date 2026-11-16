@@ -81,6 +81,9 @@ CREATE TABLE IF NOT EXISTS public.lesson_monitor_child_consents (
 CREATE TABLE IF NOT EXISTS public.lesson_monitor_classes (
   class_id                uuid PRIMARY KEY REFERENCES public.classes(id) ON DELETE CASCADE,
   enabled                 boolean NOT NULL DEFAULT false,
+  -- The ONE teacher of the pilot (teachers.id). Only lessons this teacher
+  -- taught are processed: a cover teacher was not asked (design s.6).
+  teacher_id              uuid,
   consent_wording_version text,
   consent_note            text,
   enabled_by              uuid,
@@ -93,7 +96,7 @@ CREATE TABLE IF NOT EXISTS public.lesson_monitor_classes (
   updated_at              timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT lesson_monitor_on_needs_consent CHECK (
     NOT enabled OR (
-      consent_wording_version IS NOT NULL AND enabled_by IS NOT NULL AND enabled_at IS NOT NULL
+      teacher_id IS NOT NULL AND consent_wording_version IS NOT NULL AND enabled_by IS NOT NULL AND enabled_at IS NOT NULL
       AND btrim(COALESCE(consent_note, '')) <> ''
       AND starts_on IS NOT NULL AND ends_on IS NOT NULL
       AND ends_on >= starts_on AND ends_on <= starts_on + 42))
@@ -223,6 +226,16 @@ RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $f
 $function$;
 REVOKE ALL ON FUNCTION public.lesson_monitor__lesson_teacher(uuid, uuid) FROM PUBLIC, anon, authenticated;
 
+-- Did the pilot's own teacher teach this lesson? Only then is it processed.
+CREATE OR REPLACE FUNCTION public.lesson_monitor__pilot_teacher_taught(p_class uuid, p_session uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $function$
+  SELECT COALESCE((
+    SELECT t.user_id = public.lesson_monitor__lesson_teacher(p_class, p_session)
+      FROM public.lesson_monitor_classes m JOIN public.teachers t ON t.id = m.teacher_id
+     WHERE m.class_id = p_class AND m.enabled AND t.is_active IS NOT FALSE AND t.user_id IS NOT NULL), false);
+$function$;
+REVOKE ALL ON FUNCTION public.lesson_monitor__pilot_teacher_taught(uuid, uuid) FROM PUBLIC, anon, authenticated;
+
 -- Switch a class off and record why. Internal; callers decide who may.
 CREATE OR REPLACE FUNCTION public.lesson_monitor__switch_off(p_class uuid, p_action text, p_reason text)
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -277,13 +290,14 @@ GRANT EXECUTE ON FUNCTION public.lesson_monitor_can_read_report(uuid, uuid, uuid
 -- ================================================================ the switch
 CREATE OR REPLACE FUNCTION public.lesson_monitor_set_class(
   p_class uuid, p_enabled boolean, p_wording_version text DEFAULT NULL,
-  p_consent_note text DEFAULT NULL, p_days integer DEFAULT 28)
+  p_consent_note text DEFAULT NULL, p_days integer DEFAULT 28, p_teacher uuid DEFAULT NULL)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
   v_uid uuid := auth.uid();
   v_current text;
   v_missing integer;
   v_today date := public.lesson_monitor__today();
+  v_teacher_user uuid;
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'Sign in first' USING ERRCODE = 'insufficient_privilege'; END IF;
   IF p_class IS NULL OR p_enabled IS NULL THEN RAISE EXCEPTION 'Say which class and whether the monitor is on or off'; END IF;
@@ -313,6 +327,11 @@ BEGIN
   IF p_days IS NULL OR p_days < 1 OR p_days > 42 THEN
     RAISE EXCEPTION 'A pilot runs for 1 to 42 days (the plan is 28)';
   END IF;
+  SELECT t.user_id INTO v_teacher_user FROM public.teachers t
+   WHERE t.id = p_teacher AND t.is_active IS NOT FALSE AND t.user_id IS NOT NULL;
+  IF v_teacher_user IS NULL OR NOT public.recorder_is_class_teacher(v_teacher_user, p_class) THEN
+    RAISE EXCEPTION 'Name the pilot''s teacher: an active teacher who teaches this class';
+  END IF;
   v_missing := public.lesson_monitor__children_without_consent(p_class, v_today);
   IF v_missing IS NULL OR v_missing > 0 THEN
     RAISE EXCEPTION 'The monitor stays off: % enrolled child(ren) have no monitor consent under wording %',
@@ -320,12 +339,12 @@ BEGIN
   END IF;
 
   INSERT INTO public.lesson_monitor_classes AS m
-    (class_id, enabled, consent_wording_version, consent_note, enabled_by, enabled_at, starts_on, ends_on,
+    (class_id, enabled, teacher_id, consent_wording_version, consent_note, enabled_by, enabled_at, starts_on, ends_on,
      stopped_by, stopped_at, stop_reason, updated_at)
-  VALUES (p_class, true, v_current, btrim(p_consent_note), v_uid, now(), v_today, v_today + (p_days - 1),
+  VALUES (p_class, true, p_teacher, v_current, btrim(p_consent_note), v_uid, now(), v_today, v_today + (p_days - 1),
           NULL, NULL, NULL, now())
   ON CONFLICT (class_id) DO UPDATE
-    SET enabled = true, consent_wording_version = EXCLUDED.consent_wording_version,
+    SET enabled = true, teacher_id = EXCLUDED.teacher_id, consent_wording_version = EXCLUDED.consent_wording_version,
         consent_note = EXCLUDED.consent_note, enabled_by = EXCLUDED.enabled_by, enabled_at = EXCLUDED.enabled_at,
         starts_on = EXCLUDED.starts_on, ends_on = EXCLUDED.ends_on,
         stopped_by = NULL, stopped_at = NULL, stop_reason = NULL, updated_at = now();
@@ -334,8 +353,8 @@ BEGIN
     jsonb_build_object('wording_version', v_current, 'days', p_days));
 END;
 $$;
-REVOKE ALL ON FUNCTION public.lesson_monitor_set_class(uuid, boolean, text, text, integer) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.lesson_monitor_set_class(uuid, boolean, text, text, integer) TO authenticated;
+REVOKE ALL ON FUNCTION public.lesson_monitor_set_class(uuid, boolean, text, text, integer, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.lesson_monitor_set_class(uuid, boolean, text, text, integer, uuid) TO authenticated;
 
 -- One child's monitor consent (admin). A withdrawal switches off every pilot
 -- class the child is in today AND deletes those classes' reports at once.
@@ -411,12 +430,12 @@ RETURNS TABLE (
   recording_id uuid, class_id uuid, session_id uuid, session_date date,
   scheduled_start timestamptz, scheduled_end timestamptz, started_at timestamptz, pre_start_ms bigint,
   ended_at timestamptz, format text, chunk_ms integer, delete_after timestamptz,
-  consent_ok boolean, teacher_known boolean, last_outcome text)
+  consent_ok boolean, pilot_teacher_taught boolean, last_outcome text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $function$
   SELECT r.id, r.class_id, r.session_id, r.session_date, r.scheduled_start, r.scheduled_end, r.started_at,
          r.pre_start_ms, r.ended_at, r.format, r.chunk_ms, r.delete_after,
          COALESCE(public.lesson_monitor__children_without_consent(r.class_id, r.session_date) = 0, false),
-         public.lesson_monitor__lesson_teacher(r.class_id, r.session_id) IS NOT NULL,
+         public.lesson_monitor__pilot_teacher_taught(r.class_id, r.session_id),
          run.outcome
     FROM public.class_recordings r
     LEFT JOIN public.lesson_monitor_runs run ON run.recording_id = r.id
@@ -460,8 +479,8 @@ BEGIN
   IF v_missing IS NULL OR v_missing > 0 THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'consent_missing');
   END IF;
-  IF public.lesson_monitor__lesson_teacher(r.class_id, r.session_id) IS NULL THEN
-    RETURN jsonb_build_object('ok', false, 'reason', 'no_teacher');
+  IF NOT public.lesson_monitor__pilot_teacher_taught(r.class_id, r.session_id) THEN
+    RETURN jsonb_build_object('ok', false, 'reason', 'other_teacher');
   END IF;
   PERFORM public.lesson_monitor__audit('audio_download', r.class_id, r.id, NULL, NULL, '{}'::jsonb);
   RETURN jsonb_build_object('ok', true);
@@ -504,7 +523,9 @@ BEGIN
     RAISE EXCEPTION 'This lesson has already been handled';
   END IF;
   v_teacher := public.lesson_monitor__lesson_teacher(r.class_id, r.session_id);
-  IF v_teacher IS NULL THEN RAISE EXCEPTION 'The lesson has no active teacher to give the report to'; END IF;
+  IF v_teacher IS NULL OR NOT public.lesson_monitor__pilot_teacher_taught(r.class_id, r.session_id) THEN
+    RAISE EXCEPTION 'Not saved: the pilot''s own teacher did not teach this lesson';
+  END IF;
 
   IF p_body IS NULL OR jsonb_typeof(p_body) <> 'object' OR p_body ->> 'schema' IS DISTINCT FROM 'hec-lesson-monitor/1' THEN
     RAISE EXCEPTION 'The report is not in the hec-lesson-monitor/1 shape';

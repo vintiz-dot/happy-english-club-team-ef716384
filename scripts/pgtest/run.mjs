@@ -517,6 +517,9 @@ const SUITES = [
   // the recorder pasted after it to prove its preflight still accepts.
   { name: "transcribe gate", file: "transcribe-gate.test.mjs", migrations: [] },
   { name: "class recordings scope", file: "class-recordings-scope.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112120000_class_recordings_scope.sql", "20261112100000_class_recorder.sql"] },
+  // Lesson monitor pilot (Option A, D-28): teacher-only reports on top of the recorder.
+  { name: "lesson monitor pilot", file: "lesson-monitor.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql"] },
+  { name: "lesson monitor view", file: "lesson-monitor-view.test.mjs", migrations: [] },
   // S1 security fixes (docs/evidence/S1-security-fixes.md). One migration
   // per finding, each pasted on top of the state production is in.
   // F-01: a sign-up never gets a role because the browser asked for it.
