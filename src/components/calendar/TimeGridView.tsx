@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { dayjs, nowBangkok } from "@/lib/date";
 import { statusTreatment, type ClassColor } from "@/lib/classColors";
 import { describeVariance, formatSignedMinutes } from "@/lib/sessionDuration";
+import { eventAccessibleName } from "./lib/eventLabel";
 import { useIvory } from "@/hooks/useIvory";
 import {
   STATUS_META,
@@ -71,14 +72,19 @@ function EventBlock({
   const showTeacher = height >= 56;
   const showMeta = height >= 44;
 
-  const label = [
-    event.class_name,
-    `${formatTime(event.start_time)} to ${formatTime(event.end_time)}`,
-    meta.label,
-    variance ? describeVariance(variance) : null,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  // What the block shows, line by line; the name starts with exactly that,
+  // then adds what does not fit (times, teacher), the status and any note.
+  const metaText = `${formatTime(event.start_time)}–${formatTime(event.end_time)}${variance ? ` (${formatSignedMinutes(variance.deltaMinutes)})` : ""}${event.enrolled_count ? ` · ${event.enrolled_count}` : ""}`;
+  const teacherShown = showTeacher && !!event.teacher_name;
+  const label = eventAccessibleName(
+    [event.class_name, showMeta && metaText, teacherShown && event.teacher_name],
+    [
+      !showMeta && `${formatTime(event.start_time)} to ${formatTime(event.end_time)}`,
+      !teacherShown && event.teacher_name,
+      meta.label,
+      variance ? describeVariance(variance) : null,
+    ],
+  );
 
   return (
     <button
@@ -135,9 +141,7 @@ function EventBlock({
               : ivory ? "text-hec-ink-soft" : "opacity-70",
           )}
         >
-          {formatTime(event.start_time)}–{formatTime(event.end_time)}
-          {variance ? ` (${formatSignedMinutes(variance.deltaMinutes)})` : ""}
-          {event.enrolled_count ? ` · ${event.enrolled_count}` : ""}
+          {metaText}
         </div>
       )}
       {showTeacher && event.teacher_name && (

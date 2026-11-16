@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { dayjs, nowBangkok } from "@/lib/date";
 import { statusTreatment, type ClassColor } from "@/lib/classColors";
 import { describeVariance } from "@/lib/sessionDuration";
+import { eventAccessibleName } from "./lib/eventLabel";
 import { useIvory } from "@/hooks/useIvory";
 import {
   STATUS_META,
@@ -106,14 +107,13 @@ function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps)
     data: { event },
   });
 
-  const label = [
-    event.class_name,
-    formatTime(event.start_time),
-    meta.label,
-    variance ? describeVariance(variance) : null,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  // The chip shows "17:30 Starters 1" (and the count when not compact): the
+  // name starts with exactly that, then adds the teacher and status.
+  const showCount = !compact && !!event.enrolled_count;
+  const label = eventAccessibleName(
+    [`${formatTime(event.start_time)} ${event.class_name}`, showCount && String(event.enrolled_count)],
+    [event.teacher_name, meta.label, variance ? describeVariance(variance) : null],
+  );
 
   return (
     <button
