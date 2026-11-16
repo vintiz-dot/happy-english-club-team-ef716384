@@ -246,10 +246,12 @@ Deno.serve(async (req) => {
     // Tuition for Absent/Excused, streaks for Present. Lives in
     // _lib/attendance-effects.ts so the Stars sync runs the same code when
     // a register is marked from Pixel Pal - one definition of what a mark
-    // does, not two that drift.
+    // does, not two that drift. The streak is read from the register up to
+    // this lesson and its bonus is linked to it, hence sessionId.
     await afterAttendanceMarked(supabase, {
       classId: sessionData?.class_id,
       date: sessionData?.date,
+      sessionId,
       entries,
     });
 
