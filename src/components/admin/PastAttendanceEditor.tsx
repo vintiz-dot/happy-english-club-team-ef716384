@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { heldRefusedText } from "@/lib/lessonPayGuard";
 import { Calendar, Save, Users } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -81,10 +82,15 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
 
   const saveAttendanceMutation = useMutation({
     mutationFn: async ({ sessionId, marks }: { sessionId: string; marks: Array<{ studentId: string; status: string }> }) => {
-      const { error } = await supabase.functions.invoke("mark-attendance", {
+      const { data, error } = await supabase.functions.invoke("mark-attendance", {
         body: { sessionId, batch: marks },
       });
-      if (!error) return { saved: true };
+      if (!error) {
+        // D4 step 3A (review N-2): the marks are saved; a refused Held flip is said.
+        const notHeld = heldRefusedText(data);
+        if (notHeld) toast.warning(notHeld);
+        return { saved: true };
+      }
       const body = await readBody(error);
       if (needsMoneyDialog(body)) {
         guard.open(

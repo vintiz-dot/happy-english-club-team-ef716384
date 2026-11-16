@@ -29,6 +29,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
+import { heldRefusedText } from "@/lib/lessonPayGuard";
 import { cn } from "@/lib/utils";
 import { useIvory } from "@/hooks/useIvory";
 import { supabase } from "@/integrations/supabase/client";
@@ -178,6 +179,9 @@ export function StudentActionPopover({
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      // D4 step 3A (review N-2): the marks are saved; a refused Held flip is said.
+      const notHeld = heldRefusedText(data);
+      if (notHeld) toast.warning(notHeld);
       return status;
     },
     onSuccess: (status) => {
