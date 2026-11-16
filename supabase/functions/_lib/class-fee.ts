@@ -63,13 +63,17 @@ export function classFeeOn(
   return fallback;
 }
 
-/** True when the error only says that the history table does not exist (yet). */
+/**
+ * True when the error says the history TABLE does not exist (yet): by its
+ * code only - 42P01 (Postgres) or PGRST205 (PostgREST's schema cache), which
+ * PostgREST always sends. A message is never read: "column ... does not
+ * exist" (42703) or a missing relationship (PGRST200) is a real failure and
+ * must fail the call, not price the lesson at the mirror (review F-1).
+ */
 export function isMissingFeeHistory(error: any): boolean {
   if (!error) return false;
   const code = String(error.code ?? "");
-  if (code === "42P01" || code === "PGRST205") return true;
-  const message = String(error.message ?? "");
-  return /class_fee_history/.test(message) && /(schema cache|does not exist)/i.test(message);
+  return code === "42P01" || code === "PGRST205";
 }
 
 const PAGE = 1000;

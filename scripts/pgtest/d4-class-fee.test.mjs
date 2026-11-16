@@ -694,11 +694,14 @@ await section('_lib/class-fee.ts', async () => {
      classFeeOn(h, 'a', '2026-10-31', 0) === 100000 && classFeeOn(h, 'a', '2026-11-01', 0) === 120000 && classFeeOn(h, 'a', '2027-03-04T10:00:00', 0) === 120000);
   ok('classFeeOn: no history (null), no row for the class, or no row that early -> the fallback',
      classFeeOn(null, 'a', '2026-11-01', 7) === 7 && classFeeOn(h, 'z', '2026-11-01', 7) === 7 && classFeeOn(h, 'b', '2025-12-31', 7) === 7);
-  ok('isMissingFeeHistory: PGRST205, 42P01 and the message forms; not a permission or network error',
+  ok('isMissingFeeHistory: by code only - PGRST205 and 42P01; not a permission or network error',
      isMissingFeeHistory({ code: 'PGRST205' }) && isMissingFeeHistory({ code: '42P01' }) &&
-     isMissingFeeHistory({ message: 'relation "public.class_fee_history" does not exist' }) &&
      !isMissingFeeHistory({ code: '42501', message: 'permission denied for table class_fee_history' }) && !isMissingFeeHistory(null) &&
      !isMissingFeeHistory({ message: 'fetch failed' }));
+  ok('F-1: a message alone is never "no table" (a column error, a missing relationship, a code-less message all fail the call)',
+     !isMissingFeeHistory({ code: '42703', message: 'column class_fee_history.session_rate_vnd does not exist' }) &&
+     !isMissingFeeHistory({ code: 'PGRST200', message: "Could not find a relationship between 'class_fee_history' and 'classes' in the schema cache" }) &&
+     !isMissingFeeHistory({ message: 'relation "public.class_fee_history" does not exist' }));
   const src = readFileSync(resolve(repo, 'supabase/functions/_lib/class-fee.ts'), 'utf8');
   ok('_lib/class-fee.ts imports nothing', !/^\s*import\s/m.test(src) && !/\brequire\(/.test(src));
   const calls = ['calculate-tuition/index.ts', 'calculate-tuition-bulk/index.ts', '_lib/projected-per-class.ts']

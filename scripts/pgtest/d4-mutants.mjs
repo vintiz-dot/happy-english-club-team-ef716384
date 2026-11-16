@@ -269,7 +269,9 @@ export const MUTANTS = [
   ['K30', "any history read error is taken for 'no table' (the past silently at today's fee)",
     "  if (!error) return false;\n  const code", "  return true;\n  const code", ['fee'], 'supabase/functions/_lib/class-fee.ts'],
   ['K31', "a missing table by code alone is not recognised",
-    "  if (code === \"42P01\" || code === \"PGRST205\") return true;", "  if (false) return true;", ['fee'], 'supabase/functions/_lib/class-fee.ts'],
+    "  return code === \"42P01\" || code === \"PGRST205\";", "  return false;", ['fee'], 'supabase/functions/_lib/class-fee.ts'],
+  ['K33', "F-1 undone: a message naming the table and 'does not exist' is taken for 'no table' (a column error prices at the mirror)",
+    "  return code === \"42P01\" || code === \"PGRST205\";", "  return code === \"42P01\" || code === \"PGRST205\" || (/class_fee_history/.test(String(error.message ?? \"\")) && /(schema cache|does not exist)/i.test(String(error.message ?? \"\")));", ['fee'], 'supabase/functions/_lib/class-fee.ts'],
   ['K32', "the class breakdown reports the mirror, not the month's fee",
     "      const sessionRate = classFeeOn(feeHistory, classId, startDate, Number(classData?.session_rate_vnd ?? 0));", "      const sessionRate = Number(classData?.session_rate_vnd ?? 0);", ['fee'], 'supabase/functions/calculate-tuition/index.ts'],
   // D4-2 independent review (docs/evidence/D4-2-review.md): things the review thought were not pinned
