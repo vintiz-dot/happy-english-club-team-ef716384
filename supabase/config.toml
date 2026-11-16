@@ -1,8 +1,5 @@
 project_id = "aswgmbefikhsnhogtryv"
 
-[functions.generate-sessions]
-verify_jwt = true
-
 [functions.calculate-tuition]
 verify_jwt = true
 
@@ -10,9 +7,6 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.watch-sibling-threshold]
-verify_jwt = true
-
-[functions.post-payment]
 verify_jwt = true
 
 [functions.calculate-payroll]
