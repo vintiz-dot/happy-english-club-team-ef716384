@@ -166,6 +166,7 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       // off-screen instead so it's invisible but fully painted.
       container = document.createElement("div");
       container.setAttribute("aria-hidden", "true");
+      container.setAttribute("data-hec-document", ""); // paper: the old light tokens in both themes (index.css)
       container.style.position = "absolute";
       container.style.left = "-10000px";
       container.style.top = "0";
