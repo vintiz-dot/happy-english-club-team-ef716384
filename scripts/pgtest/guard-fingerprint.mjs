@@ -29,7 +29,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { D2_PRELUDE, D4_PEOPLE } from './d4-prelude.mjs';
+import { D2_PRELUDE, D4_PEOPLE, D4_CLASS_FEE } from './d4-prelude.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const mig = (n) => readFileSync(resolve(root, 'supabase/migrations', n), 'utf8').replaceAll('\r\n', '\n'); // LF as committed; a CRLF checkout must not change prosrc
@@ -39,7 +39,7 @@ const AUDIT = '20261009130000_audit_every_admin_action.sql';
 const CANCEL = '20261027090000_cancelled_lesson_attendance_guard.sql';
 const D1 = '20261112090000_session_held_evidence.sql';
 const D2 = '20261112091000_session_cancel_guard.sql';
-const D4_FILES = ['20261114090000_d4_floors.sql', '20261114091000_d4_core_register.sql', '20261114093000_d4_lesson_pay_guard.sql'];   // each D4 step appends its file here
+const D4_FILES = ['20261114090000_d4_floors.sql', '20261114091000_d4_core_register.sql', '20261114092000_d4_class_fee_history.sql', '20261114093000_d4_lesson_pay_guard.sql'];   // each D4 step appends its file here
 const ENROL = '20261106090000_attendance_enrollment_guard.sql';   // student_enrolled_on, read by D4 file 2
 const ROLES = ['anon', 'authenticated', 'service_role'];
 
@@ -56,7 +56,7 @@ const RELEASES = {
   },
   d4: {
     label: 'D4 release',
-    prelude: D2_PRELUDE + D4_PEOPLE,
+    prelude: D2_PRELUDE + D4_PEOPLE + D4_CLASS_FEE,
     baseline: [AUDIT, CANCEL, ENROL, D1, D2],
     added: D4_FILES,
     triggerTables: null,          // every trigger the D4 files created or replaced
@@ -213,6 +213,7 @@ async function build(cfg) {
 export async function checkUnchanged({ prelude = D2_PRELUDE + D4_PEOPLE, d4Files = D4_FILES, after = null } = {}) {
   const db = new PGlite();
   await db.exec(prelude);
+  await db.exec(D4_CLASS_FEE);   // idempotent; D4 step 2's preflight needs classes.session_rate_vnd, whatever prelude a caller passes
   for (const f of [AUDIT, CANCEL, ENROL, D1, D2, ...d4Files]) await db.exec(mig(f));
   if (after) await after(db);
   const live = (await db.query(statementOf(readFileSync(resolve(root, RELEASES.d.sqlPath), 'utf8')))).rows[0].fingerprint;
@@ -241,7 +242,7 @@ if (isMain) {
   if (process.argv.includes('--check-unchanged') && process.argv.includes('--after-rollback')) {
     // D4 rollback (design f.7): every D4 rollback script, newest first, then
     // 20261112091000 pasted again -> the 66 objects must all match.
-    const rollbacks = ['scripts/ROLLBACK-d4-4-lesson-pay.sql', 'scripts/ROLLBACK-d4-2-register.sql', 'scripts/ROLLBACK-d4-1-floors.sql'];   // newest first
+    const rollbacks = ['scripts/ROLLBACK-d4-4-lesson-pay.sql', 'scripts/ROLLBACK-d4-3-class-fee.sql', 'scripts/ROLLBACK-d4-2-register.sql', 'scripts/ROLLBACK-d4-1-floors.sql'];   // newest first
     const { total, diff } = await checkUnchanged({ after: async (x) => {
       for (const r of rollbacks) await x.exec(readFileSync(resolve(root, r), 'utf8'));
       await x.exec(mig(D2));

@@ -290,6 +290,16 @@ export const D4_ENROLMENT_RPCS = `
 `;
 
 /**
+ * D4 step 2: the live classes table carries the fee (20251012020423:9,
+ * INTEGER NOT NULL DEFAULT 210000); D2's prelude has none. Loaded before
+ * 20261114092000, whose preflight requires the column.
+ */
+export const D4_CLASS_FEE = `
+  ALTER TABLE public.classes ADD COLUMN IF NOT EXISTS session_rate_vnd integer NOT NULL DEFAULT 210000,
+    ADD COLUMN IF NOT EXISTS name text;
+`;
+
+/**
  * A fresh pglite with D2's prelude, the D4 blocks asked for, then the named
  * migration files in order (real files, read as they are on disk).
  */

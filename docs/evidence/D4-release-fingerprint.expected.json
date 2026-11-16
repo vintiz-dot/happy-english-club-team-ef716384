@@ -89,6 +89,86 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._class_fee_baseline()",
+      "identity_arguments": "",
+      "md5_prosrc": "636435cd6ddb337af51aaa44f1236d5f",
+      "proname": "_class_fee_baseline",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._class_fee_mirror_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "afe1b71e4bd26f26c6148bbdccbe592c",
+      "proname": "_class_fee_mirror_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._class_fee_money_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "3e70d6360ab94d607afaedd170bf6874",
+      "proname": "_class_fee_money_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._class_fee_no_truncate()",
+      "identity_arguments": "",
+      "md5_prosrc": "00f8dc0e3348e24f0e05dc76f3184863",
+      "proname": "_class_fee_no_truncate",
+      "security_definer": false,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._class_fee_reach(p_class uuid, p_from date, p_fee_before integer, p_fee_after integer)",
+      "identity_arguments": "p_class uuid, p_from date, p_fee_before integer, p_fee_after integer",
+      "md5_prosrc": "b7fe1e41baf0e4ac3885a03f3d61c610",
+      "proname": "_class_fee_reach",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._floor_causes_push(a jsonb, c jsonb)",
       "identity_arguments": "a jsonb, c jsonb",
       "md5_prosrc": "e2dc36c5617b4ae8d6a10d839c4d4139",
@@ -345,6 +425,22 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._money_exec__class_fee(p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "9f2652c351c57cf7b6db0433d67ad8fc",
+      "proname": "_money_exec__class_fee",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._money_exec__session(p_plan jsonb, p_uid uuid)",
       "identity_arguments": "p_plan jsonb, p_uid uuid",
       "md5_prosrc": "cabd2db1f4023cba61bf8d38780d4e34",
@@ -381,6 +477,22 @@
       "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
       "md5_prosrc": "2a0bbcd0f17ba5a75dcda1baa3947021",
       "proname": "_money_plan__attendance",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_plan__class_fee(p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "e15ee2320eddaf4736c6e360f3f534fb",
+      "proname": "_money_plan__class_fee",
       "security_definer": true,
       "volatility": "s"
     },
@@ -590,6 +702,22 @@
       "md5_prosrc": "4b477e5155181f35119d0f7a225ec7ce",
       "proname": "change_approval_needed",
       "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.class_fee_on(p_class uuid, p_date date)",
+      "identity_arguments": "p_class uuid, p_date date",
+      "md5_prosrc": "f266a26b22e6b19929dafda7095c9813",
+      "proname": "class_fee_on",
+      "security_definer": false,
       "volatility": "s"
     },
     {
@@ -816,6 +944,113 @@
     }
   },
   "relations": {
+    "class_fee_history": {
+      "columns": [
+        {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "class_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "effective_from",
+          "not_null": true,
+          "type": "date"
+        },
+        {
+          "default": null,
+          "name": "session_rate_vnd",
+          "not_null": true,
+          "type": "integer"
+        },
+        {
+          "default": null,
+          "name": "note",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": "now()",
+          "name": "created_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "created_by",
+          "not_null": false,
+          "type": "uuid"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "f2abf15b9693b347e30afea55c4bab08",
+          "name": "class_fee_history_class_id_fkey",
+          "type": "f"
+        },
+        {
+          "md5_def": "c3159e705f4904074996a43fd66b5720",
+          "name": "class_fee_history_class_month_key",
+          "type": "u"
+        },
+        {
+          "md5_def": "08da2ec3ada1cb0511ccb5c929c705d8",
+          "name": "class_fee_history_fee_not_negative",
+          "type": "c"
+        },
+        {
+          "md5_def": "13efda4ad6fc7a872cfc6d2128412c59",
+          "name": "class_fee_history_first_of_month",
+          "type": "c"
+        },
+        {
+          "md5_def": "6d08fa013fc7fc727732118603a0ffdb",
+          "name": "class_fee_history_note_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "4c6419b3704337bbfe50f018842a9ad3",
+          "name": "class_fee_history_pkey",
+          "type": "p"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "class_fee_history_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
     "invoice_state_floor": {
       "columns": [
         {
@@ -1560,11 +1795,51 @@
     },
     {
       "enabled": "O",
+      "function": "audit_row_change",
+      "md5_def": "8117d39b76a1096e9f4aeb25dd8ea916",
+      "name": "audit_class_fee_history",
+      "table": "class_fee_history",
+      "tgtype": 29
+    },
+    {
+      "enabled": "O",
+      "function": "_class_fee_no_truncate",
+      "md5_def": "61eda79b56f2d525bcebc4c8f4004740",
+      "name": "class_fee_history_no_truncate",
+      "table": "class_fee_history",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "_class_fee_money_guard",
+      "md5_def": "0d8858af6a18085f2ff2acb6712f2eaa",
+      "name": "zz_class_fee_money_guard",
+      "table": "class_fee_history",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
       "function": "_transcript_evidence_keep",
       "md5_def": "93d9bd56bf5d06b094a1b0d1b5ef4ce2",
       "name": "zz_transcript_evidence_keep",
       "table": "class_transcripts",
       "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_class_fee_baseline",
+      "md5_def": "8fcb71f5d113ec68ddfd9c5af6ded9a7",
+      "name": "class_fee_baseline",
+      "table": "classes",
+      "tgtype": 5
+    },
+    {
+      "enabled": "O",
+      "function": "_class_fee_mirror_guard",
+      "md5_def": "ebf1bd33b96da6dc97d67da86b06aafe",
+      "name": "zz_class_fee_mirror_guard",
+      "table": "classes",
+      "tgtype": 19
     },
     {
       "enabled": "O",

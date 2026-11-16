@@ -15,12 +15,12 @@ import { PastAttendanceEditor } from "@/components/admin/PastAttendanceEditor";
 import { assertClassNameAvailable } from "@/components/admin/class/ClassAdminActions";
 import { useQueryClient } from "@tanstack/react-query";
 import { describePattern, parseWeeklySlots } from "@/lib/classSchedule";
+import ClassFeeHistory from "@/components/admin/class/ClassFeeHistory";
 
 const ClassSettings = ({ classId }: { classId: string }) => {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [defaultTeacherId, setDefaultTeacherId] = useState("");
-  const [sessionRate, setSessionRate] = useState(0);
   const [defaultStartTime, setDefaultStartTime] = useState("");
   const [defaultEndTime, setDefaultEndTime] = useState("");
   const [defaultSessionLength, setDefaultSessionLength] = useState(90);
@@ -71,7 +71,6 @@ const ClassSettings = ({ classId }: { classId: string }) => {
     if (classData) {
       setName(classData.name || "");
       setDefaultTeacherId(classData.default_teacher_id || "");
-      setSessionRate(classData.session_rate_vnd || 0);
       setDefaultSessionLength(classData.default_session_length_minutes || 90);
       setCurriculum((classData as any).curriculum || "");
       setAgeRange((classData as any).age_range || "");
@@ -101,7 +100,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
     try {
       // Validate the name only when it actually changed. Two classes in the
       // existing data could already share a name, and that must not block an
-      // admin who came here to edit the session rate.
+      // admin who came here to edit something else.
       const nameChanged = name.trim() !== (classData?.name ?? "");
       if (nameChanged) {
         // Throws on a blank name or a clash, before anything is written.
@@ -111,7 +110,8 @@ const ClassSettings = ({ classId }: { classId: string }) => {
       const updateData: any = {
         ...(nameChanged ? { name: name.trim() } : {}),
         default_teacher_id: defaultTeacherId || null,
-        session_rate_vnd: sessionRate,
+        // Not the fee: it is dated now and changes only through
+        // the Fee history below (D4 step 2); the column is its mirror.
         default_session_length_minutes: defaultSessionLength,
         curriculum: curriculum || null,
         age_range: ageRange || null,
@@ -242,15 +242,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Session Rate (VND)</Label>
-                <Input
-                  type="number"
-                  value={sessionRate}
-                  onChange={(e) => setSessionRate(Number(e.target.value) || 0)}
-                  placeholder="Enter session rate"
-                />
-              </div>
+              <ClassFeeHistory classId={classId} />
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
