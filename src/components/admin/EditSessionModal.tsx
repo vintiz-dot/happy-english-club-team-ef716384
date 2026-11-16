@@ -292,6 +292,17 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
           setMoveOpen(false);
           void saveRest();
         }}
+        // A lesson that ended more than a week ago is pay even while
+        // Scheduled (review S-1): its time is refused here with the money
+        // preview, and the lesson-pay check takes over, then the rest saves.
+        onPayCheck={(d) => {
+          setMoveOpen(false);
+          setPay({
+            op: d.op,
+            args: d.plan.args ?? { session_id: session.id, start_time: `${startTime}:00`, end_time: `${endTime}:00` },
+            next: {},
+          });
+        }}
       />
     );
   }

@@ -23,7 +23,8 @@
 --   * Scheduled -> Held when nobody took the register, after an earlier
 --     un-hold, or in a locked payroll month (HC020 kind=hold);
 --   * the teacher, the times or the assistants of a Held lesson, and the
---     teacher of a lesson that ended more than 7 days ago - except during
+--     teacher or the times of a lesson that ended more than 7 days ago
+--     even while it is Scheduled (A-5; review S-1 for the times) - except during
 --     the free week (lesson ended 7 days ago or less AND its payroll month
 --     open) (HC020 kind=reteach | retime | restaff);
 --   * a lesson inserted with a status other than Scheduled (HC023), or
@@ -45,7 +46,9 @@
 -- NOTHING IS PRICED. The pay tier is payroll_reach (1b: a locked month in
 -- reach is T3); calculate-payroll stays the only place pay is worked out.
 --
--- REPLACES NOTHING of D1, D2, D4 file 1 or file 2. No row is changed.
+-- REPLACES NOTHING of D1, D2 or D4 file 1, and of file 2 only d4_guard_status
+-- (the same body with this file's three triggers added to its list; the
+-- preflight pins the live 1b body). No row is changed.
 -- Safe to paste twice.
 --
 -- Rollback (all three steps; docs/evidence/D4-3a-live-apply-brief.md):
@@ -110,6 +113,18 @@ BEGIN
       v_missing := v_missing || ('function ' || r.sig || ' is not the reviewed step 1a/1b body (expected md5 ' || r.want || ')');
     END IF;
   END LOOP;
+  -- d4_guard_status (1b, live) is replaced in section 5b to list this file's
+  -- three triggers; nothing else in it changes. The live body must be 1b's
+  -- (md5 df2b7052..., D4-1b-live-apply-brief.md), or 1b's with exactly that
+  -- one insertion (a second paste of this file): the insertion is removed
+  -- before the md5 is taken.
+  IF to_regprocedure('public.d4_guard_status()') IS NULL THEN
+    v_missing := v_missing || 'function public.d4_guard_status() (D4 file 2)'::text;
+  ELSIF (SELECT md5(replace(replace(p.prosrc, E'\r', ''),
+                            ',' || chr(10) || '                      ''zz2_session_pay_guard'', ''zz_session_insert_guard'', ''zz_session_staff_guard''', ''))
+           FROM pg_proc p WHERE p.oid = to_regprocedure('public.d4_guard_status()')) IS DISTINCT FROM 'df2b7052707d4a8d06bdc307e6fe96a9' THEN
+    v_missing := v_missing || 'function public.d4_guard_status() is not the reviewed step 1b body (expected md5 df2b7052707d4a8d06bdc307e6fe96a9)'::text;
+  END IF;
   FOR r IN
     SELECT * FROM (VALUES
       ('sessions',             ARRAY['id','class_id','date','start_time','end_time','status','teacher_id','updated_at',
@@ -177,7 +192,14 @@ BEGIN
      AND (o.status = 'Held' OR NOT COALESCE(public._lesson_in_free_week(o.date, o.start_time, o.end_time), false)) THEN
     v_kinds := v_kinds || 'reteach'::text;
   END IF;
-  IF o.status = 'Held' AND NOT v_free
+  -- G-5 (and review S-1): a Held lesson's times, AND the times of a lesson
+  -- that ended more than 7 days ago even if it is still Scheduled - else an
+  -- old unpaid lesson could be lengthened raw and then held with a register
+  -- (free by G-2), paying the longer time with no reason. Same shape as A-5
+  -- for the teacher. A lesson that has not ended a week ago (every future
+  -- one: the rebuild) is never asked about here while its month is open.
+  IF (o.status = 'Held' OR NOT COALESCE(public._lesson_in_free_week(o.date, o.start_time, o.end_time), false))
+     AND NOT v_free
      AND (o.start_time IS DISTINCT FROM n.start_time OR o.end_time IS DISTINCT FROM n.end_time)
      AND public.session_change_kind(o, n) IS NULL THEN
     v_kinds := v_kinds || 'retime'::text;
@@ -253,7 +275,7 @@ RETURNS text LANGUAGE sql IMMUTABLE SET search_path = public AS $fn$
     WHEN 'unhold'  THEN 'Change the status of a held lesson from the lesson''s Actions menu, with a reason. If the lesson did not happen, cancel it instead.'
     WHEN 'hold'    THEN 'Nobody has taken the register (or the payroll month is closed). Mark it Held from the lesson''s Actions menu, with a reason.'
     WHEN 'reteach' THEN 'Change the teacher of a held lesson from the lesson''s Actions menu, with a reason.'
-    WHEN 'retime'  THEN 'Change the time of a held lesson from the lesson''s Actions menu, with a reason.'
+    WHEN 'retime'  THEN 'Change the time of a held lesson, or of one that ended more than a week ago, from the lesson''s Actions menu, with a reason.'
     WHEN 'restaff' THEN 'Change the assistants of a held lesson from the lesson''s Actions menu, with a reason.'
     WHEN 'create_past' THEN 'This lesson has already started: add it from Add lesson, with a reason, then take the register.'
     ELSE 'Make this change from the lesson''s Actions menu, with a reason.' END
@@ -805,6 +827,40 @@ BEGIN
     RAISE EXCEPTION 'bad_op' USING ERRCODE = 'HC015';
   END IF;
   RETURN jsonb_build_object('written', v_n, 'session_id', s.id, 'guard_trigger', 'sessions.zz2_session_pay_guard');
+END $fn$;
+
+-- ---------------------------------------------------------------- 5b
+-- d4_guard_status (1b): the same function, its list of guard triggers now
+-- naming this file's three as well, so a disabled one reads ok = false. The
+-- body is 1b's byte for byte except that one insertion (the preflight holds
+-- the live body to it). Its grants are 1b's (CREATE OR REPLACE keeps them:
+-- authenticated may call it; it checks admin inside). A trigger dropped by
+-- rollback 4 is simply absent from the list, as 1a's are before 1a.
+
+CREATE OR REPLACE FUNCTION public.d4_guard_status()
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $fn$
+DECLARE
+  v_uid uuid := public._session_require_admin();
+  v_trg jsonb;
+BEGIN
+  SELECT COALESCE(jsonb_object_agg(c.relname || '.' || t.tgname, t.tgenabled::text), '{}'::jsonb) INTO v_trg
+    FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+   WHERE NOT t.tgisinternal AND c.relnamespace = 'public'::regnamespace
+     AND t.tgname IN ('zz_attendance_evidence_guard', 'zz_point_evidence_keep', 'zz_transcript_evidence_keep',
+                      'zz_homework_evidence_keep', 'zz0_session_evidence_keep', 'zz_invoice_state_floor',
+                      'zz_attendance_money_guard',
+                      'zz2_session_pay_guard', 'zz_session_insert_guard', 'zz_session_staff_guard');
+  RETURN jsonb_build_object(
+    'triggers', v_trg,
+    'ok', COALESCE((SELECT bool_and(value = '"O"'::jsonb) FROM jsonb_each(v_trg)), false)
+          AND v_trg ? 'attendance.zz_attendance_money_guard' AND v_trg ? 'attendance.zz_attendance_evidence_guard',
+    'evidence_floors', (SELECT count(*)::int FROM public.session_evidence_floor),
+    'invoice_floors', (SELECT count(*)::int FROM public.invoice_state_floor),
+    'events_30d', (SELECT COALESCE(jsonb_object_agg(kind, n), '{}'::jsonb) FROM (
+        SELECT kind, count(*)::int n FROM public.money_change_events
+         WHERE kind IN ('automation_refused', 'service_retro_mark', 'owner_lane', 'enrollment_rpc_mark') AND created_at >= now() - interval '30 days'
+         GROUP BY kind) q),
+    'installed_at', (SELECT min(created_at) FROM public.money_change_events WHERE kind = 'guard_installed'));
 END $fn$;
 
 -- ---------------------------------------------------------------- 6

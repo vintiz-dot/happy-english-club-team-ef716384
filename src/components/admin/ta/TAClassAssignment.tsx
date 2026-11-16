@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { CalendarIcon, Plus, Trash2, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PayGuardDialog, type GuardSessionInfo } from "@/components/admin/session-guard/GuardDialog";
+import { payOpFromDbError } from "@/lib/lessonPayGuard";
 
 interface TAClassAssignmentProps {
   taId: string;
@@ -20,12 +22,33 @@ interface TAClassAssignmentProps {
 
 type AssignMode = "once" | "recurring" | "month" | "permanent";
 
+/** One lesson whose assistants are pay (D4 step 3A, G-6): the lesson-pay check, with the whole list after the change. */
+interface PayStep { session: GuardSessionInfo; args: Record<string, unknown> }
+
+/** The lesson's assistant list as the check sends it, with this assistant added or removed (each one's absence kept). */
+async function staffAfter(sessionId: string, taId: string, add: boolean) {
+  const { data, error } = await supabase
+    .from("session_participants")
+    .select("teaching_assistant_id, attended")
+    .eq("session_id", sessionId)
+    .eq("participant_type", "teaching_assistant");
+  if (error) throw error;
+  const list = (data ?? [])
+    .filter((r: any) => r.teaching_assistant_id && r.teaching_assistant_id !== taId)
+    .map((r: any) => ({ teaching_assistant_id: r.teaching_assistant_id as string, attended: r.attended !== false }));
+  if (add) list.push({ teaching_assistant_id: taId, attended: true });
+  return { session_id: sessionId, participants: list };
+}
+
 export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
   const queryClient = useQueryClient();
   const [selectedClassId, setSelectedClassId] = useState("");
   const [assignMode, setAssignMode] = useState<AssignMode>("recurring");
   const [effectiveFrom, setEffectiveFrom] = useState<Date | undefined>(new Date());
   const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
+  // D4 step 3A (review N-3): held lessons more than a week old (or in a closed
+  // payroll month) whose assistants the database refused; checked one by one.
+  const [payQueue, setPayQueue] = useState<PayStep[]>([]);
 
   // Fetch active classes
   const { data: classes } = useQuery({
@@ -141,26 +164,62 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
       const { error } = await supabase
         .from("session_participants")
         .upsert(participants, { onConflict: "session_id,teaching_assistant_id" });
-      if (error) throw error;
+      if (!error) return { refused: [] as PayStep[] };
+      // One held lesson in the list refuses the whole statement (nothing was
+      // written). Assign lesson by lesson; the held ones go to the check.
+      if (payOpFromDbError(error) !== "restaff") throw error;
+      const refused: PayStep[] = [];
+      for (const row of participants) {
+        const { error: one } = await supabase
+          .from("session_participants")
+          .upsert([row], { onConflict: "session_id,teaching_assistant_id" });
+        if (!one) continue;
+        if (payOpFromDbError(one) !== "restaff") throw one;
+        const s: any = availableSessions?.find((x: any) => x.id === row.session_id) ?? { id: row.session_id };
+        refused.push({
+          session: { id: s.id, date: s.date, start_time: s.start_time, end_time: s.end_time, class_name: s.classes?.name },
+          args: await staffAfter(row.session_id, taId, true),
+        });
+      }
+      return { refused };
     },
-    onSuccess: () => {
+    onSuccess: ({ refused }) => {
       queryClient.invalidateQueries({ queryKey: ["ta-assignments", taId] });
       setSelectedSessionIds([]);
+      if (refused.length > 0) {
+        const n = refused.length === 1 ? "One lesson is" : `${refused.length} lessons are`;
+        toast.warning(`${n} already held and more than a week old (or in a closed payroll month). `
+          + "Each needs a reason: check them one by one. The other sessions are assigned.");
+        setPayQueue(refused);
+        return;
+      }
       toast.success("Teaching assistant assigned to sessions");
     },
     onError: (err: any) => toast.error(err.message),
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (participantId: string) => {
+    mutationFn: async (a: any) => {
       const { error } = await supabase
         .from("session_participants")
         .delete()
-        .eq("id", participantId);
-      if (error) throw error;
+        .eq("id", a.id);
+      if (!error) return { refused: null as PayStep | null };
+      // A held lesson more than a week old: nothing was removed; the check opens.
+      if (payOpFromDbError(error) !== "restaff") throw error;
+      const s = a.sessions ?? {};
+      const step: PayStep = {
+        session: { id: a.session_id, date: s.date, start_time: s.start_time, end_time: s.end_time, class_name: s.classes?.name },
+        args: await staffAfter(a.session_id, taId, false),
+      };
+      return { refused: step };
     },
-    onSuccess: () => {
+    onSuccess: ({ refused }) => {
       queryClient.invalidateQueries({ queryKey: ["ta-assignments", taId] });
+      if (refused) {
+        setPayQueue([refused]);
+        return;
+      }
       toast.success("Assignment removed");
     },
     onError: (err: any) => toast.error(err.message),
@@ -188,6 +247,21 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
   };
 
   const alreadyAssignedIds = new Set(currentAssignments?.map(a => a.session_id) || []);
+
+  // The lesson-pay check for the first refused lesson; the next opens when it closes.
+  if (payQueue.length > 0) {
+    const step = payQueue[0];
+    return (
+      <PayGuardDialog
+        open
+        session={step.session}
+        op="restaff"
+        args={step.args}
+        onClose={() => setPayQueue((q) => q.slice(1))}
+        onDone={() => queryClient.invalidateQueries({ queryKey: ["ta-assignments", taId] })}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -373,7 +447,7 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
                       size="icon"
                       className="text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger"
                       aria-label={`Remove from ${a.sessions?.classes?.name ?? "this session"}`}
-                      onClick={() => removeMutation.mutate(a.id)}
+                      onClick={() => removeMutation.mutate(a)}
                     >
                       <Trash2 className="h-5 w-5" aria-hidden />
                     </Button>

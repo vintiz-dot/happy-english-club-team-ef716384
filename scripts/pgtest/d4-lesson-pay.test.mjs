@@ -60,6 +60,20 @@ await section('preflight: the 1b bodies it relies on', async () => {
   try { await y.exec(sqlOf(payF)); } catch (e) { msg = e.message; }
   ok('the same 1b dispatcher pasted with CRLF is accepted (md5 of the CR-stripped text)', msg === null, msg);
   await y.close();
+  // fix round 1: d4_guard_status (1b, live) is replaced to list the three
+  // 3A triggers; the preflight holds the live body to 1b's.
+  const z = await makeDb(PGlite, { people: true, migrations: base });
+  const live = (await z.query(`SELECT md5(replace(prosrc, E'\\r', '')) m FROM pg_proc WHERE oid = 'public.d4_guard_status()'::regprocedure`)).rows[0].m;
+  ok('the 1b d4_guard_status body here is the one the preflight pins (df2b7052..., = D4-1b-live-apply-brief.md)', live === 'df2b7052707d4a8d06bdc307e6fe96a9', live);
+  const gdef = (await z.query(`SELECT pg_get_functiondef('public.d4_guard_status()'::regprocedure) d`)).rows[0].d;
+  await z.exec(gdef.replace("'zz_attendance_money_guard')", "'zz_attendance_money_guard', 'zz_other')"));
+  msg = null;
+  try { await z.exec(sqlOf(payF)); } catch (e) { msg = e.message; }
+  await z.exec('ROLLBACK').catch(() => {});
+  ok('a d4_guard_status that is not the 1b body -> refused, naming it, nothing installed',
+     /d4_guard_status\(\) is not the reviewed step 1b body/.test(msg ?? '') &&
+     (await z.query(`SELECT count(*)::int n FROM pg_trigger WHERE tgname = 'zz2_session_pay_guard'`)).rows[0].n === 0, msg);
+  await z.close();
 });
 
 db = await makeDb(PGlite, { people: true, rls: false, migrations: base });
@@ -96,7 +110,13 @@ await section('install', async () => {
   const after = new Map((await db.query(`SELECT p.oid::regprocedure::text k, md5(p.prosrc) m, p.prosecdef, p.proconfig::text c,
      has_function_privilege('authenticated', p.oid, 'EXECUTE') au FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace`)).rows.map((r) => [r.k, r]));
   const changed = [...fnsBefore.keys()].filter((k) => JSON.stringify(fnsBefore.get(k)) !== JSON.stringify(after.get(k)));
-  ok('no existing function is replaced or re-granted (D1, D2, files 1 and 2 untouched; the dispatcher is not re-created)', changed.length === 0, changed);
+  const gs = (m) => { const { m: _m, ...rest } = m.get('d4_guard_status()') ?? {}; return JSON.stringify(rest); };
+  ok('no existing function is replaced or re-granted (D1, D2, files 1 and 2 untouched; the dispatcher is not re-created) - except d4_guard_status, its body only (fix round 1)',
+     JSON.stringify(changed) === JSON.stringify(['d4_guard_status()']) && gs(fnsBefore) === gs(after), changed);
+  const g = (await db.query(`SELECT replace(prosrc, E'\\r', '') s FROM pg_proc WHERE oid = 'public.d4_guard_status()'::regprocedure`)).rows[0].s;
+  const g1b = g.replace(",\n                      'zz2_session_pay_guard', 'zz_session_insert_guard', 'zz_session_staff_guard'", '');
+  ok('  d4_guard_status is 1b\'s body with exactly the three 3A trigger names added to its list (the rest byte-identical)',
+     g1b !== g && (await db.query(`SELECT md5($1) m`, [g1b])).rows[0].m === 'df2b7052707d4a8d06bdc307e6fe96a9');
   const trgAfter = (await db.query(`SELECT c.relname || '.' || t.tgname k, pg_get_triggerdef(t.oid) d, t.tgenabled::text e FROM pg_trigger t
      JOIN pg_class c ON c.oid = t.tgrelid WHERE NOT t.tgisinternal ORDER BY 1`)).rows;
   const added = trgAfter.filter((x) => !trgBefore.some((y) => y.k === x.k)).map((x) => x.k).sort();
@@ -421,9 +441,76 @@ await section('G-5 the time of a Held lesson', async () => {
   const t = await mk({ when: TODAY });
   r = await tryIt(() => asAdmin(`UPDATE sessions SET end_time = end_time + interval '5 minutes' WHERE id=$1`, [t.sid]));
   ok('today\'s Held lesson, open month -> allowed (the free week)', r.ok !== undefined, r);
+  // Review S-1 (fix round 1): this case was first pinned as "not this
+  // guard's" - but D2 does not judge a same-day time change of a lesson it
+  // does not call moved, so "as before" meant FREE, and an old unpaid lesson
+  // could be lengthened raw and then held with a register (G-2 lets a hold
+  // with marks through), paying the longer time with no reason and no row.
+  // The times of a lesson that ended more than a week ago are now retime,
+  // Held or not (the same shape as A-5 for the teacher).
   const sch = await mk({ when: OLD, status: 'Scheduled' });
   r = await tryIt(() => asAdmin(`UPDATE sessions SET end_time='20:30' WHERE id=$1`, [sch.sid]));
-  ok('a Scheduled (unpaid) old lesson: not this guard\'s (D2 judges it as before)', r.ok !== undefined, r);
+  ok('S-1: a Scheduled (unpaid) lesson 40 days old lengthened raw -> HC020 kind=retime (was free before fix round 1)',
+     isKind(r, 'HC020', 'retime') && String((await sess(sch.sid)).end_time).startsWith('19:00'), r);
+  ok('  the refusal names a lesson more than a week old, not only a held one', /more than a week ago/.test(r.detail ?? ''), r.detail);
+  // P1b of the review, as a permanent case: lengthen raw, take the register, hold.
+  {
+    const s1 = await mk({ when: TEN, status: 'Scheduled' }); const k1 = await kid(s1); await att(s1, k1, 'Present', null);
+    const l1 = await tryIt(() => asAdmin(`UPDATE sessions SET end_time='20:30' WHERE id=$1`, [s1.sid]));
+    const m1 = await tryIt(() => asAdmin(`UPDATE attendance SET marked_by=$2, status='Present' WHERE session_id=$1`, [s1.sid, ADMIN]));
+    const h1 = await tryIt(() => asAdmin(`UPDATE sessions SET status='Held' WHERE id=$1 AND status='Scheduled'`, [s1.sid]));
+    const a1 = await sess(s1.sid);
+    ok('S-1 / P1b: admin, old Scheduled lesson 10 days old: the raw lengthening is refused (HC020 retime); the register and the hold then pay the ORIGINAL 90 minutes',
+       isKind(l1, 'HC020', 'retime') && m1.ok !== undefined && h1.ok !== undefined && a1.status === 'Held' &&
+       String(a1.end_time).startsWith('19:00'), { l1, m1: m1.code, h1: h1.code, end: a1.end_time });
+    const p1 = await preview('retime', { session_id: s1.sid, start_time: '17:30', end_time: '20:30' });
+    ok('  the checked retime of an old lesson: kind retime, T1, 90 -> 180 minutes', p1.kind === 'retime' && p1.tier === 1 &&
+       p1.change.old_minutes === 90 && p1.change.new_minutes === 180, p1);
+  }
+  // P1c of the review: the lesson's own teacher under the LIVE RLS policy
+  // "Teachers can update their sessions" (20251012020423:79-86: own lesson,
+  // status Scheduled, no WITH CHECK), then the register on the service lane.
+  {
+    const tu = randomUUID();
+    const cid = randomUUID();
+    await asSuper(`INSERT INTO classes VALUES ($1,$2)`, [cid, tu]);
+    await asSuper(`INSERT INTO user_roles VALUES ($1,'teacher')`, [tu]);
+    const tRow = (await asSuper(`INSERT INTO teachers(user_id, full_name) VALUES ($1,'T') RETURNING id`, [tu])).rows[0].id;
+    const sid = (await asSuper(`INSERT INTO sessions(class_id,date,start_time,end_time,status,teacher_id) VALUES ($1,$2,'17:30','19:00','Scheduled',$3) RETURNING id`,
+      [cid, TEN.date, tRow])).rows[0].id;
+    const k2 = (await asSuper(`INSERT INTO students(full_name) VALUES ('k') RETURNING id`)).rows[0].id;
+    await asSuper(`INSERT INTO enrollments(class_id, student_id, start_date) VALUES ($1,$2,'2020-01-01')`, [cid, k2]);
+    await asSuper(`INSERT INTO attendance(session_id,student_id,status,marked_by) VALUES ($1,$2,'Present',NULL)`, [sid, k2]);
+    // The prelude's own teacher UPDATE policy is swapped for the live one for
+    // this one write, so the live policy is the only one letting it through.
+    await asSuper(`DROP POLICY "Teachers update own scheduled sessions" ON public.sessions`);
+    await asSuper(`CREATE POLICY "Teachers can update their sessions" ON public.sessions FOR UPDATE
+      USING (teacher_id IN (SELECT t.id FROM public.teachers t WHERE t.user_id = auth.uid()) AND status = 'Scheduled')`);
+    let t1, t0;
+    try {
+      // control: the same policy lets the teacher write a field that is not pay
+      t0 = await tryIt(() => as(tu, 'authenticated', 'authenticated', `UPDATE sessions SET notes='live policy' WHERE id=$1`, [sid]));
+      t1 = await tryIt(() => as(tu, 'authenticated', 'authenticated', `UPDATE sessions SET end_time='21:00' WHERE id=$1`, [sid]));
+    } finally {
+      await asSuper(`DROP POLICY "Teachers can update their sessions" ON public.sessions`);
+      await asSuper(`CREATE POLICY "Teachers update own scheduled sessions" ON public.sessions
+        FOR UPDATE USING (public.is_teacher_of_class(auth.uid(), class_id) AND status = 'Scheduled')
+        WITH CHECK (public.is_teacher_of_class(auth.uid(), class_id))`);
+    }
+    ok('  control: under the live policy the teacher\'s write reaches the row (a note is saved)', t0.ok?.affectedRows === 1, t0);
+    const t2 = await tryIt(() => asService(`UPDATE attendance SET marked_by=$2 WHERE session_id=$1`, [sid, tu]));
+    const t3 = await tryIt(() => asService(`UPDATE sessions SET status='Held' WHERE id=$1 AND status='Scheduled'`, [sid]));
+    const a2 = await sess(sid);
+    ok('S-1 / P1c: the teacher, under the live RLS policy, lengthening their own Scheduled lesson 10 days old -> HC020 retime; the service-lane flip then holds the original 90 minutes',
+       isKind(t1, 'HC020', 'retime') && t2.ok !== undefined && t3.ok !== undefined && a2.status === 'Held' && String(a2.end_time).startsWith('19:00'),
+       { t1, t2: t2.code, t3: t3.code, end: a2.end_time });
+  }
+  const recent = await mk({ when: TODAY, status: 'Scheduled' });
+  r = await tryIt(() => asAdmin(`UPDATE sessions SET end_time = end_time + interval '5 minutes' WHERE id=$1`, [recent.sid]));
+  ok('  inside the free week a Scheduled lesson\'s time is still free', r.ok !== undefined, r);
+  const fut = await mk({ when: FUTURE, status: 'Scheduled' });
+  r = await tryIt(() => asService(`UPDATE sessions SET start_time='16:00', end_time='17:30' WHERE id=$1`, [fut.sid]));
+  ok('  a future lesson\'s time (the rebuild, service lane) is still free', r.ok !== undefined && String((await sess(fut.sid)).start_time).startsWith('16:00'), r);
   let p = await preview('retime', { session_id: s.sid, start_time: '17:30', end_time: '20:30' });
   ok('preview: old and new minutes (90 -> 180), T1', p.kind === 'retime' && p.tier === 1 && p.change.old_minutes === 90 &&
      p.change.new_minutes === 180, p);
@@ -555,6 +642,37 @@ await section('the acknowledgement cannot be forged or replayed', async () => {
   await asSuper(`INSERT INTO payroll_periods(month, status) VALUES ($1,'locked') ON CONFLICT (month) DO UPDATE SET status='locked'`, [w.month]);
   r = await tryIt(() => checked('reteach', pw.args, { reason: R, token: pw.token, confirm: true, corr: CORR }));
   ok('the payroll month was locked after the preview (T1 -> T3) -> HC011', r.code === 'HC011', r);
+  // Review S-2 / probe P8 (A-8): the race the exec's re-plan exists for. The
+  // apply checks the token BEFORE the lesson is locked (for the 'session'
+  // entity no row is locked first), and the triggers re-check no tier
+  // (_money_ack(..., 0)). A month close committing between the apply's token
+  // check and the exec's FOR UPDATE is simulated in one connection: an AFTER
+  // INSERT trigger on money_change_overrides (it fires inside the apply,
+  // after the token check, before the exec) locks the lesson's payroll month.
+  // Only the exec's tier comparison sees it; mutant L36 commits the change
+  // as an unreviewed T1 override in a now-locked month.
+  const x = await mk({ when: { date: (await clock(-200)).date } });   // 40+ days from every other locked month here
+  await asSuper(`CREATE OR REPLACE FUNCTION public.zz_test_race() RETURNS trigger LANGUAGE plpgsql AS $f$
+    BEGIN IF current_setting('test.race', true) = 'on' THEN
+      INSERT INTO public.payroll_periods(month, status) VALUES ('${x.month}', 'locked') ON CONFLICT (month) DO UPDATE SET status = 'locked';
+    END IF; RETURN NULL; END $f$`);
+  await asSuper(`CREATE TRIGGER zz_test_race AFTER INSERT ON public.money_change_overrides FOR EACH ROW EXECUTE FUNCTION public.zz_test_race()`);
+  try {
+    const nt = randomUUID();
+    const px = await preview('reteach', { session_id: x.sid, teacher_id: nt });
+    const rx = await H.script(ADMIN, 'authenticated', 'authenticated',
+      `SELECT set_config('test.race', 'on', true);
+       SELECT public.money_change_checked('session','reteach','${JSON.stringify(px.args)}'::jsonb,'${R}','${px.token}',true,NULL,'{}'::jsonb)`);
+    const locked = (await asSuper(`SELECT public.payroll_month_is_locked($1) l`, [x.month])).rows[0].l;
+    ok('S-2 / P8: the payroll month locked between the apply\'s token check and the exec\'s row lock (preview T1) -> HC011, the teacher unchanged, no override row (rolled back)',
+       px.tier === 1 && rx?.code === 'HC011' && (await sess(x.sid)).teacher_id === x.teacherId &&
+       (await asSuper(`SELECT count(*)::int n FROM money_change_overrides WHERE target_id=$1`, [x.sid])).rows[0].n === 0 && locked === false,
+       { tier: px.tier, rx, locked });
+  } finally {
+    await asSuper(`DROP TRIGGER zz_test_race ON public.money_change_overrides`);
+    await asSuper(`DROP FUNCTION public.zz_test_race()`);
+    await asSuper(`DELETE FROM payroll_periods WHERE month=$1`, [x.month]);
+  }
 });
 
 await section('HC050: the checked path refuses to work without its trigger', async () => {
@@ -570,6 +688,13 @@ await section('HC050: the checked path refuses to work without its trigger', asy
   const r2 = await tryIt(() => checked('restaff', p2.args, { reason: R, token: p2.token, confirm: true }));
   await asSuper(`ALTER TABLE session_participants ENABLE TRIGGER zz_session_staff_guard`);
   ok('zz_session_staff_guard disabled: restaff -> HC050', r2.code === 'HC050', r2);
+  // fix round 1: d4_guard_status names the three 3A triggers
+  let st = (await asAdmin(`SELECT public.d4_guard_status() r`)).rows[0].r;
+  ok('d4_guard_status lists the three 3A triggers, enabled, and reads ok', TRIGGERS.every((k) => st.triggers?.[k] === 'O') && st.ok === true, st.triggers);
+  await asSuper(`ALTER TABLE sessions DISABLE TRIGGER zz_session_insert_guard`);
+  st = (await asAdmin(`SELECT public.d4_guard_status() r`)).rows[0].r;
+  await asSuper(`ALTER TABLE sessions ENABLE TRIGGER zz_session_insert_guard`);
+  ok('  one of them disabled -> ok false, the trigger shown D', st.ok === false && st.triggers?.['sessions.zz_session_insert_guard'] === 'D', st.triggers);
 });
 
 // ---------------------------------------------------------------- D2 still works

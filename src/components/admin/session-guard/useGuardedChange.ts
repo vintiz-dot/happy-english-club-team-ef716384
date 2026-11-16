@@ -13,7 +13,7 @@ import {
   type GuardOp,
   type GuardPreview,
 } from "@/lib/sessionGuard";
-import { payPreviewRequest, payRequest, type PayForm, type PayOp, type PayPlan } from "@/lib/lessonPayGuard";
+import { payDialogFrom, payPreviewRequest, payRequest, type PayForm, type PayOp, type PayPlan } from "@/lib/lessonPayGuard";
 import { manageSession, payPreview } from "./api";
 
 export interface MoveChange {
@@ -39,6 +39,13 @@ interface Options {
   change?: MoveChange;
   /** Skip the (slow) figures fetch. */
   figures?: boolean;
+  /**
+   * D4 step 3A (review S-1): the change was refused for lesson pay (a 409
+   * requires_checked_path with a pay kind and the money preview, e.g. the
+   * time of a lesson more than a week old). Given, the dialog hands the
+   * change over to the lesson-pay check instead of showing an error.
+   */
+  onPayCheck?: (d: { op: PayOp; plan: PayPlan }) => void;
 }
 
 /**
@@ -50,7 +57,7 @@ interface Options {
  *   must be given again (`staleNonce` changes so the form clears them).
  * - Every other error stays on screen with its code; nothing is assumed done.
  */
-export function useGuardedChange({ open, sessionId, op, change, figures }: Options) {
+export function useGuardedChange({ open, sessionId, op, change, figures, onPayCheck }: Options) {
   const qc = useQueryClient();
   const [phase, setPhase] = useState<GuardPhase>("idle");
   const [preview, setPreview] = useState<GuardPreview | null>(null);
@@ -65,6 +72,8 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
   previewRef.current = preview;
   const submitting = useRef(false);
   const retrying = useRef(false);
+  const payCheckRef = useRef(onPayCheck);
+  payCheckRef.current = onPayCheck;
 
   const invalidate = useCallback(() => {
     void qc.invalidateQueries({ predicate: (q) => isSessionRelatedQuery(q.queryKey) });
@@ -170,6 +179,13 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
               await load();
               setStale(["Something recorded against this lesson changed."]);
             }
+            return;
+          }
+          // Refused for lesson pay: nothing was written; the lesson-pay check takes over.
+          const pay = payCheckRef.current ? payDialogFrom(err) : null;
+          if (pay) {
+            setPhase("ready");
+            payCheckRef.current?.(pay);
             return;
           }
           setError(err);

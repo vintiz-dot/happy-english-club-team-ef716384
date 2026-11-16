@@ -230,11 +230,24 @@ Deno.serve(async (req) => {
     }
 
     // Auto-mark session as Held (as the writer above)
-    await writer
+    const { error: heldError } = await writer
       .from('sessions')
       .update({ status: 'Held' })
       .eq('id', sessionId)
       .eq('status', 'Scheduled');
+    // D4 step 3A (review N-2): the marks are saved either way; when the
+    // database refuses the flip (an admin's save in a closed payroll month,
+    // or after a checked un-hold: HC020 kind=hold) the lesson stays
+    // Scheduled - unpaid until held through the check - and the response
+    // says so instead of staying silent.
+    const heldRefused = heldError
+      ? {
+          code: (heldError as any).code ?? null,
+          message: (heldError as any).code === 'HC020'
+            ? 'The register was saved, but the lesson was not marked Held: its payroll month is closed, or it was taken off Held before. If it took place, mark it Held from the lesson\'s Actions menu, with a reason.'
+            : 'The register was saved, but the lesson could not be marked Held. Mark it Held from the lesson\'s Actions menu.',
+        }
+      : null;
 
     // Get session info once for post-processing
     const { data: sessionData } = await supabase
@@ -256,7 +269,7 @@ Deno.serve(async (req) => {
     console.log(`Attendance marked for ${entries.length} students`);
 
     return new Response(
-      JSON.stringify({ success: true, count: entries.length }),
+      JSON.stringify({ success: true, count: entries.length, ...(heldRefused ? { held: false, held_refused: heldRefused } : {}) }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {

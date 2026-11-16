@@ -24,9 +24,12 @@ import {
   payChangeLines,
   payErrorText,
   payEvidencePreview,
+  payMeaning,
   payNotes,
+  oneChangeText,
   payRequirements,
   type PayOp,
+  type PayPlan,
 } from "@/lib/lessonPayGuard";
 import { EvidenceCards } from "./EvidenceCards";
 import { ConsequenceTable, useStudentNames } from "./ConsequenceTable";
@@ -56,6 +59,8 @@ interface Props {
   /** Delete refused because the lesson has evidence: lets the admin switch to Cancel rather than hit a dead end. */
   onCancelInstead?: () => void;
   figures?: boolean;
+  /** D4 step 3A: the change was refused for lesson pay; the caller opens the lesson-pay check (PayGuardDialog). */
+  onPayCheck?: (d: { op: PayOp; plan: PayPlan }) => void;
 }
 
 const hm = (t?: string) => (t ? t.slice(0, 5) : "");
@@ -68,8 +73,8 @@ const DONE_TITLE: Record<GuardOp, string> = { cancel: "Lesson cancelled", delete
  * server what the evidence says; nothing is changed until the admin has read
  * it, written a reason and (for strong evidence) typed the lesson's date.
  */
-export function GuardDialog({ open, session, op, change, onClose, onDone, onCancelInstead, figures }: Props) {
-  const g = useGuardedChange({ open, sessionId: session.id, op, change, figures });
+export function GuardDialog({ open, session, op, change, onClose, onDone, onCancelInstead, figures, onPayCheck }: Props) {
+  const g = useGuardedChange({ open, sessionId: session.id, op, change, figures, onPayCheck });
   const { phase, preview, consequences, error, stale, staleNonce, success, retry } = g;
 
   const [reason, setReason] = useState("");
@@ -181,7 +186,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
             <ErrorBanner
               id="sg-error"
               title={error.outcome_unknown ? "Not confirmed" : "The check could not be completed"}
-              text={error.outcome_unknown ? OUTCOME_UNKNOWN_TEXT : errorText(error.code, error.message)}
+              text={error.outcome_unknown ? OUTCOME_UNKNOWN_TEXT : (oneChangeText(error) ?? errorText(error.code, error.message))}
               code={error.code}
             />
           )}
@@ -267,7 +272,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                 </div>
               )}
 
-              {error && <ErrorBanner id="sg-error" title="Nothing was changed" text={errorText(error.code, error.message)} code={error.code} />}
+              {error && <ErrorBanner id="sg-error" title="Nothing was changed" text={oneChangeText(error) ?? errorText(error.code, error.message)} code={error.code} />}
             </>
           )}
         </div>
@@ -462,7 +467,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
                     </li>
                   ))}
                 </ul>
-                <p>{PAY_COPY.meaning[op]}</p>
+                <p>{payMeaning(op, plan)}</p>
               </section>
 
               {evidence && <EvidenceCards preview={evidence} />}

@@ -172,6 +172,20 @@ await section('the time of a held lesson (G-5)', async () => {
   ok('today\'s Held lesson -> 200 plain_update (the free week)', r.status === 200 && r.body.applied === 'plain_update', r.body);
   r = await ms(admin.tok, 'set-time', { id: s.sid, start_time: 'x', end_time: '20:30' });
   ok('set-time with a malformed time -> 400 bad_change', r.status === 400 && r.body.code === 'bad_change', r.body);
+  // Review S-1: an old lesson that is still Scheduled (D2's Move dialog sends
+  // its same-day time edit here, with no token).
+  const o = await mk({ status: 'Scheduled' });
+  reset();
+  r = await ms(admin.tok, 'move', { id: o.sid, date: o.date, start_time: '17:30', end_time: '20:30' });
+  ok('S-1: a same-day time edit of an old SCHEDULED lesson -> 409 kind retime, use_action set-time, the preview, nothing written',
+     r.status === 409 && r.body.code === 'requires_checked_path' && r.body.kind === 'retime' && r.body.use_action === 'set-time' &&
+     r.body.preview?.kind === 'retime' && r.body.preview?.tier === 1 && String((await sess(o.sid)).end_time).startsWith('19:00') &&
+     sessionWrites('service').length === 0, r.body);
+  const tok = r.body.preview?.token;
+  r = await ms(admin.tok, 'move', { id: o.sid, date: o.date, start_time: '17:30', end_time: '20:30', token: tok, reason: R, confirm: true });
+  ok('  the same move WITH the acknowledgement -> 200 through the checked op (no loop back to the plain write), one retime override',
+     r.status === 200 && String((await sess(o.sid)).end_time).startsWith('20:30') &&
+     (await overrides(o.sid)).some((x) => x.op === 'retime' && x.reason === R), r.body);
 });
 
 // ---------------------------------------------------------------- staff
@@ -242,6 +256,25 @@ await section('bulk-cancel-sessions: a batch that needs a second administrator i
   ok('HC060 on the chunk -> 409 approval_required, ONE request offered for the whole batch, nothing cancelled',
      r.status === 409 && r.body.code === 'approval_required' && r.body.approval?.one_request === true &&
      items.every((i) => r.body.approval.items.includes(i.id)) && (await sess(s1.sid)).status === 'Scheduled' && (await sess(s2.sid)).status === 'Scheduled', r.body);
+});
+
+// ---------------------------------------------------------------- mark-attendance (review N-2)
+await section('mark-attendance: an admin\'s register save whose Held flip is refused says so', async () => {
+  const markFn = await F.loadFunction('supabase/functions/mark-attendance/index.ts');
+  const l = await mk({ when: LOCKED, status: 'Scheduled' }); const kl = await kid(l); await att(l, kl, 'Present', null);
+  reset();
+  let r = await call(markFn, admin.tok, { sessionId: l.sid, studentId: kl, status: 'Present' });
+  ok('N-2: a LOCKED payroll month: 200, the mark saved, the lesson still Scheduled, and the answer says it was not marked Held (with the next step)',
+     r.status === 200 && r.body.success === true && r.body.held === false && r.body.held_refused?.code === 'HC020' &&
+     /not marked Held/.test(r.body.held_refused?.message ?? '') && /Actions menu, with a reason/.test(r.body.held_refused?.message ?? '') &&
+     (await sess(l.sid)).status === 'Scheduled' &&
+     (await asSuper(`SELECT marked_by FROM attendance WHERE session_id=$1 AND student_id=$2`, [l.sid, kl])).rows[0]?.marked_by === admin.id, r.body);
+  ok('  the flip was still the admin\'s own write (never retried on the service key)', sessionWrites('service').length === 0 &&
+     sessionWrites('user').length >= 1, log.writes);
+  const o = await mk({ when: TODAY, status: 'Scheduled' }); const ko = await kid(o);
+  r = await call(markFn, admin.tok, { sessionId: o.sid, studentId: ko, status: 'Present' });
+  ok('  an open month: Held, and no held_refused in the answer (unchanged shape)', r.status === 200 && (await sess(o.sid)).status === 'Held' &&
+     !('held_refused' in r.body) && !('held' in r.body), r.body);
 });
 
 // ---------------------------------------------------------------- not installed
@@ -315,6 +348,50 @@ await section('lessonPayGuard: the dialog asks what the server says, and sends b
      /Nothing was changed/.test(lib.payErrorText('x', 'Server said no.')));
   const src = readFileSync(resolve(repo, 'src/lib/lessonPayGuard.ts'), 'utf8');
   ok('the module imports no client and prices nothing', !/supabase|calculate-payroll'|fetch\(/.test(src.replace(/\/\/[^\n]*/g, '')));
+
+  // fix round 1: the review's wording and hand-off items
+  const hold = (evidence, impact = {}) => lib.payMeaning('hold', plan({ op: 'hold', kind: 'hold', evidence, impact }));
+  ok('N-6: the hold sentence is true in each case the check asks: no register / closed month / after an un-hold; never "nobody took the register" when someone did',
+     /Nobody has taken the register/.test(hold({ person_marks: 0, unheld_before: false, payroll_month_locked: false })) &&
+     /payroll month is closed/.test(hold({ person_marks: 3, payroll_month_locked: true })) &&
+     !/Nobody has taken/.test(hold({ person_marks: 3, payroll_month_locked: true })) &&
+     /taken off Held before/.test(hold({ person_marks: 2, unheld_before: true })) && !/Nobody has taken/.test(hold({ person_marks: 2, unheld_before: true })) &&
+     /pays the teacher/.test(hold(undefined)) && !/Nobody/.test(lib.PAY_COPY.meaning.hold),
+     [hold({ person_marks: 3, payroll_month_locked: true }), hold({ person_marks: 2, unheld_before: true })]);
+  ok('  the other ops keep their sentence', lib.payMeaning('reteach', plan()) === lib.PAY_COPY.meaning.reteach);
+  ok('N-4: HC022 kinds=unhold,move -> a sentence (take it off Held first, then move); other HC022 -> null or general; non-HC022 -> null',
+     /Take it off Held first/.test(lib.oneChangeText({ code: 'one_change_at_a_time', sqlstate: 'HC022', detail: 'kinds=unhold,move' }) ?? '') &&
+     lib.oneChangeText({ code: 'one_change_at_a_time', sqlstate: 'HC022', detail: 'kinds=cancel,move' }) === null &&
+     /one change at a time/i.test(lib.oneChangeText({ code: 'HC022', details: 'kinds=reteach,move' }) ?? '') &&
+     lib.oneChangeText({ code: 'token_stale', sqlstate: 'HC011' }) === null);
+  ok('N-1: a Stars conflict refused with HC020 kind=hold -> words (closed payroll month, hold it first), never the raw code',
+     /Mark the lesson Held first/.test(lib.starsResolveRefusalText({ code: 'HC020', message: 'session_change_requires_checked_path', details: 'kind=hold; ...' }) ?? '') &&
+     !/session_change_requires_checked_path/.test(lib.starsResolveRefusalText({ code: 'HC020', details: 'kind=hold; x' }) ?? '') &&
+     lib.starsResolveRefusalText({ code: '23505', message: 'x' }) === null);
+  ok('N-2: heldRefusedText -> the function\'s sentence; nothing when the lesson was held',
+     lib.heldRefusedText({ success: true, held: false, held_refused: { code: 'HC020', message: 'The register was saved, but ...' } }) === 'The register was saved, but ...' &&
+     lib.heldRefusedText({ success: true, count: 1 }) === null && lib.heldRefusedText(null) === null);
+  const read = (f) => readFileSync(resolve(repo, f), 'utf8');
+  const ugc = read('src/components/admin/session-guard/useGuardedChange.ts');
+  ok('S-1 hand-off: the move dialog hands a 409 with a pay kind to onPayCheck (payDialogFrom) instead of showing it as an error',
+     /const pay = payCheckRef\.current \? payDialogFrom\(err\) : null;\s*if \(pay\) \{[\s\S]{0,80}payCheckRef\.current\?\.\(pay\)/.test(ugc) &&
+     /onPayCheck\b/.test(read('src/components/admin/session-guard/GuardDialog.tsx')));
+  const esm = read('src/components/admin/EditSessionModal.tsx');
+  ok('  EditSessionModal\'s non-Held time path (the Move dialog) opens the lesson-pay check on that 409; the Held path still opens it directly',
+     /op="move"[\s\S]{0,900}onPayCheck=\{\(d\) => \{\s*setMoveOpen\(false\);\s*setPay\(\{\s*op: d\.op,/.test(esm) &&
+     /session\.status === "Held"\) \{\s*setPay\(\{ op: "retime"/.test(esm));
+  ok('  the calendar\'s drag-to-move does the same', /onPayCheck=\{\(d\) =>[\s\S]{0,300}setPayDialog\(/.test(read('src/components/schedule/GlobalCalendar.tsx')) &&
+     /<PayGuardDialog/.test(read('src/components/schedule/GlobalCalendar.tsx')));
+  const tac = read('src/components/admin/ta/TAClassAssignment.tsx');
+  ok('N-3: TAClassAssignment: a restaff refusal (assign or remove) opens the lesson-pay check with the whole list; never the raw code',
+     (tac.match(/payOpFromDbError\((error|one)\) !== "restaff"\) throw/g) ?? []).length === 3 && /<PayGuardDialog[\s\S]{0,80}op="restaff"/.test(tac) &&
+     /staffAfter\(row\.session_id, taId, true\)/.test(tac) && /staffAfter\(a\.session_id, taId, false\)/.test(tac));
+  ok('N-1: StarsSyncTab words a lesson-pay refusal of a conflict', /starsResolveRefusalText\(e\)/.test(read('src/components/admin/tabs/StarsSyncTab.tsx')));
+  ok('N-2: the admin register screens show a refused Held flip', ['src/components/admin/class/AttendanceDrawer.tsx', 'src/components/admin/class/SessionDetailDrawer.tsx',
+     'src/components/admin/PastAttendanceEditor.tsx'].every((f) => /heldRefusedText\(data\)/.test(read(f))));
+  ok('N-7: TeacherScheduleTransfer tells the admin to start the date range within the last week (not "reload")',
+     /Start the date range within the last week/.test(read('src/components/admin/TeacherScheduleTransfer.tsx')) &&
+     !/Reload the list and transfer the rest/.test(read('src/components/admin/TeacherScheduleTransfer.tsx')));
 });
 
 await db.close();

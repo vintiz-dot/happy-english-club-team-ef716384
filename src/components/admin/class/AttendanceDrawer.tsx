@@ -21,7 +21,7 @@ import { SessionActionsModal } from "../SessionActionsModal";
 import { useIvory } from "@/hooks/useIvory";
 import { cn } from "@/lib/utils";
 import { functionRefusalText } from "@/lib/moneyGuard";
-import { participantsAfter, payOpFromDbError, type PayOp } from "@/lib/lessonPayGuard";
+import { heldRefusedText, participantsAfter, payOpFromDbError, type PayOp } from "@/lib/lessonPayGuard";
 import { PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
 
 const FOCUS =
@@ -129,11 +129,14 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
         studentId,
         status,
       }));
-      const { error } = await supabase.functions.invoke("mark-attendance", {
+      const { data, error } = await supabase.functions.invoke("mark-attendance", {
         body: { sessionId: session.id, batch },
       });
       // D4: an old billed lesson answers 409 with its reason and next step.
       if (error) throw new Error(await functionRefusalText(error, "Failed to save attendance"));
+      // D4 step 3A (review N-2): the marks are saved; a refused Held flip is said.
+      const notHeld = heldRefusedText(data);
+      if (notHeld) toast.warning(notHeld);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["session-students", session?.id] });

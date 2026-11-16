@@ -176,8 +176,11 @@ export function TeacherScheduleTransfer() {
       // refuses a teacher change on a held lesson, or on one that ended more
       // than a week ago (HC020 kind=reteach): say what to do instead.
       if (payOpFromDbError(err) === "reteach") {
-        toast.error("Transfer stopped: one of these lessons is already held (or ended more than a week ago). "
-          + "Its teacher is changed from that lesson's Actions menu, with a reason. Reload the list and transfer the rest.");
+        // Review N-7: reloading shows the same old lessons, which fail again;
+        // the way through is a date range that starts within the last week.
+        toast.error("Transfer stopped: the list includes a lesson that ended more than a week ago (or is already held). "
+          + "Start the date range within the last week and transfer again; an older lesson's teacher is changed "
+          + "from that lesson's Actions menu, with a reason.");
         return;
       }
       toast.error(`Transfer failed: ${err.message}`);

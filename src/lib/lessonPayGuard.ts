@@ -83,7 +83,9 @@ export const PAY_COPY = {
   /** What the change means for pay, in one sentence (b.1 "What the preview shows"). */
   meaning: {
     unhold: "The teacher is no longer paid for this lesson. If the lesson did not happen, cancel it instead.",
-    hold: "Nobody has taken the register. Marking it Held pays the teacher for this lesson.",
+    // True in every case the check asks about a hold (no register, an earlier
+    // un-hold, a closed payroll month); payMeaning() says which one it is.
+    hold: "Marking it Held pays the teacher for this lesson.",
     reteach: "The lesson's pay moves from one teacher to the other.",
     retime: "Teachers and assistants paid by the hour are paid for the new length.",
     restaff: "Assistants are paid for the lessons they are on and attended.",
@@ -102,6 +104,71 @@ export const PAY_COPY = {
   payNote: "Pay is worked out by Payroll after the change; no figure is shown here.",
   free: "This change needs no reason: the lesson ended a week ago or less and its payroll month is open.",
 };
+
+/**
+ * What the change means for pay, for this plan (review N-6). For a hold the
+ * reason the check asks is read from the plan's evidence: the payroll month
+ * is closed, the lesson was taken off Held before, or nobody took the
+ * register. A field missing -> the general sentence, which is always true.
+ */
+export function payMeaning(op: PayOp, p: PayPlan | null | undefined): string {
+  if (op !== "hold") return PAY_COPY.meaning[op];
+  const e = p?.evidence ?? {};
+  const why: string[] = [];
+  if (e.payroll_month_locked === true || p?.impact?.closed_payroll === true) why.push("This lesson's payroll month is closed.");
+  if (e.unheld_before === true) why.push("This lesson was taken off Held before, through this check.");
+  if (e.person_marks === 0) why.push("Nobody has taken the register.");
+  return [...why, PAY_COPY.meaning.hold].join(" ");
+}
+
+/**
+ * HC022 "kinds=unhold,move" (review N-4): moving a Held lesson to a time that
+ * has not started would also take it off Held (the database's status rule
+ * runs first), which changes what the teacher is paid. Said in words, with
+ * the order that works. Any other error -> null.
+ */
+export function oneChangeText(err: any): string | null {
+  if (!err || String(err.sqlstate ?? err.code ?? "") !== "HC022") return null;
+  const m = /kinds=([a-z_,]+)/.exec(String(err.detail ?? err.details ?? ""));
+  const kinds = m ? m[1].split(",") : [];
+  if (kinds.includes("unhold") && kinds.includes("move")) {
+    return "This lesson is Held. Moving it to a time that has not started also takes it off Held, which changes what the teacher is paid. "
+      + "Take it off Held first (the lesson's Actions menu, Change status, with a reason), then move it. Nothing was changed.";
+  }
+  if (kinds.some((k) => k in PAY_KIND_OP)) {
+    return "This would change two things at once, one of them what staff are paid. Make one change at a time. Nothing was changed.";
+  }
+  return null;
+}
+
+/**
+ * A Stars conflict settled with Pixel Pal's mark, refused for lesson pay
+ * (review N-1): in a closed payroll month the resolve's hold is HC020
+ * kind=hold and the whole resolve rolls back. Said in words. Else null.
+ */
+export function starsResolveRefusalText(err: any): string | null {
+  const op = payOpFromDbError(err);
+  if (op === "hold") {
+    return "Pixel Pal's mark would mark this lesson Held, which pays the teacher, and the lesson's payroll month is closed "
+      + "(or it was taken off Held before). Mark the lesson Held first from its Actions menu, with a reason, then settle this conflict. "
+      + "Nothing was changed.";
+  }
+  if (op) return "Settling this conflict would change what staff are paid, which needs a reason. Change the lesson from its Actions menu first. Nothing was changed.";
+  return null;
+}
+
+/**
+ * mark-attendance saved the register but the database refused the Held flip
+ * (review N-2: an admin, a closed payroll month or after a checked un-hold).
+ * The sentence the screen shows, or null when the lesson was marked Held.
+ */
+export function heldRefusedText(body: any): string | null {
+  const r = body && typeof body === "object" ? body.held_refused : null;
+  if (!r) return null;
+  return typeof r.message === "string" && r.message !== ""
+    ? r.message
+    : "The register was saved, but the lesson was not marked Held. Mark it Held from the lesson's Actions menu, with a reason.";
+}
 
 /** What the dialog asks for, read from the server's plan (fail closed when a field is missing). */
 export function payRequirements(p: PayPlan | null | undefined) {

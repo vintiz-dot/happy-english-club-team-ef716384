@@ -414,8 +414,11 @@ Deno.serve(async (req) => {
         if (change.date !== s.date || change.end_time <= change.start_time || s.status === 'Canceled') {
           return fail(guardError(400, 'bad_change', 'That change is not valid for this lesson.'));
         }
-        // D4 3A: a Held lesson's time outside the free week is `retime`.
-        if (hasToken() && s.status === 'Held') {
+        // D4 3A: a Held lesson's time outside the free week is `retime`, and
+        // so is the time of any lesson that ended more than a week ago
+        // (review S-1). D2 sends no token for a move it does not guard, so a
+        // token here is the lesson-pay acknowledgement, whatever the status.
+        if (hasToken()) {
           return payChecked('retime', { session_id: data.id, start_time: change.start_time, end_time: change.end_time },
             'session_time_change');
         }
