@@ -129,11 +129,11 @@ export function TuitionStudentCard({
           <div className="space-y-4 border-t border-hec-line p-4">
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
               <FinanceCell label="Base" value={fmt(item.base_amount)} />
-              <FinanceCell label="Discount" value={item.discount_amount > 0 ? `−${fmt(item.discount_amount)}` : "—"} accent={item.discount_amount > 0 ? "green" : undefined} />
-              <FinanceCell label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? fmt(priorNet) : `+${fmt(Math.abs(priorNet))}`} accent={priorNet > 0 ? "red" : priorNet < 0 ? "green" : undefined} />
+              <FinanceCell label="Discount" value={item.discount_amount > 0 ? `−${fmt(item.discount_amount)}` : "—"} />
+              <FinanceCell label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? fmt(priorNet) : `+${fmt(Math.abs(priorNet))}`} />
               <FinanceCell label="Payable" value={fmt(item.finalPayable)} bold />
-              <FinanceCell label="Paid" value={fmt(item.recorded_payment ?? 0)} accent="blue" />
-              <FinanceCell total label="Balance" value={balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "0 ₫"} accent={balance > 0 ? "red" : balance < 0 ? "green" : undefined} bold />
+              <FinanceCell label="Paid" value={fmt(item.recorded_payment ?? 0)} />
+              <FinanceCell total label="Balance" value={balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "0 ₫"} bold />
             </div>
 
             {/* Smart Tuition Flags */}
@@ -163,7 +163,7 @@ export function TuitionStudentCard({
   );
 }
 
-function FinanceCell({ label, value, accent, bold, total }: { label: string; value: string; accent?: "green" | "red" | "blue"; bold?: boolean; total?: boolean }) {
+function FinanceCell({ label, value, bold, total }: { label: string; value: string; bold?: boolean; total?: boolean }) {
   return (
     <div className={`min-w-0 ${total ? "border-t-2 border-hec-ink pt-2" : "pt-2"}`}>
       <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">{label}</p>

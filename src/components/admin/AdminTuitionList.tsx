@@ -367,11 +367,11 @@ function TuitionStudentRow({
             {/* Finance breakdown grid */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
               <FinanceCell label="Base" value={cells.base.text} />
-              <FinanceCell label="Discount" value={cells.discount.text} accent={cells.discount.accent} />
-              <FinanceCell label="Prior Bal." value={cells.prior.text} accent={cells.prior.accent} />
+              <FinanceCell label="Discount" value={cells.discount.text} />
+              <FinanceCell label="Prior Bal." value={cells.prior.text} />
               <FinanceCell label="Payable" value={cells.payable.text} bold />
-              <FinanceCell label="Paid" value={cells.paid.text} accent={cells.paid.accent} />
-              <FinanceCell total label="Balance" value={cells.balance.text} accent={cells.balance.accent} bold />
+              <FinanceCell label="Paid" value={cells.paid.text} />
+              <FinanceCell total label="Balance" value={cells.balance.text} bold />
             </div>
 
             {/* Actions */}
@@ -396,13 +396,11 @@ function TuitionStudentRow({
 function FinanceCell({
   label,
   value,
-  accent,
   bold,
   total,
 }: {
   label: string;
   value: string;
-  accent?: "green" | "red" | "blue";
   bold?: boolean;
   total?: boolean;
 }) {
