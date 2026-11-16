@@ -399,6 +399,12 @@ const SUITES = [
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116092000_teacher_reads_own_classes_profiles.sql"],
   },
   {
+    name: "staff pay reads (F-17)",
+    file: "s2-f17-staff-pay.test.mjs",
+    expect: 60,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261021090000_staff_pay_rate_history.sql", "20261116093000_staff_pay_not_for_every_account.sql"],
+  },
+  {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
     migrations: ["20261022090000_assistant_absence_on_a_session.sql"],

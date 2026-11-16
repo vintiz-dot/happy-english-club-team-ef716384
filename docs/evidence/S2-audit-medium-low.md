@@ -27,3 +27,30 @@ CREATE POLICY "Admins and teachers view monthly leaders" ON public.monthly_leade
   USING (public.has_role(auth.uid(), 'admin'::app_role) OR public.has_role(auth.uid(), 'teacher'::app_role));
 COMMIT;
 ```
+
+<!-- rollback F-17 -->
+```sql
+-- can_view_teacher exactly as 20261110140000 defines it, the rate functions'
+-- grants as 20261021090000 left them, and no catalogue function.
+-- THIS REOPENS F-17. Ship the ClassCatalog fallback first (it reads the table
+-- again when the function is missing).
+BEGIN;
+CREATE OR REPLACE FUNCTION public.can_view_teacher(_teacher_id uuid, _uid uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT _uid IS NOT NULL AND (
+    public.is_staff_member(_uid)
+    OR EXISTS (SELECT 1 FROM public.classes c WHERE c.default_teacher_id = _teacher_id AND c.is_active)
+    OR EXISTS (
+      SELECT 1 FROM public.sessions s
+      JOIN public.enrollments e ON e.class_id = s.class_id
+      WHERE s.teacher_id = _teacher_id AND public.can_view_student(e.student_id, _uid)
+    )
+  )
+$$;
+REVOKE EXECUTE ON FUNCTION public.can_view_teacher(uuid, uuid) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.can_view_teacher(uuid, uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.teacher_rate_on(uuid, date) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.assistant_rate_on(uuid, date) TO authenticated, service_role;
+DROP FUNCTION IF EXISTS public.get_class_catalog_teachers(uuid[]);
+COMMIT;
+```

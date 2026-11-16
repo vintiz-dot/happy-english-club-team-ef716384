@@ -67,8 +67,9 @@ export const HELPERS = `
     SELECT EXISTS (SELECT 1 FROM public.enrollments e WHERE e.student_id = _student_id AND e.end_date IS NULL AND public.is_teacher_of_class(_user_id, e.class_id));
   $function$;
   CREATE FUNCTION public.is_staff_member(_uid uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $function$
-    SELECT EXISTS (SELECT 1 FROM public.teachers WHERE user_id = _uid) OR EXISTS (SELECT 1 FROM public.teaching_assistants WHERE user_id = _uid)
-      OR public.has_role(_uid, 'admin'::public.app_role);
+    SELECT public.has_role(_uid, 'admin'::app_role) OR public.has_role(_uid, 'teacher'::app_role)
+      OR EXISTS (SELECT 1 FROM public.teaching_assistants ta WHERE ta.user_id = _uid)
+      OR EXISTS (SELECT 1 FROM public.teachers t WHERE t.user_id = _uid)
   $function$;
 `;
 
