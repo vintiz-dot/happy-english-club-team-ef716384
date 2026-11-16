@@ -36,6 +36,19 @@ const PayrollRequestSchema = z.object({
   teacherId: z.string().uuid("Invalid teacher ID format").optional(),
 });
 
+/**
+ * A read that decides who is paid, or for which lessons, failed. The call
+ * fails with this rather than answer without that person: a teaching
+ * assistant silently left out showed 0 on the screen and was not booked
+ * when the month closed. The message is this function's own words, so it
+ * is passed to the caller; what the database said goes to the log only.
+ */
+class PayrollReadError extends Error {}
+function payrollReadFailed(what: string, cause: unknown): PayrollReadError {
+  console.error(`Payroll read failed (${what}):`, (cause as { message?: string } | null)?.message ?? cause);
+  return new PayrollReadError(`Payroll not calculated: ${what} could not be read. Try again.`);
+}
+
 type ClassRow = {
   name: string;
   default_session_length_minutes?: number | null;
@@ -924,40 +937,55 @@ Deno.serve(async (req) => {
       // A TA's own call: their row only, whatever teacherId the body named.
       if (ownAssistantId) aq = aq.eq("id", ownAssistantId);
       else if (teacherId) aq = aq.eq("id", teacherId);
-      const { data: assistants } = await aq;
+      // Every read in this loop fails the call, as the teacher loop's do: an
+      // assistant dropped by a failed read is a 0 on the screen and nothing
+      // booked at month close, and a partial answer looks like a whole one.
+      const { data: assistants, error: assistantsErr } = await aq;
+      if (assistantsErr) throw payrollReadFailed("the teaching assistants", assistantsErr);
 
       for (const ta of assistants ?? []) {
         // Lessons this TA is on, minus the ones they missed. The rule is
         // participationIsPayable in ../_lib/payroll-sessions.ts; the query
         // narrows on the same terms for bandwidth and the predicate
         // decides, so this and the admin screen cannot disagree.
-        const { data: participations } = await supabase
+        //
+        // This month's lessons only (the embedded session's date, on the
+        // same bounds as the reads below): their ids go into those reads'
+        // URL, which otherwise grew with every lesson the TA ever assisted.
+        // The reads below keep their own date filter, so the same lessons
+        // count either way.
+        const { data: participations, error: participationsErr } = await supabase
           .from("session_participants")
-          .select("session_id, teaching_assistant_id, participant_type, attended")
+          .select("session_id, teaching_assistant_id, participant_type, attended, sessions!inner(date)")
           .eq("teaching_assistant_id", ta.id)
           .eq("participant_type", ASSISTANT_PARTICIPANT_TYPE)
-          .neq("attended", false);
+          .neq("attended", false)
+          .gte("sessions.date", startDate)
+          .lt("sessions.date", nextMonthStart);
+        if (participationsErr) throw payrollReadFailed("a teaching assistant's lessons", participationsErr);
 
         const sessionIds = (participations || [])
           .filter(participationIsPayable)
           .map(p => p.session_id);
         if (sessionIds.length === 0) continue;
 
-        const { data: held } = await supabase
+        const { data: held, error: heldErr } = await supabase
           .from("sessions")
           .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
           .in("id", sessionIds)
           .in("status", [...ACTUAL_SESSION_STATUSES])
           .gte("date", startDate)
           .lt("date", nextMonthStart);
+        if (heldErr) throw payrollReadFailed("a teaching assistant's lessons", heldErr);
 
-        const { data: projected } = await supabase
+        const { data: projected, error: projErr } = await supabase
           .from("sessions")
           .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
           .in("id", sessionIds)
           .in("status", [...PROJECTED_SESSION_STATUSES])
           .gte("date", startDate)
           .lt("date", nextMonthStart);
+        if (projErr) throw payrollReadFailed("a teaching assistant's lessons", projErr);
 
         const cancelled = await readCancelled(`assistant ${ta.id}`, (q) => q.in("id", sessionIds));
 
@@ -1073,8 +1101,8 @@ Deno.serve(async (req) => {
     const msg = e instanceof Error ? e.message : "Unknown error";
     
     // Don't expose internal errors to client
-    const safeMessage = msg.includes("month parameter") || msg.includes("Invalid") 
-      ? msg 
+    const safeMessage = e instanceof PayrollReadError || msg.includes("month parameter") || msg.includes("Invalid")
+      ? msg
       : "Failed to calculate payroll";
     
     return new Response(JSON.stringify({ error: safeMessage }), {
