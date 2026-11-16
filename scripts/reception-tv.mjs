@@ -8,6 +8,7 @@
 //   node scripts/reception-tv.mjs check      one pass of the helper (what `watch` does every few minutes)
 //   node scripts/reception-tv.mjs watch      run the helper for ever (Task Scheduler / systemd)
 //   node scripts/reception-tv.mjs status     print what the helper knows
+//   node scripts/reception-tv.mjs autostart  copy the helper to ~/.hec-reception and start it at logon
 //
 // The helper, every 3 minutes during opening hours:
 //   - wakes the TV (Wake-on-LAN) if it is off,
@@ -227,6 +228,42 @@ async function watch() {
   }
 }
 
+// ------------------------------------------------------------------ autostart
+// The repo copy may be a temporary worktree, so the helper runs from its own
+// copy in ~/.hec-reception (watch needs nothing else from the repo).
+function autostart() {
+  const dest = join(HOME, "reception-tv.mjs");
+  cpSync(fileURLToPath(import.meta.url), dest);
+  if (platform() === "win32") {
+    // wscript runs node with no console window.
+    const vbs = join(HOME, "helper.vbs");
+    writeFileSync(vbs, `CreateObject("WScript.Shell").Run """${process.execPath}"" ""${dest}"" watch", 0, False
+`);
+    const task = "HEC Reception TV helper";
+    execFileSync("schtasks", ["/Create", "/TN", task, "/SC", "ONLOGON", "/RL", "LIMITED", "/F", "/TR", `wscript.exe "${vbs}"`], { stdio: "inherit" });
+    execFileSync("schtasks", ["/Run", "/TN", task], { stdio: "inherit" });
+    console.log(`Helper installed: starts at every logon. Log: ${LOG}
+Remove with: schtasks /Delete /TN "${task}" /F`);
+  } else {
+    console.log(`Helper copied to ${dest}. On a Raspberry Pi, save this as /etc/systemd/system/hec-reception.service and run
+  sudo systemctl enable --now hec-reception
+
+[Unit]
+Description=HEC reception TV helper
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=${process.env.USER || "pi"}
+ExecStart=${process.execPath} ${dest} watch
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target`);
+  }
+}
+
 // ------------------------------------------------------------------ main
 const cmd = process.argv[2];
 try {
@@ -241,6 +278,7 @@ try {
   else if (cmd === "pair") { console.log("Look at the TV and accept the prompt with the remote…"); await ssap([], { pairing: true }); console.log("Paired."); }
   else if (cmd === "check") await check();
   else if (cmd === "watch") await watch();
+  else if (cmd === "autostart") autostart();
   else if (cmd === "status") console.log(JSON.stringify({ config: { ...cfg, token: cfg.token ? "(set)" : "(missing)", clientKey: cfg.clientKey ? "(paired)" : "(not paired)" }, state, open: openNow() }, null, 2));
   else console.log(readFileSync(fileURLToPath(import.meta.url), "utf8").split("\n").slice(1, 20).map((l) => l.replace(/^\/\/ ?/, "")).join("\n"));
 } catch (e) {

@@ -108,6 +108,8 @@ CREATE TABLE IF NOT EXISTS public.reception_settings (
   updated_at         timestamptz NOT NULL DEFAULT now()
 );
 INSERT INTO public.reception_settings (id) VALUES (true) ON CONFLICT (id) DO NOTHING;
+-- The QR form on the live site (the admin can change it under Reception > Screen).
+UPDATE public.reception_settings SET feedback_url = 'https://user.hanoienglish.com/feedback' WHERE feedback_url IS NULL;
 
 ALTER TABLE public.reception_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS reception_settings_admin ON public.reception_settings;
