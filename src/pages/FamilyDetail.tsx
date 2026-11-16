@@ -12,12 +12,30 @@ import { FamilyLinkDialog } from "@/components/admin/FamilyLinkDialog";
 import { FamilyMembersManager } from "@/components/admin/FamilyMembersManager";
 import { toast } from "sonner";
 import { useIvory } from "@/hooks/useIvory";
+import { ConfirmDestructiveDialog } from "@/components/ConfirmDestructiveDialog";
 
 const FamilyDetail = () => {
   const ivory = useIvory();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  // The child whose "Remove" was pressed: taken out of the family only on confirm.
+  const [confirmRemove, setConfirmRemove] = useState<{ id: string; full_name: string } | null>(null);
+
+  // Unchanged: what "Remove" did straight away before it asked first.
+  const removeFromFamily = async (student: { id: string }) => {
+    const { error } = await supabase
+      .from("students")
+      .update({ family_id: null })
+      .eq("id", student.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Student removed from family");
+      queryClient.invalidateQueries({ queryKey: ["family-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
+    }
+  };
 
   // Children whose sibling discount is on hold, and until when. Its own
   // query, not part of the family one: before the column exists (the
@@ -227,19 +245,7 @@ const FamilyDetail = () => {
                         <Button
                           variant={ivory ? "destructive-quiet" : "ghost"}
                           size="sm"
-                          onClick={async () => {
-                            const { error } = await supabase
-                              .from("students")
-                              .update({ family_id: null })
-                              .eq("id", student.id);
-                            if (error) {
-                              toast.error(error.message);
-                            } else {
-                              toast.success("Student removed from family");
-                              queryClient.invalidateQueries({ queryKey: ["family-detail", id] });
-                              queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
-                            }
-                          }}
+                          onClick={() => setConfirmRemove({ id: student.id, full_name: student.full_name })}
                         >
                           Remove
                         </Button>
@@ -259,6 +265,22 @@ const FamilyDetail = () => {
           />
 
         </div>
+
+        <ConfirmDestructiveDialog
+          open={confirmRemove !== null}
+          onOpenChange={(open) => { if (!open) setConfirmRemove(null); }}
+          title={`Remove ${confirmRemove?.full_name ?? ""} from this family?`}
+          description={
+            // What the code does: family_id is cleared, nothing is recalculated now. calculate-tuition
+            // then finds no family for this child; sibling-state never reassigns a month already worked out.
+            `${confirmRemove?.full_name ?? ""}'s bills lose the family's sibling discount from the next time their tuition is worked out (a frozen bill keeps its figures). ` +
+            `For the other children, months already worked out stay as they are; later months leave ${confirmRemove?.full_name ?? "this child"} out.`
+          }
+          keepLabel="Keep them in the family"
+          actionLabel="Remove from the family"
+          busyLabel="Removing..."
+          onConfirm={() => (confirmRemove ? removeFromFamily(confirmRemove) : undefined)}
+        />
 
         {showLinkDialog && (
           <FamilyLinkDialog

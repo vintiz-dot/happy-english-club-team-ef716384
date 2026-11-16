@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { PlaceholderCard } from "@/components/ui/loading";
+import { ConfirmDestructiveDialog } from "@/components/ConfirmDestructiveDialog";
 
 const DISPLAY_TYPES = [
   { value: "banner", label: "Banner" },
@@ -92,6 +93,8 @@ export const AnnouncementManager = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  // The announcement whose trash icon was pressed: deleted only on confirm.
+  const [confirmDelete, setConfirmDelete] = useState<Announcement | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(defaultForm);
   const [uploading, setUploading] = useState(false);
@@ -308,7 +311,7 @@ export const AnnouncementManager = () => {
                       <Button variant="ghost" size="icon" aria-label={`Edit ${a.title}`} onClick={() => openEdit(a)}>
                         <Pencil className="h-5 w-5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-hec-danger hover:bg-hec-danger-tint" aria-label={`Delete ${a.title}`} onClick={() => handleDelete(a.id)}>
+                      <Button variant="ghost" size="icon" className="text-hec-danger hover:bg-hec-danger-tint" aria-label={`Delete ${a.title}`} onClick={() => setConfirmDelete(a)}>
                         <Trash2 className="h-5 w-5" />
                       </Button>
                     </div>
@@ -319,6 +322,17 @@ export const AnnouncementManager = () => {
           </AnimatePresence>
         </div>
       )}
+
+      <ConfirmDestructiveDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}
+        title="Delete the announcement?"
+        description={<>&ldquo;{confirmDelete?.title}&rdquo; stops showing to everyone it was meant for, and is deleted. This cannot be undone.</>}
+        keepLabel="Keep the announcement"
+        actionLabel="Delete the announcement"
+        busyLabel="Deleting..."
+        onConfirm={() => (confirmDelete ? handleDelete(confirmDelete.id) : undefined)}
+      />
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
