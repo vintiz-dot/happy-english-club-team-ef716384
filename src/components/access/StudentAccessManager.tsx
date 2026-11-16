@@ -30,6 +30,7 @@ import {
   RefreshCw, CheckCircle2, X,
 } from "lucide-react";
 import { AccessCardDocument } from "./AccessCardDocument";
+import { tryMakeDocument, downloadBlob as hecDownload } from "@/lib/hecDocs";
 import { nodeToPdfBlob, downloadBlob, safeFileName, A4_CONTENT_WIDTH_PX } from "@/lib/reportPdf";
 
 interface Hit {
@@ -146,6 +147,21 @@ export function StudentAccessManager({ className }: { className?: string }) {
   /** Render the card off-screen and download it as a PDF to print. */
   const printCard = async () => {
     if (!issued || !selected) return;
+    // HEC Docs first (premium, text-based card); the rasterised card below
+    // stays as the fallback.
+    const doc = await tryMakeDocument("access-card", {
+      studentName: issued.student_name,
+      className: selected.classes[0] ?? null,
+      siblings: issued.siblings ?? [],
+      loginEmail: issued.login_email,
+      code: issued.code,
+      expiresAt: issued.expires_at,
+      claimUrl: `${window.location.origin}/claim`,
+    });
+    if (doc) {
+      hecDownload(doc.blob, doc.filename);
+      return;
+    }
     const host = document.createElement("div");
     host.style.width = `${A4_CONTENT_WIDTH_PX}px`;
     stageRef.current?.appendChild(host);

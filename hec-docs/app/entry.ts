@@ -8,7 +8,7 @@
 import nunjucks from "nunjucks/browser/nunjucks-slim.js";
 import TEMPLATES from "./generated/templates.js";
 import * as VALIDATORS from "./generated/validators.js";
-import { MANIFESTS, TENANT, COMPONENT_STYLES, ENGINE_VERSION } from "./generated/data.js";
+import { MANIFESTS, TENANT, COMPONENT_STYLES, ENGINE_VERSION, SCHEMAS } from "./generated/data.js";
 import { PLUGIN_FILTERS } from "./generated/filters.js";
 import { installCore } from "../src/templates/env-core.ts";
 import { pick, qrSvgMarkup } from "../src/templates/brand.ts";
@@ -59,6 +59,63 @@ function getPath(obj: unknown, dotted: string): unknown {
   return dotted.split(".").reduce<unknown>((o, k) => (o && typeof o === "object" ? (o as Record<string, unknown>)[k] : undefined), obj);
 }
 
+// ---- Pruning ---------------------------------------------------------------
+// App data often carries more fields than a template prints (database rows,
+// API responses). Templates can only print fields their schema declares, so
+// dropping undeclared fields never changes a document; it lets the strict
+// validation that follows check what matters.
+type Schema = Record<string, unknown>;
+
+function resolve(s: unknown, root: Schema): Schema | null {
+  if (!s || typeof s !== "object") return null;
+  const ref = (s as Schema).$ref;
+  if (typeof ref === "string" && ref.startsWith("#/")) {
+    return resolve(ref.slice(2).split("/").reduce<unknown>((o, k) => (o as Schema)?.[k], root), root);
+  }
+  return s as Schema;
+}
+
+function typeOf(v: unknown): string {
+  if (v === null) return "null";
+  if (Array.isArray(v)) return "array";
+  if (Number.isInteger(v)) return "integer";
+  return typeof v;
+}
+
+function fits(s: Schema, v: unknown): boolean {
+  const t = s.type;
+  if (t === undefined) return true;
+  const types = Array.isArray(t) ? t : [t];
+  const vt = typeOf(v);
+  return types.includes(vt) || (vt === "integer" && types.includes("number"));
+}
+
+export function prune(v: unknown, schema: unknown, root: Schema): unknown {
+  const s = resolve(schema, root);
+  if (!s) return v;
+  for (const key of ["oneOf", "anyOf"] as const) {
+    const branches = s[key];
+    if (Array.isArray(branches)) {
+      const b = branches.map((x) => resolve(x, root)).find((x) => x && fits(x, v));
+      return b ? prune(v, b, root) : v;
+    }
+  }
+  if (Array.isArray(v)) return s.items ? v.map((x) => prune(x, s.items, root)) : v;
+  if (v && typeof v === "object") {
+    const props = (s.properties ?? {}) as Record<string, unknown>;
+    const addl = s.additionalProperties;
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      if (k in props) out[k] = prune(val, props[k], root);
+      else if (addl === false) continue;
+      else if (addl && typeof addl === "object") out[k] = prune(val, addl, root);
+      else out[k] = val;
+    }
+    return out;
+  }
+  return v;
+}
+
 let env: nunjucks.Environment | null = null;
 let sanitiser: ((html: string) => string) | null = null;
 
@@ -88,6 +145,8 @@ export async function prepare(type: string, data: Record<string, unknown>, opts:
   const manifest = (MANIFESTS as Record<string, (typeof MANIFESTS)[keyof typeof MANIFESTS]>)[type];
   if (!manifest) throw new DocumentDataError("request", [{ path: "/type", message: `unknown document type "${type}"` }]);
   const validate = (VALIDATORS as unknown as Record<string, ValidateFn>)[manifest.validator];
+  const schema = (SCHEMAS as Record<string, Schema>)[type];
+  data = prune(data, schema, schema) as Record<string, unknown>;
   if (!validate(data)) throw new DocumentDataError(`${type}@${manifest.version}`, toFieldErrors(validate.errors));
   const variant = opts.variant ?? (getPath(data, manifest.variantField) as string | undefined) ?? manifest.defaultVariant;
   if (!(variant in manifest.variants)) throw new DocumentDataError("request", [{ path: "/variant", message: `must be one of: ${Object.keys(manifest.variants).join(", ")}` }]);

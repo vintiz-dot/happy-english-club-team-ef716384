@@ -6,6 +6,7 @@ import { fetchInvoiceData } from "@/lib/invoice/fetchInvoiceData";
 import { InvoicePrintView } from "./InvoicePrintView";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { InvoiceData, BankInfo } from "@/lib/invoice/types";
+import { tryMakeDocument, invoiceDocData, downloadBlob } from "@/lib/hecDocs";
 
 interface InvoiceDownloadButtonProps {
   studentId: string;
@@ -49,8 +50,18 @@ export function InvoiceDownloadButton({
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  // The premium invoice PDF from HEC Docs; the browser's print stays as the fallback.
+  const [making, setMaking] = useState(false);
+  const handlePrint = async () => {
+    if (!invoiceData) return window.print();
+    setMaking(true);
+    try {
+      const doc = await tryMakeDocument("invoice", await invoiceDocData(invoiceData, bankInfo, month));
+      if (doc) downloadBlob(doc.blob, doc.filename);
+      else window.print();
+    } finally {
+      setMaking(false);
+    }
   };
 
   return (
@@ -74,7 +85,8 @@ export function InvoiceDownloadButton({
           {invoiceData && (
             <>
               <div className="flex justify-end gap-2 mb-4 no-print">
-                <Button onClick={handlePrint}>
+                <Button onClick={handlePrint} disabled={making}>
+                  {making && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Print / Save as PDF
                 </Button>
                 <Button variant="outline" onClick={() => setShowPreview(false)}>

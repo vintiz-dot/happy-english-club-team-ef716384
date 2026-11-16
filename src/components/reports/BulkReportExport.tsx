@@ -40,6 +40,7 @@ import {
   FileDown, Loader2, Sparkles, CheckCircle2, AlertCircle, Users, FileText,
 } from "lucide-react";
 import { ReportDocument } from "./ReportDocument";
+import { tryMakeDocument, progressReportData } from "@/lib/hecDocs";
 import {
   nodeToPdfBlob, downloadBlob, safeFileName, A4_CONTENT_WIDTH_PX,
 } from "@/lib/reportPdf";
@@ -199,7 +200,11 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
    * document — html2canvas cannot measure a `display:none` subtree — so the
    * stage sits off the left edge of the viewport instead of being hidden.
    */
-  const renderPdf = async (student: RosterStudent, row: ReportRow): Promise<Blob> => {
+  const renderPdf = async (student: RosterStudent, row: ReportRow, bulk: boolean): Promise<Blob> => {
+    // HEC Docs first (premium, text-based PDF); the rasterised copy below
+    // stays as the fallback.
+    const doc = await tryMakeDocument("progress-report", progressReportData(student.full_name, row), { bulk });
+    if (doc) return doc.blob;
     const host = document.createElement("div");
     host.style.width = `${A4_CONTENT_WIDTH_PX}px`;
     stageRef.current?.appendChild(host);
@@ -278,7 +283,7 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
       const s = exportable[i];
       setRun({ phase: "exporting", done: i, total: exportable.length, current: s.full_name });
       try {
-        const blob = await renderPdf(s, latest[s.id]);
+        const blob = await renderPdf(s, latest[s.id], exportable.length > 1);
         files.push({ name: `${safeFileName(s.full_name)} - Progress Report.pdf`, blob });
       } catch (e: any) {
         failed.push({ name: s.full_name, reason: e?.message || "could not render the PDF" });

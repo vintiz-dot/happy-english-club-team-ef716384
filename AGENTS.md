@@ -83,3 +83,8 @@
 - `lexicon.json` is generated: `node scripts/build-language-lexicon.mjs <path to concepts.json>`. Unknown words are looked up live in ARASAAC (`arasaac.ts`, CORS is open); the child's view needs no lookup because the cells are saved.
 - ARASAAC pictograms are CC BY-NC-SA. The attribution line must stay on both screens. The licence is non-commercial; the school charges tuition, so the owner should confirm that use is acceptable before this goes to families.
 - `VideoRecorder` / `VideoHomeworkSubmission` take `kid` for Grade 1-3: three steps, big buttons, Vietnamese under English, a Listen button on the cue card, a Zalo/Facebook in-app-browser warning, and uploads that repeat a dropped file (`src/lib/video/kidVideo.ts`). `/student/record` ("Record my video") lists the child's video homework and opens it directly when there is only one.
+
+# Documents (HEC Docs)
+- Every PDF/PNG the app makes (homework, progress reports, statements, invoices single and bulk, access cards, the profile card) goes through `src/lib/hecDocs` first: the browser renders the shared template (`engine.generated.js`), the printer Worker (`hec-docs/worker`, Cloudflare free plan) prints it, the browser finishes the PDF. Each button keeps its old generator as the fallback; do not remove those.
+- `src/lib/hecDocs/engine.generated.js` and `public/hec-docs/` are generated from `hec-docs/` by `npm run build:app` there. Never edit them by hand; change the template in `hec-docs/templates/` and rebuild. `hec-docs`' CI fails when they are stale.
+- Content, numbers and filenames must match the old generators exactly (`hec-docs` runs text-parity checks against them). Read `hec-docs/README.md` before changing a document.

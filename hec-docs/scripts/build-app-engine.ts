@@ -65,12 +65,14 @@ addFormats(ajv);
 ajv.addKeyword({ keyword: "x-brand", schemaType: "boolean" });
 const refs: Record<string, string> = {};
 const manifests: Record<string, unknown> = {};
+const schemas: Record<string, unknown> = {};
 for (const [type, e] of registry) {
   const schema = JSON.parse(await readFile(path.join(e.dir, "schema.json"), "utf8"));
   ajv.addSchema(schema);
   const fn = `validate_${type.replace(/-/g, "_")}`;
   refs[fn] = schema.$id;
   manifests[type] = { ...e.manifest, validator: fn };
+  schemas[type] = schema;
 }
 await writeFile(path.join(GEN, "validators.js"), `// Generated. Do not edit.\n${standaloneCode(ajv, refs)}\n`);
 
@@ -82,7 +84,7 @@ void _tokens;
 const componentStyles = (await readdir(path.join(ROOT, "components", "css"))).filter((f) => f.endsWith(".css")).sort();
 await writeFile(
   path.join(GEN, "data.js"),
-  `// Generated. Do not edit.\nexport const ENGINE_VERSION = ${JSON.stringify(ENGINE_VERSION)};\nexport const MANIFESTS = ${JSON.stringify(manifests, null, 1)};\nexport const TENANT = ${JSON.stringify(tenantData, null, 1)};\nexport const COMPONENT_STYLES = ${JSON.stringify(componentStyles)};\n`,
+  `// Generated. Do not edit.\nexport const ENGINE_VERSION = ${JSON.stringify(ENGINE_VERSION)};\nexport const MANIFESTS = ${JSON.stringify(manifests, null, 1)};\nexport const TENANT = ${JSON.stringify(tenantData, null, 1)};\nexport const COMPONENT_STYLES = ${JSON.stringify(componentStyles)};\nexport const SCHEMAS = ${JSON.stringify(schemas)};\n`,
 );
 
 // 4. Filter plugins, statically imported.

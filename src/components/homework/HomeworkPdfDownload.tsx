@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { logPdfEvent, newExportId } from "@/lib/pdfExportLog";
 import { cleanRichHtml } from "@/lib/richText";
+import { tryMakeDocument } from "@/lib/hecDocs";
 import { useIvory } from "@/hooks/useIvory";
 
 interface HomeworkPdfDownloadProps {
@@ -136,6 +137,25 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
           if (!resolvedClass) resolvedClass = data.name || "";
           resolvedTeacher = (data.teachers as any)?.full_name || "—";
         }
+      }
+
+      // HEC Docs first: the premium, text-based PDF from the shared templates.
+      // If it is unavailable for any reason, the generator below runs as before.
+      const doc = await tryMakeDocument("homework", {
+        homework: {
+          id: homework.id,
+          title: homework.title,
+          body: homework.body ?? null,
+          due_date: homework.due_date ?? null,
+          created_at: homework.created_at ?? null,
+        },
+        className: resolvedClass || "",
+        teacherName: resolvedTeacher || "",
+      });
+      if (doc) {
+        log("info", "hecdocs.done", { pages: doc.pages, sizeBytes: doc.blob.size });
+        deliver(doc.blob, doc.filename, doc.pages);
+        return;
       }
 
       const transformedBody = transformLinks(cleanRichHtml(homework.body || ""));
@@ -332,7 +352,19 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       // Build a Blob and route the save in a way that works on iOS Safari,
       // where pdf.save() can silently fail if the user gesture has been
       // consumed by upstream awaits (Supabase fetch, html2canvas, etc.).
-      const blob: Blob = pdf.output("blob");
+      deliver(pdf.output("blob") as Blob, fileName, pageIndex);
+    } catch (err: any) {
+      console.error("PDF generation error:", err);
+      log("error", "export.fatal", { message: err?.message, stack: err?.stack });
+      toast.error("Failed to generate PDF — check Teacher Profile → PDF Diagnostics for details");
+    } finally {
+      if (container && container.parentNode) document.body.removeChild(container);
+      setGenerating(false);
+    }
+
+    // Hand the finished PDF to the user: one more tap on phones, a download elsewhere.
+    function deliver(blob: Blob, fileName: string, pageIndex: number) {
+      const mobile = isMobileWebKit();
       const blobUrl = URL.createObjectURL(blob);
       const total = Math.round(performance.now() - t0);
       log("info", "export.saved", { fileName, totalMs: total, pages: pageIndex, sizeBytes: blob.size, mobile });
@@ -361,13 +393,6 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1_000);
         toast.success(`PDF downloaded (${pageIndex} ${pageIndex === 1 ? "page" : "pages"})`);
       }
-    } catch (err: any) {
-      console.error("PDF generation error:", err);
-      log("error", "export.fatal", { message: err?.message, stack: err?.stack });
-      toast.error("Failed to generate PDF — check Teacher Profile → PDF Diagnostics for details");
-    } finally {
-      if (container && container.parentNode) document.body.removeChild(container);
-      setGenerating(false);
     }
   };
 
