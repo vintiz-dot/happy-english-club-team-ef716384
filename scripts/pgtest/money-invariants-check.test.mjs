@@ -29,7 +29,8 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '..', '..');
-const SCRIPT = readFileSync(join(repo, 'scripts', 'CHECK-money-invariants.sql'), 'utf8');
+// D5_CHECK_SQL: a mutated copy, for mutation runs only.
+const SCRIPT = readFileSync(process.env.D5_CHECK_SQL ?? join(repo, 'scripts', 'CHECK-money-invariants.sql'), 'utf8');
 const mig = (name) => readFileSync(join(repo, 'supabase', 'migrations', name), 'utf8');
 
 let pass = 0, fail = 0;
