@@ -502,7 +502,7 @@ const SUITES = [
   },
   // The S2 edge-function and browser fixes (F-03, F-04, F-07..F-13, F-17's
   // and F-23's browser half): each real function before (5594ca32) and after.
-  { name: "S2 edge functions", file: "s2-edge-functions.test.mjs", expect: 100, migrations: [] },
+  { name: "S2 edge functions", file: "s2-edge-functions.test.mjs", expect: 108, migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

@@ -171,8 +171,10 @@ console.log("=== R-4 F-03: the cache and its one caller ===");
   ok("WordExplorer sends context whenever the child typed a sentence (it always has: words are picked from it)",
     /invoke\("word-enrichment",\s*\{\s*body:\s*\{\s*word,\s*context:\s*sentence \|\| undefined/.test(we));
   const fn = readFileSync(resolve("supabase/functions/word-enrichment/index.ts"), "utf8");
-  ok("with a context the function neither reads nor writes vocab_cache", /const shared = cleanContext === ""/.test(fn) && /!shared \? \{ data: null \}/.test(fn) && /if \(sb && shared\)/.test(fn));
-  console.log("  INFO  => after F-03 every word a child clicks is an OpenAI call and the shared cache stops filling (cost / latency, not a hole)");
+  // FLIPPED by the S2 fix round (R-4): a sentence has its own cache key, read and written; the
+  // hit / miss behaviour is driven in s2-edge-functions.test.mjs.
+  ok("R-4 FIXED: with a context the cache key is ctx1:<level>:<sha256 of the sentence>:<word>, used for read and write",
+    /`ctx1:\$\{targetCefr\}:\$\{await sha256Hex\(/.test(fn) && /\.eq\("word", cacheKey\)/.test(fn) && /upsert\(\{ word: cacheKey, payload: result \}/.test(fn) && !/const shared =/.test(fn));
 }
 void SERVICE_KEY;
 done();
