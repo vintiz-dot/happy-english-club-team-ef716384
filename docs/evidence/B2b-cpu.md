@@ -105,3 +105,40 @@ Identification (SpeechBrain ECAPA, B2's chosen model): embedding 132 turn-like s
 Quality is B2's and unchanged (same model, same code, same units): closed-set top-1 68.4 %; at T = 6.0 (1 % false accept) about 18.5 % of single turns and about half of 10-s clusters named, the rest UNKNOWN; real-lesson clusters 0 named at T 6.0 (UNVERIFIED). Nothing in B2b changes that verdict; CPU is not the limit for identification, the enrolment audio is.
 
 Reading: local diarization is cheap on CPU (own diarizer about 1/20 of real time even under load) but poor (DER 0.57-0.66 vs 0.26-0.56 for the vendors on the same mixes). The diarizer, not the CPU, is the weak link of a local pipeline. Identification costs about one CPU-second and a half per second of cluster speech embedded; B2's matcher embeds at most 60 turns per cluster, so its cost is bounded per cluster, not per lesson minute.
+
+## 6. Speed on a real lesson: threads, and one 20-minute end-to-end piece (UNDER LOAD)
+
+### 6.1 Threads 4 vs 8 on the timing piece (L2, first 600 s, adopted settings)
+
+| model | threads | wall RTF | CPU-s per audio s | cores it got | others' CPU (mean, p10-p90) | free RAM min / mean | peak working set / private | words |
+|---|---|---|---|---|---|---|---|---|
+| small | 8 | 1.07 | 3.08 | 2.87 | 64 % (49-79) | 0.30 / 3.97 GB | 1.03 / 3.14 GB | 738 |
+| small | 4 | see 6.3 | | | | | | |
+| large-v3-turbo | 8 | 4.50 | 9.48 | 2.11 | 74 % (60-87) | 0.05 / 1.18 GB | 1.90 / 4.01 GB | 808 |
+| large-v3-turbo | 4 | 6.07 | 6.38 | 1.05 | 87 % (72-96) | 0.01 / 2.93 GB | 1.90 / 4.01 GB | 807 |
+
+With other agents on the machine, 8 threads get more of it (2.1 vs 1.05 cores for turbo) and finish sooner, but each CPU-second does less (9.5 vs 6.4 CPU-s per audio second): on 4 cores / 8 threads, hyper-threads share the cores' units. On a quiet machine the expected order is the usual one (8 threads somewhat faster than 4, far from twice); that is for the quiet-time rerun to show.
+
+### 6.2 End to end: L2, first 20 minutes, large-v3-turbo 8 threads + own diarizer + ECAPA matching
+
+`b2b_bench.py e2e --lesson L2 --minutes 20 --size large-v3-turbo --threads 8 --lang en --vad on --vad-thr 0.25 --cond-prev off` (2026-11-16 22:44-01:19 local, one stage after another in one process; nothing per child written):
+
+| stage | wall s | CPU s | cores | others' CPU (mean, p10-p90) | free RAM min | output |
+|---|---|---|---|---|---|---|
+| transcription (turbo) | 8 658 | 22 389 | 2.59 | 68 % (60-78) | 0.01 GB | 1 696 words |
+| diarization (own) | 107 | 387 | 3.62 | 55 % (37-98) | 2.10 GB | 6 clusters |
+| identification (ECAPA, <= 60 turns per cluster >= 10 s) | 469 | 1 375 | 2.93 | 63 % (49-93) | 0.59 GB | 5 clusters matched, 0 named at T 6.0 (same as B2: UNVERIFIED) |
+| total | 9 234 (RTF 7.7) | | | | | peak 1.93 GB working set, 4.41 GB private |
+
+Transcription is 94 % of the time. Its CPU-seconds per audio second here (18.7) are twice the timing piece's (9.5) at the same settings while free RAM sat at zero: memory pressure and hyper-thread contention, not the audio, so this run is a worst case, not an estimate.
+
+### 6.3 What a 90-minute lesson takes (EXTRAPOLATED from 10- and 20-minute pieces; no full lesson was run)
+
+A full lesson was not run: under this load a 90-minute turbo run would occupy the laptop for 7-12 hours, against the instruction to keep it usable. The harness allows it (B2 processed lesson audio locally); the command is in section 7 for a quiet time.
+
+| pipeline for 90 min of audio | measured under load (this file) | projected on the same laptop when quiet (ASSUMPTION: the lowest CPU-s per audio s measured here, spread over 3.5 busy cores at 4 threads) |
+|---|---|---|
+| small + own diarizer + ECAPA | 1.6-5.2 h transcription (RTF 1.07-3.5) + 0.1-0.2 h diarization + ~0.2 h matching | about 1.1-1.3 h transcription (2.55-3.1 CPU-s/s / 3.5) + ~5 min + ~5-10 min: **about 1.5 h** |
+| large-v3-turbo + own diarizer + ECAPA | 6.8-10.8 h transcription (RTF 4.5-7.2) + same | about 2.4 h transcription (5.6 CPU-s/s / 3.5) + ~5 min + ~5-10 min: **about 2.5-3 h** |
+
+Uncertainty: the quiet projection rests on CPU-seconds measured under contention, which this file shows can be inflated by up to 2x; the true quiet figure is more likely at or below the projection than above it, but it is a projection until the section 7 commands are run.
