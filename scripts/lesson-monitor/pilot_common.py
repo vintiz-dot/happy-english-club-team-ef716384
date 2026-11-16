@@ -1,0 +1,114 @@
+"""Shared paths and rules for the lesson monitor pilot (Option A, D-28).
+
+Data rules (binding, docs/LESSON_MONITOR_PILOT_RUNBOOK.md):
+  * Audio, transcripts and every derived lesson text live ONLY under
+    PILOT = <HEC_EVAL_ROOT>\\pilot (default C:\\Users\\Dell\\hec-audio-eval\\pilot).
+    `out()` refuses (exit 3) to write anywhere inside a git repository, using
+    the evaluation harness's own `safe_out()`.
+  * key.txt / consent.txt are never opened (the harness's `is_forbidden`).
+  * Logs hold ids, counts and short codes. Never transcript text, never a
+    child's name, never a token.
+  * The kill switch on this machine is the file PILOT\\STOP: while it exists
+    nothing downloads, and a running job stops at its next check and deletes
+    its audio copy.
+"""
+from __future__ import annotations
+
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent / "lesson-eval"))
+import common  # noqa: E402  (the harness: safe_out, inside_git_repo, is_forbidden)
+
+JOB_VERSION = "pilot-0.1"
+SCHEMA = "hec-lesson-monitor/1"
+
+
+def pilot_root() -> Path:
+    return Path(os.environ.get("HEC_PILOT_ROOT", str(common.ROOT / "pilot")))
+
+
+def models_dir() -> Path:
+    return common.ROOT / "models"
+
+
+def sub(name: str) -> Path:
+    return pilot_root() / name
+
+
+def audio_dir() -> Path:
+    return sub("audio")
+
+
+def drafts_dir() -> Path:
+    return sub("drafts")
+
+
+def step0_dir() -> Path:
+    return sub("step0")
+
+
+def logs_dir() -> Path:
+    return sub("logs")
+
+
+def stop_file() -> Path:
+    return sub("STOP")
+
+
+def step0_result_file() -> Path:
+    return step0_dir() / "result.json"
+
+
+def check_root() -> Path:
+    """The pilot folder must be called 'pilot' and must not be inside a repo."""
+    root = pilot_root().resolve()
+    if root.name.lower() != "pilot":
+        sys.exit(f"REFUSED: the pilot folder must be named 'pilot' (got {root})")
+    common.safe_out(root)
+    return root
+
+
+def out(path: str | Path, mkdir: bool = True) -> Path:
+    """An output path under the pilot folder (its parent is created); exits 3 if it
+    is outside the pilot folder or inside a git repo."""
+    p = Path(path).resolve()
+    root = pilot_root().resolve()
+    if root != p and root not in p.parents:
+        sys.stderr.write(f"REFUSED: {p} is outside the pilot folder {root}\n")
+        sys.exit(3)
+    repo = common.inside_git_repo(p.parent)
+    if repo is not None:
+        sys.stderr.write(f"REFUSED: output path {p} is inside the git repository {repo}.\n")
+        sys.exit(3)
+    if mkdir:
+        p.parent.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def stopped() -> bool:
+    return stop_file().exists()
+
+
+def log(line: str) -> None:
+    """Print and append one line to today's log. Callers pass ids and counts only."""
+    stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(line, flush=True)
+    try:
+        f = out(logs_dir() / f"nightly-{datetime.now():%Y%m%d}.log")
+        with open(f, "a", encoding="utf-8") as fh:
+            fh.write(f"{stamp} {line}\n")
+    except SystemExit:
+        raise
+    except OSError:
+        pass
+
+
+def files_under(folder: Path) -> list[Path]:
+    """Every file under `folder` (a listing, used to prove a deletion)."""
+    if not folder.exists():
+        return []
+    return [p for p in folder.rglob("*") if p.is_file()]
