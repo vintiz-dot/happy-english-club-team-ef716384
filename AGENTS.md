@@ -93,3 +93,8 @@
 - A stored link is opened only through `safeHttpUrl` / `openHttpUrl` (`src/lib/safeUrl.ts`); the tables refuse anything but http(s).
 - Every function that calls a paid vendor for a browser starts with `requireSpender` (`_lib/ai-gate.ts`): a real session, a role, a per-account limit. `verify_jwt = true` only proves the caller has the public key. A new one goes into `ai-gate.test.mjs`.
 - A rollback that recreates production's policies is kept as a file the suite runs (`docs/evidence/S1-F14-rollback.sql`, `-F16-`, `-F21-`); it doubles as the suite's "before".
+
+# Documents (HEC Docs)
+- Every PDF/PNG the app makes (homework, progress reports, statements, invoices single and bulk, access cards, the profile card) goes through `src/lib/hecDocs` first: the browser renders the shared template (`engine.generated.js`), the printer Worker (`hec-docs/worker`, Cloudflare free plan) prints it, the browser finishes the PDF. Each button keeps its old generator as the fallback; do not remove those.
+- `src/lib/hecDocs/engine.generated.js` and `public/hec-docs/` are generated from `hec-docs/` by `npm run build:app` there. Never edit them by hand; change the template in `hec-docs/templates/` and rebuild. `hec-docs`' CI fails when they are stale.
+- Content, numbers and filenames must match the old generators exactly (`hec-docs` runs text-parity checks against them). Read `hec-docs/README.md` before changing a document.

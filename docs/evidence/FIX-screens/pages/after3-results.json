@@ -1,0 +1,397 @@
+{
+ "label": "after3",
+ "checks": [
+  {
+   "id": "calendar-month-1280-names-start-with-visible-text",
+   "status": "PASS",
+   "v": {
+    "sample": [
+     {
+      "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 6, Trịnh Thu Hà, Held",
+      "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+     },
+     {
+      "name": "18:00 Movers 2 (Tue-Thu), 8, Cao Văn Lâm, Held",
+      "visible": "18:00 Movers 2 (Tue-Thu) 8"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-month-1280-axe-label-content-name-mismatch",
+   "status": "PASS",
+   "v": {
+    "nodes": 0
+   }
+  },
+  {
+   "id": "calendar-month-1280-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "color-contrast:22",
+    "list:1",
+    "listitem:1"
+   ]
+  },
+  {
+   "id": "calendar-week-1280-names-start-with-visible-text",
+   "status": "PASS",
+   "v": {
+    "sample": [
+     {
+      "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+      "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+     },
+     {
+      "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+      "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-week-1280-axe-label-content-name-mismatch",
+   "status": "PASS",
+   "v": {
+    "nodes": 0
+   }
+  },
+  {
+   "id": "calendar-week-1280-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "color-contrast:37",
+    "list:1",
+    "listitem:1"
+   ]
+  },
+  {
+   "id": "calendar-month-375-names-start-with-visible-text",
+   "status": "PASS",
+   "v": {
+    "sample": [
+     {
+      "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, Trịnh Thu Hà, Held",
+      "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+     },
+     {
+      "name": "18:00 Movers 2 (Tue-Thu), Cao Văn Lâm, Held",
+      "visible": "18:00 Movers 2 (Tue-Thu)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-month-375-axe-label-content-name-mismatch",
+   "status": "PASS",
+   "v": {
+    "nodes": 0
+   }
+  },
+  {
+   "id": "calendar-month-375-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "button-name:4",
+    "color-contrast:14"
+   ]
+  },
+  {
+   "id": "calendar-week-375-names-start-with-visible-text",
+   "status": "PASS",
+   "v": {
+    "sample": [
+     {
+      "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+      "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+     },
+     {
+      "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+      "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-week-375-axe-label-content-name-mismatch",
+   "status": "PASS",
+   "v": {
+    "nodes": 0
+   }
+  },
+  {
+   "id": "calendar-week-375-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "button-name:4",
+    "color-contrast:31"
+   ]
+  },
+  {
+   "id": "calgrid-month-1280",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "calgrid-week-1280",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "calgrid-month-375",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "calgrid-week-375",
+   "status": "PASS",
+   "v": {}
+  }
+ ],
+ "palette": {},
+ "calendar": {
+  "calendar-month-1280-pressed": [
+   "Month"
+  ],
+  "calendar-month-1280": {
+   "chips": [
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 6, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), 8, Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu) 8"
+    },
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 6, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), 8, Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu) 8"
+    },
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 6, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), 8, Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu) 8"
+    }
+   ],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 22,
+     "sample": [
+      "<button type=\"button\" aria-label=\"Open 26 October\" class=\"flex h-6 min-w-6 items-center justify-center rounded-md px-1 text-xs font-semibold tabular-nums transi",
+      "<button type=\"button\" aria-label=\"Open 27 October\" class=\"flex h-6 min-w-6 items-center justify-center rounded-md px-1 text-xs font-semibold tabular-nums transi"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"text-2xl font-semibold leading-none tracking-tight flex items-center gap-2\">"
+     ]
+    },
+    {
+     "id": "list",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      "<ol class=\"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5\"><span class=\"contents\"><li class=\"inline-flex items-center "
+     ]
+    },
+    {
+     "id": "listitem",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      "<li class=\"inline-flex items-center gap-1.5\"><span role=\"link\" aria-disabled=\"true\" aria-current=\"page\" class=\"font-semibold text-foreground\">Schedule</span></l"
+     ]
+    }
+   ]
+  },
+  "calendar-week-1280-pressed": [
+   "Week"
+  ],
+  "calendar-week-1280": {
+   "chips": [
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 00:00–23:59 (+22h 59m) · 5, Trịnh Thu Hà, Needs attendance, Runs 23h 59m but the class is set to 1h — 22h 59m longer",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 00:00–23:59 (+22h 59m) · 5 Trịnh Thu Hà"
+    }
+   ],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 37,
+     "sample": [
+      "<div class=\"absolute right-2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground/70\" style=\"top: 0px;\">00:00</div>",
+      "<div class=\"absolute right-2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground/70\" style=\"top: 64px;\">01:00</div>"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"text-2xl font-semibold leading-none tracking-tight flex items-center gap-2\">"
+     ]
+    },
+    {
+     "id": "list",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      "<ol class=\"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5\"><span class=\"contents\"><li class=\"inline-flex items-center "
+     ]
+    },
+    {
+     "id": "listitem",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      "<li class=\"inline-flex items-center gap-1.5\"><span role=\"link\" aria-disabled=\"true\" aria-current=\"page\" class=\"font-semibold text-foreground\">Schedule</span></l"
+     ]
+    }
+   ]
+  },
+  "calendar-month-375-pressed": [
+   "lucide lucide-grid3x3 h-4 w-4"
+  ],
+  "calendar-month-375": {
+   "chips": [
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu)"
+    },
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu)"
+    },
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu)"
+    }
+   ],
+   "axe": [
+    {
+     "id": "button-name",
+     "impact": "critical",
+     "nodes": 4,
+     "sample": [
+      "<button class=\"inline-flex items-ce...\" aria-pressed=\"true\">",
+      "<button class=\"inline-flex items-ce...\" aria-pressed=\"false\">"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 14,
+     "sample": [
+      "<button type=\"button\" aria-label=\"Open 26 October\" class=\"flex h-6 min-w-6 items-center justify-center rounded-md px-1 text-xs font-semibold tabular-nums transi",
+      "<button type=\"button\" aria-label=\"Open 27 October\" class=\"flex h-6 min-w-6 items-center justify-center rounded-md px-1 text-xs font-semibold tabular-nums transi"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"text-2xl font-semibold leading-none tracking-tight flex items-center gap-2\">"
+     ]
+    }
+   ]
+  },
+  "calendar-week-375-pressed": [
+   "lucide lucide-calendar-range h-4 w-4"
+  ],
+  "calendar-week-375": {
+   "chips": [
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 00:00–23:59 (+22h 59m) · 5, Trịnh Thu Hà, Needs attendance, Runs 23h 59m but the class is set to 1h — 22h 59m longer",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 00:00–23:59 (+22h 59m) · 5 Trịnh Thu Hà"
+    }
+   ],
+   "axe": [
+    {
+     "id": "button-name",
+     "impact": "critical",
+     "nodes": 4,
+     "sample": [
+      "<button class=\"inline-flex items-ce...\" aria-pressed=\"false\">",
+      "<button class=\"inline-flex items-ce...\" aria-pressed=\"true\">"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 31,
+     "sample": [
+      "<div class=\"absolute right-2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground/70\" style=\"top: 0px;\">00:00</div>",
+      "<div class=\"absolute right-2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground/70\" style=\"top: 64px;\">01:00</div>"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"text-2xl font-semibold leading-none tracking-tight flex items-center gap-2\">"
+     ]
+    }
+   ]
+  }
+ },
+ "dialogs": {}
+}

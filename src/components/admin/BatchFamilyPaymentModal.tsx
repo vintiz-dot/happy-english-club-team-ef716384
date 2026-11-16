@@ -283,7 +283,6 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
             memo: sharedSettings.memo || `Batch payment – ${family.familyName}`,
             month: sharedSettings.month,
             leftoverHandling: "unapplied_cash",
-            consentGiven: false,
           },
         });
 

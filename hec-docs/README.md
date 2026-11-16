@@ -159,17 +159,47 @@ Locally, `npm run qa -- --update-baselines` refreshes your own platform's set.
 veraPDF is not bundled (it needs Java). To run it on the outputs:
 `docker run --rm -v "$PWD/qa/out:/data" verapdf/cli --flavour ua1 /data`. The built-in check covers the structural subset listed above.
 
-## Wiring the app to the service
+## How the live app uses it (Cloudflare, free plan)
 
-The app is a static site, so Chromium cannot run there. Deploy this service (the Docker image) where Supabase functions or the browser can reach it, then replace each generator's html2canvas/print path with a call to `POST /v1/render`, passing the data the component already builds.
+The app is a static site on Cloudflare Pages, and a free Cloudflare Worker has only 10 ms of CPU per request. So the work is split three ways:
 
-| App generator | Type | Data the app sends |
-|---|---|---|
-| `HomeworkPdfDownload.tsx` | `homework` | homework + resolved class and teacher names |
-| `BulkReportExport.tsx`, `AIReportDialog.tsx` | `progress-report` | studentName, the report row |
-| `StudentStatementPrint.tsx` | `statement` | `{audit}` |
-| `InvoicePrintView.tsx`, `TuitionBulkDownload.tsx` | `invoice` | InvoiceData + BankInfo, with the VietQR image as a data URI |
-| `AccessCardDocument.tsx` | `access-card` | the card props |
-| `ProfileShareCard.tsx` | `profile-card` | the card props |
+1. **In the user's browser:** `src/lib/hecDocs/engine.generated.js` validates the data against the template's schema and renders the page. It's the same templates and filters as this service, precompiled; a test proves the HTML is identical for every fixture. It's loaded only when someone makes a document.
+2. **In the cloud:** the printer Worker (`worker/`, `https://hec-docs-printer.vintizfjes.workers.dev`) prints it with Cloudflare Browser Rendering.
+   - Only signed-in app users can call it; their Supabase token is checked.
+   - Only the app's own sites can call it from a browser.
+   - The printing browser is locked to `user.hanoienglish.com`, from which it loads the fonts, styles and logo in `public/hec-docs/`.
+3. **In the browser again:** the engine finishes the PDF (title, language, tags, fixed metadata).
 
-Keep the old buttons until the service is live. Nothing in the app has been changed yet.
+Every button tries this first and **falls back to its old generator** on any failure (offline, the free allowance used up, unexpected data), so nothing stops working. To switch the new path off without a code change, build the app with `VITE_HEC_DOCS_PRINTER_URL=off`.
+
+| App button | Document |
+|---|---|
+| Homework "Download as PDF" (`HomeworkPdfDownload.tsx`) | homework |
+| Reports export (`BulkReportExport.tsx`), report dialog "PDF" (`AIReportDialog.tsx`, was "Print") | progress-report |
+| Reports → student statement print (`ReportsTab.tsx`) | statement (downloads; the print view is the fallback) |
+| Invoice "Print / Save as PDF" (`InvoiceDownloadButton.tsx`) | invoice (downloads; print is the fallback) |
+| Bulk invoices ZIP (`TuitionBulkDownload.tsx`) | invoice |
+| Access card "Print card (PDF)" (`StudentAccessManager.tsx`) | access-card |
+| "Share Profile Card" (`ProfileShareCard.tsx`) | profile-card (PNG) |
+
+**Free-plan limits and how the Worker lives within them:**
+
+| Limit | How the Worker handles it |
+|---|---|
+| 10 minutes of browser time a day | Each document takes about 2 seconds. The browser is closed straight after a single document. |
+| 1 new browser every 20 seconds | The Worker waits for the next slot (up to 22 s). Bulk runs keep one browser open between documents (`x-hec-keep: 1`, 15 s idle). |
+| 3 browsers at once | |
+
+When the daily time runs out, documents fall back to the old generators until 00:00 UTC (07:00 in Hanoi).
+
+**After changing templates, components, schemas, tokens or the tenant:**
+
+1. Run `npm run build:app`. It regenerates `../src/lib/hecDocs/engine.generated.js` and `../public/hec-docs/`.
+2. Commit both with the change. CI's `app-engine` test fails if they are stale.
+
+**Deploy the Worker:** `cd worker && npm ci && node node_modules/wrangler/bin/wrangler.js deploy`. Wrangler asks you to sign in to Cloudflare once.
+
+**End-to-end check of the cloud path:**
+
+1. Start a test session: `wrangler dev --remote --var DEV_ALLOW_ANON:1`. That switch is test-only and never set in `wrangler.toml`.
+2. Run `node scripts/printer-check.ts http://127.0.0.1:8787`.

@@ -27,7 +27,9 @@ export function PaymentIntegrityRepair() {
     try {
       const foundIssues: IntegrityIssue[] = [];
 
-      // Check for voluntary contributions that incorrectly touched AR
+      // Voluntary contributions that touched AR. Contributions are no longer
+      // offered (D-23) and the repair tool is gone: these are history, listed
+      // so they are not mistaken for something new. Repair All leaves them.
       const { data: corruptedContributions } = await supabase
         .from('ledger_entries')
         .select('tx_id, tx_key, ledger_accounts!inner(student_id, code)')
@@ -38,8 +40,8 @@ export function PaymentIntegrityRepair() {
         foundIssues.push({
           type: 'corrupted_contribution',
           entityId: 'multiple',
-          description: `${corruptedContributions.length} voluntary contributions incorrectly posted to AR`,
-          suggestedFix: 'Use Voluntary Contribution Repair tool'
+          description: `${corruptedContributions.length} ledger legs of voluntary contributions on AR (history: contributions are no longer offered)`,
+          suggestedFix: 'None - kept as recorded; Repair All does not change them'
         });
       }
 

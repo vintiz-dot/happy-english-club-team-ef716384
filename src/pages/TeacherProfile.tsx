@@ -131,7 +131,7 @@ const TeacherProfile = () => {
                     )}
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
-                      <span>{describeRate(teacher)}</span>
+                      <span className="tabular-nums">{describeRate(teacher)}</span>
                     </div>
                   </div>
                   <p className={ivory ? "text-hec-small text-hec-ink-soft tabular-nums" : "text-sm text-muted-foreground"}>

@@ -1,0 +1,42 @@
+// Debug: what happens to fullscreen when a class screen opens over the fullscreen book.
+import { chromium } from 'playwright';
+import { spawn } from 'node:child_process';
+import path from 'node:path';
+const repo = path.resolve(process.argv[2]);
+const PORT = 5434, BASE = `http://127.0.0.1:${PORT}`;
+const pv = path.join(repo, '.claude/fix-preview');
+const vite = spawn(process.execPath, [path.join(repo, 'node_modules/vite/bin/vite.js'), '--config', path.join(pv, 'vite.config.ts'), '--port', String(PORT), '--strictPort'], { cwd: repo, stdio: 'ignore' });
+process.on('exit', () => { try { vite.kill(); } catch {} });
+for (let i = 0; i < 90; i++) { try { if ((await fetch(BASE + '/')).ok) break; } catch {} await new Promise((r) => setTimeout(r, 1000)); }
+const browser = await chromium.launch({ channel: 'chrome' });
+const ctx = await browser.newContext({ viewport: { width: 1024, height: 768 } });
+await ctx.addInitScript(() => {
+  localStorage.setItem('fake_role', 'teacher');
+  window.__log = [];
+  const L = (m) => window.__log.push(`${Math.round(performance.now())} ${m}`);
+  const desc = (el) => el ? (el.hasAttribute?.('data-class-screen') ? 'class-screen' : `${el.tagName}.${String(el.className).slice(0, 40)}`) : 'null';
+  document.addEventListener('fullscreenchange', () => L('fschange -> ' + desc(document.fullscreenElement)));
+  document.addEventListener('fullscreenerror', (e) => L('fserror ' + desc(e.target)));
+  const orig = Element.prototype.requestFullscreen;
+  Element.prototype.requestFullscreen = function (...a) { L('request ' + desc(this) + ' connected=' + this.isConnected); return orig.apply(this, a).then(() => L('request ok ' + desc(this)), (e) => { L('request rejected ' + desc(this) + ' ' + e.message); throw e; }); };
+  const ex = Document.prototype.exitFullscreen;
+  Document.prototype.exitFullscreen = function (...a) { L('exit called, fs=' + desc(document.fullscreenElement) + ' ' + new Error().stack.split('\n').slice(2, 5).map((s) => s.trim().slice(0, 90)).join(' | ')); return ex.apply(this, a); };
+  new MutationObserver((ms) => { for (const m of ms) { for (const n of m.addedNodes) if (n.nodeType === 1 && (n.hasAttribute('data-class-screen') || n.querySelector?.('[data-class-screen]'))) L('class screen added under ' + desc(m.target)); for (const n of m.removedNodes) if (n.nodeType === 1 && (n.hasAttribute('data-class-screen') || n.querySelector?.('[data-class-screen]'))) L('class screen removed from ' + desc(m.target)); } }).observe(document, { childList: true, subtree: true });
+});
+const page = await ctx.newPage();
+page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
+page.on('console', (m) => { if (m.type() === 'error') console.log('CONSOLE', m.text().slice(0, 200)); });
+await page.goto(BASE + '/teacher/books', { waitUntil: 'load', timeout: 300000 });
+await page.getByRole('button', { name: /Present Fullscreen/ }).waitFor({ timeout: 60000 }); await page.waitForTimeout(1500);
+await page.getByRole('button', { name: /Present Fullscreen/ }).click(); await page.waitForTimeout(900);
+await page.locator(':fullscreen button[aria-label="Open classroom tools"]').click(); await page.waitForTimeout(1500);
+console.log('panel parent:', await page.evaluate(() => { const d = [...document.querySelectorAll('[role=dialog]')].find((x) => x.textContent.includes('Classroom tools')); return d ? `${d.parentElement.tagName}.${String(d.parentElement.className).slice(0, 50)} isFs=${d.parentElement === document.fullscreenElement}` : 'none'; }));
+await page.getByRole('navigation', { name: 'Jump to a tool' }).getByRole('button', { name: 'Spinner', exact: true }).click(); await page.waitForTimeout(2800);
+const card = page.locator('section', { has: page.getByRole('heading', { name: 'Spinner', exact: true }) });
+await card.getByRole('button', { name: 'Spin', exact: true }).click(); await page.waitForTimeout(5500);
+await page.evaluate(() => window.__log.push('---- click Show on'));
+await page.evaluate(() => { window.__sec = [...document.querySelectorAll('section')].find((x) => x.querySelector('h2,h3')?.textContent.trim() === 'Spinner'); window.__panel = [...document.querySelectorAll('[role=dialog]')].find((x) => x.textContent.includes('Classroom tools')); const L = (m) => window.__log.push(`${Math.round(performance.now())} ${m}`); window.addEventListener('keydown', (e) => L('keydown ' + e.key), true); window.addEventListener('resize', () => L('resize ' + innerWidth + 'x' + innerHeight)); new MutationObserver((ms) => { for (const m of ms) for (const n of m.removedNodes) if (n === window.__sec || (n.nodeType === 1 && n.contains(window.__sec))) L('SPINNER SECTION removed from ' + m.target.tagName + '.' + String(m.target.className).slice(0, 40)); for (const m of ms) for (const n of m.removedNodes) if (n === window.__panel) L('PANEL removed'); }).observe(document, { childList: true, subtree: true }); });
+await card.getByRole('button', { name: /Show on/ }).click(); await page.waitForTimeout(2500);
+console.log('same section:', await page.evaluate(() => window.__sec?.isConnected), 'same panel:', await page.evaluate(() => window.__panel?.isConnected));
+console.log((await page.evaluate(() => window.__log)).join('\n'));
+await browser.close(); process.exit(0);

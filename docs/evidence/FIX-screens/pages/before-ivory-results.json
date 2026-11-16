@@ -1,0 +1,563 @@
+{
+ "label": "before-ivory",
+ "checks": [
+  {
+   "id": "calendar-month-1280-names-start-with-visible-text",
+   "status": "FAIL",
+   "v": {
+    "sample": [
+     {
+      "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30, Held",
+      "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+     },
+     {
+      "name": "Movers 2 (Tue-Thu), 18:00, Held",
+      "visible": "18:00 Movers 2 (Tue-Thu) 8"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-month-1280-axe-label-content-name-mismatch",
+   "status": "FAIL",
+   "v": {
+    "nodes": 19,
+    "sample": [
+     "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Starters",
+     "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Movers 2"
+    ]
+   }
+  },
+  {
+   "id": "calendar-month-1280-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "color-contrast:16",
+    "label-content-name-mismatch:19"
+   ]
+  },
+  {
+   "id": "calendar-week-1280-names-start-with-visible-text",
+   "status": "FAIL",
+   "v": {
+    "sample": [
+     {
+      "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30 to 18:30, Held",
+      "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+     },
+     {
+      "name": "Movers 2 (Tue-Thu), 18:00 to 19:00, Held",
+      "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-week-1280-axe-label-content-name-mismatch",
+   "status": "FAIL",
+   "v": {
+    "nodes": 5,
+    "sample": [
+     "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Starters",
+     "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Movers 2"
+    ]
+   }
+  },
+  {
+   "id": "calendar-week-1280-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "color-contrast:12",
+    "label-content-name-mismatch:5"
+   ]
+  },
+  {
+   "id": "calendar-month-375-names-start-with-visible-text",
+   "status": "FAIL",
+   "v": {
+    "sample": [
+     {
+      "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30, Held",
+      "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+     },
+     {
+      "name": "Movers 2 (Tue-Thu), 18:00, Held",
+      "visible": "18:00 Movers 2 (Tue-Thu)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-month-375-axe-label-content-name-mismatch",
+   "status": "PASS",
+   "v": {
+    "nodes": 0
+   }
+  },
+  {
+   "id": "calendar-month-375-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "button-name:4",
+    "color-contrast:8"
+   ]
+  },
+  {
+   "id": "calendar-week-375-names-start-with-visible-text",
+   "status": "FAIL",
+   "v": {
+    "sample": [
+     {
+      "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30 to 18:30, Held",
+      "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+     },
+     {
+      "name": "Movers 2 (Tue-Thu), 18:00 to 19:00, Held",
+      "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-week-375-axe-label-content-name-mismatch",
+   "status": "FAIL",
+   "v": {
+    "nodes": 5,
+    "sample": [
+     "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Starters",
+     "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Movers 2"
+    ]
+   }
+  },
+  {
+   "id": "calendar-week-375-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "button-name:4",
+    "color-contrast:6",
+    "label-content-name-mismatch:5"
+   ]
+  },
+  {
+   "id": "dialog-announcement-keep-1280-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:site_announcements:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-announcement-keep-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-announcement-act-1280-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:site_announcements:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-announcement-act-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-family-keep-1280-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:students:update"
+    ]
+   }
+  },
+  {
+   "id": "dialog-family-keep-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-family-act-1280-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:students:update"
+    ]
+   }
+  },
+  {
+   "id": "dialog-family-act-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-stars-keep-1280-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:stars_student_map:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-stars-keep-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-stars-act-1280-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:stars_student_map:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-stars-act-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-announcement-keep-375-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:site_announcements:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-announcement-keep-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-announcement-act-375-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:site_announcements:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-announcement-act-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-family-keep-375-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:students:update"
+    ]
+   }
+  },
+  {
+   "id": "dialog-family-keep-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-family-act-375-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:students:update"
+    ]
+   }
+  },
+  {
+   "id": "dialog-family-act-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-stars-keep-375-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:stars_student_map:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-stars-keep-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-stars-act-375-asks-first",
+   "status": "FAIL",
+   "v": {
+    "dialog": null,
+    "writesOnOpen": [
+     "from:stars_student_map:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-stars-act-375-page-errors",
+   "status": "PASS",
+   "v": []
+  }
+ ],
+ "palette": {},
+ "calendar": {
+  "calendar-month-1280-pressed": [
+   "Month"
+  ],
+  "calendar-month-1280": {
+   "chips": [
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu) 8"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu) 8"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu) 8"
+    }
+   ],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 16,
+     "sample": [
+      "<span class=\"shrink-0 text-hec-caption font-semibold leading-none tabular-nums text-hec-ink-soft\">17:30</span>",
+      "<span class=\"truncate text-hec-caption font-medium leading-none text-teal-950 dark:text-teal-100\">Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\">"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 19,
+     "sample": [
+      "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Starters",
+      "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Movers 2"
+     ]
+    }
+   ]
+  },
+  "calendar-week-1280-pressed": [
+   "Week"
+  ],
+  "calendar-week-1280": {
+   "chips": [
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30 to 18:30, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00 to 19:00, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30 to 18:30, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00 to 19:00, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 00:00 to 23:59, Needs attendance, Runs 23h 59m but the class is set to 1h — 22h 59m longer",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 00:00–23:59 (+22h 59m) · 5 Trịnh Thu Hà"
+    }
+   ],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 12,
+     "sample": [
+      "<div class=\"min-w-0 flex-1 truncate text-hec-caption font-semibold leading-tight text-teal-950 dark:text-teal-100\">Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương vớ",
+      "<div class=\"truncate text-hec-caption leading-tight tabular-nums text-hec-ink-soft\">17:30–18:30 · 6</div>"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\">"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Starters",
+      "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Movers 2"
+     ]
+    }
+   ]
+  },
+  "calendar-month-375-pressed": [
+   "lucide lucide-grid3x3 h-4 w-4"
+  ],
+  "calendar-month-375": {
+   "chips": [
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu)"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu)"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu)"
+    }
+   ],
+   "axe": [
+    {
+     "id": "button-name",
+     "impact": "critical",
+     "nodes": 4,
+     "sample": [
+      "<button class=\"inline-flex min-h-he...\" aria-pressed=\"true\">",
+      "<button class=\"inline-flex min-h-he...\" aria-pressed=\"false\">"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      "<span class=\"shrink-0 text-hec-caption font-semibold leading-none tabular-nums text-hec-ink-soft\">17:30</span>",
+      "<span class=\"shrink-0 text-hec-caption font-semibold leading-none tabular-nums text-hec-ink-soft\">18:00</span>"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\">"
+     ]
+    }
+   ]
+  },
+  "calendar-week-375-pressed": [
+   "lucide lucide-calendar-range h-4 w-4"
+  ],
+  "calendar-week-375": {
+   "chips": [
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30 to 18:30, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00 to 19:00, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30 to 18:30, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00 to 19:00, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 00:00 to 23:59, Needs attendance, Runs 23h 59m but the class is set to 1h — 22h 59m longer",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 00:00–23:59 (+22h 59m) · 5 Trịnh Thu Hà"
+    }
+   ],
+   "axe": [
+    {
+     "id": "button-name",
+     "impact": "critical",
+     "nodes": 4,
+     "sample": [
+      "<button class=\"inline-flex min-h-he...\" aria-pressed=\"false\">",
+      "<button class=\"inline-flex min-h-he...\" aria-pressed=\"true\">"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      "<div class=\"min-w-0 flex-1 truncate text-hec-caption font-semibold leading-tight text-teal-950 dark:text-teal-100\">Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương vớ",
+      "<div class=\"truncate text-hec-caption leading-tight tabular-nums text-hec-ink-soft\">17:30–18:30 · 6</div>"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\">"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Starters",
+      "<button type=\"button\" role=\"button\" tabindex=\"0\" aria-disabled=\"false\" aria-roledescription=\"draggable\" aria-describedby=\"DndDescribedBy-0\" aria-label=\"Movers 2"
+     ]
+    }
+   ]
+  }
+ },
+ "dialogs": {}
+}

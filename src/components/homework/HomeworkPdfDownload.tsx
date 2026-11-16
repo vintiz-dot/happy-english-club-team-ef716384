@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { logPdfEvent, newExportId } from "@/lib/pdfExportLog";
 import { cleanRichHtml } from "@/lib/richText";
+import { tryMakeDocument, appendHomeworkAttachments } from "@/lib/hecDocs";
 import { useIvory } from "@/hooks/useIvory";
 
 interface HomeworkPdfDownloadProps {
@@ -138,6 +139,25 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
         }
       }
 
+      // HEC Docs first: the premium, text-based PDF from the shared templates.
+      // If it is unavailable for any reason, the generator below runs as before.
+      const doc = await tryMakeDocument("homework", {
+        homework: {
+          id: homework.id,
+          title: homework.title,
+          body: homework.body ?? null,
+          due_date: homework.due_date ?? null,
+          created_at: homework.created_at ?? null,
+        },
+        className: resolvedClass || "",
+        teacherName: resolvedTeacher || "",
+      });
+      if (doc) {
+        log("info", "hecdocs.done", { pages: doc.pages, sizeBytes: doc.blob.size });
+        await deliver(doc.blob, doc.filename, doc.pages);
+        return;
+      }
+
       const transformedBody = transformLinks(cleanRichHtml(homework.body || ""));
 
       // Build an offscreen container with all content.
@@ -146,6 +166,7 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       // off-screen instead so it's invisible but fully painted.
       container = document.createElement("div");
       container.setAttribute("aria-hidden", "true");
+      container.setAttribute("data-hec-document", ""); // paper: the old light tokens in both themes (index.css)
       container.style.position = "absolute";
       container.style.left = "-10000px";
       container.style.top = "0";
@@ -332,7 +353,33 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       // Build a Blob and route the save in a way that works on iOS Safari,
       // where pdf.save() can silently fail if the user gesture has been
       // consumed by upstream awaits (Supabase fetch, html2canvas, etc.).
-      const blob: Blob = pdf.output("blob");
+      await deliver(pdf.output("blob") as Blob, fileName, pageIndex);
+    } catch (err: any) {
+      console.error("PDF generation error:", err);
+      log("error", "export.fatal", { message: err?.message, stack: err?.stack });
+      toast.error("Failed to generate PDF — check Teacher Profile → PDF Diagnostics for details");
+    } finally {
+      if (container && container.parentNode) document.body.removeChild(container);
+      setGenerating(false);
+    }
+
+    // Hand the finished PDF to the user: one more tap on phones, a download elsewhere.
+    async function deliver(blob: Blob, fileName: string, pageIndex: number) {
+      // The homework's attached PDFs go after the instructions, in one file.
+      // If that fails, the instructions alone still download.
+      try {
+        const merged = await appendHomeworkAttachments(blob, homework.id);
+        if (merged.appended.length && merged.pages) {
+          blob = merged.blob;
+          pageIndex = merged.pages;
+        }
+        if (merged.appended.length || merged.skipped.length) log("info", "attachments.appended", merged.appended.length ? { appended: merged.appended, skipped: merged.skipped } : { skipped: merged.skipped });
+        if (merged.skipped.length) toast.warning(`Could not add ${merged.skipped.join(", ")} to the PDF`);
+      } catch (e: any) {
+        log("warn", "attachments.failed", { message: e?.message });
+        toast.warning("Could not add the attached PDFs to this file");
+      }
+      const mobile = isMobileWebKit();
       const blobUrl = URL.createObjectURL(blob);
       const total = Math.round(performance.now() - t0);
       log("info", "export.saved", { fileName, totalMs: total, pages: pageIndex, sizeBytes: blob.size, mobile });
@@ -361,13 +408,6 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1_000);
         toast.success(`PDF downloaded (${pageIndex} ${pageIndex === 1 ? "page" : "pages"})`);
       }
-    } catch (err: any) {
-      console.error("PDF generation error:", err);
-      log("error", "export.fatal", { message: err?.message, stack: err?.stack });
-      toast.error("Failed to generate PDF — check Teacher Profile → PDF Diagnostics for details");
-    } finally {
-      if (container && container.parentNode) document.body.removeChild(container);
-      setGenerating(false);
     }
   };
 

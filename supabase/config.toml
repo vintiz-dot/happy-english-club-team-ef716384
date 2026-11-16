@@ -266,3 +266,4 @@ verify_jwt = true
 # Class recorder retention: the nightly job (runner token) or an admin only.
 [functions.recorder-retention]
 verify_jwt = true
+

@@ -93,11 +93,18 @@ export function ClassScreen({
     if (!open) return;
     const el = hostRef.current;
     if (!el?.requestFullscreen) return;
+    // Already inside the fullscreen element (a book presented fullscreen with
+    // the tools on it): the overlay already fills the display, so ask for
+    // nothing. A second, nested request unmounted the screen and dropped
+    // fullscreen altogether.
+    if (document.fullscreenElement?.contains(el)) return;
     el.requestFullscreen().catch(() => {
       /* refused (iOS, permissions policy) — overlay still stands */
     });
     return () => {
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      // Only our own fullscreen: over a book already presented fullscreen,
+      // leaving the class screen returns to the book, still fullscreen.
+      if (document.fullscreenElement === el) document.exitFullscreen().catch(() => {});
     };
   }, [open]);
 
@@ -121,7 +128,7 @@ export function ClassScreen({
   }, [open]);
 
   const close = useCallback(() => {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    if (document.fullscreenElement === hostRef.current) document.exitFullscreen().catch(() => {});
     onClose();
   }, [onClose]);
 

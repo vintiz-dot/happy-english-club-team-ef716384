@@ -6,6 +6,11 @@
  *
  *   1. What was said   - OpenAI transcription of the separate audio track
  *                        (whisper-1, verbose_json, for timestamps).
+ *                        A video over OpenAI's 25 MB with no separate
+ *                        audio track (an upload from the phone's library)
+ *                        is transcribed by Gemini instead, and recorded as
+ *                        Gemini's (models.transcript_source, the teacher's
+ *                        attention line): _lib/gemini-transcript.ts.
  *   2. How it sounded  - Azure pronunciation scores, measured in the
  *                        browser while the child recorded and saved on the
  *                        submission. Optional.
@@ -36,6 +41,12 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { askClaudeJson, CLAUDE_MODEL } from "../_lib/claude-json.ts";
 import { geminiVideoMime, speechFileFor } from "../_lib/speech-file.ts";
+import {
+  GEMINI_TRANSCRIPT_PROMPT,
+  readGeminiTranscript,
+  transcriptAttention,
+  type TranscriptSource,
+} from "../_lib/gemini-transcript.ts";
 import {
   CRITERION_MAX,
   gradeForScore,
@@ -98,8 +109,12 @@ async function transcribe(sb: SupabaseClient, path: string, mime: string | null)
   return { text: String(out.text ?? "").trim(), segments };
 }
 
-/** Gemini watches the whole video and says what it sees. Best-effort. */
-async function watch(sb: SupabaseClient, v: any, promptText: string) {
+/**
+ * The video, uploaded once to Gemini's Files API (which takes large files),
+ * for the questions below. Null without GEMINI_API_KEY. `close` deletes it:
+ * children's video does not stay with Google longer than the calls.
+ */
+async function openGeminiVideo(sb: SupabaseClient, v: any) {
   const key = Deno.env.get("GEMINI_API_KEY");
   if (!key) return null;
   const base = "https://generativelanguage.googleapis.com";
@@ -133,6 +148,9 @@ async function watch(sb: SupabaseClient, v: any, promptText: string) {
   });
   if (!up.ok) throw new Error(`Gemini upload failed (${up.status})`);
   let file = (await up.json()).file;
+  const close = async () => {
+    if (file?.name) await fetch(`${base}/v1beta/${file.name}?key=${key}`, { method: "DELETE" }).catch(() => null);
+  };
 
   try {
     for (let i = 0; i < 40 && file?.state === "PROCESSING"; i++) {
@@ -140,8 +158,32 @@ async function watch(sb: SupabaseClient, v: any, promptText: string) {
       file = await (await fetch(`${base}/v1beta/${file.name}?key=${key}`)).json();
     }
     if (file?.state !== "ACTIVE") throw new Error(`Gemini could not process the video (${file?.state})`);
+  } catch (e) {
+    await close();
+    throw e;
+  }
 
-    const ask = `You are helping an English teacher review a child's video homework. Do NOT grade it.
+  /** One question about the video; the answer's text. */
+  const ask = async (text: string): Promise<string> => {
+    const gen = await fetch(`${base}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ file_data: { mime_type: mime, file_uri: file.uri } }, { text }] }],
+        generationConfig: { responseMimeType: "application/json" },
+      }),
+    });
+    if (!gen.ok) throw new Error(`Gemini failed (${gen.status}): ${(await gen.text()).slice(0, 300)}`);
+    const out = await gen.json();
+    return out?.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? "").join("") ?? "";
+  };
+  return { ask, close };
+}
+type GeminiVideo = { ask: (text: string) => Promise<string>; close: () => Promise<void> };
+
+/** Gemini watches the whole video and says what it sees. Best-effort. */
+async function watch(gem: GeminiVideo, promptText: string) {
+  const ask = `You are helping an English teacher review a child's video homework. Do NOT grade it.
 Describe only what you can see and hear, as JSON:
 {"summary": one or two sentences on what happens,
  "on_task": true/false - does the video answer the homework below,
@@ -150,27 +192,23 @@ Describe only what you can see and hear, as JSON:
  "presentation": one sentence on confidence, eye contact, energy,
  "concerns": anything a teacher should check (someone else speaking for the child, reading from a script, video not of the child, no sound) or ""}
 Homework: ${promptText.slice(0, 1500)}`;
-
-    const gen = await fetch(`${base}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ file_data: { mime_type: mime, file_uri: file.uri } }, { text: ask }] }],
-        generationConfig: { responseMimeType: "application/json" },
-      }),
-    });
-    if (!gen.ok) throw new Error(`Gemini failed (${gen.status}): ${(await gen.text()).slice(0, 300)}`);
-    const out = await gen.json();
-    const text = out?.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? "").join("") ?? "";
-    try {
-      return { ...JSON.parse(text), model: GEMINI_MODEL };
-    } catch {
-      return { summary: text.slice(0, 1000), model: GEMINI_MODEL };
-    }
-  } finally {
-    // Children's video does not stay with Google longer than the call.
-    if (file?.name) await fetch(`${base}/v1beta/${file.name}?key=${key}`, { method: "DELETE" }).catch(() => null);
+  const text = await gem.ask(ask);
+  try {
+    return { ...JSON.parse(text), model: GEMINI_MODEL };
+  } catch {
+    return { summary: text.slice(0, 1000), model: GEMINI_MODEL };
   }
+}
+
+/**
+ * The fallback transcript, for a video OpenAI cannot take (over 25 MB with
+ * no separate audio track): Gemini's, verbatim with timestamps, and always
+ * recorded as Gemini's (_lib/gemini-transcript.ts). Null if unreadable.
+ */
+async function geminiTranscript(gem: GeminiVideo, durationSeconds: number | null) {
+  const t = readGeminiTranscript(await gem.ask(GEMINI_TRANSCRIPT_PROMPT), durationSeconds);
+  if (!t) throw new Error("its transcript could not be read");
+  return t;
 }
 
 async function frameImages(sb: SupabaseClient, paths: string[]) {
@@ -266,6 +304,7 @@ async function judge(ctx: {
   homework: any;
   rubric: { criteria: RubricCriterion[]; target_vocabulary: string[]; target_grammar: string[]; grade_band: string | null };
   transcript: { text: string; segments: { start: number; end: number; text: string }[] } | null;
+  transcriptSource: TranscriptSource | null;
   pronunciation: any;
   visual: any;
   frames: unknown[];
@@ -283,6 +322,9 @@ async function judge(ctx: {
   if (ctx.duration) lines.push(`Video length: ${Math.round(ctx.duration)} seconds`);
   if (ctx.profile) lines.push("<learning_profile>", ctx.profile.slice(0, 2500), "</learning_profile>");
 
+  if (ctx.transcriptSource === "gemini") {
+    lines.push("The transcript below was written by the video model, not a speech recogniser (the file was too large for one). It may be less exact: quote it, but keep confidence lower where a score rests on exact wording, and say so in teacher_attention.");
+  }
   lines.push("<transcript>");
   if (ctx.transcript?.segments?.length) {
     for (const s of ctx.transcript.segments) lines.push(`[${s.start}] ${s.text}`);
@@ -345,19 +387,41 @@ async function run(sb: SupabaseClient, id: string) {
       .maybeSingle();
 
     await stage("transcribing");
-    let transcript = null;
+    let transcript: Awaited<ReturnType<typeof transcribe>> = null;
     if (v.audio_path) transcript = await transcribe(sb, v.audio_path, v.audio_mime);
     else if ((v.size_bytes ?? Infinity) <= WHISPER_LIMIT) transcript = await transcribe(sb, v.video_path, v.video_mime);
+    // transcribe() throws on every failure but size, so a null here means
+    // the file was too big for OpenAI (an uploaded phone video of a few
+    // minutes, with no separate audio track).
+    let transcriptSource: TranscriptSource | null = transcript ? "openai" : null;
+    const tooBigForOpenAI = !transcript;
 
     await stage("watching");
     let visual = null;
     let visualError: string | null = null;
+    let geminiTranscriptError: string | null = null;
+    let gem: GeminiVideo | null = null;
     try {
-      visual = await watch(sb, v, `${hw?.title}: ${strip(hw?.body)}`);
+      gem = await openGeminiVideo(sb, v);
+      if (gem) visual = await watch(gem, `${hw?.title}: ${strip(hw?.body)}`);
     } catch (e) {
       visualError = (e as Error).message;
       console.warn("video watch skipped:", visualError);
     }
+    if (tooBigForOpenAI) {
+      if (!gem) {
+        geminiTranscriptError = visualError ?? "no video model is configured";
+      } else {
+        try {
+          transcript = await geminiTranscript(gem, v.duration_seconds ?? null);
+          transcriptSource = "gemini";
+        } catch (e) {
+          geminiTranscriptError = (e as Error).message;
+          console.warn("gemini transcript skipped:", geminiTranscriptError);
+        }
+      }
+    }
+    if (gem) await gem.close();
     const frames = visual ? [] : await frameImages(sb, v.frame_paths ?? []);
 
     await stage("scoring");
@@ -365,6 +429,7 @@ async function run(sb: SupabaseClient, id: string) {
       homework: hw,
       rubric,
       transcript,
+      transcriptSource,
       pronunciation: v.pronunciation,
       visual,
       frames,
@@ -392,7 +457,7 @@ async function run(sb: SupabaseClient, id: string) {
     const attention = [
       String(d.teacher_attention ?? "").trim(),
       rubricRow?.status !== "approved" ? "The rubric for this homework is not approved yet - scores used a draft or default rubric." : "",
-      !transcript ? "No transcript: the audio could not be transcribed." : "",
+      transcriptAttention(transcriptSource, { geminiModel: GEMINI_MODEL, tooBig: tooBigForOpenAI, geminiError: geminiTranscriptError }),
       visualError ? `The video model could not watch this video (${visualError}); still frames were used.` : "",
     ].filter(Boolean).join(" ");
 
@@ -419,7 +484,10 @@ async function run(sb: SupabaseClient, id: string) {
       confidence: Math.max(0, Math.min(1, Number(d.confidence) || 0)),
       teacher_attention: attention || null,
       models: {
-        transcript: transcript ? "whisper-1" : null,
+        // Which service wrote the transcript, never blurred: "gemini" marks
+        // the fallback for a video too big for OpenAI.
+        transcript: transcriptSource === "openai" ? "whisper-1" : transcriptSource === "gemini" ? GEMINI_MODEL : null,
+        transcript_source: transcriptSource,
         video: visual ? GEMINI_MODEL : null,
         judge: verdict.model || CLAUDE_MODEL,
         usage: verdict.usage,

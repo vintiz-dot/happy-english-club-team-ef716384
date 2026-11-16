@@ -184,6 +184,7 @@ Deno.serve(async (req) => {
     for (const batch of plan.streaks) {
       const ok = await advanceStreaks(supabase, {
         classId: batch.classId,
+        sessionId: batch.sessionId,
         lessonDate: batch.lessonDate,
         entries: batch.studentIds.map((studentId) => ({ studentId, status: "Present" })),
       });
