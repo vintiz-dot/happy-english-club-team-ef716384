@@ -258,11 +258,6 @@ export function AttendanceMarking() {
   };
 
   const getStatusBadge = (status: 'Present' | 'Absent' | 'Excused') => {
-    const colors = {
-      Present: "bg-success/20 text-success hover:bg-success/30",
-      Absent: "bg-destructive/20 text-destructive hover:bg-destructive/30",
-      Excused: "bg-warning/20 text-warning hover:bg-warning/30"
-    };
     const ivoryColors = {
       Present: "border border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:bg-hec-leaf-tint",
       Absent: "border border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:bg-hec-danger-tint",

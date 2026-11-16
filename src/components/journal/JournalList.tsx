@@ -159,12 +159,6 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
   };
 
   const getTypeBadge = (type: JournalType) => {
-    const variants: Record<JournalType, string> = {
-      personal: "default",
-      student: "secondary",
-      class: "outline",
-      collab_student_teacher: "destructive",
-    };
     // Ivory: the kind of journal is a label, not a state - one neutral badge (a red "collab" read as an error).
     return <Badge variant="outline" className="shrink-0 self-start capitalize">{type.replace(/_/g, " ")}</Badge>;
   };

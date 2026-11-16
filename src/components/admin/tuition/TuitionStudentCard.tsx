@@ -53,14 +53,6 @@ export function TuitionStudentCard({
   const balance = item.balance ?? 0;
   const priorNet = (item.carry_in_debt || 0) - (item.carry_in_credit || 0);
 
-  const borderColor: Record<string, string> = {
-    overpaid: 'border-l-blue-500',
-    settled: 'border-l-emerald-500',
-    underpaid: 'border-l-amber-500',
-    unpaid: 'border-l-destructive',
-    open: 'border-l-muted-foreground',
-  };
-
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       {/* Ivory: a plain card with a hairline - the status badge (icon + word)

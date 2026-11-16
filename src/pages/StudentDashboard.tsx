@@ -563,7 +563,7 @@ export default function StudentDashboard() {
               {pendingHomework && pendingHomework.length > 0 ? (
                 <div className="space-y-3">
                   {pendingHomework.slice(0, 3).map((hw: any, index: number) => (
-                    <HomeworkCard key={hw.id} homework={hw} index={index} compact ivory onOpen={() => setOpenHomework(hw)} />
+                    <HomeworkCard key={hw.id} homework={hw} index={index} compact onOpen={() => setOpenHomework(hw)} />
                   ))}
                 </div>
               ) : (

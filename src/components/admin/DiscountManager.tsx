@@ -160,12 +160,12 @@ export function DiscountManager() {
   const getStatus = (effectiveFrom: string, effectiveTo: string | null) => {
     const today = dayjs().tz().format("YYYY-MM-DD");
     if (effectiveTo && effectiveTo < today) {
-      return { label: "Ended", color: "bg-secondary text-secondary-foreground" };
+      return { label: "Ended" };
     }
     if (effectiveFrom > today) {
-      return { label: "Scheduled", color: "bg-blue-500 text-white" };
+      return { label: "Scheduled" };
     }
-    return { label: "Active", color: "bg-green-500 text-white" };
+    return { label: "Active" };
   };
 
   // D4 step 3B (G-15): ending or removing a discount or a referral bonus is a

@@ -65,9 +65,6 @@ export function ConfirmDestructiveDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>{keepLabel}</AlertDialogCancel>
           <Button
-            // Off the Ivory routes the old "destructive" variant draws white on white: its
-            // glass-sm (utilities layer) paints over bg-destructive. So there the red fill
-            // is given on the default variant instead.
             variant="destructive"
             className="w-full sm:w-auto"
             disabled={busy}

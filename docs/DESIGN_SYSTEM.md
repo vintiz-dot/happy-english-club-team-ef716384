@@ -1,6 +1,6 @@
 # HEC Design System - "Ivory"
 
-Status: tokens exist and are inert. Nothing uses them until an element carries `data-hec-theme="ivory"`. The first screen to do so is the student dashboard (task A4.2); the rest of the app waits for the owner's approval at the design checkpoint.
+Status: rolled out (A4.6 R24, 17 Nov 2026). `data-hec-theme="ivory"` is on `<html>` on every route, in light and dark, with System as the default theme - except the two screens whose owners keep them outside the system until they release them (`OUTSIDE_ROUTES` in `src/lib/ivoryScope.ts`: the class recorder `/teacher/recorder` and the admin's audit clips `/admin?tab=audit-clips`). Those two keep the old look from the header down, so the old class sets survive only in what they can render (the shared primitives, the staff shell, the classroom tools and the announcements; the list is in `docs/evidence/A4.6/R24.md`). Everything else has only the system's classes.
 
 Sources of truth: the values are in `src/index.css` (the block headed `"Ivory" design system`), the class names in `tailwind.config.ts` (`hec` colours, `font-display`, `text-hec-*`, `shadow-hec-*`, `rounded-hec-*`, `duration-hec-*`, `ease-hec`, `min-h-hec-target`). `node scripts/design-tokens-check.mjs` checks both and prints the tables in section 3. If this document and the CSS disagree, the CSS and the script are right and this document is out of date.
 

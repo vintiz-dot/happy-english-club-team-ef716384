@@ -97,14 +97,6 @@ export function StudentTuitionReviewCard({
   };
 
   const getFlagBadge = (flag: any) => {
-    const colors: Record<string, string> = {
-      has_special_discount: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-      has_referral_bonus: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-      sibling_discount_winner: "bg-green-500/10 text-green-500 border-green-500/20",
-      rate_override: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-      low_tuition: "bg-red-500/10 text-red-500 border-red-500/20",
-      enrollment_discount: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
-    };
     const warn = flag.type === "low_tuition" || flag.type === "rate_override";
     return <Badge variant={warn ? "warning" : "secondary"}>{flag.label}</Badge>;
   };

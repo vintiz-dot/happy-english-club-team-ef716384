@@ -157,20 +157,6 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
       default:
         return "bg-hec-ink-faint";
     }
-    switch (status) {
-      case "graded":
-      case "all-graded":
-        return "bg-success";
-      case "late":
-        return "bg-destructive";
-      case "due-today":
-        return "bg-warning";
-      case "submitted":
-      case "has-submissions":
-        return "bg-primary";
-      default:
-        return "bg-muted-foreground";
-    }
   };
 
   const isToday = (d: string) => d === todayKey();

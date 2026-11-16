@@ -7,7 +7,7 @@ import { MonthPicker } from "@/components/MonthPicker";
 import { dayjs } from "@/lib/date";
 import { toast } from "sonner";
 import { Calculator, Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDescription } from "@/components/ui/alert";
 
 export function GenerateTuition() {
   const [selectedMonth, setSelectedMonth] = useState(dayjs().format("YYYY-MM"));

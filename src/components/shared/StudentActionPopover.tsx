@@ -62,16 +62,6 @@ const panelMotion = {
   transition: { duration: 0.15 },
 };
 
-/** Tone gradients for the skill/behavior tiles, keyed by skill id. */
-const SKILL_TONES: Record<string, string> = {
-  speaking: "from-blue-500/15 to-sky-500/5 hover:ring-blue-500/40 text-blue-600 dark:text-blue-300",
-  listening: "from-violet-500/15 to-purple-500/5 hover:ring-violet-500/40 text-violet-600 dark:text-violet-300",
-  reading: "from-emerald-500/15 to-teal-500/5 hover:ring-emerald-500/40 text-emerald-600 dark:text-emerald-300",
-  writing: "from-amber-500/15 to-orange-500/5 hover:ring-amber-500/40 text-amber-600 dark:text-amber-300",
-  focus: "from-cyan-500/15 to-sky-500/5 hover:ring-cyan-500/40 text-cyan-600 dark:text-cyan-300",
-  teamwork: "from-pink-500/15 to-rose-500/5 hover:ring-pink-500/40 text-pink-600 dark:text-pink-300",
-};
-
 export function StudentActionPopover({
   studentId,
   studentName,
@@ -329,7 +319,6 @@ export function StudentActionPopover({
                     icon={<Zap className="h-4 w-4 text-hec-brass" />}
                     label="Quick +5"
                     sub="Instant award"
-                    tone="from-amber-500/15 to-yellow-500/5 text-amber-600 dark:text-amber-300 hover:ring-amber-500/40"
                     disabled={isBusy}
                     onClick={() =>
                       awardPointsMutation.mutate({ skill: "participation", points: 5, notes: "Quick award +5" })
@@ -339,7 +328,6 @@ export function StudentActionPopover({
                     icon={<Trophy className="h-4 w-4" />}
                     label="Skills"
                     sub="+1 per skill"
-                    tone="from-blue-500/15 to-sky-500/5 text-blue-600 dark:text-blue-300 hover:ring-blue-500/40"
                     disabled={isBusy}
                     onClick={() => setPanel("skills")}
                   />
@@ -347,7 +335,6 @@ export function StudentActionPopover({
                     icon={<Flag className="h-4 w-4" />}
                     label="Flag error"
                     sub="Log + flashcard"
-                    tone="from-orange-500/15 to-rose-500/5 text-orange-600 dark:text-orange-300 hover:ring-orange-500/40"
                     disabled={isBusy}
                     onClick={() => setPanel("flag")}
                   />
@@ -355,7 +342,6 @@ export function StudentActionPopover({
                     icon={<History className="h-4 w-4" />}
                     label="History"
                     sub="Point timeline"
-                    tone="from-slate-500/15 to-slate-400/5 text-slate-600 dark:text-slate-300 hover:ring-slate-500/40"
                     onClick={() => {
                       setOpen(false);
                       onViewHistory();
@@ -413,7 +399,6 @@ export function StudentActionPopover({
                         key={key}
                         icon={<Icon className="h-4 w-4" />}
                         label={config.label}
-                        tone={SKILL_TONES[key] ?? SKILL_TONES.speaking}
                         disabled={isBusy}
                         onClick={() => awardPointsMutation.mutate({ skill: key })}
                       />
@@ -432,7 +417,6 @@ export function StudentActionPopover({
                         key={key}
                         icon={<Icon className="h-4 w-4" />}
                         label={config.label}
-                        tone={SKILL_TONES[key] ?? SKILL_TONES.focus}
                         disabled={isBusy}
                         onClick={() => awardPointsMutation.mutate({ skill: key })}
                       />
@@ -513,12 +497,11 @@ export function StudentActionPopover({
 }
 
 function ActionTile({
-  icon, label, sub, tone, onClick, disabled,
+  icon, label, sub, onClick, disabled,
 }: {
   icon: React.ReactNode;
   label: string;
   sub: string;
-  tone: string;
   onClick: () => void;
   disabled?: boolean;
 }) {
@@ -543,11 +526,10 @@ const SAP_TILE =
   "flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-line bg-hec-surface px-3 text-left text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
 function SkillTile({
-  icon, label, tone, onClick, disabled,
+  icon, label, onClick, disabled,
 }: {
   icon: React.ReactNode;
   label: string;
-  tone: string;
   onClick: () => void;
   disabled?: boolean;
 }) {

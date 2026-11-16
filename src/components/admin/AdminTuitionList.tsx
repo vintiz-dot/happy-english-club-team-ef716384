@@ -43,7 +43,6 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
   const [confirmationFilter, setConfirmationFilter] = useState<string>("all");
   const [paymentItem, setPaymentItem] = useState<any>(null);
   const navigate = useNavigate();
-  const iv = (n: string, o: string) => (n);
 
   // Every money figure on this page is calculate-tuition-bulk's, fetched the
   // way the Finance tab fetches it. This page reads no invoice row and works

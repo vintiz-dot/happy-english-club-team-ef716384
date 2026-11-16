@@ -101,14 +101,6 @@ export function ScheduleCalendar({ role }: { role: string }) {
       default:
         return "border-hec-line bg-hec-sunken text-hec-ink-soft";
     }
-    switch (status) {
-      case "Held":
-        return "bg-green-500/10 text-green-700 border-green-500/20";
-      case "Canceled":
-        return "bg-red-500/10 text-red-700 border-red-500/20";
-      default:
-        return "bg-blue-500/10 text-blue-700 border-blue-500/20";
-    }
   };
 
   if (isLoading) {

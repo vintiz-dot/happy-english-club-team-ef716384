@@ -41,15 +41,11 @@ const StatCard = ({
   label, 
   value, 
   subValue, 
-  color,
-  delay = 0 
 }: { 
   icon: React.ElementType; 
   label: string; 
   value: string | number; 
   subValue?: string;
-  color: string;
-  delay?: number;
 }) => {
   return (
     <Card>
@@ -95,32 +91,24 @@ export function TuitionSummaryCards({ stats, isLoading }: TuitionSummaryCardsPro
           label="Total Students"
           value={stats.totalStudents}
           subValue={`${stats.discountStudents} with discounts`}
-          color="bg-blue-500"
-          delay={0}
         />
         <StatCard
           icon={CheckCircle2}
           label="Fully Paid"
           value={stats.settledCount + stats.overpaidCount}
           subValue={`${stats.overpaidCount} overpaid`}
-          color="bg-emerald-500"
-          delay={0.05}
         />
         <StatCard
           icon={AlertCircle}
           label="Outstanding"
           value={stats.underpaidCount + stats.unpaidCount}
           subValue={`${stats.unpaidCount} unpaid`}
-          color="bg-amber-500"
-          delay={0.1}
         />
         <StatCard
           icon={BadgePercent}
           label="Sibling Discounts"
           value={stats.siblingStudents}
           subValue="Active sibling rates"
-          color="bg-blue-500"
-          delay={0.15}
         />
       </div>
 

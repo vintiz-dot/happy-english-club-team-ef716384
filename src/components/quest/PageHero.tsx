@@ -6,26 +6,22 @@ interface PageHeroProps {
   title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
+  /** No effect since R24 (the colour heroes were deleted); kept so the callers need no edit. */
   variant?: "aurora" | "glacier" | "citrus" | "mint" | "night";
   className?: string;
   children?: ReactNode;
 }
 
-/**
- * Premium page header used at the top of a redesigned screen.
- * Next-gen treatment: drifting aurora orbs, a blueprint light grid and a
- * periodic light sweep over the gradient — all pure CSS, all pointer-safe.
- */
+/** Page header at the top of a screen: eyebrow, display title, subtitle, actions. */
 export function PageHero({
   eyebrow,
   title,
   subtitle,
   actions,
-  variant = "aurora",
   className,
   children,
 }: PageHeroProps) {
-  // Ivory screens: one solid card, no orbs, grid or sheen. The old look stays for the screens not yet flipped (admin tabs, Homework, Index).
+  // One solid card: no orbs, grid or sheen (the old aurora hero was deleted with R24).
   return (
     <section
       className={cn(
