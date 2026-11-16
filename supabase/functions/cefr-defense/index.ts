@@ -31,6 +31,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { safeParseJson } from "../_lib/text.ts";
+import { callerHoldsClass, callerHoldsStudent, type CallerIdentity } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -193,6 +194,15 @@ Deno.serve(async (req) => {
     const { data: roleRows } = await sb.from("user_roles").select("role").eq("user_id", user.id);
     const roles = new Set((roleRows || []).map((r: any) => r.role));
     const isStaff = roles.has("admin") || roles.has("teacher");
+    // A teacher acts only on children of their own classes (audit F-04):
+    // the role alone let any teacher or TA set a level, send a child's error
+    // log, vocabulary and date of birth to OpenAI, or set a test, for ANY
+    // student id. Same predicate as the students row policy
+    // (can_view_student_in_class); admins pass. Fails closed.
+    const caller: CallerIdentity = { userId: user.id, roles: new Set([...roles].map(String)), isServiceRole: false };
+    const staffHolds = async (studentId: string): Promise<boolean> =>
+      isStaff && !!studentId && (await callerHoldsStudent(sb, caller, studentId));
+    const notYours = () => respond({ success: false, error: "That child is not in one of your classes" }, 403);
 
     const key = Deno.env.get("OPENAI_API_KEY");
     if (!key) return respond({ success: false, error: "OPENAI_API_KEY is not configured" }, 500);
@@ -213,6 +223,8 @@ Deno.serve(async (req) => {
       if (!studentId || !LEVELS.includes(level as Level)) {
         return respond({ success: false, error: "student_id and a valid level are required" }, 400);
       }
+      if (!(await staffHolds(studentId))) return notYours();
+      if (body.class_id && !(await callerHoldsClass(sb, caller, String(body.class_id)))) return notYours();
       const { data: claim, error } = await sb
         .from("cefr_level_claims")
         .upsert(
@@ -237,6 +249,7 @@ Deno.serve(async (req) => {
     if (action === "mine_evidence") {
       if (!isStaff) return respond({ success: false, error: "Teachers/admins only" }, 403);
       const studentId = String(body.student_id || "");
+      if (!(await staffHolds(studentId))) return notYours();
       const { data: claim } = await sb
         .from("cefr_level_claims").select("*").eq("student_id", studentId).maybeSingle();
       if (!claim) return respond({ success: false, error: "Set a level first" }, 404);
@@ -341,6 +354,7 @@ Deno.serve(async (req) => {
     if (action === "generate_test") {
       if (!isStaff) return respond({ success: false, error: "Teachers/admins only" }, 403);
       const studentId = String(body.student_id || "");
+      if (!(await staffHolds(studentId))) return notYours();
       const { data: claim } = await sb
         .from("cefr_level_claims").select("*").eq("student_id", studentId).maybeSingle();
       if (!claim) return respond({ success: false, error: "Set a level first" }, 404);
@@ -379,7 +393,8 @@ Deno.serve(async (req) => {
     if (action === "get_state") {
       const studentId = String(body.student_id || ownStudent?.id || "");
       if (!studentId) return respond({ success: false, error: "No student in scope" }, 400);
-      if (!isStaff && ownStudent?.id !== studentId) {
+      const staffOk = await staffHolds(studentId);
+      if (!staffOk && ownStudent?.id !== studentId) {
         return respond({ success: false, error: "Not your record" }, 403);
       }
       const [{ data: claim }, { data: tests }] = await Promise.all([
@@ -393,7 +408,7 @@ Deno.serve(async (req) => {
           ? {
               claimed_level: claim.claimed_level,
               status: claim.status,
-              evidence: isStaff ? claim.evidence : (claim.evidence ? { verdict: claim.evidence.verdict, rationale: claim.evidence.rationale } : null),
+              evidence: staffOk ? claim.evidence : (claim.evidence ? { verdict: claim.evidence.verdict, rationale: claim.evidence.rationale } : null),
               evidence_checked_at: claim.evidence_checked_at,
             }
           : null,
@@ -409,7 +424,7 @@ Deno.serve(async (req) => {
       const { data: test } = await sb
         .from("cefr_defense_tests").select("*").eq("id", testId).maybeSingle();
       if (!test) return respond({ success: false, error: "Test not found" }, 404);
-      if (!isStaff && ownStudent?.id !== test.student_id) {
+      if (!(await staffHolds(test.student_id)) && ownStudent?.id !== test.student_id) {
         return respond({ success: false, error: "Not your test" }, 403);
       }
       if (test.status === "graded") return respond({ success: false, error: "Already graded" }, 400);

@@ -38,7 +38,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { visionDocumentOcr, customSearchImages } from "../_lib/google.ts";
 import { fireProfileRefresh } from "../_lib/profile.ts";
 import { safeParseJson } from "../_lib/text.ts";
-import { authenticateUser } from "../_lib/auth.ts";
+import { authenticateUser, callerHoldsClass } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -172,10 +172,30 @@ Deno.serve(async (req) => {
 
     const { data: work } = await sb
       .from("student_work")
-      .select("id, storage_path, uploaded_by")
+      .select("id, storage_path, uploaded_by, class_id")
       .eq("id", workId)
       .single();
     if (!work) return respond({ success: false, error: "work row not found" }, 404);
+
+    // Staff of THIS work's class, about a child of that class (audit F-04).
+    // The role alone let any teacher or TA award +10 points a word to any
+    // student_id, in any class_id, from any work row. The class is the work
+    // row's, not the body's; a body naming another class is refused. A row
+    // with no class is an admin's. The child must have an enrollment in that
+    // class (any date: a page scanned after a child left still counts).
+    if (classId && work.class_id && classId !== work.class_id) {
+      return respond({ success: false, error: "class_id does not match the work's class" }, 400);
+    }
+    if (!(await callerHoldsClass(sb, caller, work.class_id))) {
+      return respond({ success: false, error: "Not a class you teach" }, 403);
+    }
+    if (work.class_id && !caller.isServiceRole && !caller.roles.has("admin")) {
+      const { data: enr, error: enrErr } = await sb
+        .from("enrollments").select("id").eq("student_id", studentId).eq("class_id", work.class_id).limit(1);
+      if (enrErr || !enr || enr.length === 0) {
+        return respond({ success: false, error: "That child is not in this class" }, 403);
+      }
+    }
 
     const { data: student } = await sb
       .from("students")
