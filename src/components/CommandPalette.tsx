@@ -6,11 +6,12 @@
  * without touching the mouse. Mounted once in Layout.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIvory } from "@/hooks/useIvory";
+import { OPEN_GENERAL_PALETTE_EVENT, paletteFor } from "@/lib/paletteOwner";
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput,
   CommandItem, CommandList, CommandSeparator, CommandShortcut,
@@ -42,23 +43,35 @@ interface JumpTarget {
 export function CommandPalette() {
   const { role } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ivory = useIvory();
 
   const enabled = role === "admin" || role === "teacher";
+  // On an admin page an admin's Ctrl+K is AdminTopBar's; this bar answers it
+  // everywhere else (lib/paletteOwner), so only one palette ever opens.
+  const ownsKey = paletteFor(role, pathname) === "general";
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!ownsKey) {
+      setOpen(false);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen((o) => !o);
       }
     };
+    const onOpen = () => setOpen(true);
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [enabled]);
+    window.addEventListener(OPEN_GENERAL_PALETTE_EVENT, onOpen);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener(OPEN_GENERAL_PALETTE_EVENT, onOpen);
+    };
+  }, [ownsKey]);
 
   const go = useCallback(
     (path: string) => {

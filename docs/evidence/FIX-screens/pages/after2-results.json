@@ -1,0 +1,28 @@
+{
+ "label": "after2",
+ "checks": [
+  {
+   "id": "calgrid-month-1280",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "calgrid-week-1280",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "calgrid-month-375",
+   "status": "PASS",
+   "v": {}
+  },
+  {
+   "id": "calgrid-week-375",
+   "status": "PASS",
+   "v": {}
+  }
+ ],
+ "palette": {},
+ "calendar": {},
+ "dialogs": {}
+}

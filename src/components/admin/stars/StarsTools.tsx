@@ -32,6 +32,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { SectionHeader } from "@/components/quest/SectionHeader";
+import { ConfirmDestructiveDialog } from "@/components/ConfirmDestructiveDialog";
 import { dayjs } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { foldText } from "@/lib/starsNames";
@@ -223,6 +224,8 @@ export function StarsTools({
   const [showAll, setShowAll] = useState(false);
   const [linkedNow, setLinkedNow] = useState<{ ref: string; label: string; studentName: string }[]>([]);
   const [outsideClass, setOutsideClass] = useState<{ ref: string; id: string; name: string; label: string } | null>(null);
+  // "Unlink" in the link health list asks first. In memory only, like every Pixel Pal name.
+  const [confirmUnlink, setConfirmUnlink] = useState<{ ref: string; studentName: string; pixelPalName: string } | null>(null);
   const [classPicks, setClassPicks] = useState<Record<string, string>>({});
   const toolRef = useRef<HTMLDivElement>(null);
   const classToolRef = useRef<HTMLDivElement>(null);
@@ -812,7 +815,7 @@ export function StarsTools({
                         It is right
                       </Button>
                       <Button size="sm" variant="destructive-quiet" disabled={unlink.isPending}
-                        onClick={() => unlink.mutate(a.ref)}>
+                        onClick={() => setConfirmUnlink({ ref: a.ref, studentName: a.studentName, pixelPalName: a.pixelPalName ?? `Pixel Pal no. ${a.ref}` })}>
                         Unlink
                       </Button>
                     </div>
@@ -829,6 +832,18 @@ export function StarsTools({
         <SectionHeader title="Homework check" subtitle="What Pixel Pal has sent about homework, and why it does or does not show." />
         <HomeworkCheck homework={homework} engine={homeworkEngine} onShowRecords={onShowRecords} />
       </div>
+
+      {/* Only names already on this screen; nothing here is saved. */}
+      <ConfirmDestructiveDialog
+        open={confirmUnlink !== null}
+        onOpenChange={(open) => { if (!open) setConfirmUnlink(null); }}
+        title={`Unlink ${confirmUnlink?.studentName ?? ""} from ${confirmUnlink?.pixelPalName ?? ""}?`}
+        description={`Nothing more from Pixel Pal will reach ${confirmUnlink?.studentName ?? ""}. Marks and points a run has already applied stay.`}
+        keepLabel="Keep the link"
+        actionLabel="Unlink the child"
+        busyLabel="Unlinking..."
+        onConfirm={() => (confirmUnlink ? unlink.mutateAsync(confirmUnlink.ref) : undefined)}
+      />
 
       <AlertDialog open={outsideClass !== null} onOpenChange={(open) => { if (!open) setOutsideClass(null); }}>
         <AlertDialogContent>

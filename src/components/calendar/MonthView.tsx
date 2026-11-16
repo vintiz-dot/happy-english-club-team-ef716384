@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { dayjs, nowBangkok } from "@/lib/date";
 import { statusTreatment, type ClassColor } from "@/lib/classColors";
 import { describeVariance } from "@/lib/sessionDuration";
+import { eventAccessibleName } from "./lib/eventLabel";
 import { useIvory } from "@/hooks/useIvory";
 import {
   STATUS_META,
@@ -106,14 +107,13 @@ function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps)
     data: { event },
   });
 
-  const label = [
-    event.class_name,
-    formatTime(event.start_time),
-    meta.label,
-    variance ? describeVariance(variance) : null,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  // The chip shows "17:30 Starters 1" (and the count when not compact): the
+  // name starts with exactly that, then adds the teacher and status.
+  const showCount = !compact && !!event.enrolled_count;
+  const label = eventAccessibleName(
+    [`${formatTime(event.start_time)} ${event.class_name}`, showCount && String(event.enrolled_count)],
+    [event.teacher_name, meta.label, variance ? describeVariance(variance) : null],
+  );
 
   return (
     <button
@@ -148,9 +148,13 @@ function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps)
       <span className={ivory ? "shrink-0 text-hec-caption font-semibold leading-none tabular-nums text-hec-ink-soft" : "shrink-0 text-[10px] font-semibold tabular-nums opacity-70"}>
         {formatTime(event.start_time)}
       </span>
+      {/* A space between the pieces, so their text reads "17:30 Starters 1", not
+          "17:30Starters 1" (WCAG 2.5.3). White space between flex items is not drawn. */}
+      {" "}
       <span className={cn(ivory ? "truncate text-hec-caption font-medium leading-none" : "truncate text-[11px] font-medium leading-none", color.text, treatment.label)}>
         {event.class_name}
       </span>
+      {" "}
       <span className="ml-auto flex shrink-0 items-center gap-1">
         {variance && (
           <AlertTriangle

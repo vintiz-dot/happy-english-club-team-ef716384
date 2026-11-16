@@ -1,0 +1,773 @@
+{
+ "label": "after-ivory",
+ "checks": [
+  {
+   "id": "calendar-month-1280-names-start-with-visible-text",
+   "status": "PASS",
+   "v": {
+    "sample": [
+     {
+      "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 6, Trịnh Thu Hà, Held",
+      "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+     },
+     {
+      "name": "18:00 Movers 2 (Tue-Thu), 8, Cao Văn Lâm, Held",
+      "visible": "18:00 Movers 2 (Tue-Thu) 8"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-month-1280-axe-label-content-name-mismatch",
+   "status": "PASS",
+   "v": {
+    "nodes": 0
+   }
+  },
+  {
+   "id": "calendar-month-1280-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "color-contrast:16"
+   ]
+  },
+  {
+   "id": "calendar-week-1280-names-start-with-visible-text",
+   "status": "PASS",
+   "v": {
+    "sample": [
+     {
+      "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+      "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+     },
+     {
+      "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+      "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-week-1280-axe-label-content-name-mismatch",
+   "status": "PASS",
+   "v": {
+    "nodes": 0
+   }
+  },
+  {
+   "id": "calendar-week-1280-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "color-contrast:12"
+   ]
+  },
+  {
+   "id": "calendar-month-375-names-start-with-visible-text",
+   "status": "PASS",
+   "v": {
+    "sample": [
+     {
+      "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, Trịnh Thu Hà, Held",
+      "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+     },
+     {
+      "name": "18:00 Movers 2 (Tue-Thu), Cao Văn Lâm, Held",
+      "visible": "18:00 Movers 2 (Tue-Thu)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-month-375-axe-label-content-name-mismatch",
+   "status": "PASS",
+   "v": {
+    "nodes": 0
+   }
+  },
+  {
+   "id": "calendar-month-375-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "button-name:4",
+    "color-contrast:8"
+   ]
+  },
+  {
+   "id": "calendar-week-375-names-start-with-visible-text",
+   "status": "PASS",
+   "v": {
+    "sample": [
+     {
+      "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+      "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+     },
+     {
+      "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+      "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calendar-week-375-axe-label-content-name-mismatch",
+   "status": "PASS",
+   "v": {
+    "nodes": 0
+   }
+  },
+  {
+   "id": "calendar-week-375-axe-serious-critical",
+   "status": "INFO",
+   "v": [
+    "button-name:4",
+    "color-contrast:6"
+   ]
+  },
+  {
+   "id": "dialog-announcement-keep-1280-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Delete the announcement?",
+     "text": "Delete the announcement? “Parents evening” stops showing to everyone it was meant for, and is deleted. This cannot be undone. Keep the announcement Delete the announcement",
+     "buttons": [
+      "Keep the announcement",
+      "Delete the announcement"
+     ],
+     "focused": "Keep the announcement"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-announcement-keep-1280-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep the announcement"
+   }
+  },
+  {
+   "id": "dialog-announcement-keep-1280-keep-writes-nothing",
+   "status": "PASS",
+   "v": {
+    "after": []
+   }
+  },
+  {
+   "id": "dialog-announcement-keep-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-announcement-act-1280-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Delete the announcement?",
+     "text": "Delete the announcement? “Parents evening” stops showing to everyone it was meant for, and is deleted. This cannot be undone. Keep the announcement Delete the announcement",
+     "buttons": [
+      "Keep the announcement",
+      "Delete the announcement"
+     ],
+     "focused": "Keep the announcement"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-announcement-act-1280-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep the announcement"
+   }
+  },
+  {
+   "id": "dialog-announcement-act-1280-destructive-runs-once",
+   "status": "PASS",
+   "v": {
+    "after": [
+     "from:site_announcements:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-announcement-act-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-family-keep-1280-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Remove Nguyễn Minh Anh from this family?",
+     "text": "Remove Nguyễn Minh Anh from this family? Nguyễn Minh Anh's bills lose the family's sibling discount from the next time their tuition is worked out (a frozen bill keeps its figures). For the other children, months already worked out stay as they are; later months leave Nguyễn Minh Anh out. Keep them in the family Remove from the family",
+     "buttons": [
+      "Keep them in the family",
+      "Remove from the family"
+     ],
+     "focused": "Keep them in the family"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-family-keep-1280-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep them in the family"
+   }
+  },
+  {
+   "id": "dialog-family-keep-1280-keep-writes-nothing",
+   "status": "PASS",
+   "v": {
+    "after": []
+   }
+  },
+  {
+   "id": "dialog-family-keep-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-family-act-1280-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Remove Nguyễn Minh Anh from this family?",
+     "text": "Remove Nguyễn Minh Anh from this family? Nguyễn Minh Anh's bills lose the family's sibling discount from the next time their tuition is worked out (a frozen bill keeps its figures). For the other children, months already worked out stay as they are; later months leave Nguyễn Minh Anh out. Keep them in the family Remove from the family",
+     "buttons": [
+      "Keep them in the family",
+      "Remove from the family"
+     ],
+     "focused": "Keep them in the family"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-family-act-1280-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep them in the family"
+   }
+  },
+  {
+   "id": "dialog-family-act-1280-destructive-runs-once",
+   "status": "PASS",
+   "v": {
+    "after": [
+     "from:students:update"
+    ]
+   }
+  },
+  {
+   "id": "dialog-family-act-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-stars-keep-1280-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Unlink Nguyễn Hoàng Phương Thảo Nguyên from Bé Bông (Pixel Pal)?",
+     "text": "Unlink Nguyễn Hoàng Phương Thảo Nguyên from Bé Bông (Pixel Pal)? Nothing more from Pixel Pal will reach Nguyễn Hoàng Phương Thảo Nguyên. Marks and points a run has already applied stay. Keep the link Unlink the child",
+     "buttons": [
+      "Keep the link",
+      "Unlink the child"
+     ],
+     "focused": "Keep the link"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-stars-keep-1280-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep the link"
+   }
+  },
+  {
+   "id": "dialog-stars-keep-1280-keep-writes-nothing",
+   "status": "PASS",
+   "v": {
+    "after": []
+   }
+  },
+  {
+   "id": "dialog-stars-keep-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-stars-act-1280-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Unlink Nguyễn Hoàng Phương Thảo Nguyên from Bé Bông (Pixel Pal)?",
+     "text": "Unlink Nguyễn Hoàng Phương Thảo Nguyên from Bé Bông (Pixel Pal)? Nothing more from Pixel Pal will reach Nguyễn Hoàng Phương Thảo Nguyên. Marks and points a run has already applied stay. Keep the link Unlink the child",
+     "buttons": [
+      "Keep the link",
+      "Unlink the child"
+     ],
+     "focused": "Keep the link"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-stars-act-1280-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep the link"
+   }
+  },
+  {
+   "id": "dialog-stars-act-1280-destructive-runs-once",
+   "status": "PASS",
+   "v": {
+    "after": [
+     "from:stars_student_map:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-stars-act-1280-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-announcement-keep-375-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Delete the announcement?",
+     "text": "Delete the announcement? “Parents evening” stops showing to everyone it was meant for, and is deleted. This cannot be undone. Keep the announcement Delete the announcement",
+     "buttons": [
+      "Keep the announcement",
+      "Delete the announcement"
+     ],
+     "focused": "Keep the announcement"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-announcement-keep-375-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep the announcement"
+   }
+  },
+  {
+   "id": "dialog-announcement-keep-375-keep-writes-nothing",
+   "status": "PASS",
+   "v": {
+    "after": []
+   }
+  },
+  {
+   "id": "dialog-announcement-keep-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-announcement-act-375-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Delete the announcement?",
+     "text": "Delete the announcement? “Parents evening” stops showing to everyone it was meant for, and is deleted. This cannot be undone. Keep the announcement Delete the announcement",
+     "buttons": [
+      "Keep the announcement",
+      "Delete the announcement"
+     ],
+     "focused": "Keep the announcement"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-announcement-act-375-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep the announcement"
+   }
+  },
+  {
+   "id": "dialog-announcement-act-375-destructive-runs-once",
+   "status": "PASS",
+   "v": {
+    "after": [
+     "from:site_announcements:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-announcement-act-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-family-keep-375-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Remove Nguyễn Minh Anh from this family?",
+     "text": "Remove Nguyễn Minh Anh from this family? Nguyễn Minh Anh's bills lose the family's sibling discount from the next time their tuition is worked out (a frozen bill keeps its figures). For the other children, months already worked out stay as they are; later months leave Nguyễn Minh Anh out. Keep them in the family Remove from the family",
+     "buttons": [
+      "Keep them in the family",
+      "Remove from the family"
+     ],
+     "focused": "Keep them in the family"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-family-keep-375-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep them in the family"
+   }
+  },
+  {
+   "id": "dialog-family-keep-375-keep-writes-nothing",
+   "status": "PASS",
+   "v": {
+    "after": []
+   }
+  },
+  {
+   "id": "dialog-family-keep-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-family-act-375-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Remove Nguyễn Minh Anh from this family?",
+     "text": "Remove Nguyễn Minh Anh from this family? Nguyễn Minh Anh's bills lose the family's sibling discount from the next time their tuition is worked out (a frozen bill keeps its figures). For the other children, months already worked out stay as they are; later months leave Nguyễn Minh Anh out. Keep them in the family Remove from the family",
+     "buttons": [
+      "Keep them in the family",
+      "Remove from the family"
+     ],
+     "focused": "Keep them in the family"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-family-act-375-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep them in the family"
+   }
+  },
+  {
+   "id": "dialog-family-act-375-destructive-runs-once",
+   "status": "PASS",
+   "v": {
+    "after": [
+     "from:students:update"
+    ]
+   }
+  },
+  {
+   "id": "dialog-family-act-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-stars-keep-375-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Unlink Nguyễn Hoàng Phương Thảo Nguyên from Bé Bông (Pixel Pal)?",
+     "text": "Unlink Nguyễn Hoàng Phương Thảo Nguyên from Bé Bông (Pixel Pal)? Nothing more from Pixel Pal will reach Nguyễn Hoàng Phương Thảo Nguyên. Marks and points a run has already applied stay. Keep the link Unlink the child",
+     "buttons": [
+      "Keep the link",
+      "Unlink the child"
+     ],
+     "focused": "Keep the link"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-stars-keep-375-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep the link"
+   }
+  },
+  {
+   "id": "dialog-stars-keep-375-keep-writes-nothing",
+   "status": "PASS",
+   "v": {
+    "after": []
+   }
+  },
+  {
+   "id": "dialog-stars-keep-375-page-errors",
+   "status": "PASS",
+   "v": []
+  },
+  {
+   "id": "dialog-stars-act-375-asks-first",
+   "status": "PASS",
+   "v": {
+    "dialog": {
+     "title": "Unlink Nguyễn Hoàng Phương Thảo Nguyên from Bé Bông (Pixel Pal)?",
+     "text": "Unlink Nguyễn Hoàng Phương Thảo Nguyên from Bé Bông (Pixel Pal)? Nothing more from Pixel Pal will reach Nguyễn Hoàng Phương Thảo Nguyên. Marks and points a run has already applied stay. Keep the link Unlink the child",
+     "buttons": [
+      "Keep the link",
+      "Unlink the child"
+     ],
+     "focused": "Keep the link"
+    },
+    "writesOnOpen": []
+   }
+  },
+  {
+   "id": "dialog-stars-act-375-focus-on-keep",
+   "status": "PASS",
+   "v": {
+    "focused": "Keep the link"
+   }
+  },
+  {
+   "id": "dialog-stars-act-375-destructive-runs-once",
+   "status": "PASS",
+   "v": {
+    "after": [
+     "from:stars_student_map:delete"
+    ]
+   }
+  },
+  {
+   "id": "dialog-stars-act-375-page-errors",
+   "status": "PASS",
+   "v": []
+  }
+ ],
+ "palette": {},
+ "calendar": {
+  "calendar-month-1280-pressed": [
+   "Month"
+  ],
+  "calendar-month-1280": {
+   "chips": [
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 6, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), 8, Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu) 8"
+    },
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 6, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), 8, Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu) 8"
+    },
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 6, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 6"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), 8, Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu) 8"
+    }
+   ],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 16,
+     "sample": [
+      "<span class=\"shrink-0 text-hec-caption font-semibold leading-none tabular-nums text-hec-ink-soft\">17:30</span>",
+      "<span class=\"truncate text-hec-caption font-medium leading-none text-teal-950 dark:text-teal-100\">Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\">"
+     ]
+    }
+   ]
+  },
+  "calendar-week-1280-pressed": [
+   "Week"
+  ],
+  "calendar-week-1280": {
+   "chips": [
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 00:00–23:59 (+22h 59m) · 5, Trịnh Thu Hà, Needs attendance, Runs 23h 59m but the class is set to 1h — 22h 59m longer",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 00:00–23:59 (+22h 59m) · 5 Trịnh Thu Hà"
+    }
+   ],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 12,
+     "sample": [
+      "<div class=\"min-w-0 flex-1 truncate text-hec-caption font-semibold leading-tight text-teal-950 dark:text-teal-100\">Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương vớ",
+      "<div class=\"truncate text-hec-caption leading-tight tabular-nums text-hec-ink-soft\">17:30–18:30 · 6</div>"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\">"
+     ]
+    }
+   ]
+  },
+  "calendar-month-375-pressed": [
+   "lucide lucide-grid3x3 h-4 w-4"
+  ],
+  "calendar-month-375": {
+   "chips": [
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu)"
+    },
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu)"
+    },
+    {
+     "name": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, Trịnh Thu Hà, Held",
+     "visible": "17:30 Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên"
+    },
+    {
+     "name": "18:00 Movers 2 (Tue-Thu), Cao Văn Lâm, Held",
+     "visible": "18:00 Movers 2 (Tue-Thu)"
+    }
+   ],
+   "axe": [
+    {
+     "id": "button-name",
+     "impact": "critical",
+     "nodes": 4,
+     "sample": [
+      "<button class=\"inline-flex min-h-he...\" aria-pressed=\"true\">",
+      "<button class=\"inline-flex min-h-he...\" aria-pressed=\"false\">"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      "<span class=\"shrink-0 text-hec-caption font-semibold leading-none tabular-nums text-hec-ink-soft\">17:30</span>",
+      "<span class=\"shrink-0 text-hec-caption font-semibold leading-none tabular-nums text-hec-ink-soft\">18:00</span>"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\">"
+     ]
+    }
+   ]
+  },
+  "calendar-week-375-pressed": [
+   "lucide lucide-calendar-range h-4 w-4"
+  ],
+  "calendar-week-375": {
+   "chips": [
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 17:30–18:30 · 6, Trịnh Thu Hà, Held",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 17:30–18:30 · 6 Trịnh Thu Hà"
+    },
+    {
+     "name": "Movers 2 (Tue-Thu), 18:00–19:00 · 8, Cao Văn Lâm, Held",
+     "visible": "Movers 2 (Tue-Thu) 18:00–19:00 · 8 Cao Văn Lâm"
+    },
+    {
+     "name": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên, 00:00–23:59 (+22h 59m) · 5, Trịnh Thu Hà, Needs attendance, Runs 23h 59m but the class is set to 1h — 22h 59m longer",
+     "visible": "Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương với cô Nguyễn Hoàng Phương Thảo Nguyên 00:00–23:59 (+22h 59m) · 5 Trịnh Thu Hà"
+    }
+   ],
+   "axe": [
+    {
+     "id": "button-name",
+     "impact": "critical",
+     "nodes": 4,
+     "sample": [
+      "<button class=\"inline-flex min-h-he...\" aria-pressed=\"false\">",
+      "<button class=\"inline-flex min-h-he...\" aria-pressed=\"true\">"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      "<div class=\"min-w-0 flex-1 truncate text-hec-caption font-semibold leading-tight text-teal-950 dark:text-teal-100\">Starters 1 (Mon-Wed) Phòng Hoa Hướng Dương vớ",
+      "<div class=\"truncate text-hec-caption leading-tight tabular-nums text-hec-ink-soft\">17:30–18:30 · 6</div>"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "<h3 class=\"font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2\">"
+     ]
+    }
+   ]
+  }
+ },
+ "dialogs": {}
+}
