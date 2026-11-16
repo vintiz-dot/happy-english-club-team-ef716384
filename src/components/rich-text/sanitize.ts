@@ -137,14 +137,19 @@ export function sanitizeRichHtml(html: string | null | undefined, mode: Sanitize
   if (!html) return "";
   const tags = options.allowImages ? [...BASE_TAGS, "img"] : BASE_TAGS;
   const attrs = options.allowImages ? [...BASE_ATTRS, "src", "alt"] : BASE_ATTRS;
-  const fragment = purifier().sanitize(html, {
+  // Parse into an inert document (no scripts run, nothing loads), gather the
+  // body into one allowed root, and let DOMPurify clean that root in place.
+  const doc = new DOMParser().parseFromString(`<!doctype html><html><head></head><body>${html}</body></html>`, "text/html");
+  const fragment = doc.createElement("div");
+  while (doc.body.firstChild) fragment.appendChild(doc.body.firstChild);
+  doc.body.appendChild(fragment);
+  purifier().sanitize(fragment, {
     ALLOWED_TAGS: tags,
     ALLOWED_ATTR: attrs,
     ALLOW_DATA_ATTR: false,
-    RETURN_DOM_FRAGMENT: true,
-  }) as unknown as DocumentFragment;
+    IN_PLACE: true,
+  });
 
-  const doc = fragment.ownerDocument;
   const walker = doc.createTreeWalker(fragment, 0x1 | 0x4 /* SHOW_ELEMENT | SHOW_TEXT */);
   const emptyParagraphs: Element[] = [];
   const listItems: Element[] = [];
@@ -200,6 +205,22 @@ export function sanitizeRichHtml(html: string | null | undefined, mode: Sanitize
     node = walker.nextNode();
   }
 
+  if (mode === "paste") {
+    // A link's colour on the clipboard is the source's link style, not a choice.
+    fragment.querySelectorAll("a [style], a[style]").forEach((el) => {
+      const kept = filterStyle((el.getAttribute("style") || "").replace(/(^|;)\s*color\s*:[^;]*/gi, "$1"), mode);
+      if (kept) el.setAttribute("style", kept);
+      else el.removeAttribute("style");
+    });
+  }
+  if (mode !== "render") {
+    // A <span> left with no attribute carries nothing; unwrap it.
+    fragment.querySelectorAll("span:not([style]):not([class])").forEach((span) => {
+      while (span.firstChild) span.parentNode!.insertBefore(span.firstChild, span);
+      span.remove();
+    });
+  }
+
   for (const el of emptyParagraphs) {
     if (el.tagName.toLowerCase() === "img") el.remove();
     else el.appendChild(doc.createElement("br"));
@@ -221,9 +242,7 @@ export function sanitizeRichHtml(html: string | null | undefined, mode: Sanitize
     first.remove();
   }
 
-  const box = doc.createElement("div");
-  box.appendChild(fragment);
-  return box.innerHTML;
+  return fragment.innerHTML;
 }
 
 /** True when the HTML has no text a reader would see (and no image). */

@@ -151,12 +151,43 @@ function wordLists(doc: Document) {
   }
 }
 
+const COLOUR_HOSTS = "strong, b, em, i, u, s, strike, a, sub, sup, code, p, h1, h2, h3, h4, h5, h6, li";
+
+/**
+ * Quill puts a colour on the format element itself (`<strong style="color:..">`);
+ * the editor reads colour from a <span>. Move it onto a span inside, so bold
+ * blue text stays bold AND blue.
+ */
+function hoistColours(doc: Document) {
+  doc.body.querySelectorAll<HTMLElement>(COLOUR_HOSTS).forEach((el) => {
+    const style = el.getAttribute("style");
+    if (!style || !/(^|;)\s*(background-)?color\s*:/i.test(style)) return;
+    const moved: string[] = [];
+    const kept: string[] = [];
+    for (const decl of style.split(";")) {
+      const prop = decl.slice(0, decl.indexOf(":")).trim().toLowerCase();
+      if (prop === "color" || prop === "background-color") moved.push(decl.trim());
+      else if (decl.trim()) kept.push(decl.trim());
+    }
+    if (kept.length) el.setAttribute("style", kept.join("; "));
+    else el.removeAttribute("style");
+    const span = doc.createElement("span");
+    span.setAttribute("style", moved.join("; "));
+    // Wrap inline children only; a nested list stays outside the span.
+    const inline = Array.from(el.childNodes).filter((n) => !/^(UL|OL|P|DIV|BLOCKQUOTE|PRE|H[1-6])$/.test(n.nodeName));
+    if (!inline.length) return;
+    el.insertBefore(span, inline[0]);
+    inline.forEach((n) => span.appendChild(n));
+  });
+}
+
 /** Stored HTML (Quill or this editor) -> HTML for the editor to open. */
 export function prepareForEditor(html: string | null | undefined): string {
   if (!html) return "";
   const doc = parse(html);
   doc.body.querySelectorAll(".ql-ui").forEach((n) => n.remove());
   unflattenLists(doc);
+  hoistColours(doc);
   // Quill's empty line is <p><br></p>; read it as an empty paragraph.
   doc.body.querySelectorAll("p, h1, h2, h3, h4, h5, h6").forEach((p) => {
     if (p.childNodes.length === 1 && p.firstChild!.nodeName === "BR") p.removeChild(p.firstChild!);
@@ -172,10 +203,10 @@ export function prepareForEditor(html: string | null | undefined): string {
 
 /** Pasted HTML -> HTML with Word lists made real, before sanitising. */
 export function preparePaste(html: string): string {
-  if (!/mso-|Mso|ql-indent|data-list/.test(html)) return html;
   const doc = parse(html);
   wordLists(doc);
   doc.body.querySelectorAll(".ql-ui").forEach((n) => n.remove());
   unflattenLists(doc);
+  hoistColours(doc);
   return doc.body.innerHTML;
 }

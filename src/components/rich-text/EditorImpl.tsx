@@ -6,7 +6,7 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type R
 import { useEditor, EditorContent, useEditorState, type Editor } from "@tiptap/react";
 import {
   AlignCenter, AlignJustify, AlignLeft, AlignRight, Baseline, Bold, Heading1, Heading2, Heading3, Highlighter,
-  ImagePlus, Indent, Italic, Link2, List, ListOrdered, Outdent, Quote, Redo2, RemoveFormatting, Strikethrough,
+  ImagePlus, IndentDecrease, IndentIncrease, Italic, Link2, List, ListOrdered, Quote, Redo2, RemoveFormatting, Strikethrough,
   Subscript, Superscript, Underline, Undo2,
 } from "lucide-react";
 import { editorExtensions, allowedLink, type Align } from "./extensions";
@@ -55,7 +55,7 @@ const HIGHLIGHTS: Array<[string, string]> = [
 const ICONS: Record<ItemId, ReactNode> = {
   bold: <Bold />, italic: <Italic />, underline: <Underline />, strike: <Strikethrough />,
   h1: <Heading1 />, h2: <Heading2 />, h3: <Heading3 />, bulletList: <List />, orderedList: <ListOrdered />,
-  indent: <Indent />, outdent: <Outdent />, quote: <Quote />, link: <Link2 />, colour: <Baseline />,
+  indent: <IndentIncrease />, outdent: <IndentDecrease />, quote: <Quote />, link: <Link2 />, colour: <Baseline />,
   highlight: <Highlighter />, sub: <Subscript />, sup: <Superscript />, alignLeft: <AlignLeft />,
   alignCenter: <AlignCenter />, alignRight: <AlignRight />, alignJustify: <AlignJustify />, image: <ImagePlus />,
   clear: <RemoveFormatting />, undo: <Undo2 />, redo: <Redo2 />,
