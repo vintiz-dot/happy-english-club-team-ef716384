@@ -1,0 +1,139 @@
+// PC2-harvest shooting script (fake Supabase client, made-up fixtures, every non-local request aborted).
+//   node pc2h.mjs <repoRoot> <outDir> <label> [--only=id,id] [--sizes=375,1280] [--themes=light,dark] [--legacy]
+// Default: each scenario's routes are listed at run time (localStorage pc2h_ivory, read by preview/main.tsx), so
+// the screen is in the new design. --legacy: nothing extra is listed (the unlisted, old-design state) and the
+// script records the normalised outerHTML of each scenario's part for a byte-compare (no screenshots).
+// Writes <outDir>/<label>-<id>-<w>-<theme>.png and <outDir>/<label>-results.json.
+import { chromium } from 'playwright';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const repo = path.resolve(process.argv[2] || '.');
+const outDir = path.resolve(process.argv[3] || '.');
+const label = process.argv[4] || 'run';
+const opt = Object.fromEntries(process.argv.slice(5).map((a) => { const [k, v] = a.replace(/^--/, '').split('='); return [k, v ?? true]; }));
+const LEGACY = !!opt.legacy;
+const PORT = Number(opt.port || 5431), BASE = `http://127.0.0.1:${PORT}`;
+
+const pv = path.join(repo, '.claude/pc2h-preview'); fs.mkdirSync(pv, { recursive: true });
+for (const f of fs.readdirSync(path.join(here, 'preview'))) fs.copyFileSync(path.join(here, 'preview', f), path.join(pv, f));
+await new Promise((r) => spawn(process.execPath, [path.join(here, 'gen-schema.mjs'), repo, path.join(pv, 'schema.json')], { stdio: 'inherit' }).on('exit', r));
+const vite = spawn(process.execPath, [path.join(repo, 'node_modules/vite/bin/vite.js'), '--config', path.join(pv, 'vite.config.ts'), '--port', String(PORT), '--strictPort'], { cwd: repo, stdio: 'ignore' });
+const stop = () => { try { vite.kill(); } catch {} };
+process.on('exit', stop);
+for (let i = 0; i < 90; i++) { try { if ((await fetch(BASE + '/')).ok) break; } catch {} await new Promise((r) => setTimeout(r, 1000)); }
+const browser = await chromium.launch({ channel: 'chrome' });
+
+const INIT = ([role, student, boardStyle, dark, ivoryRoutes, calView]) => {
+  try {
+    localStorage.setItem('fake_role', role);
+    localStorage.setItem('pc2h_ivory', JSON.stringify(ivoryRoutes));
+    if (calView) localStorage.setItem('hec.calendar.view', calView); else localStorage.removeItem('hec.calendar.view');
+    if (role === 'student') { localStorage.setItem('selected_student_id', student); localStorage.setItem('fake_student', student); }
+    if (boardStyle) localStorage.setItem('fake_board_style', boardStyle); else localStorage.removeItem('fake_board_style');
+    for (const u of ['u-admin', 'u-teacher', 'u-student', 'u-family']) localStorage.setItem('hec-theme:' + u, dark ? 'dark' : 'light');
+    localStorage.setItem('hec-theme-boot', dark ? 'dark' : 'light');
+    localStorage.removeItem('fake_chat');
+  } catch {}
+  let seed = 20261116; Math.random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const apply = () => { const de = document.documentElement; if (!de) return false; if (dark) de.classList.add('dark'); return true; };
+  if (!apply()) new MutationObserver((_, o) => { if (apply()) o.disconnect(); }).observe(document, { childList: true });
+  window.__lastResEnd = 0;
+  try { new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__lastResEnd = Math.max(window.__lastResEnd, e.responseEnd); }).observe({ type: 'resource', buffered: true }); } catch {}
+};
+const ev = async (page, fn, arg) => { for (let i = 0; i < 6; i++) { try { return await page.evaluate(fn, arg); } catch (e) { if (!/context was destroyed|navigation/i.test(e.message)) throw e; await page.waitForTimeout(800); } } return page.evaluate(fn, arg); };
+
+// A made-up pictogram in ARASAAC's manner: transparent background, black outline, a coloured fill.
+const picto = (id) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="52" r="30" fill="#f4b860" stroke="#000" stroke-width="5"/><circle cx="40" cy="46" r="4" fill="#000"/><circle cx="60" cy="46" r="4" fill="#000"/><path d="M38 62 Q50 72 62 62" fill="none" stroke="#000" stroke-width="4"/><text x="50" y="96" font-size="11" text-anchor="middle" fill="#000">${id}</text></svg>`;
+
+// normalised outerHTML: ids React / Radix generate per mount, srcs and inline styles are dropped
+const OUTER = (sel) => [...document.querySelectorAll(sel)].map((el) => { const c = el.cloneNode(true); for (const n of [c, ...c.querySelectorAll('*')]) for (const a of [...n.attributes]) if (/^(id|for|src|srcset|style|aria-controls|aria-labelledby|aria-describedby|data-radix-.*)$/.test(a.name) || /radix-/.test(a.value)) n.removeAttribute(a.name); return c.outerHTML; }).join('\n');
+
+async function run(s, w, h, dark) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, colorScheme: dark ? 'dark' : 'light' });
+  await ctx.addInitScript(INIT, [s.role, s.student || 's-0001', (s.id.startsWith('board') && opt.style) || s.boardStyle || '', dark, LEGACY ? [] : s.ivory, s.calView || '']);
+  await ctx.route((u) => !/^(http:\/\/127\.0\.0\.1:\d+|data:|about:|blob:)/.test(String(u)), (route) => {
+    const u = route.request().url();
+    if (/static\.arasaac\.org|api\.arasaac\.org\/v1\/pictograms\/\d+/.test(u)) { const id = (u.match(/(\d{3,})/) || [])[1] || '0'; return route.fulfill({ contentType: 'image/svg+xml', body: picto(id) }); }
+    if (/api\.arasaac\.org\/v1\/pictograms\/en\/(best)?search/.test(u)) return route.fulfill({ contentType: 'application/json', body: JSON.stringify([2349, 2350, 2351, 2352, 2353, 2354].map((id, i) => ({ _id: id, keywords: [{ keyword: ['cat', 'kitten', 'pet cat', 'tabby cat', 'cat face', 'cats'][i] }] }))) });
+    return route.abort();
+  });
+  const page = await ctx.newPage();
+  await page.clock.setFixedTime(new Date('2026-11-13T12:00:00'));
+  const errors = []; page.on('pageerror', (e) => errors.push(String(e.message).slice(0, 160)));
+  await page.goto(BASE + s.route, { waitUntil: 'load', timeout: 120000 }).catch((e) => errors.push('goto ' + e.message.slice(0, 100)));
+  const t0 = Date.now();
+  while (Date.now() - t0 < 40000) { const st = await ev(page, () => ({ now: performance.now(), act: Math.max(window.__lastResEnd || 0, window.__lastRequestAt || 0), txt: (document.getElementById('root')?.innerText || '').length })); if (st.now - st.act > 1000 && st.txt > 100) break; await page.waitForTimeout(250); }
+  await page.waitForTimeout(2600);
+  const m = { errors, attr: await ev(page, () => document.documentElement.getAttribute('data-hec-theme')) };
+  if (s.action) { try { await s.action(page); await page.waitForTimeout(1200); } catch (e) { m.actionError = String(e.message).slice(0, 200); } }
+  if (s.probe) { try { m.probe = await ev(page, s.probe); } catch (e) { m.probeError = String(e.message).slice(0, 200); } }
+  m.overflow = await ev(page, () => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  if (LEGACY) {
+    m.dom = await ev(page, OUTER, s.dom);
+  } else {
+    const p = path.join(outDir, `${label}-${s.id}-${w}-${dark ? 'dark' : 'light'}.png`);
+    await page.screenshot({ path: p });
+    m.shot = path.basename(p);
+  }
+  await ctx.close();
+  return m;
+}
+
+const sleep = (p, ms) => p.waitForTimeout(ms);
+const click = async (p, loc) => { await loc.first().click(); await sleep(p, 1500); };
+const into = async (p, loc, off = -80) => { await loc.first().evaluate((el) => el.scrollIntoView({ block: 'start' })); await p.mouse.wheel(0, off); await sleep(p, 600); };
+const openTools = async (p) => { await p.getByRole('button', { name: 'Open classroom tools' }).click(); await sleep(p, 1800); };
+const jump = async (p, name) => { await p.getByRole('navigation', { name: 'Jump to a tool' }).getByRole('button', { name, exact: true }).click(); await sleep(p, 2800); };
+const S = [
+  // R19 9ff0cb73: the assistant's composer (student dashboard is listed already; the family dashboard is the unlisted one)
+  { id: 'chat', route: '/student/dashboard', role: 'student', ivory: [], dom: 'textarea', action: (p) => click(p, p.getByRole('button', { name: 'Open the HEC assistant' })),
+    probe: () => { const t = document.querySelector('textarea'); if (!t) return null; const cs = getComputedStyle(t); const lh = parseFloat(cs.lineHeight) || 24; return { h: t.clientHeight, padY: parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom), lineH: lh, placeholderLinesFit: Math.floor((t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) / lh), w: t.clientWidth }; } },
+  { id: 'fam-chat', route: '/family/dashboard', role: 'family', ivory: [], dom: 'textarea', legacyOnly: true },
+  // R19 6203fffd: Team maker class select name
+  { id: 'teams', route: '/teacher/dashboard', role: 'teacher', ivory: ['/teacher/dashboard'], dom: '[role=dialog] section:has([role=combobox])', action: async (p) => { await openTools(p); await jump(p, 'Teams'); },
+    probe: () => { const sec = [...document.querySelectorAll('[role=dialog] section')].find((s) => s.querySelector('[role=combobox]')); const cb = sec?.querySelector('[role=combobox]'); return cb ? { ariaLabel: cb.getAttribute('aria-label'), labelledby: cb.getAttribute('aria-labelledby'), text: cb.innerText } : null; } },
+  // R20 dc89d156: the mini calendar at 375
+  { id: 'mini', route: '/schedule', role: 'admin', calView: 'week', ivory: ['/schedule'], dom: 'main', action: (p) => click(p, p.locator('main button:has(svg.lucide-calendar-days)')),
+    probe: () => { const today = [...document.querySelectorAll('main button')].find((b) => b.innerText.trim() === 'Today' && b.closest('.shadow-hec-2, .glass-sm')); const panel = today?.closest('.shadow-hec-2, .glass-sm'); if (!panel) return null; const r = panel.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), vh: innerHeight, vw: innerWidth, fitsVertically: r.top >= 0 && r.bottom <= innerHeight, position: getComputedStyle(panel).position }; } },
+  // R20 89ca3302 / 77614915: a display board inside the leaderboard frame (the colour it inherits)
+  { id: 'board', route: '/teacher/leaderboards', role: 'teacher', boardStyle: 'star', ivory: ['/teacher/leaderboards'], dom: 'main', action: (p) => click(p, p.getByRole('button', { name: 'Standard' })),
+    probe: () => { const b = document.querySelector('[data-hec-board]'); if (!b) return null; const fr = b.parentElement.closest('.relative.overflow-hidden') || b.parentElement; const texts = []; for (const el of b.querySelectorAll('*')) { const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()); if (!own) continue; const cs = getComputedStyle(el); texts.push(cs.color); } for (const sv of b.querySelectorAll('svg')) { const cs = getComputedStyle(sv); texts.push('svg:' + cs.color + '/' + cs.stroke + '/' + cs.fill); } for (const el of b.querySelectorAll('*')) { const cs = getComputedStyle(el); if (cs.borderTopStyle !== 'none' && parseFloat(cs.borderTopWidth) > 0) texts.push('border:' + cs.borderTopColor); }
+const k = {}; for (const c of texts) k[c] = (k[c] || 0) + 1; return { boardInherits: getComputedStyle(b).color, frameColor: getComputedStyle(fr).color, boardTop: Math.round(b.getBoundingClientRect().top - fr.getBoundingClientRect().top), textColours: k }; } },
+  // R17 60f6194b + 9bea9312: the Quill toolbar (assignment description, exam report)
+  { id: 'quill-asg', route: '/teacher/assignments', role: 'teacher', ivory: ['/teacher/assignments'], dom: '.quill', action: (p) => into(p, p.locator('.ql-toolbar'), -120),
+    probe: () => { const q = document.querySelector('.quill'); if (!q) return null; const st = q.querySelector('.ql-toolbar .ql-stroke'); const fi = q.querySelector('.ql-toolbar .ql-fill'); const pk = q.querySelector('.ql-toolbar .ql-picker'); const ed = q.querySelector('.ql-editor'); const tb = q.querySelector('.ql-toolbar'); return { stroke: st && getComputedStyle(st).stroke, fill: fi && getComputedStyle(fi).fill, picker: pk && getComputedStyle(pk).color, placeholder: ed && getComputedStyle(ed, '::before').color, toolbarBg: tb && getComputedStyle(tb).backgroundColor, toolbarBorder: tb && getComputedStyle(tb).borderTopColor }; } },
+  { id: 'quill-asg-picker', route: '/teacher/assignments', role: 'teacher', ivory: ['/teacher/assignments'], dom: '.quill', action: async (p) => { await into(p, p.locator('.ql-toolbar'), -120); await p.locator('.ql-toolbar .ql-header .ql-picker-label').first().click(); await sleep(p, 600); },
+    probe: () => { const o = document.querySelector('.ql-picker.ql-expanded .ql-picker-options'); const it = o?.querySelector('.ql-picker-item'); return o ? { bg: getComputedStyle(o).backgroundColor, item: it && getComputedStyle(it).color } : null; } },
+  { id: 'quill-exam', route: '/teacher/exam-reports', role: 'teacher', ivory: ['/teacher/exam-reports'], dom: '[role=dialog] .quill', action: async (p) => { await click(p, p.getByRole('button', { name: /New report/ })); await into(p, p.locator('[role=dialog] .ql-toolbar'), -200); },
+    probe: () => { const q = document.querySelector('[role=dialog] .quill'); if (!q) return null; const st = q.querySelector('.ql-toolbar .ql-stroke'); const pk = q.querySelector('.ql-toolbar .ql-picker'); const tb = q.querySelector('.ql-toolbar'); return { stroke: st && getComputedStyle(st).stroke, picker: pk && getComputedStyle(pk).color, toolbarBg: tb && getComputedStyle(tb).backgroundColor }; } },
+  // R17 60f6194b: the rubric criterion label at 375
+  { id: 'rubric', route: '/teacher/assignments', role: 'teacher', ivory: ['/teacher/assignments'], dom: '[role=dialog]', action: (p) => click(p, p.getByRole('button', { name: 'Rubric' })),
+    probe: () => [...document.querySelectorAll('[role=dialog] input[aria-label="Criterion label"]')].map((i) => ({ w: i.clientWidth, cut: i.scrollWidth > i.clientWidth + 1, v: i.value })) },
+  // R18 83785f41: the chosen picture in the picker
+  { id: 'picker', route: '/teacher/language-support', role: 'teacher', ivory: ['/teacher/language-support'], dom: '[role=dialog]', action: async (p) => { await click(p, p.locator('button', { hasText: 'Week 3: farm animals' })); await click(p, p.locator('main button[title="Change the picture"]', { hasText: /^s*cats*$/ })); await sleep(p, 1500); },
+    probe: () => [...document.querySelectorAll('[role=dialog] button[aria-pressed]')].slice(0, 6).map((b) => ({ pressed: b.getAttribute('aria-pressed'), bg: getComputedStyle(b).backgroundColor, border: getComputedStyle(b).borderTopColor })) },
+];
+const only = opt.only ? String(opt.only).split(',') : null;
+const sizes = String(opt.sizes || '375,1280').split(',').map(Number);
+const themes = String(opt.themes || 'light,dark').split(',');
+fs.mkdirSync(outDir, { recursive: true });
+const resPath = path.join(outDir, `${label}-results.json`);
+const results = fs.existsSync(resPath) ? JSON.parse(fs.readFileSync(resPath, 'utf8')) : { label, legacy: LEGACY, runs: {} };
+await run(S[0], 1280, 800, false); // warm-up
+for (const s of S) {
+  if (only && !only.includes(s.id)) continue;
+  if (s.legacyOnly && !LEGACY) continue;
+  for (const w of sizes) for (const t of themes) {
+    const key = `${s.id}-${w}-${t}`;
+    try { results.runs[key] = await run(s, w, w === 375 ? 812 : 800, t === 'dark'); }
+    catch (e) { console.log(key, 'RETRY after', String(e.message).slice(0, 120)); results.runs[key] = await run(s, w, w === 375 ? 812 : 800, t === 'dark'); }
+    fs.writeFileSync(resPath, JSON.stringify(results, null, 1));
+    const r = results.runs[key];
+    console.log(key, JSON.stringify({ attr: r.attr, over: r.overflow, err: r.errors.slice(0, 2), act: r.actionError, probe: r.probe, dom: r.dom ? r.dom.length : undefined }).slice(0, 600));
+  }
+}
+fs.writeFileSync(resPath, JSON.stringify(results, null, 1));
+await browser.close(); stop();
+process.exit(0);

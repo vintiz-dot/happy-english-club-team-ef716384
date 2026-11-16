@@ -366,6 +366,10 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
               <Label htmlFor="description">Description</Label>
               <Suspense fallback={<div className="flex h-40 items-center justify-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised text-hec-body text-hec-ink-faint"><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />Loading editor...</div>}>
                 <ReactQuill
+                  // Quill paints its toolbar #444, its placeholder near-black and its picker menu white: unreadable in
+                  // dark. One class more specific than quill.snow.css, so no !important and Quill's hover / active /
+                  // open states still show.
+                  className="[&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint"
                   theme="snow"
                   value={formData.description}
                   onChange={(value) => setFormData({ ...formData, description: value })}
