@@ -507,7 +507,7 @@
       },
       "identity": "public._session_pay_sentence(p_kind text)",
       "identity_arguments": "p_kind text",
-      "md5_prosrc": "54b02ecee83b2f202e4fccc9124d6048",
+      "md5_prosrc": "37a9f2460683b1837d99355f483734f8",
       "proname": "_session_pay_sentence",
       "security_definer": false,
       "volatility": "i"
@@ -603,7 +603,7 @@
       },
       "identity": "public.d4_guard_status()",
       "identity_arguments": "",
-      "md5_prosrc": "df2b7052707d4a8d06bdc307e6fe96a9",
+      "md5_prosrc": "932bc6aa9eded89d1faa16bdb3f54577",
       "proname": "d4_guard_status",
       "security_definer": true,
       "volatility": "s"
@@ -747,7 +747,7 @@
       },
       "identity": "public.session_pay_change_kind(o sessions, n sessions)",
       "identity_arguments": "o sessions, n sessions",
-      "md5_prosrc": "f16980b8840b46a1bf45a017f443b6ca",
+      "md5_prosrc": "a67936d64bff4c046159768b4718ceef",
       "proname": "session_pay_change_kind",
       "security_definer": true,
       "volatility": "s"

@@ -57,7 +57,23 @@ As in the 1b brief: every md5 of a function body here, and in both fingerprint f
 
 1. Run `docs/evidence/D4-release-fingerprint.sql`; compare with `D4-release-fingerprint.expected.json` object by object (CR-stripped md5). Every 1a / 1b object unchanged EXCEPT `d4_guard_status` (new md5 below); the new objects of 3A:
 
-FINGERPRINT_TABLE
+   Totals after 3A: 50 functions, 22 triggers, 6 relations (fix round 1 regenerated; the diff against the build's file is exactly the three md5s marked "fix round 1").
+
+| kind | object | md5 (prosrc CR removed / triggerdef) | secdef | vol | EXECUTE anon/auth/service |
+|---|---|---|---|---|---|
+| function | session_pay_change_kind(sessions, sessions) | a67936d64bff4c046159768b4718ceef (fix round 1, S-1) | true | s | f/f/f |
+| function | _session_ta_rows(uuid) | dc0e044990548a79d45ff64718abb5d8 | true | s | f/f/f |
+| function | _session_pay_tier(text, sessions, sessions) | 13dfc790cfafffbffc108ab656e00e24 | true | s | f/f/f |
+| function | _session_pay_sentence(text) | 37a9f2460683b1837d99355f483734f8 (fix round 1, retime sentence) | false | i | f/f/f |
+| function | session_pay_guard() | f69bcfb3f69fc7206f8aaabe62db09ac | true | v | f/f/f |
+| function | _session_insert_guard() | ede7f558c2e089a3acdd214d550bfbf2 | true | v | f/f/f |
+| function | _session_staff_guard() | 19a597ce8b0fd93c159f7c43d27689b2 | true | v | f/f/f |
+| function | _money_plan__session(text, jsonb, uuid) | e21f34e1392c0dd6f34f21b133271b87 | true | s | f/f/f |
+| function | _money_exec__session(jsonb, uuid) | cabd2db1f4023cba61bf8d38780d4e34 | true | v | f/f/f |
+| function (REPLACED, 1b) | d4_guard_status() | 932bc6aa9eded89d1faa16bdb3f54577 (was df2b7052...; fix round 1) | true | s | f/t/f (unchanged) |
+| trigger | sessions.zz2_session_pay_guard | 627eb5d6e28b91e44f5d997cc30f4686 | | | enabled O |
+| trigger | sessions.zz_session_insert_guard | c33edb0a689b2c4fe1a351bf27c74a56 | | | enabled O |
+| trigger | session_participants.zz_session_staff_guard | fe26026f304672fe4cc8682e35ebdf96 | | | enabled O |
 
    If only a trigger's `md5_def` differs, print its `pg_get_triggerdef` and compare with the file by eye; report, do not repair. Any body md5 or privilege different: re-apply once (idempotent), compare again; still different: STOP.
 2. `docs/evidence/D-release-fingerprint.sql`: still 64 of 66 identical, the same two as after 1a. 3A touches no D-release object.
@@ -66,7 +82,14 @@ FINGERPRINT_TABLE
 
 For each of `manage-session`, `bulk-cancel-sessions`, `schedule-sessions`, `mark-attendance`: its `index.ts` and every relative import, recursively (`../_lib/*`, unchanged by 3A), `verify_jwt` from `supabase/config.toml`. LF md5 of each `index.ts` sent:
 
-FUNCTION_TABLE
+| function | LF md5 of index.ts (fix round 1 head) | bytes | verify_jwt |
+|---|---|---|---|
+| manage-session | f242a0ba65e94b095c504a233e54ad56 | 36542 | true |
+| bulk-cancel-sessions | be930e4c68dc7af3c8bb4a45390b9b79 | 10038 | true |
+| schedule-sessions | 1f82785e457f0bf6d6e32a4067759f9c | 32162 | true |
+| mark-attendance | 82b4aace2b308c7919a3adb462c848fa | 12969 | true |
+
+If the merged commit changed any of these files after fix round 1, recompute the md5 from that commit and record it; do not deploy from this table blindly.
 
 `get_edge_function` read-back: identical to the repo's LF blobs; otherwise redeploy once, then STOP. Probes (publishable key from `.env`, not printed): POST each with the publishable key as bearer -> 401 / 403; with no Authorization -> 401.
 

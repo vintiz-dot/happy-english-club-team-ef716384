@@ -92,10 +92,11 @@ Beyond the design, both fail-closed and both needed by real writes (flagged belo
 
 | Object | md5 (body, CR removed) / trigger def | definer | volatility |
 |---|---|---|---|
-| `session_pay_change_kind(sessions, sessions)` | f16980b8840b46a1bf45a017f443b6ca | yes | s |
+| `session_pay_change_kind(sessions, sessions)` | a67936d64bff4c046159768b4718ceef (fix round 1; build: f16980b8...) | yes | s |
 | `_session_ta_rows(uuid)` | dc0e044990548a79d45ff64718abb5d8 | yes | s |
 | `_session_pay_tier(text, sessions, sessions)` | 13dfc790cfafffbffc108ab656e00e24 | yes | s |
-| `_session_pay_sentence(text)` | 54b02ecee83b2f202e4fccc9124d6048 | no | i |
+| `_session_pay_sentence(text)` | 37a9f2460683b1837d99355f483734f8 (fix round 1; build: 54b02ece...) | no | i |
+| `d4_guard_status()` (1b, REPLACED in fix round 1) | 932bc6aa9eded89d1faa16bdb3f54577 (1b: df2b7052...) | yes | s |
 | `session_pay_guard()` | f69bcfb3f69fc7206f8aaabe62db09ac | yes | v |
 | `_session_insert_guard()` | ede7f558c2e089a3acdd214d550bfbf2 | yes | v |
 | `_session_staff_guard()` | 19a597ce8b0fd93c159f7c43d27689b2 | yes | v |
