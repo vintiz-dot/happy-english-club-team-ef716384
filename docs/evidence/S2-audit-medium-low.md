@@ -54,3 +54,35 @@ GRANT EXECUTE ON FUNCTION public.assistant_rate_on(uuid, date) TO authenticated,
 DROP FUNCTION IF EXISTS public.get_class_catalog_teachers(uuid[]);
 COMMIT;
 ```
+
+<!-- rollback F-18 -->
+```sql
+-- The three any-teacher storage policies as 20260712090000, 20260721090000
+-- and 20260711235255 created them; the new policies and helpers dropped.
+-- THIS REOPENS F-18. No file is touched.
+BEGIN;
+DROP POLICY IF EXISTS student_work_files_admin_all ON storage.objects;
+DROP POLICY IF EXISTS student_work_files_staff_select ON storage.objects;
+DROP POLICY IF EXISTS student_work_files_staff_insert ON storage.objects;
+DROP POLICY IF EXISTS student_work_files_staff_update ON storage.objects;
+DROP POLICY IF EXISTS student_work_files_staff_delete ON storage.objects;
+DROP POLICY IF EXISTS lesson_resource_files_admin_all ON storage.objects;
+DROP POLICY IF EXISTS lesson_resource_files_staff_all ON storage.objects;
+DROP POLICY IF EXISTS exam_report_files_staff_insert ON storage.objects;
+DROP POLICY IF EXISTS "staff_manage_student_work_files" ON storage.objects;
+CREATE POLICY "staff_manage_student_work_files" ON storage.objects FOR ALL TO authenticated
+  USING (bucket_id = 'student-work' AND (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'teacher')))
+  WITH CHECK (bucket_id = 'student-work' AND (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'teacher')));
+DROP POLICY IF EXISTS "staff_manage_lesson_resource_files" ON storage.objects;
+CREATE POLICY "staff_manage_lesson_resource_files" ON storage.objects FOR ALL TO authenticated
+  USING (bucket_id = 'lesson-resources' AND (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'teacher')))
+  WITH CHECK (bucket_id = 'lesson-resources' AND (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'teacher')));
+DROP POLICY IF EXISTS "Teachers and admins upload exam-reports files" ON storage.objects;
+CREATE POLICY "Teachers and admins upload exam-reports files" ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'exam-reports' AND (public.has_role(auth.uid(), 'admin'::app_role) OR public.has_role(auth.uid(), 'teacher'::app_role)));
+DROP FUNCTION IF EXISTS public.student_work_file_staff_can(text);
+DROP FUNCTION IF EXISTS public.student_work_file_may_upload(text);
+DROP FUNCTION IF EXISTS public.lesson_resource_file_staff_can(text);
+DROP FUNCTION IF EXISTS public.exam_report_file_staff_may_upload(text);
+COMMIT;
+```
