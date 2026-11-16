@@ -1,6 +1,8 @@
 # D4 build - step 3A (lessons: who is paid, P1-P7, G-1 to G-7)
 
-**Where I am / next step:** COMPLETE: built and tested (65 suites green, app typecheck exit 0, bun 166/0, 40 of 41 mutants caught, fingerprint regenerated). Next step is not mine: the independent review of 3A, then the conductor's live apply (migration, then manage-session / bulk-cancel-sessions / schedule-sessions, then the screens, in one sitting).
+**Fix round 1 - where I am:** STARTED on branch `d4-3a-fix` (= `d4-3a-lessons` 856e493d + `review-3a` 10b10442). Items B-1, S-1, S-2, N-1..N-10, d4_guard_status, merge note - none done yet.
+
+**Where I am / next step (build, before the review):** COMPLETE: built and tested (65 suites green, app typecheck exit 0, bun 166/0, 40 of 41 mutants caught, fingerprint regenerated). Next step is not mine: the independent review of 3A, then the conductor's live apply (migration, then manage-session / bulk-cancel-sessions / schedule-sessions, then the screens, in one sitting).
 
 Implementer only: nothing pushed, nothing deployed, nothing applied to any database. Branch `d4-3a-lessons`, based on `claude/hec-conductor-setup-efbaa5` at c132bf7b (the worktree's own branch was older; a new branch was cut from the conductor branch rather than merging, which conflicted on files outside this step).
 
