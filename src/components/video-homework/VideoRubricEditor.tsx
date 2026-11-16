@@ -124,8 +124,9 @@ export function VideoRubricEditor({ homeworkId, onClose }: { homeworkId: string 
 
             {criteria.map((c, i) => (
               <div key={i} className="space-y-2 rounded-hec-md border border-hec-line p-3">
-                <div className="flex gap-2">
-                  <Input value={c.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="Label" aria-label="Criterion label" className="min-w-0 text-hec-body font-medium" />
+                {/* Below sm the label takes its own line (beside the weight and remove it was 123 px and cut). */}
+                <div className="flex flex-wrap gap-2">
+                  <Input value={c.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="Label" aria-label="Criterion label" className="min-w-0 flex-1 basis-full text-hec-body font-medium sm:basis-0" />
                   <select
                     value={c.weight}
                     onChange={(e) => set(i, { weight: Number(e.target.value) })}
