@@ -505,6 +505,16 @@ await section('the mirror: classes.session_rate_vnd is "the fee now"', async () 
      r.ok !== undefined && (await mirror(C)) === 1, r);
   r = await tryIt(() => asAdmin(`UPDATE classes SET session_rate_vnd = public_fee FROM (SELECT 200000 AS public_fee) q WHERE id=$1`, [C]));
   ok('an admin bringing it back level with the history for today -> passes (prices nothing new)', r.ok !== undefined && (await mirror(C)) === 200000, r);
+  // F-4 (review P11): another BEFORE trigger rewriting the fee during an update
+  // that never names the column is judged too.
+  await db.exec(`CREATE OR REPLACE FUNCTION public.aa_probe_fee() RETURNS trigger LANGUAGE plpgsql AS $f$
+    BEGIN IF NEW.name = 'probe-reprice' THEN NEW.session_rate_vnd := 1; END IF; RETURN NEW; END $f$;
+    DROP TRIGGER IF EXISTS aa_probe_fee ON public.classes;
+    CREATE TRIGGER aa_probe_fee BEFORE UPDATE ON public.classes FOR EACH ROW EXECUTE FUNCTION public.aa_probe_fee();`);
+  r = await tryIt(() => asService(`UPDATE classes SET name = 'probe-reprice' WHERE id=$1`, [C]));
+  ok('F-4: a fee rewritten by an earlier BEFORE trigger (the column not in the SET list) -> HC120, the mirror unchanged',
+     r.code === 'HC120' && (await mirror(C)) === 200000, r);
+  await db.exec(`DROP TRIGGER aa_probe_fee ON public.classes; DROP FUNCTION public.aa_probe_fee();`);
   const neu = await mkClass(175000);
   ok('creating a class is not guarded: its fee is its first history row', (await feeOn(neu, months.today)) === 175000 && (await mirror(neu)) === 175000);
 });

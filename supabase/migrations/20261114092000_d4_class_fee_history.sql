@@ -367,7 +367,7 @@ CREATE TRIGGER class_fee_baseline AFTER INSERT ON public.classes
 
 -- classes.session_rate_vnd may only be set to the history's fee for today
 -- (Hanoi) - which is all the checked op writes - or by the owner (recorded).
--- Anyone else: HC120. A save that sends the column unchanged never fires.
+-- Anyone else: HC120. An update that leaves the value as it was never fires.
 CREATE OR REPLACE FUNCTION public._class_fee_mirror_guard()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
 DECLARE
@@ -387,7 +387,11 @@ BEGIN
 END $fn$;
 
 DROP TRIGGER IF EXISTS zz_class_fee_mirror_guard ON public.classes;
-CREATE TRIGGER zz_class_fee_mirror_guard BEFORE UPDATE OF session_rate_vnd ON public.classes
+-- No column list (review F-4): a column trigger fires only when the column is
+-- in the statement's SET list, so a BEFORE trigger that rewrites the fee during
+-- another update would not be judged. The WHEN clause limits it to a real
+-- change, and sees what earlier BEFORE triggers did.
+CREATE TRIGGER zz_class_fee_mirror_guard BEFORE UPDATE ON public.classes
   FOR EACH ROW WHEN (OLD.session_rate_vnd IS DISTINCT FROM NEW.session_rate_vnd)
   EXECUTE FUNCTION public._class_fee_mirror_guard();
 
