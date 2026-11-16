@@ -41,12 +41,12 @@ export default function ParentVideos() {
           <div className="flex justify-center py-16 text-hec-ink-soft"><Loader2 className="h-6 w-6 animate-spin" /></div>
         )}
         {isError && (
-          <Card><CardContent className="py-12 text-center text-hec-body text-hec-ink-soft">
+          <Card><CardContent className="py-12 text-center text-hec-body text-hec-ink-soft sm:py-12">
             This link is not valid any more. Please ask the teacher for a new one.
           </CardContent></Card>
         )}
         {data && data.videos.length === 0 && (
-          <Card><CardContent className="py-12 text-center text-hec-body text-hec-ink-soft">
+          <Card><CardContent className="py-12 text-center text-hec-body text-hec-ink-soft sm:py-12">
             <Video className="mx-auto mb-2 h-8 w-8 text-hec-ink-faint" />No approved videos yet. Check back soon!
           </CardContent></Card>
         )}
