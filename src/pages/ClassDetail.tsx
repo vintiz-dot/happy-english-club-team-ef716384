@@ -54,7 +54,7 @@ const ClassDetail = () => {
         </div>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 basis-64">
             <h1 className="whitespace-normal break-words hyphens-none text-balance font-display text-hec-h1 font-medium text-hec-ink">{classData?.name || "Class"}</h1>
             <p className="text-hec-small text-hec-ink-soft">Manage class details, enrollments, and homework</p>
           </div>
