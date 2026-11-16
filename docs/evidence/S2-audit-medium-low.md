@@ -216,6 +216,7 @@ DROP FUNCTION IF EXISTS public.student_work_file_staff_can(text);
 DROP FUNCTION IF EXISTS public.student_work_file_may_upload(text);
 DROP FUNCTION IF EXISTS public.lesson_resource_file_staff_can(text);
 DROP FUNCTION IF EXISTS public.exam_report_file_staff_may_upload(text);
+DROP FUNCTION IF EXISTS public.storage_object_is_mine(uuid, text);
 COMMIT;
 ```
 

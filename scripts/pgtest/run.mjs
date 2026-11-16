@@ -479,7 +479,7 @@ const SUITES = [
   {
     name: "teacher storage (F-18)",
     file: "s2-f18-teacher-storage.test.mjs",
-    expect: 38,
+    expect: 48,
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116094000_teacher_storage_by_class.sql"],
   },
   {

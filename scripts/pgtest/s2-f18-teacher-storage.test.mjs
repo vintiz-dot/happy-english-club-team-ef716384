@@ -161,6 +161,36 @@ eq("the service role (ocr-student-work routing a file) still reaches everything"
   ok("teacher B cannot move their own upload into a class-A child's folder", r.err !== null || r.n === 0, r);
 }
 
+console.log("=== review R-1 / R-6 ===");
+{
+  // R-1: a class-A row naming class B's routed photo opens nothing.
+  const bName = await nameOf(OB["work B1 (routed)"]);
+  await q(`INSERT INTO public.student_work (class_id, uploaded_by, storage_path) VALUES ($1,$2,$3)`, [W.CA, P.TEA, bName]);
+  eq("R-1: teacher A files a class-A row naming class B's photo - still cannot read it", (await as(P.TEA, `SELECT count(*)::int n FROM storage.objects WHERE id = $1`, [OB["work B1 (routed)"]])).rows[0].n, 0);
+  eq("R-1: ...nor delete it", (await as(P.TEA, `DELETE FROM storage.objects WHERE id = $1`, [OB["work B1 (routed)"]])).n, 0);
+  eq("R-1: class B's teacher still reads it", (await as(P.TEB, `SELECT count(*)::int n FROM storage.objects WHERE id = $1`, [OB["work B1 (routed)"]])).rows[0].n, 1);
+  await q(`DELETE FROM public.student_work WHERE class_id = $1 AND storage_path = $2`, [W.CA, bName]);
+  // ocr-student-work's routing, as the service role: move incoming/ -> students/<A1>/general/, update the row.
+  const inc = await nameOf(OB["work A incoming"]);
+  const routed = `students/${W.A1}/general/${inc.split("/").pop()}`;
+  await as(null, `UPDATE storage.objects SET name = $2 WHERE name = $1`, [inc, routed], { role: "service_role", keep: true });
+  await as(null, `UPDATE public.student_work SET storage_path = $2, student_id = $3 WHERE storage_path = $1`, [inc, routed, W.A1], { role: "service_role", keep: true });
+  for (const [l, u] of [["class teacher", P.TEA], ["standing TA", P.TA], ["cover teacher", P.COVER]]) {
+    eq(`a photo routed to a child of the class: ${l} still reads it`, (await as(u, `SELECT count(*)::int n FROM storage.objects WHERE name = $1`, [routed])).rows[0].n, 1);
+  }
+  eq("...and teacher B does not", (await as(P.TEB, `SELECT count(*)::int n FROM storage.objects WHERE name = $1`, [routed])).rows[0].n, 0);
+  await as(null, `UPDATE storage.objects SET name = $2 WHERE name = $1`, [routed, inc], { role: "service_role", keep: true });
+  await as(null, `UPDATE public.student_work SET storage_path = $2, student_id = NULL WHERE storage_path = $1`, [routed, inc], { role: "service_role", keep: true });
+  ok("a routed name with a malformed child folder is no match, not an error",
+    (await as(P.TEA, `SELECT public.student_work_file_staff_can('students/not-a-uuid/x.jpg') c`)).err === null);
+  // R-6: Storage's newer owner_id (text) alone is enough for the uploader.
+  const p6 = `incoming/${randomUUID()}.jpg`;
+  await q(`INSERT INTO storage.objects (bucket_id, name, owner, owner_id) VALUES ('student-work', $1, NULL, $2)`, [p6, P.TEB]);
+  eq("R-6: an unfiled upload with only owner_id set: its uploader reads it", (await as(P.TEB, `SELECT count(*)::int n FROM storage.objects WHERE name = $1`, [p6])).rows[0].n, 1);
+  eq("R-6: ...another teacher does not", (await as(P.TEA, `SELECT count(*)::int n FROM storage.objects WHERE name = $1`, [p6])).rows[0].n, 0);
+  await q(`DELETE FROM storage.objects WHERE name = $1`, [p6]);
+}
+
 console.log("=== refusals ===");
 await q(`CREATE POLICY "Teachers view all student work" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'student-work' AND has_role(auth.uid(), 'teacher'::app_role))`);
 const r1 = await exec(fixText);

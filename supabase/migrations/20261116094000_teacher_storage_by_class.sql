@@ -57,17 +57,37 @@ BEGIN
      OR to_regclass('public.enrollments') IS NULL THEN
     RAISE EXCEPTION 'Refusing to install: is_teacher_of_class / has_role / student_work / enrollments missing';
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_schema = 'storage' AND table_name = 'objects' AND column_name = 'owner_id') THEN
+    RAISE EXCEPTION 'Refusing to install: storage.objects has no owner_id column (an older Storage version than this file assumes)';
+  END IF;
 END
 $preflight$;
 
 -- ------------------------------------------------------------------ helpers
 CREATE OR REPLACE FUNCTION public.student_work_file_staff_can(_name text)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  -- A routed file (students/<child>/...) also has to be a child of the
+  -- row's class (S2 review R-1): otherwise a teacher could file a row of
+  -- their own class naming another class's photo and reach it through this
+  -- test. Routing is done only by ocr-student-work, which picks the child
+  -- from that class's roster, so every real routed row passes.
   SELECT auth.uid() IS NOT NULL
      AND coalesce(public.has_role(auth.uid(), 'teacher'::public.app_role), false)
      AND EXISTS (SELECT 1 FROM public.student_work w
                   WHERE w.storage_path = _name AND w.class_id IS NOT NULL
-                    AND public.is_teacher_of_class(auth.uid(), w.class_id))
+                    AND public.is_teacher_of_class(auth.uid(), w.class_id)
+                    AND (split_part(_name, '/', 1) <> 'students'
+                         -- compared as text: a malformed folder is simply no match
+                         OR EXISTS (SELECT 1 FROM public.enrollments e
+                                     WHERE e.student_id::text = lower(split_part(_name, '/', 2)) AND e.class_id = w.class_id)))
+$$;
+
+-- The uploader of a file (Storage fills both `owner` and the newer text
+-- `owner_id`; either is enough - S2 review R-6).
+CREATE OR REPLACE FUNCTION public.storage_object_is_mine(_owner uuid, _owner_id text)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT auth.uid() IS NOT NULL AND (_owner = auth.uid() OR _owner_id = auth.uid()::text)
 $$;
 
 CREATE OR REPLACE FUNCTION public.student_work_file_may_upload(_name text)
@@ -98,9 +118,11 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
 $$;
 
 REVOKE EXECUTE ON FUNCTION public.student_work_file_staff_can(text), public.student_work_file_may_upload(text),
-  public.lesson_resource_file_staff_can(text), public.exam_report_file_staff_may_upload(text) FROM PUBLIC, anon;
+  public.lesson_resource_file_staff_can(text), public.exam_report_file_staff_may_upload(text),
+  public.storage_object_is_mine(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.student_work_file_staff_can(text), public.student_work_file_may_upload(text),
-  public.lesson_resource_file_staff_can(text), public.exam_report_file_staff_may_upload(text) TO authenticated, service_role;
+  public.lesson_resource_file_staff_can(text), public.exam_report_file_staff_may_upload(text),
+  public.storage_object_is_mine(uuid, text) TO authenticated, service_role;
 
 -- ------------------------------------------------------------------ student-work
 DROP POLICY IF EXISTS "staff_manage_student_work_files" ON storage.objects;
@@ -115,17 +137,17 @@ CREATE POLICY student_work_files_admin_all ON storage.objects FOR ALL TO authent
   WITH CHECK (bucket_id = 'student-work' AND public.has_role(auth.uid(), 'admin'::public.app_role));
 CREATE POLICY student_work_files_staff_select ON storage.objects FOR SELECT TO authenticated
   USING (bucket_id = 'student-work' AND (public.student_work_file_staff_can(name)
-         OR (owner = auth.uid() AND public.student_work_file_may_upload(name))));
+         OR (public.storage_object_is_mine(owner, owner_id) AND public.student_work_file_may_upload(name))));
 CREATE POLICY student_work_files_staff_insert ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'student-work' AND public.student_work_file_may_upload(name));
 CREATE POLICY student_work_files_staff_update ON storage.objects FOR UPDATE TO authenticated
   USING (bucket_id = 'student-work' AND (public.student_work_file_staff_can(name)
-         OR (owner = auth.uid() AND public.student_work_file_may_upload(name))))
+         OR (public.storage_object_is_mine(owner, owner_id) AND public.student_work_file_may_upload(name))))
   WITH CHECK (bucket_id = 'student-work' AND (public.student_work_file_staff_can(name)
-         OR (owner = auth.uid() AND public.student_work_file_may_upload(name))));
+         OR (public.storage_object_is_mine(owner, owner_id) AND public.student_work_file_may_upload(name))));
 CREATE POLICY student_work_files_staff_delete ON storage.objects FOR DELETE TO authenticated
   USING (bucket_id = 'student-work' AND (public.student_work_file_staff_can(name)
-         OR (owner = auth.uid() AND public.student_work_file_may_upload(name))));
+         OR (public.storage_object_is_mine(owner, owner_id) AND public.student_work_file_may_upload(name))));
 
 -- ------------------------------------------------------------------ lesson-resources
 DROP POLICY IF EXISTS "staff_manage_lesson_resource_files" ON storage.objects;
