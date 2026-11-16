@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import HomeworkSubmission from "./HomeworkSubmission";
-import { useIvory } from "@/hooks/useIvory";
 import { getHomeworkStatus, ivoryStatusConfig } from "@/lib/homeworkStatus";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -19,8 +18,6 @@ interface AssignmentsListProps {
 
 export default function AssignmentsList({ studentId }: AssignmentsListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  // "Ivory" design system on a listed route; today's classes elsewhere (this list is on the `/` page).
-  const ivory = useIvory();
 
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["student-assignments", studentId],
@@ -55,33 +52,14 @@ export default function AssignmentsList({ studentId }: AssignmentsListProps) {
           <CardTitle>Assignments</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className={cn("text-center py-8", ivory ? "text-hec-ink-soft" : "text-muted-foreground")}>No assignments yet</p>
+          <p className={cn("text-center py-8", "text-hec-ink-soft")}>No assignments yet</p>
         </CardContent>
       </Card>
     );
   }
 
   const getCardStatusClass = (assignment: any) => {
-    if (ivory) return cn("border", ivoryStatusConfig[getHomeworkStatus(assignment)].panelClass);
-    const now = new Date();
-    const dueDate = assignment.due_date ? new Date(assignment.due_date) : null;
-    const submission = assignment.submission;
-    
-    if (submission?.status === "graded") {
-      return "bg-emerald-500/15 dark:bg-emerald-500/10 border-l-4 border-l-emerald-500 border-emerald-500/30";
-    }
-    if (submission?.status === "submitted") {
-      return "bg-sky-500/15 dark:bg-sky-500/10 border-l-4 border-l-sky-400 border-sky-400/30";
-    }
-    if (dueDate) {
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-      const diffDays = Math.ceil((dueDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      if (diffDays < 0) return "bg-red-500/20 dark:bg-red-500/15 border-l-4 border-l-red-500 border-red-500/40";
-      if (diffDays === 0) return "bg-amber-500/20 dark:bg-amber-500/15 border-l-4 border-l-amber-500 border-amber-500/40";
-      if (diffDays <= 2) return "bg-amber-400/10 dark:bg-amber-400/10 border-l-4 border-l-amber-400 border-amber-400/30";
-    }
-    return "border-l-4 border-l-muted-foreground/20";
+    return cn("border", ivoryStatusConfig[getHomeworkStatus(assignment)].panelClass);
   };
 
   return (
@@ -104,7 +82,7 @@ export default function AssignmentsList({ studentId }: AssignmentsListProps) {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                   {assignment.submission?.status === "graded" && assignment.submission.grade && (
-                    <Badge variant="default" className={ivory ? undefined : "bg-emerald-600"}>
+                    <Badge variant="default" className={undefined}>
                       {assignment.submission.grade}
                     </Badge>
                   )}

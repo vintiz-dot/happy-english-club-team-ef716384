@@ -5,14 +5,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { useIvory } from "@/hooks/useIvory";
 
-// Today's look: used on every screen that is not yet in the Ivory system.
+// The old look, kept ONLY for the screens whose owners keep them outside the
+// system (OUTSIDE_ROUTES in src/lib/ivoryScope.ts: the recorder and audit
+// clips) and for print copies. Delete it when those are released.
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 premium-click hover:scale-[1.02] active:transition-transform active:duration-100",
   {
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg backdrop-blur-xl",
-        destructive: "glass-sm bg-destructive/90 text-destructive-foreground hover:bg-destructive shadow-md hover:shadow-lg",
+        // Was "glass-sm bg-destructive/90 ...": glass-sm's own background painted over the red (white on white).
+        destructive: "bg-destructive/90 text-destructive-foreground hover:bg-destructive shadow-md hover:shadow-lg",
         outline: "glass-sm hover:bg-warmGray hover:text-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light shadow-sm hover:shadow-md",
         secondary: "glass-sm bg-secondary/80 text-secondary-foreground hover:bg-secondary shadow-sm hover:shadow-md",
         ghost: "hover:glass-sm hover:bg-warmGray hover:text-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light",

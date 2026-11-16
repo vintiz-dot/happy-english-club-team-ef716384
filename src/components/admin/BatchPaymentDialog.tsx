@@ -12,13 +12,12 @@ import { CreditCard, Loader2, Zap, Users, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getPaymentStatus, getTuitionStatusBadge, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
+import { getPaymentStatus, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED, setRecordedPayment } from "@/lib/recordedPaymentWrite";
-import { useIvory } from "@/hooks/useIvory";
 
 interface BatchPaymentDialogProps {
   open: boolean;
@@ -35,8 +34,6 @@ interface StudentPaymentEntry {
 
 export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: BatchPaymentDialogProps) => {
   const tuitionMonth = useTuitionMonthConfirmation(month, open);
-  const ivory = useIvory();
-  const iv = (n: string, o: string) => (ivory ? n : o);
   const [entries, setEntries] = useState<Record<string, string>>({});
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [method, setMethod] = useState("Cash");
@@ -209,25 +206,25 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
-          <DialogTitle className={iv("flex flex-wrap items-center gap-2", "flex items-center gap-2")}>
+          <DialogTitle className="flex flex-wrap items-center gap-2">
             <Users className="h-5 w-5" />
             Batch Record Payment
-            <Badge variant="secondary" className={iv("font-sans tabular-nums", "")}>{items.length} students</Badge>
+            <Badge variant="secondary" className="font-sans tabular-nums">{items.length} students</Badge>
           </DialogTitle>
         </DialogHeader>
 
-        <div className={iv("flex-1 overflow-y-auto flex flex-col gap-3 min-h-0 -mx-2 px-2", "flex-1 overflow-hidden flex flex-col gap-3 min-h-0")}>
+        <div className="flex-1 overflow-y-auto flex flex-col gap-3 min-h-0 -mx-2 px-2">
           {tuitionMonth.field}
           {/* Global controls - collapsible row */}
           <div className="shrink-0 grid grid-cols-2 gap-3">
-            <div className={iv("min-w-0 space-y-2", "space-y-1")}>
-              <Label htmlFor="batch-payment-date" className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Date</Label>
-              <Input id="batch-payment-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={iv("", "h-8")} />
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="batch-payment-date" className="text-hec-small font-medium text-hec-ink">Date</Label>
+              <Input id="batch-payment-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="" />
             </div>
-            <div className={iv("min-w-0 space-y-2", "space-y-1")}>
-              <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")} htmlFor="batch-payment-method">Method</Label>
+            <div className="min-w-0 space-y-2">
+              <Label className="text-hec-small font-medium text-hec-ink" htmlFor="batch-payment-method">Method</Label>
               <Select value={method} onValueChange={setMethod}>
-                <SelectTrigger id="batch-payment-method" className={iv("", "h-8")}><SelectValue /></SelectTrigger>
+                <SelectTrigger id="batch-payment-method" className=""><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Cash">Cash</SelectItem>
                   <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
@@ -238,20 +235,20 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
             </div>
           </div>
 
-          <div className={iv("shrink-0 space-y-2", "shrink-0 space-y-1")}>
-            <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Shared Note (optional)</Label>
+          <div className="shrink-0 space-y-2">
+            <Label className="text-hec-small font-medium text-hec-ink">Shared Note (optional)</Label>
             <Textarea
               placeholder="E.g. Monthly batch collection..."
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               rows={1}
-              className={iv("min-h-hec-target", "min-h-[36px]")}
+              className="min-h-hec-target"
             />
           </div>
 
-          <div className={iv("shrink-0 flex flex-wrap items-center justify-between gap-2", "shrink-0 flex items-center justify-between")}>
-            <span className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Student Amounts</span>
-            <Button variant="outline" size="sm" onClick={handlePayFullAll} className={iv("gap-1", "gap-1 h-7 text-xs")}>
+          <div className="shrink-0 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-hec-small font-medium text-hec-ink">Student Amounts</span>
+            <Button variant="outline" size="sm" onClick={handlePayFullAll} className="gap-1">
               <Zap className="h-3 w-3" />
               Pay Full All
             </Button>
@@ -260,7 +257,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
           <Separator className="shrink-0" />
 
           {/* Student list - takes remaining space */}
-          <div className={iv("shrink-0 pb-1", "flex-1 min-h-0 overflow-y-auto -mx-2 px-2 pb-1")}>
+          <div className="shrink-0 pb-1">
             <div className="space-y-2">
               {items.map((item) => {
                 const studentName = item.students?.full_name || "Student";
@@ -278,34 +275,32 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
                 return (
                   <div
                     key={item.student_id}
-                    className={ivory ? `rounded-hec-md border p-3 space-y-2 transition-colors duration-hec-1 ease-hec ${
+                    className={`rounded-hec-md border p-3 space-y-2 transition-colors duration-hec-1 ease-hec ${
                       isCompleted ? "bg-hec-leaf-tint border-hec-leaf/30" : "bg-hec-surface border-hec-line"
-                    }` : `rounded-lg border p-2.5 space-y-1.5 transition-colors ${
-                      isCompleted ? "bg-green-50 dark:bg-green-950/20 border-green-200" : ""
                     }`}
                   >
-                    <div className={iv("flex items-start gap-2", "flex items-center gap-2")}>
-                      <Avatar className={iv("h-8 w-8 shrink-0", "h-6 w-6 shrink-0")}>
+                    <div className="flex items-start gap-2">
+                      <Avatar className="h-8 w-8 shrink-0">
                         <AvatarImage
                           src={getAvatarUrl(item.students?.avatar_url) || undefined}
                           alt={studentName}
                           className="object-cover"
                         />
-                        <AvatarFallback className={iv("bg-hec-sunken text-hec-caption text-hec-ink-soft", "text-[10px] bg-primary/10 text-primary")}>
+                        <AvatarFallback className="bg-hec-sunken text-hec-caption text-hec-ink-soft">
                           {studentName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className={iv("min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink", "font-medium text-sm truncate")}>{studentName}</span>
-                          {isCompleted && <CheckCircle2 className={iv("h-4 w-4 text-hec-leaf shrink-0", "h-3.5 w-3.5 text-green-500 shrink-0")} aria-label={ivory ? "Recorded" : undefined} />}
+                          <span className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{studentName}</span>
+                          {isCompleted && <CheckCircle2 className="h-4 w-4 text-hec-leaf shrink-0" aria-label="Recorded" />}
                         </div>
-                        <div className={iv("flex flex-wrap gap-x-3 gap-y-1 text-hec-caption text-hec-ink-soft", "flex gap-3 text-xs text-muted-foreground")}>
-                          <span>Payable: <span className={iv("whitespace-nowrap text-hec-ink tabular-nums", "")}>{fmt(item.finalPayable ?? 0)}</span></span>
-                          <span>Outstanding: <span className={ivory ? "whitespace-nowrap text-hec-ink tabular-nums" : outstanding > 0 ? "text-destructive" : "text-green-600"}>{fmt(outstanding)}</span></span>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-hec-caption text-hec-ink-soft">
+                          <span>Payable: <span className="whitespace-nowrap text-hec-ink tabular-nums">{fmt(item.finalPayable ?? 0)}</span></span>
+                          <span>Outstanding: <span className="whitespace-nowrap text-hec-ink tabular-nums">{fmt(outstanding)}</span></span>
                         </div>
                       </div>
-                      {ivory ? <span className="shrink-0">{getIvoryTuitionStatusBadge(status, item.settled_in_month)}</span> : getTuitionStatusBadge(status, item.settled_in_month)}
+                      <span className="shrink-0">{getIvoryTuitionStatusBadge(status, item.settled_in_month)}</span>
                     </div>
 
                     <div className="flex gap-2">
@@ -314,15 +309,15 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
                         placeholder="0"
                         value={entries[item.student_id] || ""}
                         onChange={(e) => handleAmountChange(item.student_id, e.target.value)}
-                        className={iv("min-w-0 flex-1 tabular-nums", "flex-1 h-7 text-sm")}
+                        className="min-w-0 flex-1 tabular-nums"
                         disabled={saving}
-                        aria-label={ivory ? `Amount for ${studentName}` : undefined}
+                        aria-label={`Amount for ${studentName}`}
                       />
                       {outstanding > 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className={iv("gap-1 shrink-0", "h-7 text-xs gap-1 shrink-0")}
+                          className="gap-1 shrink-0"
                           onClick={() => handlePayFull(item.student_id, outstanding)}
                           disabled={saving}
                         >
@@ -333,11 +328,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
                     </div>
 
                     {enteredAmount > 0 && (
-                      <p className={ivory ? "text-hec-caption font-medium text-hec-ink tabular-nums" : `text-xs font-medium ${
-                        (item.finalPayable ?? 0) - (item.recorded_payment ?? 0) - enteredAmount <= 0
-                          ? "text-green-600"
-                          : "text-amber-600"
-                      }`}>
+                      <p className="text-hec-caption font-medium text-hec-ink tabular-nums">
                         → New balance: {fmt((item.finalPayable ?? 0) - (item.recorded_payment ?? 0) - enteredAmount)}
                       </p>
                     )}
@@ -349,11 +340,11 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
 
           {/* Summary bar */}
           {totalPayment > 0 && (
-            <div className={iv("sticky bottom-0 z-10 shrink-0 bg-hec-raised border-t-2 border-hec-ink pt-3 pb-1 flex flex-wrap items-baseline justify-between gap-2", "shrink-0 rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center justify-between")}>
-              <span className={iv("text-hec-body font-medium text-hec-ink", "text-sm font-medium")}>
-                Total: <span className={iv("whitespace-nowrap font-sans text-hec-h3 font-semibold text-hec-ink tabular-nums", "text-primary font-bold")}>{fmt(totalPayment)}</span>
+            <div className="sticky bottom-0 z-10 shrink-0 bg-hec-raised border-t-2 border-hec-ink pt-3 pb-1 flex flex-wrap items-baseline justify-between gap-2">
+              <span className="text-hec-body font-medium text-hec-ink">
+                Total: <span className="whitespace-nowrap font-sans text-hec-h3 font-semibold text-hec-ink tabular-nums">{fmt(totalPayment)}</span>
               </span>
-              <span className={iv("text-hec-caption text-hec-ink-soft tabular-nums", "text-xs text-muted-foreground")}>
+              <span className="text-hec-caption text-hec-ink-soft tabular-nums">
                 {validEntries.length} of {items.length} students
               </span>
             </div>

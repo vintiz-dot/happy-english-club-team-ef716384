@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { dayjs } from "@/lib/date";
 import { getSessionDisplayStatus, type SessionStatus } from "@/lib/sessionStatus";
 import { nowBangkok } from "@/lib/date";
-import { useIvory } from "@/hooks/useIvory";
 
 /** The `FOCUS` ring of docs/DESIGN_SYSTEM.md s.15. */
 const FOCUS =
@@ -30,64 +29,20 @@ interface AgendaViewProps {
   className?: string;
 }
 
-const statusConfig: Record<string, { 
-  bg: string; 
-  border: string; 
+type StatusLook = {
+  bg: string;
+  border: string;
   text: string;
   dotColor: string;
   icon: string;
-}> = {
-  scheduled: {
-    bg: "bg-success/5 hover:bg-success/10",
-    border: "border-l-success",
-    text: "text-success",
-    dotColor: "bg-success",
-    icon: "✨"
-  },
-  today: {
-    bg: "bg-primary/5 hover:bg-primary/10",
-    border: "border-l-primary",
-    text: "text-primary",
-    dotColor: "bg-primary",
-    icon: "🌟"
-  },
-  needsAttention: {
-    bg: "bg-warning/5 hover:bg-warning/10",
-    border: "border-l-warning",
-    text: "text-warning",
-    dotColor: "bg-warning",
-    icon: "⚡"
-  },
-  held: {
-    bg: "bg-muted/50 hover:bg-muted/70",
-    border: "border-l-muted-foreground/30",
-    text: "text-muted-foreground",
-    dotColor: "bg-muted-foreground/50",
-    icon: "✓"
-  },
-  canceled: {
-    bg: "bg-destructive/5 hover:bg-destructive/10",
-    border: "border-l-destructive",
-    text: "text-destructive",
-    dotColor: "bg-destructive",
-    icon: "✕"
-  },
-  holiday: {
-    bg: "bg-accent/5 hover:bg-accent/10",
-    border: "border-l-accent",
-    text: "text-accent",
-    dotColor: "bg-accent",
-    icon: "🎉"
-  },
 };
 
 /**
- * statusConfig in the "Ivory" system (DESIGN_SYSTEM s.14), used on a listed
- * route. Same keys and the same icon characters; only the classes differ.
- * One loud state: needsAttention is amber, cancelled is red, today carries
- * the brass edge (the current item); the rest are quiet ink.
+ * How each status reads (DESIGN_SYSTEM s.14). One loud state: needsAttention
+ * is amber, cancelled is red, today carries the brass edge (the current item);
+ * the rest are quiet ink.
  */
-const statusConfigIvory: typeof statusConfig = {
+const statusConfigIvory: Record<string, StatusLook> = {
   scheduled: {
     bg: "border-hec-line bg-hec-surface hover:bg-hec-sunken/60",
     border: "border-l-hec-line-strong",
@@ -161,36 +116,33 @@ function AgendaEventCard({
   onSelect: (event: AgendaEvent) => void;
   index: number;
 }) {
-  const ivory = useIvory();
   const statusKey = getEventStatusKey(event);
-  const config = (ivory ? statusConfigIvory : statusConfig)[statusKey];
+  const config = statusConfigIvory[statusKey];
 
   return (
     <motion.button
-      initial={ivory ? { opacity: 0, y: 8 } : { opacity: 0, x: -20 }}
-      animate={ivory ? { opacity: 1, y: 0 } : { opacity: 1, x: 0 }}
-      exit={ivory ? { opacity: 0 } : { opacity: 0, x: 20 }}
-      transition={ivory ? { delay: Math.min(index * 0.03, 0.24), duration: 0.24 } : { delay: index * 0.03, duration: 0.25 }}
-      whileHover={ivory ? undefined : { scale: 1.01, x: 4 }}
-      whileTap={ivory ? undefined : { scale: 0.99 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ delay: Math.min(index * 0.03, 0.24), duration: 0.24 }}
+      whileHover={undefined}
+      whileTap={undefined}
       onClick={() => onSelect(event)}
       className={cn(
-        ivory
-          ? "group flex min-h-hec-target w-full cursor-pointer items-start gap-4 rounded-hec-md border border-l-4 p-4 text-left transition-colors duration-hec-1 ease-hec"
-          : "w-full text-left p-4 rounded-xl border-l-4 transition-all duration-300",
-        ivory ? FOCUS : "backdrop-blur-sm cursor-pointer group flex items-start gap-4",
-        ivory ? undefined : "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+        "group flex min-h-hec-target w-full cursor-pointer items-start gap-4 rounded-hec-md border border-l-4 p-4 text-left transition-colors duration-hec-1 ease-hec",
+        FOCUS,
+        undefined,
         config.bg,
         config.border
       )}
     >
       {/* Time column */}
-      <div className={ivory ? "flex min-w-14 shrink-0 flex-col items-center" : "flex flex-col items-center min-w-[60px]"}>
-        <span className={ivory ? "text-hec-small font-semibold tabular-nums text-hec-ink" : "text-sm font-bold text-foreground"}>
+      <div className="flex min-w-14 shrink-0 flex-col items-center">
+        <span className="text-hec-small font-semibold tabular-nums text-hec-ink">
           {event.start_time.slice(0, 5)}
         </span>
-        <span className={ivory ? "text-hec-caption text-hec-ink-faint" : "text-[10px] text-muted-foreground"}>to</span>
-        <span className={ivory ? "text-hec-caption tabular-nums text-hec-ink-soft" : "text-xs text-muted-foreground"}>
+        <span className="text-hec-caption text-hec-ink-faint">to</span>
+        <span className="text-hec-caption tabular-nums text-hec-ink-soft">
           {event.end_time.slice(0, 5)}
         </span>
       </div>
@@ -198,52 +150,46 @@ function AgendaEventCard({
       {/* Divider */}
       <div className="flex flex-col items-center self-stretch">
         <motion.div
-          className={cn(ivory ? "mt-1 h-3 w-3 rounded-full" : "w-3 h-3 rounded-full", config.dotColor)}
-          animate={ivory ? undefined : { scale: [1, 1.2, 1] }}
-          transition={ivory ? undefined : { duration: 2, repeat: Infinity }}
+          className={cn("mt-1 h-3 w-3 rounded-full", config.dotColor)}
+          animate={undefined}
+          transition={undefined}
         />
-        <div className={ivory ? "mt-1 w-px flex-1 bg-hec-line" : "flex-1 w-px bg-border/50 mt-1"} />
+        <div className="mt-1 w-px flex-1 bg-hec-line" />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <div className={ivory ? "min-w-0 flex-1" : undefined}>
+          <div className="min-w-0 flex-1">
             <h4
               className={cn(
-                ivory
-                  ? "whitespace-normal break-words hyphens-none text-balance text-hec-body font-semibold"
-                  : "font-semibold text-sm",
+                "whitespace-normal break-words hyphens-none text-balance text-hec-body font-semibold",
                 config.text,
               )}
             >
               {event.class_name}
             </h4>
             {event.teacher_name && (
-              <p className={ivory ? "mt-1 flex items-start gap-2 text-hec-small text-hec-ink-soft" : "text-xs text-muted-foreground mt-0.5 flex items-center gap-1"}>
-                <MapPin className={ivory ? "mt-1 h-4 w-4 shrink-0" : "h-3 w-3"} />
-                {ivory ? (
-                  <span className="min-w-0 whitespace-normal break-words">{event.teacher_name}</span>
-                ) : (
-                  event.teacher_name
-                )}
+              <p className="mt-1 flex items-start gap-2 text-hec-small text-hec-ink-soft">
+                <MapPin className="mt-1 h-4 w-4 shrink-0" />
+                <span className="min-w-0 whitespace-normal break-words">{event.teacher_name}</span>
               </p>
             )}
           </div>
-          <span className={ivory ? "shrink-0 text-hec-h3" : "text-lg opacity-60 group-hover:opacity-100 transition-opacity"}>
+          <span className="shrink-0 text-hec-h3">
             {config.icon}
           </span>
         </div>
 
-        <div className={ivory ? "mt-2 flex flex-wrap items-center gap-x-4 gap-y-1" : "flex items-center gap-3 mt-2"}>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
           {event.enrolled_count !== undefined && event.enrolled_count > 0 && (
-            <span className={ivory ? "flex items-center gap-1 text-hec-small tabular-nums text-hec-ink-soft" : "flex items-center gap-1 text-xs text-muted-foreground"}>
-              <Users className={ivory ? "h-4 w-4" : "h-3 w-3"} />
+            <span className="flex items-center gap-1 text-hec-small tabular-nums text-hec-ink-soft">
+              <Users className="h-4 w-4" />
               {event.enrolled_count} students
             </span>
           )}
           {event.notes && (
-            <span className={ivory ? "max-w-[150px] truncate text-hec-small text-hec-ink-soft" : "text-xs text-muted-foreground truncate max-w-[150px]"}>
+            <span className="max-w-[150px] truncate text-hec-small text-hec-ink-soft">
               {event.notes}
             </span>
           )}
@@ -284,21 +230,20 @@ export default function AgendaView({
     return groups;
   }, [events, currentMonth]);
 
-  const ivory = useIvory();
 
   if (groupedEvents.length === 0) {
     return (
-      <div className={cn(ivory ? "rounded-hec-lg border border-dashed border-hec-line bg-hec-surface p-8" : "glass rounded-3xl p-8", className)}>
+      <div className={cn("rounded-hec-lg border border-dashed border-hec-line bg-hec-surface p-8", className)}>
         <motion.div
-          initial={ivory ? { opacity: 0, y: 8 } : { opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center justify-center py-12 text-center"
         >
-          <CalendarIcon className={ivory ? "mb-4 h-12 w-12 text-hec-ink-faint" : "h-12 w-12 text-muted-foreground/40 mb-4"} />
-          <h3 className={ivory ? "text-hec-h3 text-hec-ink" : "text-lg font-semibold text-muted-foreground"}>
+          <CalendarIcon className="mb-4 h-12 w-12 text-hec-ink-faint" />
+          <h3 className="text-hec-h3 text-hec-ink">
             No sessions this month
           </h3>
-          <p className={ivory ? "mt-1 text-hec-small text-hec-ink-soft" : "text-sm text-muted-foreground/60 mt-1"}>
+          <p className="mt-1 text-hec-small text-hec-ink-soft">
             Sessions will appear here when scheduled
           </p>
         </motion.div>
@@ -307,7 +252,7 @@ export default function AgendaView({
   }
 
   return (
-    <div className={cn(ivory ? "space-y-8 p-2 sm:p-4" : "glass rounded-3xl p-4 md:p-6 space-y-6", className)}>
+    <div className={cn("space-y-8 p-2 sm:p-4", className)}>
       <AnimatePresence mode="popLayout">
         {groupedEvents.map((group, groupIdx) => {
           const date = dayjs(group.date);
@@ -316,36 +261,34 @@ export default function AgendaView({
           return (
             <motion.div
               key={group.date}
-              initial={ivory ? { opacity: 0, y: 8 } : { opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={ivory ? { opacity: 0 } : { opacity: 0, y: -20 }}
-              transition={ivory ? { delay: Math.min(groupIdx * 0.05, 0.24), duration: 0.24 } : { delay: groupIdx * 0.05 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: Math.min(groupIdx * 0.05, 0.24), duration: 0.24 }}
               className="space-y-3"
             >
               {/* Date header */}
-              <div className={ivory ? "sticky top-0 z-10 flex items-center gap-3 bg-hec-surface py-2" : "flex items-center gap-3 sticky top-0 bg-background/80 backdrop-blur-sm py-2 z-10"}>
+              <div className="sticky top-0 z-10 flex items-center gap-3 bg-hec-surface py-2">
                 <div
                   className={cn(
-                    ivory
-                      ? "flex h-12 w-12 shrink-0 items-center justify-center rounded-hec-md text-hec-h3 tabular-nums"
-                      : "flex items-center justify-center w-12 h-12 rounded-2xl font-bold text-lg",
+                    "flex h-12 w-12 shrink-0 items-center justify-center rounded-hec-md text-hec-h3 tabular-nums",
                     isToday
-                      ? ivory ? "bg-hec-action text-hec-on-action" : "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                      : ivory ? "bg-hec-sunken text-hec-ink-soft" : "bg-muted text-muted-foreground"
+                      ? "bg-hec-action text-hec-on-action"
+                      : "bg-hec-sunken text-hec-ink-soft"
                   )}
                 >
                   {date.format("D")}
                 </div>
-                <div className={ivory ? "min-w-0" : undefined}>
-                  <h3 className={ivory ? "text-hec-h3 text-hec-ink" : "font-semibold text-foreground"}>
+                <div className="min-w-0">
+                  <h3 className="text-hec-h3 text-hec-ink">
                     {date.format("dddd")}
                     {isToday && (
-                      <span className={ivory ? "ml-2 text-hec-caption font-medium text-hec-brass" : "ml-2 text-xs font-normal text-primary"}>
+                      <span className="ml-2 text-hec-caption font-medium text-hec-brass">
                         Today
                       </span>
                     )}
                   </h3>
-                  <p className={ivory ? "text-hec-small tabular-nums text-hec-ink-soft" : "text-xs text-muted-foreground"}>
+                  <p className="text-hec-small tabular-nums text-hec-ink-soft">
                     {date.format("MMMM YYYY")} • {group.events.length} session
                     {group.events.length > 1 ? "s" : ""}
                   </p>
@@ -353,7 +296,7 @@ export default function AgendaView({
               </div>
 
               {/* Events */}
-              <div className={ivory ? "space-y-2 sm:pl-4" : "space-y-2 pl-4"}>
+              <div className="space-y-2 sm:pl-4">
                 {group.events.map((event, idx) => (
                   <AgendaEventCard
                     key={event.id}

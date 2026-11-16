@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Calendar, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
-import { useIvory } from "@/hooks/useIvory";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
@@ -18,8 +17,6 @@ export const BulkEnrollmentDateSetter = () => {
   const [filterClass, setFilterClass] = useState<string>("all");
   const [showPreview, setShowPreview] = useState(false);
   const queryClient = useQueryClient();
-  const ivory = useIvory();
-  const iv = (n: string, o: string) => (ivory ? n : o);
 
   const { data: classes } = useQuery({
     queryKey: ["active-classes"],
@@ -142,33 +139,33 @@ export const BulkEnrollmentDateSetter = () => {
         </div>
 
         {!showPreview ? (
-          <Button onClick={() => setShowPreview(true)} className={iv("w-full sm:w-auto", "w-full")}>
+          <Button onClick={() => setShowPreview(true)} className="w-full sm:w-auto">
             Preview Changes
           </Button>
         ) : (
           <>
-            <div className={iv("rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-4 text-hec-ink", "border rounded-lg p-4 bg-muted/50")}>
-              <div className={iv("mb-3 flex items-start gap-2", "flex items-start gap-2 mb-3")}>
-                <AlertTriangle className={iv("mt-0.5 h-5 w-5 shrink-0 text-hec-danger", "h-5 w-5 text-amber-500 mt-0.5")} />
-                <div className={iv("min-w-0", "")}>
-                  <p className={iv("font-semibold text-hec-ink", "font-semibold")}>Preview: {previewData?.length || 0} enrollments will be updated</p>
-                  <p className={iv("mt-1 text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground mt-1")}>
+            <div className="rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-4 text-hec-ink">
+              <div className="mb-3 flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-hec-danger" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-hec-ink">Preview: {previewData?.length || 0} enrollments will be updated</p>
+                  <p className="mt-1 text-hec-small text-hec-ink-soft">
                     All selected enrollments will have their start date set to {format(new Date(targetDate), "MMM dd, yyyy")}
                   </p>
                 </div>
               </div>
               {previewData && previewData.length > 0 && (
-                <div tabIndex={0} role="region" aria-label="Enrollments to update" className={iv("mt-3 max-h-48 space-y-2 overflow-y-auto rounded-hec-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "max-h-48 overflow-y-auto space-y-1 mt-3")}>
+                <div tabIndex={0} role="region" aria-label="Enrollments to update" className="mt-3 max-h-48 space-y-2 overflow-y-auto rounded-hec-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
                   {previewData.slice(0, 10).map((e) => (
-                    <div key={e.id} className={iv("flex items-start justify-between gap-4 text-hec-small", "text-sm flex justify-between")}>
-                      <span className={iv("min-w-0 whitespace-normal break-words hyphens-none text-hec-ink", "")}>{e.students?.full_name} - {e.classes?.name}</span>
-                      <span className={iv("shrink-0 whitespace-nowrap tabular-nums text-hec-ink-soft", "text-muted-foreground")}>
+                    <div key={e.id} className="flex items-start justify-between gap-4 text-hec-small">
+                      <span className="min-w-0 whitespace-normal break-words hyphens-none text-hec-ink">{e.students?.full_name} - {e.classes?.name}</span>
+                      <span className="shrink-0 whitespace-nowrap tabular-nums text-hec-ink-soft">
                         {format(new Date(e.start_date), "yyyy-MM-dd")} → {targetDate}
                       </span>
                     </div>
                   ))}
                   {previewData.length > 10 && (
-                    <p className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground italic")}>
+                    <p className="text-hec-caption text-hec-ink-soft">
                       ...and {previewData.length - 10} more
                     </p>
                   )}
@@ -178,23 +175,21 @@ export const BulkEnrollmentDateSetter = () => {
             {/* Ivory: overwriting every listed start date cannot be undone from
                 here, so it is the one red fill and says what it does; the safe
                 way back is the outline button, under the thumb at 375. */}
-            <div className={iv("flex flex-col-reverse gap-3 sm:flex-row sm:justify-end", "flex gap-2")}>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button
                 onClick={() => setShowPreview(false)}
                 variant="outline"
-                className={iv("w-full sm:w-auto", "flex-1")}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
               <Button
-                variant={ivory ? "destructive" : "default"}
+                variant="destructive"
                 onClick={() => updateMutation.mutate()}
                 disabled={updateMutation.isPending || !previewData?.length}
-                className={iv("w-full sm:w-auto", "flex-1")}
+                className="w-full sm:w-auto"
               >
-                {ivory
-                  ? updateMutation.isPending ? "Setting start dates..." : "Set start dates"
-                  : updateMutation.isPending ? "Updating..." : "Confirm Update"}
+                {updateMutation.isPending ? "Setting start dates..." : "Set start dates"}
               </Button>
             </div>
           </>

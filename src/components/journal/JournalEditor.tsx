@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useIvory } from "@/hooks/useIvory";
 
 type JournalType = "personal" | "student" | "class" | "collab_student_teacher";
 
@@ -21,7 +20,6 @@ interface JournalEditorProps {
 }
 
 export function JournalEditor({ type: initialType, studentId: initialStudentId, classId: initialClassId, entryId, onSave, onCancel }: JournalEditorProps) {
-  const ivory = useIvory();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -271,7 +269,7 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
           />
         </div>
 
-        <div className={ivory ? "flex flex-wrap gap-2 pt-2" : "flex gap-2 pt-2"}>
+        <div className="flex flex-wrap gap-2 pt-2">
           <Button onClick={handleSave} disabled={loading}>
             {loading ? "Saving..." : "Save Entry"}
           </Button>

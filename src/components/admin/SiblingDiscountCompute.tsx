@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Calculator, Loader2, Eye, CheckCircle2, AlertCircle, Users, Settings2 } from "lucide-react";
 import { formatVND } from "@/lib/invoice/formatter";
-import { useIvory } from "@/hooks/useIvory";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
@@ -65,8 +64,6 @@ export function SiblingDiscountCompute() {
   const [savingOverride, setSavingOverride] = useState<string | null>(null);
   const { toast } = useToast();
   const { data: earliestMonth } = useEarliestFinanceMonth();
-  const ivory = useIvory();
-  const iv = (n: string, o: string) => (ivory ? n : o);
 
   const handlePreview = async () => {
     try {
@@ -217,7 +214,7 @@ export function SiblingDiscountCompute() {
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
             <div className="flex-1 space-y-2">
-              <label className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Month</label>
+              <label className="text-hec-small font-medium text-hec-ink">Month</label>
               <MonthPicker
                 value={selectedMonth}
                 onChange={setSelectedMonth}
@@ -245,7 +242,7 @@ export function SiblingDiscountCompute() {
             </Button>
           </div>
 
-          <div className={iv("text-hec-small text-hec-ink-soft space-y-1", "text-sm text-muted-foreground space-y-1")}>
+          <div className="text-hec-small text-hec-ink-soft space-y-1">
             <p><strong>Logic:</strong></p>
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li>Uses actual tuition calculation from Finance → Tuition (same as invoices)</li>
@@ -266,13 +263,13 @@ export function SiblingDiscountCompute() {
             <DialogDescription>
               Review the discount assignments before applying them. Use the settings to adjust percentage or disable per family.
               <br />
-              <strong className={iv("text-hec-ink", "text-foreground")}>Note:</strong> Uses NET tuition (after enrollment discounts and rate adjustments) for winner selection.
+              <strong className="text-hec-ink">Note:</strong> Uses NET tuition (after enrollment discounts and rate adjustments) for winner selection.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             {previewResults && previewResults.length === 0 && (
-              <p className={iv("text-center text-hec-body text-hec-ink-soft py-8", "text-center text-muted-foreground py-8")}>No families found for this month.</p>
+              <p className="text-center text-hec-body text-hec-ink-soft py-8">No families found for this month.</p>
             )}
 
             {previewResults?.map((result) => {
@@ -287,24 +284,24 @@ export function SiblingDiscountCompute() {
                 <Card key={result.family_id} className={isDisabled ? 'opacity-60' : ''}>
                   <CardContent className="pt-6">
                     <div className="space-y-3">
-                      <div className={iv("flex flex-wrap-reverse items-start justify-between gap-3", "flex items-center justify-between")}>
-                        <div className={iv("min-w-0 flex-1 basis-56 space-y-1", "space-y-1")}>
-                          <div className={iv("flex flex-wrap items-center gap-2", "flex items-center gap-2")}>
-                            <Users className={iv("h-4 w-4 shrink-0 text-hec-ink-soft", "h-4 w-4")} />
-                            <span className={iv("min-w-0 whitespace-normal break-words hyphens-none text-hec-body font-semibold text-hec-ink", "font-semibold")}>{result.family_name || 'Unknown Family'}</span>
+                      <div className="flex flex-wrap-reverse items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1 basis-56 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Users className="h-4 w-4 shrink-0 text-hec-ink-soft" />
+                            <span className="min-w-0 whitespace-normal break-words hyphens-none text-hec-body font-semibold text-hec-ink">{result.family_name || 'Unknown Family'}</span>
                             {result.status === 'assigned' && result.winner_student_name && !isDisabled && (
-                              <Badge variant="default" className={iv("whitespace-normal border-hec-brass/40 bg-transparent text-hec-brass", "ml-2 bg-green-600")}>
+                              <Badge variant="default" className="whitespace-normal border-hec-brass/40 bg-transparent text-hec-brass">
                                 Winner: {result.winner_student_name}
                               </Badge>
                             )}
                             {isDisabled && (
-                              <Badge variant="secondary" className={iv("", "ml-2")}>
+                              <Badge variant="secondary" className="">
                                 Disabled
                               </Badge>
                             )}
                           </div>
                           {result.students && result.students.length > 0 && (
-                            <div className={iv("whitespace-normal break-words text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground ml-6")}>
+                            <div className="whitespace-normal break-words text-hec-caption text-hec-ink-soft">
                               Members: {result.students.map(s => s.name).join(', ')}
                             </div>
                           )}
@@ -314,12 +311,12 @@ export function SiblingDiscountCompute() {
                           result.status === 'assigned' ? 'default' :
                           result.status === 'pending' ? 'secondary' :
                           'outline'
-                        } className={ivory ? (
+                        } className={(
                           isDisabled ? 'shrink-0' :
                           result.status === 'assigned' ? 'shrink-0 border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf' :
                           result.status === 'pending' ? 'shrink-0 border-hec-warn/30 bg-hec-warn-tint text-hec-warn' :
                           'shrink-0'
-                        ) : undefined}>
+                        )}>
                           {!isDisabled && result.status === 'assigned' && <CheckCircle2 className="h-3 w-3 mr-1" />}
                           {!isDisabled && result.status === 'pending' && <AlertCircle className="h-3 w-3 mr-1" />}
                           {isDisabled ? 'DISABLED' : result.status.toUpperCase()}
@@ -328,20 +325,20 @@ export function SiblingDiscountCompute() {
 
                       {/* Family Override Controls */}
                       {(result.status === 'assigned' || result.status === 'pending') && (
-                        <div className={iv("flex flex-wrap items-center gap-4 p-3 bg-hec-sunken rounded-hec-md border border-hec-line", "flex items-center gap-4 p-3 bg-muted/50 rounded-lg border")}>
-                          <Settings2 className={iv("h-4 w-4 text-hec-ink-soft", "h-4 w-4 text-muted-foreground")} />
+                        <div className="flex flex-wrap items-center gap-4 p-3 bg-hec-sunken rounded-hec-md border border-hec-line">
+                          <Settings2 className="h-4 w-4 text-hec-ink-soft" />
                           <div className="flex items-center gap-2">
                             <Switch
                               id={`enable-${result.family_id}`}
                               checked={!isDisabled}
                               onCheckedChange={(checked) => updateFamilyOverride(result.family_id, { disabled: !checked })}
                             />
-                            <Label htmlFor={`enable-${result.family_id}`} className={iv("text-hec-small text-hec-ink", "text-sm")}>
+                            <Label htmlFor={`enable-${result.family_id}`} className="text-hec-small text-hec-ink">
                               Enable
                             </Label>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Label htmlFor={`percent-${result.family_id}`} className={iv("text-hec-small text-hec-ink whitespace-nowrap", "text-sm whitespace-nowrap")}>Discount %:</Label>
+                            <Label htmlFor={`percent-${result.family_id}`} className="text-hec-small text-hec-ink whitespace-nowrap">Discount %:</Label>
                             <Input
                               id={`percent-${result.family_id}`}
                               type="number"
@@ -349,7 +346,7 @@ export function SiblingDiscountCompute() {
                               max={100}
                               value={override.percent}
                               onChange={(e) => updateFamilyOverride(result.family_id, { percent: parseInt(e.target.value) || 0 })}
-                              className={iv("w-24 tabular-nums", "w-20 h-8")}
+                              className="w-24 tabular-nums"
                               disabled={isDisabled}
                             />
                           </div>
@@ -370,41 +367,37 @@ export function SiblingDiscountCompute() {
 
                       {result.status === 'assigned' && result.all_students && !isDisabled && (
                         <div className="space-y-2">
-                          <p className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Students & Highest Classes (Net Amounts):</p>
+                          <p className="text-hec-small font-medium text-hec-ink">Students & Highest Classes (Net Amounts):</p>
                           <div className="space-y-1.5">
                             {result.all_students.map((student) => (
                               <div
                                 key={student.student_id}
-                                className={ivory ? `flex items-start justify-between gap-4 p-3 rounded-hec-md text-hec-small text-hec-ink border ${
+                                className={`flex items-start justify-between gap-4 p-3 rounded-hec-md text-hec-small text-hec-ink border ${
                                   student.is_winner
                                     ? 'bg-hec-surface border-hec-brass/40'
                                     : 'bg-hec-sunken border-hec-line'
-                                }` : `flex items-center justify-between p-3 rounded text-sm ${
-                                  student.is_winner
-                                    ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800'
-                                    : 'bg-muted/50'
                                 }`}
                               >
-                                <div className={iv("flex min-w-0 flex-1 flex-col gap-1", "flex flex-col gap-1")}>
-                                  <div className={iv("flex flex-wrap items-center gap-2", "flex items-center gap-2")}>
-                                    <span className={iv("min-w-0 whitespace-normal break-words hyphens-none font-semibold", "font-semibold")}>{student.student_name}</span>
+                                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="min-w-0 whitespace-normal break-words hyphens-none font-semibold">{student.student_name}</span>
                                     {student.is_winner && (
-                                      <Badge variant="default" className={iv("shrink-0 border-hec-brass/40 bg-transparent text-hec-brass", "bg-green-600 text-xs")}>Winner</Badge>
+                                      <Badge variant="default" className="shrink-0 border-hec-brass/40 bg-transparent text-hec-brass">Winner</Badge>
                                     )}
                                   </div>
-                                  <span className={iv("whitespace-normal break-words text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>{student.class_name}</span>
+                                  <span className="whitespace-normal break-words text-hec-caption text-hec-ink-soft">{student.class_name}</span>
                                 </div>
-                                <span className={ivory ? `shrink-0 whitespace-nowrap tabular-nums text-hec-ink ${student.is_winner ? 'font-semibold' : ''}` : student.is_winner ? 'font-semibold' : ''}>
+                                <span className={`shrink-0 whitespace-nowrap tabular-nums text-hec-ink ${student.is_winner ? 'font-semibold' : ''}`}>
                                   {formatVND(student.projected_base)}
                                 </span>
                               </div>
                             ))}
                           </div>
                           
-                          <div className={iv("pt-2 border-t border-hec-line space-y-1", "pt-2 border-t space-y-1")}>
-                            <div className={iv("flex items-baseline justify-between gap-4 text-hec-small text-hec-ink", "flex justify-between text-sm")}>
-                              <span className={iv("min-w-0 whitespace-normal break-words text-hec-ink-soft", "")}>Discount ({effectivePercent}% on {result.winner_class_name})</span>
-                              <span className={iv("shrink-0 whitespace-nowrap font-semibold tabular-nums text-hec-ink", "font-semibold text-green-600 dark:text-green-400")}>
+                          <div className="pt-2 border-t border-hec-line space-y-1">
+                            <div className="flex items-baseline justify-between gap-4 text-hec-small text-hec-ink">
+                              <span className="min-w-0 whitespace-normal break-words text-hec-ink-soft">Discount ({effectivePercent}% on {result.winner_class_name})</span>
+                              <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-hec-ink">
                                 -{formatVND(recalculatedDiscount)}
                               </span>
                             </div>
@@ -413,28 +406,28 @@ export function SiblingDiscountCompute() {
                       )}
 
                       {result.status === 'pending' && result.reason === 'threshold not met' && !isDisabled && (
-                        <div className={iv("mt-3 p-3 bg-hec-warn-tint rounded-hec-md border border-hec-warn/30", "mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-md border border-yellow-200 dark:border-yellow-800")}>
-                          <p className={iv("text-hec-small font-semibold text-hec-warn mb-2", "text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-2")}>
+                        <div className="mt-3 p-3 bg-hec-warn-tint rounded-hec-md border border-hec-warn/30">
+                          <p className="text-hec-small font-semibold text-hec-warn mb-2">
                             ⚠️ Threshold Not Met: Only {result.positive_count} of {result.student_count} student(s) have positive net tuition
                           </p>
                           {result.all_students && result.all_students.length > 0 && (
                             <div className="space-y-2 mt-3">
-                              <p className={iv("text-hec-caption font-semibold text-hec-ink", "text-xs font-semibold text-yellow-700 dark:text-yellow-300")}>Student Breakdown:</p>
+                              <p className="text-hec-caption font-semibold text-hec-ink">Student Breakdown:</p>
                               {result.all_students.map((student) => (
-                                <div key={student.id || student.student_id} className={iv("text-hec-caption pl-3 border-l border-hec-warn/30 space-y-0.5", "text-xs pl-3 border-l-2 border-yellow-400 space-y-0.5")}>
-                                  <div className={iv("whitespace-normal break-words hyphens-none font-semibold text-hec-ink", "font-semibold text-yellow-900 dark:text-yellow-100")}>
+                                <div key={student.id || student.student_id} className="text-hec-caption pl-3 border-l border-hec-warn/30 space-y-0.5">
+                                  <div className="whitespace-normal break-words hyphens-none font-semibold text-hec-ink">
                                     {student.name || student.student_name}
                                   </div>
-                                  <div className={iv("whitespace-normal break-words text-hec-ink-soft", "text-yellow-700 dark:text-yellow-300")}>
+                                  <div className="whitespace-normal break-words text-hec-ink-soft">
                                     Highest Class: {student.highest_class || student.class_name || 'N/A'}
                                   </div>
-                                  <div className={iv("text-hec-ink-soft tabular-nums", "text-yellow-700 dark:text-yellow-300")}>
+                                  <div className="text-hec-ink-soft tabular-nums">
                                     Net Tuition: {formatVND(student.projected_base)} ({student.projected_sessions || 0} sessions)
                                   </div>
-                                  <div className={iv("text-hec-ink-soft tabular-nums", "text-yellow-700 dark:text-yellow-300")}>
+                                  <div className="text-hec-ink-soft tabular-nums">
                                     Active Enrollments: {student.enrollment_count || 0}
                                   </div>
-                                  <div className={ivory ? `font-medium ${student.projected_base > 0 ? 'text-hec-leaf' : 'text-hec-danger'}` : `font-medium ${student.projected_base > 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                                  <div className={`font-medium ${student.projected_base > 0 ? 'text-hec-leaf' : 'text-hec-danger'}`}>
                                     Status: {student.reason || 'unknown'}
                                   </div>
                                 </div>
@@ -445,7 +438,7 @@ export function SiblingDiscountCompute() {
                       )}
 
                       {result.status === 'none' && (
-                        <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>{result.reason}</p>
+                        <p className="text-hec-small text-hec-ink-soft">{result.reason}</p>
                       )}
                     </div>
                   </CardContent>

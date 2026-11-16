@@ -662,7 +662,6 @@ export default function StudentDashboard() {
                       />
                     )}
                     <StudentClassLeaderboard
-                      ivory
                       classId={classData.id}
                       className={classData.name}
                       currentStudentId={studentId}

@@ -19,7 +19,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useIvory } from "@/hooks/useIvory";
 
 interface ConfirmDestructiveDialogProps {
   open: boolean;
@@ -42,7 +41,6 @@ export function ConfirmDestructiveDialog({
   busyLabel,
   onConfirm,
 }: ConfirmDestructiveDialogProps) {
-  const ivory = useIvory();
   const [busy, setBusy] = useState(false);
 
   const confirm = async () => {
@@ -70,8 +68,8 @@ export function ConfirmDestructiveDialog({
             // Off the Ivory routes the old "destructive" variant draws white on white: its
             // glass-sm (utilities layer) paints over bg-destructive. So there the red fill
             // is given on the default variant instead.
-            variant={ivory ? "destructive" : "default"}
-            className={ivory ? "w-full sm:w-auto" : "bg-destructive text-destructive-foreground hover:bg-destructive/90"}
+            variant="destructive"
+            className="w-full sm:w-auto"
             disabled={busy}
             onClick={confirm}
           >

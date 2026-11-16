@@ -27,19 +27,11 @@ import { StudentAnalyticsModal } from "@/components/student/StudentAnalyticsModa
 import { type BoardEntry } from "@/components/shared/PodiumBoard";
 import { StyledClassBoard } from "@/components/leaderboard/StyledClassBoard";
 import { useClassMonitor } from "@/hooks/useClassMonitor";
-import { useIvory } from "@/hooks/useIvory";
 
 interface StudentClassLeaderboardProps {
   classId: string;
   className?: string;
   currentStudentId?: string;
-  /**
-   * "Ivory" design system frame (student dashboard, A4.2): the card, title
-   * and month picker around the board follow the system. The board itself
-   * is a themed display canvas and is not restyled (DESIGN_SYSTEM section 17).
-   * Off by default, so other screens keep the studio frame.
-   */
-  ivory?: boolean;
 }
 
 interface EdgeEntry {
@@ -74,13 +66,7 @@ export function StudentClassLeaderboard({
   classId,
   className,
   currentStudentId,
-  ivory: ivoryFrame = false,
 }: StudentClassLeaderboardProps) {
-  // The system frame when the caller asks for it (the student dashboard) or
-  // when the route is in the system (useIvory: the admin's /students/:id once
-  // the staff area is listed). Elsewhere the studio frame, as before.
-  const ivoryScope = useIvory();
-  const ivory = ivoryFrame || ivoryScope;
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [analyticsStudent, setAnalyticsStudent] = useState<{
     id: string;
@@ -137,48 +123,32 @@ export function StudentClassLeaderboard({
 
   return (
     <div
-      className={
-        ivory
-          ? "relative overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1"
-          : "studio-surface relative overflow-hidden rounded-3xl border border-studio shadow-studio"
-      }
+      className="relative overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1"
     >
       <div
-        className={
-          ivory
-            ? "flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-6"
-            : "flex items-center justify-between gap-2 px-3 pb-2 pt-4 sm:px-6"
-        }
+        className="flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-6"
       >
-        <div className={ivory ? "flex min-w-0 items-start gap-2 pt-2" : "flex min-w-0 items-center gap-2"}>
+        <div className="flex min-w-0 items-start gap-2 pt-2">
           <Trophy
-            className={ivory ? "mt-1 h-5 w-5 shrink-0 text-hec-ink-soft" : "h-5 w-5 shrink-0 text-[hsl(var(--studio-butter-ink))]"}
+            className="mt-1 h-5 w-5 shrink-0 text-hec-ink-soft"
             aria-hidden
           />
           <h3
-            className={
-              ivory
-                ? "min-w-0 whitespace-normal break-words font-display text-hec-h2 font-medium text-hec-ink"
-                : "studio-title truncate text-xl"
-            }
+            className="min-w-0 whitespace-normal break-words font-display text-hec-h2 font-medium text-hec-ink"
           >
             {className || "Leaderboard"}
           </h3>
         </div>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger
-            aria-label={ivory ? "Month" : undefined}
-            className={
-              ivory
-                ? "min-h-hec-target w-36 shrink-0 rounded-hec-md border-hec-line-strong bg-hec-raised text-hec-small text-hec-ink focus:ring-0 focus:ring-offset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
-                : "h-9 w-[140px] shrink-0 rounded-full border-studio bg-studio-card text-xs font-semibold text-ink focus:ring-0 focus:ring-offset-0"
-            }
+            aria-label="Month"
+            className="min-h-hec-target w-36 shrink-0 rounded-hec-md border-hec-line-strong bg-hec-raised text-hec-small text-hec-ink focus:ring-0 focus:ring-offset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
           >
             <SelectValue />
           </SelectTrigger>
           <SelectContent
-            data-hec-theme={ivory ? "ivory" : undefined}
-            className={ivory ? "rounded-hec-md border-hec-line bg-hec-raised text-hec-ink shadow-hec-2" : undefined}
+            data-hec-theme="ivory"
+            className="rounded-hec-md border-hec-line bg-hec-raised text-hec-ink shadow-hec-2"
           >
             {Array.from({ length: 6 }, (_, i) => {
               const date = new Date();
@@ -195,11 +165,11 @@ export function StudentClassLeaderboard({
       </div>
 
       {isLoading ? (
-        <div className={ivory ? "grid min-h-[260px] place-items-center p-8 text-hec-small text-hec-ink-soft" : "grid min-h-[260px] place-items-center p-8 text-sm text-ink-soft"}>
+        <div className="grid min-h-[260px] place-items-center p-8 text-hec-small text-hec-ink-soft">
           Counting up this month's points…
         </div>
       ) : error ? (
-        <div className={ivory ? "grid min-h-[260px] place-items-center p-8 text-center text-hec-small text-hec-ink-soft" : "grid min-h-[260px] place-items-center p-8 text-center text-sm text-ink-soft"}>
+        <div className="grid min-h-[260px] place-items-center p-8 text-center text-hec-small text-hec-ink-soft">
           This board could not be loaded right now.
         </div>
       ) : (

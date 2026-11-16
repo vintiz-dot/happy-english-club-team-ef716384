@@ -8,15 +8,12 @@ import { dayjs } from "@/lib/date";
 import { toast } from "sonner";
 import { Calculator, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useIvory } from "@/hooks/useIvory";
 
 export function GenerateTuition() {
   const [selectedMonth, setSelectedMonth] = useState(dayjs().format("YYYY-MM"));
   const [results, setResults] = useState<any>(null);
   const queryClient = useQueryClient();
-  const ivory = useIvory();
-  const iv = (n: string, o: string) => (ivory ? n : o);
-  const ResultBox = ivory ? IvoryNote : Alert;
+  const ResultBox = IvoryNote;
 
   const generateMutation = useMutation({
     mutationFn: async (month: string) => {
@@ -102,32 +99,32 @@ export function GenerateTuition() {
         <CardDescription>Calculate and generate tuition invoices for all active students</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className={iv("flex flex-col gap-4 sm:flex-row sm:items-end", "flex items-end gap-4")}>
-          <div className={iv("min-w-0 flex-1", "flex-1")}>
-            <label className={iv("mb-2 block text-hec-small font-medium text-hec-ink", "text-sm font-medium mb-2 block")}>Select Month</label>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div className="min-w-0 flex-1">
+            <label className="mb-2 block text-hec-small font-medium text-hec-ink">Select Month</label>
             <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />
           </div>
           {/* Generate writes invoices for every student this month: it is the
               irreversible act on this card, so in Ivory it is the
               destructive-quiet control and says what it does. */}
           <Button
-            variant={ivory ? "destructive-quiet" : "default"}
-            className={iv("w-full sm:w-auto", "")}
+            variant="destructive-quiet"
+            className="w-full sm:w-auto"
             onClick={() => generateMutation.mutate(selectedMonth)}
             disabled={generateMutation.isPending}
           >
             {generateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {ivory ? (generateMutation.isPending ? "Generating tuition invoices..." : "Generate tuition invoices") : "Generate"}
+            {(generateMutation.isPending ? "Generating tuition invoices..." : "Generate tuition invoices")}
           </Button>
         </div>
         {results && (
           <ResultBox>
-            <AlertDescription className={iv("text-hec-small", "")}>
+            <AlertDescription className="text-hec-small">
               Generated tuition for {results.processed} students.
               {results.needsReview > 0 && (
-                <div className={iv("mt-2 flex flex-wrap items-center gap-2", "mt-2")}>
-                  <strong className={iv("font-semibold text-hec-warn", "text-amber-600")}>{results.needsReview} students need review.</strong>
-                  <Button variant="link" className={iv("h-auto min-h-hec-target p-0", "p-0 h-auto ml-2")} onClick={() => window.location.href = `/admin/tuition-review?month=${selectedMonth}`}>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <strong className="font-semibold text-hec-warn">{results.needsReview} students need review.</strong>
+                  <Button variant="link" className="h-auto min-h-hec-target p-0" onClick={() => window.location.href = `/admin/tuition-review?month=${selectedMonth}`}>
                     Go to Review Queue →
                   </Button>
                 </div>

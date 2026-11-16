@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { useIvory } from "@/hooks/useIvory";
 import { RichTextEditor } from "@/components/rich-text";
 
 interface EditHomeworkDialogProps {
@@ -17,7 +16,6 @@ interface EditHomeworkDialogProps {
 }
 
 export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: EditHomeworkDialogProps) {
-  const ivory = useIvory();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -143,7 +141,7 @@ export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: E
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className={ivory ? "h-8 w-8 animate-spin text-hec-ink-faint" : "h-8 w-8 animate-spin"} />
+            <Loader2 className="h-8 w-8 animate-spin text-hec-ink-faint" />
           </div>
         ) : (
           <div className="space-y-4">
@@ -166,7 +164,7 @@ export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: E
                 value={body}
                 onChange={setBody}
                 placeholder="Assignment instructions and details..."
-                fallback={<div className={ivory ? "flex h-40 items-center justify-center rounded-hec-md border border-hec-line-strong text-hec-ink-faint" : "h-40 border rounded-md flex items-center justify-center text-muted-foreground"}><Loader2 className="h-5 w-5 animate-spin mr-2" />Loading editor...</div>}
+                fallback={<div className="flex h-40 items-center justify-center rounded-hec-md border border-hec-line-strong text-hec-ink-faint"><Loader2 className="h-5 w-5 animate-spin mr-2" />Loading editor...</div>}
               />
             </div>
 
@@ -180,12 +178,12 @@ export function EditHomeworkDialog({ homeworkId, isOpen, onClose, onSuccess }: E
               />
             </div>
 
-            <div className={ivory ? "flex flex-wrap gap-2 pt-4" : "flex gap-2 pt-4"}>
+            <div className="flex flex-wrap gap-2 pt-4">
               <Button onClick={handleSave} disabled={saving} className="flex-1">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Save Changes
               </Button>
-              <Button onClick={handleDelete} disabled={saving} variant={ivory ? "destructive-quiet" : "destructive"}>
+              <Button onClick={handleDelete} disabled={saving} variant="destructive-quiet">
                 Delete
               </Button>
               <Button onClick={onClose} variant="outline" disabled={saving}>

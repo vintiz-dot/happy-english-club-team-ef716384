@@ -7,7 +7,6 @@ import { DollarSign, TrendingDown, Award, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButton";
 import { Loading } from "@/components/ui/loading";
-import { useIvory } from "@/hooks/useIvory";
 import { cn } from "@/lib/utils";
 
 interface TuitionData {
@@ -36,8 +35,6 @@ export function TuitionCard({ studentId }: { studentId: string }) {
   const [currentMonth, setCurrentMonth] = useState<TuitionData | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  // Rendered on "/" (parent area, not flipped yet): old classes unless the route is ivory.
-  const ivory = useIvory();
 
   useEffect(() => {
     if (studentId) {
@@ -98,7 +95,7 @@ export function TuitionCard({ studentId }: { studentId: string }) {
           <CardTitle>Tuition</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className={cn(ivory ? "py-8 text-center text-hec-body text-hec-ink-soft" : "text-muted-foreground text-center py-8")}>No tuition data available</p>
+          <p className={cn("py-8 text-center text-hec-body text-hec-ink-soft")}>No tuition data available</p>
         </CardContent>
       </Card>
     );
@@ -107,10 +104,10 @@ export function TuitionCard({ studentId }: { studentId: string }) {
   return (
     <Card>
       <CardHeader>
-        <div className={cn(ivory ? "flex flex-wrap items-start justify-between gap-3" : "flex items-center justify-between")}>
-          <div className={cn(ivory && "min-w-0")}>
+        <div className={cn("flex flex-wrap items-start justify-between gap-3")}>
+          <div className={cn("min-w-0")}>
             <CardTitle className="flex items-center gap-2">
-              <DollarSign className={cn("h-5 w-5", ivory && "shrink-0 text-hec-ink-soft")} />
+              <DollarSign className={cn("h-5 w-5", "shrink-0 text-hec-ink-soft")} />
               Tuition - {format(new Date(), "MMMM yyyy")}
             </CardTitle>
             <CardDescription>{currentMonth.sessionCount} sessions this month</CardDescription>
@@ -126,24 +123,18 @@ export function TuitionCard({ studentId }: { studentId: string }) {
       <CardContent className="space-y-4">
         {currentMonth.siblingState && (
           <div 
-            className={ivory ? `flex items-start gap-2 rounded-hec-md border p-3 ${
+            className={`flex items-start gap-2 rounded-hec-md border p-3 ${
               currentMonth.siblingState.status === 'pending'
                 ? 'border-hec-warn/30 bg-hec-warn-tint'
                 : 'border-hec-line bg-hec-sunken'
-            }` : `p-3 rounded-lg flex items-start gap-2 ${
-              currentMonth.siblingState.status === 'assigned' && currentMonth.siblingState.isWinner
-                ? 'bg-primary/10' 
-                : currentMonth.siblingState.status === 'pending'
-                ? 'bg-yellow-50 dark:bg-yellow-950'
-                : 'bg-muted'
             }`}
           >
             {currentMonth.siblingState.status === 'assigned' && currentMonth.siblingState.isWinner ? (
               <>
-                <Award className={cn(ivory ? "mt-0.5 h-5 w-5 shrink-0 text-hec-ink-soft" : "h-5 w-5 text-primary mt-0.5")} />
-                <div className={cn(ivory ? "min-w-0 flex-1" : "flex-1")}>
-                  <p className={cn(ivory ? "text-hec-small font-medium text-hec-ink" : "text-sm font-medium")}>Sibling Discount Recipient ({currentMonth.siblingState.percent}%)</p>
-                  <p className={cn(ivory ? "text-hec-caption text-hec-ink-soft" : "text-xs text-muted-foreground")}>
+                <Award className={cn("mt-0.5 h-5 w-5 shrink-0 text-hec-ink-soft")} />
+                <div className={cn("min-w-0 flex-1")}>
+                  <p className={cn("text-hec-small font-medium text-hec-ink")}>Sibling Discount Recipient ({currentMonth.siblingState.percent}%)</p>
+                  <p className={cn("text-hec-caption text-hec-ink-soft")}>
                     You have the lowest tuition among siblings
                     {currentMonth.siblingState.winnerClassId && ' - Applied to highest-tuition class'}
                   </p>
@@ -151,12 +142,12 @@ export function TuitionCard({ studentId }: { studentId: string }) {
               </>
             ) : currentMonth.siblingState.status === 'pending' ? (
               <>
-                <AlertCircle className={cn(ivory ? "mt-0.5 h-5 w-5 shrink-0 text-hec-warn" : "h-5 w-5 text-yellow-600 mt-0.5")} />
-                <div className={cn(ivory ? "min-w-0 flex-1" : "flex-1")}>
-                  <p className={cn(ivory ? "text-hec-small font-medium text-hec-warn" : "text-sm font-medium text-yellow-900 dark:text-yellow-100")}>
+                <AlertCircle className={cn("mt-0.5 h-5 w-5 shrink-0 text-hec-warn")} />
+                <div className={cn("min-w-0 flex-1")}>
+                  <p className={cn("text-hec-small font-medium text-hec-warn")}>
                     Sibling Discount Pending
                   </p>
-                  <p className={cn(ivory ? "text-hec-caption text-hec-ink" : "text-xs text-yellow-700 dark:text-yellow-300")}>
+                  <p className={cn("text-hec-caption text-hec-ink")}>
                     Requires ≥2 siblings with tuition this month
                   </p>
                 </div>
@@ -166,28 +157,28 @@ export function TuitionCard({ studentId }: { studentId: string }) {
         )}
 
         <div className="space-y-2">
-          <div className={cn(ivory ? "flex items-baseline justify-between gap-4 text-hec-small" : "flex items-center justify-between text-sm")}>
-            <span className={cn(ivory ? "min-w-0 text-hec-ink-soft" : "text-muted-foreground")}>Base Amount</span>
-            <span className={cn(ivory ? "shrink-0 whitespace-nowrap font-medium tabular-nums text-hec-ink" : "font-medium")}>{currentMonth.baseAmount.toLocaleString('vi-VN')} ₫</span>
+          <div className={cn("flex items-baseline justify-between gap-4 text-hec-small")}>
+            <span className={cn("min-w-0 text-hec-ink-soft")}>Base Amount</span>
+            <span className={cn("shrink-0 whitespace-nowrap font-medium tabular-nums text-hec-ink")}>{currentMonth.baseAmount.toLocaleString('vi-VN')} ₫</span>
           </div>
 
           {currentMonth.discounts.length > 0 && (
             <>
-              <div className={cn(ivory ? "flex items-start justify-between gap-4 text-hec-small" : "flex items-start justify-between text-sm")}>
+              <div className={cn("flex items-start justify-between gap-4 text-hec-small")}>
                 <div className="flex items-center gap-2">
-                  <TrendingDown className={cn(ivory ? "h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4 text-success")} />
-                  <span className={cn(ivory ? "text-hec-ink-soft" : "text-muted-foreground")}>Discounts</span>
+                  <TrendingDown className={cn("h-4 w-4 shrink-0 text-hec-ink-soft")} />
+                  <span className={cn("text-hec-ink-soft")}>Discounts</span>
                 </div>
-                <div className={cn(ivory ? "min-w-0 space-y-1 text-right" : "text-right space-y-1")}>
+                <div className={cn("min-w-0 space-y-1 text-right")}>
                   {currentMonth.discounts.map((discount, idx) => (
-                    <div key={idx} className={cn(ivory ? "text-hec-caption tabular-nums text-hec-ink" : "text-xs text-muted-foreground")}>
+                    <div key={idx} className={cn("text-hec-caption tabular-nums text-hec-ink")}>
                       {/* The amount keeps its ₫ on its own line at 320 px; the badge is a figure too, so ink (R23v). */}
-                      {discount.name}:{" "}<span className={cn(ivory && "whitespace-nowrap")}>-{discount.amount.toLocaleString('vi-VN')} ₫</span>
-                      <Badge variant="secondary" className={cn(ivory ? "ml-2 whitespace-nowrap tabular-nums text-hec-ink" : "ml-2 text-xs")}>
+                      {discount.name}:{" "}<span className={cn("whitespace-nowrap")}>-{discount.amount.toLocaleString('vi-VN')} ₫</span>
+                      <Badge variant="secondary" className={cn("ml-2 whitespace-nowrap tabular-nums text-hec-ink")}>
                         {discount.value}{discount.type === 'percent' ? '%' : ' ₫'}
                       </Badge>
                       {discount.isSiblingWinner && discount.appliedToClass && (
-                        <span className={cn(ivory ? "mt-0.5 block text-hec-caption text-hec-ink-soft" : "text-[10px] block text-primary mt-0.5")}>
+                        <span className={cn("mt-0.5 block text-hec-caption text-hec-ink-soft")}>
                           Applied to one class only
                         </span>
                       )}
@@ -196,18 +187,18 @@ export function TuitionCard({ studentId }: { studentId: string }) {
                 </div>
               </div>
 
-              <div className={cn(ivory ? "flex items-baseline justify-between gap-4 border-t border-hec-line pt-2 text-hec-small" : "flex items-center justify-between text-sm border-t pt-2")}>
-                <span className={cn(ivory ? "min-w-0 text-hec-ink-soft" : "text-muted-foreground")}>Total Discount</span>
-                <span className={cn(ivory ? "shrink-0 whitespace-nowrap font-medium tabular-nums text-hec-ink" : "font-medium text-success")}>
+              <div className={cn("flex items-baseline justify-between gap-4 border-t border-hec-line pt-2 text-hec-small")}>
+                <span className={cn("min-w-0 text-hec-ink-soft")}>Total Discount</span>
+                <span className={cn("shrink-0 whitespace-nowrap font-medium tabular-nums text-hec-ink")}>
                   -{currentMonth.totalDiscount.toLocaleString('vi-VN')} ₫
                 </span>
               </div>
             </>
           )}
 
-          <div className={cn(ivory ? "flex items-baseline justify-between gap-4 border-t-2 border-hec-ink pt-3 text-hec-ink" : "flex items-center justify-between text-lg font-bold border-t-2 pt-3")}>
-            <span className={cn(ivory && "min-w-0 text-hec-body font-semibold")}>Total Due</span>
-            <span className={cn(ivory ? "shrink-0 whitespace-nowrap text-hec-h1 font-semibold tabular-nums" : "text-primary")}>{currentMonth.totalAmount.toLocaleString('vi-VN')} ₫</span>
+          <div className={cn("flex items-baseline justify-between gap-4 border-t-2 border-hec-ink pt-3 text-hec-ink")}>
+            <span className={cn("min-w-0 text-hec-body font-semibold")}>Total Due</span>
+            <span className={cn("shrink-0 whitespace-nowrap text-hec-h1 font-semibold tabular-nums")}>{currentMonth.totalAmount.toLocaleString('vi-VN')} ₫</span>
           </div>
         </div>
       </CardContent>
