@@ -295,7 +295,7 @@ const SUITES = [
     file: "attendance-streaks.test.mjs",
     migrations: ["20261116091000_attendance_streak_rule.sql"],
     args: ["scripts/REPAIR-attendance-streaks.sql"],
-    expect: 95,
+    expect: 102,
   },
   // Nor these: the admin screens' reasoning, without the screens. Who a
   // Pixel Pal child probably is, and how the record log is read and sliced.
