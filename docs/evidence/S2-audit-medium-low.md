@@ -1,13 +1,13 @@
 # S2 - medium and low audit findings
 
-Where I am / next step: COMPLETE (16 Nov 2026). All 21 findings re-verified and marked; the open ones fixed in six migrations, eighteen functions and three browser files, each with a suite. Next step is the owner's: approve the pastes in the order below and the redeploys; the deferred items need the decisions at the end.
+Where I am / next step: COMPLETE including the fix round after the independent review (R-1..R-4, R-6; see "Fix round"). Migrations still unapplied anywhere. (16 Nov 2026.) All 21 findings re-verified and marked; the open ones fixed in six migrations, eighteen functions and three browser files, each with a suite. Next step is the owner's: approve the pastes in the order below and the redeploys; the deferred items need the decisions at the end.
 
 Branch: worktree-agent-a52234cf99a76ae26 (from claude/hec-conductor-setup-efbaa5 5594ca32, merged up to 43375f67).
 Build and test only: nothing here was applied to the live database, deployed or pushed. The live catalog was NOT read in S2 (brief: no connection); every "before" is production as the audit (13 Nov) and the repository describe it, and every migration refuses to install when production holds a policy it does not know (fails closed: the paste stops, nothing changes).
 
 Files touched by the six other branches (`d4-3a-lessons`, `worktree-agent-a935...`, `-ae3a...`, `-a20e...`, `-addb...`, `origin/pc2/r22-r23`) were avoided; the only shared file is `scripts/pgtest/run.mjs` (S2 entries only). Deferred because another branch owns the file: F-13's `analyze-video-submission` re-run cap (ae3a, now merged into the conductor - free for a follow-up), F-24 (`src/pages/OAuthConsent.tsx`, pc2/r22-r23).
 
-Checks, run once at the end on the merged branch: `node scripts/pgtest/run.mjs` 6602 assertions across 72 suites, 0 failed (S2's seven: 42 + 60 + 38 + 35 + 32 + 30 + 92 = 329); `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` exit 0; `npm run test:bun` 190 pass, 0 fail.
+Checks after the fix round, once, on the branch merged up to conductor 16c90330: `node scripts/pgtest/run.mjs` 6882 assertions across 76 suites; one suite failed - d4 floors, 2 assertions of "C-1 move to a later time today", the known clock edge after 20:00 Hanoi (not S2's files). S2's nine: F-06 42, F-17 60, F-18 48, F-05 35, F-19 32, F-20 30, S2 edge functions 107, S2 review probes 20 (= 374). `tsc --noEmit -p tsconfig.app.json` exit 0; `npm run test:bun` 250 pass, 0 fail. (Round 1, before the review: 6602 / 72 / 0, tsc 0, bun 190 / 0.)
 
 ## The 21 findings
 
