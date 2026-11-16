@@ -1,6 +1,6 @@
 # D4 build - step 2 (dated class fees, G-16 / review R-9)
 
-**Where I am / next step:** COMPLETE: built and tested on branch `worktree-agent-a36ad2752b190053b` (from `claude/hec-conductor-setup-efbaa5` b27bbf06). Next step is not mine: the independent review of step 2, then the conductor's live apply (migration, then the three functions, then the screens, one sitting).
+**Where I am / next step:** FIX ROUND COMPLETE (review `D4-2-review.md`, APPLY WITH CHANGES; see "Fix round" below - it supersedes any line above it that disagrees). Built and tested on branch `worktree-agent-a36ad2752b190053b` (from `claude/hec-conductor-setup-efbaa5` b27bbf06). Next step is not mine: the independent review of step 2, then the conductor's live apply (migration, then the three functions, then the screens, one sitting).
 
 Implementer only: nothing pushed, nothing deployed, nothing applied to any database, the live database not looked at. The conductor tip c132bf7b (test-date fix 02b571e6, PC2-harvest) was merged in before the final run.
 
@@ -10,18 +10,47 @@ Implementer only: nothing pushed, nothing deployed, nothing applied to any datab
 
 | File | What |
 |---|---|
-| `supabase/migrations/20261114092000_d4_class_fee_history.sql` | table `class_fee_history` (first-of-month rows + a 1900-01-01 baseline, plain `UNIQUE (class_id, effective_from)`, CHECKs: first of month, fee >= 0, note <= 500); the idempotent baseline insert (rows in the NEW table only, at `classes.session_rate_vnd`); RLS on, one policy (admins and teachers read), authenticated SELECT only, service_role ALL (house rule); `class_fee_on(class, date)` STABLE; `_class_fee_reach`; triggers `class_fee_history.zz_class_fee_money_guard`, `class_fee_history.class_fee_history_no_truncate`, `class_fee_history.audit_class_fee_history` (the generic `audit_row_change`), `classes.class_fee_baseline` (AFTER INSERT), `classes.zz_class_fee_mirror_guard` (BEFORE UPDATE OF session_rate_vnd, WHEN changed); entity `class_fee` of the 1b dispatcher: `_money_plan__class_fee` / `_money_exec__class_fee`, ops `set` and `remove`. Preflight: the 1a/1b objects and the CR-stripped md5 of the seven 1a/1b bodies it relies on; refuses a class with a negative fee. `SET LOCAL lock_timeout = '5s'`, `NOTIFY pgrst`, result set. Replaces nothing; the dispatcher is not re-created. |
+| `supabase/migrations/20261114092000_d4_class_fee_history.sql` | table `class_fee_history` (first-of-month rows + a 1900-01-01 baseline, plain `UNIQUE (class_id, effective_from)`, CHECKs: first of month, fee >= 0, note <= 500); the idempotent baseline insert (rows in the NEW table only, at `classes.session_rate_vnd`); RLS on, one policy (admins read - fix round F-3), authenticated SELECT only, service_role ALL (house rule); `class_fee_on(class, date)` STABLE; `_class_fee_reach`; triggers `class_fee_history.zz_class_fee_money_guard`, `class_fee_history.class_fee_history_no_truncate`, `class_fee_history.audit_class_fee_history` (the generic `audit_row_change`), `classes.class_fee_baseline` (AFTER INSERT), `classes.zz_class_fee_mirror_guard` (BEFORE UPDATE OF session_rate_vnd, WHEN changed); entity `class_fee` of the 1b dispatcher: `_money_plan__class_fee` / `_money_exec__class_fee`, ops `set` and `remove`. Preflight: the 1a/1b objects and the CR-stripped md5 of the seven 1a/1b bodies it relies on; refuses a class with a negative fee. `SET LOCAL lock_timeout = '5s'`, `NOTIFY pgrst`, result set. Replaces nothing; the dispatcher is not re-created. |
 | `scripts/ROLLBACK-d4-3-class-fee.sql` | brings the mirror level (`class_fee_on(id, today)`) first, then drops the two guard triggers; states what stays. |
-| `supabase/functions/_lib/class-fee.ts` (new, imports nothing) | `indexClassFees`, `classFeeOn(history, classId, date, fallback)`, `isMissingFeeHistory` (42P01 / PGRST205 / the message forms), `readClassFeeHistory` (paged by id, 200 classes a chunk; `null` for a missing table; throws on any other error). |
+| `supabase/functions/_lib/class-fee.ts` (new, imports nothing) | `indexClassFees`, `classFeeOn(history, classId, date, fallback)`, `isMissingFeeHistory` (by code only: 42P01 / PGRST205 - fix round F-1), `readClassFeeHistory` (paged by id, 200 classes a chunk; `null` for a missing table; throws on any other error). |
 | `supabase/functions/calculate-tuition/index.ts` | the history read once, in Wave 2 beside the sessions; `defaultRate` per lesson and `class_breakdown[].session_rate_vnd` (the month's fee) through `classFeeOn`. 13 lines. |
 | `supabase/functions/calculate-tuition-bulk/index.ts` | the history read once through `fetchChunked` (paged, as every read of that file); the same two places. 18 lines. |
 | `supabase/functions/_lib/projected-per-class.ts` | the history read once; each lesson of the month summed at its fee (`select('id, date')`), `session_rate` the month's fee. |
-| `src/components/admin/class/ClassFeeHistory.tsx` (new) | the list (newest first, "until <month>", "now", "not in force yet", note), "New fee from <month>" (month, fee, note; defaults to next month), Remove (not the first fee). Preview -> T0: confirmed at once through `money_change_checked` (one override row, no dialog), bills in reach refreshed by `guarded-change-refresh`; T1+: the 1b dialog with the reached bills, reason, tick (and the correction reason at T3). |
+| `src/components/admin/class/ClassFeeHistory.tsx` (new) | the list (newest first, "until <month>", "now", "not in force yet", note), "New fee from <month>" (month, fee, note; defaults to next month), Remove (not the first fee). Preview -> only a new fee that reaches NO bill is confirmed at once (one override row); every Remove and every change whose plan reaches a bill opens the 1b dialog, at any tier (fix round S-2) with the reached bills, reason, tick (and the correction reason at T3). |
 | `src/components/admin/class/ClassSettings.tsx` | the Session Rate field and `session_rate_vnd` in the update are gone; `<ClassFeeHistory classId={classId} />` in their place. |
 | `src/lib/classFee.ts` (new, pure, imports nothing) | wording, the list layout, the month helpers, `parseFee`, the refusal texts, the dialog's one-line summary from the plan's own figures. |
 | `src/components/admin/money-guard/MoneyGuardDialog.tsx` | three OPTIONAL props (`title`, `intro`, `submitLabel`) so the class-fee screen words the same dialog; left out, the register's dialog reads exactly as before. |
-| tests | `scripts/pgtest/d4-class-fee.test.mjs` (155 assertions), `scripts/pgtest/d4-class-fee-golden-hook.mjs` (a `node --import` preload that answers `class_fee_history` inside `invoice-status.test.mjs`, which is not edited); `run.mjs` registers `d4 class fee` with `expect: 155`; `d4-prelude.mjs` gains `D4_CLASS_FEE` (the live `classes.session_rate_vnd` column); `guard-fingerprint.mjs` lists file 3, applies `D4_CLASS_FEE` in `checkUnchanged`, and runs rollback 3 first in `--after-rollback`; `d4-mutants.mjs` gains suite `fee` and mutants K01-K32. |
+| tests | `scripts/pgtest/d4-class-fee.test.mjs` (174 assertions after the fix round), `scripts/pgtest/d4-class-fee-golden-hook.mjs` (a `node --import` preload that answers `class_fee_history` inside `invoice-status.test.mjs`, which is not edited); `run.mjs` registers `d4 class fee` with `expect: 174`; `d4-prelude.mjs` gains `D4_CLASS_FEE` (the live `classes.session_rate_vnd` column); `guard-fingerprint.mjs` lists file 3, applies `D4_CLASS_FEE` in `checkUnchanged`, and runs rollback 3 first in `--after-rollback`; `d4-mutants.mjs` gains suite `fee` and mutants K01-K32. |
 | `docs/evidence/D4-release-fingerprint.*` | regenerated: 49 functions (+8), 24 triggers (+5), 7 relations (+`class_fee_history`); every 1a / 1b entry unchanged (the JSON diff is additions only). |
+
+## Fix round (after `docs/evidence/D4-2-review.md`, APPLY WITH CHANGES)
+
+`review-2` (4194991d) merged in; each finding one commit `D4-2 fix: ...`; the migration edited in place (applied nowhere).
+
+| Finding | Change | Proof |
+|---|---|---|
+| S-1 (blocker) mojibake in `ClassSettings.tsx` :222, :261, :328 | file rebuilt from the b27bbf06 bytes, only the fee edits re-applied (9d49372c); every file of the step scanned for `C3 A2 E2 82 AC` / `C3 B0 C5 B8` / BOM: none left | `git diff b27bbf06 -- ClassSettings.tsx` = the fee lines only; `d4-class-fee` case "S-1: no re-encoded bytes ... the em dashes and the bank emoji of ClassSettings are intact" |
+| S-2 (blocker) T0 saved with no dialog, notes from the browser's calendar | `feeNeedsDialog(op, plan)`: the dialog for every Remove and whenever the plan's `invoices_before` / `refresh_pairs` is non-empty, any tier (and any tier >= 1 or approval); only a new fee reaching NO bill goes straight through. `feeDialogIntro(plan)` words it from the plan (bills reached, tier). The calendar notes (`isPastMonth`, past / future / this-month) are gone; the line under the button says the bills are checked first (0b342d12) | cases "feeNeedsDialog: only a new fee that reaches NO bill goes straight through", "the dialog's wording comes from the plan", "S-2: the screen decides the dialog with feeNeedsDialog ... no calendar-based note"; mutation-free source check |
+| T-1 (blocker) V01, V02 survived; F-5 V03, V04 | the review's P2, P3, P7, P8 copied into `d4-class-fee` (d6e7b05a) | V01-V04 now CAUGHT (table below) |
+| V05 | not killed - **equivalent**: `_class_fee_reach` always returns a numeric `tier` (the literal 0 of its empty branch, or `tuition_reach`'s `COALESCE(max(tier), 0)`, now possibly raised to the literal 1 by OQ-1) or raises (then the statement fails: closed). The `COALESCE(.., 3)` in the trigger never sees NULL, so `COALESCE(.., 0)` behaves the same | V05 SURVIVED, argued |
+| F-1 "no table" by message | `isMissingFeeHistory` = `code === '42P01' \|\| code === 'PGRST205'`, nothing else (004c1d21) | case "F-1: a message alone is never no table" (42703 column, PGRST200 relationship, code-less message all false); mutants K31 (code check dropped) and K33 (message test restored) CAUGHT |
+| F-2 rollback 3 header | the reviewer's sentences: with the step-2 functions deployed the fee is the history (change it with a `class_fee_history` row; `classes.session_rate_vnd` alone changes no bill); the old class screen only with the old calculators, same sitting (9324c17e) | `scripts/ROLLBACK-d4-3-class-fee.sql` header |
+| F-3 / decision 5 teachers read the history | policy `class_fee_history_admin_read` (admins only); the old `class_fee_history_staff_read` dropped if present (f8bf316d) | cases "F-3: admins read the history; a teacher and a parent read none", "the one policy names no role but admin"; mutant K34 CAUGHT |
+| F-4 `UPDATE OF session_rate_vnd` | `BEFORE UPDATE ON public.classes ... WHEN (OLD.session_rate_vnd IS DISTINCT FROM NEW.session_rate_vnd)` (1bc90aa6) | case "F-4: a fee rewritten by an earlier BEFORE trigger (the column not in the SET list) -> HC120" (the review's P11); mutant K35 (column list back) CAUGHT; K13 (WHEN dropped) still CAUGHT |
+| Decision 7 the 1900 row by a typed year | the month box has `min` = the class's first lesson or creation month (`feeMonthMin`, never before 2000-01) and `save` refuses below it (`feeMonthAllowed`) (0b342d12) | case "decision 7: the month box starts at the class's first lesson or creation, never 1900" |
+| OQ-1 (owner's ruling: YES) | `_class_fee_reach` raises the tier to at least 1 when any reached pair's state is `paid`, `signed` or `frozen` (recorded payment / paid label / floor ever_paid, confirmed / adjusted, frozen) - in ANY month (b3546c6d). Plan and trigger share it, so the acknowledgement check agrees | cases "P4: next month already billed AND paid -> T1", "without a reason -> HC010", "P5: this month, paid -> T1", the T0 control (issued, nothing paid), "the raw write that reaches the paid bill is judged at T1"; mutant K36 CAUGHT |
+
+AGENTS.md rule text for the conductor (design (h)): **"The class fee is read with `classFeeOn` (`supabase/functions/_lib/class-fee.ts`) over `class_fee_history`, never from `classes.session_rate_vnd` (the mirror, \"the fee now\"). A fee changes only through `money_change_checked('class_fee', 'set' | 'remove')`; a change that reaches a bill with money on it asks for a reason in any month."**
+
+Deploy note: `watch-sibling-threshold` must be redeployed WITH `calculate-tuition` and `calculate-tuition-bulk` - it is unchanged, but it bundles `_lib/projected-per-class.ts`, which now reads the history (an old bundle keeps pricing its projection at the mirror).
+
+### Mutation run after the fix round (`node scripts/pgtest/d4-mutants.mjs K01 ... K36 V01 ... V05`)
+
+K01-K36 (K33-K36 new in this round) and the reviewer's V01-V05: **40 caught, 1 survived (V05, equivalent - above)**. V01 (P2), V02 (P3), V03 (P7), V04 (P8) are caught by the copied cases. `git status` clean after the function mutants.
+
+### Checks after the fix round
+
+`node scripts/pgtest/run.mjs` (once, after every fix commit): **6287 assertions across 63 suites, 0 failed** (d4 class fee 174, invoice status 268, d4 rollback 26 with its fingerprint checks, edge functions typecheck 5, app typecheck 3 = `tsc --noEmit -p tsconfig.app.json` exit 0 with the source loaded). Fingerprint regenerated (8bd1870c): `--release d4 --check` up to date, 49 functions / 24 triggers; `--check-unchanged` only the two 1a-replaced functions differ; `--after-rollback` 66 of 66. Golden gate: still byte-identical in all three states (part of the 174).
 
 ## The guards as built
 
@@ -34,7 +63,7 @@ Implementer only: nothing pushed, nothing deployed, nothing applied to any datab
 6. owner lane (SQL editor) -> pass; an `owner_lane` event (with tier and the months to refresh) when the tier is above 0.
 7. anything else -> HC120 `money_change_requires_checked_path`, DETAIL `entity=class_fee; tier=N; Change the fee from the class's fee history, from a month, with a reason.` - the service role, a person, an API role without a user, at ANY tier (decision 1).
 
-**`zz_class_fee_mirror_guard`** (BEFORE UPDATE OF `session_rate_vnd` ON `classes`, only WHEN the value changes): passes a value equal to `class_fee_on(class, today in Hanoi)` (all the checked op writes, and harmless from anyone: the calculators read the history); the owner passes with an `owner_lane` event; anything else HC120 "Change the fee from the class's fee history". A settings save that sends the column unchanged never fires (tested with the mirror out of level).
+**`zz_class_fee_mirror_guard`** (BEFORE UPDATE ON `classes`, no column list since fix round F-4, only WHEN the value changes): passes a value equal to `class_fee_on(class, today in Hanoi)` (all the checked op writes, and harmless from anyone: the calculators read the history); the owner passes with an `owner_lane` event; anything else HC120 "Change the fee from the class's fee history". A settings save that sends the column unchanged never fires (tested with the mirror out of level).
 
 **`class_fee_history_no_truncate`**: TRUNCATE -> HC121, the owner included. **`class_fee_baseline`** (AFTER INSERT ON classes): the new class's 1900 row at its fee, `ON CONFLICT DO NOTHING`.
 
@@ -46,7 +75,7 @@ Implementer only: nothing pushed, nothing deployed, nothing applied to any datab
 - exec: refuses (HC050) when the mirror's guard is missing or disabled, writes the row, then `UPDATE classes SET session_rate_vnd = class_fee_on(id, today)` when it differs; returns `guard_trigger = class_fee_history.zz_class_fee_money_guard`, which `_money_change_apply` checks (HC050).
 - the advisory lock key of `_money_change_apply` for `class_fee` args is `money:class_fee:` (the args carry `class_id`, not one of the three keys it reads): every fee change of the school is serialised. Harmless at this volume; noted.
 
-## Tests (`d4-class-fee`, 155 assertions)
+## Tests (`d4-class-fee`, 155 assertions before the fix round; 174 after it)
 
 | Part | Covers |
 |---|---|
@@ -127,7 +156,7 @@ And the `run.mjs` entry of `invoice-status` itself (the stand-in's empty table: 
 | Function | md5_prosrc | definer | volatility |
 |---|---|---|---|
 | `class_fee_on(uuid, date)` | f266a26b22e6b19929dafda7095c9813 | no | STABLE |
-| `_class_fee_reach(uuid, date, integer, integer)` | dc3dad43d1353a3dcf36e520d68c7bf7 | yes | STABLE |
+| `_class_fee_reach(uuid, date, integer, integer)` (after OQ-1) | b7fe1e41baf0e4ac3885a03f3d61c610 | yes | STABLE |
 | `_class_fee_money_guard()` | 3e70d6360ab94d607afaedd170bf6874 | yes | VOLATILE |
 | `_class_fee_no_truncate()` | 00f8dc0e3348e24f0e05dc76f3184863 | no | VOLATILE |
 | `_class_fee_baseline()` | 636435cd6ddb337af51aaa44f1236d5f | yes | VOLATILE |
@@ -141,7 +170,7 @@ And the `run.mjs` entry of `invoice-status` itself (the stand-in's empty table: 
 | `class_fee_history.class_fee_history_no_truncate` | 61eda79b56f2d525bcebc4c8f4004740 |
 | `class_fee_history.audit_class_fee_history` | 8117d39b76a1096e9f4aeb25dd8ea916 |
 | `classes.class_fee_baseline` | 8fcb71f5d113ec68ddfd9c5af6ded9a7 |
-| `classes.zz_class_fee_mirror_guard` | 8e019118e4fde353129d0dec5f5d7951 |
+| `classes.zz_class_fee_mirror_guard` (after F-4) | ebf1bd33b96da6dc97d67da86b06aafe |
 
 All of them, the table's columns, constraints, policy and privileges are in `docs/evidence/D4-release-fingerprint.expected.json` (paste `D4-release-fingerprint.sql` after the migration and compare). `guard-fingerprint.mjs --check-unchanged`: of the 66 D-release objects only the two functions 1a replaced differ; `--after-rollback` (rollbacks 3, 2, 1, then D2 again): 66 of 66.
 
@@ -149,7 +178,7 @@ Edge function files (md5 of the file with CR removed), for the deploy check:
 
 | File | md5 (CR removed) |
 |---|---|
-| `supabase/functions/_lib/class-fee.ts` | 5211fead40a9f18a362c676ac1204bda |
+| `supabase/functions/_lib/class-fee.ts` (after F-1) | 6a6d2167918057c6dc9c8c96e108cf1b |
 | `supabase/functions/calculate-tuition/index.ts` | c27f77a305aea9db083611fd6c41aaae |
 | `supabase/functions/calculate-tuition-bulk/index.ts` | 8cb94f345403c4f28a8f38aee8986a5e |
 | `supabase/functions/_lib/projected-per-class.ts` | a66a4e346e5d62d5646cce7b99cf34cf |
@@ -171,12 +200,12 @@ Apply order (the design's): migration first, then `calculate-tuition`, `calculat
 2. **The mirror guard is about the value, not the caller.** c.3 says "owner or ack 'class_fee', else HC120". Built: a value equal to `class_fee_on(class, today)` passes from anyone (it changes no bill - the calculators read the history - and it is all the checked op ever writes), the owner passes with an event, anything else HC120. So an acknowledgement cannot set the mirror to anything else either, and anyone may bring a stale mirror level.
 3. **The mirror goes stale at a month turn.** When a fee dated next month comes into force, `classes.session_rate_vnd` still shows the old fee until the next checked change of that class. The three calculators do not read it. The readers that still do: `useFinanceOverview` / `useFinanceSummary` (browser estimates that predate D4 - not tuition figures), `OperationalReports`, `AddSessionModal` / `ModifyEnrollmentModal` / `EnrollmentRateEditor` / class lists (display), and the SQL view `v_projected_base` (used only as a gate in `projected-per-class` and by `_lib/projected.ts`). Not built: a monthly `UPDATE classes SET session_rate_vnd = class_fee_on(id, today) WHERE ...` (the guard lets it through) - a cron job or the screen could run it; the conductor's call.
 4. **One line of calculate-tuition left unchanged on purpose:** the "Rate Adjustment" discount line's DISPLAY fields (`defaultRate`, `savingsPerSession`, index.ts line 348) read `sessions[].classes?.[0]?.session_rate_vnd`, which is 0 for the object PostgREST returns - a pre-existing display defect (the amount, `savings`, is priced per lesson through `classFeeOn`). Fixing it changes the golden response of the "rate override below the class rate" fixture, so it is left for its own task.
-5. **Who reads the history:** admins and teachers (the design's "staff"). Authenticated has SELECT only - no INSERT / UPDATE / DELETE grant, unlike AGENTS.md's general line for new tables, because no browser writes this table (as 1b's tables).
+5. **Who reads the history:** admins only (fix round F-3; was admins and teachers). Authenticated has SELECT only - no INSERT / UPDATE / DELETE grant, unlike AGENTS.md's general line for new tables, because no browser writes this table (as 1b's tables).
 6. **Guards the design did not list, all fail-closed:** identity (HC121 `fee_row_identity`), the baseline row (HC121 `baseline_row`), TRUNCATE (HC121), all on every lane including the owner's; the depth exemption narrowed to the two writes this file's triggers make; the generic audit trigger on the history (the owner's writes have no override row).
 7. **`set` of the 1900 row is allowed through the checked path** (a correction of the starting fee: it reaches the whole history, so it is T2 / T3 in practice). The screen does not offer it.
 8. **`nothing_to_change`** also refuses a new row whose fee equals the fee already in force from that month (a row that would change nothing).
 9. **A change that moves no fee** (a note) reaches nothing (T0) even in a confirmed month.
-10. **The screen at T0 saves without a dialog** (the button names the month; the line under it says what happens: "nothing already billed changes" / "this month's bills are worked out again" / "this corrects bills already worked out"). It still writes its override row, and refreshes the bills in `refresh_pairs` (a row from the current month with bills) through `guarded-change-refresh`.
+10. **(Superseded by fix round S-2.)** The screen at T0 saved without a dialog (the button names the month; the line under it says what happens: "nothing already billed changes" / "this month's bills are worked out again" / "this corrects bills already worked out"). It still writes its override row, and refreshes the bills in `refresh_pairs` (a row from the current month with bills) through `guarded-change-refresh`.
 11. **`MoneyGuardDialog` gained three optional props** (`title`, `intro`, `submitLabel`). The design says the shared dialog pieces were finished in 1b; the change is additive and the register's dialog renders exactly as before.
 12. **HC015 refuse codes of this entity (`baseline_row`, `not_found`, `no_baseline`) are not in `_lib/session-guard.ts`'s HC015 map** (no later step edits that file); no edge function calls the class-fee op, and the screen words them itself (`CLASS_FEE_REFUSALS`).
 13. **`d4_guard_status()` (1b) does not list the two new guard triggers** (not re-created). The migration's result set and the fingerprint show them. Step 4/5 may extend the card.
