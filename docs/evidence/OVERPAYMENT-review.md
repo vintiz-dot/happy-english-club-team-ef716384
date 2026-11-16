@@ -2,7 +2,7 @@
 
 **Verdict: SHIP WITH CHANGES - nice-to-have only, no blocker.** The money is right in every case I could build: the whole payment lands once (payment row = allocations = cash/bank debits = what the bills gained), the ledger pair balances, `carry_out_credit` equals the extra, the label is `paidLabel`'s, the next bill's payable falls by the extra, frozen and confirmed bills keep their charged figures and their confirmation, and delete-payment reverses new payments with an extra and old payments with an unapplied-cash pair. The nice-to-haves are wording that is untrue in two corner cases, one test case the builder replaced that should come back, and pre-existing issues this change did not cause.
 
-**Where I am / next step:** review done. Next (conductor): run the read-only SQL in section 5 on live, deploy as the builder's section 6 says, and decide on the nice-to-haves.
+**Where I am / next step:** review done, harness counts in section 3. Next (conductor): run the read-only SQL in section 5 on live, deploy as the builder's section 6 says, and decide on the nice-to-haves.
 
 Reviewer only: nothing deployed, pushed or applied; pglite only; no live database; no real user data.
 
@@ -54,7 +54,13 @@ Result: **24 passed, 0 failed** (P1 x2, P1b x2, P2 x2, P2c, P3 x2, P3d x2, P3m, 
 
 ## 3. Counts
 
-RUNCOUNTS
+| command | result |
+|---|---|
+| `node scripts/pgtest/run.mjs` (merged tree, once) | **6530 assertions across 68 suites, 1 suite failed**: `d4 floors` 212 passed / 2 failed, both "C-1 move ... later time today" (`HC015 bad_change`). Not this change: the case moves a lesson to `clock(0, 3)` with a one-hour end (`d4-prelude.mjs:349-353`, Hanoi time); run at 20:46 Hanoi, the new end is 00:46, before the start. It fails whenever the suite runs after 20:00 Hanoi; no file it reads is touched by this branch. Every other suite green: invoice status 294, removed money features 37, family payment month 6, tuition prior balance 267, shared-module mirrors 19, edge functions typecheck 5, app typecheck 3 (the app `tsc --noEmit -p tsconfig.app.json` with the loaded-files check), d4 lesson pay 143 |
+| `npm run test:bun` | 190 pass, 0 fail, 808 expect() calls, 16 files |
+| `node docs/evidence/OVERPAYMENT-review-probes.mjs` | 24 passed, 0 failed |
+
+Recommendation for the conductor: re-run `d4 floors` before 20:00 Hanoi (or fix the fixture to pick an earlier hour) to see it green; it does not bear on this deploy.
 
 ## 4. Old tab / new tab
 
