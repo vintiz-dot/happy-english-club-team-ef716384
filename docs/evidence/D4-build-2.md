@@ -2,7 +2,9 @@
 
 **Where I am / next step:** COMPLETE: built and tested on branch `worktree-agent-a36ad2752b190053b` (from `claude/hec-conductor-setup-efbaa5` b27bbf06). Next step is not mine: the independent review of step 2, then the conductor's live apply (migration, then the three functions, then the screens, one sitting).
 
-Implementer only: nothing pushed, nothing deployed, nothing applied to any database, the live database not looked at.
+Implementer only: nothing pushed, nothing deployed, nothing applied to any database, the live database not looked at. The conductor tip c132bf7b (test-date fix 02b571e6, PC2-harvest) was merged in before the final run.
+
+**Checks (on the merged tree):** `node scripts/pgtest/run.mjs` -> **6268 assertions across 63 suites, 0 failed** (d4 class fee 155, invoice status 268, d4 floors 213, d4 rollback 26 - its fingerprint checks include file 3 and rollback 3 - edge functions typecheck 5, app typecheck 3; no suite skips). `tsc --noEmit -p tsconfig.app.json`: exit 0. `npm run test:bun`: 159 pass, 0 fail. Mutants K01-K32: 32 / 32 caught. `guard-fingerprint.mjs --release d4 --check`: up to date; `--check-unchanged`: only the two 1a-replaced functions differ; `--after-rollback`: 66 of 66. (Before the merge the run showed `session cancel guard` and `d4 D2 carry-over` 3 failures each - the date fixture 02b571e6 fixes; neither suite loads a file of this step.)
 
 ## What was built (the files (h) lists for step 2, plus test tooling)
 
