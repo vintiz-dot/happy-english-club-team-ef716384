@@ -1,6 +1,6 @@
 # D4 step 1b - live apply, functions half (Step 4 and Step 5 of D4-1b-live-apply-brief.md)
 
-Where I am / next step: all three functions live and read back identical; next step is the Step 5 probes.
+Where I am / next step: deployed, read back and probed; last step is the log check covering 10 minutes after the last deploy (to 09:25).
 
 Live project `aswgmbefikhsnhogtryv` (confirmed with get_project_url). Steps 1-3 (migration) were done earlier by the conductor; no migration is applied here. All times Hanoi (UTC+7).
 
@@ -46,3 +46,35 @@ Note: 09:01 Hanoi on a Monday; the brief prefers outside teaching hours. Proceed
 
 - 09:14 deployed: v3 -> v4. verify_jwt true; entrypoint mark-attendance/index.ts; files: mark-attendance/index.ts, _lib/rate-limit.ts, _lib/attendance-effects.ts, _lib/session-guard.ts, _lib/money-guard.ts.
 - v4 read-back: all five EQUAL (3963244d..., aad3d996..., 597d0671..., 9046deec..., 5fab2eca...). VERDICT: identical, first attempt.
+
+## Versions (list_edge_functions, 09:17)
+
+| function | before | after | verify_jwt |
+|---|---|---|---|
+| guarded-change-refresh | absent | v2 (v1 superseded, see 4a) | true |
+| repair-attendance | v3 | v4 | true |
+| mark-attendance | v3 | v4 | true |
+
+Noticed, not mine: `analyze-video-submission` went v3 -> v4 at 09:16:43 (another deploy running in parallel). Not touched here.
+
+## Step 5 - probes (read-only) - 2026-11-16 09:16
+
+- No Authorization, POST `{}`: guarded-change-refresh 401, repair-attendance 401, mark-attendance 401 (gateway, UNAUTHORIZED_NO_AUTH_HEADER).
+- Publishable key (.env, legacy anon JWT; never printed) as bearer, POST `{}`: all three 401, each answered by the new code itself: guarded-change-refresh `code: unauthorized` (sessionGuard shape), repair-attendance `{"error":"Unauthorized"}` (requireRole), mark-attendance `{"error":"Invalid authentication"}`. So each booted and ran.
+- PostgREST, publishable key: `POST /rest/v1/rpc/money_change_preview` -> 401 / 42501 permission denied (not PGRST202). `GET /rest/v1/money_change_overrides?limit=1` -> 401 / 42501 permission denied (not PGRST205).
+- has_function_privilege: money_change_checked authenticated true / service_role false / anon false; log_money_automation_refused service_role true / authenticated false; tuition_month_state anon / authenticated / service_role all false.
+- Owners: money_change_events = postgres, money_change_overrides = postgres, _money_change_apply = postgres.
+
+## Counts (numbers only)
+
+| | before (09:01) | after (09:16) |
+|---|---|---|
+| money_change_events | guard_installed 1, no other kind | guard_installed 1, no other kind |
+| money_change_overrides | 0 | 0 |
+| attendance | 6289 | 6289 |
+| invoices | 711 | 711 |
+| sessions | 876 | 876 |
+
+## Logs 09:03 - 09:18 (function_edge_logs + function_logs, the three function ids)
+
+- Only my six probes (all 401) and one clean Boot per function at the new version (guarded-change-refresh v2, repair-attendance v4, mark-attendance v4). No error-level line, no boot error, no 5xx.
