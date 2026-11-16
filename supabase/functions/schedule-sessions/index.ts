@@ -521,6 +521,8 @@ async function reconcileSessions(
   const attention = {
     noTeacherExpected: [] as ExpectedSession[],
     noTeacherExisting: [] as any[],
+    /** Include-held time updates the database refused (D4 G-5). */
+    heldTimeRefused: [] as any[],
   };
 
   const now = new Date();
@@ -703,6 +705,26 @@ async function reconcileSessions(
             updated_by: actorUserId,
           })
           .eq('id', existingSession.id);
+
+        // D4 3A (G-5): a Held lesson's time is pay, and this run is the
+        // service lane - the database refuses it (HC020 kind=retime) outside
+        // the free week. Reported under `attention` and logged, never retried;
+        // the admin changes it one lesson at a time, with a reason.
+        if (updateError && (updateError as any).code === 'HC020') {
+          attention.heldTimeRefused.push({
+            id: existingSession.id, class: exp.className, date: existingSession.date,
+            time: `${existingSession.start_time}-${existingSession.end_time}`,
+            template_time: `${exp.startTime}-${exp.endTime}`,
+            reason: 'A held lesson\'s time is changed from the lesson\'s Actions menu, with a reason',
+          });
+          try {
+            await supabase.rpc('log_session_automation_refused', {
+              p_session_id: existingSession.id, p_source: 'schedule-sessions include-held',
+            });
+          } catch (e) {
+            console.error('log_session_automation_refused failed', (e as Error)?.message ?? e);
+          }
+        }
 
         if (!updateError) {
           // Audit the change

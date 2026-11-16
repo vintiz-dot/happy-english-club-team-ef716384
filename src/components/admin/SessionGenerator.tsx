@@ -21,6 +21,7 @@ interface GenerationReport {
   attention: {
     noTeacherExpected: any[];
     noTeacherExisting: any[];
+    heldTimeRefused?: any[];
   };
   perTeacher: any[];
 }
@@ -35,7 +36,8 @@ export function SessionGenerator({ onSuccess }: { onSuccess?: () => void }) {
   const [report, setReport] = useState<GenerationReport | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleGenerate = async (mode: "future-only" | "include-held") => {
+  // D4 3A: always "future-only"; the include-held mode is retired from this screen.
+  const handleGenerate = async (mode: "future-only") => {
     setShowConfirm(false);
     setIsGenerating(true);
     setReport(null);
