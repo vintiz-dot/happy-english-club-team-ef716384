@@ -1,6 +1,6 @@
 # D4 step 1b - live apply, functions half (Step 4 and Step 5 of D4-1b-live-apply-brief.md)
 
-Where I am / next step: guarded-change-refresh live and verified (v2); next step is deploying repair-attendance.
+Where I am / next step: guarded-change-refresh (v2) and repair-attendance (v4) live and verified; next step is deploying mark-attendance.
 
 Live project `aswgmbefikhsnhogtryv` (confirmed with get_project_url). Steps 1-3 (migration) were done earlier by the conductor; no migration is applied here. All times Hanoi (UTC+7).
 
@@ -36,3 +36,8 @@ Note: 09:01 Hanoi on a Monday; the brief prefers outside teaching hours. Proceed
 - 09:08 deployed v2 with the same four files, session-guard.ts with its final blank line.
 - v2 read-back: all four EQUAL to the repo LF md5 (b2b7b3a4..., 879142b6..., 9046deec..., 5fab2eca...). verify_jwt true. VERDICT: identical.
 - How compared: the get_edge_function result was taken from this session's transcript by a script, each file's content written to scratch with CR removed and md5'd against the repo LF file (no hand comparison).
+
+## Step 4b - repair-attendance - 2026-11-16 09:11 to 09:12
+
+- 09:11 deployed: v3 -> v4. verify_jwt true; entrypoint repair-attendance/index.ts; files: repair-attendance/index.ts, _lib/auth.ts, _lib/session-guard.ts, _lib/money-guard.ts.
+- v4 read-back: all four EQUAL (0a5db73e..., 879142b6..., 9046deec..., 5fab2eca...). VERDICT: identical, first attempt.
