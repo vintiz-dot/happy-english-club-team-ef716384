@@ -1,7 +1,7 @@
 # F-23: Content-Security-Policy (report-only first)
 
-Where I am / next step: policy, endpoint and guard test committed; probe experiments done (below: report-to dropped, the
-service worker exempted, eval detection proven). Next: full screen run, report-only and enforcing, then the ship plan.
+Where I am / next step: DONE on branch, not pushed. Policy shipped report-only, browser runs clean (one known, harmless
+report), ship plan and the one-line switch below. Next (conductor): push, run the curl checks, read reports for a few days, then enforce.
 
 ## How the site is served
 
@@ -64,6 +64,27 @@ Not loaded, so not allowed:
   so that path cannot work today. Left out; if it is ever wanted, the report will name it.
 - **`https://cdnjs.cloudflare.com` (pdfobject)**: inside jsPDF's `output("pdfobjectnewwindow")`, which the app never calls.
 - **`https://picsum.photos`**: a placeholder image URL saved by `VocabularyCreator` - covered by `img-src https:`.
+
+## The policy (`public/_headers`)
+
+```
+/*
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-MgfrBZQae7SnUdEzeisUq2vYwditKlX4jqhkpiO0hAM=' 'unsafe-hashes' 'sha256-pwQduWxX3Cm7lLbQmAos7n73RLP4QrsCDFejmsBdZ78=' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co https://api.dictionaryapi.dev; connect-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co wss://aswgmbefikhsnhogtryv.supabase.co wss://*.stt.speech.microsoft.com https://api.arasaac.org https://api.dictionaryapi.dev https://api.mymemory.translated.net https://hec-docs-printer.vintizfjes.workers.dev; frame-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; report-uri /csp-report
+
+/service-worker.js
+  ! Content-Security-Policy-Report-Only
+  ! Content-Security-Policy
+```
+
+Why each part: `default-src 'self'` covers anything unlisted; `script-src` = own files + the theme-boot hash + one
+handler hash (`'unsafe-hashes'`) + `blob:` for AudioWorklet modules, no `'unsafe-eval'`, no remote host; `style-src` /
+`font-src` = own + Google Fonts for the board styles (+ `data:` fonts); `img-src` = own, `data:`, `blob:`, any
+`https:` (image search, pictograms, storage, announcements); `media-src` = own, `data:`/`blob:` (recordings, base64
+TTS), Supabase storage (videos), the dictionary's mp3s; `connect-src` = own, `data:`/`blob:` fetches, Supabase https +
+wss, Azure speech wss, ARASAAC API, dictionary, translation, the HEC Docs printer; `frame-src` = own, `blob:` (PDFs),
+any `https:` (teachers' books, YouTube, signed PDFs); `worker-src` = own (encoder, service worker) + `blob:` (speech
+SDK); `manifest-src 'self'`; `object-src 'none'`; `base-uri 'self'`; `form-action 'self'`; `frame-ancestors 'self'`
+(enforced only once the header is enforcing); `report-uri /csp-report`.
 
 ## Experiments on the policy itself (harness, made-up data)
 
@@ -139,3 +160,61 @@ engine). Both implement CSP, including report-only, exactly as Chrome and Safari
 cannot be affected. Anything they inject through their native APIs (`evaluateJavascript`, WKUserScript) is outside page CSP;
 anything they add as `<script src>` to the page would be reported now and refused after step 2, which is harmless to the app.
 Not run on a device here.
+
+## Browser runs: screens covered and violations found
+
+Two full runs over 91 screen visits (made-up data, fake client, the built app), once with the policy as shipped
+(report-only) and once with the one-line switch applied (enforcing), plus the action screens again in both modes.
+
+- **Admin**: overview and every `?tab=` (classes, assignments, journal, exam reports, finance, payroll, reports, account,
+  automation, data, activity, announcements, Stars sync, AI actions, audit clips); class page (calendar, enrolments, homework,
+  leaderboard, settings); tuition review; students, student, student tuition; teachers, teacher profile; classes; families,
+  family; schedule; tuition; vocabulary.
+- **Teacher**: dashboard, class, payroll, attendance, schedule, assignments, journal, exam reports, leaderboards, resources,
+  vocabulary audit, smart upload, transcripts, videos, the board window in all three styles (Google Fonts), Books with the
+  YouTube book in the iframe and the classroom tools opened over it, Language Support (new set, sentence typed),
+  **Class recorder** set-up wizard walked through (microphones allowed, chosen, levels, a 10-second test recording played
+  back from two `blob:` audio elements, internet check, saved).
+- **Student**: dashboard, homework, journal, lessons, my work, resources, videos, vocabulary, defend my level, Picture Reader;
+  **Record my video** (kid recorder: camera on, recording started and finished, Azure live pronunciation opened
+  `wss://southeastasia.stt.speech.microsoft.com/...` from the app's own SDK code); exam report **PDF preview** in the iframe
+  (Supabase signed URL, Chrome PDF viewer) and download.
+- **Family**: dashboard, schedule. **Signed out**: /, /auth, /claim, reset password, /watch, OAuth consent page, 404.
+- **Assistant chat** opened and a message sent as admin, family and teacher. **PDF export** buttons on student, tuition,
+  reports, teacher assignments (homework PDF), student assignments, teacher payroll, family, student dashboard.
+  **Announcements**: a splash (`srcdoc` iframe with its own `<style>`, inline `style=""` and an external image) and an image
+  banner, signed in and signed out.
+- **HEC Docs printer page**: the HTML the app posted to the printer, set on `/hec-docs/blank` under the policy exactly as the
+  Worker does: 0 violations (the printed page carries its own stricter meta policy as well).
+
+Violations:
+
+| Run | Found | Resolution |
+|---|---|---|
+| 1st, report-only | `script-src-attr inline` from `HomeworkPdfDownload` (the logo's `onerror`) | policy: `'unsafe-hashes'` + that handler's hash |
+| 1st, report-only | `script-src eval` from `engine.generated-*.js` (nunjucks' global-object shim) | kept refused; tagged `known` by `/csp-report` |
+| 2nd, report-only | only the known shim | - |
+| 2nd, enforcing | only the known shim, refused; the homework PDF still downloaded and the printer HTML was still produced; no page error, download or screen differs from the report-only run | - |
+
+So: zero unexplained violations, and enforcement changes nothing a user can see in the screens covered.
+
+Genuinely unsafe things the app does: none that the policy had to accept. What the policy still allows, by necessity:
+- `style-src 'unsafe-inline'`: React/Radix/sonner/Quill inject styles and sanitised rich text keeps `style=""`. CSS injection
+  stays possible (F-23's first item, the `sanitizeHtml` CSS on the grading screen, is not fixed by this).
+- `img-src https:` and `frame-src https:`: image search results and teachers' book links can be any host.
+- `script-src blob:`: the recorder and the speech SDK load their AudioWorklet modules from `blob:` URLs (recorder code is
+  out of scope here). Minting a `blob:` script needs script already running, so it does not open a door by itself.
+
+## Not exercised in the harness
+
+- Real Supabase traffic (the fake client answers in-page): REST, auth, functions, storage, realtime are covered by the
+  allowed-probe requests to the real URLs, not by real sessions. Realtime subscriptions themselves were not opened.
+- Image-search results, dictionary/translation lookups and live ARASAAC lookups from the UI (the actions did not trigger
+  them with made-up data); their URLs are covered by the allowed probe.
+- Audit-clip playback, Canva / Google Slides / flipbook hosts in Books (only YouTube was framed by the app; any `https:` is
+  allowed), the profile share card PNG, MCP OAuth consent with a real authorization, passkeys (not governed by CSP).
+- The service worker as registered by `main.tsx`: in the harness the fake client's top-level await delays the module past
+  the `load` event, so the harness registered the same file at the same scope itself.
+- Cloudflare's own `_headers` handling and the Pages Function runtime: emulated (`scripts/csp/cfHeaders.mjs`) and
+  unit-tested (`csp-headers.test.mjs`); confirm with the `curl` lines above after the push.
+- Safari, Firefox, Zalo and Facebook in-app browsers, real phones. The Lovable-hosted preview (may ignore `_headers`).
