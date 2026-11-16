@@ -1,6 +1,6 @@
 # S2 independent review (audit medium + low findings)
 
-Where I am / next step: review written; suite counts below are from the merged tree. Next step is the owner's: the per-item verdicts below.
+Where I am / next step: COMPLETE. Next step is the owner's: the per-item verdicts below (four small changes - R-1..R-4 - recommended, none a blocker for the safe items).
 
 Reviewed: branch `worktree-agent-a52234cf99a76ae26` at c53b4a70, on `review-s2` merged with the conductor twice (88b22dff, then a54d4f72 when it moved during the review: D4 step 3A, the demo removal ledger). Both merges were clean, no conflict to resolve; the second brought D4 3A's three suites back into `run.mjs` beside S2's seven. Read: `docs/AUDIT_FINDINGS.md`, the code (before the builder's evidence), `docs/evidence/S2-audit-medium-low.md`, root and `supabase/AGENTS.md`, the S1 evidence, rollback files and the live-recorded migrations (47ee634e, 3dc0a290). Nothing was applied, deployed or pushed; pglite only; no live data read.
 
@@ -45,7 +45,7 @@ Reviewed: branch `worktree-agent-a52234cf99a76ae26` at c53b4a70, on `review-s2` 
 | # | Sev | Where | Finding | Probe / evidence | Proposed fix |
 |---|---|---|---|---|---|
 | R-1 | LOW | `20261116094000:64-71` with S1 `student_work_staff_insert` / `_update` (`20261113140000`) | A teacher may file (or edit) a `student_work` row of their own class whose `storage_path` names ANY file; `student_work_file_staff_can` then lets them read, overwrite or delete that file. Needs the exact name (`students/<id>/<workflow>/<random uuid>.<ext>`), which is not listable, so not practical today - but it is the "path claimed by a row" pattern. Strictly narrower than before S2. | `s2-review-probes` R-1: teacher A reads and deletes class B's photo after one INSERT. | In `student_work_file_staff_can`, for a `students/<sid>/...` name also require an enrollment of `<sid>` in `w.class_id`; or a trigger on `student_work` that lets only the service role set `storage_path` to anything outside `incoming/` / `teams/`. |
-| R-2 | LOW (perf) | `20261116093000:70-87` | With the open branch gone, every teacher row a family has no class with runs both EXISTS branches in full (all lessons x all enrollments, `can_view_student` per pair). Family `SELECT id FROM teachers` (JournalEditor lists all active teachers for a student): pglite 161-287 ms before, 2420-2498 ms after. | `s2-review-probes` R-2 (30 teachers, 90 classes, 1400 children, 9000 lessons). | Replace the two family branches with one driven from the caller's own children (`students s JOIN enrollments e WHERE s.linked_user_id/secondary_user_id/family primary = _uid AND (class's default teacher OR a lesson of that class)`). The probe installs it: 296 ms, and every one of 12 logins gets exactly the builder's rows. |
+| R-2 | LOW (perf) | `20261116093000:70-87` | With the open branch gone, every teacher row a family has no class with runs both EXISTS branches in full (all lessons x all enrollments, `can_view_student` per pair). Family `SELECT id FROM teachers` (JournalEditor lists all active teachers for a student): pglite 115-453 ms before, 2420-4365 ms after (four runs). | `s2-review-probes` R-2 (30 teachers, 90 classes, 1400 children, 9000 lessons). | Replace the two family branches with one driven from the caller's own children (`students s JOIN enrollments e WHERE s.linked_user_id/secondary_user_id/family primary = _uid AND (class's default teacher OR a lesson of that class)`). The probe installs it: 244-296 ms, and every one of 12 logins gets exactly the builder's rows. |
 | R-3 | LOW (lock-out) | `update-student-avatar/index.ts:73-83` | `declared !== looksLike` refuses real images whose browser label disagrees, and HEIC is refused with a misleading message. | R-3: WebP-labelled-JPEG 400, HEIC 400 (stored before S2), iPhone Safari JPEG 200. | Drop the declared-type equality (the stored type is already the sniffed one); for HEIC/HEIF bytes (`ftypheic`/`heix`/`mif1` at offset 4) answer "This is an iPhone/Samsung HEIC photo - choose JPEG or take a screenshot". |
 | R-4 | LOW (cost/latency) | `word-enrichment/index.ts:268-280, 409` | WordExplorer always sends `context`, so after F-03 the shared cache is dead: every word click is a gpt-4o-mini call (seconds instead of instant), and the 40-per-5-min spender limit is the only brake. | R-4 (static: the one invoke and the `shared` gate). | Key the cache by `(word, target_cefr, sha256(context))`: an answer shaped by a sentence is served only for that same sentence. |
 | R-5 | INFO | `redeem-access-code/index.ts:185-205` | "Ends old sessions" means refresh tokens revoked; an access token already issued lives until expiry (default 1 h). | Reading GoTrue's logout semantics. | None needed; say "within the hour" to the front desk. |
@@ -88,7 +88,11 @@ The repo cannot prove live state (memory: migrations are pasted by hand). The pr
 
 ## Counts (merged tree `review-s2`)
 
-COUNTS_PLACEHOLDER
+- `node scripts/pgtest/run.mjs` on `review-s2` at bfaf424b (S2 + conductor a54d4f72): **6838 assertions across 75 suites, 0 failed**. S2's seven, also run one by one: F-06 42, F-17 60, F-18 38, F-05 35, F-19 32, F-20 30, edge functions 92 (= the builder's 329). The D4 3A suites the second merge brought in: 143 + 74 + 19, green beside S2.
+- `tsc --noEmit -p tsconfig.app.json`: exit 0, 1919 files loaded.
+- `npm run test:bun`: 190 pass, 0 fail (808 expects, 16 files).
+- Probes `node scripts/pgtest/s2-review-probes.test.mjs <5 migration paths, see its header>`: 18 passed, 0 failed (R-1..R-4; timings printed, not asserted - four runs: before 115-453 ms, after 2420-4365 ms, rewrite 244-296 ms; the RESIDUAL lines assert today's behaviour and flip when fixed). Not added to `run.mjs` for that reason.
+- Note: the recorder engine suite took about 20 minutes on this machine (another session's suite was running beside it); unrelated to S2.
 
 ## What I could not check
 
