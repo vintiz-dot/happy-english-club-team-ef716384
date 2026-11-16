@@ -95,10 +95,16 @@ export const STREAK_BREAKS: ReadonlySet<string> = new Set(['Absent']);
 /** A bonus at every this-many attended lessons in a row. */
 export const STREAK_BONUS_EVERY = 5;
 export const STREAK_BONUS_POINTS = 50;
-/** The notes text of every streak bonus; the unique index matches on its prefix. */
-export const STREAK_BONUS_NOTE_PREFIX = 'Attendance streak bonus:';
+/**
+ * The marker every streak bonus's notes start with - the ones paid here
+ * ("Attendance streak bonus: 5 consecutive ...") and the ones the repair
+ * script paid late ("Attendance streak bonus (paid late): ..."). One key,
+ * student + lesson + this marker, so this code and the back-pay can never
+ * both pay one lesson; the unique index (20261116091000) matches on it too.
+ */
+export const STREAK_BONUS_NOTE_PREFIX = 'Attendance streak bonus';
 export const streakBonusNote = (run: number) =>
-  `${STREAK_BONUS_NOTE_PREFIX} ${run} consecutive classes attended!`;
+  `${STREAK_BONUS_NOTE_PREFIX}: ${run} consecutive classes attended!`;
 
 /** One of a child's marks in one class, with its lesson. */
 export interface RegisterMark {

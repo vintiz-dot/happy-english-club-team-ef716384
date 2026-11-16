@@ -16,8 +16,9 @@
 --    "already paid") instead of a double payment. It ADDS an index and
 --    changes no existing constraint. PARTIAL on purpose, like
 --    point_transactions_one_homework_award: it only concerns rows written by
---    the streak code (type 'participation', linked to a lesson, notes in the
---    streak wording), and nothing upserts against it (AGENTS.md, 42P10).
+--    the streak code and the repair's back-pay (type 'participation', linked
+--    to a lesson, notes starting 'Attendance streak bonus'), and nothing
+--    upserts against it (AGENTS.md, 42P10).
 --    Before 16 Nov 2026 no streak bonus was ever written (`date` is NOT NULL
 --    with no default and the code left it out), so no existing row can
 --    collide; if one did, CREATE fails and nothing else here applies.
@@ -33,7 +34,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS point_transactions_one_streak_bonus
   ON public.point_transactions (student_id, session_id)
   WHERE type = 'participation'
     AND session_id IS NOT NULL
-    AND notes LIKE 'Attendance streak bonus:%';
+    AND notes LIKE 'Attendance streak bonus%';
 
 -- What a register mark owes, queued. Mirrors what mark-attendance runs
 -- inline: tuition for Absent or Excused, a streak step for Present or

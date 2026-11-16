@@ -287,14 +287,15 @@ const SUITES = [
   { name: "stars sync core", file: "stars-sync-core.test.mjs", migrations: [] },
   // Attendance streaks read from the register, the bonus once per child per
   // lesson (docs/evidence/FIX-streaks-bank-uploads.md, item 1): the real
-  // attendance-effects.ts over pglite, the migration, the repair script
-  // compared with the TS rule, and the opt-in back-pay.
+  // attendance-effects.ts over pglite, the migration, and the repair script
+  // (dry run, back-pay of missed bonuses, rebuilt counters) on a
+  // hand-computed fixture and against the TS rule.
   {
     name: "attendance streaks",
     file: "attendance-streaks.test.mjs",
     migrations: ["20261116091000_attendance_streak_rule.sql"],
-    args: ["scripts/REPAIR-attendance-streaks.sql", "scripts/OPTIN-attendance-streak-backpay.sql"],
-    expect: 63,
+    args: ["scripts/REPAIR-attendance-streaks.sql"],
+    expect: 83,
   },
   // Nor these: the admin screens' reasoning, without the screens. Who a
   // Pixel Pal child probably is, and how the record log is read and sliced.
