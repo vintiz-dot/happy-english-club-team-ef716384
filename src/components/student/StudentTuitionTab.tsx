@@ -3,14 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { buildEnrolledMonths, defaultMonth, type MonthOption } from "@/lib/enrolledMonths";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Award, DollarSign, CheckCircle2 } from "lucide-react";
+import { Award, DollarSign } from "lucide-react";
 import { useStudentMonthFinance, formatVND, getMonthOptions } from "@/hooks/useStudentMonthFinance";
 import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButton";
 import { checkStudentFinanceParity } from "@/lib/dev/parityCheck";
-import { SettleBillModal } from "@/components/admin/SettleBillModal";
 import { useAuth } from "@/hooks/useAuth";
 import { getPaymentStatus, getTuitionStatusBadge, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { useIvory } from "@/hooks/useIvory";
@@ -64,25 +62,9 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
     ? monthOptions
     : getMonthOptions().map((o) => ({ ...o, classes: [] }));
   
-  const [settleBillOpen, setSettleBillOpen] = useState(false);
-  const [studentName, setStudentName] = useState("");
-
   const queryClient = useQueryClient();
   const { role } = useAuth();
   const ivory = useIvory();
-
-  // Load student name
-  useEffect(() => {
-    const loadStudentName = async () => {
-      const { data } = await supabase
-        .from("students")
-        .select("full_name")
-        .eq("id", studentId)
-        .single();
-      if (data) setStudentName(data.full_name);
-    };
-    loadStudentName();
-  }, [studentId]);
 
   // Fetch invoice data - same as PDF download
   const { data: tuitionData, isLoading } = useStudentMonthFinance(studentId, selectedMonth);
@@ -228,17 +210,6 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
           )}
         </div>
         <div className={cn(ivory ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2")}>
-          {role === "admin" && ((tuitionData?.carryOutDebt ?? 0) > 0 || (tuitionData?.carryOutCredit ?? 0) > 0) && (
-            <Button
-              onClick={() => setSettleBillOpen(true)}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              Settle Bill
-            </Button>
-          )}
           <InvoiceDownloadButton 
             studentId={studentId} 
             month={selectedMonth}
@@ -539,25 +510,6 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
       {role === "admin" && (
         <BillFreezePanel studentId={studentId} canEdit={role === "admin"} />
-      )}
-
-      {/* Settle Bill Modal */}
-      {role === "admin" && (
-        <SettleBillModal
-          studentId={settleBillOpen ? studentId : null}
-          studentName={studentName}
-          month={selectedMonth}
-          // The modal (and settle-bill fn) use signed balance semantics:
-          // positive = student owes, NEGATIVE = credit. carryOutCredit is
-          // stored positive, so flip it. The old `??` chain also short-
-          // circuited on carryOutDebt === 0 and passed credit as positive.
-          balance={
-            (tuitionData?.carryOutDebt ?? 0) > 0
-              ? (tuitionData?.carryOutDebt ?? 0)
-              : -(tuitionData?.carryOutCredit ?? 0)
-          }
-          onClose={() => setSettleBillOpen(false)}
-        />
       )}
     </div>
   );
