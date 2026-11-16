@@ -428,6 +428,9 @@ const SUITES = [
     expect: 30,
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116097000_hardening_anon_and_null_uid.sql"],
   },
+  // The S2 edge-function and browser fixes (F-03, F-04, F-07..F-13, F-17's
+  // and F-23's browser half): each real function before (5594ca32) and after.
+  { name: "S2 edge functions", file: "s2-edge-functions.test.mjs", expect: 92, migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

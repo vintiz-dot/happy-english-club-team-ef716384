@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
     // log, vocabulary and date of birth to OpenAI, or set a test, for ANY
     // student id. Same predicate as the students row policy
     // (can_view_student_in_class); admins pass. Fails closed.
-    const caller: CallerIdentity = { userId: user.id, roles, isServiceRole: false };
+    const caller: CallerIdentity = { userId: user.id, roles: new Set([...roles].map(String)), isServiceRole: false };
     const staffHolds = async (studentId: string): Promise<boolean> =>
       isStaff && !!studentId && (await callerHoldsStudent(sb, caller, studentId));
     const notYours = () => respond({ success: false, error: "That child is not in one of your classes" }, 403);
