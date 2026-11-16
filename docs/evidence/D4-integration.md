@@ -1,6 +1,6 @@
 # D4 integration: steps 2 -> 3A -> 3B in one tree
 
-Where I am / next step: merges, chain suite, brief, oracle stand-in fix, screens-alone proof done and committed. Running: mutants (step 2 + 3A runner, then 3B's two), then bun and the final full run.
+Where I am / next step: DONE. Merged, proved and checked; the live-apply brief is `docs/evidence/D4-2-3A-3B-live-apply-brief.md`. Next step is not mine: the owner's go-ahead per step (2, then 3A, then 3B), then the conductor runs the brief.
 
 Branch `d4-integration` = conductor `claude/hec-conductor-setup-efbaa5` 344cbf38 (it already carries 3A, `d4-3a-fix` 965a9f0c, on top of everything live) + `git merge worktree-agent-a36ad2752b190053b` (step 2, 2ef7adab) + `git merge d4-3b-fix` (3B, 4e5b70f8). Pglite only: nothing applied, deployed or pushed; no live database contacted; no real data.
 
@@ -48,5 +48,23 @@ First full run on the merged tree (before the fix): every suite green except two
   - step 3B builder (`d4-mutants-3b.mjs`, MUTANT_JOBS=1): **69 / 69 caught**.
   - step 3B review (`review3b-mutants.mjs`): **11 caught, R07 and R12 survived** (the accepted equivalents).
   - A second clock edge, in 3B's `d4-money-inputs` (not changed): after midnight Hanoi the unmutated suite fails one case, "N-2 confirmed: the child is inactive and its open enrolment ended today (the deactivation trigger ...)" (307 / 1 at 00:30). Every mutant that ran after midnight and was "caught" only by that case was re-run with the clock moved back 8 hours (`NODE_OPTIONS=--import` the scratch preload; the runners' child suites inherit it): S55, S56 then caught by their own cases (N-5 probe P6, N-5 discount assign); R01, R02, R05, R09, R11, R13 caught by their own cases; R07, R12 survived (as the review ruled). The verdicts above are those re-runs.
-- `npm run test:bun` (first try, under load): 189 pass, 1 fail - `familyDashboardBatch.test.ts` "a batched result at the 1000-row cap ... falls back to the per-child path" timed out at 5000 ms on its own `git show` (SIGTERM); a file no D4 step touches. Re-run below.
+- `npm run test:bun` (first try, under load): 189 pass, 1 fail - `familyDashboardBatch.test.ts` "a batched result at the 1000-row cap ... falls back to the per-child path" timed out at 5000 ms on its own `git show` (SIGTERM); a file no D4 step touches. Re-run: **190 pass, 0 fail, 16 files**.
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: **exit 0**.
+- Final full run, `node scripts/pgtest/run.mjs` at 572c20bb+ (after every fix), started 00:50 Hanoi with the process clock moved back 8 hours (`NODE_OPTIONS=--import` the scratch preload, so the two clock edges above - 1a's after 20:00, 3B's after midnight - are not met): **7534 assertions across 74 suites, 0 suite(s) failed**. D4: floors 213, D2 carry-over 275, deployed functions 37, rollback 26 (runs the fingerprint `--check`, `--check-unchanged`, `--after-rollback`), register 140, functions register 34, money guard lib 45, class fee 174, lesson pay 143, functions lessons 74, stars interplay 19, money inputs 308, functions inputs 62, reach oracle 200, money inputs lib 43, apply chain 238; invoice status 274, session guard functions 135, mirrors 19, edge functions typecheck 5, app typecheck 3. Every pinned `expect` met.
 - Screens alone (`tsc --noEmit -p tsconfig.app.json` with the other steps' `src/` files at their pre-step text, new files removed, then `git checkout HEAD -- src`): only step 2's screens (46 files reverted) exit 0; only 3A's (32 reverted) exit 0; only 3B's (22 reverted) exit 0; none of them (50 reverted) exit 0; ~900 src files loaded each time; src clean after each.
+
+## Brief and release plan
+
+- docs/evidence/D4-2-3A-3B-live-apply-brief.md: per step - read-only pre-checks (C1: the exact SQL comparing live bodies with every preflight pin, CR-stripped; C2 / C3 fingerprints; step-specific checks; live functions vs the rollback copies), the OWNER PASTE of the migration, post-checks (expected md5 table of the step's objects), the functions to deploy with every relative import (LF md5, bytes, verify_jwt), the screens, and the step's own rollback (script, previous functions, screen revert list and base).
+- Rollback copies of the functions as live now: docs/evidence/D4-int-rollback-before/ (step 2's and 3B's at 344cbf38; mark-attendance = live v5 8a4b0e4e at 73646e8e). 3A's other three stay in docs/evidence/D4-3a-rollback-before/ (still equal to eaa9a050^1).
+- Corrections to the 3A brief (now marked superseded): mark-attendance is live v5 (the streak fix), not v4 - the 3A file to deploy is f1b5067c (v5 + N-2 only), rolling back to the v4 copy would undo the streak fix; and 3A's screens revert to eaa9a050^1, not c132bf7b (StarsSyncTab.tsx changed in between).
+- Screens: three disjoint sets (2: 4 files, 3A: 18, 3B: 28), none importing another's new module; each type-checks alone (above); each ships in its own commit with its step's sitting. Table in the brief.
+
+## Not verified / left for the conductor
+
+- The live database, the deploys and the screens in a browser (pglite and the type-checker only).
+- d4_guard_status() (the status card) still lists only 1a / 1b and 3A's triggers: neither step 2 nor 3B adds its triggers (both builds flagged it). A later replace must pin 3A's body (932bc6aa). Not done here: it would make step 2 / 3B pin 3A and break "each step alone".
+- No suite drives one step's guards with another step's triggers at run time beyond the apply-chain's classes probes (each step's suites load only its own file over 1a + 1b). The reach oracle's EDITS still lack class-fee and lesson edits (3B's note).
+- Two clock edges in suites (not changed): 1a d4 floors C-1 after 20:00 Hanoi; 3B d4 money inputs "N-2 confirmed ... ended today" after midnight Hanoi (probably a UTC vs Hanoi date in the deactivation path or the case). The final run was made with the clock moved back to avoid both; at a normal time of day neither is met.
+- Root AGENTS.md rule lines the three builds propose are not added (conductor's file): add each when its step goes live.
+- udit_teachers / udit_teaching_assistants may already exist live (20261020091000); 3B then leaves them and their md5_def may differ from the expected JSON (brief 3B.1.4).
