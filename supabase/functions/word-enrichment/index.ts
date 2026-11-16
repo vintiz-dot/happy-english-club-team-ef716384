@@ -24,6 +24,9 @@ import { requireSpender, type SpendGate } from "../_lib/ai-gate.ts";
 // A signed-in account holding a role, and no more than 40 calls per
 // account in each window: OpenAI gpt-4o-mini per uncached word.
 const GATE: SpendGate = { name: "word-enrichment", limit: 40, windowMs: 5 * 60_000 };
+// Input caps (audit F-03): a word is a word, a context is one sentence.
+const MAX_WORD = 60;
+const MAX_CONTEXT = 300;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -262,6 +265,19 @@ Deno.serve(async (req) => {
 
     const cleanWord = word.trim().toLowerCase();
     const targetCefr = normalizeCefr(target_cefr, "A1");
+    // The shared cache is keyed by the word alone and served to every child.
+    // An answer shaped by one caller's free-text sentence must not become
+    // everyone's definition (audit F-03): with a context the cache is neither
+    // read nor written. A word is capped; a context is cut to one sentence's
+    // length, so a long paste still gets an answer.
+    if (cleanWord.length > MAX_WORD) {
+      return new Response(
+        JSON.stringify({ error: `word is limited to ${MAX_WORD} characters` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const cleanContext = typeof context === "string" ? context.trim().slice(0, MAX_CONTEXT) : "";
+    const shared = cleanContext === "";
 
     // ── Check vocab_cache DB first ──
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -272,7 +288,7 @@ Deno.serve(async (req) => {
     if (supabaseUrl && supabaseKey) {
       try {
         sb = createClient(supabaseUrl, supabaseKey);
-        const { data: cached } = await sb
+        const { data: cached } = !shared ? { data: null } : await sb
           .from("vocab_cache")
           .select("payload")
           .eq("word", cleanWord)
@@ -302,8 +318,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const userMessage = context
-      ? `Word: "${cleanWord}"\nSentence context: "${context}"`
+    const userMessage = cleanContext
+      ? `Word: "${cleanWord}"\nSentence context: "${cleanContext}"`
       : `Word: "${cleanWord}"`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -390,8 +406,9 @@ Deno.serve(async (req) => {
       usages: Array.isArray(parsed.usages) ? parsed.usages.slice(0, 3) : [],
     };
 
-    // Persist to vocab_cache (best-effort).
-    if (sb) {
+    // Persist to vocab_cache (best-effort) - only an answer no caller's
+    // sentence shaped (F-03).
+    if (sb && shared) {
       try {
         await sb
           .from("vocab_cache")
