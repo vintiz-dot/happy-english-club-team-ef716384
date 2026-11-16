@@ -247,6 +247,59 @@ for (const [name, cfg] of Object.entries(NINE)) {
     && (cfg.roles === STAFF) === gateLine.includes("roles: STAFF_ROLES"), gateLine);
 }
 
+// D-26: analyze-transcript spends on OpenAI for a browser (Teacher Transcripts:
+// paste and Re-analyze). It differs from the nine in one way: the service-role
+// key is still let through, because transcribe-lesson-audio hands off to it
+// with that key after its own staff + class check (transcribe-gate.test.mjs).
+// The stand-in has no transcripts, so a caller the gate lets through gets 404
+// "transcript not found": past the gate, and still nothing spent.
+console.log("=== analyze-transcript (D-26) ===");
+{
+  const name = "analyze-transcript";
+  const src = readFileSync(resolve(FUNCTIONS, name, "index.ts"), "utf8");
+  const body = { transcript_id: "00000000-0000-4000-8000-0000000000aa" };
+  const fn = await load(name, src);
+  ok("the function registers a handler", typeof fn === "function");
+  const pre = await call(fn, name, { method: "OPTIONS" });
+  ok("the CORS preflight still answers without a token", pre.status === 200 && pre.cors === "*" && spentNothing(pre), pre);
+  for (const [label, token, status] of [
+    ["no Authorization header", null, 401], ["the public (anon) key as the bearer", ANON_KEY, 401], ["a token that is not a session", "not-a-jwt", 401],
+    ["an account with no role", tokenOf(U.norole), 403], ["an account whose role lookup fails", tokenOf(U.rolesBroken), 403],
+    ["a student", tokenOf(U.student), 403], ["a family", tokenOf(U.family), 403],
+  ]) {
+    const r = await call(fn, name, { token, body });
+    ok(`${label}: ${status}, nothing spent, nothing read`, r.status === status && spentNothing(r) && r.cors === "*", r);
+  }
+  for (const [label, token] of [["a teacher", tokenOf(U.teacher)], ["an admin", tokenOf(U.admin)],
+    ["the service-role key (transcribe-lesson-audio's hand-off)", SERVICE_KEY]]) {
+    const r = await call(fn, name, { token, body });
+    ok(`${label}: past the gate (404 for a transcript that does not exist), nothing spent`, r.status === 404 && r.vendor.length === 0, r);
+  }
+  const fresh = await load(name, src);
+  let passed = 0, firstRefusal = null;
+  for (let i = 0; i < 13; i++) {
+    const r = await call(fresh, name, { token: tokenOf(U.teacher), body });
+    if (r.status === 429) firstRefusal ??= { at: i + 1, r }; else if (r.status === 404) passed++;
+  }
+  eq("exactly 10 calls per account get through, then 429", [passed, firstRefusal?.at], [10, 11]);
+  ok("the 429 says when to retry and spends nothing", !!firstRefusal && Number(firstRefusal.r.retryAfter) > 0 && spentNothing(firstRefusal.r), firstRefusal?.r);
+  const other = await call(fresh, name, { token: tokenOf(U.admin), body });
+  ok("another account is not held back by it", other.status === 404, other);
+  const iOpt = src.indexOf('req.method === "OPTIONS"'), iGate = src.indexOf("await requireSpender(req, corsHeaders, GATE)"), iJson = src.indexOf("req.json()", iOpt);
+  const between = iOpt >= 0 && iGate > iOpt ? src.slice(iOpt, iGate) : "await";
+  ok("the gate comes first after the preflight: nothing awaited and the body not read before it",
+    iGate > iOpt && !/\bawait\b/.test(between) && iJson > iGate
+    && /const spender = internal \? null : await requireSpender\(req, corsHeaders, GATE\);\s*if \(spender instanceof Response\) return spender;/.test(src));
+  const gateLine = /const GATE: SpendGate = \{([^}]*)\}/.exec(src)?.[1] ?? "";
+  ok("its settings are the ones tested here (10 per 10 min, staff only)",
+    gateLine.includes(`name: "${name}"`) && gateLine.includes("limit: 10") && gateLine.includes("windowMs: 10 * 60_000") && gateLine.includes("roles: STAFF_ROLES"), gateLine);
+  const walk = (dir) => readdirSync(dir).flatMap((e) => { const f = join(dir, e); return statSync(f).isDirectory() ? walk(f) : /\.(ts|tsx)$/.test(e) ? [f] : []; });
+  const users = walk(resolve(repo, "src")).map((f) => readFileSync(f, "utf8")).filter((t) => t.includes(`"${name}"`));
+  ok(`${users.length} caller file(s) in src/, every one through supabase.functions.invoke`, users.length > 0
+    && users.every((t) => /supabase\.functions\.invoke\(\s*"analyze-transcript"/.test(t) && !t.includes("/functions/v1/analyze-transcript")));
+  ok("verify_jwt = true in supabase/config.toml", /\[functions\.analyze-transcript\]\r?\nverify_jwt = true/.test(readFileSync(resolve(repo, "supabase", "config.toml"), "utf8")));
+}
+
 console.log("=== image-search: the cache-bypassing switches ===");
 {
   const src = readFileSync(resolve(FUNCTIONS, "image-search", "index.ts"), "utf8");
