@@ -17,6 +17,8 @@ import { GOOGLE_DOCS_PASTE, QUILL_CHECKLIST, QUILL_FIXTURES, WORD_PASTE } from "
 type Mod = typeof import("../src/components/rich-text/sanitize");
 let sanitizeRichHtml: Mod["sanitizeRichHtml"];
 let isRichTextEmpty: Mod["isRichTextEmpty"];
+let unkeepablePictures: Mod["unkeepablePictures"];
+let editorExtensions: typeof import("../src/components/rich-text/extensions").editorExtensions;
 let prepareForEditor: (html: string) => string;
 let preparePaste: (html: string) => string;
 let schemaExtensions: typeof import("../src/components/rich-text/extensions").schemaExtensions;
@@ -29,9 +31,9 @@ let uninstallDom: () => void;
 
 beforeAll(async () => {
   uninstallDom = installDom();
-  ({ sanitizeRichHtml, isRichTextEmpty } = await import("../src/components/rich-text/sanitize"));
+  ({ sanitizeRichHtml, isRichTextEmpty, unkeepablePictures } = await import("../src/components/rich-text/sanitize"));
   ({ prepareForEditor, preparePaste } = await import("../src/components/rich-text/legacy"));
-  ({ schemaExtensions } = await import("../src/components/rich-text/extensions"));
+  ({ schemaExtensions, editorExtensions } = await import("../src/components/rich-text/extensions"));
   ({ Editor } = await import("@tiptap/core"));
   ({ cleanRichHtml: legacyClean } = await import("./fixtures/rich-text/legacyRichText"));
   ({ sanitizeHtml: legacySanitize } = await import("./fixtures/rich-text/legacySanitize"));
@@ -288,10 +290,72 @@ describe("what the editor stores", () => {
     expect(isRichTextEmpty("<p>a</p>")).toBe(false);
   });
 
-  test("pictures: dropped unless the host gives an upload adapter; then http(s) only", () => {
-    const html = '<p>a</p><img src="https://cdn.example.com/x.png"><img src="data:image/png;base64,AAAA">';
-    expect(roundTrip(html)).toBe("<p>a</p>");
-    expect(roundTrip(html, true)).toBe('<p>a</p><img src="https://cdn.example.com/x.png">');
+  test("pictures a row holds are kept (http(s), base64 png/jpeg/gif/webp); other kinds are not", () => {
+    const html = '<p>a<img src="https://cdn.example.com/x.png"><img src="data:image/png;base64,AAAA" alt="cat"><img src="data:image/svg+xml;base64,AAAA"><img src="x"></p>';
+    expect(roundTrip(html)).toBe('<p>a<img src="https://cdn.example.com/x.png"><img src="data:image/png;base64,AAAA" alt="cat"></p>');
+    expect(roundTrip(html, true)).toBe(roundTrip(html));
+  });
+});
+
+describe("review fixes: pictures (B2), maxLength (B3), aria (N1)", () => {
+  const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  const ROW = `<p>Look at the picture:</p><p><img src="${PNG}"></p><p>Write three sentences.</p>`;
+
+  function openTypeSave(stored: string, typed: string, maxLength?: number): string {
+    const editor = new Editor({ extensions: editorExtensions({ maxLength }), content: prepareForEditor(sanitizeRichHtml(stored, "store")) });
+    editor.chain().focus("end").insertContent(typed).run();
+    const out = sanitizeRichHtml(editor.getHTML(), "store");
+    editor.destroy();
+    return out;
+  }
+
+  test("an old row with a base64 picture: open, type, save keeps the picture byte for byte", () => {
+    const saved = openTypeSave(ROW, " Thanks.");
+    expect(saved).toContain(`<img src="${PNG}">`);
+    expect(saved).toContain("Write three sentences. Thanks.");
+    expect(saved).toBe(`<p>Look at the picture:</p><p><img src="${PNG}"></p><p>Write three sentences. Thanks.</p>`);
+  });
+
+  test("render mode (children, families, teachers reading) still shows no picture", () => {
+    expect(sanitizeRichHtml(ROW, "render")).not.toContain("<img");
+    expect(appClean(ROW)).not.toContain("<img");
+  });
+
+  test("a picture over the 2 MB cap is not kept, and is reported so the editor locks the row", () => {
+    const big = "data:image/png;base64," + "A".repeat(2 * 1024 * 1024 + 4);
+    const row = `<p>Big:</p><p><img src="${big}"></p>`;
+    expect(unkeepablePictures(row)).toBe(1);
+    expect(unkeepablePictures(ROW)).toBe(0);
+    expect(unkeepablePictures('<p><img src="https://cdn.example.com/x.png"></p>')).toBe(0);
+    expect(unkeepablePictures('<p><img src="data:image/svg+xml;base64,AAAA"></p>')).toBe(1);
+    expect(sanitizeRichHtml(row, "store")).not.toContain("<img");
+  });
+
+  test("maxLength: a longer row loads whole, typing past the limit is refused, deleting is allowed", () => {
+    const long = `<p>START ${"abcdefghij".repeat(20)} END</p>`;
+    const editor = new Editor({ extensions: editorExtensions({ maxLength: 50 }), content: prepareForEditor(long) });
+    editor.commands.setTextSelection(3);
+    expect(editor.getText()).toContain("START");
+    expect(editor.getText()).toContain("END");
+    const before = editor.getText().length;
+    editor.chain().focus("end").insertContent("more").run();
+    expect(editor.getText().length).toBe(before);
+    editor.commands.deleteRange({ from: 1, to: 6 });
+    expect(editor.getText().length).toBe(before - 5);
+    editor.destroy();
+  });
+
+  test("maxLength: a short text grows up to the limit and no further", () => {
+    const editor = new Editor({ extensions: editorExtensions({ maxLength: 10 }), content: "<p>abc</p>" });
+    editor.chain().focus("end").insertContent("defg").run();
+    expect(editor.getText()).toBe("abcdefg");
+    editor.chain().focus("end").insertContent("hijklmn").run();
+    expect(editor.getText()).toBe("abcdefg");
+    editor.destroy();
+  });
+
+  test("aria-* never survives", () => {
+    for (const mode of ["store", "paste", "render"] as const) expect(sanitizeRichHtml('<p aria-hidden="true" aria-label="x">t</p>', mode)).toBe("<p>t</p>");
   });
 });
 

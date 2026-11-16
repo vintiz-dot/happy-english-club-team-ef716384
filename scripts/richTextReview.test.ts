@@ -154,7 +154,8 @@ describe("review: XSS payloads", () => {
       const editor = new Editor({ extensions: schemaExtensions({}), content: p });
       const html = editor.getHTML();
       editor.destroy();
-      const pr = problems(html).filter((x) => !/^attr (P|H\d|LI|OL|UL)\[|^class /.test(x));
+      // B2: the schema now holds pictures; an <img src> never runs script; any other img attribute (on*) is still reported.
+      const pr = problems(html).filter((x) => !/^attr (P|H\d|LI|OL|UL)\[|^class |^tag IMG$|^attr IMG\[(src|alt)=/.test(x));
       if (pr.length) console.log("RAW PM", p, JSON.stringify(pr), html.slice(0, 200));
       expect(pr).toEqual([]);
     }
@@ -170,33 +171,36 @@ describe("review: stored pictures", () => {
     expect(sanitizeRichHtml(URL_BODY, "render")).not.toContain("<img");
   });
 
-  test("open + save in the editor without an upload adapter DROPS both pictures", () => {
+  // B2 fixed (conductor's ruling: lose nothing, show children nothing new): the editor keeps them.
+  test("open + save in the editor without an upload adapter KEEPS both pictures, byte for byte", () => {
     const a = roundTrip(BASE64_BODY);
     const b = roundTrip(URL_BODY);
-    expect(a).not.toContain("<img");
-    expect(b).not.toContain("<img");
+    expect(a).toContain(BASE64_BODY.match(/<img[^>]*>/)![0]);
+    expect(b).toContain('<img src="https://img.example/cat.png">');
     // the text survives
     expect(a).toContain("Write three sentences.");
     expect(b).toContain("After");
   });
 
-  test("even with allowImages, a base64 picture is dropped (http(s) only)", () => {
-    expect(sanitizeRichHtml(BASE64_BODY, "store", { allowImages: true })).not.toContain("<img");
+  test("store keeps a base64 picture; render (readers) still drops it unless asked", () => {
+    expect(sanitizeRichHtml(BASE64_BODY, "store", { allowImages: true })).toContain("data:image/png;base64,");
+    expect(sanitizeRichHtml(BASE64_BODY, "render", { allowImages: true })).not.toContain("<img");
     expect(sanitizeRichHtml(URL_BODY, "store", { allowImages: true })).toContain('src="https://img.example/cat.png"');
   });
 });
 
 describe("review: aria attributes", () => {
-  test("FINDING: aria-* from stored or pasted HTML survives every mode (DOMPurify default ALLOW_ARIA_ATTR)", () => {
+  // N1 fixed: ALLOW_ARIA_ATTR: false.
+  test("aria-* from stored or pasted HTML is removed in every mode", () => {
     const html = `<p aria-hidden="true">hidden from screen readers</p><p aria-label="other words">shown</p>`;
     for (const mode of ["store", "paste", "render"] as const) {
-      expect(sanitizeRichHtml(html, mode)).toContain("aria-hidden");
+      expect(sanitizeRichHtml(html, mode)).not.toContain("aria-");
+      expect(sanitizeRichHtml(html, mode)).toContain("hidden from screen readers");
     }
   });
 });
 
-// No caller passes maxLength today; the README advertises it. These assert the defect AS FOUND:
-// flip them when editorExtensions configures CharacterCount with autoTrim: false and lets setContent through.
+// B3 fixed: CharacterCount no longer limits (it trimmed / refused); TextLimit stops only growth.
 describe("review: maxLength on existing content (CharacterCount limit)", () => {
   const LONG = `<p>START-OF-ROW ${"abcdefghij".repeat(30)}</p><p>END-OF-ROW</p>`; // > 300 characters
 
@@ -206,20 +210,22 @@ describe("review: maxLength on existing content (CharacterCount limit)", () => {
     editor.destroy();
   });
 
-  test("FINDING: the first transaction (a click / selection) cuts the row FROM THE START", () => {
+  test("the first transaction (a click / selection) leaves the row whole", () => {
     const editor = new Editor({ extensions: editorExtensions({ maxLength: 100 }), content: prepareForEditor(sanitizeRichHtml(LONG, "store")) });
     editor.commands.setTextSelection(1);
     const text = editor.getText();
     editor.destroy();
-    expect(text.includes("START-OF-ROW")).toBe(false);
+    expect(text.includes("START-OF-ROW")).toBe(true);
+    expect(text.includes("END-OF-ROW")).toBe(true);
   });
 
-  test("FINDING: a row loaded after mount (setContent, as EditHomeworkDialog does) longer than the limit is refused", () => {
+  test("a row loaded after mount (setContent, as EditHomeworkDialog does) longer than the limit loads whole", () => {
     const editor = new Editor({ extensions: editorExtensions({ maxLength: 100 }), content: "" });
     editor.commands.setTextSelection(0);
     editor.commands.setContent(prepareForEditor(sanitizeRichHtml(LONG, "store")), { emitUpdate: false });
     const text = editor.getText();
     editor.destroy();
-    expect(text.includes("END-OF-ROW")).toBe(false);
+    expect(text.includes("START-OF-ROW")).toBe(true);
+    expect(text.includes("END-OF-ROW")).toBe(true);
   });
 });
