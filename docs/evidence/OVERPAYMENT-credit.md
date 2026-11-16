@@ -104,6 +104,9 @@ Imports are `../_lib/<name>.ts`; none of these `_lib` files imports another file
 |---|---|---|
 | family-payment | `supabase/functions/family-payment/index.ts` | `_lib/rate-limit.ts`, `_lib/invoice-status.ts`, `_lib/recorded-payment-write.ts` |
 | smart-family-payment | `supabase/functions/smart-family-payment/index.ts` | `_lib/rate-limit.ts`, `_lib/invoice-status.ts`, `_lib/recorded-payment-write.ts` |
+| delete-payment (section 10) | `supabase/functions/delete-payment/index.ts` | `_lib/invoice-status.ts`, `_lib/recorded-payment-write.ts` |
+
+All three before `scripts/CREDIT-past-unapplied-cash.sql` is pasted. Both payment functions also carry S2's F-11 admin check (merged from 21c8c82a).
 
 Probes after deploy (counts only): unauthenticated POST to each is 401; the `SELECT` in section 3 returns the same count as before the deploy and never grows (no new `*-credit-` keys); `sum(recorded_payment)` unchanged by the deploy itself; edge logs 10 minutes after: no 5xx, no boot error. First real overpayment: the bill's `carry_out_credit` equals the extra, and the next month's bill opens with it.
 
@@ -129,7 +132,33 @@ Merged `review-overpay` (6d2a8cd6), then the conductor branch twice (the editor 
 | N6 (pre-existing) smart's no-bill insert ignores `siblingUnresolved` | not changed (note only). The interim figures it saves are corrected by the next calculate-tuition save, which keeps `recorded_payment`; an extra can now reach this branch for a child who owes nothing |
 | N7 (pre-existing) payment / allocation inserts unchecked, not one transaction | not changed (note only). A failure on the second child leaves the first child's part recorded (the message says so); the extra is on the first child written |
 
-Results of the round: see the table in section 4 (updated below).
+## 10. Crediting the past leftovers (owner: "Yes, credit them")
+
+Live, read-only by the conductor: 3 payments through smart-family-payment, 708,000 VND, 3 children, months 2026-02..2026-08, none reversed; each a `smart-family-credit-<payment>-<ms>` DR AR / CR CREDIT pair with no cash leg.
+
+**Script:** `scripts/CREDIT-past-unapplied-cash.sql`. Paste ONCE in the SQL editor, AFTER family-payment, smart-family-payment AND delete-payment from this branch are live (delete-payment must know the script's keys before anyone can delete one of these payments).
+
+**Expected result row:** `leftovers_credited 3 | total_vnd 708000 | still_to_credit 0` (the same on any later run). A NOTICE says how many were credited by that run.
+
+What it does, in one DO block (all or nothing), for each leftover not reversed and not yet credited:
+
+| step | what |
+|---|---|
+| bill | the child's bill for the CURRENT month (Hanoi); if none, their latest earlier bill. Rule chosen because the credit must appear on the next bill the family sees: the current bill's carry-out feeds the next one directly; for a child with no current bill (left, or not billed yet this month) the latest bill is where their chain ends, and the next bill made for them opens with the credit. A frozen bill is used like any other: recording money on a frozen bill is allowed today, and the freeze trigger keeps base/discount/total (tested). No bill at all: the whole script refuses. |
+| money | `recorded_payment = value read + amount`, `WHERE recorded_payment = value read` (compare-and-set; the row is also locked), label `public.invoice_paid_label(new, total + carry_in_debt - carry_in_credit, base, total)`, an admin's `credit` label kept; `paid_amount` + amount for smart-family rows (as smart-family-payment does). The carry trigger makes the part above the payable credit on the next bill. |
+| ledger (new rows, dated now) | reclass in the old pair's month: DR CREDIT x / CR AR x, key `past-leftover-credit-<payment>-reclass`; cash leg on the bill's month: DR CASH or BANK x / CR AR x, key `past-leftover-credit-<payment>` (the marker). CASH when the payment's method is 'cash' in any case, else BANK (smart-family-payment's rule). The old pair is never edited or deleted. |
+
+Why these legs: the new code posts DR CASH|BANK (a + x) / CR AR (a + x) and nothing on CREDIT. The old code posted DR CASH|BANK a / CR AR a plus DR AR x / CR CREDIT x. Difference: CASH|BANK +x, CREDIT +x (debit), AR -2x (credit) = the two transactions above. Proven per child: after the script each child's AR / CASH|BANK / CREDIT nets equal what the real new smart-family-payment leaves for the same money (AR -600,000, CASH 600,000, CREDIT 0 in the test), and the current month closes with the same carry-out credit; the whole ledger still balances.
+
+Safe again: a leftover whose marker exists is skipped (second run: not one row changes). Preflight (refuses, nothing changed): `invoice_paid_label` installed; exactly 3 leftovers totalling 708,000 counted over all such rows (constants at the top; change only after counting again); every leftover a two-leg pair - keyed DR AR, unkeyed CR CREDIT of the same amount on the same child; one per payment; the payment row present for each still to credit; a bill for each child.
+
+**delete-payment changed** (so it must be redeployed): `keyKind` knows `past-leftover-credit-<id>` (allocation: it put money on the bill of its month) and `past-leftover-credit-<id>-reclass` (ledger-only). Deleting one of the three payments after the credit reverses all 8 legs in 4 transactions, takes 400,000-style allocation off the source bill AND the credited amount off the bill the script used; every account nets to 0, the ledger balances, the script run again does nothing. Without the change (tested by running the old file) the delete left the correction standing and the credit on the bill.
+
+D4: the invoice floor (`zz_invoice_state_floor`, 1a) records only lowerings; this raises `recorded_payment`, so nothing is recorded. Not installed in the test (read from the trigger); the freeze, carry, audit and confirmation migrations are.
+
+Tests: `scripts/pgtest/past-leftover-credit.test.mjs` (registered, expect 29): pglite with live's ledger/payment tables, the real carry/freeze/audit/confirmation migrations and `invoice_paid_label`; the real smart-family-payment and delete-payment over a PostgREST stand-in on the same database. Fixture shaped like live (3 children, 200,000 + 258,000 + 250,000 = 708,000; one current bill paid, one current bill FROZEN, one child with no current bill). Before/after per child (ledger nets, bills, carry, next bill), old rows byte-identical, 12 new legs, idempotency, equivalence with the new code, delete-after-credit, delete-before-credit (skipped: 2 / 450,000), four refusals with not one row changed.
+
+The owner must know: run it once after the deploy, check the result row reads 3 / 708000 / 0; the three families each get the amount as credit on their next bill; their bills for the old months do not change; the ledger's cash/bank accounts rise by 708,000 in total in this month (that money was received back then but never posted to them).
 
 ## 8. Not verified
 
