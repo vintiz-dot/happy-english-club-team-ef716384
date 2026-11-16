@@ -3,12 +3,13 @@
 # (functions/csp-report.js), by report-uri only: with report-to present Chrome switches to the Reporting API
 # and stops using report-uri, and in the harness that path delivered nothing in 80 s. To enforce, rename the header on the policy line from
 # Content-Security-Policy-Report-Only to Content-Security-Policy (one line; nothing else changes).
-# The first sha256 is the theme-boot <script> in index.html (LF line endings, as git stores it); 'unsafe-hashes' and the second
+# The first two sha256 are the theme-boot <script> in index.html: LF line endings (git, Cloudflare's build) and CRLF (a dist
+# built on a Windows checkout). 'unsafe-hashes' and the third
 # allow exactly one inline handler, onerror="this.style.display='none'" on the logo in HomeworkPdfDownload.tsx's fallback PDF;
 # scripts/pgtest/csp-headers.test.mjs fails if that script changes and this hash does not.
 # Each line must stay under 2,000 characters (Cloudflare's limit).
 /*
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-MgfrBZQae7SnUdEzeisUq2vYwditKlX4jqhkpiO0hAM=' 'unsafe-hashes' 'sha256-pwQduWxX3Cm7lLbQmAos7n73RLP4QrsCDFejmsBdZ78=' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co https://api.dictionaryapi.dev; connect-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co wss://aswgmbefikhsnhogtryv.supabase.co wss://*.stt.speech.microsoft.com https://api.arasaac.org https://api.dictionaryapi.dev https://api.mymemory.translated.net https://hec-docs-printer.vintizfjes.workers.dev; frame-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; report-uri /csp-report
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-MgfrBZQae7SnUdEzeisUq2vYwditKlX4jqhkpiO0hAM=' 'sha256-e7hTxCgGJiltiIcGrlODnCMwezbLC7K6GFyGGpvPExE=' 'unsafe-hashes' 'sha256-pwQduWxX3Cm7lLbQmAos7n73RLP4QrsCDFejmsBdZ78=' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co https://api.dictionaryapi.dev; connect-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co wss://aswgmbefikhsnhogtryv.supabase.co wss://*.stt.speech.microsoft.com https://api.arasaac.org https://api.dictionaryapi.dev https://api.mymemory.translated.net https://hec-docs-printer.vintizfjes.workers.dev; frame-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; report-uri /csp-report
 
 # The service worker re-fetches the page's own requests (images from any https host, fonts),
 # and a worker's fetch() is checked against the policy the worker script was served with.

@@ -69,14 +69,14 @@ Not loaded, so not allowed:
 
 ```
 /*
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-MgfrBZQae7SnUdEzeisUq2vYwditKlX4jqhkpiO0hAM=' 'unsafe-hashes' 'sha256-pwQduWxX3Cm7lLbQmAos7n73RLP4QrsCDFejmsBdZ78=' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co https://api.dictionaryapi.dev; connect-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co wss://aswgmbefikhsnhogtryv.supabase.co wss://*.stt.speech.microsoft.com https://api.arasaac.org https://api.dictionaryapi.dev https://api.mymemory.translated.net https://hec-docs-printer.vintizfjes.workers.dev; frame-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; report-uri /csp-report
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-MgfrBZQae7SnUdEzeisUq2vYwditKlX4jqhkpiO0hAM=' 'sha256-e7hTxCgGJiltiIcGrlODnCMwezbLC7K6GFyGGpvPExE=' 'unsafe-hashes' 'sha256-pwQduWxX3Cm7lLbQmAos7n73RLP4QrsCDFejmsBdZ78=' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co https://api.dictionaryapi.dev; connect-src 'self' data: blob: https://aswgmbefikhsnhogtryv.supabase.co wss://aswgmbefikhsnhogtryv.supabase.co wss://*.stt.speech.microsoft.com https://api.arasaac.org https://api.dictionaryapi.dev https://api.mymemory.translated.net https://hec-docs-printer.vintizfjes.workers.dev; frame-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; report-uri /csp-report
 
 /service-worker.js
   ! Content-Security-Policy-Report-Only
   ! Content-Security-Policy
 ```
 
-Why each part: `default-src 'self'` covers anything unlisted; `script-src` = own files + the theme-boot hash + one
+Why each part: `default-src 'self'` covers anything unlisted; `script-src` = own files + the theme-boot hash (LF, and CRLF for a dist built on Windows) + one
 handler hash (`'unsafe-hashes'`) + `blob:` for AudioWorklet modules, no `'unsafe-eval'`, no remote host; `style-src` /
 `font-src` = own + Google Fonts for the board styles (+ `data:` fonts); `img-src` = own, `data:`, `blob:`, any
 `https:` (image search, pictograms, storage, announcements); `media-src` = own, `data:`/`blob:` (recordings, base64
@@ -218,3 +218,13 @@ Genuinely unsafe things the app does: none that the policy had to accept. What t
 - Cloudflare's own `_headers` handling and the Pages Function runtime: emulated (`scripts/csp/cfHeaders.mjs`) and
   unit-tested (`csp-headers.test.mjs`); confirm with the `curl` lines above after the push.
 - Safari, Firefox, Zalo and Facebook in-app browsers, real phones. The Lovable-hosted preview (may ignore `_headers`).
+
+## Checks
+
+- `node node_modules/vite/bin/vite.js build`: built; `dist/_headers` is byte-identical to `public/_headers`; `functions/`
+  stays at the repo root, where Pages picks it up (it is not part of `dist/`).
+- A dist built on this Windows checkout carries the theme script with CRLF, which hashes differently; the policy lists both
+  forms so neither build reports it (the harness build is LF, like Cloudflare's).
+- `node scripts/pgtest/csp-headers.test.mjs`: 39 passed (also registered in `scripts/pgtest/run.mjs`).
+- Final spot check with the enforcing header after the last policy change: dashboard, sign-in page and the class recorder's
+  test recording, 0 violations; allowed probe 0.

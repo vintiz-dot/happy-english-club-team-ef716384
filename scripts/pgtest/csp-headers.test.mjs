@@ -43,7 +43,9 @@ const inline = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/scrip
 ok("index.html has one inline script (the theme boot)", inline.length === 1, inline.length);
 for (const s of inline) {
   const h = `'sha256-${createHash("sha256").update(s, "utf8").digest("base64")}'`;
-  ok(`script-src allows the inline script by its hash ${h}`, (p["script-src"] || []).includes(h), p["script-src"]);
+  ok(`script-src allows the inline script by its hash ${h} (LF: git and Cloudflare's build)`, (p["script-src"] || []).includes(h), p["script-src"]);
+  const hc = `'sha256-${createHash("sha256").update(s.replace(/\n/g, "\r\n"), "utf8").digest("base64")}'`;
+  ok(`script-src also allows its CRLF form ${hc} (a dist built on a Windows checkout)`, (p["script-src"] || []).includes(hc), p["script-src"]);
 }
 ok("index.html has no inline event handler (on...=)", !/<[^>]+\son[a-z]+\s*=/i.test(html));
 ok("index.html loads no third-party script", [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].every((m) => m[1].startsWith("/")));
@@ -61,7 +63,7 @@ for (const [code, file] of handlers) {
   const h = `'sha256-${createHash("sha256").update(code, "utf8").digest("base64")}'`;
   ok(`script-src allows the inline handler ${JSON.stringify(code)} (${file}) by ${h}`, scriptSrc.includes("'unsafe-hashes'") && scriptSrc.includes(h), scriptSrc);
 }
-const allowedHashes = new Set([...inline, ...handlers.keys()].map((s) => `'sha256-${createHash("sha256").update(s, "utf8").digest("base64")}'`));
+const allowedHashes = new Set([...inline, ...inline.map((s) => s.replace(/\n/g, "\r\n")), ...handlers.keys()].map((s) => `'sha256-${createHash("sha256").update(s, "utf8").digest("base64")}'`));
 ok("script-src lists no hash that matches nothing in index.html or src/", scriptSrc.filter((s) => s.startsWith("'sha256-")).every((s) => allowedHashes.has(s)), scriptSrc);
 
 // the hard parts of the policy
