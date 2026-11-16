@@ -5,8 +5,14 @@ import { labelAfterPayment, monthCharged, paidLabel } from '../_lib/invoice-stat
 import { addToRecordedPayment, BILL_COLUMNS } from '../_lib/recorded-payment-write.ts';
 
 const VOLUNTARY_REMOVED =
-  'Voluntary contributions have been removed. Money paid beyond what the bills owe is kept as unapplied cash. '
+  'Voluntary contributions have been removed. Money paid beyond what the bills owe now goes on a bill as credit. '
   + 'Nothing was recorded: reload the page and post the payment again.';
+// A screen opened before the owner's decision (OVERPAYMENT) told the admin
+// the extra would be kept as unapplied cash, off every bill. It now goes on
+// a bill as credit, so what that screen said is no longer what happens.
+const UNAPPLIED_REPLACED =
+  'Money paid beyond what the bills owe now shows as credit on the next bill; it is no longer kept as unapplied cash. '
+  + 'Nothing was recorded: reload the page, check where the extra goes, and post the payment again.';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,6 +34,7 @@ interface AllocationResult {
   applied: number;
   afterDebt: number;
   excessTransferred: number;
+  creditOnBill: number; // beyond what the family owes, on this bill as credit
   allocationOrder: number;
 }
 
@@ -65,14 +72,15 @@ Deno.serve(async (req) => {
       return rateLimitResponse(userLimit.resetAt, corsHeaders);
     }
 
-    // Check admin role
-    const { data: roleData } = await supabase
+    // Check admin role. Every role row, not .single(): an admin who also
+    // holds teacher or student has two rows and .single() errored, so a real
+    // admin could not record a payment (audit F-11).
+    const { data: roleRows } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
-      .single();
+      .eq('user_id', user.id);
 
-    if (roleData?.role !== 'admin') {
+    if (!(roleRows || []).some((r: { role: string }) => r.role === 'admin')) {
       throw new Error('Unauthorized: Admin access required');
     }
 
@@ -83,9 +91,13 @@ Deno.serve(async (req) => {
       occurredAt: z.string().datetime(),
       memo: z.string().max(500).optional(),
       month: z.string().regex(/^\d{4}-\d{2}$/),
-      // Money beyond what the family owes has one outcome: unapplied cash
-      // (below). Voluntary contributions were removed (D-23).
-      leftoverHandling: z.enum(['unapplied_cash']).optional(),
+      // Money beyond what the family owes has one outcome: it goes on the
+      // bill of the sibling listed first (highest debt) for the month, where
+      // the carry makes it credit on their next bill (OVERPAYMENT, below).
+      // Voluntary contributions were removed (D-23); 'unapplied_cash' is
+      // what a screen opened before this change sends, and is refused when
+      // there is money left over.
+      leftoverHandling: z.enum(['credit_next_bill', 'unapplied_cash']).optional(),
     });
 
     const body = await req.json();
@@ -104,7 +116,8 @@ Deno.serve(async (req) => {
       method,
       occurredAt,
       memo,
-      month
+      month,
+      leftoverHandling
     } = SmartPaymentSchema.parse(body);
 
     console.log('Processing smart family payment:', { familyId, amount, month });
@@ -117,21 +130,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (familyError || !family) throw new Error('Family not found');
-
-    // Log payment initiation
-    await supabase.from('audit_log').insert({
-      action: 'family_payment_initiated',
-      entity: 'family_payment',
-      entity_id: familyId,
-      actor_user_id: user.id,
-      diff: {
-        family_id: familyId,
-        family_name: family.name,
-        total_payment: amount,
-        method,
-        month
-      }
-    });
 
     // Step 1: Get all active siblings in family
     const { data: siblings, error: siblingsError } = await supabase
@@ -194,11 +192,62 @@ Deno.serve(async (req) => {
 
     console.log('Sibling balances sorted by debt:', siblingBalances.map(s => ({ name: s.name, debt: s.debt })));
 
-    // Step 4: Waterfall allocation
+    // Step 4: Waterfall allocation, worked out in full before anything is
+    // written. Each sibling, highest debt first, takes what they owe.
+    const plan = siblingBalances.map((sibling) => ({ sibling, applied: 0, extra: 0 }));
+    let toPlace = amount;
+    for (const p of plan) {
+      if (toPlace <= 0) break;
+      p.applied = Math.min(p.sibling.debt, toPlace);
+      toPlace -= p.applied;
+    }
+
+    // Money beyond what the family owes (OVERPAYMENT, owner's decision): it
+    // goes on the bill of the sibling listed first (highest debt) - the
+    // child unapplied cash used to go to - for the month, folded into that
+    // sibling's allocation exactly as a Manual split amount above what is
+    // owed is: one allocation row, one DR CASH/BANK / CR AR pair, one
+    // compare-and-set on the bill. The carry turns it into credit on their
+    // next bill. Refused, before anything is written, when the screen did
+    // not say where it goes, or when it cannot be placed safely.
+    const leftover = toPlace;
+    if (leftover > 0) {
+      if (leftoverHandling === 'unapplied_cash') {
+        return new Response(
+          JSON.stringify({ error: UNAPPLIED_REPLACED }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (leftoverHandling !== 'credit_next_bill') {
+        throw new Error(`${leftover} is more than the family owes for ${month}, and the screen did not say where it goes. Nothing was recorded: reload the page and post the payment again.`);
+      }
+      // A sibling whose balance could not be worked out may owe some of it;
+      // and with no balance at all there is no bill priced by
+      // calculate-tuition to hold it.
+      if (plan.length === 0 || plan.length < siblings.length) {
+        throw new Error(`The balance of ${siblings.length - plan.length} of the family's ${siblings.length} children for ${month} could not be worked out, so the ${leftover} beyond what the family owes cannot be placed safely. Nothing was recorded: try again.`);
+      }
+      plan[0].extra = leftover;
+    }
+
     const allocations: AllocationResult[] = [];
     let remaining = amount;
     const parentPaymentId = crypto.randomUUID();
-    const occurredDate = new Date(occurredAt);
+
+    // Log payment initiation
+    await supabase.from('audit_log').insert({
+      action: 'family_payment_initiated',
+      entity: 'family_payment',
+      entity_id: familyId,
+      actor_user_id: user.id,
+      diff: {
+        family_id: familyId,
+        family_name: family.name,
+        total_payment: amount,
+        method,
+        month
+      }
+    });
 
     // Create parent payment record
     await supabase.from('payments').insert({
@@ -212,20 +261,23 @@ Deno.serve(async (req) => {
       family_id: familyId
     });
 
-    for (const sibling of siblingBalances) {
+    for (const { sibling, applied, extra } of plan) {
       if (remaining <= 0) break;
 
       const beforeDebt = sibling.debt;
-      const applied = Math.min(beforeDebt, remaining);
       const afterDebt = beforeDebt - applied;
+      // Passed on down the waterfall (the last sibling's excess is the leftover).
       const excessTransferred = remaining > beforeDebt ? remaining - beforeDebt : 0;
+      // What goes on this sibling's bill: what they owe, plus the leftover
+      // when they are listed first.
+      const posted = applied + extra;
 
-      if (applied > 0) {
+      if (posted > 0) {
         // Create payment allocation record
         await supabase.from('payment_allocations').insert({
           parent_payment_id: parentPaymentId,
           student_id: sibling.id,
-          allocated_amount: applied,
+          allocated_amount: posted,
           allocation_order: sibling.order,
           created_by: user.id
         });
@@ -249,17 +301,25 @@ Deno.serve(async (req) => {
 
         const accountMap = new Map(accounts?.map(a => [a.code, a.id]));
         const txId = crypto.randomUUID();
+        const cashAccount = method.toLowerCase() === 'cash' ? accountMap.get('CASH') : accountMap.get('BANK');
+        // The bill is written only after its ledger pair is: never a bill
+        // that records money the ledger does not (an insert with no account
+        // id, or one that failed, used to go unnoticed).
+        if (!cashAccount || !accountMap.get('AR')) {
+          throw new Error(`Payment recorded, but ${sibling.name}'s ledger accounts are missing, so ${posted} was not posted to the ledger or their ${month} bill`);
+        }
 
         // Post ledger entries
-        await supabase.from('ledger_entries').insert([
+        const { error: ledgerError } = await supabase.from('ledger_entries').insert([
           {
             tx_id: txId,
             tx_key: `smart-family-${parentPaymentId}-${sibling.id}-${Date.now()}`,
-            account_id: method.toLowerCase() === 'cash' ? accountMap.get('CASH') : accountMap.get('BANK'),
-            debit: applied,
+            account_id: cashAccount,
+            debit: posted,
             credit: 0,
             occurred_at: occurredAt,
-            memo: `Smart family payment (${sibling.order}/${siblingBalances.length})`,
+            memo: `Smart family payment (${sibling.order}/${siblingBalances.length})`
+              + (extra > 0 ? `, including ${extra} beyond what the family owes, kept on the bill as credit` : ''),
             month,
             created_by: user.id
           },
@@ -267,13 +327,16 @@ Deno.serve(async (req) => {
             tx_id: txId,
             account_id: accountMap.get('AR'),
             debit: 0,
-            credit: applied,
+            credit: posted,
             occurred_at: occurredAt,
             memo: `Smart family payment allocation`,
             month,
             created_by: user.id
           }
         ]);
+        if (ledgerError) {
+          throw new Error(`Payment recorded, but ${posted} for ${sibling.name} could not be posted to the ledger, so their ${month} bill was not changed: ${ledgerError.message}`);
+        }
 
         // Put it on the bill. Every write of recorded_payment is a compare-and-set
         // on the value read (_lib/recorded-payment-write.ts): a second payment
@@ -286,11 +349,11 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (invoiceReadError) throw new Error(`Payment posted to the ledger but the bill could not be read: ${invoiceReadError.message}`);
 
-        const onExisting = (bill: any) => addToRecordedPayment(supabase, bill, applied, (fresh, newRecorded) => {
+        const onExisting = (bill: any) => addToRecordedPayment(supabase, bill, posted, (fresh, newRecorded) => {
           // The month's own money against what the month asks for (the one
           // rule; an admin's 'credit' label is left alone).
           const label = labelAfterPayment(fresh, newRecorded);
-          return { paid_amount: Number(fresh.paid_amount || 0) + applied, ...(label ? { status: label } : {}) };
+          return { paid_amount: Number(fresh.paid_amount || 0) + posted, ...(label ? { status: label } : {}) };
         });
         if (invoice) {
           await onExisting(invoice);
@@ -303,11 +366,11 @@ Deno.serve(async (req) => {
             base_amount: sibData.baseAmount ?? 0,
             discount_amount: sibData.totalDiscount ?? 0,
             total_amount: sibData.totalAmount ?? 0,
-            paid_amount: applied,
-            recorded_payment: applied,
+            paid_amount: posted,
+            recorded_payment: posted,
             // No bill row yet, so nothing is recorded for the month and the
             // calculator's closing balance IS the month's payable.
-            status: paidLabel(applied, sibling.debt - sibling.credit,
+            status: paidLabel(posted, sibling.debt - sibling.credit,
               monthCharged({ base_amount: sibData.baseAmount, total_amount: sibData.totalAmount })),
           });
           if (insertError) {
@@ -336,7 +399,9 @@ Deno.serve(async (req) => {
               name: sibling.name,
               before_debt: beforeDebt,
               applied,
-              after_debt: afterDebt
+              after_debt: afterDebt,
+              // Beyond what the family owes, on this bill as credit.
+              credit_on_bill: extra
             },
             excess_transferred: excessTransferred,
             remaining_to_allocate: remaining - applied
@@ -374,6 +439,7 @@ Deno.serve(async (req) => {
           applied,
           afterDebt,
           excessTransferred,
+          creditOnBill: extra,
           allocationOrder: sibling.order
         });
 
@@ -390,63 +456,11 @@ Deno.serve(async (req) => {
       remaining -= applied;
     }
 
-    // Handle leftover amount: unapplied cash, the one outcome. It is posted
-    // to the ledger as customer credit (DR AR / CR CREDIT) on the accounts of
-    // the sibling listed first (highest debt). It is NOT put on any bill:
-    // recorded_payment, the carry and the label do not change.
-    let leftoverResult = null;
-    if (remaining > 0) {
-      const primaryStudentId = siblingBalances[0]?.id || siblings[0].id;
-
-      // That sibling may have had nothing applied, so its accounts may not
-      // exist yet (an insert with no account id used to fail silently).
-      for (const code of ['AR', 'CREDIT']) {
-        await supabase
-          .from('ledger_accounts')
-          .upsert(
-            { student_id: primaryStudentId, code },
-            { onConflict: 'student_id,code', ignoreDuplicates: true }
-          );
-      }
-      const { data: accounts } = await supabase
-        .from('ledger_accounts')
-        .select('id, code')
-        .eq('student_id', primaryStudentId);
-
-      const accountMap = new Map(accounts?.map(a => [a.code, a.id]));
-      if (!accountMap.get('AR') || !accountMap.get('CREDIT')) {
-        throw new Error(`Payment posted, but the ${remaining} left over could not be recorded as unapplied cash: the student's ledger accounts are missing`);
-      }
-      const leftoverTxId = crypto.randomUUID();
-
-      const { error: leftoverError } = await supabase.from('ledger_entries').insert([
-        {
-          tx_id: leftoverTxId,
-          tx_key: `smart-family-credit-${parentPaymentId}-${Date.now()}`,
-          account_id: accountMap.get('AR'),
-          debit: remaining,
-          credit: 0,
-          occurred_at: occurredAt,
-          memo: `Unapplied cash from smart family payment`,
-          month,
-          created_by: user.id
-        },
-        {
-          tx_id: leftoverTxId,
-          account_id: accountMap.get('CREDIT'),
-          debit: 0,
-          credit: remaining,
-          occurred_at: occurredAt,
-          memo: `Customer credit for future use`,
-          month,
-          created_by: user.id
-        }
-      ]);
-      if (leftoverError) {
-        throw new Error(`Payment posted, but the ${remaining} left over could not be recorded as unapplied cash: ${leftoverError.message}`);
-      }
-      leftoverResult = { type: 'unapplied_cash', amount: remaining };
-    }
+    // The leftover was put on the first sibling's bill with their
+    // allocation, above. Nothing is posted as unapplied cash any more.
+    const leftoverResult = leftover > 0
+      ? { type: 'credit_next_bill', amount: leftover, studentId: plan[0].sibling.id, studentName: plan[0].sibling.name, month }
+      : null;
 
     // Log completion
     await supabase.from('audit_log').insert({

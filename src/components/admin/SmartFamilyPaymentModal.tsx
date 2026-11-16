@@ -70,9 +70,10 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
     occurredAt: new Date().toISOString().slice(0, 10),
     memo: "",
     month: monthKey(),
-    // The one thing done with money beyond what the family owes (voluntary
-    // contributions were removed, D-23).
-    leftoverHandling: "unapplied_cash" as const,
+    // The one thing done with money beyond what the family owes: it goes on
+    // the first child's bill and shows as credit on their next bill
+    // (OVERPAYMENT; voluntary contributions were removed, D-23).
+    leftoverHandling: "credit_next_bill" as const,
   });
 
   const queryClient = useQueryClient();
@@ -255,7 +256,10 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
       // The function's own sentence, not "non-2xx status code".
         if (error) throw new Error(await functionErrorMessage(error));
 
-      toast.success(`Smart payment processed for ${data.allocations?.length || 0} students`);
+      toast.success(`Smart payment processed for ${data.allocations?.length || 0} students`
+        + (data?.leftover?.type === "credit_next_bill"
+          ? `; ${formatVND(Number(data.leftover.amount) || 0)} will show as credit on ${data.leftover.studentName ?? "the first child"}'s next bill`
+          : ""));
 
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["admin-tuition"] });
@@ -282,7 +286,7 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
       occurredAt: new Date().toISOString().slice(0, 10),
       memo: "",
       month: monthKey(),
-      leftoverHandling: "unapplied_cash",
+      leftoverHandling: "credit_next_bill",
     });
   };
 
@@ -539,9 +543,12 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
                         Leftover amount: {formatVND(leftoverAmount)}
                       </p>
                       <p className={iv("text-hec-small text-hec-ink", "text-sm")}>
-                        It will be kept as unapplied cash: recorded in the ledger as a credit on{" "}
-                        {siblings[0]?.name ?? "the first child"}'s account (the child listed first). It is not put on
-                        any bill, so the bills and their balances will not show it.
+                        The extra {formatVND(leftoverAmount)} will show as credit on{" "}
+                        {siblings[0]?.name ?? "the first child"}'s next bill.
+                      </p>
+                      <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
+                        It is recorded on {siblings[0]?.name ?? "the first child"}'s {formData.month} bill (the child
+                        listed first), and their next bill starts with it as credit.
                       </p>
                     </div>
                   </AlertDescription>

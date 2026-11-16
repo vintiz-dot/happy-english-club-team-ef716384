@@ -282,7 +282,8 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
             occurredAt: new Date(sharedSettings.occurredAt).toISOString(),
             memo: sharedSettings.memo || `Batch payment – ${family.familyName}`,
             month: sharedSettings.month,
-            leftoverHandling: "unapplied_cash",
+            // Only when the extra-credit line was shown (OVERPAYMENT).
+            leftoverHandling: amount > family.totalDebt ? "credit_next_bill" : undefined,
           },
         });
 
@@ -527,6 +528,12 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                               </Button>
                               {isFullSettle && <Check className={iv("h-4 w-4 text-hec-leaf shrink-0", "h-4 w-4 text-green-600 shrink-0")} aria-label={ivory ? "Settles the full debt" : undefined} />}
                             </div>
+                          )}
+                          {family.totalDebt > 0 && amount > family.totalDebt && (
+                            <p className={iv("text-hec-caption text-hec-ink tabular-nums", "text-xs text-orange-700")}>
+                              The extra {formatVND(amount - family.totalDebt)} will show as credit on{" "}
+                              {family.siblings[0]?.name ?? "the first child"}'s next bill.
+                            </p>
                           )}
 
                           {family.error && (
