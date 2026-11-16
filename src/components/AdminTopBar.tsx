@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { useIvory } from "@/hooks/useIvory";
+import { useAuth } from "@/hooks/useAuth";
+import { OPEN_GENERAL_PALETTE_EVENT, paletteFor } from "@/lib/paletteOwner";
 
 const KBD_CLASS =
   "ml-1 hidden lg:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground";
@@ -132,12 +134,19 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
   const navigate = useNavigate();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const ivory = useIvory();
+  const { role } = useAuth();
 
   const tab = searchParams.get("tab");
   const crumbs = useMemo(() => buildCrumbs(location.pathname, tab), [location.pathname, tab]);
 
-  // Cmd/Ctrl+K opens the palette.
+  // Cmd/Ctrl+K opens this (admin) palette only for an admin on an admin page;
+  // everywhere else CommandPalette answers the key (lib/paletteOwner).
+  const ownsPalette = paletteFor(role, location.pathname) === "admin";
   useEffect(() => {
+    if (!ownsPalette) {
+      setPaletteOpen(false);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
         e.preventDefault();
@@ -146,7 +155,13 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [ownsPalette]);
+
+  // The Quick jump button opens whichever palette owns the page.
+  const openPalette = () => {
+    if (ownsPalette) setPaletteOpen(true);
+    else window.dispatchEvent(new Event(OPEN_GENERAL_PALETTE_EVENT));
+  };
 
   const go = (path: string) => {
     setPaletteOpen(false);
@@ -213,7 +228,7 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
             variant="outline"
             size="sm"
             className={ivory ? "gap-2 px-3 text-hec-ink-soft" : "h-9 gap-2 text-muted-foreground"}
-            onClick={() => setPaletteOpen(true)}
+            onClick={openPalette}
           >
             <Search className="h-3.5 w-3.5" />
             <span className="hidden lg:inline">Quick jump…</span>
