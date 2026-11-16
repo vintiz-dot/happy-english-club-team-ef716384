@@ -60,6 +60,7 @@ const Vocabulary = lazy(() => import("./pages/Vocabulary"));
 const TeacherVocabularyAudit = lazy(() => import("./pages/TeacherVocabularyAudit"));
 const TeacherBooks = lazy(() => import("./pages/TeacherBooks"));
 const TeacherLanguageSupport = lazy(() => import("./pages/TeacherLanguageSupport"));
+const TeacherLessonReports = lazy(() => import("./pages/TeacherLessonReports"));
 const TeacherRecorder = lazy(() => import("./pages/TeacherRecorder"));
 const TeacherSmartUpload = lazy(() => import("./pages/TeacherSmartUpload"));
 const TeacherTranscripts = lazy(() => import("./pages/TeacherTranscripts"));
@@ -149,6 +150,8 @@ function AppContent() {
                   <Route path="/teacher/vocabulary-audit" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherVocabularyAudit /></ProtectedRoute>} />
                   <Route path="/teacher/books" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherBooks /></ProtectedRoute>} />
                   <Route path="/teacher/language-support" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLanguageSupport /></ProtectedRoute>} />
+                  {/* Lesson monitor pilot (D-28): the lesson's teacher only; the database lets nobody else read a report. */}
+                  <Route path="/teacher/lesson-reports" element={<ProtectedRoute allowedRole={["teacher"]}><TeacherLessonReports /></ProtectedRoute>} />
                   <Route path="/teacher/recorder" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherRecorder /></ProtectedRoute>} />
                   <Route path="/teacher/smart-upload" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherSmartUpload /></ProtectedRoute>} />
                   <Route path="/teacher/transcripts" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherTranscripts /></ProtectedRoute>} />

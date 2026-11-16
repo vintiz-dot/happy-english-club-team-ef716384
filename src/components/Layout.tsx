@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History, Plug, Bot, Languages, Mic, Tv} from "lucide-react";
+import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History, Plug, Bot, Languages, Mic, Tv, FileAudio} from "lucide-react";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
 import { ChangePassword } from "@/components/auth/ChangePassword";
 import NotificationBell from "@/components/NotificationBell";
@@ -23,6 +23,7 @@ import { motion, MotionConfig } from "framer-motion";
 import { useIvory } from "@/hooks/useIvory";
 import { UserMenu } from "@/components/theme/UserMenu";
 import { guardedSignOut } from "@/components/recorder/signOutGuard";
+import { useMyPilotClasses } from "@/hooks/useLessonMonitor";
 
 interface LayoutProps {
   children: ReactNode;
@@ -34,6 +35,8 @@ const SIDEBAR_KEY = "sidebar-collapsed";
 
 const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   const { user, role, signOut: rawSignOut } = useAuth();
+  // Lesson monitor pilot (D-28): the menu entry only for a teacher of a pilot class.
+  const pilotClasses = useMyPilotClasses(role === "teacher");
   // The class recorder may refuse (a lesson is being recorded) or tidy its local audio first.
   const signOut = () => guardedSignOut(rawSignOut);
   const navigate = useNavigate();
@@ -118,6 +121,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
           { icon: Languages, label: "Language Support", path: "/teacher/language-support" },
           { icon: Mic, label: "Class recorder", path: "/teacher/recorder" },
+          ...((pilotClasses.data ?? []).length ? [{ icon: FileAudio, label: "Lesson reports", path: "/teacher/lesson-reports" }] : []),
         ];
       default:
         return [];
