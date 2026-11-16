@@ -275,7 +275,10 @@ export function ExamReportEditor({
           <div className={ivOnly("space-y-2")}>
             <Label>Report content (optional)</Label>
             <Suspense fallback={<div className={iv("flex h-40 items-center justify-center text-hec-ink-faint", "h-40 flex items-center justify-center")}><Loader2 className="h-5 w-5 animate-spin" aria-hidden={ivory ? true : undefined} /></div>}>
-              <div className={iv("rounded-hec-md bg-hec-raised", "bg-background rounded-md")}>
+              {/* Ivory: Quill paints its toolbar #444 and its picker menu white, unreadable in dark. These selectors
+                  are one class more specific than quill.snow.css's own, so they win without !important and Quill's
+                  hover / active / open states (more specific still) keep showing. */}
+              <div className={iv("rounded-hec-md bg-hec-raised [&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint", "bg-background rounded-md")}>
                 <ReactQuill
                   value={contentHtml}
                   onChange={setContentHtml}
