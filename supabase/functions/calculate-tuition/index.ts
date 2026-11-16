@@ -6,6 +6,7 @@ import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
+import { classFeeOn, readClassFeeHistory } from "../_lib/class-fee.ts";
 import {
   invoiceLabelFields,
   monthCharged,
@@ -207,8 +208,11 @@ Deno.serve(async (req) => {
       .filter((e) => !e.end_date || e.end_date >= startDate) // still active in this month
       .map((e) => e.class_id);
 
-    // ----- Wave 2: sessions + sibling state (depend on Wave 1) -----
-    const [sessionsRes, siblingStateRes] = await Promise.all([
+    // ----- Wave 2: sessions + sibling state + the classes' fee history (depend on Wave 1) -----
+    // The fee history (D4 step 2, _lib/class-fee.ts) prices each lesson at the
+    // fee in force on its date; without the table every lesson is at the
+    // class's session_rate_vnd, as before.
+    const [sessionsRes, siblingStateRes, feeHistory] = await Promise.all([
       supabase
         .from("sessions")
         .select("id, date, status, class_id, classes(session_rate_vnd)")
@@ -221,6 +225,7 @@ Deno.serve(async (req) => {
             data: states[0] ?? null,
           }))
         : Promise.resolve({ data: null as any }),
+      readClassFeeHistory(supabase, activeClassIds),
     ]);
     const { data: sessions, error: sessErr } = sessionsRes;
     if (sessErr) throw sessErr;
@@ -278,7 +283,7 @@ Deno.serve(async (req) => {
 
       const att = attendanceMap.get(s.id);
       const classData = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
-      const defaultRate = Number(classData?.session_rate_vnd ?? 0);
+      const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classData?.session_rate_vnd ?? 0));
       const overrideRate = enrollment?.rate_override_vnd;
       const actualRate = overrideRate ?? defaultRate;
       const className = classNameMap.get(s.class_id) || "Unknown";
@@ -587,7 +592,7 @@ Deno.serve(async (req) => {
         : null;
 
       const className = (classNameMap.get(classId) as string | undefined) || "Unknown";
-      const sessionRate = Number(classData?.session_rate_vnd ?? 0);
+      const sessionRate = classFeeOn(feeHistory, classId, startDate, Number(classData?.session_rate_vnd ?? 0));
       const sessionsCount = sessionDetails.filter(
         (sd) => sd.class_id === classId && (sd.status === "Present" || sd.status === "Absent"),
       ).length;

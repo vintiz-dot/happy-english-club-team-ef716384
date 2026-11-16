@@ -5,6 +5,7 @@ import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
 import { monthPayable, settledWriteOff } from "../_lib/invoice-status.ts";
+import { classFeeOn, indexClassFees, isMissingFeeHistory, type ClassFeeHistory } from "../_lib/class-fee.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -155,6 +156,19 @@ Deno.serve(async (req) => {
       ? await fetchChunked(supabase, "classes", "id, name, session_rate_vnd", "id", allClassIds)
       : [];
     const classMap = new Map(allClasses.map(c => [c.id, c]));
+
+    // 4b. The classes' fee history (D4 step 2, _lib/class-fee.ts): each lesson
+    // at the fee in force on its date. No table yet: every lesson at the
+    // class's session_rate_vnd, as before; any other read error fails the call.
+    let feeHistory: ClassFeeHistory | null = null;
+    try {
+      feeHistory = indexClassFees(allClassIds.length > 0
+        ? await fetchChunked<any>(supabase, "class_fee_history", "id, class_id, effective_from, session_rate_vnd", "class_id", allClassIds)
+        : []);
+    } catch (e) {
+      if (!isMissingFeeHistory(e)) throw e;
+      feeHistory = null;
+    }
 
     // 5. Sessions in month for these classes
     const allSessions: any[] = allClassIds.length > 0
@@ -320,7 +334,7 @@ Deno.serve(async (req) => {
 
           const att = attendanceMap.get(attendanceKey(s.id, sid)) as AttendanceStatus | undefined;
           const classInfo = classMap.get(s.class_id);
-          const defaultRate = Number(classInfo?.session_rate_vnd ?? 0);
+          const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classInfo?.session_rate_vnd ?? 0));
           const overrideRate = enrollment.rate_override_vnd;
           const actualRate = overrideRate ?? defaultRate;
           // Late students attended, so they are billed like Present. Only
@@ -436,7 +450,7 @@ Deno.serve(async (req) => {
             class_id: classId,
             class_name: classInfo?.name || "Unknown",
             amount_vnd: classBase,
-            session_rate_vnd: Number(classInfo?.session_rate_vnd ?? 0),
+            session_rate_vnd: classFeeOn(feeHistory, classId, startDate, Number(classInfo?.session_rate_vnd ?? 0)),
           });
         }
 
