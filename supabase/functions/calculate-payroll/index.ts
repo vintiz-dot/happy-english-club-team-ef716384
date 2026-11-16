@@ -517,9 +517,16 @@ Deno.serve(async (req) => {
     // WHO SEES WHOSE PAY. A teacher who is not an admin gets exactly one
     // row: the teachers row whose user_id is the verified JWT's user. Any
     // teacherId in the body is ignored for them, and the assistants loop
-    // below runs for admins only. A TA (who holds the 'teacher' role but has
-    // no teachers row) gets 403 here; families and students never pass
+    // below runs for admins only. Families and students never pass
     // requireRole. scripts/pgtest/teacher-payroll.test.mjs holds this.
+    //
+    // A TA holds the 'teacher' role but has no teachers row. They get
+    // exactly one row too: the teaching_assistants row whose user_id is the
+    // verified JWT's user, through the same assistants loop the admin's
+    // answer uses (so the same figures), with no teacher read at all. Their
+    // teacherId is ignored like a teacher's. No TA row, more than one, or a
+    // failed lookup is 403 before any lesson is read (fails closed).
+    // scripts/pgtest/ta-payroll.test.mjs holds this.
     //
     // NOT filtered by is_active, deliberately. Archiving or deactivating a
     // teacher must not erase work they have already done: the filter used
@@ -541,24 +548,43 @@ Deno.serve(async (req) => {
       .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active, user_id")
       .order("full_name");
 
+    /** Set only for a TA reading their own pay: the one assistant answered. */
+    let ownAssistantId: string | null = null;
+
     if (isTeacher && !isAdmin) {
       const { data: ownTeacher } = await supabase
         .from("teachers")
         .select("id")
         .eq("user_id", userId)
         .single();
-      if (!ownTeacher) {
-        return new Response(JSON.stringify({ error: "Teacher profile not found" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (ownTeacher) {
+        tq = tq.eq("id", ownTeacher.id);
+      } else {
+        // Only the service role has no userId, and it is an admin; an empty
+        // id must still never match an unlinked TA row, so it is refused.
+        const { data: ownTa, error: ownTaErr } = userId
+          ? await supabase
+              .from("teaching_assistants")
+              .select("id")
+              .eq("user_id", userId)
+              .maybeSingle()
+          : { data: null, error: null };
+        if (ownTaErr || !ownTa?.id) {
+          return new Response(JSON.stringify({ error: "Teacher profile not found" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        ownAssistantId = ownTa.id;
       }
-      tq = tq.eq("id", ownTeacher.id);
     } else if (teacherId) {
       tq = tq.eq("id", teacherId);
     }
 
-    const { data: teachers, error: teachersError } = await tq;
+    // A TA's own call reads no teacher (and so writes no payroll_summaries).
+    const { data: teachers, error: teachersError } = ownAssistantId
+      ? { data: [] as NonNullable<Awaited<typeof tq>["data"]>, error: null }
+      : await tq;
     if (teachersError) throw teachersError;
 
     // Timetable history for every class, read once. A session is priced
@@ -882,7 +908,7 @@ Deno.serve(async (req) => {
     }
 
     // Also calculate payroll for Teaching Assistants
-    if (isAdmin) {
+    if (isAdmin || ownAssistantId) {
       let aq = supabase
         .from("teaching_assistants")
         // Same reasoning as the teachers query above: an archived TA is
@@ -895,7 +921,9 @@ Deno.serve(async (req) => {
       // lessons that month (dropped above) made [0] the first TA, and the
       // teacher's profile showed that TA's pay under the teacher's name.
       // teacherId may also name an assistant, which this now answers.
-      if (teacherId) aq = aq.eq("id", teacherId);
+      // A TA's own call: their row only, whatever teacherId the body named.
+      if (ownAssistantId) aq = aq.eq("id", ownAssistantId);
+      else if (teacherId) aq = aq.eq("id", teacherId);
       const { data: assistants } = await aq;
 
       for (const ta of assistants ?? []) {

@@ -56,6 +56,8 @@ export interface PayrollSessionDetail {
 export interface TeacherPayrollFunctionRow {
   teacherId?: string | null;
   staffType?: string | null;
+  /** The basis the month's headline figures are on (the frozen line's when closed). */
+  payRateType?: string | null;
   sessionsCountActual?: number | null;
   sessionsCountProjected?: number | null;
   totalHoursActual?: number | null;
@@ -114,6 +116,14 @@ export interface TeacherPayrollClass {
 export interface TeacherPayrollView {
   /** The function returned a row for this person. */
   found: boolean;
+  /**
+   * The function answered with a list at all. True with `found` false means
+   * it answered and has nothing for this person this month (a TA with no
+   * lessons gets no row) - not that the figure is unavailable.
+   */
+  answered: boolean;
+  /** "hourly" / "per_session" as the function reports the month; null = unknown. */
+  payBasis: "hourly" | "per_session" | null;
   /** The month is closed and these totals are what it was closed at. */
   closed: boolean;
   /**
@@ -182,6 +192,8 @@ export function pickPayrollRow(
 
 const EMPTY: TeacherPayrollView = {
   found: false,
+  answered: false,
+  payBasis: null,
   closed: false,
   monthLocked: false,
   heldSessions: 0,
@@ -203,8 +215,9 @@ export function teacherPayrollView(
   response: TeacherPayrollResponse | null | undefined,
   staffId: string | null | undefined,
 ): TeacherPayrollView {
+  const answered = Array.isArray(response?.payrollData);
   const row = pickPayrollRow(response?.payrollData, staffId);
-  if (!row) return { ...EMPTY, monthLocked: response?.locked === true, earnedByDate: new Map() };
+  if (!row) return { ...EMPTY, answered, monthLocked: response?.locked === true, earnedByDate: new Map() };
 
   const earned = num(row.totalAmountActual);
   const heldSessions = num(row.sessionsCountActual);
@@ -288,6 +301,8 @@ export function teacherPayrollView(
   const hours = figure(row.totalHoursActual);
   return {
     found: true,
+    answered,
+    payBasis: row.payRateType === "hourly" || row.payRateType === "per_session" ? row.payRateType : null,
     closed,
     monthLocked: response?.locked === true,
     heldSessions,
