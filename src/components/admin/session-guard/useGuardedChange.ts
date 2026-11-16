@@ -13,7 +13,8 @@ import {
   type GuardOp,
   type GuardPreview,
 } from "@/lib/sessionGuard";
-import { manageSession } from "./api";
+import { payDialogFrom, payPreviewRequest, payRequest, type PayForm, type PayOp, type PayPlan } from "@/lib/lessonPayGuard";
+import { manageSession, payPreview } from "./api";
 
 export interface MoveChange {
   date: string;
@@ -38,6 +39,13 @@ interface Options {
   change?: MoveChange;
   /** Skip the (slow) figures fetch. */
   figures?: boolean;
+  /**
+   * D4 step 3A (review S-1): the change was refused for lesson pay (a 409
+   * requires_checked_path with a pay kind and the money preview, e.g. the
+   * time of a lesson more than a week old). Given, the dialog hands the
+   * change over to the lesson-pay check instead of showing an error.
+   */
+  onPayCheck?: (d: { op: PayOp; plan: PayPlan }) => void;
 }
 
 /**
@@ -49,7 +57,7 @@ interface Options {
  *   must be given again (`staleNonce` changes so the form clears them).
  * - Every other error stays on screen with its code; nothing is assumed done.
  */
-export function useGuardedChange({ open, sessionId, op, change, figures }: Options) {
+export function useGuardedChange({ open, sessionId, op, change, figures, onPayCheck }: Options) {
   const qc = useQueryClient();
   const [phase, setPhase] = useState<GuardPhase>("idle");
   const [preview, setPreview] = useState<GuardPreview | null>(null);
@@ -64,6 +72,8 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
   previewRef.current = preview;
   const submitting = useRef(false);
   const retrying = useRef(false);
+  const payCheckRef = useRef(onPayCheck);
+  payCheckRef.current = onPayCheck;
 
   const invalidate = useCallback(() => {
     void qc.invalidateQueries({ predicate: (q) => isSessionRelatedQuery(q.queryKey) });
@@ -171,6 +181,13 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
             }
             return;
           }
+          // Refused for lesson pay: nothing was written; the lesson-pay check takes over.
+          const pay = payCheckRef.current ? payDialogFrom(err) : null;
+          if (pay) {
+            setPhase("ready");
+            payCheckRef.current?.(pay);
+            return;
+          }
           setError(err);
           setPhase("ready");
           return;
@@ -207,4 +224,121 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
   }, [success, invalidate]);
 
   return { phase, preview, consequences, error, stale, staleNonce, success, retry, reload: load, submit, retryRefresh, invalidate };
+}
+
+/**
+ * D4 step 3A: preview -> confirm for one lesson-pay op (un-hold, hold, the
+ * teacher, the times, the assistants, a lesson created after it started).
+ * Same rules as useGuardedChange: a FRESH preview each time the dialog
+ * opens; a stale token shows the fresh preview and asks again, never
+ * retried silently; every other error stays on screen with its code.
+ */
+export function useGuardedPayChange({ open, op, args }: { open: boolean; op: PayOp; args: Record<string, unknown> }) {
+  const qc = useQueryClient();
+  const [phase, setPhase] = useState<GuardPhase>("idle");
+  const [plan, setPlan] = useState<PayPlan | null>(null);
+  const [error, setError] = useState<GuardErrorBody | null>(null);
+  const [stale, setStale] = useState(false);
+  const [staleNonce, setStaleNonce] = useState(0);
+  const [success, setSuccess] = useState<GuardSuccess | null>(null);
+  const seq = useRef(0);
+  const planRef = useRef<PayPlan | null>(null);
+  planRef.current = plan;
+  const submitting = useRef(false);
+  const argsKey = JSON.stringify(args ?? {});
+
+  const invalidate = useCallback(() => {
+    void qc.invalidateQueries({ predicate: (q) => isSessionRelatedQuery(q.queryKey) });
+  }, [qc]);
+
+  const load = useCallback(async () => {
+    const mine = ++seq.current;
+    setPhase("loading");
+    setError(null);
+    setStale(false);
+    setPlan(null);
+    setSuccess(null);
+    const res = await payPreview(payPreviewRequest(op, JSON.parse(argsKey)));
+    if (mine !== seq.current) return;
+    if (!res.ok) {
+      setError(res.error);
+      setPhase("failed");
+      return;
+    }
+    if (!res.data.preview || typeof res.data.preview !== "object") {
+      setError({ ok: false, code: "unexpected", message: "The check returned nothing readable." });
+      setPhase("failed");
+      return;
+    }
+    setPlan(res.data.preview as PayPlan);
+    setPhase("ready");
+  }, [op, argsKey]);
+
+  useEffect(() => {
+    if (!open) {
+      seq.current++;
+      setPhase("idle");
+      setPlan(null);
+      setError(null);
+      setStale(false);
+      setSuccess(null);
+      return;
+    }
+    void load();
+    return () => {
+      seq.current++;
+    };
+  }, [open, load]);
+
+  const submit = useCallback(
+    async (form: PayForm) => {
+      const p = planRef.current;
+      if (!p || submitting.current) return;
+      submitting.current = true;
+      setPhase("submitting");
+      setError(null);
+      try {
+        const { action, data } = payRequest(p, form);
+        const opened = seq.current;
+        const res = await manageSession<GuardSuccess>(action, data);
+        if (opened !== seq.current) {
+          invalidate();
+          return;
+        }
+        if (!res.ok) {
+          const err = res.error;
+          if (UNKNOWN_OUTCOME_CODES.has(err.code)) {
+            setError({ ...err, outcome_unknown: true });
+            setPhase("failed");
+            invalidate();
+            return;
+          }
+          if (err.code === "token_stale") {
+            setStaleNonce((n) => n + 1);
+            setError(null);
+            setStale(true);
+            if (err.preview && typeof err.preview === "object") {
+              setPlan(err.preview as unknown as PayPlan);
+              setPhase("ready");
+            } else {
+              await load();
+              setStale(true);
+            }
+            return;
+          }
+          setError(err);
+          setPhase("ready");
+          return;
+        }
+        setSuccess(res.data);
+        setPhase("done");
+        invalidate();
+      } finally {
+        submitting.current = false;
+      }
+    },
+    [load, invalidate],
+  );
+
+  return { phase, plan, error, stale, staleNonce, success, reload: load, submit, invalidate };
 }

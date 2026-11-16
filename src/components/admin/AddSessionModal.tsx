@@ -19,6 +19,10 @@ import { SessionTASelector } from "@/components/admin/SessionTASelector";
 import { SessionTimeFields } from "@/components/admin/SessionTimeFields";
 import { addMinutesToTime } from "@/lib/sessionDuration";
 import { configuredLengths, expectedLengthFor, parseWeeklySlots } from "@/lib/classSchedule";
+import { manageSession } from "@/components/admin/session-guard/api";
+import { PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import { errorText } from "@/lib/sessionGuard";
+import { payDialogFrom, type PayOp } from "@/lib/lessonPayGuard";
 
 interface AddSessionModalProps {
   classId: string;
@@ -37,6 +41,8 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
   const [notes, setNotes] = useState("");
   const [selectedTAIds, setSelectedTAIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  // D4 step 3A: a lesson that has already started is added through the lesson-pay check.
+  const [pay, setPay] = useState<{ op: PayOp; args: Record<string, unknown> } | null>(null);
 
   const { data: teachers = [] } = useQuery({
     queryKey: ["teachers"],
@@ -100,6 +106,21 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
     }
   }, [classData, useDefaultTeacher, teacherId]);
 
+  /** After the lesson exists: its assistants (a new lesson is Scheduled, so this is not a pay change), then close. */
+  const finish = async (sessionId: string | null) => {
+    if (selectedTAIds.length > 0 && sessionId) {
+      const participants = selectedTAIds.map(taId => ({
+        session_id: sessionId,
+        participant_type: 'teaching_assistant',
+        teaching_assistant_id: taId,
+      }));
+      await supabase.from("session_participants").insert(participants);
+    }
+    toast.success("Session created successfully");
+    onSuccess();
+    onClose();
+  };
+
   const handleSubmit = async () => {
     if (!teacherId) {
       toast.error("Please select a teacher");
@@ -108,37 +129,28 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("manage-session", {
-        body: {
-          action: "create",
-          data: {
-            class_id: classId,
-            date: format(date, "yyyy-MM-dd"),
-            start_time: startTime,
-            end_time: endTime,
-            teacher_id: teacherId,
-            rate_override_vnd: rateOverride ? parseInt(rateOverride) : null,
-            notes: notes || null,
-            status: "Scheduled",
-          },
-        },
+      // D4 step 3A: a lesson is always created Scheduled (the register makes
+      // it Held), as the admin. One that has already started is billed to
+      // every child enrolled that day, so the server answers 409 with the
+      // lesson-pay check instead of creating it; the check creates it.
+      const res = await manageSession<{ session?: { id: string } }>("create", {
+        class_id: classId,
+        date: format(date, "yyyy-MM-dd"),
+        start_time: startTime,
+        end_time: endTime,
+        teacher_id: teacherId,
+        rate_override_vnd: rateOverride ? parseInt(rateOverride) : null,
+        notes: notes || null,
       });
-
-      if (error) throw error;
-
-      // Add TAs as session participants
-      if (selectedTAIds.length > 0 && data?.session?.id) {
-        const participants = selectedTAIds.map(taId => ({
-          session_id: data.session.id,
-          participant_type: 'teaching_assistant',
-          teaching_assistant_id: taId,
-        }));
-        await supabase.from("session_participants").insert(participants);
+      if (!res.ok) {
+        const d = payDialogFrom(res.error);
+        if (d) {
+          setPay({ op: d.op, args: d.plan.args ?? {} });
+          return;
+        }
+        throw new Error(errorText(res.error.code, res.error.message));
       }
-
-      toast.success("Session created successfully");
-      onSuccess();
-      onClose();
+      await finish(res.data?.session?.id ?? null);
     } catch (error: any) {
       console.error("Error creating session:", error);
       toast.error(error.message || "Failed to create session");
@@ -146,6 +158,23 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
       setLoading(false);
     }
   };
+
+  if (pay) {
+    return (
+      <PayGuardDialog
+        open
+        session={{ id: "", date: format(date, "yyyy-MM-dd"), start_time: startTime, end_time: endTime }}
+        op={pay.op}
+        args={pay.args}
+        names={Object.fromEntries((teachers as any[]).map((t: any) => [t.id, t.full_name]))}
+        onClose={() => setPay(null)}
+        onDone={(s: any) => {
+          setPay(null);
+          void finish(s?.session?.id ?? null);
+        }}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

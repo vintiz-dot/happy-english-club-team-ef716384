@@ -19,7 +19,8 @@ import SessionDrawer from "@/components/admin/class/SessionDrawer";
 import AttendanceDrawer from "@/components/admin/class/AttendanceDrawer";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { toast } from "sonner";
-import { GuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import { GuardDialog, PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import type { PayOp } from "@/lib/lessonPayGuard";
 import type { MoveChange } from "@/components/admin/session-guard/useGuardedChange";
 
 interface GlobalCalendarProps {
@@ -189,6 +190,10 @@ const GlobalCalendar = ({
     change: MoveChange;
     previous: MoveChange | null;
   } | null>(null);
+  // D4 step 3A (review S-1): a same-day time change of a held lesson, or of one
+  // that ended more than a week ago, is lesson pay: the move is refused with the
+  // money preview and the lesson-pay check takes over.
+  const [payDialog, setPayDialog] = useState<{ session: any; op: PayOp; args: Record<string, unknown> } | null>(null);
 
   const hm = (t?: string | null) => (t ? t.slice(0, 5) : "");
 
@@ -300,6 +305,11 @@ const GlobalCalendar = ({
           op="move"
           change={moveDialog.change}
           onClose={() => setMoveDialog(null)}
+          onPayCheck={(d) => {
+            const { session, change } = moveDialog;
+            setMoveDialog(null);
+            setPayDialog({ session, op: d.op, args: d.plan.args ?? { session_id: session.id, start_time: change.start_time, end_time: change.end_time } });
+          }}
           onDone={() => {
             const { session, change, previous } = moveDialog;
             const when = dayjs(change.date).format("ddd D MMM");
@@ -314,6 +324,24 @@ const GlobalCalendar = ({
             });
             void refetch();
           }}
+        />
+      )}
+
+      {payDialog && (
+        <PayGuardDialog
+          open
+          session={{
+            id: payDialog.session.id,
+            date: payDialog.session.date,
+            start_time: payDialog.session.start_time,
+            end_time: payDialog.session.end_time,
+            class_name: payDialog.session.classes?.name,
+            teacher_name: payDialog.session.teachers?.full_name,
+          }}
+          op={payDialog.op}
+          args={payDialog.args}
+          onClose={() => setPayDialog(null)}
+          onDone={() => void refetch()}
         />
       )}
 

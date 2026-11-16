@@ -42,6 +42,7 @@ import { SectionHeader } from "@/components/quest/SectionHeader";
 import { toast } from "sonner";
 import { dayjs } from "@/lib/date";
 import { parsePastedRoster } from "@/lib/starsRoster";
+import { starsResolveRefusalText } from "@/lib/lessonPayGuard";
 import { toRecords, type RecordContext, type RecordsView, type StarsRecord } from "@/lib/starsRecords";
 import { StarsRecordsCenter, type RecordsFocus } from "@/components/admin/stars/StarsRecordsCenter";
 import { StarsTools } from "@/components/admin/stars/StarsTools";
@@ -400,7 +401,14 @@ export default function StarsSyncTab() {
       toast.success(r === "took_theirs" ? "Pixel Pal's mark applied" : "HEC's mark kept");
       refresh();
     },
-    onError: (e) => { fail(e, "Could not settle that conflict"); refresh(); },
+    // D4 step 3A (review N-1): Pixel Pal's mark refused for lesson pay (a closed
+    // payroll month) is said in words, with what to do first.
+    onError: (e) => {
+      const payText = starsResolveRefusalText(e);
+      if (payText) toast.error(payText);
+      else fail(e, "Could not settle that conflict");
+      refresh();
+    },
   });
 
   /* ------------------------------------------------------ local state */
