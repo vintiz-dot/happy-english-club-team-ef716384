@@ -388,6 +388,16 @@ const SUITES = [
   // F-02: the nine AI / speech / image-search functions, handler by handler:
   // no session, wrong role, right role, the per-account limit.
   { name: "ai spend gate (F-02)", file: "ai-gate.test.mjs", migrations: [] },
+  // S2 (docs/evidence/S2-audit-medium-low.md): the medium and low findings.
+  // Each migration suite installs the rollback block from the evidence file
+  // as production's "before", pastes the fix twice, runs the rollback, pastes
+  // again. Each pins its assertion count.
+  {
+    name: "teacher reads (F-06)",
+    file: "s2-f06-teacher-reads.test.mjs",
+    expect: 42,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116092000_teacher_reads_own_classes_profiles.sql"],
+  },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
