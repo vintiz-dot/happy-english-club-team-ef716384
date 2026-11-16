@@ -34,12 +34,16 @@ const repo = resolve(here, '..', '..');
 const { prelude, baseline, files, mig } = D4_BUILD;
 const F6 = '20261114095000_d4_change_approvals.sql';
 const lf = (s) => s.replace(/\r\n/g, '\n');
+// The mutation runner (d4-mutants.mjs) hands a mutated copy of file 6 through the environment.
+const f6 = () => (process.env.D4_FILE6_OVERRIDE ? lf(readFileSync(process.env.D4_FILE6_OVERRIDE, 'utf8')) : mig(F6));
 const rollback6 = process.argv.find((a) => /ROLLBACK-d4-6-approvals\.sql$/.test(a)) ?? resolve(repo, 'scripts/ROLLBACK-d4-6-approvals.sql');
 
 const A1 = '00000000-0000-4000-8000-0000000000a1';   // the administrator who asks
 const A2 = '00000000-0000-4000-8000-0000000000a2';   // the other administrator
 const A3 = '00000000-0000-4000-8000-0000000000a3';   // an account given the admin role under approval
 const TU = '00000000-0000-4000-8000-0000000000b1';   // a teacher (no admin role)
+const A4 = '00000000-0000-4000-8000-0000000000a4';   // an administrator who worked while approval was off
+const A5 = '00000000-0000-4000-8000-0000000000a5';   // an administrator making single changes in one day
 const R = 'Entered against the wrong month by mistake';
 const CORR = 'Correction: the confirmed bill was wrong';
 
@@ -47,7 +51,7 @@ async function makeDb(withF6) {
   const db = new PGlite();
   await db.exec(prelude);
   for (const f of baseline) await db.exec(mig(f));
-  for (const f of files) if (withF6 || f !== F6) await db.exec(mig(f));
+  for (const f of files) if (f !== F6) await db.exec(mig(f)); else if (withF6) await db.exec(f6());
   return db;
 }
 
@@ -193,7 +197,7 @@ async function preflightScenario() {
   for (const f of baseline) await db.exec(mig(f));
   for (const f of files) if (!/094000|095000/.test(f)) await db.exec(mig(f));
   let msg = null;
-  try { await db.exec(mig(F6)); } catch (e) { msg = e.message; }
+  try { await db.exec(f6()); } catch (e) { msg = e.message; }
   await db.exec('ROLLBACK').catch(() => {});
   ok('preflight: without step 3B the file refuses, naming what is missing', /d4_change_approvals cannot be installed/.test(msg ?? '') &&
      /_money_plan__enrollment|zz_enrollment_money_guard/.test(msg ?? ''), msg);
@@ -205,7 +209,7 @@ async function preflightScenario() {
   await db.exec(`CREATE OR REPLACE FUNCTION public.money_changes_checked_bulk(p_items jsonb, p_reason text, p_batch_id uuid, p_context jsonb DEFAULT '{}'::jsonb)
     RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$ BEGIN RETURN '{}'::jsonb; END $f$;`);
   msg = null;
-  try { await db.exec(mig(F6)); } catch (e) { msg = e.message; }
+  try { await db.exec(f6()); } catch (e) { msg = e.message; }
   await db.exec('ROLLBACK').catch(() => {});
   ok('preflight: a bulk RPC that is not the reviewed 1b body (one that might catch HC060) -> refused, naming it',
      /money_changes_checked_bulk\(jsonb, text, uuid, jsonb\) is not the reviewed body/.test(msg ?? ''), msg);
@@ -213,7 +217,7 @@ async function preflightScenario() {
   // the real chain, then twice and as CRLF
   db = await makeDb(true);
   msg = null;
-  try { await db.exec(lf(mig(F6)).replace(/\n/g, '\r\n')); await db.exec(mig(F6)); } catch (e) { msg = e.message; }
+  try { await db.exec(lf(f6()).replace(/\n/g, '\r\n')); await db.exec(f6()); } catch (e) { msg = e.message; }
   ok('the file pastes a second time and as CRLF (its own bodies are pinned with CR stripped)', msg === null, msg);
   const rows = (await db.query(`SELECT count(*)::int n, bool_and(NOT enabled) off FROM change_approval_settings`)).rows[0];
   ok('  still exactly one settings row, still off', rows.n === 1 && rows.off === true, rows);
@@ -306,7 +310,7 @@ await section('install: the objects, grants and defaults', async () => {
   ok('a teacher reads no request (RLS) and no queue row (security_invoker view)', tq.ok === 0 && tv.ok === 0, { tq, tv });
   const ts = await C.rpc(TU, `SELECT public.change_approval_status() r`);
   ok('a teacher cannot read the status card (42501)', ts.code === '42501', ts);
-  const src = readFileSync(resolve(repo, 'supabase/migrations', F6), 'utf8');
+  const src = f6();
   ok('one transaction, lock_timeout 5s, NOTIFY pgrst, no partial unique index, no row of an existing table written',
      /^BEGIN;\s*\n\s*SET LOCAL lock_timeout = '5s';/m.test(lf(src)) && /NOTIFY pgrst, 'reload schema';/.test(src) && !/UNIQUE INDEX[^;]*WHERE/i.test(src) &&
      (src.match(/^INSERT INTO public\.\w+/gm) ?? []).join() === 'INSERT INTO public.change_approval_settings');
@@ -325,6 +329,15 @@ await section('switching on: two administrators', async () => {
   const bad = await C.settings({ enabled: 'yes' });
   const unk = await C.settings({ approve_everything: true });
   ok('a malformed or unknown setting is refused (HC015 bad_setting)', bad.message === 'bad_setting' && unk.message === 'bad_setting', { bad, unk });
+  // while still off: a third administrator makes three single-family T2 changes (they count in the window once on)
+  await su(`INSERT INTO user_roles VALUES ($1,'admin')`, [A4]);
+  const early = [];
+  for (let i = 0; i < 3; i++) {
+    const l = await W.lesson({ recorded: 100000 });
+    early.push(await C.go('attendance', 'set_marks', marks(l), A4));
+  }
+  ok('while off, three single-family T2 changes by one administrator all apply at once', early.every((g) => !!g.ok?.override_id), early);
+  await su(`DELETE FROM user_roles WHERE user_id = $1`, [A4]);
   await su(`INSERT INTO user_roles VALUES ($1,'admin')`, [A2]);
   const on = await C.settings({ enabled: true });
   ok('with two administrators: switched on at once (tightening needs nobody else)', on.ok?.settings?.enabled === true && on.ok?.loosens === false, on);
@@ -451,6 +464,21 @@ await section('ON: a stale approval is refused and recorded', async () => {
   const a3 = await C.approve(r2.ok?.request_id, v3.ok?.token, A2);
   ok('the mark changed after the request: stale, nothing applied (still Absent)', a3.ok?.status === 'stale' && v3.ok?.stale === true &&
      (await markOf(l2)) === 'Absent', { a3, v3: v3.ok?.stale });
+
+  // an approval is not a vehicle: inside the approver's own transaction, the
+  // approved request cannot be claimed for a different change
+  const lx = await W.lesson({ recorded: 6000000 }), ly = await W.lesson({ recorded: 6000000 });
+  const px = await C.preview('attendance', 'set_marks', marks(lx));
+  const rx = await C.ask('money', 'money_change_checked', params('attendance', 'set_marks', marks(lx), px), px.token);
+  const vx = await C.look(rx.ok?.request_id, A2);
+  const py = await C.preview('attendance', 'set_marks', marks(ly), A2);
+  const vehicle = await script(A2, 'authenticated', 'authenticated',
+    `SELECT public.approve_change_request('${rx.ok?.request_id}', '${vx.ok?.token}', NULL);
+     SELECT set_config('hec.change_request_ok', '${rx.ok?.request_id}', true);
+     SELECT public.money_change_checked('attendance','set_marks','${JSON.stringify(marks(ly))}'::jsonb,'${R}','${py.token}',true,NULL,'{}'::jsonb)`);
+  ok('approving X and then re-using X\'s claim for another change Y in the same transaction: HC060, and X is not applied either',
+     vehicle?.code === 'HC060' && (await markOf(ly)) === 'Present' && (await markOf(lx)) === 'Present' &&
+     (await q1(`SELECT status FROM change_approval_queue WHERE request_id=$1`, [rx.ok?.request_id])).status === 'pending', vehicle);
 });
 
 await section('ON: expiry, withdrawal, rejection', async () => {
@@ -488,6 +516,10 @@ await section('ON: tier 3, a fee change into a signed month, an unfreeze, a clos
   const pf = await C.preview('class_fee', 'set', { class_id: fee.cls, effective_from: W.OLD_MONTH_1, session_rate_vnd: 250000 });
   ok('a class fee dated into a signed month (step 2; its own impact names no tier): tier3 - the plan\'s tier reaches the rule',
      pf.tier === 3 && pf.approval.required === true && pf.approval.reasons.includes('tier3'), pf);
+  const next1 = (await q1(`SELECT to_char(date_trunc('month', now() AT TIME ZONE 'Asia/Ho_Chi_Minh') + interval '1 month', 'YYYY-MM-DD') d`)).d;
+  const pn = await C.preview('class_fee', 'set', { class_id: fee.cls, effective_from: next1, session_rate_vnd: 260000 });
+  ok('a fee rise from next month (T0; its impact names no tier either) needs nobody - the plan\'s tier, not "unknown = T3", is judged',
+     pn.tier === 0 && pn.approval.required === false, pn);
   const fz = await W.lesson({ recorded: 100000, frozen: true });
   const pu = await C.preview('invoice_freeze', 'unfreeze', { invoice_id: fz.inv });
   ok('unfreezing a bill: reason unfreeze', pu.approval.reasons.includes('unfreeze'), pu);
@@ -560,8 +592,15 @@ await section('ON: R-12 - a batch is judged whole, and so are the same person\'s
 
   // three single changes by one admin within 24 hours: the third requires approval
   const s1 = await W.lesson({ recorded: 100000 }), s2 = await W.lesson({ recorded: 100000 }), s3 = await W.lesson({ recorded: 100000 });
-  const T = '00000000-0000-4000-8000-0000000000a4';
-  await su(`INSERT INTO user_roles VALUES ($1,'admin')`, [T]);
+  const T = A5;
+  await su(`INSERT INTO user_roles VALUES ($1,'admin'),($2,'admin')`, [T, A4]);
+  // A4's three changes made while approval was off are in A4's window now
+  const e1 = await W.lesson({ recorded: 0 }), e2 = await W.lesson({ recorded: 100000 });
+  const pe1 = await C.preview('attendance', 'set_marks', marks(e1), A4);
+  const pe2 = await C.preview('attendance', 'set_marks', marks(e2), A4);
+  ok('the window counts T2 changes made while approval was off: a T2 change of a fourth family needs approval (families)',
+     pe2.tier === 2 && pe2.approval.required === true && pe2.approval.reasons.includes('families') && pe2.approval.totals.window_families === 3, pe2.approval);
+  ok('  but a T1 change by the same person does not wait on the families / paid lines, whatever the window', pe1.tier === 1 && pe1.approval.required === false, pe1.approval);
   const g1 = await C.go('attendance', 'set_marks', marks(s1), T);
   const g2 = await C.go('attendance', 'set_marks', marks(s2), T);
   const p3 = await C.preview('attendance', 'set_marks', marks(s3), T);
@@ -570,7 +609,7 @@ await section('ON: R-12 - a batch is judged whole, and so are the same person\'s
   const p3b = await C.preview('attendance', 'set_marks', marks(s3), A1);
   ok('  the 15 A1 approved for A2 do not count in A1\'s own window (changes applied under an approval are not counted again)',
      p3b.approval.required === false && p3b.approval.totals.window_families === 1, p3b.approval);   // 1 = A1's own direct T2 change earlier
-  await su(`DELETE FROM user_roles WHERE user_id = $1`, [T]);
+  await su(`DELETE FROM user_roles WHERE user_id IN ($1, $2)`, [T, A4]);
 });
 
 await section('ON: pay carried forward (A-4) and the admin role (A-18)', async () => {
@@ -694,7 +733,7 @@ await section('rollback 6: approvals read as off', async () => {
   const s = await C.rpc(A1, `SELECT public.change_approval_status() r`);
   ok('  the status card says rolled back, not on', s.ok?.rolled_back === true && s.ok.enabled === false, s.ok);
   err = null;
-  try { await db.exec(mig(F6)); } catch (e) { err = e.message; }
+  try { await db.exec(f6()); } catch (e) { err = e.message; }
   ok('file 6 pastes again after the rollback (its own bodies are accepted by its preflight) and approval is on again',
      err === null && (await C.preview('attendance', 'set_marks', marks(await W.lesson({ recorded: 6000000 })))).approval.required === true, err);
 });

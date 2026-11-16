@@ -25,7 +25,12 @@ const ROLLBACK2 = join(repo, 'scripts', 'ROLLBACK-d4-2-register.sql');
 const ROLLBACK4 = join(repo, 'scripts', 'ROLLBACK-d4-4-lesson-pay.sql');
 const FEE = '20261114092000_d4_class_fee_history.sql';
 const ROLLBACK3 = join(repo, 'scripts', 'ROLLBACK-d4-3-class-fee.sql');
+// step 4: d4-approvals builds its own databases from D4_BUILD; the mutated
+// copy of file 6 reaches it (and its child scenarios) through D4_FILE6_OVERRIDE
+const APPROVALS = '20261114095000_d4_change_approvals.sql';
+const ROLLBACK6 = join(repo, 'scripts', 'ROLLBACK-d4-6-approvals.sql');
 const SUITES = {
+  approvals: { file: 'd4-approvals.test.mjs', migs: [], args: [ROLLBACK6], envFile6: true },
   floors: { file: 'd4-floors.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS, FREEZE] },
   carry: { file: 'd4-d2-carryover.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS] },
   deployed: { file: 'd4-deployed-functions.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS] },
@@ -406,7 +411,105 @@ export const MUTANTS = [
     "        if (hasToken()) {\n          return payChecked('retime',", "        if (hasToken() && s.status === 'Held') {\n          return payChecked('retime',", ['fnles'], 'supabase/functions/manage-session/index.ts'],
   ['FL7', "mark-attendance: a refused Held flip is silent again (review N-2)",
     "...(heldRefused ? { held: false, held_refused: heldRefused } : {})", "...({})", ['fnles'], 'supabase/functions/mark-attendance/index.ts'],
+  // ---- step 4: approvals (file 6), suite d4-approvals
+  ['A01', "the rule never requires approval",
+    "    'required', cardinality(v_reasons) > 0,", "    'required', false,", ['approvals'], APPROVALS],
+  ['A02', "the requester may approve their own request",
+    "    IF r.requested_by = v_uid THEN\n      RAISE EXCEPTION 'self_approval' USING ERRCODE = 'HC061',\n        DETAIL = 'approvers='",
+    "    IF false THEN\n      RAISE EXCEPTION 'self_approval' USING ERRCODE = 'HC061',\n        DETAIL = 'approvers='", ['approvals'], APPROVALS],
+  ['A03', "a stale approval is not detected (fingerprints not compared)",
+    "  IF v_plan -> 'fingerprints' IS DISTINCT FROM to_jsonb(r.fingerprints) THEN\n    INSERT", "  IF false THEN\n    INSERT", ['approvals'], APPROVALS],
+  ['A04', "the approver's token is not checked",
+    "  IF p_token IS DISTINCT FROM public._approval_token(r.id, v_uid, v_plan) THEN", "  IF false THEN", ['approvals'], APPROVALS],
+  ['A05', "a request never expires",
+    "    CASE WHEN now() >= p_expires THEN 'expired' ELSE 'pending' END)", "    'pending')", ['approvals'], APPROVALS],
+  ['A06', "the claim does not require the approval event in this transaction by the caller",
+    "                  WHERE e.request_id = r.id AND e.txid = txid_current() AND e.actor_user_id = auth.uid()",
+    "                  WHERE e.request_id = r.id", ['approvals'], APPROVALS],
+  ['A07', "the claim does not compare the fingerprint (an approval becomes a vehicle)",
+    "   WHERE r.id = v::uuid AND r.kind = p_kind AND p_fingerprint = ANY (r.fingerprints)", "   WHERE r.id = v::uuid AND r.kind = p_kind", ['approvals'], APPROVALS],
+  ['A08', "R-12: the 24-hour / same-batch window dropped",
+    "  IF p_actor IS NOT NULL THEN\n    SELECT COALESCE(sum(fam), 0)", "  IF false THEN\n    SELECT COALESCE(sum(fam), 0)", ['approvals'], APPROVALS],
+  ['A09', "changes applied under an approval are counted in the approver's window again",
+    "       WHERE o.actor_user_id = p_actor AND o.tier >= 2 AND o.created_at >= now() - interval '24 hours'\n         AND NOT EXISTS (SELECT 1 FROM public.change_approval_events e\n                          WHERE e.txid = o.txid AND e.kind IN ('approved', 'released_alone'))\n      UNION ALL",
+    "       WHERE o.actor_user_id = p_actor AND o.tier >= 2 AND o.created_at >= now() - interval '24 hours'\n      UNION ALL", ['approvals'], APPROVALS],
+  ['A10', "the families line fires below T2",
+    "  IF v_tier >= 2 AND v_fam + v_wfam >= st.min_families THEN", "  IF v_fam + v_wfam >= st.min_families THEN", ['approvals'], APPROVALS],
+  ['A11', "the tier3 line dropped",
+    "  IF st.on_tier3 AND v_tier = 3 THEN", "  IF false THEN", ['approvals'], APPROVALS],
+  ['A12', "the full plan hands the rule an impact without the plan's tier",
+    "                    || jsonb_build_object('tier', v_tier), p_uid),\n                '{\"required\": true", "                    , p_uid),\n                '{\"required\": true",
+    ['approvals'], APPROVALS],
+  ['A13', "the unfreeze line dropped",
+    "  IF st.on_unfreeze AND COALESCE((v_imp ->> 'unfreeze')::boolean, false) THEN", "  IF false THEN", ['approvals'], APPROVALS],
+  ['A14', "pay carried forward passes without a claim (A-4)",
+    "  IF public._change_request_claim('money', public._approval_pay_fp(", "  IF false AND public._change_request_claim('money', public._approval_pay_fp(", ['approvals'], APPROVALS],
+  ['A15', "D2's changes pass without a claim (zz_session_override_approval inert)",
+    "  IF COALESCE((v_need ->> 'required')::boolean, true)\n     AND public._change_request_claim('session'", "  IF false\n     AND public._change_request_claim('session'", ['approvals'], APPROVALS],
+  ['A16', "the admin role is given without a claim (A-18)",
+    "  IF public._change_request_claim('settings', public._approval_grant_fp(NEW.user_id)) IS NULL THEN", "  IF false THEN", ['approvals'], APPROVALS],
+  ['A17', "loosening the setting while on needs nobody",
+    "  IF st.enabled AND public._change_approval_installed() AND v_loose THEN", "  IF false THEN", ['approvals'], APPROVALS],
+  ['A18', "approval can be switched on with one administrator",
+    "    IF cardinality(public._approval_admins()) < 2 THEN", "    IF false THEN", ['approvals'], APPROVALS],
+  ['A19', "a change that needs no approval can be parked as a request",
+    "  IF NOT COALESCE((v -> 'approval' ->> 'required')::boolean, true) THEN\n    RAISE EXCEPTION 'approval_not_needed'", "  IF false THEN\n    RAISE EXCEPTION 'approval_not_needed'", ['approvals'], APPROVALS],
+  ['A20', "two requests may wait for one target (HC063 dropped)",
+    "  IF FOUND THEN\n    RAISE EXCEPTION 'approval_already_pending'", "  IF false THEN\n    RAISE EXCEPTION 'approval_already_pending'", ['approvals'], APPROVALS],
+  ['A21', "asking does not check the requester's token",
+    "        IF (v_tier >= 1 OR it ->> 'token' IS NOT NULL) AND (it ->> 'token') IS DISTINCT FROM v ->> 'token' THEN", "        IF false THEN", ['approvals'], APPROVALS],
+  ['A22', "solo release ignores the delay (A-17)",
+    "    IF now() < r.created_at + make_interval(hours => st.solo_release_after_hours) THEN", "    IF false THEN", ['approvals'], APPROVALS],
+  ['A23', "someone other than the asker may release it",
+    "    IF r.requested_by <> v_uid THEN\n      RAISE EXCEPTION 'not allowed' USING ERRCODE = '42501', DETAIL = 'Only the person who asked can release it.';",
+    "    IF false THEN\n      RAISE EXCEPTION 'not allowed' USING ERRCODE = '42501', DETAIL = 'Only the person who asked can release it.';", ['approvals'], APPROVALS],
+  ['A24', "A-15: a missing settings row reads as off",
+    "  st := public._change_approval_settings_row();\n  IF NOT st.enabled THEN\n    RETURN false;",
+    "  SELECT * INTO st FROM public.change_approval_settings WHERE id;\n  IF NOT COALESCE(st.enabled, false) THEN\n    RETURN false;", ['approvals'], APPROVALS],
+  ['A25', "rollback 6 does not read as off (installed not checked)",
+    "  IF NOT public._change_approval_installed() THEN\n    RETURN false;\n  END IF;\n  st := public._change_approval_settings_row();\n  IF NOT st.enabled",
+    "  st := public._change_approval_settings_row();\n  IF NOT st.enabled", ['approvals'], APPROVALS],
+  ['A26', "a disabled approval trigger is not noticed while on",
+    "                        AND t.tgname = x.trg AND t.tgenabled = 'O');", "                        AND t.tgname = x.trg);", ['approvals'], APPROVALS],
+  ['A27', "the batch is judged per item (this transaction's earlier items not in the window)",
+    "       WHERE o.actor_user_id = p_actor AND o.tier >= 2 AND o.created_at >= now() - interval '24 hours'\n         AND NOT EXISTS (SELECT 1 FROM public.change_approval_events e\n                          WHERE e.txid = o.txid AND e.kind IN ('approved', 'released_alone'))\n      UNION ALL",
+    "       WHERE o.actor_user_id = p_actor AND o.tier >= 2 AND o.created_at >= now() - interval '24 hours' AND o.txid <> txid_current()\n         AND NOT EXISTS (SELECT 1 FROM public.change_approval_events e\n                          WHERE e.txid = o.txid AND e.kind IN ('approved', 'released_alone'))\n      UNION ALL",
+    ['approvals'], APPROVALS],
+  ['A28', "the paid line dropped",
+    "  IF v_tier >= 2 AND v_paid + v_wpaid >= st.min_paid_vnd THEN", "  IF false THEN", ['approvals'], APPROVALS],
+  ['A29', "a request accepted without the reason the change needs",
+    "        IF v_tier >= 1 AND v_reason IS NULL THEN\n          RAISE EXCEPTION 'reason_too_short' USING ERRCODE = 'HC010';",
+    "        IF false THEN\n          RAISE EXCEPTION 'reason_too_short' USING ERRCODE = 'HC010';", ['approvals'], APPROVALS],
+  ['A30', "rejecting needs no sentence",
+    "  v_note := public.session_change_reason_ok(p_note);\n  v_status := public._approval_request_status(r.id, r.expires_at);\n  IF v_status <> 'pending' THEN\n    RAISE EXCEPTION 'request_not_pending' USING ERRCODE = 'HC062', DETAIL = 'status=' || v_status;\n  END IF;\n  INSERT INTO public.change_approval_events (request_id, actor_user_id, kind, payload)\n  VALUES (r.id, v_uid, 'rejected'",
+    "  v_note := p_note;\n  v_status := public._approval_request_status(r.id, r.expires_at);\n  IF v_status <> 'pending' THEN\n    RAISE EXCEPTION 'request_not_pending' USING ERRCODE = 'HC062', DETAIL = 'status=' || v_status;\n  END IF;\n  INSERT INTO public.change_approval_events (request_id, actor_user_id, kind, payload)\n  VALUES (r.id, v_uid, 'rejected'",
+    ['approvals'], APPROVALS],
 ];
+
+// File 6 pins its own three replaced bodies (a second paste finds them): a
+// mutant of one of them must carry the mutated body's md5 there, or the
+// suite's second-paste case would "catch" every such mutant by itself.
+const F6_OWN = {
+  'public._money_change_full_plan(text, text, jsonb, uuid, text)': '_money_change_full_plan',
+  'public.change_approval_needed(jsonb, uuid)': 'change_approval_needed',
+  'public._change_request_claim(text, text)': '_change_request_claim',
+};
+async function patchApprovalLiterals(text) {
+  const { D4_BUILD } = await import('./guard-fingerprint.mjs');
+  const db = new PGlite();
+  await db.exec(D4_BUILD.prelude);
+  for (const f of D4_BUILD.baseline) await db.exec(D4_BUILD.mig(f));
+  for (const f of D4_BUILD.files) if (f !== APPROVALS) await db.exec(D4_BUILD.mig(f));
+  try { await db.exec(text); } catch (e) { await db.close(); return { text, error: e.message }; }
+  let out = text;
+  for (const [sig, name] of Object.entries(F6_OWN)) {
+    const m = (await db.query(`SELECT md5(replace(prosrc, E'\\r', '')) m FROM pg_proc WHERE oid = to_regprocedure($1)`, [sig])).rows[0].m;
+    out = out.replace(new RegExp(`(\\('${sig.replace(/[()]/g, '\\$&')}', ARRAY\\['[0-9a-f]{32}', ')[0-9a-f]{32}('\\]\\))`), `$1${m}$2`);
+    void name;
+  }
+  await db.close();
+  return { text: out };
+}
 
 const D4_LITERALS = [/('[0-9a-f]{32}'\) THEN\s+-- this file)/g];
 async function patchLiterals(text) {
@@ -427,7 +530,8 @@ async function patchLiterals(text) {
 
 const runSuite = (suite, mutatedPath, target = FLOORS) => new Promise((done) => {
   const args = [join(repo, 'scripts', 'pgtest', suite.file), ...suite.migs.map((f) => (f === target ? mutatedPath : migPath(f))), ...(suite.args ?? [])];
-  const child = spawn(process.execPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+  const env = suite.envFile6 && target === APPROVALS ? { ...process.env, D4_FILE6_OVERRIDE: mutatedPath } : process.env;
+  const child = spawn(process.execPath, args, { stdio: ['ignore', 'pipe', 'pipe'], env });
   let out = '';
   child.stdout.on('data', (d) => (out += d));
   child.stderr.on('data', (d) => (out += d));
@@ -464,6 +568,21 @@ for (const [id, what, find, repl, suites, file] of MUTANTS) {
       writeFileSync(fp, before);
     }
     const verdict = by.length ? `CAUGHT by ${by[0]}` : `SURVIVED (${suites.join(', ')})`;
+    results.push({ id, what, verdict });
+    console.log(`${id} ${verdict}`);
+    continue;
+  }
+  if (file === APPROVALS) {
+    const base = readFileSync(migPath(APPROVALS), 'utf8').replace(/\r\n/g, '\n');
+    const n = base.split(find).length - 1;
+    if (n !== 1) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${n} times)` }); console.log(`${id} BAD MUTANT (${n})`); continue; }
+    const { text, error } = await patchApprovalLiterals(base.replace(find, () => repl));
+    if (error) { results.push({ id, what, verdict: `CAUGHT at install (${error.slice(0, 80)})` }); console.log(`${id} CAUGHT at install`); continue; }
+    const p = resolve(tmpdir(), `d4-mutant-${id}-${process.pid}.sql`);
+    writeFileSync(p, text);
+    const r = await runSuite(SUITES.approvals, p, APPROVALS);
+    const firstFail = r.out.split('\n').find((l) => l.includes('FAIL')) ?? r.out.split('\n').slice(-3).join(' ');
+    const verdict = r.code !== 0 ? `CAUGHT by approvals: ${firstFail.trim().slice(0, 160)}` : 'SURVIVED (approvals)';
     results.push({ id, what, verdict });
     console.log(`${id} ${verdict}`);
     continue;
