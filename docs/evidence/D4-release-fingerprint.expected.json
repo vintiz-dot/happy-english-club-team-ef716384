@@ -9,6 +9,214 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._admin_grant_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "53642b6e8191d8f9289889f77bd20068",
+      "proname": "_admin_grant_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_admins()",
+      "identity_arguments": "",
+      "md5_prosrc": "10da80ab4dc5ef5452a33d2c8d0efc54",
+      "proname": "_approval_admins",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_decide(p_request_id uuid, p_token text, p_note text, p_mode text)",
+      "identity_arguments": "p_request_id uuid, p_token text, p_note text, p_mode text",
+      "md5_prosrc": "37f1a7da7c37212bedbcdb15b53d4130",
+      "proname": "_approval_decide",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_execute(p_request change_approval_requests, p_plan jsonb)",
+      "identity_arguments": "p_request change_approval_requests, p_plan jsonb",
+      "md5_prosrc": "3ecfa53c99c04509fc18051be00c2cac",
+      "proname": "_approval_execute",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_grant_fp(p_user uuid)",
+      "identity_arguments": "p_user uuid",
+      "md5_prosrc": "622a016266aaa687012619753fcfcdfb",
+      "proname": "_approval_grant_fp",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_lock_money(p_entity text, p_op text, p_args jsonb)",
+      "identity_arguments": "p_entity text, p_op text, p_args jsonb",
+      "md5_prosrc": "c8346635aa140529c169824f2237fa59",
+      "proname": "_approval_lock_money",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_pay_fp(p_month text, p_origin text, p_teacher uuid, p_assistant uuid, p_amount integer, p_reason text)",
+      "identity_arguments": "p_month text, p_origin text, p_teacher uuid, p_assistant uuid, p_amount integer, p_reason text",
+      "md5_prosrc": "fbe33f862358f4aeb1f7b28999a6b36a",
+      "proname": "_approval_pay_fp",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_plan(p_kind text, p_rpc text, p_params jsonb, p_uid uuid, p_lock boolean, p_strict boolean, p_token text)",
+      "identity_arguments": "p_kind text, p_rpc text, p_params jsonb, p_uid uuid, p_lock boolean, p_strict boolean, p_token text",
+      "md5_prosrc": "f0f9f4ca37061c673f991647caedd9e2",
+      "proname": "_approval_plan",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_request_status(p_id uuid, p_expires timestamp with time zone)",
+      "identity_arguments": "p_id uuid, p_expires timestamp with time zone",
+      "md5_prosrc": "b6df50a6d1f379910b1ef9a931716e54",
+      "proname": "_approval_request_status",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_settings_fp(p_cur jsonb, p_new jsonb)",
+      "identity_arguments": "p_cur jsonb, p_new jsonb",
+      "md5_prosrc": "67ba3a0721b62a73645b48f02a4310bd",
+      "proname": "_approval_settings_fp",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_settings_loosens(p_cur jsonb, p_new jsonb)",
+      "identity_arguments": "p_cur jsonb, p_new jsonb",
+      "md5_prosrc": "19dede1522d37f29a9161caf87cfbad7",
+      "proname": "_approval_settings_loosens",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_settings_patched(p_cur jsonb, p_patch jsonb)",
+      "identity_arguments": "p_cur jsonb, p_patch jsonb",
+      "md5_prosrc": "ae02e68b475caf57f32e09d8c085ac41",
+      "proname": "_approval_settings_patched",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._approval_token(p_request uuid, p_uid uuid, p_plan jsonb)",
+      "identity_arguments": "p_request uuid, p_uid uuid, p_plan jsonb",
+      "md5_prosrc": "81ff72098326859fc553c9bba6628b0a",
+      "proname": "_approval_token",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._attendance_billable(p_status text)",
       "identity_arguments": "p_status text",
       "md5_prosrc": "64f04a93a4a49a44f66eb6895bbe58af",
@@ -73,9 +281,73 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._change_approval_installed()",
+      "identity_arguments": "",
+      "md5_prosrc": "c2e5f7a113025387bb3ae5dd18389a78",
+      "proname": "_change_approval_installed",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._change_approval_on()",
+      "identity_arguments": "",
+      "md5_prosrc": "eaf06855ecdf1c204be0848733638527",
+      "proname": "_change_approval_on",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._change_approval_settings_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "aff2ebca0abee07a1eae664f5ab8d6d2",
+      "proname": "_change_approval_settings_guard",
+      "security_definer": false,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._change_approval_settings_row()",
+      "identity_arguments": "",
+      "md5_prosrc": "498744b7f66580a4cb52231835c568fa",
+      "proname": "_change_approval_settings_row",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._change_request_claim(p_kind text, p_fingerprint text)",
       "identity_arguments": "p_kind text, p_fingerprint text",
-      "md5_prosrc": "7c84af305cfb366c6a8bb20e6f1bc6d8",
+      "md5_prosrc": "356d74c36029a948ee60c12ceb2a6d7d",
       "proname": "_change_request_claim",
       "security_definer": true,
       "volatility": "s"
@@ -475,7 +747,7 @@
       },
       "identity": "public._money_change_full_plan(p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text)",
       "identity_arguments": "p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text",
-      "md5_prosrc": "8f8b9abdec600f4365979c8798ec801c",
+      "md5_prosrc": "5bcb5952f4f8f2e7fbe3d7747846e2dd",
       "proname": "_money_change_full_plan",
       "security_definer": true,
       "volatility": "s"
@@ -1113,6 +1385,22 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._pay_adjustment_approval()",
+      "identity_arguments": "",
+      "md5_prosrc": "211578228b5c4d338fc40184fed4e3ba",
+      "proname": "_pay_adjustment_approval",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._pay_rate_money_guard()",
       "identity_arguments": "",
       "md5_prosrc": "c5638802659cb1ca21037bcbdcc0f59b",
@@ -1213,6 +1501,22 @@
       "identity_arguments": "",
       "md5_prosrc": "ede7f558c2e089a3acdd214d550bfbf2",
       "proname": "_session_insert_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_override_approval()",
+      "identity_arguments": "",
+      "md5_prosrc": "f0f47f4225c69c16bf96bd12504827a9",
+      "proname": "_session_override_approval",
       "security_definer": true,
       "volatility": "v"
     },
@@ -1334,13 +1638,93 @@
       ],
       "execute": {
         "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.acknowledge_released_request(p_request_id uuid, p_note text)",
+      "identity_arguments": "p_request_id uuid, p_note text",
+      "md5_prosrc": "e299ce062d4bdff8f9986992cfe0d029",
+      "proname": "acknowledge_released_request",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.approval_request_preview(p_request_id uuid)",
+      "identity_arguments": "p_request_id uuid",
+      "md5_prosrc": "79656d376a15e4e2ddb009561c9ded1d",
+      "proname": "approval_request_preview",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.approve_change_request(p_request_id uuid, p_token text, p_note text)",
+      "identity_arguments": "p_request_id uuid, p_token text, p_note text",
+      "md5_prosrc": "87ff81622b0b0149551367e7ff5cc158",
+      "proname": "approve_change_request",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.carry_payroll_adjustments(p_rows jsonb)",
+      "identity_arguments": "p_rows jsonb",
+      "md5_prosrc": "f12af8b7b07755ad29e7a670bd4d727d",
+      "proname": "carry_payroll_adjustments",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
         "authenticated": false,
         "service_role": false
       },
       "identity": "public.change_approval_needed(p_impact jsonb, p_actor uuid)",
       "identity_arguments": "p_impact jsonb, p_actor uuid",
-      "md5_prosrc": "4b477e5155181f35119d0f7a225ec7ce",
+      "md5_prosrc": "9f646e810e4b375f62a37b3d9ced96dc",
       "proname": "change_approval_needed",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.change_approval_status()",
+      "identity_arguments": "",
+      "md5_prosrc": "90f4d8d1d9325ed0acaa18687ff41208",
+      "proname": "change_approval_status",
       "security_definer": true,
       "volatility": "s"
     },
@@ -1391,6 +1775,22 @@
       "proname": "d4_guard_status",
       "security_definer": true,
       "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.grant_admin_role(p_user_id uuid, p_reason text)",
+      "identity_arguments": "p_user_id uuid, p_reason text",
+      "md5_prosrc": "94b4ceae8a7124815fa39998daf1dbdb",
+      "proname": "grant_admin_role",
+      "security_definer": true,
+      "volatility": "v"
     },
     {
       "config": [
@@ -1510,6 +1910,54 @@
       ],
       "execute": {
         "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.reject_change_request(p_request_id uuid, p_note text)",
+      "identity_arguments": "p_request_id uuid, p_note text",
+      "md5_prosrc": "62c90f57d7d03259d04b9aced621d5d7",
+      "proname": "reject_change_request",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.release_own_request(p_request_id uuid, p_token text)",
+      "identity_arguments": "p_request_id uuid, p_token text",
+      "md5_prosrc": "6a194f27e95bef9c6867d52a8f5b71e6",
+      "proname": "release_own_request",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.request_change_approval(p_kind text, p_rpc text, p_params jsonb, p_token text)",
+      "identity_arguments": "p_kind text, p_rpc text, p_params jsonb, p_token text",
+      "md5_prosrc": "eb4a6be117817ce939561e20f15f156d",
+      "proname": "request_change_approval",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
         "authenticated": false,
         "service_role": false
       },
@@ -1558,6 +2006,22 @@
       ],
       "execute": {
         "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.set_change_approval_settings(p_patch jsonb, p_reason text)",
+      "identity_arguments": "p_patch jsonb, p_reason text",
+      "md5_prosrc": "ad61a2c8e007663b10ec1b1923b048c0",
+      "proname": "set_change_approval_settings",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
         "authenticated": false,
         "service_role": false
       },
@@ -1583,14 +2047,34 @@
       "proname": "tuition_reach",
       "security_definer": true,
       "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.withdraw_change_request(p_request_id uuid)",
+      "identity_arguments": "p_request_id uuid",
+      "md5_prosrc": "63c20f0558bd2dc78a420703b4965fcd",
+      "proname": "withdraw_change_request",
+      "security_definer": true,
+      "volatility": "v"
     }
   ],
   "informational": {
     "view_definitions_md5": {
+      "change_approval_queue": "f51714c6623fbb439cb6c6a1860783aa",
       "money_change_review_queue": "33ebb7cc7b89ce8d860c821dcee072a8",
       "money_change_tuition_pending": "e1fc4bef637fca19a1cf5229cd7afd2b"
     },
     "view_options": {
+      "change_approval_queue": [
+        "security_invoker=true"
+      ],
       "money_change_review_queue": [
         "security_invoker=true"
       ],
@@ -1600,6 +2084,521 @@
     }
   },
   "relations": {
+    "change_approval_events": {
+      "columns": [
+        {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": "clock_timestamp()",
+          "name": "created_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "request_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": "txid_current()",
+          "name": "txid",
+          "not_null": true,
+          "type": "bigint"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "kind",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": "'{}'::jsonb",
+          "name": "payload",
+          "not_null": true,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "420ad7535474daa4e7635f8d607cf104",
+          "name": "change_approval_events_kind_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "ab4afefbe79477595f0173ab5d3bdb78",
+          "name": "change_approval_events_payload_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "4c6419b3704337bbfe50f018842a9ad3",
+          "name": "change_approval_events_pkey",
+          "type": "p"
+        },
+        {
+          "md5_def": "b54292dfbb96d291b289ca77f2a93b79",
+          "name": "change_approval_events_request",
+          "type": "c"
+        },
+        {
+          "md5_def": "ecd2708ffa530678f4ae9b2f6b6bf9cd",
+          "name": "change_approval_events_request_id_fkey",
+          "type": "f"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "change_approval_events_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
+    "change_approval_queue": {
+      "columns": [
+        {
+          "default": null,
+          "name": "request_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "not_null": false,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "requested_by",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "kind",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "rpc",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "target_keys",
+          "not_null": false,
+          "type": "text[]"
+        },
+        {
+          "default": null,
+          "name": "batch",
+          "not_null": false,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "impact",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "reasons",
+          "not_null": false,
+          "type": "text[]"
+        },
+        {
+          "default": null,
+          "name": "preview",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "expires_at",
+          "not_null": false,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "status",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "decided_by",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "decided_at",
+          "not_null": false,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "decision",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "decision_note",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "released_alone",
+          "not_null": false,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "acknowledged",
+          "not_null": false,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "override_ids",
+          "not_null": false,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [],
+      "force_row_level_security": false,
+      "kind": "v",
+      "policies": [],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT"
+        ]
+      },
+      "row_level_security": false
+    },
+    "change_approval_requests": {
+      "columns": [
+        {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": "now()",
+          "name": "created_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "txid_current()",
+          "name": "txid",
+          "not_null": true,
+          "type": "bigint"
+        },
+        {
+          "default": null,
+          "name": "requested_by",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "kind",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "rpc",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "params",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "target_keys",
+          "not_null": true,
+          "type": "text[]"
+        },
+        {
+          "default": null,
+          "name": "batch",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "impact",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "reasons",
+          "not_null": true,
+          "type": "text[]"
+        },
+        {
+          "default": null,
+          "name": "preview",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "fingerprints",
+          "not_null": true,
+          "type": "text[]"
+        },
+        {
+          "default": null,
+          "name": "expires_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "4f70bfd0c8bf1f96632d0af3a3642f43",
+          "name": "change_approval_requests_fingerprints_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "73ae12c3f60fed30325d87db68090716",
+          "name": "change_approval_requests_kind_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "4c6419b3704337bbfe50f018842a9ad3",
+          "name": "change_approval_requests_pkey",
+          "type": "p"
+        },
+        {
+          "md5_def": "f048a79353eec0adf576b350860cccc4",
+          "name": "change_approval_requests_rpc_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "b4965b05a9aaf4db344adb03ef55ff6a",
+          "name": "change_approval_requests_size",
+          "type": "c"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "change_approval_requests_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
+    "change_approval_settings": {
+      "columns": [
+        {
+          "default": "true",
+          "name": "id",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "false",
+          "name": "enabled",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "true",
+          "name": "on_tier3",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "true",
+          "name": "on_closed_payroll",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "true",
+          "name": "on_unfreeze",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "true",
+          "name": "on_pay_adjustment",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "3",
+          "name": "min_families",
+          "not_null": true,
+          "type": "integer"
+        },
+        {
+          "default": "5000000",
+          "name": "min_paid_vnd",
+          "not_null": true,
+          "type": "bigint"
+        },
+        {
+          "default": "168",
+          "name": "expiry_hours",
+          "not_null": true,
+          "type": "integer"
+        },
+        {
+          "default": null,
+          "name": "solo_release_after_hours",
+          "not_null": false,
+          "type": "integer"
+        },
+        {
+          "default": "now()",
+          "name": "updated_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "updated_by",
+          "not_null": false,
+          "type": "uuid"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "b64a25c399c74dad0f742272e4b7519f",
+          "name": "change_approval_settings_expiry_hours_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "cddd5f1abfdea207f35d375bbadc5064",
+          "name": "change_approval_settings_id_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "4051fa295461205185d0736c2374f28b",
+          "name": "change_approval_settings_min_families_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "b1e674f62b6ca13eef071feba3be4fda",
+          "name": "change_approval_settings_min_paid_vnd_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "4c6419b3704337bbfe50f018842a9ad3",
+          "name": "change_approval_settings_pkey",
+          "type": "p"
+        },
+        {
+          "md5_def": "250ed0ebd607aa40de1db590c9f3bebf",
+          "name": "change_approval_settings_solo_release_after_hours_check",
+          "type": "c"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "change_approval_settings_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
     "class_fee_history": {
       "columns": [
         {
@@ -2451,6 +3450,70 @@
     },
     {
       "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "md5_def": "5458d5861e853fbe0aec6d946c4ad9ec",
+      "name": "change_approval_events_append_only",
+      "table": "change_approval_events",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_insert_guard",
+      "md5_def": "80f879b1f974b4b3afa7f0f9d85bb12f",
+      "name": "change_approval_events_insert_guard",
+      "table": "change_approval_events",
+      "tgtype": 7
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "md5_def": "4c04c5a66d99467146364de7acced6d7",
+      "name": "change_approval_events_no_truncate",
+      "table": "change_approval_events",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "md5_def": "1c3fae9deaeefdc16bdc7adda837cf28",
+      "name": "change_approval_requests_append_only",
+      "table": "change_approval_requests",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_insert_guard",
+      "md5_def": "280c4f09bcb1601a1271f143e214c0f9",
+      "name": "change_approval_requests_insert_guard",
+      "table": "change_approval_requests",
+      "tgtype": 7
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "md5_def": "84785df24dc7073daa92d63b8260bbb8",
+      "name": "change_approval_requests_no_truncate",
+      "table": "change_approval_requests",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "md5_def": "f9a6118bb9070fbb7e5ff932f0445268",
+      "name": "change_approval_settings_no_truncate",
+      "table": "change_approval_settings",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "_change_approval_settings_guard",
+      "md5_def": "86b84fa153933b2d236ec412e499cfa8",
+      "name": "change_approval_settings_write_guard",
+      "table": "change_approval_settings",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
       "function": "audit_row_change",
       "md5_def": "8117d39b76a1096e9f4aeb25dd8ea916",
       "name": "audit_class_fee_history",
@@ -2667,6 +3730,14 @@
     },
     {
       "enabled": "O",
+      "function": "_pay_adjustment_approval",
+      "md5_def": "8ec23d552372020dac4a5c2985833598",
+      "name": "zz_pay_adjustment_approval",
+      "table": "payroll_adjustments",
+      "tgtype": 7
+    },
+    {
+      "enabled": "O",
       "function": "audit_row_change",
       "md5_def": "363bb3a1fdda8534cb5c569712c780ec",
       "name": "audit_point_transactions",
@@ -2696,6 +3767,14 @@
       "name": "zz_discount_money_guard",
       "table": "referral_bonuses",
       "tgtype": 31
+    },
+    {
+      "enabled": "O",
+      "function": "_session_override_approval",
+      "md5_def": "27b426520398171a2ef664da30823cec",
+      "name": "zz_session_override_approval",
+      "table": "session_cancel_overrides",
+      "tgtype": 7
     },
     {
       "enabled": "O",
@@ -2800,6 +3879,14 @@
       "name": "zz_staff_pay_mirror_guard",
       "table": "teaching_assistants",
       "tgtype": 19
+    },
+    {
+      "enabled": "O",
+      "function": "_admin_grant_guard",
+      "md5_def": "597f5f242a2e46db5f4daf1678b663cc",
+      "name": "zz_admin_grant_guard",
+      "table": "user_roles",
+      "tgtype": 23
     }
   ]
 }
