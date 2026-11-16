@@ -19,8 +19,41 @@ import { safeHttpUrl } from "@/lib/safeUrl";
 export type SanitizeMode = "store" | "render" | "paste";
 
 export interface SanitizeOptions {
-  /** Keep <img> with an http(s) src. Off unless the editor has an image adapter. */
+  /**
+   * Render and paste: keep <img> with an http(s) src (off by default, so a reader
+   * sees no picture it did not see before). Store mode always keeps the pictures
+   * a row already holds - see keepablePictureSrc.
+   */
   allowImages?: boolean;
+}
+
+/** Largest data: picture kept in a stored row (characters of the src). */
+export const MAX_DATA_PICTURE = 2 * 1024 * 1024;
+const DATA_PICTURE = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=\s]+$/;
+
+/**
+ * The src of a picture the editor may keep, unchanged byte for byte, or
+ * undefined. http(s) always (through safeUrl); a base64 png/jpeg/gif/webp only
+ * when `allowData` (stored rows: the old editor embedded pictures that way)
+ * and only up to MAX_DATA_PICTURE.
+ */
+export function keepablePictureSrc(src: string | null | undefined, allowData: boolean): string | undefined {
+  if (!src) return undefined;
+  const http = safeHttpUrl(src);
+  if (http) return http;
+  if (allowData && src.length <= MAX_DATA_PICTURE && DATA_PICTURE.test(src)) return src;
+  return undefined;
+}
+
+/**
+ * How many pictures in stored HTML the editor could NOT keep (too big, or a
+ * kind it does not hold). The editor refuses to edit such a row, so saving
+ * never writes over the picture.
+ */
+export function unkeepablePictures(html: string | null | undefined): number {
+  if (!html || !/<img\b/i.test(html)) return 0;
+  const doc = new DOMParser().parseFromString(`<!doctype html><body>${html}</body>`, "text/html");
+  return Array.from(doc.body.querySelectorAll("img")).filter((img) => !keepablePictureSrc(img.getAttribute("src"), true)).length;
 }
 
 const BASE_TAGS = [
@@ -135,8 +168,10 @@ function softenNbsp(text: string): string {
  */
 export function sanitizeRichHtml(html: string | null | undefined, mode: SanitizeMode = "render", options: SanitizeOptions = {}): string {
   if (!html) return "";
-  const tags = options.allowImages ? [...BASE_TAGS, "img"] : BASE_TAGS;
-  const attrs = options.allowImages ? [...BASE_ATTRS, "src", "alt"] : BASE_ATTRS;
+  // Store keeps the pictures a row holds; render and paste only on request.
+  const pictures = mode === "store" || !!options.allowImages;
+  const tags = pictures ? [...BASE_TAGS, "img"] : BASE_TAGS;
+  const attrs = pictures ? [...BASE_ATTRS, "src", "alt"] : BASE_ATTRS;
   // Parse into an inert document (no scripts run, nothing loads), gather the
   // body into one allowed root, and let DOMPurify clean that root in place.
   const doc = new DOMParser().parseFromString(`<!doctype html><html><head></head><body>${html}</body></html>`, "text/html");
@@ -147,6 +182,8 @@ export function sanitizeRichHtml(html: string | null | undefined, mode: Sanitize
     ALLOWED_TAGS: tags,
     ALLOWED_ATTR: attrs,
     ALLOW_DATA_ATTR: false,
+    // A pasted aria-hidden would hide text from a screen reader; no aria-* is stored or drawn.
+    ALLOW_ARIA_ATTR: false,
     IN_PLACE: true,
   });
 
@@ -192,8 +229,10 @@ export function sanitizeRichHtml(html: string | null | undefined, mode: Sanitize
         }
       }
       if (tag === "img") {
-        const src = safeHttpUrl(el.getAttribute("src"));
-        if (src) el.setAttribute("src", src);
+        const src = keepablePictureSrc(el.getAttribute("src"), mode === "store");
+        if (src) {
+          if (src !== el.getAttribute("src")) el.setAttribute("src", src);
+        }
         else {
           // Unlink now, remove after the walk (removing mid-walk skips nodes).
           emptyParagraphs.push(el);
