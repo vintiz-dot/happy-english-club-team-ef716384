@@ -11,6 +11,11 @@ import { format } from "date-fns";
 import { FileText, Upload, Trash2, Edit } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+
+// Staff only (/admin/classes/:id?tab=homework). Quill paints its toolbar #444 and its picker menu white, unreadable in
+// dark. These selectors are one class more specific than quill.snow.css's own, so they win without !important and
+// Quill's hover / active / open states (more specific still) keep showing. Same treatment as ExamReportEditor.
+const IVORY_QUILL = "rounded-hec-md bg-hec-raised [&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const ClassHomework = ({ classId }: { classId: string }) => {
@@ -222,8 +227,9 @@ const ClassHomework = ({ classId }: { classId: string }) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Title</Label>
+            <Label htmlFor="class-homework-title">Title</Label>
             <Input
+              id="class-homework-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Grammar Exercise 5"
@@ -232,6 +238,7 @@ const ClassHomework = ({ classId }: { classId: string }) => {
 
           <div className="space-y-2">
             <Label>Notes</Label>
+            <div className={IVORY_QUILL}>
             <ReactQuill
               theme="snow"
               value={body}
@@ -247,14 +254,15 @@ const ClassHomework = ({ classId }: { classId: string }) => {
                 ],
               }}
             />
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Due Date (Optional)</Label>
-            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <Label htmlFor="class-homework-due">Due Date (Optional)</Label>
+            <Input id="class-homework-due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {editingId ? (
               <>
                 <Button onClick={handleUpdate} disabled={creating} className="flex-1">
@@ -274,24 +282,25 @@ const ClassHomework = ({ classId }: { classId: string }) => {
       </Card>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Posted Homework</h3>
+        <h3 className="font-display text-hec-h2 font-medium text-hec-ink">Posted Homework</h3>
         {homeworks?.map((hw) => (
           <Card key={hw.id}>
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{hw.title}</CardTitle>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="whitespace-normal break-words text-hec-h3">{hw.title}</CardTitle>
                   {hw.due_date && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-hec-small text-hec-ink-soft">
                       Due: {format(new Date(hw.due_date), "MMM dd, yyyy")}
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex shrink-0 gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEdit(hw)}
+                    aria-label="Edit homework"
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -299,8 +308,9 @@ const ClassHomework = ({ classId }: { classId: string }) => {
                     variant="ghost"
                     size="sm"
                     onClick={() => setDeleteId(hw.id)}
+                    aria-label="Delete homework"
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-4 w-4 text-hec-danger" />
                   </Button>
                 </div>
               </div>
@@ -308,7 +318,7 @@ const ClassHomework = ({ classId }: { classId: string }) => {
             <CardContent className="space-y-4">
               {hw.body && (
                 <div 
-                  className="text-sm text-muted-foreground prose prose-sm max-w-none"
+                  className="prose prose-sm max-w-none break-words text-hec-small text-hec-ink-soft"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(hw.body) }}
                 />
               )}
@@ -321,9 +331,9 @@ const ClassHomework = ({ classId }: { classId: string }) => {
                       <button
                         key={file.id}
                         onClick={() => openFile(file.storage_key)}
-                        className="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer"
+                        className="flex min-h-hec-target min-w-0 items-center gap-2 break-all text-left text-hec-small text-hec-brass underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                       >
-                        <FileText className="h-4 w-4" />
+                        <FileText className="h-4 w-4 shrink-0" />
                         {file.file_name}
                       </button>
                     ))}
@@ -355,7 +365,7 @@ const ClassHomework = ({ classId }: { classId: string }) => {
         ))}
 
         {!homeworks?.length && (
-          <p className="text-muted-foreground text-center py-8">No homework posted yet</p>
+          <p className="py-8 text-center text-hec-body text-hec-ink-soft">No homework posted yet</p>
         )}
       </div>
 
@@ -368,12 +378,12 @@ const ClassHomework = ({ classId }: { classId: string }) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Keep the homework</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90"
             >
-              Delete
+              Delete the homework
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
