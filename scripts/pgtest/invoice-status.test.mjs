@@ -212,6 +212,7 @@ function invoiceQuery() {
 // (a settlement counts on the bill; a payment's ledger legs are reversed).
 const KEEPS_INSERTS = new Set(['settlements', 'ledger_entries', 'payments', 'payment_allocations']);
 let failTables = new Set();             // T4: a read of these tables answers with an error
+let failCanceledRead = false;           // BROWSER-PRICING: only the read of the CANCELLED lessons fails
 let insertSeq = 0;
 function memoryQuery(table) {
   let rows = fixture[table] || [];
@@ -226,7 +227,8 @@ function memoryQuery(table) {
   });
   let orderKey = null, lim = Infinity;
   const page = () => { const out = orderKey ? [...rows].sort((a, b) => (String(a[orderKey]) < String(b[orderKey]) ? -1 : String(a[orderKey]) > String(b[orderKey]) ? 1 : 0)) : rows; return out.slice(0, lim); };
-  const failed = () => failTables.has(table);
+  let forced = false;
+  const failed = () => failTables.has(table) || forced;
   const keep = (v) => {
     if (!KEEPS_INSERTS.has(table)) return;
     fixture[table] = fixture[table] || [];
@@ -240,6 +242,7 @@ function memoryQuery(table) {
     gt(k, v) { rows = rows.filter((r) => String(r[k]) > String(v)); return q; },
     // A filter on an embedded relation ('ledger_accounts.student_id') reads the embed.
     eq(k, v) {
+      if (failCanceledRead && table === 'sessions' && k === 'status' && v === 'Canceled') forced = true;
       if (k.includes('.')) { const [rel, col] = k.split('.'); rows = rows.filter((r) => r[rel]?.[col] === v); } else rows = rows.filter((r) => r[k] === v);
       return q;
     },
@@ -351,7 +354,7 @@ function world(opts = {}) {
 async function reset() {
   await db.exec('DELETE FROM public.invoices; DELETE FROM public.audit_log;');
   invoiceWrites = []; memoryWrites = []; failInvoiceRead = false; failPriorRead = false;
-  failNextFullUpsert = false; beforeNextUpsert = null; failTables = new Set();
+  failNextFullUpsert = false; beforeNextUpsert = null; failTables = new Set(); failCanceledRead = false;
   beforeNextInvoiceWrite = null; beforeNextMemoryInsert = null;
   globalThis.__t1Gate = { isServiceRole: false, roles: new Set(['admin']), userId: ADMIN };
   globalThis.__t1Sibling = async () => { throw new Error('Unexpected family calculation'); };
@@ -1132,10 +1135,12 @@ console.log('\nRound 2 - carry.payable and siblingUnresolved (T3)');
        && one.body.carry?.carryOutCredit === 250000, { bulk: many.body.results?.[0]?.carry, single: one.body.carry });
   ok('  payable - month payment = carry-out debt - carry-out credit, in both',
      [one.body, many.body.results[0]].every((x) => x.carry.payable - x.payments.monthPayments === x.carry.carryOutDebt - x.carry.carryOutCredit));
-  // Every existing field of the bulk answer is where it was.
-  ok('bulk: the existing fields are unchanged; two were added (carry.payable, siblingUnresolved)',
+  // Every existing field of the bulk answer is where it was. BROWSER-PRICING
+  // added two more at the end (excusedLessons, cancelledLessons), display
+  // figures beside the totals; tested in the BROWSER-PRICING section.
+  ok('bulk: the existing fields are unchanged; added: carry.payable, siblingUnresolved, then excusedLessons, cancelledLessons at the end',
      same(Object.keys(many.body.results[0]), ['studentId', 'baseAmount', 'totalDiscount', 'totalAmount', 'payments', 'carry',
-       'siblingUnresolved', 'breakdown', 'invoiceId', 'invoiceStatus', 'confirmationStatus'])
+       'siblingUnresolved', 'breakdown', 'invoiceId', 'invoiceStatus', 'confirmationStatus', 'excusedLessons', 'cancelledLessons'])
        && same(Object.keys(many.body.results[0].carry), ['carryInCredit', 'carryInDebt', 'carryOutCredit', 'carryOutDebt', 'settledInMonth', 'payable']),
      Object.keys(many.body.results[0]));
 
@@ -2060,6 +2065,176 @@ console.log('\nscripts/CHECK-invoice-status-resets.sql finds bills the old behav
 }
 
 // ============================================ the figures have not moved
+// ======================================================= BROWSER-PRICING
+// calculate-tuition-bulk reports, beside the totals, the lessons a student is
+// not charged for (excusedLessons, cancelledLessons), each with what it would
+// have added to the month. The Reports tab (Lost Tuition, Excused Absences)
+// and the Finance tab (Excused Loss) read them through src/lib/lostLessonsView.ts;
+// the student Tuition tab reads calculate-tuition's sibling line and
+// carry.payable through src/lib/tuitionFigures.ts. Those screens used to
+// price these themselves (classes.session_rate_vnd x marks; amount x percent;
+// a sum of the carry fields). No total moves: checked against calculate-tuition
+// here, and by the golden section below, which runs after this one.
+console.log('\nBROWSER-PRICING: the lessons not charged, as calculate-tuition-bulk reports them, and the screens that read them');
+{
+  const lib = async (rel) => {
+    const b = await build({ entryPoints: [resolve(repo, rel)], bundle: true, format: 'esm', platform: 'node', write: false });
+    const f = join(out, `${rel.replace(/[\\/.]/g, '_')}.mjs`);
+    writeFileSync(f, b.outputFiles[0].text);
+    return import(pathToFileURL(f).href);
+  };
+  const LL = await lib('src/lib/lostLessonsView.ts');
+  const TF = await lib('src/lib/tuitionFigures.ts');
+  const list = (r, k) => (Array.isArray(r?.[k]) ? r[k].map((l) => `${l.session_id}|${l.date}|${l.class_id === CA ? 'A' : l.class_id}|${l.rate_vnd}`).join(',') : r?.[k]);
+  const sameTotals = (a, b) => a.baseAmount === b.baseAmount && a.totalDiscount === b.totalDiscount && a.totalAmount === b.totalAmount;
+  const rows = [];   // before / after, printed at the end
+  /** The register as the old screens priced it: every Excused mark / every enrolled head at the class's fee of today. */
+  const oldExcused = () => fixture.attendance.filter((a) => a.status === 'Excused').length * fixture.classes[0].session_rate_vnd;
+  const oldCancelled = () => fixture.sessions.filter((s) => s.status === 'Canceled').length * fixture.enrollments.length * fixture.classes[0].session_rate_vnd;
+
+  // 1. The golden fixture "Excused, Late, Absent and a Canceled lesson".
+  const register = () => { world(); mark(0, 'Excused'); mark(1, 'Late'); mark(2, 'Absent'); fixture.sessions[3].status = 'Canceled'; };
+  await reset(); register();
+  let single = await calc(), b = await bulk(), r = b.body.results?.[0];
+  ok('register fixture: bulk 200; base, discount and total equal calculate-tuition (the new fields move no amount)',
+     b.status === 200 && single.status === 200 && sameTotals(r, single.body), { bulk: r, single: single.body.totalAmount });
+  ok('  excusedLessons = the one Excused lesson, at what it would have charged (100,000)',
+     list(r, 'excusedLessons') === 's0|2026-10-07|A|100000', r?.excusedLessons);
+  ok('  cancelledLessons = the one Canceled lesson, the student enrolled on its date (100,000)',
+     list(r, 'cancelledLessons') === 's3|2026-10-28|A|100000', r?.cancelledLessons);
+  ok('  Late and Absent are charged, so neither is listed', !JSON.stringify(r?.excusedLessons).includes('"s1"') && !JSON.stringify(r?.excusedLessons).includes('"s2"'));
+  let ex = LL.forgoneTuition(b.body.results, 'excusedLessons', [S1]);
+  let ca = LL.forgoneTuition(b.body.results, 'cancelledLessons', [S1]);
+  ok('  Finance Excused Loss / Reports Excused Absences total = the function\'s excusedLessons summed (100,000)', ex.total === 100000, ex);
+  ok('  Reports Excused Absences row: the function\'s figure for that lesson and student', LL.forgoneByLesson(ex).get(`s0:${S1}`) === 100000);
+  ok('  Reports Lost Tuition = the function\'s cancelledLessons summed (100,000)', ca.total === 100000, ca);
+  rows.push(['register (list fee, no override)', 'Excused Loss', oldExcused(), ex.total], ['register (list fee, no override)', 'Lost Tuition', oldCancelled(), ca.total]);
+
+  // 2. What a listed lesson "would have added" is exactly what marking it
+  // Present adds to the month (no month-level discount in these fixtures).
+  for (const [label, override] of [['list fee', null], ['override below the fee (80,000)', 80000], ['override above the fee (120,000: charged at the fee)', 120000]]) {
+    await reset(); world(); fixture.enrollments[0].rate_override_vnd = override;
+    const present = (await bulk()).body.results?.[0];
+    mark(0, 'Excused');
+    const excused = (await bulk()).body.results?.[0];
+    const added = present.totalAmount - excused.totalAmount;
+    ok(`${label}: the excused lesson's rate_vnd = what marking it Present adds to the month (${added})`,
+       excused.excusedLessons?.length === 1 && excused.excusedLessons[0].rate_vnd === added && added > 0, { excused: excused.excusedLessons, added });
+    if (override === 80000) {
+      ok('  the student\'s own rate, not the class list fee (80,000, was priced at 100,000)', excused.excusedLessons[0].rate_vnd === 80000);
+      rows.push(['rate override 80,000', 'Excused Loss', oldExcused(), LL.forgoneTuition([excused], 'excusedLessons', [S1]).total]);
+    }
+  }
+
+  // 3. A cancelled lesson counts only on the student's enrolled dates and weekdays.
+  await reset(); world();
+  const wed = new Date('2026-10-07T12:00:00+07:00').getDay();
+  fixture.enrollments[0].allowed_days = [wed];
+  fixture.sessions.push({ id: 'sx', date: '2026-10-09', class_id: CA, status: 'Canceled', classes: fixture.classes[0] });   // a Friday
+  fixture.sessions[3].status = 'Canceled';                                                                                // a Wednesday
+  r = (await bulk()).body.results?.[0];
+  ok('a cancelled lesson on a weekday the student does not come is not theirs to lose; the one on their weekday is',
+     list(r, 'cancelledLessons') === 's3|2026-10-28|A|100000', r?.cancelledLessons);
+  rows.push(['weekday-limited enrolment', 'Lost Tuition', oldCancelled(), LL.forgoneTuition([r], 'cancelledLessons', [S1]).total]);
+  await reset(); world();
+  fixture.enrollments[0].start_date = '2026-10-10';
+  fixture.sessions[0].status = 'Canceled';                                                                                // 7 Oct, before the start
+  fixture.sessions[3].status = 'Canceled';
+  r = (await bulk()).body.results?.[0];
+  ok('a cancelled lesson before the student\'s start date is not listed; one after it is',
+     list(r, 'cancelledLessons') === 's3|2026-10-28|A|100000', r?.cancelledLessons);
+  await reset(); world();
+  r = (await bulk()).body.results?.[0];
+  ok('nothing excused or cancelled: both lists present and empty (an answer, total 0)',
+     Array.isArray(r?.excusedLessons) && r.excusedLessons.length === 0 && Array.isArray(r?.cancelledLessons) && r.cancelledLessons.length === 0 &&
+     LL.forgoneTuition([r], 'excusedLessons', [S1]).total === 0 && LL.forgoneTuition([r], 'cancelledLessons', [S1]).total === 0, r);
+
+  // 4. The cancelled lessons cannot be read: the call still answers, the
+  // totals are the same, and only that field is missing (figure unavailable).
+  await reset(); register();
+  const good = (await bulk()).body.results?.[0];
+  failCanceledRead = true;
+  b = await bulk(); r = b.body.results?.[0];
+  failCanceledRead = false;
+  ok('cancelled lessons not read: 200, the same totals, excusedLessons kept, cancelledLessons left out',
+     b.status === 200 && sameTotals(r, good) && list(r, 'excusedLessons') === list(good, 'excusedLessons') && !('cancelledLessons' in r), r);
+  ok('  Lost Tuition is then null = figure unavailable, never 0', LL.forgoneTuition(b.body.results, 'cancelledLessons', [S1]).total === null);
+  ok('  Excused Loss is still known', LL.forgoneTuition(b.body.results, 'excusedLessons', [S1]).total === 100000);
+
+  // 5. The mapper never fills a gap with a browser price or a confident 0.
+  const old = [{ studentId: S1, totalAmount: 1 }];   // a function deployed before the fields
+  ok('a function too old to send the fields: null, not 0', LL.forgoneTuition(old, 'excusedLessons', [S1]).total === null &&
+     LL.forgoneTuition(null, 'excusedLessons', [S1]).total === null);
+  ok('a student asked about but not answered, or answered with an error: null (a part would read as the whole)',
+     LL.forgoneTuition([good], 'excusedLessons', [S1, S2]).total === null &&
+     LL.forgoneTuition([good, { studentId: S2, error: true }], 'excusedLessons', [S1, S2]).total === null);
+  ok('a lesson without a figure: null', LL.forgoneTuition([{ studentId: S1, excusedLessons: [{ session_id: 's0', rate_vnd: null }] }], 'excusedLessons', [S1]).total === null);
+  ok('lost profit = lost tuition - saved pay, unknown if either is', LL.difference(100000, 30000) === 70000 && LL.difference(null, 1) === null);
+
+  // 6. The student Tuition tab: the sibling line and Final Payable.
+  await reset(); world(); twoClassesForPricing();
+  fixture.students = [{ id: S1, family_id: FAMILY, families: { id: FAMILY, sibling_percent_override: null } }];
+  globalThis.__t1Sibling = async () => [{ family_id: FAMILY, status: 'assigned', winner_student_id: S1, winner_class_id: CA, sibling_percent: 10, reason: null }];
+  single = await calc();
+  const line = (single.body.discounts ?? []).find((d) => d.isSiblingWinner);
+  const classA = single.body.breakdown?.classes?.find((c) => c.class_id === CA);
+  ok('sibling winner: the line under class A = calculate-tuition\'s Sibling Discount amount (40,000)',
+     !!line && TF.siblingDiscountFor(single.body.discounts, CA) === line.amount && line.amount === 40000, single.body.discounts);
+  ok('  nothing under class B (the discount applies to the winner class only)', TF.siblingDiscountFor(single.body.discounts, CB) === 0);
+  rows.push(['sibling winner 10%, two classes', 'sibling line (class A)', Math.round(classA.amount_vnd * (10 / 100)), TF.siblingDiscountFor(single.body.discounts, CA)]);
+  globalThis.__t1Sibling = async () => [{ family_id: FAMILY, status: 'assigned', winner_student_id: S2, winner_class_id: CA, sibling_percent: 10, reason: null }];
+  single = await calc();
+  ok('another child wins: no line (0), whatever the family percent', TF.siblingDiscountFor(single.body.discounts, CA) === 0);
+  ok('discount lists the function did not send: 0, never a percent of the class', TF.siblingDiscountFor(undefined, CA) === 0 && TF.siblingDiscountFor([{ isSiblingWinner: true, appliedToClass: CA, amount: 'x' }], CA) === 0);
+
+  for (const [label, setup] of [
+    ['debt carried in', async () => { world(); await db.query(`INSERT INTO public.invoices (student_id, month, base_amount, total_amount, recorded_payment, status) VALUES ($1, '2026-09', 400000, 400000, 100000, 'issued')`, [S1]); }],
+    ['credit carried in', async () => { world(); await db.query(`INSERT INTO public.invoices (student_id, month, base_amount, total_amount, recorded_payment, status) VALUES ($1, '2026-09', 400000, 400000, 650000, 'issued')`, [S1]); }],
+  ]) {
+    await reset(); await setup();
+    single = await calc();
+    const c = single.body.carry;
+    ok(`${label}: Final Payable = calculate-tuition's carry.payable (${c?.payable})`,
+       TF.payableFrom(c) === c?.payable && typeof c?.payable === 'number', c);
+    rows.push([label, 'Final Payable', single.body.totalAmount + (c.carryInDebt - c.carryInCredit), TF.payableFrom(c)]);
+  }
+  ok('a function too old to send carry.payable: null = figure unavailable, not a sum', TF.payableFrom({ carryInDebt: 5 }) === null && TF.payableFrom(null) === null);
+
+  // 7. The screens price nothing themselves any more.
+  const src = (f) => readFileSync(resolve(repo, f), 'utf8');
+  const code = (f) => src(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
+  const reports = code('src/components/admin/reports/OperationalReports.tsx');
+  ok('Reports: no list fee, no pay rate, no rate x minutes (session_rate_vnd / sessionPayVnd / hourly_rate_vnd / rate_override_vnd gone)',
+     !/session_rate_vnd|sessionPayVnd|hourly_rate_vnd|per_session_rate_vnd|rate_override_vnd/.test(reports));
+  ok('  and it reads calculate-tuition-bulk and calculate-payroll through the mappers',
+     /forgoneTuition\(tuition\.results, "cancelledLessons"/.test(reports) && /forgoneTuition\(tuition\.results, "excusedLessons"/.test(reports) &&
+     /cancelledPayTotal\(/.test(reports) && /"calculate-tuition-bulk"/.test(reports) && /"calculate-payroll"/.test(reports));
+  for (const f of ['src/hooks/useFinanceOverview.ts', 'src/hooks/useFinanceSummary.ts']) {
+    ok(`${f}: no class list fee priced (session_rate_vnd gone)`, !/session_rate_vnd/.test(code(f)));
+  }
+  ok('Finance Excused Loss = forgoneTuition over the same bulk answer as the revenue', /forgoneTuition\(liveRows, "excusedLessons", enrolledIds\)/.test(code('src/hooks/useFinanceOverview.ts')));
+  const cal = code('src/components/admin/class/ClassCalendarEnhanced.tsx');
+  ok('class calendar: the cost card is classPayFrom(calculate-payroll), not a sum of sessions.rate_override_vnd',
+     /classPayFrom\(data, classId\)/.test(cal) && !/rate_override_vnd \|\| 0/.test(cal) && !/cost:\s*sessions/.test(cal));
+  const tab = code('src/components/student/StudentTuitionTab.tsx');
+  ok('student Tuition tab: no percent / 100 and no carry sum; the sibling line and Final Payable come from the function',
+     !/percent \|\| 0\) \/ 100/.test(tab) && !/carryInDebt - tuitionData\.carryInCredit/.test(tab) &&
+     /siblingDiscountFor\(tuitionData\.discounts, classItem\.class_id\)/.test(tab) && /formatVND\(tuitionData\.payable\)/.test(tab));
+
+  console.log('\n  | Fixture | Figure | Old browser | Function (now shown) |\n  |---|---|---|---|');
+  for (const [a, w, before, after] of rows) console.log(`  | ${a} | ${w} | ${before} | ${after} |`);
+}
+
+function twoClassesForPricing() {
+  const classB = { id: CB, name: 'Class B', session_rate_vnd: 150000 };
+  fixture.classes.push(classB);
+  fixture.enrollments.push({ ...fixture.enrollments[0], class_id: CB, discount_type: null, discount_value: null, discount_cadence: null });
+  for (const [i, date] of ['2026-10-08', '2026-10-15'].entries()) {
+    fixture.sessions.push({ id: `b${i}`, date, class_id: CB, status: 'Held', classes: classB });
+    fixture.attendance.push({ session_id: `b${i}`, student_id: S1, status: 'Present' });
+  }
+}
+
 console.log('\nFigures: byte-identical to the function before T1');
 {
   const twoClasses = () => {

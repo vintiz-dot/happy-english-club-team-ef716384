@@ -716,6 +716,34 @@ await section('the calculators price each lesson at the fee on its date', async 
      fz.status === 200 && fz.r.baseAmount === 200000 && fz.r.totalAmount === 200000, fz.r?.totalAmount);
 });
 
+// BROWSER-PRICING: calculate-tuition-bulk's excusedLessons / cancelledLessons
+// (the Reports' Lost Tuition and Excused Absences, the Finance tab's Excused
+// Loss) are each at the fee on the lesson's date, as a charged lesson is -
+// never at classes.session_rate_vnd, the mirror of the fee NOW.
+await section('BROWSER-PRICING: the lessons not charged are at the fee on their date', async () => {
+  const forgone = () => {
+    world({ history: [['1900-01-01', 100000], ['2026-11-01', 120000]] });
+    fixture.attendance.find((a) => a.session_id === 's0').status = 'Excused';
+    fixture.attendance.find((a) => a.session_id === 's2').status = 'Excused';
+    fixture.sessions.push({ id: 'c1', date: '2026-10-21', class_id: CL, status: 'Canceled', classes: fixture.classes[0] },
+                          { id: 'c2', date: '2026-11-18', class_id: CL, status: 'Canceled', classes: fixture.classes[0] });
+  };
+  const rates = (r, k) => (r?.[k] ?? []).map((l) => `${l.session_id}@${l.rate_vnd}`).join(',');
+  forgone();
+  const oct = await call('calculate-tuition-bulk', '2026-10'), nov = await call('calculate-tuition-bulk', '2026-11');
+  ok('October: the excused and the cancelled lesson at the October fee (100,000), not the mirror (120,000)',
+     oct.status === 200 && rates(oct.r, 'excusedLessons') === 's0@100000' && rates(oct.r, 'cancelledLessons') === 'c1@100000', { ex: oct.r?.excusedLessons, ca: oct.r?.cancelledLessons });
+  ok('November: both at the November fee (120,000)',
+     nov.status === 200 && rates(nov.r, 'excusedLessons') === 's2@120000' && rates(nov.r, 'cancelledLessons') === 'c2@120000', { ex: nov.r?.excusedLessons, ca: nov.r?.cancelledLessons });
+  ok('  the charged lesson beside them is at the same fee (October base 100,000 for the one Present lesson)', oct.r.baseAmount === 100000 && nov.r.baseAmount === 120000, { oct: oct.r.baseAmount, nov: nov.r.baseAmount });
+  forgone();
+  feeError = { code: 'PGRST205', message: "Could not find the table 'public.class_fee_history' in the schema cache" };
+  const pre = await call('calculate-tuition-bulk', '2026-10');
+  feeError = null;
+  ok('no history table yet: both at the mirror, exactly like the charged lesson (120,000)',
+     pre.status === 200 && rates(pre.r, 'excusedLessons') === 's0@120000' && rates(pre.r, 'cancelledLessons') === 'c1@120000' && pre.r.baseAmount === 120000, pre.r);
+});
+
 await section('projected-per-class (the sibling winner\'s projection)', async () => {
   const famWorld = (opts) => { world(opts); fixture.students[0].family_id = 'fam'; };
   famWorld({ history: [['1900-01-01', 100000], ['2026-11-01', 120000]] });

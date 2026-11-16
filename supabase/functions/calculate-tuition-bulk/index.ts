@@ -420,7 +420,12 @@ Deno.serve(async (req) => {
               if (!enrollment) continue;
               if (enrollment.allowed_days && !enrollment.allowed_days.includes(getDayOfWeek(s.date))) continue;
               cancelledLessons.push({ session_id: s.id, date: s.date, class_id: s.class_id,
-                rate_vnd: lessonCharge(Number(classMap.get(s.class_id)?.session_rate_vnd ?? 0), enrollment.rate_override_vnd) });
+                // The fee in force on the lesson's date, as a charged lesson
+                // is priced above (D4 step 2), not the class's current fee.
+                rate_vnd: lessonCharge(
+                  classFeeOn(feeHistory, s.class_id, s.date, Number(classMap.get(s.class_id)?.session_rate_vnd ?? 0)),
+                  enrollment.rate_override_vnd,
+                ) });
             }
           }
         }
