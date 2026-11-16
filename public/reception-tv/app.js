@@ -148,6 +148,14 @@
       var extra = ofKind("course");
       for (var x = 0; x < extra.length; x++) list.push({ t: ["Our Programmes", "Chương trình học"], html: feature(extra[x], "Programme · Khoá học") });
     }
+    if (on("albums")) {
+      var al = filter(ofKind("album"), function (x) { return x.images && x.images.length; });
+      for (var ai = 0; ai < al.length; ai++) list.push(albumScene(al[ai]));
+    }
+    if (on("videos")) {
+      var vs = filter(ofKind("video"), function (x) { return !!x.video_url; });
+      for (var vi = 0; vi < vs.length; vi++) list.push(videoScene(vs[vi]));
+    }
     if (on("photos")) {
       var ph = filter(ofKind("photo"), function (p) { return !!p.image_url; });
       for (var p = 0; p < ph.length; p++) list.push({ t: ["Life at HEC", "Cuộc sống tại HEC"], html: photoScene(ph[p]) });
@@ -285,6 +293,81 @@
     return '<div class="row wrap courses">' + html + "</div>";
   }
 
+  // ------------------------------------------------------------ albums
+  // A slideshow: up to 12 pictures a pass (an album keeps its place between
+  // passes), about 6 s each with a slow pan, captions along the bottom.
+  var albumOffset = {};
+  var PANS = ["pan-a", "pan-b", "pan-c", "pan-d"];
+  function albumScene(a) {
+    var all = a.images, per = Math.min(12, all.length);
+    var start = albumOffset[a.id] || 0;
+    var pics = [];
+    for (var i = 0; i < per; i++) pics.push(all[(start + i) % all.length]);
+    albumOffset[a.id] = (start + per) % all.length;
+    var slides = "";
+    for (var j = 0; j < pics.length; j++) {
+      slides += '<div class="slide' + (j === 0 ? " show " + PANS[0] : "") + '"><img src="' + esc(pics[j].url) + '" alt=""></div>';
+    }
+    var html = '<div class="album">' + slides + '<div class="cap">' +
+      '<div class="eyebrow">' + esc(a.title_en) + (a.title_vi ? ' &middot; <span class="vi">' + esc(a.title_vi) + "</span>" : "") + "</div>" +
+      '<div class="h-md album-caption" style="margin-top:10px">' + esc(pics[0].caption || a.body_en || "") + "</div>" +
+      '<div class="album-count small" style="margin-top:8px">1 / ' + pics.length + "</div></div></div>";
+    var t;
+    return {
+      t: ["Life at HEC", "Cuộc sống tại HEC"], html: html, maxMs: (pics.length * 6 + 6) * 1000,
+      play: function (el, done) {
+        var k = 0, slidesEl = el.getElementsByClassName("slide");
+        var cap = el.getElementsByClassName("album-caption")[0], cnt = el.getElementsByClassName("album-count")[0];
+        var step = pics.length === 1 ? 8000 : 6000;
+        t = setInterval(function () {
+          k++;
+          if (k >= pics.length) { clearInterval(t); done(); return; }
+          for (var m = 0; m < slidesEl.length; m++) {
+            slidesEl[m].className = "slide" + (m === k ? " show " + PANS[k % PANS.length] : (m === k - 1 ? " leaving " + PANS[(k - 1) % PANS.length] : ""));
+          }
+          if (cap) cap.innerHTML = esc(pics[k].caption || a.body_en || "");
+          if (cnt) cnt.innerHTML = (k + 1) + " / " + pics.length;
+        }, step);
+      },
+      stop: function () { clearInterval(t); }
+    };
+  }
+
+  // ------------------------------------------------------------ videos
+  // Uploaded and Drive videos play here; YouTube ones go to the helper (the
+  // feed leaves them out). play_seconds, or to the end; muted unless the
+  // admin switched sound on. A video that will not play is skipped.
+  function videoScene(v) {
+    var html = '<div class="videoscene"><video preload="auto"' + (v.sound ? "" : " muted") + ' src="' + esc(v.video_url) + '"></video>' +
+      ((v.title_en || v.body_en) ? '<div class="cap"><div class="h-md">' + esc(v.title_en) + "</div>" +
+        (v.title_vi ? '<div class="vi" style="font-size:24px;margin-top:6px">' + esc(v.title_vi) + "</div>" : "") + "</div>" : "") + "</div>";
+    var cut, stall, vid;
+    return {
+      t: ["Life at HEC", "Cuộc sống tại HEC"], html: html,
+      maxMs: (v.play_seconds ? v.play_seconds + 30 : 20 * 60) * 1000,
+      play: function (el, done) {
+        vid = el.getElementsByTagName("video")[0];
+        keepAwake(false); // one decoder for the real video
+        var finished = false;
+        var end = function () { if (finished) return; finished = true; clearTimeout(cut); clearTimeout(stall); done(); };
+        vid.muted = !v.sound;
+        vid.onended = end;
+        vid.onerror = function () { setTimeout(end, 1500); };
+        vid.onplaying = function () {
+          clearTimeout(stall);
+          if (v.play_seconds) { clearTimeout(cut); cut = setTimeout(end, v.play_seconds * 1000); }
+        };
+        stall = setTimeout(end, 30000); // never started (network, codec): move on
+        try { var pr = vid.play(); if (pr && pr["catch"]) pr["catch"](function () {}); } catch (e) {}
+      },
+      stop: function () {
+        clearTimeout(cut); clearTimeout(stall);
+        if (vid) { vid.onended = null; vid.onerror = null; vid.onplaying = null; }
+        keepAwake(true);
+      }
+    };
+  }
+
   function photoScene(p) {
     return '<div class="photo"><img src="' + esc(p.image_url) + '" alt=""><div class="cap">' +
       '<div class="h-lg rise">' + esc(p.title_en) + "</div>" +
@@ -359,12 +442,22 @@
     $("dots").innerHTML = html;
   }
 
+  // A scene may bring its own player (albums, videos): sc.play(el, done)
+  // runs once the scene is in and calls done() when it has finished;
+  // sc.stop() runs when the scene leaves. A safety timer always moves on.
+  var playing = null;
+  function stopPlaying() {
+    if (playing && playing.stop) { try { playing.stop(); } catch (e) {} }
+    playing = null;
+  }
   function next() {
     if (!scenes.length) return;
+    stopPlaying();
     idx = HOLD ? Math.min(scenes.length, +HOLD) - 1 : (idx + 1) % scenes.length;
     var sc = scenes[idx];
     var back = front === "scene-a" ? "scene-b" : "scene-a";
     var el = $(back), old = $(front);
+    releaseMedia(old);
     el.innerHTML = sc.html;
     $("section-title").innerHTML = '<div class="en">' + esc(sc.t[0]) + '</div><div class="vi">' + esc(sc.t[1]) + "</div>";
     // let the new content lay out before fading it in
@@ -374,7 +467,22 @@
     dots();
     var base = ((feed && feed.settings && feed.settings.scene_seconds) || 14) * 1000;
     clearTimeout(timer);
-    if (!HOLD) timer = setTimeout(next, Math.round(base * (sc.secs || 1)));
+    var mine = idx;
+    if (sc.play) {
+      playing = sc;
+      sc.play(el, function () { if (idx === mine && !HOLD) { clearTimeout(timer); next(); } });
+      if (!HOLD) timer = setTimeout(next, sc.maxMs || 20 * 60 * 1000);
+    } else if (!HOLD) {
+      timer = setTimeout(next, Math.round(base * (sc.secs || 1)));
+    }
+  }
+
+  // Free a video's decoder: a 2016 TV has few, and a paused video keeps one.
+  function releaseMedia(root) {
+    var vids = root.getElementsByTagName("video");
+    for (var i = 0; i < vids.length; i++) {
+      try { vids[i].pause(); vids[i].removeAttribute("src"); vids[i].load(); } catch (e) {}
+    }
   }
 
   function showSetup() {
@@ -386,23 +494,16 @@
   }
 
   // ------------------------------------------------------------ keep the TV awake
-  // Consumer webOS shows its screensaver after a few idle minutes even inside
-  // an app. The TV asks registered apps first; answering "no" keeps the feed up.
-  function keepAwake() {
-    if (typeof window.PalmServiceBridge === "undefined") return;
+  // Consumer webOS shows its screensaver after a few idle minutes and denies a
+  // developer app the call that would refuse it. It does not start one while a
+  // video plays, so a 2-second black clip loops invisibly in a corner. It
+  // pauses while a real video plays (the TV may have one video decoder).
+  function keepAwake(on) {
+    var k = $("keepawake");
+    if (!k) return;
     try {
-      var sub = new window.PalmServiceBridge();
-      sub.onservicecallback = function (msg) {
-        var r; try { r = JSON.parse(msg); } catch (e) { return; }
-        if (r && r.state === "Active" && r.timestamp) {
-          var ack = new window.PalmServiceBridge();
-          ack.call("luna://com.webos.service.tvpower/power/responseScreenSaverRequest",
-            JSON.stringify({ clientName: "hec-reception", ack: false, timestamp: r.timestamp }));
-        }
-      };
-      sub.call("luna://com.webos.service.tvpower/power/registerScreenSaverRequest",
-        JSON.stringify({ subscribe: true, clientName: "hec-reception" }));
-      window.__hecKeepAwake = sub; // keep the subscription alive
+      if (on) { var pr = k.play(); if (pr && pr["catch"]) pr["catch"](function () {}); }
+      else k.pause();
     } catch (e) {}
   }
 
@@ -412,7 +513,7 @@
   tick();
   setInterval(tick, 10 * 1000);
   setInterval(scrollTicker, 33);
-  keepAwake();
+  keepAwake(true);
   refresh();
   setInterval(refresh, REFRESH_MS);
   setTimeout(function () { location.reload(); }, RELOAD_MS);

@@ -14,7 +14,10 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CheckCircle2, Copy, Eye, EyeOff, ImagePlus, Loader2, MonitorPlay, Pencil, Plus, RefreshCw, Star, Trash2, Tv } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, Copy, Eye, EyeOff, Film, Images, ImagePlus, Loader2, MonitorPlay, Pencil, Plus, RefreshCw, Star, Trash2, Tv, Upload, Volume2, VolumeX, Youtube } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { MAX_VIDEO_BYTES, VIDEO_BUCKET, looksLikeDriveLink, uploadForTv, uploadPhotoForTv, videoExt } from "@/lib/receptionMedia";
+import { parseYoutubeId } from "@/lib/auditClips";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,11 +34,15 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 const db = supabase as any;
 const KEY = ["reception"] as const;
 
-type Kind = "announcement" | "award" | "course" | "success" | "event" | "photo";
+type Kind = "announcement" | "award" | "course" | "success" | "event" | "photo" | "album" | "video";
+type AlbumImage = { url: string; caption?: string | null };
+type VideoSource = "upload" | "drive" | "youtube";
 type Item = {
   id: string; kind: Kind; title_en: string; title_vi: string | null; body_en: string | null; body_vi: string | null;
   stat_value: string | null; image_url: string | null; student_id: string | null; starts_on: string | null;
   ends_on: string | null; sort_order: number; is_active: boolean; created_at: string;
+  images: AlbumImage[]; video_source: VideoSource | null; video_url: string | null; youtube_id: string | null;
+  source_url: string | null; play_seconds: number | null; sound: boolean;
 };
 type Feedback = {
   id: string; name: string | null; relation: string; rating: number | null; message: string; contact: string | null;
@@ -43,7 +50,7 @@ type Feedback = {
 };
 type Settings = {
   display_token: string; feedback_url: string | null; zalo_url: string; google_review_url: string;
-  scene_seconds: number; sections: Record<string, boolean>; last_seen_at: string | null;
+  scene_seconds: number; sections: Record<string, boolean>; last_seen_at: string | null; youtube_every_minutes: number;
 };
 
 const KINDS: { value: Kind; label: string; hint: string }[] = [
@@ -51,6 +58,8 @@ const KINDS: { value: Kind; label: string; hint: string }[] = [
   { value: "event", label: "Event", hint: "Something with a date: set the start date and it shows the day." },
   { value: "award", label: "Student award", hint: "Pick the student; their name and photo appear with the award." },
   { value: "success", label: "Success figure", hint: "A big number and what it means, e.g. 21 - Summer Camp campers." },
+  { value: "album", label: "Picture album", hint: "Several pictures played as a slideshow with a slow pan, each with its own caption." },
+  { value: "video", label: "Video", hint: "Upload a video, copy one from Google Drive, or link a YouTube video." },
   { value: "photo", label: "Photo", hint: "A full-screen photo with a caption. Needs an image." },
   { value: "course", label: "Programme feature", hint: "A spotlight card for a programme, on top of the live class list." },
 ];
@@ -61,12 +70,14 @@ const SECTIONS: { key: string; label: string }[] = [
   { key: "awards", label: "Champions & awards" },
   { key: "success", label: "Our success" },
   { key: "courses", label: "Programmes" },
+  { key: "albums", label: "Picture albums" },
+  { key: "videos", label: "Videos" },
   { key: "photos", label: "Photos" },
   { key: "announcements", label: "News & events" },
   { key: "feedback", label: "Feedback & QR codes" },
 ];
 
-const blank = (): Partial<Item> => ({ kind: "announcement", title_en: "", title_vi: "", body_en: "", body_vi: "", stat_value: "", image_url: null, student_id: null, starts_on: null, ends_on: null, sort_order: 0, is_active: true });
+const blank = (): Partial<Item> => ({ kind: "announcement", title_en: "", title_vi: "", body_en: "", body_vi: "", stat_value: "", image_url: null, student_id: null, starts_on: null, ends_on: null, sort_order: 0, is_active: true, images: [], video_source: "upload", video_url: null, youtube_id: null, source_url: null, play_seconds: null, sound: false });
 const newToken = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, "0")).join("");
 const nullIfBlank = (s: string | null | undefined) => (s && s.trim() ? s.trim() : null);
 
@@ -185,7 +196,11 @@ function ContentPanel({ items, students, onChange }: { items: Item[]; students: 
           const out = (last && last < today) || (i.kind !== "event" && i.starts_on && i.starts_on > today);
           return (
             <div key={i.id} className="flex items-center gap-3 rounded-lg border p-3">
-              {i.image_url ? <img src={i.image_url} alt="" className="h-12 w-16 rounded object-cover" /> : <div className="h-12 w-16 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">{i.stat_value || KINDS.find((k) => k.value === i.kind)?.label.split(" ")[0]}</div>}
+              {(i.image_url || i.images?.[0]?.url)
+                ? <img src={i.image_url || i.images[0].url} alt="" className="h-12 w-16 rounded object-cover" />
+                : <div className="h-12 w-16 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                    {i.kind === "video" ? (i.video_source === "youtube" ? <Youtube className="h-5 w-5" /> : <Film className="h-5 w-5" />) : i.stat_value || KINDS.find((k) => k.value === i.kind)?.label.split(" ")[0]}
+                  </div>}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium truncate">{i.title_en}</span>
@@ -194,7 +209,10 @@ function ContentPanel({ items, students, onChange }: { items: Item[]; students: 
                   {i.is_active && out && <Badge variant="secondary">Outside its dates</Badge>}
                 </div>
                 <div className="text-xs text-muted-foreground truncate">
-                  {[i.student_id ? studentName.get(i.student_id) : null, i.title_vi, i.starts_on && `from ${i.starts_on}`, i.ends_on && `until ${i.ends_on}`].filter(Boolean).join(" · ")}
+                  {[i.student_id ? studentName.get(i.student_id) : null,
+                    i.kind === "album" ? `${i.images.length} picture${i.images.length === 1 ? "" : "s"}` : null,
+                    i.kind === "video" ? `${i.video_source === "youtube" ? "YouTube" : i.video_source === "drive" ? "from Drive" : "uploaded"} · ${i.play_seconds ? `${i.play_seconds}s` : "to the end"} · ${i.sound ? "sound on" : "muted"}` : null,
+                    i.title_vi, i.starts_on && `from ${i.starts_on}`, i.ends_on && `until ${i.ends_on}`].filter(Boolean).join(" · ")}
                 </div>
               </div>
               <Button size="icon" variant="ghost" title={i.is_active ? "Hide" : "Show"} onClick={() => toggle.mutate(i)}>{i.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</Button>
@@ -217,16 +235,11 @@ function ItemDialog({ item, students, onClose, onSaved }: { item: Partial<Item>;
   const set = (k: keyof Item, v: any) => setF((x) => ({ ...x, [k]: v }));
   const kind = KINDS.find((k) => k.value === f.kind)!;
 
+  // Pictures are shrunk to TV size in the browser first (src/lib/receptionMedia.ts).
   const upload = async (picked: File) => {
-    if (!/^image\/(jpeg|png|webp)$/.test(picked.type)) return toast.error("Use a JPG, PNG or WebP image.");
-    if (picked.size > 8 * 1024 * 1024) return toast.error("Images must be under 8 MB.");
     setUploading(true);
     try {
-      const ext = picked.type === "image/png" ? "png" : picked.type === "image/webp" ? "webp" : "jpg";
-      const path = `items/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error } = await supabase.storage.from("reception").upload(path, picked, { contentType: picked.type, upsert: false });
-      if (error) throw error;
-      set("image_url", supabase.storage.from("reception").getPublicUrl(path).data.publicUrl);
+      set("image_url", await uploadPhotoForTv(picked));
     } catch (e: any) {
       toast.error(e.message ?? "Upload failed.");
     } finally {
@@ -239,10 +252,24 @@ function ItemDialog({ item, students, onClose, onSaved }: { item: Partial<Item>;
       if (!f.title_en?.trim()) throw new Error("An English title is needed.");
       if (f.kind === "photo" && !f.image_url) throw new Error("A photo item needs an image.");
       if (f.kind === "award" && !f.student_id) throw new Error("Pick the student for this award.");
+      if (f.kind === "album" && !(f.images?.length)) throw new Error("Add at least one picture to the album.");
+      if (f.kind === "video") {
+        if (f.video_source === "youtube" && !f.youtube_id) throw new Error("Paste the YouTube link.");
+        if (f.video_source === "youtube" && !f.play_seconds) throw new Error("For a YouTube video, enter how many seconds to play (the TV cannot tell when it ends).");
+        if (f.video_source !== "youtube" && !f.video_url) throw new Error(f.video_source === "drive" ? "Copy the video from Drive first." : "Upload the video first.");
+      }
+      const isVideo = f.kind === "video";
       const row = {
         kind: f.kind, title_en: f.title_en.trim(), title_vi: nullIfBlank(f.title_vi), body_en: nullIfBlank(f.body_en), body_vi: nullIfBlank(f.body_vi),
         stat_value: nullIfBlank(f.stat_value), image_url: f.image_url ?? null, student_id: f.kind === "award" ? f.student_id : null,
         starts_on: f.starts_on || null, ends_on: f.ends_on || null, sort_order: Number(f.sort_order) || 0, is_active: f.is_active ?? true,
+        images: f.kind === "album" ? (f.images ?? []).map((m) => ({ url: m.url, caption: nullIfBlank(m.caption ?? null) })) : [],
+        video_source: isVideo ? f.video_source : null,
+        video_url: isVideo && f.video_source !== "youtube" ? f.video_url : null,
+        youtube_id: isVideo && f.video_source === "youtube" ? f.youtube_id : null,
+        source_url: isVideo ? nullIfBlank(f.source_url) : null,
+        play_seconds: isVideo && f.play_seconds ? Number(f.play_seconds) : null,
+        sound: isVideo ? !!f.sound : false,
         updated_at: new Date().toISOString(),
       };
       const { error } = f.id
@@ -291,7 +318,9 @@ function ItemDialog({ item, students, onClose, onSaved }: { item: Partial<Item>;
               <div className="space-y-1.5"><Label>Text (Tiếng Việt)</Label><Textarea maxLength={800} rows={4} value={f.body_vi ?? ""} onChange={(e) => set("body_vi", e.target.value)} /></div>
             </div>
           )}
-          {f.kind !== "success" && (
+          {f.kind === "album" && <AlbumEditor images={f.images ?? []} onChange={(v) => set("images", v)} />}
+          {f.kind === "video" && <VideoEditor f={f} set={set} />}
+          {f.kind !== "success" && f.kind !== "album" && f.kind !== "video" && (
             <div className="space-y-1.5">
               <Label>Image {f.kind === "photo" ? "" : "(optional)"}</Label>
               <div className="flex items-center gap-3">
@@ -319,6 +348,194 @@ function ItemDialog({ item, students, onClose, onSaved }: { item: Partial<Item>;
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ------------------------------------------------------------------ album
+function AlbumEditor({ images, onChange }: { images: AlbumImage[]; onChange: (v: AlbumImage[]) => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState<{ done: number; total: number } | null>(null);
+  const latest = useRef(images);
+  latest.current = images;
+
+  const add = async (files: FileList | null) => {
+    const list = Array.from(files ?? []);
+    if (input.current) input.current.value = "";
+    if (!list.length) return;
+    if (images.length + list.length > 80) return toast.error("An album holds up to 80 pictures.");
+    setBusy({ done: 0, total: list.length });
+    for (const file of list) {
+      try {
+        const url = await uploadPhotoForTv(file, "albums");
+        latest.current = [...latest.current, { url, caption: "" }];
+        onChange(latest.current);
+      } catch (e: any) {
+        toast.error(e.message ?? `${file.name}: upload failed.`);
+      }
+      setBusy((b) => (b ? { ...b, done: b.done + 1 } : b));
+    }
+    setBusy(null);
+  };
+  const move = (i: number, d: number) => {
+    const j = i + d;
+    if (j < 0 || j >= images.length) return;
+    const next = [...images];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label>Pictures ({images.length})</Label>
+        <input ref={input} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" onChange={(e) => add(e.target.files)} />
+        <Button type="button" variant="outline" size="sm" disabled={!!busy} onClick={() => input.current?.click()}>
+          {busy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Images className="h-4 w-4 mr-1" />}
+          {busy ? `Uploading ${busy.done}/${busy.total}` : "Add pictures"}
+        </Button>
+      </div>
+      {busy && <Progress value={(busy.done / busy.total) * 100} aria-label="Album upload progress" />}
+      {images.length === 0 && !busy && <p className="text-xs text-muted-foreground">Pick several pictures at once. They are shrunk to TV size before upload, so phone photos are fine.</p>}
+      <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {images.map((m, i) => (
+          <div key={m.url} className="flex items-center gap-2 rounded border p-2">
+            <img src={m.url} alt="" className="h-14 w-24 rounded object-cover" />
+            <Input className="flex-1" maxLength={140} placeholder="Caption (optional)" value={m.caption ?? ""}
+              onChange={(e) => onChange(images.map((x, k) => (k === i ? { ...x, caption: e.target.value } : x)))} />
+            <Button type="button" size="icon" variant="ghost" title="Earlier" disabled={i === 0} onClick={() => move(i, -1)}><ArrowUp className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="ghost" title="Later" disabled={i === images.length - 1} onClick={() => move(i, 1)}><ArrowDown className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="ghost" title="Remove" onClick={() => onChange(images.filter((_, k) => k !== i))}><Trash2 className="h-4 w-4" /></Button>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">Each picture shows for about 6 seconds with a slow pan; the album title and your captions show along the bottom.</p>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ video
+function VideoEditor({ f, set }: { f: Partial<Item>; set: (k: keyof Item, v: any) => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [pct, setPct] = useState<number | null>(null);
+  const [link, setLink] = useState(f.source_url ?? "");
+  const [copying, setCopying] = useState(false);
+  const source = (f.video_source ?? "upload") as VideoSource;
+
+  const pick = async (file?: File) => {
+    if (input.current) input.current.value = "";
+    if (!file) return;
+    const ext = videoExt(file);
+    if (!ext) return toast.error(`${file.name}: use an MP4, MOV (iPhone) or WebM video.`);
+    if (file.size > MAX_VIDEO_BYTES) return toast.error(`${file.name} is ${Math.round(file.size / 1048576)} MB; the limit is 250 MB.`);
+    setPct(0);
+    try {
+      const type = ext === "mov" ? "video/quicktime" : ext === "webm" ? "video/webm" : "video/mp4";
+      const url = await uploadForTv(VIDEO_BUCKET, "uploads", file, type, ext, setPct);
+      set("video_url", url);
+      set("source_url", null);
+      toast.success("Video uploaded.");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed.");
+    } finally {
+      setPct(null);
+    }
+  };
+
+  const copyFromDrive = async () => {
+    if (!looksLikeDriveLink(link)) return toast.error("Paste a Google Drive file link (drive.google.com/file/d/…).");
+    setCopying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("reception-drive-import", { body: { link: link.trim() } });
+      if (error) {
+        let msg = error.message;
+        try { msg = (await (error as any).context?.json?.())?.error ?? msg; } catch { /* keep the message */ }
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+      set("video_url", data.url);
+      set("source_url", link.trim());
+      toast.success(`Copied from Drive${data.bytes ? ` (${Math.round(data.bytes / 1048576)} MB)` : ""}.`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Could not copy the video from Drive.");
+    } finally {
+      setCopying(false);
+    }
+  };
+
+  const setYoutube = (v: string) => {
+    setLink(v);
+    set("source_url", v.trim() || null);
+    set("youtube_id", parseYoutubeId(v));
+  };
+
+  const choose = (v: VideoSource) => {
+    if (v === source) return;
+    set("video_source", v);
+    set("video_url", null);
+    set("youtube_id", null);
+    set("source_url", null);
+    setLink("");
+  };
+
+  return (
+    <div className="space-y-3 rounded-lg border p-3">
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant={source === "upload" ? "default" : "outline"} onClick={() => choose("upload")}><Upload className="h-4 w-4 mr-1" /> Upload a file</Button>
+        <Button type="button" size="sm" variant={source === "drive" ? "default" : "outline"} onClick={() => choose("drive")}><Film className="h-4 w-4 mr-1" /> Google Drive link</Button>
+        <Button type="button" size="sm" variant={source === "youtube" ? "default" : "outline"} onClick={() => choose("youtube")}><Youtube className="h-4 w-4 mr-1" /> YouTube link</Button>
+      </div>
+
+      {source === "upload" && (
+        <div className="space-y-2">
+          <input ref={input} type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.m4v,.mov,.webm" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
+          <Button type="button" variant="outline" disabled={pct !== null} onClick={() => input.current?.click()}>
+            {pct !== null ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
+            {pct !== null ? `Uploading ${pct}%` : f.video_url ? "Replace the video" : "Choose a video"}
+          </Button>
+          {pct !== null && <Progress value={pct} aria-label="Video upload progress" />}
+          <p className="text-xs text-muted-foreground">MP4, iPhone MOV or WebM, up to 250 MB. Keep this window open until it reaches 100%.</p>
+        </div>
+      )}
+
+      {source === "drive" && (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input placeholder="https://drive.google.com/file/d/…" value={link} onChange={(e) => setLink(e.target.value)} />
+            <Button type="button" onClick={copyFromDrive} disabled={copying}>{copying && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Copy video</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">In Drive, set Share › General access to "Anyone with the link". The TV cannot run Drive's own player, so the video is copied into HEC once (up to 250 MB); a big file takes a minute or two.</p>
+        </div>
+      )}
+
+      {source === "youtube" && (
+        <div className="space-y-2">
+          <Input placeholder="https://www.youtube.com/watch?v=…" value={link || f.source_url || ""} onChange={(e) => setYoutube(e.target.value)} />
+          {(link || f.source_url) && !f.youtube_id && <p className="text-xs text-destructive">That is not a YouTube video link.</p>}
+          <p className="text-xs text-muted-foreground">
+            The TV's 2016 browser cannot play YouTube inside the display, so the helper on the centre's computer switches the TV to its YouTube app
+            for this video, then brings the display back. YouTube videos take turns, one every few minutes (set under Screen).
+          </p>
+        </div>
+      )}
+
+      {f.video_url && source !== "youtube" && <video src={f.video_url} controls muted className="w-full max-h-56 rounded bg-black" />}
+      {f.youtube_id && source === "youtube" && <img src={`https://i.ytimg.com/vi/${f.youtube_id}/hqdefault.jpg`} alt="" className="w-full max-h-56 rounded object-cover" />}
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Play for (seconds){source === "youtube" ? "" : " - blank plays to the end"}</Label>
+          <Input type="number" min={5} max={3600} placeholder={source === "youtube" ? "e.g. 90" : "to the end"} value={f.play_seconds ?? ""}
+            onChange={(e) => set("play_seconds", e.target.value ? Number(e.target.value) : null)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Sound</Label>
+          <div className="flex items-center gap-2 h-10 text-sm">
+            <Switch checked={!!f.sound} onCheckedChange={(v) => set("sound", v)} />
+            {f.sound ? <><Volume2 className="h-4 w-4" /> Plays with sound</> : <><VolumeX className="h-4 w-4" /> Muted</>}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -389,6 +606,7 @@ function ScreenPanel({ settings, onChange }: { settings: Settings; onChange: () 
     feedback_url: settings.feedback_url ?? defaultFeedbackUrl,
     zalo_url: settings.zalo_url,
     google_review_url: settings.google_review_url,
+    youtube_every_minutes: settings.youtube_every_minutes ?? 10,
   });
   const [showToken, setShowToken] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
@@ -425,6 +643,11 @@ function ScreenPanel({ settings, onChange }: { settings: Settings; onChange: () 
                 </label>
               ))}
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Play a YouTube video every (minutes)</Label>
+            <Input type="number" min={2} max={240} value={f.youtube_every_minutes} onChange={(e) => setF({ ...f, youtube_every_minutes: Number(e.target.value) })} />
+            <p className="text-xs text-muted-foreground">YouTube videos play in the TV's YouTube app, one at a time, while the screen is on. Uploaded and Drive videos play inside the display.</p>
           </div>
           <div className="space-y-1.5"><Label>Feedback form link</Label><Input value={f.feedback_url} onChange={(e) => setF({ ...f, feedback_url: e.target.value })} />
             <p className="text-xs text-muted-foreground">Normally {defaultFeedbackUrl}</p></div>

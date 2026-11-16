@@ -8,6 +8,7 @@
 //   node scripts/reception-tv.mjs check      one pass of the helper (what `watch` does every few minutes)
 //   node scripts/reception-tv.mjs watch      run the helper for ever (Task Scheduler / systemd)
 //   node scripts/reception-tv.mjs status     print what the helper knows
+//   node scripts/reception-tv.mjs youtube-now  play the next YouTube item now (a test)
 //   node scripts/reception-tv.mjs autostart  copy the helper to ~/.hec-reception and start it at logon
 //
 // The helper, every 3 minutes during opening hours:
@@ -128,7 +129,7 @@ function pkg() {
   const app = join(BUILD, "app");
   rmSync(BUILD, { recursive: true, force: true });
   mkdirSync(app, { recursive: true });
-  cpSync(SRC, app, { recursive: true, filter: (p) => !/demo-feed\.js$/.test(p) });
+  cpSync(SRC, app, { recursive: true, filter: (p) => !/demo-(feed\.js|video\.mp4)$/.test(p) });
   const conf = readFileSync(join(SRC, "config.js"), "utf8").replace(/token:\s*""/, `token: "${token}"`).replace(/screen:\s*""/, 'screen: "tv"');
   if (!conf.includes(token)) throw new Error("Could not write the token into config.js");
   writeFileSync(join(app, "config.js"), conf);
@@ -172,7 +173,7 @@ function ssap(requests, { pairing = false, timeoutMs = 15000 } = {}) {
         forcePairing: false, pairingType: "PROMPT", "client-key": cfg.clientKey || undefined,
         manifest: {
           manifestVersion: 1, appVersion: "1.0", signed: { appId: "com.happyenglishclub.helper", vendorId: "hec", created: "20261116", localizedAppNames: { "": "HEC reception helper" }, permissions: [] },
-          permissions: ["LAUNCH", "CONTROL_POWER", "READ_RUNNING_APPS", "READ_CURRENT_CHANNEL", "READ_INSTALLED_APPS"],
+          permissions: ["LAUNCH", "CONTROL_POWER", "CONTROL_AUDIO", "READ_RUNNING_APPS", "READ_CURRENT_CHANNEL", "READ_INSTALLED_APPS"],
         },
       },
     });
@@ -289,11 +290,84 @@ async function check() {
   saveState();
 }
 
+// ------------------------------------------------------------------ YouTube breaks
+// The TV's 2016 browser cannot play YouTube inside the display, and the TV
+// will not let the display open another app. The helper can: every
+// youtube_every_minutes (Admin > Reception > Screen) it plays the next
+// YouTube item in the TV's YouTube app for its play_seconds, muted or not as
+// the admin chose, then brings the display back.
+const YOUTUBE_APP = "youtube.leanback.v4";
+const YOUTUBE_START_MS = 10000; // the 2016 YouTube app takes a while to open
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let feedCache = { at: 0, data: null };
+
+async function readFeed() {
+  if (Date.now() - feedCache.at < 5 * 60 * 1000 && feedCache.data) return feedCache.data;
+  const conf = cfg.feedUrl && cfg.apiKey ? cfg : publicConfig();
+  if (!conf.feedUrl || !cfg.token) return null;
+  const res = await fetch(conf.feedUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: conf.apiKey, Authorization: `Bearer ${conf.apiKey}` },
+    body: JSON.stringify({ token: cfg.token, screen: "helper" }),
+  });
+  if (!res.ok) throw new Error(`feed ${res.status}`);
+  feedCache = { at: Date.now(), data: await res.json() };
+  return feedCache.data;
+}
+
+/** feedUrl and the publishable key, from the display's own config.js (saved so the copy in ~/.hec-reception has them). */
+function publicConfig() {
+  try {
+    const text = readFileSync(join(SRC, "config.js"), "utf8");
+    const feedUrl = text.match(/feedUrl:\s*"([^"]+)"/)?.[1];
+    const apiKey = text.match(/apiKey:\s*"([^"]+)"/)?.[1];
+    if (feedUrl && apiKey) { cfg.feedUrl = feedUrl; cfg.apiKey = apiKey; saveCfg(); }
+  } catch {}
+  return cfg;
+}
+
+async function youtubeBreak({ force = false } = {}) {
+  if (!force && (!openNow().open || Date.now() < (state.nextYoutubeAt ?? 0))) return;
+  const feed = await readFeed();
+  const list = feed?.youtube ?? [];
+  const every = Math.max(2, Number(feed?.settings?.youtube_every_minutes) || 10);
+  state.nextYoutubeAt = Date.now() + every * 60 * 1000;
+  saveState();
+  if (!list.length) return;
+  // Only ever interrupt our own display, never someone using the TV.
+  const [front] = await ssap([["ssap://com.webos.applicationManager/getForegroundAppInfo"]]);
+  if (front?.appId !== APP_ID) return;
+  const v = list[(state.youtubeIndex ?? 0) % list.length];
+  state.youtubeIndex = ((state.youtubeIndex ?? 0) + 1) % list.length;
+  saveState();
+
+  let wasMuted = null;
+  try { const [a] = await ssap([["ssap://audio/getStatus"]]); wasMuted = typeof a?.mute === "boolean" ? a.mute : null; } catch {}
+  try { await ssap([["ssap://audio/setMute", { mute: !v.sound }]]); }
+  catch (e) { log(`YouTube: could not set the sound (${e.message}); run "pair" again to allow it`); }
+  await ssap([["ssap://system.launcher/launch", { id: YOUTUBE_APP, contentId: v.youtube_id }]]);
+  log(`YouTube: playing "${v.title}" for ${v.play_seconds}s${v.sound ? " with sound" : ", muted"}`);
+  await sleep(YOUTUBE_START_MS + v.play_seconds * 1000);
+  try {
+    const [now] = await ssap([["ssap://com.webos.applicationManager/getForegroundAppInfo"]]);
+    // Someone switched to something else meanwhile: leave the TV to them.
+    if (now?.appId === YOUTUBE_APP) await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]);
+  } finally {
+    if (wasMuted !== null) { try { await ssap([["ssap://audio/setMute", { mute: wasMuted }]]); } catch {} }
+  }
+}
+
 async function watch() {
   log(`helper started (TV ${cfg.tvIp}; on, Hanoi time: ${describeSchedule()})`);
+  publicConfig();
+  let lastCheck = 0;
   for (;;) {
-    try { await check(); } catch (e) { log(`check failed: ${e.message}`); }
-    await new Promise((r) => setTimeout(r, 3 * 60 * 1000));
+    if (Date.now() - lastCheck >= 3 * 60 * 1000) {
+      lastCheck = Date.now();
+      try { await check(); } catch (e) { log(`check failed: ${e.message}`); }
+    }
+    try { await youtubeBreak(); } catch (e) { log(`YouTube break failed: ${e.message}`); }
+    await sleep(20 * 1000);
   }
 }
 
@@ -351,6 +425,7 @@ try {
   else if (cmd === "install") install();
   else if (cmd === "pair") { console.log("Look at the TV and accept the prompt with the remote…"); await ssap([], { pairing: true }); console.log("Paired."); }
   else if (cmd === "check") await check();
+  else if (cmd === "youtube-now") { feedCache.at = 0; await youtubeBreak({ force: true }); }
   else if (cmd === "watch") await watch();
   else if (cmd === "autostart") autostart();
   else if (cmd === "status") console.log(JSON.stringify({ config: { ...cfg, token: cfg.token ? "(set)" : "(missing)", clientKey: cfg.clientKey ? "(paired)" : "(not paired)" }, state, schedule: describeSchedule(),
