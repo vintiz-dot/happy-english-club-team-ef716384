@@ -78,7 +78,7 @@ const SUITES = [
   // D5: every write path to the money tables and every RPC, pinned; no browser
   // writes of payments / ledger / payroll; recorded_payment only by
   // compare-and-set; labels from the one rule; no NEW browser pricing.
-  { name: "money write paths", file: "money-write-paths.test.mjs", expect: 19, migrations: [] },
+  { name: "money write paths", file: "money-write-paths.test.mjs", expect: 20, migrations: [] },
   // D5: the sibling-discount hold rule (_lib/sibling-hold.ts), its fail-closed
   // read (only 42703 means "column missing", G-10) and its two callers.
   { name: "sibling hold", file: "sibling-hold.test.mjs", expect: 22, migrations: [] },

@@ -186,8 +186,9 @@ console.log('\n1. every direct write to a money table is pinned');
   // Writes through a table name held in a variable (a generic helper): none may reach a money table unseen.
   const PINNED_DYNAMIC = {
     'supabase/functions/admin-data-import/index.ts': 'the import writes whitelisted tables; D4 G-20 took sessions, attendance, enrollments, discounts out of the whitelist and drops classes.session_rate_vnd',
-    'src/components/admin/DataImportExport.tsx': 'gap G-9: NOT MOUNTED anywhere, but it upserts CSV rows into students, teachers, families, classes or enrollments from the browser',
   };
+  // G-9 (fixed in D5 fix round 1): the unmounted browser CSV importer is deleted.
+  ok('G-9: src/components/admin/DataImportExport.tsx is gone and nothing names it', ![...src.keys()].some((f) => /DataImportExport/.test(f) || /DataImportExport/.test(src.get(f))));
   const found = [...new Set(dynamic.map((d) => d.file))];
   const unknown = found.filter((f) => !(f in PINNED_DYNAMIC));
   ok('writes through a variable table name: only the pinned generic writers', unknown.length === 0, dynamic.filter((d) => unknown.includes(d.file)));
