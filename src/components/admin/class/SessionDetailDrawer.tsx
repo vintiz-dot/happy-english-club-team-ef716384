@@ -23,6 +23,8 @@ import { CancelSessionDialog } from "@/components/admin/CancelSessionDialog";
 import { DeleteSessionDialog } from "@/components/admin/DeleteSessionDialog";
 import { cn } from "@/lib/utils";
 import { functionRefusalText } from "@/lib/moneyGuard";
+import { payOpFromDbError, type PayOp } from "@/lib/lessonPayGuard";
+import { PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
 
 interface SessionDetailDrawerProps {
   session: any;
@@ -38,6 +40,8 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
   const [notes, setNotes] = useState(session?.notes || "");
   const [selectedTeacher, setSelectedTeacher] = useState(session?.teacher_id || "");
   const [isEditingTeacher, setIsEditingTeacher] = useState(false);
+  // D4 step 3A: a held lesson's teacher outside the free week -> the lesson-pay check.
+  const [pay, setPay] = useState<{ op: PayOp; args: Record<string, unknown> } | null>(null);
   const queryClient = useQueryClient();
   const { role } = useAuth();
 
@@ -125,7 +129,12 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
       queryClient.invalidateQueries({ queryKey: ["enhanced-class-sessions"] });
       setIsEditingTeacher(false);
     },
-    onError: (error: any) => {
+    onError: (error: any, vars: { notes?: string; teacherId?: string }) => {
+      // The write was refused as a whole (HC020): nothing was saved, notes included.
+      if (vars.teacherId !== undefined && payOpFromDbError(error) === "reteach") {
+        setPay({ op: "reteach", args: { session_id: session.id, teacher_id: vars.teacherId } });
+        return;
+      }
       toast.error(error.message || "Failed to update session");
     },
   });
@@ -402,6 +411,21 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
           session={session}
           students={students || []}
           onClose={() => setShowParticipationPoints(false)}
+        />
+      )}
+
+      {pay && (
+        <PayGuardDialog
+          open
+          session={session}
+          op={pay.op}
+          args={pay.args}
+          names={Object.fromEntries((teachers ?? []).map((t: any) => [t.id, t.full_name]))}
+          onClose={() => setPay(null)}
+          onDone={() => {
+            setIsEditingTeacher(false);
+            queryClient.invalidateQueries({ queryKey: ["enhanced-class-sessions"] });
+          }}
         />
       )}
 

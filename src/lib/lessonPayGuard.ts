@@ -177,6 +177,33 @@ export function payDialogFrom(body: any): { op: PayOp; plan: PayPlan } | null {
   return { op, plan: plan as PayPlan };
 }
 
+/**
+ * A direct (PostgREST) write the database refused for a pay kind: SQLSTATE
+ * HC020 with DETAIL "kind=reteach; ..." -> the op the dialog opens, or null.
+ * Screens that write a lesson directly try the write first and open the
+ * dialog only on this answer (design (d) step 3A).
+ */
+export function payOpFromDbError(err: any): PayOp | null {
+  if (!err || String(err.code ?? "") !== "HC020") return null;
+  const m = /kind=([a-z_]+)/.exec(String(err.details ?? err.detail ?? err.message ?? ""));
+  return m ? PAY_KIND_OP[m[1]] ?? null : null;
+}
+
+/** The assistant list a restaff sends, from the rows on screen with one change applied. */
+export function participantsAfter(rows: Array<{ id?: string; teaching_assistant_id: string; attended?: boolean | null }>,
+                                  change: { id?: string; teaching_assistant_id?: string; attended?: boolean; remove?: boolean; add?: string }) {
+  const out = rows
+    .filter((r) => !(change.remove && (r.id === change.id || r.teaching_assistant_id === change.teaching_assistant_id)))
+    .map((r) => ({
+      teaching_assistant_id: r.teaching_assistant_id,
+      attended: (change.id && r.id === change.id) || (change.teaching_assistant_id && r.teaching_assistant_id === change.teaching_assistant_id)
+        ? change.attended ?? (r.attended !== false)
+        : r.attended !== false,
+    }));
+  if (change.add && !out.some((r) => r.teaching_assistant_id === change.add)) out.push({ teaching_assistant_id: change.add, attended: true });
+  return out;
+}
+
 const hm = (t?: string | null) => (t ? String(t).slice(0, 5) : "?");
 
 /** What changes, line by line (ids are resolved to names by the caller's `names`). */

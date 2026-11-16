@@ -21,6 +21,8 @@ import { SessionActionsModal } from "../SessionActionsModal";
 import { useIvory } from "@/hooks/useIvory";
 import { cn } from "@/lib/utils";
 import { functionRefusalText } from "@/lib/moneyGuard";
+import { participantsAfter, payOpFromDbError, type PayOp } from "@/lib/lessonPayGuard";
+import { PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
@@ -44,6 +46,9 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
   const [showParticipationPoints, setShowParticipationPoints] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [swappingTeacher, setSwappingTeacher] = useState(false);
+  // D4 step 3A: a held lesson's teacher or assistants outside the free week
+  // are refused by the database (HC020); the lesson-pay check opens instead.
+  const [pay, setPay] = useState<{ op: PayOp; args: Record<string, unknown> } | null>(null);
   const queryClient = useQueryClient();
   const { role } = useAuth();
   // Also opened from GlobalCalendar on "/" (teacher home) and from the
@@ -167,7 +172,11 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
       queryClient.invalidateQueries({ queryKey: ["enhanced-class-sessions"] });
       setSwappingTeacher(false);
     },
-    onError: (err: any) => {
+    onError: (err: any, newTeacherId: string) => {
+      if (payOpFromDbError(err) === "reteach") {
+        setPay({ op: "reteach", args: { session_id: session.id, teacher_id: newTeacherId } });
+        return;
+      }
       toast.error(err.message || "Failed to swap teacher");
     },
   });
@@ -257,8 +266,14 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
       queryClient.invalidateQueries({ queryKey: ["class-finance"] });
       queryClient.invalidateQueries({ queryKey: ["finance-overview"] });
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Could not change that"),
+    onError: (e: any, vars: { id: string; attended: boolean }) => {
+      if (payOpFromDbError(e) === "restaff") {
+        setPay({ op: "restaff", args: { session_id: session.id,
+          participants: participantsAfter((sessionTAs ?? []) as any[], { id: vars.id, attended: vars.attended }) } });
+        return;
+      }
+      toast.error(e instanceof Error ? e.message : e?.message || "Could not change that");
+    },
   });
 
   return (
@@ -472,6 +487,26 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
         />
       )}
       
+      {pay && (
+        <PayGuardDialog
+          open
+          session={session}
+          op={pay.op}
+          args={pay.args}
+          names={Object.fromEntries([
+            ...(teachers ?? []).map((t: any) => [t.id, t.full_name]),
+            ...((sessionTAs ?? []) as any[]).map((t: any) => [t.teaching_assistant_id, t.teaching_assistants?.full_name ?? "an assistant"]),
+          ])}
+          onClose={() => setPay(null)}
+          onDone={() => {
+            setSwappingTeacher(false);
+            queryClient.invalidateQueries({ queryKey: ["session-tas", session?.id] });
+            queryClient.invalidateQueries({ queryKey: ["calendar-sessions"] });
+            queryClient.invalidateQueries({ queryKey: ["enhanced-class-sessions"] });
+          }}
+        />
+      )}
+
       {showActions && (
         <SessionActionsModal
           session={session}
