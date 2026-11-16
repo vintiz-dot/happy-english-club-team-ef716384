@@ -34,7 +34,7 @@ export function TeacherProfileOverview({ teacherId, selectedMonth, onMonthChange
     <div className="space-y-4">
       <div className="flex justify-end">
         <Select value={selectedMonth} onValueChange={onMonthChange}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48" aria-label="Month">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -50,53 +50,53 @@ export function TeacherProfileOverview({ teacherId, selectedMonth, onMonthChange
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
+            <CardDescription className="flex items-center gap-2 text-hec-small text-hec-ink-soft">
               <Calendar className="h-4 w-4" />
               Scheduled Sessions
             </CardDescription>
-            <CardTitle className="text-3xl">{payrollData?.sessionsCountProjected || 0}</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums">{payrollData?.sessionsCountProjected || 0}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Total sessions planned</p>
+            <p className="text-hec-caption text-hec-ink-soft">Total sessions planned</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
+            <CardDescription className="flex items-center gap-2 text-hec-small text-hec-ink-soft">
               <CheckCircle2 className="h-4 w-4" />
               Held Sessions
             </CardDescription>
-            <CardTitle className="text-3xl">{payrollData?.sessionsCountActual || 0}</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums">{payrollData?.sessionsCountActual || 0}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Sessions completed</p>
+            <p className="text-hec-caption text-hec-ink-soft">Sessions completed</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
+            <CardDescription className="flex items-center gap-2 text-hec-small text-hec-ink-soft">
               <Clock className="h-4 w-4" />
               Scheduled Hours
             </CardDescription>
-            <CardTitle className="text-3xl">{payrollData?.totalHoursProjected?.toFixed(1) || 0}</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums">{payrollData?.totalHoursProjected?.toFixed(1) || 0}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Total hours planned</p>
+            <p className="text-hec-caption text-hec-ink-soft">Total hours planned</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
+            <CardDescription className="flex items-center gap-2 text-hec-small text-hec-ink-soft">
               <CalendarClock className="h-4 w-4" />
               Held Hours
             </CardDescription>
-            <CardTitle className="text-3xl">{payrollData?.totalHoursActual?.toFixed(1) || 0}</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums">{payrollData?.totalHoursActual?.toFixed(1) || 0}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Hours completed</p>
+            <p className="text-hec-caption text-hec-ink-soft">Hours completed</p>
           </CardContent>
         </Card>
       </div>
@@ -110,18 +110,18 @@ export function TeacherProfileOverview({ teacherId, selectedMonth, onMonthChange
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Completion Rate:</span>
-              <span className="font-medium">
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="min-w-0 text-hec-ink-soft">Completion Rate:</span>
+              <span className="shrink-0 whitespace-nowrap font-medium tabular-nums text-hec-ink">
                 {payrollData?.sessionsCountProjected
                   ? ((payrollData.sessionsCountActual / payrollData.sessionsCountProjected) * 100).toFixed(1)
                   : 0}
                 %
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Avg Session Duration:</span>
-              <span className="font-medium">
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="min-w-0 text-hec-ink-soft">Avg Session Duration:</span>
+              <span className="shrink-0 whitespace-nowrap font-medium tabular-nums text-hec-ink">
                 {payrollData?.sessionsCountActual
                   ? ((payrollData.totalHoursActual / payrollData.sessionsCountActual) * 60).toFixed(0)
                   : 0}{" "}
