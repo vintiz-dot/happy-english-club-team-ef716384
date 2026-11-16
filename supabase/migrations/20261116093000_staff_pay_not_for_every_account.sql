@@ -67,21 +67,25 @@ GRANT EXECUTE ON FUNCTION public.teacher_rate_on(uuid, date) TO service_role;
 GRANT EXECUTE ON FUNCTION public.assistant_rate_on(uuid, date) TO service_role;
 
 -- 2. Who may read a teacher's row.
+-- Driven from the caller's own children (a handful of rows: the child's
+-- login, second login, the family's primary login - can_view_student's
+-- test, written out), then the classes they are or were enrolled in: this
+-- teacher leads one of them, or taught a lesson of one. Same answer as
+-- "lessons x enrollments, can_view_student per pair", without walking every
+-- lesson for every teacher row a family has no class with (S2 review R-2:
+-- ~8x slower that way for a family's unfiltered teachers read).
 CREATE OR REPLACE FUNCTION public.can_view_teacher(_teacher_id uuid, _uid uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT _uid IS NOT NULL AND (
     public.is_staff_member(_uid)
-    -- the class's own families: this teacher leads a class one of the
-    -- caller's children is (or was) enrolled in
     OR EXISTS (
-      SELECT 1 FROM public.classes c
-      JOIN public.enrollments e ON e.class_id = c.id
-      WHERE c.default_teacher_id = _teacher_id AND public.can_view_student(e.student_id, _uid)
-    )
-    OR EXISTS (
-      SELECT 1 FROM public.sessions s
-      JOIN public.enrollments e ON e.class_id = s.class_id
-      WHERE s.teacher_id = _teacher_id AND public.can_view_student(e.student_id, _uid)
+      SELECT 1
+        FROM public.students s
+        JOIN public.enrollments e ON e.student_id = s.id
+       WHERE (s.linked_user_id = _uid OR s.secondary_user_id = _uid
+              OR s.family_id IN (SELECT f.id FROM public.families f WHERE f.primary_user_id = _uid))
+         AND (EXISTS (SELECT 1 FROM public.classes c WHERE c.id = e.class_id AND c.default_teacher_id = _teacher_id)
+              OR EXISTS (SELECT 1 FROM public.sessions x WHERE x.class_id = e.class_id AND x.teacher_id = _teacher_id))
     )
   )
 $$;

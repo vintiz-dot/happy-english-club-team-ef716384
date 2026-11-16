@@ -98,34 +98,33 @@ console.log("=== R-2 F-17: a family listing teachers, at school scale ===");
   const a = await time();
   console.log(`  INFO  family SELECT teachers: before ${b.ms} ms (${b.n} rows), after ${a.ms} ms (${a.n} rows)`);
   ok("after: the family sees only its own child's teachers", a.n === 2 && a.err === null, a);
-  // Timings are reported, not asserted: pglite on a busy laptop varies 2-3x run to run.
-  // Who sees which teacher rows, with the builder's function...
+  // FLIPPED by the S2 fix round: 20261116093000 now carries the reviewer's
+  // body (driven from the caller's own children). Who sees which teacher rows
+  // with it, for all 12 logins...
   const everyone = [W.P.ADMIN, W.P.TEA, W.P.TA, W.P.COVER, W.P.TEB, W.P.PARENT, W.P.KID, W.P.SECOND, W.P.PARENT2, W.P.NEW, W.P.FAKE_T, W.P.NOROLE];
   const reach = async () => { const m = []; for (const u of everyone) m.push((await as(u, `SELECT id FROM public.teachers ORDER BY id`)).rows.map((r) => r.id).join(",")); return m; };
   const M_fix = await reach();
-  // ...and with the proposed rewrite: drive from the caller's own children
-  // (a handful of rows) instead of every lesson x every enrollment.
-  const rw = await exec(`
+  // ...must equal what the first S2 body (lessons x enrollments,
+  // can_view_student per pair) gave, which is kept here as the reference.
+  const first = await exec(`
     CREATE OR REPLACE FUNCTION public.can_view_teacher(_teacher_id uuid, _uid uuid)
     RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
       SELECT _uid IS NOT NULL AND (
         public.is_staff_member(_uid)
-        OR EXISTS (
-          SELECT 1
-            FROM public.students s
-            JOIN public.enrollments e ON e.student_id = s.id
-           WHERE (s.linked_user_id = _uid OR s.secondary_user_id = _uid
-                  OR s.family_id IN (SELECT f.id FROM public.families f WHERE f.primary_user_id = _uid))
-             AND (EXISTS (SELECT 1 FROM public.classes c WHERE c.id = e.class_id AND c.default_teacher_id = _teacher_id)
-                  OR EXISTS (SELECT 1 FROM public.sessions x WHERE x.class_id = e.class_id AND x.teacher_id = _teacher_id))
-        )
+        OR EXISTS (SELECT 1 FROM public.classes c JOIN public.enrollments e ON e.class_id = c.id
+                    WHERE c.default_teacher_id = _teacher_id AND public.can_view_student(e.student_id, _uid))
+        OR EXISTS (SELECT 1 FROM public.sessions s JOIN public.enrollments e ON e.class_id = s.class_id
+                    WHERE s.teacher_id = _teacher_id AND public.can_view_student(e.student_id, _uid))
       )
     $$;`);
-  ok("proposed rewrite installs", rw === null, rw);
+  ok("the first S2 body (reference) installs", first === null, first);
   await time();
   const c = await time();
-  console.log(`  INFO  proposed rewrite: ${c.ms} ms (${c.n} rows)`);
-  eq("proposed rewrite gives every login exactly the rows the builder's version gives", await reach(), M_fix);
+  console.log(`  INFO  first S2 body: ${c.ms} ms (${c.n} rows)`);
+  eq("R-2 FIXED: every one of the 12 logins gets exactly the rows the first S2 body gave", await reach(), M_fix);
+  // Timing: pglite on a busy laptop varies 2-3x run to run, so the bound is
+  // loose; the first body ran ~8x the before-S2 figure and fails it.
+  ok(`R-2 FIXED: the shipped body is back near the before-S2 figure (${a.ms} ms vs ${b.ms} ms; bound 3x + 250 ms)`, a.ms <= 3 * b.ms + 250, { before: b.ms, after: a.ms, first: c.ms });
 }
 
 // ------------------------------------------------------------------ R-3 (F-13)
