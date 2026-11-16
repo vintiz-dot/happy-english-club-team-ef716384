@@ -63,11 +63,47 @@ Beyond the design, both fail-closed and both needed by real writes (flagged belo
 
 ## Checks
 
-FILL: full `node scripts/pgtest/run.mjs`, `tsc --noEmit -p tsconfig.app.json`, `npm run test:bun`, edge typecheck, mutants, fingerprint.
+- `node scripts/pgtest/run.mjs`: RUNALL_LINE. The three new suites: d4 lesson pay 130, d4 functions lessons 57, d4 stars interplay 19 (pinned). Every D2 / 1a / 1b suite green, incl. session guard functions 135/135 (after decision 18), d4 rollback 26 (it runs `guard-fingerprint.mjs --release d4 --check`, `--check-unchanged` and `--after-rollback` 66/66 with rollback 4), d4 register 140, d4 deployed functions 37, edge functions typecheck 5 (the three changed functions type-check), mirrors 19.
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0 (and the suite "app typecheck").
+- `npm run test:bun`: 166 pass, 0 fail, 13 files (bun from the local npx cache).
+
+## Mutations (`node scripts/pgtest/d4-mutants.mjs L01 ... L36 FL1 ... FL5`)
+
+41 mutants: 36 of file 4 (L01-L36), 5 of manage-session (FL1-FL5, mutated in place and restored; `git status` clean afterwards). **40 caught, 1 survivor (L36), explained:**
+
+| Mutant | Breaks | Verdict |
+|---|---|---|
+| L01-L07 | un-hold not a kind / given the free week / kept un-hold raises / no event / A-9 dropped / any started lesson / locked month ignored | CAUGHT (lesson) |
+| L08-L11 | hold without register / A-5 locked / after a checked un-hold / service hold refused | CAUGHT (lesson) |
+| L12-L15 | born Held / an upsert of an existing lesson judged as new / G-7 dropped / service backdates | CAUGHT (lesson) |
+| L16-L20 | G-4 dropped / A-19 / A-5 teacher / G-5 dropped / HC022 dropped | CAUGHT (lesson) |
+| L21-L25 | G-6 dropped / `attended` not pay / staff free week ignores the lock (caught after a case was added) / service restaff / R-4 for assistants | CAUGHT (lesson) |
+| L26-L33 | create T0 / create ignores bills / un-hold tier not D2's / locked hold T1 / pay tier ignores payroll_reach / reteach not manual / end_time not watched / no owner_lane event | CAUGHT (lesson) |
+| L34 | the session exec granted to authenticated (first written as a REVOKE without authenticated: SURVIVED as equivalent - nobody had a grant - and rewritten as a real GRANT) | CAUGHT (lesson) |
+| L35 | preflight no longer checks the 1b bodies | CAUGHT (lesson) |
+| **L36** | the exec's re-plan under the row lock (A-8) removed | **SURVIVED** - see decision 4: the apply's token already covers the row and the tier; the exec check closes only a race between the apply's plan and the row lock, which one pglite connection cannot drive. |
+| FL1-FL5 | Held <-> Scheduled on the service key / refused teacher change not turned into the check / create on the service key / T0 shortcut for T1+ / update writes status again | CAUGHT (fnles) |
 
 ## Fingerprints (CR-stripped md5 of each new function body)
 
-FILL from `docs/evidence/D4-release-fingerprint.expected.json`.
+`docs/evidence/D4-release-fingerprint.{sql,expected.json}` regenerated (`guard-fingerprint.mjs --release d4`): now 50 functions, 22 triggers; the diff against 1b's version is additions only (every 1a / 1b entry unchanged). New in file 4:
+
+| Object | md5 (body, CR removed) / trigger def | definer | volatility |
+|---|---|---|---|
+| `session_pay_change_kind(sessions, sessions)` | f16980b8840b46a1bf45a017f443b6ca | yes | s |
+| `_session_ta_rows(uuid)` | dc0e044990548a79d45ff64718abb5d8 | yes | s |
+| `_session_pay_tier(text, sessions, sessions)` | 13dfc790cfafffbffc108ab656e00e24 | yes | s |
+| `_session_pay_sentence(text)` | 54b02ecee83b2f202e4fccc9124d6048 | no | i |
+| `session_pay_guard()` | f69bcfb3f69fc7206f8aaabe62db09ac | yes | v |
+| `_session_insert_guard()` | ede7f558c2e089a3acdd214d550bfbf2 | yes | v |
+| `_session_staff_guard()` | 19a597ce8b0fd93c159f7c43d27689b2 | yes | v |
+| `_money_plan__session(text, jsonb, uuid)` | e21f34e1392c0dd6f34f21b133271b87 | yes | s |
+| `_money_exec__session(jsonb, uuid)` | cabd2db1f4023cba61bf8d38780d4e34 | yes | v |
+| trigger `sessions.zz2_session_pay_guard` | md5_def 627eb5d6e28b91e44f5d997cc30f4686 | | |
+| trigger `sessions.zz_session_insert_guard` | md5_def c33edb0a689b2c4fe1a351bf27c74a56 | | |
+| trigger `session_participants.zz_session_staff_guard` | md5_def fe26026f304672fe4cc8682e35ebdf96 | | |
+
+EXECUTE for anon / authenticated / service_role: none on all nine. The preflight's pinned 1a/1b bodies (CR-stripped, equal to `D4-1b-live-apply-brief.md`): `_caller_lane` 66001c3b..., `_lesson_in_free_week` 4e8eac60..., `_money_ack` 471a5563..., `_money_change_plan` 3efa9ebc..., `_money_change_exec` b5efef0f..., `payroll_reach` 5ccecd82....
 
 ## Rollback
 
