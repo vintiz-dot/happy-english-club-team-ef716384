@@ -1,0 +1,366 @@
+﻿## Before (conductor 2e88891a) vs after (parent-release)
+auth-1280-dark: req same, numbers same; attr null->ivory
+auth-1280-light: req same, numbers same; attr null->ivory
+auth-375-dark: req same, numbers same; attr null->ivory
+auth-375-light: req same, numbers same; attr null->ivory
+auth-forgot-1280-dark: req same, numbers same; attr null->ivory
+auth-forgot-1280-light: req same, numbers same; attr null->ivory
+auth-forgot-375-dark: req same, numbers same; attr null->ivory
+auth-forgot-375-light: req same, numbers same; attr null->ivory
+auth-signup-1280-dark: req same, numbers same; attr null->ivory
+auth-signup-1280-light: req same, numbers same; attr null->ivory
+auth-signup-375-dark: req same, numbers same; attr null->ivory
+auth-signup-375-light: req same, numbers same; attr null->ivory
+auth-signup-open-1280-dark: req same, numbers same; attr null->ivory
+auth-signup-open-1280-light: req same, numbers same; attr null->ivory
+auth-signup-open-375-dark: req same, numbers same; attr null->ivory
+auth-signup-open-375-light: req same, numbers same; attr null->ivory
+claim-1280-dark: req same, numbers same; attr null->ivory
+claim-1280-light: req same, numbers same; attr null->ivory
+claim-375-dark: req same, numbers same; attr null->ivory
+claim-375-light: req same, numbers same; attr null->ivory
+claim-error-1280-dark: req same, numbers same; attr null->ivory
+claim-error-1280-light: req same, numbers same; attr null->ivory
+claim-error-375-dark: req same, numbers same; attr null->ivory
+claim-error-375-light: req same, numbers same; attr null->ivory
+fdash-1280-dark: req same, numbers same; attr null->ivory
+fdash-1280-light: req same, numbers same; attr null->ivory
+fdash-375-dark: req same, numbers same; attr null->ivory
+fdash-375-light: req same, numbers same; attr null->ivory
+fdash-empty-1280-dark: req same, numbers same; attr null->ivory
+fdash-empty-1280-light: req same, numbers same; attr null->ivory
+fdash-empty-375-dark: req same, numbers same; attr null->ivory
+fdash-empty-375-light: req same, numbers same; attr null->ivory
+fdash-switch-1280-dark: req same, numbers same; attr null->ivory
+fdash-switch-1280-light: req same, numbers same; attr null->ivory
+fdash-switch-375-dark: req same, numbers same; attr null->ivory
+fdash-switch-375-light: req same, numbers same; attr null->ivory
+index-family1-1280-dark: req same, numbers same; attr null->ivory
+index-family1-1280-light: req same, numbers same; attr null->ivory
+index-family1-375-dark: req same, numbers same; attr null->ivory
+index-family1-375-light: req same, numbers same; attr null->ivory
+index-family13-1280-dark: req same, numbers same; attr null->ivory
+index-family13-1280-light: req same, numbers same; attr null->ivory
+index-family13-375-dark: req same, numbers same; attr null->ivory
+index-family13-375-light: req same, numbers same; attr null->ivory
+index-family2-1280-dark: req same, numbers same; attr null->ivory
+index-family2-1280-light: req same, numbers same; attr null->ivory
+index-family2-375-dark: req same, numbers same; attr null->ivory
+index-family2-375-light: req same, numbers same; attr null->ivory
+index-teacher-1280-dark: req same, numbers same; attr null->null
+index-teacher-1280-light: req same, numbers same; attr null->null
+index-teacher-375-dark: req same, numbers same; attr null->null
+index-teacher-375-light: req same, numbers same; attr null->null
+picker-1280-dark: req same, numbers DIFF; NUMBERS differ (main [], dialogs ["1/10/2014:+1","2/11/2015:+1","4/13/2014:+1"]); attr null->ivory
+picker-1280-light: req same, numbers DIFF; NUMBERS differ (main [], dialogs ["1/10/2014:+1","2/11/2015:+1","4/13/2014:+1"]); attr null->ivory
+picker-375-dark: req same, numbers DIFF; NUMBERS differ (main [], dialogs ["1/10/2014:+1","2/11/2015:+1","4/13/2014:+1"]); attr null->ivory
+picker-375-light: req same, numbers DIFF; NUMBERS differ (main [], dialogs ["1/10/2014:+1","2/11/2015:+1","4/13/2014:+1"]); attr null->ivory
+reset-1280-dark: req same, numbers same; attr null->ivory
+reset-1280-light: req same, numbers same; attr null->ivory
+reset-375-dark: req same, numbers same; attr null->ivory
+reset-375-light: req same, numbers same; attr null->ivory
+reset-typed-1280-dark: req same, numbers same; attr null->ivory
+reset-typed-1280-light: req same, numbers same; attr null->ivory
+reset-typed-375-dark: req same, numbers same; attr null->ivory
+reset-typed-375-light: req same, numbers same; attr null->ivory
+reset-wait-1280-dark: req same, numbers same; attr null->ivory
+reset-wait-1280-light: req same, numbers same; attr null->ivory
+reset-wait-375-dark: req same, numbers same; attr null->ivory
+reset-wait-375-light: req same, numbers same; attr null->ivory
+watch-1280-dark: req same, numbers same; attr null->ivory
+watch-1280-light: req same, numbers same; attr null->ivory
+watch-375-dark: req same, numbers same; attr null->ivory
+watch-375-light: req same, numbers same; attr null->ivory
+watch-empty-1280-dark: req same, numbers same; attr null->ivory
+watch-empty-1280-light: req same, numbers same; attr null->ivory
+watch-empty-375-dark: req same, numbers same; attr null->ivory
+watch-empty-375-light: req same, numbers same; attr null->ivory
+watch-expired-1280-dark: req same, numbers same; attr null->ivory
+watch-expired-1280-light: req same, numbers same; attr null->ivory
+watch-expired-375-dark: req same, numbers same; attr null->ivory
+watch-expired-375-light: req same, numbers same; attr null->ivory
+x-admin-1280-dark: req same, numbers same; dom raw IDENTICAL (efdb61255cf9fe3e / efdb61255cf9fe3e), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-admin-1280-light: req same, numbers same; dom raw IDENTICAL (efdb61255cf9fe3e / efdb61255cf9fe3e), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-admin-375-dark: req same, numbers same; dom raw IDENTICAL (efdb61255cf9fe3e / efdb61255cf9fe3e), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-admin-375-light: req same, numbers same; dom raw IDENTICAL (efdb61255cf9fe3e / efdb61255cf9fe3e), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-fschedule-1280-dark: req same, numbers same; dom raw IDENTICAL (963e7c51b1a6c58d / 963e7c51b1a6c58d), normalised IDENTICAL, html attr null/null; attr null->null
+x-fschedule-1280-light: req same, numbers same; dom raw IDENTICAL (963e7c51b1a6c58d / 963e7c51b1a6c58d), normalised IDENTICAL, html attr null/null; attr null->null
+x-fschedule-375-dark: req same, numbers same; dom raw IDENTICAL (34ea6e863966c57f / 34ea6e863966c57f), normalised IDENTICAL, html attr null/null; attr null->null
+x-fschedule-375-light: req same, numbers same; dom raw IDENTICAL (34ea6e863966c57f / 34ea6e863966c57f), normalised IDENTICAL, html attr null/null; attr null->null
+x-sdash-1280-dark: req same, numbers same; dom raw IDENTICAL (815ebe5c7a6bd843 / 815ebe5c7a6bd843), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-sdash-1280-light: req same, numbers same; dom raw IDENTICAL (815ebe5c7a6bd843 / 815ebe5c7a6bd843), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-sdash-375-dark: req same, numbers same; dom raw IDENTICAL (4a371b23f88910ad / da550e65853251e0), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-sdash-375-light: req same, numbers same; dom raw IDENTICAL (4a371b23f88910ad / da550e65853251e0), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-sjournal-1280-dark: req same, numbers same; dom raw IDENTICAL (6ed0c0a94d1f7d0e / 6ed0c0a94d1f7d0e), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-sjournal-1280-light: req same, numbers same; dom raw IDENTICAL (6ed0c0a94d1f7d0e / 6ed0c0a94d1f7d0e), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-sjournal-375-dark: req same, numbers same; dom raw IDENTICAL (6ed0c0a94d1f7d0e / 6ed0c0a94d1f7d0e), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-sjournal-375-light: req same, numbers same; dom raw IDENTICAL (6ed0c0a94d1f7d0e / 6ed0c0a94d1f7d0e), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-tdash-1280-dark: req same, numbers same; dom raw IDENTICAL (6833026655f6ece0 / 6833026655f6ece0), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-tdash-1280-light: req same, numbers same; dom raw IDENTICAL (6833026655f6ece0 / 6833026655f6ece0), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-tdash-375-dark: req same, numbers same; dom raw IDENTICAL (f6ef2a834a3ea45b / f6ef2a834a3ea45b), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-tdash-375-light: req same, numbers same; dom raw IDENTICAL (f6ef2a834a3ea45b / f6ef2a834a3ea45b), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-tschedule-1280-dark: req same, numbers same; dom raw IDENTICAL (e4140387ec139311 / e4140387ec139311), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-tschedule-1280-light: req same, numbers same; dom raw IDENTICAL (e4140387ec139311 / e4140387ec139311), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-tschedule-375-dark: req same, numbers same; dom raw IDENTICAL (14e8dfc78e5e7cb5 / 14e8dfc78e5e7cb5), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+x-tschedule-375-light: req same, numbers same; dom raw IDENTICAL (14e8dfc78e5e7cb5 / 14e8dfc78e5e7cb5), normalised IDENTICAL, html attr ivory/ivory; attr ivory->ivory
+
+requests identical 104/104, numbers identical 100/104
+
+## Money (every element showing an amount with ₫), after
+index-family1-1280-dark: 6 amounts, off-rule 0 | 1.440.000 ₫ | -144.000 ₫ | -50.000 ₫ | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family1-1280-light: 6 amounts, off-rule 0 | 1.440.000 ₫ | -144.000 ₫ | -50.000 ₫ | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family1-375-dark: 6 amounts, off-rule 0 | 1.440.000 ₫ | -144.000 ₫ | -50.000 ₫ | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family1-375-light: 6 amounts, off-rule 0 | 1.440.000 ₫ | -144.000 ₫ | -50.000 ₫ | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family13-1280-dark: 2 amounts, off-rule 0 | 1.800.000 ₫ | 1.800.000 ₫
+index-family13-1280-light: 2 amounts, off-rule 0 | 1.800.000 ₫ | 1.800.000 ₫
+index-family13-375-dark: 2 amounts, off-rule 0 | 1.800.000 ₫ | 1.800.000 ₫
+index-family13-375-light: 2 amounts, off-rule 0 | 1.800.000 ₫ | 1.800.000 ₫
+index-family2-1280-dark: 2 amounts, off-rule 0 | 1.600.000 ₫ | 1.600.000 ₫
+index-family2-1280-light: 2 amounts, off-rule 0 | 1.600.000 ₫ | 1.600.000 ₫
+index-family2-375-dark: 2 amounts, off-rule 0 | 1.600.000 ₫ | 1.600.000 ₫
+index-family2-375-light: 2 amounts, off-rule 0 | 1.600.000 ₫ | 1.600.000 ₫
+x-sdash-1280-dark: 1 amounts, off-rule 0 | 0 ₫
+x-sdash-1280-light: 1 amounts, off-rule 0 | 0 ₫
+x-sdash-375-dark: 1 amounts, off-rule 0 | 0 ₫
+x-sdash-375-light: 1 amounts, off-rule 0 | 0 ₫
+x-tdash-1280-dark: 1 amounts, off-rule 0 | 250,000 ₫
+x-tdash-1280-light: 1 amounts, off-rule 0 | 250,000 ₫
+x-tdash-375-dark: 1 amounts, off-rule 0 | 250,000 ₫
+x-tdash-375-light: 1 amounts, off-rule 0 | 250,000 ₫
+
+## Money, before (for reference)
+index-family1-1280-dark: 1.440.000 ₫ | Sibling discount: -144.000 ₫10%Applied to one clas | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family1-1280-light: 1.440.000 ₫ | Sibling discount: -144.000 ₫10%Applied to one clas | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family1-375-dark: 1.440.000 ₫ | Sibling discount: -144.000 ₫10%Applied to one clas | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family1-375-light: 1.440.000 ₫ | Sibling discount: -144.000 ₫10%Applied to one clas | 50000 ₫ | -194.000 ₫ | 1.246.000 ₫
+index-family13-1280-dark: 1.800.000 ₫ | 1.800.000 ₫
+index-family13-1280-light: 1.800.000 ₫ | 1.800.000 ₫
+index-family13-375-dark: 1.800.000 ₫ | 1.800.000 ₫
+index-family13-375-light: 1.800.000 ₫ | 1.800.000 ₫
+index-family2-1280-dark: 1.600.000 ₫ | 1.600.000 ₫
+index-family2-1280-light: 1.600.000 ₫ | 1.600.000 ₫
+index-family2-375-dark: 1.600.000 ₫ | 1.600.000 ₫
+index-family2-375-light: 1.600.000 ₫ | 1.600.000 ₫
+x-sdash-1280-dark: 0 ₫
+x-sdash-1280-light: 0 ₫
+x-sdash-375-dark: 0 ₫
+x-sdash-375-light: 0 ₫
+x-tdash-1280-dark: 250,000 ₫
+x-tdash-1280-light: 250,000 ₫
+x-tdash-375-dark: 250,000 ₫
+x-tdash-375-light: 250,000 ₫
+
+## axe critical/serious, after
+auth-signup-open-1280-dark: serious aria-hidden-focus x1 (in main 0) @ .lg\:grid-cols-2
+auth-signup-open-1280-light: serious aria-hidden-focus x1 (in main 0) @ .lg\:grid-cols-2
+auth-signup-open-375-dark: serious aria-hidden-focus x1 (in main 0) @ .lg\:grid-cols-2
+auth-signup-open-375-light: serious aria-hidden-focus x1 (in main 0) @ .lg\:grid-cols-2
+fdash-switch-1280-dark: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+fdash-switch-1280-light: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+fdash-switch-375-dark: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+fdash-switch-375-light: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+index-teacher-1280-dark: serious color-contrast x31 (in main 31) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+index-teacher-1280-light: serious color-contrast x31 (in main 31) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+index-teacher-375-dark: critical button-name x4 (in main 4) @ .px-2.rounded-md.hover\:glass-sm:nth-child(1) ; .bg-muted\/60 > .hover\:bg-primary\/90.hover\:shadow-lg.bg-primary ; .px-2.rounded-md.hover\:glass-sm:nth-child(3) ; .px-2.rounded-md.hover\:glass-sm:nth-child(4) || serious color-contrast x28 (in main 28) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+index-teacher-375-light: critical button-name x4 (in main 4) @ .px-2.rounded-md.hover\:glass-sm:nth-child(1) ; .bg-muted\/60 > .hover\:bg-primary\/90.hover\:shadow-lg.bg-primary ; .px-2.rounded-md.hover\:glass-sm:nth-child(3) ; .px-2.rounded-md.hover\:glass-sm:nth-child(4) || serious color-contrast x28 (in main 28) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+x-fschedule-1280-dark: serious color-contrast x41 (in main 41) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+x-fschedule-1280-light: serious color-contrast x41 (in main 41) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+x-fschedule-375-dark: critical button-name x4 (in main 4) @ .hover\:glass-sm.px-2.rounded-md:nth-child(1) ; .hover\:bg-primary\/90 ; .hover\:glass-sm.px-2.rounded-md:nth-child(3) ; .hover\:glass-sm.px-2.rounded-md:nth-child(4) || serious color-contrast x35 (in main 35) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+x-fschedule-375-light: critical button-name x4 (in main 4) @ .hover\:glass-sm.px-2.rounded-md:nth-child(1) ; .hover\:bg-primary\/90 ; .hover\:glass-sm.px-2.rounded-md:nth-child(3) ; .hover\:glass-sm.px-2.rounded-md:nth-child(4) || serious color-contrast x35 (in main 35) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+x-sdash-1280-dark: serious label-content-name-mismatch x4 (in main 4) @ button[aria-label="Show Book points"] ; button[aria-label="Show Bolt points"] ; button[aria-label="Show Flame points"] ; button[aria-label="Show Words points"]
+x-sdash-1280-light: serious label-content-name-mismatch x4 (in main 4) @ button[aria-label="Show Book points"] ; button[aria-label="Show Bolt points"] ; button[aria-label="Show Flame points"] ; button[aria-label="Show Words points"]
+x-tdash-1280-dark: serious color-contrast x4 (in main 4) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr
+x-tdash-1280-light: serious color-contrast x6 (in main 6) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .it ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].pl-2 > .it
+x-tdash-375-dark: serious color-contrast x2 (in main 2) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr
+x-tdash-375-light: serious color-contrast x3 (in main 3) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .it ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr
+x-tschedule-1280-dark: serious color-contrast x4 (in main 4) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].py-1 > .tr
+x-tschedule-1280-light: serious color-contrast x6 (in main 6) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .it ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].py-1 > .it
+x-tschedule-375-dark: serious color-contrast x2 (in main 2) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr
+x-tschedule-375-light: serious color-contrast x3 (in main 3) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .it ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr
+
+## axe critical/serious, before
+auth-1280-dark: serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-1280-light: serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-375-dark: serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-375-light: serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-forgot-1280-dark: serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-forgot-1280-light: serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-forgot-375-dark: serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-forgot-375-light: serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-signup-1280-dark: critical button-name x1 (in main 1) @ .border-input || serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-signup-1280-light: critical button-name x1 (in main 1) @ .border-input || serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-signup-375-dark: critical button-name x1 (in main 1) @ .border-input || serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-signup-375-light: critical button-name x1 (in main 1) @ .border-input || serious color-contrast x2 (in main 2) @ .bg-amber-500 ; .text-white\/80
+auth-signup-open-1280-dark: serious aria-hidden-focus x1 (in main 0) @ .bg-night || serious color-contrast x3 (in main 2) @ .bg-amber-500 ; .text-white\/80 ; #radix-\:r3\:
+auth-signup-open-1280-light: serious aria-hidden-focus x1 (in main 0) @ .bg-night || serious color-contrast x3 (in main 2) @ .bg-amber-500 ; .text-white\/80 ; #radix-\:r3\:
+auth-signup-open-375-dark: serious aria-hidden-focus x1 (in main 0) @ .bg-night || serious color-contrast x3 (in main 2) @ .bg-amber-500 ; .text-white\/80 ; #radix-\:r3\:
+auth-signup-open-375-light: serious aria-hidden-focus x1 (in main 0) @ .bg-night || serious color-contrast x3 (in main 2) @ .bg-amber-500 ; .text-white\/80 ; #radix-\:r3\:
+fdash-switch-1280-dark: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+fdash-switch-1280-light: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+fdash-switch-375-dark: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+fdash-switch-375-light: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+index-family1-1280-dark: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2) || serious color-contrast x1 (in main 1) @ .border-t > .text-success
+index-family1-1280-light: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2) || serious color-contrast x1 (in main 1) @ .border-t > .text-success
+index-family1-375-dark: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2) || serious color-contrast x1 (in main 1) @ .border-t > .text-success
+index-family1-375-light: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2) || serious color-contrast x1 (in main 1) @ .border-t > .text-success
+index-family13-1280-dark: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+index-family13-1280-light: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+index-family13-375-dark: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+index-family13-375-light: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+index-family2-1280-dark: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+index-family2-1280-light: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+index-family2-375-dark: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+index-family2-375-light: critical button-name x2 (in main 2) @ .w-10.h-10.hover\:shadow-md:nth-child(1) ; .w-10.h-10.hover\:shadow-md:nth-child(2)
+index-teacher-1280-dark: serious color-contrast x31 (in main 31) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+index-teacher-1280-light: serious color-contrast x31 (in main 31) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+index-teacher-375-dark: critical button-name x4 (in main 4) @ .px-2.rounded-md.hover\:glass-sm:nth-child(1) ; .bg-muted\/60 > .hover\:bg-primary\/90.hover\:shadow-lg.bg-primary ; .px-2.rounded-md.hover\:glass-sm:nth-child(3) ; .px-2.rounded-md.hover\:glass-sm:nth-child(4) || serious color-contrast x28 (in main 28) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+index-teacher-375-light: critical button-name x4 (in main 4) @ .px-2.rounded-md.hover\:glass-sm:nth-child(1) ; .bg-muted\/60 > .hover\:bg-primary\/90.hover\:shadow-lg.bg-primary ; .px-2.rounded-md.hover\:glass-sm:nth-child(3) ; .px-2.rounded-md.hover\:glass-sm:nth-child(4) || serious color-contrast x28 (in main 28) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+reset-1280-dark: critical button-name x2 (in main 0) @ .space-y-1\.5:nth-child(1) > .relative > .right-3.text-white\/40.hover\:text-white\/70 ; .space-y-1\.5:nth-child(2) > .relative > .right-3.text-white\/40.hover\:text-white\/70
+reset-1280-light: critical button-name x2 (in main 0) @ .space-y-1\.5:nth-child(1) > .relative > .right-3.text-white\/40.hover\:text-white\/70 ; .space-y-1\.5:nth-child(2) > .relative > .right-3.text-white\/40.hover\:text-white\/70
+reset-375-dark: critical button-name x2 (in main 0) @ .space-y-1\.5:nth-child(1) > .relative > .right-3.text-white\/40.hover\:text-white\/70 ; .space-y-1\.5:nth-child(2) > .relative > .right-3.text-white\/40.hover\:text-white\/70
+reset-375-light: critical button-name x2 (in main 0) @ .space-y-1\.5:nth-child(1) > .relative > .right-3.text-white\/40.hover\:text-white\/70 ; .space-y-1\.5:nth-child(2) > .relative > .right-3.text-white\/40.hover\:text-white\/70
+reset-typed-1280-dark: critical button-name x2 (in main 0) @ .space-y-1\.5:nth-child(1) > .relative > .right-3.hover\:text-white\/70.text-white\/40 ; .space-y-1\.5:nth-child(2) > .relative > .right-3.hover\:text-white\/70.text-white\/40
+reset-typed-1280-light: critical button-name x2 (in main 0) @ .space-y-1\.5:nth-child(1) > .relative > .right-3.hover\:text-white\/70.text-white\/40 ; .space-y-1\.5:nth-child(2) > .relative > .right-3.hover\:text-white\/70.text-white\/40
+reset-typed-375-dark: critical button-name x2 (in main 0) @ .space-y-1\.5:nth-child(1) > .relative > .right-3.hover\:text-white\/70.text-white\/40 ; .space-y-1\.5:nth-child(2) > .relative > .right-3.hover\:text-white\/70.text-white\/40
+reset-typed-375-light: critical button-name x2 (in main 0) @ .space-y-1\.5:nth-child(1) > .relative > .right-3.hover\:text-white\/70.text-white\/40 ; .space-y-1\.5:nth-child(2) > .relative > .right-3.hover\:text-white\/70.text-white\/40
+x-fschedule-1280-dark: serious color-contrast x41 (in main 41) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+x-fschedule-1280-light: serious color-contrast x41 (in main 41) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+x-fschedule-375-dark: critical button-name x4 (in main 4) @ .hover\:glass-sm.px-2.rounded-md:nth-child(1) ; .hover\:bg-primary\/90 ; .hover\:glass-sm.px-2.rounded-md:nth-child(3) ; .hover\:glass-sm.px-2.rounded-md:nth-child(4) || serious color-contrast x35 (in main 35) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+x-fschedule-375-light: critical button-name x4 (in main 4) @ .hover\:glass-sm.px-2.rounded-md:nth-child(1) ; .hover\:bg-primary\/90 ; .hover\:glass-sm.px-2.rounded-md:nth-child(3) ; .hover\:glass-sm.px-2.rounded-md:nth-child(4) || serious color-contrast x35 (in main 35) @ .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(2) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(3) ; .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(4)
+x-sdash-1280-dark: serious label-content-name-mismatch x4 (in main 4) @ button[aria-label="Show Book points"] ; button[aria-label="Show Bolt points"] ; button[aria-label="Show Flame points"] ; button[aria-label="Show Words points"]
+x-sdash-1280-light: serious label-content-name-mismatch x4 (in main 4) @ button[aria-label="Show Book points"] ; button[aria-label="Show Bolt points"] ; button[aria-label="Show Flame points"] ; button[aria-label="Show Words points"]
+x-tdash-1280-dark: serious color-contrast x4 (in main 4) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr
+x-tdash-1280-light: serious color-contrast x6 (in main 6) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .it ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].pl-2 > .it
+x-tdash-375-dark: serious color-contrast x2 (in main 2) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr
+x-tdash-375-light: serious color-contrast x3 (in main 3) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .it ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].pl-2 > .tr
+x-tschedule-1280-dark: serious color-contrast x4 (in main 4) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].py-1 > .tr
+x-tschedule-1280-light: serious color-contrast x6 (in main 6) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .it ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(4) > .opacity-60.saturate-\[0\.5\].py-1 > .it
+x-tschedule-375-dark: serious color-contrast x2 (in main 2) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr
+x-tschedule-375-light: serious color-contrast x3 (in main 3) @ .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .it ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr ; .border-l.relative.border-hec-line:nth-child(2) > .opacity-60.saturate-\[0\.5\].py-1 > .tr
+
+## axe critical/serious, after 320
+fdash-switch-320-light: serious aria-hidden-focus x1 (in main 0) @ .min-h-screen
+
+## overflow / off-screen / long name / small targets, after
+auth-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"\" 16x16"]
+auth-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"\" 16x16"]
+auth-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"\" 16x16"]
+auth-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"\" 16x16"]
+auth-forgot-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-forgot-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-forgot-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-forgot-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-open-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-open-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-open-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-open-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-error-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-error-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-error-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-error-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+fdash-1280-dark: overflow false (1280/1280), offscreen 0, long name 2 shown / 0 clipped, lines [2,1], small 0
+fdash-1280-light: overflow false (1280/1280), offscreen 0, long name 2 shown / 0 clipped, lines [2,1], small 0
+fdash-375-dark: overflow false (375/375), offscreen 0, long name 2 shown / 0 clipped, lines [2,2], small 0
+fdash-375-light: overflow false (375/375), offscreen 0, long name 2 shown / 0 clipped, lines [2,2], small 0
+fdash-empty-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+fdash-empty-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+fdash-empty-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+fdash-empty-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+fdash-switch-1280-dark: overflow false (1280/1280), offscreen 0, long name 3 shown / 0 clipped, lines [2,1,2], small 0
+fdash-switch-1280-light: overflow false (1280/1280), offscreen 0, long name 3 shown / 0 clipped, lines [2,1,2], small 0
+fdash-switch-375-dark: overflow false (375/375), offscreen 0, long name 3 shown / 0 clipped, lines [2,2,2], small 0
+fdash-switch-375-light: overflow false (375/375), offscreen 0, long name 3 shown / 0 clipped, lines [2,2,2], small 0
+index-family1-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family1-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family1-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family1-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family13-1280-dark: overflow false (1280/1280), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+index-family13-1280-light: overflow false (1280/1280), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+index-family13-375-dark: overflow false (375/375), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+index-family13-375-light: overflow false (375/375), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+index-family2-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family2-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family2-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family2-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-teacher-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 45 ["other:BUTTON \"Collapse the menu\" 32x32","nav:BUTTON \"Dashboard\" 207x36","nav:BUTTON \"Schedule\" 207x36","nav:BUTTON \"Leaderboard\" 207x36"]
+index-teacher-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 45 ["other:BUTTON \"Collapse the menu\" 32x32","nav:BUTTON \"Dashboard\" 207x36","nav:BUTTON \"Schedule\" 207x36","nav:BUTTON \"Leaderboard\" 207x36"]
+index-teacher-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 28 ["header:BUTTON \"Open the menu\" 40x40","header:BUTTON \"Notifications\" 40x40","header:BUTTON \"Change Password\" 42x36","main:BUTTON \"Select a class\" 293x40"]
+index-teacher-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 28 ["header:BUTTON \"Open the menu\" 40x40","header:BUTTON \"Notifications\" 40x40","header:BUTTON \"Change Password\" 42x36","main:BUTTON \"Select a class\" 293x40"]
+picker-1280-dark: overflow false (1280/1280), offscreen 0, long name 2 shown / 0 clipped, lines [1,1], small 0
+picker-1280-light: overflow false (1280/1280), offscreen 0, long name 2 shown / 0 clipped, lines [1,1], small 0
+picker-375-dark: overflow false (375/375), offscreen 0, long name 2 shown / 0 clipped, lines [1,2], small 0
+picker-375-light: overflow false (375/375), offscreen 0, long name 2 shown / 0 clipped, lines [1,2], small 0
+reset-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-typed-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-typed-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-typed-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-typed-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-wait-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-wait-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-wait-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-wait-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-1280-dark: overflow false (1280/1280), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+watch-1280-light: overflow false (1280/1280), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+watch-375-dark: overflow false (375/375), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+watch-375-light: overflow false (375/375), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+watch-empty-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-empty-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-empty-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-empty-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-expired-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-expired-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-expired-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-expired-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+x-admin-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+x-admin-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+x-admin-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+x-admin-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+x-fschedule-1280-dark: overflow false (1280/1280), offscreen 0, long name 1 shown / 0 clipped, lines [1], small 20 ["header:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 322x40","header:BUTTON \"Notifications\" 40x40","header:BUTTON \"Change Password\" 170x36","header:BUTTON \"Sign Out\" 114x36"]
+x-fschedule-1280-light: overflow false (1280/1280), offscreen 0, long name 1 shown / 0 clipped, lines [1], small 20 ["header:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 322x40","header:BUTTON \"Notifications\" 40x40","header:BUTTON \"Change Password\" 170x36","header:BUTTON \"Sign Out\" 114x36"]
+x-fschedule-375-dark: overflow false (375/375), offscreen 0, long name 1 shown / 1 clipped ["ellipsis:SPAN ."], lines [1], small 20 ["header:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 188x40","header:BUTTON \"Notifications\" 23x40","header:BUTTON \"Change Password\" 42x36","header:BUTTON \"Sign out\" 24x40"]
+x-fschedule-375-light: overflow false (375/375), offscreen 0, long name 1 shown / 1 clipped ["ellipsis:SPAN ."], lines [1], small 20 ["header:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 188x40","header:BUTTON \"Notifications\" 23x40","header:BUTTON \"Change Password\" 42x36","header:BUTTON \"Sign out\" 24x40"]
+x-sdash-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 10 ["header:BUTTON \"All\" 33x32","header:BUTTON \"Book\" 33x32","header:BUTTON \"Bolt\" 33x32","header:BUTTON \"Flame\" 33x32"]
+x-sdash-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 10 ["header:BUTTON \"All\" 33x32","header:BUTTON \"Book\" 33x32","header:BUTTON \"Bolt\" 33x32","header:BUTTON \"Flame\" 33x32"]
+x-sdash-375-dark: overflow false (375/375), offscreen 1 ["DIV.h-full w-full flex-1 bg-primary transiti -173-136"], long name 1 shown / 0 clipped, lines [5], small 0
+x-sdash-375-light: overflow false (375/375), offscreen 1 ["DIV.h-full w-full flex-1 bg-primary transiti -173-136"], long name 1 shown / 0 clipped, lines [5], small 0
+x-sjournal-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+x-sjournal-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+x-sjournal-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+x-sjournal-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+x-tdash-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"Starters 1 (Mon-Wed), 00:00 to\" 55x32"]
+x-tdash-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"Starters 1 (Mon-Wed), 00:00 to\" 55x32"]
+x-tdash-375-dark: overflow false (375/375), offscreen 1 ["DIV.h-full w-full flex-1 bg-primary transiti -276-33"], long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"Starters 1 (Mon-Wed), 00:00 to\" 52x32"]
+x-tdash-375-light: overflow false (375/375), offscreen 1 ["DIV.h-full w-full flex-1 bg-primary transiti -276-33"], long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"Starters 1 (Mon-Wed), 00:00 to\" 52x32"]
+x-tschedule-1280-dark: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"Starters 1 (Mon-Wed), 00:00 to\" 61x32"]
+x-tschedule-1280-light: overflow false (1280/1280), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"Starters 1 (Mon-Wed), 00:00 to\" 61x32"]
+x-tschedule-375-dark: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"Starters 1 (Mon-Wed), 00:00 to\" 52x32"]
+x-tschedule-375-light: overflow false (375/375), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"Starters 1 (Mon-Wed), 00:00 to\" 52x32"]
+
+## overflow / off-screen / long name / small targets, after 320
+auth-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 1 ["main:BUTTON \"\" 16x16"]
+auth-forgot-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+auth-signup-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+claim-error-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+fdash-320-light: overflow false (320/320), offscreen 0, long name 2 shown / 0 clipped, lines [2,3], small 0
+fdash-switch-320-light: overflow false (320/320), offscreen 0, long name 3 shown / 0 clipped, lines [2,3,2], small 0
+index-family1-320-dark: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family1-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+index-family13-320-dark: overflow false (320/320), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+index-family13-320-light: overflow false (320/320), offscreen 0, long name 1 shown / 0 clipped, lines [2], small 0
+picker-320-light: overflow false (320/320), offscreen 0, long name 2 shown / 0 clipped, lines [2,3], small 0
+reset-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+reset-typed-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0
+watch-320-light: overflow false (320/320), offscreen 0, long name 1 shown / 0 clipped, lines [3], small 0
+watch-expired-320-light: overflow false (320/320), offscreen 0, long name 0 shown / 0 clipped, lines [], small 0

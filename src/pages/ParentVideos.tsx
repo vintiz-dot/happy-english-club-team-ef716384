@@ -27,45 +27,45 @@ export default function ParentVideos() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
-        <header className="text-center space-y-1">
-          <p className="text-sm font-medium text-primary">Happy English Club</p>
-          <h1 className="text-2xl md:text-3xl font-bold">
+    <div className="min-h-screen bg-hec-paper text-hec-ink">
+      <div className="mx-auto max-w-3xl px-4 py-8 space-y-6 sm:px-6">
+        <header className="text-center space-y-2">
+          <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">Happy English Club</p>
+          <h1 className="font-display text-hec-display font-medium text-hec-ink whitespace-normal break-words hyphens-none text-balance">
             {data?.student?.name ? `${data.student.name}'s videos` : "Video homework"}
           </h1>
-          <p className="text-muted-foreground text-sm">Video homework checked and approved by the teacher.</p>
+          <p className="text-hec-small text-hec-ink-soft">Video homework checked and approved by the teacher.</p>
         </header>
 
         {isLoading && (
-          <div className="flex justify-center py-16 text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin" /></div>
+          <div className="flex justify-center py-16 text-hec-ink-soft"><Loader2 className="h-6 w-6 animate-spin" /></div>
         )}
         {isError && (
-          <Card><CardContent className="py-10 text-center text-muted-foreground">
+          <Card><CardContent className="py-12 text-center text-hec-body text-hec-ink-soft sm:py-12">
             This link is not valid any more. Please ask the teacher for a new one.
           </CardContent></Card>
         )}
         {data && data.videos.length === 0 && (
-          <Card><CardContent className="py-10 text-center text-muted-foreground">
-            <Video className="mx-auto mb-2 h-8 w-8" />No approved videos yet. Check back soon!
+          <Card><CardContent className="py-12 text-center text-hec-body text-hec-ink-soft sm:py-12">
+            <Video className="mx-auto mb-2 h-8 w-8 text-hec-ink-faint" />No approved videos yet. Check back soon!
           </CardContent></Card>
         )}
         {data?.videos.map((v) => (
-          <Card key={v.id} className="overflow-hidden">
+          <Card key={v.id} className="overflow-clip">
             <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <CardTitle className="text-lg break-words">{v.title}</CardTitle>
-                  <CardDescription>{dayjs(v.date).format("D MMM YYYY")}</CardDescription>
+                  <CardTitle className="break-words">{v.title}</CardTitle>
+                  <CardDescription className="tabular-nums">{dayjs(v.date).format("D MMM YYYY")}</CardDescription>
                 </div>
                 {v.grade && <Badge className="shrink-0">{v.grade}</Badge>}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <video src={v.url} controls playsInline preload="metadata" className="w-full rounded-lg bg-muted aspect-video" />
+              <video src={v.url} controls playsInline preload="metadata" className="w-full rounded-hec-md bg-hec-sunken aspect-video" />
               {v.feedback && (
-                <div className="rounded-lg bg-muted p-3 text-sm whitespace-pre-wrap break-words">
-                  <p className="font-medium mb-1">Teacher's note</p>
+                <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-small text-hec-ink whitespace-pre-wrap break-words">
+                  <p className="font-medium text-hec-ink mb-1">Teacher's note</p>
                   {v.feedback}
                 </div>
               )}

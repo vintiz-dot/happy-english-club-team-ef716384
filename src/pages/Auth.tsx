@@ -191,11 +191,11 @@ const Auth = () => {
 
   if (checkingAdmins) {
     return (
-      <div className="min-h-screen bg-night flex items-center justify-center">
-        <div className="rounded-2xl bg-white/10 backdrop-blur-md p-8 ring-1 ring-white/20">
-          <div className="flex items-center gap-3 text-white">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/30 border-t-white" />
-            <span className="font-medium">Loading…</span>
+      <div className="min-h-screen bg-hec-paper flex items-center justify-center px-4">
+        <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-8 shadow-hec-1">
+          <div className="flex items-center gap-3 text-hec-ink">
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-hec-line border-t-hec-ink" />
+            <span className="text-hec-body font-medium">Loading…</span>
           </div>
         </div>
       </div>
@@ -212,40 +212,35 @@ const Auth = () => {
       : "We'll send a reset link to your inbox.";
 
   return (
-    <div className="min-h-screen bg-night text-white grid lg:grid-cols-2 overflow-hidden">
+    <div className="min-h-screen bg-hec-paper text-hec-ink grid lg:grid-cols-2 overflow-x-clip">
       {/* ───── LEFT — brand panel (desktop only) ───── */}
-      <aside className="relative hidden lg:flex flex-col justify-between p-10 xl:p-14 overflow-hidden">
-        {/* aurora accents */}
-        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-blue-500/40 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-sky-500/30 blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/3 h-72 w-72 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
-
+      <aside className="relative hidden lg:flex flex-col justify-between gap-8 border-r border-hec-line bg-hec-surface p-12">
         <div className="relative">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-aurora flex items-center justify-center shadow-q3 overflow-hidden p-1">
-              <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-contain rounded-xl" />
+            <div className="h-12 w-12 shrink-0 rounded-hec-lg border border-hec-line bg-hec-raised flex items-center justify-center overflow-hidden p-1">
+              <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-contain rounded-hec-md" />
             </div>
-            <div>
-              <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/60">
+            <div className="min-w-0">
+              <p className="text-hec-caption font-medium tracking-wider uppercase text-hec-ink-soft">
                 Happy English Club
               </p>
-              <p className="text-lg font-extrabold">Learning, levelled up.</p>
+              <p className="font-display text-hec-h2 font-medium text-hec-ink">Learning, levelled up.</p>
             </div>
           </div>
         </div>
 
         <div className="relative space-y-8 max-w-md">
           <div>
-            <h2 className="text-4xl xl:text-5xl font-extrabold leading-[1.05] tracking-tight">
-              Earn XP. <span className="text-aurora">Climb ranks.</span>{" "}
+            <h2 className="font-display text-hec-display font-medium text-hec-ink">
+              Earn XP. <span className="text-hec-ink">Climb ranks.</span>{" "}
               Level up your English.
             </h2>
-            <p className="mt-4 text-white/70 text-base xl:text-lg leading-relaxed">
+            <p className="mt-4 text-hec-body text-hec-ink-soft">
               Track every quest, celebrate every grade, and watch your streak grow.
             </p>
           </div>
 
-          {/* Floating stat tiles for vibe */}
+          {/* Three quiet tiles: what the club has */}
           <div className="grid grid-cols-3 gap-3">
             <FeatureTile icon={Trophy} label="Class Arena" tone="amber" />
             <FeatureTile icon={Flame} label="Streaks" tone="rose" />
@@ -253,50 +248,47 @@ const Auth = () => {
           </div>
         </div>
 
-        <div className="relative text-xs text-white/40">
+        <div className="relative text-hec-caption text-hec-ink-faint">
           © {new Date().getFullYear()} Happy English Club · Crafted with care.
         </div>
       </aside>
 
       {/* ───── RIGHT — form panel ───── */}
-      <main className="relative flex items-center justify-center p-5 sm:p-8 lg:p-12 bg-background text-foreground min-h-screen lg:min-h-0">
-        {/* subtle gradient header on mobile to keep brand visible */}
-        <div className="absolute inset-x-0 top-0 h-40 bg-aurora opacity-10 lg:hidden" />
-
+      <main className="relative flex items-center justify-center px-4 py-8 sm:p-8 lg:p-12 bg-hec-paper text-hec-ink min-h-screen lg:min-h-0">
         <div className="relative w-full max-w-sm">
           {/* Mobile brand */}
           <div className="lg:hidden mb-8 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-aurora flex items-center justify-center shadow-q3 overflow-hidden p-1">
-              <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-contain rounded-xl" />
+            <div className="h-11 w-11 shrink-0 rounded-hec-lg border border-hec-line bg-hec-raised flex items-center justify-center overflow-hidden p-1">
+              <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-contain rounded-hec-md" />
             </div>
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground">
+            <div className="min-w-0">
+              <p className="text-hec-caption font-medium tracking-wider uppercase text-hec-ink-soft">
                 Happy English Club
               </p>
-              <p className="text-base font-extrabold">Learning, levelled up.</p>
+              <p className="font-display text-hec-h3 font-medium text-hec-ink">Learning, levelled up.</p>
             </div>
           </div>
 
           {/* Headline */}
-          <div className="mb-7">
-            <h1 className="type-display">{headline}</h1>
-            <p className="type-body text-muted-foreground mt-1.5">{subhead}</p>
+          <div className="mb-8">
+            <h1 className="font-display text-hec-display font-medium text-hec-ink">{headline}</h1>
+            <p className="mt-2 text-hec-body text-hec-ink-soft">{subhead}</p>
           </div>
 
           {/* Bootstrap notice */}
           {showBootstrap && (
-            <div className="mb-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4">
+            <div className="mb-6 rounded-hec-lg border border-hec-warn/30 bg-hec-warn-tint p-4">
               <div className="flex items-start gap-3">
-                <Lock className="h-5 w-5 text-amber-600 dark:text-amber-300 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold mb-1">System setup required</p>
-                  <p className="text-xs text-muted-foreground mb-3">
+                <Lock className="h-5 w-5 shrink-0 text-hec-warn mt-1" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-hec-small font-semibold text-hec-ink mb-1">System setup required</p>
+                  <p className="text-hec-caption text-hec-ink-soft mb-3">
                     No admin account exists yet. Create the first one to get started.
                   </p>
                   <Button
                     onClick={handleBootstrap}
                     disabled={bootstrapping}
-                    className="w-full h-11 bg-amber-500 hover:bg-amber-400 text-white font-semibold"
+                    className="w-full"
                   >
                     {bootstrapping ? "Setting up…" : "Create First Admin"}
                   </Button>
@@ -306,16 +298,16 @@ const Auth = () => {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-1.5">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
               <Label
                 htmlFor="email"
-                className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
+                className="text-hec-small font-medium text-hec-ink"
               >
                 Email
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-hec-ink-faint" />
                 <Input
                   id="email"
                   type="email"
@@ -323,21 +315,21 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 pl-10 rounded-xl text-[15px]"
+                  className="pl-10"
                 />
               </div>
             </div>
 
             {mode !== "forgot" && (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label
                   htmlFor="password"
-                  className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
+                  className="text-hec-small font-medium text-hec-ink"
                 >
                   Password
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-hec-ink-faint" />
                   <Input
                     id="password"
                     type="password"
@@ -346,19 +338,19 @@ const Auth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="h-12 pl-10 rounded-xl text-[15px]"
+                    className="pl-10"
                   />
                 </div>
               </div>
             )}
 
             {mode === "signup" && (
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+              <div className="space-y-2">
+                <Label htmlFor="signup-role" className="text-hec-small font-medium text-hec-ink">
                   I am a
                 </Label>
                 <Select value={role} onValueChange={(v: UserRole) => setRole(v)}>
-                  <SelectTrigger className="h-12 rounded-xl text-[15px]">
+                  <SelectTrigger id="signup-role">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -366,26 +358,26 @@ const Auth = () => {
                     <SelectItem value="family">Family</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-hec-caption text-hec-ink-soft">
                   The school links your account to your child before you can see anything. Teachers and staff: the school creates your login.
                 </p>
               </div>
             )}
 
             {mode === "login" && (
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="flex min-h-hec-target items-center gap-2 cursor-pointer">
                   <Checkbox
                     id="remember"
                     checked={rememberMe}
                     onCheckedChange={(c) => setRememberMe(c as boolean)}
                   />
-                  <span className="text-sm font-medium">Remember me</span>
+                  <span className="text-hec-small font-medium text-hec-ink">Remember me</span>
                 </label>
                 <Button
                   type="button"
                   variant="link"
-                  className="h-auto p-0 text-sm font-semibold text-blue-600 dark:text-blue-300"
+                  className="text-hec-small font-semibold"
                   onClick={() => setMode("forgot")}
                 >
                   Forgot?
@@ -396,11 +388,11 @@ const Auth = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-12 rounded-xl bg-aurora text-white font-bold shadow-q3 hover:opacity-95 active:scale-[0.99] transition-all"
+              className="w-full"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <div className="animate-spin h-4 w-4 rounded-full border-2 border-white/40 border-t-white" />
+                  <div className="animate-spin h-4 w-4 rounded-full border-2 border-hec-on-action/40 border-t-hec-on-action" />
                   Processing…
                 </span>
               ) : (
@@ -413,25 +405,25 @@ const Auth = () => {
           </form>
 
           {/* Mode toggle */}
-          <div className="mt-7 text-center text-sm">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-1 text-center text-hec-small">
             {mode === "login" ? (
               <>
-                <span className="text-muted-foreground">New to the club?</span>{" "}
+                <span className="text-hec-ink-soft">New to the club?</span>{" "}
                 <button
                   type="button"
                   onClick={() => setMode("signup")}
-                  className="font-bold text-blue-600 dark:text-blue-300 hover:underline"
+                  className="inline-flex min-h-hec-target items-center rounded-hec-sm px-2 font-semibold text-hec-brass underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                 >
                   Sign up
                 </button>
               </>
             ) : (
               <>
-                <span className="text-muted-foreground">Already have an account?</span>{" "}
+                <span className="text-hec-ink-soft">Already have an account?</span>{" "}
                 <button
                   type="button"
                   onClick={() => setMode("login")}
-                  className="font-bold text-blue-600 dark:text-blue-300 hover:underline"
+                  className="inline-flex min-h-hec-target items-center rounded-hec-sm px-2 font-semibold text-hec-brass underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                 >
                   Sign in
                 </button>
@@ -447,23 +439,23 @@ const Auth = () => {
               which left the holder of a valid code with no way in. In "forgot"
               mode this is the likeliest answer, so it is stated plainly. */}
           {mode !== "signup" && (
-            <div className="mt-6 pt-5 border-t border-white/10">
+            <div className="mt-6 pt-6 border-t border-hec-line">
               <Link
                 to="/claim"
-                className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3 transition-colors hover:bg-white/10"
+                className="flex min-h-hec-target items-center gap-3 rounded-hec-lg border border-hec-line bg-hec-surface px-4 py-3 shadow-hec-1 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
               >
-                <KeyRound className="h-5 w-5 shrink-0 text-blue-500 dark:text-blue-300" />
+                <KeyRound className="h-5 w-5 shrink-0 text-hec-brass" />
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold">
+                  <span className="block text-hec-small font-semibold text-hec-ink">
                     Have an access code from the school?
                   </span>
-                  <span className="block text-[11px] text-muted-foreground">
+                  <span className="block text-hec-caption text-hec-ink-soft">
                     {mode === "forgot"
                       ? "Forgot your email too? Use the code on your access card instead."
                       : "Use the code on your card to set a new password."}
                   </span>
                 </span>
-                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-hec-ink-soft" />
               </Link>
             </div>
           )}
@@ -472,24 +464,24 @@ const Auth = () => {
               set. This is a live app holding real student and family data:
               there is deliberately no admin/teacher/family demo, and no
               password is published here or anywhere in the source. */}
-          <div className="mt-8 pt-6 border-t border-white/10">
-            <p className="text-sm font-semibold text-center text-white/80">Want to look around?</p>
-            <p className="text-[11px] text-center text-muted-foreground mt-1 mb-3">
+          <div className="mt-8 pt-6 border-t border-hec-line">
+            <p className="text-hec-small font-semibold text-center text-hec-ink">Want to look around?</p>
+            <p className="text-hec-caption text-center text-hec-ink-soft mt-1 mb-3">
               Ask us for the demo password — the demo is a sample student account with fictional data.
             </p>
             <div className="space-y-2">
               <Input
                 type="password"
                 placeholder="Demo password"
+                aria-label="Demo password"
                 value={demoPassword}
                 onChange={(e) => setDemoPassword(e.target.value)}
-                className="h-10 bg-white/5 border-white/20"
                 autoComplete="off"
               />
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-10 border-white/20 bg-white/5 hover:bg-white/10 text-xs font-semibold"
+                className="w-full"
                 onClick={() => handleDemoLogin(demoPassword)}
                 disabled={loading || demoPassword.length < 4}
               >
@@ -499,8 +491,8 @@ const Auth = () => {
           </div>
 
           {/* Trust marker */}
-          <div className="mt-6 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-            <Sparkles className="h-3 w-3" />
+          <div className="mt-6 flex items-center justify-center gap-2 text-hec-caption text-hec-ink-faint">
+            <Sparkles className="h-4 w-4 shrink-0" />
             <span>Secure authentication powered by Supabase</span>
           </div>
         </div>
@@ -518,17 +510,18 @@ function FeatureTile({
   label: string;
   tone: "amber" | "rose" | "violet";
 }) {
+  // One quiet look for all three: brass marks the reward icons (DESIGN_SYSTEM s.18); the tone names stay.
   const map = {
-    amber: "from-amber-400/30 to-orange-500/20 text-amber-200",
-    rose: "from-rose-400/30 to-sky-500/20 text-rose-200",
-    violet: "from-blue-400/30 to-indigo-500/20 text-blue-200",
+    amber: "text-hec-brass",
+    rose: "text-hec-brass",
+    violet: "text-hec-brass",
   } as const;
   return (
     <div
-      className={`rounded-2xl bg-gradient-to-br ${map[tone]} ring-1 ring-white/10 p-3 text-center backdrop-blur-md`}
+      className="rounded-hec-lg border border-hec-line bg-hec-sunken p-3 text-center"
     >
-      <Icon className="h-5 w-5 mx-auto mb-1.5" />
-      <p className="text-[11px] font-semibold text-white/90">{label}</p>
+      <Icon className={`h-5 w-5 mx-auto mb-2 ${map[tone]}`} />
+      <p className="text-hec-caption font-medium text-hec-ink-soft">{label}</p>
     </div>
   );
 }

@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { KeyRound, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { KeyRound, Loader2, Eye, EyeOff, ShieldCheck, AlertCircle } from "lucide-react";
 
 const MIN_PASSWORD = 8;
 
@@ -86,17 +86,17 @@ export default function ClaimAccess() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-violet-50 via-background to-indigo-50 dark:from-violet-950/20 dark:via-background dark:to-indigo-950/20">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-hec-paper text-hec-ink">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg mb-2">
-            <KeyRound className="h-7 w-7 text-white" />
+          <div className="mx-auto h-14 w-14 rounded-hec-lg border border-hec-line bg-hec-sunken flex items-center justify-center mb-2">
+            <KeyRound className="h-7 w-7 text-hec-brass" />
           </div>
           <CardTitle>Set up your account</CardTitle>
           <CardDescription>
             Enter the one-time code from the card the school gave you, then choose your own
             password.
-            <span className="block mt-1 text-xs">
+            <span className="block mt-2 text-hec-caption">
               Nhập mã một lần trên thẻ nhà trường đã cấp, rồi tự đặt mật khẩu.
             </span>
           </CardDescription>
@@ -112,7 +112,7 @@ export default function ClaimAccess() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="XXXXX-XXXXX"
-                className="mt-1 font-mono tracking-widest text-center text-lg"
+                className="mt-2 font-mono tracking-widest text-center text-hec-h3"
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -120,7 +120,7 @@ export default function ClaimAccess() {
 
             <div>
               <Label htmlFor="password">Choose a password</Label>
-              <div className="relative mt-1">
+              <div className="relative mt-2">
                 <Input
                   id="password"
                   type={show ? "text" : "password"}
@@ -128,11 +128,12 @@ export default function ClaimAccess() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={`At least ${MIN_PASSWORD} characters`}
                   autoComplete="new-password"
+                  className="pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShow((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex min-h-hec-target min-w-hec-target items-center justify-center rounded-hec-md text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                   aria-label={show ? "Hide password" : "Show password"}
                 >
                   {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -147,34 +148,35 @@ export default function ClaimAccess() {
                 type={show ? "text" : "password"}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="mt-1"
+                className="mt-2"
                 autoComplete="new-password"
               />
             </div>
 
             {error && (
-              <p className="text-sm text-destructive bg-destructive/5 border border-destructive/30 rounded-lg p-2.5">
-                {error}
+              <p role="alert" className="flex items-start gap-2 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 text-hec-small text-hec-danger">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-1" />
+                <span className="min-w-0">{error}</span>
               </p>
             )}
 
             <Button
               type="submit"
               disabled={busy || !code.trim() || !password || !confirm}
-              className="w-full gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
+              className="w-full gap-2"
             >
               {busy
                 ? <><Loader2 className="h-4 w-4 animate-spin" />Setting up…</>
                 : <>Set my password</>}
             </Button>
 
-            <p className="text-[11px] text-muted-foreground flex items-start gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 shrink-0 mt-px" />
+            <p className="text-hec-caption text-hec-ink-soft flex items-start gap-2">
+              <ShieldCheck className="h-4 w-4 shrink-0" />
               Only you will know this password — the school cannot see it. The code works once.
             </p>
 
-            <p className="text-xs text-center text-muted-foreground">
-              Already set up? <Link to="/auth" className="underline">Sign in</Link>
+            <p className="text-hec-small text-center text-hec-ink-soft">
+              Already set up? <Link to="/auth" className="inline-flex min-h-hec-target items-center rounded-hec-sm px-1 font-medium text-hec-brass underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">Sign in</Link>
             </p>
           </form>
         </CardContent>
