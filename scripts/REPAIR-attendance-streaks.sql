@@ -10,8 +10,10 @@
 --
 -- The rule is the one in supabase/functions/_lib/attendance-effects.ts
 -- (streakRun): a child's marks in one class in lesson order (date,
--- start_time, id); Present and Late count, Absent breaks the run, Excused /
--- unmarked / cancelled lessons neither count nor break it.
+-- start_time, id), over HELD lessons up to today only; Present and Late
+-- count, Absent breaks the run, Excused / unmarked lessons are passed over.
+-- Scheduled lessons (future placeholders, past lessons never turned to Held)
+-- and Canceled ones neither count nor break it.
 --
 -- What the real run does, in one transaction:
 --   1. BACK-PAY. For every attended lesson at which a child's run reached a
@@ -62,7 +64,12 @@ WITH reg AS (
                             ORDER BY s.date, s.start_time::text, s.id::text) AS ord
     FROM public.attendance a
     JOIN public.sessions s ON s.id = a.session_id
-   WHERE s.status::text <> 'Canceled'
+   -- Only Held lessons up to today take part (attendance-effects.ts
+   -- takesPartInStreak): Scheduled lessons - the placeholder 'Present' on
+   -- future lessons, past lessons never turned to Held - and Canceled
+   -- ones neither count nor break. Held placeholders count.
+   WHERE s.status::text = 'Held'
+     AND s.date <= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
 ), grouped AS (
   SELECT r.*,
          count(*) FILTER (WHERE r.status = 'Absent')
@@ -88,7 +95,12 @@ WITH reg AS (
                             ORDER BY s.date, s.start_time::text, s.id::text) AS ord
     FROM public.attendance a
     JOIN public.sessions s ON s.id = a.session_id
-   WHERE s.status::text <> 'Canceled'
+   -- Only Held lessons up to today take part (attendance-effects.ts
+   -- takesPartInStreak): Scheduled lessons - the placeholder 'Present' on
+   -- future lessons, past lessons never turned to Held - and Canceled
+   -- ones neither count nor break. Held placeholders count.
+   WHERE s.status::text = 'Held'
+     AND s.date <= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
 ), grouped AS (
   -- Each Absent starts a new group; the current run is the attended
   -- lessons of the last group.

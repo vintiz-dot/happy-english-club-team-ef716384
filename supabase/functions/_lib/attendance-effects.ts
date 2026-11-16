@@ -22,7 +22,8 @@
  * THE STREAK (owner's ruling, 16 Nov 2026, docs/evidence/FIX-streaks-bank-uploads.md).
  * A streak is the run of consecutive ATTENDED lessons of one child in one
  * class, read from the register: Present and Late count, Absent breaks it,
- * Excused, unmarked and cancelled lessons neither count nor break it. It
+ * Excused, unmarked, cancelled and not-yet-Held (Scheduled) lessons neither
+ * count nor break it - only Held lessons take part. It
  * is worked out from `attendance` + `sessions` every time, never stepped
  * up from the stored row: the stored row used to be incremented on every
  * call, so a retried or late-processed lesson counted again and 18
@@ -113,7 +114,7 @@ export interface RegisterMark {
   date: string;
   /** The lesson's start time; orders two lessons on one day. */
   startTime?: string | null;
-  /** The lesson's status; a 'Canceled' lesson is passed over. */
+  /** The lesson's status; only a 'Held' lesson takes part in a streak. */
   sessionStatus?: string | null;
   /** The child's mark on it. */
   status: string | null;
@@ -126,7 +127,7 @@ export interface StreakReading {
   lastAttended: string | null;
   /** With a bound: whether that lesson is in the register at all. */
   found: boolean;
-  /** With a bound: whether the bound lesson itself counts (attended, not cancelled). */
+  /** With a bound: whether the bound lesson itself counts (attended, Held). */
   boundAttended: boolean;
   /** With a bound: that lesson's date. */
   boundDate: string | null;
@@ -140,32 +141,52 @@ const lessonOrder = (a: RegisterMark, b: RegisterMark) =>
   cmp(a.date, b.date) || cmp(a.startTime ?? '', b.startTime ?? '') || cmp(a.sessionId, b.sessionId);
 
 /**
+ * Whether a lesson takes part in a streak at all: only a lesson that was
+ * HELD, on or before `limit` (the processed lesson's date, or today). A
+ * Scheduled lesson - including the placeholder 'Present' rows seeded on
+ * every future lesson, and past lessons nobody turned to Held - neither
+ * counts nor breaks, whatever its mark; a Canceled one likewise. A Held
+ * lesson's placeholder mark (marked_by NULL) does count, as billing counts
+ * it. The repair script's `WHERE s.status::text = 'Held' AND s.date <= today`
+ * is this same test.
+ */
+export const takesPartInStreak = (m: RegisterMark, limit?: string | null) =>
+  m.sessionStatus === 'Held' && (!limit || m.date <= limit);
+
+/**
  * The rule. Reads a child's register in one class in lesson order and
  * returns the run of attended lessons ending at `uptoSessionId` (or at the
- * latest lesson when none is given): Present and Late count, Absent ends
- * the run, Excused / unmarked / cancelled lessons are passed over. Pure.
+ * latest lesson up to `today` when none is given), over the lessons that
+ * take part (`takesPartInStreak`): Present and Late count, Absent ends the
+ * run, Excused / unmarked lessons are passed over. Pure.
  */
-export function streakRun(marks: readonly RegisterMark[], uptoSessionId?: string | null): StreakReading {
+export function streakRun(
+  marks: readonly RegisterMark[],
+  uptoSessionId?: string | null,
+  opts: { today?: string | null } = {},
+): StreakReading {
   const sorted = [...marks].filter((m) => m && typeof m.date === 'string' && typeof m.sessionId === 'string')
     .sort(lessonOrder);
   let end = sorted.length - 1;
   let found = false;
   let boundAttended = false;
   let boundDate: string | null = null;
+  let limit: string | null = opts.today ?? null;
   if (uptoSessionId) {
     end = sorted.findIndex((m) => m.sessionId === uptoSessionId);
     found = end >= 0;
     if (!found) return { run: 0, lastAttended: null, found, boundAttended, boundDate };
     const b = sorted[end];
     boundDate = b.date;
-    boundAttended = b.sessionStatus !== 'Canceled' && STREAK_ATTENDED.has(b.status ?? '');
+    limit = b.date;
+    boundAttended = takesPartInStreak(b, limit) && STREAK_ATTENDED.has(b.status ?? '');
   }
   let run = 0;
   let broken = false;
   let lastAttended: string | null = null;
   for (let i = end; i >= 0; i--) {
     const m = sorted[i];
-    if (m.sessionStatus === 'Canceled') continue;
+    if (!takesPartInStreak(m, limit)) continue;
     const s = m.status ?? '';
     if (STREAK_ATTENDED.has(s)) {
       if (lastAttended === null) lastAttended = m.date;
@@ -200,6 +221,8 @@ export async function advanceStreaks(
     return false;
   }
   const now = new Date().toISOString();
+  // Today in Hanoi: the stored row is the run up to today, as the repair reads it.
+  const hanoiToday = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
 
   try {
     const { data: streaks, error: readError } = await supabase
@@ -254,7 +277,7 @@ export async function advanceStreaks(
 
     for (const r of reads) {
       if (!r.marks) { ok = false; continue; }
-      const current = streakRun(r.marks);
+      const current = streakRun(r.marks, null, { today: hanoiToday });
       const atLesson = streakRun(r.marks, sessionId);
       if (streakBonusDue(atLesson)) due.push({ studentId: r.studentId, run: atLesson.run, date: atLesson.boundDate! });
       if (hasRow.has(r.studentId) || current.run > 0) {

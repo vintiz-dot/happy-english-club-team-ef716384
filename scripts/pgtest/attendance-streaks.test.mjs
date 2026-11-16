@@ -197,11 +197,24 @@ console.log("=== the rule, pure ===");
   eq("the order of the input does not matter", fx.streakRun([...reg].reverse()).run, 1);
   const sameDay = [M("x2", "2026-11-02", "Present", { startTime: "18:00:00" }), M("x1", "2026-11-02", "Absent", { startTime: "08:00:00" })];
   eq("two lessons on one day are ordered by start time", fx.streakRun(sameDay).run, 1);
+  // Only Held lessons take part (conductor's live counts: 734 placeholder
+  // 'Present' rows on future Scheduled lessons, 29 'Present' + 5 'Excused'
+  // on past lessons still Scheduled).
+  const held4 = ["h1", "h2", "h3", "h4"].map((id, i) => M(id, `2026-11-0${i + 1}`, "Present"));
+  const future = ["f1", "f2", "f3"].map((id, i) => M(id, `2026-12-0${i + 1}`, "Present", { sessionStatus: "Scheduled" }));
+  eq("future Scheduled placeholders do not lengthen the run", [fx.streakRun([...held4, ...future]).run, fx.streakRun([...held4, ...future]).lastAttended], [4, "2026-11-04"]);
+  eq("  and never owe a bonus (the 5th mark is a future placeholder)", fx.streakBonusDue(fx.streakRun([...held4, ...future], "f1")), false);
+  const pastSched = (status) => M("ps", "2026-11-03", status, { startTime: "18:00:00", sessionStatus: "Scheduled" });
+  eq("a past lesson still Scheduled, marked Present, does not count", fx.streakRun([...held4, pastSched("Present")]).run, 4);
+  eq("  marked Absent, does not break", fx.streakRun([...held4, pastSched("Absent")]).run, 4);
+  eq("a Held lesson after today (by the clock) is left out of the current run",
+     fx.streakRun([...held4, M("h9", "2099-01-01", "Absent")], null, { today: "2026-11-16" }).run, 4);
+  eq("  and an Absent after the processed lesson never matters to it", fx.streakRun([...held4, M("h5", "2026-11-05", "Absent")], "h4").run, 4);
 }
 
 console.log("=== mark-attendance: five lessons, one bonus, dated by the lesson ===");
 const C = await klass(), APPLE = await kid();
-const dates = ["2026-10-27", "2026-10-29", "2026-11-03", "2026-11-05", "2026-11-10", "2026-11-12", "2026-11-17"];
+const dates = ["2026-10-27", "2026-10-29", "2026-11-03", "2026-11-05", "2026-11-10", "2026-11-12", "2026-11-14"];
 const L = [];
 for (const d of dates) L.push(await lesson(C, d));
 for (let i = 0; i < 4; i++) await markAndRun(C, L[i], dates[i], APPLE, "Present");
@@ -232,6 +245,33 @@ eq("  and the Absent still recalculates tuition, as before",
 await markAndRun(C, L[6], dates[6], APPLE, "Excused");
 eq("re-marked Excused, the absence no longer breaks it", await streak(APPLE, C), { c: 6, d: "2026-11-12", b: 1 });
 eq("  and the earlier bonus is not paid again", (await bonuses(APPLE)).length, 1);
+
+console.log("=== only Held lessons take part: Scheduled placeholders neither count nor break ===");
+{
+  const C7 = await klass(), K = await kid();
+  // Four lessons taught (Held, placeholder marks as billing has them), a
+  // past lesson nobody turned to Held with an 'Absent', and the seeded
+  // 'Present' placeholders on three future lessons.
+  const taught = [];
+  for (const d of ["2026-09-07", "2026-09-08", "2026-09-09", "2026-09-10"]) { const s = await lesson(C7, d); taught.push(s); await mark(s, K, "Present"); }
+  const stale = await lesson(C7, "2026-09-11", { status: "Scheduled" });
+  await mark(stale, K, "Absent");
+  const next = await lesson(C7, "2026-09-14", { status: "Scheduled" });
+  const futures = [];
+  for (const d of ["2027-01-04", "2027-01-05", "2027-01-06"]) { const s = await lesson(C7, d, { status: "Scheduled" }); futures.push(s); await mark(s, K, "Present"); }
+  for (const f of futures) await drain(C7, f, null, [K]);
+  eq("working the future placeholders pays nothing", (await bonuses(K)).length, 0);
+  await drain(C7, taught[3], "2026-09-10", [K]);
+  eq("  the run is the four taught lessons: the future ones do not lengthen it, the stale Absent does not break it",
+     await streak(K, C7), { c: 4, d: "2026-09-10", b: 0 });
+  // mark-attendance turns the lesson Held, then runs the effects.
+  await q(`UPDATE public.sessions SET status = 'Held' WHERE id = $1 AND status = 'Scheduled'`, [next]);
+  await markAndRun(C7, next, "2026-09-14", K, "Present");
+  const b = await bonuses(K);
+  eq("the fifth TAUGHT lesson pays, on that lesson - not the run of 8 the placeholders would make",
+     [b.length, b[0]?.session_id, b[0]?.notes], [1, next, "Attendance streak bonus: 5 consecutive classes attended!"]);
+  eq("  and the counter reads 5", await streak(K, C7), { c: 5, d: "2026-09-14", b: 1 });
+}
 
 console.log("=== Excused and cancelled lessons neither count nor break ===");
 {
@@ -374,10 +414,27 @@ ok("the script starts as a dry run, and has exactly one switch", REPAIR_SQL.spli
   await marks(D, lessonsY, "LLLLL");          // Late counts: 5 at lesson 5 of Y
   await marks(E, lessonsY, "PPPPP");          // 5 at lesson 5 of Y, but the live code already paid it
   await marks(F, lessonsX, "AAAAA");          // nothing
+  // Not-yet-taught lessons (conductor's live counts): class Z has three
+  // taught lessons then the seeded 'Present' on three FUTURE Scheduled
+  // ones; class W has a PAST lesson still Scheduled in the middle.
+  const Z = (await q2(`INSERT INTO public.classes (name) VALUES ('z') RETURNING id`))[0].id;
+  const W = (await q2(`INSERT INTO public.classes (name) VALUES ('w') RETURNING id`))[0].id;
+  const zl = [];
+  for (const [date, status] of [[d(1), "Held"], [d(2), "Held"], [d(3), "Held"], ["2027-02-01", "Scheduled"], ["2027-02-02", "Scheduled"], ["2027-02-03", "Scheduled"]]) {
+    zl.push((await q2(`INSERT INTO public.sessions (class_id, date, status) VALUES ($1,$2,$3) RETURNING id`, [Z, date, status]))[0].id);
+  }
+  const wl = [];
+  for (let i = 1; i <= 6; i++) {
+    wl.push((await q2(`INSERT INTO public.sessions (class_id, date, status) VALUES ($1,$2,$3) RETURNING id`, [W, d(i), i === 4 ? "Scheduled" : "Held"]))[0].id);
+  }
+  const G = await child(), H = await child(), I = await child();
+  await marks(G, zl, "PPPPPP");               // 3 taught + 3 future placeholders: run 3, nothing owed (not 5 at the 5th)
+  await marks(H, wl, "PPPPPP");               // lesson 4 still Scheduled: does not count - run 5 only at lesson 6
+  await marks(I, wl, "PPPAPP");               // an Absent on the Scheduled lesson 4 does not break: run 5 at lesson 6
   await q2(`INSERT INTO public.point_transactions (student_id, class_id, session_id, points, type, date, month, notes)
             VALUES ($1,$2,$3,50,'participation',$4,'2026-08','Attendance streak bonus: 5 consecutive classes attended!')`, [E, Y, lessonsY[4], d(5)]);
   // Inflated counters, as the retries left them.
-  for (const [k, c] of [[A, X], [B, X], [C, X], [D, Y], [E, Y], [F, X]]) {
+  for (const [k, c] of [[A, X], [B, X], [C, X], [D, Y], [E, Y], [F, X], [G, Z], [H, W], [I, W]]) {
     await q2(`INSERT INTO public.student_attendance_streaks (student_id, class_id, consecutive_days, last_attendance_date, bonuses_awarded) VALUES ($1,$2,612,'2026-11-13',14)`, [k, c]);
   }
   const WANT = [
@@ -386,6 +443,8 @@ ok("the script starts as a dry run, and has exactly one switch", REPAIR_SQL.spli
     `${B}|${lessonsX[10]}|Attendance streak bonus (paid late): 5 classes in a row, lesson of 2026-08-11`,
     `${C}|${lessonsX[6]}|Attendance streak bonus (paid late): 5 classes in a row, lesson of 2026-08-07`,
     `${D}|${lessonsY[4]}|Attendance streak bonus (paid late): 5 classes in a row, lesson of 2026-08-05`,
+    `${H}|${wl[5]}|Attendance streak bonus (paid late): 5 classes in a row, lesson of 2026-08-06`,
+    `${I}|${wl[5]}|Attendance streak bonus (paid late): 5 classes in a row, lesson of 2026-08-06`,
   ].sort();
   const snap2 = async () => ({
     pts: await q2(`SELECT id, student_id, points, date::text, notes FROM public.point_transactions ORDER BY id`),
@@ -397,33 +456,36 @@ ok("the script starts as a dry run, and has exactly one switch", REPAIR_SQL.spli
 
   const dry = lastRow(await db2.exec(REPAIR_SQL));
   eq("DRY RUN: changes nothing at all", await snap2(), before);
-  eq("  and says what it would pay: 5 bonuses, 250 points",
-     [dry?.mode, Number(dry?.bonuses_to_pay), Number(dry?.points_to_pay)], ["DRY RUN - nothing changed", 5, 250]);
-  eq("  per class, largest first, as counts", dry?.bonuses_per_class, [4, 1]);
-  eq("  per child, as counts: three children get one, one child gets two", dry?.children_by_bonus_count, { 1: 3, 2: 1 });
-  eq("  four children, the largest single-child total 100 points", [Number(dry?.children_paid), Number(dry?.largest_child_points)], [4, 100]);
-  eq("  and the counters it would fix", [Number(dry?.rows_over_500_before), Number(dry?.streak_rows_to_change), Number(dry?.max_run_after)], [6, 6, 11]);
+  eq("  and says what it would pay: 7 bonuses, 350 points - none for a lesson not yet taught",
+     [dry?.mode, Number(dry?.bonuses_to_pay), Number(dry?.points_to_pay)], ["DRY RUN - nothing changed", 7, 350]);
+  eq("  per class, largest first, as counts", dry?.bonuses_per_class, [4, 2, 1]);
+  eq("  per child, as counts: five children get one, one child gets two", dry?.children_by_bonus_count, { 1: 5, 2: 1 });
+  eq("  six children, the largest single-child total 100 points", [Number(dry?.children_paid), Number(dry?.largest_child_points)], [6, 100]);
+  eq("  and the counters it would fix", [Number(dry?.rows_over_500_before), Number(dry?.streak_rows_to_change), Number(dry?.max_run_after)], [9, 9, 11]);
   {
-    const ids = [A, B, C, D, E, F, X, Y, ...lessonsX, ...lessonsY];
+    const ids = [A, B, C, D, E, F, G, H, I, X, Y, Z, W, ...lessonsX, ...lessonsY, ...zl, ...wl];
     const printed = JSON.stringify(dry);
     ok("  no id appears in what it prints", ids.every((id) => !printed.includes(id)));
   }
 
   const real = lastRow(await db2.exec(REAL_SQL));
-  eq("REAL RUN: pays the same 5 bonuses it announced", [real?.mode, Number(real?.bonuses_to_pay), Number(real?.points_to_pay)], ["REAL RUN", 5, 250]);
+  eq("REAL RUN: pays the same 7 bonuses it announced", [real?.mode, Number(real?.bonuses_to_pay), Number(real?.points_to_pay)], ["REAL RUN", 7, 350]);
   const paid = await q2(`SELECT student_id || '|' || session_id || '|' || notes k, points, type, date::text, month, created_by
                            FROM public.point_transactions WHERE notes LIKE 'Attendance streak bonus (paid late)%'`);
   eq("  exactly the hand-computed lessons, with the run and the lesson's date in the wording", paid.map((r) => r.k).sort(), WANT);
   eq("  each 50 points, participation, no creator", [...new Set(paid.map((r) => `${r.points}|${r.type}|${r.created_by}`))], ["50|participation|null"]);
   eq("  all dated TODAY in Hanoi, not by the lesson, so past months are not rewritten",
      [...new Set(paid.map((r) => `${r.date}|${r.month}`))], [`${HANOI_TODAY}|${HANOI_TODAY.slice(0, 7)}`]);
+  eq("  nothing for the child whose 4th-6th marks are future placeholders",
+     (await q2(`SELECT count(*)::int n FROM public.point_transactions WHERE student_id = $1`, [G]))[0].n, 0);
   eq("  the lesson the live code had already paid is not paid again",
      (await q2(`SELECT count(*)::int n FROM public.point_transactions WHERE student_id = $1`, [E]))[0].n, 1);
   eq("  the counters rebuilt, bonuses_awarded = floor(run / 5)",
      await q2(`SELECT consecutive_days c, last_attendance_date::text d, bonuses_awarded b FROM public.student_attendance_streaks
-               ORDER BY array_position($1::uuid[], student_id)`, [[A, B, C, D, E, F]]),
+               ORDER BY array_position($1::uuid[], student_id)`, [[A, B, C, D, E, F, G, H, I]]),
      [{ c: 11, d: "2026-08-12", b: 2 }, { c: 5, d: "2026-08-11", b: 1 }, { c: 5, d: "2026-08-07", b: 1 },
-      { c: 5, d: "2026-08-05", b: 1 }, { c: 5, d: "2026-08-05", b: 1 }, { c: 0, d: null, b: 0 }]);
+      { c: 5, d: "2026-08-05", b: 1 }, { c: 5, d: "2026-08-05", b: 1 }, { c: 0, d: null, b: 0 },
+      { c: 3, d: "2026-08-03", b: 0 }, { c: 5, d: "2026-08-06", b: 1 }, { c: 5, d: "2026-08-06", b: 1 }]);
   const after = await snap2();
   eq("  register and lessons untouched", [after.att, after.ses], [before.att, before.ses]);
 
@@ -469,6 +531,17 @@ console.log("=== the repair on a fixture like live, against the TS rule; then th
     await mark(lessonsB[14], kids[k], k % 2 ? "Absent" : "Present");   // the 18:00 lesson on day 4
     await q(`INSERT INTO public.student_attendance_streaks (student_id, class_id, consecutive_days, last_attendance_date, bonuses_awarded)
              VALUES ($1,$2,$3,'2026-11-13',14), ($1,$4,$5,NULL,0)`, [kids[k], CA, 600 + k, CB, k]);
+  }
+  // As on live: a past lesson still Scheduled with placeholder marks, and
+  // the seeded 'Present' on future Scheduled lessons, in both classes.
+  const pastSched = [await lesson(CA, "2026-07-09", { start: "19:00", status: "Scheduled" }), await lesson(CB, "2026-07-02", { start: "19:00", status: "Scheduled" })];
+  const futureSched = [];
+  for (const d of ["2027-03-01", "2027-03-02", "2027-03-03", "2027-03-04", "2027-03-05"]) {
+    futureSched.push(await lesson(CA, d, { status: "Scheduled" }), await lesson(CB, d, { status: "Scheduled" }));
+  }
+  for (let k = 0; k < kids.length; k++) {
+    for (const s of pastSched) await mark(s, kids[k], k === 1 ? "Excused" : k === 4 ? "Absent" : "Present");
+    for (const s of futureSched) await mark(s, kids[k], "Present");
   }
   const KNONE = await kid();
   await q(`INSERT INTO public.student_attendance_streaks (student_id, class_id, consecutive_days, last_attendance_date, bonuses_awarded) VALUES ($1,$2,7,'2026-01-01',1)`, [KNONE, CA]);
@@ -528,11 +601,13 @@ console.log("=== the repair on a fixture like live, against the TS rule; then th
   eq("REAL RUN pays exactly what the TS rule owes, lesson by lesson", late.map((r) => r.k).sort(), owed);
   ok("  all dated today", late.every((r) => r.date === HANOI_TODAY));
   eq("  nothing is owed after it", await owedByTs(), []);
+  eq("  and nothing on a lesson not yet taught (past Scheduled or future placeholders)",
+     (await one(`SELECT count(*)::int n FROM public.point_transactions pt JOIN public.sessions s ON s.id = pt.session_id WHERE s.status::text <> 'Held'`)).n, 0);
   eq("  none over 500", (await one(`SELECT count(*)::int n FROM public.student_attendance_streaks WHERE consecutive_days > 500`)).n, 0);
   const rows = await q(`SELECT student_id, class_id, consecutive_days c, last_attendance_date::text d, bonuses_awarded b FROM public.student_attendance_streaks ORDER BY student_id, class_id`);
   const diffs = [];
   for (const r of rows) {
-    const ts = fx.streakRun(await readMarks(r.student_id, r.class_id));
+    const ts = fx.streakRun(await readMarks(r.student_id, r.class_id), null, { today: HANOI_TODAY });
     const want = { c: ts.run, d: ts.lastAttended, b: Math.floor(ts.run / 5) };
     if (JSON.stringify({ c: r.c, d: r.d, b: r.b }) !== JSON.stringify(want)) diffs.push({ got: r, want });
   }
