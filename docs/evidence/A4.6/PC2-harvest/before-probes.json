@@ -1,0 +1,550 @@
+{
+ "label": "before",
+ "legacy": false,
+ "runs": {
+  "chat-375-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "h": 42,
+    "padY": 16,
+    "lineH": 25.6,
+    "placeholderLinesFit": 1,
+    "w": 263
+   },
+   "overflow": false,
+   "shot": "before-chat-375-light.png"
+  },
+  "chat-375-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "h": 42,
+    "padY": 16,
+    "lineH": 25.6,
+    "placeholderLinesFit": 1,
+    "w": 263
+   },
+   "overflow": false,
+   "shot": "before-chat-375-dark.png"
+  },
+  "chat-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "h": 42,
+    "padY": 16,
+    "lineH": 25.6,
+    "placeholderLinesFit": 1,
+    "w": 300
+   },
+   "overflow": false,
+   "shot": "before-chat-1280-light.png"
+  },
+  "chat-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "h": 42,
+    "padY": 16,
+    "lineH": 25.6,
+    "placeholderLinesFit": 1,
+    "w": 300
+   },
+   "overflow": false,
+   "shot": "before-chat-1280-dark.png"
+  },
+  "teams-375-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "ariaLabel": null,
+    "labelledby": null,
+    "text": "Starters 1 (Mon-Wed)"
+   },
+   "overflow": false,
+   "shot": "before-teams-375-light.png"
+  },
+  "teams-375-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "ariaLabel": null,
+    "labelledby": null,
+    "text": "Starters 1 (Mon-Wed)"
+   },
+   "overflow": false,
+   "shot": "before-teams-375-dark.png"
+  },
+  "teams-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "ariaLabel": null,
+    "labelledby": null,
+    "text": "Starters 1 (Mon-Wed)"
+   },
+   "overflow": false,
+   "shot": "before-teams-1280-light.png"
+  },
+  "teams-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "ariaLabel": null,
+    "labelledby": null,
+    "text": "Starters 1 (Mon-Wed)"
+   },
+   "overflow": false,
+   "shot": "before-teams-1280-dark.png"
+  },
+  "mini-375-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "top": 551,
+    "bottom": 977,
+    "left": 16,
+    "right": 359,
+    "vh": 812,
+    "vw": 375,
+    "fitsVertically": false,
+    "position": "fixed"
+   },
+   "overflow": false,
+   "shot": "before-mini-375-light.png"
+  },
+  "mini-375-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "top": 551,
+    "bottom": 977,
+    "left": 16,
+    "right": 359,
+    "vh": 812,
+    "vw": 375,
+    "fitsVertically": false,
+    "position": "fixed"
+   },
+   "overflow": false,
+   "shot": "before-mini-375-dark.png"
+  },
+  "mini-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "top": 552,
+    "bottom": 978,
+    "left": 412,
+    "right": 764,
+    "vh": 800,
+    "vw": 1280,
+    "fitsVertically": false,
+    "position": "static"
+   },
+   "overflow": false,
+   "shot": "before-mini-1280-light.png"
+  },
+  "mini-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "top": 552,
+    "bottom": 978,
+    "left": 412,
+    "right": 764,
+    "vh": 800,
+    "vw": 1280,
+    "fitsVertically": false,
+    "position": "static"
+   },
+   "overflow": false,
+   "shot": "before-mini-1280-dark.png"
+  },
+  "quill-asg-375-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "stroke": "rgb(68, 68, 68)",
+    "fill": "rgb(68, 68, 68)",
+    "picker": "rgb(68, 68, 68)",
+    "placeholder": "rgba(0, 0, 0, 0.6)",
+    "toolbarBg": "rgb(239, 233, 220)",
+    "toolbarBorder": "rgb(204, 204, 204)"
+   },
+   "overflow": false,
+   "shot": "before-quill-asg-375-light.png"
+  },
+  "quill-asg-375-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "stroke": "rgb(68, 68, 68)",
+    "fill": "rgb(68, 68, 68)",
+    "picker": "rgb(68, 68, 68)",
+    "placeholder": "rgba(0, 0, 0, 0.6)",
+    "toolbarBg": "rgb(7, 12, 23)",
+    "toolbarBorder": "rgb(204, 204, 204)"
+   },
+   "overflow": false,
+   "shot": "before-quill-asg-375-dark.png"
+  },
+  "quill-asg-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "stroke": "rgb(68, 68, 68)",
+    "fill": "rgb(68, 68, 68)",
+    "picker": "rgb(68, 68, 68)",
+    "placeholder": "rgba(0, 0, 0, 0.6)",
+    "toolbarBg": "rgb(239, 233, 220)",
+    "toolbarBorder": "rgb(204, 204, 204)"
+   },
+   "overflow": false,
+   "shot": "before-quill-asg-1280-light.png"
+  },
+  "quill-asg-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "stroke": "rgb(68, 68, 68)",
+    "fill": "rgb(68, 68, 68)",
+    "picker": "rgb(68, 68, 68)",
+    "placeholder": "rgba(0, 0, 0, 0.6)",
+    "toolbarBg": "rgb(7, 12, 23)",
+    "toolbarBorder": "rgb(204, 204, 204)"
+   },
+   "overflow": false,
+   "shot": "before-quill-asg-1280-dark.png"
+  },
+  "quill-asg-picker-375-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "bg": "rgb(255, 255, 255)",
+    "item": "rgb(68, 68, 68)"
+   },
+   "overflow": false,
+   "shot": "before-quill-asg-picker-375-light.png"
+  },
+  "quill-asg-picker-375-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "bg": "rgb(255, 255, 255)",
+    "item": "rgb(68, 68, 68)"
+   },
+   "overflow": false,
+   "shot": "before-quill-asg-picker-375-dark.png"
+  },
+  "quill-asg-picker-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "bg": "rgb(255, 255, 255)",
+    "item": "rgb(68, 68, 68)"
+   },
+   "overflow": false,
+   "shot": "before-quill-asg-picker-1280-light.png"
+  },
+  "quill-asg-picker-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "bg": "rgb(255, 255, 255)",
+    "item": "rgb(68, 68, 68)"
+   },
+   "overflow": false,
+   "shot": "before-quill-asg-picker-1280-dark.png"
+  },
+  "quill-exam-375-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "stroke": "rgb(68, 68, 68)",
+    "picker": "rgb(68, 68, 68)",
+    "toolbarBg": "rgb(239, 233, 220)"
+   },
+   "overflow": false,
+   "shot": "before-quill-exam-375-light.png"
+  },
+  "quill-exam-375-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "stroke": "rgb(68, 68, 68)",
+    "picker": "rgb(68, 68, 68)",
+    "toolbarBg": "rgb(7, 12, 23)"
+   },
+   "overflow": false,
+   "shot": "before-quill-exam-375-dark.png"
+  },
+  "quill-exam-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "stroke": "rgb(68, 68, 68)",
+    "picker": "rgb(68, 68, 68)",
+    "toolbarBg": "rgb(239, 233, 220)"
+   },
+   "overflow": false,
+   "shot": "before-quill-exam-1280-light.png"
+  },
+  "quill-exam-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": {
+    "stroke": "rgb(68, 68, 68)",
+    "picker": "rgb(68, 68, 68)",
+    "toolbarBg": "rgb(7, 12, 23)"
+   },
+   "overflow": false,
+   "shot": "before-quill-exam-1280-dark.png"
+  },
+  "rubric-375-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": [
+    {
+     "w": 123,
+     "cut": true,
+     "v": "Says what the animal eats and where it lives"
+    },
+    {
+     "w": 123,
+     "cut": true,
+     "v": "Speaks without long stops"
+    },
+    {
+     "w": 123,
+     "cut": false,
+     "v": "Clear sounds"
+    }
+   ],
+   "overflow": false,
+   "shot": "before-rubric-375-light.png"
+  },
+  "rubric-375-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": [
+    {
+     "w": 123,
+     "cut": true,
+     "v": "Says what the animal eats and where it lives"
+    },
+    {
+     "w": 123,
+     "cut": true,
+     "v": "Speaks without long stops"
+    },
+    {
+     "w": 123,
+     "cut": false,
+     "v": "Clear sounds"
+    }
+   ],
+   "overflow": false,
+   "shot": "before-rubric-375-dark.png"
+  },
+  "rubric-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": [
+    {
+     "w": 356,
+     "cut": false,
+     "v": "Says what the animal eats and where it lives"
+    },
+    {
+     "w": 356,
+     "cut": false,
+     "v": "Speaks without long stops"
+    },
+    {
+     "w": 356,
+     "cut": false,
+     "v": "Clear sounds"
+    }
+   ],
+   "overflow": false,
+   "shot": "before-rubric-1280-light.png"
+  },
+  "rubric-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": [
+    {
+     "w": 356,
+     "cut": false,
+     "v": "Says what the animal eats and where it lives"
+    },
+    {
+     "w": 356,
+     "cut": false,
+     "v": "Speaks without long stops"
+    },
+    {
+     "w": 356,
+     "cut": false,
+     "v": "Clear sounds"
+    }
+   ],
+   "overflow": false,
+   "shot": "before-rubric-1280-dark.png"
+  },
+  "picker-375-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": [
+    {
+     "pressed": "true",
+     "bg": "rgb(239, 233, 220)",
+     "border": "rgb(116, 86, 26)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(255, 254, 250)",
+     "border": "rgb(226, 218, 203)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(255, 254, 250)",
+     "border": "rgb(226, 218, 203)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(255, 254, 250)",
+     "border": "rgb(226, 218, 203)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(239, 233, 220)",
+     "border": "rgb(226, 218, 203)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(255, 254, 250)",
+     "border": "rgb(226, 218, 203)"
+    }
+   ],
+   "overflow": false,
+   "shot": "before-picker-375-light.png"
+  },
+  "picker-375-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": [
+    {
+     "pressed": "true",
+     "bg": "rgb(7, 12, 23)",
+     "border": "rgb(218, 185, 114)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(24, 35, 58)",
+     "border": "rgb(36, 45, 66)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(24, 35, 58)",
+     "border": "rgb(36, 45, 66)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(24, 35, 58)",
+     "border": "rgb(36, 45, 66)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(7, 12, 23)",
+     "border": "rgb(36, 45, 66)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(24, 35, 58)",
+     "border": "rgb(36, 45, 66)"
+    }
+   ],
+   "overflow": false,
+   "shot": "before-picker-375-dark.png"
+  },
+  "picker-1280-light": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": [
+    {
+     "pressed": "true",
+     "bg": "rgb(239, 233, 220)",
+     "border": "rgb(116, 86, 26)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(255, 254, 250)",
+     "border": "rgb(226, 218, 203)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(255, 254, 250)",
+     "border": "rgb(226, 218, 203)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(255, 254, 250)",
+     "border": "rgb(226, 218, 203)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(255, 254, 250)",
+     "border": "rgb(226, 218, 203)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(255, 254, 250)",
+     "border": "rgb(226, 218, 203)"
+    }
+   ],
+   "overflow": false,
+   "shot": "before-picker-1280-light.png"
+  },
+  "picker-1280-dark": {
+   "errors": [],
+   "attr": "ivory",
+   "probe": [
+    {
+     "pressed": "true",
+     "bg": "rgb(7, 12, 23)",
+     "border": "rgb(218, 185, 114)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(24, 35, 58)",
+     "border": "rgb(36, 45, 66)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(24, 35, 58)",
+     "border": "rgb(36, 45, 66)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(24, 35, 58)",
+     "border": "rgb(36, 45, 66)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(24, 35, 58)",
+     "border": "rgb(36, 45, 66)"
+    },
+    {
+     "pressed": "false",
+     "bg": "rgb(24, 35, 58)",
+     "border": "rgb(36, 45, 66)"
+    }
+   ],
+   "overflow": false,
+   "shot": "before-picker-1280-dark.png"
+  }
+ }
+}

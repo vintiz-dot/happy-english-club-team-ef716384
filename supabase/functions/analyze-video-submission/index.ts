@@ -35,6 +35,7 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { askClaudeJson, CLAUDE_MODEL } from "../_lib/claude-json.ts";
+import { geminiVideoMime, speechFileFor } from "../_lib/speech-file.ts";
 import {
   CRITERION_MAX,
   gradeForScore,
@@ -69,9 +70,12 @@ async function transcribe(sb: SupabaseClient, path: string, mime: string | null)
   if (error || !blob) throw new Error(`Could not read the recording: ${error?.message ?? "missing"}`);
   if (blob.size > WHISPER_LIMIT) return null;
 
-  const ext = (mime ?? blob.type ?? "").includes("mp4") ? "mp4" : (mime ?? "").includes("ogg") ? "ogg" : "webm";
+  // OpenAI reads the format from the file name: an iPhone .mov sent as
+  // "audio.webm" was refused (see _lib/speech-file.ts).
+  const file = speechFileFor(mime, blob.type, path);
+  if (!file) throw new Error(`This recording's format (${mime || blob.type || "unknown"}) cannot be transcribed`);
   const form = new FormData();
-  form.append("file", new File([blob], `audio.${ext}`, { type: mime ?? blob.type ?? "audio/webm" }));
+  form.append("file", new File([blob], file.name, { type: file.type }));
   form.append("model", "whisper-1");
   form.append("language", "en");
   form.append("response_format", "verbose_json");
@@ -105,7 +109,7 @@ async function watch(sb: SupabaseClient, v: any, promptText: string) {
   const src = await fetch(signed.signedUrl);
   if (!src.ok || !src.body) throw new Error(`Could not read the video (${src.status})`);
   const size = Number(src.headers.get("content-length") ?? v.size_bytes ?? 0);
-  const mime = v.video_mime || src.headers.get("content-type") || "video/webm";
+  const mime = geminiVideoMime(v.video_mime || src.headers.get("content-type"));
 
   const start = await fetch(`${base}/upload/v1beta/files?key=${key}`, {
     method: "POST",

@@ -392,7 +392,9 @@ export function AssistantChat({ className }: { className?: string }) {
               }
             }}
             placeholder={copy.placeholder}
-            className={ivory ? "min-h-hec-target max-h-32 resize-none" : "min-h-[44px] max-h-32 resize-none text-sm"}
+            // Ivory: as tall as the two stacked buttons beside it (96 px), so a placeholder that wraps
+            // to two lines at 375 ("Ask me anything about your learning…") is not cut.
+            className={ivory ? "min-h-24 max-h-32 resize-none" : "min-h-[44px] max-h-32 resize-none text-sm"}
             rows={1}
             disabled={busy}
           />

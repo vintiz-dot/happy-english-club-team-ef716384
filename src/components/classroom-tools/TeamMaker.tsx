@@ -292,8 +292,9 @@ export function TeamMaker() {
             <div>
               <span className={labelCls}>Class</span>
               <Select value={classId} onValueChange={setClassId} disabled={classesLoading}>
-                {/* Ivory: the Select primitive's own recipe (44 px, 3:1 edge, brass ring); no overrides. */}
-                <SelectTrigger className={ivory ? undefined :"h-11 rounded-2xl border-studio bg-studio-stage text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0"}>
+                {/* Ivory: the Select primitive's own recipe (44 px, 3:1 edge, brass ring); no overrides.
+                    Named by its visible label "Class" (a combobox takes no name from its value). */}
+                <SelectTrigger aria-label={ivory ? "Class" : undefined} className={ivory ? undefined :"h-11 rounded-2xl border-studio bg-studio-stage text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0"}>
                   <SelectValue placeholder={classesLoading ? "Loading…" : "Pick a class"} />
                 </SelectTrigger>
                 <SelectContent>

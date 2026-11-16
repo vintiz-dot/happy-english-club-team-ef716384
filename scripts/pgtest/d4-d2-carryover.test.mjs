@@ -339,6 +339,12 @@ const clock = async (days = 0, hours = 0) => (await db.query(`
     FROM (SELECT date_trunc('minute', now() AT TIME ZONE 'Asia/Ho_Chi_Minh') + make_interval(days => $1::int, hours => $2::int) AS t) q`,
   [days, hours])).rows[0];
 const PAST = await clock(-3), FUTURE = await clock(10), FAR = await clock(20);
+// The month whose payroll the locked-month cases lock. It must never share a
+// month with any other day used here (10..100 days ahead): at 45 it collided
+// with the F-12 days (14..17) whenever both fell in one month (from 16 Nov
+// 2026), and those days then read as payroll-locked. 150 is at least 50 days
+// past every other offset, so it is always a later month.
+const LOCK_DAYS = 150;
 // A past month no other case uses (37 days from PAST, so always another month): d24 locks its payroll.
 const OLD = await clock(-40);
 
@@ -596,10 +602,10 @@ await section("d16, d17, d18 + B-2/B-3: moves and re-classing.", async () => {
   r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [intoPast.sid, PAST.date]));
   ok('B-3 automation cannot move an untouched future lesson INTO THE PAST -> HC020', r.code === 'HC020', r);
   // into a locked month
-  const lockMonth = (await clock(45)).date.slice(0, 7);
+  const lockMonth = (await clock(LOCK_DAYS)).date.slice(0, 7);
   await asSuper(`INSERT INTO payroll_periods VALUES ($1,'locked',now(),$2)`, [lockMonth, ADMIN]);
   const intoLocked = await mk();
-  const lockDate = (await clock(45)).date;
+  const lockDate = (await clock(LOCK_DAYS)).date;
   r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [intoLocked.sid, lockDate]));
   ok('B-3 automation cannot move a lesson into a month whose payroll is locked -> HC020', r.code === 'HC020', r);
   // into a month where a billed child's invoice is paid
@@ -871,7 +877,7 @@ await section("d28 atomicity, d31 moves, B-1, B-3 through the checked path.", as
   ok('B-3 a future NONE lesson moved into the past: started at the destination -> T1, confirm', p.tier === 1 && p.requires.confirm, p.tier);
   r = await tryIt(() => move(c.sid, { date: PAST.date, start: '17:30', end: '19:00', token: p.token }));
   ok('B-3   without confirm -> HC012', r.code === 'HC012', r);
-  const lockDay = await clock(45);
+  const lockDay = await clock(LOCK_DAYS);
   const d = await mk();
   await att(d.sid, 'Present', d.teacher);
   p = await preview(d.sid, 'move', { date: lockDay.date, start_time: '17:30', end_time: '19:00' });
