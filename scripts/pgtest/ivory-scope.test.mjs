@@ -47,6 +47,7 @@ eq("complete: audit clips stays outside", isIvoryRoute("/admin", "?tab=audit-cli
 eq("complete: audit clips stays outside for an admin", isIvoryRoute("/admin", "?tab=audit-clips", undefined, undefined, "admin"), false);
 eq("complete: recorder stays outside", isIvoryRoute("/teacher/recorder", "", undefined, undefined, "teacher"), false);
 eq("complete: recorder, trailing slash", isIvoryRoute("/teacher/recorder/"), false);
+eq("complete: public feedback page stays outside", isIvoryRoute("/feedback"), false);
 eq("complete: admin overview still in", isIvoryRoute("/admin", "?tab=overview"), true);
 eq("complete: an empty outside list leaves nothing out", isIvoryRoute("/teacher/recorder", "", [], true, "teacher", []), true);
 // Below: the registry itself (the record of what flipped when), read with complete = false.
