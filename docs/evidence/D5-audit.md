@@ -176,7 +176,7 @@ One SELECT, 40 rows: `check_id, check_name, kind, violations, total_vnd, meaning
 | M38 | bills_lowered_from_floor | report | recorded payment below the highest ever recorded |
 | M39 | finance_snapshot_differs_from_bill | report | a closed-month snapshot no longer matches its bill |
 | M40 | guard_installed | report | 1 = the D2 guard event exists (0: M20-M22 checked nothing) |
-| M41 | ledger_unbalanced_before_keys | report | unbalanced transactions wholly from before the first keyed ledger write (round 1) |
+| M41 | ledger_unbalanced_before_keys | report | the 3 unbalanced transactions of Oct 2025 from before the first keyed ledger write, pinned by tx_id and amount (round 1; pinned in round 2) |
 | M42 | frozen_bill_restored_to_pre_wipe_total | report | the 9 Nov no-actor restore of a frozen bill to its pre-28-Oct total (round 1) |
 
 Expected on live: every `must be 0` at 0; M40 = 1; M05 = 3 (708,000); M03 and M11 above 0 (history and G-1 / G-4). The "payroll_lines of closed months unchanged vs snapshots" item of the brief is M31 + M32: `payroll_lines` IS the snapshot taken at the close (there is no other copy), so the check is that nothing wrote it after the close and that it equals the cost booked with it.
@@ -234,4 +234,93 @@ md5 (LF line endings, as committed): 20261117110000 `7c089526f8303f7c30ead851571
 ### 6.5 Gates (fix round 1)
 
 Full `node scripts/pgtest/run.mjs` with the clock moved back 8 h (at 0fb8adf5): **8721 assertions across 92 suites, 0 failed** - it includes `app typecheck` (= `tsc --noEmit -p tsconfig.app.json`, asserting it loaded the source; clean after the G-9 deletion) and `edge functions typecheck` (clean after G-10). `npm run test:bun`: **250 pass, 0 fail** (18 files).
+
+---
+
+## 7. Fix round 2 (17 Nov 2026)
+
+Review of round 1 (verdict SHIP WITH CHANGES): M-1, M-2, M-3, N-1 fixed here; N-2 and N-3 said in the migration headers. Neither migration is applied; nothing deployed, nothing pushed. Live was read with SELECTs only (counts, sums, shapes; no names).
+
+### 7.1 M-1 - the July restore exemption now matches live
+
+- **Why round 1 missed it.** The bill's FIRST audit row on live is 28 Oct 03:58 UTC (10:58 Hanoi), on the wipe day, not before it. Its four rows (read-only, 17 Nov): 28 Oct 03:58 changes paid_amount, status only (total 1,620,000 both sides); 28 Oct 04:04 base, carry_out_credit, class_breakdown, total 1,620,000 -> 0 (no actor); 6 Nov 08:57 frozen at 0 (no actor); 9 Nov 01:22 0 -> 1,620,000 while frozen (no actor). `pre_wipe` looked only BEFORE 28 Oct 00:00 Hanoi, so it was empty for this bill. The suite passed because its fixture invented a 5 Jul INSERT that live does not have.
+- **Change (`scripts/CHECK-money-invariants.sql`).** The pre-wipe total is the last audit image before the wipe day, as before. When a bill has no row before that day, it is the `old` image of its first UPDATE row ON the wipe day (28 Oct 00:00 - 29 Oct 00:00 Hanoi). Nothing else about the exemption changed: no actor, the 9 Nov window, the restored total equal to that figure.
+- **Fixture.** It now has the live shape, row for row, with no July row. Proven: the round-1 script fails the new fixture exactly as live did (M13 1, M14 1, no M42), and the fixed script passes. Cases added: the older shape with a row before the wipe still exempts; first rows on 29 Oct (the day after) alarm.
+
+### 7.2 M-3 - M01 cannot be dodged by a backdated created_at
+
+Both fixes were made.
+
+- **The check (`CHECK-money-invariants.sql`).** M41 is pinned to the three known transactions by tx_id AND amount (`known_pre_key`: 2c519f69... -500,000; fafc4363... -200,000; ecd66a3d... -220,000; read-only on live, the only unbalanced transactions there). The time and unkeyed conditions stay as well. Anything else unbalanced is M01, whatever its created_at:
+  - a new backdated single leg;
+  - a fourth transaction beside the three;
+  - a further leg on a pinned one, which moves its amount.
+
+  Cases added for each of those.
+- **The database (`20261117111000`).** A BEFORE INSERT trigger `ledger_entries_stamp_created_at` sets `created_at := now()` for every role. `occurred_at` (when the money moved) stays the writer's.
+  - No writer sets created_at. Checked in family-payment, smart-family-payment, modify-payment and delete-payment (its reversal rows are built fresh, with no created_at), in `scripts/CREDIT-past-unapplied-cash.sql`, and in `post_sibling_retro_credit`.
+  - On live, the only database function that inserts a ledger leg is `post_sibling_retro_credit`, and it does not name created_at.
+  - Suite `ledger-append-only`: a backdated insert gets now(), as an admin, as the service role and as the owner. The function cannot be called by anon or authenticated.
+
+### 7.3 M-2 - refresh_invoice_carry is no longer callable by a signed-in account
+
+`20261117110000` revokes EXECUTE on `public.refresh_invoice_carry(uuid)` from PUBLIC, anon and authenticated, and grants it to service_role. It was proven first that nothing calls it except the trigger:
+- **The repo.** grep over supabase/functions, src (types.ts lists it, nothing calls it), docs/sql, scripts, drizzle and every migration. It is named only by the trigger function `invoices_carry_sync` and by the one-off backfill in 20261009120000.
+- **Live (read-only).** The only function whose body mentions it is `invoices_carry_sync()`: SECURITY DEFINER, owned by postgres. Live today: authenticated = true, service_role = true, anon = false.
+
+Because the trigger runs as the owner, every writer keeps its carry refresh. Probe D, now in run.mjs:
+- a role-less signed-in account calling the RPC is refused with 42501;
+- that call leaves the bill, its floor and the audit untouched;
+- an admin's ordinary write still relabels through the trigger.
+
+### 7.4 N-1 - header corrected (the audit row on every upsert stays)
+
+The G-11 header now says that every sibling_discount_state upsert writes an audit row, because compute-sibling-discounts and watch-sibling-threshold send `computed_at = now()`. Skipping those rows was not chosen, for three reasons:
+- **It would mean new shapes.** Either a second trigger shape (an UPDATE trigger with a WHEN clause, split from INSERT/DELETE, since a WHEN on OLD cannot sit on an INSERT trigger), or a per-table noise list in the shared `audit_row_change` that every audited table runs.
+- **A recompute is a fact worth keeping.** It records when, and as whom.
+- **The volume is small.** 7 states were recomputed in the 7 days to 17 Nov, against 3,789 audit rows.
+
+N-2 (the relabel leaves no audit row: depth 2) and N-3 (the preflight does not see cascade or dynamic SQL paths; none on live) are now one paragraph each in the headers.
+
+### 7.5 Live results of the changed checks (read-only SELECT, 17 Nov, counts only)
+
+The changed CTEs (`params`, `known_pre_key`, `unbalanced`, `pre_wipe_*`, `frozen_moves`, `freeze_rec`, `freeze_ref`) and the five checks, verbatim from the script, were run through the Supabase MCP as one SELECT:
+
+| Check | Violations | Total VND |
+|---|---|---|
+| M01 | 0 | 0 |
+| M13 | 0 | - |
+| M14 | 0 | 0 |
+| M41 | 3 | 920,000 |
+| M42 | 1 | 1,620,000 |
+
+That is what round 1 expected and did not get.
+
+### 7.6 Files to paste (LF md5, CR stripped)
+
+- `supabase/migrations/20261117110000_carry_refresh_relabels.sql`: `2e0c17b226209dc3ee56351e0f836281`. It replaces round 1's `7c089526...`.
+- `supabase/migrations/20261117111000_ledger_append_only_and_audit.sql`: `a2f6c7019885395374a71e6b13a37988`. It replaces round 1's `3498f768...`.
+- Read-only scripts:
+  - `scripts/CHECK-money-invariants.sql`: `da690a637db4beb957996b2b2e404df6`
+  - `scripts/CHECK-label-relabel-impact.sql`: `cc2f6db9f5a10cb000ae9bbc2721e406` (unchanged)
+
+Paste order and independence are as in the round-1 review: either file after 3B, and each pastes twice.
+
+### 7.7 Gates (fix round 2)
+
+Full `node scripts/pgtest/run.mjs`, on the real clock (run at 08:16 Hanoi), at e24ad719: **8748 assertions across 93 suites, 0 failed**. That is round 1's 8721, plus 5 in money invariants, 4 in ledger append-only, and the 18 of the new suite. Per suite:
+
+| Suite | Result |
+|---|---|
+| `money invariants check` | 125/0 (pinned 125) |
+| `ledger append-only` | 30/0 (pinned 30) |
+| `D5 review probes` (`scripts/pgtest/review-d5-probes.test.mjs`, the reviewer's 16 with D, M-3 and N-1 turned to the safe behaviour, plus 2) | 18/0 (pinned 18) |
+| `invoice status` | 317/0 |
+| `invoice status + G-4` | 317/0 |
+| `app typecheck` | clean |
+| `edge functions typecheck` | clean |
+
+Both invoice status runs are against `fixtures/tuition-figures.golden.json`, which is unchanged.
+
+`node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0. `npm run test:bun`: **250 pass, 0 fail** (18 files).
 
