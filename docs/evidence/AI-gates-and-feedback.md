@@ -84,7 +84,20 @@ Migration `20261117160100`:
 
 ## Gates
 
-GATES_PLACEHOLDER
+Run at 20:08 Hanoi, so `run.mjs` ran with a preload moving the clock back 8 hours (NODE_OPTIONS `--import`, inherited by every suite).
+
+| gate | main `9e591347` | this branch |
+|---|---|---|
+| `node scripts/pgtest/run.mjs` | 3999 assertions, 46 suites, 2 failed | 4545 assertions, 48 suites, 2 failed |
+| the two failures | invoice status 236/32, stars sync core (crash) | the same two, the same counts: the known main-vs-conductor harness lag, files this branch does not touch |
+| AI spend gates (new to main) | - | 474 / 0 (250 F-02 + 224 N-5) |
+| student work feedback (new) | - | 32 / 0 |
+| video homework | 55 / 0 | 95 / 0 |
+| chat assistant | 201 / 0 | 201 / 0 |
+| edge functions typecheck | 5 / 0 | 5 / 0 (112 files loaded) |
+| homework grading | 27 / 0 | 27 / 0 |
+| `tsc --noEmit -p tsconfig.app.json` | | exit 0 |
+| `npm run test:bun` | | 142 pass, 3 fail: `SettleBillModal.tsx` missing and `scripts/fixtures/rich-text/dom` missing - neither exists on `origin/main`; no file here touches them |
 
 ## Migrations (LF md5, CR stripped)
 
