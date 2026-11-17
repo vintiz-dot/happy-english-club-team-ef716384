@@ -19,7 +19,9 @@
  *   3. a per-account rate limit (`_lib/rate-limit.ts`), keyed by function
  *      and by the user id from the token - never by anything in the body.
  * The service-role key is refused too: no function calls these nine, and a
- * key that can spend without limit is exactly what this closes.
+ * key that can spend without limit is exactly what this closes. A function
+ * with a real internal caller opts in with `serviceLimit`, which still
+ * counts those calls (N-5, 17 Nov 2026: eight more functions behind this).
  *
  * The limiter is in memory (it resets on a cold start and is per instance -
  * audit F-12). It stops a loop in a browser tab or a simple script; it is
@@ -45,6 +47,14 @@ export interface SpendGate {
   /** Calls allowed per account in each window. */
   limit: number;
   windowMs: number;
+  /**
+   * Off unless set. Lets the service-role key through - an internal call
+   * from another function that already passed its own gate - counted under
+   * ONE shared key at this many calls per window. Only refresh-student-
+   * profile sets it (ocr-vocab-scan refreshes the profile it just fed). A
+   * browser never holds that key.
+   */
+  serviceLimit?: number;
 }
 
 export async function requireSpender(
@@ -61,7 +71,7 @@ export async function requireSpender(
   let caller: CallerIdentity | Response;
   try {
     caller = await requireRole(req, serviceClient(), gate.roles ?? SIGNED_IN_ROLES, corsHeaders, {
-      allowServiceRole: false,
+      allowServiceRole: gate.serviceLimit !== undefined,
     });
   } catch (e) {
     // Could not even ask who this is: refuse rather than spend.
@@ -69,6 +79,12 @@ export async function requireSpender(
     return json(503, "Sign-in could not be checked. Please try again.");
   }
   if (caller instanceof Response) return caller;
+  if (caller.isServiceRole) {
+    if (gate.serviceLimit === undefined) return json(403, "Not permitted");
+    const srl = checkRateLimit(`${gate.name}:service_role`, gate.serviceLimit, gate.windowMs, "user");
+    if (srl.limited) return rateLimitResponse(srl.resetAt, corsHeaders);
+    return caller;
+  }
   if (!caller.userId) return json(401, "Unauthorized");
 
   const rl = checkRateLimit(`${gate.name}:${caller.userId}`, gate.limit, gate.windowMs, "user");

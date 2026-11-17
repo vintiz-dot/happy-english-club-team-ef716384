@@ -32,8 +32,12 @@
  * video_submissions.status / processing_stage.
  *
  * Input:  { video_submission_id: string }
- * Who:    the child's family (once, for a fresh upload) or the class's
- *         teacher / an admin (any time - that is "re-run").
+ * Who:    a signed-in account holding a role (requireSpender), and then
+ *         the child / their family - only for a new or failed take, at most
+ *         3 runs a take and 10 a submission, 6 an hour - or the class's
+ *         teacher / an admin (a re-run of anything not approved, at most 6
+ *         a take and 20 a submission). video_analysis_claim decides and
+ *         counts, under a row lock.
  *
  * Keys:   OPENAI_API_KEY (transcript), ANTHROPIC_API_KEY (judgement),
  *         GEMINI_API_KEY (optional), GEMINI_MODEL (optional).
@@ -55,6 +59,8 @@ import {
   type CriterionScore,
   type RubricCriterion,
 } from "../_lib/video-homework.ts";
+import { requireSpender, SIGNED_IN_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
+import { checkRateLimit, rateLimitResponse } from "../_lib/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -511,13 +517,34 @@ async function run(sb: SupabaseClient, id: string) {
   }
 }
 
+// Every role may start one: the child's upload asks for its own draft. A
+// teacher may re-run a class's videos; a family gets the tighter limit
+// below. The durable limits are per submission, in video_analysis_claim.
+const GATE: SpendGate = { name: "analyze-video-submission", roles: SIGNED_IN_ROLES, limit: 30, windowMs: 60 * 60_000 };
+const FAMILY_LIMIT = 6; // per account per hour, for a caller who is not staff of the class
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** What video_analysis_claim's refusals mean to the caller. */
+const CLAIM_REFUSED: Record<string, [number, string]> = {
+  not_found: [404, "Not found"],
+  approved: [409, "Already approved"],
+  with_teacher: [409, "This video is already with the teacher"],
+  busy: [409, "A draft is already being made for this video"],
+  take_limit: [429, "This video has been analysed as often as it may be; the teacher can grade it without a draft"],
+  total_limit: [429, "This homework has been analysed as often as it may be; the teacher can grade it without a draft"],
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // N-5: a real session holding a role, and a per-account limit, before the
+  // body is read. This used to run for any bearer at all.
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
   const url = Deno.env.get("SUPABASE_URL")!;
   const authHeader = req.headers.get("Authorization") ?? "";
-  if (!authHeader) return json({ error: "Unauthorized" }, 401);
 
   let body: { video_submission_id?: string };
   try {
@@ -525,8 +552,8 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: "Body must be JSON" }, 400);
   }
-  const id = body.video_submission_id;
-  if (!id) return json({ error: "video_submission_id is required" }, 400);
+  const id = String(body?.video_submission_id ?? "");
+  if (!UUID_RE.test(id)) return json({ error: "video_submission_id is required" }, 400);
 
   // Read the row AS THE CALLER: if their row policies do not show it to
   // them, they may not start an analysis of it.
@@ -535,24 +562,45 @@ Deno.serve(async (req) => {
   });
   const { data: mine, error } = await asCaller
     .from("video_submissions")
-    .select("id, class_id, status")
+    .select("id, class_id, student_id, status")
     .eq("id", id)
     .maybeSingle();
-  if (error) return json({ error: error.message }, 500);
+  if (error) return json({ error: "The video could not be read" }, 500);
   if (!mine) return json({ error: "Not found" }, 404);
 
-  const { data: isStaff } = await asCaller.rpc("video_staff_for_class", { p_class: mine.class_id });
-  if (!isStaff && !["uploaded", "failed"].includes(mine.status)) {
-    // A family starts one analysis per take; a teacher may re-run.
-    return json({ error: "This video is already with the teacher" }, 409);
+  // Staff of this class, or this child / their family - asked of the
+  // database as the caller, and anything else (an error included) is a no.
+  const { data: staffAnswer, error: staffErr } = await asCaller.rpc("video_staff_for_class", { p_class: mine.class_id });
+  if (staffErr) return json({ error: "Could not check who is asking" }, 503);
+  const isStaff = staffAnswer === true;
+  if (!isStaff) {
+    const { data: own, error: ownErr } = await asCaller.rpc("can_view_student", {
+      student_id: mine.student_id,
+      user_id: spender.userId,
+    });
+    if (ownErr) return json({ error: "Could not check who is asking" }, 503);
+    if (own !== true) return json({ error: "Not found" }, 404);
+    const rl = checkRateLimit(`analyze-video-submission:family:${spender.userId}`, FAMILY_LIMIT, GATE.windowMs, "user");
+    if (rl.limited) return rateLimitResponse(rl.resetAt, corsHeaders);
   }
-  if (mine.status === "approved") return json({ error: "Already approved" }, 409);
 
+  // The claim: one row lock decides whether this run may start, counts it,
+  // and stamps 'processing' - so two calls at once cannot both spend, a
+  // family can start only a new or failed take, and each submission has a
+  // ceiling (migration 20261117160200).
   const sb = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  await sb
-    .from("video_submissions")
-    .update({ status: "processing", processing_stage: "queued", error: null })
-    .eq("id", id);
+  const { data: claim, error: claimErr } = await sb.rpc("video_analysis_claim", {
+    p_submission: id,
+    p_by_staff: isStaff,
+  });
+  if (claimErr) {
+    console.error("video_analysis_claim failed:", claimErr.message);
+    return json({ error: "The analysis could not be started" }, 503);
+  }
+  if (claim !== "claimed") {
+    const [status, message] = CLAIM_REFUSED[String(claim)] ?? [409, "The analysis could not be started"];
+    return json({ error: message }, status);
+  }
 
   const job = run(sb, id);
   const er = (globalThis as any).EdgeRuntime;

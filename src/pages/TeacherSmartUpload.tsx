@@ -272,7 +272,18 @@ export default function TeacherSmartUpload() {
         .in("status", ["needs_review", "processing", "failed"])
         .order("created_at", { ascending: false })
         .limit(40);
-      return data || [];
+      const rows = data || [];
+      // The AI's draft note is staff-only (student_work_ai_drafts, N-6): it
+      // pre-fills the review box, and reaches the child only as the
+      // teacher_notes a teacher approves.
+      const ids = rows.filter((w: any) => w.status === "needs_review").map((w: any) => w.id);
+      if (!ids.length) return rows;
+      const { data: drafts } = await (supabase as any)
+        .from("student_work_ai_drafts")
+        .select("work_id, feedback")
+        .in("work_id", ids);
+      const byId = new Map<string, string>((drafts || []).map((d: any) => [d.work_id, d.feedback]));
+      return rows.map((w: any) => ({ ...w, ai_draft: byId.get(w.id) ?? null }));
     },
   });
 
@@ -541,8 +552,9 @@ export default function TeacherSmartUpload() {
         .update({
           status: decision,
           student_id: chosenStudent,
-          // Falls back to the AI draft shown in the box when untouched.
-          teacher_notes: reviewNotes[work.id] ?? work.teacher_notes ?? work.ai_feedback,
+          // Falls back to the AI draft shown in the box when untouched: the
+          // teacher approving is what lets the child read it.
+          teacher_notes: reviewNotes[work.id] ?? work.teacher_notes ?? work.ai_draft,
           approved_by: user?.id,
           approved_at: decision === "approved" ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
@@ -1050,7 +1062,7 @@ export default function TeacherSmartUpload() {
                           <Textarea
                             placeholder="Teacher notes for the student — or let AI draft them…"
                             className="min-h-[64px] pr-12"
-                            value={reviewNotes[w.id] ?? w.ai_feedback ?? ""}
+                            value={reviewNotes[w.id] ?? w.teacher_notes ?? w.ai_draft ?? ""}
                             onChange={(e) => setReviewNotes((p) => ({ ...p, [w.id]: e.target.value }))}
                           />
                           {w.storage_path && (

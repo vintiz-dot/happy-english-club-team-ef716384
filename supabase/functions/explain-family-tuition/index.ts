@@ -2,7 +2,7 @@
 // review and send. Figures come ONLY from calculate-tuition (the single
 // source of truth); the model words them, it never prices anything.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { requireRole } from "../_lib/auth.ts";
+import { requireSpender, type SpendGate } from "../_lib/ai-gate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,12 +17,16 @@ const json = (status: number, body: unknown) =>
 // EXPLAIN_MODEL can override it without a redeploy of the code.
 const MODEL = Deno.env.get("EXPLAIN_MODEL") || "claude-haiku-5-5";
 
+// Admins only; one explanation per family an admin is writing to (each one
+// also asks calculate-tuition, which allows 30 calls a minute, per child).
+const GATE: SpendGate = { name: "explain-family-tuition", roles: ["admin"], limit: 20, windowMs: 10 * 60_000 };
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const caller = await requireRole(req, sb, ["admin"], corsHeaders, { allowServiceRole: false });
-  if (caller instanceof Response) return caller;
 
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return json(500, { error: "AI is not configured." });

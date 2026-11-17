@@ -38,7 +38,8 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { visionDocumentOcr, customSearchImages } from "../_lib/google.ts";
 import { fireProfileRefresh } from "../_lib/profile.ts";
 import { safeParseJson } from "../_lib/text.ts";
-import { authenticateUser, callerHoldsClass } from "../_lib/auth.ts";
+import { callerHoldsClass } from "../_lib/auth.ts";
+import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -137,8 +138,15 @@ async function awardVocabPoints(
   if (error) console.warn(`points insert failed for ${word}:`, error.message);
 }
 
+// Teachers and admins, one call per photographed vocabulary page (Vision,
+// OpenAI and an image search per word). The most in ten minutes so far: 6.
+// No function calls this one, so the service key is refused.
+const GATE: SpendGate = { name: "ocr-vocab-scan", roles: STAFF_ROLES, limit: 20, windowMs: 10 * 60_000 };
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
   const respond = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
@@ -152,15 +160,8 @@ Deno.serve(async (req) => {
 
   let workId: string | null = null;
   try {
-    // ── Who is calling? Staff only. ──────────────────────────────────────
-    const caller = await authenticateUser(req, sb);
-    if (!caller) return respond({ success: false, error: "Unauthorized" }, 401);
-    const isStaff =
-      caller.isServiceRole || caller.roles.has("admin") || caller.roles.has("teacher");
-    if (!isStaff) {
-      console.warn(`ocr-vocab-scan denied for non-staff user ${caller.userId}`);
-      return respond({ success: false, error: "Forbidden — teachers and admins only" }, 403);
-    }
+    // ── Who is calling? Staff only: the gate above, from the JWT. ─────────
+    const caller = spender;
 
     const body = await req.json().catch(() => ({}));
     workId = String(body.work_id ?? "").trim() || null;

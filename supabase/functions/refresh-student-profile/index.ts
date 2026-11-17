@@ -20,7 +20,8 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { callerHoldsStudent, requireRole } from "../_lib/auth.ts";
+import { callerHoldsStudent } from "../_lib/auth.ts";
+import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,8 +31,16 @@ const corsHeaders = {
 
 const MODEL = "gpt-4o-mini";
 
+// Staff only (every screen that calls it is a teacher's or an admin's). A
+// teacher approving a whole class's transcript refreshes each child, and a
+// smart-upload batch has reached 25 approvals in ten minutes. The internal
+// refresh from ocr-vocab-scan (_lib/profile.ts) comes on the service key.
+const GATE: SpendGate = { name: "refresh-student-profile", roles: STAFF_ROLES, limit: 60, windowMs: 10 * 60_000, serviceLimit: 200 };
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
   const respond = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
@@ -57,10 +66,9 @@ Deno.serve(async (req) => {
     // callerHoldsStudent mirrors the predicate the students table's own
     // SELECT policy uses, so this grants no more than reading the row
     // directly would. Internal callers (_lib/profile.ts) pass as service
-    // role; admins pass without the lookup.
-    const gate = await requireRole(req, sb, ["admin", "teacher"], corsHeaders);
-    if (gate instanceof Response) return gate;
-    if (!(await callerHoldsStudent(sb, gate, studentId))) {
+    // role; admins pass without the lookup. The role and the per-account
+    // limit are the gate's, above.
+    if (!(await callerHoldsStudent(sb, spender, studentId))) {
       return respond({ success: false, error: "You do not teach this student." }, 403);
     }
 
@@ -86,7 +94,7 @@ Deno.serve(async (req) => {
     const [worksRes, vocabRes, metricsRes, errorsRes, cefrRes, countsWork, countsVocab, countsTr] =
       await Promise.all([
         sb.from("student_work")
-          .select("ocr_text, ai_feedback, teacher_notes, workflow, created_at")
+          .select("ocr_text, teacher_notes, workflow, created_at")
           .eq("student_id", studentId).eq("status", "approved")
           .gt("created_at", since).order("created_at", { ascending: false }).limit(6),
         sb.from("student_vocabulary_entries")
@@ -117,7 +125,9 @@ Deno.serve(async (req) => {
       approved_work: (worksRes.data ?? []).map((w) => ({
         type: w.workflow,
         excerpt: (w.ocr_text || "").slice(0, 500),
-        feedback_given: w.ai_feedback || w.teacher_notes || null,
+        // What the teacher approved, never the AI's draft (N-6: the draft
+        // is staff-only now, in student_work_ai_drafts).
+        feedback_given: w.teacher_notes || null,
       })),
       new_vocabulary: (vocabRes.data ?? []).map((v) => v.word),
       lesson_participation: metricsRes.data ?? [],
