@@ -1,6 +1,6 @@
 # FIX: analyze-transcript (D-26)
 
-Where I am / next step: built and tested on branch `worktree-agent-a31821f59b07b78ef`; next step is the conductor's review, then the owner pastes the migration, deploys `analyze-transcript`, and publishes the app (in that order - see "Deploy order"). Nothing applied, deployed or pushed.
+Where I am / next step: fix round 1 (the review's M-1..M-4 and minors) built and tested on branch `transcript-fix` (see "Fix round 1" at the end, which supersedes the deploy order below: two pastes now); next step is the conductor's re-review, then the owner pastes `20261117100000`, deploys `analyze-transcript`, pastes `20261117100100`, and publishes the app. Nothing applied, deployed or pushed.
 
 ## Owner's rulings
 
@@ -86,3 +86,138 @@ Between 1 and 2 the old function still publishes at once (as today). Between 2 a
 - `class_speaker_aliases` written by an approval are not removed by a withdrawal (they are only ever read back as a suggestion).
 - Re-approving replaces the published errors, so their SRS cards are recreated and their review progress resets (the same as video homework's re-approval).
 - Not changed, but seen while reading: `transcribe-lesson-audio` (Whisper + diarization for a browser) has no `requireSpender`; `generate-student-report` and `cefr-defense` write `cefr_assessments` from a model's answer, which families read. Both outside this task.
+
+## Fix round 1 (review `REVIEW-transcript.md`, branch `transcript-fix` from `3a036509`)
+
+Nothing applied, deployed or pushed. Live database: read-only SELECTs returning counts only.
+
+### M-1 (conductor's ruling: take the old pipeline's output off families' view, keep the content)
+
+New migration `supabase/migrations/20261117100100_transcript_legacy_unpublish.sql`, a second file rather than more of `20261117100000`, because it must be pasted AFTER the new `analyze-transcript` is deployed (the old function publishes again on its next run), it is a one-time data step rather than schema, and keeping it apart lets it be re-pasted on its own if anything slips in between (it is idempotent). It refuses unless this round's `20261117100000` is in (guard on, `_transcript_alias_revert` present, the suggestions table accepts `legacy_auto`).
+
+Per lesson with NO approval row it:
+1. copies every row it takes down, whole, into the new `transcript_legacy_holds` (staff of the class only: one SELECT policy for admin / `is_teacher_of_class`, no write policy, explicit grants, anon none);
+2. drafts the lesson so a teacher approves it in the new panel WITHOUT a paid re-analysis: a suggestion per linked speaker naming the child the old pipeline picked, `confidence = medium`, `basis = 'legacy_auto'` (or `teacher_alias` when a teacher saved that label for that child), `labels_from_model = true` (not recorded for these lessons, so assumed); its published errors, de-duplicated, as the drafted errors; its latest CEFR point as the drafted level; the published overview as `overview_draft`; `analysis.drafted_for_review = true`. The screen never pre-selects `legacy_auto` or a saved label on a model-made label: the teacher chooses every child;
+3. unlinks the metric rows (`student_id` NULL; the old child is in the suggestion and the held copy);
+4. deletes the error rows (cards cascade), the CEFR points and the non-edited overviews.
+
+Identification rule (the only rows it touches):
+- `student_error_log`: `source = 'transcript' AND source_id = <lesson> AND created_by IS NULL`, plus their `srs_cards`;
+- `cefr_assessments`: same rule;
+- `lesson_overviews`: `transcript_id = <lesson> AND NOT edited_by_teacher`;
+- `transcript_speaker_metrics`: `student_id IS NOT NULL` on a lesson with no approval.
+
+Why `created_by IS NULL` is exact:
+- `20260712090000` documents it ("NULL = pipeline"); the column has no default live (checked);
+- the old analysis (at `6404f52b`) never set it; the old screen's hand picker set `created_by: user.id`; `approve_transcript_analysis` sets it;
+- no other code writes `source = 'transcript'` (grep of `src` and `supabase`); video homework and other features use other sources (`homework`, `student_work`, `live_flag`, `vocab`, `ai_report`, ...), which it never reads.
+
+Kept as they are:
+- the 2 teacher-edited overviews stay published (the teacher's own text, and possibly written by hand). They become the draft too, marked `edited_by_teacher`, so a re-analysis keeps them and the approval republishes that same text (N-9). The approval does not count such an overview as "shared automatically" while the draft is the teacher's.
+- rows a person made on the same lessons (the old picker's errors / levels: none live) stay published; approving such a lesson asks the replace step, as before.
+- `student_learning_profiles` (an AI summary built from the published rows, family-readable): not touched; each child's profile is refreshed when a teacher approves. The owner may refresh the 32 children's profiles after the paste.
+
+Fails closed (nothing moves) on: this round's `20261117100000` missing, an unknown policy on a draft table, RLS off, a linked teacher / "Unknown" speaker, two speakers linked to one child in one lesson, a published error / CEFR row whose child is no linked speaker of a lesson that has no drafts. Prints its counts (NOTICE, a SELECT before COMMIT, and a per-table summary of everything held after COMMIT). A second paste finds nothing and changes nothing; a later paste takes back anything published in between.
+
+Live, read-only, with the rule exactly as written (no approvals exist yet):
+
+| | Rule selects | Review's count |
+|---|---|---|
+| lessons | 24 (all analysed) | 24 |
+| metric links / children | 57 / 32 | 57 / 32 |
+| error rows / their cards | 100 / 100 | 100 / 100 |
+| CEFR points | 54 | 54 |
+| overviews taken down / kept (teacher-edited) | 22 / 2 | 24 (2 edited) |
+| `source = 'transcript'` errors / CEFR rows outside the rule | 0 / 0 | |
+| other error rows / cards / CEFR rows, untouched | 170 / 170 / 9 | |
+| shape refusals (teacher or Unknown linked, one child twice, orphan rows) | 0, 0, 0 | |
+| distinct drafted errors after de-duplication | 94 | |
+| speakers whose basis will be `teacher_alias` | 1 | |
+| `created_by` column defaults | none | |
+
+Proof (suite): before the paste, the child and family read the old rows. After: they read none. No row of those lessons is linked. Every row a person or another feature made has the same ids, and the approvals are unchanged. The two teacher overviews are unchanged. Held copies, by table, equal what was taken. The holding table is staff-only. The suggestions are as described, and nobody is pre-selected. Each lesson reads as a draft. Pasting twice changes nothing. Approving a held lesson needs no replace step, and the old guess (Bao Tran) gets nothing. The teacher-overview lesson keeps the teacher's text. The teacher's own rows ask the replace step. A later paste picks up a new one, and its speaker key equals the function's `speakerKey`.
+
+### M-2: re-approving must not republish errors the teacher dropped
+
+- What changed: approve stores, per speaker in `transcript_approvals.assignments`, `kept_errors` (as published) and `draft_error_count`.
+- `initialChoices(metrics, suggestions, approval)` seeds each box from the approval (standing or withdrawn), matching on error and correction text. The page now reads `assignments`.
+- Proof: drop ERR2 and approve. "Approve again" then starts `[true, false]`, and approving unchanged publishes 1 error, ERR2 none. The same holds after a withdrawal. Probe R7 turned round.
+
+### M-3: a withdrawn pick must not live on as a high pre-selection
+
+- What changed in the database:
+  - `transcript_approvals.alias_writes` records each alias the approval wrote: the label, whether it existed, the child it held before, the child after.
+  - Withdraw, and a re-approval before it rewrites, put each alias back through `_transcript_alias_revert`, newest first. That means the earlier child, or removing an alias the approval created. An alias somebody changed since is left alone.
+  - The helper is executable by the owner only.
+- What changed in suggestions and the screen:
+  - `suggestSpeaker` caps a saved label on a model-made label at `medium`.
+  - `preselects` never pre-selects a `teacher_alias` on a model label, or `legacy_auto`.
+- Proof: a "bao" alias (Bao Ngoc) is overwritten by an approval as Bao Tran, then restored to Bao Ngoc on withdraw. A new label approved as Kiki, then Anh, ends at Anh, and is removed on withdraw. A label changed by someone else survives. The model-label alias is not pre-selected.
+
+### M-4: show everything that will be published, let the teacher drop or edit it
+
+- What changed in the database: approve now REQUIRES `text: { contribution, teacher_feedback, recommendation, highlights }` for every speaker given a child, and writes exactly that onto the metric row. Empty publishes nothing. `edited_by_teacher` is set when she changed it. The before and after text are kept in `assignments`.
+- What changed in the panel:
+  - per chosen child, under "What X's lesson page and family will see once you approve": the speaking figures, editable "How you did" / "Your teacher says" / "Try next" (badged "AI draft" until edited), highlights to tick, and practice points to tick;
+  - the caption and the replace confirm name all of it, the lesson summary included.
+- Proof: an approval without `text` is refused. The child reads exactly the teacher's edit, no dropped feedback, and the kept highlight only. Probe R2 turned round. The source check covers the panel.
+
+### Minors
+
+- **N-1:** the guard refuses an API role changing `transcript_id` or `class_id` of any metric row. Proof: probe R3 and the suite (teacher, service role, admin, into an approved lesson). Text edits still pass.
+- **N-2:** approve takes a metric row only `AND class_id = tr.class_id`. Proof: probe R4 and the suite.
+- **N-3:** the child must hold an enrolment covering the lesson date (start ≤ date ≤ end). The panel offers exactly those children, from a new lesson-date roster. Proof: ended before the lesson is refused, joined after is refused, left since is accepted.
+- **N-4:** a child for the "Unknown" speaker is refused. Proof: probe R6.
+- **N-5:** the guard refuses an API role deleting a metric row linked to a child. After the take-back no unapproved linked rows remain anyway. Proof: probe R8.
+- **N-6:** `transcript_approval_active` answers only an admin, the class's staff or a caller with no session (service role, owner). Everyone else gets false, and anon cannot call it. Proof: probe R1 and the suite.
+- **N-7:** "Retry transcription" is disabled on an approved lesson, with a tooltip saying why. This is in the screen only; `transcribe-lesson-audio` is unchanged. Proof: source check.
+- **N-8:** the function stamps `status = 'processing'` before analysing in both modes. A failed stamp gives a 503. Proof: the suite (the first write of a sync run).
+- **N-9:** the teacher's overview text is kept as the draft by the take-back. A re-analysis keeps a teacher-marked draft (suite), and the approval does not replace it with AI text.
+- **N-10:** unchanged by design. Approving stays open to everyone `is_teacher_of_class` covers, like every other staff policy.
+
+### Files (LF md5, CR stripped)
+
+| File | md5 |
+|---|---|
+| `supabase/migrations/20261117100000_transcript_analysis_drafts.sql` | 921dc2136710395071810bfdb7b5c5c0 |
+| `supabase/migrations/20261117100100_transcript_legacy_unpublish.sql` (new) | aa3b9ee0d66e9bfafd32b7c587776bc7 |
+| `supabase/functions/analyze-transcript/index.ts` | 91226837ac479450f06a6114e7f21048 |
+| `supabase/functions/_lib/speaker-suggestion.ts` | f76d5f35174b732ee14b97c0f92fd8e4 |
+
+Screen: `src/lib/transcriptReview.ts`, `src/components/teacher/TranscriptApprovalPanel.tsx`, `src/pages/TeacherTranscripts.tsx`.
+
+Tests:
+- `scripts/pgtest/transcript-drafts.setup.mjs` (new): the shared database;
+- `transcript-drafts.test.mjs`;
+- `review-transcript-probes.mjs`: the reviewer's R1-R9, turned round.
+
+### Deploy order (owner)
+
+1. Paste `20261117100000_transcript_analysis_drafts.sql`. It is not applied yet; this round's version replaces the first.
+2. Deploy `analyze-transcript`. Its imports are unchanged from the first round, and `_lib/speaker-suggestion.ts` changed.
+3. Paste `20261117100100_transcript_legacy_unpublish.sql`.
+   - It prints the counts; send them back. Expected: 24 lessons, 57 links and 32 children, 100 errors and 100 cards, 54 CEFR points, 22 overviews taken down and 2 kept.
+   - If it refuses, send back what it names.
+4. Publish the app. Do 3 and 4 back to back: between them the old screen cannot approve, and families see nothing of those 24 lessons except the 2 teacher-written overviews.
+
+Steps 1 and 2 may swap (stricter): the new function answers 503 until 1 is in. Step 3 must come after 2. If an analysis ran on the old function after 3, paste 3 again.
+
+### Tests (fix round 1)
+
+Run on the real clock (the full run started 08:37 Hanoi). The machine was shared with other agents' suites.
+
+| Check | Result |
+|---|---|
+| `transcript drafts (D-26)` (expect pinned at 221; was 141) | 221 passed, 0 failed |
+| `transcript review probes` (R1-R9 turned round, expect 34) | 34 passed, 0 failed |
+| `ai spend gate (F-02)` | 269 passed, 0 failed |
+| `edge functions typecheck` | 5 passed, 0 failed |
+| `app typecheck` inside run.mjs | 3 passed, 0 failed |
+| Full `node scripts/pgtest/run.mjs` | **8470 assertions across 88 suites, 0 failed** (exit 0) |
+| `npm run test:bun` | 250 pass, 0 fail, 18 files |
+| `tsc --noEmit -p tsconfig.app.json` standalone | exit 0 |
+
+Still not verified:
+- the screen was type-checked, not opened in a browser;
+- real OpenAI replies are not exercised;
+- the take-back ran only against the in-process Postgres. Live: only its selection, read-only.
