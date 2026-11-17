@@ -132,13 +132,26 @@ let log = [];
 // Make the read of cancelled lessons (Lost Income) fail: null, "error"
 // (PostgREST answers with an error) or "throw" (the request itself throws).
 let failCancelled = null;
+// FOLLOWUP (TA fail-closed): make any one read fail. { test(entry), mode }
+// where entry is the logged read ({ table, op, filters, select }) and mode
+// "error" (PostgREST answers with an error) or "throw" (the request throws).
+let failRead = null;
 const clone = (v) => JSON.parse(JSON.stringify(v));
 function fakeClient(key) {
   const who = key === SERVICE_KEY ? "service" : "other";
   const from = (table) => {
-    const st = { table, op: "select", filters: [], payload: null, single: null, order: null };
+    const st = { table, op: "select", filters: [], payload: null, single: null, order: null, select: "" };
+    // A filter on an embedded resource ("sessions.date") reads the row the
+    // foreign key points at. Only an !inner embed drops the parent row, as
+    // in PostgREST; a plain embed would keep it with the embed emptied.
+    const embedded = (r, k) => {
+      const [rel, col] = k.split(".");
+      if (table !== "session_participants" || rel !== "sessions") throw new Error(`stand-in: no embed ${table} -> ${rel}`);
+      return (db.sessions ?? []).find((s) => s.id === r.session_id)?.[col];
+    };
     const match = (r) => st.filters.every(([op, k, v]) => {
-      const x = r[k];
+      if (k.includes(".") && !st.select.includes(`${k.split(".")[0]}!inner(`)) return true;
+      const x = k.includes(".") ? embedded(r, k) : r[k];
       if (op === "eq") return x === v;
       if (op === "neq") return x !== v;
       if (op === "in") return v.includes(x);
@@ -149,6 +162,10 @@ function fakeClient(key) {
     });
     const exec = () => {
       log.push(clone({ client: who, table, op: st.op, filters: st.filters, single: st.single, payload: st.op === "select" ? undefined : st.payload }));
+      if (failRead && st.op === "select" && failRead.test({ table, filters: st.filters, select: st.select })) {
+        if (failRead.mode === "throw") throw new Error("connection reset while reading");
+        return { data: null, error: { code: "08006", message: "connection reset" } };
+      }
       if (failCancelled && table === "sessions" && st.op === "select" && st.filters.some(([op, k, v]) => op === "eq" && k === "status" && v === "Canceled")) {
         if (failCancelled === "throw") throw new Error("connection reset while reading cancelled lessons");
         return { data: null, error: { code: "08006", message: "connection reset" } };
@@ -169,7 +186,7 @@ function fakeClient(key) {
       return { data: rows, error: null };
     };
     const b = {
-      select() { return b; },
+      select(cols = "") { st.select = cols; return b; },
       upsert(p) { st.op = "upsert"; st.payload = p; return b; },
       insert(p) { st.op = "insert"; st.payload = p; return b; },
       update(p) { st.op = "update"; st.payload = p; return b; },
@@ -345,10 +362,13 @@ await section("an admin may ask for anyone", async () => {
 });
 
 // ===================================================================== 2
-const NEW_FIELDS = new Set(["lostIncome", "payRateType", "rateVnd"]);
+const NEW_FIELDS = new Set(["lostIncome", "payRateType", "rateVnd", "lostIncomeTotal", "lostIncomeOnly"]);
+// The month-wide Lost Income (CALC-fix M-1): two top-level fields after
+// payrollData, display only. Every row and every other figure is compared.
+const LOST_KEYS = new Set(["lostIncome", "lostIncomeTotal", "lostIncomeOnly"]);
 const stripNew = (v) => JSON.parse(JSON.stringify(v), function (k, x) {
   // payRateType is new only inside per-session detail; the row has had one.
-  if (k === "lostIncome") return undefined;
+  if (LOST_KEYS.has(k)) return undefined;
   if ((k === "payRateType" || k === "rateVnd") && this && "amount" in this && "minutes" in this) return undefined;
   return x;
 });
@@ -415,7 +435,7 @@ await section("the new fields", async () => {
 globalThis.__t5PayrollFn = fn;
 const CLOSE_DIR = resolve(repo, "supabase", "functions", "close-payroll-month");
 const closeFn = await load(readFileSync(resolve(CLOSE_DIR, "index.ts"), "utf8"), "close", CLOSE_DIR);
-const dropLost = (v) => JSON.parse(JSON.stringify(v), (k, x) => (k === "lostIncome" ? undefined : x));
+const dropLost = (v) => JSON.parse(JSON.stringify(v), (k, x) => (LOST_KEYS.has(k) ? undefined : x));
 const closeWrites = (r) => r.log.filter((e) => e.op === "upsert" && (e.table === "payroll_lines" || e.table === "expenditures")).map((e) => [e.table, e.payload]);
 
 await section("the cancelled-lessons read fails", async () => {
@@ -438,9 +458,10 @@ await section("the cancelled-lessons read fails", async () => {
       failCancelled = null;
       ok(`${mode}: ${label} -> 200`, r.status === 200, { status: r.status, json: r.json });
       ok(`${mode}: ${label}: every pay figure identical to the run where it was read`,
-        JSON.stringify(r.json) === JSON.stringify(dropLost(normal[label].json)), { got: r.json, want: dropLost(normal[label].json) });
+        JSON.stringify(dropLost(r.json)) === JSON.stringify(dropLost(normal[label].json)), { got: dropLost(r.json), want: dropLost(normal[label].json) });
       ok(`${mode}: ${label}: lostIncome absent on every row (the screen shows "Figure unavailable")`,
         (r.json?.payrollData ?? []).length > 0 && r.json.payrollData.every((x) => !("lostIncome" in x)));
+      eq(`${mode}: ${label}: lostIncomeTotal null (Saved Payroll shows "Figure unavailable")`, r.json?.lostIncomeTotal, null);
       eq(`${mode}: ${label}: same writes`, writes(r).map((e) => [e.table, e.op, e.payload]), writes(normal[label]).map((e) => [e.table, e.op, e.payload]));
     }
     failCancelled = mode;
@@ -451,6 +472,33 @@ await section("the cancelled-lessons read fails", async () => {
     eq(`${mode}: close-payroll-month same total`, close.json?.totalAmountVnd, normalClose.json?.totalAmountVnd);
   }
   ok("the normal close booked lines at all (the comparison is not empty)", closeWrites(normalClose).length >= 2, closeWrites(normalClose));
+});
+
+// ============================================== FOLLOWUP: TA loop fail-closed
+// A pay read for an assistant is NOT a display figure: when it fails the
+// whole calculation fails, and so does the month close that asks for it -
+// rather than close the month without the TA (docs/evidence/FOLLOWUPS-writeoff-payroll.md).
+await section("a teaching assistant's lessons cannot be read: the call and the close fail", async () => {
+  const normalClose = await call(closeFn, tokenOf(U.admin), { month: "2026-10", action: "close" });
+  const tasLine = closeWrites(normalClose).find(([t, p]) => t === "payroll_lines" && JSON.stringify(p).includes(TA_1));
+  ok("the normal close books a line for TA_1", normalClose.status === 200 && !!tasLine, closeWrites(normalClose));
+  const parts = (e) => e.table === "session_participants";
+  for (const mode of ["error", "throw"]) {
+    failRead = { test: parts, mode };
+    const admin = await call(fn, tokenOf(U.admin), { month: "2026-10" });
+    const teacher = await call(fn, tokenOf(U.teacherA), { month: "2026-10" });
+    const close = await call(closeFn, tokenOf(U.admin), { month: "2026-10", action: "close" });
+    failRead = null;
+    ok(`${mode}: admin's October -> 500, no payrollData (was: 200 without the TA)`,
+      admin.status === 500 && !("payrollData" in (admin.json ?? {})), { status: admin.status, json: admin.json });
+    if (mode === "error") eq(`${mode}: the error says what could not be read`, admin.json?.error, "Payroll not calculated: a teaching assistant's lessons could not be read. Try again.");
+    ok(`${mode}: a teacher's own call reads no assistant and is unaffected`,
+      teacher.status === 200 && JSON.stringify(ids(teacher)) === JSON.stringify([T_A]) && !teacher.log.some(parts), { status: teacher.status, ids: ids(teacher) });
+    ok(`${mode}: close-payroll-month refuses to close October`, close.status === 500 && close.json?.status !== "locked", { status: close.status, json: close.json });
+    ok(`${mode}: and books nothing - no payroll line, no expenditure, no period lock`,
+      !close.log.some((e) => e.op !== "select" && ["payroll_lines", "expenditures", "payroll_periods"].includes(e.table)),
+      close.log.filter((e) => e.op !== "select").map((e) => [e.table, e.op]));
+  }
 });
 
 // ===================================================================== 3
@@ -581,6 +629,63 @@ await section("before / after on the fixture", async () => {
   console.log("\n| Screen | Figure | Old browser | Function (now shown) | Why |\n|---|---|---|---|---|");
   for (const t of table) console.log(`| ${t.screen} | ${t.what} | ${t.before} | ${t.after} | ${t.why} |`);
   console.log("");
+});
+
+// ======================================================= BROWSER-PRICING
+// The Reports tab's Saved Payroll and the class calendar's cost card read
+// this function through src/lib/lostLessonsView.ts and
+// src/lib/finance/classPayroll.ts. Both screens used to price in the
+// browser (teacher row rate of today; sum of sessions.rate_override_vnd).
+const LL = await loadLib("src/lib/lostLessonsView.ts");
+const CP = await loadLib("src/lib/finance/classPayroll.ts");
+await section("BROWSER-PRICING: Saved Payroll and the class cost card = the function's figures", async () => {
+  failCancelled = null;
+  const oct = (await call(fn, tokenOf(U.admin), { month: "2026-10" })).json;
+  const sumLost = (j) => (j.payrollData ?? []).reduce((n, r) => n + r.lostIncome.totalAmount, 0);
+  ok("Oct (open): rows carry lostIncome (the comparison is not empty)", (oct.payrollData ?? []).length >= 3 && oct.payrollData.every((r) => r.lostIncome), oct.payrollData?.length);
+  eq("Oct (open): Saved Payroll = the function's lostIncome summed over every row", LL.cancelledPayTotal(oct), sumLost(oct));
+  eq("  = 300,000 (A, 13 Oct at the 13 Oct rate) + 250,000 (B, one fee) + 0 (TA)", LL.cancelledPayTotal(oct), 550000);
+  const sep = (await call(fn, tokenOf(U.admin), { month: "2026-09" })).json;
+  ok("Sep is the closed month", sep.locked === true, sep.locked);
+  eq("Sep (closed): Saved Payroll = the function's lostIncome summed", LL.cancelledPayTotal(sep), sumLost(sep));
+
+  failCancelled = "error";
+  const noLost = (await call(fn, tokenOf(U.admin), { month: "2026-10" })).json;
+  failCancelled = null;
+  eq("cancelled lessons not read (no lostIncome): Saved Payroll is null = figure unavailable, not 0", LL.cancelledPayTotal(noLost), null);
+  eq("function did not answer: null", LL.cancelledPayTotal(null), null);
+  eq("a 403 body: null", LL.cancelledPayTotal({ error: "Forbidden" }), null);
+  eq("one row without lostIncome among others: null (a part would read as the whole)",
+    LL.cancelledPayTotal({ payrollData: [{ lostIncome: { totalAmount: 5 } }, {}] }), null);
+  eq("lost profit = lost tuition - saved pay; unknown if either is", [LL.difference(1000, 300), LL.difference(null, 300), LL.difference(1000, null)], [700, null, null]);
+
+  // The class calendar's card.
+  const perClass = (j, cid, key) => (j.payrollData ?? []).reduce((n, r) => n + (r[key] ?? []).filter((s) => s.class_id === cid).reduce((m, s) => m + s.amount, 0), 0);
+  for (const cid of [C1, C2, C3]) {
+    eq(`Oct (open), class ${cid.slice(-1)}: card = the function's projected lessons of that class, every staff row`, CP.classPayFrom(oct, cid), perClass(oct, cid, "sessionDetailsProjected"));
+  }
+  ok("Oct: class 1 has pay to show (the comparison is not empty)", CP.classPayFrom(oct, C1) > 0, CP.classPayFrom(oct, C1));
+  const sepSplit = CP.splitPayrollByClass(sep.payrollData, { locked: true });
+  for (const cid of [C1, C2, C3]) {
+    eq(`Sep (closed), class ${cid.slice(-1)}: card = the paid totals split by class (Reports' Class Finance split)`, CP.classPayFrom(sep, cid), sepSplit.byClass.get(cid) ?? 0);
+  }
+  eq("Sep (closed): classes + unattributed = the frozen totals the function reports",
+    [...sepSplit.byClass.values()].reduce((n, v) => n + v, 0) + sepSplit.unattributed,
+    sep.payrollData.reduce((n, r) => n + r.totalAmountActual, 0));
+  eq("payroll not answered: card shows figure unavailable (null)", [CP.classPayFrom(null, C1), CP.classPayFrom({ error: "x" }, C1)], [null, null]);
+  eq("a class nobody was paid for: 0 (answered)", CP.classPayFrom(oct, "c0000000-0000-4000-8000-0000000000ff"), 0);
+
+  // Before / after on this fixture.
+  const seedRows = seed();
+  const octSessions = seedRows.sessions.filter((s) => s.date.startsWith("2026-10"));
+  const oldCard = octSessions.filter((s) => s.class_id === C1).reduce((n, s) => n + (s.rate_override_vnd || 0), 0);
+  addRow("class calendar (class 1, Oct)", "$ card", oldCard, CP.classPayFrom(oct, C1), true, "old: sum of sessions.rate_override_vnd, a column payroll ignores");
+  const tRow = (id) => seedRows.teachers.find((t) => t.id === id);
+  const oldSaved = octSessions.filter((s) => s.status === "Canceled" && s.teacher_id)
+    .reduce((n, s) => n + rate.sessionPayVnd(tRow(s.teacher_id), dur.durationMinutes(s.start_time, s.end_time) ?? 0), 0);
+  addRow("Reports (Oct)", "Saved Payroll", oldSaved, LL.cancelledPayTotal(oct), true, "old: each cancelled lesson's teacher at the teacher row's rate of today");
+  console.log("\n| Screen | Figure | Old browser | Function (now shown) | Why |\n|---|---|---|---|---|");
+  for (const t of table.slice(-2)) console.log(`| ${t.screen} | ${t.what} | ${t.before} | ${t.after} | ${t.why} |`);
 });
 
 for (const p of [sessionsTmp, viewTmp, rowsTmp, payRateTmp]) { try { unlinkSync(p); } catch { /* ignore */ } }

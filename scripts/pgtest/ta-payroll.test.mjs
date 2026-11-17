@@ -157,14 +157,27 @@ let log = [];
 // Make the read of cancelled lessons (Lost Income) fail: null, "error"
 // (PostgREST answers with an error) or "throw" (the request itself throws).
 let failCancelled = null;
+// FOLLOWUP (TA fail-closed): make any one read fail. { test(entry), mode }
+// where entry is the logged read ({ table, op, filters, select }) and mode
+// "error" (PostgREST answers with an error) or "throw" (the request throws).
+let failRead = null;
 let failTaLookup = null;
 const clone = (v) => JSON.parse(JSON.stringify(v));
 function fakeClient(key) {
   const who = key === SERVICE_KEY ? "service" : "other";
   const from = (table) => {
-    const st = { table, op: "select", filters: [], payload: null, single: null, order: null };
+    const st = { table, op: "select", filters: [], payload: null, single: null, order: null, select: "" };
+    // A filter on an embedded resource ("sessions.date") reads the row the
+    // foreign key points at. Only an !inner embed drops the parent row, as
+    // in PostgREST; a plain embed would keep it with the embed emptied.
+    const embedded = (r, k) => {
+      const [rel, col] = k.split(".");
+      if (table !== "session_participants" || rel !== "sessions") throw new Error(`stand-in: no embed ${table} -> ${rel}`);
+      return (db.sessions ?? []).find((s) => s.id === r.session_id)?.[col];
+    };
     const match = (r) => st.filters.every(([op, k, v]) => {
-      const x = r[k];
+      if (k.includes(".") && !st.select.includes(`${k.split(".")[0]}!inner(`)) return true;
+      const x = k.includes(".") ? embedded(r, k) : r[k];
       if (op === "eq") return x === v;
       if (op === "neq") return x !== v;
       if (op === "in") return v.includes(x);
@@ -175,6 +188,10 @@ function fakeClient(key) {
     });
     const exec = () => {
       log.push(clone({ client: who, table, op: st.op, filters: st.filters, single: st.single, payload: st.op === "select" ? undefined : st.payload }));
+      if (failRead && st.op === "select" && failRead.test({ table, filters: st.filters, select: st.select })) {
+        if (failRead.mode === "throw") throw new Error("connection reset while reading");
+        return { data: null, error: { code: "08006", message: "connection reset" } };
+      }
       // TA-PAY: the TA's own-row lookup (teaching_assistants by user_id) fails.
       if (failTaLookup && table === "teaching_assistants" && st.filters.some(([op, k]) => op === "eq" && k === "user_id")) {
         if (failTaLookup === "throw") throw new Error("connection reset while finding the TA");
@@ -200,7 +217,7 @@ function fakeClient(key) {
       return { data: rows, error: null };
     };
     const b = {
-      select() { return b; },
+      select(cols = "") { st.select = cols; return b; },
       upsert(p) { st.op = "upsert"; st.payload = p; return b; },
       insert(p) { st.op = "insert"; st.payload = p; return b; },
       update(p) { st.op = "update"; st.payload = p; return b; },
@@ -375,6 +392,18 @@ await section("a TA lookup that is not exactly one row fails closed", async () =
 });
 
 // ===================================================================== 2
+// CALC-fix round 1 (M-1): calculate-payroll appends two display-only fields
+// after payrollData - lostIncomeTotal and lostIncomeOnly. Everything before
+// them must still be the very same bytes; an answer without payrollData
+// (an error, a 403) must be identical outright.
+const sameAnswer = (now, before) => {
+  if (now === before) return true;
+  if (!before.endsWith("}") || !now.startsWith(before.slice(0, -1) + ',"lostIncomeTotal":')) return false;
+  const j = JSON.parse(now);
+  const keys = Object.keys(j);
+  return keys.length === Object.keys(JSON.parse(before)).length + 2 && keys.slice(-2).join() === "lostIncomeTotal,lostIncomeOnly" &&
+    Array.isArray(j.lostIncomeOnly) && (j.lostIncomeTotal === null || typeof j.lostIncomeTotal === "number");
+};
 await section(`nothing else moved since ${BASE}`, async () => {
   if (!baseFn) { ok(`base ${BASE} available from git`, false); return; }
   const cases = [
@@ -397,7 +426,7 @@ await section(`nothing else moved since ${BASE}`, async () => {
   for (const [label, token, body] of cases) {
     const now = await call(fn, token, body);
     const before = await call(baseFn, token, body);
-    ok(`${label}: same status and byte-identical answer`, now.status === before.status && now.text === before.text, { now: now.text.slice(0, 300), before: before.text.slice(0, 300) });
+    ok(`${label}: same status and byte-identical answer (apart from the month-wide Lost Income appended)`, now.status === before.status && sameAnswer(now.text, before.text), { now: now.text.slice(0, 300), before: before.text.slice(0, 300) });
     eq(`${label}: same writes`, writes(now).map((e) => [e.table, e.op, e.payload]), writes(before).map((e) => [e.table, e.op, e.payload]));
   }
   // The one intended difference: the TA's own call.
@@ -411,6 +440,120 @@ await section(`nothing else moved since ${BASE}`, async () => {
       { now: now.json?.payrollData, adminBefore: adminBefore.json?.payrollData });
     eq(`TA, ${month}: locked flag as for the admin`, now.json?.locked, adminBefore.json?.locked);
   }
+});
+
+// ============================================== FOLLOWUP: TA loop fail-closed
+// docs/evidence/FOLLOWUPS-writeoff-payroll.md, piece 2. The assistants' loop
+// ignored its read errors (the teacher loop threw): a failed read dropped
+// the TA - 0 on screen, nothing booked at close. Now every read there fails
+// the call, and the TA's participations are read for the requested month
+// only. PREV is the function just before that change; every figure, for
+// every caller, must be what it answered.
+const PREV = "efcb3a64"; // claude/hec-conductor-setup-efbaa5 when the follow-up branched
+let prevFn = null;
+try {
+  const files = ["calculate-payroll/index.ts", "_lib/pay-rate.ts", "_lib/pay-history.ts", "_lib/auth.ts", "_lib/payroll-sessions.ts"];
+  const dir = resolve(tmpdir(), `tapay-prev-${process.pid}`);
+  const { mkdirSync, rmSync } = await import("node:fs");
+  for (const f of files) {
+    const text = execFileSync("git", ["show", `${PREV}:supabase/functions/${f}`], { cwd: repo, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    mkdirSync(dirname(resolve(dir, f)), { recursive: true });
+    writeFileSync(resolve(dir, f), text);
+  }
+  prevFn = await load(readFileSync(resolve(dir, "calculate-payroll/index.ts"), "utf8"), "prev", resolve(dir, "calculate-payroll"));
+  rmSync(dir, { recursive: true, force: true }); // our own scratch copy in the OS temp dir
+} catch (e) { console.log("  (prev not loadable:", e?.message, ")"); }
+
+const OCT_LESSONS = seed().sessions.filter((s) => s.date >= "2026-10-01" && s.date < "2026-11-01").map((s) => s.id);
+const SEP_LESSONS = seed().sessions.filter((s) => s.date >= "2026-09-01" && s.date < "2026-10-01").map((s) => s.id);
+
+await section(`every figure as at ${PREV}, for every caller`, async () => {
+  if (!prevFn) { ok(`prev ${PREV} available from git`, false); return; }
+  const cases = [];
+  for (const month of ["2026-09", "2026-10", "2026-11"]) {
+    cases.push(
+      [`admin, ${month}`, tokenOf(U.admin), { month }],
+      [`admin naming TA_1, ${month}`, tokenOf(U.admin), { month, teacherId: TA_1 }],
+      [`admin naming TA_2, ${month}`, tokenOf(U.admin), { month, teacherId: TA_2 }],
+      [`admin naming teacher A, ${month}`, tokenOf(U.admin), { month, teacherId: T_A }],
+      [`teacher A, ${month}`, tokenOf(U.teacherA), { month }],
+      [`teacher B, ${month}`, tokenOf(U.teacherB), { month }],
+      [`TA_1 own, ${month}`, tokenOf(U.ta), { month }],
+      [`TA_2 own, ${month}`, tokenOf(U.ta2), { month }],
+      [`service role, ${month}`, SERVICE_KEY, { month }],
+    );
+  }
+  cases.push(["one login, two TA rows", tokenOf(U.taDup), { month: "2026-10" }], ["parent", tokenOf(U.parent), { month: "2026-10" }]);
+  let rows = 0;
+  for (const [label, token, body] of cases) {
+    const now = await call(fn, token, body);
+    const before = await call(prevFn, token, body);
+    rows += (now.json?.payrollData ?? []).length;
+    ok(`${label}: same status and byte-identical answer (apart from the month-wide Lost Income appended)`, now.status === before.status && sameAnswer(now.text, before.text), { now: now.text.slice(0, 300), before: before.text.slice(0, 300) });
+    eq(`${label}: same writes`, writes(now).map((e) => [e.table, e.op, e.payload]), writes(before).map((e) => [e.table, e.op, e.payload]));
+  }
+  ok(`  the comparison covered real rows (${rows} payroll rows across ${cases.length} calls)`, rows >= 30, rows);
+});
+
+await section("the TA's participations are read for the requested month only", async () => {
+  const r = await call(fn, tokenOf(U.ta), { month: "2026-10" });
+  const part = r.log.filter((e) => e.table === "session_participants");
+  ok("one participations read, narrowed by the embedded session's date to October",
+    part.length === 1 && JSON.stringify(part[0].filters.filter(([, k]) => k.startsWith("sessions."))) === JSON.stringify([["gte", "sessions.date", "2026-10-01"], ["lt", "sessions.date", "2026-11-01"]]),
+    part.map((e) => e.filters));
+  ok("  every lesson id sent to the sessions reads is an October lesson; none of September's", lessonIdsIn(r).length > 0
+    && lessonIdsIn(r).every((id) => OCT_LESSONS.includes(id)) && !lessonIdsIn(r).some((id) => SEP_LESSONS.includes(id)), lessonIdsIn(r));
+  if (prevFn) {
+    const before = await call(prevFn, tokenOf(U.ta), { month: "2026-10" });
+    ok(`  at ${PREV} September's lesson ids were in the October URL too (the long-URL growth this removes)`,
+      lessonIdsIn(before).some((id) => SEP_LESSONS.includes(id)), lessonIdsIn(before));
+  }
+  const sep = await call(fn, tokenOf(U.admin), { month: "2026-09", teacherId: TA_1 });
+  ok("a September read sends September's lessons only", lessonIdsIn(sep).length > 0 && lessonIdsIn(sep).every((id) => SEP_LESSONS.includes(id)), lessonIdsIn(sep));
+});
+
+await section("a failed read in the assistants' loop fails the call, never a partial answer", async () => {
+  const READS = [
+    ["the assistants list", "the teaching assistants", (e) => e.table === "teaching_assistants" && !e.filters.some(([, k]) => k === "user_id")],
+    ["the TA's participations", "a teaching assistant's lessons", (e) => e.table === "session_participants"],
+    ["the TA's held lessons", "a teaching assistant's lessons", (e) => e.table === "sessions" && e.filters.some(([op, k]) => op === "in" && k === "id") && e.filters.some(([op, k, v]) => op === "in" && k === "status" && JSON.stringify(v) === JSON.stringify(["Held"]))],
+    ["the TA's projected lessons", "a teaching assistant's lessons", (e) => e.table === "sessions" && e.filters.some(([op, k]) => op === "in" && k === "id") && e.filters.some(([op, k, v]) => op === "in" && k === "status" && JSON.stringify(v) === JSON.stringify(["Held", "Scheduled"]))],
+  ];
+  const CALLERS = [
+    ["admin, October", tokenOf(U.admin), { month: "2026-10" }],
+    ["admin naming TA_1", tokenOf(U.admin), { month: "2026-10", teacherId: TA_1 }],
+    ["admin, September (closed)", tokenOf(U.admin), { month: "2026-09" }],
+    ["TA_1 own", tokenOf(U.ta), { month: "2026-10" }],
+    ["service role (close-payroll-month)", SERVICE_KEY, { month: "2026-10" }],
+  ];
+  for (const [readLabel, what, test] of READS) {
+    for (const mode of ["error", "throw"]) {
+      for (const [label, token, body] of CALLERS) {
+        failRead = { test, mode };
+        const r = await call(fn, token, body);
+        failRead = null;
+        const hit = r.log.some((e) => e.op === "select" && test(e));
+        const want = mode === "error" ? `Payroll not calculated: ${what} could not be read. Try again.` : "Failed to calculate payroll";
+        ok(`${readLabel} ${mode === "error" ? "answers an error" : "throws"}, ${label}: 500 "${want}", no payrollData`,
+          hit && r.status === 500 && r.json?.error === want && !("payrollData" in (r.json ?? {})),
+          { hit, status: r.status, json: r.json });
+        ok(`  ${mode}, ${label}: nothing the database said reaches the caller`, !/connection reset|08006/.test(r.text), r.text);
+        if (label === "TA_1 own") ok(`  ${mode}, ${label}: nothing written`, writes(r).length === 0, writes(r));
+      }
+    }
+  }
+  if (prevFn) {
+    failRead = { test: READS[1][2], mode: "error" };
+    const before = await call(prevFn, tokenOf(U.admin), { month: "2026-10" });
+    failRead = null;
+    ok(`at ${PREV} the same failed read answered 200 without TA_1 (the bug: 0 on screen, nothing booked)`,
+      before.status === 200 && !ids(before).includes(TA_1) && ids(before).includes(T_A), { status: before.status, ids: ids(before) });
+  }
+  // Lost Income is a display figure and still never fails the call.
+  failCancelled = "error";
+  const lost = await call(fn, tokenOf(U.ta), { month: "2026-10" });
+  failCancelled = null;
+  ok("the cancelled-lessons read (Lost Income only) failing still answers 200 with the TA's row", lost.status === 200 && JSON.stringify(ids(lost)) === JSON.stringify([TA_1]), { status: lost.status, ids: ids(lost) });
 });
 
 // ===================================================================== 3
