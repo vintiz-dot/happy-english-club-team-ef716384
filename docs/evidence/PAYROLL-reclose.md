@@ -30,7 +30,7 @@ Checked: the drift panel walked calculate-payroll's live rows only. calculate-pa
 
 After a re-close that removed someone, the close toast says who and how much ("Removed 1 line(s) from the earlier close of staff who earn nothing in the month now: Colleague (500,000 ₫).") and stays until dismissed. After the re-close the month records 0 for them, so the panel correctly shows no drift for them: the correction is the re-close itself, recorded in audit_log. Carry-forward (payroll_adjustments, the D4 approval trigger on it) is untouched.
 
-## Tests - `scripts/pgtest/payroll-reclose.test.mjs` (registered as "payroll re-close"): 89 passed, 0 failed
+## Tests - `scripts/pgtest/payroll-reclose.test.mjs` (registered as "payroll re-close"): 89 passed at 4f41f003, 127 after fix round 1
 
 The real close-payroll-month and main's (04ccc58f) bundled, over a PostgREST stand-in that runs every select/upsert/update/rpc as real SQL as service_role, on the real migration chain in paste order (audit 20261009130000, 092000, 093000, 095000, 096000, 097000-099000 class overhead with a rent template so the freeze writes rows, 20261022091000, 20261117111000, then the new file).
 
@@ -53,29 +53,47 @@ Other suites touched: `teacher-payroll.test.mjs` - its stand-in now answers the 
 
 main's `run.mjs` lacks the teacher/TA payroll suites. I brought `teacher-payroll.test.mjs`, `ta-payroll.test.mjs`, `teacher-payroll-view.test.mjs` from **`calc-fix`, not conductor/work**: conductor's copies predate main's calculate-payroll (they fail 21 and 30 on main because main's TA read filters `sessions.date`, commit 268e0700); calc-fix's calculate-payroll is byte-identical to main's and its copies pass (164/261/94). Registered them, `payroll re-close` and `money invariants check` in run.mjs. Nothing else from conductor/work was brought.
 
-## Gates
+## Gates (at 4f41f003)
 
 Full `node scripts/pgtest/run.mjs` (real clock, ~17:00 Hanoi): **4732 assertions across 51 suites, 2 failed** (invoice status 32 failed, stars sync core crash). main at 04ccc58f, same harness minus the five suites registered here: 3999 across 46, the same 2 failed. `tsc --noEmit -p tsconfig.app.json`: clean. `npm run test:bun`: 142 pass, 3 fail, 2 errors - all on main already (functionError.test.ts reads the removed SettleBillModal.tsx; richTextEditor/richTextReview miss ./fixtures/rich-text/dom). Known on main and unchanged by this branch: `invoice status` (32 failed) and `stars sync core` (crashes) - the harness-lag failures the brief names; `money-write-paths` is not registered on main and crashes there on a missing `scripts/CREDIT-past-unapplied-cash.sql` after 6 unrelated failures (none mention close-payroll-month after this change).
 
-## Files to apply / deploy (LF md5, CR stripped)
+## Fix round 1 (review REVIEW-payroll-reclose.md, SHIP WITH CHANGES)
 
-1. Paste `supabase/migrations/20261117153000_payroll_reclose_reconcile.sql` - `fe129dba87374a15951d15b7d6944318`.
-2. Then deploy `close-payroll-month`: `supabase/functions/close-payroll-month/index.ts` `8208c0197fbb7cee0a055cc8605f9ec4`, `supabase/functions/_lib/auth.ts` `92b44db93cd2614a2fb3011e3a9063ba` (unchanged).
-3. Push the screen (Cloudflare): `src/lib/payrollDrift.ts`, `src/components/admin/payroll/PayrollMonthLock.tsx`, `src/components/admin/tabs/PayrollTab.tsx`. Works with either function version (the removed list is optional).
+| Item | Change | Proved by (payroll-reclose.test.mjs) |
+|---|---|---|
+| M-1 (ruling: fail closed in the database AND show it) | `close_payroll_month_apply` refuses with **HC149** to remove the line of anyone with `payroll_adjustments` carried out of this month (`origin_month = p_month`): message names each person, their line, the carried sum and the months it went into, says to undo the carry first (if unpaid) or leave the month, and "Nothing was changed". Checked before any write that matters (after the period lock; the refusal rolls everything back). close-payroll-month passes it through as 409. `payrollDrift` also emits a row for any carried id in neither the live rows nor the lines (paid 0, now 0, delta = minus what was carried, `carriedOnly`), named from `payroll_adjustments -> teachers / teaching_assistants (full_name)`; the panel labels it "(no line and no lessons in this month; only a carried correction remains)". The close/reopen toast now shows the function's own sentence (`functionErrorMessage`) for 20 s instead of "non-2xx". | section 8: the reviewer's underpay scenario (Hoa TA 450,000 closed, -450,000 carried into October, re-close without her) -> 409 HC149 naming her, every table (adjustments included) identical before/after; direct rpc code HC149; a re-close that keeps a carried person (line updated) closes as before; someone else without a carry is still removed. Section 7: the reviewer's drift probe as assertions (carried-only row +500,000 by name; active-at-0 not doubled; netted-to-0 no row; unnamed TA). |
+| M-2 | `removedCostsText` beside `removedLinesText`; the close toast shows both (memo + amount). | section 7 (text, and PayrollMonthLock uses both), R1 (a first close that removes only a Payroll-tab booking now produces the cost sentence). |
+| N-1 | Chose a transaction **advisory lock** over FOR SHARE on the period row, because on a first close the period row is the close's own uncommitted insert and FOR SHARE would find nothing to wait on. The close takes `pg_advisory_xact_lock(1902, hashtext(month))` first and holds it to commit; `refuse_payroll_expenditure_write_to_locked_month` is replaced by the same body plus `pg_advisory_xact_lock_shared(1902, hashtext(m))` on each month the payroll row names (key and date, old and new, sorted), taken BEFORE it checks. A Payroll-tab booking during a close waits, then (fresh snapshot) finds the month closed and is refused; one in flight makes the close wait and its DELETE then sees it. Bookings do not block each other. The preflight refuses to replace the guard unless its body md5 is 20261022091000's (`32dc7c68...`, = live) or this file's (`8d4df0f0...`). | section 8: a payroll booking holds the lock shared until commit; a non-payroll cost takes none; the close holds it exclusively (its own cost writes do not self-block); the installed guard locks before it checks. Section 1: a changed guard body refuses the install. The waiting itself needs two connections - pglite has one; reasoned, not run. |
+| N-4 | When calculate-payroll fails, close-payroll-month re-reads the period; locked now -> 409 "already closed", else the 500 as before. | section 8: a close that lost the race (the month locked during its calculate-payroll call) -> 409, nothing written by it; a failure on a still-open month stays 500. |
+| N-5 | The audit `why` lists per item: "`<name>`: line (X) and booked cost (Y)", "line (X) only, no booked cost", or "`<memo>`: booked cost (Y) only, no line". | section 8: first close (cost only) and re-close (both). |
+| N-2 | Left as is: a mis-dated keyed cost in a closed month blocks the whole close with the guard's own words naming that month and "Nothing was changed" - fails safe; live has 0 such rows. | R2 (BASE 200, new 409 naming July). |
 
-Order matters for 1 -> 2: the new function refuses to close (503, nothing written) until the migration is in. The old function keeps working after the migration (nothing it uses changed). Rollback: redeploy the previous close-payroll-month, then `DROP FUNCTION public.close_payroll_month_apply(text, jsonb, jsonb, uuid, text);`.
+The reviewer's probes are in the suite, not as separate files: `probe-reclose-appendix.mjs` R1-R5 is section 9 (each printed NOTE now an assertion), `probe-drift-carried.mts` is the M-1 block of section 7 (it imported from the reviewer's deleted export, so it could not run as copied). Registered through the suite.
+
+Suite now **127 passed, 0 failed** (was 89). Re-run in the fix round: teacher-payroll 164/0, ta-payroll 261/0, teacher-payroll-view 94/0, payroll-rows 69/0, money-invariants-check 125/0, edge-functions typecheck 5/0, `tsc --noEmit -p tsconfig.app.json` exit 0, `npm run test:bun` 142 pass / 3 fail / 2 errors (unchanged, all on main). money-write-paths: no failure mentions the close. The full run.mjs was not repeated in this round.
+
+## Files to apply / deploy (LF md5, CR stripped) - fix round 1
+
+1. Paste `supabase/migrations/20261117153000_payroll_reclose_reconcile.sql` - `f55e77a920bfe7bddedd7a14174a6511` (same file name; replaces `fe129dba...`, never applied).
+2. Then deploy `close-payroll-month`: `supabase/functions/close-payroll-month/index.ts` `9a20158cc2a283464784a7019d97b2aa`, `supabase/functions/_lib/auth.ts` `92b44db93cd2614a2fb3011e3a9063ba` (unchanged).
+3. Push the screen (Cloudflare): `src/lib/payrollDrift.ts` `d7ebea490f5343352b96766ae9f3d2ba`, `src/components/admin/payroll/PayrollMonthLock.tsx` `cfa4d1fdda7b29bf6aa17afa921731a6`, `src/components/admin/tabs/PayrollTab.tsx` (one prop). Works with either function version (the removed lists are optional).
+
+Order matters for 1 -> 2: the new function refuses to close (503, nothing written) until the migration is in. The old function keeps working after the migration (the guard only gains a lock it never contends: the old close takes none). Rollback: redeploy the previous close-payroll-month; `DROP FUNCTION public.close_payroll_month_apply(text, jsonb, jsonb, uuid, text);`; re-run the `CREATE OR REPLACE FUNCTION public.refuse_payroll_expenditure_write_to_locked_month()` block of 20261022091000.
 
 ## What a reviewer should attack
 
 - The removal set is "not in this close's lines", i.e. calculate-payroll's `totalAmountActual > 0` set. A person in the result at 0 who had a line is removed (they are owed nothing). If calculate-payroll ever answered short without failing, a re-close would remove a real line. Today every staff read in it throws (FOLLOWUP 268e0700), and the edge function refuses a month with nobody earning.
 - A FIRST close also removes this month's keyed payroll costs of people not earning (e.g. a Payroll-tab booking for someone whose lessons were then cancelled). Same overpay, same rule; live October 2026 (open) has 6 such bookings - their people will be checked against calculate-payroll when October is closed. Payroll-tab bookings of people who do earn are overwritten exactly as before (tested byte-for-byte).
-- Concurrency with the Payroll tab's "Add to Expenditures": it does not lock the period row, so an insert committed between this transaction's DELETE and its COMMIT can leave a stale cost (window: one transaction, was five HTTP round trips). Two closes at once are serialised by FOR UPDATE (not exercisable in single-connection pglite; reasoned, not tested).
+- Concurrency (fix round N-1): the Payroll tab's booking and the close now take turns on the month's advisory lock (shared / exclusive). Two closes at once are serialised by the same lock and FOR UPDATE; the loser answers 409 (N-4). The waiting is not exercisable in single-connection pglite; reasoned, plus lock-held assertions.
+- A re-close that KEEPS a person with a carried correction but changes their line (e.g. 500,000 -> 300,000 with -200,000 carried) still upserts as main always did; the panel then shows the +200,000 to carry back (not silent). Refusing that too would be a wider rule than the ruling; open question for the conductor.
 - `payroll_summaries` (calculate-payroll's cache) is not cleaned for a dropped person - not a payment record; out of scope.
 - Hand-entered payroll costs (`source_kind` NULL) and payroll costs with another key shape are left alone on purpose.
 - M33 could become 'must be 0' once this is live; I did not change the check script.
 
 ## What I could not check
 
-- The real PostgREST rpc path (named jsonb args, error codes PGRST202 / 23514 / HC147 / HC148 as supabase-js reports them) - stand-in only.
+- The real PostgREST rpc path (named jsonb args, error codes PGRST202 / 23514 / HC147 / HC148 / HC149 as supabase-js reports them) - stand-in only.
+- Two real connections contending for the advisory lock (N-1, N-4).
+- The embedded `teachers(full_name), teaching_assistants(full_name)` read of payroll_adjustments on live PostgREST (typed by types.ts; tsc clean).
 - Live Supabase editor paste of the migration (preflight conditions checked read-only on live: all pass).
 - The toast in a browser (not run).
