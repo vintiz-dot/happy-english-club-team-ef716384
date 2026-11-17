@@ -17,7 +17,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatVND } from "@/lib/invoice/formatter";
 import { monthKey } from "@/lib/date";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
-import { useIvory } from "@/hooks/useIvory";
 
 interface SmartFamilyPaymentModalProps {
   open: boolean;
@@ -78,8 +77,6 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
 
   const queryClient = useQueryClient();
   const tuitionMonth = useTuitionMonthConfirmation(formData.month, open);
-  const ivory = useIvory();
-  const iv = (n: string, o: string) => (ivory ? n : o);
 
   // Load families with multiple students
   useEffect(() => {
@@ -329,7 +326,7 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
               </SelectContent>
             </Select>
             {families.length === 0 && (
-              <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
+              <p className="text-hec-small text-hec-ink-soft">
                 No families with multiple active students found
               </p>
             )}
@@ -356,7 +353,7 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
               </div>
               
               {loadingBalances ? (
-                <div className={iv("border border-hec-line rounded-hec-md divide-y divide-hec-line", "border rounded-lg divide-y")}>
+                <div className="border border-hec-line rounded-hec-md divide-y divide-hec-line">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center justify-between p-3">
                       <div className="flex items-center gap-3">
@@ -368,47 +365,47 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
                   ))}
                 </div>
               ) : (
-                <div className={iv("border border-hec-line rounded-hec-md divide-y divide-hec-line", "border rounded-lg divide-y")}>
+                <div className="border border-hec-line rounded-hec-md divide-y divide-hec-line">
                   {siblings.map((sibling, index) => (
                     <div key={sibling.id} className="p-3 space-y-2">
-                      <div className={iv("flex items-start justify-between gap-3", "flex items-center justify-between")}>
-                        <div className={iv("flex min-w-0 flex-1 items-start gap-3", "flex items-center gap-3")}>
-                          <div className={iv("h-6 w-6 shrink-0 rounded-full bg-hec-sunken text-hec-ink-soft flex items-center justify-center text-hec-caption font-medium tabular-nums", "h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium")}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                          <div className="h-6 w-6 shrink-0 rounded-full bg-hec-sunken text-hec-ink-soft flex items-center justify-center text-hec-caption font-medium tabular-nums">
                             {index + 1}
                           </div>
-                          <span className={iv("min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink", "font-medium")}>{sibling.name}</span>
+                          <span className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{sibling.name}</span>
                         </div>
-                        <Badge variant={sibling.debt > 0 ? "destructive" : "secondary"} className={iv(sibling.debt > 0 ? "shrink-0 whitespace-nowrap tabular-nums" : "shrink-0 whitespace-nowrap border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf", "")}>
+                        <Badge variant={sibling.debt > 0 ? "destructive" : "secondary"} className={(sibling.debt > 0 ? "shrink-0 whitespace-nowrap tabular-nums" : "shrink-0 whitespace-nowrap border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf")}>
                           {sibling.debt > 0 ? `Owes ${formatVND(sibling.debt)}` : "Settled"}
                         </Badge>
                       </div>
 
                       {/* Discount breakdown */}
                       {sibling.baseAmount > 0 && (
-                        <div className={iv("ml-9 text-hec-caption space-y-1", "ml-9 text-xs space-y-1")}>
-                          <div className={iv("flex flex-wrap gap-x-3 gap-y-1 text-hec-ink-soft tabular-nums", "flex gap-3 text-muted-foreground")}>
-                            <span className={iv("whitespace-nowrap", "")}>Base: {formatVND(sibling.baseAmount)}</span>
+                        <div className="ml-9 text-hec-caption space-y-1">
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-hec-ink-soft tabular-nums">
+                            <span className="whitespace-nowrap">Base: {formatVND(sibling.baseAmount)}</span>
                             {sibling.totalDiscount > 0 && (
-                              <span className={iv("whitespace-nowrap text-hec-ink-soft", "text-green-600")}>Disc: -{formatVND(sibling.totalDiscount)}</span>
+                              <span className="whitespace-nowrap text-hec-ink-soft">Disc: -{formatVND(sibling.totalDiscount)}</span>
                             )}
-                            <span className={iv("whitespace-nowrap font-medium text-hec-ink", "font-medium text-foreground")}>Net: {formatVND(sibling.totalAmount)}</span>
+                            <span className="whitespace-nowrap font-medium text-hec-ink">Net: {formatVND(sibling.totalAmount)}</span>
                           </div>
 
                           {sibling.discounts.length > 0 && (
                             <Collapsible>
-                              <CollapsibleTrigger className={iv("flex min-h-hec-target items-center gap-1 rounded-hec-sm text-hec-brass hover:underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors")}>
+                              <CollapsibleTrigger className="flex min-h-hec-target items-center gap-1 rounded-hec-sm text-hec-brass hover:underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
                                 <ChevronDown className="h-3 w-3" />
                                 <span>{sibling.discounts.length} discount{sibling.discounts.length > 1 ? 's' : ''} applied</span>
                               </CollapsibleTrigger>
                               <CollapsibleContent className="pt-1 space-y-0.5">
                                 {sibling.discounts.map((d, i) => (
-                                  <div key={i} className={iv("flex items-baseline justify-between gap-4 text-hec-ink-soft", "flex justify-between text-muted-foreground")}>
-                                    <span className={iv("min-w-0 whitespace-normal break-words", "")}>
+                                  <div key={i} className="flex items-baseline justify-between gap-4 text-hec-ink-soft">
+                                    <span className="min-w-0 whitespace-normal break-words">
                                       {d.name}
                                       {d.type === 'percent' ? ` (${d.value}%)` : ''}
                                       {d.appliedToClass ? ` · ${d.appliedToClass}` : ''}
                                     </span>
-                                    <span className={iv("shrink-0 whitespace-nowrap text-hec-ink tabular-nums", "text-green-600")}>-{formatVND(d.amount)}</span>
+                                    <span className="shrink-0 whitespace-nowrap text-hec-ink tabular-nums">-{formatVND(d.amount)}</span>
                                   </div>
                                 ))}
                               </CollapsibleContent>
@@ -421,9 +418,9 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
                 </div>
               )}
               
-              <div className={iv("flex items-baseline justify-between gap-4 text-hec-small", "flex items-center justify-between text-sm")}>
-                <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Total Family Debt (post-discount):</span>
-                <span className={iv("shrink-0 whitespace-nowrap font-semibold text-hec-ink tabular-nums", "font-semibold text-destructive")}>{formatVND(totalFamilyDebt)}</span>
+              <div className="flex items-baseline justify-between gap-4 text-hec-small">
+                <span className="min-w-0 text-hec-ink-soft">Total Family Debt (post-discount):</span>
+                <span className="shrink-0 whitespace-nowrap font-semibold text-hec-ink tabular-nums">{formatVND(totalFamilyDebt)}</span>
               </div>
             </div>
           )}
@@ -431,8 +428,8 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
           {/* Payment Details */}
           {siblings.length > 0 && (
             <>
-              <div className={iv("grid grid-cols-1 sm:grid-cols-2 gap-4", "grid grid-cols-2 gap-4")}>
-                <div className={iv("min-w-0 space-y-2", "space-y-2")}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="min-w-0 space-y-2">
                   <Label htmlFor="amount">Payment Amount (VND) *</Label>
                   <div className="flex gap-2">
                     <Input
@@ -441,7 +438,7 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                       required
-                      className={iv("min-w-0 flex-1 tabular-nums", "flex-1")}
+                      className="min-w-0 flex-1 tabular-nums"
                     />
                     <Button type="button" variant="outline" size="sm" onClick={handleSettleAll}>
                       Settle All
@@ -490,43 +487,43 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
 
               {/* Allocation Preview */}
               {paymentAmount > 0 && (
-                <Card className={iv("bg-hec-sunken", "border-primary/20 bg-primary/5")}>
-                  <CardContent className={iv("pt-4 sm:pt-6 space-y-3", "pt-4 space-y-3")}>
-                    <div className={iv("flex items-center gap-2 text-hec-body font-medium text-hec-ink", "flex items-center gap-2 font-medium")}>
+                <Card className="bg-hec-sunken">
+                  <CardContent className="pt-4 sm:pt-6 space-y-3">
+                    <div className="flex items-center gap-2 text-hec-body font-medium text-hec-ink">
                       <Users className="h-4 w-4" />
                       Payment Allocation Preview
                     </div>
 
                     <div className="space-y-2">
                       {allocationPreview.map((alloc, index) => (
-                        <div key={alloc.studentId} className={iv("flex flex-wrap items-center gap-x-2 gap-y-1 text-hec-small text-hec-ink", "flex items-center gap-2 text-sm")}>
-                          <div className={iv("h-6 w-6 shrink-0 rounded-full bg-hec-surface border border-hec-line text-hec-ink-soft flex items-center justify-center text-hec-caption tabular-nums", "h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-xs")}>
+                        <div key={alloc.studentId} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-hec-small text-hec-ink">
+                          <div className="h-6 w-6 shrink-0 rounded-full bg-hec-surface border border-hec-line text-hec-ink-soft flex items-center justify-center text-hec-caption tabular-nums">
                             {index + 1}
                           </div>
-                          <span className={iv("min-w-0 flex-1 basis-32 whitespace-normal break-words hyphens-none font-medium", "flex-1")}>{alloc.studentName}</span>
-                          <span className={iv("whitespace-nowrap text-hec-ink-soft tabular-nums", "text-muted-foreground")}>
+                          <span className="min-w-0 flex-1 basis-32 whitespace-normal break-words hyphens-none font-medium">{alloc.studentName}</span>
+                          <span className="whitespace-nowrap text-hec-ink-soft tabular-nums">
                             (debt: {formatVND(alloc.debt)})
                           </span>
-                          <ArrowDown className={iv("h-3 w-3 text-hec-ink-soft", "h-3 w-3 text-muted-foreground")} />
-                          <span className={ivory ? (alloc.applied > 0 ? "whitespace-nowrap font-medium text-hec-ink tabular-nums" : "text-hec-ink-soft") : alloc.applied > 0 ? "text-green-600 font-medium" : "text-muted-foreground"}>
+                          <ArrowDown className="h-3 w-3 text-hec-ink-soft" />
+                          <span className={(alloc.applied > 0 ? "whitespace-nowrap font-medium text-hec-ink tabular-nums" : "text-hec-ink-soft")}>
                             {alloc.applied > 0 ? `Apply: ${formatVND(alloc.applied)}` : "—"}
                           </span>
                           {alloc.afterDebt === 0 && alloc.applied > 0 && (
-                            <Check className={iv("h-4 w-4 text-hec-leaf", "h-4 w-4 text-green-600")} aria-label={ivory ? "Settled in full" : undefined} />
+                            <Check className="h-4 w-4 text-hec-leaf" aria-label="Settled in full" />
                           )}
                         </div>
                       ))}
                     </div>
 
-                    <div className={iv("flex items-baseline justify-between gap-4 pt-3 border-t-2 border-hec-ink text-hec-body text-hec-ink", "flex justify-between pt-2 border-t text-sm")}>
-                      <span className={iv("min-w-0 font-semibold", "")}>Total Applied:</span>
-                      <span className={iv("shrink-0 whitespace-nowrap font-sans text-hec-h3 font-semibold text-hec-ink tabular-nums", "font-medium text-green-600")}>{formatVND(totalApplied)}</span>
+                    <div className="flex items-baseline justify-between gap-4 pt-3 border-t-2 border-hec-ink text-hec-body text-hec-ink">
+                      <span className="min-w-0 font-semibold">Total Applied:</span>
+                      <span className="shrink-0 whitespace-nowrap font-sans text-hec-h3 font-semibold text-hec-ink tabular-nums">{formatVND(totalApplied)}</span>
                     </div>
 
                     {leftoverAmount > 0 && (
-                      <div className={iv("flex items-baseline justify-between gap-4 text-hec-small text-hec-ink", "flex justify-between text-sm")}>
-                        <span className={iv("min-w-0 text-hec-warn font-medium", "")}>Leftover:</span>
-                        <span className={iv("shrink-0 whitespace-nowrap font-medium text-hec-ink tabular-nums", "font-medium text-orange-600")}>{formatVND(leftoverAmount)}</span>
+                      <div className="flex items-baseline justify-between gap-4 text-hec-small text-hec-ink">
+                        <span className="min-w-0 text-hec-warn font-medium">Leftover:</span>
+                        <span className="shrink-0 whitespace-nowrap font-medium text-hec-ink tabular-nums">{formatVND(leftoverAmount)}</span>
                       </div>
                     )}
                   </CardContent>
@@ -535,18 +532,18 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
 
               {/* Leftover Handling */}
               {leftoverAmount > 0 && (
-                <Alert className={iv("rounded-hec-md border-hec-warn/30 bg-hec-warn-tint text-hec-ink [&>svg]:text-hec-warn", "")}>
+                <Alert className={"rounded-hec-md border-hec-warn/30 bg-hec-warn-tint text-hec-ink [&>svg]:text-hec-warn"}>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     <div className="space-y-3">
-                      <p className={iv("font-medium tabular-nums", "font-medium")}>
+                      <p className="font-medium tabular-nums">
                         Leftover amount: {formatVND(leftoverAmount)}
                       </p>
-                      <p className={iv("text-hec-small text-hec-ink", "text-sm")}>
+                      <p className="text-hec-small text-hec-ink">
                         The extra {formatVND(leftoverAmount)} will show as credit on{" "}
                         {siblings[0]?.name ?? "the first child"}'s next bill.
                       </p>
-                      <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
+                      <p className="text-hec-small text-hec-ink-soft">
                         It is recorded on {siblings[0]?.name ?? "the first child"}'s {formData.month} bill (the child
                         listed first), and their next bill starts with it as credit.
                       </p>

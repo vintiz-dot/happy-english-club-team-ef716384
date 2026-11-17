@@ -8,7 +8,6 @@
  * in cefr_assessments so the growth chart tells the whole story.
  */
 import { useState } from "react";
-import { useIvory } from "@/hooks/useIvory";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,14 +38,7 @@ const invokeDefense = async (body: Record<string, unknown>) => {
   return data;
 };
 
-// Rendered on the staff student page (not flipped yet) and, later, everywhere: `ivory` picks the class set.
 const BADGE_TONES = {
-  old: {
-    good: "bg-emerald-500/15 text-emerald-600 gap-1",
-    warn: "bg-amber-500/15 text-amber-600 gap-1",
-    bad: "bg-red-500/15 text-red-600 gap-1",
-    info: "bg-blue-500/15 text-blue-600 gap-1",
-  },
   ivory: {
     good: "gap-1 border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
     warn: "gap-1 border-hec-warn/30 bg-hec-warn-tint text-hec-warn",
@@ -55,8 +47,8 @@ const BADGE_TONES = {
   },
 };
 
-const statusBadge = (status: string | null | undefined, ivory: boolean) => {
-  const T = ivory ? BADGE_TONES.ivory : BADGE_TONES.old;
+const statusBadge = (status: string | null | undefined) => {
+  const T = BADGE_TONES.ivory;
   switch (status) {
     case "supported":
       return <Badge className={T.good}><ShieldCheck className="h-3 w-3" />Evidence supports</Badge>;
@@ -77,10 +69,8 @@ const statusBadge = (status: string | null | undefined, ivory: boolean) => {
 
 export function CefrDefensePanel({ studentId, classId }: { studentId: string; classId?: string | null }) {
   const queryClient = useQueryClient();
-  const ivory = useIvory();
   const [level, setLevel] = useState<string>("");
-  const k = ivory
-    ? {
+  const k = {
         icon: "h-4 w-4 text-hec-ink-soft",
         level: "font-display text-hec-h1 font-medium text-hec-brass",
         audit: "gap-1.5",
@@ -95,22 +85,6 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
         againstTitle: "mb-1 text-hec-caption font-medium text-hec-warn",
         item: "text-hec-caption text-hec-ink-soft",
         wait: "flex items-center gap-1.5 text-hec-caption text-hec-ink-soft",
-      }
-    : {
-        icon: "h-4 w-4 text-violet-500",
-        level: "text-2xl font-black text-violet-600",
-        audit: "gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white",
-        box: "rounded-xl border p-3 space-y-2 text-sm",
-        label: "font-semibold text-xs uppercase tracking-wide text-muted-foreground",
-        muted: "text-xs text-muted-foreground",
-        body: "text-xs text-muted-foreground leading-relaxed",
-        strong: "font-bold text-foreground",
-        forBox: "rounded-lg bg-emerald-500/5 ring-1 ring-emerald-500/20 p-2",
-        forTitle: "text-[11px] font-bold text-emerald-600 mb-1",
-        againstBox: "rounded-lg bg-amber-500/5 ring-1 ring-amber-500/20 p-2",
-        againstTitle: "text-[11px] font-bold text-amber-600 mb-1",
-        item: "text-[11px] text-muted-foreground",
-        wait: "text-[11px] text-muted-foreground flex items-center gap-1.5",
       };
 
   const { data: state, isLoading } = useQuery<any>({
@@ -156,21 +130,21 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
               <Scale className={k.icon} />
               CEFR Level Defense
             </CardTitle>
-            <CardDescription className={ivory ? "mt-1 text-hec-small" : "text-xs mt-1"}>
+            <CardDescription className="mt-1 text-hec-small">
               Declare a working level, then let the AI audit the evidence — or have the student defend it in an adaptive test.
             </CardDescription>
           </div>
           {claim && (
             <div className="flex items-center gap-2">
               <span className={k.level}>{claim.claimed_level}</span>
-              {statusBadge(claim.status, ivory)}
+              {statusBadge(claim.status)}
             </div>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
-          <div className={ivory ? "flex items-center gap-2 py-2 text-hec-small text-hec-ink-soft" : "flex items-center gap-2 text-sm text-muted-foreground py-2"}>
+          <div className="flex items-center gap-2 py-2 text-hec-small text-hec-ink-soft">
             <Loader2 className="h-4 w-4 animate-spin" />Loading…
           </div>
         ) : (
@@ -257,9 +231,9 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className={k.label}>Defense test result</p>
                   {latestGraded.result.defended ? (
-                    <Badge className={BADGE_TONES[ivory ? "ivory" : "old"].good}><CheckCircle2 className="h-3 w-3" />Defended {latestGraded.target_level}</Badge>
+                    <Badge className={BADGE_TONES.ivory.good}><CheckCircle2 className="h-3 w-3" />Defended {latestGraded.target_level}</Badge>
                   ) : (
-                    <Badge className={BADGE_TONES[ivory ? "ivory" : "old"].bad}><XCircle className="h-3 w-3" />Estimate: {latestGraded.result.level_estimate}</Badge>
+                    <Badge className={BADGE_TONES.ivory.bad}><XCircle className="h-3 w-3" />Estimate: {latestGraded.result.level_estimate}</Badge>
                   )}
                 </div>
                 <p className={k.body}>{latestGraded.result.rationale}</p>

@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudentProfileContext } from "@/contexts/StudentProfileContext";
 import { Loading } from "@/components/ui/loading";
-import { useIvory } from "@/hooks/useIvory";
 
 type Assignment = {
   id: string;
@@ -34,9 +33,6 @@ interface AssignmentCalendarProps {
 }
 
 export function AssignmentCalendar({ onSelectAssignment, role, classId }: AssignmentCalendarProps) {
-  // "Ivory" design system on a listed route; today's classes elsewhere (the teacher's assignments page shares this).
-  const ivory = useIvory();
-  const c = (next: string, old: string) => (ivory ? next : old);
   const [currentMonth, setCurrentMonth] = useState(dayjs().format("YYYY-MM"));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const lastDateRef = useRef<string | null>(null);
@@ -99,9 +95,9 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
     return (
       <Card>
         <div className="py-12 text-center px-4">
-          <CalendarIcon className={c("h-12 w-12 mx-auto text-hec-ink-soft mb-4", "h-12 w-12 mx-auto text-muted-foreground mb-4")} />
-          <p className={c("text-hec-ink-soft", "text-muted-foreground")}>No assignments for this month</p>
-          <p className={c("text-hec-small text-hec-ink-soft mt-1", "text-sm text-muted-foreground mt-1")}>
+          <CalendarIcon className="h-12 w-12 mx-auto text-hec-ink-soft mb-4" />
+          <p className="text-hec-ink-soft">No assignments for this month</p>
+          <p className="text-hec-small text-hec-ink-soft mt-1">
             No assignments found for the selected student
           </p>
         </div>
@@ -147,35 +143,19 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
   };
 
   const getStatusColor = (status: string) => {
-    if (ivory) {
-      switch (status) {
-        case "graded":
-        case "all-graded":
-          return "bg-hec-leaf";
-        case "late":
-          return "bg-hec-danger";
-        case "due-today":
-          return "bg-hec-warn";
-        case "submitted":
-        case "has-submissions":
-          return "bg-hec-ink";
-        default:
-          return "bg-hec-ink-faint";
-      }
-    }
     switch (status) {
       case "graded":
       case "all-graded":
-        return "bg-success";
+        return "bg-hec-leaf";
       case "late":
-        return "bg-destructive";
+        return "bg-hec-danger";
       case "due-today":
-        return "bg-warning";
+        return "bg-hec-warn";
       case "submitted":
       case "has-submissions":
-        return "bg-primary";
+        return "bg-hec-ink";
       default:
-        return "bg-muted-foreground";
+        return "bg-hec-ink-faint";
     }
   };
 
@@ -199,12 +179,12 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
   const selectedDateAssignments = shownDate ? assignmentsByDate[shownDate] || [] : [];
 
   return (
-    <Card className={c("p-4 md:p-6", "glass-sm p-4 md:p-6")}>
+    <Card className="p-4 md:p-6">
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
-            <CalendarIcon className={c("h-5 w-5 shrink-0 text-hec-ink-soft", "h-5 w-5 shrink-0 text-primary")} />
+            <CalendarIcon className="h-5 w-5 shrink-0 text-hec-ink-soft" />
             <h2 className="whitespace-nowrap text-base font-semibold sm:text-lg">
               <span className="sm:hidden">{dayjs(currentMonth).format("MMM YYYY")}</span>
               <span className="hidden sm:inline">{dayjs(currentMonth).format("MMMM YYYY")}</span>
@@ -216,7 +196,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
               size="sm"
               onClick={() => navigateMonth("prev")}
               aria-label="Previous month"
-              className={c("min-h-hec-target min-w-hec-target p-0", "h-8 w-8 p-0")}
+              className="min-h-hec-target min-w-hec-target p-0"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -224,7 +204,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
               variant="outline"
               size="sm"
               onClick={goToToday}
-              className={c("min-h-hec-target px-3", "h-8 px-3")}
+              className="min-h-hec-target px-3"
             >
               Today
             </Button>
@@ -233,7 +213,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
               size="sm"
               onClick={() => navigateMonth("next")}
               aria-label="Next month"
-              className={c("min-h-hec-target min-w-hec-target p-0", "h-8 w-8 p-0")}
+              className="min-h-hec-target min-w-hec-target p-0"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -241,21 +221,21 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
         </div>
 
         {/* Legend */}
-        <div className={c("flex flex-wrap gap-x-3 gap-y-2 text-hec-caption text-hec-ink-soft", "flex flex-wrap gap-2 text-xs")}>
+        <div className="flex flex-wrap gap-x-3 gap-y-2 text-hec-caption text-hec-ink-soft">
           <div className="flex items-center gap-1">
-            <div className={c("h-2 w-2 rounded-full bg-hec-leaf", "w-2 h-2 rounded-full bg-success")} />
+            <div className="h-2 w-2 rounded-full bg-hec-leaf" />
             <span>{role === "student" ? "Graded" : "All Graded"}</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className={c("h-2 w-2 rounded-full bg-hec-ink", "w-2 h-2 rounded-full bg-primary")} />
+            <div className="h-2 w-2 rounded-full bg-hec-ink" />
             <span>{role === "student" ? "Submitted" : "Has Submissions"}</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className={c("h-2 w-2 rounded-full bg-hec-warn", "w-2 h-2 rounded-full bg-warning")} />
+            <div className="h-2 w-2 rounded-full bg-hec-warn" />
             <span>Due Today</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className={c("h-2 w-2 rounded-full bg-hec-danger", "w-2 h-2 rounded-full bg-destructive")} />
+            <div className="h-2 w-2 rounded-full bg-hec-danger" />
             <span>Late</span>
           </div>
         </div>
@@ -265,7 +245,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
           <Loading message="Loading calendar" />
         ) : (
           <>
-            <div className={c("-mx-2 grid grid-cols-7 gap-0.5 text-hec-caption font-medium text-hec-ink-soft sm:mx-0 sm:gap-1", "grid grid-cols-7 gap-1 text-xs text-muted-foreground font-medium")}>
+            <div className="-mx-2 grid grid-cols-7 gap-0.5 text-hec-caption font-medium text-hec-ink-soft sm:mx-0 sm:gap-1">
               {weekdayHeaders.map((h) => (
                 <div key={h} className="px-2 py-1 text-center">
                   {h}
@@ -273,7 +253,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
               ))}
             </div>
             {/* Ivory at 375: the grid borrows the card padding and a 2 px gap so seven columns keep 44 px targets (R08). */}
-            <div className={c("-mx-2 grid grid-cols-7 gap-0.5 sm:mx-0 sm:gap-2", "grid grid-cols-7 gap-2")}>
+            <div className="-mx-2 grid grid-cols-7 gap-0.5 sm:mx-0 sm:gap-2">
               {cells.map((d) => {
                 const dayAssignments = assignmentsByDate[d] || [];
                 const isCurrentMonth = d.startsWith(currentMonth);
@@ -283,19 +263,13 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
                     key={d}
                     onClick={() => dayAssignments.length > 0 && setSelectedDate(d)}
                     className={
-                      ivory
-                        ? `relative min-h-16 rounded-hec-md border p-1 sm:min-h-[80px] sm:p-2 transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${
+                      `relative min-h-16 rounded-hec-md border p-1 sm:min-h-[80px] sm:p-2 transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${
                             isToday(d) ? "border-hec-ink bg-hec-surface ring-1 ring-hec-ink" : isCurrentMonth ? "border-hec-line bg-hec-surface" : "border-hec-line bg-hec-paper"
                           } ${dayAssignments.length > 0 ? "cursor-pointer hover:bg-hec-sunken" : "cursor-default"}`
-                        : `glass-sm rounded-lg p-2 min-h-[80px] transition-all hover:scale-[1.02] relative ${
-                            isToday(d) ? "ring-2 ring-primary" : ""
-                          } ${!isCurrentMonth ? "opacity-40" : ""} ${
-                            dayAssignments.length > 0 ? "cursor-pointer" : "cursor-default"
-                          }`
                     }
                   >
                     <div className="text-right mb-1">
-                      <div className={ivory ? "text-hec-small font-medium tabular-nums text-hec-ink" : `text-sm font-medium ${isToday(d) ? "text-primary" : ""}`}>
+                      <div className="text-hec-small font-medium tabular-nums text-hec-ink">
                         {dayjs(d).format("D")}
                       </div>
                     </div>
@@ -305,12 +279,12 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
                           key={assignment.id}
                           className={`h-2.5 rounded-full ${getStatusColor(
                             getAssignmentStatus(assignment)
-                          )} ${ivory ? "" : "animate-fade-in shadow-sm"}`}
+                          )} ${""}`}
                           title={assignment.title}
                         />
                       ))}
                       {dayAssignments.length > 3 && (
-                        <div className={c("text-center text-hec-caption font-medium text-hec-ink mt-0.5", "text-[10px] text-center font-bold text-foreground mt-0.5")}>
+                        <div className="text-center text-hec-caption font-medium text-hec-ink mt-0.5">
                           +{dayAssignments.length - 3}
                         </div>
                       )}
@@ -325,7 +299,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
 
       {/* Assignment Details Dialog */}
       <Dialog open={!!selectedDate} onOpenChange={(open) => !open && setSelectedDate(null)}>
-        <DialogContent className={c("w-[calc(100%-2rem)] max-w-2xl", "glass-sm w-[calc(100%-2rem)] max-w-2xl rounded-3xl !bg-background")}>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-2xl">
           <DialogHeader>
             <DialogTitle className="pr-8 text-left leading-snug">
               Assignments for {shownDate && dayjs(shownDate).format("MMMM D, YYYY")}
@@ -340,7 +314,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
                 return (
                   <Card
                     key={assignment.id}
-                    className={c("cursor-pointer p-4 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken", "glass-sm p-4 cursor-pointer hover:bg-accent/50 transition-colors")}
+                    className="cursor-pointer p-4 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken"
                     onClick={() => {
                       // Close this list first, or the homework opens underneath it.
                       setSelectedDate(null);
@@ -351,7 +325,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <h3 className="font-semibold break-words">{assignment.title}</h3>
-                          <p className={c("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
+                          <p className="text-hec-small text-hec-ink-soft">
                             {assignment.classes?.name || "No class"}
                           </p>
                         </div>
@@ -380,7 +354,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
                         </Badge>
                       </div>
                       {role !== "student" && submissions.length > 0 && (
-                        <div className={c("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>
+                        <div className="text-hec-caption text-hec-ink-soft">
                           {submissions.filter(s => s.status === "graded").length} graded ·{" "}
                           {submissions.filter(s => s.status === "submitted").length} submitted
                         </div>

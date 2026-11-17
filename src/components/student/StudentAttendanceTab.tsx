@@ -9,16 +9,13 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AttendanceHeatmap } from "./AttendanceHeatmap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useIvory } from "@/hooks/useIvory";
 
-// Dot fills per state. The ivory set is for the Ivory design system (tokens carry both themes);
-// the old set stays for staff screens that have not been migrated yet (StudentDetail).
+// Dot fills per state (tokens carry both themes).
 const DOT = {
-  old: { present: "bg-green-500", absent: "bg-red-500", excused: "bg-gray-500", canceled: "bg-amber-500", holiday: "bg-slate-500", none: "bg-muted", onFill: "text-white" },
   ivory: { present: "bg-hec-leaf", absent: "bg-hec-danger-fill", excused: "bg-hec-ink-soft", canceled: "bg-hec-warn", holiday: "bg-hec-ink-faint", none: "bg-hec-sunken", onFill: "text-hec-paper" },
 };
 
-const getAttendanceColor = (sessionDate: string, sessionStatus: string, attendanceStatus: string | undefined, c: typeof DOT.old) => {
+const getAttendanceColor = (sessionDate: string, sessionStatus: string, attendanceStatus: string | undefined, c: typeof DOT.ivory) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const sessDate = new Date(sessionDate);
@@ -42,8 +39,7 @@ const getAttendanceColor = (sessionDate: string, sessionStatus: string, attendan
 };
 
 export function StudentAttendanceTab({ studentId }: { studentId: string }) {
-  const ivory = useIvory();
-  const dot = ivory ? DOT.ivory : DOT.old;
+  const dot = DOT.ivory;
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
 
   const { data: sessions, isLoading } = useQuery({

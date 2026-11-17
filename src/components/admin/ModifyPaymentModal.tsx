@@ -11,7 +11,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { FamilyPaymentEditModal } from "./FamilyPaymentEditModal";
-import { useIvory } from "@/hooks/useIvory";
 
 interface ModifyPaymentModalProps {
   payment: {
@@ -31,8 +30,6 @@ export function ModifyPaymentModal({ payment, onClose, students = [] }: ModifyPa
   const [isFamilyPayment, setIsFamilyPayment] = useState(false);
   const [showFamilyModal, setShowFamilyModal] = useState(false);
   const queryClient = useQueryClient();
-  const ivory = useIvory();
-  const iv = (n: string, o: string) => (ivory ? n : o);
 
   // Safe date formatting helper
   const formatPaymentDate = (dateStr: string | null | undefined): string => {
@@ -122,7 +119,7 @@ export function ModifyPaymentModal({ payment, onClose, students = [] }: ModifyPa
               <DialogTitle>Family Payment</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p className={iv("text-hec-body text-hec-ink", "")}>This is a family payment with multiple allocations.</p>
+              <p className="text-hec-body text-hec-ink">This is a family payment with multiple allocations.</p>
               <Button 
                 onClick={() => {
                   setShowFamilyModal(true);
@@ -164,18 +161,18 @@ export function ModifyPaymentModal({ payment, onClose, students = [] }: ModifyPa
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className={iv("grid grid-cols-1 sm:grid-cols-2 gap-4", "grid grid-cols-2 gap-4")}>
-            <div className={iv("min-w-0 space-y-2", "space-y-2")}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="student">Student</Label>
               <Input
                 id="student"
                 value={students.find(s => s.id === formData.studentId)?.full_name || "Unknown Student"}
                 disabled
-                className={iv("", "bg-muted")}
+                className=""
               />
             </div>
 
-            <div className={iv("min-w-0 space-y-2", "space-y-2")}>
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="amount">Amount (VND)</Label>
               <Input
                 id="amount"
@@ -183,7 +180,7 @@ export function ModifyPaymentModal({ payment, onClose, students = [] }: ModifyPa
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 required
-                className={ivory ? "tabular-nums" : undefined}
+                className="tabular-nums"
               />
             </div>
 
@@ -228,7 +225,7 @@ export function ModifyPaymentModal({ payment, onClose, students = [] }: ModifyPa
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reason" className={iv("text-hec-ink", "text-destructive")}>Reason for Modification *</Label>
+            <Label htmlFor="reason" className="text-hec-ink">Reason for Modification *</Label>
             <Textarea
               id="reason"
               value={formData.reason}
@@ -240,12 +237,12 @@ export function ModifyPaymentModal({ payment, onClose, students = [] }: ModifyPa
           </div>
 
           {hasChanges && (
-            <div className={iv("rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4 space-y-2", "rounded-lg border border-amber-500 bg-amber-50 p-4 space-y-2")}>
-              <div className={iv("flex items-center gap-2 text-hec-warn font-medium", "flex items-center gap-2 text-amber-800 font-medium")}>
+            <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4 space-y-2">
+              <div className="flex items-center gap-2 text-hec-warn font-medium">
                 <AlertTriangle className="h-4 w-4" />
                 Changes Summary
               </div>
-              <div className={iv("text-hec-small text-hec-ink tabular-nums space-y-1", "text-sm text-amber-700 space-y-1")}>
+              <div className="text-hec-small text-hec-ink tabular-nums space-y-1">
                 {parseInt(formData.amount) !== payment.amount && (
                   <p>• Amount: {payment.amount.toLocaleString()} → {parseInt(formData.amount).toLocaleString()} VND</p>
                 )}

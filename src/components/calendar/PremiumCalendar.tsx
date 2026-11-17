@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { dayjs, nowBangkok } from "@/lib/date";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useIvory } from "@/hooks/useIvory";
 import MiniCalendar from "./MiniCalendar";
 import AgendaView from "./AgendaView";
 import MonthView from "./MonthView";
@@ -143,10 +142,6 @@ export default function PremiumCalendar({
 }: PremiumCalendarProps) {
   const isMobile = useIsMobile();
   const reduceMotion = useReducedMotion();
-  // Staff routes are in the system (R21); a family's or a student's /schedule and the parent home are not yet
-  // (parent area, R23), so the frame keeps today's classes there.
-  const ivory = useIvory();
-  const iv = (n: string, o: string) => (ivory ? n : o);
   const [view, setView] = usePersistedView("week");
   const [cursor, setCursor] = useState(() => nowBangkok());
   const [showMiniCalendar, setShowMiniCalendar] = useState(false);
@@ -302,20 +297,20 @@ export default function PremiumCalendar({
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className={iv("flex items-center rounded-hec-md border border-hec-line-strong", "flex items-center rounded-lg border border-border/60")}>
+            <div className="flex items-center rounded-hec-md border border-hec-line-strong">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => go(-1)}
                 aria-label="Previous"
-                className={iv("rounded-r-none", "h-8 w-8 rounded-r-none")}
+                className="rounded-r-none"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 onClick={goToday}
-                className={iv("rounded-none border-x border-hec-line-strong px-3 text-hec-small font-medium", "h-8 rounded-none border-x border-border/60 px-3 text-xs font-medium")}
+                className="rounded-none border-x border-hec-line-strong px-3 text-hec-small font-medium"
               >
                 Today
               </Button>
@@ -324,7 +319,7 @@ export default function PremiumCalendar({
                 size="icon"
                 onClick={() => go(1)}
                 aria-label="Next"
-                className={iv("rounded-l-none", "h-8 w-8 rounded-l-none")}
+                className="rounded-l-none"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -334,15 +329,12 @@ export default function PremiumCalendar({
               <button
                 type="button"
                 onClick={() => setShowMiniCalendar((v) => !v)}
-                aria-expanded={ivory ? showMiniCalendar : undefined}
-                className={iv("flex min-h-hec-target items-center gap-1.5 rounded-hec-md px-2 font-display text-hec-h2 font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "flex items-center gap-1.5 rounded-md px-1 py-0.5 text-lg font-bold tracking-tight transition-colors hover:bg-muted md:text-xl")}
+                aria-expanded={showMiniCalendar}
+                className="flex min-h-hec-target items-center gap-1.5 rounded-hec-md px-2 font-display text-hec-h2 font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
               >
                 {cursorLabel(view, cursor, isMobile)}
                 <CalendarDays
-                  className={ivory ? "h-4 w-4 shrink-0 text-hec-ink-soft" : cn(
-                    "h-4 w-4 text-muted-foreground transition-transform",
-                    showMiniCalendar && "rotate-180",
-                  )}
+                  className="h-4 w-4 shrink-0 text-hec-ink-soft"
                 />
               </button>
               {showMiniCalendar && (
@@ -362,20 +354,20 @@ export default function PremiumCalendar({
             </div>
           </div>
 
-          <div className={iv("flex items-center gap-1 rounded-hec-md bg-hec-sunken p-1", "flex items-center gap-1 rounded-lg bg-muted/60 p-0.5")}>
+          <div className="flex items-center gap-1 rounded-hec-md bg-hec-sunken p-1">
             {VIEWS.map(({ key, label, icon }) => (
               <Button
                 key={key}
-                variant={ivory ? "ghost" : view === key ? "default" : "ghost"}
+                variant="ghost"
                 size="sm"
                 onClick={() => setView(key)}
                 aria-pressed={view === key}
                 // Icon-only below md: the visible word is the button's name.
-                aria-label={ivory && isMobile ? label : undefined}
-                className={ivory ? cn("rounded-hec-sm px-3 text-hec-ink-soft hover:text-hec-ink", view === key && "bg-hec-raised text-hec-ink shadow-hec-1 hover:bg-hec-raised") : cn("h-7 rounded-md px-2", view === key && "shadow-sm")}
+                aria-label={isMobile ? label : undefined}
+                className={cn("rounded-hec-sm px-3 text-hec-ink-soft hover:text-hec-ink", view === key && "bg-hec-raised text-hec-ink shadow-hec-1 hover:bg-hec-raised")}
               >
                 {icon}
-                {!isMobile && <span className={iv("text-hec-small", "ml-1.5 text-xs")}>{label}</span>}
+                {!isMobile && <span className="text-hec-small">{label}</span>}
               </Button>
             ))}
           </div>
@@ -392,7 +384,7 @@ export default function PremiumCalendar({
           colorFor={colorFor}
         />
 
-        <div className={iv("flex flex-wrap items-center gap-2 text-hec-caption text-hec-ink-soft", "flex items-center gap-2 text-xs text-muted-foreground")}>
+        <div className="flex flex-wrap items-center gap-2 text-hec-caption text-hec-ink-soft">
           <span className="tabular-nums">
             {visible.length} session{visible.length === 1 ? "" : "s"}
           </span>
@@ -405,9 +397,9 @@ export default function PremiumCalendar({
         </div>
 
         {/* Body */}
-        <div className={iv("rounded-hec-lg border border-hec-line bg-hec-surface p-2 shadow-hec-1 md:p-3", "rounded-2xl border border-border/50 bg-card/30 p-2 md:p-3")}>
+        <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-2 shadow-hec-1 md:p-3">
           {isLoading && inRange.length === 0 ? (
-            <div className={iv("py-16 text-center text-hec-small text-hec-ink-soft", "py-16 text-center text-sm text-muted-foreground")}>
+            <div className="py-16 text-center text-hec-small text-hec-ink-soft">
               Loading sessions…
             </div>
           ) : (
@@ -459,7 +451,7 @@ export default function PremiumCalendar({
         {dragging && (
           <div
             className={cn(
-              iv("pointer-events-none rounded-hec-md border px-2 py-1 text-[11px] font-semibold shadow-hec-2", "pointer-events-none rounded-lg border px-2 py-1 text-[11px] font-semibold shadow-lg"),
+              "pointer-events-none rounded-hec-md border px-2 py-1 text-[11px] font-semibold shadow-hec-2",
               colorFor(colorKeyFor(dragging)).tint,
               colorFor(colorKeyFor(dragging)).border,
             )}

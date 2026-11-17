@@ -44,7 +44,7 @@ function PagedCards({ paged, onOpen, lead = false }: { paged: ReturnType<typeof 
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
         {paged.slice.map((a: any, i: number) => (
           <div key={a.id} className="long-list-item min-w-0">
-            <HomeworkCard homework={a} index={lead && paged.page === 1 ? i : i + 1} ivory onOpen={() => onOpen(a)} />
+            <HomeworkCard homework={a} index={lead && paged.page === 1 ? i : i + 1} onOpen={() => onOpen(a)} />
           </div>
         ))}
       </div>

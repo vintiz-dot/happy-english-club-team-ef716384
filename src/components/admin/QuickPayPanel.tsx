@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED, setRecordedPayment } from "@/lib/recordedPaymentWrite";
-import { useIvory } from "@/hooks/useIvory";
 
 interface QuickPayPanelProps {
   month: string;
@@ -44,8 +43,6 @@ interface QuickPayPanelProps {
  */
 export function QuickPayPanel({ month }: QuickPayPanelProps) {
   const tuitionMonth = useTuitionMonthConfirmation(month);
-  const ivory = useIvory();
-  const iv = (n: string, o: string) => (ivory ? n : o);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: tuitionData, isLoading, refetch } = useLiveTuitionData(month);
@@ -233,7 +230,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className={iv("py-12 text-center text-hec-body text-hec-ink-soft", "py-12 text-center text-muted-foreground")}>
+        <CardContent className="py-12 text-center text-hec-body text-hec-ink-soft">
           <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
           Loading tuition…
         </CardContent>
@@ -245,9 +242,9 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <CheckCircle2 className={iv("h-12 w-12 mx-auto text-hec-leaf mb-3", "h-12 w-12 mx-auto text-emerald-500 mb-3")} />
-          <p className={iv("text-hec-h3 font-semibold text-hec-ink", "text-lg font-semibold")}>All caught up</p>
-          <p className={iv("text-hec-small text-hec-ink-soft mt-1", "text-sm text-muted-foreground mt-1")}>
+          <CheckCircle2 className="h-12 w-12 mx-auto text-hec-leaf mb-3" />
+          <p className="text-hec-h3 font-semibold text-hec-ink">All caught up</p>
+          <p className="text-hec-small text-hec-ink-soft mt-1">
             No outstanding tuition for this month.
           </p>
         </CardContent>
@@ -257,45 +254,45 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className={iv("border-b border-hec-line", "bg-gradient-to-br from-blue-500/10 via-sky-500/5 to-amber-500/10 border-b")}>
+      <CardHeader className="border-b border-hec-line">
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className={iv("min-w-0", "")}>
+          <div className="min-w-0">
             <CardTitle className="flex items-center gap-2">
-              <Zap className={iv("h-5 w-5 text-hec-brass", "h-5 w-5 text-amber-500")} />
+              <Zap className="h-5 w-5 text-hec-brass" />
               Quick Pay
             </CardTitle>
             <CardDescription>
               One screen. One click. Mark every paid student in seconds.
             </CardDescription>
           </div>
-          <div className={iv("flex items-center gap-2 text-hec-small", "flex items-center gap-2 text-sm")}>
-            <Wallet className={iv("h-4 w-4 text-hec-ink-soft", "h-4 w-4 text-muted-foreground")} />
-            <span className={iv("text-hec-ink-soft", "text-muted-foreground")}>To collect:</span>
-            <span className={iv("whitespace-nowrap font-sans font-semibold text-hec-body text-hec-ink tabular-nums", "font-bold text-base text-emerald-600 dark:text-emerald-400 tabular-nums")}>
+          <div className="flex items-center gap-2 text-hec-small">
+            <Wallet className="h-4 w-4 text-hec-ink-soft" />
+            <span className="text-hec-ink-soft">To collect:</span>
+            <span className="whitespace-nowrap font-sans font-semibold text-hec-body text-hec-ink tabular-nums">
               {fmt(totalToCollect)}
             </span>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className={iv("space-y-4 pt-4 sm:pt-6", "space-y-4 pt-5")}>
+      <CardContent className="space-y-4 pt-4 sm:pt-6">
         {tuitionMonth.field}
         {/* Top controls */}
-        <div className={iv("grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-4 gap-4", "grid grid-cols-2 sm:grid-cols-4 gap-3")}>
-          <div className={iv("min-w-0 space-y-2", "space-y-1")}>
-            <Label htmlFor="quickpay-date" className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Payment date</Label>
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="quickpay-date" className="text-hec-small font-medium text-hec-ink">Payment date</Label>
             <Input
               id="quickpay-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className={iv("", "h-9")}
+              className=""
             />
           </div>
-          <div className={iv("min-w-0 space-y-2", "space-y-1")}>
-            <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")} htmlFor="quickpay-method">Method</Label>
+          <div className="min-w-0 space-y-2">
+            <Label className="text-hec-small font-medium text-hec-ink" htmlFor="quickpay-method">Method</Label>
             <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger id="quickpay-method" className={iv("", "h-9")}>
+              <SelectTrigger id="quickpay-method" className="">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -306,31 +303,31 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
               </SelectContent>
             </Select>
           </div>
-          <div className={iv("min-w-0 min-[400px]:col-span-2 space-y-2", "col-span-2 space-y-1")}>
-            <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Search</Label>
+          <div className="min-w-0 min-[400px]:col-span-2 space-y-2">
+            <Label className="text-hec-small font-medium text-hec-ink">Search</Label>
             <div className="relative">
-              <Search className={iv("absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-hec-ink-faint", "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60")} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-hec-ink-faint" />
               <Input
                 placeholder="Filter by student name…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={iv("pl-9", "h-9 pl-9")}
+                className="pl-9"
               />
             </div>
           </div>
         </div>
 
         {/* Selection toolbar */}
-        <div className={iv("flex items-center justify-between gap-3 flex-wrap text-hec-small", "flex items-center justify-between gap-3 flex-wrap text-sm")}>
-          <div className={iv("flex items-center gap-3 text-hec-ink-soft", "flex items-center gap-3 text-muted-foreground")}>
+        <div className="flex items-center justify-between gap-3 flex-wrap text-hec-small">
+          <div className="flex items-center gap-3 text-hec-ink-soft">
             <span>
-              <span className={iv("font-semibold text-hec-ink tabular-nums", "font-bold text-foreground")}>{selectedRows.length}</span> of{" "}
+              <span className="font-semibold text-hec-ink tabular-nums">{selectedRows.length}</span> of{" "}
               {unpaid.length} selected
             </span>
             <span className="hidden sm:inline">·</span>
             <span className="hidden sm:inline">
               Outstanding total:{" "}
-              <span className={iv("whitespace-nowrap font-semibold text-hec-ink tabular-nums", "font-semibold text-foreground tabular-nums")}>
+              <span className="whitespace-nowrap font-semibold text-hec-ink tabular-nums">
                 {fmt(unpaid.reduce((s, i) => s + getOutstanding(i), 0))}
               </span>
             </span>
@@ -346,7 +343,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         </div>
 
         {/* List */}
-        <div className={iv("rounded-hec-lg border border-hec-line bg-hec-surface divide-y divide-hec-line max-h-[55vh] overflow-y-auto", "rounded-2xl border divide-y max-h-[55vh] overflow-y-auto")}>
+        <div className="rounded-hec-lg border border-hec-line bg-hec-surface divide-y divide-hec-line max-h-[55vh] overflow-y-auto">
           {unpaid.map((item) => {
             const outstanding = getOutstanding(item);
             const entryAmount = getEntryAmount(item);
@@ -357,18 +354,13 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
             return (
               <div
                 key={item.student_id}
-                className={ivory ? cn(
+                className={cn(
                   "flex flex-wrap items-center gap-3 px-4 py-3 transition-colors duration-hec-1 ease-hec",
                   isSkipped && "opacity-50",
                   isDone && "bg-hec-leaf-tint"
-                ) : cn(
-                  "flex items-center gap-3 p-3 sm:p-4 transition-colors",
-                  isSkipped && "opacity-50",
-                  isDone && "bg-emerald-50 dark:bg-emerald-950/20"
                 )}
               >
-                {ivory ? (
-                  <label className="-m-3 flex min-h-hec-target min-w-hec-target shrink-0 cursor-pointer items-center justify-center">
+                <label className="-m-3 flex min-h-hec-target min-w-hec-target shrink-0 cursor-pointer items-center justify-center">
                     <Checkbox
                       checked={!isSkipped}
                       onCheckedChange={() => toggleRow(item.student_id)}
@@ -376,42 +368,35 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
                       aria-label={`Include ${studentName}`}
                     />
                   </label>
-                ) : (
-                  <Checkbox
-                    checked={!isSkipped}
-                    onCheckedChange={() => toggleRow(item.student_id)}
-                    className="shrink-0"
-                  />
-                )}
-                <Avatar className={iv("h-11 w-11 shrink-0", "h-9 w-9 shrink-0")}>
+                <Avatar className="h-11 w-11 shrink-0">
                   <AvatarImage src={getAvatarUrl((item.students as any)?.avatar_url) || undefined} />
-                  <AvatarFallback className={iv("bg-hec-sunken text-hec-caption text-hec-ink-soft", "text-xs")}>
+                  <AvatarFallback className="bg-hec-sunken text-hec-caption text-hec-ink-soft">
                     {studentName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className={iv("min-w-0 flex-1 basis-40", "flex-1 min-w-0")}>
-                  <div className={iv("flex flex-wrap items-center gap-2", "flex items-center gap-2")}>
-                    <p className={iv("min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink", "font-semibold text-sm sm:text-[15px] truncate")}>{studentName}</p>
+                <div className="min-w-0 flex-1 basis-40">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{studentName}</p>
                     {isDone && (
-                      <Badge className={iv("shrink-0 border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf", "bg-emerald-500 text-white text-[10px] h-5")}>
+                      <Badge className="shrink-0 border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
                         <CheckCircle2 className="h-3 w-3 mr-0.5" />
                         Recorded
                       </Badge>
                     )}
                     {isPartial && !isDone && (
-                      <Badge variant="outline" className={iv("shrink-0 border-hec-warn/30 bg-hec-warn-tint text-hec-warn", "text-[10px] h-5 border-amber-500/40 text-amber-700 dark:text-amber-300")}>
+                      <Badge variant="outline" className="shrink-0 border-hec-warn/30 bg-hec-warn-tint text-hec-warn">
                         Partial
                       </Badge>
                     )}
                   </div>
-                  <p className={iv("text-hec-small text-hec-ink-soft", "text-xs text-muted-foreground")}>
+                  <p className="text-hec-small text-hec-ink-soft">
                     Outstanding:{" "}
-                    <span className={iv("whitespace-nowrap font-semibold text-hec-ink tabular-nums", "font-semibold text-foreground tabular-nums")}>
+                    <span className="whitespace-nowrap font-semibold text-hec-ink tabular-nums">
                       {fmt(outstanding)}
                     </span>
                   </p>
                 </div>
-                <div className={iv("ml-auto shrink-0 flex items-center gap-2", "shrink-0 flex items-center gap-2")}>
+                <div className="ml-auto shrink-0 flex items-center gap-2">
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -423,11 +408,11 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
                     onChange={(e) =>
                       setOverrides((prev) => ({ ...prev, [item.student_id]: e.target.value }))
                     }
-                    className={iv("w-32 text-right tabular-nums", "w-28 sm:w-32 h-9 text-right tabular-nums")}
+                    className="w-32 text-right tabular-nums"
                     disabled={isSkipped || isDone}
-                    aria-label={ivory ? `Amount for ${studentName}` : undefined}
+                    aria-label={`Amount for ${studentName}`}
                   />
-                  <span className={iv("text-hec-caption text-hec-ink-soft hidden sm:inline", "text-xs text-muted-foreground hidden sm:inline")}>₫</span>
+                  <span className="text-hec-caption text-hec-ink-soft hidden sm:inline">₫</span>
                 </div>
               </div>
             );
@@ -435,17 +420,17 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         </div>
 
         {/* Submit */}
-        <div className={iv("flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t-2 border-hec-ink", "flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t")}>
-          <div className={iv("text-hec-small", "text-sm")}>
-            <div className={iv("text-hec-ink-soft", "text-muted-foreground")}>Will record</div>
-            <div className={iv("whitespace-nowrap font-sans text-hec-h1 font-semibold text-hec-ink tabular-nums", "font-extrabold text-lg text-emerald-600 dark:text-emerald-400 tabular-nums")}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t-2 border-hec-ink">
+          <div className="text-hec-small">
+            <div className="text-hec-ink-soft">Will record</div>
+            <div className="whitespace-nowrap font-sans text-hec-h1 font-semibold text-hec-ink tabular-nums">
               {fmt(totalToCollect)}
             </div>
           </div>
           <Button
             onClick={handleRecord}
             disabled={saving || selectedRows.length === 0 || totalToCollect === 0}
-            className={iv("w-full sm:w-auto px-6 gap-2", "h-11 px-6 gap-2 bg-aurora text-white font-bold shadow-q3 hover:opacity-95")}
+            className="w-full sm:w-auto px-6 gap-2"
           >
             {saving ? (
               <>

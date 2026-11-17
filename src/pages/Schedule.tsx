@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
-import { useIvory } from "@/hooks/useIvory";
 import { SessionGenerator } from "@/components/admin/SessionGenerator";
 import GlobalCalendar from "@/components/schedule/GlobalCalendar";
 import AddSessionModal from "@/components/admin/AddSessionModal";
@@ -10,9 +9,6 @@ import AddSessionModal from "@/components/admin/AddSessionModal";
 const Schedule = () => {
   const queryClient = useQueryClient();
   const { role } = useAuth();
-  // Staff on /schedule are in the system (R21); a student's or a parent's
-  // /schedule is not yet (parent area, R23), so it keeps today's classes.
-  const ivory = useIvory();
   const [addSessionDate, setAddSessionDate] = useState<Date | null>(null);
   const [editSession, setEditSession] = useState<any>(null);
 
@@ -26,12 +22,12 @@ const Schedule = () => {
 
   return (
     <Layout>
-      <div className={ivory ? "space-y-6" : "space-y-8"}>
+      <div className="space-y-6">
         <div>
-          <h1 className={ivory ? "font-display text-hec-h1 font-medium text-hec-ink" : "text-3xl font-bold tracking-tight"}>
+          <h1 className="font-display text-hec-h1 font-medium text-hec-ink">
             {role === "student" ? "My Classes" : role === "teacher" ? "My Schedule" : "Schedule"}
           </h1>
-          <p className={ivory ? "text-hec-small text-hec-ink-soft" : "text-muted-foreground"}>
+          <p className="text-hec-small text-hec-ink-soft">
             {role === "student" 
               ? "View your class schedule and attendance" 
               : role === "teacher" 

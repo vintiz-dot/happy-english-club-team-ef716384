@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import {  ChevronDown, CheckCircle, Edit, FileText, Loader2 } from "lucide-react";
 import { EnrollmentRateEditor } from "./EnrollmentRateEditor";
 import { Textarea } from "@/components/ui/textarea";
-import { useIvory } from "@/hooks/useIvory";
 
 interface StudentTuitionReviewCardProps {
   invoice: any;
@@ -30,8 +29,6 @@ export function StudentTuitionReviewCard({
   const [notes, setNotes] = useState(invoice.confirmation_notes || "");
   const [showNotes, setShowNotes] = useState(false);
   const queryClient = useQueryClient();
-  const ivory = useIvory();
-  const iv = (n: string, o: string) => (ivory ? n : o);
 
   const confirmMutation = useMutation({
     mutationFn: async () => {
@@ -96,29 +93,12 @@ export function StudentTuitionReviewCard({
       auto_approved: "secondary",
     };
     const config = variants[status] || variants.needs_review;
-    return <Badge variant={ivory ? ivoryVariants[status] || ivoryVariants.needs_review : config.variant}>{config.label}</Badge>;
+    return <Badge variant={ivoryVariants[status] || ivoryVariants.needs_review}>{config.label}</Badge>;
   };
 
   const getFlagBadge = (flag: any) => {
-    const colors: Record<string, string> = {
-      has_special_discount: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-      has_referral_bonus: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-      sibling_discount_winner: "bg-green-500/10 text-green-500 border-green-500/20",
-      rate_override: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-      low_tuition: "bg-red-500/10 text-red-500 border-red-500/20",
-      enrollment_discount: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
-    };
-    if (ivory) {
-      // A flag is a label: a low tuition or a rate override asks for a check
-      // (warning); the rest are neutral. Same label text.
-      const warn = flag.type === "low_tuition" || flag.type === "rate_override";
-      return <Badge variant={warn ? "warning" : "secondary"}>{flag.label}</Badge>;
-    }
-    return (
-      <Badge variant="outline" className={colors[flag.type] || ""}>
-        {flag.label}
-      </Badge>
-    );
+    const warn = flag.type === "low_tuition" || flag.type === "rate_override";
+    return <Badge variant={warn ? "warning" : "secondary"}>{flag.label}</Badge>;
   };
 
   const reviewFlags = (invoice.review_flags as any[]) || [];
@@ -128,9 +108,9 @@ export function StudentTuitionReviewCard({
     : 0;
 
   return (
-    <Card className={iv("", "hover:shadow-md transition-shadow")}>
+    <Card className="">
       <CardContent className="p-4">
-        <div className={iv("flex items-start gap-3", "flex items-start gap-4")}>
+        <div className="flex items-start gap-3">
           <Checkbox
             checked={isSelected}
             onCheckedChange={onToggleSelect}
@@ -138,19 +118,19 @@ export function StudentTuitionReviewCard({
             aria-label={`Select ${student?.full_name || "student"}`}
           />
 
-          <div className={iv("min-w-0 flex-1 space-y-3", "flex-1 space-y-3")}>
+          <div className="min-w-0 flex-1 space-y-3">
             {/* Header */}
-            <div className={iv("flex flex-wrap items-start justify-between gap-3", "flex items-start justify-between")}>
-              <div className={iv("min-w-0", "")}>
-                <h3 className={iv("whitespace-normal break-words hyphens-none text-balance text-hec-h3 font-semibold text-hec-ink", "font-semibold text-lg")}>{student?.full_name || "Unknown Student"}</h3>
-                <div className={iv("mt-2 flex flex-wrap items-center gap-2", "flex items-center gap-2 mt-1")}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="whitespace-normal break-words hyphens-none text-balance text-hec-h3 font-semibold text-hec-ink">{student?.full_name || "Unknown Student"}</h3>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   {getStatusBadge(invoice.confirmation_status)}
                   {/* Ivory: the invoice total is this card's one total - ink, sans, tabular. */}
-                  <span className={iv("whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums text-hec-ink", "text-sm text-muted-foreground")}>
+                  <span className="whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums text-hec-ink">
                     {formatVND(invoice.total_amount)}
                   </span>
                   {discountPercent > 0 && (
-                    <Badge variant={ivory ? "secondary" : "outline"} className={iv("tabular-nums", "text-xs")}>
+                    <Badge variant="secondary" className="tabular-nums">
                       -{discountPercent}% discount
                     </Badge>
                   )}
@@ -160,12 +140,12 @@ export function StudentTuitionReviewCard({
               <div className="flex gap-2">
                 {invoice.confirmation_status === "needs_review" && (
                   <Button
-                    size={ivory ? "icon" : "sm"}
+                    size="icon"
                     variant="default"
                     onClick={() => confirmMutation.mutate()}
                     disabled={confirmMutation.isPending}
                     aria-label="Confirm tuition"
-                    title={ivory ? "Confirm tuition" : undefined}
+                    title="Confirm tuition"
                   >
                     {confirmMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -175,11 +155,11 @@ export function StudentTuitionReviewCard({
                   </Button>
                 )}
                 <Button
-                  size={ivory ? "icon" : "sm"}
+                  size="icon"
                   variant="outline"
                   onClick={() => setIsEditingRate(true)}
                   aria-label="Edit rates"
-                  title={ivory ? "Edit rates" : undefined}
+                  title="Edit rates"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -207,30 +187,30 @@ export function StudentTuitionReviewCard({
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-3 mt-3">
-                <div className={iv("grid grid-cols-1 gap-x-6 gap-y-2 text-hec-small sm:grid-cols-2", "grid grid-cols-2 gap-4 text-sm")}>
-                  <div className={iv("flex items-baseline justify-between gap-4", "")}>
-                    <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Base Amount:</span>
-                    <span className={iv("shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink", "ml-2 font-medium")}>{formatVND(invoice.base_amount)}</span>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-2 text-hec-small sm:grid-cols-2">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="min-w-0 text-hec-ink-soft">Base Amount:</span>
+                    <span className="shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink">{formatVND(invoice.base_amount)}</span>
                   </div>
-                  <div className={iv("flex items-baseline justify-between gap-4", "")}>
-                    <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Discount:</span>
-                    <span className={iv("shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink", "ml-2 font-medium")}>{formatVND(invoice.discount_amount)}</span>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="min-w-0 text-hec-ink-soft">Discount:</span>
+                    <span className="shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink">{formatVND(invoice.discount_amount)}</span>
                   </div>
-                  <div className={iv("flex items-baseline justify-between gap-4", "")}>
-                    <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Total Due:</span>
-                    <span className={iv("shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink", "ml-2 font-medium")}>{formatVND(invoice.total_amount)}</span>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="min-w-0 text-hec-ink-soft">Total Due:</span>
+                    <span className="shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink">{formatVND(invoice.total_amount)}</span>
                   </div>
-                  <div className={iv("flex items-baseline justify-between gap-4", "")}>
-                    <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Paid:</span>
-                    <span className={iv("shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink", "ml-2 font-medium")}>{formatVND(invoice.paid_amount || 0)}</span>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="min-w-0 text-hec-ink-soft">Paid:</span>
+                    <span className="shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink">{formatVND(invoice.paid_amount || 0)}</span>
                   </div>
                 </div>
 
                 {/* Possible Reasons for Anomalies */}
                 {reviewFlags.some((f) => f.type === "low_tuition") && (
-                  <div className={iv("rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4", "p-3 bg-muted rounded-lg")}>
-                    <h4 className={iv("mb-2 text-hec-small font-semibold text-hec-warn", "font-medium text-sm mb-2")}>Possible Reasons for Low Tuition:</h4>
-                    <ul className={iv("space-y-1 text-hec-small text-hec-ink", "text-xs space-y-1 text-muted-foreground")}>
+                  <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4">
+                    <h4 className="mb-2 text-hec-small font-semibold text-hec-warn">Possible Reasons for Low Tuition:</h4>
+                    <ul className="space-y-1 text-hec-small text-hec-ink">
                       {reviewFlags
                         .find((f) => f.type === "low_tuition")
                         ?.details?.possibleReasons?.map((reason: string, idx: number) => (

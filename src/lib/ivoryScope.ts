@@ -13,14 +13,14 @@
  * the same commit that restyles them; an AREA (student, parent, teacher,
  * admin) ships to main when all its routes are listed.
  *
- * When every area is listed, ROLLOUT_COMPLETE becomes true: the attribute
- * is on <html> everywhere, the theme default moves from Light to System,
- * and the old class strings in src/components/ui can be deleted.
+ * Every area is listed, so ROLLOUT_COMPLETE is true (R24): the attribute is
+ * on <html> everywhere except OUTSIDE_ROUTES, and the theme default is
+ * System. The list stays as the record of what was migrated when.
  *
  * Pure: no imports.
  */
 
-export const ROLLOUT_COMPLETE = false;
+export const ROLLOUT_COMPLETE = true;
 
 export interface IvoryRoute {
   /** Path, with ":param" for a dynamic segment ("/student/lessons/:id"). */
@@ -108,14 +108,13 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   { path: "/teacher/transcripts" },
   { path: "/teacher/videos" },
   { path: "/board-window/:classId" },
-  // Shared with the student and the parent: only the staff roles here. A
-  // family's /schedule flips with the parent area (R23).
-  { path: "/schedule", roles: ["admin", "teacher"] },
+  // Shared with the student and the parent: the staff roles flipped with R21,
+  // the family's and the student's view with R24.
+  { path: "/schedule", roles: ["admin", "teacher", "family", "student"] },
   { path: "/tuition", roles: ["admin", "teacher"] },
   { path: "/dashboard", roles: ["admin", "teacher"] },
-  // Not listed on purpose: /teacher/recorder and /admin?tab=audit-clips (the
-  // recorder and audit-clips screens stay outside the system until their
-  // owners release them, DESIGN_SYSTEM s.17).
+  // Not listed on purpose: /teacher/recorder and /admin?tab=audit-clips, see
+  // OUTSIDE_ROUTES below.
 
   // parent + public (R23)
   { path: "/family/dashboard" },
@@ -123,8 +122,24 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   { path: "/claim" },
   { path: "/auth" },
   { path: "/auth/reset-password" },
-  // "/" is also the teacher hub (staff area): only the family hub is in the system.
-  { path: "/", roles: ["family"] },
+  // "/" is the family hub (R23) and the teacher hub (R24). Students and admins
+  // are redirected from it; signed out it sends to /auth.
+  { path: "/", roles: ["family", "teacher"] },
+];
+
+/**
+ * Screens that stay outside the system even with ROLLOUT_COMPLETE, because
+ * their owners keep them as they are until they release them (DESIGN_SYSTEM
+ * s.17): the recorder and the audit-clips tab. They keep today's look from
+ * the header down, exactly as before the rollout. Releasing one = deleting its
+ * line here.
+ */
+export const OUTSIDE_ROUTES: IvoryRoute[] = [
+  { path: "/teacher/recorder" },
+  { path: "/admin", tab: "audit-clips" },
+  // The public QR feedback page (Reception): its card is hard-coded white, so it
+  // keeps today's light look until it is restyled.
+  { path: "/feedback" },
 ];
 
 const trimSlash = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);
@@ -142,15 +157,19 @@ export function isIvoryRoute(
   routes: IvoryRoute[] = IVORY_ROUTES,
   complete: boolean = ROLLOUT_COMPLETE,
   role: string | null = null,
+  outside: IvoryRoute[] = OUTSIDE_ROUTES,
 ): boolean {
-  if (complete) return true;
   const tab = new URLSearchParams(search).get("tab") ?? "";
-  return routes.some(
-    (r) =>
-      pathMatches(r.path, pathname) &&
-      (r.tab === undefined || r.tab === tab) &&
-      (r.roles === undefined || (role !== null && r.roles.includes(role))),
-  );
+  const listed = (list: IvoryRoute[]) =>
+    list.some(
+      (r) =>
+        pathMatches(r.path, pathname) &&
+        (r.tab === undefined || r.tab === tab) &&
+        (r.roles === undefined || (role !== null && r.roles.includes(role))),
+    );
+  if (listed(outside)) return false;
+  if (complete) return true;
+  return listed(routes);
 }
 
 /** Theme choice: Light until the rollout is complete (owner's default), then System. */

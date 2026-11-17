@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useIvory } from "@/hooks/useIvory";
 import {
   Rocket,
   Sparkles,
@@ -53,7 +52,6 @@ function slugifyFirstName(name: string): string {
 }
 
 export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
-  const ivory = useIvory();
   const [enabled, setEnabled] = useState(false);
   const [step, setStep] = useState<Step>("intro");
   const [studentName, setStudentName] = useState("");
@@ -131,52 +129,44 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
   };
 
   return (
-    <div className={ivory ? "fixed inset-0 z-[200] overflow-y-auto bg-hec-paper text-hec-ink" : "fixed inset-0 z-[200] overflow-y-auto bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600"}>
+    <div className="fixed inset-0 z-[200] overflow-y-auto bg-hec-paper text-hec-ink">
       {/* Floating orbs */}
-      {!ivory && (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-yellow-300/30 blur-3xl animate-pulse" />
-        <div
-          className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-pink-300/30 blur-3xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        />
-      </div>
-      )}
+      
 
-      <div className={ivory ? "relative flex min-h-[100dvh] items-center justify-center px-4 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:p-6" : "relative min-h-screen flex items-center justify-center p-4 sm:p-6"}>
+      <div className="relative flex min-h-[100dvh] items-center justify-center px-4 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:p-6">
         <div className="w-full max-w-lg">
           {/* Card */}
-          <div className={ivory ? "overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-3" : "rounded-3xl bg-white/10 backdrop-blur-xl border-2 border-white/20 shadow-2xl overflow-hidden"}>
-            <div className={ivory ? "px-4 py-8 text-hec-ink sm:px-8" : "px-6 sm:px-8 py-7 sm:py-9 text-white"}>
+          <div className="overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-3">
+            <div className="px-4 py-8 text-hec-ink sm:px-8">
               {step === "intro" && (
-                <div className={ivory ? cn(IV.step, "text-center") : "space-y-6 text-center animate-fade-in"}>
-                  <div className={ivory ? cn(IV.tile, "h-20 w-20") : "inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-yellow-300 text-purple-700 shadow-xl mx-auto"}>
-                    <Rocket className="h-10 w-10" strokeWidth={ivory ? 2 : 2.5} />
+                <div className={cn(IV.step, "text-center")}>
+                  <div className={cn(IV.tile, "h-20 w-20")}>
+                    <Rocket className="h-10 w-10" strokeWidth={2} />
                   </div>
                   <div className="space-y-2">
-                    <div className={ivory ? "inline-flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft" : "inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-yellow-200"}>
-                      <Sparkles className={ivory ? "h-4 w-4 text-hec-brass" : "h-3.5 w-3.5"} /> New & Better Website!
+                    <div className="inline-flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
+                      <Sparkles className="h-4 w-4 text-hec-brass" /> New & Better Website!
                     </div>
-                    <h2 className={ivory ? "whitespace-normal break-words font-display text-hec-display font-medium text-hec-ink" : "text-3xl sm:text-4xl font-extrabold leading-tight"}>
+                    <h2 className="whitespace-normal break-words font-display text-hec-display font-medium text-hec-ink">
                       Hi {studentName.split(" ")[0] || "friend"}! 👋
                       <br />
                       Want to try our new site?
                     </h2>
-                    <p className={ivory ? "text-hec-body text-hec-ink-soft" : "text-white/90 text-base"}>
+                    <p className="text-hec-body text-hec-ink-soft">
                       It's faster, more fun, and built just for you. ✨
                     </p>
                   </div>
-                  <div className={ivory ? "space-y-2 pt-2" : "space-y-3 pt-2"}>
+                  <div className="space-y-2 pt-2">
                     <Button
-                      variant={ivory ? "brass" : undefined}
+                      variant="brass"
                       onClick={() => setStep("remember")}
-                      className={ivory ? IV.big : "w-full h-14 text-lg font-bold bg-yellow-300 text-purple-700 hover:bg-yellow-200 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all rounded-2xl"}
+                      className={IV.big}
                     >
                       Yes, take me there! 🚀
                     </Button>
                     <button
                       onClick={dismissForSession}
-                      className={ivory ? IV.quiet : "w-full text-sm text-white/70 hover:text-white py-2 font-medium"}
+                      className={IV.quiet}
                     >
                       Not right now
                     </button>
@@ -185,38 +175,38 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
               )}
 
               {step === "remember" && (
-                <div className={ivory ? IV.step : "space-y-6 animate-fade-in"}>
+                <div className={IV.step}>
                   <button
                     onClick={() => setStep("intro")}
-                    className={ivory ? IV.back : "inline-flex items-center gap-1 text-sm text-white/80 hover:text-white"}
+                    className={IV.back}
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
                   <div className="text-center space-y-3">
-                    <div className={ivory ? cn(IV.tile, "h-16 w-16") : "inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-white/20 mx-auto"}>
-                      <KeyRound className={ivory ? "h-8 w-8" : "h-8 w-8 text-yellow-200"} />
+                    <div className={cn(IV.tile, "h-16 w-16")}>
+                      <KeyRound className="h-8 w-8" />
                     </div>
-                    <h2 className={ivory ? "whitespace-normal break-words font-display text-hec-h1 font-medium text-hec-ink" : "text-2xl sm:text-3xl font-extrabold leading-tight"}>
+                    <h2 className="whitespace-normal break-words font-display text-hec-h1 font-medium text-hec-ink">
                       Do you remember your username and password?
                     </h2>
-                    <p className={ivory ? "text-hec-body text-hec-ink-soft" : "text-white/85 text-sm"}>
+                    <p className="text-hec-body text-hec-ink-soft">
                       You'll need them to log into the new site.
                     </p>
                   </div>
-                  <div className={ivory ? "space-y-2" : "space-y-3"}>
+                  <div className="space-y-2">
                     <Button
                       onClick={() => {
                         window.open(NEW_SITE_URL, "_blank", "noopener,noreferrer");
                         dismissForSession();
                       }}
-                      className={ivory ? IV.big : "w-full h-14 text-base font-bold bg-emerald-400 text-emerald-950 hover:bg-emerald-300 shadow-xl rounded-2xl"}
+                      className={IV.big}
                     >
-                      <Check className={ivory ? "h-5 w-5" : "h-5 w-5 mr-2"} /> Yes, I remember!
+                      <Check className="h-5 w-5" /> Yes, I remember!
                     </Button>
                     <Button
                       onClick={() => setStep("create")}
                       variant="outline"
-                      className={ivory ? IV.big : "w-full h-14 text-base font-bold bg-white/10 border-white/40 text-white hover:bg-white/20 hover:text-white rounded-2xl"}
+                      className={IV.big}
                     >
                       No, I forgot — make me a new one
                     </Button>
@@ -225,28 +215,28 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
               )}
 
               {step === "create" && (
-                <div className={ivory ? IV.step : "space-y-6 animate-fade-in"}>
+                <div className={IV.step}>
                   <button
                     onClick={() => setStep("remember")}
-                    className={ivory ? IV.back : "inline-flex items-center gap-1 text-sm text-white/80 hover:text-white"}
+                    className={IV.back}
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
                   <div className="text-center space-y-2">
-                    <div className={ivory ? cn(IV.tile, "h-16 w-16") : "inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-yellow-300 text-purple-700 mx-auto shadow-lg"}>
+                    <div className={cn(IV.tile, "h-16 w-16")}>
                       <Sparkles className="h-8 w-8" />
                     </div>
-                    <h2 className={ivory ? "whitespace-normal break-words font-display text-hec-h1 font-medium text-hec-ink" : "text-2xl sm:text-3xl font-extrabold"}>
+                    <h2 className="whitespace-normal break-words font-display text-hec-h1 font-medium text-hec-ink">
                       Let's make your new login!
                     </h2>
-                    <p className={ivory ? "text-hec-body text-hec-ink-soft" : "text-white/85 text-sm"}>
+                    <p className="text-hec-body text-hec-ink-soft">
                       Pick an easy email you'll remember. Your password will be{" "}
-                      <span className={ivory ? "font-semibold tabular-nums text-hec-ink" : "font-bold text-yellow-200"}>1234567</span>.
+                      <span className="font-semibold tabular-nums text-hec-ink">1234567</span>.
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="new-email" className={ivory ? "text-hec-small font-medium text-hec-ink" : "text-white/90 font-semibold"}>
+                    <Label htmlFor="new-email" className="text-hec-small font-medium text-hec-ink">
                       Your new email
                     </Label>
                     <Input
@@ -254,18 +244,18 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value.toLowerCase())}
-                      className={ivory ? "text-hec-body" : "h-12 text-base bg-white text-foreground"}
+                      className="text-hec-body"
                       placeholder="anna@english.com"
                       autoComplete="off"
                     />
-                    <p className={ivory ? "text-hec-caption text-hec-ink-soft" : "text-xs text-white/70"}>
-                      Tip: try <span className={ivory ? "break-all font-mono text-hec-ink" : "font-mono"}>{slugifyFirstName(studentName)}@english.com</span>
+                    <p className="text-hec-caption text-hec-ink-soft">
+                      Tip: try <span className="break-all font-mono text-hec-ink">{slugifyFirstName(studentName)}@english.com</span>
                     </p>
                   </div>
 
-                  <div className={ivory ? "rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-small text-hec-ink" : "rounded-2xl bg-white/10 border border-white/20 p-4 text-sm text-white/90"}>
-                    <p className={ivory ? "mb-1 font-semibold" : "font-semibold mb-1"}>📌 What happens next:</p>
-                    <ul className={ivory ? "list-inside list-disc space-y-1 text-hec-ink-soft" : "list-disc list-inside space-y-1 text-white/80"}>
+                  <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-small text-hec-ink">
+                    <p className="mb-1 font-semibold">📌 What happens next:</p>
+                    <ul className="list-inside list-disc space-y-1 text-hec-ink-soft">
                       <li>We make a brand-new login just for you</li>
                       <li>Your old login still works too</li>
                       <li>You'll see your new password to write down</li>
@@ -275,15 +265,15 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
                   <Button
                     onClick={handleCreate}
                     disabled={submitting || !email}
-                    className={ivory ? IV.big : "w-full h-14 text-lg font-bold bg-yellow-300 text-purple-700 hover:bg-yellow-200 shadow-xl rounded-2xl disabled:opacity-60"}
+                    className={IV.big}
                   >
                     {submitting ? (
                       <>
-                        <Loader2 className={ivory ? "h-5 w-5 animate-spin" : "h-5 w-5 mr-2 animate-spin"} /> Creating...
+                        <Loader2 className="h-5 w-5 animate-spin" /> Creating...
                       </>
                     ) : (
                       <>
-                        Create my new login <ArrowRight className={ivory ? "h-5 w-5" : "h-5 w-5 ml-2"} />
+                        Create my new login <ArrowRight className="h-5 w-5" />
                       </>
                     )}
                   </Button>
@@ -291,24 +281,24 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
               )}
 
               {step === "done" && result && (
-                <div className={ivory ? cn(IV.step, "text-center") : "space-y-6 animate-fade-in text-center"}>
-                  <div className={ivory ? cn(IV.tile, "h-20 w-20") : "inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-yellow-300 text-purple-700 mx-auto shadow-xl"}>
+                <div className={cn(IV.step, "text-center")}>
+                  <div className={cn(IV.tile, "h-20 w-20")}>
                     <PartyPopper className="h-10 w-10" />
                   </div>
                   <div className="space-y-2">
-                    <h2 className={ivory ? "font-display text-hec-display font-medium text-hec-ink" : "text-3xl font-extrabold"}>All done! 🎉</h2>
-                    <p className={ivory ? "text-hec-body font-medium text-hec-ink" : "text-white/90 text-base font-semibold"}>
+                    <h2 className="font-display text-hec-display font-medium text-hec-ink">All done! 🎉</h2>
+                    <p className="text-hec-body font-medium text-hec-ink">
                       📝 Write this down somewhere safe — you'll need it to log in!
                     </p>
                   </div>
 
-                  <div className={ivory ? "space-y-4 rounded-hec-md border border-hec-line bg-hec-raised p-4 text-left sm:p-6" : "rounded-2xl bg-white p-5 space-y-4 text-left shadow-2xl"}>
+                  <div className="space-y-4 rounded-hec-md border border-hec-line bg-hec-raised p-4 text-left sm:p-6">
                     <div>
-                      <div className={ivory ? "mb-1 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft" : "text-xs font-bold uppercase tracking-wider text-purple-700 mb-1"}>
+                      <div className="mb-1 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
                         Your new email
                       </div>
                       <div className="flex items-center gap-2">
-                        <code className={ivory ? "min-w-0 flex-1 break-all rounded-hec-sm bg-hec-sunken px-3 py-2 text-hec-body font-semibold text-hec-ink" : "flex-1 text-base sm:text-lg font-bold text-foreground bg-yellow-100 rounded-lg px-3 py-2 break-all"}>
+                        <code className="min-w-0 flex-1 break-all rounded-hec-sm bg-hec-sunken px-3 py-2 text-hec-body font-semibold text-hec-ink">
                           {result.email}
                         </code>
                         <Button
@@ -319,7 +309,7 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
                           aria-label="Copy email"
                         >
                           {copied === "email" ? (
-                            <Check className={ivory ? "h-4 w-4 text-hec-leaf" : "h-4 w-4 text-emerald-600"} />
+                            <Check className="h-4 w-4 text-hec-leaf" />
                           ) : (
                             <Copy className="h-4 w-4" />
                           )}
@@ -327,11 +317,11 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
                       </div>
                     </div>
                     <div>
-                      <div className={ivory ? "mb-1 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft" : "text-xs font-bold uppercase tracking-wider text-purple-700 mb-1"}>
+                      <div className="mb-1 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
                         Your new password
                       </div>
                       <div className="flex items-center gap-2">
-                        <code className={ivory ? "min-w-0 flex-1 rounded-hec-sm bg-hec-sunken px-3 py-2 text-center text-hec-h1 font-semibold tracking-widest tabular-nums text-hec-ink" : "flex-1 text-2xl font-extrabold text-foreground bg-yellow-100 rounded-lg px-3 py-2 tracking-widest text-center"}>
+                        <code className="min-w-0 flex-1 rounded-hec-sm bg-hec-sunken px-3 py-2 text-center text-hec-h1 font-semibold tracking-widest tabular-nums text-hec-ink">
                           {result.password}
                         </code>
                         <Button
@@ -342,7 +332,7 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
                           aria-label="Copy password"
                         >
                           {copied === "pw" ? (
-                            <Check className={ivory ? "h-4 w-4 text-hec-leaf" : "h-4 w-4 text-emerald-600"} />
+                            <Check className="h-4 w-4 text-hec-leaf" />
                           ) : (
                             <Copy className="h-4 w-4" />
                           )}
@@ -351,19 +341,19 @@ export function NewSiteMigrationOverlay({ userId, onCompleted }: Props) {
                     </div>
                   </div>
 
-                  <div className={ivory ? "space-y-2" : "space-y-3"}>
+                  <div className="space-y-2">
                     <Button
                       onClick={() => {
                         window.open(NEW_SITE_URL, "_blank", "noopener,noreferrer");
                         dismissForSession();
                       }}
-                      className={ivory ? IV.big : "w-full h-14 text-base font-bold bg-emerald-400 text-emerald-950 hover:bg-emerald-300 shadow-xl rounded-2xl"}
+                      className={IV.big}
                     >
-                      Open the new website <ExternalLink className={ivory ? "h-4 w-4" : "h-4 w-4 ml-2"} />
+                      Open the new website <ExternalLink className="h-4 w-4" />
                     </Button>
                     <button
                       onClick={dismissForSession}
-                      className={ivory ? IV.quiet : "w-full text-sm text-white/80 hover:text-white py-2 font-medium"}
+                      className={IV.quiet}
                     >
                       I wrote it down — close this
                     </button>

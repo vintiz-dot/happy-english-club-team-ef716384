@@ -54,11 +54,6 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   }, [sidebarOpen]);
 
 
-  // Only an admin has a profile screen to go to, so only they get a
-  // button; for everyone else the chip stays a label.
-  const isAdmin = role === "admin";
-  const Component = isAdmin ? "button" : "div";
-
   if (!user) {
     return <>{children}</>;
   }
@@ -127,10 +122,10 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   const navItems = getNavigationItems();
   const showSidebar = role === "admin" || role === "teacher";
 
-  // Student/Family layout, "Ivory" design system (the route is listed in
-  // src/lib/ivoryScope.ts). Solid paper, no glow; the controls are 44 px and
-  // labelled; a child's name in the switcher wraps, never cut.
-  if (!showSidebar && ivory) {
+  // Student/Family layout (Ivory design system). Solid paper, no glow; the
+  // controls are 44 px and labelled; a child's name in the switcher wraps,
+  // never cut. The old student/family header was deleted with R24.
+  if (!showSidebar) {
     return (
       <MotionConfig reducedMotion="user">
         <div className="min-h-screen bg-hec-paper text-hec-ink">
@@ -169,91 +164,6 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           <AssistantLauncher />
         </div>
       </MotionConfig>
-    );
-  }
-
-  // Student/Family layout with sticky navbar
-  if (!showSidebar) {
-    return (
-      <div className="min-h-screen bg-background">
-        <AmbientBackground intensity="bold" />
-        <header className="sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 shadow-sm">
-          <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between gap-3">
-            <div className="flex shrink-0 items-center gap-2 md:gap-3">
-              {/* Conic aurora ring around the brand mark */}
-              <div className="h-9 w-9 md:h-11 md:w-11 rounded-full p-[2px] bg-[conic-gradient(from_140deg,#3b82f6,#22d3ee,#facc15,#3b82f6)] shadow-[0_0_16px_-4px_rgba(59,130,246,0.5)]">
-                <div className="h-full w-full rounded-full overflow-hidden bg-card">
-                  <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-cover" />
-                </div>
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-base md:text-xl font-bold text-shimmer">{title || "Education Manager"}</h1>
-                <p className="text-xs text-muted-foreground hidden md:block">Happy English Club</p>
-              </div>
-            </div>
-            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 md:gap-4">
-              <PWAInstallButton variant="outline" />
-              {/* A long child name shrinks and truncates so the controls to its right stay on screen. */}
-              <div className="min-w-0 [&>button]:max-w-full [&>button>span]:min-w-0 [&>button>span]:truncate">
-                <ProfileSwitcher />
-              </div>
-              <NotificationBell />
-              {userName && (
-                <Component
-                  {...(isAdmin
-                    ? {
-                        type: "button" as const,
-                        title: "View your profile",
-                        onClick: () => navigate("/admin?tab=account"),
-                      }
-                    : {})}
-                  className={cn(
-                    "hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm text-left",
-                    isAdmin && "transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  )}
-                >
-                  <div className="rounded-full p-[1.5px] bg-gradient-to-br from-blue-500 via-cyan-400 to-amber-300">
-                    <Avatar className="h-7 w-7 ring-1 ring-background">
-                      <AvatarImage src={avatarUrl || undefined} alt={userName} />
-                      <AvatarFallback className="text-xs">{initialsOf(userName)}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <span className="flex flex-col leading-tight">
-                    <span className="text-sm font-medium text-foreground">{userName}</span>
-                    {role && (
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        {role}
-                      </span>
-                    )}
-                  </span>
-                </Component>
-              )}
-              <ChangePassword />
-              <Button onClick={signOut} variant="outline" size="sm" className="hidden sm:flex group">
-                <LogOut className="h-4 w-4 mr-2 group-hover:text-red-500 transition-colors" />
-                Sign Out
-              </Button>
-              <Button onClick={signOut} variant="outline" size="icon" className="sm:hidden group" aria-label="Sign out">
-                <LogOut className="h-4 w-4 group-hover:text-red-500 transition-colors" />
-              </Button>
-            </div>
-          </div>
-          {/* Luxe gradient hairline */}
-          <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
-        </header>
-        {role === "student" && <StudentNavBar />}
-        <main
-          className={
-            role === "student"
-              ? // The bottom tab bar is fixed: leave room for it (and the iPhone home bar) below the page, not above it.
-                // overflow-x-clip: decorative glows must never make a phone page scroll sideways.
-                "container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8"
-              : "container mx-auto px-4 py-4 md:py-6 lg:py-8 pb-20 md:pb-8"
-          }
-        >{children}</main>
-        {/* Read-only, RLS-scoped assistant — available to every signed-in role */}
-        <AssistantLauncher />
-      </div>
     );
   }
 

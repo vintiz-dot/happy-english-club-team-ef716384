@@ -11,13 +11,11 @@ import { useState } from "react";
 import { FamilyLinkDialog } from "@/components/admin/FamilyLinkDialog";
 import { FamilyMembersManager } from "@/components/admin/FamilyMembersManager";
 import { toast } from "sonner";
-import { useIvory } from "@/hooks/useIvory";
 import { ConfirmDestructiveDialog } from "@/components/ConfirmDestructiveDialog";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 const FamilyDetail = () => {
-  const ivory = useIvory();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [showLinkDialog, setShowLinkDialog] = useState(false);
@@ -127,8 +125,8 @@ const FamilyDetail = () => {
   if (!family) {
     return (
       <Layout>
-        <div className={ivory ? "py-12 text-center" : "text-center py-12"}>
-          <h2 className={ivory ? "font-display text-hec-h2 font-medium text-hec-ink" : "text-2xl font-bold"}>Family not found</h2>
+        <div className="py-12 text-center">
+          <h2 className="font-display text-hec-h2 font-medium text-hec-ink">Family not found</h2>
         </div>
       </Layout>
     );
@@ -136,24 +134,24 @@ const FamilyDetail = () => {
 
   return (
     <Layout>
-      <div className={ivory ? "space-y-8" : "space-y-6"}>
-        <div className={ivory ? "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between" : "flex items-center justify-between"}>
-          <div className={ivory ? "min-w-0 space-y-2" : "space-y-2"}>
-            <h1 className={ivory ? "whitespace-normal break-words font-display text-hec-display font-medium text-hec-ink" : "text-3xl font-bold tracking-tight"}>{family.name}</h1>
+      <div className="space-y-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-2">
+            <h1 className="whitespace-normal break-words font-display text-hec-display font-medium text-hec-ink">{family.name}</h1>
             <div className="flex flex-col gap-1">
               {family.primary_user_id && family.linkedUserEmail && (
-                <div className={ivory ? "flex flex-wrap items-center gap-2 text-hec-small" : "flex items-center gap-2 text-sm"}>
-                  <span className={ivory ? "text-hec-ink-soft" : "text-muted-foreground"}>Registered Email:</span>
-                  <span className={ivory ? "min-w-0 break-all font-medium text-hec-ink" : "font-medium text-foreground"}>{family.linkedUserEmail}</span>
-                  <Badge variant={ivory ? "success" : "outline"} className={ivory ? undefined : "text-xs"}>
+                <div className="flex flex-wrap items-center gap-2 text-hec-small">
+                  <span className="text-hec-ink-soft">Registered Email:</span>
+                  <span className="min-w-0 break-all font-medium text-hec-ink">{family.linkedUserEmail}</span>
+                  <Badge variant="success" className={undefined}>
                     Linked
                   </Badge>
                 </div>
               )}
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowLinkDialog(true)} className={ivory ? "w-full shrink-0 sm:w-auto" : undefined}>
-            <Link className={ivory ? "h-4 w-4" : "h-4 w-4 mr-2"} />
+          <Button variant="outline" size="sm" onClick={() => setShowLinkDialog(true)} className="w-full shrink-0 sm:w-auto">
+            <Link className="h-4 w-4" />
             {family.primary_user_id ? 'Manage Link' : 'Connect to User'}
           </Button>
         </div>
@@ -168,36 +166,36 @@ const FamilyDetail = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <div className={ivory ? "flex items-center gap-2 text-hec-small" : "flex items-center gap-2 text-sm"}>
-                    <span className={ivory ? "text-hec-ink-soft" : "text-muted-foreground"}>Status:</span>
-                    <Badge variant={family.is_active ? (ivory ? "success" : "default") : "secondary"} className={ivory ? undefined : family.is_active ? "bg-green-500" : ""}>
+                  <div className="flex items-center gap-2 text-hec-small">
+                    <span className="text-hec-ink-soft">Status:</span>
+                    <Badge variant={family.is_active ? "success" : "secondary"} className={undefined}>
                       {family.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                   {family.email && (
-                    <div className={ivory ? "flex items-start gap-2 text-hec-small text-hec-ink" : "flex items-center gap-2 text-sm"}>
-                      <Mail className={ivory ? "mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4 text-muted-foreground"} />
-                      <span className={ivory ? "min-w-0 break-all" : undefined}>{family.email}</span>
+                    <div className="flex items-start gap-2 text-hec-small text-hec-ink">
+                      <Mail className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" />
+                      <span className="min-w-0 break-all">{family.email}</span>
                     </div>
                   )}
                   {family.phone && (
-                    <div className={ivory ? "flex items-start gap-2 text-hec-small tabular-nums text-hec-ink" : "flex items-center gap-2 text-sm"}>
-                      <Phone className={ivory ? "mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4 text-muted-foreground"} />
+                    <div className="flex items-start gap-2 text-hec-small tabular-nums text-hec-ink">
+                      <Phone className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" />
                       <span>{family.phone}</span>
                     </div>
                   )}
                 </div>
                 <div className="space-y-2">
                   {family.address && (
-                    <div className={ivory ? "text-hec-small text-hec-ink" : "text-sm"}>
-                      <span className={ivory ? "text-hec-ink-soft" : "text-muted-foreground"}>Address:</span>
-                      <p className={ivory ? "mt-1 break-words" : "mt-1"}>{family.address}</p>
+                    <div className="text-hec-small text-hec-ink">
+                      <span className="text-hec-ink-soft">Address:</span>
+                      <p className="mt-1 break-words">{family.address}</p>
                     </div>
                   )}
                   {family.sibling_percent_override !== null && (
-                    <div className={ivory ? "text-hec-small text-hec-ink" : "text-sm"}>
-                      <span className={ivory ? "text-hec-ink-soft" : "text-muted-foreground"}>Sibling Discount Override:</span>
-                      <p className={ivory ? "mt-1 whitespace-nowrap font-medium tabular-nums" : "mt-1 font-medium"}>{family.sibling_percent_override}%</p>
+                    <div className="text-hec-small text-hec-ink">
+                      <span className="text-hec-ink-soft">Sibling Discount Override:</span>
+                      <p className="mt-1 whitespace-nowrap font-medium tabular-nums">{family.sibling_percent_override}%</p>
                     </div>
                   )}
                 </div>
@@ -209,7 +207,7 @@ const FamilyDetail = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className={ivory ? "h-5 w-5 shrink-0 text-hec-ink-soft" : "h-5 w-5"} />
+                <Users className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                 Family Members ({family.students?.length || 0})
               </CardTitle>
               <CardDescription>Students linked to this family</CardDescription>
@@ -218,15 +216,15 @@ const FamilyDetail = () => {
               {family.students && family.students.length > 0 ? (
                 <div className="space-y-3">
                   {family.students.map((student: any) => (
-                    <div key={student.id} className={ivory ? "flex flex-col gap-3 rounded-hec-md border border-hec-line bg-hec-surface p-4 sm:flex-row sm:items-start sm:justify-between" : "flex items-center justify-between p-4 border rounded-lg"}>
-                      <div className={ivory ? "min-w-0 flex-1 space-y-1" : "space-y-1"}>
-                        <div className={ivory ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2"}>
-                          <p className={ivory ? "min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink" : "font-medium"}>{student.full_name}</p>
-                          <Badge variant={student.is_active ? (ivory ? "success" : "default") : "secondary"}>
+                    <div key={student.id} className="flex flex-col gap-3 rounded-hec-md border border-hec-line bg-hec-surface p-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{student.full_name}</p>
+                          <Badge variant={student.is_active ? "success" : "secondary"}>
                             {student.is_active ? "Active" : "Inactive"}
                           </Badge>
                           {siblingHolds?.[student.id] && (
-                            <Badge variant={ivory ? "warning" : "outline"} className={ivory ? "tabular-nums" : "border-violet-300 text-violet-700 dark:text-violet-300"}>
+                            <Badge variant="warning" className="tabular-nums">
                               Sibling discount from{" "}
                               {new Date(`${siblingHolds[student.id]}T00:00:00Z`).toLocaleDateString("en-GB", {
                                 day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
@@ -235,13 +233,13 @@ const FamilyDetail = () => {
                           )}
                         </div>
                         {student.email && (
-                          <p className={ivory ? "break-all text-hec-small text-hec-ink-soft" : "text-sm text-muted-foreground"}>✉️ {student.email}</p>
+                          <p className="break-all text-hec-small text-hec-ink-soft">✉️ {student.email}</p>
                         )}
                         {student.phone && (
-                          <p className={ivory ? "text-hec-small tabular-nums text-hec-ink-soft" : "text-sm text-muted-foreground"}>📱 {student.phone}</p>
+                          <p className="text-hec-small tabular-nums text-hec-ink-soft">📱 {student.phone}</p>
                         )}
                       </div>
-                      <div className={ivory ? "flex shrink-0 flex-wrap gap-2" : "flex gap-2"}>
+                      <div className="flex shrink-0 flex-wrap gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -250,7 +248,7 @@ const FamilyDetail = () => {
                           View Details
                         </Button>
                         <Button
-                          variant={ivory ? "destructive-quiet" : "ghost"}
+                          variant="destructive-quiet"
                           size="sm"
                           onClick={() => setConfirmRemove({ id: student.id, full_name: student.full_name })}
                         >
@@ -261,7 +259,7 @@ const FamilyDetail = () => {
                   ))}
                 </div>
               ) : (
-                <p className={ivory ? "py-8 text-center text-hec-body text-hec-ink-soft" : "text-center py-8 text-muted-foreground"}>No students in this family</p>
+                <p className="py-8 text-center text-hec-body text-hec-ink-soft">No students in this family</p>
               )}
             </CardContent>
           </Card>
