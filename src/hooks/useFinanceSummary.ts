@@ -15,7 +15,6 @@ export interface FinanceSummaryData {
   totalExpenditures: number;
   payrollExpenditures: number;
   operatingExpenditures: number;
-  excusedLoss: number;
   netActual: number;
   netProjected: number;
 }
@@ -64,21 +63,10 @@ export function useFinanceSummary(month: string) {
 
       const spend = splitExpenditures(expenditures || []);
 
-      const { data: excused } = await supabase
-        .from("attendance")
-        .select(`
-          id,
-          sessions!inner (date, class_id,
-            classes (session_rate_vnd)
-          )
-        `)
-        .eq("status", "Excused")
-        .gte("sessions.date", startDate)
-        .lt("sessions.date", endDate);
-
-      const excusedLoss = (excused || []).reduce((sum, a: any) => {
-        return sum + (a.sessions?.classes?.session_rate_vnd || 0);
-      }, 0);
+      // Excused loss is not worked out here any more: it priced each excused
+      // mark at the class's list fee in the browser, and no screen read it
+      // (OverviewStats uses the other fields). The Finance tab's card takes
+      // it from calculate-tuition-bulk (useFinanceOverview). BROWSER-PRICING.
 
       // Payroll booked into expenditures is the salary line in a second
       // place, so net subtracts the salary plus the REST of the ledger.
@@ -100,7 +88,6 @@ export function useFinanceSummary(month: string) {
         totalExpenditures: spend.total,
         payrollExpenditures: spend.payroll,
         operatingExpenditures: spend.operating,
-        excusedLoss,
         netActual,
         netProjected,
         payrollDiscrepancies,

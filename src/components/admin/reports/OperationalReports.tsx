@@ -11,11 +11,17 @@
  */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, XCircle, TrendingDown, UserX, Download, ChevronRight, ChevronDown } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sessionPayVnd } from "@/lib/payRate";
-import { durationMinutes } from "@/lib/sessionDuration";
 import { splitPayrollByClass } from "@/lib/finance/classPayroll";
+import { fetchBilledStudentIds } from "@/lib/finance/studentsInMonth";
+import {
+  cancelledPayTotal,
+  difference,
+  forgoneByLesson,
+  forgoneTuition,
+  type BulkTuitionResult,
+} from "@/lib/lostLessonsView";
 import { breakEven, describeGap } from "@/lib/finance/breakEven";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -44,8 +50,65 @@ function describeAim(mode: string, cost: number, share: number): string {
   return share < cost ? "shared across the classes that ran" : "shared — this was the only class that ran";
 }
 
+/** A figure the function did not send: a dash, and words for a screen reader. */
+const Unavailable = () => (
+  <>
+    <span aria-hidden>—</span>
+    <span className="sr-only">Figure unavailable</span>
+  </>
+);
+const vnd = (v: number | null) => (v === null ? <Unavailable /> : formatVND(v));
+
+/** calculate-payroll for the month, as { data, error } - never throws. */
+interface PayrollAnswer {
+  data: { payrollData?: unknown[]; locked?: boolean } | null;
+  error: unknown;
+}
+/** calculate-tuition-bulk over the month's billed roster; results null when any chunk failed. */
+interface TuitionAnswer {
+  ids: string[];
+  results: BulkTuitionResult[] | null;
+}
+const BULK_CHUNK = 200;
+
 const OperationalReports = () => {
   const [selectedMonth, setSelectedMonth] = useState(monthKey());
+  const queryClient = useQueryClient();
+
+  // Every money figure on this page comes from one of these two answers,
+  // fetched once per month and shared by the cards below.
+  const payrollFor = (month: string) =>
+    queryClient.fetchQuery<PayrollAnswer>({
+      queryKey: ["ops-payroll", month],
+      staleTime: 30_000,
+      queryFn: async () => {
+        const res = await supabase.functions.invoke("calculate-payroll", { body: { month } });
+        return { data: (res.data ?? null) as PayrollAnswer["data"], error: res.error ?? null };
+      },
+    });
+  const tuitionFor = (month: string) =>
+    queryClient.fetchQuery<TuitionAnswer>({
+      queryKey: ["ops-tuition-bulk", month],
+      staleTime: 30_000,
+      queryFn: async () => {
+        // The same roster the Finance tab and the tuition list price.
+        let ids: string[] = [];
+        try {
+          ids = await fetchBilledStudentIds(month);
+        } catch {
+          return { ids, results: null };
+        }
+        const results: BulkTuitionResult[] = [];
+        for (let i = 0; i < ids.length; i += BULK_CHUNK) {
+          const { data, error } = await supabase.functions.invoke("calculate-tuition-bulk", {
+            body: { studentIds: ids.slice(i, i + BULK_CHUNK), month },
+          });
+          if (error || !Array.isArray(data?.results)) return { ids, results: null };
+          results.push(...data.results);
+        }
+        return { ids, results };
+      },
+    });
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const toggleRow = (id: string) =>
     setOpenRows((prev) => {
@@ -75,49 +138,34 @@ const OperationalReports = () => {
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       const monthEnd = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
 
+      // Only the count is read here. What the lessons would have charged and
+      // paid is the functions' (BROWSER-PRICING): this used to multiply the
+      // class's list fee of today by a head count, and price the lesson's
+      // teacher - never its assistant - at the teacher row's rate of today.
       const { data: cancelledSessions, error } = await supabase
         .from("sessions")
-        .select(`id, date, start_time, end_time, class_id, classes(id, name, session_rate_vnd), teachers(id, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd)`)
+        .select("id")
         .eq("status", "Canceled")
         .gte("date", monthStart)
         .lt("date", monthEnd);
 
       if (error) throw error;
+      // No cancelled lesson: nothing was lost or saved. A count, not a price.
       if (!cancelledSessions?.length) return { lostProfit: 0, lostTuition: 0, savedPayroll: 0, sessionCount: 0 };
 
-      const classIds = [...new Set(cancelledSessions.map(s => s.class_id))];
-      const { data: allEnrollments } = await supabase
-        .from("enrollments")
-        .select("class_id, student_id, start_date, end_date")
-        .in("class_id", classIds);
-
-      let totalLostTuition = 0;
-      let totalLostPayroll = 0;
-
-      for (const session of cancelledSessions) {
-        // durationMinutes, not a hand-rolled subtraction: the inline version
-        // goes negative across midnight and would turn saved payroll into a
-        // charge.
-        const minutes = durationMinutes(session.start_time, session.end_time) ?? 0;
-
-        const studentCount = (allEnrollments || []).filter(e =>
-          e.class_id === session.class_id &&
-          e.start_date <= session.date &&
-          (!e.end_date || e.end_date >= session.date)
-        ).length;
-
-        const sessionRate = (session.classes as any)?.session_rate_vnd || 0;
-
-        totalLostTuition += sessionRate * studentCount;
-        // A cancelled lesson saves a per-session teacher's whole fee, not a
-        // pro-rated slice of an hourly rate they are not on.
-        totalLostPayroll += sessionPayVnd(session.teachers as any, minutes);
-      }
+      const [payroll, tuition] = await Promise.all([payrollFor(selectedMonth), tuitionFor(selectedMonth)]);
+      // calculate-tuition-bulk's cancelledLessons: what each cancelled lesson
+      // would have added to each enrolled student's month.
+      const lostTuition = forgoneTuition(tuition.results, "cancelledLessons", tuition.ids).total;
+      // calculate-payroll's lostIncomeTotal: what they would have paid,
+      // teachers and assistants (staff with no payroll row that month
+      // included), at the rate in force on each lesson's date.
+      const savedPayroll = payroll.error ? null : cancelledPayTotal(payroll.data as Parameters<typeof cancelledPayTotal>[0]);
 
       return {
-        lostProfit: totalLostTuition - totalLostPayroll,
-        lostTuition: totalLostTuition,
-        savedPayroll: totalLostPayroll,
+        lostProfit: difference(lostTuition, savedPayroll),
+        lostTuition,
+        savedPayroll,
         sessionCount: cancelledSessions.length,
       };
     },
@@ -132,25 +180,42 @@ const OperationalReports = () => {
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       const monthEnd = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
 
+      // The marks give the names and dates; what each one forgoes is
+      // calculate-tuition-bulk's excusedLessons, on the student's own
+      // enrollment, weekdays and rate override. This used to price every
+      // excused mark at the class's list fee of today, enrolled or not.
       const { data: excused, error } = await supabase
         .from("attendance")
-        .select(`id, status, students(id, full_name), sessions!inner(id, date, start_time, end_time, class_id, classes(id, name, session_rate_vnd))`)
+        .select(`id, status, student_id, students(id, full_name), sessions!inner(id, date, class_id, classes(id, name))`)
         .eq("status", "Excused")
         .gte("sessions.date", monthStart)
         .lt("sessions.date", monthEnd);
 
       if (error) throw error;
 
-      const rows = (excused || []).map((a: any) => ({
-        id: a.id,
-        studentName: a.students?.full_name || "Unknown",
-        className: a.sessions?.classes?.name || "Unknown",
-        date: a.sessions?.date,
-        rate: a.sessions?.classes?.session_rate_vnd || 0,
-      }));
+      const tuition = excused?.length ? await tuitionFor(selectedMonth) : { ids: [], results: [] };
+      const forgone = forgoneTuition(tuition.results, "excusedLessons", tuition.ids);
+      const byLesson = forgoneByLesson(forgone);
+
+      const rows = (excused || []).map((a: any) => {
+        const studentId = a.student_id ?? a.students?.id ?? "";
+        const amount = byLesson.get(`${a.sessions?.id}:${studentId}`);
+        return {
+          id: a.id,
+          studentName: a.students?.full_name || "Unknown",
+          className: a.sessions?.classes?.name || "Unknown",
+          date: a.sessions?.date,
+          // The function's figure; null when it did not answer for this
+          // student. Answered but not listed: the lesson is outside the
+          // student's enrollment or weekdays, so nothing would have been
+          // charged for it.
+          rate: amount ?? null,
+          notCharged: amount === undefined && forgone.answered.has(studentId),
+        };
+      });
 
       rows.sort((a: any, b: any) => (b.date || "").localeCompare(a.date || ""));
-      const totalLoss = rows.reduce((sum: number, r: any) => sum + r.rate, 0);
+      const totalLoss = excused?.length ? forgone.total : 0;
       return { rows, totalLoss, count: rows.length };
     },
   });
@@ -186,10 +251,10 @@ const OperationalReports = () => {
         // still held its lessons and still used the room; dropping it
         // would hand its share of the rent to the classes still open.
         // Dormant active classes are filtered out further down instead.
-        supabase.from("classes").select("id, name, session_rate_vnd, is_active"),
+        supabase.from("classes").select("id, name, is_active"),
         supabase
           .from("sessions")
-          .select("id, class_id, teacher_id, start_time, end_time, rate_override_vnd, status, teachers(hourly_rate_vnd, pay_rate_type, per_session_rate_vnd)")
+          .select("id, class_id, status")
           .in("status", ["Scheduled", "Held"])
           .gte("date", monthStart)
           .lt("date", monthEnd),
@@ -202,7 +267,7 @@ const OperationalReports = () => {
           .from("invoices")
           .select("class_breakdown, student_id")
           .eq("month", selectedMonth),
-        supabase.functions.invoke("calculate-payroll", { body: { month: selectedMonth } }),
+        payrollFor(selectedMonth),
         // Cast on purpose: src/integrations/supabase/types.ts is
         // regenerated from the live database by the other agent working
         // on this repo, and a regeneration that lands before the
@@ -220,9 +285,9 @@ const OperationalReports = () => {
       const locked = (periodRes.data as { status?: string } | null)?.status === "locked";
 
       // Pay, per class, from the function that owns pricing. If it cannot
-      // be reached the report still renders - from the old per-session
-      // estimate - and says so, rather than showing a confident wrong
-      // number or an empty page.
+      // be reached the report still renders and says so: Payroll and Profit
+      // read "figure unavailable". (It used to fall back to pricing the
+      // teacher row's rate of today in the browser - no TAs, wrong dates.)
       const payrollRows = (payrollRes as { data?: { payrollData?: unknown[] } }).data?.payrollData;
       const payrollEstimated = !!payrollRes.error || !Array.isArray(payrollRows);
       const paySplit = payrollEstimated
@@ -294,20 +359,11 @@ const OperationalReports = () => {
           }
         }
 
-        let payroll: number;
-        if (paySplit) {
-          payroll = paySplit.byClass.get(cls.id) ?? 0;
-        } else {
-          payroll = 0;
-          for (const session of classSessions) {
-            const minutes = durationMinutes(session.start_time, session.end_time) ?? 0;
-            payroll += sessionPayVnd(session.teachers as any, minutes);
-          }
-        }
+        const payroll: number | null = paySplit ? (paySplit.byClass.get(cls.id) ?? 0) : null;
 
         const overhead = overheadByClass.get(cls.id) ?? 0;
         const discounts = grossTuition - netTuition;
-        const net = netTuition - payroll - overhead;
+        const net = payroll === null ? null : netTuition - payroll - overhead;
 
         return {
           id: cls.id,
@@ -318,9 +374,9 @@ const OperationalReports = () => {
           grossTuition: Math.round(grossTuition),
           discounts: Math.round(discounts),
           tuition: Math.round(netTuition),
-          payroll: Math.round(payroll),
+          payroll: payroll === null ? null : Math.round(payroll),
           overhead: Math.round(overhead),
-          net: Math.round(net),
+          net: net === null ? null : Math.round(net),
         };
       })
         // An archived class appears only for the months it actually ran.
@@ -346,9 +402,16 @@ const OperationalReports = () => {
   const totalGrossTuition = classRows.reduce((sum, c) => sum + c.grossTuition, 0);
   const totalDiscounts = classRows.reduce((sum, c) => sum + c.discounts, 0);
   const totalTuition = classRows.reduce((sum, c) => sum + c.tuition, 0);
-  const totalPayroll = classRows.reduce((sum, c) => sum + c.payroll, 0);
+  // Null (figure unavailable) when pay could not be loaded: one unknown row
+  // makes the total unknown.
+  const sumKnown = (values: Array<number | null>): number | null =>
+    values.some((v) => v === null) ? null : values.reduce<number>((sum, v) => sum + (v as number), 0);
+  const totalPayroll = sumKnown(classRows.map((c) => c.payroll));
   const totalOverhead = classRows.reduce((sum, c) => sum + c.overhead, 0);
-  const totalNet = classRows.reduce((sum, c) => sum + c.net, 0);
+  const totalNet = sumKnown(classRows.map((c) => c.net));
+  /** Break-even needs the pay; without it there is no answer to give. */
+  const breakEvenOf = (c: (typeof classRows)[number]) =>
+    c.payroll === null ? null : breakEven({ ...c, payroll: c.payroll });
   // Standing costs that belong to the month but are not in the column
   // above. Measured against the DISPLAYED total, not against the full
   // RPC result: a share belonging to a class the table filtered out would
@@ -369,12 +432,13 @@ const OperationalReports = () => {
         c.grossTuition,
         c.discounts,
         c.tuition,
-        c.payroll,
+        // Empty, not 0, when pay could not be loaded.
+        c.payroll ?? "",
         c.overhead,
-        c.net,
-        breakEven(c).students ?? "",
+        c.net ?? "",
+        breakEvenOf(c)?.students ?? "",
       ].join(",")),
-      ["TOTAL", "-", "-", "-", totalGrossTuition, totalDiscounts, totalTuition, totalPayroll, totalOverhead, totalNet, ""].join(","),
+      ["TOTAL", "-", "-", "-", totalGrossTuition, totalDiscounts, totalTuition, totalPayroll ?? "", totalOverhead, totalNet ?? "", ""].join(","),
       ...(unallocatedOverhead > 0
         ? [["UNALLOCATED OVERHEAD", "-", "-", "-", "", "", "", "", unallocatedOverhead, "", ""].join(",")]
         : []),
@@ -435,10 +499,10 @@ const OperationalReports = () => {
             <CardDescription>Potential profit lost from cancelled sessions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="whitespace-nowrap font-sans text-hec-display font-semibold tabular-nums text-hec-ink">{formatVND(lostRevenue?.lostProfit || 0)}</div>
+            <div className="whitespace-nowrap font-sans text-hec-display font-semibold tabular-nums text-hec-ink">{vnd(lostRevenue?.lostProfit ?? null)}</div>
             <div className="mt-2 space-y-1 text-hec-small tabular-nums text-hec-ink-soft">
-              <p>Lost Tuition: {formatVND(lostRevenue?.lostTuition || 0)}</p>
-              <p>Saved Payroll: {formatVND(lostRevenue?.savedPayroll || 0)}</p>
+              <p>Lost Tuition: {vnd(lostRevenue?.lostTuition ?? null)}</p>
+              <p>Saved Payroll: {vnd(lostRevenue?.savedPayroll ?? null)}</p>
             </div>
           </CardContent>
         </Card>
@@ -452,7 +516,7 @@ const OperationalReports = () => {
             Excused Absences
           </CardTitle>
           <CardDescription>
-            Students excused — tuition lost: {formatVND(excusedData?.totalLoss || 0)} ({excusedData?.count || 0} absences)
+            Students excused — tuition lost: {vnd(excusedData?.totalLoss ?? null)} ({excusedData?.count || 0} absences)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -472,12 +536,14 @@ const OperationalReports = () => {
                     <TableCell className="whitespace-nowrap tabular-nums">{row.date}</TableCell>
                     <TableCell className="break-words font-medium">{row.studentName}</TableCell>
                     <TableCell className="break-words">{row.className}</TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-medium tabular-nums">{formatVND(row.rate)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-medium tabular-nums">
+                      {row.notCharged ? "not charged" : vnd(row.rate)}
+                    </TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="border-t-2 border-hec-ink font-semibold">
                   <TableCell colSpan={3}>TOTAL</TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(excusedData.totalLoss)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{vnd(excusedData.totalLoss)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -528,8 +594,7 @@ const OperationalReports = () => {
               )}
               {classFinance?.payrollEstimated && (
                 <p className="mt-1 text-hec-caption text-hec-warn">
-                  Payroll could not be loaded, so these figures are estimated from teacher rates and leave
-                  out teaching assistants.
+                  Payroll could not be loaded, so Payroll, Profit and break-even read as figure unavailable.
                 </p>
               )}
               {(classFinance?.unattributedPayroll ?? 0) !== 0 && (
@@ -579,7 +644,7 @@ const OperationalReports = () => {
             </TableHeader>
             <TableBody>
               {classRows.map((cls) => {
-                const be = breakEven(cls);
+                const be = breakEvenOf(cls);
                 const open = openRows.has(cls.id);
                 const lines = classFinance?.breakdownByClass.get(cls.id) ?? [];
                 const staff = classFinance?.staffByClass.get(cls.id) ?? [];
@@ -609,15 +674,17 @@ const OperationalReports = () => {
                     {cls.discounts > 0 ? `-${formatVND(cls.discounts)}` : '-'}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right font-medium tabular-nums">{formatVND(cls.tuition)}</TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(cls.payroll)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{vnd(cls.payroll)}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
                     {cls.overhead > 0 ? formatVND(cls.overhead) : '-'}
                   </TableCell>
-                  <TableCell className={`whitespace-nowrap text-right font-semibold tabular-nums ${cls.net >= 0 ? 'text-hec-leaf' : 'text-hec-danger'}`}>
-                    {formatVND(cls.net)}
+                  <TableCell className={`whitespace-nowrap text-right font-semibold tabular-nums ${cls.net === null ? '' : cls.net >= 0 ? 'text-hec-leaf' : 'text-hec-danger'}`}>
+                    {vnd(cls.net)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {be.students === null ? (
+                    {be === null ? (
+                      <span className="text-hec-ink-soft"><Unavailable /></span>
+                    ) : be.students === null ? (
                       <span className="text-hec-ink-soft">—</span>
                     ) : (
                       <span className="whitespace-nowrap tabular-nums">
@@ -636,7 +703,7 @@ const OperationalReports = () => {
                       <div className="grid gap-4 md:grid-cols-3">
                         <div>
                           <p className="mb-2 text-hec-caption font-semibold text-hec-ink">
-                            Pay — what the {formatVND(cls.payroll)} is made of
+                            Pay — what the {vnd(cls.payroll)} is made of
                           </p>
                           {staff.length === 0 ? (
                             <p className="text-hec-caption text-hec-ink-soft">
@@ -697,7 +764,11 @@ const OperationalReports = () => {
                         </div>
                         <div>
                           <p className="mb-2 text-hec-caption font-semibold text-hec-ink">Break-even</p>
-                          {be.students === null ? (
+                          {be === null ? (
+                            <p className="text-hec-caption text-hec-ink-soft">
+                              Payroll could not be loaded, so what this class costs is unknown.
+                            </p>
+                          ) : be.students === null ? (
                             <p className="text-hec-caption text-hec-ink-soft">
                               No students billed this month, so there is nothing to work out what one is worth.
                             </p>
@@ -714,7 +785,7 @@ const OperationalReports = () => {
                               <p>
                                 It costs <span className="whitespace-nowrap font-medium tabular-nums">{formatVND(be.cost)}</span>
                                 <span className="text-hec-ink-soft">
-                                  {" "}— {formatVND(cls.payroll)} of pay and {formatVND(cls.overhead)} of overhead.
+                                  {" "}— {vnd(cls.payroll)} of pay and {formatVND(cls.overhead)} of overhead.
                                 </span>
                               </p>
                               <p className={(be.gap ?? 0) > 0 ? "font-medium text-hec-danger" : "font-medium"}>
@@ -747,12 +818,12 @@ const OperationalReports = () => {
                   {totalDiscounts > 0 ? `-${formatVND(totalDiscounts)}` : '-'}
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(totalTuition)}</TableCell>
-                <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(totalPayroll)}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">{vnd(totalPayroll)}</TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
                   {totalOverhead > 0 ? formatVND(totalOverhead) : '-'}
                 </TableCell>
-                <TableCell className={`whitespace-nowrap text-right tabular-nums ${totalNet >= 0 ? 'text-hec-leaf' : 'text-hec-danger'}`}>
-                  {formatVND(totalNet)}
+                <TableCell className={`whitespace-nowrap text-right tabular-nums ${totalNet === null ? '' : totalNet >= 0 ? 'text-hec-leaf' : 'text-hec-danger'}`}>
+                  {vnd(totalNet)}
                 </TableCell>
                 <TableCell className="text-right">-</TableCell>
               </TableRow>

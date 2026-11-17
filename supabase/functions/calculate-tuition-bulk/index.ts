@@ -4,7 +4,7 @@ import { requireRole } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
-import { monthPayable, settledWriteOff } from "../_lib/invoice-status.ts";
+import { monthPayable } from "../_lib/invoice-status.ts";
 import { classFeeOn, indexClassFees, isMissingFeeHistory, type ClassFeeHistory } from "../_lib/class-fee.ts";
 
 const corsHeaders = {
@@ -18,6 +18,24 @@ type AttendanceStatus = "Present" | "Absent" | "Excused" | "Late";
 function getDayOfWeek(dateStr: string): number {
   const date = new Date(`${dateStr}T12:00:00+07:00`);
   return date.getDay();
+}
+
+/** A lesson the student is not charged for (excused or cancelled). */
+type LessonForgone = { session_id: string; date: string; class_id: string; rate_vnd: number };
+
+/**
+ * What one lesson adds to a student's month before the month-level discounts:
+ * exactly the two lines the billable branch of the loop below adds for it -
+ * the class's default rate into the base, less the rate-adjustment saving when
+ * the enrollment's override is lower - and 0 when that branch would skip the
+ * lesson (no positive rate). Used ONLY for the excused / cancelled lessons
+ * reported beside the totals; no charged figure goes through here.
+ */
+function lessonCharge(defaultRate: number, overrideRate: number | null | undefined): number {
+  const actualRate = overrideRate ?? defaultRate;
+  if (!(actualRate > 0)) return 0;
+  const saving = overrideRate && overrideRate < defaultRate ? defaultRate - overrideRate : 0;
+  return defaultRate - saving;
 }
 
 function monthRange(month: string) {
@@ -191,6 +209,33 @@ Deno.serve(async (req) => {
       sessionsByClass.set(s.class_id, arr);
     }
 
+    // 5b. The month's CANCELLED lessons of the same classes, read apart from
+    // the lessons above so nothing that is charged depends on it. They price
+    // `cancelledLessons` only - what each would have added to a student's
+    // month - for the reports' "lost tuition" (BROWSER-PRICING), which used to
+    // multiply classes.session_rate_vnd by a head count in the browser. A
+    // display figure: if it cannot be read the field is left out and the
+    // screens say "figure unavailable"; the call does not fail for it.
+    let cancelledByClass: Map<string, any[]> | null = new Map();
+    try {
+      const cancelled: any[] = allClassIds.length > 0
+        ? await fetchChunked(
+            supabase, "sessions",
+            "id, date, status, class_id",
+            "class_id", allClassIds,
+            (q: any) => q.gte("date", startDate).lt("date", nextMonthStart).eq("status", "Canceled")
+          )
+        : [];
+      for (const s of cancelled) {
+        const arr = cancelledByClass.get(s.class_id) || [];
+        arr.push(s);
+        cancelledByClass.set(s.class_id, arr);
+      }
+    } catch (e) {
+      console.error("Cancelled lessons not read:", e instanceof Error ? e.message : e);
+      cancelledByClass = null;
+    }
+
     const allSessionIds = allSessions.map(s => s.id);
 
     // 6. Attendance for all sessions + all students
@@ -232,25 +277,6 @@ Deno.serve(async (req) => {
       "student_id", studentIds,
       (q: any) => q.lte("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
     );
-    // 8b. Settle Bill write-offs of this month (see _lib/invoice-status.ts).
-    const allSettlements: any[] = await fetchChunked(
-      supabase, "settlements",
-      "id, student_id, settlement_type, amount, tx_id",
-      "student_id", studentIds,
-      (q: any) => q.eq("month", month).eq("settlement_type", "discount")
-    );
-    // Their ledger legs say which the T4 settle-bill posted (settledWriteOff filters).
-    const settlementLegs: any[] = await fetchChunked(
-      supabase, "ledger_entries",
-      "id, tx_id, tx_key",
-      "tx_id", [...new Set(allSettlements.map((s) => s.tx_id).filter(Boolean))] as string[]
-    );
-    const settlementsByStudent = new Map<string, any[]>();
-    for (const s of allSettlements) {
-      const arr = settlementsByStudent.get(s.student_id) || [];
-      arr.push(s);
-      settlementsByStudent.set(s.student_id, arr);
-    }
     const referralsByStudent = new Map<string, any[]>();
     for (const r of allReferralBonuses) {
       const arr = referralsByStudent.get(r.student_id) || [];
@@ -328,6 +354,9 @@ Deno.serve(async (req) => {
         const enrollmentBaseAmounts = new Map<string, number>();
         const datedEnrollmentBases = new Map<any, number>();
         const rateAdjustmentSavings = new Map<string, number>();
+        // Lessons this student is not charged for, each with what it would
+        // have added to the month: see lessonCharge. Display figures only.
+        const excusedLessons: LessonForgone[] = [];
 
         for (const s of studentSessions) {
           const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
@@ -353,6 +382,31 @@ Deno.serve(async (req) => {
             if (overrideRate && overrideRate < defaultRate) {
               const savings = defaultRate - overrideRate;
               rateAdjustmentSavings.set(s.class_id, (rateAdjustmentSavings.get(s.class_id) || 0) + savings);
+            }
+          } else if (att === "Excused") {
+            excusedLessons.push({ session_id: s.id, date: s.date, class_id: s.class_id,
+              rate_vnd: lessonCharge(defaultRate, overrideRate) });
+          }
+        }
+
+        // The month's cancelled lessons in this student's classes, on the
+        // student's enrolled dates and weekdays - the same two tests a charged
+        // lesson passes above. Null when they could not be read.
+        let cancelledLessons: LessonForgone[] | null = null;
+        if (cancelledByClass) {
+          cancelledLessons = [];
+          for (const cid of activeClassIds) {
+            for (const s of cancelledByClass.get(cid) || []) {
+              const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
+              if (!enrollment) continue;
+              if (enrollment.allowed_days && !enrollment.allowed_days.includes(getDayOfWeek(s.date))) continue;
+              cancelledLessons.push({ session_id: s.id, date: s.date, class_id: s.class_id,
+                // The fee in force on the lesson's date, as a charged lesson
+                // is priced above (D4 step 2), not the class's current fee.
+                rate_vnd: lessonCharge(
+                  classFeeOn(feeHistory, s.class_id, s.date, Number(classMap.get(s.class_id)?.session_rate_vnd ?? 0)),
+                  enrollment.rate_override_vnd,
+                ) });
             }
           }
         }
@@ -401,13 +455,7 @@ Deno.serve(async (req) => {
         }
 
         let totalAmount = Math.max(0, baseAmount - totalDiscount);
-        // Settle Bill write-off: the same line, in the same place, as calculate-tuition.
         const frozenInv = currentInvoiceMap.get(sid);
-        const writeOff = Math.min(settledWriteOff(settlementsByStudent.get(sid), settlementLegs), totalAmount);
-        if (writeOff > 0 && !frozenInv?.tuition_frozen) {
-          totalDiscount += writeOff;
-          totalAmount -= writeOff;
-        }
         // A frozen bill keeps its saved figures whatever the enrollment says now.
         if (frozenInv?.tuition_frozen) {
           baseAmount = Number(frozenInv.base_amount ?? 0);
@@ -477,6 +525,20 @@ Deno.serve(async (req) => {
           invoiceId: currentInvoice?.id || null,
           invoiceStatus: currentInvoice?.status || null,
           confirmationStatus: currentInvoice?.confirmation_status || null,
+          // Added for BROWSER-PRICING. Lessons not charged, each with what it
+          // would have added to the month before the month-level discounts
+          // (enrollment terms, special, referral, sibling): the reports'
+          // "tuition lost". Not part of any total above.
+          //
+          // Left out for a FROZEN bill: its charge is the saved figure, not
+          // today's register, so a lesson marked Excused after the freeze may
+          // still be charged (and one charged now may not have been). Listing
+          // it as forgone would call billed tuition lost. Absent, the screens
+          // show "figure unavailable" rather than a guess.
+          ...(frozenInv?.tuition_frozen ? {} : {
+            excusedLessons,
+            ...(cancelledLessons ? { cancelledLessons } : {}),
+          }),
         });
       } catch (err) {
         console.error(`Error processing student ${sid}:`, err);
