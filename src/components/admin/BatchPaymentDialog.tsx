@@ -18,7 +18,7 @@ import { getAvatarUrl } from "@/lib/avatars";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
-import { newPaymentKey, recordPayment } from "@/lib/recordPayment";
+import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
 import { useIvory } from "@/hooks/useIvory";
 
 interface BatchPaymentDialogProps {
@@ -39,7 +39,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
   const ivory = useIvory();
   const iv = (n: string, o: string) => (ivory ? n : o);
   const [entries, setEntries] = useState<Record<string, string>>({});
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(() => receiptDateToday());
   const [method, setMethod] = useState("Cash");
   const [memo, setMemo] = useState("");
   const [saving, setSaving] = useState(false);
@@ -185,7 +185,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
 
   const handleClose = () => {
     setEntries({});
-    setDate(new Date().toISOString().split("T")[0]);
+    setDate(receiptDateToday());
     setMethod("Cash");
     setMemo("");
     setCompleted([]);

@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
-import { newPaymentKey, recordPayment } from "@/lib/recordPayment";
+import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
 import { useIvory } from "@/hooks/useIvory";
 
 interface QuickPayPanelProps {
@@ -52,7 +52,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
   const { data: tuitionData, isLoading, refetch } = useLiveTuitionData(month);
 
   const [search, setSearch] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => receiptDateToday());
   const [method, setMethod] = useState("Cash");
   const [skipped, setSkipped] = useState<Set<string>>(new Set());
   const [overrides, setOverrides] = useState<Record<string, string>>({});

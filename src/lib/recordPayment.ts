@@ -30,9 +30,13 @@ export interface RecordPaymentDone {
 
 /**
  * ok: recorded, `data` set. Otherwise `message` is the function's own words.
- * answered: the function replied - the attempt is over, so the next one needs
- * a new key. Not answered (network): the outcome is unknown, so the retry
- * keeps the same key and cannot pay twice.
+ * answered: record-payment itself replied with a definite outcome - the
+ * attempt is over, so the next one needs a new key.
+ * Not answered: the request may have reached the server and been recorded
+ * with no reply arriving (a dropped connection, a gateway error, or the
+ * function's own `unknown` answer when the database's reply was lost). The
+ * screen KEEPS the key, so the retry either records it once or is refused as
+ * a duplicate - it cannot pay twice (fix round 1, review B-2).
  * conflict: the bill changed since the screen loaded; reload it.
  */
 export interface RecordPaymentResult {
@@ -43,6 +47,10 @@ export interface RecordPaymentResult {
   conflict: boolean;
   duplicate: boolean;
 }
+
+/** What the screens say when there was no definite answer (the key is kept). */
+export const NO_ANSWER_MESSAGE =
+  "No answer from the server, so the payment may or may not have been recorded. Retry with the same entry (it cannot be recorded twice) or reload to check before entering it again.";
 
 export function newPaymentKey(): string {
   return crypto.randomUUID();
@@ -57,20 +65,31 @@ export async function recordPayment(client: any, args: RecordPaymentArgs): Promi
   let data: any = null, error: any = null;
   try {
     ({ data, error } = await client.functions.invoke("record-payment", { body: args }));
-  } catch (e) {
-    return { ok: false, message: (e as Error)?.message || "The payment could not be sent", answered: false, conflict: false, duplicate: false };
+  } catch {
+    return { ok: false, message: NO_ANSWER_MESSAGE, answered: false, conflict: false, duplicate: false };
   }
   if (!error && data?.success) return { ok: true, data, message: "", answered: true, conflict: false, duplicate: false };
-  let body: any = data;
+  if (!error && data) {
+    // A 2xx from the function without success: it answered, but not with a payment.
+    const message = (typeof data.error === "string" && data.error) || "The payment could not be recorded";
+    return { ok: false, message, answered: !data.unknown, conflict: !!data.conflict, duplicate: !!data.duplicate };
+  }
+  // functions-js does not throw on a network failure: it returns a
+  // FunctionsFetchError whose `context` is the fetch error. Only an HTTP
+  // Response is a reply - and only one carrying record-payment's own JSON
+  // `error` (a gateway 5xx page is not record-payment answering).
   const context = error?.context;
-  if (context && typeof context.json === "function") {
+  const isReply = typeof Response !== "undefined" && context instanceof Response;
+  let body: any = null;
+  if (isReply) {
     try {
-      body = await (typeof context.clone === "function" ? context.clone() : context).json();
+      body = await context.clone().json();
     } catch {
       body = null;
     }
   }
-  const answered = !!context || !!data;
-  const message = (body && typeof body.error === "string" && body.error) || error?.message || "The payment could not be recorded";
-  return { ok: false, message, answered, conflict: !!body?.conflict, duplicate: !!body?.duplicate };
+  const fromFunction = isReply && !!body && typeof body.error === "string" && body.error.length > 0;
+  const answered = fromFunction && body.unknown !== true;
+  const message = answered ? body.error : fromFunction ? `${body.error}` : NO_ANSWER_MESSAGE;
+  return { ok: false, message, answered, conflict: answered && !!body?.conflict, duplicate: answered && !!body?.duplicate };
 }

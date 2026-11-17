@@ -48,14 +48,26 @@ export function RecordedPaymentManager() {
   const editMonth = useTuitionMonthConfirmation(selectedMonth, !!editingInvoice);
   const reverseMonth = useTuitionMonthConfirmation(selectedMonth, !!reversingInvoice);
   // Which ledger account the money went into or came out of: cash or bank.
-  const [method, setMethod] = useState("Cash");
-  // One key per attempt (src/lib/recordPayment.ts): a double click records once.
-  const paymentKey = useRef(newPaymentKey());
-  const methodField = (
+  // Nothing is pre-selected: the admin chooses every time (a default would
+  // book every unexamined edit to one account and skew the CASH/BANK split).
+  // The edit form and the reversal dialog each have their own choice, and
+  // both are cleared whenever one opens, so a choice never carries to another row.
+  const [editMethod, setEditMethod] = useState("");
+  const [reverseMethod, setReverseMethod] = useState("");
+  // One key per invoice row per attempt (src/lib/recordPayment.ts): a double
+  // click, or a retry after no answer, records nothing more; another row
+  // never reuses it.
+  const paymentKeys = useRef(new Map<string, string>());
+  const keyFor = (invoiceId: string) => {
+    let k = paymentKeys.current.get(invoiceId);
+    if (!k) { k = newPaymentKey(); paymentKeys.current.set(invoiceId, k); }
+    return k;
+  };
+  const methodField = (id: string, value: string, onChange: (v: string) => void) => (
     <div className="space-y-1 text-left">
-      <Label htmlFor="rpm-method" className="text-xs">Money in / out by</Label>
-      <Select value={method} onValueChange={setMethod}>
-        <SelectTrigger id="rpm-method" className="h-8 w-32"><SelectValue /></SelectTrigger>
+      <Label htmlFor={id} className="text-xs">Money in / out by (required)</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger id={id} className="h-8 w-40"><SelectValue placeholder="Choose cash or bank" /></SelectTrigger>
         <SelectContent>
           <SelectItem value="Cash">Cash</SelectItem>
           <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
@@ -63,6 +75,7 @@ export function RecordedPaymentManager() {
       </Select>
     </div>
   );
+  const METHOD_REQUIRED = "Choose whether the money moved by cash or by bank transfer";
 
   useEffect(() => {
     loadInvoices();
@@ -90,6 +103,7 @@ export function RecordedPaymentManager() {
   };
 
   const handleStartEdit = (invoice: Invoice) => {
+    setEditMethod("");
     setEditingInvoice({
       id: invoice.id,
       newValue: (invoice.recorded_payment || 0).toString(),
@@ -109,6 +123,7 @@ export function RecordedPaymentManager() {
       toast.error("Please provide a reason for this change");
       return;
     }
+    if (!editMethod) { toast.error(METHOD_REQUIRED); return; }
 
     setLoading(true);
     try {
@@ -133,13 +148,13 @@ export function RecordedPaymentManager() {
         month: selectedMonth,
         kind: newValue > oldValue ? "payment" : "correction",
         amount: Math.abs(newValue - oldValue),
-        method,
+        method: editMethod,
         occurredAt: receiptDateToday(),
         memo: `Recorded Payment Manager: ${editingInvoice.reason.trim()}`.slice(0, 500),
-        idempotencyKey: paymentKey.current,
+        idempotencyKey: keyFor(invoice.id),
         expectedRecorded: oldValue,
       });
-      if (saved.ok || saved.answered) paymentKey.current = newPaymentKey();
+      if (saved.ok || saved.answered) paymentKeys.current.delete(invoice.id);
       if (!saved.ok) {
         // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is
         toast.error(saved.message);
@@ -168,6 +183,7 @@ export function RecordedPaymentManager() {
       toast.error("Please provide a reason for this reversal");
       return;
     }
+    if (!reverseMethod) { toast.error(METHOD_REQUIRED); return; }
 
     setLoading(true);
     try {
@@ -186,13 +202,13 @@ export function RecordedPaymentManager() {
         month: selectedMonth,
         kind: "correction",
         amount: current,
-        method,
+        method: reverseMethod,
         occurredAt: receiptDateToday(),
         memo: `Reversal (Recorded Payment Manager): ${reversalReason.trim()}`.slice(0, 500),
-        idempotencyKey: paymentKey.current,
+        idempotencyKey: keyFor(invoice.id),
         expectedRecorded: current,
       });
-      if (saved.ok || saved.answered) paymentKey.current = newPaymentKey();
+      if (saved.ok || saved.answered) paymentKeys.current.delete(invoice.id);
       if (!saved.ok) {
         // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is
         toast.error(saved.message);
@@ -311,7 +327,7 @@ export function RecordedPaymentManager() {
                           {isEditing ? (
                             <div className="space-y-2">
                               {editMonth.field}
-                              {methodField}
+                              {methodField("rpm-edit-method", editMethod, setEditMethod)}
                               <Input
                                 type="number"
                                 value={editingInvoice.newValue}
@@ -380,10 +396,13 @@ export function RecordedPaymentManager() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => setReversingInvoice({ 
-                                    id: invoice.id, 
-                                    currentValue: recordedPayment 
-                                  })}
+                                  onClick={() => {
+                                    setReverseMethod("");
+                                    setReversingInvoice({
+                                      id: invoice.id,
+                                      currentValue: recordedPayment
+                                    });
+                                  }}
                                   title="Reverse recorded payment"
                                 >
                                   <Undo2 className="h-4 w-4" />
@@ -413,7 +432,7 @@ export function RecordedPaymentManager() {
           </AlertDialogHeader>
           <div className="space-y-2 py-4">
             {reverseMonth.field}
-            {methodField}
+            {methodField("rpm-reverse-method", reverseMethod, setReverseMethod)}
             <Label>Reason for reversal (required)</Label>
             <Textarea
               value={reversalReason}
@@ -426,7 +445,7 @@ export function RecordedPaymentManager() {
             <AlertDialogCancel onClick={() => setReversalReason("")}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleReversePayment}
-              disabled={!reversalReason.trim() || loading}
+              disabled={!reversalReason.trim() || !reverseMethod || loading}
             >
               Reverse Payment
             </AlertDialogAction>

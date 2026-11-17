@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { getPaymentStatus, getTuitionStatusBadge, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
-import { newPaymentKey, recordPayment } from "@/lib/recordPayment";
+import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
 import { useIvory } from "@/hooks/useIvory";
 
 interface RecordPaymentDialogProps {
@@ -31,7 +31,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
   const iv = (n: string, o: string) => (ivory ? n : o);
   const [mode, setMode] = useState<"payment" | "correction">("payment");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(() => receiptDateToday());
   const [method, setMethod] = useState("Cash");
   const [memo, setMemo] = useState("");
   const [saving, setSaving] = useState(false);
@@ -158,7 +158,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
 
   const handleClose = () => {
     setAmount("");
-    setDate(new Date().toISOString().split("T")[0]);
+    setDate(receiptDateToday());
     setMethod("Cash");
     setMemo("");
     setMode("payment");

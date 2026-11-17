@@ -245,13 +245,23 @@ Deno.serve(async (req) => {
       .eq("student_id", studentId)
       .order("occurred_at", { ascending: true });
 
+    const paymentIds = new Set<string>();
     for (const p of payments ?? []) {
       if (p.created_by) actorIds.add(p.created_by);
+      paymentIds.add(String(p.id));
+      const amount = Number(p.amount ?? 0);
+      // A NEGATIVE row is a record-payment correction (D5 G-1): money taken
+      // back off the bill, not money received. It is listed as an
+      // adjustment, signed, so the account statement's "Payments received"
+      // (which lists payment and correction events by absolute amount) never
+      // prints it as a payment; the month's Paid column already nets it.
+      const correction = amount < 0;
       events.push({
         id: `pay:${p.id}`,
-        kind: "payment",
-        label: p.parent_payment_id ? "Payment (part of a family payment)" : "Payment",
-        amount: Number(p.amount ?? 0),
+        kind: correction ? "adjustment" : "payment",
+        label: correction ? "Payment correction (taken off the bill)"
+          : p.parent_payment_id ? "Payment (part of a family payment)" : "Payment",
+        amount,
         occurredAt: p.occurred_at ?? null,
         recordedAt: p.created_at,
         month: p.occurred_at ? String(p.occurred_at).slice(0, 7) : null,
@@ -329,6 +339,10 @@ Deno.serve(async (req) => {
         row.entity_id === studentId ||
         (row.entity === "invoices" && row.entity_id && invoiceIds.has(row.entity_id));
       if (!mentionsStudent) continue;
+      // record-payment (D5 G-1) writes a payments row AND this audit row for
+      // one payment; the payments row is listed above, so this one is not
+      // listed again (one payment, one line).
+      if (diff.via === "record-payment" && typeof diff.payment_id === "string" && paymentIds.has(diff.payment_id)) continue;
 
       if (row.actor_user_id) actorIds.add(row.actor_user_id);
 
