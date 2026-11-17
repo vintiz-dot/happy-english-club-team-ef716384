@@ -9,9 +9,13 @@
  *
  * Confidence:
  *   high    a teacher's own earlier choice for this label in this class
- *           (class_speaker_aliases), or an exact roster-name match on a label
- *           that came from the source text (a Zoom / Teams / "Name:" label);
- *   medium  an exact match on a label the MODEL produced (room-recording
+ *           (class_speaker_aliases) on a label from the source text, or an
+ *           exact roster-name match on a label that came from the source
+ *           text (a Zoom / Teams / "Name:" label);
+ *   medium  a teacher's earlier choice on a label the MODEL produced (the
+ *           model can give that label to another voice next time, so the
+ *           screen does not pre-select it - review M-3),
+ *           an exact match on a label the MODEL produced (room-recording
  *           diarization), a unique "contains" match ("Anna" / "Anna Tran"),
  *           or a unique token match on a label from the source text;
  *   low     anything else: a tie between two children, a weak match, a
@@ -74,7 +78,7 @@ export function suggestSpeaker(
 
   const aliased = aliases.get(key);
   if (aliased && roster.some((r) => r.id === aliased)) {
-    return { studentId: aliased, confidence: "high", basis: "teacher_alias" };
+    return { studentId: aliased, confidence: labelsFromModel ? "medium" : "high", basis: "teacher_alias" };
   }
 
   const scored = roster

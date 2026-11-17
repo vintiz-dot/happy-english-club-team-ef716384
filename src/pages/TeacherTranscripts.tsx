@@ -10,7 +10,7 @@
  * (TranscriptApprovalPanel -> approve_transcript_analysis), and then only
  * what the teacher chose (D-26, docs/evidence/FIX-analyze-transcript.md).
  */
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -164,10 +164,25 @@ export default function TeacherTranscripts() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("transcript_approvals")
-        .select("transcript_id, approved_at, approved_by, withdrawn_at, analyzed_at")
+        .select("transcript_id, approved_at, approved_by, withdrawn_at, analyzed_at, assignments")
         .eq("transcript_id", selectedId)
         .maybeSingle();
       return data ?? null;
+    },
+  });
+
+  // What 20261117100100 took back from families for an older lesson (staff-only).
+  // Before that file is pasted the table does not exist: no hold.
+  const { data: legacyHold = null } = useQuery<any>({
+    queryKey: ["transcript-legacy-hold", selectedId],
+    enabled: !!selectedId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("transcript_legacy_holds")
+        .select("transcript_id, held_at")
+        .eq("transcript_id", selectedId)
+        .maybeSingle();
+      return error ? null : data ?? null;
     },
   });
 
@@ -283,7 +298,7 @@ export default function TeacherTranscripts() {
     `${c.suggested} speaker${c.suggested === 1 ? "" : "s"} with a suggested child · review and approve to share it with families`;
   const invalidateLesson = (id: string | null) => {
     queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
-    for (const k of ["transcript-metrics", "transcript-errors", "transcript-point-suggestions", "transcript-suggestions", "transcript-approval", "lesson-overview"]) {
+    for (const k of ["transcript-metrics", "transcript-errors", "transcript-point-suggestions", "transcript-suggestions", "transcript-approval", "transcript-legacy-hold", "lesson-overview"]) {
       queryClient.invalidateQueries({ queryKey: [k, id] });
     }
   };
@@ -572,20 +587,18 @@ export default function TeacherTranscripts() {
   // database, and the old backfill published errors and a level at once.
 
   // Roster for manual speaker assignment.
-  const { data: classRoster = [] } = useQuery<any[]>({
-    queryKey: ["transcript-class-roster", classId],
+  // The approval panel offers the children enrolled ON THE LESSON'S DATE,
+  // which is what approve_transcript_analysis accepts (review N-3); a child
+  // who has left since still appears for their old lessons.
+  const { data: lessonEnrollments = [] } = useQuery<any[]>({
+    queryKey: ["transcript-lesson-enrollments", classId],
     enabled: !!classId,
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
       const { data } = await (supabase as any)
         .from("enrollments")
-        .select("students(id, full_name)")
-        .eq("class_id", classId)
-        .or(`end_date.is.null,end_date.gte.${today}`);
-      return ((data || []) as any[])
-        .map((r) => r.students)
-        .filter(Boolean)
-        .sort((a: any, b: any) => a.full_name.localeCompare(b.full_name));
+        .select("start_date, end_date, students(id, full_name)")
+        .eq("class_id", classId);
+      return (data || []) as any[];
     },
   });
 
@@ -670,6 +683,18 @@ export default function TeacherTranscripts() {
   const selected = transcripts.find((t) => t.id === selectedId);
   const review = reviewState(selected, approval);
   const isApproved = review === "approved";
+  const lessonRoster = useMemo(() => {
+    const day = String(selected?.transcript_date ?? "").slice(0, 10);
+    const seen = new Map<string, { id: string; full_name: string }>();
+    for (const e of lessonEnrollments) {
+      const s = e?.students;
+      if (!s?.id || !day) continue;
+      if (e.start_date && String(e.start_date) > day) continue;
+      if (e.end_date && String(e.end_date) < day) continue;
+      seen.set(s.id, { id: s.id, full_name: s.full_name });
+    }
+    return [...seen.values()].sort((a, b) => a.full_name.localeCompare(b.full_name));
+  }, [lessonEnrollments, selected?.transcript_date]);
   // What the teacher reviews: the draft overview, or (an older lesson) the published one.
   const shownOverview: any = selected?.overview_draft ?? overview ?? null;
   const overviewChangedSinceApproval = isApproved && !!overview && !!selected?.overview_draft
@@ -915,7 +940,7 @@ export default function TeacherTranscripts() {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      disabled={retryTranscriptionMutation.isPending}
+                      disabled={retryTranscriptionMutation.isPending || isApproved}
                       onClick={() => retryTranscriptionMutation.mutate(selected.id)}
                     >
                       {retryTranscriptionMutation.isPending ? (
@@ -926,7 +951,11 @@ export default function TeacherTranscripts() {
                       Retry transcription
                     </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Re-run Whisper transcription from the stored recording — no re-upload needed</TooltipContent>
+                    <TooltipContent>
+                      {isApproved
+                        ? "This lesson is approved and shared — withdraw the approval first to transcribe it again"
+                        : "Re-run Whisper transcription from the stored recording — no re-upload needed"}
+                    </TooltipContent>
                     </Tooltip>
                   )}
                   <Tooltip>
@@ -960,7 +989,8 @@ export default function TeacherTranscripts() {
                   metrics={metrics}
                   suggestions={suggestions}
                   approval={approval}
-                  roster={classRoster}
+                  hold={legacyHold}
+                  roster={lessonRoster}
                   onChanged={() => {
                     invalidateLesson(selectedId);
                     queryClient.invalidateQueries({ queryKey: ["class-speaker-aliases", classId] });

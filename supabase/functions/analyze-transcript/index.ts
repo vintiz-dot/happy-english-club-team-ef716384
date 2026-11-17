@@ -1018,19 +1018,23 @@ Deno.serve(async (req) => {
       }, 409);
     }
 
-    if (body.background === true) {
-      // Queue-and-return: stamp the run, answer in milliseconds, analyze on
-      // this instance's background budget. The client polls the row.
-      await sb
-        .from("class_transcripts")
-        .update({
-          status: "processing",
-          processing_stage: "analyzing",
-          processing_started_at: new Date().toISOString(),
-          error_message: null,
-        })
-        .eq("id", transcriptId);
+    // Stamp the run in BOTH modes (review N-8): while it says "processing"
+    // the old draft cannot be approved (approve_transcript_analysis wants
+    // "analyzed"), so nobody approves a draft this run is about to replace.
+    const { error: stampErr } = await sb
+      .from("class_transcripts")
+      .update({
+        status: "processing",
+        processing_stage: "analyzing",
+        processing_started_at: new Date().toISOString(),
+        error_message: null,
+      })
+      .eq("id", transcriptId);
+    if (stampErr) return respond({ success: false, error: "Could not start the analysis. Try again." }, 503);
 
+    if (body.background === true) {
+      // Queue-and-return: answer in milliseconds, analyze on this
+      // instance's background budget. The client polls the row.
       const work = runAnalysis(sb, tr).catch((e) => markFailed(transcriptId, e));
       const er = (globalThis as any).EdgeRuntime;
       if (er?.waitUntil) er.waitUntil(work);
