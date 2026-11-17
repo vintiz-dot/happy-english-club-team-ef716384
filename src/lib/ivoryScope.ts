@@ -137,6 +137,9 @@ export const IVORY_ROUTES: IvoryRoute[] = [
 export const OUTSIDE_ROUTES: IvoryRoute[] = [
   { path: "/teacher/recorder" },
   { path: "/admin", tab: "audit-clips" },
+  // The public QR feedback page (Reception): its card is hard-coded white, so it
+  // keeps today's light look until it is restyled.
+  { path: "/feedback" },
 ];
 
 const trimSlash = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);

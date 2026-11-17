@@ -14,8 +14,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg backdrop-blur-xl",
-        // Was "glass-sm bg-destructive/90 ...": glass-sm's own background painted over the red (white on white).
-        destructive: "bg-destructive/90 text-destructive-foreground hover:bg-destructive shadow-md hover:shadow-lg",
+        // Kept exactly as before the rollout: only the outside routes (audit clips) and print
+        // copies read this string, and the owner keeps audit clips as it is today.
+        destructive: "glass-sm bg-destructive/90 text-destructive-foreground hover:bg-destructive shadow-md hover:shadow-lg",
         outline: "glass-sm hover:bg-warmGray hover:text-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light shadow-sm hover:shadow-md",
         secondary: "glass-sm bg-secondary/80 text-secondary-foreground hover:bg-secondary shadow-sm hover:shadow-md",
         ghost: "hover:glass-sm hover:bg-warmGray hover:text-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light",
