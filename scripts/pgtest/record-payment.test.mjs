@@ -1014,6 +1014,82 @@ console.log('\n11. delete-payment takes a record-payment payment back from all t
      && Number((await billOf(s2, M)).recorded_payment) === 100000, guarded);
 }
 
+// =================================================================== 11b
+console.log('\n11b. the assistant\'s payment step (payments-followups, 20261117150000) over every D4 file, G-4, G-11 and live\'s triggers');
+{
+  // The assistant's set-up actions (20261107090000, T4 20261113090000) and the change under
+  // test, installed here - after section 0, which pins live's payments delete trigger as it
+  // is today. The columns the assistant's functions read that this world's prelude lacks:
+  await db.exec(`
+    ALTER TABLE public.students ADD COLUMN IF NOT EXISTS date_of_birth date, ADD COLUMN IF NOT EXISTS secondary_user_id uuid,
+      ADD COLUMN IF NOT EXISTS sibling_discount_from date, ADD COLUMN IF NOT EXISTS created_by uuid, ADD COLUMN IF NOT EXISTS updated_by uuid;
+    ALTER TABLE public.monthly_finance_snapshots ADD COLUMN IF NOT EXISTS superseded_at timestamptz;
+    ALTER TABLE public.classes ADD COLUMN IF NOT EXISTS max_students integer;
+    CREATE TABLE IF NOT EXISTS public.profiles (id uuid PRIMARY KEY, display_name text);
+    CREATE TABLE IF NOT EXISTS public.student_points (student_id uuid REFERENCES public.students(id), class_id uuid, month text);
+    ALTER TABLE public.student_points ADD COLUMN IF NOT EXISTS total_points integer DEFAULT 0;
+  `);
+  let installErr = null;
+  for (const f of ['20261107090000_ai_assisted_admin_actions.sql', '20261113090000_invoice_paid_label.sql', '20261117150000_ai_action_payment_on_ledger.sql']) {
+    try { await db.exec(mig(f)); } catch (e) { installErr = `${f}: ${e.message}`; break; }
+  }
+  ok('the assistant\'s migrations, then 20261117150000, install over this world (every preflight passes)', installErr === null, installErr);
+  const today = (await one(`SELECT to_char((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date, 'YYYY-MM-DD') AS d`)).d;
+  const MN = today.slice(0, 7);
+  const apply = async (plan, tok = ADMIN) => (await asRole('user', tok.id, 'SELECT public.ai_action_apply(gen_random_uuid(), $1, $2) AS r', ['typed by the admin', plan])).rows[0].r;
+  const undo = async (id, tok = ADMIN) => (await asRole('user', tok.id, 'SELECT public.ai_action_undo($1) AS r', [id])).rows[0].r;
+  const effectsOf = async (id) => (await one('SELECT effects FROM public.ai_actions WHERE id = $1', [id])).effects;
+
+  // An existing child, a bill of this month.
+  const s = await child('AssistantPays');
+  await bill(s, MN, 1000000);
+  const w0 = Number((await one('SELECT coalesce(max(id), 0) AS m FROM public.test_write_role')).m);
+  const r = await apply({ version: 1, student: { id: s }, payment: { amount: 350000, month: MN, method: 'Cash', paid_on: today, note: 'Zalo' } });
+  ok('an existing child: the assistant records 350,000', r?.ok === true, r);
+  const e = (await effectsOf(r.action_id)).payment;
+  const legs = await legsOf(s);
+  ok('  a payments row (the action\'s payment_id), two balanced legs keyed as delete-payment expects, the bill moved - in the D4 world',
+     (await paymentsOf(s)).length === 1 && (await paymentsOf(s))[0].id === e.payment_id && legs.length === 2 && balanced(legs)
+     && legs.some((l) => l.tx_key === `record-payment-${e.payment_id}-${s}` && l.code === 'CASH' && Number(l.debit) === 350000)
+     && Number((await billOf(s, MN)).recorded_payment) === 350000 && (await billOf(s, MN)).status === 'partial', { e, legs });
+  const wr = await rows('SELECT tbl, op, role, uid FROM public.test_write_role WHERE id > $1 ORDER BY id', [w0]);
+  ok('  every write of the payment (row, legs, bill) made with auth.uid() = the admin (the D4 lane "person"), inside the definer apply',
+     wr.length >= 4 && wr.every((w) => w.uid === ADMIN.id) && ['payments', 'ledger_entries', 'invoices'].every((t) => wr.some((w) => w.tbl === t)), wr);
+  const u = await undo(r.action_id);
+  ok('  undone (by the admin): payment row deleted, two reversal legs, the bill back to 0 - D4 and G-11 let it through',
+     u?.ok === true && u.payment_reversed === true && (await paymentsOf(s)).length === 0 && (await reversalLegs(e.payment_id)) === 2
+     && Number((await billOf(s, MN)).recorded_payment) === 0 && Number((await billOf(s, MN)).paid_amount) === 0 && (await billOf(s, MN)).status === 'issued'
+     && (await legsOf(s)).length === 4 && balanced(await legsOf(s)), u);
+  const dpAfter = await call(deleteFn, ADMIN.tok, { paymentId: e.payment_id, deleteReason: 'again' });
+  ok('  delete-payment then finds nothing to delete (the payment is gone)', dpAfter.status >= 400, dpAfter);
+
+  // A payment the assistant recorded, deleted by Delete payment: the undo refuses, nothing changes.
+  const r2 = await apply({ version: 1, student: { id: s }, payment: { amount: 120000, month: MN, method: 'Bank Transfer', paid_on: today } });
+  const e2 = (await effectsOf(r2.action_id)).payment;
+  const dp = await call(deleteFn, ADMIN.tok, { paymentId: e2.payment_id, deleteReason: 'entered twice' });
+  ok('an assistant payment is deleted by Delete payment like any other (its key is record-payment-)', dp.status === 200
+     && (await paymentsOf(s)).length === 0 && Number((await billOf(s, MN)).recorded_payment) === 0, dp);
+  const before2 = await snapshot();
+  const u2 = await undo(r2.action_id);
+  ok('  its undo then refuses with the reason, and changes nothing', u2?.ok === false && u2.reasons.some((x) => /less than the 120\.000|deleted since/.test(x)) && same(await snapshot(), before2), u2);
+
+  // A new child, in a family, paid for: undo keeps the child, inactive.
+  const fam = (await one(`INSERT INTO public.families (name) VALUES ('AssistantFamily') RETURNING id`)).id;
+  const r3 = await apply({ version: 1, student: { new: { full_name: 'Assistant New Child' } }, family: { family_id: fam },
+    payment: { amount: 200000, month: MN, method: 'Cash', paid_on: today } });
+  ok('a new child in a family, paid for: applies in the D4 world (a bill with no charge made for the month)', r3?.ok === true, r3);
+  const kid = r3.student_id;
+  const e3 = (await effectsOf(r3.action_id)).payment;
+  const delTry = await tryIt(() => sql('DELETE FROM public.students WHERE id = $1', [kid]));
+  ok('  deleting that child is refused by the database (D4 G-21 / G-11)', ['HC121', 'HC130'].includes(delTry?.code), delTry);
+  const u3 = await undo(r3.action_id);
+  const k = await one('SELECT is_active, family_id FROM public.students WHERE id = $1', [kid]);
+  ok('  undone: the child kept, inactive, out of the family; the payment reversed; its bill gone; the ledger keeps 4 legs, net 0',
+     u3?.ok === true && u3.student_deactivated === true && u3.student_removed === false && k?.is_active === false && k?.family_id === null
+     && (await paymentsOf(kid)).length === 0 && !(await billOf(kid, MN)) && (await legsOf(kid)).length === 4 && balanced(await legsOf(kid))
+     && Object.values(await net(kid)).every((v) => v === 0) && (u3.notices ?? []).length === 2, { u3, k, e3 });
+}
+
 // =================================================================== 12
 console.log('\n12. CHECK-money-invariants.sql over what the functions wrote: M01 / M03 / M04 stay 0');
 const checkSrc = readFileSync(join(repo, 'scripts', 'pgtest', 'money-invariants-check.test.mjs'), 'utf8').replace(/\r\n/g, '\n');

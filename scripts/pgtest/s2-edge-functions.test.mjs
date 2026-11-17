@@ -253,6 +253,19 @@ for (const name of ["family-payment", "modify-payment", "smart-family-payment"])
   const n = await call(f.after, name, { token: tokenOf(U.norole), body: {} });
   ok(`${name}: an account with no role is still refused`, /Admin access required/.test(n.text), n);
 }
+// payments-followups (D5 G-2): modify-payment is retired - a 410 stub that
+// reads and writes nothing, for every caller (the F-11 defect went with it).
+{
+  const f = await both("modify-payment");
+  reset(base());
+  const b = await call(f.before, "modify-payment", { token: tokenOf(U.adminTeacher), body: {} });
+  ok("modify-payment BEFORE: an admin who also teaches is refused as not an admin", /Admin access required/.test(b.text), b);
+  for (const [who, tok] of [["the admin who teaches", tokenOf(U.adminTeacher)], ["a teacher", tokenOf(U.teaA)], ["no token", null]]) {
+    reset(base());
+    const r = await call(f.after, "modify-payment", { token: tok, body: { paymentId: "p", amount: 1 } });
+    ok(`modify-payment now: ${who} -> 410, nothing read or written`, r.status === 410 && /Modify payment has been removed/.test(r.text) && world.log.length === 0, { r, log: world.log });
+  }
+}
 
 // ================================================================ F-12
 console.log("=== F-12 redeem-access-code ends the old sessions ===");
