@@ -8,8 +8,11 @@
 
 1. In the app (admin): lesson_monitor_delete_everything - every report (the
    transcripts), target words, run records and class switches; with
-   --consents, the monitor consent records too. The audit log keeps ids and
-   counts only and is not deleted.
+   --consents, the monitor consent records too. The audit log is scrubbed of
+   every child id (student_id) and keeps event names, dates, class and
+   recording ids and counts.
+   If the sign-in or the call fails, step 2 still runs and the line
+   "app: NOT DONE" is printed (exit code 2): run it again to clear the app.
 2. On this laptop: everything under pilot\\ (audio copies, drafts, step 0
    samples and sheets, logs). Then the folder is LISTED again and the count of
    files left is printed; it must be 0.
@@ -71,12 +74,20 @@ def main(argv=None) -> int:
         return 1
     rc = 0
     if not a.local_only:
-        import supa
-        api = supa.open_api(a.token)
-        counts = api.rpc("lesson_monitor_delete_everything", {"p_confirm": CONFIRM, "p_consents": a.consents})
-        print(f"app: deleted {counts}")
-        if counts.get("left"):
-            print("app: something is still there - check before going on")
+        # The laptop's files go whatever happens in the app: a failed sign-in (SystemExit), an expired
+        # token or a refused call must never leave audio or drafts behind.
+        try:
+            import supa
+            api = supa.open_api(a.token)
+            counts = api.rpc("lesson_monitor_delete_everything", {"p_confirm": CONFIRM, "p_consents": a.consents})
+            print(f"app: deleted {counts}")
+            if counts.get("left"):
+                print("app: something is still there - check before going on")
+                rc = 2
+        except (SystemExit, Exception) as e:  # noqa: BLE001
+            why = getattr(e, "message", None) or str(e) or type(e).__name__
+            print(f"app: NOT DONE ({str(why)[:120]}). The laptop is cleaned anyway; run this again, "
+                  f"signed in, to delete the app's rows.")
             rc = 2
     removed, left = delete_local(root)
     from stop import switch_on_local

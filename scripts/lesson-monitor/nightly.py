@@ -238,7 +238,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
     except transcribe.Stopped:
         left = delete_audio_copy(folder, room)
         remove_draft(rid)
-        pc.log(f"{rid} STOPPED ({guard.verdict()}); audio copy and any draft deleted ({left} files left)")
+        pc.log(f"{rid} STOPPED ({guard.reason()}); audio copy and any draft deleted ({left} files left)")
         return "stopped"
     except Exception as e:  # one lesson's failure never ends the night; a code, never content, is kept
         left = delete_audio_copy(folder, room)
@@ -262,11 +262,11 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
     audio_s, proc_s = int(duration), int(time.time() - t_start)
     # The last look before anything is kept or saved: the class may have been stopped, or a child's
     # consent withdrawn, while the laptop worked.
+    # Only a database that says "ok" right now lets anything be kept: an unreachable one is not a yes.
     final = guard.verdict(force=True)
-    if final not in ("ok", "unreachable") or (keep_local and final != "ok"):
+    if final != "ok":
         remove_draft(rid)
-        pc.log(f"{rid} NOT kept: {final if final != 'unreachable' else 'the database could not confirm consent'}; "
-               f"report dropped, nothing saved")
+        pc.log(f"{rid} NOT kept: {guard.reason()}; report dropped, nothing saved")
         return "stopped"
     if keep_local:
         write_draft(row, body, audio_s, proc_s, html_copy=True)

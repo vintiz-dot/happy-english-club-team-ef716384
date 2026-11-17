@@ -131,12 +131,20 @@ class Guard:
     every `every` seconds, the database (lesson_monitor_may_continue: class still on, every child of
     the lesson still consented). Answers 'ok', a reason ('class_off', 'consent_missing', 'gone',
     'stopped' for the local file), or 'unreachable' when the database cannot be asked (offline, token
-    expired): the job goes on then, because every save is checked by the database again."""
+    expired).
 
-    def __init__(self, api, recording_id: str, every: float = 15.0, clock=time.monotonic):
-        self.api, self.rid, self.every, self.clock = api, recording_id, every, clock
+    An unreachable database is NOT a yes. A withdrawal or a switch-off made in the app cannot reach a
+    laptop that cannot be asked, so silence must not mean "carry on" for hours. The job gets a short
+    grace (`grace` seconds, default 120: a Wi-Fi blip, a slow request) and after that should_stop()
+    is True: the caller stops and deletes its audio copy and any draft. A pasted token (--token)
+    expires in about an hour and cannot be refreshed, so a job on one must finish inside that hour;
+    after it the job stops and wipes rather than go on unchecked."""
+
+    def __init__(self, api, recording_id: str, every: float = 15.0, grace: float = 120.0, clock=time.monotonic):
+        self.api, self.rid, self.every, self.grace, self.clock = api, recording_id, every, grace, clock
         self._last_at = None
         self._last = "ok"
+        self._down_since = None
 
     def verdict(self, force: bool = False) -> str:
         if stopped():
@@ -148,13 +156,31 @@ class Guard:
         try:
             r = self.api.rpc("lesson_monitor_may_continue", {"p_recording": self.rid})
             self._last = r if isinstance(r, str) and r else "gone"
+            self._down_since = None
         except ApiError as e:
-            self._last = "unreachable" if e.status in (0, 401) else "gone"
+            if e.status in (0, 401):
+                self._last = "unreachable"
+                if self._down_since is None:
+                    self._down_since = now
+            else:
+                self._last = "gone"
+                self._down_since = None
         self._last_at = now
         return self._last
 
     def should_stop(self) -> bool:
-        return self.verdict() not in ("ok", "unreachable")
+        v = self.verdict()
+        if v == "unreachable":
+            return self.clock() - (self._down_since if self._down_since is not None else self.clock()) > self.grace
+        return v != "ok"
+
+    def reason(self) -> str:
+        """Why the last answer stopped the job, without asking again."""
+        if stopped():
+            return "stopped"
+        if self._last == "unreachable":
+            return "database_unreachable"
+        return self._last
 
 
 def files_under(folder: Path) -> list[Path]:
