@@ -139,6 +139,12 @@ const PINNED = {
   'supabase/functions/modify-payment/index.ts ledger_entries insert': 3,
   'supabase/functions/modify-payment/index.ts payment_modifications insert': 1,
   'supabase/functions/modify-payment/index.ts payments insert': 2,
+  // D5 G-1: the admin payment screens' one path (payment row, both legs in one insert, the
+  // bill by compare-and-set in _lib; on failure the legs reversed by a second insert and the row deleted)
+  'supabase/functions/record-payment/index.ts ledger_accounts upsert': 1,
+  'supabase/functions/record-payment/index.ts ledger_entries insert': 2,
+  'supabase/functions/record-payment/index.ts payments delete': 1,
+  'supabase/functions/record-payment/index.ts payments insert': 1,
   'supabase/functions/schedule-sessions/index.ts sessions delete': 1,
   'supabase/functions/schedule-sessions/index.ts sessions insert': 1,
   'supabase/functions/schedule-sessions/index.ts sessions update': 3,
@@ -237,6 +243,15 @@ console.log('\n3. money tables the browser never writes');
   ok(`no file under src/ writes ${NEVER_FROM_BROWSER.join(', ')} directly`, hits.length === 0, hits);
   const svc = [...src].filter(([f, t]) => f.startsWith('src/') && /SERVICE_ROLE|service_role_key|serviceRoleKey/i.test(t) && /createClient\(/.test(t)).map(([f]) => f);
   ok('no file under src/ builds a client with a service-role key', svc.length === 0, svc);
+  // D5 G-1: the four admin payment screens put money on a bill only through record-payment,
+  // which writes the payment row and both ledger legs with it; the browser no longer writes
+  // recorded_payment for them (setRecordedPayment has no caller left in src/).
+  const SCREENS = ['RecordPaymentDialog', 'QuickPayPanel', 'BatchPaymentDialog', 'RecordedPaymentManager'].map((n) => `src/components/admin/${n}.tsx`);
+  const notMoved = SCREENS.filter((f) => !src.has(f) || !/recordPayment\(supabase,/.test(src.get(f)) || /setRecordedPayment|addToRecordedPayment/.test(src.get(f))
+    || writes.some((w) => w.file === f));
+  ok('G-1: the four payment screens call record-payment and write no money table themselves', notMoved.length === 0, notMoved);
+  const setters = [...src].filter(([f, t]) => f.startsWith('src/') && f !== 'src/lib/recordedPaymentWrite.ts' && /setRecordedPayment\s*\(/.test(t)).map(([f]) => f);
+  ok('  G-1: nothing under src/ calls setRecordedPayment any more (the browser copy stays only as the mirror)', setters.length === 0, setters);
 }
 
 // ------------------------------------------------------- 4. recorded_payment

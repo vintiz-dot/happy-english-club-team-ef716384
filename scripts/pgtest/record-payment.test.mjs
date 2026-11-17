@@ -590,6 +590,17 @@ console.log('\n9. two payments on one bill at the same moment both land');
   ok('  the refused one is undone completely: its payments row deleted, its legs reversed by new legs (net = the winner only)',
      (await paymentsOf(s2)).length === 1 && (n2.CASH ?? 0) === won.body.amount && n2.AR === -won.body.amount && balanced(await legsOf(s2))
      && (await legsOf(s2)).filter((l) => (l.tx_key ?? '').startsWith(`payment-reversal-${lost.body.paymentId}-`)).length === 2, { n2, lost });
+
+  // Two corrections at once, each fine alone, together below 0: the retry re-checks the floor.
+  const s3 = await child('BusyCorrections');
+  await bill(s3, M, 1000000);
+  await pay({ studentId: s3, amount: 300000 });
+  const [e, g] = await Promise.all([pay({ studentId: s3, kind: 'correction', amount: 200000, memo: 'one' }),
+                                    pay({ studentId: s3, kind: 'correction', amount: 200000, memo: 'two' })]);
+  const n3 = await net(s3);
+  ok('two corrections of 200,000 at once on 300,000 recorded: one lands, the other is refused at the re-read (never below 0) and undone',
+     [e.status, g.status].sort().join() === '200,409' && Number((await billOf(s3, M)).recorded_payment) === 100000
+     && n3.CASH === 100000 && n3.AR === -100000 && (await paymentsOf(s3)).length === 2 && balanced(await legsOf(s3)), { e, g, n3 });
 }
 
 // =================================================================== 10

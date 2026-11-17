@@ -93,7 +93,7 @@ const SUITES = [
   // D5: every write path to the money tables and every RPC, pinned; no browser
   // writes of payments / ledger / payroll; recorded_payment only by
   // compare-and-set; labels from the one rule; no NEW browser pricing.
-  { name: "money write paths", file: "money-write-paths.test.mjs", expect: 20, migrations: [] },
+  { name: "money write paths", file: "money-write-paths.test.mjs", expect: 22, migrations: [] },
   // D5: the sibling-discount hold rule (_lib/sibling-hold.ts), its fail-closed
   // read (only 42703 means "column missing", G-10) and its two callers.
   { name: "sibling hold", file: "sibling-hold.test.mjs", expect: 22, migrations: [] },
@@ -106,7 +106,7 @@ const SUITES = [
   // payment row + two balanced legs + the bill, as the admin; corrections;
   // double clicks; concurrent payments; failures undone by reversal legs;
   // CHECK-money-invariants M01 / M03 / M04 over what was written.
-  { name: "record payment (G-1)", file: "record-payment.test.mjs", expect: 64, migrations: [] },
+  { name: "record payment (G-1)", file: "record-payment.test.mjs", expect: 65, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
