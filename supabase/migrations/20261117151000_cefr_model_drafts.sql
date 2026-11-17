@@ -41,9 +41,13 @@
 --                                 keeps every decision and removal.
 --   cefr_model_point_guard        trigger on cefr_assessments: an API role
 --                                 (anon, authenticated, service_role) may not
---                                 insert a model-made point, or turn a row into
---                                 one. Only the approval (running as the owner)
---                                 writes them. This also stops the functions as
+--                                 write a row with a model source at all
+--                                 (ai_report, level_defense_evidence,
+--                                 level_defense_test), whatever its source_id
+--                                 says - NULL, dangling, or a report that does
+--                                 not exist yet (review N-1: fail closed). Only
+--                                 the approvals (running as the owner) write
+--                                 those sources. This also stops the functions as
 --                                 deployed today the moment this is pasted, so
 --                                 the deploy order does not matter.
 --   source CHECK                  widened by the two level-defense sources, so
@@ -204,9 +208,10 @@ AS $function$
                        ELSE coalesce(public.can_view_student_in_class(_student_id, auth.uid()), false) END))
 $function$;
 
-REVOKE EXECUTE ON FUNCTION public.cefr_point_is_model_made(text, uuid) FROM PUBLIC, anon;
+-- cefr_point_is_model_made is the take-back's rule only (run by the owner):
+-- no API role may call it (review N-1: it answered "is this uuid a report").
+REVOKE EXECUTE ON FUNCTION public.cefr_point_is_model_made(text, uuid) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE EXECUTE ON FUNCTION public.cefr_draft_staff_can(uuid, uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.cefr_point_is_model_made(text, uuid) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.cefr_draft_staff_can(uuid, uuid) TO authenticated, service_role;
 
 DROP POLICY IF EXISTS cefr_assessment_drafts_staff_select ON public.cefr_assessment_drafts;
@@ -224,9 +229,11 @@ LANGUAGE plpgsql
 SET search_path = public
 AS $function$
 BEGIN
+  -- Not keyed on source_id (review N-1): an ai_report point with no, a
+  -- dangling or a not-yet-existing report id is refused just the same.
   IF current_user IN ('anon', 'authenticated', 'service_role')
      AND (TG_OP = 'INSERT' OR NEW.source IS DISTINCT FROM OLD.source OR NEW.source_id IS DISTINCT FROM OLD.source_id)
-     AND public.cefr_point_is_model_made(NEW.source, NEW.source_id) THEN
+     AND NEW.source IN ('ai_report', 'level_defense_evidence', 'level_defense_test') THEN
     RAISE EXCEPTION 'A CEFR level a model made is a draft until a teacher approves it (cefr_assessment_drafts, approve_cefr_draft)'
       USING ERRCODE = '42501', HINT = 'CEFR_MODEL_DRAFT';
   END IF;

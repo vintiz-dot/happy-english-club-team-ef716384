@@ -128,6 +128,8 @@ export default function StudentDefendLevel() {
                   <p className="text-hec-body font-semibold text-hec-ink">Your teacher believes you're {claim.claimed_level}</p>
                   <p className="mt-0.5 text-hec-small text-hec-ink-soft">
                     {claim.status === "reviewed" && approved ? `Your teacher reviewed your test: your level is ${approved.level}.`
+                      : claim.status === "reviewed" ? "Your teacher has reviewed your test."
+                      : claim.status === "set_by_teacher" && teacherLevel ? `Your teacher set your level: ${teacherLevel.level}.`
                       : claim.status === "submitted" ? "Test submitted — your teacher will review it."
                       : claim.status === "test_assigned" ? "A defense test is waiting for you below."
                       : "Show what you can do to prove it."}
@@ -223,14 +225,20 @@ export default function StudentDefendLevel() {
                   <CardTitle className="text-base flex items-center gap-2">
                     {approved ? (
                       <><ShieldCheck className="h-5 w-5 text-hec-leaf" />Your teacher's review: {approved.level}</>
-                    ) : (
+                    ) : claim.status === "submitted" ? (
                       <><CheckCircle2 className="h-5 w-5 text-hec-ink-soft" />Test submitted</>
+                    ) : (
+                      <><CheckCircle2 className="h-5 w-5 text-hec-leaf" />Reviewed by your teacher</>
                     )}
                   </CardTitle>
                   <CardDescription className="text-hec-small">
                     {approved
                       ? "Your teacher looked at your test and confirmed this level."
-                      : "Your teacher will review your test. Your level shows here once they have."}
+                      : claim.status === "submitted"
+                        ? "Your teacher will review your test. Your level shows here once they have."
+                        : teacherLevel
+                          ? `Your teacher set your level: ${teacherLevel.level}.`
+                          : "Your teacher has looked at your test."}
                   </CardDescription>
                 </CardHeader>
               </Card>

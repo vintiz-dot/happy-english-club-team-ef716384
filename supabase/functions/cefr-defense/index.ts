@@ -39,7 +39,14 @@
  * included), and the three actions that call OpenAI (mine_evidence,
  * generate_test, submit_stage) share a tighter 20 per 10 minutes. A whole
  * test is 4 OpenAI calls (generate + 3 stages); 20 is five tests or audits in
- * ten minutes for one teacher, and a child needs 3.
+ * ten minutes for one teacher, and a child needs 3. That limit is counted
+ * just before the OpenAI call, after the action's own checks, so a refused
+ * call ("Already graded", not your child) costs nothing (review N-4).
+ *
+ * After the test, the child's status moves on when a teacher acts (review
+ * N-3): 'reviewed' with the approved level, 'reviewed' with none when the
+ * teacher discarded the draft, 'set_by_teacher' when the teacher set a level
+ * of their own afterwards (set_level, or a manual point - shown).
  *
  * Anti-cheat: generated items (with answer keys) live only in the
  * `stages` JSONB, which students cannot SELECT (no RLS policy). This
@@ -235,9 +242,11 @@ function childTest(test: any) {
 }
 
 /** A child's view of the claim status: never an AI verdict. */
-function childClaimStatus(tests: any[], approved: boolean): string {
+function childClaimStatus(tests: any[], seen: { approved: boolean; setByTeacher: boolean; discarded: boolean }): string {
   if (tests.some((t) => t.status !== "graded")) return "test_assigned";
-  if (approved) return "reviewed";
+  if (seen.approved) return "reviewed";
+  if (seen.setByTeacher) return "set_by_teacher";
+  if (seen.discarded) return "reviewed";
   if (tests.some((t) => t.status === "graded")) return "submitted";
   return "set_by_teacher";
 }
@@ -293,10 +302,12 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "");
-    if (SPENDING_ACTIONS.has(action)) {
+    // The OpenAI actions' own limit, counted right before the model call.
+    const overSpend = (): Response | null => {
+      if (!SPENDING_ACTIONS.has(action)) return null;
       const rl = checkRateLimit(`cefr-defense:spend:${user.id}`, SPEND.limit, SPEND.windowMs, "user");
-      if (rl.limited) return rateLimitResponse(rl.resetAt, corsHeaders);
-    }
+      return rl.limited ? rateLimitResponse(rl.resetAt, corsHeaders) : null;
+    };
 
     // Resolve the acting student (for student-initiated actions).
     const { data: ownStudent } = await sb
@@ -341,6 +352,7 @@ Deno.serve(async (req) => {
       const { data: claim } = await sb
         .from("cefr_level_claims").select("*").eq("student_id", studentId).maybeSingle();
       if (!claim) return respond({ success: false, error: "Set a level first" }, 404);
+      { const limited = overSpend(); if (limited) return limited; }
 
       const [{ data: metricsRows }, { data: errRows }, { data: vocabRows }, { data: histRows }, { data: profileRow }, { data: studentRow }] =
         await Promise.all([
@@ -447,6 +459,7 @@ Deno.serve(async (req) => {
       const { data: claim } = await sb
         .from("cefr_level_claims").select("*").eq("student_id", studentId).maybeSingle();
       if (!claim) return respond({ success: false, error: "Set a level first" }, 404);
+      { const limited = overSpend(); if (limited) return limited; }
 
       const { data: studentRow } = await sb
         .from("students").select("date_of_birth").eq("id", studentId).maybeSingle();
@@ -514,13 +527,35 @@ Deno.serve(async (req) => {
           .limit(1);
         if (!ptsErr && pts && pts[0]) approved = { level: pts[0].level, assessed_at: pts[0].assessed_at };
       }
+      // After the latest graded test, has a teacher acted? (Fails closed: a
+      // lookup error leaves the child at 'submitted', never shows a level.)
+      const graded = (tests || []).filter((t: any) => t.status === "graded");
+      let discarded = false, setByTeacher = false;
+      let teacherLevel: { level: string; assessed_at: string } | null = null;
+      if (!approved && graded.length) {
+        const last = graded[0];
+        const gradedAt = String(last.updated_at || last.created_at || "");
+        const [{ data: dr, error: drErr }, { data: manual, error: mErr }] = await Promise.all([
+          sb.from("cefr_assessment_drafts").select("status, source_id")
+            .eq("student_id", studentId).eq("source", "level_defense_test").in("source_id", graded.map((t: any) => t.id)),
+          sb.from("cefr_assessments").select("level, assessed_at, created_at")
+            .eq("student_id", studentId).eq("source", "manual")
+            .order("created_at", { ascending: false }).limit(5),
+        ]);
+        discarded = !drErr && (dr || []).some((d: any) => d.source_id === last.id && d.status === "discarded");
+        const m = mErr ? null : (manual || []).find((p: any) => String(p.created_at) > gradedAt);
+        if (m) teacherLevel = { level: m.level, assessed_at: m.assessed_at };
+        const relevelled = !!claim && claim.status === "unverified" && String(claim.updated_at || "") > gradedAt;
+        setByTeacher = !!m || relevelled;
+      }
       return respond({
         success: true,
         claim: claim
-          ? { claimed_level: claim.claimed_level, status: childClaimStatus(tests || [], !!approved), evidence: null, evidence_checked_at: null }
+          ? { claimed_level: claim.claimed_level, status: childClaimStatus(tests || [], { approved: !!approved, setByTeacher, discarded }), evidence: null, evidence_checked_at: null }
           : null,
         tests: (tests || []).map(childTest),
         approved_level: approved,
+        teacher_level: teacherLevel,
       });
     }
 
@@ -541,6 +576,7 @@ Deno.serve(async (req) => {
       const stages: any[] = Array.isArray(test.stages) ? test.stages : [];
       const stage = stages[test.current_stage - 1];
       if (!stage) return respond({ success: false, error: "Stage missing" }, 500);
+      { const limited = overSpend(); if (limited) return limited; }
 
       // Grade the MCQs server-side.
       const answerMap = new Map(answers.map((a) => [String(a.item_id), a.answer]));
