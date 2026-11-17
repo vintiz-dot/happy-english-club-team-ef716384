@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/ui/loading";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
-import { paymentKeys, receiptDateToday, recordPayment } from "@/lib/recordPayment";
+import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage } from "@/lib/recordPayment";
 
 interface Invoice {
   id: string;
@@ -142,6 +142,8 @@ export function RecordedPaymentManager() {
         studentId: invoice.student_id, month: selectedMonth,
         kind: newValue > oldValue ? "payment" as const : "correction" as const, amount: Math.abs(newValue - oldValue),
       };
+      // An earlier try of exactly this change got no answer (review N-2).
+      const waiting = paymentKeys.pending(attempt);
       const saved = await recordPayment(supabase, {
         studentId: invoice.student_id,
         month: selectedMonth,
@@ -155,8 +157,16 @@ export function RecordedPaymentManager() {
       });
       paymentKeys.settle(attempt, saved);
       if (!saved.ok) {
-        // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is
-        toast.error(saved.message);
+        // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is.
+        // A duplicate of an unanswered earlier try: said plainly, with the deliberate way out (review N-2).
+        if (saved.duplicate && waiting) {
+          toast.error(waitingDuplicateMessage(attempt, invoice.students?.full_name), {
+            duration: 30_000,
+            action: { label: DIFFERENT_PAYMENT_LABEL, onClick: () => paymentKeys.forget(attempt) },
+          });
+        } else {
+          toast.error(saved.message);
+        }
         loadInvoices();
         return;
       }
@@ -197,6 +207,8 @@ export function RecordedPaymentManager() {
       // record-payment (payments list, ledger and bill together, D5 G-1),
       // against the figure this screen showed.
       const attempt = { studentId: invoice.student_id, month: selectedMonth, kind: "correction" as const, amount: current };
+      // An earlier try of exactly this change got no answer (review N-2).
+      const waiting = paymentKeys.pending(attempt);
       const saved = await recordPayment(supabase, {
         studentId: invoice.student_id,
         month: selectedMonth,
@@ -210,8 +222,16 @@ export function RecordedPaymentManager() {
       });
       paymentKeys.settle(attempt, saved);
       if (!saved.ok) {
-        // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is
-        toast.error(saved.message);
+        // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is.
+        // A duplicate of an unanswered earlier try: said plainly, with the deliberate way out (review N-2).
+        if (saved.duplicate && waiting) {
+          toast.error(waitingDuplicateMessage(attempt, invoice.students?.full_name), {
+            duration: 30_000,
+            action: { label: DIFFERENT_PAYMENT_LABEL, onClick: () => paymentKeys.forget(attempt) },
+          });
+        } else {
+          toast.error(saved.message);
+        }
         loadInvoices();
         return;
       }

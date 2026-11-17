@@ -1170,8 +1170,8 @@ async function invariants() {
   const inv = await invariants();
   const counts = await one(`SELECT (SELECT count(*) FROM public.payments)::int AS p, (SELECT count(*) FROM public.ledger_entries)::int AS l,
                                    (SELECT count(*) FROM public.invoices WHERE recorded_payment > 0)::int AS b`);
-  ok(`after every case above, faults and lost replies included (${counts.p} payments, ${counts.l} legs, ${counts.b} bills with money): M01 0 (no unbalanced transaction), M03 0 (no bill shows more than the ledger), M04 0 (no ledger cash off a bill), M08 0`,
-     inv.M01 === 0 && inv.M03 === 0 && inv.M04 === 0 && inv.M08 === 0 && counts.p >= 25, { inv, counts });
+  ok(`after every case above, faults and lost replies included (${counts.p} payments, ${counts.l} legs, ${counts.b} bills with money): M01 0 (no unbalanced transaction), M03 0 (no bill shows more than the ledger), M04 0 (no ledger cash off a bill), M08 0, M43 0 (no record-payment leg without its payment or reversal)`,
+     inv.M01 === 0 && inv.M03 === 0 && inv.M04 === 0 && inv.M08 === 0 && inv.M43 === 0 && counts.p >= 25, { inv, counts });
   // Control: the write the screens used to make (recorded_payment only) is what M03 counts.
   const s = await child('Legacy');
   await bill(s, M, 500000);
@@ -1233,7 +1233,15 @@ console.log('\n14. the screens and the function, statically');
        return n > 0 && n === (t.match(/idempotencyKey: paymentKeys\.keyFor\(attempt\),/g) ?? []).length
          && n === (t.match(/paymentKeys\.settle\(attempt, saved\);/g) ?? []).length
          && !/useRef|newPaymentKey|paymentKey\.current|paymentKeys\.current/.test(t)
-         && /import \{ paymentKeys, receiptDateToday, recordPayment \} from "@\/lib\/recordPayment";/.test(t); }));
+         && /import \{[^}]*\bpaymentKeys\b[^}]*\} from "@\/lib\/recordPayment";/.test(t); }));
+  // Review N-2: each screen notes, before sending, whether an identical try got no answer; on a duplicate of
+  // one it says so plainly (waitingDuplicateMessage) and offers DIFFERENT_PAYMENT_LABEL - the ONLY call of forget.
+  ok('  N-2: every screen checks pending() before sending, says a waiting duplicate plainly, and forgets the key only from "This is a different payment - record it too"',
+     screens.every((f) => { const t = read(f); const n = (t.match(/idempotencyKey:/g) ?? []).length;
+       const forgets = (t.match(/paymentKeys\.forget\(/g) ?? []).length;
+       return (t.match(/= paymentKeys\.pending\(attempt\);/g) ?? []).length === n
+         && /saved\.duplicate && waiting/.test(t) && /waitingDuplicateMessage\(/.test(t)
+         && forgets > 0 && forgets === (t.match(/action: \{ label: DIFFERENT_PAYMENT_LABEL, onClick: \(\) => paymentKeys\.forget\((attempt|w\.attempt)\) \}/g) ?? []).length; }));
   ok('  src/lib/recordPayment.ts reaches the function only through supabase.functions.invoke("record-payment")',
      /client\.functions\.invoke\("record-payment"/.test(read('src/lib/recordPayment.ts')) && !/fetch\(/.test(read('src/lib/recordPayment.ts')));
   const toml = read('supabase/config.toml');
@@ -1323,9 +1331,19 @@ console.log('\n15. the screens\' answer rule over the REAL functions-js client (
     const again = await dialogSave(store, { ...attempt }, 400000, serve);
     ok('  reopened, the same payment entered again: refused as already submitted - paid ONCE',
        again.ok === false && again.duplicate === true && Number((await billOf(r, M)).recorded_payment) === 400000 && (await paymentsOf(r)).length === 1, again);
-    ok('  that definite answer clears the key: the next payment of the same amount is a new one and records',
+    // Review N-2: the duplicate keeps the key - the same entry made again is refused again, and the
+    // screen says so plainly - until the admin says it is a different payment (forget).
+    const third = await dialogSave(store, attempt, 400000, serve);
+    ok('  N-2: the duplicate keeps the key: entered again it is refused again (still paid ONCE), and the store says it is waiting',
+       store.pending(attempt) && third.duplicate === true && (await paymentsOf(r)).length === 1);
+    ok('  N-2: what the screen says names the identical payment, that it WAS recorded, and the way to record a different one',
+       /An identical payment of 400,000 ₫ for 2026-08 \(Reopen Kid\) was sent earlier and got no answer at the time\. It WAS recorded, so this one was not recorded again/.test(lib.waitingDuplicateMessage(attempt, 'Reopen Kid'))
+       && lib.waitingDuplicateMessage(attempt).includes(`"${lib.DIFFERENT_PAYMENT_LABEL}"`) && lib.DIFFERENT_PAYMENT_LABEL === 'This is a different payment - record it too'
+       && /Saving again is safe/.test(lib.waitingNotice(attempt)), lib.waitingDuplicateMessage(attempt, 'Reopen Kid'));
+    store.forget(attempt);
+    ok('  N-2: "This is a different payment - record it too" (forget): the next payment of the same amount is a new one and records',
        !store.pending(attempt) && (await dialogSave(store, attempt, 400000, serve)).ok === true
-       && Number((await billOf(r, M)).recorded_payment) === 800000 && (await paymentsOf(r)).length === 2);
+       && Number((await billOf(r, M)).recorded_payment) === 800000 && (await paymentsOf(r)).length === 2 && !store.pending(attempt));
   }
   {
     // Not recorded at all (the request never arrived), dialog closed and reopened: the kept key records it once.
@@ -1350,7 +1368,7 @@ console.log('\n15. the screens\' answer rule over the REAL functions-js client (
     const afterReload = lib.createPaymentKeyStore(storage);
     const again = await dialogSave(afterReload, attempt, 300000, serve);
     ok('R-N2: the tab reloaded between the lost reply and the retry: sessionStorage kept the key - paid ONCE',
-       again.duplicate === true && (await paymentsOf(r)).length === 1 && Number((await billOf(r, M)).recorded_payment) === 300000 && storage.m.size === 0, again);
+       again.duplicate === true && (await paymentsOf(r)).length === 1 && Number((await billOf(r, M)).recorded_payment) === 300000 && storage.m.size === 1, again);
   }
   {
     // A storage that refuses (private window): memory still keeps it for the page.
@@ -1372,7 +1390,9 @@ console.log('\n15. the screens\' answer rule over the REAL functions-js client (
        store.keyFor({ ...a }) === k && store.keyFor({ ...a, amount: 101 }) !== k && store.keyFor({ ...a, kind: 'correction' }) !== k
        && store.keyFor({ ...a, month: '2026-01' }) !== k && store.keyFor({ ...a, studentId: randomUUID() }) !== k);
     store.settle(a, { ok: false, answered: false });
-    ok('  no answer leaves it; ok or a definite answer removes it', store.pending(a) && (store.settle(a, { ok: false, answered: true }), !store.pending(a)));
+    ok('  no answer leaves it; a duplicate leaves it (N-2); ok or another definite answer removes it', store.pending(a)
+       && (store.settle(a, { ok: false, answered: true, duplicate: true }), store.pending(a))
+       && (store.settle(a, { ok: false, answered: true }), !store.pending(a)) && (store.keyFor(a), store.settle(a, { ok: true, answered: true }), !store.pending(a)));
   }
   {
     // Control: the dialog as it was (a key made when the component mounts) loses it on close.

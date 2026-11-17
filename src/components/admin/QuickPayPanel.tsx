@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
-import { paymentKeys, receiptDateToday, recordPayment } from "@/lib/recordPayment";
+import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
 
 interface QuickPayPanelProps {
   month: string;
@@ -120,6 +120,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
     const savedIds = new Set<string>();
     const conflicts: string[] = [];
     const refusals: string[] = [];
+    const waitingDuplicates: Array<{ attempt: PaymentAttempt; name: string }> = [];
     const recordedAfter = new Map<string, number>();
 
     try {
@@ -133,6 +134,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         const name = (item.students as any)?.full_name || "a student";
 
         const attempt = { studentId: item.student_id, month, kind: "payment" as const, amount: enteredAmount };
+        const waiting = paymentKeys.pending(attempt);  // an earlier try of exactly this got no answer (review N-2)
         try {
           // record-payment (D5 G-1): payment row, both ledger legs and the
           // bill together, against the figure this screen showed. It writes
@@ -151,6 +153,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
           paymentKeys.settle(attempt, saved);
           if (!saved.ok) {
             if (saved.conflict) conflicts.push(name);
+            else if (saved.duplicate && waiting) waitingDuplicates.push({ attempt, name });
             else refusals.push(`${name}: ${saved.message}`);
             failCount++;
             continue;
@@ -202,6 +205,14 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
       }
       // Each refusal in the function's own words: nothing was recorded for them.
       for (const r of refusals) toast.error(r);
+      // Identical to an earlier try that got no answer and was in fact recorded (review N-2):
+      // say so plainly, and let the admin deliberately record genuinely different ones.
+      for (const w of waitingDuplicates) {
+        toast.error(waitingDuplicateMessage(w.attempt, w.name), {
+          duration: 30_000,
+          action: { label: DIFFERENT_PAYMENT_LABEL, onClick: () => paymentKeys.forget(w.attempt) },
+        });
+      }
 
       setOverrides({});
       tuitionMonth.reset();

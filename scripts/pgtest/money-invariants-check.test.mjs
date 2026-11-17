@@ -236,7 +236,7 @@ console.log('\n1. the script is one read-only statement');
   ok('the only function of public it calls is invoice_paid_label (IMMUTABLE)', fns.length === 1 && fns[0] === 'public.invoice_paid_label', fns);
   ok('invoice_paid_label is declared IMMUTABLE in its migration', /invoice_paid_label\([\s\S]*?IMMUTABLE/.test(mig('20261113090000_invoice_paid_label.sql')));
   const ids = [...SCRIPT.matchAll(/'(M\d\d)' AS check_id|SELECT '(M\d\d)'/g)].map((m) => m[1] ?? m[2]);
-  ok('42 checks, numbered M01..M42 once each', ids.length === 42 && new Set(ids).size === 42
+  ok('43 checks, numbered M01..M43 once each', ids.length === 43 && new Set(ids).size === 43
      && ids.every((id, i) => id === `M${String(i + 1).padStart(2, '0')}`), ids);
 }
 
@@ -347,6 +347,15 @@ const CASES = [
        '{"old":{"tuition_frozen":true,"base_amount":1620000,"total_amount":1620000},"new":{"tuition_frozen":true,"base_amount":1500000,"discount_amount":0,"total_amount":1500000}}')`, ['M13', 'M14', 'M42']],
   // [label, mutation SQL, checks that must move]
   ['M01 a one-legged ledger transaction', `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month) VALUES ('${tx(100)}', ${acct(S1, 'AR')}, 500, 0, '2026-10')`, ['M01']],
+  // payments-followups (review N-3): a record-payment payment whose row vanished without its reversal.
+  ['M43 a record-payment payment whose payments row is gone and whose legs were never reversed (and its cash on no bill)',
+   `INSERT INTO public.ledger_entries(tx_id, tx_key, account_id, debit, credit, month) VALUES ${leg(140, `record-payment-${U(140)}-${S1}`, S1, 'CASH', 90000, 0, '2026-12')}, ${leg(140, null, S1, 'AR', 0, 90000, '2026-12')}`, ['M04', 'M43']],
+  ['M43 control: the same legs with their payment-reversal- legs (delete-payment / the assistant\'s undo) move nothing',
+   `INSERT INTO public.ledger_entries(tx_id, tx_key, account_id, debit, credit, month) VALUES ${leg(141, `record-payment-${U(141)}-${S1}`, S1, 'CASH', 90000, 0, '2026-12')}, ${leg(141, null, S1, 'AR', 0, 90000, '2026-12')},
+      ${leg(142, `payment-reversal-${U(141)}-a`, S1, 'CASH', 0, 90000, '2026-12')}, ${leg(142, `payment-reversal-${U(141)}-b`, S1, 'AR', 90000, 0, '2026-12')}`, []],
+  ['M43 control: the same legs with the payments row standing: not M43 (only M04, for the cash on no bill)',
+   `INSERT INTO public.payments(id, student_id, amount) VALUES ('${U(143)}', '${S1}', 90000);
+    INSERT INTO public.ledger_entries(tx_id, tx_key, account_id, debit, credit, month) VALUES ${leg(143, `record-payment-${U(143)}-${S1}`, S1, 'CASH', 90000, 0, '2026-12')}, ${leg(143, null, S1, 'AR', 0, 90000, '2026-12')}`, ['M04']],
   ['M02 a ledger row with neither side', `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month) VALUES ('${tx(101)}', ${acct(S1, 'AR')}, 0, 0, '2026-10')`, ['M02']],
   ['M03 a bill recording 50,000 more than the ledger (and its carry not refreshed)', `UPDATE public.invoices SET recorded_payment = recorded_payment + 50000 WHERE id = '${B_NOV}'`, ['M03', 'M09']],
   ['M04 ledger cash for a month with no bill', `INSERT INTO public.ledger_entries(tx_id, tx_key, account_id, debit, credit, month) VALUES ${leg(102, 'k102', S1, 'CASH', 70000, 0, '2026-12')}, ${leg(102, null, S1, 'AR', 0, 70000, '2026-12')}`, ['M04']],
@@ -452,7 +461,7 @@ const db = await freshDb();
 const base = await runReadOnly(db);
 {
   const ids = Object.keys(base);
-  ok('the script runs read-only and returns its 42 rows', ids.length === 42, ids);
+  ok('the script runs read-only and returns its 43 rows', ids.length === 43, ids);
   const nonZero = Object.entries(base).filter(([id, v]) => (id === 'M40' ? v.n !== 1 : v.n !== 0));
   ok('every check is 0 on the consistent world, M40 is 1', nonZero.length === 0, nonZero);
   ok('every row says its kind', Object.values(base).every((v) => v.kind === 'must be 0' || v.kind === 'report'));
@@ -477,7 +486,7 @@ for (const [label, sql, expect] of CASES) {
 }
 {
   const missing = Object.keys(base).filter((id) => !covered.has(id));
-  ok('every one of the 42 checks has a case that makes it move', missing.length === 0, missing);
+  ok('every one of the 43 checks has a case that makes it move', missing.length === 0, missing);
 }
 // The totals mean what they say on two cases.
 {

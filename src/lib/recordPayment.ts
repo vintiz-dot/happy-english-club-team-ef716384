@@ -90,11 +90,13 @@ const STORE_PREFIX = "hec.record-payment.pending:";
  * sessionStorage so a reload of the tab keeps it too - under the attempt
  * (child, month, kind, amount). It is created when the admin presses Save
  * (before the request leaves) and removed only when record-payment gives a
- * definite answer (recorded, or refused with its reason - a duplicate
- * included). The same entry made again therefore carries the same key: if
- * the first one was recorded the retry is refused as a duplicate (and that
- * answer clears it); if it was not, the retry records it once. A different
- * amount is a different payment and gets its own key.
+ * definite answer (recorded, or refused with its reason). The same entry made
+ * again therefore carries the same key: if the first one was recorded the
+ * retry is refused as a duplicate; if it was not, the retry records it once.
+ * A duplicate keeps the key (review N-2): the screen says an identical
+ * payment was found recorded and offers "This is a different payment -
+ * record it too", which is the only thing that drops it (forget). A
+ * different amount is a different payment and gets its own key.
  */
 export function createPaymentKeyStore(storage: KeyStorage | null = null, makeKey: () => string = newPaymentKey) {
   const memory = new Map<string, string>();
@@ -129,14 +131,44 @@ export function createPaymentKeyStore(storage: KeyStorage | null = null, makeKey
     pending(a: PaymentAttempt): boolean {
       return read(name(a)) !== null;
     },
-    /** After a reply: drop the key on a definite answer, keep it otherwise. */
-    settle(a: PaymentAttempt, result: Pick<RecordPaymentResult, "ok" | "answered">): void {
-      if (!(result.ok || result.answered)) return;
-      const n = name(a);
-      memory.delete(n);
-      try { storage?.removeItem(n); } catch { /* memory only */ }
+    /**
+     * After a reply: drop the key on a definite answer, keep it otherwise.
+     * A duplicate is kept too (review N-2): it says an identical payment sent
+     * earlier WAS recorded, so the same entry made again is refused again -
+     * until the admin says it is a different payment (forget).
+     */
+    settle(a: PaymentAttempt, result: Pick<RecordPaymentResult, "ok" | "answered"> & { duplicate?: boolean }): void {
+      if (!(result.ok || result.answered) || (!result.ok && result.duplicate)) return;
+      drop(a);
+    },
+    /** The admin said "this is a different payment": the next try of it gets a new key. Only that choice calls this. */
+    forget(a: PaymentAttempt): void {
+      drop(a);
     },
   };
+  function drop(a: PaymentAttempt): void {
+    const n = name(a);
+    memory.delete(n);
+    try { storage?.removeItem(n); } catch { /* memory only */ }
+  }
+}
+
+/** The button that lets a genuinely different payment of the same amount through. */
+export const DIFFERENT_PAYMENT_LABEL = "This is a different payment - record it too";
+
+/** What a screen says when record-payment refused an attempt as a duplicate of one that got no answer before. */
+export function waitingDuplicateMessage(a: PaymentAttempt, who?: string): string {
+  const what = a.kind === "correction" ? "correction" : "payment";
+  return `An identical ${what} of ${Math.trunc(Number(a.amount)).toLocaleString()} ₫ for ${a.month}${who ? ` (${who})` : ""} was sent earlier `
+    + `and got no answer at the time. It WAS recorded, so this one was not recorded again (that would count it twice). `
+    + `Reload to see it. If this really is a different ${what} of the same amount, choose "${DIFFERENT_PAYMENT_LABEL}" and save again.`;
+}
+
+/** What a screen shows before saving when the entry is exactly one that got no answer before. */
+export function waitingNotice(a: PaymentAttempt): string {
+  const what = a.kind === "correction" ? "correction" : "payment";
+  return `An identical ${what} of ${Math.trunc(Number(a.amount)).toLocaleString()} ₫ for ${a.month} was sent earlier and got no answer. `
+    + `Saving again is safe: if that one was recorded, nothing more is recorded.`;
 }
 
 function sessionStore(): KeyStorage | null {

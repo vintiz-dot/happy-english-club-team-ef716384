@@ -510,5 +510,14 @@ SELECT 'M42', 'frozen_bill_restored_to_pre_wipe_total', 'report', count(*)::bigi
        'frozen bills put back to the total they had before the 28 Oct wipe, with no actor, on 9 Nov (Hanoi): the owner''s July restore (1 / 1,620,000 on live); exempt from M13 / M14'
   FROM frozen_moves WHERE is_restore
 
+-- ----------------------------- a payment gone from one record only (payments-followups, review N-3)
+UNION ALL
+SELECT 'M43', 'record_payment_leg_without_payment', 'must be 0', count(*)::bigint, coalesce(sum(e.debit + e.credit), 0)::bigint,
+       'record-payment ledger legs whose payments row is gone with no payment-reversal- legs: a payment removed some other way than delete-payment or the assistant''s undo (both post the reversal first) - the bill and the ledger still count money the payments list no longer has'
+  FROM public.ledger_entries e
+ WHERE e.tx_key LIKE 'record-payment-%'
+   AND NOT EXISTS (SELECT 1 FROM public.payments p WHERE p.id::text = substring(e.tx_key from 16 for 36))
+   AND NOT EXISTS (SELECT 1 FROM public.ledger_entries r WHERE r.tx_key LIKE 'payment-reversal-' || substring(e.tx_key from 16 for 36) || '-%')
+
 ) checks
 ORDER BY check_id;
