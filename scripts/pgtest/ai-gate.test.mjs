@@ -391,7 +391,13 @@ function fake8(key, opts) {
       if (name === "can_view_student_in_class") return { data: params._user_id === U.teacher && params._student_id === IDS.student, error: null };
       if (name === "video_staff_for_class") return { data: STAFF_IDS.includes(callerUid), error: null };
       if (name === "can_view_student") return { data: OWNERS.includes(params.user_id) && params.student_id === IDS.student, error: null };
-      if (name === "video_analysis_claim") return W.claim === "error" ? { data: null, error: { message: "boom" } } : { data: W.claim, error: null };
+      if (name === "video_analysis_claim") {
+        if (W.claim === "error") return { data: null, error: { message: "boom" } };
+        // As the real claim: a granted run stamps processing and counts itself.
+        const row = (W.video_submissions ?? []).find((r) => r.id === params.p_submission);
+        if (W.claim === "claimed" && row) { row.status = "processing"; row.analysis_runs = (row.analysis_runs ?? 0) + 1; }
+        return { data: W.claim, error: null };
+      }
       return { data: null, error: null };
     },
     storage: { from: () => ({
@@ -422,6 +428,8 @@ async function fetch8(url, init = {}) {
     return new Response("{}", { status: 200, headers: { "content-type": "application/json" } });
   }
   vendor8.push(u.host);
+  // Something happening elsewhere while a video run is in flight.
+  if (u.pathname.includes("/audio/transcriptions") && W?.midRun) { const f = W.midRun; W.midRun = null; f(); }
   if (vendorDown) return new Response("down", { status: 500 });
   if (u.host === "oauth2.googleapis.com") return new Response(JSON.stringify({ access_token: "tok", expires_in: 3600 }), { status: 200 });
   if (u.host === "vision.googleapis.com") return new Response(JSON.stringify({ responses: [{ fullTextAnnotation: { text: "cat - a small animal - The cat sat." } }] }), { status: 200 });
@@ -629,6 +637,29 @@ console.log("=== analyze-video-submission: whose video, and how often ===");
     const each = await load8("analyze-video-submission", src);
     const r = await call8(each, "analyze-video-submission", { token: tokenOf(U.family), body: { video_submission_id: IDS.video } });
     ok(`the claim answers ${claim}: ${status}, no vendor call, the submission untouched`, r.status === status && r.vendor.length === 0 && r.writes.length === 0, r);
+  }
+  // Review M-1: a teacher approves while a run is in flight. The run must
+  // not move the video back, however it ends.
+  for (const [label, down] of [["fails", true], ["finishes", false]]) {
+    W = world();
+    const row = W.video_submissions[0];
+    W.midRun = () => { row.status = "approved"; };
+    vendorDown = down;
+    const r = await call8(fn, "analyze-video-submission", { token: tokenOf(U.teacher), body: { video_submission_id: IDS.video } });
+    vendorDown = false;
+    eq(`a video approved while its re-run is in flight stays approved when the run ${label}`, [r.status, row.status], [200, "approved"]);
+    ok("  and the run saved no draft over it", !r.writes.some((w) => w.table === "video_analyses"), r.writes);
+  }
+  {
+    // A teacher's restart while an older run still goes: that run's outcome
+    // belongs to an earlier run number and is dropped.
+    W = world();
+    const row = W.video_submissions[0];
+    W.midRun = () => { row.analysis_runs += 1; };
+    vendorDown = true;
+    const r = await call8(fn, "analyze-video-submission", { token: tokenOf(U.teacher), body: { video_submission_id: IDS.video } });
+    vendorDown = false;
+    eq("an overtaken run does not mark the newer run failed", [r.status, row.status], [200, "processing"]);
   }
   ok("only the claim moves the status to processing (no direct status write before it)",
     !/update\(\{\s*status:\s*"processing"/.test(src) && src.indexOf('rpc("video_analysis_claim"') < src.indexOf("const job = run(sb, id)"));

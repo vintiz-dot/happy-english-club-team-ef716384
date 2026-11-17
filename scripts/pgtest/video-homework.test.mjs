@@ -506,6 +506,57 @@ if (hasClaim) {
     await db.query(`ALTER TABLE public.video_submissions ENABLE TRIGGER video_submissions_guard`);
     eq("a run stuck in processing for 20 minutes: the teacher may restart it", await claim(pet, true), "claimed");
   }
+
+  console.log("=== review M-1: an approval is never undone by a run in flight ===");
+  {
+    // The reviewer's probe, as assertions: a draft is on screen, the teacher
+    // clicks "New draft", then tries to approve the old draft.
+    const hw3 = (await one(`INSERT INTO public.homeworks (class_id, title, body, due_date, submission_type) VALUES ($1, 'Probe', 'x', '2026-11-21', 'video') RETURNING id`, [cls])).id;
+    await as(U.minhLogin, "student", () => db.query(
+      `INSERT INTO public.video_submissions (homework_id, student_id, class_id, video_path) VALUES ($1,$2,$3,$4)`, [hw3, minh, cls, path(minh, hw3)]));
+    const id = (await one(`SELECT id FROM public.video_submissions WHERE homework_id=$1`, [hw3])).id;
+    eq("the family's first claim", await claim(id, false), "claimed");
+    await db.query(`INSERT INTO public.video_analyses (video_submission_id, criteria_scores, strengths) VALUES ($1, '[{"key":"a","label":"A","score":1,"max":4,"comment":"MODEL 1"}]', '["MODEL STRENGTH"]')`, [id]);
+    await db.query(`UPDATE public.video_submissions SET status='ready_for_review' WHERE id=$1 AND status='processing'`, [id]);
+    eq("the teacher's New draft", await claim(id, true), "claimed");
+    const pointsBefore = (await one(`SELECT count(*)::int c FROM public.point_transactions WHERE homework_id=$1`, [hw3])).c;
+    const err = await tryAs(U.teacher, "teacher", () => db.query(`SELECT public.approve_video_feedback($1, 75, 'B', 'Teacher words', null, '[]'::jsonb, true)`, [id]));
+    ok("approving while the new draft is being made is refused, with a reason", /new AI draft is being made/.test(err ?? ""), err ?? "approved");
+    eq("  nothing of the approval stays: still processing, no points, no grade", [
+      (await state(id)).status,
+      (await one(`SELECT count(*)::int c FROM public.point_transactions WHERE homework_id=$1`, [hw3])).c - pointsBefore,
+      (await one(`SELECT approved_at FROM public.video_analyses WHERE video_submission_id=$1`, [id])).approved_at,
+    ], ["processing", 0, null]);
+    // The run finishes; the teacher approves the new draft.
+    await db.query(`UPDATE public.video_submissions SET status='ready_for_review' WHERE id=$1 AND status='processing'`, [id]);
+    await as(U.teacher, "teacher", () => db.query(`SELECT public.approve_video_feedback($1, 75, 'B', 'Teacher words', null, '[]'::jsonb, false)`, [id]));
+    eq("once it is ready the approval goes through", (await state(id)).status, "approved");
+    // The function's outcome writes are conditional on its run (ai-gate
+    // drives them); the same condition, here, against an approved row:
+    const late = await db.query(`UPDATE public.video_submissions SET status='failed' WHERE id=$1 AND status='processing'`, [id]);
+    eq("a late failure of an earlier run changes nothing", [late.affectedRows ?? 0, (await state(id)).status], [0, "approved"]);
+    eq("the family cannot claim a run on the approved video", await claim(id, false), "approved");
+    eq("  nor the teacher", await claim(id, true), "approved");
+    const fam = (await as(U.minhLogin, "student", () => db.query(`SELECT public.get_video_homework_for_student($1,$2) j`, [hw3, minh]))).rows[0].j;
+    eq("and the family keeps its report", fam.report?.feedback, "Teacher words");
+    // A run stuck 20 minutes no longer holds an approval up.
+    await db.query(`ALTER TABLE public.video_submissions DISABLE TRIGGER video_submissions_guard`);
+    await db.query(`UPDATE public.video_submissions SET status='processing', updated_at = now() - interval '20 minutes' WHERE id=$1`, [pet]);
+    await db.query(`ALTER TABLE public.video_submissions ENABLE TRIGGER video_submissions_guard`);
+    const stuckErr = await tryAs(U.teacher, "teacher", () => db.query(`SELECT public.approve_video_feedback($1, 60, 'C', 'Graded by hand', null, '[]'::jsonb, false)`, [pet]));
+    eq("a teacher may grade a video whose draft has been stuck for 20 minutes", [stuckErr, (await state(pet)).status], [null, "approved"]);
+  }
+
+  if (hasN7) {
+    console.log("=== review N-10: staff of the video's class only ===");
+    // Minh once sat in otherTeacher's class: that teacher reaches the
+    // function, but not this class's videos.
+    await db.query(`INSERT INTO public.enrollments (student_id, class_id, end_date) VALUES ($1, $2, '2026-09-30')`, [minh, otherCls]);
+    const p = (await as(U.otherTeacher, "teacher", () => db.query(`SELECT public.get_video_progress($1) j`, [minh]))).rows[0].j;
+    eq("a teacher of another class the child was in sees none of this class's videos", p.videos, []);
+    const mine = (await as(U.teacher, "teacher", () => db.query(`SELECT public.get_video_progress($1) j`, [minh]))).rows[0].j;
+    ok("the class's own teacher still sees them, as before", mine.videos.length >= 1 && mine.videos.every((x) => Array.isArray(x.criteria)), JSON.stringify(mine).slice(0, 300));
+  }
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

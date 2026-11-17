@@ -29,9 +29,11 @@
 --     parent_note (all final_*), criteria = final_criteria (label, score,
 --     max), approved_at. strengths and focus_points are kept as keys and
 --     are empty: no teacher approved them.
--- STAFF ARE UNCHANGED: an admin, or a teacher of the child's class (of the
--- homework's class for the single report), gets exactly what they got
--- before - they read video_analyses directly anyway.
+-- STAFF: an admin, or a teacher of the video's class (of the homework's
+-- class for the single report), gets exactly what they got before - they
+-- read video_analyses directly anyway. Review N-10 (fix round): in
+-- get_video_progress that is now per video - a teacher of another class
+-- the child is or was enrolled in no longer sees this class's videos.
 --
 -- Fails closed: refuses to replace either function unless it is the
 -- version 20261109090000 installed (or this one). Safe to run twice.
@@ -117,13 +119,17 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_staff boolean;
+  v_admin  boolean;
+  v_family boolean;
 BEGIN
-  -- N-7: families read final only. Staff see what they saw before.
-  v_staff := public.has_role(auth.uid(), 'admin'::app_role)
+  -- N-7: families read final only. Staff see what they saw before - but
+  -- (review N-10) staff of the VIDEO's class: a teacher of some other class
+  -- the child is or was in no longer gets the model's scores for it.
+  v_admin  := COALESCE(public.has_role(auth.uid(), 'admin'::app_role), false);
+  v_family := COALESCE(public.can_view_student(p_student, auth.uid()), false);
+  IF NOT (v_admin OR v_family
           OR EXISTS (SELECT 1 FROM public.enrollments e
-                     WHERE e.student_id = p_student AND public.is_teacher_of_class(auth.uid(), e.class_id));
-  IF NOT (v_staff OR public.can_view_student(p_student, auth.uid())) THEN
+                     WHERE e.student_id = p_student AND public.is_teacher_of_class(auth.uid(), e.class_id))) THEN
     RAISE EXCEPTION 'Access denied';
   END IF;
 
@@ -134,7 +140,7 @@ BEGIN
         'homework_title', h.title,
         'date', COALESCE(h.due_date, v.submitted_at::date),
         'score', a.final_score,
-        'criteria', CASE WHEN v_staff
+        'criteria', CASE WHEN v.staff
           THEN (SELECT COALESCE(jsonb_agg(jsonb_build_object(
                    'key', c->>'key', 'label', c->>'label', 'score', c->'score', 'max', c->'max')), '[]'::jsonb)
                 FROM jsonb_array_elements(a.criteria_scores) c)
@@ -145,12 +151,14 @@ BEGIN
             'prosody', v.pronunciation->'prosody') END,
         'gaps', COALESCE(a.final_gaps, '[]'::jsonb)
       ) ORDER BY COALESCE(h.due_date, v.submitted_at::date))
-      FROM public.video_submissions v
+      FROM (SELECT vs.*, (v_admin OR COALESCE(public.is_teacher_of_class(auth.uid(), vs.class_id), false)) AS staff
+              FROM public.video_submissions vs) v
       JOIN public.homeworks h ON h.id = v.homework_id
       JOIN public.video_analyses a ON a.video_submission_id = v.id
       WHERE v.student_id = p_student AND v.status = 'approved'
-        -- A family sees a video only once a teacher has approved it.
-        AND (v_staff OR a.approved_at IS NOT NULL)
+        -- Staff of the video's class see it as before; the child and their
+        -- family once a teacher has approved it; anyone else not at all.
+        AND (v.staff OR (v_family AND a.approved_at IS NOT NULL))
     ), '[]'::jsonb)
   );
 END;

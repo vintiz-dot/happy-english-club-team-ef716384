@@ -362,12 +362,23 @@ async function judge(ctx: {
 // ---------------------------------------------------------------- pipeline
 
 async function run(sb: SupabaseClient, id: string) {
+  // Every write this run makes is conditional on the submission still being
+  // in THIS run: status 'processing' and the run number the claim counted
+  // (review M-1). An approval, a re-record or a restart in the meantime wins:
+  // a late finish or failure never moves an approved video back.
+  let runNo: number | null = null;
+  const thisRun = (q: any) => {
+    q = q.eq("id", id).eq("status", "processing");
+    return runNo === null ? q : q.eq("analysis_runs", runNo);
+  };
   const stage = (processing_stage: string) =>
-    sb.from("video_submissions").update({ processing_stage }).eq("id", id);
+    thisRun(sb.from("video_submissions").update({ processing_stage }));
 
   try {
     const { data: v, error } = await sb.from("video_submissions").select("*").eq("id", id).single();
     if (error || !v) throw new Error(error?.message ?? "submission vanished");
+    if (v.status !== "processing") return; // claimed, then overtaken before it started
+    runNo = Number(v.analysis_runs);
 
     const { data: hw } = await sb
       .from("homeworks")
@@ -501,19 +512,24 @@ async function run(sb: SupabaseClient, id: string) {
       updated_at: new Date().toISOString(),
     };
 
+    // Still this run, on this take? Otherwise the draft is not saved at all.
+    const { data: still } = await thisRun(sb.from("video_submissions").select("id").eq("video_path", v.video_path)).maybeSingle();
+    if (!still) return;
+
     const { error: saveError } = await sb.from("video_analyses").upsert(analysis, { onConflict: "video_submission_id" });
     if (saveError) throw new Error(saveError.message);
 
-    // Only if nobody re-recorded while this ran.
-    await sb
+    // Only if this run still owns it (nobody re-recorded, approved or restarted).
+    await thisRun(sb
       .from("video_submissions")
       .update({ status: "ready_for_review", processing_stage: "done", processed_at: new Date().toISOString(), error: null })
-      .eq("id", id)
-      .eq("video_path", v.video_path);
+      .eq("video_path", v.video_path));
   } catch (e) {
     const message = (e as Error).message ?? String(e);
     console.error(`analyze-video-submission ${id} failed:`, message);
-    await sb.from("video_submissions").update({ status: "failed", error: message.slice(0, 500) }).eq("id", id);
+    // Only a run that still owns the submission marks it failed: never an
+    // approved video (which a family could otherwise claim again).
+    await thisRun(sb.from("video_submissions").update({ status: "failed", error: message.slice(0, 500) }));
   }
 }
 

@@ -217,6 +217,14 @@ export function VideoReviewPanel({
   const stalled =
     v.status === "uploaded" && !a && Date.now() - new Date(v.updated_at ?? v.submitted_at).getTime() > 90_000;
   const working = v.status === "processing" || (v.status === "uploaded" && !a && !stalled);
+  // A run that has not moved for 15 minutes (its instance died): the
+  // database's claim lets staff restart it then, and lets an approval
+  // through (video_analysis_claim, video_submissions_guard).
+  const stuck =
+    v.status === "processing" && Date.now() - new Date(v.updated_at ?? v.submitted_at).getTime() > 15 * 60_000;
+  // While a draft is being made, an approval would be undone by it: the
+  // database refuses one, and so does this screen.
+  const approveBlocked = v.status === "processing" && !stuck;
   const pron = v.pronunciation;
 
   return (
@@ -240,7 +248,17 @@ export function VideoReviewPanel({
               Start now
             </Button>
           )}
+          {stuck && (
+            <Button size="sm" variant="outline" className="ml-auto min-h-hec-target" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
+              {rerun.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Restart analysis"}
+            </Button>
+          )}
         </div>
+      )}
+      {stuck && (
+        <p className="text-hec-caption text-hec-ink-soft">
+          This draft has not moved for 15 minutes. Restart it, or grade the video yourself below.
+        </p>
       )}
 
       {v.status === "approved" && (
@@ -287,7 +305,7 @@ export function VideoReviewPanel({
         </div>
       )}
 
-      {(a || v.status === "failed") && (
+      {(a || v.status === "failed" || stuck) && (
         <>
           {/* Scores */}
           <div className="space-y-3">
@@ -448,7 +466,8 @@ export function VideoReviewPanel({
             <Button
               className="min-h-hec-target flex-1"
               onClick={() => approve.mutate()}
-              disabled={approve.isPending || !grade || !feedback.trim()}
+              disabled={approve.isPending || approveBlocked || !grade || !feedback.trim()}
+              title={approveBlocked ? "A new AI draft is being made - approve it once it is ready" : undefined}
             >
               {approve.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
               {v.status === "approved" ? "Update & re-send" : "Approve & send to family"}
@@ -458,7 +477,7 @@ export function VideoReviewPanel({
                 <Undo2 className="h-4 w-4" aria-hidden="true" /> Ask to re-record
               </Button>
             )}
-            {a && v.status !== "approved" && (
+            {a && v.status !== "approved" && !approveBlocked && (
               <Button variant="ghost" className="min-h-hec-target" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
                 <RefreshCw className="h-4 w-4" aria-hidden="true" /> New draft
               </Button>

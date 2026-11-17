@@ -24,6 +24,14 @@
 -- policy - from writing them: 0 on an insert, the take count reset by a
 -- re-record, the total never.
 --
+-- Review M-1 (fix round): the guard also refuses to approve a video while
+-- a run is under way (processing, touched in the last 15 minutes), so
+-- approve_video_feedback rolls back whole; and analyze-video-submission
+-- writes the run's outcome only while the row is still that run's
+-- (status 'processing' and the analysis_runs the claim counted). Together:
+-- an approved video is never moved back, and a family can never claim a
+-- run on it.
+--
 -- Fails closed: refuses to replace the guard unless it is the version
 -- 20261109090000 installed (or this one). Safe to run twice.
 
@@ -100,6 +108,15 @@ BEGIN
   -- UPDATE
   IF NEW.homework_id <> OLD.homework_id OR NEW.student_id <> OLD.student_id THEN
     RAISE EXCEPTION 'a video submission cannot be moved to another homework or child';
+  END IF;
+
+  -- Review M-1: no approval while a new AI draft is being made (the run
+  -- would otherwise land on top of it). approve_video_feedback's last step
+  -- is this update, so the whole approval - grade, points, gaps, scores -
+  -- rolls back. A run stuck for 15 minutes no longer holds it up.
+  IF OLD.status = 'processing' AND NEW.status = 'approved'
+     AND OLD.updated_at > now() - interval '15 minutes' THEN
+    RAISE EXCEPTION 'A new AI draft is being made for this video. Approve it once the draft is ready, or restart the draft if it has been stuck for 15 minutes.';
   END IF;
 
   IF NEW.video_path IS DISTINCT FROM OLD.video_path THEN
