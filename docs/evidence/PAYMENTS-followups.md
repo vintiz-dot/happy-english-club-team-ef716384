@@ -282,8 +282,20 @@ already applied: do NOT paste them.**
 
 Run in Hanoi daytime, real clock (no shim).
 
-- `node scripts/pgtest/run.mjs`: see the hand-back (numbers filled from the final
-  run). The money gates: record payment (G-1) 122/0, G-1 probe delete trigger
+- `node scripts/pgtest/run.mjs`: **7460 assertions across 98 suites, 30 suites
+  failed - every one of the 30 also failed in the baseline run of the same
+  harness on main before these changes** (7251 / 97 / 35 failed; the five that
+  are green now: past leftover credit, money invariants check, money write
+  paths, d4 register, AI admin actions - harness files brought over, and this
+  change). The 30, all main's lag behind the conductor's harness and untouched
+  here: invoice status x2 (16, write-off reader), removed money features (2),
+  session guard functions (1), d4 rollback (2; was 9), d4 class fee (3), d4
+  functions lessons / inputs, money inputs lib, d4 apply chain, teacher / TA
+  payroll function, and 16 suites that crash on files main lacks (S1 F-xx
+  rollbacks, S2 edge functions - its BASE bundle of calculate-tuition-bulk
+  imports `settledWriteOff`, gone from main's _lib - so the new modify-payment
+  F-11 case there did not run in the gate; CSP, class recordings, audit eval
+  proxy). The money gates: record payment (G-1) 122/0, G-1 probe delete trigger
   123/0, AI admin actions 137/0, statement: deleted payments 27/0, money write
   paths 28/0, money invariants check 125/0, ledger append-only 30/0, shared-module
   mirrors 19/0, edge functions typecheck 5/0, app typecheck 3/0.
