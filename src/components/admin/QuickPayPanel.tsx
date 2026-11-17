@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
-import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
+import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
 
 interface QuickPayPanelProps {
   month: string;
@@ -55,14 +55,10 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
-  // One key per student per attempt (src/lib/recordPayment.ts): a second
-  // click, or a retry after no reply, records nothing more.
-  const paymentKeys = useRef(new Map<string, string>());
-  const keyFor = (studentId: string) => {
-    let k = paymentKeys.current.get(studentId);
-    if (!k) { k = newPaymentKey(); paymentKeys.current.set(studentId, k); }
-    return k;
-  };
+  // One key per student per attempt, kept outside this panel (paymentKeys in
+  // src/lib/recordPayment.ts, review R-N2): a second click, or a retry after
+  // no reply - even after the panel was closed and opened again - records
+  // nothing more.
 
   // Only rows that owe money this month
   const unpaid = useMemo(() => {
@@ -124,6 +120,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
     const savedIds = new Set<string>();
     const conflicts: string[] = [];
     const refusals: string[] = [];
+    const waitingDuplicates: Array<{ attempt: PaymentAttempt; name: string }> = [];
     const recordedAfter = new Map<string, number>();
 
     try {
@@ -136,6 +133,8 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         const isPersistedInvoice = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(invoiceId);
         const name = (item.students as any)?.full_name || "a student";
 
+        const attempt = { studentId: item.student_id, month, kind: "payment" as const, amount: enteredAmount };
+        const waiting = paymentKeys.pending(attempt);  // an earlier try of exactly this got no answer (review N-2)
         try {
           // record-payment (D5 G-1): payment row, both ledger legs and the
           // bill together, against the figure this screen showed. It writes
@@ -148,12 +147,13 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
             method,
             occurredAt: date,
             memo: "Quick Pay",
-            idempotencyKey: keyFor(item.student_id),
+            idempotencyKey: paymentKeys.keyFor(attempt),
             ...(isPersistedInvoice ? { expectedRecorded: alreadyPaid } : {}),
           });
-          if (saved.ok || saved.answered) paymentKeys.current.delete(item.student_id);
+          paymentKeys.settle(attempt, saved);
           if (!saved.ok) {
             if (saved.conflict) conflicts.push(name);
+            else if (saved.duplicate && waiting) waitingDuplicates.push({ attempt, name });
             else refusals.push(`${name}: ${saved.message}`);
             failCount++;
             continue;
@@ -205,6 +205,14 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
       }
       // Each refusal in the function's own words: nothing was recorded for them.
       for (const r of refusals) toast.error(r);
+      // Identical to an earlier try that got no answer and was in fact recorded (review N-2):
+      // say so plainly, and let the admin deliberately record genuinely different ones.
+      for (const w of waitingDuplicates) {
+        toast.error(waitingDuplicateMessage(w.attempt, w.name), {
+          duration: 30_000,
+          action: { label: DIFFERENT_PAYMENT_LABEL, onClick: () => paymentKeys.forget(w.attempt) },
+        });
+      }
 
       setOverrides({});
       tuitionMonth.reset();

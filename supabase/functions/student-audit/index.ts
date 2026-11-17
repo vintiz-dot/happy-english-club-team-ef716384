@@ -245,10 +245,8 @@ Deno.serve(async (req) => {
       .eq("student_id", studentId)
       .order("occurred_at", { ascending: true });
 
-    const paymentIds = new Set<string>();
     for (const p of payments ?? []) {
       if (p.created_by) actorIds.add(p.created_by);
-      paymentIds.add(String(p.id));
       const amount = Number(p.amount ?? 0);
       // A NEGATIVE row is a record-payment correction (D5 G-1): money taken
       // back off the bill, not money received. It is listed as an
@@ -339,10 +337,16 @@ Deno.serve(async (req) => {
         row.entity_id === studentId ||
         (row.entity === "invoices" && row.entity_id && invoiceIds.has(row.entity_id));
       if (!mentionsStudent) continue;
-      // record-payment (D5 G-1) writes a payments row AND this audit row for
-      // one payment; the payments row is listed above, so this one is not
-      // listed again (one payment, one line).
-      if (diff.via === "record-payment" && typeof diff.payment_id === "string" && paymentIds.has(diff.payment_id)) continue;
+      // record-payment (D5 G-1, public.record_admin_payment - also the
+      // assistant's payment step since 20261117150000) writes a payments row
+      // AND this audit row for one payment, in one transaction. The payments
+      // row is the source: it is listed above while the payment stands, and
+      // once the payment is deleted (delete-payment, or the assistant's undo)
+      // the row is gone and so is the payment. So an audit row of this kind
+      // is NEVER listed (review R-N1): listing it when its payments row is
+      // missing printed a deleted payment as "Payment recorded", i.e. as
+      // money received on the Account Statement.
+      if (diff.via === "record-payment") continue;
 
       if (row.actor_user_id) actorIds.add(row.actor_user_id);
 

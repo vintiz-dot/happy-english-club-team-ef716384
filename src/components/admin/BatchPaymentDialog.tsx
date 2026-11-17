@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import { getAvatarUrl } from "@/lib/avatars";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
-import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
+import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
 
 interface BatchPaymentDialogProps {
   open: boolean;
@@ -41,14 +41,10 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
   const [memo, setMemo] = useState("");
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState<string[]>([]);
-  // One key per student per attempt (src/lib/recordPayment.ts): a second
-  // click, or a retry after no reply, records nothing more.
-  const paymentKeys = useRef(new Map<string, string>());
-  const keyFor = (studentId: string) => {
-    let k = paymentKeys.current.get(studentId);
-    if (!k) { k = newPaymentKey(); paymentKeys.current.set(studentId, k); }
-    return k;
-  };
+  // One key per student per attempt, kept outside this dialog (paymentKeys in
+  // src/lib/recordPayment.ts, review R-N2): a second click, or a retry after
+  // no reply - even after the dialog was closed and opened again - records
+  // nothing more.
   const queryClient = useQueryClient();
 
   const getOutstanding = (item: any) => Math.max(0, (item.finalPayable ?? 0) - (item.recorded_payment ?? 0));
@@ -97,6 +93,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
       const savedIds = new Set<string>();
       const conflicts: string[] = [];
       const refusals: string[] = [];
+      const waitingDuplicates: Array<{ attempt: PaymentAttempt; name: string }> = [];
       const recordedAfter = new Map<string, number>();
 
       for (const item of validEntries) {
@@ -107,6 +104,8 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
         const isPlaceholder = !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(String(item.id ?? ""));
         const name = item.students?.full_name || "a student";
 
+        const attempt = { studentId: item.student_id, month, kind: "payment" as const, amount: enteredAmount };
+        const waiting = paymentKeys.pending(attempt);  // an earlier try of exactly this got no answer (review N-2)
         try {
           // record-payment (D5 G-1): payment row, both ledger legs and the
           // bill together, against the figure this screen showed. It writes
@@ -119,12 +118,13 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
             method,
             occurredAt: date,
             memo: memo || "Batch payment",
-            idempotencyKey: keyFor(item.student_id),
+            idempotencyKey: paymentKeys.keyFor(attempt),
             ...(isPlaceholder ? {} : { expectedRecorded: alreadyPaid }),
           });
-          if (saved.ok || saved.answered) paymentKeys.current.delete(item.student_id);
+          paymentKeys.settle(attempt, saved);
           if (!saved.ok) {
             if (saved.conflict) conflicts.push(name);
+            else if (saved.duplicate && waiting) waitingDuplicates.push({ attempt, name });
             else refusals.push(`${name}: ${saved.message}`);
             failCount++;
             continue;
@@ -169,6 +169,14 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
       }
       // Each refusal in the function's own words: nothing was recorded for them.
       for (const r of refusals) toast.error(r);
+      // Identical to an earlier try that got no answer and was in fact recorded (review N-2):
+      // say so plainly, and let the admin deliberately record genuinely different ones.
+      for (const w of waitingDuplicates) {
+        toast.error(waitingDuplicateMessage(w.attempt, w.name), {
+          duration: 30_000,
+          action: { label: DIFFERENT_PAYMENT_LABEL, onClick: () => paymentKeys.forget(w.attempt) },
+        });
+      }
 
       onSuccess?.();
       setTimeout(() => handleClose(), 600);

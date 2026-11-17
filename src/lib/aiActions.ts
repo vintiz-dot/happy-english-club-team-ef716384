@@ -38,6 +38,12 @@ export interface UndoResult {
   ok: boolean;
   open_path?: string;
   student_removed?: boolean;
+  /** The child it created was kept, made inactive (a payment of theirs is in the ledger's history). */
+  student_deactivated?: boolean;
+  /** A payment it recorded was taken back as Delete payment does. */
+  payment_reversed?: boolean;
+  /** What the undo did that the admin should know, in the database's words. */
+  notices?: string[];
   /** Why nothing was undone, when ok is false. */
   reasons?: string[];
 }

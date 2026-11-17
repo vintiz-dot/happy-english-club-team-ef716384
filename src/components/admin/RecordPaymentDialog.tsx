@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { getPaymentStatus, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
-import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
+import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, waitingNotice } from "@/lib/recordPayment";
 
 interface RecordPaymentDialogProps {
   open: boolean;
@@ -32,8 +32,6 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
   const [method, setMethod] = useState("Cash");
   const [memo, setMemo] = useState("");
   const [saving, setSaving] = useState(false);
-  // One key per attempt (src/lib/recordPayment.ts): a double click records once.
-  const paymentKey = useRef(newPaymentKey());
   const queryClient = useQueryClient();
 
   const studentName = item?.students?.full_name || "Student";
@@ -87,6 +85,13 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
     }
 
     setSaving(true);
+    // One key per attempt, kept OUTSIDE this dialog (paymentKeys in
+    // src/lib/recordPayment.ts, review R-N2): closing the dialog after "no
+    // answer" and entering the same payment again reuses it, so a payment
+    // that was in fact recorded is refused as a duplicate, never paid twice.
+    const attempt = { studentId: item.student_id, month, kind: mode, amount: enteredAmount };
+    // An earlier try of exactly this entry got no answer (review N-2).
+    const waiting = paymentKeys.pending(attempt);
     try {
       // record-payment writes the payment, its two ledger legs and the bill
       // together (D5 G-1), against the figure this screen showed: a payment
@@ -100,15 +105,24 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
         method,
         occurredAt: date,
         memo: memo || null,
-        idempotencyKey: paymentKey.current,
+        idempotencyKey: paymentKeys.keyFor(attempt),
         ...(isPlaceholder ? {} : { expectedRecorded: alreadyPaid }),
       });
       // A reply ends the attempt: the next one is a new payment. No reply
-      // (network): the retry keeps the key, so it cannot pay twice.
-      if (saved.ok || saved.answered) paymentKey.current = newPaymentKey();
+      // (network): the key stays kept for this attempt, so it cannot pay twice.
+      paymentKeys.settle(attempt, saved);
       if (!saved.ok) {
-        // Nothing was recorded (the function says why); reload so the admin sees the bill as it is
-        toast.error(saved.message);
+        // Nothing was recorded (the function says why); reload so the admin sees the bill as it is.
+        // A duplicate of an unanswered earlier try: say so plainly, and let the admin
+        // deliberately record a genuinely different payment of the same amount (review N-2).
+        if (saved.duplicate && waiting) {
+          toast.error(waitingDuplicateMessage(attempt, studentName), {
+            duration: 30_000,
+            action: { label: DIFFERENT_PAYMENT_LABEL, onClick: () => paymentKeys.forget(attempt) },
+          });
+        } else {
+          toast.error(saved.message);
+        }
         queryClient.invalidateQueries({ queryKey: ["admin-tuition-live", month] });
         queryClient.invalidateQueries({ queryKey: ["student-tuition", item.student_id, month] });
         return;
@@ -236,6 +250,12 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
                   )}
                 </Button>
               </div>
+              {/* An identical entry got no answer earlier (review N-2): say so before Save. */}
+              {item && enteredAmount > 0 && paymentKeys.pending({ studentId: item.student_id, month, kind: mode, amount: enteredAmount }) && (
+                <p role="status" className="text-hec-small text-hec-warn">
+                  {waitingNotice({ studentId: item.student_id, month, kind: mode, amount: enteredAmount })}
+                </p>
+              )}
             </div>
 
             {/* Date & Method */}
