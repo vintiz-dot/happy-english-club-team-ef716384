@@ -598,7 +598,7 @@ const SUITES = [
     file: "cefr-drafts.test.mjs",
     expect: 139,
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql",
-      "20261117150000_cefr_model_drafts.sql"],
+      "20261117151000_cefr_model_drafts.sql"],
   },
   // F-02: the nine AI / speech / image-search functions, handler by handler:
   // no session, wrong role, right role, the per-account limit.

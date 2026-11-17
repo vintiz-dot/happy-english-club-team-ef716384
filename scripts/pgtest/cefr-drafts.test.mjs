@@ -1,7 +1,7 @@
 // Model-made CEFR points are staff-only drafts until a teacher approves
 // (privacy follow-ups, docs/evidence/PRIVACY-followups.md).
 //
-//   node scripts/pgtest/run.mjs   (or: this file <20261111110000_...sql> <20261113140000_...sql> <20261117150000_cefr_model_drafts.sql>)
+//   node scripts/pgtest/run.mjs   (or: this file <20261111110000_...sql> <20261113140000_...sql> <20261117151000_cefr_model_drafts.sql>)
 //
 // Part 1 drives the REAL migration against an in-process Postgres over
 // production's state: the real is_teacher_of_class (20261111110000), the
@@ -31,9 +31,9 @@ const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const MIGS = process.argv.slice(2);
 const TA_MIG = MIGS.find((f) => f.includes("20261111110000"));
 const STAFF_MIG = MIGS.find((f) => f.includes("20261113140000"));
-const FIX_MIG = MIGS.find((f) => f.includes("20261117150000"));
+const FIX_MIG = MIGS.find((f) => f.includes("20261117151000"));
 if (!TA_MIG || !STAFF_MIG || !FIX_MIG) {
-  console.log("usage: cefr-drafts.test.mjs <20261111110000_...sql> <20261113140000_...sql> <20261117150000_cefr_model_drafts.sql>");
+  console.log("usage: cefr-drafts.test.mjs <20261111110000_...sql> <20261113140000_...sql> <20261117151000_cefr_model_drafts.sql>");
   console.log("0 passed, 1 failed");
   process.exit(1);
 }

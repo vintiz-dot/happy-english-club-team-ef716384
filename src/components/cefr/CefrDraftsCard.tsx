@@ -4,7 +4,7 @@
  * generate-student-report (the AI progress report) and cefr-defense (the
  * evidence audit and the level-defence test) no longer write a level onto
  * the growth chart. They leave a staff-only draft in cefr_assessment_drafts
- * (migration 20261117150000); nothing reaches the child or the family until
+ * (migration 20261117151000); nothing reaches the child or the family until
  * a teacher approves it here (approve_cefr_draft, optionally with a level of
  * their own) or discards it. The database checks who may decide: an admin,
  * or staff of the draft's class / of a class the child is in.

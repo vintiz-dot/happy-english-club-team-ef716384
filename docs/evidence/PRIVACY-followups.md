@@ -26,7 +26,7 @@ The transcript pattern applies: the published table keeps its meaning (everythin
 - No reader of `cefr_assessments` needed a change.
 - A reader added later cannot leak a draft by forgetting a filter.
 
-New migration `supabase/migrations/20261117150000_cefr_model_drafts.sql` (one file, idempotent, paste once):
+New migration `supabase/migrations/20261117151000_cefr_model_drafts.sql` (one file, idempotent, paste once):
 
 - **Preflight (fails closed).** Refuses unless all of these hold:
   - `is_teacher_of_class`, `has_role`, `staff_may_write_for` (20261113140000) and `can_view_student_in_class` exist.
@@ -232,7 +232,7 @@ Harness: `scripts/pgtest` came from `transcript-fix` (= `origin/conductor/work` 
 
 | File | md5 |
 |---|---|
-| `supabase/migrations/20261117150000_cefr_model_drafts.sql` (new) | 7a19069d90aad63eab8245af812a0b81 |
+| `supabase/migrations/20261117151000_cefr_model_drafts.sql` (new) | 7a19069d90aad63eab8245af812a0b81 |
 | `supabase/functions/generate-student-report/index.ts` | 691e0cc141db68a17adb3fc64cc57db0 |
 | `supabase/functions/cefr-defense/index.ts` | 391b02fdeef1277bd5d076011888b6c3 |
 | `supabase/functions/transcribe-lesson-audio/index.ts` | 2d637c062aed9c5e5752d93c36ae9665 |
@@ -251,7 +251,7 @@ Screens: `src/components/cefr/CefrDraftsCard.tsx` (new), `src/pages/StudentDetai
 
 ## Deploy order (owner)
 
-1. Paste `20261117150000_cefr_model_drafts.sql`.
+1. Paste `20261117151000_cefr_model_drafts.sql`.
    - Expected output: `held_this_paste 9, children 9, drafts_waiting 9, held_total 9`.
    - If it refuses, send back what it names.
    - From this moment the deployed functions can no longer publish a model's level: their insert is refused, the error is ignored, and the report still saves.

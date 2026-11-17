@@ -24,7 +24,7 @@
  *   evidence audit's recommended level) is saved as a staff-only DRAFT in
  *   cefr_assessment_drafts; it reaches the growth chart, the child and the
  *   family only when a teacher approves it (approve_cefr_draft, migration
- *   20261117150000). saveDraft below is the only write of a CEFR point here.
+ *   20261117151000). saveDraft below is the only write of a CEFR point here.
  *
  * Anti-cheat: generated items (with answer keys) live only in the
  * `stages` JSONB, which students cannot SELECT (no RLS policy). This

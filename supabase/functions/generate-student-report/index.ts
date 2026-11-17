@@ -18,7 +18,7 @@
  * as a staff-only DRAFT (`cefr_assessment_drafts`). Nothing reaches the child
  * or the family until a teacher acts: the report when they publish it
  * (`student_reports.published`), the CEFR point when they approve it
- * (`approve_cefr_draft`, migration 20261117150000). A published report is
+ * (`approve_cefr_draft`, migration 20261117151000). A published report is
  * never regenerated in place (409).
  *
  * Input:  { report_id: string }
