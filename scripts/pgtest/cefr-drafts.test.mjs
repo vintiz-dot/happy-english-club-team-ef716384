@@ -8,6 +8,14 @@
 // the level-defense claim staff-only (FamilyDashboard shows the approved
 // level instead); cefr-defense gives a child progress only.
 //
+// Round 3 (review REVIEW-privacy-followups.md): the guard refuses every model
+// source from an API role whatever its source_id (N-1, probes R1/R2/R9 turned
+// round); a child reads a published report only through
+// get_my_published_reports, with the approved level and never the model's
+// (N-2); both rollback files run, then both migrations paste again (M-1); the
+// child's status moves on when a teacher discards or sets a level (N-3); the
+// OpenAI limit counts only calls that reach the model (N-4).
+//
 // Part 1 drives the REAL migration against an in-process Postgres over
 // production's state: the real is_teacher_of_class (20261111110000), the
 // real staff policies on cefr_assessments (20261113140000), and the admin /
@@ -39,6 +47,8 @@ const STAFF_MIG = MIGS.find((f) => f.includes("20261113140000"));
 const FIX_MIG = MIGS.find((f) => f.includes("20261117151000"));
 const DEFENSE_MIG = MIGS.find((f) => f.includes("20260730100000"));
 const FAMILY_MIG = MIGS.find((f) => f.includes("20261117152000"));
+const ROLLBACK_DRAFTS = readFileSync(resolve(repo, "scripts", "ROLLBACK-cefr-model-drafts.sql"), "utf8");
+const ROLLBACK_FAMILY = readFileSync(resolve(repo, "scripts", "ROLLBACK-family-reads-without-ai.sql"), "utf8");
 if (!TA_MIG || !STAFF_MIG || !FIX_MIG || !DEFENSE_MIG || !FAMILY_MIG) {
   console.log("usage: cefr-drafts.test.mjs <20261111110000_...sql> <20261113140000_...sql> <20260730100000_cefr_level_defense.sql> <20261117151000_cefr_model_drafts.sql> <20261117152000_family_reads_without_ai.sql>");
   console.log("0 passed, 1 failed");
@@ -240,6 +250,14 @@ await db.exec(`
   CREATE POLICY "family_read_children_learning_profiles" ON public.student_learning_profiles FOR SELECT TO authenticated
     USING (public.can_view_student(student_id, auth.uid()));
   GRANT SELECT, INSERT, UPDATE, DELETE ON public.student_learning_profiles, public.cefr_level_claims, public.cefr_defense_tests TO authenticated, service_role;
+  -- student_reports as 20260712090000 made it (the shared prelude keeps only
+  -- the columns the staff policies need), and its admin and child policies.
+  ALTER TABLE public.student_reports ADD COLUMN period_start date, ADD COLUMN period_end date, ADD COLUMN status text NOT NULL DEFAULT 'generating',
+    ADD COLUMN report jsonb, ADD COLUMN narrative text, ADD COLUMN created_at timestamptz NOT NULL DEFAULT now();
+  CREATE POLICY "admins_all_reports" ON public.student_reports FOR ALL TO authenticated
+    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+  CREATE POLICY "students_read_published_reports" ON public.student_reports FOR SELECT TO authenticated
+    USING (published AND public.is_linked_student(auth.uid(), student_id));
 `);
 const FIX = readFileSync(FIX_MIG, "utf8");
 const FAMILY = readFileSync(FAMILY_MIG, "utf8");
@@ -286,6 +304,11 @@ const CLAIM_K = (await one(`INSERT INTO public.cefr_level_claims (student_id, cl
 // ---------------------------------------------------------------- production's rows before the paste
 const report = async (sid, cls, by) => (await one(`INSERT INTO public.student_reports (student_id, class_id, generated_by) VALUES ($1,$2,$3) RETURNING id`, [sid, cls, by])).id;
 const R1 = await report(KIKI, CA, TEA), R2 = await report(LILY, CB, TEB);
+const MODEL_CEFR = { level: "B2", confidence: 0.55, rationale: "MODEL REPORT RATIONALE" };
+// R3: a report a teacher published, whose CEFR level nobody approved.
+const R3 = (await one(`INSERT INTO public.student_reports (student_id, class_id, generated_by, published, status, report, narrative)
+  VALUES ($1,$2,$3,true,'ready',$4::jsonb,'Kiki has grown this term.') RETURNING id`,
+  [KIKI, CA, TEA, JSON.stringify({ cefr: MODEL_CEFR, strengths: [{ area: "speaking" }] })])).id;
 const point = async (sid, cls, source, level, score, by, sourceId, evidence = null) =>
   (await one(`INSERT INTO public.cefr_assessments (student_id, class_id, source, level, level_score, confidence, evidence, created_by, source_id, assessed_at)
               VALUES ($1,$2,$3,$4,$5,0.7,$6,$7,$8,'2026-11-01') RETURNING id`, [sid, cls, source, level, score, evidence, by, sourceId])).id;
@@ -305,7 +328,9 @@ const heldBefore = await snapshot([P_R1, P_R2]);
 console.log("=== before the paste: the defect ===");
 eq("the child reads the AI report's level (and every other point)", await count(KID, "cefr_assessments", "student_id = $1", [KIKI]), 4);
 eq("the family reads it too", await count(PARENT, "cefr_assessments", "id = $1", [P_R1]), 1);
-eq("...although the report itself is unpublished (a child reads no report)", await count(KID, "student_reports", "true"), 0);
+eq("...although the report itself is unpublished (a child reads no report)", await count(KID, "student_reports", "id = $1", [R1]), 0);
+eq("a published report: the child reads the model's CEFR level and rationale in it (review N-2)",
+  (await as(KID, `SELECT report->'cefr'->>'rationale' AS r FROM public.student_reports WHERE id = $1`, [R3])).rows, [{ r: "MODEL REPORT RATIONALE" }]);
 eq("the family reads the model's profile summary and CEFR estimate", (await as(PARENT, `SELECT summary, cefr_estimate FROM public.student_learning_profiles WHERE student_id = $1`, [KIKI])).rows,
   [{ summary: "MODEL SUMMARY: Kiki speaks confidently", cefr_estimate: "B2" }]);
 eq("the child too", await count(KID, "student_learning_profiles", "student_id = $1", [KIKI]), 1);
@@ -398,8 +423,25 @@ console.log("=== nothing but an approval puts a model-made point where families 
     const c = await ins(uid, role, "manual", null);
     ok(`${label}: a person's own level still goes in`, c.err === null && c.rows.length === 1, c.err);
   }
-  const vid = await ins(null, "service_role", "ai_report", randomUUID());
-  ok("an ai_report point that names no report (video homework's shape) is not blocked", vid.err === null, vid.err);
+  // Review N-1 (probes R1, R2): not keyed on source_id any more.
+  for (const [label, sid] of [["no source_id", null], ["a dangling source_id", randomUUID()]]) {
+    for (const [who, uid, role] of [["the service role", null, "service_role"], ["the class teacher", TEA, "authenticated"]]) {
+      const r = await ins(uid, role, "ai_report", sid);
+      ok(`${who}: an ai_report point with ${label} is refused too`, /draft until a teacher approves/.test(r.err ?? ""), r.err);
+    }
+  }
+  {
+    const rid = randomUUID();
+    const r = await as(null, `INSERT INTO public.cefr_assessments (student_id, class_id, source, level, level_score, source_id) VALUES ($1,$2,'ai_report','B2',4,$3)`, [KIKI, CA, rid], { role: "service_role", keep: true });
+    ok("a point naming a report that does not exist yet is refused (probe R2)", /draft until a teacher approves/.test(r.err ?? ""), r.err);
+    eq("  ...nothing published under it", await countAll("cefr_assessments", "source_id = $1", [rid]), 0);
+  }
+  for (const who of [["the child", KID], ["a teacher", TEA]]) {
+    const r = await as(who[1], `SELECT public.cefr_point_is_model_made('ai_report', $1) AS m`, [R2]);
+    ok(`${who[0]} cannot call cefr_point_is_model_made (probe R9: the report-id oracle is gone)`, /permission denied/.test(r.err ?? ""), r.err);
+  }
+  ok("  ...nor the service role, nor anon", /permission denied/.test((await as(null, `SELECT public.cefr_point_is_model_made('ai_report', $1)`, [R2], { role: "service_role" })).err ?? "")
+    && /permission denied/.test((await as(null, `SELECT public.cefr_point_is_model_made('ai_report', $1)`, [R2], { role: "anon" })).err ?? ""));
   const turn = await as(TEA, `UPDATE public.cefr_assessments SET source = 'ai_report', source_id = $2 WHERE id = $1`, [P_MANUAL, R1]);
   ok("the teacher cannot turn a person's point into a report's one", /draft until a teacher approves/.test(turn.err ?? ""), turn.err);
   const edit = await as(TEA, `UPDATE public.cefr_assessments SET evidence = 'Seen in class' WHERE id = $1`, [P_MANUAL]);
@@ -537,9 +579,31 @@ console.log("=== learning profiles and level claims are staff-only (202611171520
   eq("another class's teacher reads neither of Kiki's", [await count(TEB, "student_learning_profiles", "student_id = $1", [KIKI]), await count(TEB, "cefr_level_claims", "student_id = $1", [KIKI])], [0, 0]);
   eq("an admin reads both profiles and the claim", [await count(ADMIN, "student_learning_profiles"), await count(ADMIN, "cefr_level_claims")], [2, 1]);
   eq("the family still reads the approved levels", await count(PARENT, "cefr_assessments", "id = $1", [P_R1]), 1);
-  eq("the policies left are the staff ones", (await q(`SELECT tablename || '.' || policyname AS p FROM pg_policies WHERE tablename IN ('student_learning_profiles', 'cefr_level_claims', 'cefr_defense_tests') ORDER BY 1`)).map((r) => r.p),
+  eq("the policies left are the staff ones", (await q(`SELECT tablename || '.' || policyname AS p FROM pg_policies WHERE tablename IN ('student_learning_profiles', 'cefr_level_claims', 'cefr_defense_tests', 'student_reports') ORDER BY 1`)).map((r) => r.p),
     ["cefr_defense_tests.admins_all_cefr_tests", "cefr_defense_tests.teachers_manage_class_cefr_tests", "cefr_level_claims.admins_all_cefr_claims",
-     "cefr_level_claims.teachers_manage_class_cefr_claims", "student_learning_profiles.admins_all_learning_profiles", "student_learning_profiles.teachers_read_class_learning_profiles"]);
+     "cefr_level_claims.teachers_manage_class_cefr_claims", "student_learning_profiles.admins_all_learning_profiles", "student_learning_profiles.teachers_read_class_learning_profiles",
+     "student_reports.admins_all_reports", "student_reports.student_reports_staff_delete", "student_reports.student_reports_staff_insert",
+     "student_reports.student_reports_staff_select", "student_reports.student_reports_staff_update"]);
+  // Review N-2: the child's published reports, column-safe.
+  eq("the child reads no report row directly any more", await count(KID, "student_reports"), 0);
+  const mine = (uid, sid = KIKI) => as(uid, `SELECT id, report, approved_level, narrative FROM public.get_my_published_reports($1)`, [sid]);
+  const r3 = await mine(KID);
+  eq("get_my_published_reports: the child's one published report, its narrative, no CEFR at all (nobody approved one)",
+    r3.rows.map((r) => [r.id, r.narrative, r.report?.cefr ?? null, r.approved_level, r.report?.strengths?.length]), [[R3, "Kiki has grown this term.", null, null, 1]]);
+  ok("  ...the model's level and rationale appear nowhere in it", !JSON.stringify(r3.rows).includes("MODEL REPORT RATIONALE") && !JSON.stringify(r3.rows).includes("\"B2\""), r3.rows);
+  await q(`UPDATE public.student_reports SET published = true, status = 'ready', report = $2::jsonb, narrative = 'Second report' WHERE id = $1`, [R1, JSON.stringify({ cefr: MODEL_CEFR })]);
+  const approvedR1 = (await one(`SELECT level FROM public.cefr_assessments WHERE id = $1`, [P_R1])).level;
+  const both = await mine(KID);
+  eq("a published report whose level a teacher approved: the approved level, marked approved, no confidence or rationale",
+    both.rows.find((r) => r.id === R1) && [both.rows.find((r) => r.id === R1).report.cefr, both.rows.find((r) => r.id === R1).approved_level], [{ level: approvedR1, approved: true }, approvedR1]);
+  ok("  ...and still not the model's B2 or its rationale", !JSON.stringify(both.rows).includes("MODEL REPORT RATIONALE"), both.rows);
+  for (const [who, uid] of [["the family (it had no report policy before either)", PARENT], ["Lily's child login", KIDB], ["an account with no role", NOROLE], ["another class's teacher", TEB]]) {
+    eq(`${who}: get_my_published_reports for Kiki returns nothing`, (await mine(uid)).rows.length, 0);
+  }
+  ok("anon cannot call it", /permission denied/.test((await as(null, `SELECT * FROM public.get_my_published_reports($1)`, [KIKI], { role: "anon" })).err ?? ""));
+  await q(`UPDATE public.student_reports SET published = false WHERE id = $1`, [R1]);
+  eq("an unpublished report is not returned", (await mine(KID)).rows.map((r) => r.id), [R3]);
+  eq("the class teacher still reads the whole report, the model's estimate included", (await as(TEA, `SELECT report->'cefr'->>'rationale' AS r FROM public.student_reports WHERE id = $1`, [R3])).rows, [{ r: "MODEL REPORT RATIONALE" }]);
   eq("the rows themselves are untouched", (await q(`SELECT summary FROM public.student_learning_profiles ORDER BY summary`)).map((r) => r.summary), ["MODEL SUMMARY: Kiki speaks confidently", "MODEL SUMMARY: Lily"]);
 }
 
@@ -723,6 +787,56 @@ console.log("--- cefr-defense: what a child sees (round 2)");
   reset(world2(1));
   const t1 = await call(fn, name, { token: tokenOf(TEA), body: { action: "submit_stage", test_id: TEST, answers: [0, 1, 2, 3].map((i) => ({ item_id: `s1q${i}`, answer: 0 })) } });
   ok("staff submitting the same stage still get the score and the routed level", t1.json?.stage_score === 1 && t1.json?.test?.active_stage?.level === "B1", t1.json);
+
+  // Review N-3: the child's status moves on when a teacher acts on a graded test.
+  const gradedWorld = (extra = {}) => {
+    const w = world2();
+    Object.assign(w.cefr_defense_tests[0], { status: "graded", updated_at: "2026-11-17T10:00:00.000+00:00", result: { level_estimate: "A1", rationale: "MODEL TEST RATIONALE" } });
+    w.cefr_level_claims[0].updated_at = "2026-11-17T10:00:00.000+00:00";
+    return { ...w, ...extra };
+  };
+  const stateOf = async (w) => { reset(w); return call(fn, name, { token: tokenOf(KID), body: { action: "get_state" } }); };
+  let st = await stateOf(gradedWorld());
+  eq("graded, nothing decided yet: 'submitted'", [st.json?.claim?.status, st.json?.approved_level, st.json?.teacher_level], ["submitted", null, null]);
+  st = await stateOf(gradedWorld({ cefr_assessment_drafts: [{ id: "d1", student_id: KIKI, source: "level_defense_test", source_id: TEST, status: "discarded" }] }));
+  eq("the teacher discarded the test's draft: 'reviewed', no level", [st.json?.claim?.status, st.json?.approved_level, st.json?.teacher_level, leaks(st, AI_WORDS)], ["reviewed", null, null, []]);
+  st = await stateOf(gradedWorld({ cefr_assessments: [{ id: "m1", student_id: KIKI, source: "manual", level: "A2+", assessed_at: "2026-11-17", created_at: "2026-11-17T11:00:00.000+00:00" }] }));
+  eq("the teacher set a manual level after the test: 'set_by_teacher', that level", [st.json?.claim?.status, st.json?.teacher_level?.level, leaks(st, AI_WORDS)], ["set_by_teacher", "A2+", []]);
+  st = await stateOf(gradedWorld({ cefr_assessments: [{ id: "m0", student_id: KIKI, source: "manual", level: "A1", assessed_at: "2026-11-01", created_at: "2026-11-01T09:00:00.000+00:00" }] }));
+  eq("a manual level from before the test does not count: 'submitted'", [st.json?.claim?.status, st.json?.teacher_level], ["submitted", null]);
+  {
+    const w = gradedWorld();
+    Object.assign(w.cefr_level_claims[0], { status: "unverified", claimed_level: "B1", updated_at: "2026-11-17T12:00:00.000+00:00" });
+    st = await stateOf(w);
+    eq("the teacher set a new level on the claim after the test: 'set_by_teacher', the claim shows it", [st.json?.claim?.status, st.json?.claim?.claimed_level], ["set_by_teacher", "B1"]);
+  }
+  st = await stateOf(gradedWorld({ cefr_assessment_drafts: [{ id: "d1", student_id: KIKI, source: "level_defense_test", source_id: TEST, status: "discarded" }],
+    cefr_assessments: [{ id: "p1", student_id: KIKI, source: "level_defense_test", source_id: TEST, level: "A2", assessed_at: "2026-11-17", created_at: "2026-11-17T13:00:00.000+00:00" }] }));
+  eq("an approved level wins: 'reviewed', A2", [st.json?.claim?.status, st.json?.approved_level?.level], ["reviewed", "A2"]);
+
+  // Review N-4: the OpenAI actions' limit counts only calls that reach the model.
+  {
+    const f2 = await load(name, fsrc(name));
+    reset(gradedWorld()); answer = {};
+    let refused = 0, limited = 0;
+    for (let i = 0; i < 25; i++) {
+      const r = await call(f2, name, { token: tokenOf(KID), body: { action: "submit_stage", test_id: TEST, answers: [] } });
+      if (r.status === 400 && /Already graded/.test(r.json?.error ?? "")) refused++; else if (r.status === 429) limited++;
+    }
+    eq("25 'Already graded' submits by the child: all refused by the function, none counted (no 429)", [refused, limited], [25, 0]);
+    reset(world2(1)); answer = { items: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => ({ id: `n${i}`, skill: "grammar", prompt: `P${i}`, options: ["a", "b", "c", "d"], correct_index: 1 })) };
+    const real = await call(f2, name, { token: tokenOf(KID), body: { action: "submit_stage", test_id: TEST, answers: [0, 1, 2, 3].map((i) => ({ item_id: `s1q${i}`, answer: 0 })) } });
+    ok("  ...so the child's real submit after them still goes through", real.status === 200 && world.vendor.length === 1, { status: real.status, vendor: world.vendor.length });
+    const f3 = await load(name, fsrc(name));
+    const VER = { verdict: "supported", confidence: 0.8, recommended_level: "A2", evidence_for: [], evidence_against: [], rationale: "r" };
+    let reached = 0, first429 = null;
+    for (let i = 0; i < 22; i++) {
+      reset(defenseWorld()); answer = VER;
+      const r = await call(f3, name, { token: tokenOf(TEA), body: { action: "mine_evidence", student_id: KIKI } });
+      if (r.status === 429) { first429 ??= { at: i + 1, vendor: world.vendor.length }; } else if (r.status === 200 && world.vendor.length === 1) reached++;
+    }
+    eq("the teacher's evidence audits: exactly 20 reach OpenAI, the 21st is a 429 that calls nothing", [reached, first429?.at, first429?.vendor], [20, 21, 0]);
+  }
 }
 
 console.log("--- what they wrote, in the real schema");
@@ -780,6 +894,57 @@ console.log("=== FamilyDashboard: the approved level, no model text (against Pos
   ok("the page loads the cards through withApprovedLevels", /withPoints\(await withApprovedLevels\(supabase, await fetchChildren\(supabase\)\)\)/.test(page));
 }
 
+console.log("=== rollbacks (review M-1): both files run, then both migrations paste again ===");
+{
+  const exec = async (sql) => { try { await db.exec(sql); return null; } catch (e) { await db.exec("ROLLBACK").catch(() => {}); return e.message; } };
+  const heldNotPublished = await q(`SELECT d.id, d.held_row FROM public.cefr_assessment_drafts d
+                                     WHERE d.held_row IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.cefr_assessments c WHERE c.id = d.id) ORDER BY d.id`);
+  const approvedPublished = await snapshot((await q(`SELECT id FROM public.cefr_assessment_drafts WHERE status = 'approved' ORDER BY id`)).map((r) => r.id));
+  const draftCount = Number((await one(`SELECT count(*) AS n FROM public.cefr_assessment_drafts`)).n);
+  ok("(there are held points not published, to put back)", heldNotPublished.length > 0, heldNotPublished.length);
+
+  ok("ROLLBACK-family-reads-without-ai.sql runs", (await exec(ROLLBACK_FAMILY)) === null);
+  ok("  ...and runs a second time", (await exec(ROLLBACK_FAMILY)) === null);
+  eq("  ...the family and the child read the profile again, the child the claim and the published report (production's 'before')",
+    [await count(PARENT, "student_learning_profiles", "student_id = $1", [KIKI]), await count(KID, "student_learning_profiles", "student_id = $1", [KIKI]),
+     await count(KID, "cefr_level_claims"), await count(KID, "student_reports", "id = $1", [R3])], [1, 1, 1, 1]);
+  eq("  ...the four policies are back exactly as production had them", (await q(`SELECT tablename, policyname, cmd, roles::text AS roles, qual FROM pg_policies
+       WHERE policyname IN ('family_read_children_learning_profiles', 'students_read_own_learning_profile', 'students_read_own_cefr_claim', 'students_read_published_reports') ORDER BY policyname`)).map((p) => [p.policyname, p.cmd, p.roles, p.qual.replace(/\s+/g, " ")]),
+    [["family_read_children_learning_profiles", "SELECT", "{authenticated}", "can_view_student(student_id, auth.uid())"],
+     ["students_read_own_cefr_claim", "SELECT", "{authenticated}", "(EXISTS ( SELECT 1 FROM students s WHERE ((s.id = cefr_level_claims.student_id) AND (s.linked_user_id = auth.uid()))))"],
+     ["students_read_own_learning_profile", "SELECT", "{authenticated}", "is_linked_student(auth.uid(), student_id)"],
+     ["students_read_published_reports", "SELECT", "{authenticated}", "(published AND is_linked_student(auth.uid(), student_id))"]]);
+  eq("  ...and the report RPC is gone", (await one(`SELECT to_regprocedure('public.get_my_published_reports(uuid)') IS NULL AS gone`)).gone, true);
+
+  ok("ROLLBACK-cefr-model-drafts.sql runs", (await exec(ROLLBACK_DRAFTS)) === null);
+  eq("  ...every held point that was not published is back, byte for byte from held_row", await snapshot(heldNotPublished.map((h) => h.id)), heldNotPublished.map((h) => h.held_row));
+  eq("  ...the points teachers approved stay as the teachers published them", await snapshot(approvedPublished.map((j) => j.id)), approvedPublished);
+  eq("  ...the drafts table is gone, every draft kept in the copy", [(await one(`SELECT to_regclass('public.cefr_assessment_drafts') IS NULL AS gone`)).gone,
+    Number((await one(`SELECT count(*) AS n FROM public.cefr_assessment_drafts_rolled_back`)).n)], [true, draftCount]);
+  eq("  ...which no API role can read", [(await as(ADMIN, `SELECT count(*) FROM public.cefr_assessment_drafts_rolled_back`)).err !== null,
+    (await as(null, `SELECT count(*) FROM public.cefr_assessment_drafts_rolled_back`, [], { role: "service_role" })).err !== null], [true, true]);
+  eq("  ...triggers and functions gone", [Number((await one(`SELECT count(*) AS n FROM pg_trigger WHERE tgname IN ('cefr_model_point_guard', 'cefr_published_point_removed')`)).n),
+    Number((await one(`SELECT count(*) AS n FROM pg_proc WHERE proname IN ('approve_cefr_draft', 'discard_cefr_draft', 'cefr_point_is_model_made', 'cefr_draft_staff_can', 'cefr_model_point_guard', 'cefr_published_point_removed', 'cefr_draft_write_guard')`)).n)], [0, 0]);
+  ok("  ...approved level-defense points exist, so the wider source CHECK stays (the narrow one would refuse them)",
+    /level_defense_test/.test((await one(`SELECT pg_get_constraintdef(oid) AS d FROM pg_constraint WHERE conname = 'cefr_assessments_source_check'`)).d));
+  ok("  ...and it runs a second time", (await exec(ROLLBACK_DRAFTS)) === null);
+
+  ok("the migration pastes again after the rollback", (await exec(FIX)) === null);
+  eq("  ...every model-made point is held again (approvals included: they go back to the teachers' queue)",
+    [Number((await one(`SELECT count(*) AS n FROM public.cefr_assessments c WHERE c.source IN ('level_defense_test', 'level_defense_evidence') OR (c.source = 'ai_report' AND EXISTS (SELECT 1 FROM public.student_reports r WHERE r.id = c.source_id))`)).n),
+     await count(PARENT, "cefr_assessments", "id = $1", [P_R1])], [0, 0]);
+  ok("20261117152000 pastes again", (await exec(FAMILY)) === null);
+  eq("  ...staff-only again", [await count(PARENT, "student_learning_profiles"), await count(KID, "cefr_level_claims"), await count(KID, "student_reports")], [0, 0, 0]);
+
+  // The narrow-CHECK path: no level-defense point published when the rollback runs.
+  await q(`DELETE FROM public.cefr_assessment_drafts WHERE source IN ('level_defense_test', 'level_defense_evidence')`);
+  ok("rolled back once more with no level-defense point: both files run", (await exec(ROLLBACK_FAMILY)) === null && (await exec(ROLLBACK_DRAFTS)) === null);
+  eq("  ...the source CHECK is production's five values again",
+    (await one(`SELECT pg_get_constraintdef(oid) AS d FROM pg_constraint WHERE conname = 'cefr_assessments_source_check'`)).d.match(/'([^']+)'/g).map((x) => x.slice(1, -1)).sort(),
+    ["ai_report", "exam", "manual", "transcript", "vocab_analysis"]);
+  ok("and both migrations paste once more on top", (await exec(FIX)) === null && (await exec(FAMILY)) === null);
+}
+
 // =================================================================== part 3
 console.log("=== the source: every writer and reader ===");
 const walk = (dir) => readdirSync(dir).flatMap((e) => { const f = join(dir, e); return statSync(f).isDirectory() ? walk(f) : /\.(ts|tsx)$/.test(e) ? [f] : []; });
@@ -797,8 +962,9 @@ const uses = (files, table) => files.flatMap(([f, t]) => {
     ["supabase/functions/analyze-transcript/index.ts", "supabase/functions/cefr-defense/index.ts", "supabase/functions/chat/index.ts",
      "supabase/functions/generate-student-report/index.ts", "supabase/functions/refresh-student-profile/index.ts"].sort());
   const fnDrafts = uses(fnFiles, "cefr_assessment_drafts");
-  eq("only the two model writers touch the drafts, and only to insert", fnDrafts.map(([f, k]) => `${f}:${k}`).sort(),
-    ["supabase/functions/cefr-defense/index.ts:write", "supabase/functions/generate-student-report/index.ts:write"]);
+  eq("only the two model writers touch the drafts: they insert, and cefr-defense reads a draft's status for the child's progress (round 3, N-3; never its level)", fnDrafts.map(([f, k]) => `${f}:${k}`).sort(),
+    ["supabase/functions/cefr-defense/index.ts:read", "supabase/functions/cefr-defense/index.ts:write", "supabase/functions/generate-student-report/index.ts:write"]);
+  ok("  ...that read selects only status and source_id", /from\("cefr_assessment_drafts"\)\.select\("status, source_id"\)/.test(fnFiles.find(([f]) => f === "supabase/functions/cefr-defense/index.ts")[1]));
   ok("the chat assistant never reads the drafts (its CEFR tool reads cefr_assessments through the caller)", !fnFiles.find(([f]) => f === "supabase/functions/chat/index.ts")[1].includes("cefr_assessment_drafts"));
   ok("nor does the reception feed or refresh-student-profile", ["reception-feed", "refresh-student-profile"].every((n) => !(fnFiles.find(([f]) => f === `supabase/functions/${n}/index.ts`)?.[1] ?? "").includes("cefr_assessment_drafts")));
   const srcCefr = uses(srcFiles, "cefr_assessments");

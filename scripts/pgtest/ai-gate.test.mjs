@@ -437,23 +437,19 @@ console.log("=== cefr-defense (privacy follow-ups round 2) ===");
     const r = await call(fn, name, { token: tokenOf(U[role]), body: state });
     ok(`${role}: past the gate (400 "No student in scope": the stand-in has no linked child), nothing spent`, r.status === 400 && r.vendor.length === 0, r);
   }
-  // The three OpenAI actions share 20 per 10 min; get_state counts only towards the 60.
+  // The OpenAI actions' own 20 per 10 min is counted just before the model
+  // call (review N-4), so calls the function refuses first cost nothing of it;
+  // cefr-drafts.test.mjs drives the 20 real calls. Here: refused calls never
+  // reach that limit, and every call counts towards the overall 60.
   const fresh = await load(name, src);
   const mine = { action: "mine_evidence", student_id: "00000000-0000-4000-8000-0000000000dd" };
-  let spendPassed = 0, spendRefusal = null;
-  for (let i = 0; i < 22; i++) {
+  let refused = 0, limited = 0;
+  for (let i = 0; i < 25; i++) {
     const r = await call(fresh, name, { token: tokenOf(U.teacher), body: mine });
-    if (r.status === 429) spendRefusal ??= { at: i + 1, r }; else if (r.status === 403) spendPassed++;
+    if (r.status === 403 && r.vendor.length === 0) refused++; else if (r.status === 429) limited++;
   }
-  eq("the OpenAI actions: exactly 20 per account, then 429 (here each is refused later as not the teacher's child)", [spendPassed, spendRefusal?.at], [20, 21]);
-  ok("  ...that 429 spends nothing", !!spendRefusal && spendRefusal.r.vendor.length === 0, spendRefusal?.r);
-  for (const action of ["generate_test", "submit_stage"]) {
-    const r = await call(fresh, name, { token: tokenOf(U.teacher), body: { action, student_id: mine.student_id, test_id: "t" } });
-    ok(`  ...${action} shares that limit (429)`, r.status === 429 && spentNothing(r), r);
-  }
-  const look = await call(fresh, name, { token: tokenOf(U.teacher), body: state });
-  ok("  ...while get_state still answers (400 here: past both gates)", look.status === 400, look);
-  // 22 + 2 + 1 = 25 calls so far; 35 more reach 60, the 61st is refused.
+  eq("25 evidence audits the function refuses (not the teacher's child): all 403, none counted as an OpenAI call", [refused, limited], [25, 0]);
+  // 25 calls so far; 35 more reach 60, the 61st is refused.
   let left = 0, overall = null;
   for (let i = 0; i < 37; i++) {
     const r = await call(fresh, name, { token: tokenOf(U.teacher), body: state });
@@ -467,6 +463,12 @@ console.log("=== cefr-defense (privacy follow-ups round 2) ===");
   gateSource(src, name, 60, false, "SIGNED_IN_ROLES");
   ok("the OpenAI actions' own limit is 20 per 10 min, on mine_evidence, generate_test and submit_stage",
     /const SPEND = \{ limit: 20, windowMs: 10 \* 60_000 \}/.test(src) && /SPENDING_ACTIONS = new Set\(\["mine_evidence", "generate_test", "submit_stage"\]\)/.test(src));
+  {
+    const after = (block, check) => { const i = src.indexOf(block); const c = src.indexOf(check, i); const o = src.indexOf("overSpend()", i); const m = src.indexOf("openaiJson(key", i) === -1 ? Infinity : src.indexOf("openaiJson(key", i); const g = src.indexOf("generateStage(key", i);
+      return i >= 0 && c > i && o > c && o < Math.min(m, g === -1 ? Infinity : g); };
+    ok("  ...counted inside each action after its own checks, before the model call (N-4)",
+      after('if (action === "mine_evidence")', '"Set a level first"') && after('if (action === "generate_test")', '"Set a level first"') && after('if (action === "submit_stage")', '"Already graded"'));
+  }
 }
 
 console.log("=== image-search: the cache-bypassing switches ===");

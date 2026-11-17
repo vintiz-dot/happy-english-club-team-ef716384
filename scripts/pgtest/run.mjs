@@ -594,11 +594,12 @@ const SUITES = [
   // held. Also drives the real generate-student-report and cefr-defense and
   // loads what they wrote into the schema. Round 2: an unpublished point is
   // re-approvable; the AI learning profile and level claims are staff-only
-  // (20261117152000); a child sees defense progress only.
+  // (20261117152000); a child sees defense progress only. Round 3: the
+  // child's report RPC, the guard on every model source, both rollbacks.
   {
     name: "cefr drafts",
     file: "cefr-drafts.test.mjs",
-    expect: 191,
+    expect: 243,
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql", "20260730100000_cefr_level_defense.sql",
       "20261117151000_cefr_model_drafts.sql", "20261117152000_family_reads_without_ai.sql"],
   },
