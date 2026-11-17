@@ -26,7 +26,14 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { authenticateUser, callerHoldsClass } from "../_lib/auth.ts";
+import { callerHoldsClass } from "../_lib/auth.ts";
+import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
+
+// Staff only. BulkReportExport generates a whole class one report after
+// another; the biggest class had 10 active children on 17 Nov 2026 (read
+// live), so 60 per account per 10 minutes is six such classes back to back.
+// Nothing calls this with the service-role key, so that key is refused.
+const GATE: SpendGate = { name: "generate-student-report", roles: STAFF_ROLES, limit: 60, windowMs: 10 * 60_000 };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,6 +56,11 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
+  // The spend gate comes first: a real staff session and a per-account
+  // limit, before the body or any row is read.
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
+
   const sb = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -56,7 +68,7 @@ Deno.serve(async (req) => {
 
   let reportId: string | null = null;
   try {
-    // Staff only.
+    // Staff only (the gate above).
     //
     // This function runs on the SERVICE ROLE and compiles a complete language
     // profile of a child from transcripts, error logs, work samples and
@@ -65,12 +77,7 @@ Deno.serve(async (req) => {
     // alone, so without this gate ANY authenticated user could insert a row
     // naming another child, call this function, and then read the resulting
     // profile back through that same policy. Identity comes from the JWT.
-    const caller = await authenticateUser(req, sb);
-    if (!caller) return respond({ success: false, error: "Unauthorized" }, 401);
-    if (!(caller.isServiceRole || caller.roles.has("admin") || caller.roles.has("teacher"))) {
-      console.warn(`generate-student-report denied for non-staff user ${caller.userId}`);
-      return respond({ success: false, error: "Forbidden — teachers and admins only" }, 403);
-    }
+    const caller = spender;
 
     const body = await req.json().catch(() => ({}));
     reportId = String(body.report_id ?? "").trim() || null;
@@ -290,7 +297,7 @@ Deno.serve(async (req) => {
           level_score: CEFR_SCORE[level],
           confidence: typeof result.cefr.confidence === "number" ? result.cefr.confidence : null,
           evidence: result.cefr.rationale ? String(result.cefr.rationale).slice(0, 500) : null,
-          requested_by: caller.isServiceRole ? report.generated_by : caller.userId,
+          requested_by: caller.userId,
         })
         .select("id")
         .single();

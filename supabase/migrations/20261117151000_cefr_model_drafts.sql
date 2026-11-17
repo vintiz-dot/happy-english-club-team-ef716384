@@ -34,6 +34,11 @@
 --                                 into cefr_assessments under the draft's id,
 --                                 signed by the teacher (created_by).
 --   discard_cefr_draft(id)        same checks; nothing is published.
+--   cefr_published_point_removed  a teacher deleting an approved point from
+--                                 the chart (the staff delete policy) puts its
+--                                 draft back to 'draft': off the chart, back in
+--                                 the teacher's queue, re-approvable. history
+--                                 keeps every decision and removal.
 --   cefr_model_point_guard        trigger on cefr_assessments: an API role
 --                                 (anon, authenticated, service_role) may not
 --                                 insert a model-made point, or turn a row into
@@ -146,12 +151,14 @@ CREATE TABLE IF NOT EXISTS public.cefr_assessment_drafts (
   decided_at timestamptz,
   approved_level text CHECK (approved_level IN ('Pre-A1', 'A1', 'A1+', 'A2', 'A2+', 'B1', 'B1+', 'B2', 'B2+', 'C1', 'C2')),
   held_row jsonb,                                    -- the published row this draft took down (whole), if any
+  history jsonb NOT NULL DEFAULT '[]'::jsonb,        -- [{event: approved|discarded|unpublished, by, at, level?}]
   created_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT cefr_assessment_drafts_decision_check CHECK (
     (status = 'draft' AND decided_by IS NULL AND decided_at IS NULL AND approved_level IS NULL)
     OR (status = 'approved' AND decided_by IS NOT NULL AND decided_at IS NOT NULL AND approved_level IS NOT NULL)
     OR (status = 'discarded' AND decided_by IS NOT NULL AND decided_at IS NOT NULL AND approved_level IS NULL))
 );
+ALTER TABLE public.cefr_assessment_drafts ADD COLUMN IF NOT EXISTS history jsonb NOT NULL DEFAULT '[]'::jsonb;
 CREATE INDEX IF NOT EXISTS idx_cefr_drafts_student ON public.cefr_assessment_drafts (student_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_cefr_drafts_class ON public.cefr_assessment_drafts (class_id, status, created_at DESC);
 
@@ -243,7 +250,7 @@ BEGIN
     IF TG_OP = 'UPDATE' THEN
       RAISE EXCEPTION 'A CEFR draft is decided only by approve_cefr_draft / discard_cefr_draft' USING ERRCODE = '42501';
     END IF;
-    IF NEW.status <> 'draft' OR NEW.held_row IS NOT NULL THEN
+    IF NEW.status <> 'draft' OR NEW.held_row IS NOT NULL OR NEW.history <> '[]'::jsonb THEN
       RAISE EXCEPTION 'A new CEFR draft starts undecided, holding nothing' USING ERRCODE = '42501';
     END IF;
   END IF;
@@ -299,7 +306,8 @@ BEGIN
      CASE WHEN v_level = d.level THEN d.confidence END, v_evidence, d.assessed_at, v_uid, d.source_id);
 
   UPDATE public.cefr_assessment_drafts
-     SET status = 'approved', decided_by = v_uid, decided_at = now(), approved_level = v_level
+     SET status = 'approved', decided_by = v_uid, decided_at = now(), approved_level = v_level,
+         history = history || jsonb_build_array(jsonb_build_object('event', 'approved', 'by', v_uid, 'at', now(), 'level', v_level))
    WHERE id = d.id;
   RETURN d.id;
 END
@@ -326,15 +334,42 @@ BEGIN
     RAISE EXCEPTION 'This CEFR draft was already %', d.status USING ERRCODE = '55000';
   END IF;
   UPDATE public.cefr_assessment_drafts
-     SET status = 'discarded', decided_by = v_uid, decided_at = now()
+     SET status = 'discarded', decided_by = v_uid, decided_at = now(),
+         history = history || jsonb_build_array(jsonb_build_object('event', 'discarded', 'by', v_uid, 'at', now()))
    WHERE id = d.id;
 END
 $function$;
+
+-- A published model point deleted by staff (cefr_assessments_staff_delete,
+-- or an admin): its draft goes back to 'draft', so it leaves the chart, shows
+-- again in the teacher's queue and can be approved again (or discarded).
+-- Runs as the owner: the drafts table has no write policy and its guard
+-- refuses an API role's UPDATE.
+CREATE OR REPLACE FUNCTION public.cefr_published_point_removed()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+BEGIN
+  UPDATE public.cefr_assessment_drafts
+     SET status = 'draft', decided_by = NULL, decided_at = NULL, approved_level = NULL,
+         history = history || jsonb_build_array(jsonb_build_object('event', 'unpublished', 'by', auth.uid(), 'at', now(),
+                                                                    'level', OLD.level))
+   WHERE id = OLD.id AND status = 'approved';
+  RETURN OLD;
+END
+$function$;
+DROP TRIGGER IF EXISTS cefr_published_point_removed ON public.cefr_assessments;
+CREATE TRIGGER cefr_published_point_removed
+  AFTER DELETE ON public.cefr_assessments
+  FOR EACH ROW EXECUTE FUNCTION public.cefr_published_point_removed();
 
 REVOKE EXECUTE ON FUNCTION public.approve_cefr_draft(uuid, text) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.discard_cefr_draft(uuid) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.cefr_model_point_guard() FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.cefr_draft_write_guard() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.cefr_published_point_removed() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.approve_cefr_draft(uuid, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.discard_cefr_draft(uuid) TO authenticated;
 
