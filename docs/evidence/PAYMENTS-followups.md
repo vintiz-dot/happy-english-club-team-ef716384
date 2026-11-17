@@ -387,3 +387,54 @@ closed, write-path rows).
 - main's other lagging suites (invoice-status' write-off reader, D4 function
   suites, payroll function suites, s2-edge-functions' BASE bundle) - pre-existing,
   same in the baseline run, untouched.
+
+## Fix round 1 (review REVIEW-payments-followups.md of 109b54d2: SHIP WITH CHANGES)
+
+**Superseded above where they differ:** the migration's md5s, the post-paste
+function md5s in the deploy order, the delete rule's description, the key
+store's "a duplicate clears the key", the counts.
+
+| Finding | What changed | Proof |
+|---|---|---|
+| B-1 the delete-rule exception was scoped to a call frame, not to the action's payment | `prevent_direct_payment_deletion` lets the delete through under undo's frame ONLY when `EXISTS (SELECT 1 FROM public.ai_actions x WHERE x.status IS DISTINCT FROM 'undone' AND x.student_id = OLD.student_id AND x.effects -> 'payment' ->> 'payment_id' = OLD.id::text)` - the reviewer's binding, verbatim. The status turns 'undone' only after undo's DELETE; clients cannot write ai_actions; only apply writes payment_id (record_admin_payment's key). The preflight now also requires ai_actions.status / student_id / effects | ai-actions: P3 (an AFTER INSERT trigger on audit_log deleting another child's person-recorded payment during undo) is refused. The victim's row stays, undo reports "Direct payment deletion is not allowed", nothing changes, and the action stays applied. Without the trigger the same undo goes through and the victim's payment stands. The installed rule names the three conditions. record-payment 11b (D4 world): the same P3 is refused outside undo AND inside it, snapshot unchanged |
+| M-1 undo of a new child + payment deleted a bill a person confirmed in between | ai_student_activity's `invoices` count now also takes a bill a PERSON confirmed or froze: `confirmed_by IS NOT NULL OR confirmation_status IN ('confirmed','adjusted') OR tuition_frozen`. Deliberately NOT `confirmation_status IS NOT NULL` as the brief suggested: on live the column defaults to 'needs_review' and calculate-tuition writes 'auto_approved' (live counts: 509 auto_approved, 156 confirmed, 57 needs_review), so that test would block every undo of a new child with any bill. New label: "bill(s) with money on them or confirmed or frozen by a person". The preflight requires the three columns | ai-actions P4: confirmed by a person, and frozen by a person, are refused with the reason; bill, payment, ledger and child are unchanged. A bill only priced and auto_approved by calculate-tuition does not block: undone, child inactive. record-payment 11b (D4 world) P4 confirmed and frozen: refused with a reason (never a raw error), the bill stays, snapshot unchanged |
+| N-1 a D4 HC1xx refusal came out as a raw error | undo's handler gains `WHEN OTHERS`. SQLSTATE class HC returns `{ok:false, reasons:["The money guard refused part of this undo (HCxxx), so nothing was changed: <the guard's sentence from its DETAIL>"]}`, with everything rolled back. Any other error is re-raised | ai-actions: a stand-in HC120 with D4's DETAIL shape gives the sentence; a 22012 still propagates; with the guard gone the undo goes through. record-payment 11b: the REAL D4 frozen-bill delete guard refusing undo's delete of an empty bill a person froze returns the reason with HC1xx, nothing changed |
+| N-2 a deliberate second equal payment after a lost reply was refused unexplained | The store keeps the key on a duplicate (settle no longer drops it). New `forget(attempt)` is called ONLY from the toast action "This is a different payment - record it too". Each of the four screens reads `paymentKeys.pending(attempt)` before sending. On a duplicate of a waiting attempt it shows `waitingDuplicateMessage`: it names the identical payment, says it WAS recorded and nothing more was, says to reload to see it, and offers the button. RecordPaymentDialog also shows `waitingNotice` under the amount while an identical entry is waiting | record-payment 15: a duplicate keeps the key; entered again it is refused again (paid once); the message text is asserted; after forget the next equal payment records (2 payments). Unit: a duplicate leaves the key, other answers drop it. The reload case keeps 1 entry in sessionStorage. Static (14): every screen calls pending() before sending, branches on `saved.duplicate && waiting`, and every `paymentKeys.forget(` is the DIFFERENT_PAYMENT_LABEL action |
+| N-3 the invariants did not see a vanished payments row | `scripts/CHECK-money-invariants.sql` adds **M43** `record_payment_leg_without_payment` (must be 0): record-payment legs whose payments row is gone and which have no payment-reversal- legs | money-invariants-check 128/0: M43 moves for the vanished row (with M04), not when the legs are reversed, not when the row stands; 43 checks. record-payment section 12: M43 0 after everything (assistant payments, undos, delete-payment). Live has 0 record-payment legs today, so M43 is 0 there |
+| N-4 an invoice_state_floor row stays for a month whose bill undo deleted | Not changed. By D4's design the floor (ever_paid) outlives the bill ("no FK: outlives a deleted bill"). The child it concerns is inactive, and a floor only stops downward moves, so a bill re-created for that child and month would start under it - visible and correctable, and no money moves | - |
+| N-5 an assistant payment now lists under its receipt month on the statement | Not changed. The payments row is the record, and student-audit dates every payments row by `occurred_at`, exactly as it has for the four admin payment screens since G-1: a November payment received on 30 Oct lists in October. The month's Paid column (the bill) is unaffected | - |
+
+**Mutation pass:** not re-run for this round. Each new line has its own tests
+(P3, P4 x3, N-1 x3, N-2 x5, M43 x3).
+
+### Gates (fix round 1, Hanoi daytime, real clock)
+
+- AI admin actions **146/0** (expect 146); statement: deleted payments 27/0;
+  money write paths 28/0; money invariants check **128/0** (expect 128);
+  ledger append-only 30/0; record payment (G-1) **130/0** (expect 130), G-1
+  probe delete trigger **131/0** (expect 131), G-1 probe answered 2/0 - all
+  re-run after N-2 / N-3. The full run.mjs was not re-run this round (the
+  previous full run: 30 failing suites, all pre-existing).
+- `tsc --noEmit -p tsconfig.app.json`: exit 0.
+
+### Files (fix round 1, LF md5)
+
+| md5 | file |
+|---|---|
+| `0fec1c5050af298795f986c2766ee549` | supabase/migrations/20261117150000_ai_action_payment_on_ledger.sql (same name - paste this one) |
+| `ab278502220d1ea6aa21a4333f1b1147` | docs/sql/ai_action_apply_undo.installed.sql |
+| `28961ba9312266f69f0285fe8063860e` | src/lib/recordPayment.ts |
+| `3a18001a4e7a5e6fb51e2890065f1d85` | src/components/admin/RecordPaymentDialog.tsx |
+| `3416cacb1c4245acfda589c6fd3e2bf0` | src/components/admin/QuickPayPanel.tsx |
+| `5601c48589c0d08a49514dce898e28f8` | src/components/admin/BatchPaymentDialog.tsx |
+| `0cbe4bb13ac3abe022b807ef320da9f8` | src/components/admin/RecordedPaymentManager.tsx |
+| `553e2849653f3791d38b89944a340c36` | scripts/CHECK-money-invariants.sql |
+
+This round does not change student-audit or modify-payment (`be0fa080...`, `79df4474...`).
+
+**After the paste** (CR-stripped md5 of `pg_get_functiondef`):
+ai_action_apply `7f5b1484fb593b4e351fb473f0e800a4` (unchanged by this round),
+ai_action_undo `ef4e1709cd1330753879fd186273c158`,
+prevent_direct_payment_deletion() `ef7ae4794e85e4a52d59604719994050`,
+ai_student_activity(uuid) `ed908438003457e75bb6c9dc7a74c7fe`,
+ai_student_activity(uuid, uuid[]) `e7f2db8d3265662456b3b462ee6b1c72`.

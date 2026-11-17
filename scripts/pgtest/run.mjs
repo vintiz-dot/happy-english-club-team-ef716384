@@ -112,10 +112,10 @@ const SUITES = [
   // payments; faults inside the transaction leave nothing; lost replies;
   // the preflight; the screens' answer rule over functions-js;
   // CHECK-money-invariants M01 / M03 / M04 over what was written.
-  { name: "record payment (G-1)", file: "record-payment.test.mjs", expect: 122, migrations: [] },
+  { name: "record payment (G-1)", file: "record-payment.test.mjs", expect: 130, migrations: [] },
   // The review's two G-1 probes (fix round 1): the suite with live's payments
   // delete trigger (B-1), and a dropped connection is not "answered" (B-2).
-  { name: "G-1 probe: delete trigger", file: "probe-g1-live-delete-trigger.test.mjs", expect: 123, migrations: [] },
+  { name: "G-1 probe: delete trigger", file: "probe-g1-live-delete-trigger.test.mjs", expect: 131, migrations: [] },
   { name: "G-1 probe: answered", file: "probe-g1-answered.mjs", expect: 2, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
