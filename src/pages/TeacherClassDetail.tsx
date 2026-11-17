@@ -10,6 +10,7 @@ import { ArrowLeft, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BulkReportExport } from "@/components/reports/BulkReportExport";
+import { CefrDraftsCard } from "@/components/cefr/CefrDraftsCard";
 import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShared";
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { SetMonitorControl } from "@/components/teacher/SetMonitorControl";
@@ -233,6 +234,9 @@ export default function TeacherClassDetail() {
           {/* Class is fixed here, so the picker is hidden and the roster
               loads straight away. */}
           <BulkReportExport classId={id!} />
+          {/* The reports' CEFR levels (and level checks) wait here for the
+              teacher; nothing reaches a family before approval. */}
+          <CefrDraftsCard classId={id!} />
         </TabsContent>
 
         <TabsContent value="leaderboard" className="space-y-4">

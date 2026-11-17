@@ -4,8 +4,10 @@
  * Set the student's working CEFR level → audit it against the platform's
  * collected evidence (transcripts, errors, vocabulary, history) → or assign
  * an adaptive, CEFR-aligned defense test the student takes to prove it.
- * Everything runs through the cefr-defense edge function; results also land
- * in cefr_assessments so the growth chart tells the whole story.
+ * Everything runs through the cefr-defense edge function. A level the AI
+ * arrives at (the audit's recommendation, the test's estimate) is a
+ * staff-only draft until a teacher approves it in CefrDraftsCard; only then
+ * is it on the growth chart and visible to the student and family.
  */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -95,6 +97,7 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["cefr-defense", studentId] });
     queryClient.invalidateQueries({ queryKey: ["cefr-growth", studentId] });
+    queryClient.invalidateQueries({ queryKey: ["cefr-drafts"] });
   };
 
   const setLevelMutation = useMutation({

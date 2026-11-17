@@ -24,6 +24,8 @@ const SOURCE_LABEL: Record<string, string> = {
   manual: "Teacher assessment",
   vocab_analysis: "Vocabulary analysis",
   exam: "Exam",
+  level_defense_evidence: "Level check (approved)",
+  level_defense_test: "Level defence test (approved)",
 };
 
 interface Props {

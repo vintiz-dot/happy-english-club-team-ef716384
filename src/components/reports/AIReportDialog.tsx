@@ -6,7 +6,12 @@
  * attendance, points) and asks the profiling engine for a CEFR estimate,
  * skill matrix, strengths/weaknesses matrix, learning styles and a
  * parent-ready narrative. Reports are stored and can be published to the
- * student/family or printed.
+ * student or printed. The model's CEFR estimate in a report is a staff-only
+ * draft until a teacher approves it (CefrDraftsCard). A published report
+ * reaches the child only through get_my_published_reports (20261117152000),
+ * which shows the APPROVED level for that report, or none, and never the
+ * model's estimate or rationale. The PDF you print or download is your copy
+ * and shows the model's estimate: check it before handing it out.
  *
  * Printing: the report renders twice — once inside the dialog (scrollable)
  * and once into a hidden print-only portal attached under <body>
@@ -101,9 +106,9 @@ export function AIReportDialog({ studentId, studentName, classId, trigger }: Pro
       return result;
     },
     onSuccess: () => {
-      toast.success("Report generated");
+      toast.success("Report generated", { description: "Its CEFR level waits for your approval before it reaches the growth chart." });
       queryClient.invalidateQueries({ queryKey: ["student-reports", studentId] });
-      queryClient.invalidateQueries({ queryKey: ["cefr-growth", studentId] });
+      queryClient.invalidateQueries({ queryKey: ["cefr-drafts"] });
     },
     onError: (e: any) => toast.error("Report failed", { description: e.message }),
   });
@@ -118,7 +123,9 @@ export function AIReportDialog({ studentId, studentName, classId, trigger }: Pro
       return published;
     },
     onSuccess: (published) => {
-      toast.success(published ? "Published — visible to the student/family" : "Unpublished");
+      toast.success(published ? "Published — the student can read it" : "Unpublished", published
+        ? { description: "They see its CEFR level only once you approve it (it waits on the growth chart); never the AI's estimate or reasoning." }
+        : undefined);
       queryClient.invalidateQueries({ queryKey: ["student-reports", studentId] });
     },
   });

@@ -24,6 +24,7 @@ import { ExamReportsManager } from "@/components/exam-reports/ExamReportsManager
 import { AIReportDialog } from "@/components/reports/AIReportDialog";
 import { CefrGrowthChart } from "@/components/charts/CefrGrowthChart";
 import { CefrDefensePanel } from "@/components/cefr/CefrDefensePanel";
+import { CefrDraftsCard } from "@/components/cefr/CefrDraftsCard";
 import { LearningJourneyCard } from "@/components/student/LearningJourneyCard";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -161,6 +162,8 @@ const StudentDetail = () => {
             {/* AI-maintained journey profile + language trajectory */}
             <LearningJourneyCard studentId={student.id} />
             <CefrGrowthChart studentId={student.id} />
+            {/* AI-suggested levels: on the chart only once approved. */}
+            <CefrDraftsCard studentId={student.id} />
             <CefrDefensePanel
               studentId={student.id}
               classId={(() => {

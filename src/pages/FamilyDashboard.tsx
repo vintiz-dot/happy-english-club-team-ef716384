@@ -3,7 +3,7 @@
  *
  * Family-role users previously had NO landing page at all (Dashboard.tsx
  * redirected every other role and left family on a blank screen). This
- * gives parents a per-child progress overview — journey summary, CEFR
+ * gives parents a per-child progress overview — the teacher-approved CEFR
  * level, points, attendance, latest lessons, homework — plus the HEC
  * assistant for questions in their own words (English or Vietnamese).
  *
@@ -194,6 +194,33 @@ export async function fetchChildren(client: Db): Promise<ChildSummary[]> {
 // END fetchChildren
 
 /**
+ * Each child's level: the latest APPROVED CEFR level (cefr_assessments holds
+ * only published points - a teacher's own, or a model's once a teacher
+ * approved it: 20261117151000), and no model-written summary. The learning
+ * profile (an AI summary and estimate no teacher approves) is staff-only
+ * since 20261117152000; fetchChildren still asks for it (its batching is
+ * tested against the original) and now gets nothing, and whatever it returns
+ * is dropped here so a stale policy could not put it back on the card.
+ */
+export async function withApprovedLevels(client: Db, children: ChildSummary[]): Promise<ChildSummary[]> {
+  const cleared = children.map((c) => ({ ...c, cefr: null, journey: null }));
+  if (!cleared.length) return cleared;
+  const { data, error } = await client
+    .from("cefr_assessments")
+    .select("student_id, level, assessed_at, created_at")
+    .in("student_id", cleared.map((c) => c.id))
+    .order("assessed_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(POSTGREST_ROW_CAP);
+  if (error || !Array.isArray(data)) return cleared;
+  const latest = new Map<string, string>();
+  for (const r of data as Array<{ student_id: string; level: string }>) {
+    if (!latest.has(r.student_id)) latest.set(r.student_id, r.level);
+  }
+  return cleared.map((c) => ({ ...c, cefr: latest.get(c.id) ?? null }));
+}
+
+/**
  * Each child's points: every point ever earned, every class, with the
  * level, from student_points_summary (20261117120000). fetchChildren read
  * "the" student_points row with maybeSingle, but there is one per class
@@ -215,7 +242,7 @@ function useChildren(userId?: string) {
   return useQuery<ChildSummary[]>({
     queryKey: ["family-children", userId],
     enabled: !!userId,
-    queryFn: async () => withPoints(await fetchChildren(supabase)),
+    queryFn: async () => withPoints(await withApprovedLevels(supabase, await fetchChildren(supabase))),
   });
 }
 

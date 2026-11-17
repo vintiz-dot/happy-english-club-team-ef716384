@@ -20,7 +20,33 @@
  *                          routed level; writing is graded against CEFR
  *                          writing descriptors.
  *   Result: synthesis of accuracy-at-level + writing bands → level estimate,
- *   defended = estimate reaches the claimed level. Feeds cefr_assessments.
+ *   defended = estimate reaches the claimed level. The estimate (and the
+ *   evidence audit's recommended level) is saved as a staff-only DRAFT in
+ *   cefr_assessment_drafts; it reaches the growth chart, the child and the
+ *   family only when a teacher approves it (approve_cefr_draft, migration
+ *   20261117151000). saveDraft below is the only write of a CEFR point here.
+ *
+ * What a child sees (privacy follow-ups round 2): only the teacher's level and
+ * progress. get_state and submit_stage give a non-staff caller no AI verdict
+ * - no estimate, no defended / not defended, no rationale, no evidence audit,
+ * not even the routed stage level or the stage score - just "submitted, your
+ * teacher will review it", and the level a teacher APPROVED once there is one
+ * (a published level_defense_test point). Staff see everything. The child's
+ * direct SELECT on cefr_level_claims is gone (20261117152000).
+ *
+ * Spend gate: requireSpender first (any signed-in role - the child takes the
+ * test, staff run the rest; 60 calls per account per 10 minutes, get_state
+ * included), and the three actions that call OpenAI (mine_evidence,
+ * generate_test, submit_stage) share a tighter 20 per 10 minutes. A whole
+ * test is 4 OpenAI calls (generate + 3 stages); 20 is five tests or audits in
+ * ten minutes for one teacher, and a child needs 3. That limit is counted
+ * just before the OpenAI call, after the action's own checks, so a refused
+ * call ("Already graded", not your child) costs nothing (review N-4).
+ *
+ * After the test, the child's status moves on when a teacher acts (review
+ * N-3): 'reviewed' with the approved level, 'reviewed' with none when the
+ * teacher discarded the draft, 'set_by_teacher' when the teacher set a level
+ * of their own afterwards (set_level, or a manual point - shown).
  *
  * Anti-cheat: generated items (with answer keys) live only in the
  * `stages` JSONB, which students cannot SELECT (no RLS policy). This
@@ -31,7 +57,15 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { safeParseJson } from "../_lib/text.ts";
-import { callerHoldsClass, callerHoldsStudent, type CallerIdentity } from "../_lib/auth.ts";
+import { callerHoldsClass, callerHoldsStudent } from "../_lib/auth.ts";
+import { requireSpender, SIGNED_IN_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
+import { checkRateLimit, rateLimitResponse } from "../_lib/rate-limit.ts";
+
+const GATE: SpendGate = { name: "cefr-defense", roles: SIGNED_IN_ROLES, limit: 60, windowMs: 10 * 60_000 };
+/** The actions that call OpenAI, per account. */
+const SPEND = { limit: 20, windowMs: 10 * 60_000 };
+const SPENDING_ACTIONS = new Set(["mine_evidence", "generate_test", "submit_stage"]);
+const CHILD_SUBMITTED = "Submitted - your teacher will review your test.";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -159,6 +193,64 @@ function sanitizeStage(stage: any) {
   };
 }
 
+/** A model's CEFR point, as a staff-only draft for a teacher to approve.
+ *  Never a cefr_assessments row: families read that table (and the database
+ *  refuses a model-made row there). A failed save loses the draft and
+ *  shares nothing. */
+async function saveDraft(sb: any, row: {
+  student_id: string; class_id: string | null; source: "level_defense_evidence" | "level_defense_test";
+  source_id: string | null; level: string; confidence: unknown; evidence: unknown; requested_by: string;
+}): Promise<string | null> {
+  const { data, error } = await sb
+    .from("cefr_assessment_drafts")
+    .insert({
+      student_id: row.student_id,
+      class_id: row.class_id,
+      source: row.source,
+      source_id: row.source_id,
+      level: row.level,
+      level_score: levelIdx(row.level),
+      confidence: typeof row.confidence === "number" ? row.confidence : null,
+      evidence: String(row.evidence || "").slice(0, 1000),
+      requested_by: row.requested_by,
+    })
+    .select("id")
+    .single();
+  if (error) {
+    console.error(`cefr-defense: CEFR draft (${row.source}) not saved:`, error.message);
+    return null;
+  }
+  return data?.id ?? null;
+}
+
+/** A child's view of a test: progress only. No result, no routed level. */
+function childTest(test: any) {
+  const stages = Array.isArray(test.stages) ? test.stages : [];
+  const active = test.status === "graded" ? null : sanitizeStage(stages[test.current_stage - 1]);
+  if (active) delete (active as any).level;
+  return {
+    id: test.id,
+    status: test.status,
+    target_level: test.target_level,     // the teacher's level
+    current_stage: test.current_stage,
+    total_stages: 3,
+    active_stage: active,
+    result: null,
+    submitted: test.status === "graded",
+    created_at: test.created_at,
+  };
+}
+
+/** A child's view of the claim status: never an AI verdict. */
+function childClaimStatus(tests: any[], seen: { approved: boolean; setByTeacher: boolean; discarded: boolean }): string {
+  if (tests.some((t) => t.status !== "graded")) return "test_assigned";
+  if (seen.approved) return "reviewed";
+  if (seen.setByTeacher) return "set_by_teacher";
+  if (seen.discarded) return "reviewed";
+  if (tests.some((t) => t.status === "graded")) return "submitted";
+  return "set_by_teacher";
+}
+
 function sanitizeTest(test: any) {
   const stages = Array.isArray(test.stages) ? test.stages : [];
   return {
@@ -181,25 +273,26 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
+  // The spend gate comes first: a real session with a role, and a
+  // per-account limit, before the body or any row is read.
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
+
   const sb = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
   try {
-    const authHeader = req.headers.get("Authorization") || "";
-    const { data: { user } } = await sb.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (!user) return respond({ success: false, error: "Unauthorized" }, 401);
-
-    const { data: roleRows } = await sb.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = new Set((roleRows || []).map((r: any) => r.role));
+    const user = { id: spender.userId };
+    const roles = spender.roles;
     const isStaff = roles.has("admin") || roles.has("teacher");
     // A teacher acts only on children of their own classes (audit F-04):
     // the role alone let any teacher or TA set a level, send a child's error
     // log, vocabulary and date of birth to OpenAI, or set a test, for ANY
     // student id. Same predicate as the students row policy
     // (can_view_student_in_class); admins pass. Fails closed.
-    const caller: CallerIdentity = { userId: user.id, roles: new Set([...roles].map(String)), isServiceRole: false };
+    const caller = spender;
     const staffHolds = async (studentId: string): Promise<boolean> =>
       isStaff && !!studentId && (await callerHoldsStudent(sb, caller, studentId));
     const notYours = () => respond({ success: false, error: "That child is not in one of your classes" }, 403);
@@ -209,6 +302,12 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "");
+    // The OpenAI actions' own limit, counted right before the model call.
+    const overSpend = (): Response | null => {
+      if (!SPENDING_ACTIONS.has(action)) return null;
+      const rl = checkRateLimit(`cefr-defense:spend:${user.id}`, SPEND.limit, SPEND.windowMs, "user");
+      return rl.limited ? rateLimitResponse(rl.resetAt, corsHeaders) : null;
+    };
 
     // Resolve the acting student (for student-initiated actions).
     const { data: ownStudent } = await sb
@@ -253,6 +352,7 @@ Deno.serve(async (req) => {
       const { data: claim } = await sb
         .from("cefr_level_claims").select("*").eq("student_id", studentId).maybeSingle();
       if (!claim) return respond({ success: false, error: "Set a level first" }, 404);
+      { const limited = overSpend(); if (limited) return limited; }
 
       const [{ data: metricsRows }, { data: errRows }, { data: vocabRows }, { data: histRows }, { data: profileRow }, { data: studentRow }] =
         await Promise.all([
@@ -333,21 +433,22 @@ Deno.serve(async (req) => {
         .update({ evidence: verdict, evidence_checked_at: new Date().toISOString(), status, updated_at: new Date().toISOString() })
         .eq("id", claim.id);
 
-      // Feed the growth chart when the audit is conclusive.
+      // A conclusive audit drafts a growth-chart point for a teacher to approve.
+      let cefrDraftId: string | null = null;
       if (verdict.recommended_level && LEVELS.includes(verdict.recommended_level) && verdict.verdict !== "insufficient_evidence") {
-        await sb.from("cefr_assessments").insert({
+        cefrDraftId = await saveDraft(sb, {
           student_id: studentId,
           class_id: claim.class_id,
-          level: verdict.recommended_level,
-          level_score: levelIdx(verdict.recommended_level),
-          confidence: typeof verdict.confidence === "number" ? verdict.confidence : null,
           source: "level_defense_evidence",
-          evidence: String(verdict.rationale || "").slice(0, 1000),
-          created_by: user.id,
+          source_id: claim.id,
+          level: verdict.recommended_level,
+          confidence: verdict.confidence,
+          evidence: verdict.rationale,
+          requested_by: user.id,
         });
       }
 
-      return respond({ success: true, verdict, status });
+      return respond({ success: true, verdict, status, cefr_draft_id: cefrDraftId });
     }
 
     // ── generate_test ────────────────────────────────────────────────────
@@ -358,6 +459,7 @@ Deno.serve(async (req) => {
       const { data: claim } = await sb
         .from("cefr_level_claims").select("*").eq("student_id", studentId).maybeSingle();
       if (!claim) return respond({ success: false, error: "Set a level first" }, 404);
+      { const limited = overSpend(); if (limited) return limited; }
 
       const { data: studentRow } = await sb
         .from("students").select("date_of_birth").eq("id", studentId).maybeSingle();
@@ -402,17 +504,58 @@ Deno.serve(async (req) => {
         sb.from("cefr_defense_tests").select("*").eq("student_id", studentId)
           .order("created_at", { ascending: false }).limit(3),
       ]);
+      if (staffOk) {
+        return respond({
+          success: true,
+          claim: claim
+            ? { claimed_level: claim.claimed_level, status: claim.status, evidence: claim.evidence, evidence_checked_at: claim.evidence_checked_at }
+            : null,
+          tests: (tests || []).map(sanitizeTest),
+        });
+      }
+      // The child: the teacher's level, progress, and a level only once a
+      // teacher approved it (published points only; fails closed to none).
+      const testIds = (tests || []).map((t: any) => t.id);
+      let approved: { level: string; assessed_at: string } | null = null;
+      if (testIds.length) {
+        const { data: pts, error: ptsErr } = await sb.from("cefr_assessments")
+          .select("level, assessed_at, source_id")
+          .eq("student_id", studentId)
+          .eq("source", "level_defense_test")
+          .in("source_id", testIds)
+          .order("assessed_at", { ascending: false })
+          .limit(1);
+        if (!ptsErr && pts && pts[0]) approved = { level: pts[0].level, assessed_at: pts[0].assessed_at };
+      }
+      // After the latest graded test, has a teacher acted? (Fails closed: a
+      // lookup error leaves the child at 'submitted', never shows a level.)
+      const graded = (tests || []).filter((t: any) => t.status === "graded");
+      let discarded = false, setByTeacher = false;
+      let teacherLevel: { level: string; assessed_at: string } | null = null;
+      if (!approved && graded.length) {
+        const last = graded[0];
+        const gradedAt = String(last.updated_at || last.created_at || "");
+        const [{ data: dr, error: drErr }, { data: manual, error: mErr }] = await Promise.all([
+          sb.from("cefr_assessment_drafts").select("status, source_id")
+            .eq("student_id", studentId).eq("source", "level_defense_test").in("source_id", graded.map((t: any) => t.id)),
+          sb.from("cefr_assessments").select("level, assessed_at, created_at")
+            .eq("student_id", studentId).eq("source", "manual")
+            .order("created_at", { ascending: false }).limit(5),
+        ]);
+        discarded = !drErr && (dr || []).some((d: any) => d.source_id === last.id && d.status === "discarded");
+        const m = mErr ? null : (manual || []).find((p: any) => String(p.created_at) > gradedAt);
+        if (m) teacherLevel = { level: m.level, assessed_at: m.assessed_at };
+        const relevelled = !!claim && claim.status === "unverified" && String(claim.updated_at || "") > gradedAt;
+        setByTeacher = !!m || relevelled;
+      }
       return respond({
         success: true,
         claim: claim
-          ? {
-              claimed_level: claim.claimed_level,
-              status: claim.status,
-              evidence: staffOk ? claim.evidence : (claim.evidence ? { verdict: claim.evidence.verdict, rationale: claim.evidence.rationale } : null),
-              evidence_checked_at: claim.evidence_checked_at,
-            }
+          ? { claimed_level: claim.claimed_level, status: childClaimStatus(tests || [], { approved: !!approved, setByTeacher, discarded }), evidence: null, evidence_checked_at: null }
           : null,
-        tests: (tests || []).map(sanitizeTest),
+        tests: (tests || []).map(childTest),
+        approved_level: approved,
+        teacher_level: teacherLevel,
       });
     }
 
@@ -424,7 +567,8 @@ Deno.serve(async (req) => {
       const { data: test } = await sb
         .from("cefr_defense_tests").select("*").eq("id", testId).maybeSingle();
       if (!test) return respond({ success: false, error: "Test not found" }, 404);
-      if (!(await staffHolds(test.student_id)) && ownStudent?.id !== test.student_id) {
+      const staffView = await staffHolds(test.student_id);
+      if (!staffView && ownStudent?.id !== test.student_id) {
         return respond({ success: false, error: "Not your test" }, 403);
       }
       if (test.status === "graded") return respond({ success: false, error: "Already graded" }, 400);
@@ -432,6 +576,7 @@ Deno.serve(async (req) => {
       const stages: any[] = Array.isArray(test.stages) ? test.stages : [];
       const stage = stages[test.current_stage - 1];
       if (!stage) return respond({ success: false, error: "Stage missing" }, 500);
+      { const limited = overSpend(); if (limited) return limited; }
 
       // Grade the MCQs server-side.
       const answerMap = new Map(answers.map((a) => [String(a.item_id), a.answer]));
@@ -482,7 +627,9 @@ Deno.serve(async (req) => {
           })
           .eq("id", testId).select("*").single();
         if (error) throw error;
-        return respond({ success: true, test: sanitizeTest(updated), stage_score: score });
+        return staffView
+          ? respond({ success: true, test: sanitizeTest(updated), stage_score: score })
+          : respond({ success: true, test: childTest(updated) });
       }
 
       // Stage 3 submitted — grade writing + synthesize the final estimate.
@@ -537,19 +684,20 @@ Deno.serve(async (req) => {
         .update({ status: defended ? "defended" : "not_defended", updated_at: new Date().toISOString() })
         .eq("id", test.claim_id);
 
-      await sb.from("cefr_assessments").insert({
+      await saveDraft(sb, {
         student_id: test.student_id,
         class_id: test.class_id,
-        level: estimate,
-        level_score: levelIdx(estimate),
-        confidence: typeof result.confidence === "number" ? result.confidence : null,
         source: "level_defense_test",
         source_id: testId,
-        evidence: String(result.rationale || "").slice(0, 1000),
-        created_by: user.id,
+        level: estimate,
+        confidence: result.confidence,
+        evidence: result.rationale,
+        requested_by: user.id,
       });
 
-      return respond({ success: true, test: sanitizeTest(graded), stage_score: score });
+      return staffView
+        ? respond({ success: true, test: sanitizeTest(graded), stage_score: score })
+        : respond({ success: true, test: childTest(graded), message: CHILD_SUBMITTED });
     }
 
     return respond({ success: false, error: `Unknown action: ${action}` }, 400);
