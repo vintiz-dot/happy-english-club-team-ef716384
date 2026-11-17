@@ -392,6 +392,18 @@ await section("a TA lookup that is not exactly one row fails closed", async () =
 });
 
 // ===================================================================== 2
+// CALC-fix round 1 (M-1): calculate-payroll appends two display-only fields
+// after payrollData - lostIncomeTotal and lostIncomeOnly. Everything before
+// them must still be the very same bytes; an answer without payrollData
+// (an error, a 403) must be identical outright.
+const sameAnswer = (now, before) => {
+  if (now === before) return true;
+  if (!before.endsWith("}") || !now.startsWith(before.slice(0, -1) + ',"lostIncomeTotal":')) return false;
+  const j = JSON.parse(now);
+  const keys = Object.keys(j);
+  return keys.length === Object.keys(JSON.parse(before)).length + 2 && keys.slice(-2).join() === "lostIncomeTotal,lostIncomeOnly" &&
+    Array.isArray(j.lostIncomeOnly) && (j.lostIncomeTotal === null || typeof j.lostIncomeTotal === "number");
+};
 await section(`nothing else moved since ${BASE}`, async () => {
   if (!baseFn) { ok(`base ${BASE} available from git`, false); return; }
   const cases = [
@@ -414,7 +426,7 @@ await section(`nothing else moved since ${BASE}`, async () => {
   for (const [label, token, body] of cases) {
     const now = await call(fn, token, body);
     const before = await call(baseFn, token, body);
-    ok(`${label}: same status and byte-identical answer`, now.status === before.status && now.text === before.text, { now: now.text.slice(0, 300), before: before.text.slice(0, 300) });
+    ok(`${label}: same status and byte-identical answer (apart from the month-wide Lost Income appended)`, now.status === before.status && sameAnswer(now.text, before.text), { now: now.text.slice(0, 300), before: before.text.slice(0, 300) });
     eq(`${label}: same writes`, writes(now).map((e) => [e.table, e.op, e.payload]), writes(before).map((e) => [e.table, e.op, e.payload]));
   }
   // The one intended difference: the TA's own call.
@@ -477,7 +489,7 @@ await section(`every figure as at ${PREV}, for every caller`, async () => {
     const now = await call(fn, token, body);
     const before = await call(prevFn, token, body);
     rows += (now.json?.payrollData ?? []).length;
-    ok(`${label}: same status and byte-identical answer`, now.status === before.status && now.text === before.text, { now: now.text.slice(0, 300), before: before.text.slice(0, 300) });
+    ok(`${label}: same status and byte-identical answer (apart from the month-wide Lost Income appended)`, now.status === before.status && sameAnswer(now.text, before.text), { now: now.text.slice(0, 300), before: before.text.slice(0, 300) });
     eq(`${label}: same writes`, writes(now).map((e) => [e.table, e.op, e.payload]), writes(before).map((e) => [e.table, e.op, e.payload]));
   }
   ok(`  the comparison covered real rows (${rows} payroll rows across ${cases.length} calls)`, rows >= 30, rows);
