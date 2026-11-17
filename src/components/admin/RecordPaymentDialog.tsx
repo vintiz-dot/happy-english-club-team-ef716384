@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { getPaymentStatus, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
-import { setRecordedPayment } from "@/lib/recordedPaymentWrite";
+import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
 
 interface RecordPaymentDialogProps {
   open: boolean;
@@ -28,10 +28,12 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
   const tuitionMonth = useTuitionMonthConfirmation(month, open);
   const [mode, setMode] = useState<"payment" | "correction">("payment");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(() => receiptDateToday());
   const [method, setMethod] = useState("Cash");
   const [memo, setMemo] = useState("");
   const [saving, setSaving] = useState(false);
+  // One key per attempt (src/lib/recordPayment.ts): a double click records once.
+  const paymentKey = useRef(newPaymentKey());
   const queryClient = useQueryClient();
 
   const studentName = item?.students?.full_name || "Student";
@@ -86,62 +88,32 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
 
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // The label is the one rule (src/lib/invoiceStatus.ts, mirror of the
-      // edge functions' copy); undefined leaves an admin's 'credit' alone.
-      const newStatus = labelForPayment(item?.status, newTotalPaid, payable, monthCharged(item ?? {}));
-
-      // Saved only if the bill still holds what this screen showed
-      // (compare-and-set, src/lib/recordedPaymentWrite.ts): a payment saved
-      // meanwhile from another screen is never overwritten.
-      const saved = await setRecordedPayment(supabase, {
-        invoiceId: isPlaceholder ? null : item.id,
+      // record-payment writes the payment, its two ledger legs and the bill
+      // together (D5 G-1), against the figure this screen showed: a payment
+      // saved meanwhile from another screen is never overwritten. It also
+      // writes the audit row and creates a missing bill through calculate-tuition.
+      const saved = await recordPayment(supabase, {
         studentId: item.student_id,
         month,
-        expected: alreadyPaid,
-        next: newTotalPaid,
-        fields: {
-          ...(newStatus ? { status: newStatus } : {}),
-          ...(isPlaceholder ? {} : { updated_at: new Date().toISOString(), updated_by: user?.id }),
-        },
-        newRow: {
-          base_amount: item.base_amount || 0,
-          discount_amount: item.discount_amount || 0,
-          total_amount: item.total_amount || 0,
-          paid_amount: 0,
-          carry_in_credit: item.carry_in_credit || 0,
-          carry_in_debt: item.carry_in_debt || 0,
-          created_by: user?.id,
-        },
+        kind: mode,
+        amount: enteredAmount,
+        method,
+        occurredAt: date,
+        memo: memo || null,
+        idempotencyKey: paymentKey.current,
+        ...(isPlaceholder ? {} : { expectedRecorded: alreadyPaid }),
       });
+      // A reply ends the attempt: the next one is a new payment. No reply
+      // (network): the retry keeps the key, so it cannot pay twice.
+      if (saved.ok || saved.answered) paymentKey.current = newPaymentKey();
       if (!saved.ok) {
-        // conflict: nothing written; reload so the admin sees the bill as it is
+        // Nothing was recorded (the function says why); reload so the admin sees the bill as it is
         toast.error(saved.message);
         queryClient.invalidateQueries({ queryKey: ["admin-tuition-live", month] });
         queryClient.invalidateQueries({ queryKey: ["student-tuition", item.student_id, month] });
         return;
       }
-
-      // Audit log
-      await supabase.from("audit_log").insert({
-        entity: "invoice",
-        entity_id: isPlaceholder ? item.student_id : item.id,
-        action: mode === "correction" ? "payment_correction" : "record_payment",
-        actor_user_id: user?.id,
-        diff: {
-          student_id: item.student_id,
-          month,
-          previous_recorded_payment: alreadyPaid,
-          payment_amount: actualAmount,
-          new_recorded_payment: newTotalPaid,
-          payment_date: date,
-          payment_method: method,
-          memo: memo || null,
-          invoice_created: isPlaceholder,
-          type: mode,
-        },
-      });
+      const recordedAfter = saved.data!.recordedAfter;
 
       // Optimistic cache update — patch just this student instantly
       queryClient.setQueryData(["admin-tuition-live", month], (old: any[] | undefined) => {
@@ -149,12 +121,12 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
         return old.map((row: any) => {
           if (row.student_id !== item.student_id) return row;
           const fp = row.finalPayable ?? 0;
-          const debt = Math.max(0, fp - newTotalPaid);
-          const credit = Math.max(0, newTotalPaid - fp);
-          const status = labelForPayment(row.status, newTotalPaid, fp, monthCharged(row)) ?? row.status;
+          const debt = Math.max(0, fp - recordedAfter);
+          const credit = Math.max(0, recordedAfter - fp);
+          const status = labelForPayment(row.status, recordedAfter, fp, monthCharged(row)) ?? row.status;
           return {
-            ...row, 
-            recorded_payment: newTotalPaid, 
+            ...row,
+            recorded_payment: recordedAfter,
             balance: debt > 0 ? debt : -credit, 
             carry_out_debt: debt, 
             carry_out_credit: credit, 
@@ -183,7 +155,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
 
   const handleClose = () => {
     setAmount("");
-    setDate(new Date().toISOString().split("T")[0]);
+    setDate(receiptDateToday());
     setMethod("Cash");
     setMemo("");
     setMode("payment");

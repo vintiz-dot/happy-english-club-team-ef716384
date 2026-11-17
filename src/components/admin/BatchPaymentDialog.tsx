@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
-import { CHANGED_SINCE_LOADED, setRecordedPayment } from "@/lib/recordedPaymentWrite";
+import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
+import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
 
 interface BatchPaymentDialogProps {
   open: boolean;
@@ -35,11 +36,19 @@ interface StudentPaymentEntry {
 export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: BatchPaymentDialogProps) => {
   const tuitionMonth = useTuitionMonthConfirmation(month, open);
   const [entries, setEntries] = useState<Record<string, string>>({});
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(() => receiptDateToday());
   const [method, setMethod] = useState("Cash");
   const [memo, setMemo] = useState("");
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState<string[]>([]);
+  // One key per student per attempt (src/lib/recordPayment.ts): a second
+  // click, or a retry after no reply, records nothing more.
+  const paymentKeys = useRef(new Map<string, string>());
+  const keyFor = (studentId: string) => {
+    let k = paymentKeys.current.get(studentId);
+    if (!k) { k = newPaymentKey(); paymentKeys.current.set(studentId, k); }
+    return k;
+  };
   const queryClient = useQueryClient();
 
   const getOutstanding = (item: any) => Math.max(0, (item.finalPayable ?? 0) - (item.recorded_payment ?? 0));
@@ -87,62 +96,40 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
       let failCount = 0;
       const savedIds = new Set<string>();
       const conflicts: string[] = [];
+      const refusals: string[] = [];
+      const recordedAfter = new Map<string, number>();
 
       for (const item of validEntries) {
         const enteredAmount = parseInt(entries[item.student_id] || "0") || 0;
         if (enteredAmount <= 0) continue;
 
         const alreadyPaid = item.recorded_payment ?? 0;
-        const newTotalPaid = alreadyPaid + enteredAmount;
-        const payable = item.finalPayable ?? 0;
         const isPlaceholder = !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(String(item.id ?? ""));
-
-        // The one rule (src/lib/invoiceStatus.ts); undefined keeps an admin's 'credit'.
-        const newStatus = labelForPayment((item as any).status, newTotalPaid, payable, monthCharged(item as any));
+        const name = item.students?.full_name || "a student";
 
         try {
-          // Saved only if the bill still holds what this screen showed
-          // (compare-and-set, src/lib/recordedPaymentWrite.ts).
-          const saved = await setRecordedPayment(supabase, {
-            invoiceId: isPlaceholder ? null : item.id,
+          // record-payment (D5 G-1): payment row, both ledger legs and the
+          // bill together, against the figure this screen showed. It writes
+          // the audit row and creates a missing bill through calculate-tuition.
+          const saved = await recordPayment(supabase, {
             studentId: item.student_id,
             month,
-            expected: alreadyPaid,
-            next: newTotalPaid,
-            fields: {
-              ...(newStatus ? { status: newStatus } : {}),
-              ...(isPlaceholder ? {} : { updated_at: new Date().toISOString(), updated_by: user?.id }),
-            },
-            newRow: {
-              base_amount: item.base_amount || 0,
-              discount_amount: item.discount_amount || 0,
-              total_amount: item.total_amount || 0,
-              paid_amount: 0,
-              carry_in_credit: item.carry_in_credit || 0,
-              carry_in_debt: item.carry_in_debt || 0,
-              created_by: user?.id,
-            },
+            kind: "payment",
+            amount: enteredAmount,
+            method,
+            occurredAt: date,
+            memo: memo || "Batch payment",
+            idempotencyKey: keyFor(item.student_id),
+            ...(isPlaceholder ? {} : { expectedRecorded: alreadyPaid }),
           });
-          if (!saved.ok) { conflicts.push(item.students?.full_name || "a student"); failCount++; continue; }
-
-          await supabase.from("audit_log").insert({
-            entity: "invoice",
-            entity_id: isPlaceholder ? item.student_id : item.id,
-            action: "batch_record_payment",
-            actor_user_id: user?.id,
-            diff: {
-              student_id: item.student_id,
-              month,
-              previous_recorded_payment: alreadyPaid,
-              payment_amount: enteredAmount,
-              new_recorded_payment: newTotalPaid,
-              payment_date: date,
-              payment_method: method,
-              memo: memo || null,
-              invoice_created: isPlaceholder,
-              batch: true,
-            },
-          });
+          if (saved.ok || saved.answered) paymentKeys.current.delete(item.student_id);
+          if (!saved.ok) {
+            if (saved.conflict) conflicts.push(name);
+            else refusals.push(`${name}: ${saved.message}`);
+            failCount++;
+            continue;
+          }
+          recordedAfter.set(item.student_id, saved.data!.recordedAfter);
 
           successCount++;
           savedIds.add(item.student_id);
@@ -158,9 +145,9 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
         if (!old) return old;
         return old.map((row: any) => {
           if (!savedIds.has(row.student_id)) return row; // only what was really saved
-          const amt = parseInt(entries[row.student_id] || "0") || 0;
-          if (amt <= 0) return row;
-          const newRecorded = (row.recorded_payment ?? 0) + amt;
+          // What the function says the bill now records.
+          const newRecorded = recordedAfter.get(row.student_id);
+          if (newRecorded === undefined) return row;
           const fp = row.finalPayable ?? 0;
           const debt = Math.max(0, fp - newRecorded);
           const credit = Math.max(0, newRecorded - fp);
@@ -180,6 +167,8 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
         // conflict: those bills changed since the list was loaded; nothing was written to them
         toast.error(`${conflicts.join(", ")}: ${CHANGED_SINCE_LOADED}`);
       }
+      // Each refusal in the function's own words: nothing was recorded for them.
+      for (const r of refusals) toast.error(r);
 
       onSuccess?.();
       setTimeout(() => handleClose(), 600);
@@ -193,7 +182,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
 
   const handleClose = () => {
     setEntries({});
-    setDate(new Date().toISOString().split("T")[0]);
+    setDate(receiptDateToday());
     setMethod("Cash");
     setMemo("");
     setCompleted([]);

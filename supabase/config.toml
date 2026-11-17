@@ -192,6 +192,9 @@ verify_jwt = true
 [functions.delete-payment]
 verify_jwt = true
 
+[functions.record-payment]
+verify_jwt = true
+
 [functions.family-payment]
 verify_jwt = true
 
