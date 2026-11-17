@@ -20,3 +20,7 @@ SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 ALLOWED_ORIGINS = "https://user.hanoienglish.com,https://user.hanoienglish.vip,http://localhost:8080,http://localhost:5173"
 ALLOWED_ORIGIN_SUFFIX = ".happy-class-mate.pages.dev"
 ASSET_ORIGIN = "https://user.hanoienglish.com"
+
+# Request logs (free plan: Workers Logs), so a failed print can be traced.
+[observability]
+enabled = true

@@ -12,7 +12,7 @@ import JSZip from "jszip";
 
 import type { InvoiceData, BankInfo } from "@/lib/invoice/types";
 import { fetchInvoiceData } from "@/lib/invoice/fetchInvoiceData";
-import { tryMakeDocument, invoiceDocData } from "@/lib/hecDocs";
+import { makeDocument, invoiceDocData, HecDocsUnavailable, type HecDocument } from "@/lib/hecDocs";
 import { InvoicePrintView } from "@/components/invoice/InvoicePrintView";
 
 type Pair = { invoice: InvoiceData; bankInfo: BankInfo | null };
@@ -44,6 +44,9 @@ export function TuitionBulkDownload({ month }: { month: string }) {
   const [progress, setProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
   const [ready, setReady] = useState(false);
   const pdfMapRef = useRef<Map<string, Blob>>(new Map());
+  // Which generator made each student's PDF, and why the old one was used.
+  const [madeWith, setMadeWith] = useState<Record<string, "new" | "old">>({});
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
   const pageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Pickers
@@ -250,20 +253,45 @@ export function TuitionBulkDownload({ month }: { month: string }) {
       setBuilding(true);
       setProgress({ done: 0, total: pairs.length });
 
-      // HEC Docs first (premium, text-based, paginated invoices). If it fails
-      // once, the rest of this run uses the previous generator directly.
+      setMadeWith({});
+      setFallbackReason(null);
+
+      // HEC Docs first (premium, text-based, paginated invoices), each invoice
+      // tried twice: the free printer is sometimes briefly busy. An invoice
+      // that still fails uses the previous generator. Only when the printer
+      // itself fails for 3 invoices in a row does the rest of the run skip it.
       let useHecDocs = true;
+      let printerFailures = 0;
+      let oldCount = 0;
+      const makeNew = async (pair: Pair): Promise<HecDocument> => {
+        const data = await invoiceDocData(pair.invoice, pair.bankInfo, month);
+        try {
+          return await makeDocument("invoice", data, { bulk: true });
+        } catch (e) {
+          if (!(e instanceof HecDocsUnavailable) || e.status === 401) throw e;
+          await new Promise((r) => setTimeout(r, 5_000));
+          return await makeDocument("invoice", data, { bulk: true });
+        }
+      };
       for (const pair of pairs) {
         const sid = pair.invoice.student.id;
         if (useHecDocs) {
-          const doc = await tryMakeDocument("invoice", await invoiceDocData(pair.invoice, pair.bankInfo, month), { bulk: true });
-          if (doc) {
+          try {
+            const doc = await makeNew(pair);
             pdfMapRef.current.set(sid, doc.blob);
+            setMadeWith((m) => ({ ...m, [sid]: "new" }));
+            printerFailures = 0;
             setProgress((p) => ({ done: Math.min(p.done + 1, p.total), total: p.total }));
             continue;
+          } catch (e) {
+            const why = (e as Error)?.message ?? String(e);
+            console.warn(`[hec-docs] invoice ${pair.invoice.student.full_name}: using the previous generator (${why})`);
+            setFallbackReason((r) => r ?? why);
+            if (e instanceof HecDocsUnavailable && ++printerFailures >= 3) useHecDocs = false;
           }
-          useHecDocs = false;
         }
+        setMadeWith((m) => ({ ...m, [sid]: "old" }));
+        oldCount += 1;
         const node = pageRefs.current[sid];
         if (!node) {
           setProgress((p) => ({ done: Math.min(p.done + 1, p.total), total: p.total }));
@@ -321,6 +349,9 @@ export function TuitionBulkDownload({ month }: { month: string }) {
         toast({ title: "Some PDFs failed", description: `${pdfMapRef.current.size}/${pairs.length} ready` });
       } else {
         toast({ title: "PDFs ready", description: `${pairs.length} generated` });
+      }
+      if (oldCount) {
+        toast({ title: "Some invoices use the old design", description: `${oldCount} of ${pairs.length}: the new design could not be made. The reason is shown in the window.` });
       }
     };
 
@@ -468,10 +499,52 @@ export function TuitionBulkDownload({ month }: { month: string }) {
             </div>
           </div>
 
+          {fallbackReason && !building && (
+            <div className="no-print mb-3 rounded-hec-md border border-hec-line-strong bg-hec-sunken p-3 text-hec-small text-hec-ink">
+              {Object.values(madeWith).filter((v) => v === "old").length} invoice(s) used the old design because the new one could not be made: {fallbackReason}
+            </div>
+          )}
+
           {pairs.length === 0 ? (
             <div className="text-hec-small text-hec-ink-soft">No invoices loaded</div>
           ) : (
-            <div className="space-y-4">
+            <ul className="no-print divide-y divide-hec-line rounded-hec-md border border-hec-line">
+              {sortedPairs.map((p) => {
+                const sid = p.invoice.student.id;
+                const how = madeWith[sid];
+                return (
+                  <li key={sid} className="flex items-center justify-between gap-3 px-3 py-2 text-hec-small">
+                    <span className="text-hec-ink">{p.invoice.student.full_name}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-hec-ink-soft">
+                        {how === "new" ? "New design" : how === "old" ? "Old design" : building ? "Waiting…" : "Not made"}
+                      </span>
+                      {pdfMapRef.current.get(sid) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const blob = pdfMapRef.current.get(sid);
+                            if (!blob) return;
+                            const url = URL.createObjectURL(blob);
+                            window.open(url, "_blank", "noopener");
+                            setTimeout(() => URL.revokeObjectURL(url), 60_000);
+                          }}
+                        >
+                          Open
+                        </Button>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {/* The old generator photographs these pages, so they stay laid out,
+              off screen, for any invoice the new design could not make. */}
+          {pairs.length > 0 && (
+            <div aria-hidden="true" style={{ position: "fixed", left: "-10000px", top: 0 }}>
               {pairs.map((p) => (
                 <div
                   key={p.invoice.student.id}
