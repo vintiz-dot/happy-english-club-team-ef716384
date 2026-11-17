@@ -152,11 +152,22 @@ The chat assistant's CEFR tool reads `cefr_assessments` through the caller's own
 | `transcribe gate` (`transcribe-gate.test.mjs`, updated) | 133 passed, 0 failed |
 | `ai spend gate (F-02)` (`ai-gate.test.mjs`, transcribe-lesson-audio section added) | 293 passed, 0 failed |
 | `chat assistant` | 201 passed, 0 failed |
-| `transcript drafts (D-26)` / `transcript review probes` | see full run |
-| `edge functions typecheck` | 5 passed, 0 failed |
-| full `node scripts/pgtest/run.mjs` | see below |
-| `tsc --noEmit -p tsconfig.app.json` | see below |
-| `npm run test:bun` | see below |
+| `transcript drafts (D-26)` / `transcript review probes` | 221 / 34 passed, 0 failed |
+| `edge functions typecheck` / `app typecheck` (inside run.mjs) | 5 / 3 passed, 0 failed |
+| full `node scripts/pgtest/run.mjs` (real clock, started 16:2x Hanoi) | 6258 assertions across 91 suites, 36 suites failed: every failure is harness lag, none loads a file this work changed (below) |
+| `tsc --noEmit -p tsconfig.app.json` standalone | exit 0 (173 s) |
+| `npm run test:bun` | 142 pass, 3 fail, 2 errors (14 files). The failures are `src/components/admin/SettleBillModal.tsx` missing and `scripts/fixtures/rich-text/dom` missing. This branch changes no `scripts/*.ts` and no file those tests read, so main gives the same result. |
+
+The 36 failed suites, in two groups:
+
+- **Crashes on a missing file (`Node.js v24` crash).** The conductor tree's suites read files that `origin/main` does not have:
+  - D4 migrations (`20261114093000_d4_lesson_pay_guard.sql`, `20261114094000_d4_money_inputs_guard.sql`);
+  - `scripts/ROLLBACK-d4-*.sql`;
+  - `docs/evidence/S1-*`, `S2-audit-medium-low.md` and `T2-class-recordings-access.md`;
+  - `scripts/lesson-eval/teardown_audit_eval.sql`, `scripts/csp/cfHeaders.mjs`, `scripts/CREDIT-past-unapplied-cash.sql` and `scripts/CHECK-unlinked-accounts.sql`.
+- **Assertion failures in money and payroll code this work does not touch:** invoice status (named as known in the brief), removed money features, session guard functions, d4 floors / register / class fee / rollback / apply chain, teacher payroll function, and TA payroll function.
+
+Every suite that loads a changed file is green: cefr drafts, transcribe gate, ai spend gate, chat assistant, transcript drafts, transcript review probes, edge functions typecheck and app typecheck.
 
 `cefr-drafts.test.mjs`, in three parts:
 
