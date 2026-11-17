@@ -89,6 +89,22 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._approval_impact_tier(p_impact jsonb, p_tier integer)",
+      "identity_arguments": "p_impact jsonb, p_tier integer",
+      "md5_prosrc": "e56101c9ce0c813223a119c0ca95a611",
+      "proname": "_approval_impact_tier",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._approval_lock_money(p_entity text, p_op text, p_args jsonb)",
       "identity_arguments": "p_entity text, p_op text, p_args jsonb",
       "md5_prosrc": "c8346635aa140529c169824f2237fa59",
@@ -123,7 +139,7 @@
       },
       "identity": "public._approval_plan(p_kind text, p_rpc text, p_params jsonb, p_uid uuid, p_lock boolean, p_strict boolean, p_token text)",
       "identity_arguments": "p_kind text, p_rpc text, p_params jsonb, p_uid uuid, p_lock boolean, p_strict boolean, p_token text",
-      "md5_prosrc": "f0f9f4ca37061c673f991647caedd9e2",
+      "md5_prosrc": "e81e78dff194bc39a5c0704c7d839b4b",
       "proname": "_approval_plan",
       "security_definer": true,
       "volatility": "v"
@@ -315,7 +331,7 @@
       },
       "identity": "public._change_approval_settings_guard()",
       "identity_arguments": "",
-      "md5_prosrc": "aff2ebca0abee07a1eae664f5ab8d6d2",
+      "md5_prosrc": "bed9e99d3d83088cae0f8a705bc0197c",
       "proname": "_change_approval_settings_guard",
       "security_definer": false,
       "volatility": "v"
@@ -747,7 +763,7 @@
       },
       "identity": "public._money_change_full_plan(p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text)",
       "identity_arguments": "p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text",
-      "md5_prosrc": "5bcb5952f4f8f2e7fbe3d7747846e2dd",
+      "md5_prosrc": "b27d8f2f6fd43ed006ce43ff180359c6",
       "proname": "_money_change_full_plan",
       "security_definer": true,
       "volatility": "s"
@@ -1387,7 +1403,7 @@
       },
       "identity": "public._pay_adjustment_approval()",
       "identity_arguments": "",
-      "md5_prosrc": "211578228b5c4d338fc40184fed4e3ba",
+      "md5_prosrc": "806f0d8933c4d62e4bd72ee85e1c5a06",
       "proname": "_pay_adjustment_approval",
       "security_definer": true,
       "volatility": "v"
@@ -1693,6 +1709,22 @@
       "identity_arguments": "p_rows jsonb",
       "md5_prosrc": "f12af8b7b07755ad29e7a670bd4d727d",
       "proname": "carry_payroll_adjustments",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.change_approval_check(p_kind text, p_rpc text, p_params jsonb)",
+      "identity_arguments": "p_kind text, p_rpc text, p_params jsonb",
+      "md5_prosrc": "499fa65e20bc43335d8bbf44d7410a4e",
+      "proname": "change_approval_check",
       "security_definer": true,
       "volatility": "v"
     },
@@ -3731,10 +3763,10 @@
     {
       "enabled": "O",
       "function": "_pay_adjustment_approval",
-      "md5_def": "8ec23d552372020dac4a5c2985833598",
+      "md5_def": "6b2bed944bf21019241f031798b6fa47",
       "name": "zz_pay_adjustment_approval",
       "table": "payroll_adjustments",
-      "tgtype": 7
+      "tgtype": 31
     },
     {
       "enabled": "O",

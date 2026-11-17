@@ -138,7 +138,9 @@ export async function refreshApprovedChange(service: any, asCaller: any, request
         if (table === 'money') {
           const t = await refreshMoneyChange(service, asCaller, id);
           per.push('error' in t ? { override_id: id, status: 'failed', error: t.error.code }
-            : { override_id: id, status: t.status, remaining: t.remaining, failed: t.failed, event_recorded: t.event_recorded });
+            : { override_id: id, status: t.status, remaining: t.remaining, failed: t.failed,
+                // nothing left to do this call: no event was due
+                event_recorded: t.results.length > 0 ? t.event_recorded : undefined });
           continue;
         }
         const { data: o, error: oErr } = await asCaller.from('session_cancel_overrides')

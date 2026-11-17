@@ -342,9 +342,13 @@ const SUITES = [
   // from guard-fingerprint.mjs D4_BUILD (D1, D2, every D4 file 1a..3B and
   // file 6, real files); OFF is proved by running one scenario with and
   // without file 6 and comparing; then ON; rollback 6 is the argument.
-  { name: "d4 approvals", file: "d4-approvals.test.mjs", expect: 141, migrations: [], args: ["scripts/ROLLBACK-d4-6-approvals.sql"] },
+  { name: "d4 approvals", file: "d4-approvals.test.mjs", expect: 157, migrations: [], args: ["scripts/ROLLBACK-d4-6-approvals.sql"] },
   // The wording and the requests of src/lib/approvals.ts, and the step 4 screens (static).
-  { name: "approvals lib", file: "approvals-lib.test.mjs", expect: 35, migrations: [] },
+  { name: "approvals lib", file: "approvals-lib.test.mjs", expect: 50, migrations: [] },
+  // The step 4 review's probe (B-1 carry rewritten, B-2 bills left unrefreshed), kept as a
+  // suite asserting the fix round 1 answers: the carry guard, the settings row, the approval
+  // through guarded-change-refresh, bulk cancel's whole-batch question, the admin grant.
+  { name: "d4 approvals review probe", file: "d4-approvals-review-probe.test.mjs", expect: 47, migrations: [] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

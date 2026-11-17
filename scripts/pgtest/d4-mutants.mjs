@@ -438,7 +438,7 @@ export const MUTANTS = [
   ['A11', "the tier3 line dropped",
     "  IF st.on_tier3 AND v_tier = 3 THEN", "  IF false THEN", ['approvals'], APPROVALS],
   ['A12', "the full plan hands the rule an impact without the plan's tier",
-    "                    || jsonb_build_object('tier', v_tier), p_uid),\n                '{\"required\": true", "                    , p_uid),\n                '{\"required\": true",
+    "                    || jsonb_build_object('tier', public._approval_impact_tier(v -> 'impact', v_tier)), p_uid),\n                '{\"required\": true", "                    , p_uid),\n                '{\"required\": true",
     ['approvals'], APPROVALS],
   ['A13', "the unfreeze line dropped",
     "  IF st.on_unfreeze AND COALESCE((v_imp ->> 'unfreeze')::boolean, false) THEN", "  IF false THEN", ['approvals'], APPROVALS],
@@ -484,6 +484,24 @@ export const MUTANTS = [
     "  v_note := public.session_change_reason_ok(p_note);\n  v_status := public._approval_request_status(r.id, r.expires_at);\n  IF v_status <> 'pending' THEN\n    RAISE EXCEPTION 'request_not_pending' USING ERRCODE = 'HC062', DETAIL = 'status=' || v_status;\n  END IF;\n  INSERT INTO public.change_approval_events (request_id, actor_user_id, kind, payload)\n  VALUES (r.id, v_uid, 'rejected'",
     "  v_note := p_note;\n  v_status := public._approval_request_status(r.id, r.expires_at);\n  IF v_status <> 'pending' THEN\n    RAISE EXCEPTION 'request_not_pending' USING ERRCODE = 'HC062', DETAIL = 'status=' || v_status;\n  END IF;\n  INSERT INTO public.change_approval_events (request_id, actor_user_id, kind, payload)\n  VALUES (r.id, v_uid, 'rejected'",
     ['approvals'], APPROVALS],
+  // ---- step 4 fix round 1 (review B-1, decision 4, N-3, N-4, M-1)
+  ['A31', "B-1: an approved carry can be rewritten by UPDATE while on",
+    "  IF TG_OP = 'UPDATE' THEN\n    IF (to_jsonb(NEW) - 'reason' - 'created_by') IS NOT DISTINCT FROM (to_jsonb(OLD) - 'reason' - 'created_by') THEN",
+    "  IF TG_OP = 'UPDATE' THEN\n    IF true THEN", ['approvals'], APPROVALS],
+  ['A32', "B-1: an approved carry can be deleted while on",
+    "  IF TG_OP = 'DELETE' THEN\n    RAISE EXCEPTION 'approval_required' USING ERRCODE = 'HC060',",
+    "  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n    RAISE EXCEPTION 'approval_required' USING ERRCODE = 'HC060',", ['approvals'], APPROVALS],
+  ['A33', "B-1: the pay trigger fires on INSERT only again",
+    "CREATE TRIGGER zz_pay_adjustment_approval BEFORE INSERT OR UPDATE OR DELETE ON", "CREATE TRIGGER zz_pay_adjustment_approval BEFORE INSERT ON", ['approvals'], APPROVALS],
+  ['A34', "decision 4: the table owner may delete the settings row",
+    "  IF TG_OP = 'DELETE' THEN\n    RAISE EXCEPTION 'the approval setting row is never deleted'", "  IF false THEN\n    RAISE EXCEPTION 'the approval setting row is never deleted'", ['approvals'], APPROVALS],
+  ['A35', "N-3: the impact tier handed to the rule can be lowered",
+    "  SELECT GREATEST(COALESCE(p_tier, 3),", "  SELECT LEAST(COALESCE(p_tier, 3),", ['approvals'], APPROVALS],
+  ['A36', "M-1: the whole-batch question never says approval is required",
+    "    'required', COALESCE((v -> 'approval' ->> 'required')::boolean, true),\n    'reasons', COALESCE(v -> 'approval' -> 'reasons', '[\"unknown\"]'::jsonb),",
+    "    'required', false,\n    'reasons', COALESCE(v -> 'approval' -> 'reasons', '[\"unknown\"]'::jsonb),", ['approvals'], APPROVALS],
+  ['A37', "N-4: the requester's whole context is replayed into the approved change",
+    "      v_ctx := v_ctx || jsonb_build_object('set_manual', 'true');", "      v_ctx := v_p -> 'context';", ['approvals'], APPROVALS],
 ];
 
 // File 6 pins its own three replaced bodies (a second paste finds them): a
