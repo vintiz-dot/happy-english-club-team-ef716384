@@ -76,13 +76,19 @@ Deno.serve(async (req) => {
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  let body: { homework_id?: string; grade_band?: string };
+  let body: { homework_id?: string; grade_band?: string; redo?: boolean };
   try {
     body = await req.json();
   } catch {
     return json({ error: "Body must be JSON" }, 400);
   }
   if (!body.homework_id) return json({ error: "homework_id is required" }, 400);
+  // Review N-1: a rubric a teacher has written or approved is replaced only
+  // when a teacher asks for a new draft (the editor's button sends redo).
+  // Without it - the automatic draft when a homework is created - this only
+  // ever creates the first rubric, so a teacher who approves in the editor
+  // before the model answers keeps the approval.
+  const redo = body.redo === true;
 
   const { data: hw, error } = await sb
     .from("homeworks")
@@ -93,6 +99,15 @@ Deno.serve(async (req) => {
   if (!hw) return json({ error: "Homework not found" }, 404);
   if (hw.submission_type !== "video") return json({ error: "This homework is not a video homework" }, 400);
   if (!(await callerHoldsClass(sb, spender, hw.class_id))) return json({ error: "Not your class" }, 403);
+
+  const ALREADY = { error: "This homework already has a rubric. Ask for a new draft in the rubric editor to replace it.", existing: true };
+  if (!redo) {
+    // Before spending: nothing to draft if a rubric is already there.
+    const { data: existing, error: exErr } = await sb
+      .from("video_homework_rubrics").select("homework_id").eq("homework_id", hw.id).maybeSingle();
+    if (exErr) return json({ error: "Could not read the rubric" }, 500);
+    if (existing) return json(ALREADY, 409);
+  }
 
   const gradeBand = String(body.grade_band ?? "").slice(0, 40) || null;
   const prompt = [
@@ -140,12 +155,15 @@ Deno.serve(async (req) => {
     updated_at: new Date().toISOString(),
   };
 
-  const { data: saved, error: saveError } = await sb
-    .from("video_homework_rubrics")
-    .upsert(rubric, { onConflict: "homework_id" })
-    .select()
-    .single();
-  if (saveError) return json({ error: saveError.message }, 500);
+  // Without redo an INSERT: if a teacher saved or approved a rubric while the
+  // model was writing, the unique key refuses this one and theirs stands.
+  const { data: saved, error: saveError } = redo
+    ? await sb.from("video_homework_rubrics").upsert(rubric, { onConflict: "homework_id" }).select().single()
+    : await sb.from("video_homework_rubrics").insert(rubric).select().single();
+  if (saveError) {
+    if (!redo && (saveError as any).code === "23505") return json(ALREADY, 409);
+    return json({ error: saveError.message }, 500);
+  }
 
   return json({ rubric: saved });
 });

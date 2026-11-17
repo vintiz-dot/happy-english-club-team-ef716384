@@ -50,8 +50,10 @@ export function VideoRubricEditor({ homeworkId, onClose }: { homeworkId: string 
 
   const draft = useMutation({
     mutationFn: async () => {
+      // The teacher asked for a new draft: it replaces the current rubric,
+      // an approved one included (it goes back to draft for them to check).
       const { data, error } = await supabase.functions.invoke("video-rubric", {
-        body: { homework_id: homeworkId, grade_band: gradeBand || undefined },
+        body: { homework_id: homeworkId, grade_band: gradeBand || undefined, redo: true },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -116,7 +118,10 @@ export function VideoRubricEditor({ homeworkId, onClose }: { homeworkId: string 
                 <Label htmlFor="rubric-grade" className="text-hec-small font-medium text-hec-ink">Grade (helps the AI pitch it)</Label>
                 <Input id="rubric-grade" value={gradeBand} onChange={(e) => setGradeBand(e.target.value)} placeholder="e.g. Grade 3" className="text-hec-body" />
               </div>
-              <Button variant="outline" className="min-h-hec-target w-full sm:w-auto" onClick={() => draft.mutate()} disabled={draft.isPending}>
+              <Button variant="outline" className="min-h-hec-target w-full sm:w-auto" onClick={() => {
+                if (rubric?.status === "approved" && !window.confirm("Replace the approved rubric with a new AI draft? You will need to approve it again.")) return;
+                draft.mutate();
+              }} disabled={draft.isPending}>
                 {draft.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
                 {rubric ? "Redraft with AI" : "Draft with AI"}
               </Button>

@@ -347,6 +347,11 @@ function fake8(key, opts) {
       let rows;
       if (st.op === "insert" || st.op === "upsert") {
         const list = (Array.isArray(st.payload) ? st.payload : [st.payload]).map((p) => ({ ...p }));
+        // A plain INSERT against a primary key that is taken, as Postgres.
+        const pk = { video_homework_rubrics: "homework_id", student_work_ai_drafts: "work_id", student_work_vocab_drafts: "work_id" }[table];
+        if (st.op === "insert" && pk && list.some((p) => W[table].some((r) => r[pk] === p[pk]))) {
+          return { data: null, error: { code: "23505", message: "duplicate key value violates unique constraint" } };
+        }
         for (const p of list) {
           const k = st.conflict?.split(",")[0];
           const at = k ? W[table].findIndex((r) => r[k] === p[k]) : -1;
@@ -417,7 +422,7 @@ const MODEL_JSON = JSON.stringify({
   criteria: [{ key: "task", label: "Did the task", description: "d", weight: 2 }], target_vocabulary: [], target_grammar: [], kid_summary: "Your teacher is looking for a story.",
   criteria_scores: [], feedback_student: "Good", feedback_parent_vi: "Tốt", gaps: [], confidence: 0.5, teacher_attention: "",
 });
-globalThis.__claude = () => { vendor8.push("api.anthropic.com"); return { content: [{ type: "text", text: MODEL_JSON }], stop_reason: "end_turn", model: "claude-test", usage: {} }; };
+globalThis.__claude = () => { vendor8.push("api.anthropic.com"); if (W?.midClaude) { const f = W.midClaude; W.midClaude = null; f(); } return { content: [{ type: "text", text: MODEL_JSON }], stop_reason: "end_turn", model: "claude-test", usage: {} }; };
 let vendorDown = false;
 async function fetch8(url, init = {}) {
   const u = new URL(String(url));
@@ -611,6 +616,34 @@ console.log("=== generate-work-feedback: a teacher's decision stands (N-6) ===")
   W = world();
   const o = await call8(fn, "generate-work-feedback", { token: tokenOf(U.teacher), body: { work_id: IDS.work, student_id: "50000000-0000-4000-8000-0000000000ff" } });
   ok("naming a child the teacher does not teach (whose profile would go into the prompt): 403, no vendor call", o.status === 403 && o.vendor.length === 0, o);
+}
+
+console.log("=== video-rubric: a teacher's rubric stands (review N-1) ===");
+{
+  const fn = await load8("video-rubric", readFileSync(resolve(FUNCTIONS, "video-rubric", "index.ts"), "utf8"));
+  const approved = () => ({ homework_id: IDS.hw, criteria: [{ key: "mine", label: "Teacher's", description: "d", weight: 1 }], status: "approved", approved_by: U.teacher, generated_by_ai: false });
+  W = world({ video_homework_rubrics: [approved()] });
+  const r = await call8(fn, "video-rubric", { token: tokenOf(U.teacher), body: { homework_id: IDS.hw } });
+  ok("the automatic draft (no redo) over an approved rubric: 409, no model call", r.status === 409 && r.vendor.length === 0 && r.json?.existing === true, r);
+  eq("  the approved rubric is untouched", [W.video_homework_rubrics.length, W.video_homework_rubrics[0].status, W.video_homework_rubrics[0].criteria[0].key], [1, "approved", "mine"]);
+  W = world({ video_homework_rubrics: [{ ...approved(), status: "draft", approved_by: null }] });
+  const d = await call8(fn, "video-rubric", { token: tokenOf(U.teacher), body: { homework_id: IDS.hw } });
+  ok("  nor over a teacher's saved draft", d.status === 409 && d.vendor.length === 0 && W.video_homework_rubrics[0].criteria[0].key === "mine", d);
+  // AssignmentUpload's race: the editor opens with the request in flight,
+  // and the teacher approves before the model answers.
+  W = world();
+  W.midClaude = () => { W.video_homework_rubrics = [approved()]; };
+  const race = await call8(fn, "video-rubric", { token: tokenOf(U.teacher), body: { homework_id: IDS.hw } });
+  eq("an approval made while the model was writing stands (409; the draft is not saved)", [race.status, W.video_homework_rubrics.length, W.video_homework_rubrics[0].status, W.video_homework_rubrics[0].criteria[0].key], [409, 1, "approved", "mine"]);
+  W = world({ video_homework_rubrics: [approved()] });
+  const redo = await call8(fn, "video-rubric", { token: tokenOf(U.teacher), body: { homework_id: IDS.hw, redo: true } });
+  eq("the teacher asks for a new draft (redo): replaced, back to draft for them to approve", [redo.status, W.video_homework_rubrics[0].status, W.video_homework_rubrics[0].criteria[0].key], [200, "draft", "task"]);
+  W = world();
+  const first = await call8(fn, "video-rubric", { token: tokenOf(U.teacher), body: { homework_id: IDS.hw } });
+  eq("a new homework's first rubric is drafted as before", [first.status, W.video_homework_rubrics?.[0]?.status], [200, "draft"]);
+  const editor = readFileSync(resolve(repo, "src/components/video-homework/VideoRubricEditor.tsx"), "utf8");
+  const upload = readFileSync(resolve(repo, "src/components/teacher/AssignmentUpload.tsx"), "utf8");
+  ok("only the editor's own button asks for a redo; the automatic draft does not", /redo: true/.test(editor) && !/redo/.test(upload));
 }
 
 console.log("=== analyze-video-submission: whose video, and how often ===");
