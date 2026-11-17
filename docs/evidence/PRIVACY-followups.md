@@ -563,7 +563,7 @@ Class-less drafts (a defence claim set with no class) show only on the admin Stu
 | `transcribe gate` | 133 passed, 0 failed |
 | `transcript drafts (D-26)` / `transcript review probes` | 221 / 34 passed, 0 failed |
 | `edge functions typecheck` | 5 passed, 0 failed |
-| `tsc --noEmit -p tsconfig.app.json` | TSC3 |
+| `tsc --noEmit -p tsconfig.app.json` | exit 0 (174 s) |
 
 The full `run.mjs` was not re-run this round. Round 2's full run had the same 36 harness-lag failures, none in a suite that loads a changed file, and no suite outside the ones above loads a file round 3 changed.
 
