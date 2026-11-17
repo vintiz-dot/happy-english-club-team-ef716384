@@ -4,6 +4,8 @@ import type { MoneyPlan } from "@/lib/moneyGuard";
 import { inputErrorText, needsInputDialog } from "@/lib/moneyInputs";
 import { confirmMoneyChange, previewMoneyChange, refreshMoneyChange } from "./api";
 import { useMoneyChange, type MoneyRequest } from "./useMoneyChange";
+import { toast } from "@/hooks/use-toast";
+import { parseReasons, reasonSentence } from "@/lib/approvals";
 
 /**
  * The money guard for the money-input screens (D4 step 3B), on top of
@@ -31,6 +33,14 @@ export function useMoneyInput(onDone?: (result: any, request: MoneyRequest) => v
   const guard = useMoneyChange((result) => {
     if (last.current) done.current?.(result, last.current);
     void drain.current();
+  }, () => {
+    // review N-6: a change sent for approval stops the queue; say what was not made
+    const left = pending.current.length;
+    pending.current = [];
+    if (left > 0) {
+      toast({ title: `${left} more ${left === 1 ? "change was" : "changes were"} not made`,
+              description: "The list stopped at the change sent for approval. Nothing else in it was changed: make the rest again." });
+    }
   });
   const [running, setRunning] = useState(false);
   const { open } = guard;
@@ -148,7 +158,10 @@ export async function runMoneyBulk(items: BulkItem[]): Promise<BulkOutcome> {
       p_items: chunk, p_reason: null, p_batch_id: batchId, p_context: { source: "screen" },
     });
     if (error) {
-      out.error = inputErrorText(null, String(error.message ?? ""));
+      // HC060: the preview said no approval, the database (a moment later) said yes - review M-3
+      out.error = String(error.code ?? "") === "HC060"
+        ? `${reasonSentence(parseReasons(String(error.details ?? "")))} The rest of the list was not made${out.done ? `; the ${out.done} made before it stay made` : ""}. Make the remaining changes one at a time to send them for approval.`
+        : inputErrorText(null, String(error.message ?? ""));
       return out;
     }
     out.done += Array.isArray(data?.done) ? data.done.length : 0;

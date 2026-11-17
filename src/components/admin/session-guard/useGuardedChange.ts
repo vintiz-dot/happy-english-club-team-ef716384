@@ -15,6 +15,8 @@ import {
 } from "@/lib/sessionGuard";
 import { payDialogFrom, payPreviewRequest, payRequest, type PayForm, type PayOp, type PayPlan } from "@/lib/lessonPayGuard";
 import { manageSession, payPreview } from "./api";
+import { approvalErrorText, canRequestSessionApproval, moneyApprovalParams, sessionApprovalRequest } from "@/lib/approvals";
+import { requestApproval as requestApprovalRpc } from "@/components/admin/approvals/api";
 
 export interface MoveChange {
   date: string;
@@ -223,7 +225,28 @@ export function useGuardedChange({ open, sessionId, op, change, figures, onPayCh
     invalidate();
   }, [success, invalidate]);
 
-  return { phase, preview, consequences, error, stale, staleNonce, success, retry, reload: load, submit, retryRefresh, invalidate };
+  /**
+   * D4 step 4: the change was refused with approval_required (HC060: a second
+   * administrator must approve it). Sends D2's own checked function with the
+   * arguments as typed and this preview's token to request_change_approval;
+   * the lesson is not touched until the other administrator approves.
+   */
+  const [approval, setApproval] = useState<{ busy: boolean; sent?: string; error?: string } | null>(null);
+  const requestApproval = useCallback(async (form: GuardForm) => {
+    const p = previewRef.current;
+    const built = p ? sessionApprovalRequest(op, sessionId, form, op === "move" ? change ?? null : null) : null;
+    if (!p || !built || !canRequestSessionApproval(form)) return;
+    setApproval({ busy: true });
+    const r = await requestApprovalRpc("session", built.rpc, built.params, p.token ?? null);
+    if ("error" in r) setApproval({ busy: false, error: approvalErrorText(r.error.code, r.error.detail) });
+    else setApproval({ busy: false, sent: r.data.request_id });
+    invalidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [op, sessionId, change?.date, change?.start_time, change?.end_time, invalidate]);
+  useEffect(() => { if (!open) setApproval(null); }, [open]);
+
+  return { phase, preview, consequences, error, stale, staleNonce, success, retry, reload: load, submit, retryRefresh, invalidate,
+           requestApproval, approval };
 }
 
 /**
@@ -340,5 +363,25 @@ export function useGuardedPayChange({ open, op, args }: { open: boolean; op: Pay
     [load, invalidate],
   );
 
-  return { phase, plan, error, stale, staleNonce, success, reload: load, submit, invalidate };
+  /**
+   * D4 step 4 (review M-3): the pay change was refused with approval_required.
+   * Sends the checked money op ('session', op) with the arguments as previewed,
+   * the form as typed and the preview's token to request_change_approval;
+   * nothing changes until another administrator approves it (and the approval
+   * then works out its bills, as this dialog's own confirm does).
+   */
+  const [approval, setApproval] = useState<{ busy: boolean; sent?: string; error?: string } | null>(null);
+  useEffect(() => { if (!open) setApproval(null); }, [open]);
+  const requestApproval = useCallback(async (form: PayForm) => {
+    const p = planRef.current;
+    if (!p) return;
+    setApproval({ busy: true });
+    const params = moneyApprovalParams("session", String(p.op ?? op), (p.args ?? {}) as Record<string, unknown>, p as any,
+      { reason: form.reason, confirm: form.confirm, correctionReason: form.correctionReason });
+    const r = await requestApprovalRpc("money", "money_change_checked", params, p.token ?? null);
+    if ("error" in r) setApproval({ busy: false, error: approvalErrorText(r.error.code, r.error.detail) });
+    else setApproval({ busy: false, sent: r.data.request_id });
+  }, [op]);
+
+  return { phase, plan, error, stale, staleNonce, success, reload: load, submit, invalidate, requestApproval, approval };
 }

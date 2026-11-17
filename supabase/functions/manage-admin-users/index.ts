@@ -212,6 +212,40 @@ Deno.serve(async (req) => {
       return rateLimitResponse(userRateCheck.resetAt, corsHeaders);
     }
 
+    // D4 step 4 (review M-2): while two-administrator approval is switched on,
+    // the database refuses the admin role on this (service) lane unless an
+    // approved grant request claims it (HC060). Ask FIRST, as the caller, so
+    // no account is created that cannot get its role, and nobody's roles are
+    // removed for a grant that will be refused. Function missing (step 4 not
+    // installed) = off. No anon key: not asked; the database still refuses,
+    // and an account created for the refused grant is removed again.
+    const reply = (status: number, body: Record<string, unknown>) =>
+      new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const adminGrantBlocked = async (targetUserId: string | null): Promise<Response | null> => {
+      const anon = Deno.env.get('SUPABASE_ANON_KEY');
+      if (!anon) return null;
+      const asCaller = createClient(supabaseUrl, anon, {
+        global: { headers: { Authorization: authHeader } }, auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data, error } = await asCaller.rpc('change_approval_status');
+      if (error) {
+        const code = String((error as any).code ?? '');
+        if (code === 'PGRST202' || code === '42883') return null;
+        return reply(503, { error: 'The approval check in the database could not be read, so the administrator role was not given. Nothing was changed.',
+                            code: code === 'HC050' ? 'guard_broken' : 'approval_check_failed' });
+      }
+      if (!data?.enabled) return null;
+      return reply(409, {
+        error: targetUserId
+          ? 'Two-administrator approval is switched on: giving the administrator role needs a second administrator. Nothing was changed. Send it for approval; another administrator approves it in Automation, Approvals.'
+          : 'Two-administrator approval is switched on, so a new administrator account cannot be made here. Nothing was created. Use "Promote to Admin" on an existing account (create it another way first, for example as a teacher) and send that for approval.',
+        code: 'approval_required',
+        ...(targetUserId ? { approval: { kind: 'settings', rpc: 'grant_admin_role', user_id: targetUserId } } : {}),
+      });
+    };
+    /** The role insert was refused after the account was made: remove the account again (its email is free for a retry). */
+    const roleRefused = (e: any) => String(e?.code ?? '') === 'HC060' || String(e?.code ?? '') === 'HC050';
+
     if (action === 'listUsers') {
       // List ALL users with their roles and links.
       //
@@ -314,6 +348,9 @@ Deno.serve(async (req) => {
         });
       }
 
+      const blocked = await adminGrantBlocked(null);
+      if (blocked) return blocked;
+
       // Create user with service role (bypasses email confirmation)
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email,
@@ -337,9 +374,15 @@ Deno.serve(async (req) => {
 
       if (roleInsertError) {
         console.error('Role insert error:', roleInsertError);
-        return new Response(JSON.stringify({ error: roleInsertError.message }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        // Never leave an account without its role (and its email taken): remove it again.
+        const { error: undoError } = await supabase.auth.admin.deleteUser(newUser.user.id);
+        if (undoError) console.error('Removing the account after the refused role failed:', undoError);
+        return reply(roleRefused(roleInsertError) ? 409 : 400, {
+          error: roleRefused(roleInsertError)
+            ? `The database refused the administrator role (${String((roleInsertError as any).code)}), so the account was ${undoError ? 'NOT removed - remove it in Users' : 'removed again'}. Nothing else was changed.`
+            : roleInsertError.message,
+          code: String((roleInsertError as any).code ?? '') === 'HC060' ? 'approval_required' : undefined,
+          account_removed: !undoError,
         });
       }
 
@@ -384,6 +427,9 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
+
+      const blockedPromote = await adminGrantBlocked(userId);
+      if (blockedPromote) return blockedPromote;
 
       // Insert admin role
       const { error: roleInsertError } = await supabase
@@ -640,6 +686,12 @@ Deno.serve(async (req) => {
         });
       }
 
+      if (role === 'admin') {
+        const blockedRole = await adminGrantBlocked(userId);
+        if (blockedRole) return blockedRole;
+      }
+      const { data: rolesBefore } = await supabase.from('user_roles').select('role').eq('user_id', userId);
+
       // Delete existing roles
       await supabase
         .from('user_roles')
@@ -653,6 +705,12 @@ Deno.serve(async (req) => {
 
       if (roleError) {
         console.error('Role update error:', roleError);
+        // Put back what the account had, so a refused change leaves it as it was.
+        if ((rolesBefore ?? []).length > 0) {
+          const { error: restoreError } = await supabase.from('user_roles')
+            .insert((rolesBefore ?? []).map((r: { role: string }) => ({ user_id: userId, role: r.role })));
+          if (restoreError) console.error('Restoring the earlier roles failed:', restoreError);
+        }
         return new Response(JSON.stringify({ error: roleError.message }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }

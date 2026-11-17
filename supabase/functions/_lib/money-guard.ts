@@ -14,7 +14,7 @@
 //
 // Imports only the session guard's error mapping and refresh (both
 // dependency-free), so it type-checks and bundles on its own.
-import { guardError, mapDbError, refreshPairs, type GuardError, type PairResult } from './session-guard.ts';
+import { guardError, mapDbError, refreshAndRecord, refreshPairs, type GuardError, type PairResult } from './session-guard.ts';
 
 export const REFRESH_PER_CALL = 25;
 
@@ -109,6 +109,61 @@ export async function refreshMoneyChange(service: any, asCaller: any, overrideId
     failed: results.filter((r) => !r.ok).map((r) => ({ student_id: r.student_id, month: r.month, error: r.error })),
     event_recorded,
     event_error,
+  };
+}
+
+/**
+ * D4 step 4 (review B-2): after a second administrator's approval applied a
+ * change, work out its bills again exactly as the direct path does - the
+ * money override through refreshMoneyChange, a D2 lesson override through
+ * refreshAndRecord - and record each outcome on the override, as the caller.
+ * Which overrides, and of which kind, is read AS THE CALLER from the approval
+ * record (change_approval_queue, admin RLS), never taken from the request
+ * body. Idempotent: a money override refreshes only the pairs not yet done,
+ * a D2 override that already has tuition_refreshed is left alone, so the
+ * inbox's "work out the bills again" can simply call it again.
+ */
+export async function refreshApprovedChange(service: any, asCaller: any, requestId: string) {
+  const { data: q, error } = await asCaller.from('change_approval_queue')
+    .select('request_id, kind, rpc, status, override_ids').eq('request_id', requestId).maybeSingle();
+  if (error) return { error: mapDbError(error) };
+  if (!q) return { error: guardError(404, 'not_found', 'That approval request was not found.') };
+  if (q.status !== 'applied') return { error: guardError(409, 'not_applied', 'That request has not been applied, so there are no bills to work out.') };
+  const ids: string[] = (Array.isArray(q.override_ids) ? q.override_ids : []).filter((x: unknown) => typeof x === 'string');
+  const table = q.kind === 'session' ? 'session' : q.kind === 'money' && q.rpc !== 'carry_payroll_adjustments' ? 'money' : null;
+  const per: Array<{ override_id: string; status: string; remaining?: number; failed?: any[]; event_recorded?: boolean; error?: string }> = [];
+  if (table) {
+    for (const id of ids) {
+      try {
+        if (table === 'money') {
+          const t = await refreshMoneyChange(service, asCaller, id);
+          per.push('error' in t ? { override_id: id, status: 'failed', error: t.error.code }
+            : { override_id: id, status: t.status, remaining: t.remaining, failed: t.failed,
+                // nothing left to do this call: no event was due
+                event_recorded: t.results.length > 0 ? t.event_recorded : undefined });
+          continue;
+        }
+        const { data: o, error: oErr } = await asCaller.from('session_cancel_overrides')
+          .select('id, refresh_pairs').eq('id', id).maybeSingle();
+        if (oErr || !o) { per.push({ override_id: id, status: 'failed', error: oErr ? mapDbError(oErr).code : 'not_found' }); continue; }
+        const { data: ev, error: evErr } = await asCaller.from('session_cancel_override_events')
+          .select('kind').eq('override_id', id);
+        if (evErr) { per.push({ override_id: id, status: 'failed', error: mapDbError(evErr).code }); continue; }
+        if ((ev ?? []).some((e: any) => e?.kind === 'tuition_refreshed')) { per.push({ override_id: id, status: 'refreshed' }); continue; }
+        const t = await refreshAndRecord(service, asCaller, id, Array.isArray(o.refresh_pairs) ? o.refresh_pairs : []);
+        per.push({ override_id: id, status: t.status, failed: t.failed, event_recorded: t.event_recorded });
+      } catch (e) {
+        per.push({ override_id: id, status: 'failed', error: String((e as Error)?.message ?? e) });
+      }
+    }
+  }
+  const failed = per.filter((p) => p.status === 'failed' || p.status === 'partial' || (p.status === 'refreshed' && p.event_recorded === false));
+  return {
+    request_id: q.request_id,
+    kind: q.kind,
+    status: per.length === 0 || per.every((p) => p.status === 'none') ? 'none' : failed.length ? 'failed' : 'refreshed',
+    per_override: per,
+    failed: failed.length,
   };
 }
 

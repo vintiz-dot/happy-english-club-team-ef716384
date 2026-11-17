@@ -16,6 +16,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ReasonField } from "@/components/admin/session-guard/Fields";
+import { requestApproval } from "@/components/admin/approvals/api";
+import { approvalErrorText, grantAdminParams } from "@/lib/approvals";
+import { checkReason, REASON_MIN } from "@/lib/sessionGuard";
+
+/**
+ * The function's own answer for a non-2xx: supabase-js hands back only
+ * "Edge Function returned a non-2xx status code"; the body says what happened
+ * (D4 step 4, review M-2: "approval_required" with a sentence).
+ */
+async function invokeError(error: any, data: any): Promise<{ message: string; code?: string; approval?: any }> {
+  if (data?.error) return { message: String(data.error), code: data.code, approval: data.approval };
+  try {
+    const body = await error?.context?.json?.();
+    if (body?.error) return { message: String(body.error), code: body.code, approval: body.approval };
+  } catch { /* keep the generic message */ }
+  return { message: String(error?.message ?? "The request failed.") };
+}
 
 interface User {
   id: string;
@@ -36,6 +54,11 @@ export function AdminUsersManager() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
+  /** D4 step 4: the account whose administrator role waits for a second administrator's approval. */
+  const [grantFor, setGrantFor] = useState<{ userId: string; email: string } | null>(null);
+  const [grantReason, setGrantReason] = useState("");
+  const [grantBusy, setGrantBusy] = useState(false);
+  const [grantMsg, setGrantMsg] = useState<string | null>(null);
   const { toast } = useToast();
 
   const loadUsers = async () => {
@@ -100,8 +123,7 @@ export function AdminUsersManager() {
         body: { action: "create", email, password },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error || data?.error) throw new Error((await invokeError(error, data)).message);
 
       toast({
         title: "Admin created",
@@ -129,8 +151,17 @@ export function AdminUsersManager() {
         body: { action: "promote", userId },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error || data?.error) {
+        const e = await invokeError(error, data);
+        if (e.code === "approval_required" && e.approval?.rpc === "grant_admin_role") {
+          // nothing was changed: offer the grant request instead
+          setGrantFor({ userId, email: users.find((u) => u.id === userId)?.email ?? "this account" });
+          setGrantReason("");
+          setGrantMsg(e.message);
+          return;
+        }
+        throw new Error(e.message);
+      }
 
       toast({
         title: "User promoted",
@@ -145,6 +176,19 @@ export function AdminUsersManager() {
         variant: "destructive",
       });
     }
+  };
+
+  const sendGrant = async () => {
+    if (!grantFor || grantBusy || !checkReason(grantReason, REASON_MIN).ok) return;
+    setGrantBusy(true);
+    const r = await requestApproval("settings", "grant_admin_role", grantAdminParams(grantFor.userId, grantReason), null);
+    setGrantBusy(false);
+    if ("error" in r) {
+      setGrantMsg(approvalErrorText(r.error.code, r.error.detail));
+      return;
+    }
+    toast({ title: "Sent for approval", description: `${grantFor.email} becomes an administrator once another administrator approves it in Automation, Approvals.` });
+    setGrantFor(null);
   };
 
   const handleRevoke = async () => {
@@ -300,6 +344,24 @@ export function AdminUsersManager() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!grantFor} onOpenChange={(o) => { if (!o && !grantBusy) setGrantFor(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send for approval?</AlertDialogTitle>
+            <AlertDialogDescription className="break-words">
+              {grantMsg ?? "Giving the administrator role needs a second administrator."} {grantFor ? `Account: ${grantFor.email}.` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <ReasonField label="Why this account needs the administrator role (required)" value={grantReason} onChange={setGrantReason} min={REASON_MIN} disabled={grantBusy} />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={grantBusy}>Cancel</AlertDialogCancel>
+            <Button onClick={() => void sendGrant()} disabled={grantBusy || !checkReason(grantReason, REASON_MIN).ok}>
+              Send for approval
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>
         <AlertDialogContent>

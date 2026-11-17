@@ -25,7 +25,23 @@ export function MoneyChangesReview() {
       ]);
       if (queue.error) throw queue.error;
       if (events.error) throw events.error;
-      return { queue: queue.data ?? [], events: events.data ?? [] };
+      // D4 step 4 (review N-2): a change a second administrator approved was run by
+      // the approver; who asked is read from the approval record (its "applied"
+      // event lists the override ids), never from the row's own context. Missing
+      // view (step 4 not installed): nobody is named.
+      const approved = await db.from("change_approval_queue").select("requested_by, decided_by, override_ids")
+        .eq("status", "applied").eq("kind", "money").limit(1000);
+      const asked: Record<string, { by: string; decided: string | null }> = {};
+      for (const a of approved.error ? [] : approved.data ?? []) {
+        for (const oid of Array.isArray(a.override_ids) ? a.override_ids : []) asked[String(oid)] = { by: a.requested_by, decided: a.decided_by ?? null };
+      }
+      const ids = [...new Set(Object.values(asked).flatMap((x) => [x.by, x.decided]).filter(Boolean))] as string[];
+      const names: Record<string, string> = {};
+      if (ids.length) {
+        const { data: profiles } = await db.from("profiles").select("id, display_name").in("id", ids);
+        for (const p of profiles ?? []) names[p.id] = p.display_name || "an administrator";
+      }
+      return { queue: queue.data ?? [], events: events.data ?? [], asked, names };
     },
   });
 
@@ -56,6 +72,12 @@ export function MoneyChangesReview() {
                     <li key={q.override_id} className="rounded-xl border border-border p-3 text-sm break-words">
                       <span className="font-medium">{when(q.created_at)}</span> - {q.entity} / {q.op}, level {q.tier}: {q.reason}
                       {q.correction_reason ? ` (correction: ${q.correction_reason})` : ""} - bills {q.tuition_state}
+                      {data.asked[q.override_id] && (
+                        <span className="block text-xs text-muted-foreground">
+                          Asked by {data.names[data.asked[q.override_id].by] ?? "an administrator"}; approved and made by{" "}
+                          {data.names[data.asked[q.override_id].decided ?? ""] ?? "another administrator"}.
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>

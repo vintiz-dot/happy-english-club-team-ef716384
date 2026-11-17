@@ -26,6 +26,8 @@ import {
   type ReviewFilters,
 } from "@/lib/sessionGuard";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ApprovalInbox } from "@/components/admin/approvals/ApprovalInbox";
 
 const LIMIT = 300;
 const ALL = "all";
@@ -56,7 +58,14 @@ async function loadOverrides(): Promise<Loaded> {
     reviewed: !!r.review_required && !inQueue.has(r.id),
     tuition_state: unrefreshed.has(r.id) ? "failed" : inQueue.get(r.id) ?? undefined,
   }));
-  const actorIds = [...new Set(rows.map((r) => r.actor_user_id).filter(Boolean))];
+  // D4 step 4: who asked for a change a second administrator approved, read from the
+  // approval record (its "applied" event lists the override ids), never from the row's
+  // own attached context (which the caller writes). Missing view (step 4 not installed): none.
+  const approved = await db.from("change_approval_queue").select("requested_by, override_ids").eq("status", "applied").limit(1000);
+  for (const a of approved.error ? [] : approved.data ?? []) {
+    for (const oid of Array.isArray(a.override_ids) ? a.override_ids : []) ASKED.set(String(oid), a.requested_by);
+  }
+  const actorIds = [...new Set(rows.flatMap((r) => [r.actor_user_id, askedBy(r)]).filter(Boolean))];
   const teacherIds = [...new Set(rows.map((r) => r.teacher_id).filter(Boolean))];
   const [profiles, teachers] = await Promise.all([
     actorIds.length ? db.from("profiles").select("id, display_name").in("id", actorIds) : { data: [] },
@@ -68,6 +77,34 @@ async function loadOverrides(): Promise<Loaded> {
   return { rows, hitLimit: raw.length >= LIMIT, names };
 }
 
+/** override id -> who asked, from the approval record (filled by loadOverrides). */
+const ASKED = new Map<string, string>();
+/** Who asked for a change a second administrator approved (the approver ran it: actor_user_id). */
+function askedBy(r: OverrideRow): string | null {
+  return ASKED.get(r.override_id) ?? null;
+}
+
+/**
+ * D4 step 4: two tabs - the overrides (as before), and the lesson changes
+ * waiting for, or decided by, a second administrator.
+ */
+export default function CancelOverridesReview() {
+  return (
+    <Tabs defaultValue="overrides" className="space-y-3">
+      <TabsList className="flex-wrap">
+        <TabsTrigger value="overrides">Overrides</TabsTrigger>
+        <TabsTrigger value="approvals">Waiting for approval</TabsTrigger>
+      </TabsList>
+      <TabsContent value="overrides">
+        <OverridesList />
+      </TabsContent>
+      <TabsContent value="approvals">
+        <ApprovalInbox kinds={["session"]} title="Lesson changes waiting for a second administrator" />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
 /**
  * Cancellations that went through the guard: who, when, why, what the system
  * knew at the time, and whether anyone still has to look at them. Reads the
@@ -76,7 +113,7 @@ async function loadOverrides(): Promise<Loaded> {
  * audit event, record_session_override_event 'reviewed'); it never changes
  * a lesson, a bill or pay.
  */
-export default function CancelOverridesReview() {
+function OverridesList() {
   const [state, setState] = useState<ReviewFilters["state"]>("needs_review");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -217,6 +254,7 @@ function OverrideItem({ row, names, className, onReviewed }: { row: OverrideRow;
           </span>
           <span className="block break-words text-xs text-muted-foreground">
             {when} by {names[row.actor_user_id] ?? "an administrator"}
+            {askedBy(row) ? `, asked for by ${names[askedBy(row) as string] ?? "another administrator"}` : ""}
           </span>
           <span className="flex flex-wrap gap-1.5">
             <Badge variant="outline">{row.level === "STRONG" ? "Strong evidence" : row.level === "SOFT" ? "Some evidence" : "No evidence"}</Badge>
@@ -231,7 +269,11 @@ function OverrideItem({ row, names, className, onReviewed }: { row: OverrideRow;
         <div id={`${id}-body`} className="space-y-3 border-t border-border p-3 text-sm">
           <dl className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-[10rem_1fr]">
             <dt className="text-muted-foreground">Who</dt>
-            <dd className="break-words">{names[row.actor_user_id] ?? "an administrator"}</dd>
+            <dd className="break-words">
+              {askedBy(row)
+                ? `Asked by ${names[askedBy(row) as string] ?? "an administrator"}; approved and made by ${names[row.actor_user_id] ?? "another administrator"}`
+                : names[row.actor_user_id] ?? "an administrator"}
+            </dd>
             <dt className="text-muted-foreground">When</dt>
             <dd>{when}</dd>
             <dt className="text-muted-foreground">Teacher</dt>

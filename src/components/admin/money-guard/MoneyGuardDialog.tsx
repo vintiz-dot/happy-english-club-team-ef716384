@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { ConfirmTick, ReasonField } from "@/components/admin/session-guard/Fields";
 import { markLines, MONEY_COPY, moneyRequirements } from "@/lib/moneyGuard";
+import { reasonSentence } from "@/lib/approvals";
 import { ReachTable } from "./ReachTable";
 import type { useMoneyChange } from "./useMoneyChange";
 
@@ -19,7 +20,8 @@ type Guard = ReturnType<typeof useMoneyChange>;
 export function MoneyGuardDialog({ guard, names, title, intro, submitLabel }: {
   guard: Guard; names?: Record<string, string>; title?: string; intro?: string; submitLabel?: string;
 }) {
-  const { request, plan, form, setForm, busy, error, close, submit, canSubmit } = guard;
+  const { request, plan, form, setForm, busy, error, close, submit, canSubmit, requestApproval, canRequestApproval } = guard;
+  const needsApproval = !!plan?.approval?.required;
   const op = request?.op ?? "set_marks";
   const req = moneyRequirements(plan);
   const lines = markLines(plan);
@@ -60,7 +62,7 @@ export function MoneyGuardDialog({ guard, names, title, intro, submitLabel }: {
               </ConfirmTick>
             )}
             {plan.review_required && <p className="text-sm text-muted-foreground">{MONEY_COPY.review}</p>}
-            {plan.approval?.required && <p className="text-sm font-medium">{MONEY_COPY.approval}</p>}
+            {plan.approval?.required && <p className="text-sm font-medium">{reasonSentence(plan.approval.reasons, plan.approval.thresholds)} It waits, unchanged, until another administrator approves it.</p>}
           </div>
         )}
 
@@ -72,7 +74,9 @@ export function MoneyGuardDialog({ guard, names, title, intro, submitLabel }: {
 
         <div className="flex flex-wrap justify-end gap-2 pt-2">
           <Button variant="outline" onClick={close} disabled={busy}>Keep as it was</Button>
-          <Button onClick={submit} disabled={!canSubmit || busy}>{submitLabel ?? MONEY_COPY.submit[op] ?? "Confirm"}</Button>
+          {needsApproval
+            ? <Button onClick={() => void requestApproval()} disabled={!canRequestApproval || busy}>Send for approval</Button>
+            : <Button onClick={submit} disabled={!canSubmit || busy}>{submitLabel ?? MONEY_COPY.submit[op] ?? "Confirm"}</Button>}
         </div>
       </DialogContent>
     </Dialog>
