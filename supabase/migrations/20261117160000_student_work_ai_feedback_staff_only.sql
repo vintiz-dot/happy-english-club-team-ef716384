@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS public.student_work_ai_drafts (
   generated_at timestamptz NOT NULL DEFAULT now(),
   source       text NOT NULL DEFAULT 'generate-work-feedback'
     CONSTRAINT student_work_ai_drafts_source_check
-    CHECK (source IN ('generate-work-feedback', 'moved_from_student_work'))
+    CHECK (source IN ('generate-work-feedback', 'moved_from_student_work', 'service_role_write', 'staff_write'))
 );
 
 ALTER TABLE public.student_work_ai_drafts ENABLE ROW LEVEL SECURITY;
@@ -188,8 +188,19 @@ BEGIN
   IF TG_OP = 'INSERT' THEN
     RAISE EXCEPTION 'student_work.ai_feedback is retired: AI drafts go to student_work_ai_drafts';
   END IF;
+  -- An update that reviews the work AND sets a text (review N-3): the guard
+  -- in 3 reads the row before this update, so it would let a draft onto
+  -- reviewed work. Refused here instead.
+  IF NEW.status NOT IN ('processing', 'needs_review') THEN
+    RAISE EXCEPTION 'student work % is being reviewed (%): an AI draft cannot be written with it', NEW.id, NEW.status
+      USING ERRCODE = 'P0001';
+  END IF;
+  -- Labelled by who actually wrote it (review N-3): the service role (the
+  -- generate-work-feedback deployed before this change) or a signed-in
+  -- member of staff through student_work's own update policy.
   INSERT INTO public.student_work_ai_drafts (work_id, feedback, generated_by, generated_at, source)
-  VALUES (NEW.id, NEW.ai_feedback, auth.uid(), now(), 'generate-work-feedback')
+  VALUES (NEW.id, NEW.ai_feedback, auth.uid(), now(),
+          CASE WHEN auth.uid() IS NULL THEN 'service_role_write' ELSE 'staff_write' END)
   ON CONFLICT (work_id) DO UPDATE
     SET feedback = EXCLUDED.feedback,
         generated_by = EXCLUDED.generated_by,

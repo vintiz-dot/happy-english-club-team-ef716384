@@ -191,7 +191,7 @@ console.log("=== the function as deployed before (writes student_work.ai_feedbac
   eq("its write to work waiting on the teacher becomes a draft", (await one(`SELECT feedback FROM public.student_work_ai_drafts WHERE work_id = $1`, [waiting])).feedback, "OLD FN DRAFT");
   eq("  and the column stays empty", (await one(`SELECT ai_feedback FROM public.student_work WHERE id = $1`, [waiting])).ai_feedback, null);
   const err = await tryAs(null, null, () => db.query(`UPDATE public.student_work SET ai_feedback = 'OVERWRITE' WHERE id = $1`, [asIs]), "service_role");
-  ok("its write over approved work is refused (it used to overwrite it)", /has been reviewed/.test(err ?? ""), err ?? "written");
+  ok("its write over approved work is refused (it used to overwrite it)", /has been reviewed|being reviewed/.test(err ?? ""), err ?? "written");
   const err2 = await tryAs(null, null, () => db.query(
     `INSERT INTO public.student_work (student_id, class_id, uploaded_by, storage_path, status, ai_feedback) VALUES ($1, $2, $3, 'q.jpg', 'needs_review', 'x')`, [kid, cls, U.teacher]), "service_role");
   ok("a new row carrying an AI text is refused", /retired/.test(err2 ?? ""), err2 ?? "inserted");
@@ -200,6 +200,30 @@ console.log("=== the function as deployed before (writes student_work.ai_feedbac
   try { await db.query(`UPDATE public.student_work SET ai_feedback = 'x' WHERE id = $1`, [waiting]); } catch (e) { err3 = e.message; }
   await db.exec(`ALTER TABLE public.student_work ENABLE TRIGGER student_work_ai_feedback_divert`);
   ok("with the trigger gone the column still cannot hold text (CHECK)", /student_work_ai_feedback_is_retired/.test(err3 ?? ""), err3 ?? "written");
+}
+
+console.log("=== review N-3: who wrote a draft, and no draft on reviewed work ===");
+{
+  eq("the old function's diverted write is labelled as the service role's", (await one(`SELECT source, generated_by FROM public.student_work_ai_drafts WHERE work_id = $1`, [waiting])), { source: "service_role_write", generated_by: null });
+  const w2 = await ins("needs_review", null, null);
+  await as(U.teacher, "teacher", () => db.query(`UPDATE public.student_work SET ai_feedback = 'TEACHER VIA COLUMN' WHERE id = $1`, [w2]));
+  eq("a teacher writing the old column through the staff policy: a draft labelled as theirs", await one(`SELECT feedback, source, generated_by FROM public.student_work_ai_drafts WHERE work_id = $1`, [w2]),
+    { feedback: "TEACHER VIA COLUMN", source: "staff_write", generated_by: U.teacher });
+  const w3 = await ins("needs_review", null, null);
+  const err = await tryAs(U.teacher, "teacher", () => db.query(
+    `UPDATE public.student_work SET status = 'approved', approved_by = $2, approved_at = now(), ai_feedback = 'SAME STATEMENT' WHERE id = $1`, [w3, U.teacher]));
+  ok("approving and setting an AI text in one statement is refused", /being reviewed/.test(err ?? ""), err ?? "accepted");
+  eq("  and leaves no draft, and the work as it was", [
+    (await one(`SELECT count(*)::int c FROM public.student_work_ai_drafts WHERE work_id = $1`, [w3])).c,
+    (await one(`SELECT status FROM public.student_work WHERE id = $1`, [w3])).status], [0, "needs_review"]);
+  const kid2 = await tryAs(U.child, "student", () => db.query(`UPDATE public.student_work SET ai_feedback = 'KID' WHERE id = $1`, [w3]));
+  eq("a child's update writes nothing (no update policy reaches the row)", [kid2, (await one(`SELECT count(*)::int c FROM public.student_work_ai_drafts WHERE work_id = $1`, [w3])).c], [null, 0]);
+  eq("  and the helper says no to a child", (await as(U.child, "student", () => db.query(`SELECT public.student_work_draft_staff_can($1) b`, [w3]))).rows[0].b, false);
+  for (const q of [`INSERT INTO public.student_work_ai_drafts (work_id, feedback) VALUES ('${w3}', 'x')`, `DELETE FROM public.student_work_ai_drafts`, `UPDATE public.student_work_ai_drafts SET feedback = 'y'`]) {
+    const e = await tryAs(U.admin, "admin", () => db.query(q));
+    ok(`even an admin cannot write drafts directly: ${q.split(" ")[0]}`, /permission denied/.test(e ?? ""), e ?? "allowed");
+  }
+  eq("the moved rows keep their origin", (await one(`SELECT count(*)::int c FROM public.student_work_ai_drafts WHERE source = 'moved_from_student_work'`)).c, 4);
 }
 
 console.log("=== the teacher approves: one click, the draft becomes what the child reads ===");
