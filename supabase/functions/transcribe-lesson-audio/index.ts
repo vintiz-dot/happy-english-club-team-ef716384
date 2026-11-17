@@ -34,7 +34,13 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { safeParseJson, chunkArray } from "../_lib/text.ts";
-import { requireRole, callerHoldsClass } from "../_lib/auth.ts";
+import { callerHoldsClass } from "../_lib/auth.ts";
+import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
+
+// One run is a whole lesson through Whisper plus the speaker labeler, then
+// the analysis hand-off. Staff only; nothing calls this with the service-role
+// key, so that key is refused like any other non-session (requireSpender).
+const GATE: SpendGate = { name: "transcribe-lesson-audio", roles: STAFF_ROLES, limit: 10, windowMs: 10 * 60_000 };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -413,20 +419,22 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
+  // The spend gate comes first: a real staff session (teacher, TA or admin),
+  // and a per-account limit, before the body or any row is read. This runs
+  // on the service role: it downloads a class's lesson audio (children's
+  // voices), sends it to OpenAI and writes the transcript into the row, all
+  // off a transcript_id in the body. verify_jwt alone let any token through,
+  // the public anon key included.
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
+  const gate = spender;
+
   const sb = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
   try {
-    // Staff only, and only for a class they hold - checked BEFORE anything
-    // is read. This runs on the service role: it downloads a class's lesson
-    // audio (children's voices), sends it to OpenAI and writes the
-    // transcript into the row, all off a transcript_id in the body. verify_jwt
-    // alone let any token through, the public anon key included.
-    const gate = await requireRole(req, sb, ["admin", "teacher"], corsHeaders);
-    if (gate instanceof Response) return gate;
-
     const body = await req.json().catch(() => ({}));
     const transcriptId = String(body.transcript_id ?? "").trim() || null;
     if (!transcriptId) return respond({ success: false, error: "transcript_id is required" }, 400);
@@ -442,6 +450,25 @@ Deno.serve(async (req) => {
     if (!(await callerHoldsClass(sb, gate, tr.class_id))) {
       console.warn(`transcribe-lesson-audio refused: caller ${gate.userId} transcript ${tr.id} class ${tr.class_id}`);
       return respond({ success: false, error: "That transcript belongs to a class you do not hold." }, 403);
+    }
+    // An approved lesson is shared with families: re-transcribing it would
+    // replace the text under the approval and re-run the analysis (which
+    // refuses an approved lesson anyway, after Whisper has been paid for).
+    // Withdraw the approval first. Fail closed: if the approval cannot be
+    // read, nothing is downloaded, sent or written.
+    const { data: approval, error: apErr } = await sb
+      .from("transcript_approvals")
+      .select("transcript_id, withdrawn_at")
+      .eq("transcript_id", transcriptId)
+      .maybeSingle();
+    if (apErr) {
+      return respond({ success: false, error: "Could not check whether this lesson is approved. Try again." }, 503);
+    }
+    if (approval && !approval.withdrawn_at) {
+      return respond({
+        success: false,
+        error: "This lesson's analysis is approved and shared with families. Withdraw the approval before transcribing it again.",
+      }, 409);
     }
     // A path in the body (the app sends none) must name this row's recording.
     if (body.audio_storage_path !== undefined && body.audio_storage_path !== tr.audio_storage_path) {

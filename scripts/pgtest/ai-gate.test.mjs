@@ -300,6 +300,67 @@ console.log("=== analyze-transcript (D-26) ===");
   ok("verify_jwt = true in supabase/config.toml", /\[functions\.analyze-transcript\]\r?\nverify_jwt = true/.test(readFileSync(resolve(repo, "supabase", "config.toml"), "utf8")));
 }
 
+// PRIVACY follow-ups (docs/evidence/PRIVACY-followups.md): transcribe-lesson-audio
+// sends a whole lesson's recording to Whisper for a browser (Teacher
+// Transcripts: upload and Retry). Staff only, 10 per 10 minutes, and - unlike
+// analyze-transcript - no service-role hand-off: nothing calls it with that
+// key, so the key is refused. The stand-in has no transcripts, so a caller the
+// gate lets through gets 404 "transcript not found": past the gate, nothing spent.
+console.log("=== transcribe-lesson-audio (privacy follow-ups) ===");
+{
+  const name = "transcribe-lesson-audio";
+  const src = readFileSync(resolve(FUNCTIONS, name, "index.ts"), "utf8");
+  const body = { transcript_id: "00000000-0000-4000-8000-0000000000bb" };
+  const fn = await load(name, src);
+  ok("the function registers a handler", typeof fn === "function");
+  const pre = await call(fn, name, { method: "OPTIONS" });
+  ok("the CORS preflight still answers without a token", pre.status === 200 && pre.cors === "*" && spentNothing(pre), pre);
+  for (const [label, token, status] of [
+    ["no Authorization header", null, 401], ["the public (anon) key as the bearer", ANON_KEY, 401], ["a token that is not a session", "not-a-jwt", 401],
+    ["an empty bearer", " ", 401], ["the service-role key (nothing hands off to this function)", SERVICE_KEY, 403],
+    ["an account with no role", tokenOf(U.norole), 403], ["an account whose role lookup fails", tokenOf(U.rolesBroken), 403],
+    ["a student", tokenOf(U.student), 403], ["a family", tokenOf(U.family), 403],
+  ]) {
+    const r = await call(fn, name, { token, body });
+    ok(`${label}: ${status}, nothing spent, nothing read`, r.status === status && spentNothing(r) && r.cors === "*", r);
+  }
+  {
+    const r = await call(fn, name, { token: tokenOf(U.norole), body: { ...body, user_id: U.admin, role: "admin" }, headers: { "x-user-id": U.admin, "x-role": "admin" } });
+    ok("a role-less account naming an admin in the body and headers is still refused", r.status === 403 && spentNothing(r), r);
+  }
+  for (const [label, token] of [["a teacher", tokenOf(U.teacher)], ["an admin", tokenOf(U.admin)], ["an admin who also holds student", tokenOf(U.adminAndStudent)]]) {
+    const r = await call(fn, name, { token, body });
+    ok(`${label}: past the gate (404 for a transcript that does not exist), nothing spent`, r.status === 404 && r.vendor.length === 0, r);
+  }
+  const fresh = await load(name, src);
+  let passed = 0, firstRefusal = null;
+  for (let i = 0; i < 13; i++) {
+    const r = await call(fresh, name, { token: tokenOf(U.teacher), body });
+    if (r.status === 429) firstRefusal ??= { at: i + 1, r }; else if (r.status === 404) passed++;
+  }
+  eq("exactly 10 calls per account get through, then 429", [passed, firstRefusal?.at], [10, 11]);
+  ok("the 429 says when to retry and spends nothing", !!firstRefusal && Number(firstRefusal.r.retryAfter) > 0 && Number(firstRefusal.r.retryAfter) <= 600 && spentNothing(firstRefusal.r), firstRefusal?.r);
+  const other = await call(fresh, name, { token: tokenOf(U.admin), body });
+  ok("another account is not held back by it", other.status === 404, other);
+  const spoofed = await call(fresh, name, { token: tokenOf(U.teacher), body, headers: { "x-forwarded-for": "203.0.113.9", "x-real-ip": "203.0.113.9" } });
+  ok("the limited account cannot escape by changing its IP headers (the key is the user id)", spoofed.status === 429, spoofed);
+  const iOpt = src.indexOf('req.method === "OPTIONS"'), iGate = src.indexOf("await requireSpender(req, corsHeaders, GATE)"), iJson = src.indexOf("req.json()", iOpt);
+  const between = iOpt >= 0 && iGate > iOpt ? src.slice(iOpt, iGate) : "await";
+  ok("the gate comes first after the preflight: nothing awaited and the body not read before it",
+    iGate > iOpt && !/\bawait\b/.test(between) && iJson > iGate
+    && /const spender = await requireSpender\(req, corsHeaders, GATE\);\s*if \(spender instanceof Response\) return spender;/.test(src));
+  const gateLine = /const GATE: SpendGate = \{([^}]*)\}/.exec(src)?.[1] ?? "";
+  ok("its settings are the ones tested here (10 per 10 min, staff only)",
+    gateLine.includes(`name: "${name}"`) && gateLine.includes("limit: 10") && gateLine.includes("windowMs: 10 * 60_000") && gateLine.includes("roles: STAFF_ROLES"), gateLine);
+  const walk = (dir) => readdirSync(dir).flatMap((e) => { const f = join(dir, e); return statSync(f).isDirectory() ? walk(f) : /\.(ts|tsx)$/.test(e) ? [f] : []; });
+  const users = walk(resolve(repo, "src")).map((f) => readFileSync(f, "utf8")).filter((t) => t.includes(`"${name}"`));
+  ok(`${users.length} caller file(s) in src/, every one through supabase.functions.invoke (a staff session)`, users.length > 0
+    && users.every((t) => /supabase\.functions\.invoke\(\s*"transcribe-lesson-audio"/.test(t) && !t.includes("/functions/v1/transcribe-lesson-audio")));
+  const fnUsers = walk(FUNCTIONS).filter((f) => !f.includes(`${name}`)).filter((f) => readFileSync(f, "utf8").includes(`functions/v1/${name}`));
+  eq("no edge function calls it (so no service-role hand-off is needed)", fnUsers, []);
+  ok("verify_jwt = true in supabase/config.toml", /\[functions\.transcribe-lesson-audio\]\r?\nverify_jwt = true/.test(readFileSync(resolve(repo, "supabase", "config.toml"), "utf8")));
+}
+
 console.log("=== image-search: the cache-bypassing switches ===");
 {
   const src = readFileSync(resolve(FUNCTIONS, "image-search", "index.ts"), "utf8");

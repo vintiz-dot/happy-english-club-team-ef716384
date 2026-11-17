@@ -14,6 +14,11 @@
 // gate adds checks and changes nothing for a legitimate caller.
 //
 // The optional argument points at another copy of index.ts (mutation runs).
+//
+// PRIVACY follow-ups (docs/evidence/PRIVACY-followups.md): the function now
+// starts with requireSpender (staff, 10 per 10 minutes) - so the service-role
+// key, which nothing sends it, is refused - and answers 409 for a lesson whose
+// analysis is approved (transcript_approvals), 503 when that cannot be read.
 import { build } from 'esbuild';
 import { writeFileSync, readFileSync, unlinkSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -64,12 +69,20 @@ const TR_ELSEWHERE = 'bbbbbbbb-0000-4000-8000-000000000002'; // C1 row, path und
 const TR_NOPATH = 'bbbbbbbb-0000-4000-8000-000000000003';
 const TR_UNKNOWN = 'bbbbbbbb-0000-4000-8000-0000000000ff';
 const TR_BROKEN = 'bbbbbbbb-0000-4000-8000-0000000000ee'; // lookup errors
+const TR_APPROVED = 'bbbbbbbb-0000-4000-8000-000000000004';  // its analysis is approved (shared with families)
+const TR_WITHDRAWN = 'bbbbbbbb-0000-4000-8000-000000000005'; // approved once, withdrawn since
+const TR_APBROKEN = 'bbbbbbbb-0000-4000-8000-000000000006';  // the approval lookup errors
+const APPROVALS = { [TR_APPROVED]: { transcript_id: TR_APPROVED, withdrawn_at: null },
+  [TR_WITHDRAWN]: { transcript_id: TR_WITHDRAWN, withdrawn_at: '2026-11-17T03:00:00Z' } };
 
 function seedRows() {
   return {
     [TR1]: { id: TR1, class_id: C1, audio_storage_path: `${C1}/rec-1.mp3`, audio_mime_type: 'audio/mpeg', title: 'Animals', lesson_context: 'Unit 3' },
     [TR_ELSEWHERE]: { id: TR_ELSEWHERE, class_id: C1, audio_storage_path: `${C2}/rec-2.mp3`, audio_mime_type: 'audio/mpeg', title: null, lesson_context: null },
     [TR_NOPATH]: { id: TR_NOPATH, class_id: C1, audio_storage_path: null, audio_mime_type: null, title: null, lesson_context: null },
+    [TR_APPROVED]: { id: TR_APPROVED, class_id: C1, audio_storage_path: `${C1}/rec-4.mp3`, audio_mime_type: 'audio/mpeg', title: 'Approved', lesson_context: null },
+    [TR_WITHDRAWN]: { id: TR_WITHDRAWN, class_id: C1, audio_storage_path: `${C1}/rec-5.mp3`, audio_mime_type: 'audio/mpeg', title: 'Withdrawn', lesson_context: null },
+    [TR_APBROKEN]: { id: TR_APBROKEN, class_id: C1, audio_storage_path: `${C1}/rec-6.mp3`, audio_mime_type: 'audio/mpeg', title: 'Broken', lesson_context: null },
   };
 }
 
@@ -96,6 +109,11 @@ function fakeClient(key) {
         const row = rows[idf?.[2]];
         if (!row) return { data: null, error: { message: 'JSON object requested, multiple (or no) rows returned', code: 'PGRST116' } };
         return { data: { ...row }, error: null };
+      }
+      if (table === 'transcript_approvals' && st.op === 'select') {
+        const tid = st.filters.find((f) => f[0] === 'eq' && f[1] === 'transcript_id')?.[2];
+        if (tid === TR_APBROKEN) return { data: null, error: { message: 'connection reset', code: '08006' } };
+        return { data: APPROVALS[tid] ? { ...APPROVALS[tid] } : null, error: null };
       }
       if (st.op === 'update' || st.op === 'insert') return { data: null, error: null };
       if (table === 'enrollments') return { data: [{ students: { full_name: 'Anna' } }, { students: { full_name: 'Binh' } }], error: null };
@@ -213,7 +231,12 @@ async function load(source, tag) {
 }
 
 const target = process.argv[2] ? resolve(process.argv[2]) : resolve(FN_DIR, 'index.ts');
-const fn = await load(readFileSync(target, 'utf8'), 'now');
+const SRC = readFileSync(target, 'utf8');
+// Each section gets a fresh instance: the spend limit is per account and in
+// memory, and the sections call as the class's teacher many times.
+let fn = await load(SRC, 'now');
+let generation = 0;
+const fresh = async () => { fn = await load(SRC, `now-${++generation}`); };
 ok('the function registered a handler', typeof fn === 'function');
 let baseFn = null;
 try {
@@ -240,6 +263,7 @@ async function call(handler, token, body) {
 const writes = (r) => r.log.filter((e) => e.op && e.op !== 'select');
 const downloads = (r) => r.log.filter((e) => e.storage);
 const transcriptReads = (r) => r.log.filter((e) => e.table === 'class_transcripts' && e.op === 'select');
+const approvalReads = (r) => r.log.filter((e) => e.table === 'transcript_approvals');
 function touchedNothing(label, r) {
   ok(`${label}: no storage download`, downloads(r).length === 0, downloads(r));
   ok(`${label}: no vendor or function fetch`, r.fetches.length === 0, r.fetches.map((f) => f.url));
@@ -259,10 +283,11 @@ function proceeded(label, r) {
   ok(`${label}: wrote the labeled transcript to this row`, !!vtt && vtt.payload.raw_text.startsWith('WEBVTT') && vtt.filters.some((f) => f[1] === 'id' && f[2] === TR1), vtt);
 }
 // The parts of a run that do not depend on who asked: everything after the
-// gate's own lookups (getUser, user_roles, is_teacher_of_class).
+// gate's own lookups (getUser, user_roles, is_teacher_of_class) and the
+// approval check (asserted on its own below).
 const work = (r) => ({
   status: r.status, json: r.json, fetches: r.fetches,
-  log: r.log.filter((e) => !e.auth && e.table !== 'user_roles' && !e.rpc),
+  log: r.log.filter((e) => !e.auth && e.table !== 'user_roles' && !e.rpc && e.table !== 'transcript_approvals'),
 });
 
 await section('no or bad credentials', async () => {
@@ -310,18 +335,55 @@ await section('staff who do not hold the class', async () => {
   touchedNothing('class lookup error', broken);
 });
 
-await section('the class\'s own staff, admins and the service role proceed', async () => {
-  proceeded('the class\'s teacher', await call(fn, tokenOf(U.teacher1), { transcript_id: TR1 }));
+await section('the service-role key is refused (requireSpender: a real staff session only)', async () => {
+  const svc = await call(fn, SERVICE_KEY, { transcript_id: TR1 });
+  ok('service-role key -> 403', svc.status === 403, svc);
+  ok('service-role key: the transcript row is not read', transcriptReads(svc).length === 0, svc.log);
+  touchedNothing('service-role key', svc);
+  if (baseFn) {
+    const before = await call(baseFn, SERVICE_KEY, { transcript_id: TR1 });
+    ok(`BEFORE (${BASE}): the same key ran a full transcription`, before.status === 200 && before.fetches.length === 3, { status: before.status });
+  }
+});
+
+await section('the class\'s own staff and admins proceed', async () => {
+  await fresh();
+  const t1 = await call(fn, tokenOf(U.teacher1), { transcript_id: TR1 });
+  proceeded('the class\'s teacher', t1);
+  ok('the class\'s teacher: the approval was checked for this transcript, after the class check',
+    approvalReads(t1).length === 1 && approvalReads(t1)[0].filters.some((f) => f[1] === 'transcript_id' && f[2] === TR1)
+    && t1.log.findIndex((e) => e.rpc === 'is_teacher_of_class') < t1.log.findIndex((e) => e.table === 'transcript_approvals'), t1.log);
   proceeded('a TA on the class', await call(fn, tokenOf(U.taOn), { transcript_id: TR1 }));
   proceeded('admin', await call(fn, tokenOf(U.admin), { transcript_id: TR1 }));
-  const svc = await call(fn, SERVICE_KEY, { transcript_id: TR1 });
-  proceeded('service-role call', svc);
-  ok('admin and service role are not asked about the class', true);
+  ok('admins are not asked about the class', true);
   const same = await call(fn, tokenOf(U.teacher1), { transcript_id: TR1, audio_storage_path: `${C1}/rec-1.mp3` });
   proceeded('the class\'s teacher sending the row\'s own path', same);
 });
 
+await section('an approved lesson is not transcribed again (409, server side)', async () => {
+  await fresh();
+  for (const who of ['teacher1', 'taOn', 'admin']) {
+    const r = await call(fn, tokenOf(U[who]), { transcript_id: TR_APPROVED });
+    ok(`${who}: an approved lesson -> 409`, r.status === 409 && r.json?.success === false && /approved/i.test(r.json?.error ?? ''), { status: r.status, json: r.json });
+    touchedNothing(`${who} on an approved lesson`, r);
+  }
+  const outsider = await call(fn, tokenOf(U.teacher2), { transcript_id: TR_APPROVED });
+  ok('a teacher of another class on an approved lesson -> 403 (the class check comes first; the approval is not even read)',
+    outsider.status === 403 && approvalReads(outsider).length === 0, outsider);
+  const broken = await call(fn, tokenOf(U.teacher1), { transcript_id: TR_APBROKEN });
+  ok('the approval cannot be read -> 503 (fails closed)', broken.status === 503 && broken.json?.success === false, { status: broken.status, json: broken.json });
+  touchedNothing('approval lookup error', broken);
+  const withdrawn = await call(fn, tokenOf(U.teacher1), { transcript_id: TR_WITHDRAWN });
+  ok('a withdrawn approval: transcribed as usual (200 queued, its own recording)',
+    withdrawn.status === 200 && withdrawn.json?.queued === true && downloads(withdrawn)[0]?.download === `${C1}/rec-5.mp3`, { status: withdrawn.status, json: withdrawn.json });
+  if (baseFn) {
+    const before = await call(baseFn, tokenOf(U.teacher1), { transcript_id: TR_APPROVED });
+    ok(`BEFORE (${BASE}): the approved lesson was downloaded and sent to Whisper again`, before.status === 200 && downloads(before).length === 1 && before.fetches.length === 3, { status: before.status });
+  }
+});
+
 await section('identical to the function before the gate, for the class\'s teacher', async () => {
+  await fresh();
   if (!baseFn) { ok(`base ${BASE} available from git for the comparison`, false, 'git show failed'); return; }
   const cases = [
     ['a full run', { transcript_id: TR1 }],
@@ -340,12 +402,10 @@ await section('identical to the function before the gate, for the class\'s teach
     const before = work(await call(baseFn, tokenOf(U[who]), { transcript_id: TR1 }));
     ok(`${who}: a full run identical to ${BASE}`, JSON.stringify(now) === JSON.stringify(before), { now, before });
   }
-  const sNow = work(await call(fn, SERVICE_KEY, { transcript_id: TR1 }));
-  const sBefore = work(await call(baseFn, SERVICE_KEY, { transcript_id: TR1 }));
-  ok(`service role: a full run identical to ${BASE}`, JSON.stringify(sNow) === JSON.stringify(sBefore), { sNow, sBefore });
 });
 
 await section('paths and ids', async () => {
+  await fresh();
   const mismatch = await call(fn, tokenOf(U.teacher1), { transcript_id: TR1, audio_storage_path: `${C2}/rec-9.mp3` });
   ok('a body path that is not the row\'s -> 400', mismatch.status === 400 && mismatch.json?.success === false, mismatch);
   touchedNothing('body path mismatch', mismatch);
@@ -371,6 +431,28 @@ await section('paths and ids', async () => {
     noAudio.status === 400 && writes(noAudio).length === 1 && writes(noAudio)[0].payload.status === 'failed', noAudio);
   const opts = await fn(new Request('https://example.supabase.co/functions/v1/transcribe-lesson-audio', { method: 'OPTIONS' }));
   ok('OPTIONS still answers the CORS preflight without credentials', opts.status === 200 && opts.headers.get('Access-Control-Allow-Origin') === '*');
+});
+
+await section('the spend limit and where the gate sits', async () => {
+  await fresh();
+  let passed = 0, firstRefusal = null;
+  for (let i = 0; i < 13; i++) {
+    const r = await call(fn, tokenOf(U.teacher1), { transcript_id: TR_UNKNOWN });
+    if (r.status === 429) firstRefusal ??= { at: i + 1, r }; else if (r.status === 404) passed++;
+  }
+  ok('exactly 10 calls per account get through, then 429', passed === 10 && firstRefusal?.at === 11, { passed, at: firstRefusal?.at });
+  ok('the 429 reads no row and spends nothing', !!firstRefusal && transcriptReads(firstRefusal.r).length === 0 && firstRefusal.r.fetches.length === 0 && writes(firstRefusal.r).length === 0, firstRefusal?.r);
+  const other = await call(fn, tokenOf(U.admin), { transcript_id: TR_UNKNOWN });
+  ok('another account is not held back by it', other.status === 404, other);
+  const iOpt = SRC.indexOf('req.method === "OPTIONS"'), iGate = SRC.indexOf('await requireSpender(req, corsHeaders, GATE)'), iJson = SRC.indexOf('req.json()', iOpt);
+  const between = iOpt >= 0 && iGate > iOpt ? SRC.slice(iOpt, iGate) : 'await';
+  ok('the gate is the first thing after the preflight: nothing awaited and the body not read before it',
+    iGate > iOpt && !/\bawait\b/.test(between) && iJson > iGate
+    && /const spender = await requireSpender\(req, corsHeaders, GATE\);\s*if \(spender instanceof Response\) return spender;/.test(SRC));
+  const gateLine = /const GATE: SpendGate = \{([^}]*)\}/.exec(SRC)?.[1] ?? '';
+  ok('its settings: 10 per 10 min, staff only', gateLine.includes('name: "transcribe-lesson-audio"') && gateLine.includes('limit: 10')
+    && gateLine.includes('windowMs: 10 * 60_000') && gateLine.includes('roles: STAFF_ROLES'), gateLine);
+  ok('no requireRole of its own is left (one gate, not two)', !/requireRole\(/.test(SRC));
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
