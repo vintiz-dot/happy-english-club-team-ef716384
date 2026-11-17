@@ -377,5 +377,136 @@ console.log("=== re-recording ===");
   eq("  and the old analysis is gone", (await one(`SELECT count(*)::int c FROM public.video_analyses WHERE video_submission_id=$1`, [anVs])).c, 0);
 }
 
+// ------------------------------------------- N-7: families read final only
+// Runs only when 20261117160100 is in the list (run.mjs passes it).
+const hasN7 = MIGS.some((f) => f.includes("20261117160100"));
+const hasClaim = MIGS.some((f) => f.includes("20261117160200"));
+if (hasN7) {
+  console.log("=== N-7: a family reads only what the teacher approved ===");
+  // Minh's approved video: the teacher's scores were saved (score 3 on
+  // "task") and approved above. Now the model's words sit beside them.
+  await db.query(`UPDATE public.video_analyses
+     SET strengths = '["AI STRENGTH"]', focus_points = '["AI FOCUS"]' WHERE video_submission_id = $1`, [vs]);
+  const famProgress = async () => (await as(U.minhLogin, "student", () => db.query(`SELECT public.get_video_progress($1) j`, [minh]))).rows[0].j;
+  const famReport = async () => (await as(U.minhLogin, "student", () => db.query(`SELECT public.get_video_homework_for_student($1,$2) j`, [vlog, minh]))).rows[0].j;
+  {
+    const p = await famProgress();
+    eq("the family's progress shows the teacher's per-criterion score as approved", p.videos[0].criteria.map((c) => [Object.keys(c).sort(), c.key, c.label, c.score, c.max]), [[["key", "label", "max", "score"], "task", "Did the task", 3, 4]]);
+    eq("  and the teacher's final score", p.videos[0].score, 90);
+    const r = await famReport();
+    eq("the family's report: the teacher's scores, no comment, no evidence", r.report.criteria.map((c) => [Object.keys(c).sort(), c.label, c.score, c.max]), [[["label", "max", "score"], "Did the task", 3, 4]]);
+    eq("  no model strengths or focus points (no teacher approved them)", [r.report.strengths, r.report.focus_points], [[], []]);
+    ok("  nothing the model wrote anywhere in either", !/AI STRENGTH|AI FOCUS|"Clear"|evidence|quote/.test(JSON.stringify([p, r])), JSON.stringify([p, r]));
+  }
+  // The model writes criteria_scores again after the approval (a re-run,
+  // or the column edited): the family's view must not move.
+  await db.query(`UPDATE public.video_analyses
+     SET criteria_scores = '[{"key":"task","label":"Did the task","score":4,"max":4,"comment":"AI LATE","evidence":[{"t":1,"quote":"x"}]}]'
+   WHERE video_submission_id = $1`, [vs]);
+  {
+    const p = await famProgress();
+    eq("after the model overwrites its draft, the family still sees the approved 3", p.videos[0].criteria.map((c) => c.score), [3]);
+    ok("  and none of the late text", !JSON.stringify(p).includes("AI LATE"));
+    const r = await famReport();
+    eq("  in the report too", r.report.criteria.map((c) => c.score), [3]);
+  }
+  {
+    const p = (await as(U.teacher, "teacher", () => db.query(`SELECT public.get_video_progress($1) j`, [minh]))).rows[0].j;
+    eq("staff are unchanged: the teacher's progress view reads criteria_scores as before", p.videos[0].criteria.map((c) => [Object.keys(c).sort(), c.score]), [[["key", "label", "max", "score"], 4]]);
+    const r = (await as(U.teacher, "teacher", () => db.query(`SELECT public.get_video_homework_for_student($1,$2) j`, [vlog, minh]))).rows[0].j;
+    eq("  and the teacher's report view still has the strengths, focus points and comments", [r.report.strengths, r.report.focus_points, r.report.criteria[0].comment], [["AI STRENGTH"], ["AI FOCUS"], "AI LATE"]);
+    const admin = (await as(U.otherTeacher, "admin", () => db.query(`SELECT public.get_video_progress($1) j`, [minh]))).rows[0].j;
+    eq("  an admin too", admin.videos[0].criteria.map((c) => c.score), [4]);
+  }
+  // The teacher re-approves: the family's view follows the teacher.
+  await db.query(`UPDATE public.video_analyses
+     SET criteria_scores = '[{"key":"task","label":"Did the task","score":2,"max":4,"comment":"x","evidence":[]}]' WHERE video_submission_id = $1`, [vs]);
+  await approve(U.teacher, 70, []);
+  {
+    const p = await famProgress();
+    eq("a re-approval takes the teacher's new scores", [p.videos[0].score, p.videos[0].criteria.map((c) => c.score)], [70, [2]]);
+  }
+  {
+    // An approved analysis with no snapshot (approved before the change and
+    // touched since): the family sees no criteria rather than the model's.
+    await db.query(`UPDATE public.video_analyses SET final_criteria = NULL WHERE video_submission_id = $1`, [vs]);
+    const p = await famProgress();
+    eq("an approval with no recorded teacher scores shows no criteria to the family", p.videos[0].criteria, []);
+    const r = await famReport();
+    eq("  nor in the report", r.report.criteria, []);
+    eq("  but the teacher's final score and words still show", [p.videos[0].score, r.report.feedback], [70, "Great vlog, Minh!"]);
+  }
+  {
+    const err = await tryAs(U.anLogin, "student", () => db.query(`SELECT public.get_video_progress($1)`, [minh]));
+    ok("a classmate still cannot read another child's progress", /Access denied/.test(err ?? ""), err ?? "allowed");
+  }
+}
+
+// --------------------------------------------- N-5: the analysis claim
+if (hasClaim) {
+  console.log("=== N-5: who may start an analysis, and how often ===");
+  const vlog2 = (await one(`INSERT INTO public.homeworks (class_id, title, body, due_date, submission_type)
+                            VALUES ($1, 'My pet', 'Show us your pet', '2026-11-20', 'video') RETURNING id`, [cls])).id;
+  const claim = async (id, staff) => (await one(`SELECT public.video_analysis_claim($1, $2) c`, [id, staff])).c;
+  const state = (id) => one(`SELECT status, analysis_runs r, analysis_take_runs t FROM public.video_submissions WHERE id=$1`, [id]);
+  // The child's upload, exactly as VideoHomeworkSubmission sends it (an
+  // upsert), with counters it has no business setting.
+  await as(U.anLogin, "student", () => db.query(
+    `INSERT INTO public.video_submissions (homework_id, student_id, class_id, video_path, analysis_runs, analysis_take_runs)
+     VALUES ($1,$2,$3,$4, -50, -50)
+     ON CONFLICT (homework_id, student_id) DO UPDATE SET video_path = EXCLUDED.video_path`,
+    [vlog2, an, cls, path(an, vlog2)]));
+  const pet = (await one(`SELECT id FROM public.video_submissions WHERE homework_id=$1 AND student_id=$2`, [vlog2, an])).id;
+  eq("a family's upload starts with no runs counted, whatever it sends", await state(pet), { status: "uploaded", r: 0, t: 0 });
+  {
+    const err = await tryAs(U.anLogin, "student", () => db.query(`SELECT public.video_analysis_claim($1, true)`, [pet]));
+    ok("a family cannot call the claim (service role only)", /permission denied/.test(err ?? ""), err ?? "allowed");
+    const err2 = await tryAs(U.teacher, "teacher", () => db.query(`SELECT public.video_analysis_claim($1, true)`, [pet]));
+    ok("  nor can a teacher", /permission denied/.test(err2 ?? ""), err2 ?? "allowed");
+  }
+  eq("the upload's own request: claimed", await claim(pet, false), "claimed");
+  eq("  processing, one run counted", await state(pet), { status: "processing", r: 1, t: 1 });
+  eq("the family asking again while it runs: with the teacher", await claim(pet, false), "with_teacher");
+  eq("a teacher asking while it runs: busy", await claim(pet, true), "busy");
+  for (const n of [2, 3]) {
+    await db.query(`UPDATE public.video_submissions SET status='failed' WHERE id=$1`, [pet]);
+    eq(`after a failure the family may retry (run ${n} of this take)`, await claim(pet, false), "claimed");
+  }
+  await db.query(`UPDATE public.video_submissions SET status='failed' WHERE id=$1`, [pet]);
+  eq("a 4th family run of one take: refused (a failing video is no longer a loop)", await claim(pet, false), "take_limit");
+  eq("  the teacher may still retry it", await claim(pet, true), "claimed");
+  eq("  counted", await state(pet), { status: "processing", r: 4, t: 4 });
+  await db.query(`UPDATE public.video_submissions SET status='ready_for_review' WHERE id=$1`, [pet]);
+  eq("a family cannot re-run a draft that is with the teacher", await claim(pet, false), "with_teacher");
+  eq("the teacher can ('New draft')", await claim(pet, true), "claimed");
+  await db.query(`UPDATE public.video_submissions SET status='ready_for_review' WHERE id=$1`, [pet]);
+  await as(U.anLogin, "student", () => db.query(`UPDATE public.video_submissions SET analysis_runs=0, analysis_take_runs=0 WHERE id=$1`, [pet]));
+  eq("a family cannot reset the counters", await state(pet), { status: "ready_for_review", r: 5, t: 5 });
+  await as(U.teacher, "teacher", () => db.query(`UPDATE public.video_submissions SET analysis_runs=0, analysis_take_runs=0 WHERE id=$1`, [pet]));
+  eq("  nor can a teacher through the staff policy", await state(pet), { status: "ready_for_review", r: 5, t: 5 });
+  // A re-record: a new take may be analysed, the submission's total stands.
+  await as(U.anLogin, "student", () => db.query(
+    `INSERT INTO public.video_submissions (homework_id, student_id, class_id, video_path) VALUES ($1,$2,$3,$4)
+     ON CONFLICT (homework_id, student_id) DO UPDATE SET video_path = EXCLUDED.video_path`,
+    [vlog2, an, cls, path(an, vlog2, "v2.webm")]));
+  eq("a re-record resets this take's count, not the submission's", await state(pet), { status: "uploaded", r: 5, t: 0 });
+  eq("  and its upload is analysed", await claim(pet, false), "claimed");
+  await db.query(`UPDATE public.video_submissions SET status='failed', analysis_runs=10 WHERE id=$1`, [pet]);
+  eq("a submission's 10 runs: no more for the family, across re-records", await claim(pet, false), "total_limit");
+  eq("  the teacher still may (up to 20)", await claim(pet, true), "claimed");
+  await db.query(`UPDATE public.video_submissions SET status='failed', analysis_runs=20, analysis_take_runs=0 WHERE id=$1`, [pet]);
+  eq("  and then not", await claim(pet, true), "total_limit");
+  eq("an approved video: nobody", [await claim(vs, false), await claim(vs, true)], ["approved", "approved"]);
+  eq("an unknown id: not found", await claim("99999999-9999-4999-8999-999999999999", true), "not_found");
+  {
+    // A processing run nobody finished (an instance killed): after 15
+    // minutes the teacher may start again.
+    await db.query(`ALTER TABLE public.video_submissions DISABLE TRIGGER video_submissions_guard`);
+    await db.query(`UPDATE public.video_submissions SET status='processing', analysis_runs=6, analysis_take_runs=1, updated_at = now() - interval '20 minutes' WHERE id=$1`, [pet]);
+    await db.query(`ALTER TABLE public.video_submissions ENABLE TRIGGER video_submissions_guard`);
+    eq("a run stuck in processing for 20 minutes: the teacher may restart it", await claim(pet, true), "claimed");
+  }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

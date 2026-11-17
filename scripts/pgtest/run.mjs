@@ -231,8 +231,22 @@ const SUITES = [
     migrations: [
       "20261023090000_homework_grading_integrity.sql",
       "20261109090000_video_homework.sql",
+      // N-7: a family reads only the teacher's final fields; N-5: the
+      // analysis claim (who may start one, and how often).
+      "20261117160100_video_family_reads_final_only.sql",
+      "20261117160200_video_analysis_claim.sql",
     ],
   },
+  // N-6: AI feedback on student work is a staff-only draft until a teacher
+  // approves it; the 65 existing texts are moved, not deleted.
+  {
+    name: "student work feedback",
+    file: "student-work-feedback.test.mjs",
+    migrations: ["20261117160000_student_work_ai_feedback_staff_only.sql"],
+  },
+  // F-02 and N-5: every function that spends AI / speech / image credit for
+  // a browser stands behind requireSpender (the real functions, bundled).
+  { name: "AI spend gates", file: "ai-gate.test.mjs", migrations: [] },
   // Audit clips: admin-only store of children's clips, consent before upload.
   { name: "audit clips lib", file: "audit-clips-lib.test.mjs", migrations: [] },
   {
