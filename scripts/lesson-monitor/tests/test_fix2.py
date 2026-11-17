@@ -271,3 +271,65 @@ def test_step0_score_deletes_the_sample_and_keeps_only_result_json(pilot_root):
     assert not folder.exists()
     assert [p.name for p in pc.files_under(pilot_root / "step0")] == ["result.json"]
     assert json.loads((pilot_root / "step0" / "result.json").read_text())["words_pass"] is True
+
+
+# ------------------------------------------------------------------ R-1: offline while the token refreshes
+def _offline_session():
+    s = supa.Session("https://x.invalid", "pub", transport=lambda *a, **k: (0, b'{"message": "network: URLError"}'))
+    s._token, s._refresh, s._exp = "t", "r", 0.0            # an expired token with a refresh token
+    return s
+
+
+def test_a_failed_refresh_is_an_api_error_not_a_sys_exit():
+    with pytest.raises(ApiError) as e:
+        _offline_session().token()
+    assert e.value.status == 0
+    s = _offline_session()
+    s._http = lambda *a, **k: (400, b'{"error": "invalid_grant"}')
+    with pytest.raises(ApiError) as e:
+        s.token()
+    assert e.value.status == 401                            # a dead refresh token counts as unreachable too
+
+
+class RefreshingApi(FakeApi):
+    """Like the real Api: every call asks the session for a token first. The token expires, offline, after the first chunk."""
+
+    def __init__(self):
+        super().__init__()
+        self.s, self.downloads = _offline_session(), 0
+        self.s._exp = float("inf")
+
+    def rpc(self, fn, args=None):
+        self.s.token()
+        return super().rpc(fn, args)
+
+    def download(self, path):
+        self.s.token()
+        self.downloads += 1
+        data = super().download(path)
+        self.s._exp = 0.0
+        return data
+
+
+def test_offline_during_a_token_refresh_deletes_the_audio_copy_and_saves_nothing(pilot_root):
+    touch(pilot_root / "drafts" / f"{REC}.json", b"{}")
+    api = RefreshingApi()
+    assert nightly.process_one(api, ROW, FakeModel(), STEP0, keep_local=False) in ("stopped", "failed")
+    assert api.saved == [] and api.downloads == 1
+    assert pc.files_under(pc.audio_dir()) == [] and pc.files_under(pc.drafts_dir()) == []
+
+
+def test_a_system_exit_inside_a_lesson_still_deletes_the_audio_and_the_draft(pilot_root):
+    touch(pilot_root / "drafts" / f"{REC}.json", b"{}")
+    api = FakeApi()
+    real = api.download
+    n = []
+
+    def download(path):
+        if n:
+            raise SystemExit("anything that ends the process")
+        n.append(1)
+        return real(path)
+    api.download = download
+    assert nightly.process_one(api, ROW, FakeModel(), STEP0, keep_local=False) == "failed"
+    assert api.saved == [] and pc.files_under(pc.audio_dir()) == [] and pc.files_under(pc.drafts_dir()) == []

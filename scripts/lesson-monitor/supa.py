@@ -136,6 +136,14 @@ class Session:
             st, raw = self._http("POST", f"{self.url}/auth/v1/token?grant_type=refresh_token",
                                  {"apikey": self.key, "Content-Type": "application/json"},
                                  json.dumps({"refresh_token": self._refresh}).encode())
+            # A refresh that fails (offline, refresh token dead) is an ApiError like any other
+            # unreachable call, never sys.exit: the job must be able to stop and delete its audio copy.
+            try:
+                d = json.loads(raw)
+            except ValueError:
+                d = {}
+            if st != 200 or not d.get("access_token"):
+                raise ApiError(st if st in (0, 401) else 401, f"session refresh failed (HTTP {st})")
             self._take(st, raw)
         return self._token
 

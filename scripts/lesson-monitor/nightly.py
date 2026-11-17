@@ -242,8 +242,10 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
         remove_draft(rid)
         pc.log(f"{rid} STOPPED ({guard.reason()}); audio copy and any draft deleted ({left} files left)")
         return "stopped"
-    except Exception as e:  # one lesson's failure never ends the night; a code, never content, is kept
+    except (Exception, SystemExit) as e:  # one lesson's failure never ends the night; a code, never content, is kept
+        # SystemExit too: whatever ends the job, the children's audio copy goes first.
         left = delete_audio_copy(folder, room)
+        remove_draft(rid)  # a lesson that failed leaves nothing unverified behind
         code = str(e) if str(e) == "chunk_hash_mismatch" else f"error_{type(e).__name__.lower()}"[:40]
         code = "".join(ch for ch in code if ch.isalnum() or ch == "_").lower() or "error"
         try:

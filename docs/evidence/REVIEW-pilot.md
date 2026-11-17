@@ -113,4 +113,6 @@ Branch `pilot-fix2` (built on `pilot-fix`). Nothing applied to the live database
 
 **N-6.** Helpers lose default EXECUTE: probe "N-6 helpers have no default EXECUTE".
 
+**R-1 (re-check).** `supa.Session.token()` called `sys.exit` when the refresh failed offline; that SystemExit escaped the Guard and `process_one`, leaving the audio copy in `pilot\audio`. Now a failed refresh raises `ApiError` (status 0 offline, 401 for a dead refresh token), so the Guard counts it as unreachable and the grace/stop path runs; and `process_one` also catches `SystemExit`, deletes the audio copy and the lesson's draft, and records the failure. Proved by `test_a_failed_refresh_is_an_api_error_not_a_sys_exit`, `test_offline_during_a_token_refresh_deletes_the_audio_copy_and_saves_nothing` and `test_a_system_exit_inside_a_lesson_still_deletes_the_audio_and_the_draft`. A failed lesson now also removes its local draft.
+
 **Migration** `supabase/migrations/20261117090000_lesson_monitor_pilot.sql`, md5 with CR removed (LF): `a6a48bb36518609188311b4d4308c206`.
