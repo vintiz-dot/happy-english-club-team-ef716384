@@ -104,6 +104,7 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   { path: "/teacher/vocabulary-audit" },
   { path: "/teacher/books" },
   { path: "/teacher/language-support" },
+  { path: "/teacher/lesson-reports" },
   { path: "/teacher/smart-upload" },
   { path: "/teacher/transcripts" },
   { path: "/teacher/videos" },
