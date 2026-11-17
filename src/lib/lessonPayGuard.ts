@@ -335,6 +335,8 @@ export const PAY_ERROR_TEXT: Record<string, string> = {
   not_installed: "The database update for checked lesson-pay changes has not been applied yet. Nothing was changed.",
   born_status: "A lesson is created as Scheduled. Create it, then take the register.",
   one_change_at_a_time: "Make one change at a time (status, teacher, time or a move). Nothing was changed.",
+  approval_required:
+    "This change to who is paid needs a second administrator, so nothing was changed. Send it for approval (the button here), then another administrator approves it in Automation, Approvals.",
 };
 
 /** A refusal in words, always with the next step. */

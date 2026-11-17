@@ -33,7 +33,7 @@ export interface MoneyPlan {
   refresh_pairs?: Array<{ student_id: string; month: string }>;
   reach?: { pairs?: Array<{ student_id: string; month: string; state?: string; tier?: number }>; fp?: string } | null;
   impact?: { tier?: number; families?: number; paid_vnd?: number; closed_payroll?: boolean } | null;
-  approval?: { required?: boolean; reasons?: string[] } | null;
+  approval?: { required?: boolean; reasons?: string[]; thresholds?: { families?: number | null; paid_vnd?: number | null } | null } | null;
   review_required?: boolean;
   token?: string;
 }

@@ -11,6 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Ban, CheckCircle2, Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { callFn, manageSession } from "@/components/admin/session-guard/api";
+import { requestApproval } from "@/components/admin/approvals/api";
+import { approvalErrorText } from "@/lib/approvals";
 import { ConfirmTick, ReasonField, TypedDateField } from "@/components/admin/session-guard/Fields";
 import {
   bulkAckProblem,
@@ -65,6 +67,8 @@ export function BulkSessionDelete() {
   const [errorStep, setErrorStep] = useState<"preview" | "confirm" | null>(null);
   /** The checked rows, kept after the confirm so every result line can name its lesson. */
   const [rowsById, setRowsById] = useState<Record<string, BulkRow>>({});
+  /** D4 step 4: the one request the server offers for a batch that needs a second administrator. */
+  const [offer, setOffer] = useState<ApprovalOffer | null>(null);
   const inFlight = useRef(false);
 
   const { data: classes } = useQuery({
@@ -100,6 +104,7 @@ export function BulkSessionDelete() {
     setErrorStep(null);
     setBatchReason("");
     setAcks({});
+    setOffer(null);
   };
 
   const handlePreview = async () => {
@@ -135,6 +140,7 @@ export function BulkSessionDelete() {
     inFlight.current = true;
     setError(null);
     setErrorStep(null);
+    setOffer(null);
     setBusy("confirm");
     try {
       const res = await callFn("bulk-cancel-sessions", {
@@ -153,8 +159,10 @@ export function BulkSessionDelete() {
         setError(res.error);
         setErrorStep("confirm");
         if (UNKNOWN_OUTCOME_CODES.has(res.error.code)) setPreview(null);
+        setOffer(approvalOfferOf(res.error));
         return;
       }
+      setOffer(approvalOfferOf(res.data));
       setResult(normaliseBulkResult(res.data));
       setPreview(null);
     } finally {
@@ -245,6 +253,7 @@ export function BulkSessionDelete() {
                 : errorText(error.code, error.message)}
             </p>
             <p className="text-xs text-muted-foreground">Code: {error.code}</p>
+            {offer && <SendBatchForApproval offer={offer} />}
           </div>
         )}
 
@@ -359,6 +368,7 @@ export function BulkSessionDelete() {
           </div>
         )}
 
+        {result && offer && <SendBatchForApproval offer={offer} />}
         {result && (
           <BulkResultView
             result={result}
@@ -556,6 +566,44 @@ function BulkResultView({
       <Button size="lg" className="min-h-12 w-full sm:w-auto" onClick={onAgain}>
         Start another check
       </Button>
+    </div>
+  );
+}
+
+/** What bulk-cancel-sessions offers for a batch that needs a second administrator (its `approval`). */
+interface ApprovalOffer { rpc: "cancel_sessions_checked_bulk"; params: Record<string, unknown>; count: number }
+
+function approvalOfferOf(body: any): ApprovalOffer | null {
+  const a = body?.approval;
+  if (!a || a.one_request !== true || a.rpc !== "cancel_sessions_checked_bulk" || !a.params || !Array.isArray(a.params.items) || a.params.items.length === 0) return null;
+  return { rpc: "cancel_sessions_checked_bulk", params: a.params, count: a.params.items.length };
+}
+
+/**
+ * D4 step 4 (review M-1): one request for the lessons of the batch that need a
+ * second administrator, sent as the server listed them (ids, tokens, reasons).
+ * Nothing is cancelled until another administrator approves it; the approval
+ * then cancels them all at once and works out their bills.
+ */
+function SendBatchForApproval({ offer }: { offer: ApprovalOffer }) {
+  const [state, setState] = useState<{ busy: boolean; sent?: boolean; error?: string }>({ busy: false });
+  const send = async () => {
+    if (state.busy || state.sent) return;
+    setState({ busy: true });
+    const r = await requestApproval("session", offer.rpc, offer.params, null);
+    setState("error" in r ? { busy: false, error: approvalErrorText(r.error.code, r.error.detail) } : { busy: false, sent: true });
+  };
+  return (
+    <div role="status" className="space-y-2 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+      {state.sent ? (
+        <p>Sent: {offer.count} {offer.count === 1 ? "lesson waits" : "lessons wait"}, unchanged, until another administrator approves them in Automation, Approvals.</p>
+      ) : (
+        <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={state.busy} onClick={() => void send()}>
+          {state.busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+          Send {offer.count === 1 ? "this lesson" : `these ${offer.count} lessons`} for approval
+        </Button>
+      )}
+      {state.error && <p role="alert" className="break-words">{state.error}</p>}
     </div>
   );
 }

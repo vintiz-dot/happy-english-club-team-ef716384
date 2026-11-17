@@ -102,11 +102,62 @@ const cor = src('src/components/admin/session-guard/CancelOverridesReview.tsx');
 ok('CancelOverridesReview: tabs (overrides / waiting for approval); "asked by" read from the approval record, not from the row\'s attached context',
    /TabsTrigger value="approvals"/.test(cor) && /change_approval_queue/.test(cor) && !/attached\.requested_by|\.attached\b/.test(cor));
 const ui = ['ApprovalInbox.tsx', 'ApprovalSettingsCard.tsx', 'PendingApprovalBadge.tsx', 'api.ts'].map((f) => src(`src/components/admin/approvals/${f}`)).join('\n');
-ok('the approval screens write nothing but the nine RPCs (no table write, no service key, no edge function)',
-   !/\.(insert|update|upsert|delete)\(/.test(ui) && !/service_role|SERVICE_ROLE/.test(ui) && !/functions\.invoke/.test(ui));
+ok('the approval screens write nothing but the RPCs below and guarded-change-refresh (no table write, no service key, no other edge function)',
+   !/\.(insert|update|upsert|delete)\(/.test(ui) && !/service_role|SERVICE_ROLE/.test(ui) &&
+   [...ui.matchAll(/functions\.invoke\("([a-z-]+)"/g)].map((m) => m[1]).join() === 'guarded-change-refresh');
 const rpcs = [...ui.matchAll(/call<[^>]*>\("([a-z_]+)"/g)].map((m) => m[1]).sort();
-ok('  and only these RPCs', JSON.stringify(rpcs) === JSON.stringify(['acknowledge_released_request', 'approval_request_preview', 'approve_change_request',
-  'change_approval_status', 'reject_change_request', 'release_own_request', 'request_change_approval', 'set_change_approval_settings', 'withdraw_change_request']), rpcs);
+ok('  and only these RPCs (approve / release go through the function, which calls them as the admin)', JSON.stringify(rpcs) === JSON.stringify(['acknowledge_released_request', 'approval_request_preview',
+  'change_approval_status', 'reject_change_request', 'request_change_approval', 'set_change_approval_settings', 'withdraw_change_request']), rpcs);
+
+// ---- fix round 1
+const apiSrc = src('src/components/admin/approvals/api.ts');
+ok('B-2: approve and release are guarded-change-refresh actions "approve" / "release" (the decision RPC, then the bills, server side); "approval-refresh" again on its own',
+   /decide\("approve", id, token, note\)/.test(apiSrc) && /decide\("release", id, token, null\)/.test(apiSrc) &&
+   /decide\("approval-refresh", id, null, null\)/.test(apiSrc) && /e\.code === "bad_action" \? "function_outdated"/.test(apiSrc));
+const gcr = src('supabase/functions/guarded-change-refresh/index.ts');
+ok('B-2: the function calls approve_change_request / release_own_request on the caller\'s client and then refreshApprovedChange; never the service client for the decision',
+   /asCaller\.rpc\("approve_change_request"/.test(gcr) && /asCaller\.rpc\("release_own_request"/.test(gcr) &&
+   /refreshApprovedChange\(service, asCaller, body\.request_id\)/.test(gcr) && !/service\.rpc\("(approve_change_request|release_own_request)"/.test(gcr));
+const inbox = src('src/components/admin/approvals/ApprovalInbox.tsx');
+ok('B-2: the inbox says whether the bills came back and offers "Work out the bills again" for an applied money / lesson request',
+   /decidedText\(d\?\.decision, d\?\.tuition\)/.test(inbox) && /refreshApprovedBills\(row\.request_id\)/.test(inbox) && /Work out the bills again/.test(inbox));
+const dt = lib.decidedText({ status: 'applied' }, { status: 'refreshed' });
+const df = lib.decidedText({ status: 'applied' }, { status: 'failed' });
+ok('decidedText: applied + refreshed / applied + not all refreshed (offers the retry) / stale', /Approved.*worked out again\./.test(dt.text) && !dt.billsLeft &&
+   /not confirmed/.test(df.text) && df.billsLeft && /nothing was done/.test(lib.decidedText({ status: 'stale' }, null).text) &&
+   /Done alone/.test(lib.decidedText({ status: 'applied' }, { status: 'none' }, true).text));
+ok('N-1: the paid / families lines name the setting\'s own figures when known; the defaults otherwise',
+   lib.reasonSentence(['paid'], { paid_vnd: 9000000, families: 4 }) === 'This needs a second administrator because it reaches bills with 9,000,000 VND or more already paid.' &&
+   /of 4 or more families/.test(lib.reasonSentence(['families'], { paid_vnd: 9000000, families: 4 })) && /5,000,000/.test(lib.reasonSentence(['paid'])));
+ok('N-1: the expiry sentence no longer says "7 days"; an outdated function says nothing was done',
+   !/7 days/.test(lib.approvalErrorText('HC064')) && /nothing was done/.test(lib.approvalErrorText('function_outdated')));
+ok('grantAdminParams: the grant request\'s params', JSON.stringify(lib.grantAdminParams('u', '  New  office manager ')) === JSON.stringify({ user_id: 'u', reason: 'New office manager' }));
+ok('M-3: approval_required has its own sentence with the next step in sessionGuard ERROR_TEXT and lessonPayGuard PAY_ERROR_TEXT',
+   /approval_required:\s*\n?\s*"This needs a second administrator, so nothing was changed\. Send it for approval/.test(src('src/lib/sessionGuard.ts')) &&
+   /approval_required:\s*\n?\s*"This change to who is paid needs a second administrator, so nothing was changed\. Send it for approval/.test(src('src/lib/lessonPayGuard.ts')));
+ok('M-3: the lesson-pay dialog offers "Send for approval" (the checked money op as previewed, with its token)',
+   /g\.requestApproval\(form\)/.test(gd.slice(gd.indexOf('export function PayGuardDialog'))) &&
+   /requestApprovalRpc\("money", "money_change_checked", params, p\.token/.test(ugc));
+const bsd = src('src/components/admin/BulkSessionDelete.tsx');
+ok('M-1: the bulk screen keeps the server\'s one-request offer and sends it (session / cancel_sessions_checked_bulk, the listed items)',
+   /approvalOfferOf\(res\.error\)/.test(bsd) && /approvalOfferOf\(res\.data\)/.test(bsd) && /requestApproval\("session", offer\.rpc, offer\.params, null\)/.test(bsd));
+const bcs = src('supabase/functions/bulk-cancel-sessions/index.ts');
+ok('M-1: bulk-cancel-sessions asks for the whole batch before the first chunk when it is more than one chunk; a later approval stop is refreshed, audited and reported',
+   /if \(items\.length > BULK_CHUNK\) \{\s*\n\s*const pc = await approvalPrecheck\(/.test(bcs) && /chunkError\?\.code === 'approval_required' && done\.length === 0/.test(bcs) &&
+   /ok: !chunkError \|\| approvalStopped/.test(bcs));
+const aum = src('src/components/admin/AdminUsersManager.tsx');
+const mau = src('supabase/functions/manage-admin-users/index.ts');
+ok('M-2: manage-admin-users asks change_approval_status (as the caller) before creating an account / giving the role, and removes an account whose role was refused',
+   mau.indexOf('const blocked = await adminGrantBlocked(null);') > 0 && mau.indexOf('const blocked = await adminGrantBlocked(null);') < mau.indexOf('supabase.auth.admin.createUser({\n        email,\n        password,\n        email_confirm: true,\n        user_metadata: { role: \'admin\' }') &&
+   /asCaller\.rpc\('change_approval_status'\)/.test(mau) && /supabase\.auth\.admin\.deleteUser\(newUser\.user\.id\)/.test(mau) &&
+   /if \(role === 'admin'\) \{\s*\n\s*const blockedRole = await adminGrantBlocked\(userId\);/.test(mau));
+ok('M-2: Promote to Admin, refused for approval, offers the grant request (settings / grant_admin_role)',
+   /requestApproval\("settings", "grant_admin_role", grantAdminParams\(/.test(aum) && /e\.code === "approval_required"/.test(aum));
+const umi = src('src/components/admin/money-guard/useMoneyInput.ts');
+ok('N-6: a change sent for approval stops the queue and says how many were not made', /more \$\{left === 1 \? "change was" : "changes were"\} not made/.test(umi) &&
+   /pending\.current = \[\];/.test(umi));
+ok('N-2: the money review names who asked, from the approval record', /change_approval_queue/.test(src('src/components/admin/money-guard/MoneyChangesReview.tsx')) &&
+   /Asked by/.test(src('src/components/admin/money-guard/MoneyChangesReview.tsx')));
 const mounted = src('src/components/admin/tabs/AutomationTab.tsx');
 ok('mounted on the admin Automation page (settings card, inbox, the waiting count)', /<ApprovalSettingsCard \/>/.test(mounted) && /<ApprovalInbox \/>/.test(mounted) && /<PendingApprovalBadge \/>/.test(mounted));
 

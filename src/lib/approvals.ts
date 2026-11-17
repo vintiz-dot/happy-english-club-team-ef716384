@@ -49,9 +49,25 @@ export const REASON_TEXT: Record<string, string> = {
   unknown: "the database could not tell how much it reaches",
 };
 
+/** The lines the owner set, as the database reports them (`approval.thresholds`). */
+export interface ApprovalThresholds { families?: number | null; paid_vnd?: number | null }
+
+/** One reason in words; the families / paid lines name the setting's own figure when it is known (review N-1). */
+export function reasonText(reason: string, thresholds?: ApprovalThresholds | null): string {
+  const paid = Number(thresholds?.paid_vnd);
+  const fam = Number(thresholds?.families);
+  if (reason === "paid" && thresholds && Number.isFinite(paid) && thresholds.paid_vnd !== null) {
+    return `it reaches bills with ${paid.toLocaleString("en-US")} VND or more already paid`;
+  }
+  if (reason === "families" && thresholds && Number.isFinite(fam) && thresholds.families !== null) {
+    return `it reaches the settled bills of ${fam} or more families`;
+  }
+  return REASON_TEXT[reason] ?? reason;
+}
+
 /** "This needs a second administrator because ..." from the database's reasons. */
-export function reasonSentence(reasons: string[] | null | undefined): string {
-  const list = (reasons ?? []).map((r) => REASON_TEXT[r] ?? r);
+export function reasonSentence(reasons: string[] | null | undefined, thresholds?: ApprovalThresholds | null): string {
+  const list = (reasons ?? []).map((r) => reasonText(r, thresholds));
   if (list.length === 0) return "This needs a second administrator.";
   const body = list.length === 1 ? list[0] : `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
   return `This needs a second administrator because ${body}.`;
@@ -97,7 +113,11 @@ export function approvalErrorText(code: string | null | undefined, detail?: stri
       return "A request for this is already waiting. Open it to approve or reject it, or ask whoever sent it to withdraw it.";
     case "request_expired":
     case "HC064":
-      return "This request is more than 7 days old and can no longer be approved. Ask again.";
+      return "This request has passed its expiry and can no longer be approved. Ask again.";
+    case "function_outdated":
+      return "The approval function on the server is not updated yet, so nothing was done. Try again once it is deployed.";
+    case "not_applied":
+      return "This request was not applied, so there are no bills to work out again.";
     case "approval_setting_locked":
     case "HC065":
       if (/two_admins/.test(d)) return "Approval needs two administrators before it can be switched on.";
@@ -117,6 +137,24 @@ export function approvalErrorText(code: string | null | undefined, detail?: stri
     default:
       return "The request did not go through. Nothing was changed.";
   }
+}
+
+/**
+ * What the screen says after "Approve and make the change" / "Do it alone" /
+ * "Work out the bills again", from guarded-change-refresh's answer: the
+ * decision first, then whether every bill it reached was worked out again.
+ * Nothing is assumed: an unknown refresh is said to be unconfirmed.
+ */
+export function decidedText(decision: any, tuition: any, alone = false): { text: string; billsLeft: boolean } {
+  if (decision && decision.status !== "applied") {
+    return { text: "It had changed meanwhile, so nothing was done. It is marked out of date.", billsLeft: false };
+  }
+  const head = !decision ? "" : alone ? "Done alone. The other administrator sees it first when they return." : "Approved: the change is done.";
+  const st = tuition?.status;
+  const tail = st === "none" ? (decision ? "" : "There were no bills to work out again.")
+    : st === "refreshed" ? "Its bills were worked out again."
+    : "Some of its bills were not confirmed as worked out again: use \"Work out the bills again\" below.";
+  return { text: [head, tail].filter(Boolean).join(" "), billsLeft: st !== "none" && st !== "refreshed" };
 }
 
 /** reasons=[...] from an HC060 detail. */
@@ -196,6 +234,11 @@ export interface PayAdjustmentRow {
 /** request_change_approval's params for carrying pay forward (the rows PayrollMonthLock would insert). */
 export function payApprovalParams(rows: PayAdjustmentRow[]) {
   return { rows: rows.map((r) => ({ ...r, amount_vnd: Math.round(r.amount_vnd), reason: clean(r.reason) })) };
+}
+
+/** request_change_approval's params for giving someone the administrator role (grant_admin_role). */
+export function grantAdminParams(userId: string, reason: string) {
+  return { user_id: userId, reason: clean(reason) };
 }
 
 /** Pending first; among them, the ones released alone and not yet read, then the oldest. */

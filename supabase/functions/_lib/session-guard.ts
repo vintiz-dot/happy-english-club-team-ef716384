@@ -329,6 +329,29 @@ export async function bulkCancelChunks(asCaller: any, items: BulkItem[], reason:
   return { done, refused, not_attempted, chunkError };
 }
 
+/** D4 step 4 (review M-1): the most lessons one approval request may hold (_approval_plan's cap). */
+export const APPROVAL_BATCH_CAP = 200;
+
+/**
+ * Would this whole batch wait for a second administrator? Asked once, as the
+ * caller, before the first chunk (change_approval_check, read-only), so a
+ * batch applied in several transactions is never left half done because a
+ * later chunk needed approval. The function missing means step 4 is not
+ * installed: nothing can need approval. Any other failure is returned (the
+ * caller refuses: nothing was changed).
+ */
+export async function approvalPrecheck(asCaller: any, kind: string, rpcName: string, params: Record<string, unknown>):
+  Promise<{ enabled: boolean; required: boolean; reasons: string[] } | { error: GuardError }> {
+  const { data, error } = await asCaller.rpc('change_approval_check', { p_kind: kind, p_rpc: rpcName, p_params: params });
+  if (error) {
+    const m = mapDbError(error);
+    if (m.code === 'guard_not_installed') return { enabled: false, required: false, reasons: [] };
+    return { error: m };
+  }
+  return { enabled: data?.enabled === true, required: data?.required !== false,
+           reasons: Array.isArray(data?.reasons) ? data.reasons.map(String) : [] };
+}
+
 /** One preview per lesson, split into plain (tier 0, allowed) and the rest. */
 export async function bulkPreview(asCaller: any, sessions: any[], op: string) {
   const plain: any[] = [], needs_ack: any[] = [], refused: any[] = [], preview_failed: any[] = [];

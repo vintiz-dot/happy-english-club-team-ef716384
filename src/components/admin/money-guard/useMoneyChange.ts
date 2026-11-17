@@ -3,6 +3,7 @@ import { canSubmitMoney, moneyAck, moneyErrorText, type MoneyForm, type MoneyPla
 import { confirmMoneyChange, previewMoneyChange, refreshMoneyChange, type MoneyError } from "./api";
 import { approvalErrorText, canRequestMoneyApproval, moneyApprovalParams } from "@/lib/approvals";
 import { requestApproval as requestApprovalRpc } from "@/components/admin/approvals/api";
+import { toast } from "@/hooks/use-toast";
 
 export interface MoneyRequest {
   entity: string;
@@ -17,7 +18,7 @@ const EMPTY: MoneyForm = { reason: "", confirm: false, correctionReason: "" };
  * or asked for directly), then the admin's confirmation through
  * money_change_checked, then the bill refresh. Holds no rule of its own.
  */
-export function useMoneyChange(onDone?: (result: any) => void) {
+export function useMoneyChange(onDone?: (result: any) => void, onApprovalSent?: () => void) {
   const [request, setRequest] = useState<MoneyRequest | null>(null);
   const [plan, setPlan] = useState<MoneyPlan | null>(null);
   const [form, setForm] = useState<MoneyForm>(EMPTY);
@@ -92,8 +93,10 @@ export function useMoneyChange(onDone?: (result: any) => void) {
     }
     // Not onDone: nothing was changed, so the screen must not report a save.
     setNotice("approval_sent");
+    toast({ title: "Sent for approval", description: "Nothing changes until another administrator approves it in Automation, Approvals." });
+    onApprovalSent?.();
     close();
-  }, [request, plan, form, close]);
+  }, [request, plan, form, close, onApprovalSent]);
 
   return { request, plan, form, setForm, busy, error, notice, open, close, submit, canSubmit: canSubmitMoney(plan, form),
            requestApproval, canRequestApproval: canRequestMoneyApproval(plan, form) };

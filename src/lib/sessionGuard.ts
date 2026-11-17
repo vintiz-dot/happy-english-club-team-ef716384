@@ -257,6 +257,10 @@ export const ERROR_TEXT: Record<string, string> = {
   function_missing: "The server function for this change is not deployed yet. Nothing was changed.",
   not_refreshed: "The server answered, but did not confirm that every bill was recalculated. Try again in a minute.",
   http_error: "The server answered with an error the app does not recognise. Reload the lesson to see whether anything was changed.",
+  // D4 step 4 (review M-3): approval switched on
+  approval_required:
+    "This needs a second administrator, so nothing was changed. Send it for approval (the button here), then another administrator approves it in Automation, Approvals.",
+  approval_already_pending: "A request for this is already waiting for a second administrator. Nothing was changed. Open Automation, Approvals.",
 };
 
 /**

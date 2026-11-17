@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ApprovalKind, ApprovalQueueRow, ApprovalRpc } from "@/lib/approvals";
+import { parseInvokeError } from "@/lib/sessionGuard";
 
 /**
  * Typed wrappers for two-administrator approval (D4 step 4). The RPCs are
@@ -36,11 +37,39 @@ export const requestApproval = (kind: ApprovalKind, rpc: ApprovalRpc, params: Re
     { p_kind: kind, p_rpc: rpc, p_params: params, p_token: token });
 
 export const previewRequest = (id: string) => call<any>("approval_request_preview", { p_request_id: id });
-export const approveRequest = (id: string, token: string, note: string | null) =>
-  call<any>("approve_change_request", { p_request_id: id, p_token: token, p_note: note });
 export const rejectRequest = (id: string, note: string) => call<any>("reject_change_request", { p_request_id: id, p_note: note });
 export const withdrawRequest = (id: string) => call<any>("withdraw_change_request", { p_request_id: id });
-export const releaseOwnRequest = (id: string, token: string) => call<any>("release_own_request", { p_request_id: id, p_token: token });
+
+/** What an approval did, and what came of working out its bills again. */
+export interface Decided { decision: any; tuition: any }
+
+/**
+ * Approve, release alone, or work out the bills again (review B-2): through
+ * the edge function guarded-change-refresh, which calls approve_change_request
+ * / release_own_request with the signed-in administrator's own JWT and then
+ * refreshes the bills of what was applied, as the direct path does - so the
+ * refresh is not left to this tab. A function too old for these actions
+ * answers bad_action before doing anything: "function_outdated", nothing done.
+ */
+async function decide(action: "approve" | "release" | "approval-refresh", id: string, token: string | null, note: string | null): Promise<Res<Decided>> {
+  try {
+    const { data, error } = await supabase.functions.invoke("guarded-change-refresh", {
+      body: { action, request_id: id, ...(token ? { token } : {}), ...(note ? { note } : {}) },
+    });
+    if (error || !data || typeof data !== "object" || (data as any).ok !== true) {
+      const e = await parseInvokeError(error, data);
+      return { error: { code: e.code === "bad_action" ? "function_outdated" : e.code, sqlstate: String(e.sqlstate ?? ""),
+                        message: String(e.message ?? ""), detail: String(e.detail ?? "") } };
+    }
+    return { data: { decision: (data as any).decision ?? null, tuition: (data as any).tuition ?? null } };
+  } catch (x) {
+    const e = await parseInvokeError(x);
+    return { error: { code: e.code, sqlstate: "", message: String(e.message ?? ""), detail: "" } };
+  }
+}
+export const approveRequest = (id: string, token: string, note: string | null) => decide("approve", id, token, note);
+export const releaseOwnRequest = (id: string, token: string) => decide("release", id, token, null);
+export const refreshApprovedBills = (id: string) => decide("approval-refresh", id, null, null);
 export const acknowledgeReleased = (id: string, note: string | null) => call<any>("acknowledge_released_request", { p_request_id: id, p_note: note });
 export const approvalStatus = () => call<any>("change_approval_status", {});
 export const setApprovalSettings = (patch: Record<string, unknown>, reason: string) =>

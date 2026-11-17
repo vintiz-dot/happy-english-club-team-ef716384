@@ -9,6 +9,7 @@ import { ReasonField } from "@/components/admin/session-guard/Fields";
 import { checkReason, cleanReason, formatClock, formatDay, REASON_MIN } from "@/lib/sessionGuard";
 import {
   approvalErrorText,
+  decidedText,
   expiryWords,
   reasonSentence,
   RPC_WORDS,
@@ -22,6 +23,7 @@ import {
   approveRequest,
   loadQueue,
   previewRequest,
+  refreshApprovedBills,
   rejectRequest,
   releaseOwnRequest,
   requestApproval,
@@ -104,7 +106,7 @@ function RequestItem({ row, names, me, onChanged }: { row: ApprovalQueueRow; nam
         {open ? <ChevronDown className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <ChevronRight className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}
         <span className="min-w-0 flex-1 space-y-1">
           <span className="block break-words text-sm font-medium">{RPC_WORDS[row.rpc] ?? row.rpc}{row.batch ? ` (${row.preview?.items?.length ?? "several"} items)` : ""}</span>
-          <span className="block break-words text-xs text-muted-foreground">Asked {when} by {asker}. {reasonSentence(row.reasons)}</span>
+          <span className="block break-words text-xs text-muted-foreground">Asked {when} by {asker}. {reasonSentence(row.reasons, row.preview?.approval?.thresholds)}</span>
           <span className="flex flex-wrap gap-1.5">
             <Badge variant={row.status === "pending" ? "destructive" : "outline"}>{STATUS_WORDS[row.status] ?? row.status}</Badge>
             {row.status === "pending" && <Badge variant="outline">{expiryWords(row.expires_at)}</Badge>}
@@ -131,6 +133,7 @@ function RequestDetail({ id, row, me, onChanged }: { id: string; row: ApprovalQu
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [billsLeft, setBillsLeft] = useState(false);
   const inFlight = useRef(false);
 
   const act = async (fn: () => Promise<{ data: any } | { error: ApprovalError }>, done: (d: any) => string) => {
@@ -187,7 +190,7 @@ function RequestDetail({ id, row, me, onChanged }: { id: string; row: ApprovalQu
               <ReasonField label="Note (optional)" help="What you checked." value={note} onChange={setNote} min={0} disabled={busy} />
               <Button className="min-h-11 w-full sm:w-auto" disabled={busy || !look.token}
                 onClick={() => void act(() => approveRequest(row.request_id, look.token, note.trim() ? cleanReason(note) : null),
-                  (d) => (d?.status === "applied" ? "Approved: the change is done." : "It had changed meanwhile, so nothing was done. It is marked out of date."))}>
+                  (d) => { const t = decidedText(d?.decision, d?.tuition); setBillsLeft(t.billsLeft); return t.text; })}>
                 {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
                 Approve and make the change
               </Button>
@@ -204,7 +207,8 @@ function RequestDetail({ id, row, me, onChanged }: { id: string; row: ApprovalQu
           )}
           {look.can_release && (
             <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy}
-              onClick={() => void act(() => releaseOwnRequest(row.request_id, look.token), () => "Done alone. The other administrator sees it first when they return.")}>
+              onClick={() => void act(() => releaseOwnRequest(row.request_id, look.token),
+                (d) => { const t = decidedText(d?.decision, d?.tuition, true); setBillsLeft(t.billsLeft); return t.text; })}>
               Do it alone (the other administrator is away)
             </Button>
           )}
@@ -219,6 +223,16 @@ function RequestDetail({ id, row, me, onChanged }: { id: string; row: ApprovalQu
               onClick={() => void act(() => acknowledgeReleased(row.request_id, null), () => "Marked as read.")}>
               I have read this
             </Button>
+          )}
+          {row.status === "applied" && (row.kind === "session" || (row.kind === "money" && row.rpc !== "carry_payroll_adjustments")) && (
+            <section aria-label="Bills" className="space-y-1">
+              {billsLeft && <p role="alert" className="text-sm">Until its bills are worked out again, families may see a bill that does not include this change.</p>}
+              <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy}
+                onClick={() => void act(() => refreshApprovedBills(row.request_id),
+                  (d) => { const t = decidedText(null, d?.tuition); setBillsLeft(t.billsLeft); return t.text; })}>
+                Work out the bills again
+              </Button>
+            </section>
           )}
           {(row.status === "stale" || row.status === "expired") && row.requested_by === me && <AskAgain row={row} onDone={(t) => { setMsg(t); onChanged(); }} />}
           {row.requested_by === me && row.status === "pending" && !look.can_release && (

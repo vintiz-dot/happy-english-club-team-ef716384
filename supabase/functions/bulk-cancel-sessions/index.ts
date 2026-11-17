@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import {
-  BULK_PREVIEW_CAP, bulkCancelChunks, bulkConfirmItems, bulkPreview, callerClient, corsHeaders, fail, guardError,
+  APPROVAL_BATCH_CAP, approvalPrecheck, BULK_CHUNK, BULK_PREVIEW_CAP, bulkCancelChunks, bulkConfirmItems, bulkPreview, callerClient, corsHeaders, fail, guardError,
   isUuid, json, outsideCriteria, preview, readReason, refreshDone, storedConsequences, type BulkItem,
 } from '../_lib/session-guard.ts';
 
@@ -123,6 +123,37 @@ Deno.serve(async (req) => {
       message_key: 'sessionGuard.error.outside_criteria', sqlstate: null }));
     const batchId = validationResult.data.batch_id ?? crypto.randomUUID();
 
+    // D4 (design (d) step 3A, (e) R-12): a batch that needs a second
+    // administrator is ONE request for the whole batch - request_change_approval
+    // with these params (the items as sent, their tokens, the batch reason).
+    const approvalOffer = (ids: string[]) => ({
+      required: true, one_request: true, kind: 'session', rpc: 'cancel_sessions_checked_bulk',
+      batch_id: batchId, reason: rr.reason, items: ids,
+      params: { items: items.filter((i) => ids.includes(i.id)), reason: rr.reason, batch_id: batchId,
+                context: { source: 'bulk-cancel-sessions', set_manual: 'true' } },
+    });
+    // Review M-1: more than one chunk is more than one transaction. Ask for the
+    // WHOLE batch before the first chunk, so approval never leaves the earlier
+    // chunks cancelled and the rest not (approval off: answered at once).
+    if (items.length > BULK_CHUNK) {
+      const pc = await approvalPrecheck(asCaller, 'session', 'cancel_sessions_checked_bulk',
+        { items, reason: rr.reason, batch_id: batchId });
+      if ('error' in pc) {
+        if (pc.error.code === 'bad_items' && items.length > APPROVAL_BATCH_CAP) {
+          return fail(guardError(413, 'too_many', `With approval switched on, at most ${APPROVAL_BATCH_CAP} lessons can be checked as one batch. Nothing was changed: narrow the range.`),
+            { success: false });
+        }
+        return fail(pc.error, { success: false });
+      }
+      if (pc.required) {
+        return fail(guardError(409, 'approval_required', 'This batch needs a second administrator. Nothing was changed.', 'HC060',
+          `reasons=${JSON.stringify(pc.reasons)}`), {
+          success: false, done: [], not_attempted: items.map((i) => ({ id: i.id, code: 'approval_required' })), batch_id: batchId,
+          approval: approvalOffer(items.map((i) => i.id)),
+        });
+      }
+    }
+
     const { done, refused: dbRefused, not_attempted, chunkError } = items.length === 0
       ? { done: [] as any[], refused: [] as any[], not_attempted: [] as any[], chunkError: null }
       : await bulkCancelChunks(asCaller, items, rr.reason, batchId, {
@@ -130,19 +161,19 @@ Deno.serve(async (req) => {
       attached: { source: 'bulk-cancel-sessions', criteria: { date_from, date_to, class_id, teacher_id }, include_held: !!include_held },
     });
     const refused = [...outsideRefused, ...dbRefused];
-    // D4 (design (d) step 3A, (e) R-12): a batch that needs a second
-    // administrator is ONE request for the whole batch. HC060 is not in the
-    // bulk RPC's per-item list, so it stops the chunk; the answer names every
-    // lesson of the batch that is not done and offers one request for them.
-    // Approval ships switched off (step 4), so today this never fires.
-    if (chunkError?.code === 'approval_required') {
+    // HC060 is not in the bulk RPC's per-item list, so it stops the chunk.
+    // Nothing done (one chunk, or the first): the answer names every lesson
+    // and offers one request for them. Something done already (a later
+    // chunk needed approval although the whole batch did not, a moment
+    // before): it is NOT returned early - what was cancelled is refreshed,
+    // audited and reported below, with the rest as not attempted.
+    if (chunkError?.code === 'approval_required' && done.length === 0) {
       return fail(chunkError, {
-        success: false, done: done.map(({ refresh_pairs: _p, ...d }: any) => d), not_attempted, batch_id: batchId,
-        approval: { required: true, one_request: true, kind: 'session', rpc: 'cancel_sessions_checked_bulk',
-                    batch_id: batchId, reason: rr.reason,
-                    items: not_attempted.map((n: any) => n.id) },
+        success: false, done: [], not_attempted, batch_id: batchId,
+        approval: approvalOffer(not_attempted.map((n: any) => n.id)),
       });
     }
+    const approvalStopped = chunkError?.code === 'approval_required';
     if (chunkError && done.length === 0 && refused.length === 0) {
       return fail(chunkError, { success: false, not_attempted });
     }
@@ -180,9 +211,13 @@ Deno.serve(async (req) => {
     });
 
     return json({
-      ok: !chunkError,
+      // a batch stopped by approval part-way is reported as what it is: the
+      // screen lists what was cancelled (refreshed and audited above) and
+      // what was not attempted, and offers the request for the rest
+      ok: !chunkError || approvalStopped,
       success: !chunkError,
       partial: !!chunkError || refused.length > 0,
+      ...(approvalStopped ? { approval: approvalOffer(not_attempted.map((n: any) => n.id)) } : {}),
       batch_id: batchId,
       canceled: done.map(({ refresh_pairs: _p, ...d }: any) => d),
       refused,

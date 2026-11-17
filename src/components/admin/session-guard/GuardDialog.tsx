@@ -516,7 +516,21 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
                 </div>
               )}
 
-              {error && <ErrorBanner id="pg-error" title="Nothing was changed" text={payErrorText(error.code, errorText(error.code, error.message))} code={error.code} />}
+              {error && error.code !== "approval_required" && <ErrorBanner id="pg-error" title="Nothing was changed" text={payErrorText(error.code, errorText(error.code, error.message))} code={error.code} />}
+              {error?.code === "approval_required" && (
+                <div id="pg-error" role="status" className="space-y-2 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                  <p className="font-medium">{approvalErrorText("approval_required", error.detail ?? (error as any).details)}</p>
+                  {g.approval?.sent ? (
+                    <p>Sent. Nothing changes until another administrator approves it in Automation, Approvals.</p>
+                  ) : (
+                    <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={!!g.approval?.busy || !canGo}
+                      onClick={() => void g.requestApproval(form)}>
+                      {g.approval?.busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : null} Send for approval
+                    </Button>
+                  )}
+                  {g.approval?.error && <p role="alert" className="break-words">{g.approval.error}</p>}
+                </div>
+              )}
             </>
           )}
         </div>

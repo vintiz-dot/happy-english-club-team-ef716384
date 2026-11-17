@@ -87,7 +87,7 @@ export function MoneyInputDialogView({ open, plan, form, setForm, busy, error, c
               </ConfirmTick>
             )}
             {plan.review_required && <p className="text-sm text-muted-foreground">{INPUT_TEXT.review}</p>}
-            {plan.approval?.required && <p className="text-sm font-medium">{reasonSentence(plan.approval.reasons)} It waits, unchanged, until another administrator approves it.</p>}
+            {plan.approval?.required && <p className="text-sm font-medium">{reasonSentence(plan.approval.reasons, plan.approval.thresholds)} It waits, unchanged, until another administrator approves it.</p>}
           </div>
         )}
 

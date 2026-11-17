@@ -62,7 +62,7 @@ export function MoneyGuardDialog({ guard, names, title, intro, submitLabel }: {
               </ConfirmTick>
             )}
             {plan.review_required && <p className="text-sm text-muted-foreground">{MONEY_COPY.review}</p>}
-            {plan.approval?.required && <p className="text-sm font-medium">{reasonSentence(plan.approval.reasons)} It waits, unchanged, until another administrator approves it.</p>}
+            {plan.approval?.required && <p className="text-sm font-medium">{reasonSentence(plan.approval.reasons, plan.approval.thresholds)} It waits, unchanged, until another administrator approves it.</p>}
           </div>
         )}
 
