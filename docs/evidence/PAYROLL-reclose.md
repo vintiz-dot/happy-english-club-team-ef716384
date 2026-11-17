@@ -30,7 +30,7 @@ Checked: the drift panel walked calculate-payroll's live rows only. calculate-pa
 
 After a re-close that removed someone, the close toast says who and how much ("Removed 1 line(s) from the earlier close of staff who earn nothing in the month now: Colleague (500,000 ₫).") and stays until dismissed. After the re-close the month records 0 for them, so the panel correctly shows no drift for them: the correction is the re-close itself, recorded in audit_log. Carry-forward (payroll_adjustments, the D4 approval trigger on it) is untouched.
 
-## Tests - `scripts/pgtest/payroll-reclose.test.mjs` (registered as "payroll re-close"): 90 passed, 0 failed
+## Tests - `scripts/pgtest/payroll-reclose.test.mjs` (registered as "payroll re-close"): 89 passed, 0 failed
 
 The real close-payroll-month and main's (04ccc58f) bundled, over a PostgREST stand-in that runs every select/upsert/update/rpc as real SQL as service_role, on the real migration chain in paste order (audit 20261009130000, 092000, 093000, 095000, 096000, 097000-099000 class overhead with a rent template so the freeze writes rows, 20261022091000, 20261117111000, then the new file).
 
@@ -55,7 +55,7 @@ main's `run.mjs` lacks the teacher/TA payroll suites. I brought `teacher-payroll
 
 ## Gates
 
-See the hand-back for the numbers of this run. Known on main and unchanged by this branch: `invoice status` (32 failed) and `stars sync core` (crashes) - the harness-lag failures the brief names; `money-write-paths` is not registered on main and crashes there on a missing `scripts/CREDIT-past-unapplied-cash.sql` after 6 unrelated failures (none mention close-payroll-month after this change).
+Full `node scripts/pgtest/run.mjs` (real clock, ~17:00 Hanoi): **4732 assertions across 51 suites, 2 failed** (invoice status 32 failed, stars sync core crash). main at 04ccc58f, same harness minus the five suites registered here: 3999 across 46, the same 2 failed. `tsc --noEmit -p tsconfig.app.json`: clean. `npm run test:bun`: 142 pass, 3 fail, 2 errors - all on main already (functionError.test.ts reads the removed SettleBillModal.tsx; richTextEditor/richTextReview miss ./fixtures/rich-text/dom). Known on main and unchanged by this branch: `invoice status` (32 failed) and `stars sync core` (crashes) - the harness-lag failures the brief names; `money-write-paths` is not registered on main and crashes there on a missing `scripts/CREDIT-past-unapplied-cash.sql` after 6 unrelated failures (none mention close-payroll-month after this change).
 
 ## Files to apply / deploy (LF md5, CR stripped)
 
