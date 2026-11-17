@@ -2,12 +2,15 @@
  * TeacherTranscripts — end-of-lesson transcript ingestion + instant insights.
  *
  * Paste or upload the class transcript (Zoom/Teams VTT, SRT, or plain
- * "Name: line" text). It is analyzed immediately: per-student talk share,
- * questions, vocabulary richness, CEFR estimates, flagged errors (which
- * auto-feed each student's spaced-repetition deck) and a lesson summary —
- * ready for teacher and admin the moment analysis completes.
+ * "Name: line" text). It is analyzed at once into a DRAFT only the class's
+ * staff can see: talk share, questions, vocabulary richness, a suggested
+ * child per speaker (low / medium / high confidence), drafted errors and CEFR
+ * estimates, and a draft lesson summary. Nothing reaches a child or a family
+ * until the teacher approves in the "Teacher approval" panel
+ * (TranscriptApprovalPanel -> approve_transcript_analysis), and then only
+ * what the teacher chose (D-26, docs/evidence/FIX-analyze-transcript.md).
  */
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,6 +27,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import TranscriptApprovalPanel from "@/components/teacher/TranscriptApprovalPanel";
+import { reviewState } from "@/lib/transcriptReview";
 import {
   AudioLines, Loader2, UploadCloud, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, Star, FileText, TrendingUp,
@@ -119,7 +124,7 @@ export default function TeacherTranscripts() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("class_transcripts")
-        .select("id, title, transcript_date, status, summary, error_message, source_format, created_at, title_covered, title_evidence, title_note, analysis, processing_stage, processing_started_at")
+        .select("id, title, transcript_date, status, summary, error_message, source_format, created_at, title_covered, title_evidence, title_note, analysis, overview_draft, analyzed_at, processing_stage, processing_started_at")
         .eq("class_id", classId)
         .order("created_at", { ascending: false })
         .limit(25);
@@ -140,6 +145,48 @@ export default function TeacherTranscripts() {
     },
   });
 
+  // The draft's suggestions (staff-only) and the approval record, if any.
+  const { data: suggestions = [] } = useQuery<any[]>({
+    queryKey: ["transcript-suggestions", selectedId],
+    enabled: !!selectedId,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("transcript_speaker_suggestions")
+        .select("metric_id, suggested_student_id, confidence, basis, labels_from_model, draft_errors, cefr_estimate")
+        .eq("transcript_id", selectedId);
+      return data || [];
+    },
+  });
+
+  const { data: approval = null } = useQuery<any>({
+    queryKey: ["transcript-approval", selectedId],
+    enabled: !!selectedId,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("transcript_approvals")
+        .select("transcript_id, approved_at, approved_by, withdrawn_at, analyzed_at, assignments")
+        .eq("transcript_id", selectedId)
+        .maybeSingle();
+      return data ?? null;
+    },
+  });
+
+  // What 20261117100100 took back from families for an older lesson (staff-only).
+  // Before that file is pasted the table does not exist: no hold.
+  const { data: legacyHold = null } = useQuery<any>({
+    queryKey: ["transcript-legacy-hold", selectedId],
+    enabled: !!selectedId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("transcript_legacy_holds")
+        .select("transcript_id, held_at")
+        .eq("transcript_id", selectedId)
+        .maybeSingle();
+      return error ? null : data ?? null;
+    },
+  });
+
+  // Published errors only (the approval writes them).
   const { data: errors = [] } = useQuery<any[]>({
     queryKey: ["transcript-errors", selectedId],
     enabled: !!selectedId,
@@ -238,20 +285,22 @@ export default function TeacherTranscripts() {
 
   // Counts for the success toast (the background run can't return them in
   // the HTTP response the way the old synchronous call did).
+  // Nothing is published by the analysis: count what the draft suggests.
   const fetchAnalyzedCounts = async (id: string) => {
-    const [{ count: matched }, { count: errs }] = await Promise.all([
-      (supabase as any)
-        .from("transcript_speaker_metrics")
-        .select("id", { count: "exact", head: true })
-        .eq("transcript_id", id)
-        .not("student_id", "is", null),
-      (supabase as any)
-        .from("student_error_log")
-        .select("id", { count: "exact", head: true })
-        .eq("source", "transcript")
-        .eq("source_id", id),
-    ]);
-    return { matched: matched ?? 0, errors: errs ?? 0 };
+    const { count: suggested } = await (supabase as any)
+      .from("transcript_speaker_suggestions")
+      .select("metric_id", { count: "exact", head: true })
+      .eq("transcript_id", id)
+      .not("suggested_student_id", "is", null);
+    return { suggested: suggested ?? 0 };
+  };
+  const draftReadyText = (c: { suggested: number }) =>
+    `${c.suggested} speaker${c.suggested === 1 ? "" : "s"} with a suggested child · review and approve to share it with families`;
+  const invalidateLesson = (id: string | null) => {
+    queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
+    for (const k of ["transcript-metrics", "transcript-errors", "transcript-point-suggestions", "transcript-suggestions", "transcript-approval", "transcript-legacy-hold", "lesson-overview"]) {
+      queryClient.invalidateQueries({ queryKey: [k, id] });
+    }
   };
 
   const uploadMutation = useMutation({
@@ -288,9 +337,7 @@ export default function TeacherTranscripts() {
       return { id: row.id, counts };
     },
     onSuccess: ({ id, counts }) => {
-      toast.success("Transcript analyzed", {
-        description: `${counts.matched} students matched · ${counts.errors} errors logged`,
-      });
+      toast.success("Draft ready", { description: draftReadyText(counts) });
       setRawText("");
       setTitle("");
       setSelectedId(id);
@@ -362,9 +409,7 @@ export default function TeacherTranscripts() {
       return { id: row.id, counts };
     },
     onSuccess: ({ id, counts }) => {
-      toast.success("Recording transcribed & analyzed", {
-        description: `${counts.matched} students matched · ${counts.errors} errors logged`,
-      });
+      toast.success("Recording transcribed - draft ready", { description: draftReadyText(counts) });
       setTitle("");
       setSelectedId(id);
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
@@ -387,13 +432,8 @@ export default function TeacherTranscripts() {
       return fetchAnalyzedCounts(transcriptId);
     },
     onSuccess: (counts) => {
-      toast.success("Re-analyzed", {
-        description: `${counts.matched} students matched · ${counts.errors} errors logged`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
-      queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
-      queryClient.invalidateQueries({ queryKey: ["transcript-errors", selectedId] });
-      queryClient.invalidateQueries({ queryKey: ["transcript-point-suggestions", selectedId] });
+      toast.success("Re-analyzed - new draft ready", { description: draftReadyText(counts) });
+      invalidateLesson(selectedId);
     },
     onError: (e: any) => toast.error("Re-analysis failed", { description: e.message }),
   });
@@ -413,13 +453,8 @@ export default function TeacherTranscripts() {
       return fetchAnalyzedCounts(transcriptId);
     },
     onSuccess: (counts) => {
-      toast.success("Recording transcribed & analyzed", {
-        description: `${counts.matched} students matched · ${counts.errors} errors logged`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
-      queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
-      queryClient.invalidateQueries({ queryKey: ["transcript-errors", selectedId] });
-      queryClient.invalidateQueries({ queryKey: ["transcript-point-suggestions", selectedId] });
+      toast.success("Recording transcribed - draft ready", { description: draftReadyText(counts) });
+      invalidateLesson(selectedId);
     },
     onError: (e: any) => {
       toast.error("Retry failed", { description: e.message });
@@ -436,47 +471,39 @@ export default function TeacherTranscripts() {
   });
 
   const startEditOverview = () => {
+    const ov = shownOverview;
     setOvDraft({
-      summary: overview?.summary ?? selected?.summary ?? "",
-      homework: overview?.homework ?? "",
-      materials: Array.isArray(overview?.materials)
-        ? overview.materials.map((m: any) => ({ name: m?.name ?? "", pages: m?.pages ?? "" }))
+      summary: ov?.summary ?? selected?.summary ?? "",
+      homework: ov?.homework ?? "",
+      materials: Array.isArray(ov?.materials)
+        ? ov.materials.map((m: any) => ({ name: m?.name ?? "", pages: m?.pages ?? "" }))
         : [],
     });
     setEditingOverview(true);
   };
 
+  // The edit goes to the DRAFT (class_transcripts.overview_draft, staff-only).
+  // Families see it when the teacher approves the lesson.
   const saveOverviewMutation = useMutation({
     mutationFn: async () => {
       if (!selected) throw new Error("No lesson selected");
       const materials = ovDraft.materials
         .map((m) => ({ name: m.name.trim(), pages: m.pages.trim() || null }))
         .filter((m) => m.name);
-      const payload = {
-        transcript_id: selected.id,
-        class_id: classId,
-        lesson_date: selected.transcript_date,
-        title: selected.title ?? null,
+      const draft = {
         summary: ovDraft.summary.trim() || null,
         homework: ovDraft.homework.trim() || null,
         materials,
         edited_by_teacher: true,
-        updated_at: new Date().toISOString(),
       };
       const { error } = await (supabase as any)
-        .from("lesson_overviews")
-        .upsert(payload, { onConflict: "transcript_id" });
-      if (error) throw error;
-
-      // Keep the teacher-facing transcript summary in step with the one
-      // students read, so the two never disagree.
-      await (supabase as any)
         .from("class_transcripts")
-        .update({ summary: ovDraft.summary.trim() || null })
+        .update({ overview_draft: draft, summary: draft.summary })
         .eq("id", selected.id);
+      if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Lesson updated — students see your version");
+      toast.success("Saved to the draft", { description: "Approve the lesson to share your version with families." });
       setEditingOverview(false);
       queryClient.invalidateQueries({ queryKey: ["lesson-overview", selectedId] });
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
@@ -555,115 +582,23 @@ export default function TeacherTranscripts() {
     onError: (e: any) => toast.error("Couldn't remove", { description: e.message }),
   });
 
-  // Manually attribute an unmatched speaker to a student. Beyond fixing this
-  // lesson's stats, it backfills the analysis that was skipped for the
-  // unmatched speaker (errors → SRS cards, CEFR point) and remembers the
-  // label for this class so future transcripts resolve it automatically.
-  const assignSpeakerMutation = useMutation({
-    mutationFn: async ({ metric, studentId: sid }: { metric: any; studentId: string }) => {
-      if (!user) throw new Error("Not authenticated");
-
-      const { error: updErr } = await (supabase as any)
-        .from("transcript_speaker_metrics")
-        .update({ student_id: sid })
-        .eq("id", metric.id);
-      if (updErr) throw updErr;
-
-      // Remember the correction for this class (idempotent).
-      const norm = String(metric.speaker_label || "")
-        .normalize("NFD").replace(/[̀-ͯ]/g, "")
-        .toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
-      if (norm) {
-        await (supabase as any).from("class_speaker_aliases").upsert(
-          { class_id: classId, speaker_label: norm, student_id: sid, created_by: user.id },
-          { onConflict: "class_id,speaker_label" },
-        );
-      }
-
-      // Backfill what the pipeline skipped because the speaker was unmatched.
-      const ai = (selected?.analysis?.students || []).find(
-        (s: any) => String(s.name || "").trim().toLowerCase() === String(metric.speaker_label || "").trim().toLowerCase(),
-      );
-      let backfilled = 0;
-      if (ai) {
-        for (const err of ai.errors ?? []) {
-          if (!err?.error_text || !err?.corrected_text) continue;
-          const { data: errRow } = await (supabase as any)
-            .from("student_error_log")
-            .insert({
-              student_id: sid,
-              class_id: classId,
-              source: "transcript",
-              source_id: selected.id,
-              error_text: String(err.error_text).slice(0, 500),
-              corrected_text: String(err.corrected_text).slice(0, 500),
-              error_type: ["grammar", "vocabulary", "pronunciation", "spelling", "syntax", "other"].includes(err.error_type)
-                ? err.error_type : "grammar",
-              cefr_topic: err.cefr_topic ? String(err.cefr_topic).slice(0, 80) : null,
-              created_by: user.id,
-            })
-            .select("id").single();
-          if (errRow) {
-            backfilled++;
-            await (supabase as any).from("srs_cards").insert({
-              student_id: sid,
-              source: "error",
-              error_log_id: errRow.id,
-              front: `Fix this sentence:\n"${String(err.error_text).slice(0, 300)}"`,
-              back: String(err.corrected_text).slice(0, 300),
-              hint: err.cefr_topic ? `Topic: ${err.cefr_topic}` : null,
-            });
-          }
-        }
-        const CEFR_SCORE: Record<string, number> = {
-          "Pre-A1": 0, A1: 1, "A1+": 1.5, A2: 2, "A2+": 2.5, B1: 3, "B1+": 3.5, B2: 4, "B2+": 4.5,
-        };
-        if (ai.cefr_estimate && CEFR_SCORE[ai.cefr_estimate] !== undefined) {
-          await (supabase as any).from("cefr_assessments").insert({
-            student_id: sid,
-            class_id: classId,
-            source: "transcript",
-            level: ai.cefr_estimate,
-            level_score: CEFR_SCORE[ai.cefr_estimate],
-            evidence: ai.evidence ? String(ai.evidence).slice(0, 500) : null,
-            assessed_at: selected.transcript_date,
-            source_id: selected.id,
-            created_by: user.id,
-          });
-        }
-      }
-
-      // Refresh that student's living profile with the newly-linked evidence.
-      supabase.functions.invoke("refresh-student-profile", { body: { student_id: sid } }).catch(() => {});
-      return backfilled;
-    },
-    onSuccess: (backfilled) => {
-      toast.success("Speaker assigned", {
-        description: backfilled > 0
-          ? `${backfilled} flagged point${backfilled === 1 ? "" : "s"} added to their record — and I'll remember this name next time`
-          : "I'll remember this name for future transcripts in this class",
-      });
-      queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
-      queryClient.invalidateQueries({ queryKey: ["transcript-errors", selectedId] });
-    },
-    onError: (e: any) => toast.error("Couldn't assign speaker", { description: e.message }),
-  });
+  // Choosing who a speaker was is the approval panel's job now
+  // (TranscriptApprovalPanel): a direct write of student_id is refused by the
+  // database, and the old backfill published errors and a level at once.
 
   // Roster for manual speaker assignment.
-  const { data: classRoster = [] } = useQuery<any[]>({
-    queryKey: ["transcript-class-roster", classId],
+  // The approval panel offers the children enrolled ON THE LESSON'S DATE,
+  // which is what approve_transcript_analysis accepts (review N-3); a child
+  // who has left since still appears for their old lessons.
+  const { data: lessonEnrollments = [] } = useQuery<any[]>({
+    queryKey: ["transcript-lesson-enrollments", classId],
     enabled: !!classId,
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
       const { data } = await (supabase as any)
         .from("enrollments")
-        .select("students(id, full_name)")
-        .eq("class_id", classId)
-        .or(`end_date.is.null,end_date.gte.${today}`);
-      return ((data || []) as any[])
-        .map((r) => r.students)
-        .filter(Boolean)
-        .sort((a: any, b: any) => a.full_name.localeCompare(b.full_name));
+        .select("start_date, end_date, students(id, full_name)")
+        .eq("class_id", classId);
+      return (data || []) as any[];
     },
   });
 
@@ -746,6 +681,26 @@ export default function TeacherTranscripts() {
   });
 
   const selected = transcripts.find((t) => t.id === selectedId);
+  const review = reviewState(selected, approval);
+  const isApproved = review === "approved";
+  const lessonRoster = useMemo(() => {
+    const day = String(selected?.transcript_date ?? "").slice(0, 10);
+    const seen = new Map<string, { id: string; full_name: string }>();
+    for (const e of lessonEnrollments) {
+      const s = e?.students;
+      if (!s?.id || !day) continue;
+      if (e.start_date && String(e.start_date) > day) continue;
+      if (e.end_date && String(e.end_date) < day) continue;
+      seen.set(s.id, { id: s.id, full_name: s.full_name });
+    }
+    return [...seen.values()].sort((a, b) => a.full_name.localeCompare(b.full_name));
+  }, [lessonEnrollments, selected?.transcript_date]);
+  // What the teacher reviews: the draft overview, or (an older lesson) the published one.
+  const shownOverview: any = selected?.overview_draft ?? overview ?? null;
+  const overviewChangedSinceApproval = isApproved && !!overview && !!selected?.overview_draft
+    && (String(overview.summary ?? "") !== String(selected.overview_draft.summary ?? "")
+      || String(overview.homework ?? "") !== String(selected.overview_draft.homework ?? "")
+      || JSON.stringify(overview.materials ?? []) !== JSON.stringify(selected.overview_draft.materials ?? []));
   // A run killed by the platform never reaches its catch block, so the row
   // keeps status "processing" forever. The pipeline is background now and a
   // 90-minute recording legitimately takes ~10 minutes end to end, so only
@@ -775,7 +730,7 @@ export default function TeacherTranscripts() {
             <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Transcript Insights</h1>
             <p className="text-hec-small text-hec-ink-soft">
               Upload the lesson transcript — or the raw recording — and engagement, CEFR signals,
-              flagged errors, and point awards are extracted instantly.
+              flagged errors and point awards are drafted for you. Nothing reaches families until you approve.
             </p>
           </div>
         </div>
@@ -985,7 +940,7 @@ export default function TeacherTranscripts() {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      disabled={retryTranscriptionMutation.isPending}
+                      disabled={retryTranscriptionMutation.isPending || isApproved}
                       onClick={() => retryTranscriptionMutation.mutate(selected.id)}
                     >
                       {retryTranscriptionMutation.isPending ? (
@@ -996,7 +951,11 @@ export default function TeacherTranscripts() {
                       Retry transcription
                     </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Re-run Whisper transcription from the stored recording — no re-upload needed</TooltipContent>
+                    <TooltipContent>
+                      {isApproved
+                        ? "This lesson is approved and shared — withdraw the approval first to transcribe it again"
+                        : "Re-run Whisper transcription from the stored recording — no re-upload needed"}
+                    </TooltipContent>
                     </Tooltip>
                   )}
                   <Tooltip>
@@ -1005,7 +964,7 @@ export default function TeacherTranscripts() {
                     variant="outline"
                     size="sm"
                     className="gap-2"
-                    disabled={reanalyzeMutation.isPending || selected.status === "processing"}
+                    disabled={reanalyzeMutation.isPending || selected.status === "processing" || isApproved}
                     onClick={() => reanalyzeMutation.mutate(selected.id)}
                   >
                     {reanalyzeMutation.isPending ? (
@@ -1016,9 +975,27 @@ export default function TeacherTranscripts() {
                     Re-analyze
                   </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Re-run analysis on the stored transcript text — useful after a matching fix or if 0 students matched</TooltipContent>
+                  <TooltipContent>
+                    {isApproved
+                      ? "This lesson is approved and shared — withdraw the approval first to analyse it again"
+                      : "Re-run analysis on the stored transcript text — makes a new draft for you to review"}
+                  </TooltipContent>
                   </Tooltip>
                 </div>
+
+                {/* The approval step: nothing below reaches a child or a family until it is done. */}
+                <TranscriptApprovalPanel
+                  transcript={selected}
+                  metrics={metrics}
+                  suggestions={suggestions}
+                  approval={approval}
+                  hold={legacyHold}
+                  roster={lessonRoster}
+                  onChanged={() => {
+                    invalidateLesson(selectedId);
+                    queryClient.invalidateQueries({ queryKey: ["class-speaker-aliases", classId] });
+                  }}
+                />
 
                 {selected.summary && (
                   <Card>
@@ -1026,12 +1003,21 @@ export default function TeacherTranscripts() {
                       <div className="flex items-start justify-between gap-2">
                         <CardTitle className="flex flex-wrap items-center gap-2">
                           <Sparkles className="h-5 w-5 shrink-0 text-hec-ink-soft" />Lesson summary
-                          {overview && (
+                          {overview ? (
                             <Badge variant="outline" className="border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
                               shared with students
                             </Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-hec-brass/40 text-hec-brass">
+                              draft - not shared yet
+                            </Badge>
                           )}
-                          {overview?.edited_by_teacher && (
+                          {overviewChangedSinceApproval && (
+                            <Badge variant="outline" className="border-hec-warn/30 bg-hec-warn-tint text-hec-warn">
+                              edited since approval - approve again to share
+                            </Badge>
+                          )}
+                          {shownOverview?.edited_by_teacher && (
                             <Badge variant="outline" className="text-hec-ink-soft">
                               your edit
                             </Badge>
@@ -1121,7 +1107,7 @@ export default function TeacherTranscripts() {
                         </div>
                       ) : (
                       <>
-                      <p className="text-hec-body text-hec-ink-soft">{overview?.summary ?? selected.summary}</p>
+                      <p className="text-hec-body text-hec-ink-soft">{shownOverview?.summary ?? selected.summary}</p>
 
                       {/* Did the lesson actually cover its title? */}
                       {selected.title_covered !== null && selected.title_covered !== undefined && (
@@ -1149,22 +1135,22 @@ export default function TeacherTranscripts() {
                           )}
                         </div>
                       )}
-                      {Array.isArray(overview?.materials) && overview.materials.length > 0 && (
+                      {Array.isArray(shownOverview?.materials) && shownOverview.materials.length > 0 && (
                         <div className="flex flex-wrap items-center gap-2">
                           <BookOpen className="h-4 w-4 shrink-0 text-hec-ink-soft" />
-                          {overview.materials.map((m: any, i: number) => (
+                          {shownOverview.materials.map((m: any, i: number) => (
                             <Badge key={i} variant="secondary" className="font-normal">
                               {m.name}{m.pages ? ` · p.${m.pages}` : ""}
                             </Badge>
                           ))}
                         </div>
                       )}
-                      {overview?.homework && (
+                      {shownOverview?.homework && (
                         <p className="text-hec-small flex items-start gap-2">
                           <NotebookPen className="h-4 w-4 text-hec-ink-soft shrink-0 mt-1" />
                           <span>
                             <span className="font-semibold text-hec-ink">Homework:</span>{" "}
-                            <span className="text-hec-ink-soft">{overview.homework}</span>
+                            <span className="text-hec-ink-soft">{shownOverview.homework}</span>
                           </span>
                         </p>
                       )}
@@ -1599,27 +1585,12 @@ export default function TeacherTranscripts() {
                           </div>
                         </div>
 
-                        {/* Couldn't be matched to the roster — let the teacher say who it was */}
+                        {/* Not linked to a child yet: that is chosen in Teacher approval */}
                         {!m.student_id && (
-                          <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 space-y-2">
-                            <p className="text-hec-small text-hec-warn font-semibold flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 shrink-0 mt-1" />
-                              "{m.speaker_label}" isn't on the roster — who was this?
-                            </p>
-                            <Select
-                              onValueChange={(sid) => assignSpeakerMutation.mutate({ metric: m, studentId: sid })}
-                              disabled={assignSpeakerMutation.isPending}
-                            >
-                              <SelectTrigger aria-label={`Who was "${m.speaker_label}"?`}>
-                                <SelectValue placeholder="Assign to a student…" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {classRoster.map((s: any) => (
-                                  <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                          <p className="text-hec-caption text-hec-ink-soft flex items-start gap-2">
+                            <HelpCircle className="h-4 w-4 shrink-0" />
+                            Not linked to a child yet - choose who this was in Teacher approval. Only staff see this card until then.
+                          </p>
                         )}
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div className="rounded-hec-md bg-hec-sunken p-2">
@@ -1730,7 +1701,7 @@ export default function TeacherTranscripts() {
                         <Badge variant="secondary" className="tabular-nums">{errors.length}</Badge>
                       </CardTitle>
                       <CardDescription>
-                        Each error was logged and turned into a spaced-repetition card on the student's deck.
+                        Published when you approved the lesson: each kept error is on the child's record with a practice card.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
