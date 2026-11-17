@@ -25,10 +25,18 @@
 //
 // Not refused: a frozen bill (a freeze locks what is charged, not what is
 // paid) and a closed month (the family payment paths do not refuse it).
+//
+// WHO WRITES. The caller must be a signed-in admin (the service key is not
+// let in). Every read and write of the child's data goes through the
+// caller's own client (anon key + their JWT), so row security and the D4
+// money triggers see the admin, not the service key. The service client is
+// used only for the role check and to ask calculate-tuition to price or
+// refresh the bill (the internal call every payment path makes).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { requireRole } from "../_lib/auth.ts";
+import { callerClient } from "../_lib/session-guard.ts";
 import { labelAfterPayment } from "../_lib/invoice-status.ts";
 import { addToRecordedPayment, BILL_COLUMNS } from "../_lib/recorded-payment-write.ts";
 
@@ -68,12 +76,15 @@ Deno.serve(async (req) => {
   const respond = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-  const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+  const url = Deno.env.get("SUPABASE_URL") ?? "";
+  const service = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
   // A person, and an admin: the service key has no admin behind it.
-  const gate = await requireRole(req, supabase, ["admin"], corsHeaders, { allowServiceRole: false });
+  const gate = await requireRole(req, service, ["admin"], corsHeaders, { allowServiceRole: false });
   if (gate instanceof Response) return gate;
   const actor = gate.userId;
+  // The admin's own client: row security and auth.uid() apply to every row below.
+  const supabase = callerClient(createClient, url, Deno.env.get("SUPABASE_ANON_KEY") ?? "", req.headers.get("Authorization") ?? "");
 
   let input: z.infer<typeof Input>;
   try {
@@ -117,11 +128,15 @@ Deno.serve(async (req) => {
       return data;
     };
     let bill = await readBill();
+    if (!bill && kind === "correction") {
+      // A bill that does not exist records nothing: there is nothing to take off.
+      return respond({ error: `There is no ${month} bill for ${student.full_name}, so there is no payment to correct. Nothing was recorded.` }, 409);
+    }
     if (!bill) {
       // No bill yet: calculate-tuition prices and saves it (the one place
       // tuition is priced). Never a bill made from figures a screen sent.
       try {
-        await supabase.functions.invoke("calculate-tuition", { body: { studentId, month } });
+        await service.functions.invoke("calculate-tuition", { body: { studentId, month } });
       } catch (e) {
         console.error("[record-payment] calculate-tuition:", e instanceof Error ? e.message : e);
       }
@@ -261,7 +276,7 @@ Deno.serve(async (req) => {
         payment_date: input.occurredAt, memo: memo ?? null, type: kind, via: "record-payment" },
     });
     try {
-      await supabase.functions.invoke("calculate-tuition", { body: { studentId, month } });
+      await service.functions.invoke("calculate-tuition", { body: { studentId, month } });
     } catch (e) {
       console.error("[record-payment] recalc:", e instanceof Error ? e.message : e);
     }

@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
       }
       const { data: invoice, error: invError } = await supabase
         .from('invoices')
-        .select('id, recorded_payment, paid_amount, base_amount, total_amount, carry_in_debt, carry_in_credit, status')
+        .select('id, student_id, month, recorded_payment, paid_amount, base_amount, total_amount, carry_in_debt, carry_in_credit, status')
         .eq('student_id', studentId)
         .eq('month', month)
         .maybeSingle();

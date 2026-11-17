@@ -48,6 +48,11 @@ export function newPaymentKey(): string {
   return crypto.randomUUID();
 }
 
+/** Today in Hanoi, YYYY-MM-DD (a UTC date is yesterday before 07:00 Hanoi). */
+export function receiptDateToday(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
 export async function recordPayment(client: any, args: RecordPaymentArgs): Promise<RecordPaymentResult> {
   let data: any = null, error: any = null;
   try {

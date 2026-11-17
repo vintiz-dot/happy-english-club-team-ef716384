@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/ui/loading";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
-import { newPaymentKey, recordPayment } from "@/lib/recordPayment";
+import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
 
 interface Invoice {
   id: string;
@@ -119,6 +119,8 @@ export function RecordedPaymentManager() {
       const invoice = invoices.find(inv => inv.id === editingInvoice.id);
       if (!invoice) throw new Error("Invoice not found");
 
+      // The month written is the month the admin confirmed, never another.
+      if (invoice.month !== selectedMonth) throw new Error("This bill is not for the month shown; reload and try again");
       const oldValue = invoice.recorded_payment || 0;
       if (newValue === oldValue) { toast.info("The recorded payment is unchanged"); setEditingInvoice(null); return; }
 
@@ -128,11 +130,11 @@ export function RecordedPaymentManager() {
       // labels the bill by the one rule and writes the audit row.
       const saved = await recordPayment(supabase, {
         studentId: invoice.student_id,
-        month: invoice.month,
+        month: selectedMonth,
         kind: newValue > oldValue ? "payment" : "correction",
         amount: Math.abs(newValue - oldValue),
         method,
-        occurredAt: new Date().toISOString().slice(0, 10),
+        occurredAt: receiptDateToday(),
         memo: `Recorded Payment Manager: ${editingInvoice.reason.trim()}`.slice(0, 500),
         idempotencyKey: paymentKey.current,
         expectedRecorded: oldValue,
@@ -172,6 +174,7 @@ export function RecordedPaymentManager() {
       const invoice = invoices.find(inv => inv.id === reversingInvoice.id);
       if (!invoice) throw new Error("Invoice not found");
 
+      if (invoice.month !== selectedMonth) throw new Error("This bill is not for the month shown; reload and try again");
       const current = invoice.recorded_payment || 0;
       if (current <= 0) { toast.info("This bill records no payment to reverse"); setReversingInvoice(null); return; }
 
@@ -180,11 +183,11 @@ export function RecordedPaymentManager() {
       // against the figure this screen showed.
       const saved = await recordPayment(supabase, {
         studentId: invoice.student_id,
-        month: invoice.month,
+        month: selectedMonth,
         kind: "correction",
         amount: current,
         method,
-        occurredAt: new Date().toISOString().slice(0, 10),
+        occurredAt: receiptDateToday(),
         memo: `Reversal (Recorded Payment Manager): ${reversalReason.trim()}`.slice(0, 500),
         idempotencyKey: paymentKey.current,
         expectedRecorded: current,
