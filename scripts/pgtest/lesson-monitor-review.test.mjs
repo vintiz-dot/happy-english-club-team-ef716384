@@ -176,20 +176,65 @@ eq("kill switch by teacher", await tryAs(VICTOR, () => db.query(`SELECT public.l
 eq("P1 report still readable after kill switch", await reportsSeenBy(VICTOR), [rV1]);
 eq("P1b save_report refused after kill", /monitor is off/.test(await save(ADMIN, rV2) ?? ""), true);
 
-// P2: expiry: old report is hidden by policy but still PRESENT until someone calls expire
+// P2 (M-1): expiry: an old report is hidden by policy AND deleted on the server without the laptop.
 await raw(`UPDATE public.lesson_monitor_reports SET session_date = public.lesson_monitor__today() - 45 WHERE recording_id = $1`, [rV1]);
 eq("P2 hidden from teacher", await reportsSeenBy(VICTOR), []);
-eq("P2 but physically present", (await one(`SELECT count(*)::int n FROM public.lesson_monitor_reports`)).n, 1);
-await raw(`UPDATE public.lesson_monitor_reports SET session_date = public.lesson_monitor__today() - 1 WHERE recording_id = $1`, [rV1]);
-
-// P3: child leaves the class (enrollment ended), THEN parent withdraws: reports of the class stay?
+eq("P2 still physically present until something runs", (await one(`SELECT count(*)::int n FROM public.lesson_monitor_reports`)).n, 1);
+// no pg_cron in this database (PGlite): any write function purges first
+await tryAs(ADMIN, () => db.query(`SELECT public.lesson_monitor_set_class($1,false,NULL,'stop')`, [VENUS]));
+eq("P2 fixed: a write function purged the expired report (no nightly job)", (await one(`SELECT count(*)::int n FROM public.lesson_monitor_reports`)).n, 0);
+eq("P2 and audited as counts", (await one(`SELECT detail->>'reports' n FROM public.lesson_monitor_audit WHERE action='reports_expired' ORDER BY id DESC LIMIT 1`)).n, "1");
+// with pg_cron: the migration schedules it, once, idempotently
+await db.exec(`CREATE SCHEMA cron; CREATE TABLE cron.job (jobname text, schedule text, command text);
+  CREATE FUNCTION cron.schedule(text, text, text) RETURNS bigint LANGUAGE sql AS $f$ INSERT INTO cron.job VALUES ($1,$2,$3) RETURNING 1::bigint $f$;
+  CREATE FUNCTION cron.unschedule(text) RETURNS boolean LANGUAGE sql AS $f$ DELETE FROM cron.job WHERE jobname = $1 RETURNING true $f$;`);
+await db.exec(readFileSync(LM_MIG, "utf8")); await db.exec(readFileSync(LM_MIG, "utf8"));
+const jobs = await q(`SELECT jobname, schedule, command FROM cron.job`);
+eq("P2 fixed: one pg_cron job, hourly, purge only (applied twice)", [jobs.length, jobs[0]?.jobname, jobs[0]?.schedule, /lesson_monitor__purge_expired/.test(jobs[0]?.command)], [1, "lesson-monitor-expire", "23 * * * *", true]);
+eq("P2 purge is not callable by signed-in users", (await one(`SELECT has_function_privilege('authenticated','public.lesson_monitor__purge_expired()','EXECUTE') x`)).x, false);
+// the report is gone: make it again for the rest of the probes
 await setClass(ADMIN, VENUS, true); await raw(`UPDATE public.lesson_monitor_classes SET starts_on = public.lesson_monitor__today() - 10, ends_on = public.lesson_monitor__today() + 17 WHERE class_id = $1`, [VENUS]);
-await raw(`UPDATE public.enrollments SET end_date = public.lesson_monitor__today() - 3 WHERE student_id = $1`, [k2]);
-await q(`UPDATE public.lesson_monitor_child_consents SET status='granted' WHERE student_id=$1`, [k2]);
-await consent(ADMIN, k2, "withdrawn", "parent phoned");
-eq("P3 report of lessons that child attended survives withdrawal after he left", (await one(`SELECT count(*)::int n FROM public.lesson_monitor_reports`)).n, 1);
-eq("P3 class stays ON", (await one(`SELECT enabled FROM public.lesson_monitor_classes WHERE class_id=$1`, [VENUS])).enabled, true);
+await raw(`DELETE FROM public.lesson_monitor_runs`);  // a purged report leaves its run row; clear it to make the report again
+eq("save r1 again", await save(ADMIN, rV1), null);
 
+// P3 (M-2a): a child leaves the class (enrolment ended), THEN the parent withdraws: the reports of lessons
+// the child was in are deleted, the lessons they were not in stay.
+eq("save r2 (lesson of 2 days ago)", await save(ADMIN, rV2), null);
+await raw(`UPDATE public.enrollments SET end_date = public.lesson_monitor__today() - 2 WHERE student_id = $1`, [k2]);
+const wd = await valAs(ADMIN, `SELECT public.lesson_monitor_record_child_consent($1,'withdrawn','parent phoned') r`, [k2]);
+eq("P3 fixed: the earlier lesson's report of the child who left is deleted", (await q(`SELECT recording_id FROM public.lesson_monitor_reports`)).map((r) => r.recording_id), [rV1]);
+eq("P3 and says how many", wd.r.reports_deleted, 1);
+eq("P3 the class (child no longer in it today) stays ON, by design", (await one(`SELECT enabled FROM public.lesson_monitor_classes WHERE class_id=$1`, [VENUS])).enabled, true);
+// M-2c: a visitor with NO consent row counts as not consented
+const visitor = (await one(`INSERT INTO public.students (full_name) VALUES ('Visitor') RETURNING id`)).id;
+await q(`INSERT INTO public.attendance (session_id, student_id, status) VALUES ($1,$2,'Present')`, [sV1, visitor]);
+const sV1date = (await one(`SELECT date::text d FROM public.sessions WHERE id=$1`, [sV1])).d;
+eq("P4 visitor present at the lesson: consent missing (nothing recorded without it)", (await valAs(VICTOR, `SELECT public.lesson_monitor_class_missing_consent($1,$2::date) n`, [VENUS, sV1date])).n, 1);
+const rV3 = await recording(VENUS, await sess(VENUS, tVictor, -1));
+eq("P4 begin refuses a lesson of the day the visitor was there", (await valAs(ADMIN, `SELECT public.lesson_monitor_begin($1) r`, [rV3])).r.reason, "consent_missing");
+eq("P4 may_continue says so", (await valAs(ADMIN, `SELECT public.lesson_monitor_may_continue($1) r`, [rV1])).r, "consent_missing");
+await q(`UPDATE public.attendance SET status='Absent' WHERE student_id=$1`, [visitor]);
+eq("P4 an ABSENT visitor does not count", (await valAs(ADMIN, `SELECT public.lesson_monitor_may_continue($1) r`, [rV1])).r, "ok");
+await q(`UPDATE public.attendance SET status='Present' WHERE student_id=$1`, [visitor]);
+await consent(ADMIN, visitor, "granted", "visitor form");
+eq("P4 visitor with a consent row: ok", (await valAs(ADMIN, `SELECT public.lesson_monitor_may_continue($1) r`, [rV1])).r, "ok");
+await consent(ADMIN, visitor, "withdrawn", "visitor parent said no");
+eq("P4 the visitor's withdrawal deleted the report of the lesson he attended", (await one(`SELECT count(*)::int n FROM public.lesson_monitor_reports`)).n, 0);
+// M-2b / M-3: keep_check: what the laptop may keep as a local draft
+eq("keep_check: withdrawn child's lessons, a class that is off, a stranger: all false",
+  (await rowsAs(ADMIN, `SELECT recording_id, keep FROM public.lesson_monitor_keep_check($1::uuid[]) ORDER BY recording_id`, [[rV1, rV2, rM1, "99999999-9999-4999-8999-999999999999"]])).every((r) => r.keep === false), true);
+await consent(ADMIN, visitor, "granted", "visitor form again"); await consent(ADMIN, k2, "granted", "parent changed mind");
+await raw(`UPDATE public.enrollments SET end_date = NULL WHERE student_id = $1`, [k2]);
+await setClass(ADMIN, VENUS, true); await raw(`UPDATE public.lesson_monitor_classes SET starts_on = public.lesson_monitor__today() - 10, ends_on = public.lesson_monitor__today() + 17 WHERE class_id = $1`, [VENUS]);
+eq("keep_check: all consent back and class on: true for Venus, false for the class that is off",
+  Object.fromEntries((await rowsAs(ADMIN, `SELECT recording_id, keep FROM public.lesson_monitor_keep_check($1::uuid[])`, [[rV1, rM1]])).map((r) => [r.recording_id, r.keep])), { [rV1]: true, [rM1]: false });
+eq("keep_check: a teacher who may not listen gets false", (await rowsAs(OTHER, `SELECT keep FROM public.lesson_monitor_keep_check($1::uuid[])`, [[rV1]]))[0].keep, false);
+eq("keep_check: nobody signed in gets no rows", (await rowsAs(null, `SELECT keep FROM public.lesson_monitor_keep_check($1::uuid[])`, [[rV1]])).length, 0);
+// the kill switch: may_continue says class_off at once
+await tryAs(VICTOR, () => db.query(`SELECT public.lesson_monitor_set_class($1,false,NULL,'stop')`, [VENUS]));
+eq("M-3 after the kill switch may_continue says class_off", (await valAs(ADMIN, `SELECT public.lesson_monitor_may_continue($1) r`, [rV1])).r, "class_off");
+eq("M-3 keep_check drops the local draft", (await rowsAs(ADMIN, `SELECT keep FROM public.lesson_monitor_keep_check($1::uuid[])`, [[rV1]]))[0].keep, false);
+await setClass(ADMIN, VENUS, true); await raw(`UPDATE public.lesson_monitor_classes SET starts_on = public.lesson_monitor__today() - 10, ends_on = public.lesson_monitor__today() + 17 WHERE class_id = $1`, [VENUS]);
 // P4: a child with a stale enrolment (class overlap) or a visitor: not covered by consent (documented?)
 // P5: teacher who is ALSO an admin?  admin who is not the teacher reads nothing
 eq("P5 admin reads none", await reportsSeenBy(ADMIN), []);
@@ -200,9 +245,16 @@ eq("P7 helper only true for own uid", (await valAs(OTHER, `SELECT public.lesson_
 eq("P8 teacher sees only his own audit rows", (await rowsAs(VICTOR, `SELECT DISTINCT actor FROM public.lesson_monitor_audit`)).every((r) => r.actor === VICTOR), true);
 // P9: service_role / authenticated direct insert of a report body
 refused("P9 direct insert refused", await tryAs(VICTOR, () => db.query(`INSERT INTO public.lesson_monitor_reports (recording_id,class_id,session_date,teacher_user_id,made_by,job_version,body) VALUES ($1,$2,current_date,$3,$3,'x','{}')`, [rV2, VENUS, VICTOR])), /permission denied/);
-// P10: delete_everything leaves audit with student ids
+// P10 (M-4): delete_everything keeps counts and dates, clears WHO
+const auditBefore = (await one(`SELECT count(*)::int n FROM public.lesson_monitor_audit`)).n;
+eq("P10 audit holds student ids before", (await one(`SELECT count(*)::int n FROM public.lesson_monitor_audit WHERE student_id IS NOT NULL`)).n > 0, true);
 await tryAs(ADMIN, () => db.query(`SELECT public.lesson_monitor_delete_everything('DELETE ALL PILOT DATA', true)`));
-eq("P10 audit rows with a student_id remain after delete everything", (await one(`SELECT count(*)::int n FROM public.lesson_monitor_audit WHERE student_id IS NOT NULL`)).n > 0, true);
+eq("P10 fixed: no student id left in the audit table", (await one(`SELECT count(*)::int n FROM public.lesson_monitor_audit WHERE student_id IS NOT NULL`)).n, 0);
+eq("P10 the rows (counts, dates) are all still there, plus the delete row", (await one(`SELECT count(*)::int n FROM public.lesson_monitor_audit`)).n, auditBefore + 1);
+eq("P10 the delete row says how many ids were cleared", Number((await one(`SELECT detail->>'student_ids_cleared' n FROM public.lesson_monitor_audit WHERE action='delete_everything' ORDER BY id DESC LIMIT 1`)).n) > 0, true);
+refused("P10 audit is still append-only (no flag)", await tryAs(null, () => db.query(`UPDATE public.lesson_monitor_audit SET student_id = NULL`), "service_role"), /append-only/);
+// N-6
+eq("N-6 helpers have no default EXECUTE", await one(`SELECT has_function_privilege('authenticated','public.lesson_monitor__today()','EXECUTE') a, has_function_privilege('anon','public.lesson_monitor__today()','EXECUTE') b, has_function_privilege('authenticated','public.lesson_monitor__audit_is_append_only()','EXECUTE') c`), { a: false, b: false, c: false });
 // P11: body with a name hidden in a line is accepted (spoken names are in the transcript by design)
 await consent(ADMIN, k1); await consent(ADMIN, k2);
 await setClass(ADMIN, VENUS, true); await raw(`UPDATE public.lesson_monitor_classes SET starts_on = public.lesson_monitor__today() - 10, ends_on = public.lesson_monitor__today() + 17 WHERE class_id = $1`, [VENUS]);
