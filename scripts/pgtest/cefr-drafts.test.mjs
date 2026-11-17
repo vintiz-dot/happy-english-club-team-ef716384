@@ -1,7 +1,12 @@
 // Model-made CEFR points are staff-only drafts until a teacher approves
 // (privacy follow-ups, docs/evidence/PRIVACY-followups.md).
 //
-//   node scripts/pgtest/run.mjs   (or: this file <20261111110000_...sql> <20261113140000_...sql> <20261117151000_cefr_model_drafts.sql>)
+//   node scripts/pgtest/run.mjs   (or: this file with the five migrations run.mjs lists for "cefr drafts")
+//
+// Round 2 adds: a teacher deleting an approved point puts its draft back in
+// the queue (re-approvable); 20261117152000 makes the AI learning profile and
+// the level-defense claim staff-only (FamilyDashboard shows the approved
+// level instead); cefr-defense gives a child progress only.
 //
 // Part 1 drives the REAL migration against an in-process Postgres over
 // production's state: the real is_teacher_of_class (20261111110000), the
@@ -32,8 +37,10 @@ const MIGS = process.argv.slice(2);
 const TA_MIG = MIGS.find((f) => f.includes("20261111110000"));
 const STAFF_MIG = MIGS.find((f) => f.includes("20261113140000"));
 const FIX_MIG = MIGS.find((f) => f.includes("20261117151000"));
-if (!TA_MIG || !STAFF_MIG || !FIX_MIG) {
-  console.log("usage: cefr-drafts.test.mjs <20261111110000_...sql> <20261113140000_...sql> <20261117151000_cefr_model_drafts.sql>");
+const DEFENSE_MIG = MIGS.find((f) => f.includes("20260730100000"));
+const FAMILY_MIG = MIGS.find((f) => f.includes("20261117152000"));
+if (!TA_MIG || !STAFF_MIG || !FIX_MIG || !DEFENSE_MIG || !FAMILY_MIG) {
+  console.log("usage: cefr-drafts.test.mjs <20261111110000_...sql> <20261113140000_...sql> <20260730100000_cefr_level_defense.sql> <20261117151000_cefr_model_drafts.sql> <20261117152000_family_reads_without_ai.sql>");
   console.log("0 passed, 1 failed");
   process.exit(1);
 }
@@ -215,7 +222,27 @@ await db.exec(`ALTER TABLE public.cefr_assessments ADD CONSTRAINT cefr_assessmen
 await db.exec(readFileSync(TA_MIG, "utf8"));
 await db.exec(LIVE);
 await db.exec(readFileSync(STAFF_MIG, "utf8"));
+// The level defense tables and policies, as the migration that made them.
+await db.exec(readFileSync(DEFENSE_MIG, "utf8"));
+// student_learning_profiles with production's four policies (read live 17 Nov):
+// 20260715090000 (admin, child), 20261116092000 (class teachers), 20260730130000 (family).
+await db.exec(`
+  CREATE TABLE public.student_learning_profiles (student_id uuid PRIMARY KEY REFERENCES public.students(id) ON DELETE CASCADE,
+    summary text, strengths jsonb NOT NULL DEFAULT '[]'::jsonb, struggles jsonb NOT NULL DEFAULT '[]'::jsonb, cefr_estimate text,
+    updated_at timestamptz NOT NULL DEFAULT now());
+  ALTER TABLE public.student_learning_profiles ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "admins_all_learning_profiles" ON public.student_learning_profiles FOR ALL TO authenticated
+    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+  CREATE POLICY "students_read_own_learning_profile" ON public.student_learning_profiles FOR SELECT TO authenticated
+    USING (public.is_linked_student(auth.uid(), student_id));
+  CREATE POLICY "teachers_read_class_learning_profiles" ON public.student_learning_profiles FOR SELECT TO authenticated
+    USING (public.has_role(auth.uid(), 'teacher'::public.app_role) AND public.can_view_student_in_class(student_id, auth.uid()));
+  CREATE POLICY "family_read_children_learning_profiles" ON public.student_learning_profiles FOR SELECT TO authenticated
+    USING (public.can_view_student(student_id, auth.uid()));
+  GRANT SELECT, INSERT, UPDATE, DELETE ON public.student_learning_profiles, public.cefr_level_claims, public.cefr_defense_tests TO authenticated, service_role;
+`);
 const FIX = readFileSync(FIX_MIG, "utf8");
+const FAMILY = readFileSync(FAMILY_MIG, "utf8");
 
 async function as(uid, sql, params = [], { role = "authenticated", keep = false } = {}) {
   await db.exec("BEGIN");
@@ -251,6 +278,10 @@ const kid = async (name, cls, { family = null, linked = null } = {}) => {
 };
 const KIKI = await kid("Kiki", CA, { family: F1, linked: KID });
 const LILY = await kid("Lily", CB, { linked: KIDB });
+// The model's profile and the AI evidence audit on a claim, as production holds them.
+await q(`INSERT INTO public.student_learning_profiles (student_id, summary, cefr_estimate) VALUES ($1, 'MODEL SUMMARY: Kiki speaks confidently', 'B2'), ($2, 'MODEL SUMMARY: Lily', 'A2')`, [KIKI, LILY]);
+const CLAIM_K = (await one(`INSERT INTO public.cefr_level_claims (student_id, class_id, claimed_level, set_by, status, evidence)
+  VALUES ($1, $2, 'A2', $3, 'not_supported', '{"verdict":"not_supported","recommended_level":"A1","rationale":"MODEL RATIONALE"}'::jsonb) RETURNING id`, [KIKI, CA, TEA])).id;
 
 // ---------------------------------------------------------------- production's rows before the paste
 const report = async (sid, cls, by) => (await one(`INSERT INTO public.student_reports (student_id, class_id, generated_by) VALUES ($1,$2,$3) RETURNING id`, [sid, cls, by])).id;
@@ -275,6 +306,10 @@ console.log("=== before the paste: the defect ===");
 eq("the child reads the AI report's level (and every other point)", await count(KID, "cefr_assessments", "student_id = $1", [KIKI]), 4);
 eq("the family reads it too", await count(PARENT, "cefr_assessments", "id = $1", [P_R1]), 1);
 eq("...although the report itself is unpublished (a child reads no report)", await count(KID, "student_reports", "true"), 0);
+eq("the family reads the model's profile summary and CEFR estimate", (await as(PARENT, `SELECT summary, cefr_estimate FROM public.student_learning_profiles WHERE student_id = $1`, [KIKI])).rows,
+  [{ summary: "MODEL SUMMARY: Kiki speaks confidently", cefr_estimate: "B2" }]);
+eq("the child too", await count(KID, "student_learning_profiles", "student_id = $1", [KIKI]), 1);
+eq("the child reads the AI evidence audit on their claim (verdict, recommended level, rationale)", (await as(KID, `SELECT evidence->>'recommended_level' AS r FROM public.cefr_level_claims`)).rows, [{ r: "A1" }]);
 {
   const r = await as(null, `INSERT INTO public.cefr_assessments (student_id, class_id, source, level, level_score, source_id) VALUES ($1,$2,'level_defense_test','A2',2,$3)`,
     [KIKI, CA, randomUUID()], { role: "service_role" });
@@ -283,6 +318,9 @@ eq("...although the report itself is unpublished (a child reads no report)", awa
 
 console.log("=== installing ===");
 {
+  let ferr = null; try { await db.exec(FAMILY); } catch (e) { ferr = e.message; await db.exec("ROLLBACK").catch(() => {}); }
+  ok("20261117152000 refuses before 20261117151000 is in", /paste 20261117151000_cefr_model_drafts.sql first/.test(ferr ?? ""), ferr);
+  eq("  ...and drops nothing", await count(PARENT, "student_learning_profiles", "student_id = $1", [KIKI]), 1);
   await db.exec(`ALTER TABLE public.cefr_assessments DROP CONSTRAINT cefr_assessments_source_check;
                  ALTER TABLE public.cefr_assessments ADD CONSTRAINT cefr_assessments_source_check CHECK (source IN ('ai_report','transcript','manual','vocab_analysis','exam','rogue'))`);
   let err = null; try { await db.exec(FIX); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
@@ -429,6 +467,28 @@ const discard = (uid, id) => as(uid, `SELECT public.discard_cefr_draft($1) AS r`
     [{ source: "level_defense_test", class_id: null }, 1]);
 }
 
+console.log("=== a teacher takes an approved point off the chart: the draft is back, re-approvable ===");
+{
+  const del = await as(TEA, `DELETE FROM public.cefr_assessments WHERE id = $1`, [P_R1], { keep: true });
+  ok("the class teacher deletes the approved report level (the staff delete policy)", del.err === null && del.n === 1, del);
+  eq("  ...the family no longer reads it", await count(PARENT, "cefr_assessments", "id = $1", [P_R1]), 0);
+  const d = await one(`SELECT status, decided_by, decided_at, approved_level, (SELECT array_agg(h->>'event') FROM jsonb_array_elements(history) h) AS ev,
+                              history->-1->>'by' AS by, history->-1->>'level' AS lvl FROM public.cefr_assessment_drafts WHERE id = $1`, [P_R1]);
+  eq("  ...its draft is a draft again, history: approved, unpublished (by the teacher, A2)", d,
+    { status: "draft", decided_by: null, decided_at: null, approved_level: null, ev: ["approved", "unpublished"], by: TEA, lvl: "A2" });
+  eq("  ...and is in the class teacher's queue", await count(TEA, "cefr_assessment_drafts", "id = $1 AND status = 'draft'", [P_R1]), 1);
+  const again = await approve(TEA, P_R1, "B1");
+  ok("  ...the teacher approves it again, at B1", again.err === null, again.err);
+  eq("  ...published again under its id, the family reads B1", [(await one(`SELECT level FROM public.cefr_assessments WHERE id = $1`, [P_R1]))?.level, await count(PARENT, "cefr_assessments", "id = $1", [P_R1])], ["B1", 1]);
+  eq("  ...history keeps all three steps", (await one(`SELECT (SELECT array_agg(h->>'event') FROM jsonb_array_elements(history) h) AS ev FROM public.cefr_assessment_drafts WHERE id = $1`, [P_R1])).ev, ["approved", "unpublished", "approved"]);
+  const own = (await as(TEA, `INSERT INTO public.cefr_assessments (student_id, class_id, source, level, level_score, created_by) VALUES ($1,$2,'manual','A1',1,$3) RETURNING id`, [KIKI, CA, TEA], { keep: true })).rows[0].id;
+  const draftsBefore = await q(`SELECT id, status, history FROM public.cefr_assessment_drafts ORDER BY id`);
+  ok("deleting a teacher's own point touches no draft", (await as(TEA, `DELETE FROM public.cefr_assessments WHERE id = $1`, [own], { keep: true })).err === null
+    && JSON.stringify(await q(`SELECT id, status, history FROM public.cefr_assessment_drafts ORDER BY id`)) === JSON.stringify(draftsBefore));
+  const h = await as(null, `INSERT INTO public.cefr_assessment_drafts (student_id, class_id, source, level, level_score, history) VALUES ($1,$2,'ai_report','A2',2,'[{"event":"approved"}]')`, [KIKI, CA], { role: "service_role" });
+  ok("the service role cannot insert a draft with a made-up history", /starts undecided/.test(h.err ?? ""), h.err);
+}
+
 console.log("=== a paste after approvals, and a leak in between ===");
 {
   const before = await q(`SELECT id, status FROM public.cefr_assessment_drafts ORDER BY id`);
@@ -452,6 +512,35 @@ console.log("=== a paste after approvals, and a leak in between ===");
   err = null; try { await db.exec(FIX); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
   ok("an unknown policy on the drafts table: refused, and named", /unknown policy rogue_family/.test(err ?? ""), err);
   await db.exec(`DROP POLICY rogue_family ON public.cefr_assessment_drafts`);
+}
+
+console.log("=== learning profiles and level claims are staff-only (20261117152000) ===");
+{
+  await db.exec(`CREATE POLICY rogue_parents ON public.student_learning_profiles FOR SELECT TO authenticated USING (true)`);
+  let err = null; try { await db.exec(FAMILY); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
+  ok("an unknown policy on student_learning_profiles: refused, and named", /unknown policy rogue_parents/.test(err ?? ""), err);
+  eq("  ...nothing dropped", await count(KID, "student_learning_profiles", "student_id = $1", [KIKI]), 1);
+  await db.exec(`DROP POLICY rogue_parents ON public.student_learning_profiles`);
+  await db.exec(`CREATE POLICY rogue_claims ON public.cefr_level_claims FOR SELECT TO authenticated USING (true)`);
+  err = null; try { await db.exec(FAMILY); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
+  ok("an unknown policy on cefr_level_claims: refused", /unknown policy rogue_claims/.test(err ?? ""), err);
+  await db.exec(`DROP POLICY rogue_claims ON public.cefr_level_claims`);
+  err = null; try { await db.exec(FAMILY); } catch (e) { err = e.message; }
+  ok("it installs on production's state", err === null, err);
+  err = null; try { await db.exec(FAMILY); } catch (e) { err = e.message; }
+  ok("and pastes a second time", err === null, err);
+  for (const [who, uid] of [["the family", PARENT], ["the child", KID], ["Lily's child login", KIDB], ["an account with no role", NOROLE]]) {
+    eq(`${who}: reads no learning profile and no level claim`, [await count(uid, "student_learning_profiles"), await count(uid, "cefr_level_claims")], [0, 0]);
+  }
+  eq("the class teacher still reads Kiki's profile and claim, not Lily's", [await count(TEA, "student_learning_profiles"), await count(TEA, "cefr_level_claims")], [1, 1]);
+  eq("the TA on the class reads Kiki's profile", await count(TA_ON, "student_learning_profiles", "student_id = $1", [KIKI]), 1);
+  eq("another class's teacher reads neither of Kiki's", [await count(TEB, "student_learning_profiles", "student_id = $1", [KIKI]), await count(TEB, "cefr_level_claims", "student_id = $1", [KIKI])], [0, 0]);
+  eq("an admin reads both profiles and the claim", [await count(ADMIN, "student_learning_profiles"), await count(ADMIN, "cefr_level_claims")], [2, 1]);
+  eq("the family still reads the approved levels", await count(PARENT, "cefr_assessments", "id = $1", [P_R1]), 1);
+  eq("the policies left are the staff ones", (await q(`SELECT tablename || '.' || policyname AS p FROM pg_policies WHERE tablename IN ('student_learning_profiles', 'cefr_level_claims', 'cefr_defense_tests') ORDER BY 1`)).map((r) => r.p),
+    ["cefr_defense_tests.admins_all_cefr_tests", "cefr_defense_tests.teachers_manage_class_cefr_tests", "cefr_level_claims.admins_all_cefr_claims",
+     "cefr_level_claims.teachers_manage_class_cefr_claims", "student_learning_profiles.admins_all_learning_profiles", "student_learning_profiles.teachers_read_class_learning_profiles"]);
+  eq("the rows themselves are untouched", (await q(`SELECT summary FROM public.student_learning_profiles ORDER BY summary`)).map((r) => r.summary), ["MODEL SUMMARY: Kiki speaks confidently", "MODEL SUMMARY: Lily"]);
 }
 
 // =================================================================== part 2
@@ -587,6 +676,55 @@ const defenseWorld = () => base2({
   ok("the child cannot run the evidence audit (unchanged): 403, no draft", kidMine.status === 403 && inserted("cefr_assessment_drafts").length === 0, kidMine.status);
 }
 
+console.log("--- cefr-defense: what a child sees (round 2)");
+{
+  const name = "cefr-defense";
+  const fn = await load(name, fsrc(name));
+  const EVID = { verdict: "not_supported", confidence: 0.6, recommended_level: "A1", rationale: "MODEL EVIDENCE RATIONALE", evidence_for: [], evidence_against: [] };
+  const world2 = (stageNo = 3) => {
+    const w = defenseWorld();
+    w.cefr_level_claims[0].status = "not_supported"; w.cefr_level_claims[0].evidence = EVID;
+    if (stageNo === 1) Object.assign(w.cefr_defense_tests[0], { current_stage: 1, stages: [stage(1, "A2")], status: "assigned" });
+    return w;
+  };
+  const leaks = (r, words) => words.filter((x) => JSON.stringify(r.json).includes(x));
+  const AI_WORDS = ["MODEL EVIDENCE RATIONALE", "MODEL TEST RATIONALE", "not_supported", "recommended_level", "level_estimate", "defended", "stage_score", "correct_index"];
+  reset(world2()); answer = {};
+  const g = await call(fn, name, { token: tokenOf(KID), body: { action: "get_state" } });
+  ok("the child's get_state: 200", g.status === 200 && g.json?.success === true, g);
+  eq("  ...the teacher's level and progress only: no evidence, status 'test_assigned'", [g.json?.claim?.claimed_level, g.json?.claim?.status, g.json?.claim?.evidence], ["A2", "test_assigned", null]);
+  eq("  ...no AI verdict, rationale, recommended level, routed stage level or answer key anywhere in the reply", leaks(g, AI_WORDS), []);
+  ok("  ...the active stage has its questions but no level", !!g.json?.tests?.[0]?.active_stage?.items?.length && !("level" in g.json.tests[0].active_stage), g.json?.tests?.[0]?.active_stage);
+  eq("  ...no approved level yet", g.json?.approved_level, null);
+  const gs = await call(fn, name, { token: tokenOf(TEA), body: { action: "get_state", student_id: KIKI } });
+  ok("the class teacher's get_state: the full audit and the AI status", gs.json?.claim?.evidence?.rationale === "MODEL EVIDENCE RATIONALE" && gs.json?.claim?.status === "not_supported", gs.json?.claim);
+
+  const TRESULT = { level_estimate: "A1", defended: false, confidence: 0.6, writing_assessment: [], skill_notes: {}, rationale: "MODEL TEST RATIONALE", next_steps: [] };
+  answer = TRESULT;
+  const sub = await call(fn, name, { token: tokenOf(KID), body: { action: "submit_stage", test_id: TEST, answers: [{ item_id: "s3q0", answer: 0 }, { item_id: "s3w0", answer: "I went." }] } });
+  ok("the child submits the last stage: 200, 'submitted - your teacher will review'", sub.status === 200 && /teacher will review/.test(sub.json?.message ?? "") && sub.json?.test?.submitted === true, sub.json);
+  eq("  ...no level, defended, rationale or score in the reply", leaks(sub, AI_WORDS), []);
+  ok("  ...while the graded result is stored for staff", world.tables.cefr_defense_tests[0].result?.level_estimate === "A1");
+  const after = await call(fn, name, { token: tokenOf(KID), body: { action: "get_state" } });
+  eq("the child's get_state after the test: 'submitted', no result, no approved level", [after.json?.claim?.status, after.json?.tests?.[0]?.result, after.json?.approved_level, leaks(after, AI_WORDS)], ["submitted", null, null, []]);
+  const staffAfter = await call(fn, name, { token: tokenOf(TEA), body: { action: "get_state", student_id: KIKI } });
+  ok("the teacher sees the AI's estimate and rationale", staffAfter.json?.tests?.[0]?.result?.level_estimate === "A1" && staffAfter.json?.tests?.[0]?.result?.rationale === "MODEL TEST RATIONALE", staffAfter.json?.tests?.[0]);
+  // A teacher approves the draft (at A2): the published point is what the child now sees.
+  (world.tables.cefr_assessments ??= []).push({ id: "pub-1", student_id: KIKI, source: "level_defense_test", source_id: TEST, level: "A2", assessed_at: "2026-11-17" });
+  (world.tables.cefr_assessments).push({ id: "pub-2", student_id: KIKI, source: "level_defense_test", source_id: "another-childs-test", level: "C1", assessed_at: "2026-11-18" });
+  const reviewed = await call(fn, name, { token: tokenOf(KID), body: { action: "get_state" } });
+  eq("once a teacher approved a level, the child sees it: 'reviewed', A2 (their own test's, not another)", [reviewed.json?.claim?.status, reviewed.json?.approved_level?.level, leaks(reviewed, AI_WORDS)], ["reviewed", "A2", []]);
+
+  reset(world2(1));
+  answer = { items: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => ({ id: `n${i}`, skill: "grammar", prompt: `P${i}`, options: ["a", "b", "c", "d"], correct_index: 1 })) };
+  const s1 = await call(fn, name, { token: tokenOf(KID), body: { action: "submit_stage", test_id: TEST, answers: [0, 1, 2, 3].map((i) => ({ item_id: `s1q${i}`, answer: 0 })) } });
+  ok("the child submits stage 1: the next stage, without its level, a score or an answer key", s1.status === 200 && s1.json?.test?.current_stage === 2
+    && !!s1.json?.test?.active_stage && !("level" in s1.json.test.active_stage) && leaks(s1, AI_WORDS).length === 0, s1.json);
+  reset(world2(1));
+  const t1 = await call(fn, name, { token: tokenOf(TEA), body: { action: "submit_stage", test_id: TEST, answers: [0, 1, 2, 3].map((i) => ({ item_id: `s1q${i}`, answer: 0 })) } });
+  ok("staff submitting the same stage still get the score and the routed level", t1.json?.stage_score === 1 && t1.json?.test?.active_stage?.level === "B1", t1.json);
+}
+
 console.log("--- what they wrote, in the real schema");
 for (const [label, row] of loaded) {
   const r = await toPg(row);
@@ -601,6 +739,45 @@ for (const [label, row] of loaded) {
 {
   const direct = await as(null, `INSERT INTO public.cefr_assessments (student_id, class_id, source, level, level_score, source_id) VALUES ($1,$2,'ai_report','A2',2,$3)`, [KIKI, CA, R1], { role: "service_role" });
   ok("and the old functions' direct write is refused in the database (deploy order does not matter)", /draft until a teacher approves/.test(direct.err ?? ""), direct.err);
+}
+
+console.log("=== FamilyDashboard: the approved level, no model text (against Postgres, as the family) ===");
+{
+  const { transform } = await import("esbuild");
+  const page = readFileSync(resolve(repo, "src", "pages", "FamilyDashboard.tsx"), "utf8").replace(/\r\n/g, "\n");
+  const a = page.indexOf("export async function withApprovedLevels");
+  const b = page.indexOf("\n}\n", a) + 3;
+  const code = (await transform(`const POSTGREST_ROW_CAP = 1000;\n${page.slice(a, b).replace("export async function", "async function")}\nexport { withApprovedLevels };`, { loader: "ts", format: "esm" })).code;
+  const mod = await import(`data:text/javascript;base64,${Buffer.from(code).toString("base64")}`);
+  // A PostgREST stand-in that runs the page's exact request in Postgres as the caller.
+  const pgClient = (uid) => ({
+    from: (table) => {
+      const st = { cols: "*", where: [], params: [], order: [], limit: null };
+      const b2 = {
+        select(c) { st.cols = c; return b2; },
+        in(c, v) { st.params.push(v); st.where.push(`${c}::text = ANY($${st.params.length}::text[])`); return b2; },
+        order(c, o) { st.order.push(`${c} ${o?.ascending === false ? "DESC" : "ASC"}`); return b2; },
+        limit(n) { st.limit = n; return b2; },
+        then(res, rej) {
+          const sql = `SELECT ${st.cols} FROM public.${table}${st.where.length ? " WHERE " + st.where.join(" AND ") : ""}${st.order.length ? " ORDER BY " + st.order.join(", ") : ""}${st.limit ? " LIMIT " + st.limit : ""}`;
+          return as(uid, sql, st.params).then((r) => (r.err ? { data: null, error: { message: r.err } } : { data: r.rows, error: null })).then(res, rej);
+        },
+      };
+      return b2;
+    },
+  });
+  const latestK = (await one(`SELECT level FROM public.cefr_assessments WHERE student_id = $1 ORDER BY assessed_at DESC, created_at DESC LIMIT 1`, [KIKI])).level;
+  const input = [
+    { id: KIKI, full_name: "Kiki", cefr: "B2", journey: "MODEL SUMMARY: Kiki speaks confidently", total_points: 0, attendance: { present: 0, total: 0 }, lessons: [] },
+    { id: LILY, full_name: "Lily", cefr: "A2", journey: "MODEL SUMMARY: Lily", total_points: 0, attendance: { present: 0, total: 0 }, lessons: [] },
+  ];
+  const out = await mod.withApprovedLevels(pgClient(PARENT), input);
+  eq("Kiki's card: the latest approved level, no journey text (even when the profile request still returned one)", [out[0].cefr, out[0].journey], [latestK, null]);
+  eq("a child the family cannot read: no level, no text", [out[1].cefr, out[1].journey], [null, null]);
+  ok("nothing of the model's profile survives on any card", !JSON.stringify(out).includes("MODEL SUMMARY") && !out.some((c) => c.cefr === "B2" && latestK !== "B2"));
+  const broken = await mod.withApprovedLevels({ from: () => ({ select() { return this; }, in() { return this; }, order() { return this; }, limit() { return this; }, then: (r) => r({ data: null, error: { message: "down" } }) }) }, input);
+  eq("the level cannot be read: no level, still no model text (fails closed)", broken.map((c) => [c.cefr, c.journey]), [[null, null], [null, null]]);
+  ok("the page loads the cards through withApprovedLevels", /withPoints\(await withApprovedLevels\(supabase, await fetchChildren\(supabase\)\)\)/.test(page));
 }
 
 // =================================================================== part 3
@@ -634,6 +811,11 @@ const uses = (files, table) => files.flatMap(([f, t]) => {
   ok("  ...StudentDetail is an admin route, TeacherClassDetail a teacher/admin route",
     /path="\/students\/:id" element={<ProtectedRoute allowedRole="admin"><StudentDetail/.test(app)
     && /path="\/teacher\/classes\/:id" element={<ProtectedRoute allowedRole={\["teacher", "admin"\]}><TeacherClassDetail/.test(app));
+  const prof = uses(srcFiles, "student_learning_profiles").map(([f]) => f);
+  eq("the browser reads the learning profile in two places: the admin's LearningJourneyCard, and FamilyDashboard's fetchChildren (RLS now returns a family nothing, and withApprovedLevels drops it)",
+    [...new Set(prof)].sort(), ["src/components/student/LearningJourneyCard.tsx", "src/pages/FamilyDashboard.tsx"]);
+  ok("  ...LearningJourneyCard is shown only on the admin StudentDetail", srcFiles.filter(([f, t]) => /<LearningJourneyCard\b/.test(t)).map(([f]) => f).join() === "src/pages/StudentDetail.tsx");
+  eq("the browser never reads cefr_level_claims or cefr_defense_tests directly", [...uses(srcFiles, "cefr_level_claims"), ...uses(srcFiles, "cefr_defense_tests")], []);
   const card = srcFiles.find(([f]) => f === "src/components/cefr/CefrDraftsCard.tsx")[1];
   ok("the card decides only through approve_cefr_draft / discard_cefr_draft", /rpc\("approve_cefr_draft"/.test(card) && /rpc\("discard_cefr_draft"/.test(card) && !/\.(insert|update|upsert|delete)\(/.test(card));
 }

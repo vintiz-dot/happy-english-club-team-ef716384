@@ -592,13 +592,15 @@ const SUITES = [
   // model made (the AI report, the level-defense audit and test) is a
   // staff-only draft until a teacher approves; the 9 already published are
   // held. Also drives the real generate-student-report and cefr-defense and
-  // loads what they wrote into the schema.
+  // loads what they wrote into the schema. Round 2: an unpublished point is
+  // re-approvable; the AI learning profile and level claims are staff-only
+  // (20261117152000); a child sees defense progress only.
   {
     name: "cefr drafts",
     file: "cefr-drafts.test.mjs",
-    expect: 139,
-    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql",
-      "20261117151000_cefr_model_drafts.sql"],
+    expect: 191,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql", "20260730100000_cefr_level_defense.sql",
+      "20261117151000_cefr_model_drafts.sql", "20261117152000_family_reads_without_ai.sql"],
   },
   // F-02: the nine AI / speech / image-search functions, handler by handler:
   // no session, wrong role, right role, the per-account limit.
