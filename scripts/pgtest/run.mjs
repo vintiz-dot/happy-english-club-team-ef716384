@@ -86,7 +86,7 @@ const SUITES = [
   // D5: scripts/CHECK-money-invariants.sql, the owner's read-only check of the
   // money invariants on live data - one broken row per check, each caught;
   // read-only; the fixture columns are the live ones; on the real triggers.
-  { name: "money invariants check", file: "money-invariants-check.test.mjs", expect: 120, migrations: [] },
+  { name: "money invariants check", file: "money-invariants-check.test.mjs", expect: 125, migrations: [] },
   // D5: scripts/CHECK-past-cancellations-with-evidence.sql on the real audit,
   // cancelled-lesson guard, D1 and D2 (it loads them itself, in paste order).
   { name: "past cancellations check", file: "past-cancellations-check.test.mjs", expect: 20, migrations: [] },
@@ -100,7 +100,11 @@ const SUITES = [
   // D5 G-11: 20261117111000 - the ledger is append-only for every role, its
   // preflight fails closed, six money tables audited (it loads the real audit
   // migration itself, then the file under test).
-  { name: "ledger append-only", file: "ledger-append-only.test.mjs", expect: 26, migrations: [] },
+  { name: "ledger append-only", file: "ledger-append-only.test.mjs", expect: 30, migrations: [] },
+  // D5 review round 1's probes, kept (fix round 2): both D5 files on the whole
+  // D4 chain incl. 3B; refresh_invoice_carry not callable by a signed-in
+  // account (M-2); a backdated ledger created_at stamped now() (M-3).
+  { name: "D5 review probes", file: "review-d5-probes.test.mjs", expect: 18, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },

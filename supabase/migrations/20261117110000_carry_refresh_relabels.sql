@@ -32,8 +32,26 @@
 -- what a one-off relabel would change, is the READ-ONLY
 -- scripts/CHECK-label-relabel-impact.sql (no one-off write is part of this).
 --
--- Who can call it: unchanged (CREATE OR REPLACE keeps the grants:
--- EXECUTE revoked from anon and PUBLIC by 20261009120000).
+-- No audit row for the relabel itself: it runs at trigger depth 2, and
+-- audit_row_change skips depth > 1, as it does for the carry columns (derived
+-- data). The person's own write that set it off is audited; the D4 bill floor
+-- (zz_invoice_state_floor) still records a paid/partial -> issued lowering.
+--
+-- WHO CAN CALL IT (fix round 2, M-2). Until now: any signed-in account.
+-- 20261009120000 revoked EXECUTE from anon and PUBLIC only, and live grants
+-- it to authenticated (has_function_privilege = true, 17 Nov). As SECURITY
+-- DEFINER, and with this change also rewriting invoices.status, that made
+-- `SELECT public.refresh_invoice_carry(<any child>)` a definer write path
+-- open to parents and students (it writes only the rule's label and moves no
+-- figure, but it is not theirs to call). So EXECUTE is revoked from PUBLIC,
+-- anon and authenticated below; service_role and the owner keep it.
+-- Nothing else calls it, proven 17 Nov: in the repo only the trigger
+-- function invoices_carry_sync (20261009120000) and the one-off backfill in
+-- that file name it (supabase/functions, src - types.ts lists it, nothing
+-- calls it -, docs/sql, scripts, drizzle, every migration); on live the only
+-- function whose body mentions it is invoices_carry_sync(), SECURITY DEFINER
+-- owned by postgres, so the trigger calls it as postgres and keeps working
+-- for every writer (a person's write, an edge function, the SQL editor).
 --
 -- Fails closed: refuses to install unless invoice_paid_label, the carry
 -- function and the trigger exist and invoices.status is the invoice_status
@@ -117,5 +135,9 @@ AS $function$
       OR (NOT l.keep_label AND i.status IS DISTINCT FROM l.by_rule));
 $function$;
 
+-- Fix round 2, M-2: the trigger (SECURITY DEFINER, owner) is the only caller.
+REVOKE EXECUTE ON FUNCTION public.refresh_invoice_carry(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.refresh_invoice_carry(uuid) TO service_role;
+
 COMMENT ON FUNCTION public.refresh_invoice_carry(uuid) IS
-  'Recomputes carry_in_credit/debt and carry_out_credit/debt for every invoice of one student, from the invoice rows themselves, and re-derives status with invoice_paid_label over the new carry (credit and draft kept). Writes only rows that differ; never a money figure. Called by the invoices_carry_sync trigger (D5 G-4, 20261117110000).';
+  'Recomputes carry_in_credit/debt and carry_out_credit/debt for every invoice of one student, from the invoice rows themselves, and re-derives status with invoice_paid_label over the new carry (credit and draft kept). Writes only rows that differ; never a money figure. Called by the invoices_carry_sync trigger only; EXECUTE revoked from PUBLIC, anon and authenticated (D5 G-4, 20261117110000).';
