@@ -100,7 +100,9 @@ Deno.serve(async (req) => {
       // The class boards' own calculation (20261117120000): ranks with ties,
       // and last month's champions from the ledger. Until that migration is
       // pasted this errors and the screen keeps the reckoning below.
-      db.rpc("leaderboard_tv_feed", { p_top: 10 }),
+      // Every child, not a top list (owner, 17 Nov 2026: "show every student
+      // in the reception tv").
+      db.rpc("leaderboard_tv_feed", { p_top: 1000 }),
     ]);
     for (const r of [classesRes, enrollRes, pointsRes, itemsRes]) if (r.error) throw r.error;
 
@@ -140,21 +142,35 @@ Deno.serve(async (req) => {
 
     const engine: any = engineRes && !engineRes.error ? engineRes.data : null;
 
-    let top = [...overall.entries()]
+    // Children on today's register with no points yet are on every list too:
+    // no rank, after everyone ranked, by name (no points, no rank).
+    const noPoints = (ids: Iterable<string>, ranked: Set<string>) =>
+      [...new Set(ids)].filter((id) => kids.has(id) && !ranked.has(id))
+        .sort((a, b) => kids.get(a)!.name.localeCompare(kids.get(b)!.name));
+
+    const centreRanked = [...overall.entries()]
       .filter(([id, pts]) => kids.has(id) && pts > 0)
-      .sort((a, b) => b[1] - a[1] || kids.get(a[0])!.name.localeCompare(kids.get(b[0])!.name))
-      .slice(0, 10)
-      .map(([id, pts], i) => ({ rank: i + 1, ...person(id, pts), class_name: classesOf(id) }));
+      .sort((a, b) => b[1] - a[1] || kids.get(a[0])!.name.localeCompare(kids.get(b[0])!.name));
+    let top: Array<{ rank: number | null; name: string; photo: string | null; points: number; class_name: string | null }> = [
+      ...centreRanked.map(([id, pts], i) => ({ rank: i + 1, ...person(id, pts), class_name: classesOf(id) })),
+      ...noPoints(kids.keys(), new Set(centreRanked.map(([id]) => id)))
+        .map((id) => ({ rank: null, ...person(id, 0), class_name: classesOf(id) })),
+    ];
 
     let classBoards = classes
       .map((c) => {
-        const rows = (perClass.get(c.id) ?? []).filter((r) => r.points > 0 && kids.has(r.id))
-          .sort((a, b) => b.points - a.points || kids.get(a.id)!.name.localeCompare(kids.get(b.id)!.name))
-          .slice(0, 5)
-          .map((r, i) => ({ rank: i + 1, ...person(r.id, r.points) }));
-        return { class_name: c.name, curriculum: c.curriculum, students: roster.get(c.id)?.size ?? 0, top: rows };
+        const ranked = (perClass.get(c.id) ?? []).filter((r) => r.points > 0 && kids.has(r.id))
+          .sort((a, b) => b.points - a.points || kids.get(a.id)!.name.localeCompare(kids.get(b.id)!.name));
+        const rows: Array<{ rank: number | null; name: string; photo: string | null; points: number; class_name: string | null }> = [
+          ...ranked.map((r, i) => ({ rank: i + 1, ...person(r.id, r.points) })),
+          ...noPoints(roster.get(c.id) ?? [], new Set(ranked.map((r) => r.id))).map((id) => ({ rank: null, ...person(id, 0) })),
+        ];
+        // `top` stays the class's top five, as the installed TV app reads it;
+        // `everyone` is every child, for the app that lists them all.
+        return { class_name: c.name, curriculum: c.curriculum, students: roster.get(c.id)?.size ?? 0,
+          top: rows.filter((r) => r.rank != null).slice(0, 5), everyone: rows };
       })
-      .filter((b) => b.top.length > 0);
+      .filter((b) => b.everyone.length > 0);
 
     // Last month's champions (archived when the month closed).
     let champions = (leadersRes.data ?? [])
@@ -165,19 +181,25 @@ Deno.serve(async (req) => {
     if (engine) {
       // Same shape as above, from the one calculation. Only children on
       // today's register are shown (a champion who has left is not).
-      top = (engine.centre ?? [])
-        .filter((r: any) => kids.has(r.student_id))
-        .map((r: any) => ({ rank: r.rank, ...person(r.student_id, Number(r.points)), class_name: classesOf(r.student_id) }));
+      const centreRows = (engine.centre ?? []).filter((r: any) => kids.has(r.student_id));
+      top = [
+        ...centreRows.map((r: any) => ({ rank: r.rank, ...person(r.student_id, Number(r.points)), class_name: classesOf(r.student_id) })),
+        ...noPoints(kids.keys(), new Set<string>(centreRows.map((r: any) => r.student_id)))
+          .map((id) => ({ rank: null, ...person(id, 0), class_name: classesOf(id) })),
+      ];
       const rowsOf = new Map<string, any[]>((engine.classes ?? []).map((c: any) => [c.class_id, c.rows ?? []]));
       classBoards = classes
         .map((c) => {
-          const rows = (rowsOf.get(c.id) ?? [])
-            .filter((r: any) => kids.has(r.student_id))
-            .slice(0, 5)
-            .map((r: any) => ({ rank: r.rank, ...person(r.student_id, Number(r.points)) }));
-          return { class_name: c.name, curriculum: c.curriculum, students: roster.get(c.id)?.size ?? 0, top: rows };
+          const ranked = (rowsOf.get(c.id) ?? []).filter((r: any) => kids.has(r.student_id));
+          const rows = [
+            ...ranked.map((r: any) => ({ rank: r.rank, ...person(r.student_id, Number(r.points)) })),
+            ...noPoints(roster.get(c.id) ?? [], new Set<string>(ranked.map((r: any) => r.student_id)))
+              .map((id) => ({ rank: null, ...person(id, 0) })),
+          ];
+          return { class_name: c.name, curriculum: c.curriculum, students: roster.get(c.id)?.size ?? 0,
+            top: rows.filter((r) => r.rank != null).slice(0, 5), everyone: rows };
         })
-        .filter((b) => b.top.length > 0);
+        .filter((b) => b.everyone.length > 0);
       champions = (engine.champions ?? [])
         .filter((w: any) => kids.has(w.student_id) && classById.has(w.class_id))
         .map((w: any) => ({ ...person(w.student_id, Number(w.points), w.class_id) }))
@@ -244,7 +266,10 @@ Deno.serve(async (req) => {
       champions_month: t.prevMonth,
       settings: { scene_seconds: settings.scene_seconds, sections: settings.sections, youtube_every_minutes: settings.youtube_every_minutes ?? 10 },
       stats,
-      leaderboard: top,
+      // `leaderboard` stays the top ten, as the installed TV app reads it;
+      // `everyone` is every child on today's register.
+      leaderboard: top.filter((r) => r.rank != null).slice(0, 10),
+      everyone: top,
       class_boards: classBoards,
       champions,
       courses,

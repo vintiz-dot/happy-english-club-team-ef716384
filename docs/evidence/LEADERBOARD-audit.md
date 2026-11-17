@@ -184,3 +184,7 @@ Verdict "ship with changes", no blocker; the full review is `docs/evidence/REVIE
 ## 9. "Show all the students" (owner, 17 Nov 2026)
 
 The three display styles show three on the podium and the rest two at a time. Every styled board now has an "Everyone" list of all its children and their points (the server's rows, rank and points; nobody ranked in the browser): under the board on class pages, and behind an "Everyone" button on the projector / class window. The classic board already listed everyone.
+
+## 10. Every student on the reception TV (owner, 17 Nov 2026)
+
+`reception-feed` now also sends `everyone` (every child on today's register, ranked children first, then children with no points with no rank) and each class's `everyone`; `leaderboard` (top ten) and each class's `top` (top five) keep their old meaning, so the TV app installed before this change keeps working until it is reinstalled. The new TV app adds "Every Student" pages (30 to a page, three columns, with class and points) after the top-ten podium, and lists every child on each class board, carrying a long class on to a second board ("Movers 2 (2/2)"). ES5 checked with acorn; the demo feed gained made-up children to preview it.

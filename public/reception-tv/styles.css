@@ -117,6 +117,22 @@ body { font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif; color: #f7f
 .board .line .nm { font-size: 25px; font-weight: 600; margin-left: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .board .line .pt { font-size: 22px; color: #f7f1e3; font-weight: 700; margin-left: 12px; }
 
+.board.dense .line { padding: 6px 0; }
+.board.dense .line .rk { font-size: 26px; width: 46px; }
+.board.dense .line .nm { font-size: 22px; margin-left: 12px; }
+.board.dense .line .pt { font-size: 20px; }
+
+/* every student: three columns of ten */
+.everyone { -webkit-justify-content: center; justify-content: center; }
+.ev-col { width: 584px; margin: 0 12px; padding: 14px 22px; }
+.ev-line { padding: 7px 0; border-top: 1px solid rgba(226,192,120,0.15); -webkit-align-items: center; align-items: center; }
+.ev-line:first-child { border-top: 0; }
+.ev-line .rk { width: 52px; font-family: "Playfair Display", Georgia, serif; font-size: 26px; color: #e2c078; font-weight: 700; }
+.ev-who { margin-left: 14px; min-width: 0; }
+.ev-who .nm { font-size: 22px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-who .cls { font-size: 15px; color: #aebbd6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-line .pt { font-size: 22px; color: #f7f1e3; font-weight: 700; margin-left: 12px; }
+
 /* champions / awards */
 .tiles { -webkit-justify-content: center; justify-content: center; }
 .tile { width: 560px; margin: 0 14px 26px; padding: 26px 28px; -webkit-align-items: center; align-items: center; }

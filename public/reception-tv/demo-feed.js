@@ -88,13 +88,251 @@ window.HEC_DEMO_FEED = {
    "photo": null,
    "points": 720,
    "class_name": "Venus"
+  },
+  {
+   "rank": 11,
+   "name": "Tran An Bao",
+   "photo": null,
+   "points": 683,
+   "class_name": "Jupiter"
+  },
+  {
+   "rank": 12,
+   "name": "Le Ha Giang",
+   "photo": null,
+   "points": 646,
+   "class_name": "SKY 1"
+  },
+  {
+   "rank": 13,
+   "name": "Pham Mai Khoa",
+   "photo": null,
+   "points": 609,
+   "class_name": "Mars"
+  },
+  {
+   "rank": 14,
+   "name": "Hoang Quan Mai",
+   "photo": null,
+   "points": 572,
+   "class_name": "Venus"
+  },
+  {
+   "rank": 15,
+   "name": "Vu Vy Ngoc",
+   "photo": null,
+   "points": 535,
+   "class_name": "Neptune"
+  },
+  {
+   "rank": 16,
+   "name": "Dang Dung Son",
+   "photo": null,
+   "points": 498,
+   "class_name": "Sun (IELTS)"
+  },
+  {
+   "rank": 17,
+   "name": "Bui Lan Uyen",
+   "photo": null,
+   "points": 461,
+   "class_name": "Jupiter"
+  },
+  {
+   "rank": 18,
+   "name": "Do Ngoc An",
+   "photo": null,
+   "points": 424,
+   "class_name": "SKY 1"
+  },
+  {
+   "rank": 19,
+   "name": "Tran Thao Dung",
+   "photo": null,
+   "points": 387,
+   "class_name": "Mars"
+  },
+  {
+   "rank": 20,
+   "name": "Le Bao Hieu",
+   "photo": null,
+   "points": 350,
+   "class_name": "Venus"
+  },
+  {
+   "rank": 21,
+   "name": "Pham Hieu Linh",
+   "photo": null,
+   "points": 313,
+   "class_name": "Neptune"
+  },
+  {
+   "rank": 22,
+   "name": "Hoang Minh Nam",
+   "photo": null,
+   "points": 276,
+   "class_name": "Sun (IELTS)"
+  },
+  {
+   "rank": 23,
+   "name": "Vu Son Quan",
+   "photo": null,
+   "points": 239,
+   "class_name": "Jupiter"
+  },
+  {
+   "rank": 24,
+   "name": "Dang Yen Thao",
+   "photo": null,
+   "points": 202,
+   "class_name": "SKY 1"
+  },
+  {
+   "rank": 25,
+   "name": "Bui Giang Yen",
+   "photo": null,
+   "points": 165,
+   "class_name": "Mars"
+  },
+  {
+   "rank": 26,
+   "name": "Do Linh Chi",
+   "photo": null,
+   "points": 128,
+   "class_name": "Venus"
+  },
+  {
+   "rank": 27,
+   "name": "Tran Phuc Ha",
+   "photo": null,
+   "points": 91,
+   "class_name": "Neptune"
+  },
+  {
+   "rank": 28,
+   "name": "Le Uyen Lan",
+   "photo": null,
+   "points": 54,
+   "class_name": "Sun (IELTS)"
+  },
+  {
+   "rank": 29,
+   "name": "Pham Chi Minh",
+   "photo": null,
+   "points": 17,
+   "class_name": "Jupiter"
+  },
+  {
+   "rank": null,
+   "name": "Hoang Khoa Phuc",
+   "photo": null,
+   "points": 0,
+   "class_name": "SKY 1"
+  },
+  {
+   "rank": null,
+   "name": "Vu Nam Tam",
+   "photo": null,
+   "points": 0,
+   "class_name": "Mars"
+  },
+  {
+   "rank": null,
+   "name": "Dang Tam Vy",
+   "photo": null,
+   "points": 0,
+   "class_name": "Venus"
+  },
+  {
+   "rank": null,
+   "name": "Bui An Bao",
+   "photo": null,
+   "points": 0,
+   "class_name": "Neptune"
+  },
+  {
+   "rank": null,
+   "name": "Do Ha Giang",
+   "photo": null,
+   "points": 0,
+   "class_name": "Sun (IELTS)"
+  },
+  {
+   "rank": null,
+   "name": "Tran Mai Khoa",
+   "photo": null,
+   "points": 0,
+   "class_name": "Jupiter"
+  },
+  {
+   "rank": null,
+   "name": "Le Quan Mai",
+   "photo": null,
+   "points": 0,
+   "class_name": "SKY 1"
+  },
+  {
+   "rank": null,
+   "name": "Pham Vy Ngoc",
+   "photo": null,
+   "points": 0,
+   "class_name": "Mars"
+  },
+  {
+   "rank": null,
+   "name": "Hoang Dung Son",
+   "photo": null,
+   "points": 0,
+   "class_name": "Venus"
+  },
+  {
+   "rank": null,
+   "name": "Vu Lan Uyen",
+   "photo": null,
+   "points": 0,
+   "class_name": "Neptune"
+  },
+  {
+   "rank": null,
+   "name": "Dang Ngoc An",
+   "photo": null,
+   "points": 0,
+   "class_name": "Sun (IELTS)"
+  },
+  {
+   "rank": null,
+   "name": "Bui Thao Dung",
+   "photo": null,
+   "points": 0,
+   "class_name": "Jupiter"
+  },
+  {
+   "rank": null,
+   "name": "Do Bao Hieu",
+   "photo": null,
+   "points": 0,
+   "class_name": "SKY 1"
+  },
+  {
+   "rank": null,
+   "name": "Tran Hieu Linh",
+   "photo": null,
+   "points": 0,
+   "class_name": "Mars"
+  },
+  {
+   "rank": null,
+   "name": "Le Minh Nam",
+   "photo": null,
+   "points": 0,
+   "class_name": "Venus"
   }
  ],
  "class_boards": [
   {
    "class_name": "Jupiter",
    "curriculum": "Reach Higher",
-   "students": 8,
+   "students": 12,
    "top": [
     {
      "rank": 1,
@@ -125,6 +363,48 @@ window.HEC_DEMO_FEED = {
      "name": "Hoàng Thu Hà",
      "photo": null,
      "points": 300
+    },
+    {
+     "rank": 6,
+     "name": "Demo Dung Tran",
+     "photo": null,
+     "points": 40
+    },
+    {
+     "rank": 7,
+     "name": "Demo Giang Le",
+     "photo": null,
+     "points": 35
+    },
+    {
+     "rank": 8,
+     "name": "Demo Ha Pham",
+     "photo": null,
+     "points": 30
+    },
+    {
+     "rank": 9,
+     "name": "Demo Hieu Hoang",
+     "photo": null,
+     "points": 25
+    },
+    {
+     "rank": null,
+     "name": "Demo Khoa Vu",
+     "photo": null,
+     "points": 0
+    },
+    {
+     "rank": null,
+     "name": "Demo Lan Dang",
+     "photo": null,
+     "points": 0
+    },
+    {
+     "rank": null,
+     "name": "Demo Linh Bui",
+     "photo": null,
+     "points": 0
     }
    ]
   },

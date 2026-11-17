@@ -41,6 +41,11 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function fmt(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+  // Children with points (a rank); the others are listed after them with "–".
+  function ranked(list) { return filter(list || [], function (p) { return p && p.rank != null; }); }
+  function rankText(p) { return p && p.rank != null ? String(p.rank) : "\u2013"; }
+  var EVERYONE_PER_PAGE = 30;
+  var BOARD_LINES = 10;
   function chunk(list, n) { var out = []; for (var i = 0; i < list.length; i += n) out.push(list.slice(i, i + n)); return out; }
   function filter(list, fn) { var out = []; for (var i = 0; i < (list || []).length; i++) if (fn(list[i])) out.push(list[i]); return out; }
   function initials(name) {
@@ -130,9 +135,29 @@
     var ofKind = function (k) { return filter(items, function (i) { return i.kind === k; }); };
 
     if (on("welcome")) list.push({ t: ["Welcome", "Chào mừng"], html: welcome(f), secs: 1.2 });
-    if (on("leaderboard") && (f.leaderboard || []).length) list.push({ t: ["Leaderboard · " + monthName(f.month), "Bảng xếp hạng · " + monthVi(f.month)], html: leaderboard(f), secs: 1.4 });
+    if (on("leaderboard") && ranked(f.leaderboard).length) list.push({ t: ["Leaderboard · " + monthName(f.month), "Bảng xếp hạng · " + monthVi(f.month)], html: leaderboard(f), secs: 1.4 });
+    // Every student and their points, EVERYONE_PER_PAGE to a page (owner,
+    // 17 Nov 2026: "show every student in the reception tv").
+    var all = f.everyone || f.leaderboard || [];
+    if (on("leaderboard") && all.length) {
+      var ev = chunk(all, EVERYONE_PER_PAGE);
+      for (var e = 0; e < ev.length; e++) {
+        list.push({ t: ["Every Student · " + monthName(f.month) + (ev.length > 1 ? " (" + (e + 1) + "/" + ev.length + ")" : ""),
+          "Tất cả học sinh · " + monthVi(f.month)], html: everyone(ev[e], e * EVERYONE_PER_PAGE), secs: 1.3 });
+      }
+    }
     if (on("classes")) {
-      var bc = chunk(f.class_boards || [], 3);
+      // A class longer than one board carries on on the next ("2/2").
+      var parts = [];
+      var cb = f.class_boards || [];
+      for (var ci = 0; ci < cb.length; ci++) {
+        var pieces = chunk(cb[ci].everyone || cb[ci].top || [], BOARD_LINES);
+        for (var pi = 0; pi < pieces.length; pi++) {
+          parts.push({ class_name: cb[ci].class_name + (pieces.length > 1 ? " (" + (pi + 1) + "/" + pieces.length + ")" : ""),
+            curriculum: cb[ci].curriculum, students: cb[ci].students, top: pieces[pi] });
+        }
+      }
+      var bc = chunk(parts, 3);
       for (var i = 0; i < bc.length; i++) list.push({ t: ["Class Stars", "Ngôi sao của lớp"], html: boards(bc[i]) });
     }
     if (on("awards")) {
@@ -215,7 +240,7 @@
   function stat(n, en, vi) { return '<div class="stat"><div class="n">' + esc(typeof n === "number" ? fmt(n) : n) + '</div><div class="l">' + esc(en) + '<span class="vi">' + esc(vi) + "</span></div></div>"; }
 
   function leaderboard(f) {
-    var top = f.leaderboard || [];
+    var top = ranked(f.leaderboard).slice(0, 10);
     var order = [top[1], top[0], top[2]];
     var heights = [160, 200, 125];
     var pods = "";
@@ -241,15 +266,31 @@
     var html = "";
     for (var i = 0; i < list.length; i++) {
       var b = list[i], lines = "";
+      var dense = b.top.length > 6;
       for (var j = 0; j < b.top.length; j++) {
         var s = b.top[j];
-        lines += '<div class="line row">' + '<div class="rk">' + s.rank + "</div>" + photo(s, 74) +
+        lines += '<div class="line row">' + '<div class="rk">' + rankText(s) + "</div>" + photo(s, dense ? 46 : 74) +
           '<div class="nm grow">' + esc(s.name) + '</div><div class="pt">' + fmt(s.points) + "</div></div>";
       }
-      html += '<div class="board card col rise d' + (i + 1) + '"><div class="bh">' + esc(b.class_name) + '</div><div class="bs">' +
+      html += '<div class="board card col rise d' + (i + 1) + (dense ? " dense" : "") + '"><div class="bh">' + esc(b.class_name) + '</div><div class="bs">' +
         esc((b.curriculum || "") + (b.students ? " · " + b.students + " students" : "")) + "</div>" + lines + "</div>";
     }
     return '<div class="row boards">' + html + "</div>";
+  }
+
+  function everyone(list, offset) {
+    var cols = chunk(list, 10), html = "";
+    for (var c = 0; c < cols.length; c++) {
+      var lines = "";
+      for (var j = 0; j < cols[c].length; j++) {
+        var p = cols[c][j];
+        lines += '<div class="ev-line row">' + '<div class="rk">' + rankText(p) + "</div>" + photo(p, 44) +
+          '<div class="grow ev-who"><div class="nm">' + esc(p.name) + '</div><div class="cls">' + esc(p.class_name || "") + "</div></div>" +
+          '<div class="pt">' + fmt(p.points) + "</div></div>";
+      }
+      html += '<div class="ev-col card col rise d' + (c + 1) + '">' + lines + "</div>";
+    }
+    return '<div class="row everyone">' + html + "</div>";
   }
 
   function champions(list) {
@@ -440,7 +481,7 @@
 
   function ticker(f) {
     var bits = [];
-    var top = (f.leaderboard || [])[0];
+    var top = ranked(f.leaderboard)[0];
     if (top) bits.push("<b>Top of the month:</b> " + esc(top.name) + " · " + fmt(top.points) + " pts");
     var notes = filter(f.items || [], function (i) { return i.kind === "announcement" || i.kind === "event"; });
     for (var i = 0; i < notes.length; i++) bits.push("<b>" + esc(notes[i].title_en) + "</b>" + (notes[i].title_vi ? " · " + esc(notes[i].title_vi) : ""));
