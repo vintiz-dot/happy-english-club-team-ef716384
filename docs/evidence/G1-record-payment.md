@@ -148,9 +148,23 @@ public functions is unchanged - asserted by ai-gate as it stands.
 
 Gates (Hanoi daytime, no clock shim needed):
 
-- `node scripts/pgtest/run.mjs`: GATE_PGTEST
-- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: GATE_TSC
-- `npm run test:bun`: GATE_BUN
+- `node scripts/pgtest/run.mjs`: **8788 assertions across 93 suites, 0 failed**
+  (D5 round 1 was 8721 / 92: + 65 record-payment, + 2 money-write-paths).
+  invoice status 317/0 and invoice status + G-4 317/0, golden unchanged;
+  d4 class fee 174/0 (it re-runs invoice-status inside); money invariants
+  120/0; ledger append-only 26/0; past leftover credit 29/0; mirrors 19/0;
+  edge functions typecheck 5/0; app typecheck 3/0; S2 edge functions 107/0.
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0
+- `npm run test:bun`: 250 pass / 0 fail (18 files)
+
+`invoice-status.test.mjs` changed in TWO static assertions only (its count
+and every figure are as before): "takes the label from @/lib/invoiceStatus"
+now also accepts a screen that leaves the label to record-payment, and
+"writes recorded_payment only through setRecordedPayment" became "puts money
+on the bill only through record-payment (expectedRecorded = the screen's
+figure) and handles a refusal" - they pinned the old screen code this change
+replaces. Its dynamic cases of `setRecordedPayment` (the library, still the
+registered mirror) are unchanged.
 
 ## Files (LF md5)
 
