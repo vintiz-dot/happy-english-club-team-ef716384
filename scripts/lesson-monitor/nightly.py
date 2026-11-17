@@ -19,6 +19,13 @@ report, which goes to the database where only the lesson's teacher can read it):
   5. DELETE the audio copy, and prove it by listing the folder (0 files).
   6. Save the report (lesson_monitor_save_report), or keep it as a local draft.
 
+While it works it asks the database between chunks, while transcribing, and again
+before it keeps or saves anything (lesson_monitor_may_continue): if the class was
+switched off or a child's consent was withdrawn, it stops and deletes its audio copy
+and any draft of that lesson. At the start it also deletes every local draft the
+database no longer allows (lesson_monitor_keep_check), and a STOP file makes it delete
+all local audio and drafts before it exits.
+
 Refuses to start: while pilot\\STOP exists (the kill switch); before step 0 has
 passed for words (step0.py score); if the pilot folder is inside a git repo.
 Logs (pilot\\logs) carry recording ids, counts and short codes only.
@@ -97,6 +104,35 @@ def expire_drafts(today: date, keep_days: int = 30) -> int:
     return n
 
 
+def remove_draft(rid: str) -> None:
+    f = pc.drafts_dir() / f"{rid}.json"
+    f.unlink(missing_ok=True)
+    f.with_suffix(".html").unlink(missing_ok=True)
+
+
+def purge_local_drafts(api) -> int:
+    """Delete every local draft the database no longer allows: class switched off, a child's consent
+    withdrawn or missing, recording gone. Withdrawals and kill switches pressed in the app reach the
+    laptop here. A draft that cannot be checked (offline) is kept and says so. Returns drafts deleted."""
+    from supa import ApiError
+    files = sorted(pc.drafts_dir().glob("*.json")) if pc.drafts_dir().exists() else []
+    if not files:
+        return 0
+    ids = [f.stem for f in files]
+    try:
+        answers = api.rpc("lesson_monitor_keep_check", {"p_recordings": ids}) or []
+    except ApiError as e:
+        pc.log(f"start: could not check {len(ids)} local drafts against the database (HTTP {e.status}); they stay for now")
+        return 0
+    keep = {a["recording_id"]: bool(a.get("keep")) for a in answers}
+    n = 0
+    for rid in ids:
+        if not keep.get(rid, False):
+            remove_draft(rid)
+            n += 1
+    return n
+
+
 def write_draft(rec: dict, body: dict, audio_s: int, proc_s: int, html_copy: bool) -> Path:
     f = pc.out(pc.drafts_dir() / f"{rec['recording_id']}.json")
     f.write_text(json.dumps({"recording_id": rec["recording_id"], "session_date": rec["session_date"],
@@ -140,6 +176,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
 
     rid = row["recording_id"]
     t_start = time.time()
+    guard = pc.Guard(api, rid)
     b = api.rpc("lesson_monitor_begin", {"p_recording": rid})
     if not b or not b.get("ok"):
         why = (b or {}).get("reason", "refused")
@@ -169,7 +206,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
             if track == "teacher" and not use_teacher:
                 continue
             for c in by[track]:
-                if pc.stopped():
+                if guard.should_stop():
                     raise transcribe.Stopped()
                 data = api.download(c["storage_path"])
                 if len(data) != int(c["byte_size"]) or hashlib.sha256(data).hexdigest() != c["sha256"]:
@@ -187,7 +224,9 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
         markers = [{"kind": m["kind"], "t_s": m["t_ms"] / 1000.0 - window[0]} for m in markers]
         targets = fetch_targets(api, row)
 
-        segs = transcribe.transcribe(model, str(folder / "room16k.wav"))
+        if guard.should_stop():
+            raise transcribe.Stopped()
+        segs = transcribe.transcribe(model, str(folder / "room16k.wav"), should_stop=guard.should_stop)
         duration = window[1] - window[0]
         body = report.build_report(
             segs, {"teacher_db": lv_teacher["db"], "teacher_cov": lv_teacher["cov"], "teacher_peak": lv_teacher["peak"],
@@ -198,7 +237,8 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
             offset_s=window[0])
     except transcribe.Stopped:
         left = delete_audio_copy(folder, room)
-        pc.log(f"{rid} STOPPED by the kill switch; audio copy deleted ({left} files left)")
+        remove_draft(rid)
+        pc.log(f"{rid} STOPPED ({guard.verdict()}); audio copy and any draft deleted ({left} files left)")
         return "stopped"
     except Exception as e:  # one lesson's failure never ends the night; a code, never content, is kept
         left = delete_audio_copy(folder, room)
@@ -220,6 +260,14 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
     else:
         pc.log(f"{rid} report built ({len(body['lines'])} lines); audio copy deleted (0 files left)")
     audio_s, proc_s = int(duration), int(time.time() - t_start)
+    # The last look before anything is kept or saved: the class may have been stopped, or a child's
+    # consent withdrawn, while the laptop worked.
+    final = guard.verdict(force=True)
+    if final not in ("ok", "unreachable") or (keep_local and final != "ok"):
+        remove_draft(rid)
+        pc.log(f"{rid} NOT kept: {final if final != 'unreachable' else 'the database could not confirm consent'}; "
+               f"report dropped, nothing saved")
+        return "stopped"
     if keep_local:
         write_draft(row, body, audio_s, proc_s, html_copy=True)
         pc.log(f"{rid} kept on this laptop only (--no-upload)")
@@ -271,7 +319,9 @@ def main(argv=None) -> int:
 
     pc.check_root()
     if pc.stopped():
+        audio_n, drafts_n = pc.wipe_work()
         print(f"The kill switch is on ({pc.stop_file()}): nothing runs. stop.py off removes it.")
+        print(f"Deleted from this laptop: {audio_n} audio files, {drafts_n} local draft files.")
         return 0
     step0 = read_step0()
     allowed, why = step0_allows_running(step0)
@@ -289,6 +339,9 @@ def main(argv=None) -> int:
     api = supa.open_api(a.token)
     if a.token:
         print("Pasted token: it cannot be refreshed. Reports that cannot be saved in time stay as local drafts.")
+    gone = purge_local_drafts(api)
+    if gone:
+        pc.log(f"start: {gone} local drafts deleted (class switched off, consent withdrawn or missing, or recording gone)")
     expired = api.rpc("lesson_monitor_expire")
     if expired:
         pc.log(f"start: {expired} reports past 30 days deleted in the database")

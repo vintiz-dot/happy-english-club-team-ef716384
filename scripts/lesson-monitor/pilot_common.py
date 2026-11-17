@@ -15,7 +15,9 @@ Data rules (binding, docs/LESSON_MONITOR_PILOT_RUNBOOK.md):
 from __future__ import annotations
 
 import os
+import shutil
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -105,6 +107,54 @@ def log(line: str) -> None:
         raise
     except OSError:
         pass
+
+
+def wipe_drafts() -> int:
+    """Delete every local draft (reports kept on this laptop). Returns files removed."""
+    d = drafts_dir()
+    n = len(files_under(d))
+    if d.exists():
+        shutil.rmtree(d, ignore_errors=True)
+    return n
+
+
+def wipe_work() -> tuple[int, int]:
+    """What a stop removes from this laptop: every audio copy and every local draft. Returns (audio files, draft files)."""
+    a = len(files_under(audio_dir()))
+    if audio_dir().exists():
+        shutil.rmtree(audio_dir(), ignore_errors=True)
+    return a, wipe_drafts()
+
+
+class Guard:
+    """May the work on ONE recording go on? Asks the local kill switch (the STOP file) and, at most
+    every `every` seconds, the database (lesson_monitor_may_continue: class still on, every child of
+    the lesson still consented). Answers 'ok', a reason ('class_off', 'consent_missing', 'gone',
+    'stopped' for the local file), or 'unreachable' when the database cannot be asked (offline, token
+    expired): the job goes on then, because every save is checked by the database again."""
+
+    def __init__(self, api, recording_id: str, every: float = 15.0, clock=time.monotonic):
+        self.api, self.rid, self.every, self.clock = api, recording_id, every, clock
+        self._last_at = None
+        self._last = "ok"
+
+    def verdict(self, force: bool = False) -> str:
+        if stopped():
+            return "stopped"
+        now = self.clock()
+        if not force and self._last_at is not None and now - self._last_at < self.every:
+            return self._last
+        from supa import ApiError
+        try:
+            r = self.api.rpc("lesson_monitor_may_continue", {"p_recording": self.rid})
+            self._last = r if isinstance(r, str) and r else "gone"
+        except ApiError as e:
+            self._last = "unreachable" if e.status in (0, 401) else "gone"
+        self._last_at = now
+        return self._last
+
+    def should_stop(self) -> bool:
+        return self.verdict() not in ("ok", "unreachable")
 
 
 def files_under(folder: Path) -> list[Path]:
