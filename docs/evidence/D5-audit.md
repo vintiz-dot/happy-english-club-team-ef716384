@@ -103,7 +103,7 @@ Only edge functions write them (never `src/`, held by the suite): smart-family-p
 ### payroll_lines, payroll_periods, payroll_summaries, payroll_adjustments, expenditures
 | Writer | Lane | Guards met |
 |---|---|---|
-| `close-payroll-month` (lines upsert, period upsert + 2 updates, payroll cost upsert) | service, admin-gated | lines refused once locked; status set last; payroll cost refused once locked; **G-7** |
+| `close-payroll-month` (lines upsert, period upsert + 2 updates, payroll cost upsert; on branch payroll-reclose: ONE rpc `close_payroll_month_apply` + the reopen update) | service, admin-gated | lines refused once locked; status set last; payroll cost refused once locked; **G-7** (built, not applied: docs/evidence/PAYROLL-reclose.md) |
 | `calculate-payroll` (payroll_summaries upsert) | service | refused for a locked month |
 | `PayrollTab` (payroll cost upsert from the function's figures) | person | fresh period read + `canBookPayroll`; DB trigger refuses a locked month |
 | `PayrollMonthLock` (payroll_adjustments insert) | person | admin RLS; a correction lands in an open month; audited |
@@ -229,7 +229,7 @@ md5 (LF line endings, as committed): 20261117110000 `7c089526f8303f7c30ead851571
 
 - **G-1 (money on a bill with no payment row / ledger):** a new admin-only edge function `record-payment` (single child): validate month + amount, insert the payments row, post DR CASH|BANK / CR AR (case-insensitive method), then the compare-and-set bill write with `labelAfterPayment`, conflict -> 409; point RecordPaymentDialog, QuickPayPanel, BatchPaymentDialog and the correction mode of RecordedPaymentManager at it (a correction = reversal legs + CAS down, refusing below 0); ai_action_apply's payment step either calls the same SQL in-transaction or is documented as bill-only. Tests: invoice-status case per screen path, concurrency, M03 stops growing; delete-payment must then accept these payments. Needs a deploy + screen release together.
 - **G-2 (modify-payment):** decide delete vs rebuild. Recommended: delete the function and the unmounted ModifyPaymentModal (no caller); if kept, rebuild as delete-payment + a new payment through the payment paths so the bill moves with the ledger, with `method.toLowerCase()` and every insert checked. With G-11 applied it already cannot edit ledger rows (it only inserts).
-- **G-7 (re-close leaves stale lines / costs):** in close-payroll-month, while the month is still open and before the lock: delete that month's payroll_lines and `source_kind = 'payroll'` expenditures whose subject is not in the new earning set (the triggers allow it because the month is open), in the same request, with an audit entry naming who was removed and why. Tests in paylock / class-overhead: close, reopen, drop a person, close -> no line, no cost for them; M33 = 0.
+- **G-7 (re-close leaves stale lines / costs):** in close-payroll-month, while the month is still open and before the lock: delete that month's payroll_lines and `source_kind = 'payroll'` expenditures whose subject is not in the new earning set (the triggers allow it because the month is open), in the same request, with an audit entry naming who was removed and why. Tests in paylock / class-overhead: close, reopen, drop a person, close -> no line, no cost for them; M33 = 0. **Built 17 Nov on branch `payroll-reclose` (migration 20261117153000, close-payroll-month, PayrollMonthLock drift; suite `payroll re-close`); not applied or deployed - docs/evidence/PAYROLL-reclose.md.**
 
 ### 6.5 Gates (fix round 1)
 

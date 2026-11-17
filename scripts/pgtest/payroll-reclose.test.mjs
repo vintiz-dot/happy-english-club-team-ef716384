@@ -384,7 +384,9 @@ const AUG = { "2026-08": [row(MAI, "Mai", 3000000), row(COL, "Colleague", 0), ro
   ok("the new close closes", rb.status === 200, rb.json);
   const sa = await snap(a), sb = await snap(b);
   for (const k of Object.keys(sa)) eq(`  ${k}: identical to BASE (${sa[k].length} row(s))`, sb[k], sa[k]);
-  ok("  and there is something to compare (2 lines, 2 costs, audit rows)", sa.lines.length === 2 && sa.costs.length === 2 && sa.audit.length >= 5, { lines: sa.lines.length, costs: sa.costs.length, audit: sa.audit.length });
+  ok("  and there is something to compare (2 lines, 2 payroll costs + rent, an overhead share, audit rows)",
+    sa.lines.length === 2 && sa.costs.length === 3 && sa.overhead.length === 1 && sa.audit.length >= 6,
+    { lines: sa.lines.length, costs: sa.costs.length, overhead: sa.overhead.length, audit: sa.audit.length });
   const { lockedAt: _x, ...restA } = ra.json; const { lockedAt: _y, removedLines, removedCosts, ...restB } = rb.json;
   eq("  response: BASE's, plus removedLines / removedCosts empty", { restB, removedLines, removedCosts }, { restB: restA, removedLines: [], removedCosts: [] });
   ok("  lockedAt is the stored lock time", rb.json.lockedAt && new Date(rb.json.lockedAt).getTime() === new Date((await b.query(`SELECT locked_at FROM public.payroll_periods WHERE month='2026-08'`)).rows[0].locked_at).getTime(), rb.json.lockedAt);
