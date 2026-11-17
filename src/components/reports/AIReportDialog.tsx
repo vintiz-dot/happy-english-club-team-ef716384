@@ -6,7 +6,9 @@
  * attendance, points) and asks the profiling engine for a CEFR estimate,
  * skill matrix, strengths/weaknesses matrix, learning styles and a
  * parent-ready narrative. Reports are stored and can be published to the
- * student/family or printed.
+ * student/family or printed. The report's CEFR level is a staff-only draft
+ * until a teacher approves it (CefrDraftsCard); publishing the report does
+ * not approve it.
  *
  * Printing: the report renders twice — once inside the dialog (scrollable)
  * and once into a hidden print-only portal attached under <body>
@@ -101,9 +103,9 @@ export function AIReportDialog({ studentId, studentName, classId, trigger }: Pro
       return result;
     },
     onSuccess: () => {
-      toast.success("Report generated");
+      toast.success("Report generated", { description: "Its CEFR level waits for your approval before it reaches the growth chart." });
       queryClient.invalidateQueries({ queryKey: ["student-reports", studentId] });
-      queryClient.invalidateQueries({ queryKey: ["cefr-growth", studentId] });
+      queryClient.invalidateQueries({ queryKey: ["cefr-drafts"] });
     },
     onError: (e: any) => toast.error("Report failed", { description: e.message }),
   });

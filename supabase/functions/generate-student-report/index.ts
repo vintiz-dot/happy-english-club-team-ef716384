@@ -14,10 +14,15 @@
  *
  * The frontend inserts a `student_reports` row (status `generating`) and
  * invokes this function with the row id. On success the report JSON +
- * narrative are stored and a `cefr_assessments` trajectory point is added.
+ * narrative are stored, unpublished, and the model's CEFR estimate is saved
+ * as a staff-only DRAFT (`cefr_assessment_drafts`). Nothing reaches the child
+ * or the family until a teacher acts: the report when they publish it
+ * (`student_reports.published`), the CEFR point when they approve it
+ * (`approve_cefr_draft`, migration 20261117150000). A published report is
+ * never regenerated in place (409).
  *
  * Input:  { report_id: string }
- * Output: { success, report_id, report }
+ * Output: { success, report_id, report, cefr_draft_id }
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
@@ -73,7 +78,7 @@ Deno.serve(async (req) => {
 
     const { data: report, error: repErr } = await sb
       .from("student_reports")
-      .select("id, student_id, class_id, period_start, period_end, generated_by")
+      .select("id, student_id, class_id, period_start, period_end, generated_by, published")
       .eq("id", reportId)
       .single();
     if (repErr || !report) return respond({ success: false, error: "report row not found" }, 404);
@@ -82,6 +87,12 @@ Deno.serve(async (req) => {
     // report with no class (admin reports) is an admin's.
     if (!(await callerHoldsClass(sb, caller, report.class_id))) {
       return respond({ success: false, error: "Not a class you teach" }, 403);
+    }
+    // A published report is what the teacher approved for the child to read:
+    // regenerating it in place would put new model text in front of them with
+    // no teacher in between. Generate a new report instead (the screens do).
+    if (report.published !== false) {
+      return respond({ success: false, error: "This report is published. Unpublish it, or generate a new one." }, 409);
     }
 
     const since = report.period_start ?? new Date(Date.now() - 90 * 86400_000).toISOString().slice(0, 10);
@@ -244,7 +255,9 @@ Deno.serve(async (req) => {
     const result = JSON.parse(data.choices?.[0]?.message?.content || "{}");
 
     // ── Persist ──────────────────────────────────────────────────────────
-    const { error: updErr } = await sb
+    // Only while still unpublished (compare-and-set): a teacher who
+    // published the row meanwhile keeps what they published.
+    const { data: saved, error: updErr } = await sb
       .from("student_reports")
       .update({
         status: "ready",
@@ -253,25 +266,40 @@ Deno.serve(async (req) => {
         report: result,
         narrative: result.narrative ?? null,
       })
-      .eq("id", reportId);
+      .eq("id", reportId)
+      .eq("published", false)
+      .select("id");
     if (updErr) throw updErr;
-
-    const level = result?.cefr?.level;
-    if (level && CEFR_SCORE[level] !== undefined) {
-      await sb.from("cefr_assessments").insert({
-        student_id: sid,
-        class_id: report.class_id,
-        source: "ai_report",
-        level,
-        level_score: CEFR_SCORE[level],
-        confidence: typeof result.cefr.confidence === "number" ? result.cefr.confidence : null,
-        evidence: result.cefr.rationale ? String(result.cefr.rationale).slice(0, 500) : null,
-        created_by: report.generated_by,
-        source_id: reportId,
-      });
+    if (!saved || saved.length !== 1) {
+      return respond({ success: false, error: "This report was published while it was being written; nothing was changed." }, 409);
     }
 
-    return respond({ success: true, report_id: reportId, report: result });
+    // The model's CEFR estimate is a staff-only draft until a teacher
+    // approves it; never a cefr_assessments row (the database refuses one).
+    let cefrDraftId: string | null = null;
+    const level = result?.cefr?.level;
+    if (level && CEFR_SCORE[level] !== undefined) {
+      const { data: draft, error: draftErr } = await sb
+        .from("cefr_assessment_drafts")
+        .insert({
+          student_id: sid,
+          class_id: report.class_id,
+          source: "ai_report",
+          source_id: reportId,
+          level,
+          level_score: CEFR_SCORE[level],
+          confidence: typeof result.cefr.confidence === "number" ? result.cefr.confidence : null,
+          evidence: result.cefr.rationale ? String(result.cefr.rationale).slice(0, 500) : null,
+          requested_by: caller.isServiceRole ? report.generated_by : caller.userId,
+        })
+        .select("id")
+        .single();
+      // The report stands without it; the draft is lost, nothing is shared.
+      if (draftErr) console.error("generate-student-report: CEFR draft not saved:", draftErr.message);
+      else cefrDraftId = draft?.id ?? null;
+    }
+
+    return respond({ success: true, report_id: reportId, report: result, cefr_draft_id: cefrDraftId });
   } catch (error) {
     console.error("generate-student-report error:", error);
     if (reportId) {
@@ -281,7 +309,8 @@ Deno.serve(async (req) => {
           status: "failed",
           error_message: (error as Error).message?.slice(0, 500),
         })
-        .eq("id", reportId);
+        .eq("id", reportId)
+        .eq("published", false);
     }
     return respond({ success: false, error: (error as Error).message }, 500);
   }

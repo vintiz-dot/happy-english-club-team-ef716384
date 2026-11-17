@@ -20,7 +20,11 @@
  *                          routed level; writing is graded against CEFR
  *                          writing descriptors.
  *   Result: synthesis of accuracy-at-level + writing bands → level estimate,
- *   defended = estimate reaches the claimed level. Feeds cefr_assessments.
+ *   defended = estimate reaches the claimed level. The estimate (and the
+ *   evidence audit's recommended level) is saved as a staff-only DRAFT in
+ *   cefr_assessment_drafts; it reaches the growth chart, the child and the
+ *   family only when a teacher approves it (approve_cefr_draft, migration
+ *   20261117150000). saveDraft below is the only write of a CEFR point here.
  *
  * Anti-cheat: generated items (with answer keys) live only in the
  * `stages` JSONB, which students cannot SELECT (no RLS policy). This
@@ -157,6 +161,36 @@ function sanitizeStage(stage: any) {
       id: w.id, type: "writing", prompt: w.prompt,
     })),
   };
+}
+
+/** A model's CEFR point, as a staff-only draft for a teacher to approve.
+ *  Never a cefr_assessments row: families read that table (and the database
+ *  refuses a model-made row there). A failed save loses the draft and
+ *  shares nothing. */
+async function saveDraft(sb: any, row: {
+  student_id: string; class_id: string | null; source: "level_defense_evidence" | "level_defense_test";
+  source_id: string | null; level: string; confidence: unknown; evidence: unknown; requested_by: string;
+}): Promise<string | null> {
+  const { data, error } = await sb
+    .from("cefr_assessment_drafts")
+    .insert({
+      student_id: row.student_id,
+      class_id: row.class_id,
+      source: row.source,
+      source_id: row.source_id,
+      level: row.level,
+      level_score: levelIdx(row.level),
+      confidence: typeof row.confidence === "number" ? row.confidence : null,
+      evidence: String(row.evidence || "").slice(0, 1000),
+      requested_by: row.requested_by,
+    })
+    .select("id")
+    .single();
+  if (error) {
+    console.error(`cefr-defense: CEFR draft (${row.source}) not saved:`, error.message);
+    return null;
+  }
+  return data?.id ?? null;
 }
 
 function sanitizeTest(test: any) {
@@ -333,21 +367,22 @@ Deno.serve(async (req) => {
         .update({ evidence: verdict, evidence_checked_at: new Date().toISOString(), status, updated_at: new Date().toISOString() })
         .eq("id", claim.id);
 
-      // Feed the growth chart when the audit is conclusive.
+      // A conclusive audit drafts a growth-chart point for a teacher to approve.
+      let cefrDraftId: string | null = null;
       if (verdict.recommended_level && LEVELS.includes(verdict.recommended_level) && verdict.verdict !== "insufficient_evidence") {
-        await sb.from("cefr_assessments").insert({
+        cefrDraftId = await saveDraft(sb, {
           student_id: studentId,
           class_id: claim.class_id,
-          level: verdict.recommended_level,
-          level_score: levelIdx(verdict.recommended_level),
-          confidence: typeof verdict.confidence === "number" ? verdict.confidence : null,
           source: "level_defense_evidence",
-          evidence: String(verdict.rationale || "").slice(0, 1000),
-          created_by: user.id,
+          source_id: claim.id,
+          level: verdict.recommended_level,
+          confidence: verdict.confidence,
+          evidence: verdict.rationale,
+          requested_by: user.id,
         });
       }
 
-      return respond({ success: true, verdict, status });
+      return respond({ success: true, verdict, status, cefr_draft_id: cefrDraftId });
     }
 
     // ── generate_test ────────────────────────────────────────────────────
@@ -537,16 +572,15 @@ Deno.serve(async (req) => {
         .update({ status: defended ? "defended" : "not_defended", updated_at: new Date().toISOString() })
         .eq("id", test.claim_id);
 
-      await sb.from("cefr_assessments").insert({
+      await saveDraft(sb, {
         student_id: test.student_id,
         class_id: test.class_id,
-        level: estimate,
-        level_score: levelIdx(estimate),
-        confidence: typeof result.confidence === "number" ? result.confidence : null,
         source: "level_defense_test",
         source_id: testId,
-        evidence: String(result.rationale || "").slice(0, 1000),
-        created_by: user.id,
+        level: estimate,
+        confidence: result.confidence,
+        evidence: result.rationale,
+        requested_by: user.id,
       });
 
       return respond({ success: true, test: sanitizeTest(graded), stage_score: score });
