@@ -35,7 +35,8 @@ import { dayjs } from "@/lib/date";
 import { approvalErrorText, isApprovalRequired, payApprovalParams, type PayAdjustmentRow } from "@/lib/approvals";
 import { requestApproval } from "@/components/admin/approvals/api";
 import { PendingApprovalBadge } from "@/components/admin/approvals/PendingApprovalBadge";
-import { payrollDrift, removedLinesText } from "@/lib/payrollDrift";
+import { payrollDrift, removedCostsText, removedLinesText } from "@/lib/payrollDrift";
+import { functionErrorMessage } from "@/lib/functionError";
 
 export interface LiveStaffTotal {
   id: string;
@@ -99,10 +100,17 @@ export function PayrollMonthLock({ month, live, liveReady = true }: PayrollMonth
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payroll_adjustments")
-        .select("teacher_id, assistant_id, amount_vnd, month")
+        .select("teacher_id, assistant_id, amount_vnd, month, teachers(full_name), teaching_assistants(full_name)")
         .eq("origin_month", month);
       if (error) throw error;
-      return data ?? [];
+      // The name, for a person who has a carry but no line or live row.
+      return (data ?? []).map((a) => ({
+        teacher_id: a.teacher_id,
+        assistant_id: a.assistant_id,
+        amount_vnd: a.amount_vnd,
+        month: a.month,
+        staff_name: a.teachers?.full_name ?? (a.teaching_assistants?.full_name ? `${a.teaching_assistants.full_name} (TA)` : null),
+      }));
     },
     enabled: locked,
   });
@@ -128,14 +136,18 @@ export function PayrollMonthLock({ month, live, liveReady = true }: PayrollMonth
       const { data, error } = await supabase.functions.invoke("close-payroll-month", {
         body: { month, action: vars.action, reason: vars.reason },
       });
-      if (error) throw error;
+      // A refusal's own sentence (who has a carried correction, which guard
+      // refused, "Nothing was changed") reaches the admin, not "non-2xx".
+      if (error) throw new Error(await functionErrorMessage(error, "Could not update the period"));
       if (data?.error) throw new Error(data.error);
       return data;
     },
     onSuccess: (data, vars) => {
       // A re-close that took people off the month says who, and stays up
       // until dismissed: it is a correction to what the month pays.
-      const removed = vars.action === "close" ? removedLinesText(data?.removedLines, vnd) : "";
+      const removed = vars.action === "close"
+        ? [removedLinesText(data?.removedLines, vnd), removedCostsText(data?.removedCosts, vnd)].filter(Boolean).join(" ")
+        : "";
       toast.success(
         vars.action === "close"
           ? `${dayjs(`${month}-01`).format("MMMM YYYY")} closed — ${data.lines} line(s), ${vnd(data.totalAmountVnd)}`
@@ -146,7 +158,8 @@ export function PayrollMonthLock({ month, live, liveReady = true }: PayrollMonth
       setShowReopen(false);
       invalidate();
     },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Could not update the period"),
+    // A refused close can name people and what to do: long enough to read.
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Could not update the period", { duration: 20000 }),
   });
 
   // D4 step 4: the rows a refused carry would have inserted, waiting to be sent for approval
@@ -284,7 +297,9 @@ export function PayrollMonthLock({ month, live, liveReady = true }: PayrollMonth
             {drift.map((d) => (
               <p key={d.id} className="text-hec-small tabular-nums text-hec-ink">
                 <span className="font-medium">{d.name}</span> — paid {vnd(d.paid)}, now computes {vnd(d.totalEarned)}
-                {d.noLongerEarns ? " (no longer earns in this month)" : ""}
+                {d.carriedOnly
+                  ? " (no line and no lessons in this month; only a carried correction remains)"
+                  : d.noLongerEarns ? " (no longer earns in this month)" : ""}
                 {" "}(<span className="font-medium">{signed(d.delta)}</span>)
               </p>
             ))}

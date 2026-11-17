@@ -15,6 +15,12 @@
  * this, the panel walked the live rows only and such a person vanished).
  * Until the live figures have loaded nothing is reported, so a closed month
  * does not flash "everyone paid too much" while the screen loads.
+ *
+ * A person with a correction carried OUT of the month and neither a line nor
+ * a live row (review M-1: their line was removed after the carry) is also a
+ * row: paid 0, now 0, so what is left is minus what was carried. The close
+ * refuses to remove such a line now (HC149); this keeps any that got there
+ * another way from being silent.
  */
 export interface DriftLiveRow {
   id: string;
@@ -34,6 +40,8 @@ export interface DriftCarried {
   teacher_id: string | null;
   assistant_id: string | null;
   amount_vnd: number;
+  /** The person's name, when the screen has it (for a row with no line). */
+  staff_name?: string | null;
 }
 
 export interface DriftRow extends DriftLiveRow {
@@ -43,6 +51,8 @@ export interface DriftRow extends DriftLiveRow {
   delta: number;
   /** True when the person has a line but no live row: earns nothing now. */
   noLongerEarns: boolean;
+  /** True when the person has neither a line nor a live row, only a carry. */
+  carriedOnly: boolean;
 }
 
 export function payrollDrift(
@@ -66,6 +76,7 @@ export function payrollDrift(
     paid: paid.get(s.id) ?? 0,
     delta: Math.round(s.totalEarned - (paid.get(s.id) ?? 0) - (done.get(s.id) ?? 0)),
     noLongerEarns: false,
+    carriedOnly: false,
   }));
   for (const l of lines) {
     const id = l.teacher_id ?? l.assistant_id ?? "";
@@ -79,6 +90,22 @@ export function payrollDrift(
       paid: l.total_amount_vnd,
       delta: Math.round(0 - l.total_amount_vnd - (done.get(id) ?? 0)),
       noLongerEarns: true,
+      carriedOnly: false,
+    });
+  }
+  for (const a of carried) {
+    const id = a.teacher_id ?? a.assistant_id ?? "";
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    rows.push({
+      id,
+      staffType: a.teacher_id ? "teacher" : "ta",
+      name: a.staff_name ?? "Staff member",
+      totalEarned: 0,
+      paid: 0,
+      delta: Math.round(0 - (done.get(id) ?? 0)),
+      noLongerEarns: true,
+      carriedOnly: true,
     });
   }
   return rows.filter((s) => s.delta !== 0);
@@ -94,4 +121,17 @@ export function removedLinesText(removed: RemovedLine[] | null | undefined, vnd:
   if (!Array.isArray(removed) || removed.length === 0) return "";
   const who = removed.map((r) => `${r.staffName ?? "someone"} (${vnd(Number(r.totalAmountVnd ?? 0))})`).join(", ");
   return `Removed ${removed.length} line(s) from the earlier close of staff who earn nothing in the month now: ${who}.`;
+}
+
+/** The close's answer about booked payroll costs it took off, as one sentence. */
+export interface RemovedCost {
+  memo?: string | null;
+  sourceKey?: string | null;
+  amount?: number | null;
+}
+
+export function removedCostsText(removed: RemovedCost[] | null | undefined, vnd: (n: number) => string): string {
+  if (!Array.isArray(removed) || removed.length === 0) return "";
+  const what = removed.map((c) => `${c.memo ?? c.sourceKey ?? "a payroll cost"} (${vnd(Number(c.amount ?? 0))})`).join(", ");
+  return `Removed ${removed.length} booked payroll cost(s) of staff who earn nothing in the month now: ${what}.`;
 }

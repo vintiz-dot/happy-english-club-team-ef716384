@@ -141,7 +141,20 @@ Deno.serve(async (req) => {
         headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
       },
     );
-    if (payrollError) throw payrollError;
+    if (payrollError) {
+      // Another close of this month may have won meanwhile: calculate-payroll
+      // then fails on the closed month's payroll_summaries. Say so (409)
+      // rather than a bare 500 - nothing was written either way.
+      const { data: now } = await supabase
+        .from("payroll_periods")
+        .select("month, status")
+        .eq("month", month)
+        .maybeSingle();
+      if (now?.status === "locked") {
+        return json({ error: `Payroll for ${month} is already closed.`, month }, 409);
+      }
+      throw payrollError;
+    }
 
     // The response field is payrollData, not results.
     const rows: PayrollResultRow[] = payroll?.payrollData ?? [];
@@ -212,6 +225,9 @@ Deno.serve(async (req) => {
         }, 503);
       }
       if (code === "HC147") return json({ error: `Payroll for ${month} is already closed.`, month }, 409);
+      // A correction already carried out of this month for someone the close
+      // would remove (HC149): the database names them and says what to do.
+      if (code === "HC149") return json({ error: applyError.message, month }, 409);
       // A closed-payroll guard (23514) or a plan that disagrees with itself
       // (HC148): the whole call was rolled back.
       if (code === "23514" || code === "HC148") {
