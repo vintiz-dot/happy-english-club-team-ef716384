@@ -35,9 +35,17 @@
 --   2. No write grant on any table: every write is a function that checks the
 --      caller, the class switch and consent again. No family, student or TA
 --      path exists to any of it.
---   3. A class is processed only while every child enrolled on the lesson's date
---      holds the monitor consent under the current wording; a withdrawal
---      switches the class off and deletes its reports at once (design s.6).
+--   3. A class is processed only while every child ENROLLED ON THE LESSON'S DATE
+--      or MARKED PRESENT/LATE at that lesson (a visitor, a trial child) holds the
+--      monitor consent under the current wording; a child with no consent row
+--      counts as NOT consented. A withdrawal switches off the classes the child
+--      is in today and deletes the child's reports in EVERY lesson they were
+--      enrolled in or marked present at, even after they left the class (the
+--      report holds no child ids, so the lesson's roster is how they are found).
+--   3b. Expiry happens on the server: a pg_cron job (where pg_cron exists) and,
+--      as a fallback, every write function purges expired reports first.
+--      Local copies on the laptop are checked against the server by
+--      lesson_monitor_keep_check / lesson_monitor_may_continue.
 --   4. Nothing names a child: the report body may not carry a student id or
 --      name field; the screen shows a transcript, never a per-child figure.
 --
@@ -52,7 +60,8 @@ BEGIN
   IF to_regclass('public.class_recordings') IS NULL
      OR to_regprocedure('public.recorder_can_listen(uuid,uuid)') IS NULL
      OR to_regprocedure('public.recorder_is_class_teacher(uuid,uuid)') IS NULL
-     OR to_regprocedure('public.recorder_can_read_class(uuid)') IS NULL THEN
+     OR to_regprocedure('public.recorder_can_read_class(uuid)') IS NULL
+     OR to_regclass('public.attendance') IS NULL THEN
     RAISE EXCEPTION 'Refusing to install the lesson monitor pilot: the class recorder (20261112100000) is not installed';
   END IF;
 END
@@ -164,9 +173,15 @@ CREATE TABLE IF NOT EXISTS public.lesson_monitor_audit (
 CREATE OR REPLACE FUNCTION public.lesson_monitor__audit_is_append_only()
 RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
+  -- The one exception: delete_everything clears WHO (student_id) from old rows, keeping counts and dates.
+  IF TG_OP = 'UPDATE' AND current_setting('lesson_monitor.scrub', true) = 'on'
+     AND NEW.student_id IS NULL AND (to_jsonb(NEW) - 'student_id') = (to_jsonb(OLD) - 'student_id') THEN
+    RETURN NEW;
+  END IF;
   RAISE EXCEPTION 'lesson_monitor_audit is append-only: % is refused', TG_OP USING ERRCODE = 'insufficient_privilege';
 END;
 $$;
+REVOKE ALL ON FUNCTION public.lesson_monitor__audit_is_append_only() FROM PUBLIC, anon, authenticated;
 DROP TRIGGER IF EXISTS lesson_monitor_audit_no_change ON public.lesson_monitor_audit;
 CREATE TRIGGER lesson_monitor_audit_no_change BEFORE UPDATE OR DELETE ON public.lesson_monitor_audit
   FOR EACH ROW EXECUTE FUNCTION public.lesson_monitor__audit_is_append_only();
@@ -185,20 +200,26 @@ REVOKE ALL ON FUNCTION public.lesson_monitor__audit(text, uuid, uuid, uuid, uuid
 
 CREATE OR REPLACE FUNCTION public.lesson_monitor__today()
 RETURNS date LANGUAGE sql STABLE AS $function$ SELECT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date; $function$;
+REVOKE ALL ON FUNCTION public.lesson_monitor__today() FROM PUBLIC, anon, authenticated;
 
--- Children enrolled in the class on that day WITHOUT the monitor's consent
--- 'granted' under the CURRENT wording. NULL (= refuse) when it cannot tell.
+-- Children in the lesson that day WITHOUT the monitor's consent 'granted' under
+-- the CURRENT wording: those enrolled in the class that day, and those marked
+-- Present/Late at a session of the class that day (a visitor, a trial child).
+-- A child with no consent row is NOT consented. NULL (= refuse) when it cannot tell.
 CREATE OR REPLACE FUNCTION public.lesson_monitor__children_without_consent(p_class uuid, p_on date)
 RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $function$
   SELECT CASE WHEN v.current_version IS NULL OR p_class IS NULL OR p_on IS NULL THEN NULL ELSE (
-    SELECT count(DISTINCT e.student_id)::integer
-    FROM public.enrollments e
-    WHERE e.class_id = p_class
-      AND e.start_date <= p_on
-      AND (e.end_date IS NULL OR e.end_date >= p_on)
-      AND NOT EXISTS (
+    SELECT count(DISTINCT p.student_id)::integer
+    FROM (
+      SELECT e.student_id FROM public.enrollments e
+       WHERE e.class_id = p_class AND e.start_date <= p_on AND (e.end_date IS NULL OR e.end_date >= p_on)
+      UNION
+      SELECT a.student_id FROM public.attendance a JOIN public.sessions s ON s.id = a.session_id
+       WHERE s.class_id = p_class AND s.date = p_on AND a.status IN ('Present', 'Late')
+    ) p
+    WHERE NOT EXISTS (
         SELECT 1 FROM public.lesson_monitor_child_consents cc
-        WHERE cc.student_id = e.student_id AND cc.status = 'granted'
+        WHERE cc.student_id = p.student_id AND cc.status = 'granted'
           AND cc.wording_version = v.current_version)
   ) END
   FROM (SELECT (SELECT s.consent_wording_version FROM public.lesson_monitor_settings s WHERE s.id = 1) AS current_version) v;
@@ -274,6 +295,27 @@ DROP TRIGGER IF EXISTS lesson_monitor_settings_changed ON public.lesson_monitor_
 CREATE TRIGGER lesson_monitor_settings_changed BEFORE UPDATE ON public.lesson_monitor_settings
   FOR EACH ROW EXECUTE FUNCTION public.lesson_monitor__settings_changed();
 
+-- Delete what is past the report window. No caller check: it only removes what is
+-- overdue, and it is run by the cron job (no signed-in person) and by every write
+-- function below, so expiry never depends on the laptop.
+CREATE OR REPLACE FUNCTION public.lesson_monitor__purge_expired()
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_n integer;
+BEGIN
+  DELETE FROM public.lesson_monitor_reports
+   WHERE session_date < public.lesson_monitor__today()
+                        - COALESCE((SELECT report_days FROM public.lesson_monitor_settings WHERE id = 1), 30);
+  GET DIAGNOSTICS v_n = ROW_COUNT;
+  DELETE FROM public.lesson_monitor_targets t
+   USING public.sessions s WHERE s.id = t.session_id AND s.date < public.lesson_monitor__today() - 60;
+  IF v_n > 0 THEN
+    PERFORM public.lesson_monitor__audit('reports_expired', NULL, NULL, NULL, NULL, jsonb_build_object('reports', v_n));
+  END IF;
+  RETURN v_n;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.lesson_monitor__purge_expired() FROM PUBLIC, anon, authenticated;
+
 -- May the signed-in person read this report? Only its teacher, while they may
 -- still listen to that lesson, and only within the report window.
 CREATE OR REPLACE FUNCTION public.lesson_monitor_can_read_report(p_teacher uuid, p_class uuid, p_session uuid, p_date date)
@@ -301,6 +343,7 @@ DECLARE
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'Sign in first' USING ERRCODE = 'insufficient_privilege'; END IF;
   IF p_class IS NULL OR p_enabled IS NULL THEN RAISE EXCEPTION 'Say which class and whether the monitor is on or off'; END IF;
+  PERFORM public.lesson_monitor__purge_expired();
 
   IF NOT p_enabled THEN
     -- The kill switch: an admin or a teacher of the class. Never refused for a reason other than who.
@@ -357,7 +400,11 @@ REVOKE ALL ON FUNCTION public.lesson_monitor_set_class(uuid, boolean, text, text
 GRANT EXECUTE ON FUNCTION public.lesson_monitor_set_class(uuid, boolean, text, text, integer, uuid) TO authenticated;
 
 -- One child's monitor consent (admin). A withdrawal switches off every pilot
--- class the child is in today AND deletes those classes' reports at once.
+-- class the child is in today AND deletes the child's reports at once: every
+-- report of a lesson the child was enrolled in on its date or marked present at,
+-- including lessons of classes the child has since left. (A report names no
+-- child, so the lesson's roster is the only way to know who is in it.) The
+-- laptop learns of it through lesson_monitor_keep_check and deletes its drafts.
 CREATE OR REPLACE FUNCTION public.lesson_monitor_record_child_consent(p_student uuid, p_status text, p_note text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
@@ -402,6 +449,21 @@ BEGIN
           jsonb_build_object('reports', v_n, 'reason', 'consent_withdrawn'));
       END IF;
     END LOOP;
+    -- Every other lesson the child was in, even in a class they have left.
+    WITH gone AS (
+      DELETE FROM public.lesson_monitor_reports r
+       WHERE EXISTS (SELECT 1 FROM public.enrollments e
+                      WHERE e.student_id = p_student AND e.class_id = r.class_id
+                        AND e.start_date <= r.session_date AND (e.end_date IS NULL OR e.end_date >= r.session_date))
+          OR EXISTS (SELECT 1 FROM public.attendance a
+                      WHERE a.student_id = p_student AND a.session_id = r.session_id AND a.status IN ('Present', 'Late'))
+      RETURNING r.class_id)
+    SELECT count(*)::integer INTO v_n FROM gone;
+    v_reports := v_reports + v_n;
+    IF v_n > 0 THEN
+      PERFORM public.lesson_monitor__audit('report_deleted', NULL, NULL, NULL, NULL,
+        jsonb_build_object('reports', v_n, 'reason', 'consent_withdrawn_earlier_lessons'));
+    END IF;
   END IF;
   RETURN jsonb_build_object('classes_switched_off', v_classes, 'reports_deleted', v_reports);
 END;
@@ -461,6 +523,7 @@ DECLARE
   v_missing integer;
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Sign in first' USING ERRCODE = 'insufficient_privilege'; END IF;
+  PERFORM public.lesson_monitor__purge_expired();
   SELECT * INTO r FROM public.class_recordings WHERE id = p_recording;
   IF NOT FOUND OR NOT public.recorder_can_listen(r.class_id, r.session_id) THEN
     RAISE EXCEPTION 'Not a recording you may listen to' USING ERRCODE = 'insufficient_privilege';
@@ -489,6 +552,37 @@ $$;
 REVOKE ALL ON FUNCTION public.lesson_monitor_begin(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.lesson_monitor_begin(uuid) TO authenticated;
 
+-- The laptop asks this BETWEEN chunks and before it keeps or saves anything:
+-- may the work on this recording go on? One word: ok, or why not. It changes and
+-- logs nothing. 'gone' covers a recording the caller may not listen to.
+CREATE OR REPLACE FUNCTION public.lesson_monitor_may_continue(p_recording uuid)
+RETURNS text LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+DECLARE r public.class_recordings%ROWTYPE; v_missing integer;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Sign in first' USING ERRCODE = 'insufficient_privilege'; END IF;
+  SELECT * INTO r FROM public.class_recordings WHERE id = p_recording;
+  IF NOT FOUND OR NOT public.recorder_can_listen(r.class_id, r.session_id) THEN RETURN 'gone'; END IF;
+  IF NOT public.lesson_monitor__class_on(r.class_id, r.session_date) THEN RETURN 'class_off'; END IF;
+  v_missing := public.lesson_monitor__children_without_consent(r.class_id, r.session_date);
+  IF v_missing IS NULL OR v_missing > 0 THEN RETURN 'consent_missing'; END IF;
+  RETURN 'ok';
+END;
+$$;
+REVOKE ALL ON FUNCTION public.lesson_monitor_may_continue(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.lesson_monitor_may_continue(uuid) TO authenticated;
+
+-- Local drafts: which of these recordings may a copy still be kept for? Anything
+-- not ok (class off, consent withdrawn or missing, recording gone) is deleted by the laptop.
+CREATE OR REPLACE FUNCTION public.lesson_monitor_keep_check(p_recordings uuid[])
+RETURNS TABLE (recording_id uuid, keep boolean)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $function$
+  SELECT x, public.lesson_monitor_may_continue(x) = 'ok'
+    FROM unnest(COALESCE(p_recordings, '{}'::uuid[])) AS x
+   WHERE auth.uid() IS NOT NULL;
+$function$;
+REVOKE ALL ON FUNCTION public.lesson_monitor_keep_check(uuid[]) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.lesson_monitor_keep_check(uuid[]) TO authenticated;
+
 -- Save a finished report. Every check of begin() again (consent may have been
 -- withdrawn while the laptop worked), plus the body's shape. Returns the id only.
 CREATE OR REPLACE FUNCTION public.lesson_monitor_save_report(
@@ -504,6 +598,7 @@ DECLARE
   v_key text;
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'Sign in first' USING ERRCODE = 'insufficient_privilege'; END IF;
+  PERFORM public.lesson_monitor__purge_expired();
   SELECT * INTO r FROM public.class_recordings WHERE id = p_recording;
   IF NOT FOUND OR NOT public.recorder_can_listen(r.class_id, r.session_id) THEN
     RAISE EXCEPTION 'Not a recording you may listen to' USING ERRCODE = 'insufficient_privilege';
@@ -570,6 +665,7 @@ RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE r public.class_recordings%ROWTYPE;
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Sign in first' USING ERRCODE = 'insufficient_privilege'; END IF;
+  PERFORM public.lesson_monitor__purge_expired();
   IF p_outcome IS NULL OR p_outcome NOT IN ('refused', 'failed') THEN
     RAISE EXCEPTION 'A run is recorded here as refused or failed; a report is saved with lesson_monitor_save_report';
   END IF;
@@ -596,22 +692,12 @@ GRANT EXECUTE ON FUNCTION public.lesson_monitor_record_run(uuid, text, text) TO 
 -- Any signed-in staff member may run it: it only removes what is overdue.
 CREATE OR REPLACE FUNCTION public.lesson_monitor_expire()
 RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE v_n integer;
 BEGIN
   IF auth.uid() IS NULL OR NOT (COALESCE(public.has_role(auth.uid(), 'admin'::public.app_role), false)
                                 OR COALESCE(public.has_role(auth.uid(), 'teacher'::public.app_role), false)) THEN
     RAISE EXCEPTION 'Staff only' USING ERRCODE = 'insufficient_privilege';
   END IF;
-  DELETE FROM public.lesson_monitor_reports
-   WHERE session_date < public.lesson_monitor__today()
-                        - COALESCE((SELECT report_days FROM public.lesson_monitor_settings WHERE id = 1), 30);
-  GET DIAGNOSTICS v_n = ROW_COUNT;
-  DELETE FROM public.lesson_monitor_targets t
-   USING public.sessions s WHERE s.id = t.session_id AND s.date < public.lesson_monitor__today() - 60;
-  IF v_n > 0 THEN
-    PERFORM public.lesson_monitor__audit('reports_expired', NULL, NULL, NULL, NULL, jsonb_build_object('reports', v_n));
-  END IF;
-  RETURN v_n;
+  RETURN public.lesson_monitor__purge_expired();
 END;
 $$;
 REVOKE ALL ON FUNCTION public.lesson_monitor_expire() FROM PUBLIC, anon;
@@ -697,6 +783,7 @@ CREATE OR REPLACE FUNCTION public.lesson_monitor_report_feedback(
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE rep public.lesson_monitor_reports%ROWTYPE;
 BEGIN
+  PERFORM public.lesson_monitor__purge_expired();
   SELECT * INTO rep FROM public.lesson_monitor_reports WHERE id = p_report;
   IF NOT FOUND OR NOT public.lesson_monitor_can_read_report(rep.teacher_user_id, rep.class_id, rep.session_id, rep.session_date) THEN
     RAISE EXCEPTION 'Not your report' USING ERRCODE = 'insufficient_privilege';
@@ -761,10 +848,11 @@ GRANT EXECUTE ON FUNCTION public.lesson_monitor_admin_status() TO authenticated;
 
 -- One command deletes everything the pilot put in the database: reports,
 -- target words, run records, the class switches (and, if asked, the monitor
--- consent records). The audit log keeps ids and counts only and stays.
+-- consent records). The audit log stays, as counts and dates: WHO (student_id) is
+-- cleared from every row, by the one exception the append-only trigger allows.
 CREATE OR REPLACE FUNCTION public.lesson_monitor_delete_everything(p_confirm text, p_consents boolean DEFAULT false)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE v_reports integer; v_targets integer; v_runs integer; v_classes integer; v_consents integer := 0;
+DECLARE v_reports integer; v_targets integer; v_runs integer; v_classes integer; v_consents integer := 0; v_scrubbed integer;
 BEGIN
   IF auth.uid() IS NULL OR NOT COALESCE(public.has_role(auth.uid(), 'admin'::public.app_role), false) THEN
     RAISE EXCEPTION 'Admins only' USING ERRCODE = 'insufficient_privilege';
@@ -779,8 +867,13 @@ BEGIN
   IF COALESCE(p_consents, false) THEN
     DELETE FROM public.lesson_monitor_child_consents; GET DIAGNOSTICS v_consents = ROW_COUNT;
   END IF;
+  PERFORM set_config('lesson_monitor.scrub', 'on', true);
+  UPDATE public.lesson_monitor_audit SET student_id = NULL WHERE student_id IS NOT NULL;
+  GET DIAGNOSTICS v_scrubbed = ROW_COUNT;
+  PERFORM set_config('lesson_monitor.scrub', 'off', true);
   PERFORM public.lesson_monitor__audit('delete_everything', NULL, NULL, NULL, NULL,
-    jsonb_build_object('reports', v_reports, 'targets', v_targets, 'runs', v_runs, 'classes', v_classes, 'consents', v_consents));
+    jsonb_build_object('reports', v_reports, 'targets', v_targets, 'runs', v_runs, 'classes', v_classes, 'consents', v_consents,
+                       'student_ids_cleared', v_scrubbed));
   RETURN jsonb_build_object('reports', v_reports, 'targets', v_targets, 'runs', v_runs, 'classes', v_classes, 'consents', v_consents,
     'left', (SELECT count(*) FROM public.lesson_monitor_reports) + (SELECT count(*) FROM public.lesson_monitor_targets)
           + (SELECT count(*) FROM public.lesson_monitor_runs) + (SELECT count(*) FROM public.lesson_monitor_classes));
@@ -845,5 +938,19 @@ GRANT SELECT ON public.lesson_monitor_child_consents, public.lesson_monitor_clas
 GRANT ALL ON public.lesson_monitor_settings, public.lesson_monitor_child_consents, public.lesson_monitor_classes,
   public.lesson_monitor_reports, public.lesson_monitor_targets, public.lesson_monitor_runs, public.lesson_monitor_audit
   TO service_role;
+
+-- Expiry without the laptop (review M-1): hourly at :23 where pg_cron exists.
+-- Tolerant like the recorder's 20261112101000: without pg_cron it only says so,
+-- and every write function purges expired reports first anyway.
+DO $cron$
+BEGIN
+  IF to_regprocedure('cron.schedule(text,text,text)') IS NULL THEN
+    RAISE NOTICE 'lesson monitor: pg_cron is not installed here - no expiry job scheduled; write functions purge expired reports';
+    RETURN;
+  END IF;
+  BEGIN PERFORM cron.unschedule('lesson-monitor-expire'); EXCEPTION WHEN OTHERS THEN NULL; END;
+  PERFORM cron.schedule('lesson-monitor-expire', '23 * * * *', $cmd$ select public.lesson_monitor__purge_expired(); $cmd$);
+END
+$cron$;
 
 COMMIT;

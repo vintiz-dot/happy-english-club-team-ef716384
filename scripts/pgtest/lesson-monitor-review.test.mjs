@@ -49,6 +49,10 @@ const PRELUDE = `
   CREATE TABLE public.enrollments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id uuid NOT NULL REFERENCES public.students(id), class_id uuid NOT NULL REFERENCES public.classes(id),
     start_date date NOT NULL DEFAULT '2026-01-01', end_date date);
+  CREATE TABLE public.attendance (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id uuid NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
+    student_id uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+    status text NOT NULL CHECK (status IN ('Present','Absent','Excused','Late')), UNIQUE (session_id, student_id));
   CREATE SCHEMA storage;
   CREATE TABLE storage.buckets (id text PRIMARY KEY, name text, public boolean,
     file_size_limit bigint, allowed_mime_types text[]);

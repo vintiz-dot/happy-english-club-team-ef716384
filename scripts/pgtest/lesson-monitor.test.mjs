@@ -70,6 +70,10 @@ const PRELUDE = `
   CREATE TABLE public.enrollments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id uuid NOT NULL REFERENCES public.students(id), class_id uuid NOT NULL REFERENCES public.classes(id),
     start_date date NOT NULL DEFAULT '2026-01-01', end_date date);
+  CREATE TABLE public.attendance (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id uuid NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
+    student_id uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+    status text NOT NULL CHECK (status IN ('Present','Absent','Excused','Late')), UNIQUE (session_id, student_id));
   CREATE SCHEMA storage;
   CREATE TABLE storage.buckets (id text PRIMARY KEY, name text, public boolean,
     file_size_limit bigint, allowed_mime_types text[]);
@@ -357,8 +361,8 @@ console.log("=== the teacher's own actions: open, feedback, target words, delete
   refused("minutes are bounded", await tryAs(VICTOR, () => db.query(`SELECT public.lesson_monitor_report_feedback($1, 999, NULL)`, [r1])), /0 to 240/);
   refused("the admin cannot give the teacher's feedback", await tryAs(ADMIN, () => db.query(`SELECT public.lesson_monitor_report_feedback($1, 1, 'no')`, [r1])), /Not your report/);
 
-  eq("Victor's upcoming Venus lessons", (await rowsAs(VICTOR, `SELECT session_id FROM public.lesson_monitor_my_lessons(public.lesson_monitor__today(), public.lesson_monitor__today() + 7)`)).map((r) => r.session_id).sort(), [sVup, sVnext].sort());
-  eq("another teacher has none", (await rowsAs(OTHER, `SELECT 1 FROM public.lesson_monitor_my_lessons(public.lesson_monitor__today() - 7, public.lesson_monitor__today() + 7)`)).length, 0);
+  eq("Victor's upcoming Venus lessons", (await rowsAs(VICTOR, `SELECT session_id FROM public.lesson_monitor_my_lessons($1::date, $1::date + 7)`, [today])).map((r) => r.session_id).sort(), [sVup, sVnext].sort());
+  eq("another teacher has none", (await rowsAs(OTHER, `SELECT 1 FROM public.lesson_monitor_my_lessons($1::date - 7, $1::date + 7)`, [today])).length, 0);
   eq("Victor types target words (cleaned, sorted)", await tryAs(VICTOR, () => db.query(
     `SELECT public.lesson_monitor_set_targets($1, ARRAY['  Elephant','giraffe','elephant'], ARRAY['can / can''t'])`, [sVnext])), null);
   eq("stored", (await one(`SELECT words, structures FROM public.lesson_monitor_targets WHERE session_id = $1`, [sVnext])), { words: ["elephant", "giraffe"], structures: ["can / can't"] });
