@@ -116,7 +116,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
         queryClient.invalidateQueries({ queryKey: ["student-tuition", item.student_id, month] });
         return;
       }
-      const recordedAfter = saved.data.recordedAfter;
+      const recordedAfter = saved.data!.recordedAfter;
 
       // Optimistic cache update — patch just this student instantly
       queryClient.setQueryData(["admin-tuition-live", month], (old: any[] | undefined) => {

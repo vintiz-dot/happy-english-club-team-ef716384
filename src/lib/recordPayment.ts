@@ -28,15 +28,21 @@ export interface RecordPaymentDone {
   ledgerAccount: "CASH" | "BANK";
 }
 
-export type RecordPaymentResult =
-  | { ok: true; data: RecordPaymentDone }
-  /**
-   * answered: the function replied (refused or failed) - the attempt is over,
-   * so the next one needs a new key. Not answered (network): the outcome is
-   * unknown, so the retry keeps the same key and cannot pay twice.
-   * conflict: the bill changed since the screen loaded; reload it.
-   */
-  | { ok: false; message: string; answered: boolean; conflict: boolean; duplicate: boolean };
+/**
+ * ok: recorded, `data` set. Otherwise `message` is the function's own words.
+ * answered: the function replied - the attempt is over, so the next one needs
+ * a new key. Not answered (network): the outcome is unknown, so the retry
+ * keeps the same key and cannot pay twice.
+ * conflict: the bill changed since the screen loaded; reload it.
+ */
+export interface RecordPaymentResult {
+  ok: boolean;
+  data?: RecordPaymentDone;
+  message: string;
+  answered: boolean;
+  conflict: boolean;
+  duplicate: boolean;
+}
 
 export function newPaymentKey(): string {
   return crypto.randomUUID();
@@ -49,7 +55,7 @@ export async function recordPayment(client: any, args: RecordPaymentArgs): Promi
   } catch (e) {
     return { ok: false, message: (e as Error)?.message || "The payment could not be sent", answered: false, conflict: false, duplicate: false };
   }
-  if (!error && data?.success) return { ok: true, data };
+  if (!error && data?.success) return { ok: true, data, message: "", answered: true, conflict: false, duplicate: false };
   let body: any = data;
   const context = error?.context;
   if (context && typeof context.json === "function") {

@@ -132,7 +132,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
             failCount++;
             continue;
           }
-          recordedAfter.set(item.student_id, saved.data.recordedAfter);
+          recordedAfter.set(item.student_id, saved.data!.recordedAfter);
 
           successCount++;
           savedIds.add(item.student_id);

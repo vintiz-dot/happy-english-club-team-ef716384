@@ -161,7 +161,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
             failCount++;
             continue;
           }
-          recordedAfter.set(item.student_id, saved.data.recordedAfter);
+          recordedAfter.set(item.student_id, saved.data!.recordedAfter);
 
           successCount++;
           savedIds.add(item.student_id);
