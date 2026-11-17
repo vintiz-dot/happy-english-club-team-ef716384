@@ -153,6 +153,8 @@ The nine F-02 functions also import `_lib/ai-gate.ts`; they need no redeploy (th
 | N-10 | get_video_progress: staff view per video - an admin, or a teacher of THAT video's class (`is_teacher_of_class`); a teacher of another class the child is or was in sees none of those videos | video-homework: such a teacher gets none; the class's own teacher still sees them as before |
 | found here | ocr-student-work called Google Vision for a browser with a role check and no per-account limit: now behind `requireSpender` (staff, 60 / 10 min) | ai-gate, as the eight |
 
+Gates after the fix round (clock shifted 8 h as before): full `run.mjs` 4627 assertions, 48 suites, the same 2 known failures at the same counts (invoice status 236/32, stars sync core). AI spend gates 526/0, student work feedback 50/0 (with 160300), video homework 107/0, video homework rules 26/0, chat assistant 201/0, homework grading 27/0, mirrors 19/0, edge typecheck 5/0, app typecheck 3/0; `tsc -p tsconfig.app.json` exit 0; `npm run test:bun` 142 pass / 3 fail, the same pre-existing three. No vocab/OCR suite exists on main beyond the cases added to ai-gate and student-work-feedback.
+
 Still outside the gate (not in this brief; for the owner): `cefr-defense`, `generate-student-report`, `transcribe-lesson-audio` call a paid model without `requireSpender` on main (`origin/conductor/work` has a transcribe gate suite).
 
 The reviewer's probes (`zz-probe-vh`, `zz-probe-swf`) were copies of the two harnesses that printed what happened; they are carried as asserted cases in `video-homework.test.mjs` (with M-1's expectations: the approval stands) and `student-work-feedback.test.mjs`, not as separate files.
