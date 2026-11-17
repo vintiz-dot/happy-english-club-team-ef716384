@@ -88,3 +88,29 @@ keeps for 30 days in the same project) is small, provided M-1 is fixed so transc
 Real audio and real offline Whisper behaviour (HF_HUB_OFFLINE is set in `load_model` with `local_files_only=True`; no network
 capture on the laptop), the live database (no SELECTs run), Supabase backup retention, Windows permissions on the pilot folder,
 whether 20261117090000 is applied in production.
+
+## 6. Fix round 1
+
+Branch `pilot-fix2` (built on `pilot-fix`). Nothing applied to the live database, nothing deployed, nothing pushed.
+
+**M-1 (expiry depended on the laptop).** The migration schedules the purge with a tolerant pg_cron job (hourly), and readers and `save_report` purge too. Proved by `lesson-monitor-review.test.mjs` P2 (one job, applied twice; an old report is deleted on the server with no laptop run). `delete_pilot.py` at the end remains the full deletion.
+
+**M-2 (withdrawal did not reach everything).** (a) Server withdrawal covers every class the child was enrolled in during the pilot window: probe P3. (c) A child with no consent row (visitor, trial) counts as NOT consented in `may_continue`/`begin`/`save`: probe P4; the runbook says what cannot be checked in code. (b) Local drafts follow the database: `nightly.py` runs `lesson_monitor_keep_check` at start and deletes every draft it does not allow; a draft that cannot be checked stays and is logged. Proved by the `keep_check` probes and pytest `test_drafts_the_database_no_longer_allows_are_deleted_at_start`, `test_a_draft_that_cannot_be_checked_stays_and_is_said_so`, `test_a_draft_the_database_does_not_know_is_deleted`.
+
+**M-3 (kill switch vs a running job; step 0).** `pilot_common.Guard` checks the STOP file at every check and the database (`lesson_monitor_may_continue`) at most every 15 s: between chunks, during transcription (each segment) and once more, forced, before anything is kept or saved. A "no" stops the job and deletes the audio copy and any draft of that lesson. An unreachable database (offline, or HTTP 401) is not a yes: after a 2-minute grace the job stops and wipes, and nothing is kept or saved unless the database says `ok` at the last look (also in `--no-upload`). Reason: a withdrawal cannot reach a laptop that cannot be asked, so silence must not mean "carry on" for hours; cost: a job on a pasted `--token` (about an hour) must finish inside it. `stop.py on` and `nightly.py` with STOP present delete all local audio and drafts. Step 0: `make` refuses while STOP exists and stops between chunks; `make --recording` goes through `lesson_monitor_begin` (class on, consent, audit line); any failure deletes what `make` wrote; `score` deletes the sample and keeps only `result.json`. Proved by `tests/test_fix2.py` (mid-run withdrawal, switch-off while transcribing, withdrawal after transcribing in both modes, unreachable beyond grace, blip inside grace, 401, last look unreachable, `--no-upload` only on ok, Guard unit, stop wipes, nightly with STOP, and the `test_step0_*` cases) and the probes "M-3 after the kill switch may_continue says class_off" and "keep_check drops the local draft".
+
+**M-4 (wording).** Runbook, the screen text (`WORDING.forYouOnly`, `src/lib/lessonMonitor.ts`) and the design doc now say that in the app only the teacher can read a report, but whoever sits at the laptop while the job runs, and whoever can open `pilot\drafts`, can read it. The audit holds no child ids after `delete_everything` (it keeps event names, dates, class and recording ids, counts): probe P10.
+
+**N-1.** Owner's ruling, recorded verbatim in the runbook: "it's ok to send names. the students use psuedo names in class". The report stays in the app (conductor ruling); `--no-upload` stays only because it now obeys every rule above.
+
+**N-2.** Left as is: the teacher still reads existing reports after the kill switch until deleted or 30 days; the screen says so.
+
+**N-3.** Left as is: a teacher of the class can read `consent_note`; flagged for the owner.
+
+**N-4.** `delete_pilot.py` always runs the local wipe, even when sign-in or the app call fails (`SystemExit` included), prints `app: NOT DONE`, exits 2. Proved by three `test_delete_pilot_*` tests.
+
+**N-5.** Not checked (no dashboard access): Supabase backups may keep deleted rows for their retention window; the runbook says so.
+
+**N-6.** Helpers lose default EXECUTE: probe "N-6 helpers have no default EXECUTE".
+
+**Migration** `supabase/migrations/20261117090000_lesson_monitor_pilot.sql`, md5 with CR removed (LF): `a6a48bb36518609188311b4d4308c206`.
