@@ -570,12 +570,23 @@ const SUITES = [
   // reads none of them; only the teacher's approval publishes, exactly once,
   // and a low-confidence suggestion never lands on a child. Also drives the
   // real analyze-transcript and loads what it wrote into the schema.
+  // Fix round 1 adds 20261117100100 (taking back what the old pipeline
+  // published, copies kept) and the review's findings M-1..M-4, N-1..N-9.
   {
     name: "transcript drafts (D-26)",
     file: "transcript-drafts.test.mjs",
-    expect: 141,
+    expect: 221,
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql",
-      "20261117100000_transcript_analysis_drafts.sql"],
+      "20261117100000_transcript_analysis_drafts.sql", "20261117100100_transcript_legacy_unpublish.sql"],
+  },
+  // The independent reviewer's probes R1-R9 (REVIEW-transcript.md), turned
+  // round to assert the safe behaviour; same database (transcript-drafts.setup.mjs).
+  {
+    name: "transcript review probes",
+    file: "review-transcript-probes.mjs",
+    expect: 34,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql",
+      "20261117100000_transcript_analysis_drafts.sql", "20261117100100_transcript_legacy_unpublish.sql"],
   },
   // F-02: the nine AI / speech / image-search functions, handler by handler:
   // no session, wrong role, right role, the per-account limit.
