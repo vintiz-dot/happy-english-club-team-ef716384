@@ -317,7 +317,8 @@ BEGIN
   RETURN jsonb_build_object(
     'success', true, 'paymentId', p_payment_id, 'ledgerTxId', v_tx, 'invoiceId', v_bill.id,
     'studentId', p_student_id, 'month', p_month, 'kind', p_kind, 'amount', v_delta,
-    'ledgerAccount', v_code, 'recordedBefore', v_before, 'recordedAfter', v_after);
+    'ledgerAccount', v_code, 'recordedBefore', v_before, 'recordedAfter', v_after,
+    'status', coalesce(v_label::text, v_bill.status::text));
 END
 $function$;
 

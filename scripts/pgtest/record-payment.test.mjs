@@ -209,8 +209,12 @@ await db.exec(`
   GRANT EXECUTE ON FUNCTION public.refresh_invoice_carry(uuid) TO service_role;
 `);
 
-// ---- the file under test
+// ---- the file under test, with live's default privileges on new functions
+// (pg_default_acl, 17 Nov: EXECUTE to anon, authenticated and service_role),
+// so its REVOKE is what keeps anon and the service key out.
+await db.exec('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role');
 await db.exec(mig(RP_MIGRATION));
+await db.exec('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated, service_role');
 
 // ---- test instruments (not live): who wrote, and faults inside the transaction
 await db.exec(`
@@ -276,8 +280,16 @@ console.log('\n0. the database carries the real money triggers, and the function
      && /WHERE i\.id = v_bill\.id AND coalesce\(i\.recorded_payment, 0\) = v_before/.test(body));
   if (PROBE) {
     const live = (await one(`SELECT prosrc FROM pg_proc WHERE proname = 'prevent_direct_payment_deletion'`)).prosrc;
-    ok('PROBE (review B-1): the payments delete trigger is the text of 20251024152825 verbatim, and it refuses an admin\'s DELETE',
-       /IF auth\.role\(\) != 'service_role' THEN/.test(live) && DELETE_TRIGGER_SQL.includes(live.trim().split('\n')[0].trim()));
+    const kid = (await one(`INSERT INTO public.students (full_name) VALUES ('ProbeKid') RETURNING id`)).id;
+    const admin = randomUUID();
+    await sql(`INSERT INTO public.user_roles VALUES ($1, 'admin')`, [admin]);
+    const pid = (await one(`INSERT INTO public.payments (student_id, amount, method) VALUES ($1, 1, 'Cash') RETURNING id`, [kid])).id;
+    const refused = await tryIt(() => asRole('user', admin, 'DELETE FROM public.payments WHERE id = $1', [pid]));
+    const allowed = await tryIt(() => asRole('service', null, 'DELETE FROM public.payments WHERE id = $1', [pid]));
+    await sql('DELETE FROM public.user_roles WHERE user_id = $1', [admin]);
+    await sql('DELETE FROM public.students WHERE id = $1', [kid]);
+    ok('PROBE (review B-1): the payments delete trigger is the text of 20251024152825; it refuses an admin\'s DELETE and lets the service role (delete-payment) through',
+       /IF auth\.role\(\) != 'service_role' THEN/.test(live) && DELETE_TRIGGER_SQL.includes(live.trim()) && /Direct payment deletion is not allowed/.test(refused?.message ?? '') && allowed === null, { refused, allowed });
   }
 }
 
@@ -704,6 +716,15 @@ console.log('\n4. a correction takes money off - never below 0, never without a 
   const bz = await billOf(s, M);
   ok('a correction of exactly what is recorded: 0 recorded, issued again (the one rule), paid_amount floored at 0',
      toZero.status === 200 && Number(bz.recorded_payment) === 0 && bz.status === 'issued' && Number(bz.paid_amount) === 0, bz);
+  // paid_amount is cumulative and may hold less than recorded_payment (history): floored at 0, never negative.
+  const pf = await child('PaidFloor');
+  const pfi = await bill(pf, M, 1000000);
+  await pay({ studentId: pf, amount: 300000 });
+  await sql('UPDATE public.invoices SET paid_amount = 100000 WHERE id = $1', [pfi]);
+  const rpf = await pay({ studentId: pf, kind: 'correction', amount: 300000, memo: 'wrong child' });
+  const bpf = await billOf(pf, M);
+  ok('  a correction larger than the bill\'s paid_amount: paid_amount floored at 0 (not -200,000), recorded 0', rpf.status === 200
+     && Number(bpf.paid_amount) === 0 && Number(bpf.recorded_payment) === 0, { rpf, bpf });
   const s2 = await child('NoBill');
   tuition.price.set(s2, 900000);
   const w1 = log.length, i1 = invokes.length;
@@ -749,8 +770,15 @@ console.log('\n5. the label rule, frozen bills and the D4 floors do not get in t
   await bill(cd, M, 500000);
   const rd = await pay({ studentId: cd, amount: 500000 });
   const bd = await billOf(cd, M);
-  ok('a payment of the month\'s charge with 300,000 debt carried in: partial, not paid (invoice_paid_label over charge + carry-in debt)',
-     rd.status === 200 && Number(bd.carry_in_debt) === 300000 && bd.status === 'partial', bd);
+  ok('a payment of the month\'s charge with 300,000 debt carried in: the function itself labels it partial, not paid (invoice_paid_label over charge + carry-in debt)',
+     rd.status === 200 && rd.body?.status === 'partial' && Number(bd.carry_in_debt) === 300000 && bd.status === 'partial', { rd, bd });
+  const cc = await child('CarryCredit');
+  await bill(cc, '2026-07', 300000);
+  await bill(cc, M, 500000);
+  await pay({ studentId: cc, month: '2026-07', amount: 800000 });
+  const rcc = await pay({ studentId: cc, amount: 1000 });
+  ok('  and with 500,000 credit carried in that covers the month, a small payment labels it paid', rcc.status === 200 && rcc.body?.status === 'paid'
+     && (await billOf(cc, M)).status === 'paid', rcc);
 }
 
 // =================================================================== 6
@@ -1060,7 +1088,8 @@ console.log('\n14. the screens and the function, statically');
      && /handleStartEdit = \(invoice: Invoice\) => \{\n\s*setEditMethod\(""\);/.test(rpm) && /setReverseMethod\(""\);\n\s*setReversingInvoice\(/.test(rpm)
      && /if \(!editMethod\) \{ toast\.error\(METHOD_REQUIRED\); return; \}/.test(rpm) && /if \(!reverseMethod\) \{ toast\.error\(METHOD_REQUIRED\); return; \}/.test(rpm)
      && /method: editMethod,/.test(rpm) && /method: reverseMethod,/.test(rpm) && /placeholder="Choose cash or bank"/.test(rpm));
-  ok('  RecordedPaymentManager keeps one key per invoice row (review N-1)', /idempotencyKey: keyFor\(invoice\.id\)/.test(rpm) && !/paymentKey\.current/.test(rpm)
+  ok('  RecordedPaymentManager keeps one key per invoice row (review N-1)', (rpm.match(/idempotencyKey: keyFor\(invoice\.id\)/g) ?? []).length === 2
+     && (rpm.match(/idempotencyKey:/g) ?? []).length === 2 && !/paymentKey\.current/.test(rpm)
      && (rpm.match(/paymentKeys\.current\.delete\(invoice\.id\)/g) ?? []).length === 2);
   ok('  src/lib/recordPayment.ts reaches the function only through supabase.functions.invoke("record-payment")',
      /client\.functions\.invoke\("record-payment"/.test(read('src/lib/recordPayment.ts')) && !/fetch\(/.test(read('src/lib/recordPayment.ts')));

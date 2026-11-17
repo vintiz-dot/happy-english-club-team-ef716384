@@ -93,7 +93,7 @@ const SUITES = [
   // D5: every write path to the money tables and every RPC, pinned; no browser
   // writes of payments / ledger / payroll; recorded_payment only by
   // compare-and-set; labels from the one rule; no NEW browser pricing.
-  { name: "money write paths", file: "money-write-paths.test.mjs", expect: 22, migrations: [] },
+  { name: "money write paths", file: "money-write-paths.test.mjs", expect: 23, migrations: [] },
   // D5: the sibling-discount hold rule (_lib/sibling-hold.ts), its fail-closed
   // read (only 42703 means "column missing", G-10) and its two callers.
   { name: "sibling hold", file: "sibling-hold.test.mjs", expect: 22, migrations: [] },
@@ -102,11 +102,18 @@ const SUITES = [
   // migration itself, then the file under test).
   { name: "ledger append-only", file: "ledger-append-only.test.mjs", expect: 26, migrations: [] },
   // D5 G-1: the real record-payment and delete-payment over every D4 file, the
-  // carry trigger, G-4 and G-11 (it builds its own database from D4_BUILD):
-  // payment row + two balanced legs + the bill, as the admin; corrections;
-  // double clicks; concurrent payments; failures undone by reversal legs;
+  // carry trigger, G-4, G-11, every trigger live has on the money tables and
+  // record_admin_payment (20261117120000; it builds its own database from
+  // D4_BUILD): the payment row + two balanced legs + the bill in ONE
+  // transaction, as the admin; corrections; double clicks; concurrent
+  // payments; faults inside the transaction leave nothing; lost replies;
+  // the preflight; the screens' answer rule over functions-js;
   // CHECK-money-invariants M01 / M03 / M04 over what was written.
-  { name: "record payment (G-1)", file: "record-payment.test.mjs", expect: 65, migrations: [] },
+  { name: "record payment (G-1)", file: "record-payment.test.mjs", expect: 101, migrations: [] },
+  // The review's two G-1 probes (fix round 1): the suite with live's payments
+  // delete trigger (B-1), and a dropped connection is not "answered" (B-2).
+  { name: "G-1 probe: delete trigger", file: "probe-g1-live-delete-trigger.test.mjs", expect: 102, migrations: [] },
+  { name: "G-1 probe: answered", file: "probe-g1-answered.mjs", expect: 2, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
