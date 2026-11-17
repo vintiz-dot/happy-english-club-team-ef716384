@@ -83,8 +83,16 @@ sum is the incomplete figure.
     writes are identical, close-payroll-month books the same lines and
     totals, and `lostIncomeTotal` is null in all 8 failure runs (8 new
     assertions).
-- `ta-payroll.test.mjs` (261) and `payroll-rows.test.mjs` are untouched and
-  pass, so teacher and TA pay figures are unchanged.
+- `ta-payroll.test.mjs` (261, unchanged count): its two "byte-identical
+  answer" sections (against 2e88891a and efcb3a64, 15 + 29 callers) now use
+  `sameAnswer`. That requires every byte of the old answer up to its closing
+  brace to be identical, followed only by `,"lostIncomeTotal":...` and
+  `"lostIncomeOnly":[...]` (exactly two extra keys, last). An answer without
+  payrollData, such as an error or a 403, must still be identical outright.
+  Before that change the first full run failed these 38 comparisons on the
+  appended keys alone. The writes comparisons beside them are untouched.
+- `payroll-rows.test.mjs` (69) and `teacher-payroll-view.test.mjs` (94) are
+  untouched and pass.
 
 ## M-2 Excused / cancelled "lost tuition" ignored a frozen bill
 
@@ -156,7 +164,18 @@ These are static checks only. No screen was opened in a browser.
 
 ## Gates
 
-GATES_PLACEHOLDER
+| command | result |
+|---|---|
+| `node scripts/pgtest/run.mjs` (11:35-12:15 Hanoi; inside 08:00-20:00, so no clock shim) | EXIT 0: **8978 assertions across 88 suites, 0 failed** |
+| ... of which | invoice status 352 (unchanged), calc probe: frozen 368 (pinned), calc probe: payroll 182 (pinned), teacher payroll function 164 (was 156), TA payroll function 261, payroll screen rows 69, teacher payroll view 94, d4 class fee 178, shared-module mirrors 19, edge functions typecheck 5, app typecheck 3, S2 edge functions 107 |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 (and app typecheck 3/3 in the suite, which asserts the source was loaded) |
+| `npm run test:bun` | 250 pass, 0 fail, 1801 expect() calls, 18 files |
+
+The review's run was 8420 across 86 suites. The 558 added assertions are the
+two registered probes (368 + 182) and the 8 added to teacher-payroll.
+
+`git diff c9e96bab -- scripts/pgtest/fixtures supabase/functions/_lib supabase/functions/calculate-tuition src/lib/invoiceStatus.ts`
+is empty.
 
 ## Deploy file lists (LF md5, CR stripped, from this tree)
 
