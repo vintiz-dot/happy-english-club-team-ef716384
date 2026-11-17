@@ -1433,8 +1433,10 @@ console.log('\nT4 faults 3 and 4 - the browser writes the label by the same rule
   const writers = ['RecordPaymentDialog.tsx', 'QuickPayPanel.tsx', 'BatchPaymentDialog.tsx', 'RecordedPaymentManager.tsx', 'PaymentIntegrityRepair.tsx'];
   for (const f of writers) {
     const t = src(`src/components/admin/${f}`);
-    ok(`  ${f}: takes the label from @/lib/invoiceStatus and states no rule of its own`,
-       /from "@\/lib\/invoiceStatus"/.test(t)
+    // D5 G-1: a screen that hands the bill to record-payment leaves the label to the
+    // function (labelAfterPayment, the functions' copy) - that counts as the rule too.
+    ok(`  ${f}: takes the label from @/lib/invoiceStatus (or leaves it to record-payment) and states no rule of its own`,
+       (/from "@\/lib\/invoiceStatus"/.test(t) || (/from "@\/lib\/recordPayment"/.test(t) && !/status:\s*(label|newStatus)\b/.test(t)))
          && !/>=\s*(payable|fp)\s*&&\s*(payable|fp)\s*>\s*0/.test(t)
          && !/(newStatus|status|expectedStatus|correctStatus)\s*=\s*['"](paid|partial|draft|issued)['"]/.test(t)
          && !/paid_amount\s*===\s*0|total_amount\s*-\s*invoice\.paid_amount/.test(t));
@@ -1534,9 +1536,12 @@ console.log('\nT4 r2 - two payments on one bill at the same moment: neither is l
     const src = (rel) => readFileSync(join(repo, rel), 'utf8');
     for (const f of ['RecordPaymentDialog.tsx', 'QuickPayPanel.tsx', 'BatchPaymentDialog.tsx', 'RecordedPaymentManager.tsx']) {
       const t = src(`src/components/admin/${f}`);
-      ok(`  ${f} writes recorded_payment only through setRecordedPayment and handles a conflict`,
-         /from "@\/lib\/recordedPaymentWrite"/.test(t) && /setRecordedPayment\(/.test(t) && /conflict/.test(t)
-           && !/\.(update|upsert)\(\s*\[?\s*\{[^}]*recorded_payment/.test(t));
+      // D5 G-1: the screens no longer write recorded_payment at all; record-payment does,
+      // by the same compare-and-set (addToRecordedPayment, expectedRecorded = the screen's figure),
+      // and a refusal (conflict included) is shown and reloaded. scripts/pgtest/record-payment.test.mjs drives it.
+      ok(`  ${f} puts money on the bill only through record-payment (the screen's figure as expectedRecorded) and handles a refusal`,
+         /from "@\/lib\/recordPayment"/.test(t) && /recordPayment\(supabase,/.test(t) && /expectedRecorded/.test(t) && /!saved\.ok/.test(t)
+           && !/setRecordedPayment\(/.test(t) && !/\.(update|upsert|insert)\(\s*\[?\s*\{[^}]*recorded_payment/.test(t));
     }
   }
 

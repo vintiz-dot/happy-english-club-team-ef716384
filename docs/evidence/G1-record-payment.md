@@ -97,7 +97,7 @@ review of its own, so it is offered, not built (open question 2).
 
 ## Tests
 
-`scripts/pgtest/record-payment.test.mjs` (registered in `run.mjs`, expect 64):
+`scripts/pgtest/record-payment.test.mjs` (registered in `run.mjs`, expect 65; 65/0):
 the REAL record-payment and delete-payment handlers bundled with esbuild,
 against a PostgREST stand-in over one pglite built from `D4_BUILD` (D2's
 prelude, its baseline, ALL FIVE D4 files), live's ledger / payment tables,
@@ -116,7 +116,7 @@ G-4 20261117110000 and G-11 20261117111000. User clients run as
 | 6 | missing bill made by calculate-tuition then paid; calculate-tuition failing -> 409, nothing written |
 | 7 | stale `expectedRecorded` -> 409 conflict, nothing written |
 | 8 | the same key twice at once: one 200, one 409 duplicate; again later 409; three more at once all refused; paid once |
-| 9 | two keys at once on one bill: both land (CAS missed once and re-read); two screens both showing 0: one lands, the other refused and fully undone |
+| 9 | two keys at once on one bill: both land (CAS missed once and re-read); two screens both showing 0: one lands, the other refused and fully undone; two corrections at once that together would go below 0: one lands, the other refused at the re-read and undone |
 | 10 | bill write fails after the legs: 409 undone, bill unchanged, row gone, two reversal legs, net 0; key then refused; ledger insert fails: 500, nothing left, the key then pays once; the ledger refuses UPDATE / DELETE (HC130) |
 | 11 | delete-payment reverses a record-payment payment (bill, two reversal legs, row gone, deletion record), refuses a second time; deleting a CORRECTION puts the money back; refuses when the bill now holds less |
 | 12 | `scripts/CHECK-money-invariants.sql` itself over a copy of everything written: M01 0, M03 0, M04 0, M08 0; control: one old-style screen write makes M03 1 |
@@ -124,7 +124,14 @@ G-4 20261117110000 and G-11 20261117111000. User clients run as
 | 14 | static: the four screens call recordPayment, write neither the bill nor audit_log; month confirmation kept; invoke only; verify_jwt = true; requireRole admin / no service lane / callerClient |
 
 Mutation pass (scratchpad `g1-mutants.mjs`, each mutant applied to the source,
-the suite run, the file restored byte for byte): MUTANTS_RESULT.
+the suite run, the file restored byte for byte): 13 mutants, 13 killed - data
+through the service key; CASH only for exactly "Cash"; no below-0 check before
+writing; no below-0 check at the CAS retry (survived the first pass; killed
+after section 9 gained the two-corrections-at-once case); undo deleting the
+legs; undo leaving the payments row; credit label not kept; no duplicate check;
+legs on the receipt month; no expectedRecorded check; the CAS without its
+condition (`_lib`); delete-payment skipping corrections; a correction allowed
+with no bill.
 
 `money-write-paths.test.mjs` (expect 20 -> 22): record-payment's four writers
 pinned (ledger_accounts upsert, ledger_entries insert x2, payments insert,
@@ -147,7 +154,36 @@ Gates (Hanoi daytime, no clock shim needed):
 
 ## Files (LF md5)
 
-FILES_MD5
+Deployed as edge functions (the `_lib` files they bundle are unchanged by
+this work - `git diff f3ee41db` touches nothing under `supabase/functions/_lib`,
+`supabase/migrations` or `docs/sql`):
+
+| md5 (CR stripped) | file |
+|---|---|
+| `24c4f50f44171830400a5496d9caca9e` | supabase/functions/record-payment/index.ts (NEW) |
+| `3c80e93c2a1fefefadb99ab48c248c6f` | supabase/functions/delete-payment/index.ts |
+| `ce6470c236d307bcfdc4c07eced08f14` | supabase/functions/_lib/recorded-payment-write.ts (unchanged) |
+| `a278832ac3c18b088c5a9c84f9e31ed1` | supabase/functions/_lib/invoice-status.ts (unchanged) |
+| `9046deec2a7253a8287b3f64f1ee4659` | supabase/functions/_lib/session-guard.ts (unchanged; `callerClient`) |
+| `92b44db93cd2614a2fb3011e3a9063ba` | supabase/functions/_lib/auth.ts (unchanged; `requireRole`) |
+
+The screens (push to main):
+
+| md5 (CR stripped) | file |
+|---|---|
+| `28a78d810edf8998d7e9afc6eedd6c7c` | src/lib/recordPayment.ts (NEW) |
+| `603669db71f6ac93f72465171e48ac32` | src/components/admin/RecordPaymentDialog.tsx |
+| `f1530f5337e55451f8136e3c794bb7c8` | src/components/admin/QuickPayPanel.tsx |
+| `5e55548d0bcb35404994a8e8bcaf77d5` | src/components/admin/BatchPaymentDialog.tsx |
+| `b268d8dc5269cf453c949d2b9bf58356` | src/components/admin/RecordedPaymentManager.tsx |
+| `16586d861da15f74c98a09f5709acf0c` | src/lib/recordedPaymentWrite.ts (unchanged; mirror only now) |
+
+Also: `supabase/config.toml` (`[functions.record-payment] verify_jwt = true`),
+`scripts/pgtest/record-payment.test.mjs` (`1c40769603685b9bc992767f0b47e12f`),
+`scripts/pgtest/money-write-paths.test.mjs`, `scripts/pgtest/run.mjs`,
+`docs/evidence/D5-audit.md` (write-path rows). Golden
+`fixtures/tuition-figures.golden.json` `181298c3b173095b02ed95c69f9ed24a`,
+unchanged.
 
 No migration in this change.
 
