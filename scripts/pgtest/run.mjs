@@ -101,6 +101,12 @@ const SUITES = [
   // preflight fails closed, six money tables audited (it loads the real audit
   // migration itself, then the file under test).
   { name: "ledger append-only", file: "ledger-append-only.test.mjs", expect: 26, migrations: [] },
+  // D5 G-1: the real record-payment and delete-payment over every D4 file, the
+  // carry trigger, G-4 and G-11 (it builds its own database from D4_BUILD):
+  // payment row + two balanced legs + the bill, as the admin; corrections;
+  // double clicks; concurrent payments; failures undone by reversal legs;
+  // CHECK-money-invariants M01 / M03 / M04 over what was written.
+  { name: "record payment (G-1)", file: "record-payment.test.mjs", expect: 64, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
