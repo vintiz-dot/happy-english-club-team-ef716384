@@ -74,7 +74,10 @@ export const AvatarPicker = ({ studentId, currentAvatarUrl, onSelect }: AvatarPi
               ? (d.board.rows ?? []).find((r: any) => r.student_id === studentId)
               : (d.leaderboard ?? []).find((r: any) => r.student_id === studentId);
             if (!mine) return null;
-            return { class_id: e.class_id, rank: mine.rank as number, classes: e.classes };
+            // A real place: ranked, with points. A child with no points has no
+            // rank (and in an empty month nobody is "top three").
+            const pts = Number(mine.total ?? mine.points ?? mine.total_points ?? 0);
+            return { class_id: e.class_id, rank: mine.rank != null && pts > 0 ? (mine.rank as number) : 999, classes: e.classes };
           }),
         )
       ).filter(Boolean) as Array<{ class_id: string; rank: number; classes: { name: string } | null }>;

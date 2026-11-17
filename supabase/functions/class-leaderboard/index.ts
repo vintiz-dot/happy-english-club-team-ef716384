@@ -37,19 +37,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // The cover window. MUST MATCH is_teacher_of_class (see
-    // supabase/migrations/20261007120000_scope_teacher_class_access_in_time.sql)
-    // and src/lib/teacherAccess.ts. Roster membership is permanent; covering a
-    // class is not, and this function previously treated them the same.
-    const COVER_TRAILING_DAYS = 7;
-    const COVER_UPCOMING_DAYS = 60;
-    const asDate = (offsetDays: number) => {
-      const d = new Date();
-      d.setUTCDate(d.getUTCDate() + offsetDays);
-      return d.toISOString().slice(0, 10);
-    };
-    const coverFrom = asDate(-COVER_TRAILING_DAYS);
-    const coverTo = asDate(COVER_UPCOMING_DAYS);
+    // Who may see the class is decided by is_teacher_of_class below - the
+    // same rule as the database, cover window included.
 
     // Parse request body. `month` ("2026-10") is what every client sent
     // until the period picker; `period` + `anchor` is the new shape.
@@ -57,6 +46,9 @@ Deno.serve(async (req) => {
     const classId: string | undefined = body?.classId;
     const month: string | undefined = typeof body?.month === "string" ? body.month : undefined;
     const PERIODS = ["week", "month", "term", "all"];
+    const CATEGORIES = ["homework", "video", "class", "streak", "vocabulary", "reading"];
+    // Rank the board on one tab, on the server (the screen never ranks).
+    const category: string | null = CATEGORIES.includes(body?.category) ? body.category : null;
     const period: string = PERIODS.includes(body?.period) ? body.period : "month";
     const anchor: string | null =
       typeof body?.anchor === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.anchor)
@@ -83,126 +75,57 @@ Deno.serve(async (req) => {
     // Create admin client to bypass RLS
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // ----- Wave 1: identity lookups + main enrollments, all in parallel -----
-    const [teacherRes, userStudentRes, familyRes, enrollmentsRes, adminRes] = await Promise.all([
-      adminClient.from("teachers")
-        .select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle(),
-      adminClient.from("students")
-        .select("id, family_id").eq("linked_user_id", user.id).maybeSingle(),
-      adminClient.from("families")
-        .select("id").eq("primary_user_id", user.id).maybeSingle(),
+    // ----- Who is asking -----
+    // Staff: an admin, or anyone is_teacher_of_class lets into this class -
+    // the same rule as the database's policies, so teaching assistants and
+    // cover teachers count (review N-5; this used to read `teachers` only).
+    // A child or family: the children this login can view (linked login,
+    // second guardian, or the family's main login), enrolled in the class
+    // now.
+    const [adminRes, teacherRes, kidsRes, familyRes, enrollmentsRes] = await Promise.all([
+      adminClient.from("user_roles")
+        .select("role").eq("user_id", user.id).eq("role", "admin").limit(1),
+      adminClient.rpc("is_teacher_of_class", { user_id: user.id, class_id: classId }),
+      adminClient.from("students").select("id")
+        .or(`linked_user_id.eq.${user.id},secondary_user_id.eq.${user.id}`),
+      adminClient.from("families").select("id").eq("primary_user_id", user.id),
+      // For the old month board only (before the migration was pasted).
       adminClient.from("enrollments")
         .select(`id, student_id, students ( id, full_name, avatar_url )`)
         .eq("class_id", classId).is("end_date", null),
-      adminClient.from("user_roles")
-        .select("role").eq("user_id", user.id).eq("role", "admin").limit(1),
     ]);
     const isAdmin = ((adminRes as any).data?.length ?? 0) > 0;
+    const isStaff = isAdmin || (teacherRes as any).data === true;
 
-    const teacher = teacherRes.data;
-    const userStudent = userStudentRes.data;
-    const family = familyRes.data;
-    const { data: enrollments, error: enrollError } = enrollmentsRes;
+    const familyIds = ((familyRes as any).data ?? []).map((f: any) => f.id);
+    const familyKids = familyIds.length
+      ? ((await adminClient.from("students").select("id").in("family_id", familyIds)).data ?? [])
+      : [];
+    const myKids = [...new Set([...((kidsRes as any).data ?? []), ...familyKids].map((k: any) => k.id as string))];
 
-    if (enrollError) {
-      console.error("Error fetching enrollments:", enrollError);
-      return new Response(JSON.stringify({ error: "Failed to fetch enrollments" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const studentIds = enrollments?.map((e) => e.student_id) || [];
-
-    // ----- Wave 2: secondary auth checks + points, all in parallel -----
-    const [classRes, teacherSessionRes, studentEnrollRes, familyEnrollRes, pointsRes] =
-      await Promise.all([
-        // Roster: permanent. Reads the weekly slots too - a teacher named on
-        // a slot is on the roster even when they are not the class default.
-        teacher
-          ? adminClient.from("classes").select("id, default_teacher_id, schedule_template")
-              .eq("id", classId).maybeSingle()
-          : Promise.resolve({ data: null as any }),
-        // Coverage, bounded. This used to be "any session for this class with
-        // my teacher_id, ever", so covering one lesson opened this class's
-        // leaderboard permanently - and the function runs on the service-role
-        // key, so RLS does not catch it. Cancelled sessions no longer count.
-        // Window must match is_teacher_of_class and src/lib/teacherAccess.ts.
-        teacher
-          ? adminClient.from("sessions").select("id")
-              .eq("class_id", classId).eq("teacher_id", teacher.id)
-              .neq("status", "Canceled")
-              .gte("date", coverFrom).lte("date", coverTo).limit(1)
-          : Promise.resolve({ data: null as any }),
-        userStudent
-          ? adminClient.from("enrollments").select("id, end_date")
-              .eq("student_id", userStudent.id).eq("class_id", classId).limit(1)
-          : Promise.resolve({ data: null as any }),
-        family
-          ? adminClient.from("enrollments")
-              .select("id, student_id, end_date, students!inner(family_id)")
-              .eq("class_id", classId).eq("students.family_id", family.id).limit(20)
-          : Promise.resolve({ data: null as any }),
-        studentIds.length && month
-          ? adminClient.from("student_points")
-              .select("student_id, participation_points, homework_points, reading_theory_points, vocabulary_quiz_points, total_points")
-              .eq("class_id", classId).eq("month", month).in("student_id", studentIds)
-          : Promise.resolve({ data: [] as any[], error: null as any }),
-      ]);
-
-    // ----- Evaluate authorization (same precedence as before) -----
-    let isAuthorized = false;
-    let isStaff = false;
-    let currentStudentId: string | null = null;
-    // Every child of this viewer in the class: shown in full and marked "you".
+    // Every child of this viewer in the class now: shown in full and marked "you".
     const viewerIds: string[] = [];
-
-    // Admins can see every class board (they are who opens a student's
-    // profile). No student is "the viewer", so currentStudentId stays null.
-    if (isAdmin) { isAuthorized = true; isStaff = true; }
-
-    if (!isAuthorized && teacher) {
-      const cls = (classRes as any).data;
-      const slots = Array.isArray(cls?.schedule_template?.weeklySlots)
-        ? cls.schedule_template.weeklySlots
-        : [];
-      const onRoster =
-        !!cls &&
-        (cls.default_teacher_id === teacher.id ||
-          slots.some((slot: any) => slot?.teacherId === teacher.id));
-      if (onRoster) isAuthorized = true;
-      if (!isAuthorized && (teacherSessionRes as any).data && (teacherSessionRes as any).data.length > 0) {
-        isAuthorized = true;
-      }
-      isStaff = isAuthorized;
-    }
-
-    if (!isAuthorized && userStudent) {
-      currentStudentId = userStudent.id;
-      const enr = (studentEnrollRes as any).data?.[0];
-      if (enr && (!enr.end_date || new Date(enr.end_date) >= new Date())) {
-        isAuthorized = true;
-        viewerIds.push(userStudent.id);
+    if (!isStaff && myKids.length) {
+      const { data: kidEnrols } = await adminClient.from("enrollments")
+        .select("student_id, end_date").eq("class_id", classId).in("student_id", myKids);
+      for (const enr of (kidEnrols ?? []) as Array<{ student_id: string; end_date: string | null }>) {
+        if ((!enr.end_date || new Date(enr.end_date) >= new Date()) && !viewerIds.includes(enr.student_id)) {
+          viewerIds.push(enr.student_id);
+        }
       }
     }
+    const currentStudentId: string | null = viewerIds[0] ?? null;
 
-    if (!isAuthorized && family) {
-      const current = ((familyEnrollRes as any).data ?? []).filter(
-        (enr: any) => !enr.end_date || new Date(enr.end_date) >= new Date(),
-      );
-      if (current.length > 0) {
-        isAuthorized = true;
-        currentStudentId = current[0].student_id;
-        for (const enr of current) if (!viewerIds.includes(enr.student_id)) viewerIds.push(enr.student_id);
-      }
-    }
-
-    if (!isAuthorized) {
+    if (!isStaff && viewerIds.length === 0) {
       return new Response(JSON.stringify({ error: "Not enrolled in this class" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const { data: enrollments, error: enrollError } = enrollmentsRes as any;
+    if (enrollError) console.error("Error fetching enrollments:", enrollError);
+    const studentIds: string[] = (enrollments ?? []).map((e: any) => e.student_id);
 
     // ----- A family sees the class from when their child joined -----
     // Children who left before then were never this child's classmates
@@ -234,6 +157,9 @@ Deno.serve(async (req) => {
       p_anchor: anchor,
       p_viewers: viewerIds,
       p_full: isStaff,
+      p_category: category,
+      // A teacher's view of a level counts only their own classes (review M-3).
+      p_teacher: isStaff && !isAdmin ? user.id : null,
     });
     if (!boardError && board) {
       const rows = (board as any).rows ?? [];
@@ -246,7 +172,7 @@ Deno.serve(async (req) => {
         homework_points: Number(r.categories?.homework ?? 0) + Number(r.categories?.video ?? 0),
         reading_theory_points: Number(r.categories?.reading ?? 0),
         vocabulary_quiz_points: Number(r.categories?.vocabulary ?? 0),
-        total_points: Number(r.total ?? 0),
+        total_points: Number(r.total ?? r.points ?? 0),
         is_current_user: !!r.is_self,
         rank: r.rank,
       }));
@@ -276,7 +202,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: rawPoints, error: pointsError } = pointsRes as any;
+    const { data: rawPoints, error: pointsError } = studentIds.length
+      ? await adminClient.from("student_points")
+          .select("student_id, participation_points, homework_points, reading_theory_points, vocabulary_quiz_points, total_points")
+          .eq("class_id", classId).eq("month", month).in("student_id", studentIds)
+      : { data: [] as any[], error: null as any };
     if (pointsError) {
       console.error("Error fetching points:", pointsError);
     }
@@ -300,7 +230,7 @@ Deno.serve(async (req) => {
 
     // Combine data and calculate rankings
     const leaderboard = (enrollments || [])
-      .map((enrollment) => {
+      .map((enrollment: any) => {
         const studentPoints = pointsMap.get(enrollment.student_id);
         const student = enrollment.students as unknown as { id: string; full_name: string; avatar_url: string | null } | null;
         
@@ -324,13 +254,13 @@ Deno.serve(async (req) => {
           is_current_user: enrollment.student_id === currentStudentId,
         };
       })
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         if (b.total_points !== a.total_points) {
           return b.total_points - a.total_points;
         }
         return a.student_name.localeCompare(b.student_name);
       })
-      .map((entry, index) => ({
+      .map((entry: any, index: number) => ({
         ...entry,
         rank: index + 1,
       }));

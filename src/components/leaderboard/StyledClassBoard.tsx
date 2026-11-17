@@ -29,9 +29,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { PodiumBoard, type BoardEntry, type PodiumBoardProps } from "@/components/shared/PodiumBoard";
 import { isPerLesson, type ServerBoard } from "@/lib/leaderboard/board";
 import { BoardFrame } from "./BoardFrame";
+import { EveryoneList } from "./EveryoneList";
 import { toBoardEntries, useBoardExtras, useBoardRows } from "./useBoardData";
 import { useClassBoardStyle } from "./useClassBoardStyle";
-import { isDisplayBoard, type BoardCategory, type BoardStyle, type BoardViewProps } from "./types";
+import { BOARD_CATEGORIES, isDisplayBoard, type BoardCategory, type BoardStyle, type BoardViewProps } from "./types";
 
 // Each style carries its own fonts and a few hundred lines of decoration.
 // Loading all three into every bundle that shows a leaderboard would make
@@ -62,6 +63,12 @@ export interface StyledClassBoardProps extends Omit<PodiumBoardProps, "entries">
   forceClassic?: boolean;
   /** Fills its container instead of sitting in the page flow. */
   fullscreen?: boolean;
+  /**
+   * The tab, held by the caller so it can ask the server to rank on it
+   * (useClassBoard's `category`). Without it the board keeps its own.
+   */
+  activeCategory?: BoardCategory["key"] | null;
+  onCategoryChange?: (key: BoardCategory["key"] | null) => void;
 }
 
 export function StyledClassBoard({
@@ -70,12 +77,16 @@ export function StyledClassBoard({
   forceClassic = false,
   fullscreen = false,
   board: serverBoard,
+  activeCategory: controlledCategory,
+  onCategoryChange: controlledChange,
   ...board
 }: StyledClassBoardProps) {
   const { data: info } = useClassBoardStyle(board.classId);
   const isMobile = useIsMobile();
 
-  const [activeCategory, setActiveCategory] = useState<BoardCategory["key"] | null>(null);
+  const [ownCategory, setOwnCategory] = useState<BoardCategory["key"] | null>(null);
+  const activeCategory = controlledChange ? (controlledCategory ?? null) : ownCategory;
+  const setActiveCategory = controlledChange ?? setOwnCategory;
   const [revealKey, setRevealKey] = useState(0);
 
   const entries = useMemo<BoardEntry[]>(() => toBoardEntries(serverBoard), [serverBoard]);
@@ -91,6 +102,12 @@ export function StyledClassBoard({
     if (entry) board.onOpenAnalytics(entry);
   };
 
+  // On the projector: the styled board, or every child at once.
+  const [showAll, setShowAll] = useState(false);
+  const pointsLabel = activeCategory
+    ? `${BOARD_CATEGORIES.find((c) => c.key === activeCategory)?.label ?? ""} points`
+    : isPerLesson(serverBoard) ? "points per lesson" : "points";
+
   const prefersReduced = useMemo(() => {
     if (typeof window === "undefined" || !window.matchMedia) return false;
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -105,7 +122,7 @@ export function StyledClassBoard({
     return <PodiumBoard {...board} entries={entries} periodNote={isPerLesson(serverBoard) ? "Points per lesson" : undefined} />;
   }
 
-  return (
+  const styled = (
     <BoardFrame style={chosen} className={className} fullscreen={fullscreen}>
       {/* One handler for every child's card the style drew (data-student-id):
           tapping a child opens their points, as on the classic board. */}
@@ -141,5 +158,31 @@ export function StyledClassBoard({
       </Suspense>
       </div>
     </BoardFrame>
+  );
+
+  // The styled boards show three on the podium and the rest a page at a
+  // time; the owner wants every child and their points at once. On a page
+  // the full list sits under the board; on the projector a button swaps.
+  if (!fullscreen) {
+    return (
+      <>
+        {styled}
+        <div className="px-4 pb-4 sm:px-6">
+          <EveryoneList rows={rows} pointsLabel={pointsLabel} onSelect={onSelect} />
+        </div>
+      </>
+    );
+  }
+  return (
+    <div className="relative h-full">
+      <button
+        type="button"
+        onClick={() => setShowAll((v) => !v)}
+        className="absolute right-3 top-3 z-30 min-h-hec-target rounded-hec-md border border-hec-line-strong bg-hec-raised px-4 text-hec-small font-semibold text-hec-ink shadow-hec-2 hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+      >
+        {showAll ? "Show the board" : "Everyone"}
+      </button>
+      {showAll ? <EveryoneList rows={rows} pointsLabel={pointsLabel} big /> : styled}
+    </div>
   );
 }

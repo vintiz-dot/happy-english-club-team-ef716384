@@ -22,15 +22,21 @@ export interface ServerRow {
   student_id: string;
   name: string;
   avatar_url?: string | null;
-  rank: number;
+  /** This board's rank (the chosen tab's, when the server ranked one). Null: no points, no rank. */
+  rank: number | null;
+  /** This board's points: the tab's, or points per lesson on a per-lesson board, else the total. */
+  points?: number | string | null;
+  /** Overall rank when a tab is chosen (staff and own rows only). */
+  overall_rank?: number | null;
   tied?: boolean;
   is_new?: boolean;
   is_self?: boolean;
-  total: number;
+  /** Absent for a classmate on a per-lesson board (it would give their lesson count). */
+  total?: number;
   per_lesson?: number | string | null;
   gain_week?: number;
   categories?: Partial<Record<ServerCategory, number>>;
-  category_ranks?: Partial<Record<ServerCategory, number>>;
+  category_ranks?: Partial<Record<ServerCategory, number | null>>;
   all_time?: number;
   level?: ServerLevel | null;
   /** Staff, and a family's own child, only. */
@@ -44,6 +50,8 @@ export interface ServerRow {
 export interface ServerBoard {
   period: { kind: PeriodKind; from: string; to: string; label: string; term_id: string | null; basis: "total" | "per_lesson" };
   class_id: string;
+  /** The tab the server ranked this board on, if any. */
+  category?: ServerCategory | null;
   full?: boolean;
   rows: ServerRow[];
   champions: Array<{ category: ServerCategory; student_id: string; name: string; points: number }>;
@@ -82,50 +90,62 @@ export const perLessonOf = (r: ServerRow): number => num(r.per_lesson);
 export const isPerLesson = (b: Pick<ServerBoard, "period"> | null | undefined): boolean =>
   b?.period?.basis === "per_lesson";
 
+/** The server ranked this board on exactly what is being shown. */
+const rankedAsShown = (b: ServerBoard, active: ServerCategory | null) => (b.category ?? null) === active;
+
 /**
- * The number a board shows beside a child: points per lesson on a
- * per-lesson board, the category's points on a category tab, else total.
+ * The number a board shows beside a child: the server's `points` for the
+ * board it ranked (the tab's points, points per lesson on a per-lesson
+ * board, else the total). Older servers: worked out from the same fields.
  */
 export function shownPoints(b: ServerBoard, r: ServerRow, active: ServerCategory | null): number {
+  if (rankedAsShown(b, active) && r.points != null) return num(r.points);
   if (active) return categoryPoints(r, active);
   return isPerLesson(b) ? perLessonOf(r) : num(r.total);
 }
 
-/** The rank to show: the category's own when a tab is chosen. */
-export function shownRank(r: ServerRow, active: ServerCategory | null): number {
-  if (active) return num(r.category_ranks?.[active]) || num(r.rank);
-  return num(r.rank);
+/** The rank to show, or null: no points, no rank. */
+export function shownRank(b: ServerBoard, r: ServerRow, active: ServerCategory | null): number | null {
+  if (rankedAsShown(b, active)) return r.rank == null ? null : num(r.rank) || null;
+  const c = active ? r.category_ranks?.[active] : r.overall_rank ?? r.rank;
+  return c == null ? null : num(c) || null;
 }
+
+const rankKey = (n: number | null) => (n == null ? Number.MAX_SAFE_INTEGER : n);
 
 /**
  * The rows in the order to draw them: by the server's rank for what is
- * shown, then by name. Sorting by a rank the server gave is not ranking.
+ * shown, unranked (no points) last, then by name. Sorting by a rank the
+ * server gave is not ranking.
  */
 export function orderedRows(b: ServerBoard, active: ServerCategory | null): ServerRow[] {
   return [...(b.rows ?? [])].sort(
-    (x, y) => shownRank(x, active) - shownRank(y, active) || x.name.localeCompare(y.name),
+    (x, y) => rankKey(shownRank(b, x, active)) - rankKey(shownRank(b, y, active)) || x.name.localeCompare(y.name),
   );
 }
 
-/** Whether another child shares this child's shown rank. */
+/** Whether another child shares this child's shown rank (never for the unranked). */
 export function isTied(b: ServerBoard, r: ServerRow, active: ServerCategory | null): boolean {
-  const mine = shownRank(r, active);
-  return (b.rows ?? []).filter((x) => shownRank(x, active) === mine).length > 1;
+  const mine = shownRank(b, r, active);
+  if (mine == null) return false;
+  return (b.rows ?? []).filter((x) => shownRank(b, x, active) === mine).length > 1;
 }
 
 /**
- * Points still needed to reach third place on what is shown; 0 when on
- * the podium. Arithmetic over the server's own figures, nothing more.
+ * Points still needed to reach the podium on what is shown; 0 when on it.
+ * Arithmetic over the server's own figures, nothing more. With fewer than
+ * three children on points, any point at all reaches it.
  */
 export function toPodium(b: ServerBoard, r: ServerRow, active: ServerCategory | null): number {
-  if (shownRank(r, active) <= 3) return 0;
-  const third = (b.rows ?? []).filter((x) => shownRank(x, active) <= 3)
+  const mine = shownRank(b, r, active);
+  if (mine != null && mine <= 3) return 0;
+  const podium = (b.rows ?? []).filter((x) => { const k = shownRank(b, x, active); return k != null && k <= 3; })
     .map((x) => shownPoints(b, x, active));
-  if (!third.length) return 0;
-  const bar = Math.min(...third);
+  const tenths = isPerLesson(b) && !active;
+  const bar = podium.length >= 3 ? Math.min(...podium) : 0;
   const gap = bar - shownPoints(b, r, active);
   // A per-lesson board moves in tenths.
-  return isPerLesson(b) && !active ? Math.max(0, Math.round((gap + 0.1) * 10) / 10) : Math.max(0, Math.floor(gap) + 1);
+  return tenths ? Math.max(0.1, Math.round((gap + 0.1) * 10) / 10) : Math.max(1, Math.floor(gap) + 1);
 }
 
 /* ------------------------------------------------------------ periods */

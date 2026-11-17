@@ -268,7 +268,9 @@ export function NightLeague({
   const streakRow = streak ? rows.find((r) => r.studentId === streak.studentId) : undefined;
   const litBars = streak ? Math.max(0, Math.min(10, streak.days)) : 0;
 
-  const rest = rows.slice(3);
+  // The podium is for children with points (none at the start of a month).
+  const podium = rows.filter((r) => r.rank > 0).slice(0, 3);
+  const rest = rows.filter((r) => !podium.includes(r));
   /** Two rows fit the strip, so a bigger class is shown a page at a time. */
   const restPage = useRestPaging(rest.length, ROWS_PER_PAGE, motion);
   const visibleRest = rest.slice(restPage.from, restPage.to);
@@ -479,26 +481,28 @@ export function NightLeague({
           >
             <div style={{ position: "absolute", inset: g.ring1, borderRadius: "50%", background: BASE }} />
             <div style={{ position: "absolute", inset: g.ring2 }}>{avatar(row, g.initial)}</div>
-            <span
-              style={{
-                position: "absolute",
-                left: "50%",
-                bottom: g.lvBottom,
-                transform: "translateX(-50%)",
-                padding: "4px 11px",
-                borderRadius: 6,
-                border: `1px solid ${metal}`,
-                background: BASE,
-                color: metal,
-                fontSize: g.lv,
-                fontWeight: 700,
-                lineHeight: 1.2,
-                letterSpacing: "0.14em",
-                whiteSpace: "nowrap",
-              }}
-            >
-              LV {row.level}
-            </span>
+            {row.level > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  bottom: g.lvBottom,
+                  transform: "translateX(-50%)",
+                  padding: "4px 11px",
+                  borderRadius: 6,
+                  border: `1px solid ${metal}`,
+                  background: BASE,
+                  color: metal,
+                  fontSize: g.lv,
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                  letterSpacing: "0.14em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                LV {row.level}
+              </span>
+            )}
             {isClimber && climber ? (
               <span
                 title="Points gained this week"
@@ -650,7 +654,7 @@ export function NightLeague({
               WebkitTextStroke: `2px ${hexA(metal, 0.6)}`,
             }}
           >
-            {`${row.tied ? "T" : ""}${row.rank}`}
+            {row.rank ? `${row.tied ? "T" : ""}${row.rank}` : "–"}
           </span>
           <div
             style={{
@@ -1090,9 +1094,9 @@ export function NightLeague({
                   aria-label="Podium"
                   style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 28 }}
                 >
-                  {renderSlot(rows[1], "small", "L", 2)}
-                  {renderSlot(rows[0], "big", "C", 1)}
-                  {renderSlot(rows[2], "small", "R", 3)}
+                  {renderSlot(podium[1], "small", "L", 2)}
+                  {renderSlot(podium[0], "big", "C", 1)}
+                  {renderSlot(podium[2], "small", "R", 3)}
                 </section>
 
                 <section aria-label="Standings" style={{ height: STANDINGS_H, flexShrink: 0, overflow: "hidden" }}>
@@ -1162,7 +1166,7 @@ export function NightLeague({
                             <tr key={row.studentId} data-student-id={row.studentId} role="button" tabIndex={0} aria-label={`${row.name}, ${row.points} points`}>
                               <td style={tdFirst(!!row.isSelf)}>
                                 <span style={{ fontFamily: HEAD, fontWeight: 800, fontSize: 32, lineHeight: 1 }}>
-                                  {`${row.tied ? "T" : ""}${row.rank}`}
+                                  {row.rank ? `${row.tied ? "T" : ""}${row.rank}` : "–"}
                                 </span>
                               </td>
                               <td style={TD}>
@@ -1209,7 +1213,7 @@ export function NightLeague({
                                 </span>
                               </td>
                               <td style={TD}>
-                                <span style={{ fontSize: 18, fontWeight: 700, color: SOFT }}>{row.level}</span>
+                                <span style={{ fontSize: 18, fontWeight: 700, color: SOFT }}>{row.level > 0 ? row.level : "–"}</span>
                               </td>
                               {BOARD_CATEGORIES.map((cat) => {
                                 const value = row.categories[cat.key] || 0;
@@ -1310,7 +1314,7 @@ export function NightLeague({
                     </span>
                     {climberRow ? (
                       <span style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2, letterSpacing: "0.18em", textTransform: "uppercase", color: ACCENT }}>
-                        {`Now ${ordinal(climberRow.rank)} overall`}
+                        {climberRow.rank ? `Now ${ordinal(climberRow.rank)} overall` : ""}
                       </span>
                     ) : null}
                   </div>

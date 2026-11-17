@@ -15,7 +15,9 @@
  * them, because the class is who reads it. It used to rank the rows
  * itself with no ties, and pin the month it opened in.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { SERVER_KEY_OF } from "@/lib/leaderboard/board";
+import type { BoardCategory } from "./types";
 import { Loading } from "@/components/ui/loading";
 import { useClassBoard } from "@/hooks/useClassBoard";
 import { StyledClassBoard } from "./StyledClassBoard";
@@ -25,7 +27,11 @@ const EMPTY_PENDING = new Map<string, number>();
 const EMPTY_SELECTION = new Map<string, { id: string; name: string; avatarUrl?: string | null }>();
 
 export function ProjectedBoard({ classId }: { classId: string }) {
-  const { data, isLoading } = useClassBoard(classId, THIS_MONTH, "staff", { wall: true });
+  const [tab, setTab] = useState<BoardCategory["key"] | null>(null);
+  const { data, isLoading } = useClassBoard(classId, THIS_MONTH, "staff", {
+    wall: true,
+    category: tab ? SERVER_KEY_OF[tab] : null,
+  });
   const label = useMemo(() => data?.board?.period?.label ?? "", [data]);
 
   if (isLoading) {
@@ -39,6 +45,8 @@ export function ProjectedBoard({ classId }: { classId: string }) {
   return (
     <StyledClassBoard
       board={data?.board ?? null}
+      activeCategory={tab}
+      onCategoryChange={setTab}
       classId={classId}
       periodLabel={label}
       fullscreen

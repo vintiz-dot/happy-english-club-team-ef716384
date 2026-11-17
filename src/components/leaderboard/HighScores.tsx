@@ -554,26 +554,28 @@ function PodiumSlot({
               pct={row.levelPct}
               track={TRACK_DARK}
             />
-            <span
-              style={{
-                position: "absolute",
-                left: "50%",
-                bottom: geo.lvBottom,
-                transform: "translateX(-50%)",
-                padding: geo.lvPad,
-                border: `4px solid ${INK}`,
-                borderRadius: 10,
-                background: GREEN,
-                color: INK,
-                fontFamily: DISPLAY_FONT,
-                fontWeight: 400,
-                fontSize: geo.lvFont,
-                lineHeight: 1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              LV{row.level}
-            </span>
+            {row.level > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  bottom: geo.lvBottom,
+                  transform: "translateX(-50%)",
+                  padding: geo.lvPad,
+                  border: `4px solid ${INK}`,
+                  borderRadius: 10,
+                  background: GREEN,
+                  color: INK,
+                  fontFamily: DISPLAY_FONT,
+                  fontWeight: 400,
+                  fontSize: geo.lvFont,
+                  lineHeight: 1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                LV{row.level}
+              </span>
+            )}
             {crown && <Crown anim={anims.crown} />}
           </div>
 
@@ -881,7 +883,9 @@ export function HighScores({
     ? (BOARD_CATEGORIES.find((c) => c.key === activeCategory)?.label ?? "All") + " points"
     : "All points";
 
-  const rest = rows.slice(3);
+  // The podium is for children with points (none at the start of a month).
+  const podium = rows.filter((r) => r.rank > 0).slice(0, 3);
+  const rest = rows.filter((r) => !podium.includes(r));
   /** Two cards fit the strip, so a bigger class is shown a page at a time. */
   const restPage = useRestPaging(rest.length, REST_PER_PAGE, motion);
   const shownRest = rest.slice(restPage.from, restPage.to);
@@ -1245,7 +1249,7 @@ export function HighScores({
                 }}
               >
                 <PodiumSlot
-                  row={rows[1]}
+                  row={podium[1]}
                   geo={SIDE}
                   seat={2}
                   tilt={-2}
@@ -1258,7 +1262,7 @@ export function HighScores({
                   gloss={false}
                 />
                 <PodiumSlot
-                  row={rows[0]}
+                  row={podium[0]}
                   geo={CENTRE}
                   seat={1}
                   tilt={-2}
@@ -1271,7 +1275,7 @@ export function HighScores({
                   gloss
                 />
                 <PodiumSlot
-                  row={rows[2]}
+                  row={podium[2]}
                   geo={SIDE}
                   seat={3}
                   tilt={2}
@@ -1421,7 +1425,7 @@ export function HighScores({
                           textAlign: "center",
                         }}
                       >
-                        #{row.rank}
+                        {row.rank ? `#${row.rank}` : "–"}
                       </span>
                       <Disc
                         size={88}

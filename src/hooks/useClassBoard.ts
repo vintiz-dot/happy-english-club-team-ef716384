@@ -19,6 +19,7 @@ import {
   type LegacyEntry,
   type PeriodChoice,
   type ServerBoard,
+  type ServerCategory,
 } from "@/lib/leaderboard/board";
 
 export type BoardAudience = "staff" | "family";
@@ -40,10 +41,10 @@ export class BeforeJoinedError extends Error {
   constructor() { super("Before your child joined this class"); }
 }
 
-async function viaFunction(classId: string, choice: PeriodChoice): Promise<ClassBoardResult> {
+async function viaFunction(classId: string, choice: PeriodChoice, category: ServerCategory | null): Promise<ClassBoardResult> {
   const month = legacyMonthOf(choice, hanoiToday());
   const res = await supabase.functions.invoke("class-leaderboard", {
-    body: { classId, period: choice.kind, anchor: choice.anchor, ...(month ? { month } : {}) },
+    body: { classId, period: choice.kind, anchor: choice.anchor, category, ...(month ? { month } : {}) },
   });
   if (res.error) {
     const ctx = (res.error as { context?: Response }).context;
@@ -72,27 +73,34 @@ export function useClassBoard(
   classId: string | undefined,
   choice: PeriodChoice,
   audience: BoardAudience,
-  /** The projector / class window: staff-opened, class-read. Classmate fields only. */
-  opts: { wall?: boolean } = {},
+  /**
+   * wall: the projector / class window: staff-opened, class-read, classmate fields only.
+   * category: rank the board on one tab, on the server (the screen never ranks).
+   */
+  opts: { wall?: boolean; category?: ServerCategory | null } = {},
 ) {
   const wall = !!opts.wall;
+  const category = opts.category ?? null;
   const queryClient = useQueryClient();
 
   const query = useQuery<ClassBoardResult>({
-    queryKey: ["class-board", classId, audience, wall ? "wall" : "desk", periodKey(choice)],
+    queryKey: ["class-board", classId, audience, wall ? "wall" : "desk", periodKey(choice), category ?? "all"],
     enabled: !!classId,
     staleTime: 30_000,
+    // Keep the board on screen while another tab or period loads.
+    placeholderData: (prev) => prev,
     retry: (n, e) => !(e instanceof NoTermError) && !(e instanceof BeforeJoinedError) && n < 1,
     queryFn: async () => {
       if (audience === "staff") {
         const { data, error } = await supabase.rpc("leaderboard_board" as never, {
           p_class: classId, p_period: choice.kind, p_anchor: choice.anchor, p_wall: wall,
+          p_category: category,
         } as never);
         if (!error && data) return { board: data as unknown as ServerBoard, currentStudentId: null, legacy: false };
         if (error && (error as { code?: string }).code === "P0002") throw new NoTermError();
         if (!isMissingFunction(error)) throw error;
       }
-      return viaFunction(classId!, choice);
+      return viaFunction(classId!, choice, category);
     },
   });
 

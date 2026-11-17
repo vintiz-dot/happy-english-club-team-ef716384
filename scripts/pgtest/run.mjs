@@ -199,7 +199,7 @@ const SUITES = [
   { name: "stars records", file: "stars-records.test.mjs", migrations: [] },
   // The leaderboard: one calculation for every board (rank, ties, periods,
   // categories, level, streak, what a family sees of classmates, the TV).
-  { name: "leaderboard engine", file: "leaderboard.test.mjs", migrations: ["20261117120000_leaderboard_engine.sql"] },
+  { name: "leaderboard engine", file: "leaderboard.test.mjs", migrations: ["20261117120000_leaderboard_engine.sql", "20261117130000_leaderboard_review_fixes.sql"] },
   // How the screens read that board: order, ties, per-lesson, the month list.
   { name: "leaderboard board mapping", file: "leaderboard-board.test.mjs", migrations: [] },
   {

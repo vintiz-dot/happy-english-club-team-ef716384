@@ -164,3 +164,23 @@ A separate agent reviewed `origin/main...HEAD`: no blockers; all suites it ran p
 Also done: classmates no longer receive each other's all-time points (only the level); an enrolment that has not started is not on today's board; impossible dates get a 400; a 404 is "no term" only when the function says so; an old server shows Month only on staff screens too; the repair is split into CHECK and REPAIR files.
 
 Left as is (owner may decide later): on the projector and for families the "Hot streak" panel shows only the family's own child, or "No run going yet" on the projector, because a classmate's attendance run is not shared; a classmate's lesson count can be estimated from total / points per lesson.
+
+## 8. Second review, of the release 6b53a6b5 (conductor, 17 Nov 2026)
+
+Verdict "ship with changes", no blocker; the full review is `docs/evidence/REVIEW-leaderboard-6b53a6b5.md`. Done in migration `20261117130000_leaderboard_review_fixes.sql` plus the screens and functions, each with a test:
+
+| Finding | Fix | Test |
+|---|---|---|
+| M-1 classmates carried level, per-lesson, new/tied flags, category ranks | A family (and the projector) gets a classmate as name, avatar, this board's `points` and `rank` (plus the category split on a points board). Tabs are ranked on the server (`p_category`). Boards hide a level they were not given. | leaderboard.test "a classmate is a name, an avatar, this board's points and rank", "on a per-lesson board a classmate has no total", "a category tab is ranked on the server" |
+| M-2 class-cash approval not idempotent | `economy_process(tx, status)`: one transaction, claimed by id, refuses a handled request and a month going below zero; class-cash rows (`Class cash:`) never change a level (`level_points`) | "approving takes the points once", "a second approval is refused", "spending points on class cash does not lower the level", "a request bigger than the month's points is refused" |
+| M-3 a teacher saw other classes' totals | Teacher's level / all-time over their own classes, in boards and the summary; a teacher sees a child's points only while the child is in their class | "for the class teacher only their own class counts", "a teacher's summary ... only over the teacher's classes", "a teacher of a class the child has left is refused" |
+| M-4 everyone 1st at zero | No points, no rank; podium only for ranked children; "–" in the list; premium avatars need a ranked place with points | "nobody has points: nobody is ranked", "premium avatars: a child with no points is not top 3", leaderboard-board "nobody with points: nobody ranked" |
+| N-1 reset default month on the 29th-31st | Hanoi year/month arithmetic | leaderboard-board "on 31 Oct it is September" |
+| N-2 TV list short after an inactive child | Inactive children / classes are on no board that reaches today; TV filters before the limit | "an inactive child is not on this month's board", "the TV's top 2 are two children on the register" |
+| N-3 school_terms default privileges | No TRUNCATE/REFERENCES/TRIGGER for app roles, nothing for anon; helpers not for anon | "school_terms privileges" |
+| N-4 teachers could write student_points directly | Teachers keep SELECT only; the ledger trigger and the service role write it | "a teacher can no longer write student_points directly" |
+| N-5 class-leaderboard missed teaching assistants | Staff = admin or `is_teacher_of_class`; second guardians' children count | leaderboard-board "class-leaderboard lets staff in by is_teacher_of_class" |
+
+## 9. "Show all the students" (owner, 17 Nov 2026)
+
+The three display styles show three on the podium and the rest two at a time. Every styled board now has an "Everyone" list of all its children and their points (the server's rows, rank and points; nobody ranked in the browser): under the board on class pages, and behind an "Everyone" button on the projector / class window. The classic board already listed everyone.

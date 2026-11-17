@@ -24,10 +24,15 @@ Deno.serve(async (req) => {
 
     const { targetMonth } = await req.json().catch(() => ({}));
     
+    // Last month in Hanoi (UTC+7), by year and month: setMonth(-1) on the
+    // 29th-31st lands in the current month (review N-1).
     const monthToArchive = targetMonth || (() => {
-      const now = new Date();
-      now.setMonth(now.getMonth() - 1);
-      return now.toISOString().slice(0, 7);
+      const h = new Date(Date.now() + 7 * 3600 * 1000);
+      const y = h.getUTCFullYear();
+      const m = h.getUTCMonth(); // 0-11, this month
+      const py = m === 0 ? y - 1 : y;
+      const pm = m === 0 ? 12 : m; // last month, 1-12
+      return `${py}-${String(pm).padStart(2, "0")}`;
     })();
 
     console.log(`Starting monthly leaderboard reset for month: ${monthToArchive}`);

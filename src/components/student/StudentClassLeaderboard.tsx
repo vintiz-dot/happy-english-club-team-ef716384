@@ -18,7 +18,8 @@ import { StyledClassBoard } from "@/components/leaderboard/StyledClassBoard";
 import { PeriodPicker, THIS_MONTH } from "@/components/leaderboard/PeriodPicker";
 import { useClassMonitor } from "@/hooks/useClassMonitor";
 import { BeforeJoinedError, NoTermError, useClassBoard } from "@/hooks/useClassBoard";
-import { hanoiToday, type PeriodChoice } from "@/lib/leaderboard/board";
+import { hanoiToday, SERVER_KEY_OF, type PeriodChoice } from "@/lib/leaderboard/board";
+import type { BoardCategory } from "@/components/leaderboard/types";
 
 interface StudentClassLeaderboardProps {
   classId: string;
@@ -44,6 +45,7 @@ export function StudentClassLeaderboard({
   currentStudentId,
 }: StudentClassLeaderboardProps) {
   const [period, setPeriod] = useState<PeriodChoice>(THIS_MONTH);
+  const [tab, setTab] = useState<BoardCategory["key"] | null>(null);
   const [analyticsStudent, setAnalyticsStudent] = useState<{
     id: string;
     name: string;
@@ -59,7 +61,7 @@ export function StudentClassLeaderboard({
   } | null>(null);
 
   const { data: monitorStudentId } = useClassMonitor(classId);
-  const { data, isLoading, error } = useClassBoard(classId, period, "family");
+  const { data, isLoading, error } = useClassBoard(classId, period, "family", { category: tab ? SERVER_KEY_OF[tab] : null });
   const board = data?.board ?? null;
 
   // The function tells us who the viewer is; the prop is a fallback for
@@ -108,6 +110,8 @@ export function StudentClassLeaderboard({
       ) : (
         <StyledClassBoard
           board={board}
+          activeCategory={tab}
+          onCategoryChange={setTab}
           classId={classId}
           periodLabel={board?.period?.label ?? ""}
           currentStudentId={viewerStudentId}

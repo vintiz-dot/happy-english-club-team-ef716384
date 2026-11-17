@@ -52,10 +52,12 @@ export function boardRowsFrom(
       shortName: shortNameOf(r.name || "Unknown"),
       initial: initialOf(r.name || "?"),
       avatarUrl: r.avatar_url ?? null,
-      rank: shownRank(r, active),
+      // 0 = no rank (no points); the boards show "–" and keep the podium for ranked children.
+      rank: shownRank(board, r, active) ?? 0,
       tied: isTied(board, r, active),
       points: shownPoints(board, r, active),
-      level: r.level?.level ?? 1,
+      // 0 = not shown: a family is not told a classmate's level (review M-1).
+      level: r.level?.level ?? 0,
       levelPct: r.level?.progress ?? 0,
       categories,
       toPodium: toPodium(board, r, active),
@@ -78,7 +80,7 @@ export function toBoardEntries(board: ServerBoard | null | undefined): BoardEntr
   return orderedRows(board, null).map((r) => ({
     id: `${board.class_id}-${r.student_id}`,
     student_id: r.student_id,
-    rank: r.rank,
+    rank: shownRank(board, r, null) ?? 0,
     total_points: shownPoints(board, r, null),
     homework_points: categoryPoints(r, "homework") + categoryPoints(r, "video"),
     participation_points: categoryPoints(r, "class") + categoryPoints(r, "streak"),

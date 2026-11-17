@@ -266,7 +266,7 @@ function PodiumPlace({
 }) {
   const ivory = useIvory();
   const tier = (ivory ? TIERS_IVORY : TIERS)[entry.rank as 1 | 2 | 3];
-  const { level, pct } = levelOfEntry(entry);
+  const { level, pct, known } = levelOfEntry(entry);
   const first = entry.rank === 1;
 
   return (
@@ -358,7 +358,7 @@ function PodiumPlace({
           {entry.total_points}
         </p>
         <p className={ivory ? "mb-2 text-hec-caption font-medium tabular-nums text-hec-ink-soft" : "mb-2 text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-ink-faint"}>
-          points · level {level}
+          {known ? `points · level ${level}` : "points"}
         </p>
         <div className="mx-auto w-3/4">
           <ProgressBead pct={pct} color={tier.inkSoft} />
@@ -424,7 +424,7 @@ function BoardRow({
   classId: string;
 }) {
   const ivory = useIvory();
-  const { level, pct } = levelOfEntry(entry);
+  const { level, pct, known } = levelOfEntry(entry);
 
   return (
     <motion.div
@@ -459,7 +459,7 @@ function BoardRow({
       )}
 
       <span className={ivory ? "w-8 shrink-0 self-center text-center text-hec-small font-semibold tabular-nums text-hec-ink-soft" : "w-7 shrink-0 text-center text-sm font-bold tabular-nums text-ink-faint"}>
-        {entry.rank}
+        {entry.rank || "–"}
       </span>
 
       <div className={ivory ? "relative shrink-0 self-center" : "relative shrink-0"}>
@@ -525,7 +525,7 @@ function BoardRow({
           small progress indicator into the widest thing on the board. */}
       <div className={ivory ? "hidden w-24 shrink-0 self-center sm:block" : "hidden w-24 shrink-0 sm:block"}>
         <ProgressBead pct={pct} color={ivory ? "hsl(var(--hec-brass))" : "hsl(var(--studio-ink) / 0.26)"} />
-        <p className={ivory ? "mt-1 text-right text-hec-caption tabular-nums text-hec-ink-soft" : "mt-1 text-right text-[0.625rem] text-ink-faint"}>Level {level}</p>
+        <p className={ivory ? "mt-1 text-right text-hec-caption tabular-nums text-hec-ink-soft" : "mt-1 text-right text-[0.625rem] text-ink-faint"}>{known ? `Level ${level}` : ""}</p>
       </div>
 
       <div className={ivory ? "shrink-0 self-center text-right" : "shrink-0 text-right"}>
@@ -589,8 +589,11 @@ export function PodiumBoard({
     previousRanksRef.current = map;
   }, [entries]);
 
-  const top3 = useMemo(() => entries.slice(0, 3), [entries]);
-  const rest = useMemo(() => entries.slice(3), [entries]);
+  // The podium is for children with points; with none (the start of a
+  // month) nobody stands on it with nothing. Unranked children (rank 0)
+  // are listed below with "–".
+  const top3 = useMemo(() => entries.filter((e) => e.rank > 0).slice(0, 3), [entries]);
+  const rest = useMemo(() => entries.filter((e) => !top3.includes(e)), [entries, top3]);
   // The page's own child first: a family login marks every one of its
   // children in the class as is_self.
   const self = (currentStudentId ? entries.find((e) => e.student_id === currentStudentId) : null)
@@ -636,7 +639,7 @@ export function PodiumBoard({
       {rest.length > 0 && (
         <>
           <div className={ivory ? "mb-2 flex items-baseline justify-between gap-2 px-1" : "mb-2 flex items-baseline justify-between px-1"}>
-            <h3 className={ivory ? "text-hec-h3 text-hec-ink" : "studio-title text-base"}>Everyone else</h3>
+            <h3 className={ivory ? "text-hec-h3 text-hec-ink" : "studio-title text-base"}>{top3.length ? "Everyone else" : "No points yet"}</h3>
             <span className={ivory ? "text-hec-caption tabular-nums text-hec-ink-soft" : "text-xs text-ink-faint"}>
               {rest.length} {rest.length === 1 ? "student" : "students"}
             </span>
@@ -674,7 +677,7 @@ export function PodiumBoard({
       )}
 
       {/* "You", pinned, when the viewer is a student outside the podium. */}
-      {self && self.rank > 3 && <SelfCard entry={self} onClick={() => onOpenAnalytics(self)} />}
+      {self && !top3.includes(self) && <SelfCard entry={self} onClick={() => onOpenAnalytics(self)} />}
     </div>
   );
 }
@@ -698,8 +701,9 @@ function SelfCard({ entry, onClick }: { entry: BoardEntry; onClick: () => void }
       <Avatar48 entry={entry} ring={ivory ? "hsl(var(--hec-brass))" : "hsl(var(--studio-butter))"} className="h-10 w-10 shrink-0" />
       <div className="min-w-0 flex-1">
         <p className={ivory ? "text-hec-caption font-semibold uppercase tracking-wider text-hec-brass" : "text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[hsl(var(--studio-butter))]"}>
-          You · {entry.rank}
-          {entry.rank === 1 ? "st" : entry.rank === 2 ? "nd" : entry.rank === 3 ? "rd" : "th"}
+          {entry.rank
+            ? `You · ${entry.rank}${entry.rank === 1 ? "st" : entry.rank === 2 ? "nd" : entry.rank === 3 ? "rd" : "th"}`
+            : "You · no points yet"}
         </p>
         <p className={ivory ? "text-hec-small tabular-nums text-hec-ink-soft" : "truncate text-xs text-[hsl(var(--studio-card)/0.75)]"}>
           {known ? `Level ${level} · ${toNext} to the next one` : `Level ${level}`}

@@ -671,24 +671,26 @@ function PodiumSlot({ row, place, motion }: { row?: BoardRow; place: 1 | 2 | 3; 
         >
           {row.initial}
         </div>
-        <div
-          style={{
-            position: "absolute",
-            right: m.badgeRight,
-            bottom: m.badgeBottom,
-            height: m.badgeH,
-            padding: `0 ${m.badgePad}px`,
-            borderRadius: 999,
-            background: INK,
-            color: "#FFFFFF",
-            fontSize: m.badgeFont,
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          Lv {row.level}
-        </div>
+        {row.level > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              right: m.badgeRight,
+              bottom: m.badgeBottom,
+              height: m.badgeH,
+              padding: `0 ${m.badgePad}px`,
+              borderRadius: 999,
+              background: INK,
+              color: "#FFFFFF",
+              fontSize: m.badgeFont,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            Lv {row.level}
+          </div>
+        )}
         {place === 1 && (
           <div
             className="sb-rv"
@@ -961,10 +963,13 @@ export function StarBoard({
   const active = BOARD_CATEGORIES.find((c) => c.key === activeCategory) ?? null;
   const modeLabel = active ? `${active.short} points` : "All points";
 
-  const first = rows[0];
-  const second = rows[1];
-  const third = rows[2];
-  const rest = rows.slice(3);
+  // The podium is for children with points: with none (start of a month)
+  // it stays empty, and nobody stands on it with nothing.
+  const podium = rows.filter((r) => r.rank > 0).slice(0, 3);
+  const first = podium[0];
+  const second = podium[1];
+  const third = podium[2];
+  const rest = rows.filter((r) => !podium.includes(r));
   /** Only two cards fit the strip, so a bigger class is shown a page at a time. */
   const restPage = useRestPaging(rest.length, REST_PER_PAGE, motion);
   const restShown = rest.slice(restPage.from, restPage.to);
@@ -1283,7 +1288,7 @@ export function StarBoard({
                           justifyContent: "center",
                         }}
                       >
-                        {s.rank}
+                        {s.rank || "–"}
                       </span>
                       <Disc
                         size={96}

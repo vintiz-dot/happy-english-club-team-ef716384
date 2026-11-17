@@ -46,7 +46,14 @@ const PRELUDE = `
   CREATE TABLE public.profiles (id uuid PRIMARY KEY, display_name text);
   CREATE TABLE public.students (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), full_name text NOT NULL,
     avatar_url text, family_id uuid REFERENCES public.families(id), linked_user_id uuid, secondary_user_id uuid,
-    is_active boolean NOT NULL DEFAULT true);
+    is_active boolean NOT NULL DEFAULT true, cash_on_hand integer DEFAULT 0);
+  CREATE TYPE public.economy_tx_type AS ENUM ('convert_to_cash','spend_cash','deposit_cash');
+  CREATE TYPE public.economy_tx_status AS ENUM ('pending','approved','rejected');
+  CREATE TABLE public.economy_transactions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id uuid NOT NULL, class_id uuid NOT NULL, type public.economy_tx_type NOT NULL,
+    points_impact integer NOT NULL DEFAULT 0, cash_impact integer NOT NULL DEFAULT 0,
+    status public.economy_tx_status NOT NULL DEFAULT 'pending', processed_by uuid, note text,
+    created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now());
   CREATE TABLE public.enrollments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id uuid NOT NULL REFERENCES public.students(id), class_id uuid NOT NULL REFERENCES public.classes(id),
     start_date date NOT NULL, end_date date);
@@ -124,8 +131,16 @@ const PRELUDE = `
   CREATE FUNCTION public.is_family_student(_student_id uuid, _user_id uuid)
     RETURNS boolean LANGUAGE sql STABLE AS $f$ SELECT public.can_view_student(_student_id, _user_id) $f$;
 
+  ALTER TABLE public.student_points ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "Teachers can manage points for their classes" ON public.student_points FOR ALL TO authenticated
+    USING (public.is_teacher_of_class(auth.uid(), class_id)) WITH CHECK (public.is_teacher_of_class(auth.uid(), class_id));
+  CREATE POLICY "Admins can manage all points" ON public.student_points FOR ALL TO authenticated
+    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
   GRANT USAGE ON SCHEMA public TO authenticated, service_role, anon;
   GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
+  GRANT INSERT, UPDATE, DELETE ON public.student_points TO authenticated;
+  -- As Supabase's default privileges give every new table (review N-3).
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;
   GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
 `;
 
@@ -272,9 +287,10 @@ const sp = await one(`SELECT total_points, homework_points, participation_points
 eq("categories add up to the stored monthly total", row(tb, An).total, sp.total_points);
 eq("homework + video = stored homework bucket", row(tb, An).categories.homework + row(tb, An).categories.video, sp.homework_points);
 eq("ties share a rank: An and Binh both 1st, nobody 2nd", tb.rows.map((r) => r.rank), [1, 1, 3, 4]);
-ok("tied flag set on both", row(tb, An).tied && row(tb, Binh).tied && !row(tb, Chi).tied);
+ok("a tie is two equal ranks (no separate flag is sent)", row(tb, An).rank === row(tb, Binh).rank && !("tied" in row(tb, An)));
 eq("category rank: reading", row(tb, Binh).category_ranks.reading, 1);
-eq("level counts every point ever, every class (100+200+999 = 1299 -> level 5)", row(tb, An).level.level, 5);
+eq("for an admin the level counts every point ever, every class (100+200+999 = 1299 -> level 5)", row(await board(U.admin), An).level.level, 5);
+eq("for the class teacher only their own class counts (300 -> level 3; review M-3)", row(tb, An).level.level, 3);
 eq("lessons counted: held, inside the enrolment, cancelled left out", [row(tb, An).lessons, row(tb, An).attended, row(tb, Binh).attended], [2, 2, 1]);
 eq("Em joined today: only lessons from her start count", row(tb, Em).lessons, today === monthStart ? 2 : 1);
 eq("Em is marked new on this month's board (unless it is the 1st)", row(tb, Em).is_new, today > monthStart);
@@ -313,11 +329,19 @@ ok("everyone signed in can read the terms list", (await as(U.parent, () => q(`SE
 
 console.log("what a family sees (through class-leaderboard)");
 const fb = await as("service", async () => (await one(`SELECT public.leaderboard_json($1,'month',null,$2::uuid[],false) AS b`, [cls, [An]])).b);
-ok("own child marked as self", row(fb, An).is_self === true && row(fb, Binh).is_self === false);
+ok("own child marked as self", row(fb, An).is_self === true && !row(fb, Binh).is_self);
 ok("own child's lessons and streak shown", row(fb, An).lessons === 2 && row(fb, An).streak_now === 7);
 ok("a classmate's lessons, attendance and streak are not sent", !("lessons" in row(fb, Binh)) && !("attended" in row(fb, Binh)) && !("streak_now" in row(fb, Binh)) && !("joined_on" in row(fb, Binh)));
 ok("a classmate is still a name, an avatar and points", row(fb, Binh).name === "Binh" && row(fb, Binh).total === 100);
-ok("a classmate's points from other classes are not sent, only the level", !("all_time" in row(fb, Binh)) && !!row(fb, Binh).level && row(fb, An).all_time === 1299);
+eq("a classmate is a name, an avatar, this board's points and rank - nothing else (review M-1)",
+  Object.keys(row(fb, Binh)).sort(), ["avatar_url", "categories", "name", "points", "rank", "student_id", "total"]);
+ok("own child keeps level and all-time points", !!row(fb, An).level && row(fb, An).all_time === 1299);
+const fAll = await as("service", async () => (await one(`SELECT public.leaderboard_json($1,'all',null,$2::uuid[],false) AS b`, [cls, [An]])).b);
+eq("on a per-lesson board a classmate has no total (it would give their lesson count)",
+  Object.keys(row(fAll, Binh)).sort(), ["avatar_url", "name", "points", "rank", "student_id"]);
+const fRead = await as("service", async () => (await one(`SELECT public.leaderboard_json($1,'month',null,$2::uuid[],false,'reading') AS b`, [cls, [An]])).b);
+eq("a category tab is ranked on the server: reading puts Binh 1st, nobody else ranked", fRead.rows.map((r) => [r.name, r.rank, Number(r.points)]),
+  [["Binh", 1, 100], ["An", null, 0], ["Chi", null, 0], ["Em", null, 0]]);
 eq("the streak panel shows the family's own child only", fb.streak?.student_id, An);
 ok("own child's place in the whole centre", row(fb, An).centre && row(fb, An).centre.rank >= 1 && row(fb, An).centre.of >= 4);
 ok("no centre place on a classmate", !("centre" in row(fb, Binh)));
@@ -339,7 +363,9 @@ const th = await as(U.teacher, async () => (await one(`SELECT public.student_poi
 ok("a teacher sees only the rows of their own class", th.rows.length === 6 && th.rows.every((r) => r.class_name === "Stars") && Number(th.total) === 300);
 const tsum = await as(U.teacher, async () => (await one(`SELECT public.student_points_summary($1::uuid[]) AS s`, [[An]])).s);
 ok("a teacher's summary lists only the classes they teach", tsum[An].classes.length === 1 && tsum[An].classes[0].class_id === cls);
-eq("but the level is the child's own, every class", tsum[An].level.level, 5);
+eq("and the level and all-time points only over the teacher's classes (review M-3)", [tsum[An].all_time, tsum[An].level.level], [300, 3]);
+const psum = await as(U.parent, async () => (await one(`SELECT public.student_points_summary($1::uuid[]) AS s`, [[An]])).s);
+eq("the family's own figure is every class", psum[An].all_time, 1299);
 ok("a stranger is refused", await refuses(U.stranger, `SELECT * FROM public.student_points_history($1, $2::date, $3::date)`, [An, "2026-01-01", day(1)]));
 
 console.log("admin audit");
@@ -360,7 +386,7 @@ const after = await one(`SELECT SUM(total_points)::int AS t FROM public.student_
 eq("the reset zeroes nothing any more", after.t, before.t);
 eq("it saves last month's standings, rank from the same engine",
   (await q(`SELECT s.full_name, a.rank FROM public.archived_leaderboards a JOIN public.students s ON s.id=a.student_id WHERE a.class_id=$1 ORDER BY a.rank, s.full_name`, [cls])).map((r) => [r.full_name, r.rank]),
-  [["Dung", 1], ["An", 2], ["Binh", 3], ["Chi", 3]]);
+  [["Dung", 1], ["An", 2], ["Binh", null], ["Chi", null]]);
 eq("and the class's champion", (await one(`SELECT s.full_name FROM public.monthly_leaders m JOIN public.students s ON s.id=m.student_id WHERE m.class_id=$1`, [cls])).full_name, "Dung");
 const tv = await as("service", async () => (await one(`SELECT public.leaderboard_tv_feed(10) AS f`)).f);
 eq("TV champions: last month's winner, from the ledger", tv.champions.filter((c) => c.class_id === cls).map((c) => c.student_id), [Dung]);
@@ -368,5 +394,67 @@ const tvClass = tv.classes.find((c) => c.class_id === cls);
 eq("TV class board ranks like the class board", tvClass.rows.map((r) => r.rank), [1, 1, 3, 4]);
 ok("TV centre board has An with both classes' points", tv.centre.find((r) => r.student_id === An)?.points === 1099);
 
+
+console.log("review follow-up (20261117130000)");
+// M-4: no points, no rank.
+const empty = (await one(`INSERT INTO public.classes (name, teacher_user) VALUES ('Comets', $1) RETURNING id`, [U.teacher])).id;
+const k1 = await kid("K1"); const k2 = await kid("K2");
+await enrol(k1, empty, "2026-01-01"); await enrol(k2, empty, "2026-01-01");
+const eb = await as(U.teacher, async () => (await one(`SELECT public.leaderboard_board($1,'month',null) AS b`, [empty])).b);
+eq("nobody has points: nobody is ranked (was: everyone 1st)", eb.rows.map((r) => r.rank), [null, null]);
+const avatarEligible = (r) => r != null && r.rank != null && r.rank <= 3 && Number(r.total ?? r.points) > 0;
+ok("premium avatars: a child with no points is not 'top 3' (AvatarPicker rule)", !avatarEligible(eb.rows[0]));
+
+// N-2: an inactive child is on no board that reaches today, and not on the TV.
+const Ghost = await kid("Ghost");
+await enrol(Ghost, cls, "2026-01-01");
+await award(Ghost, cls, 5000, "participation", today, "Big", { by: U.teacher });
+await q(`UPDATE public.students SET is_active = false WHERE id = $1`, [Ghost]);
+ok("an inactive child is not on this month's board", !(await board(U.teacher)).rows.some((r) => r.name === "Ghost"));
+const tv2 = await as("service", async () => (await one(`SELECT public.leaderboard_tv_feed(2) AS f`)).f);
+ok("the TV's top 2 are two children on the register (the inactive one is skipped before the limit)",
+  tv2.centre.length === 2 && !tv2.centre.some((r) => r.student_id === Ghost));
+
+// M-3: a teacher sees a child's points only while the child is in their class.
+await q(`UPDATE public.enrollments SET end_date = $2 WHERE student_id = $1 AND class_id = $3`, [Chi, day(-1), cls]);
+ok("a teacher of a class the child has left is refused the history", await refuses(U.teacher, `SELECT public.student_points_history($1, $2::date, $3::date)`, [Chi, "2026-01-01", day(1)]));
+await q(`UPDATE public.enrollments SET end_date = NULL WHERE student_id = $1 AND class_id = $2`, [Chi, cls]);
+
+// N-4: the ledger is the only way points change.
+ok("a teacher can no longer write student_points directly", await refuses(U.teacher,
+  `INSERT INTO public.student_points (student_id, class_id, month, participation_points) VALUES ($1,$2,'2026-01',5)`, [Binh, cls]));
+ok("but still reads them", (await as(U.teacher, () => q(`SELECT 1 FROM public.student_points WHERE class_id = $1`, [cls]))).length > 0);
+
+// N-3: terms are not reachable by anon, and app roles cannot truncate them.
+eq("school_terms privileges", (await one(`SELECT has_table_privilege('anon','public.school_terms','SELECT') a,
+   has_table_privilege('authenticated','public.school_terms','TRUNCATE') t,
+   has_table_privilege('authenticated','public.school_terms','INSERT') i`)), { a: false, t: false, i: true });
+
+// M-2: class-cash approval is one transaction, claimed once.
+const monthPts = async (s) => Number((await one(`SELECT COALESCE(SUM(total_points),0) AS t FROM public.student_points WHERE student_id=$1 AND class_id=$2 AND month=$3`, [s, cls, monthOf(today)])).t);
+const lvlPts = async (s) => Number((await one(`SELECT public.level_points($1, NULL) AS l`, [s])).l);
+const req = async (s, type, pts, cash) => (await one(`INSERT INTO public.economy_transactions (student_id, class_id, type, points_impact, cash_impact)
+  VALUES ($1,$2,$3,$4,$5) RETURNING id`, [s, cls, type, pts, cash])).id;
+const before2 = { m: await monthPts(Binh), l: await lvlPts(Binh) };
+const r1 = await req(Binh, "convert_to_cash", -50, 1);
+await as(U.teacher, () => q(`SELECT public.economy_process($1, 'approved')`, [r1]));
+eq("approving takes the points once and pays the cash", [await monthPts(Binh), Number((await one(`SELECT cash_on_hand FROM public.students WHERE id=$1`, [Binh])).cash_on_hand)], [before2.m - 50, 1]);
+ok("a second approval of the same request is refused", await refuses(U.teacher, `SELECT public.economy_process($1, 'approved')`, [r1]));
+eq("and took nothing more", await monthPts(Binh), before2.m - 50);
+eq("spending points on class cash does not lower the level", await lvlPts(Binh), before2.l);
+const r2 = await req(Binh, "convert_to_cash", -10000, 200);
+ok("a request bigger than the month's points is refused", await refuses(U.teacher, `SELECT public.economy_process($1, 'approved')`, [r2]));
+eq("and nothing moved: still pending, points and cash unchanged",
+  [(await one(`SELECT status::text s FROM public.economy_transactions WHERE id=$1`, [r2])).s, await monthPts(Binh)], ["pending", before2.m - 50]);
+ok("a teacher of another class cannot approve", await refuses(U.otherTeacher, `SELECT public.economy_process($1, 'approved')`, [r2]));
+await as(U.teacher, () => q(`SELECT public.economy_process($1, 'rejected')`, [r2]));
+eq("a rejection moves nothing", [(await one(`SELECT status::text s FROM public.economy_transactions WHERE id=$1`, [r2])).s, await monthPts(Binh)], ["rejected", before2.m - 50]);
+
+// Pasting the files again (the owner pastes by hand) changes nothing.
+const ranksBefore = (await board(U.teacher)).rows.map((r) => [r.name, r.rank]);
+for (const f of MIGS) await db.exec(readFileSync(f, "utf8"));
+eq("pasting the migrations again keeps the board the same", (await board(U.teacher)).rows.map((r) => [r.name, r.rank]), ranksBefore);
+eq("and the review fixes stay in force after a re-paste",
+  Object.keys(row(await as("service", async () => (await one(`SELECT public.leaderboard_json($1,'month',null,$2::uuid[],false) AS b`, [cls, [An]])).b), Binh)).length, 7);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

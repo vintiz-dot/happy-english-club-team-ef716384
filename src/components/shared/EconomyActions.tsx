@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { hanoiToday } from "@/lib/leaderboard/board";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -31,74 +30,13 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
 
   const processMutation = useMutation({
     mutationFn: async ({ txId, status }: { txId: string; status: "approved" | "rejected" }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // The points move first. If the ledger refuses it, nothing else
-      // happens: the request stays pending, the cash does not move, and
-      // the child does not end up holding both.
-      if (status === "approved") {
-        const tx = pendingTransactions.find(t => t.id === txId);
-        if (tx) {
-          // The points side, as a ledger row. This used to edit
-          // student_points directly, and the next award to the child
-          // recalculated the month from the ledger and gave the spent
-          // points back (docs/evidence/LEADERBOARD-audit.md, M10).
-          const moved =
-            (tx.type === "convert_to_cash" && tx.points_impact < 0) ||
-            (tx.type === "deposit_cash" && tx.points_impact > 0);
-          if (moved) {
-            const today = hanoiToday();
-            const { error: pointsError } = await supabase.from("point_transactions").insert({
-              student_id: tx.student_id,
-              class_id: classId,
-              type: "adjustment",
-              points: tx.points_impact,
-              date: today,
-              month: today.slice(0, 7),
-              notes: tx.type === "convert_to_cash" ? "Points changed into class cash" : "Class cash changed back into points",
-              created_by: user?.id ?? null,
-            });
-            if (pointsError) throw pointsError;
-          }
-        }
-      }
-
-      const { error } = await supabase
-        .from("economy_transactions")
-        .update({ 
-          status: status as any, 
-          processed_by: user?.id 
-        })
-        .eq("id", txId);
-
+      // One transaction on the server, keyed by the request
+      // (economy_process, 20261117130000): the request is claimed, the
+      // points move as a ledger row, the cash moves, or none of it does. A
+      // request already handled (two teachers, a double click, a retry) is
+      // refused, and spending may not take a month below zero.
+      const { error } = await supabase.rpc("economy_process" as never, { p_tx: txId, p_status: status } as never);
       if (error) throw error;
-
-      // If approved, update cash_on_hand
-      if (status === "approved") {
-        const tx = pendingTransactions.find(t => t.id === txId);
-        if (tx) {
-          // Fetch current cash
-          const { data: student } = await supabase
-            .from("students")
-            .select("cash_on_hand")
-            .eq("id", tx.student_id)
-            .single();
-
-          const currentCash = student?.cash_on_hand || 0;
-          const newCash = currentCash + tx.cash_impact;
-
-          // The result was discarded here. If row-level security refused the
-          // write, the transaction was still marked approved and the UI still
-          // reported success - so the student was told their cash had moved
-          // when it had not. Approving money must fail loudly.
-          const { error: cashError } = await supabase
-            .from("students")
-            .update({ cash_on_hand: Math.max(0, newCash) })
-            .eq("id", tx.student_id);
-          if (cashError) throw cashError;
-
-        }
-      }
     },
     onSuccess: (_, { status }) => {
       toast.success(`Transaction ${status}`);

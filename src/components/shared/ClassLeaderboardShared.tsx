@@ -4,7 +4,8 @@ import { Trophy, Users, X, CheckSquare, Clock, Monitor, ExternalLink } from "luc
 import { useClassBoard, NoTermError } from "@/hooks/useClassBoard";
 import { PeriodPicker, THIS_MONTH } from "@/components/leaderboard/PeriodPicker";
 import { toBoardEntries } from "@/components/leaderboard/useBoardData";
-import { hanoiToday, periodKey, type PeriodChoice } from "@/lib/leaderboard/board";
+import { hanoiToday, periodKey, SERVER_KEY_OF, type PeriodChoice } from "@/lib/leaderboard/board";
+import type { BoardCategory } from "@/components/leaderboard/types";
 import { openClassBoardWindow } from "@/pages/ClassBoardWindow";
 import { BoardErrorBoundary } from "@/components/leaderboard/BoardErrorBoundary";
 import { useState, useEffect, useMemo, useRef, Suspense } from "react";
@@ -60,6 +61,7 @@ export function ClassLeaderboardShared({
 }: ClassLeaderboardSharedProps) {
   const ivory = useIvory();
   const [period, setPeriod] = useState<PeriodChoice>(THIS_MONTH);
+  const [tab, setTab] = useState<BoardCategory["key"] | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(
     null
   );
@@ -165,7 +167,7 @@ export function ClassLeaderboardShared({
   // board, ranks with ties, categories, level, climber and streak. This
   // screen used to read enrolments and points itself and rank them, and
   // disagreed with the children's screen on every tie.
-  const { data: boardResult, isLoading, error: boardError } = useClassBoard(classId, period, "staff", { wall });
+  const { data: boardResult, isLoading, error: boardError } = useClassBoard(classId, period, "staff", { wall, category: tab ? SERVER_KEY_OF[tab] : null });
   const serverBoard = boardResult?.board ?? null;
   const leaderboard = useMemo(() => toBoardEntries(serverBoard), [serverBoard]);
   const boardPeriodLabel = serverBoard?.period?.label ?? "";
@@ -347,6 +349,8 @@ export function ClassLeaderboardShared({
       ) : (
       <StyledClassBoard
         board={serverBoard}
+        activeCategory={tab}
+        onCategoryChange={setTab}
         periodLabel={boardPeriodLabel}
         forceClassic={showClassicBoard}
         classId={classId}
