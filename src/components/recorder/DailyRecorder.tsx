@@ -19,13 +19,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
-  boardAdd, boardClear, boardForScreen, clock, hanoiDate, type BoardEntry, hhmm, lessonHeadline, lessonPhase, pickLesson, stopConfirmText,
+  boardAdd, boardClear, boardForScreen, clock, hanoiDate, type BoardEntry, hhmm, lessonHeadline, lessonPhase, noSetupNotice, pickLesson, stopConfirmText,
   trackName, uploadMbps, uploadSpeedLine, uploadStatus, addMinutes, type LessonLike,
 } from "@/lib/recorderUi";
 import type { ChunkMeta, DeviceProfile, HeldAudio, Level, ProfileResolution, RecorderError, RecorderState, TrackRole, UploadProgress, MarkerKind } from "@/lib/recorder";
 import { useRecorderDeps } from "./RecorderDeps";
 import type { RecorderLike } from "./engine";
-import { dayDeps, fetchClassSwitch, fetchEnrolled, fetchRecorderSettings, fetchTodayLessons } from "./data";
+import { dayDeps, fetchClassSwitch, fetchEnrolled, fetchMissingConsentCount, fetchRecorderSettings, fetchTodayLessons } from "./data";
 import { LevelMeter, MicTick, Notice, Status } from "./pieces";
 import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
 import { adopt, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
@@ -60,6 +60,8 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const kids = useQuery({ queryKey: ["recorder-kids", lesson?.classId, today], enabled: !!lesson, queryFn: () => fetchEnrolled(client, [lesson!.classId], today) });
 
   const [profile, setProfile] = useState<DeviceProfile | null>(() => engine.loadProfile(userId));
+  // No setup: the backup recorder is suggested only when the server counts no child without permission today.
+  const consentQ = useQuery({ queryKey: ["recorder-missing-consent", lesson?.classId, today], enabled: !!lesson && !profile, queryFn: () => fetchMissingConsentCount(client, lesson!.classId), refetchInterval: 5 * 60_000 });
   const rec = useRef<RecorderLike | null>(null);
   const [state, setState] = useState<RecorderState>("idle");
   const [busy, setBusy] = useState(false);
@@ -315,9 +317,11 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   );
 
   if (!profile) {
+    // Without a setup the engine never starts: say whether THIS lesson goes unrecorded (17 Nov 2026).
+    const n = noSetupNotice(lesson, tick, w, switchQ.isSuccess ? switchQ.data === true : null, consentQ.isSuccess ? consentQ.data : null);
     return (
-      <Notice tone="info" title="Set up the microphones first" action={<Button size="lg" className="min-h-12 text-base" onClick={onSetup}><Settings2 className="h-5 w-5 mr-2" aria-hidden /> Set up the microphones</Button>}>
-        You do this once on this laptop. It takes about five minutes.
+      <Notice tone={n.tone} title={n.title} role={n.alert ? "alert" : undefined} action={<Button size="lg" className="min-h-12 text-base" onClick={onSetup}><Settings2 className="h-5 w-5 mr-2" aria-hidden /> Set up the microphones</Button>}>
+        {n.body}
       </Notice>
     );
   }

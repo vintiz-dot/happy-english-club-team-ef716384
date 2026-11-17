@@ -65,5 +65,72 @@ ok("held in memory is said", U.uploadStatus({ ...p, heldInMemory: 2 }).some((l) 
 ok("below-floor (silent) pieces are said", U.uploadStatus({ ...p, belowFloor: 3 }).some((l) => /silent/.test(l.text)));
 ok("an older engine without the fields still works", U.uploadStatus(p).length === 1);
 
+console.log("=== no microphone setup on this laptop (17 Nov 2026) ===");
+{
+  // 17 Nov 2026: lesson 17:30-19:00, the recorder opened at 18:13 with no setup: it said "Set up the microphones first", calmly.
+  const W = { preRoll: 5, grace: 10, armWindow: 20 };
+  const l = { sessionId: "s1", classId: "c1", className: "Movers 2", date: "2026-11-17", startTime: "17:30:00", endTime: "19:00:00" };
+  const at = (hm) => U.hanoiMs("2026-11-17", hm);
+  const N = (hm, sw = true, miss = 0) => U.noSetupNotice(l, at(hm), W, sw, miss);
+  const during = N("18:13:00");
+  ok("during a switched-on lesson: an alert that it is NOT being recorded", during.tone === "error" && during.alert && /NOT being recorded/.test(during.title), during.title);
+  ok("...and it sends the teacher to the backup recorder, naming the class", /backup recorder for Movers 2/.test(during.body), during.body);
+  const arming = N("17:15:00");
+  ok("in the 20 minutes before: an alert that the class will NOT be recorded", arming.tone === "error" && arming.alert && /Movers 2 will NOT be recorded/.test(arming.title), arming.title);
+  ok("...with the time capture would start", /before 17:25/.test(arming.body), arming.body);
+  const later = N("14:00:00");
+  ok("earlier in the day: a warning with the deadline", later.tone === "warn" && !later.alert && /before 17:10/.test(later.title), later.title);
+  // The exact edges: arm window opens 17:10, capture 17:25, the lesson ends 19:00, capture closes 19:10.
+  eq("edges: 17:09:59 warn, 17:10 arming alert, 17:25 capturing alert",
+    [N("17:09:59").title, N("17:10:00").title, N("17:25:00").title], ["Set up the microphones before 17:10", "Movers 2 will NOT be recorded", "This lesson is NOT being recorded"]);
+  const after = N("19:00:00");
+  ok("after the bell (inside the grace minutes): 'was not recorded', no alert, no backup recorder", after.tone === "warn" && !after.alert && /was not recorded/.test(after.title) && !/backup/.test(after.body), after.title);
+  ok("18:59:59 is still the lesson", N("18:59:59").alert === true);
+  for (const [name, n] of [
+    ["the class switched off", N("18:13:00", false)],
+    ["the switch not known yet", N("18:13:00", null)],
+    ["a child without permission today (the switch is on but arming would be refused)", N("18:13:00", true, 1)],
+    ["the permission count not known yet", N("18:13:00", true, null)],
+    ["no lesson today", U.noSetupNotice(null, at("18:13:00"), W, true, 0)],
+    ["the lesson over", N("19:10:00")],
+  ]) ok(`${name}: the calm setup notice, never the backup recorder`, n.tone === "info" && !n.alert && n.title === "Set up the microphones first" && !/backup/.test(n.body), n.title);
+}
+
+console.log("=== admin: which teachers of a switched-on class have set up the microphones ===");
+{
+  const L = (class_id, teacher_user_id, date, start_time, status = "Scheduled") => ({ class_id, teacher_user_id, date, start_time, end_time: start_time.replace(/^(\d\d)/, (h) => String(+h + 1).padStart(2, "0")), status });
+  const lessons = [
+    L("c1", "u2", "2026-11-19", "17:30:00"),
+    L("c1", "u1", "2026-11-18", "17:30:00"),
+    L("c1", "u1", "2026-11-17", "19:30:00", "Canceled"),
+    L("c1", "u1", "2026-11-20", "17:30:00"),
+    L("c1", "u4", "2026-11-17", "08:00:00"),              // earlier today, over at 15:00: not "next"
+    L("c1", null, "2026-11-18", "08:00:00"),
+    L("c2", "u3", "2026-11-18", "09:00:00"),
+    L("c5", null, "2026-11-18", "09:00:00"), L("c5", null, "2026-11-19", "09:00:00"),
+  ];
+  const profiles = [
+    { user_id: "u2", verified_at: "2026-11-10T03:00:00Z" }, { user_id: "u2", verified_at: "2026-11-16T03:00:00Z" },
+    { user_id: "u3", verified_at: null },
+  ];
+  const now = U.hanoiMs("2026-11-17", "15:00:00");
+  const s = U.teacherSetupFor("c1", lessons, profiles, now);
+  eq("one row per teacher, earliest coming lesson first; cancelled and finished lessons left out", s.teachers.map((t) => [t.userId, t.next.date, t.laptops]), [["u1", "2026-11-18", 0], ["u2", "2026-11-19", 2]]);
+  eq("a lesson with no teacher login is counted, not dropped", s.noTeacher, 1);
+  eq("the latest check is the one shown", s.teachers[1].lastVerified, "2026-11-16T03:00:00Z");
+  const none = U.teacherSetupLine(s.teachers[0], "Teacher A", (x) => x.slice(0, 10));
+  ok("no check on the server: a warning that the lessons are probably NOT recorded, with the next one", none.tone === "warn" && /reached the school server/.test(none.text) && /NOT recorded/.test(none.text) && /next: 18 Nov at 17:30/.test(none.text), none.text);
+  ok("...and how to fix it", /Class recorder, then Microphones/.test(none.text), none.text);
+  const two = U.teacherSetupLine(s.teachers[1], "Teacher B", (x) => x.slice(0, 10));
+  ok("checks saved: ok, how many laptops, when, and that one should be the classroom laptop", two.tone === "ok" && /2 laptops, last on 2026-11-16/.test(two.text) && /classroom laptop/.test(two.text), two.text);
+  ok("a check without a date still counts", U.teacherSetupLine(U.teacherSetupFor("c2", lessons, profiles, now).teachers[0], "C", String).tone === "ok");
+  const only = U.teacherSetupFor("c5", lessons, profiles, now);
+  ok("a class whose lessons have no teacher login is not 'no lessons'", only.teachers.length === 0 && only.noTeacher === 2);
+  ok("...and says they are NOT recorded", /2 lessons .* have no teacher with a login, so they are NOT recorded/.test(U.noTeacherLine(2).text), U.noTeacherLine(2).text);
+  eq("nothing said when every lesson has a teacher", U.noTeacherLine(0), null);
+  eq("no lessons: nothing to say", U.teacherSetupFor("c9", lessons, profiles, now), { teachers: [], noTeacher: 0 });
+  eq("dates read as day and month", [U.shortDate("2026-11-17"), U.shortDate("2027-01-05"), U.shortDate("odd")], ["17 Nov", "5 Jan", "odd"]);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

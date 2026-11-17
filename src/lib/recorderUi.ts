@@ -572,3 +572,103 @@ export function retentionText(r: { delete_after: string | null; deletion_request
 export function validReason(text: string): boolean {
   return (text || "").trim().length >= 3;
 }
+
+// ---------------------------------------------------------------- no microphone setup (17 Nov 2026)
+//
+// The recorder cannot start until the microphones have been set up on this
+// laptop for this teacher (the wizard's saved profile). On 17 Nov 2026 a
+// teacher opened the recorder 43 minutes into a switched-on lesson on a
+// laptop where that had never been done: the screen said, calmly, "Set up the
+// microphones first", the engine never started, and nothing told anyone the
+// lesson was not being recorded. These say so, by how close the lesson is.
+
+export interface NoticeView { tone: Tone; title: string; body: string; alert: boolean }
+
+/**
+ * The teacher screen with no microphone setup on this laptop. Loud only when
+ * the lesson may be recorded at all: its class switched ON and no child
+ * without permission today (`missingConsent` 0, the server's own count). The
+ * backup recorder is never suggested otherwise. null = not known yet: calm.
+ */
+export function noSetupNotice(lesson: LessonLike | null, nowMs: number, w: WindowMinutes, switchOn: boolean | null, missingConsent: number | null): NoticeView {
+  const calm: NoticeView = { tone: "info", title: "Set up the microphones first", body: "You do this once on this laptop. It takes about five minutes.", alert: false };
+  if (!lesson || switchOn !== true || missingConsent !== 0) return calm;
+  const phase = lessonPhase(lesson, nowMs, w);
+  if (phase === "over") return calm;
+  if (phase === "capturing" && nowMs >= lessonTimes(lesson, w).end) return {
+    tone: "warn", alert: false, title: `${lesson.className} was not recorded`,
+    body: "The microphones have not been set up on this laptop. Set them up now (about five minutes) so your next lessons record by themselves.",
+  };
+  if (phase === "capturing") return {
+    tone: "error", alert: true, title: "This lesson is NOT being recorded",
+    body: `The microphones have not been set up on this laptop, so the recorder cannot start. Use the backup recorder for ${lesson.className} now. After the lesson, set up the microphones here (about five minutes) so your next lessons record by themselves.`,
+  };
+  if (phase === "arming") return {
+    tone: "error", alert: true, title: `${lesson.className} will NOT be recorded`,
+    body: `The microphones have not been set up on this laptop. Set them up now (about five minutes) before ${addMinutes(lesson.startTime, -w.preRoll)}. If there is not time, use the backup recorder for this lesson.`,
+  };
+  return {
+    tone: "warn", alert: false, title: `Set up the microphones before ${addMinutes(lesson.startTime, -w.armWindow)}`,
+    body: `${lesson.className} at ${hhmm(lesson.startTime)} is recorded only if the microphones are set up on this laptop first. You do this once; it takes about five minutes.`,
+  };
+}
+
+/** A lesson of a switched-on class (admin readiness), with its teacher's user id (null: no teacher with a login). */
+export interface SetupLesson { class_id: string; teacher_user_id: string | null; date: string; start_time: string; end_time: string; status?: string | null }
+/** A saved microphone check (recorder_device_profiles): one per teacher per laptop. */
+export interface SetupProfile { user_id: string; verified_at: string | null }
+export interface TeacherSetup { userId: string; next: { date: string; startTime: string }; laptops: number; lastVerified: string | null }
+export interface ClassSetup { teachers: TeacherSetup[]; noTeacher: number }
+
+/**
+ * For one class: each teacher of its coming lessons (not cancelled, not over
+ * at `nowMs`), their next lesson in it, and how many laptops have sent the
+ * server a microphone check for them; and how many coming lessons have no
+ * teacher with a login (nobody can record those). Earliest lesson first.
+ */
+export function teacherSetupFor(classId: string, lessons: SetupLesson[], profiles: SetupProfile[], nowMs: number): ClassSetup {
+  const by = new Map<string, TeacherSetup>();
+  let noTeacher = 0;
+  const coming = lessons
+    .filter((l) => l.class_id === classId && !isCanceled(l.status))
+    .filter((l) => lessonTimes({ sessionId: "", classId, className: "", date: l.date, startTime: l.start_time, endTime: l.end_time }).end > nowMs)
+    .sort((a, b) => (a.date + a.start_time).localeCompare(b.date + b.start_time));
+  for (const l of coming) {
+    const id = l.teacher_user_id;
+    if (!id) { noTeacher += 1; continue; }
+    if (by.has(id)) continue;
+    const mine = profiles.filter((p) => p.user_id === id);
+    const lastVerified = mine.map((p) => p.verified_at).filter((v): v is string => !!v).sort().pop() ?? null;
+    by.set(id, { userId: id, next: { date: l.date, startTime: l.start_time }, laptops: mine.length, lastVerified });
+  }
+  return { teachers: [...by.values()], noTeacher };
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "2026-11-17" -> "17 Nov". */
+export function shortDate(date: string): string {
+  const [, m, d] = (date || "").split("-").map(Number);
+  return m >= 1 && m <= 12 && d ? `${d} ${MONTHS[m - 1]}` : date;
+}
+
+/**
+ * The admin card's line for one teacher of a switched-on class. Worded from
+ * what the server can know: a check saved only on the laptop (the server did
+ * not answer) is not here, and a check from some laptop says nothing about
+ * the classroom one.
+ */
+export function teacherSetupLine(t: TeacherSetup, name: string, fmt: (iso: string) => string): StatusLine {
+  if (t.laptops === 0) return {
+    tone: "warn",
+    text: `No microphone check from ${name} has reached the school server, so their lessons here are probably NOT recorded (next: ${shortDate(t.next.date)} at ${hhmm(t.next.startTime)}). They set the microphones up once, signed in as themselves on the classroom laptop: Class recorder, then Microphones.`,
+  };
+  return {
+    tone: "ok",
+    text: `${name}: microphone check saved from ${t.laptops} ${t.laptops === 1 ? "laptop" : "laptops"}${t.lastVerified ? `, last on ${fmt(t.lastVerified)}` : ""}. One of them should be the classroom laptop.`,
+  };
+}
+
+/** Coming lessons of a switched-on class with no teacher who can sign in: nobody can record them. */
+export function noTeacherLine(n: number): StatusLine | null {
+  return n > 0 ? { tone: "warn", text: `${n} ${n === 1 ? "lesson" : "lessons"} in the next two weeks ${n === 1 ? "has" : "have"} no teacher with a login, so ${n === 1 ? "it is" : "they are"} NOT recorded.` } : null;
+}

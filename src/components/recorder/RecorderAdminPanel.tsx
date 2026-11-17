@@ -10,7 +10,7 @@
  * no, its own words are shown. No playback in this phase.
  */
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Power, PowerOff, ShieldCheck, Trash2, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +22,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { dayjs } from "@/lib/date";
 import {
-  auditActionLabel, consentGapText, consentGaps, durationWords, hanoiDate, recordingStatusLabel, retentionText, validReason, type ConsentGap,
+  auditActionLabel, consentGapText, consentGaps, durationWords, hanoiDate, recordingStatusLabel, noTeacherLine, retentionText, teacherSetupFor, teacherSetupLine, validReason,
+  type ClassSetup, type ConsentGap,
 } from "@/lib/recorderUi";
 import { useRecorderDeps } from "./RecorderDeps";
 import {
-  fetchAdminClasses, fetchAudit, fetchConsents, fetchEnrolled, fetchPeople, fetchRecorderSettings, fetchRecordings,
+  fetchAdminClasses, fetchAudit, fetchConsents, fetchEnrolled, fetchPeople, fetchRecorderSettings, fetchRecordings, fetchTeacherSetup,
   recordChildConsent, requestDeletion, setClassRecording, type AdminClass, type RecordingRow,
 } from "./data";
 import { Notice, Status } from "./pieces";
@@ -48,18 +49,32 @@ export function RecorderAdminPanel() {
   });
   const recordings = useQuery({ queryKey: ["rec-admin-recordings"], queryFn: () => fetchRecordings(client) });
   const audit = useQuery({ queryKey: ["rec-admin-audit"], queryFn: () => fetchAudit(client) });
+  // 17 Nov 2026: a class switched on whose teacher has no microphone setup is not recorded - said on its card.
+  const onIds = (classes.data ?? []).filter((c) => c.switch?.recording_enabled === true).map((c) => c.id);
+  const setup = useQuery({
+    queryKey: ["rec-admin-setup", today, onIds.join(",")],
+    enabled: !!classes.data && onIds.length > 0,
+    queryFn: () => fetchTeacherSetup(client, onIds, today),
+  });
+  const setupBy = useMemo(() => {
+    const m = new Map<string, ClassSetup>();
+    for (const id of onIds) m.set(id, teacherSetupFor(id, setup.data?.lessons ?? [], setup.data?.profiles ?? [], now()));
+    return m;
+  }, [onIds.join(","), setup.data]); // eslint-disable-line react-hooks/exhaustive-deps
   const people = useQuery({
-    queryKey: ["rec-admin-people", (classes.data ?? []).length, (audit.data ?? []).length, (recordings.data ?? []).length],
+    queryKey: ["rec-admin-people", (classes.data ?? []).length, (audit.data ?? []).length, (recordings.data ?? []).length, (setup.data?.lessons ?? []).length],
     enabled: !!classes.data && !!audit.data && !!recordings.data,
+    placeholderData: keepPreviousData,
     queryFn: () => fetchPeople(client, [
       ...(classes.data ?? []).flatMap((c) => [c.switch?.consent_confirmed_by ?? "", c.switch?.disabled_by ?? ""]),
       ...(audit.data ?? []).map((a) => a.actor ?? ""),
       ...(recordings.data ?? []).map((r) => r.started_by ?? ""),
+      ...(setup.data?.lessons ?? []).map((l) => l.teacher_user_id ?? ""),
     ]),
   });
   const who = (id: string | null | undefined) => (id ? people.data?.get(id) ?? "An admin" : "The system");
   const className = (id: string | null) => classes.data?.find((c) => c.id === id)?.name ?? "A class";
-  const refresh = () => { for (const k of ["rec-admin-classes", "rec-admin-consents", "rec-admin-recordings", "rec-admin-audit", "rec-admin-people"]) void qc.invalidateQueries({ queryKey: [k] }); };
+  const refresh = () => { for (const k of ["rec-admin-classes", "rec-admin-consents", "rec-admin-recordings", "rec-admin-audit", "rec-admin-people", "rec-admin-setup"]) void qc.invalidateQueries({ queryKey: [k] }); };
 
   const wording = settings.data?.wordingVersion ?? null;
   const gapsBy = useMemo(() => {
@@ -91,7 +106,8 @@ export function RecorderAdminPanel() {
           {classes.isLoading ? <Status line={{ tone: "info", text: "Loading classes..." }} live /> : null}
           {(classes.data ?? []).map((c) => (
             <ClassCard key={c.id} cls={c} gaps={gapsBy.get(c.id) ?? []} enrolledCount={(kids.data ?? []).filter((k) => k.class_id === c.id).length}
-              wording={wording} who={who} onChanged={refresh} />
+              wording={wording} who={who} onChanged={refresh}
+              setup={setup.isError ? "error" : setup.data ? setupBy.get(c.id) ?? { teachers: [], noTeacher: 0 } : null} teacherName={(id) => people.data?.get(id) ?? "The teacher"} />
           ))}
         </TabsContent>
 
@@ -123,8 +139,10 @@ export function RecorderAdminPanel() {
   );
 }
 
-function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged }: {
+function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged, setup, teacherName }: {
   cls: AdminClass; gaps: ConsentGap[]; enrolledCount: number; wording: string | null; who: (id: string | null) => string; onChanged: () => void;
+  /** Switched-on classes: each coming lesson's teacher and their microphone setup (null = loading). */
+  setup: ClassSetup | "error" | null; teacherName: (userId: string) => string;
 }) {
   const { client } = useRecorderDeps();
   const on = cls.switch?.recording_enabled === true;
@@ -166,6 +184,17 @@ function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged }: {
           <Button className="min-h-11 self-start shrink-0" onClick={() => { setServerSaid(null); setOpenOn(true); }}><Power className="h-4 w-4 mr-2" aria-hidden /> Switch on...</Button>
         )}
       </div>
+
+      {on && setup === "error" ? (
+        <Status line={{ tone: "warn", text: "Could not check whether this class's teachers have set up the microphones. Reload to try again." }} />
+      ) : on && setup && setup !== "error" ? (
+        setup.teachers.length || setup.noTeacher ? (
+          <div className="space-y-1" data-teacher-setup="">
+            {setup.teachers.map((t) => <Status key={t.userId} line={teacherSetupLine(t, teacherName(t.userId), day)} />)}
+            {setup.noTeacher ? <Status line={noTeacherLine(setup.noTeacher)!} /> : null}
+          </div>
+        ) : <Status line={{ tone: "info", text: "No lessons in the next two weeks." }} />
+      ) : null}
 
       {gaps.length ? (
         <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 space-y-2">

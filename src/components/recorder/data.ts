@@ -11,7 +11,7 @@
  * engine's backend does.
  */
 
-import type { LessonLike, WindowMinutes, EnrolledChild, ConsentRow } from "@/lib/recorderUi";
+import type { LessonLike, WindowMinutes, EnrolledChild, ConsentRow, SetupLesson, SetupProfile } from "@/lib/recorderUi";
 import { DEFAULT_MINUTES } from "@/lib/recorderUi";
 
 type Client = any;
@@ -121,6 +121,37 @@ export async function fetchAdminClasses(client: Client): Promise<AdminClass[]> {
   ]);
   const by = new Map<string, ClassSwitchRow>((settings ?? []).map((s: ClassSwitchRow) => [s.class_id, s]));
   return (classes ?? []).map((c: any) => ({ id: c.id, name: c.name, switch: by.get(c.id) ?? null }));
+}
+
+/** `date` (YYYY-MM-DD) plus `days`, as a date. */
+export function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Readiness for the admin card: the lessons of these classes from `from` for
+ * `days` days, with each lesson's teacher as a user id, and the saved
+ * microphone checks of those teachers (admins may read recorder_device_profiles).
+ * No setup means the engine never starts for that teacher (17 Nov 2026).
+ */
+export async function fetchTeacherSetup(client: Client, classIds: string[], from: string, days = 14): Promise<{ lessons: SetupLesson[]; profiles: SetupProfile[] }> {
+  if (!classIds.length) return { lessons: [], profiles: [] };
+  const { data: s, error } = await client.from("sessions")
+    .select("class_id, teacher_id, date, start_time, end_time, status")
+    .in("class_id", classIds).gte("date", from).lte("date", addDays(from, days))
+    .order("date", { ascending: true }).order("start_time", { ascending: true });
+  if (error) throw new Error(String(error.message ?? error));
+  const teacherIds = [...new Set((s ?? []).map((x: any) => x.teacher_id).filter(Boolean))];
+  const { data: t, error: te } = teacherIds.length ? await client.from("teachers").select("id, user_id").in("id", teacherIds) : { data: [], error: null };
+  if (te) throw new Error(String(te.message ?? te));
+  const userOf = new Map<string, string | null>((t ?? []).map((x: any) => [x.id, x.user_id ?? null]));
+  const lessons: SetupLesson[] = (s ?? []).map((x: any) => ({ class_id: x.class_id, teacher_user_id: userOf.get(x.teacher_id) ?? null, date: x.date, start_time: x.start_time, end_time: x.end_time, status: x.status }));
+  const userIds = [...new Set(lessons.map((l) => l.teacher_user_id).filter((v): v is string => !!v))];
+  const { data: p, error: pe } = userIds.length ? await client.from("recorder_device_profiles").select("user_id, verified_at").in("user_id", userIds) : { data: [], error: null };
+  if (pe) throw new Error(String(pe.message ?? pe));
+  return { lessons, profiles: p ?? [] };
 }
 
 export async function fetchConsents(client: Client): Promise<ConsentRow[]> {
