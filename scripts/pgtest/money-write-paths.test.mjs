@@ -278,12 +278,12 @@ console.log('\n4. recorded_payment is written only by compare-and-set (or under 
     'supabase/migrations/20261107090000_ai_assisted_admin_actions.sql': 'ai_action_apply / undo: SELECT ... FOR UPDATE, then add',
     'docs/sql/ai_action_apply_undo.installed.sql': 'the same, as installed',
     'scripts/CREDIT-past-unapplied-cash.sql': 'compare-and-set on the value read, all or nothing',
-    'supabase/migrations/20261117120000_record_admin_payment.sql': 'record_admin_payment (D5 G-1): SELECT ... FOR UPDATE, then compare-and-set on the value read',
+    'supabase/migrations/20261117121000_record_admin_payment.sql': 'record_admin_payment (D5 G-1): SELECT ... FOR UPDATE, then compare-and-set on the value read',
   };
   ok('SQL that sets recorded_payment: only the pinned four', setters.every((f) => f in SQL_ALLOWED) && Object.keys(SQL_ALLOWED).every((f) => setters.includes(f)), setters);
   const installed = readFileSync(join(repo, 'docs', 'sql', 'ai_action_apply_undo.installed.sql'), 'utf8');
   ok('  the AI action reads the bill FOR UPDATE before each recorded_payment write', (installed.match(/FROM public\.invoices[^;]*FOR UPDATE/g) ?? []).length >= 2);
-  const rap = readFileSync(join(repo, 'supabase', 'migrations', '20261117120000_record_admin_payment.sql'), 'utf8').replace(/\r\n/g, '\n');
+  const rap = readFileSync(join(repo, 'supabase', 'migrations', '20261117121000_record_admin_payment.sql'), 'utf8').replace(/\r\n/g, '\n');
   ok('  record_admin_payment reads the bill FOR UPDATE and writes recorded_payment only WHERE it still equals the value read (and record-payment writes no table itself)',
      /FROM public\.invoices i\s+WHERE i\.student_id = p_student_id AND i\.month = p_month\s+FOR UPDATE/.test(rap)
      && /WHERE i\.id = v_bill\.id AND coalesce\(i\.recorded_payment, 0\) = v_before/.test(rap)

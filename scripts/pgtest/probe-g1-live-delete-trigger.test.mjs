@@ -10,7 +10,7 @@
 // before this one).
 //
 // Fix round 1 removed the undo: the three writes are one transaction in
-// public.record_admin_payment (20261117120000), and the suite itself now
+// public.record_admin_payment (20261117121000), and the suite itself now
 // installs the trigger from the migration text with every other trigger live
 // has on the money tables. So the probe is now the suite with the trigger, as
 // the review defined it: this file runs record-payment.test.mjs with

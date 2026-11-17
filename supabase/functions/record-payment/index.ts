@@ -5,7 +5,7 @@
 // RecordedPaymentManager) used to add to invoices.recorded_payment from the
 // browser and nothing else: no payments row, no ledger legs. Every such write
 // now comes here, and is recorded in all three places by ONE database
-// function, public.record_admin_payment (migration 20261117120000), in ONE
+// function, public.record_admin_payment (migration 20261117121000), in ONE
 // transaction:
 //
 //   1. a payments row, whose id is the screen's idempotency key;

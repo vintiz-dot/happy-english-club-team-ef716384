@@ -103,7 +103,7 @@ const SUITES = [
   { name: "ledger append-only", file: "ledger-append-only.test.mjs", expect: 26, migrations: [] },
   // D5 G-1: the real record-payment and delete-payment over every D4 file, the
   // carry trigger, G-4, G-11, every trigger live has on the money tables and
-  // record_admin_payment (20261117120000; it builds its own database from
+  // record_admin_payment (20261117121000; it builds its own database from
   // D4_BUILD): the payment row + two balanced legs + the bill in ONE
   // transaction, as the admin; corrections; double clicks; concurrent
   // payments; faults inside the transaction leave nothing; lost replies;

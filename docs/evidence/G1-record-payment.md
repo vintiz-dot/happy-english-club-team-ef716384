@@ -14,7 +14,7 @@ does not fit cleanly - an owner decision first).
 said DO NOT SHIP (B-1: the undo's DELETE is refused on live; B-2: a dropped
 connection counted as answered). The three PostgREST writes and their undo
 are now ONE database transaction (`record_admin_payment`, migration
-20261117120000). Where a section above describes the undo, the reversal legs
+20261117121000). Where a section above describes the undo, the reversal legs
 or `halfDone`, Fix round 1 is what holds.
 
 ## The gap
@@ -311,7 +311,7 @@ read only (SELECTs of catalog definitions and counts; no personal data).
 
 ### The conductor's ruling (B-1 and M-3 together): one transaction
 
-NEW migration `supabase/migrations/20261117120000_record_admin_payment.sql`:
+NEW migration `supabase/migrations/20261117121000_record_admin_payment.sql`:
 `public.record_admin_payment(p_payment_id, p_student_id, p_month, p_kind,
 p_amount, p_method, p_occurred_at, p_memo, p_expected_recorded) RETURNS jsonb`
 does all three writes, plus the audit row, in ONE plpgsql transaction:
@@ -483,8 +483,8 @@ committed, and the next statement sees its payments row).
 
 | md5 | file |
 |---|---|
-| `5502a0aea99792c1c381053fdfa8e146` | supabase/migrations/20261117120000_record_admin_payment.sql (NEW - paste) |
-| `222fe43b32473fd2cb2a442619de85eb` | supabase/functions/record-payment/index.ts (deploy) |
+| `23cdcb44947476c1ba75d91e08e733b2` | supabase/migrations/20261117121000_record_admin_payment.sql (NEW - paste) |
+| `202c10a71adbec777cb26bf2a90b83ad` | supabase/functions/record-payment/index.ts (deploy) |
 | `3c80e93c2a1fefefadb99ab48c248c6f` | supabase/functions/delete-payment/index.ts (deploy; unchanged since 1549ec07) |
 | `fa04a8014b1b1c819a5ecb9dd6b7f5a3` | supabase/functions/student-audit/index.ts (deploy; N-4) |
 | `92b44db93cd2614a2fb3011e3a9063ba` | supabase/functions/_lib/auth.ts (unchanged) |
@@ -494,8 +494,8 @@ committed, and the next statement sees its payments row).
 | `5304d7dc9eaf9e527e3b67cf9da29659` | src/components/admin/QuickPayPanel.tsx |
 | `7ca0c30e43f94644f059208b371f3cf5` | src/components/admin/BatchPaymentDialog.tsx |
 | `efc22ac80f362b8b8e18979d60b69c4a` | src/components/admin/RecordedPaymentManager.tsx |
-| `a7b0a436798f929a553263b4bc6d6d3c` | scripts/pgtest/record-payment.test.mjs |
-| `4243d2531bcd8c75bef7787a854ac355` | scripts/pgtest/probe-g1-live-delete-trigger.test.mjs |
+| `91dce53611aad75af9f848a0a79d5856` | scripts/pgtest/record-payment.test.mjs |
+| `0e2ea9a0420fc94cd8ff52ba992e3095` | scripts/pgtest/probe-g1-live-delete-trigger.test.mjs |
 | `2e116bc7124c52c6b42b4df2802b04b7` | scripts/pgtest/probe-g1-answered.mjs |
 
 Also `scripts/pgtest/money-write-paths.test.mjs`, `scripts/pgtest/run.mjs`,
@@ -509,7 +509,7 @@ pieces itself; take main's files when merging.
 
 ### Deploy order (fix round 1)
 
-1. **Paste the migration** `20261117120000_record_admin_payment.sql` in the
+1. **Paste the migration** `20261117121000_record_admin_payment.sql` in the
    SQL editor. Its preflight refuses (nothing changed) if anything it needs
    is missing. Check afterwards: `has_function_privilege('authenticated',
    'public.record_admin_payment(uuid,uuid,text,text,integer,text,timestamptz,text,integer)',

@@ -1,6 +1,6 @@
 // D5 G-1: supabase/functions/record-payment, the one admin payment path
 // (docs/evidence/G1-record-payment.md), its database function
-// public.record_admin_payment (20261117120000, fix round 1), and
+// public.record_admin_payment (20261117121000, fix round 1), and
 // delete-payment taking one back.
 //
 // What runs: the REAL record-payment and delete-payment handlers, bundled
@@ -26,7 +26,7 @@
 //   and G-11 round 2's ledger_entries_stamp_created_at plus its revoke of
 //   refresh_invoice_carry (live, from main; this branch's copy of the file
 //   predates round 2);
-//   then the file under test, 20261117120000_record_admin_payment.sql.
+//   then the file under test, 20261117121000_record_admin_payment.sql.
 //
 // The stand-in runs a client made with the caller's JWT as `authenticated`
 // (auth.uid() = the caller, row security on), the service key as
@@ -61,7 +61,7 @@ const ok = (name, value, extra) => {
 };
 const migText = (n) => readFileSync(join(repo, 'supabase', 'migrations', n), 'utf8').replace(/\r\n/g, '\n');
 const tryIt = async (fn) => { try { await fn(); return null; } catch (e) { return { code: e.code, message: e.message }; } };
-const RP_MIGRATION = '20261117120000_record_admin_payment.sql';
+const RP_MIGRATION = '20261117121000_record_admin_payment.sql';
 const RP_SIG = 'public.record_admin_payment(uuid, uuid, text, text, integer, text, timestamptz, text, integer)';
 
 // ------------------------------------------------------------- database
