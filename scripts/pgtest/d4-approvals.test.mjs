@@ -169,6 +169,14 @@ async function offScenario(withF6) {
   out.pay = nr(await H.tryIt(() => H.as(A1, 'authenticated', 'authenticated',
     `INSERT INTO payroll_adjustments(month, origin_month, teacher_id, amount_vnd, reason) VALUES ($1,$2,$3,150000,'found after close') RETURNING 1 AS tier`,
     [thisMonth, W.OLD.month, W.teacherId]).then((r) => r.rows[0])));
+  // review B-1: while off a carry is still rewritten and deleted as today
+  out.pay_update = nr(await H.tryIt(() => H.as(A1, 'authenticated', 'authenticated',
+    `UPDATE payroll_adjustments SET amount_vnd = 200000 RETURNING 1 AS tier`).then((r) => r.rows[0])));
+  out.pay_delete = nr(await H.tryIt(() => H.as(A1, 'authenticated', 'authenticated',
+    `DELETE FROM payroll_adjustments RETURNING 1 AS tier`).then((r) => r.rows[0])));
+  out.pay_again = nr(await H.tryIt(() => H.as(A1, 'authenticated', 'authenticated',
+    `INSERT INTO payroll_adjustments(month, origin_month, teacher_id, amount_vnd, reason) VALUES ($1,$2,$3,150000,'found after close') RETURNING 1 AS tier`,
+    [thisMonth, W.OLD.month, W.teacherId]).then((r) => r.rows[0])));
   out.grant = nr(await H.tryIt(() => H.as(null, 'service_role', 'service_role', `INSERT INTO user_roles VALUES ($1,'admin') RETURNING 0 AS tier`, [A3]).then((r) => r.rows[0])));
   out.state = (await W.q1(`SELECT
       (SELECT jsonb_agg(jsonb_build_array(entity, op, tier, review_required) ORDER BY entity, op, tier, review_required) FROM money_change_overrides) mo,
@@ -263,7 +271,7 @@ await section('OFF: identical to the database without file 6', async () => {
      ['p_small', 'p_big', 'p_signed', 'p_fee', 'p_unfreeze'].every((k) => b[k].approval.required === false && b[k].approval.reasons.length === 0 &&
        Object.keys(b[k].approval).length === 2), b);
   ok('OFF: every change applied at once - nothing waits (no HC060 anywhere)',
-     !JSON.stringify(b).includes('HC060') && ['g_small', 'g_big', 'g_signed', 'g_fee', 'g_unfreeze', 's_cancel', 'pay', 'grant'].every((k) => !b[k].code), b);
+     !JSON.stringify(b).includes('HC060') && ['g_small', 'g_big', 'g_signed', 'g_fee', 'g_unfreeze', 's_cancel', 'pay', 'pay_update', 'pay_delete', 'pay_again', 'grant'].every((k) => !b[k].code), b);
   ok('OFF: not one approval request or event was written', approval_rows?.r === 0 && approval_rows?.e === 0, approval_rows);
   ok('OFF: asking for an approval is refused as not needed (HC015 approval_not_needed)', ask_off === 'approval_not_needed', ask_off);
 });
@@ -570,6 +578,44 @@ await section('ON: D2\'s own changes (zz_session_override_approval)', async () =
   const ab = await C.approve(rb.ok?.request_id, vb.ok?.token, A2);
   ok('approved: both cancelled in one transaction, two D2 override rows with the batch id', ab.ok?.status === 'applied' && ab.ok.override_ids.length === 2 &&
      (await countOf('session_cancel_overrides', `batch_id = '${batch}'`)) === 2, ab);
+
+  // review N-4: the requester's context reaches the approved change only as source / set_manual
+  const c1 = await W.lesson({ conf: 'confirmed' });
+  const ci = [await C.sBulkItem(c1.sid)];
+  const rc = await C.ask('session', 'cancel_sessions_checked_bulk', { items: ci, reason: R, batch_id: randomUUID(),
+    context: { source: 'bulk-cancel-sessions', set_manual: 'true', attached: { said: 'anything' }, other: 'x' } });
+  const stored = await q1(`SELECT params -> 'context' c FROM change_approval_requests WHERE id = $1`, [rc.ok?.request_id]);
+  ok('N-4: a request keeps only source and set_manual of the context it was sent (free text is not replayed unseen)',
+     JSON.stringify(stored?.c) === JSON.stringify({ source: 'bulk-cancel-sessions', set_manual: 'true' }), stored);
+  await C.rpc(A1, `SELECT public.withdraw_change_request($1) r`, [rc.ok?.request_id]);
+
+  // review M-1: the whole-batch question, asked before any chunk is applied
+  const k1 = await W.lesson({ conf: 'confirmed' }), k2 = await W.lesson({ conf: 'confirmed' });
+  const ki = [await C.sBulkItem(k1.sid), await C.sBulkItem(k2.sid)];
+  const chk = await C.rpc(A1, `SELECT public.change_approval_check('session','cancel_sessions_checked_bulk',$1::jsonb) r`,
+    [JSON.stringify({ items: ki, reason: R, batch_id: randomUUID() })]);
+  ok('M-1: change_approval_check for a whole batch: on, required, with the reasons; nothing written',
+     chk.ok?.enabled === true && chk.ok.required === true && chk.ok.reasons.includes('tier3') && chk.ok.items === 2 &&
+     (await countOf('sessions', `id IN ('${k1.sid}','${k2.sid}') AND status = 'Canceled'`)) === 0 &&
+     (await countOf('change_approval_requests', `target_keys && ARRAY['session:${k1.sid}']`)) === 0, chk);
+  const fcls = randomUUID();
+  await su(`INSERT INTO classes(id, default_teacher_user, name) VALUES ($1,$2,'c')`, [fcls, TU]);
+  const fsid = (await q1(`INSERT INTO sessions(class_id,date,start_time,end_time,status,teacher_id)
+                          VALUES ($1,(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date + 20,'08:00','09:00','Scheduled',$2) RETURNING id`, [fcls, W.teacherId])).id;
+  const fi = [await C.sBulkItem(fsid)];
+  const chk0 = await C.rpc(A1, `SELECT public.change_approval_check('session','cancel_sessions_checked_bulk',$1::jsonb) r`,
+    [JSON.stringify({ items: fi, reason: R, batch_id: randomUUID() })]);
+  ok('  a batch of a future lesson with nothing recorded: on, not required', chk0.ok?.enabled === true && chk0.ok.required === false, chk0);
+  const chkT = await C.rpc(TU, `SELECT public.change_approval_check('session','cancel_sessions_checked_bulk',$1::jsonb) r`,
+    [JSON.stringify({ items: fi, reason: R, batch_id: randomUUID() })]);
+  ok('  a teacher cannot ask it (42501)', chkT.code === '42501', chkT);
+
+  // review N-3: the tier handed to the rule is never lowered
+  const t = (await q1(`SELECT public._approval_impact_tier('{"tier": 3}'::jsonb, 1) a, public._approval_impact_tier('{}'::jsonb, 1) b,
+                              public._approval_impact_tier('{"tier": "x"}'::jsonb, 0) c, public._approval_impact_tier(NULL, 2) d,
+                              public._approval_impact_tier('{"tier": 1}'::jsonb, 2) e`));
+  ok('N-3: the impact tier is the higher of the plan\'s and the impact\'s own (an odd one counts as 3)',
+     t.a === 3 && t.b === 1 && t.c === 3 && t.d === 2 && t.e === 2, t);
 });
 
 await section('ON: R-12 - a batch is judged whole, and so are the same person\'s last 24 hours', async () => {
@@ -634,6 +680,32 @@ await section('ON: pay carried forward (A-4) and the admin role (A-18)', async (
   const a2 = await C.approve(r2.ok?.request_id, v2.ok?.token, A2);
   ok('a carry for the same person and month made meanwhile makes the request stale (no double payment)', a2.ok?.status === 'stale' &&
      (await countOf('payroll_adjustments')) === 2, a2);
+
+  // review B-1: the approved carry cannot be rewritten or removed behind the approval
+  const adjOf = async () => q1(`SELECT amount_vnd, teacher_id, month, reason FROM payroll_adjustments WHERE id = $1`, [adj.id]);
+  const t2 = (await q1(`INSERT INTO teachers(user_id, full_name) VALUES (gen_random_uuid(),'t-other') RETURNING id`)).id;
+  const upAmt = await tryIt(() => as(A1, 'authenticated', 'authenticated', `UPDATE payroll_adjustments SET amount_vnd = 50000000 WHERE id = $1`, [adj.id]));
+  ok('B-1: ON, raising an approved carry by UPDATE (the asker, through the API): HC060, the amount stays 150,000',
+     upAmt.code === 'HC060' && /pay_adjustment/.test(upAmt.detail ?? '') && (await adjOf()).amount_vnd === 150000, upAmt);
+  const upWho = await tryIt(() => as(A2, 'authenticated', 'authenticated', `UPDATE payroll_adjustments SET teacher_id = $1 WHERE id = $2`, [t2, adj.id]));
+  const upMonth = await tryIt(() => as(A1, 'authenticated', 'authenticated', `UPDATE payroll_adjustments SET month = $1 WHERE id = $2`, ['2099-01', adj.id]));
+  ok('  moving it to another teacher (even by the approver), or to another month: HC060, unchanged',
+     upWho.code === 'HC060' && upMonth.code === 'HC060' && (await adjOf()).teacher_id === W.teacherId && (await adjOf()).month === month, { upWho, upMonth });
+  const svcUp = await tryIt(() => as(null, 'service_role', 'service_role', `UPDATE payroll_adjustments SET amount_vnd = 1 WHERE id = $1`, [adj.id]));
+  ok('  on the service lane too: HC060', svcUp.code === 'HC060' && (await adjOf()).amount_vnd === 150000, svcUp);
+  const del = await tryIt(() => as(A1, 'authenticated', 'authenticated', `DELETE FROM payroll_adjustments WHERE id = $1 RETURNING id`, [adj.id]).then((r) => r.rows.length));
+  ok('  deleting it: HC060 (carry the opposite amount instead), the row stays', del.code === 'HC060' && /opposite amount/.test(del.detail ?? '') &&
+     (await countOf('payroll_adjustments', `id = '${adj.id}'`)) === 1, del);
+  const wording = await tryIt(() => as(A1, 'authenticated', 'authenticated', `UPDATE payroll_adjustments SET reason = 'Correction found after close (typo fixed)' WHERE id = $1 RETURNING id`, [adj.id]).then((r) => r.rows.length));
+  ok('  rewording only the reason is not a money change: accepted', wording.ok === 1 && /typo fixed/.test((await adjOf()).reason), wording);
+  const own = await tryIt(() => su(`UPDATE payroll_adjustments SET amount_vnd = 150001 WHERE id = $1`, [adj.id]));
+  ok('  the owner lane (SQL editor) is not refused, as for every guard', own.ok !== undefined && (await adjOf()).amount_vnd === 150001, own);
+  await su(`UPDATE payroll_adjustments SET amount_vnd = 150000 WHERE id = $1`, [adj.id]);
+  const back = await C.ask('money', 'carry_payroll_adjustments', { rows: [{ ...rows[0], amount_vnd: -150000, reason: 'Reverses the carry made in error' }] });
+  const vbk = await C.look(back.ok?.request_id, A2);
+  const abk = await C.approve(back.ok?.request_id, vbk.ok?.token, A2);
+  ok('  the way to correct it: carry the opposite amount - a request, approved by the other administrator', abk.ok?.status === 'applied' &&
+     (await q1(`SELECT sum(amount_vnd)::int s FROM payroll_adjustments WHERE teacher_id = $1 AND origin_month = $2 AND amount_vnd IN (150000, -150000)`, [W.teacherId, W.OLD.month])).s === 0, abk);
 
   const sv = await tryIt(() => as(null, 'service_role', 'service_role', `INSERT INTO user_roles VALUES ($1,'admin')`, [A3]));
   ok('giving the admin role on the service lane (the admin-user function) while on: HC060', sv.code === 'HC060' && !(await q1(`SELECT public.has_role($1,'admin') h`, [A3])).h, sv);
@@ -707,7 +779,15 @@ await section('fail closed: a missing or disabled piece', async () => {
   ok('an approval trigger disabled while on: HC050 guard_broken naming it (not "not required")', d.code === 'HC050' && /zz_admin_grant_guard/.test(d.detail ?? ''), d);
   await su(`ALTER TABLE public.user_roles ENABLE TRIGGER zz_admin_grant_guard`);
   const saved = await q1(`SELECT * FROM change_approval_settings`);
-  await su(`DELETE FROM change_approval_settings`);
+  const ownerDel = await tryIt(() => su(`DELETE FROM change_approval_settings`));
+  const svcDel = await tryIt(() => as(null, 'service_role', 'service_role', `DELETE FROM change_approval_settings`));
+  ok('review decision 4: the settings row cannot be deleted, by the table owner either (HC041, naming the way to switch off)',
+     ownerDel.code === 'HC041' && svcDel.code === 'HC041' && /set_change_approval_settings/.test(ownerDel.detail ?? '') &&
+     (await countOf('change_approval_settings')) === 1, { ownerDel, svcDel });
+  // removing it takes a deliberate DROP / DISABLE of the guard (here, to prove what a missing row does)
+  await db.exec(`ALTER TABLE public.change_approval_settings DISABLE TRIGGER change_approval_settings_write_guard;
+            DELETE FROM public.change_approval_settings;
+            ALTER TABLE public.change_approval_settings ENABLE TRIGGER change_approval_settings_write_guard;`);
   const m = await tryIt(() => C.preview('attendance', 'set_marks', marks(l)));
   ok('A-15: the settings row deleted: a money preview is HC050 guard_broken with the repair statement', m.code === 'HC050' &&
      /INSERT INTO public\.change_approval_settings/.test(m.detail ?? ''), m);

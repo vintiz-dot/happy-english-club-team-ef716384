@@ -11,12 +11,18 @@
 --   view      change_approval_queue
 --   triggers  session_cancel_overrides.zz_session_override_approval  (D2's own changes)
 --             user_roles.zz_admin_grant_guard                       (giving the admin role, A-18)
---             payroll_adjustments.zz_pay_adjustment_approval        (carrying pay forward, A-4)
+--             payroll_adjustments.zz_pay_adjustment_approval        (carrying pay forward, A-4;
+--                                                                    while on, a carry is not
+--                                                                    rewritten or deleted)
 --   RPCs      request_change_approval, approval_request_preview,
 --             approve_change_request, reject_change_request,
 --             withdraw_change_request, release_own_request,
 --             acknowledge_released_request, set_change_approval_settings,
---             change_approval_status (admin JWT only)
+--             change_approval_status, change_approval_check (admin JWT only)
+--   An approved change's bills are worked out again by the edge function
+--   guarded-change-refresh (actions approve / release / approval-refresh),
+--   which calls approve_change_request / release_own_request as the admin
+--   and then refreshes what the change reached (review fix round 1, B-2).
 --
 -- WHAT IT REPLACES (preflight pins each one; a second paste finds its own body)
 --   change_approval_needed, _change_request_claim   the two stubs of 1b
@@ -140,7 +146,7 @@ BEGIN
       ('public._money_plan__pay_rate(text, jsonb, uuid)', ARRAY['aa28af8b81495574af464d95444978a3']),
       ('public._money_plan__invoice_freeze(text, jsonb, uuid)', ARRAY['9c4f583e0d0f729689c08bce2ea62a5e']),
       ('public._money_plan__family_link(text, jsonb, uuid)', ARRAY['8bdd8a7a760b08ed65fd6beb69097dfd']),
-      ('public._money_change_full_plan(text, text, jsonb, uuid, text)', ARRAY['8f8b9abdec600f4365979c8798ec801c', '5bcb5952f4f8f2e7fbe3d7747846e2dd']),
+      ('public._money_change_full_plan(text, text, jsonb, uuid, text)', ARRAY['8f8b9abdec600f4365979c8798ec801c', 'b27d8f2f6fd43ed006ce43ff180359c6']),
       ('public.change_approval_needed(jsonb, uuid)', ARRAY['4b477e5155181f35119d0f7a225ec7ce', '9f646e810e4b375f62a37b3d9ced96dc']),
       ('public._change_request_claim(text, text)', ARRAY['7c84af305cfb366c6a8bb20e6f1bc6d8', '356d74c36029a948ee60c12ceb2a6d7d'])) AS t(sig, want)
   LOOP
@@ -213,10 +219,18 @@ CREATE TABLE IF NOT EXISTS public.change_approval_events (
 CREATE INDEX IF NOT EXISTS change_approval_events_request_idx ON public.change_approval_events (request_id, created_at);
 CREATE INDEX IF NOT EXISTS change_approval_events_txid_idx    ON public.change_approval_events (txid);
 
--- The settings row: written only by the table owner (the definer functions).
+-- The settings row: written only by the table owner (the definer functions),
+-- and never deleted, by the owner either (review decision 4): a missing row
+-- cannot tell "was off" from "was on", so every checked change stops (HC050)
+-- until it is put back. Removing it takes a deliberate DROP TRIGGER.
 CREATE OR REPLACE FUNCTION public._change_approval_settings_guard()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $fn$
 BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'the approval setting row is never deleted' USING ERRCODE = 'HC041',
+      DETAIL = 'Without it every checked change stops (guard_broken). Switch approval off with set_change_approval_settings, '
+            || 'or roll the step back with scripts/ROLLBACK-d4-6-approvals.sql. Nothing was changed.';
+  END IF;
   IF current_user::text IN ('anon', 'authenticated', 'service_role', 'authenticator')
      OR current_user <> (SELECT c.relowner::regrole::name FROM pg_class c WHERE c.oid = TG_RELID) THEN
     RAISE EXCEPTION 'the approval setting is changed only through set_change_approval_settings'
@@ -423,9 +437,22 @@ BEGIN
   RETURN v_id;
 END $fn$;
 
+-- The tier an impact is judged at: the higher of the plan's tier and the
+-- impact's own (review N-3: never lowered). An impact tier that is not 0-3
+-- counts as 3; an impact without one takes the plan's.
+CREATE OR REPLACE FUNCTION public._approval_impact_tier(p_impact jsonb, p_tier int)
+RETURNS int LANGUAGE sql IMMUTABLE SET search_path = public AS $fn$
+  SELECT GREATEST(COALESCE(p_tier, 3),
+                  CASE WHEN jsonb_typeof(p_impact) IS DISTINCT FROM 'object' OR NOT (p_impact ? 'tier') THEN 0
+                       WHEN (p_impact ->> 'tier') ~ '^[0-3]$' THEN (p_impact ->> 'tier')::int
+                       ELSE 3 END)
+$fn$;
+
 -- 1b's full plan with ONE change: the impact handed to the approval rule
 -- carries the plan's own tier (step 2's and some 3B plans' impact has none,
--- and the tier3 line needs it). Token, fingerprint and everything else are 1b's.
+-- and the tier3 line needs it), or the impact's own tier when that is higher
+-- (never lowered; one that is not 0-3 counts as 3). Token, fingerprint and
+-- everything else are 1b's.
 CREATE OR REPLACE FUNCTION public._money_change_full_plan(p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $fn$
 DECLARE
@@ -442,7 +469,7 @@ BEGIN
   IF v_tier IS NULL OR v_tier NOT BETWEEN 0 AND 3 THEN v_tier := 3; END IF;
   v_approval := COALESCE(public.change_approval_needed(
                   CASE WHEN jsonb_typeof(v -> 'impact') = 'object' THEN v -> 'impact' ELSE '{}'::jsonb END
-                    || jsonb_build_object('tier', v_tier), p_uid),
+                    || jsonb_build_object('tier', public._approval_impact_tier(v -> 'impact', v_tier)), p_uid),
                 '{"required": true, "reasons": ["unknown"]}'::jsonb);
   RETURN v || jsonb_build_object(
     'tier', v_tier,
@@ -604,7 +631,18 @@ BEGIN
        OR (p_kind = 'settings' AND p_rpc IN ('set_change_approval_settings', 'grant_admin_role'))) THEN
     RAISE EXCEPTION 'bad_rpc' USING ERRCODE = 'HC015';
   END IF;
-  v_ctx := CASE WHEN jsonb_typeof(v_p -> 'context') = 'object' THEN v_p -> 'context' ELSE '{}'::jsonb END;
+  -- The requester's context is replayed into the approved change, which the
+  -- approver does not see (review N-4): only `source` (a label) and D2's
+  -- `set_manual` = 'true' (what bulk cancel sends) are kept.
+  v_ctx := '{}'::jsonb;
+  IF jsonb_typeof(v_p -> 'context') = 'object' THEN
+    IF jsonb_typeof(v_p -> 'context' -> 'source') = 'string' THEN
+      v_ctx := v_ctx || jsonb_build_object('source', left(v_p -> 'context' ->> 'source', 100));
+    END IF;
+    IF v_p -> 'context' ->> 'set_manual' = 'true' THEN
+      v_ctx := v_ctx || jsonb_build_object('set_manual', 'true');
+    END IF;
+  END IF;
 
   -- ---- normalise: only the arguments the checked function takes are kept
   IF p_rpc = 'money_change_checked' THEN
@@ -739,7 +777,7 @@ BEGIN
         'fingerprint', CASE WHEN v ->> 'refuse_code' IS NULL THEN v ->> 'fingerprint' ELSE 'refused:' || (v ->> 'refuse_code') END,
         'token', v ->> 'token', 'tier', v_tier,
         'impact', CASE WHEN jsonb_typeof(v -> 'impact') = 'object' THEN v -> 'impact' ELSE '{}'::jsonb END
-                  || jsonb_build_object('tier', v_tier),
+                  || jsonb_build_object('tier', public._approval_impact_tier(v -> 'impact', v_tier)),
         'plan', jsonb_build_object('entity', v ->> 'entity', 'op', v ->> 'op', 'target_id', v ->> 'target_id', 'tier', v_tier,
                   'refuse_code', v ->> 'refuse_code', 'student_ids', v -> 'student_ids', 'change', v -> 'change',
                   'reach_from', v ->> 'reach_from', 'reach_to', v ->> 'reach_to', 'refresh_pairs', v -> 'refresh_pairs',
@@ -791,7 +829,7 @@ BEGIN
         'fingerprint', CASE WHEN v ->> 'refuse_code' IS NULL THEN v ->> 'fingerprint' ELSE 'refused:' || (v ->> 'refuse_code') END,
         'token', v ->> 'token', 'tier', v_tier,
         'impact', CASE WHEN jsonb_typeof(v -> 'impact') = 'object' THEN v -> 'impact' ELSE '{}'::jsonb END
-                  || jsonb_build_object('tier', v_tier),
+                  || jsonb_build_object('tier', public._approval_impact_tier(v -> 'impact', v_tier)),
         'plan', jsonb_build_object('session_id', s.id, 'action', it ->> 'action', 'session', v -> 'session', 'tier', v_tier,
                   'level', v ->> 'level', 'refuse_code', v ->> 'refuse_code', 'change', v -> 'change',
                   'affected', v -> 'affected', 'refresh_pairs', v -> 'refresh_pairs', 'impact', v -> 'impact')));
@@ -1348,6 +1386,31 @@ BEGIN
     'off_statement', 'UPDATE public.change_approval_settings SET enabled = false, updated_at = now() WHERE id;');
 END $fn$;
 
+-- Would this change wait for a second administrator, asked by the caller,
+-- now? Read-only (the plan is worked out without locks and nothing is
+-- written). For an edge function that applies one batch in several
+-- transactions (bulk cancel over 50 lessons): it asks for the WHOLE batch
+-- before the first chunk, so approval never leaves a batch half done
+-- (review M-1). The checked functions still decide, chunk by chunk.
+CREATE OR REPLACE FUNCTION public.change_approval_check(p_kind text, p_rpc text, p_params jsonb)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
+DECLARE
+  v_uid uuid := public._session_require_admin();
+  v jsonb;
+BEGIN
+  IF NOT public._change_approval_on() THEN
+    RETURN jsonb_build_object('enabled', false, 'required', false, 'reasons', '[]'::jsonb);
+  END IF;
+  v := public._approval_plan(p_kind, p_rpc, p_params, v_uid, false, false);
+  RETURN jsonb_build_object(
+    'enabled', true,
+    'required', COALESCE((v -> 'approval' ->> 'required')::boolean, true),
+    'reasons', COALESCE(v -> 'approval' -> 'reasons', '["unknown"]'::jsonb),
+    'totals', v -> 'approval' -> 'totals',
+    'thresholds', v -> 'approval' -> 'thresholds',
+    'items', jsonb_array_length(COALESCE(v -> 'items', '[]'::jsonb)));
+END $fn$;
+
 -- ---------------------------------------------------------------- 8
 -- The three hooks.
 
@@ -1402,13 +1465,29 @@ BEGIN
   RETURN NEW;
 END $fn$;
 
--- Carrying pay forward (A-4), on every lane but the owner's.
+-- Carrying pay forward (A-4), on every lane but the owner's. INSERT needs the
+-- claim of an approved carry_payroll_adjustments request. While on, a carry
+-- already made is never rewritten (review B-1): an UPDATE that changes
+-- anything but the wording of the reason (or who made it) is refused, and so
+-- is a DELETE - no request kind writes either, so no claim can allow them. A
+-- wrong carry is corrected by carrying the difference, which is a request.
 CREATE OR REPLACE FUNCTION public._pay_adjustment_approval()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
 BEGIN
   IF public._caller_lane() = 'owner' OR NOT public._change_approval_on()
      OR NOT (public._change_approval_settings_row()).on_pay_adjustment THEN
-    RETURN NEW;
+    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  END IF;
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'approval_required' USING ERRCODE = 'HC060',
+      DETAIL = 'reasons=["pay_adjustment"]; a carried pay correction is not deleted while approval is on: carry the opposite amount instead (it is sent for approval). Nothing was changed.';
+  END IF;
+  IF TG_OP = 'UPDATE' THEN
+    IF (to_jsonb(NEW) - 'reason' - 'created_by') IS NOT DISTINCT FROM (to_jsonb(OLD) - 'reason' - 'created_by') THEN
+      RETURN NEW;
+    END IF;
+    RAISE EXCEPTION 'approval_required' USING ERRCODE = 'HC060',
+      DETAIL = 'reasons=["pay_adjustment"]; a carried pay correction is not rewritten while approval is on: carry the difference instead (it is sent for approval). Nothing was changed.';
   END IF;
   IF public._change_request_claim('money', public._approval_pay_fp(NEW.month, NEW.origin_month, NEW.teacher_id, NEW.assistant_id,
                                                                    NEW.amount_vnd, NEW.reason)) IS NULL THEN
@@ -1424,7 +1503,7 @@ DROP TRIGGER IF EXISTS zz_admin_grant_guard ON public.user_roles;
 CREATE TRIGGER zz_admin_grant_guard BEFORE INSERT OR UPDATE ON public.user_roles
   FOR EACH ROW EXECUTE FUNCTION public._admin_grant_guard();
 DROP TRIGGER IF EXISTS zz_pay_adjustment_approval ON public.payroll_adjustments;
-CREATE TRIGGER zz_pay_adjustment_approval BEFORE INSERT ON public.payroll_adjustments
+CREATE TRIGGER zz_pay_adjustment_approval BEFORE INSERT OR UPDATE OR DELETE ON public.payroll_adjustments
   FOR EACH ROW EXECUTE FUNCTION public._pay_adjustment_approval();
 
 -- ---------------------------------------------------------------- 9
@@ -1488,6 +1567,8 @@ REVOKE ALL ON FUNCTION
   public.acknowledge_released_request(uuid, text),
   public.approval_request_preview(uuid),
   public.change_approval_status(),
+  public.change_approval_check(text, text, jsonb),
+  public._approval_impact_tier(jsonb, integer),
   public._session_override_approval(),
   public._admin_grant_guard(),
   public._pay_adjustment_approval()
@@ -1502,7 +1583,8 @@ GRANT EXECUTE ON FUNCTION
   public.withdraw_change_request(uuid),
   public.acknowledge_released_request(uuid, text),
   public.approval_request_preview(uuid),
-  public.change_approval_status()
+  public.change_approval_status(),
+  public.change_approval_check(text, text, jsonb)
 TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
