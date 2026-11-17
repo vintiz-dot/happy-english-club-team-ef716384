@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/ui/loading";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
-import { labelAfterPayment } from "@/lib/invoiceStatus";
-import { setRecordedPayment } from "@/lib/recordedPaymentWrite";
+import { newPaymentKey, recordPayment } from "@/lib/recordPayment";
 
 interface Invoice {
   id: string;
@@ -48,6 +47,22 @@ export function RecordedPaymentManager() {
   const [reversalReason, setReversalReason] = useState("");
   const editMonth = useTuitionMonthConfirmation(selectedMonth, !!editingInvoice);
   const reverseMonth = useTuitionMonthConfirmation(selectedMonth, !!reversingInvoice);
+  // Which ledger account the money went into or came out of: cash or bank.
+  const [method, setMethod] = useState("Cash");
+  // One key per attempt (src/lib/recordPayment.ts): a double click records once.
+  const paymentKey = useRef(newPaymentKey());
+  const methodField = (
+    <div className="space-y-1 text-left">
+      <Label htmlFor="rpm-method" className="text-xs">Money in / out by</Label>
+      <Select value={method} onValueChange={setMethod}>
+        <SelectTrigger id="rpm-method" className="h-8 w-32"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="Cash">Cash</SelectItem>
+          <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
   useEffect(() => {
     loadInvoices();
@@ -98,49 +113,37 @@ export function RecordedPaymentManager() {
     setLoading(true);
     try {
       const newValue = parseInt(editingInvoice.newValue);
-      
+      if (!Number.isFinite(newValue) || newValue < 0) throw new Error("Enter the recorded payment as a whole number, 0 or more");
+
       // Get the current invoice to capture the old value
       const invoice = invoices.find(inv => inv.id === editingInvoice.id);
       if (!invoice) throw new Error("Invoice not found");
 
       const oldValue = invoice.recorded_payment || 0;
-      // The label follows the money by the one rule (it was left as it was,
-      // and this screen prints it); an admin's 'credit' is kept.
-      const label = labelAfterPayment(invoice, newValue);
+      if (newValue === oldValue) { toast.info("The recorded payment is unchanged"); setEditingInvoice(null); return; }
 
-      // Saved only if the bill still holds what this screen showed
-      // (compare-and-set, src/lib/recordedPaymentWrite.ts): a payment saved
-      // meanwhile from another screen is never overwritten.
-      const saved = await setRecordedPayment(supabase, {
-        invoiceId: editingInvoice.id,
+      // The change is money in (a payment) or money back out (a correction),
+      // recorded by record-payment in the payments list, the ledger and the
+      // bill together (D5 G-1), against the figure this screen showed. It
+      // labels the bill by the one rule and writes the audit row.
+      const saved = await recordPayment(supabase, {
         studentId: invoice.student_id,
         month: invoice.month,
-        expected: oldValue,
-        next: newValue,
-        fields: { ...(label ? { status: label } : {}), updated_at: new Date().toISOString() },
+        kind: newValue > oldValue ? "payment" : "correction",
+        amount: Math.abs(newValue - oldValue),
+        method,
+        occurredAt: new Date().toISOString().slice(0, 10),
+        memo: `Recorded Payment Manager: ${editingInvoice.reason.trim()}`.slice(0, 500),
+        idempotencyKey: paymentKey.current,
+        expectedRecorded: oldValue,
       });
+      if (saved.ok || saved.answered) paymentKey.current = newPaymentKey();
       if (!saved.ok) {
-        // conflict: nothing written; reload the list so the admin sees the bill as it is
+        // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is
         toast.error(saved.message);
         loadInvoices();
         return;
       }
-
-      // Log the change to audit log
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("audit_log").insert({
-        entity: "invoice",
-        entity_id: editingInvoice.id,
-        action: "update_recorded_payment",
-        actor_user_id: user?.id,
-        diff: {
-          old_recorded_payment: oldValue,
-          new_recorded_payment: newValue,
-          reason: editingInvoice.reason,
-          student_id: invoice.student_id,
-          month: invoice.month
-        }
-      });
 
       toast.success("Recorded payment updated successfully");
       setEditingInvoice(null);
@@ -169,40 +172,30 @@ export function RecordedPaymentManager() {
       const invoice = invoices.find(inv => inv.id === reversingInvoice.id);
       if (!invoice) throw new Error("Invoice not found");
 
-      const newValue = 0; // Reset to 0 on reversal
-      const label = labelAfterPayment(invoice, newValue);
+      const current = invoice.recorded_payment || 0;
+      if (current <= 0) { toast.info("This bill records no payment to reverse"); setReversingInvoice(null); return; }
 
-      // Compare-and-set on what this screen showed (src/lib/recordedPaymentWrite.ts).
-      const saved = await setRecordedPayment(supabase, {
-        invoiceId: reversingInvoice.id,
+      // Back to 0: a correction of everything the bill records, through
+      // record-payment (payments list, ledger and bill together, D5 G-1),
+      // against the figure this screen showed.
+      const saved = await recordPayment(supabase, {
         studentId: invoice.student_id,
         month: invoice.month,
-        expected: invoice.recorded_payment || 0,
-        next: newValue,
-        fields: { ...(label ? { status: label } : {}), updated_at: new Date().toISOString() },
+        kind: "correction",
+        amount: current,
+        method,
+        occurredAt: new Date().toISOString().slice(0, 10),
+        memo: `Reversal (Recorded Payment Manager): ${reversalReason.trim()}`.slice(0, 500),
+        idempotencyKey: paymentKey.current,
+        expectedRecorded: current,
       });
+      if (saved.ok || saved.answered) paymentKey.current = newPaymentKey();
       if (!saved.ok) {
-        // conflict: nothing written; reload the list so the admin sees the bill as it is
+        // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is
         toast.error(saved.message);
         loadInvoices();
         return;
       }
-
-      // Log the reversal
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("audit_log").insert({
-        entity: "invoice",
-        entity_id: reversingInvoice.id,
-        action: "reverse_recorded_payment",
-        actor_user_id: user?.id,
-        diff: {
-          old_recorded_payment: reversingInvoice.currentValue,
-          new_recorded_payment: newValue,
-          reason: reversalReason,
-          student_id: invoice.student_id,
-          month: invoice.month
-        }
-      });
 
       toast.success("Recorded payment reversed successfully");
       setReversingInvoice(null);
@@ -315,6 +308,7 @@ export function RecordedPaymentManager() {
                           {isEditing ? (
                             <div className="space-y-2">
                               {editMonth.field}
+                              {methodField}
                               <Input
                                 type="number"
                                 value={editingInvoice.newValue}
@@ -410,12 +404,13 @@ export function RecordedPaymentManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reverse Recorded Payment</AlertDialogTitle>
             <AlertDialogDescription>
-              This will reset the recorded_payment to 0 for this invoice. 
+              This will reset the recorded_payment to 0 for this invoice, recorded as a correction in the payments list and the ledger.
               Current value: {reversingInvoice?.currentValue.toLocaleString('vi-VN')} ₫
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 py-4">
             {reverseMonth.field}
+            {methodField}
             <Label>Reason for reversal (required)</Label>
             <Textarea
               value={reversalReason}

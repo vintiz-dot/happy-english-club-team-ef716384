@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +24,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
-import { CHANGED_SINCE_LOADED, setRecordedPayment } from "@/lib/recordedPaymentWrite";
+import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
+import { newPaymentKey, recordPayment } from "@/lib/recordPayment";
 import { useIvory } from "@/hooks/useIvory";
 
 interface QuickPayPanelProps {
@@ -57,6 +58,14 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  // One key per student per attempt (src/lib/recordPayment.ts): a second
+  // click, or a retry after no reply, records nothing more.
+  const paymentKeys = useRef(new Map<string, string>());
+  const keyFor = (studentId: string) => {
+    let k = paymentKeys.current.get(studentId);
+    if (!k) { k = newPaymentKey(); paymentKeys.current.set(studentId, k); }
+    return k;
+  };
 
   // Only rows that owe money this month
   const unpaid = useMemo(() => {
@@ -117,6 +126,8 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
     let failCount = 0;
     const savedIds = new Set<string>();
     const conflicts: string[] = [];
+    const refusals: string[] = [];
+    const recordedAfter = new Map<string, number>();
 
     try {
       for (const item of selectedRows) {
@@ -124,55 +135,33 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         if (enteredAmount <= 0) continue;
 
         const alreadyPaid = (item as any).recorded_payment ?? 0;
-        const newTotalPaid = alreadyPaid + enteredAmount;
-        const payable = (item as any).finalPayable ?? 0;
         const invoiceId = String((item as any).id ?? "");
         const isPersistedInvoice = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(invoiceId);
-
-        // The one rule (src/lib/invoiceStatus.ts); undefined keeps an admin's 'credit'.
-        const newStatus = labelForPayment((item as any).status, newTotalPaid, payable, monthCharged(item as any));
+        const name = (item.students as any)?.full_name || "a student";
 
         try {
-          // Saved only if the bill still holds what this screen showed
-          // (compare-and-set, src/lib/recordedPaymentWrite.ts).
-          const saved = await setRecordedPayment(supabase, {
-            invoiceId: isPersistedInvoice ? invoiceId : null,
+          // record-payment (D5 G-1): payment row, both ledger legs and the
+          // bill together, against the figure this screen showed. It writes
+          // the audit row and creates a missing bill through calculate-tuition.
+          const saved = await recordPayment(supabase, {
             studentId: item.student_id,
             month,
-            expected: alreadyPaid,
-            next: newTotalPaid,
-            fields: {
-              ...(newStatus ? { status: newStatus } : {}),
-              ...(isPersistedInvoice ? { updated_at: new Date().toISOString(), updated_by: user?.id } : {}),
-            },
-            newRow: {
-              base_amount: (item as any).base_amount || 0,
-              discount_amount: (item as any).discount_amount || 0,
-              total_amount: (item as any).total_amount || 0,
-              paid_amount: 0,
-              carry_in_credit: (item as any).carry_in_credit || 0,
-              carry_in_debt: (item as any).carry_in_debt || 0,
-              created_by: user?.id,
-            },
+            kind: "payment",
+            amount: enteredAmount,
+            method,
+            occurredAt: date,
+            memo: "Quick Pay",
+            idempotencyKey: keyFor(item.student_id),
+            ...(isPersistedInvoice ? { expectedRecorded: alreadyPaid } : {}),
           });
-          if (!saved.ok) { conflicts.push((item.students as any)?.full_name || "a student"); failCount++; continue; }
-
-          await supabase.from("audit_log").insert({
-            entity: "invoice",
-            entity_id: isPersistedInvoice ? invoiceId : item.student_id,
-            action: "quickpay_record_payment",
-            actor_user_id: user?.id,
-            diff: {
-              student_id: item.student_id,
-              month,
-              previous_recorded_payment: alreadyPaid,
-              payment_amount: enteredAmount,
-              new_recorded_payment: newTotalPaid,
-              payment_date: date,
-              payment_method: method,
-              quickpay: true,
-            },
-          });
+          if (saved.ok || saved.answered) paymentKeys.current.delete(item.student_id);
+          if (!saved.ok) {
+            if (saved.conflict) conflicts.push(name);
+            else refusals.push(`${name}: ${saved.message}`);
+            failCount++;
+            continue;
+          }
+          recordedAfter.set(item.student_id, saved.data.recordedAfter);
 
           successCount++;
           savedIds.add(item.student_id);
@@ -188,9 +177,9 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         if (!old) return old;
         return old.map((row) => {
           if (skipped.has(row.student_id) || !savedIds.has(row.student_id)) return row; // only what was really saved
-          const amt = getEntryAmount(row);
-          if (amt <= 0) return row;
-          const newRecorded = (row.recorded_payment ?? 0) + amt;
+          // What the function says the bill now records.
+          const newRecorded = recordedAfter.get(row.student_id);
+          if (newRecorded === undefined) return row;
           const fp = row.finalPayable ?? 0;
           const debt = Math.max(0, fp - newRecorded);
           const credit = Math.max(0, newRecorded - fp);
@@ -217,6 +206,8 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         // conflict: those bills changed since the list was loaded; nothing was written to them
         toast.error(`${conflicts.join(", ")}: ${CHANGED_SINCE_LOADED}`);
       }
+      // Each refusal in the function's own words: nothing was recorded for them.
+      for (const r of refusals) toast.error(r);
 
       setOverrides({});
       tuitionMonth.reset();
