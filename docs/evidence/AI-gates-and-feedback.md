@@ -13,7 +13,8 @@ Owner rule: every function that calls a paid vendor for a browser starts with `r
 | video-rubric | teacher, admin | 20 / 10 min | one per video homework set |
 | explain-family-tuition | admin | 20 / 10 min | one per family written to (each also calls calculate-tuition per child) |
 | audit-eval-proxy | admin | 60 / 10 min | `audit_eval_runs`: 283 calls, at most 33 in any 10 min. Only the gate changed; the bucket, page and SQL caps are untouched (owner) |
-| ocr-vocab-scan | teacher, admin (service key now refused: nothing calls it) | 20 / 10 min | 6 vocab pages in 10 min busiest |
+| ocr-vocab-scan | teacher, admin (service key now refused: nothing calls it) | 40 / 10 min (fix round: a scan and an approval per page) | 6 vocab pages in 10 min busiest |
+| ocr-student-work (fix round) | teacher, admin | 60 / 10 min | 25 pages in 10 min busiest, plus retries |
 | chat | student, family, teacher, admin | 30 / 5 min, plus the existing 80 a day | every role keeps it; role-less accounts are refused (live: 2 role-less accounts, neither linked to a child or a family, so no one who used it loses it) |
 | analyze-video-submission | any role, then: the class's staff, or this child / their family | 30 / hour; a family account 6 / hour | see below |
 
@@ -99,13 +100,16 @@ Run at 20:08 Hanoi, so `run.mjs` ran with a preload moving the clock back 8 hour
 | `tsc --noEmit -p tsconfig.app.json` | | exit 0 |
 | `npm run test:bun` | | 142 pass, 3 fail: `SettleBillModal.tsx` missing and `scripts/fixtures/rich-text/dom` missing - neither exists on `origin/main`; no file here touches them |
 
-## Migrations (LF md5, CR stripped)
+## Migrations (LF md5, CR stripped; after the fix round)
+
+None is applied, so the fix round edited 160000-160200 in place and added 160300.
 
 | file | md5 |
 |---|---|
-| `supabase/migrations/20261117160000_student_work_ai_feedback_staff_only.sql` | `428742572d7bcdf20cfaad99b8d9fb1a` |
-| `supabase/migrations/20261117160100_video_family_reads_final_only.sql` | `3b7fc29208bea70aee5312d402c3c5a9` |
-| `supabase/migrations/20261117160200_video_analysis_claim.sql` | `4bf82dbd70978f1b143ddf7b5aa23f7f` |
+| `supabase/migrations/20261117160000_student_work_ai_feedback_staff_only.sql` | `eb41160cb63834545d482cca43ce7ddf` |
+| `supabase/migrations/20261117160100_video_family_reads_final_only.sql` | `e41dc618059a3f6c2dfbaa8a4ddefdaf` |
+| `supabase/migrations/20261117160200_video_analysis_claim.sql` | `0921c11681ddadbc457837813800425b` |
+| `supabase/migrations/20261117160300_vocab_scan_teacher_review.sql` (new) | `65a7fa811f7840853f52e67e5e5f9917` |
 
 ## Functions to deploy (LF md5, CR stripped)
 
@@ -115,21 +119,54 @@ Run at 20:08 Hanoi, so `run.mjs` ran with a preload moving the clock back 8 hour
 |---|---|
 | refresh-student-profile | `index.ts` `4aaf6d92f727edff047740495fcbfc75` |
 | generate-work-feedback | `index.ts` `efe3acfc4bc170b4ed5afd9ce95d96fd` |
-| video-rubric | `index.ts` `61c31abc793a3846d6d9913f3ff7fc18`; `_lib/claude-json.ts` `8b59deaf477c607efd56d5de5cac0977`, `_lib/video-homework.ts` `5deff10fed4c7e498cfcfbeceb2dce5f` (unchanged) |
+| video-rubric | `index.ts` `7d32fd0e02c74561b7f5dd3c38b23084`; `_lib/claude-json.ts` `8b59deaf477c607efd56d5de5cac0977`, `_lib/video-homework.ts` `5deff10fed4c7e498cfcfbeceb2dce5f` (unchanged) |
 | explain-family-tuition | `index.ts` `9f019ccefdcf3b8f3d6396f84d88bfba` |
 | audit-eval-proxy | `index.ts` `6a2d59051bce948d88823b2c96bb2022`; `vendors.ts` `67ecf80753ee13123c930c29233b8ebc` (unchanged) |
-| ocr-vocab-scan | `index.ts` `c27de801cae0b864992a179031864926`; `_lib/google.ts` `c46de6f19b00cb3c14c540c25340f160`, `_lib/profile.ts` `f8f9bca90d0ed65b0b655f59a94bb1d4`, `_lib/text.ts` `41a119cc74c73f197cf8fd6c84c3f33a` (unchanged) |
+| ocr-vocab-scan | `index.ts` `3f1de5dc02005c988a7c3bd7cb2e2fca`; `_lib/google.ts` `c46de6f19b00cb3c14c540c25340f160`, `_lib/profile.ts` `f8f9bca90d0ed65b0b655f59a94bb1d4`, `_lib/text.ts` `41a119cc74c73f197cf8fd6c84c3f33a` (unchanged) |
 | chat | `index.ts` `a16401181d81b1b5d8a988cd4f1dc4d9`; `_lib/chat-context.ts` `04d7b33bd83714a1129dbd59883c247e`, `_lib/chat-plan.ts` `61474efde2b5e36a68a7413566ef9f05`, `_lib/text.ts` (unchanged) |
-| analyze-video-submission | `index.ts` `731ea9cab749d21a0f832743999a7595`; `_lib/claude-json.ts`, `_lib/video-homework.ts`, `_lib/gemini-transcript.ts` `5893bde8c6970d55709f9f295dacdf03`, `_lib/speech-file.ts` `f5bd9da0492ed6c9921c1020942d573a` (unchanged) |
+| ocr-student-work (fix round) | `index.ts` `2dfa45d1e7a982789b42129df4a0c1f7`; `_lib/google.ts` (unchanged) |
+| analyze-video-submission | `index.ts` `805c87900e7d8f308c9ae1731b12960f`; `_lib/claude-json.ts`, `_lib/video-homework.ts`, `_lib/gemini-transcript.ts` `5893bde8c6970d55709f9f295dacdf03`, `_lib/speech-file.ts` `f5bd9da0492ed6c9921c1020942d573a` (unchanged) |
 
 The nine F-02 functions also import `_lib/ai-gate.ts`; they need no redeploy (the change is an option none of them sets) and pick it up on their next deploy.
 
-## Deploy order
+## Deploy order (after the fix round)
 
-1. Paste `20261117160000` (N-6). Before generate-work-feedback and before the app: the new function writes the draft table; the old one's writes are diverted by the migration's trigger.
-2. Paste `20261117160100` (N-7) and `20261117160200` (claim). Before analyze-video-submission: the new function needs `video_analysis_claim` and answers 503 (no draft, nothing spent) without it. Until it is redeployed the old function still runs unlimited.
-3. Deploy the eight functions; analyze-video-submission and generate-work-feedback first.
-4. Push the app (TeacherSmartUpload). Between 1 and 4, the old page finds no AI text in `ai_feedback`: the box is not pre-filled with an old draft (a freshly drafted note still fills it), and an untouched approve would save no note.
+1. Paste `20261117160000` (N-6), then `20261117160300` (N-8; it needs 160000's helper). From here the old generate-work-feedback's writes are diverted and the old ocr-vocab-scan's words are refused (they come back "rejected", no points) - fail closed until step 3.
+2. Paste `20261117160100` (N-7, N-10) and `20261117160200` (claim, M-1 approval guard). The new analyze-video-submission needs `video_analysis_claim` (503, nothing spent, without it); until it is redeployed the old one still runs unlimited and its outcome writes are still unconditional.
+3. Deploy the functions: analyze-video-submission, ocr-vocab-scan and generate-work-feedback first, then video-rubric, ocr-student-work, refresh-student-profile, explain-family-tuition, audit-eval-proxy, chat.
+4. Push the app (TeacherSmartUpload, VideoReviewPanel, VideoRubricEditor). Between 1 and 4 the old Smart Upload page shows no pre-filled AI draft and has no way to approve scanned words (they wait, staff-only, in `student_work_vocab_drafts`, and appear in the queue once the app is out); the old VideoRubricEditor's "draft with AI" gets a 409 on a homework that already has a rubric.
+
+## Fix round (independent review of 034c84bd: SHIP WITH CHANGES)
+
+| finding | what changed | proof |
+|---|---|---|
+| M-1 (must) | analyze-video-submission: every write of a run (stages, the draft, `ready_for_review`, `failed`) is conditional on `status = 'processing'` and the `analysis_runs` the claim counted; a run that finds itself overtaken saves no draft. `video_submissions_guard` refuses `processing -> approved` while the run is fresh (under 15 min), so `approve_video_feedback` (unchanged) rolls back whole with "A new AI draft is being made...". VideoReviewPanel disables Approve and hides "New draft" while a draft is being made | ai-gate: approved mid-run stays approved whether the run fails or finishes, no draft saved over it; an overtaken run does not mark the newer run failed. video-homework (the reviewer's probe as assertions): approval during a run refused with nothing left (no points, no approved_at); once ready it goes through; a late failure changes nothing; neither family nor teacher can claim a run on the approved video; the family keeps its report; a run stuck 20 min no longer blocks grading |
+| N-1 | video-rubric replaces an existing rubric only with `redo: true` (the editor's button, with a confirm when the rubric is approved). Without it (AssignmentUpload's automatic draft) it checks first (409 before any model call) and writes with INSERT, so an approval made while the model was writing wins on the unique key | ai-gate: approved and teacher-draft rubrics untouched, no model call; the race (approval while the model writes) -> 409, approval stands; redo replaces and demotes to draft; first rubric still drafted; only the editor sends redo |
+| N-2 | VideoReviewPanel: "Restart analysis" (and the grading form) for a run in processing that has not moved for 15 minutes - the claim's stuck rule | the claim's 15-minute restart is in video-homework; the screen was checked by the app typecheck only |
+| N-3 | The diversion trigger labels a draft `service_role_write` (no uid) or `staff_write` (a signed-in member of staff), with `generated_by`; an UPDATE that reviews the work and sets `ai_feedback` together is refused | student-work-feedback: labels for both writers; approve + text in one statement refused, no draft, work unchanged; a child's update writes nothing; even an admin cannot write drafts directly; moved rows keep their origin |
+| N-4 | Live, checked by the reviewer: 5 of the 65 AI-text rows (4 verbatim) were approved on 22 Jul 2026 by an account that holds only `student` today; `audit_log` shows it held `admin` until 10 Oct 2026. So all 65 were approved by staff at the time; "every approved row has approved_by" alone did not prove that | - |
+| N-5 | Residual, not built: chat's "holds a role" is weak because sign-up gives `student`; 15 live student-only accounts link to no child or family and are held only by the in-memory 30 / 5 min and 80 / day. A durable per-account daily cap for chat is worth adding (one counter row per account per day, checked in the gate) once the spend is visible; it is the one place F-12's in-memory limit is the only limit | - |
+| N-6 | Bounded, accepted: a family re-recording during a run starts a second run (take count reset); held by 10 runs per submission and 6 an hour | - |
+| N-7 | A failed or refused scan (a 429 from the gate included) no longer leaves the Smart Upload row at `processing`: ocr-vocab-scan marks a failed scan `failed`, the page marks the row `failed` when the call itself is refused, and the queue has "Try again" for failed rows | ai-gate: a failing scan leaves the page `failed` |
+| N-8 (must) | Scanned words wait for a teacher. ocr-vocab-scan's scan writes only `student_work_vocab_drafts` (staff-only, same helper as the AI drafts) and leaves the page `needs_review`; Smart Upload's queue lists the words with a tick each; "Approve & add to word bank" calls `{approve: true, words}`, which takes the pending set (a DELETE that returns it: the claim) and only then writes the kept words, points, activity, error log and cards, with `enrichment.approved_by`; the database refuses an `ocr_scan` word without it (so the old function cannot keep writing between paste and deploy). The child is the one scanned for, never the body's. Live, left as history: 302 auto-added words for 3 children from 32 self-approved pages | ai-gate: the scan writes nothing a child reads; the page waits; a child cannot approve; the teacher keeps two of three - exactly those enter the bank, with the approver, points for two, one error-log entry and card; a second approval 409. student-work-feedback: child and family read no pending words, the class's teacher does, another teacher does not, no one edits the set directly, an unapproved scanned word is refused and an approved one admitted, a word the child saved needs nothing |
+| N-9 | Accepted, negligible: in the paste-to-deploy window an old function's diverted write and a new function's draft upsert on the same row take the two rows in opposite orders; Postgres would fail one with a deadlock error, nothing half-written | - |
+| N-10 | get_video_progress: staff view per video - an admin, or a teacher of THAT video's class (`is_teacher_of_class`); a teacher of another class the child is or was in sees none of those videos | video-homework: such a teacher gets none; the class's own teacher still sees them as before |
+| found here | ocr-student-work called Google Vision for a browser with a role check and no per-account limit: now behind `requireSpender` (staff, 60 / 10 min) | ai-gate, as the eight |
+
+Still outside the gate (not in this brief; for the owner): `cefr-defense`, `generate-student-report`, `transcribe-lesson-audio` call a paid model without `requireSpender` on main (`origin/conductor/work` has a transcribe gate suite).
+
+The reviewer's probes (`zz-probe-vh`, `zz-probe-swf`) were copies of the two harnesses that printed what happened; they are carried as asserted cases in `video-homework.test.mjs` (with M-1's expectations: the approval stands) and `student-work-feedback.test.mjs`, not as separate files.
+
+### AGENTS.md lines, proposed (not applied: AGENTS.md is the agents' own instructions file, so it is for the owner to paste)
+
+Video homework section:
+- `video_analyses.final_criteria` is the teacher's per-criterion scores as they stood at approval (a trigger on `approved_at`); the family RPCs read it and the `final_*` fields, never `criteria_scores`, strengths, focus points or comments. Staff views are per video class.
+- analyze-video-submission starts only through `video_analysis_claim` (20261117160200, service role only): families a new or failed take, 3 a take / 10 a submission; staff 6 / 20. Every write of a run is conditional on `processing` and its run number, and the guard refuses an approval while a fresh run is under way: an approved video is never moved back.
+- video-rubric replaces an existing rubric only with `redo: true` (the editor's button).
+
+Who may see and write what section:
+- AI feedback on student work is a staff-only draft in `student_work_ai_drafts` (20261117160000); `student_work.ai_feedback` is retired (always NULL, CHECK). The child reads `teacher_notes`, which only a teacher's approval writes.
+- Words ocr-vocab-scan reads off a page wait in `student_work_vocab_drafts` (20261117160300) until a teacher approves them in Smart Upload; an `ocr_scan` word without `enrichment.approved_by` cannot enter a word bank.
 
 ## What a reviewer should attack
 
