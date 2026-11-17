@@ -366,8 +366,8 @@ Chosen: re-approvable. Applied to 151000, which is not yet applied anywhere.
 | `transcribe gate` | 133 passed, 0 failed |
 | `transcript drafts (D-26)` / `transcript review probes` | 221 / 34 passed, 0 failed |
 | `edge functions typecheck` | 5 passed, 0 failed |
-| `tsc --noEmit -p tsconfig.app.json` standalone | FULL_TSC |
-| full `node scripts/pgtest/run.mjs` | FULL_RUN |
+| `tsc --noEmit -p tsconfig.app.json` standalone | exit 0 (252 s) |
+| full `node scripts/pgtest/run.mjs` | 6357 assertions across 91 suites; 36 suites failed: the same 36 as round 1, assertion for assertion (only random ids differ in the messages) |
 | `npm run test:bun` | 142 pass, 3 fail, 2 errors: same as round 1. `familyDashboardBatch.test.ts` passes. |
 
 New cases in `cefr-drafts.test.mjs`:
@@ -410,7 +410,7 @@ Mutations, each caught:
 | child given the staff final submit | 2 failures |
 | FamilyDashboard keeps the model text | 4 failures |
 
-FULL_LAG
+Full-run failures are harness lag, not this work, and are unchanged from round 1. The conductor tree's suites read files `origin/main` lacks: the D4 migrations 20261114093000 / 094000, `scripts/ROLLBACK-d4-*`, `docs/evidence/S1-*`, `S2-*` and `T2-*`, lesson-eval, csp and the CHECK/CREDIT scripts. A few also assert money or payroll behaviour main does not have yet: invoice status, d4, and teacher / TA payroll. None of the 36 loads a file this branch changes. Every suite that does is green: cefr drafts 191, ai spend gate 340, chat assistant 201, transcribe gate 133, transcript drafts 221, review probes 34, edge functions typecheck 5, app typecheck 3.
 
 ### Files (LF md5, CR stripped) - round 2
 
