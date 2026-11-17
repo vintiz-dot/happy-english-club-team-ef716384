@@ -1088,9 +1088,20 @@ console.log('\n14. the screens and the function, statically');
      && /handleStartEdit = \(invoice: Invoice\) => \{\n\s*setEditMethod\(""\);/.test(rpm) && /setReverseMethod\(""\);\n\s*setReversingInvoice\(/.test(rpm)
      && /if \(!editMethod\) \{ toast\.error\(METHOD_REQUIRED\); return; \}/.test(rpm) && /if \(!reverseMethod\) \{ toast\.error\(METHOD_REQUIRED\); return; \}/.test(rpm)
      && /method: editMethod,/.test(rpm) && /method: reverseMethod,/.test(rpm) && /placeholder="Choose cash or bank"/.test(rpm));
-  ok('  RecordedPaymentManager keeps one key per invoice row (review N-1)', (rpm.match(/idempotencyKey: keyFor\(invoice\.id\)/g) ?? []).length === 2
-     && (rpm.match(/idempotencyKey:/g) ?? []).length === 2 && !/paymentKey\.current/.test(rpm)
-     && (rpm.match(/paymentKeys\.current\.delete\(invoice\.id\)/g) ?? []).length === 2);
+  // payments-followups (R-N2): the key is no longer held by the component
+  // (a useRef died with the dialog); it is the shared store's, per bill
+  // (child + month) and attempt (kind, amount), settled only on an answer.
+  ok('  RecordedPaymentManager keeps one key per bill row and attempt, in the shared store (review N-1, R-N2)',
+     (rpm.match(/idempotencyKey: paymentKeys\.keyFor\(attempt\)/g) ?? []).length === 2
+     && (rpm.match(/idempotencyKey:/g) ?? []).length === 2 && !/paymentKey\.current|useRef|newPaymentKey/.test(rpm)
+     && (rpm.match(/paymentKeys\.settle\(attempt, saved\)/g) ?? []).length === 2
+     && (rpm.match(/studentId: invoice\.student_id, month: selectedMonth,/g) ?? []).length === 2);
+  ok('  all four screens take the key from the shared store and settle it with the reply - no component-held key (R-N2)',
+     screens.every((f) => { const t = read(f); const n = (t.match(/idempotencyKey:/g) ?? []).length;
+       return n > 0 && n === (t.match(/idempotencyKey: paymentKeys\.keyFor\(attempt\),/g) ?? []).length
+         && n === (t.match(/paymentKeys\.settle\(attempt, saved\);/g) ?? []).length
+         && !/useRef|newPaymentKey|paymentKey\.current|paymentKeys\.current/.test(t)
+         && /import \{ paymentKeys, receiptDateToday, recordPayment \} from "@\/lib\/recordPayment";/.test(t); }));
   ok('  src/lib/recordPayment.ts reaches the function only through supabase.functions.invoke("record-payment")',
      /client\.functions\.invoke\("record-payment"/.test(read('src/lib/recordPayment.ts')) && !/fetch\(/.test(read('src/lib/recordPayment.ts')));
   const toml = read('supabase/config.toml');
@@ -1155,6 +1166,91 @@ console.log('\n15. the screens\' answer rule over the REAL functions-js client (
   await lib.recordPayment(via(serve), args({ studentId: c, amount: 500000, idempotencyKey: randomUUID() }));
   ok('  control: had the screen made a new key (the old answered = true), the retry would have recorded 1,000,000',
      Number((await billOf(c, M)).recorded_payment) === 1000000 && (await paymentsOf(c)).length === 2);
+
+  // payments-followups (review R-N2): the reply is lost, the admin CLOSES the
+  // dialog (the component and anything it held are gone), opens it again and
+  // enters the same payment. The key is the shared store's, not the dialog's.
+  const lostFetch = async (u, i) => { const res = await serve(u, i); await res.text(); throw new TypeError('Failed to fetch'); };
+  const memoryStorage = () => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), m }; };
+  // What a dialog does on Save, with its own (component) lifetime: it takes
+  // the key from the store, sends, and settles the store with the reply.
+  const dialogSave = async (store, a, expectedRecorded, fetcher) => {
+    const saved = await lib.recordPayment(via(fetcher), args({ studentId: a.studentId, month: a.month, kind: a.kind, amount: a.amount, expectedRecorded, idempotencyKey: store.keyFor(a) }));
+    store.settle(a, saved);
+    return saved;
+  };
+  {
+    const r = await child('ReopenRetry');
+    await bill(r, M, 1000000);
+    const store = lib.createPaymentKeyStore(memoryStorage());
+    const attempt = { studentId: r, month: M, kind: 'payment', amount: 400000 };
+    const first = await dialogSave(store, attempt, 0, lostFetch);
+    ok('R-N2: recorded, reply lost: not answered, and the store still holds the attempt\'s key after the dialog is gone',
+       first.answered === false && store.pending(attempt) && Number((await billOf(r, M)).recorded_payment) === 400000, first);
+    // Reopened: a NEW dialog (nothing carried over but the store); the bill reloaded (400,000).
+    const again = await dialogSave(store, { ...attempt }, 400000, serve);
+    ok('  reopened, the same payment entered again: refused as already submitted - paid ONCE',
+       again.ok === false && again.duplicate === true && Number((await billOf(r, M)).recorded_payment) === 400000 && (await paymentsOf(r)).length === 1, again);
+    ok('  that definite answer clears the key: the next payment of the same amount is a new one and records',
+       !store.pending(attempt) && (await dialogSave(store, attempt, 400000, serve)).ok === true
+       && Number((await billOf(r, M)).recorded_payment) === 800000 && (await paymentsOf(r)).length === 2);
+  }
+  {
+    // Not recorded at all (the request never arrived), dialog closed and reopened: the kept key records it once.
+    const r = await child('ReopenNotSent');
+    await bill(r, M, 1000000);
+    const store = lib.createPaymentKeyStore(memoryStorage());
+    const attempt = { studentId: r, month: M, kind: 'payment', amount: 250000 };
+    const lostBefore = await dialogSave(store, attempt, 0, async () => { throw new TypeError('Failed to fetch'); });
+    const kept = store.keyFor(attempt);
+    const retry = await dialogSave(store, attempt, 0, serve);
+    ok('R-N2: nothing arrived, reopened and retried: recorded once, with the key kept from the first try',
+       lostBefore.answered === false && retry.ok === true && retry.data?.paymentId === kept
+       && Number((await billOf(r, M)).recorded_payment) === 250000 && (await paymentsOf(r)).length === 1 && !store.pending(attempt), retry);
+  }
+  {
+    // The tab is reloaded in between: a new store (a fresh module) over the same sessionStorage.
+    const r = await child('ReloadRetry');
+    await bill(r, M, 1000000);
+    const storage = memoryStorage();
+    const attempt = { studentId: r, month: M, kind: 'payment', amount: 300000 };
+    await dialogSave(lib.createPaymentKeyStore(storage), attempt, 0, lostFetch);
+    const afterReload = lib.createPaymentKeyStore(storage);
+    const again = await dialogSave(afterReload, attempt, 300000, serve);
+    ok('R-N2: the tab reloaded between the lost reply and the retry: sessionStorage kept the key - paid ONCE',
+       again.duplicate === true && (await paymentsOf(r)).length === 1 && Number((await billOf(r, M)).recorded_payment) === 300000 && storage.m.size === 0, again);
+  }
+  {
+    // A storage that refuses (private window): memory still keeps it for the page.
+    const r = await child('NoStorageRetry');
+    await bill(r, M, 1000000);
+    const refusing = { getItem: () => { throw new Error('denied'); }, setItem: () => { throw new Error('denied'); }, removeItem: () => { throw new Error('denied'); } };
+    const store = lib.createPaymentKeyStore(refusing);
+    const attempt = { studentId: r, month: M, kind: 'payment', amount: 120000 };
+    await dialogSave(store, attempt, 0, lostFetch);
+    const again = await dialogSave(store, attempt, 120000, serve);
+    ok('R-N2: sessionStorage refusing every call: the page\'s memory keeps the key - paid ONCE, nothing thrown',
+       again.duplicate === true && (await paymentsOf(r)).length === 1, again);
+  }
+  {
+    const store = lib.createPaymentKeyStore(memoryStorage());
+    const a = { studentId: randomUUID(), month: M, kind: 'payment', amount: 100 };
+    const k = store.keyFor(a);
+    ok('R-N2: the key is per attempt - another amount, another kind, another month or another child is a new key; the same attempt the same key',
+       store.keyFor({ ...a }) === k && store.keyFor({ ...a, amount: 101 }) !== k && store.keyFor({ ...a, kind: 'correction' }) !== k
+       && store.keyFor({ ...a, month: '2026-01' }) !== k && store.keyFor({ ...a, studentId: randomUUID() }) !== k);
+    store.settle(a, { ok: false, answered: false });
+    ok('  no answer leaves it; ok or a definite answer removes it', store.pending(a) && (store.settle(a, { ok: false, answered: true }), !store.pending(a)));
+  }
+  {
+    // Control: the dialog as it was (a key made when the component mounts) loses it on close.
+    const r = await child('ReopenOldDialog');
+    await bill(r, M, 1000000);
+    await lib.recordPayment(via(lostFetch), args({ studentId: r, amount: 400000, expectedRecorded: 0, idempotencyKey: randomUUID() }));
+    await lib.recordPayment(via(serve), args({ studentId: r, amount: 400000, expectedRecorded: 400000, idempotencyKey: randomUUID() /* the reopened dialog's new useRef */ }));
+    ok('  control: with the key held by the dialog (before R-N2), the reopened retry pays it AGAIN (800,000)',
+       Number((await billOf(r, M)).recorded_payment) === 800000 && (await paymentsOf(r)).length === 2);
+  }
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

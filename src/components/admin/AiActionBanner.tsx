@@ -54,7 +54,14 @@ export function AiActionBanner() {
     try {
       const r = await undoAiAction(action.id);
       if (r.ok) {
-        toast.success("Undone. Everything the assistant set up has been taken back.");
+        // A payment taken back, or a new child kept inactive rather than
+        // deleted, is said in the database's own words (ai_action_undo's notices).
+        const notices = r.notices ?? [];
+        if (notices.length > 0) {
+          toast.success("Undone.", { description: notices.join(" "), duration: 12_000 });
+        } else {
+          toast.success("Undone. Everything the assistant set up has been taken back.");
+        }
         await queryClient.invalidateQueries();
         if (r.student_removed && r.open_path) navigate(r.open_path);
       } else {

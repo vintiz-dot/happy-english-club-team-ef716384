@@ -9,6 +9,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
@@ -90,7 +91,61 @@ await db.exec(`
   CREATE TABLE public.point_transactions (student_id uuid REFERENCES public.students(id), points integer);
   CREATE TABLE public.audit_log (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), entity text NOT NULL,
     entity_id text, action text NOT NULL, actor_user_id uuid, diff jsonb, occurred_at timestamptz DEFAULT now());
+
+  -- payments-followups: the money tables the assistant's payment step now
+  -- writes through record_admin_payment (live's columns: 20251012022746,
+  -- tx_key 20251024050029, the family columns, payment_deletions 20251024152825).
+  CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS
+    $$ SELECT nullif(current_setting('test.role', true), '') $$;
+  GRANT EXECUTE ON FUNCTION auth.role() TO authenticated, anon;
+  CREATE TYPE public.account_code AS ENUM ('AR', 'REVENUE', 'DISCOUNT', 'CASH', 'BANK', 'CREDIT');
+  CREATE TABLE public.payments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid REFERENCES public.students(id),
+    amount integer NOT NULL, method text, memo text, occurred_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT now(), created_by uuid, family_id uuid, parent_payment_id uuid);
+  CREATE TABLE public.payment_deletions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), payment_id uuid NOT NULL,
+    snapshot jsonb NOT NULL, deleted_by uuid, deletion_reason text NOT NULL, deleted_at timestamptz DEFAULT now(), created_at timestamptz DEFAULT now());
+  CREATE TABLE public.ledger_accounts (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE, code public.account_code NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(), UNIQUE (student_id, code));
+  CREATE TABLE public.ledger_entries (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tx_id uuid NOT NULL,
+    account_id uuid NOT NULL REFERENCES public.ledger_accounts(id) ON DELETE CASCADE,
+    debit integer NOT NULL DEFAULT 0, credit integer NOT NULL DEFAULT 0, occurred_at timestamptz NOT NULL DEFAULT now(),
+    memo text, month text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), created_by uuid, tx_key text UNIQUE,
+    CONSTRAINT debit_or_credit CHECK ((debit > 0 AND credit = 0) OR (credit > 0 AND debit = 0)));
+  -- D4 (20261114090000): the strongest state a bill had, kept when it is lowered or deleted.
+  CREATE TABLE public.invoice_state_floor (student_id uuid NOT NULL, month text NOT NULL,
+    ever_paid boolean NOT NULL DEFAULT false, max_recorded_payment numeric NOT NULL DEFAULT 0, PRIMARY KEY (student_id, month));
+  CREATE FUNCTION public.test_floor() RETURNS trigger LANGUAGE plpgsql AS $$
+  BEGIN
+    IF OLD.status::text IN ('paid', 'partial') OR coalesce(OLD.recorded_payment, 0) > 0 THEN
+      INSERT INTO public.invoice_state_floor AS f (student_id, month, ever_paid, max_recorded_payment)
+      VALUES (OLD.student_id, OLD.month, OLD.status::text = 'paid' OR coalesce(OLD.recorded_payment, 0) > 0, coalesce(OLD.recorded_payment, 0))
+      ON CONFLICT (student_id, month) DO UPDATE SET ever_paid = f.ever_paid OR EXCLUDED.ever_paid,
+        max_recorded_payment = greatest(f.max_recorded_payment, EXCLUDED.max_recorded_payment);
+    END IF;
+    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  END $$;
+  CREATE TRIGGER zz_invoice_state_floor BEFORE UPDATE OR DELETE ON public.invoices FOR EACH ROW EXECUTE FUNCTION public.test_floor();
+  -- What G-11 needs to install (its audit trigger is a stand-in here; the audit suite runs the real one).
+  CREATE TABLE public.expenditures (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+  CREATE TABLE public.settlements (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid);
+  CREATE FUNCTION public.audit_row_change() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NULL; END $$;
+  -- 20260712023825: the API roles get the tables explicitly (record_admin_payment's preflight checks them).
+  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
 `);
+{
+  // live's payments delete trigger: the function and trigger text of 20251024152825, verbatim.
+  const migDir0 = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "supabase", "migrations");
+  const t = readFileSync(join(migDir0, "20251024152825_6747d865-6888-4aa4-b728-fdb8e5a109d3.sql"), "utf8");
+  const a = t.indexOf("CREATE OR REPLACE FUNCTION public.prevent_direct_payment_deletion()");
+  const b = t.indexOf("EXECUTE FUNCTION public.prevent_direct_payment_deletion();", a);
+  await db.exec(t.slice(a, b + "EXECUTE FUNCTION public.prevent_direct_payment_deletion();".length));
+  // D4 G-21 (20261114094000): a child with payments, a paid bill or person-made marks is not deleted.
+  const g = readFileSync(join(migDir0, "20261114094000_d4_money_inputs_guard.sql"), "utf8");
+  const c = g.indexOf("CREATE OR REPLACE FUNCTION public._student_delete_guard()");
+  const d = g.indexOf("FOR EACH ROW EXECUTE FUNCTION public._student_delete_guard();", c);
+  await db.exec(g.slice(c, d + "FOR EACH ROW EXECUTE FUNCTION public._student_delete_guard();".length));
+}
 
 for (const file of process.argv.slice(2)) {
   try { await db.exec(readFileSync(file, "utf8")); ok(`migration applies: ${file.split(/[\\/]/).pop()}`, true); }
@@ -109,8 +164,12 @@ await db.exec(`
 async function as(uid, sql, params = []) {
   await db.exec("RESET ROLE");
   await db.query("SELECT set_config('test.uid', $1, false)", [uid ?? ""]);
+  await db.query("SELECT set_config('test.role', 'authenticated', false)");
   await db.exec("SET ROLE authenticated");
-  try { return await db.query(sql, params); } finally { await db.exec("RESET ROLE"); }
+  try { return await db.query(sql, params); } finally {
+    await db.exec("RESET ROLE");
+    await db.query("SELECT set_config('test.role', '', false)");
+  }
 }
 const fails = async (uid, sql, params = []) => {
   try { await as(uid, sql, params); return null; } catch (e) { return e.message; }
@@ -310,7 +369,11 @@ console.log("=== recording tuition ===");
   let inv = await one("SELECT recorded_payment, status FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0]);
   eq("added to the month's payments", [inv.recorded_payment, inv.status], [123000, "partial"]);
   const a = await one("SELECT diff FROM public.audit_log WHERE entity = 'invoice' AND action = 'record_payment' ORDER BY occurred_at DESC LIMIT 1");
-  eq("with the same audit entry the payment dialog writes", [a.diff.payment_amount, a.diff.payment_method, a.diff.memo, a.diff.via], [123000, "Bank Transfer", "Zalo", "assistant"]);
+  // payments-followups: the payment dialog's entry IS record_admin_payment's now (via 'record-payment').
+  eq("with the same audit entry the payment dialog writes (record_admin_payment's)", [a.diff.payment_amount, a.diff.method, a.diff.memo, a.diff.via, a.diff.ledger_account],
+    [123000, "Bank Transfer", "Zalo", "record-payment", "BANK"]);
+  eq("  and no second entry of its own (it would print the payment twice on the statement)",
+    (await one("SELECT count(*)::int AS n FROM public.audit_log WHERE entity = 'invoice' AND diff->>'via' = 'assistant'")).n, 0);
 
   await db.query("UPDATE public.invoices SET recorded_payment = recorded_payment + 200000 WHERE student_id = $1 AND month = $2", [lan, M0]);
   ok("undo", (await undo(r.action_id)).ok);
@@ -354,7 +417,11 @@ console.log("=== recording tuition ===");
   try { await db.exec(readFileSync(t4mig, "utf8")); again = null; } catch (e) { again = e.message; }
   const def2 = (await one("SELECT pg_get_functiondef('public.ai_action_apply(uuid, text, jsonb)'::regprocedure) AS d")).d
     + (await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d;
-  ok("T4: the migration run a second time changes nothing", again === null && def2 === def, again);
+  // payments-followups: the apply installed by 20261117150000 has no label
+  // expression of its own left (record_admin_payment labels the bill), so T4
+  // pasted again now stops with its own error - and still changes nothing.
+  ok("T4: the migration run a second time changes nothing (it stops: apply has no label expression left to patch)",
+     /expected exactly one label expression in public\.ai_action_apply\(uuid, text, jsonb\), found 0; nothing was changed/.test(again ?? "") && def2 === def, again);
 
   // T4 r2 (review m1): an admin's credit label is kept by the assistant too.
   await db.query("UPDATE public.invoices SET status = 'credit' WHERE student_id = $1 AND month = $2", [lan, M0]);
@@ -372,11 +439,12 @@ console.log("=== recording tuition ===");
     + `${(await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d};`);
   if (process.env.T4_WRITE_REFERENCE === "1") {
     writeFileSync(refPath, `-- REFERENCE ONLY - do not paste. The source of public.ai_action_apply and\n`
-      + `-- public.ai_action_undo as installed after migrations 20261107090000 and\n`
-      + `-- 20261113090000 (the label patch). No migration holds this text any more:\n`
-      + `-- start any change to either function from here, and keep\n`
-      + `-- public.invoice_paid_label as its label. scripts/pgtest/ai-actions.test.mjs\n`
-      + `-- fails when the installed functions differ from the text below.\n\n${installed}\n`);
+      + `-- public.ai_action_undo as installed after migrations 20261107090000,\n`
+      + `-- 20261113090000 (the label patch) and 20261117150000 (the payment step\n`
+      + `-- through record_admin_payment; its undo as delete-payment). Start any\n`
+      + `-- change to either function from here, and keep public.invoice_paid_label\n`
+      + `-- as its label. scripts/pgtest/ai-actions.test.mjs fails when the\n`
+      + `-- installed functions differ from the text below.\n\n${installed}\n`);
   }
   // The file is its header comment, one blank line, then the source.
   const refText = existsSync(refPath) ? readFileSync(refPath, "utf8").replace(/\r\n/g, "\n") : "";
@@ -389,6 +457,270 @@ console.log("=== recording tuition ===");
     .filter((f) => /FUNCTION\s+public\.ai_action_(apply|undo)\s*\(/i.test(readFileSync(join(migDir, f), "utf8")));
   ok("T4: no later migration re-creates ai_action_apply / ai_action_undo without invoice_paid_label",
      later.every((f) => /invoice_paid_label/.test(readFileSync(join(migDir, f), "utf8"))), later.join(", "));
+}
+
+console.log("=== the payment is on the ledger (payments-followups, 20261117150000) ===");
+{
+  const migDir = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "supabase", "migrations");
+  const MIG = "20261117150000_ai_action_payment_on_ledger.sql";
+  const rows = async (sql, params = []) => (await db.query(sql, params)).rows;
+  const n = async (sql, params = []) => Number((await one(sql, params)).n);
+  // Money per child and month, as CHECK-money-invariants M03 / M04 compare it:
+  // cash received in the ledger (CASH + BANK debit - credit) against the bill's recorded_payment.
+  const moneyOff = async (sid) => rows(`
+    WITH led AS (SELECT e.month, sum(e.debit - e.credit) AS cash FROM public.ledger_entries e
+                   JOIN public.ledger_accounts a ON a.id = e.account_id AND a.code IN ('CASH', 'BANK') AND a.student_id = $1 GROUP BY e.month),
+         bil AS (SELECT month, coalesce(recorded_payment, 0) AS rec FROM public.invoices WHERE student_id = $1)
+    SELECT coalesce(l.month, b.month) AS month, coalesce(l.cash, 0)::bigint AS cash, coalesce(b.rec, 0)::bigint AS rec
+    FROM led l FULL JOIN bil b ON b.month = l.month WHERE coalesce(l.cash, 0) <> coalesce(b.rec, 0)`, [sid]);
+  const unbalanced = async () => n(`SELECT count(*) AS n FROM (SELECT tx_id FROM public.ledger_entries GROUP BY tx_id HAVING sum(debit) <> sum(credit)) t`);
+  const ledgerRows = () => n("SELECT count(*) AS n FROM public.ledger_entries");
+  const asService = async (sql, params = []) => {
+    await db.query("SELECT set_config('test.role', 'service_role', false)");
+    try { return await db.query(sql, params); } finally { await db.query("SELECT set_config('test.role', '', false)"); }
+  };
+
+  // ---------------------------------------------------- an existing child
+  const { id: hoa } = await one("INSERT INTO public.students (full_name) VALUES ('Hoa Plum') RETURNING id");
+  await db.query("INSERT INTO public.invoices (student_id, month, base_amount, total_amount) VALUES ($1, $2, 1000000, 1000000)", [hoa, M0]);
+  const pay = (sid, amount, month = M0, method = "Cash", note = "Zalo") => ({ version: 1, student: { id: sid }, payment: { amount, month, method, paid_on: today, note } });
+  const r = await apply(pay(hoa, 300000));
+  ok("apply records the payment", r.ok, JSON.stringify(r));
+  const eff = (await one("SELECT effects FROM public.ai_actions WHERE id = $1", [r.action_id])).effects.payment;
+  const p = await one("SELECT * FROM public.payments WHERE id = $1", [eff.payment_id]);
+  eq("a payments row, with the id the action keeps, the amount, the method, the note, the admin and the day paid (noon Hanoi)",
+    [p?.student_id, p?.amount, p?.method, p?.memo, p?.created_by, p?.occurred_at?.toISOString?.()],
+    [hoa, 300000, "Cash", "Zalo", ADMIN, new Date(`${today}T12:00:00+07:00`).toISOString()]);
+  const legs = await rows(`SELECT e.*, a.code::text AS code FROM public.ledger_entries e JOIN public.ledger_accounts a ON a.id = e.account_id
+    WHERE a.student_id = $1 ORDER BY a.code`, [hoa]);
+  eq("two legs in one transaction on the payment's month: DR CASH keyed record-payment-<payment>-<child>, CR AR unkeyed",
+    legs.map((l) => [l.code, l.debit, l.credit, l.month, l.tx_key, l.tx_id === legs[0].tx_id, l.created_by]),
+    [["AR", 0, 300000, M0, null, true, ADMIN], ["CASH", 300000, 0, M0, `record-payment-${eff.payment_id}-${hoa}`, true, ADMIN]]);
+  let bill = await one("SELECT recorded_payment, paid_amount, status FROM public.invoices WHERE student_id = $1 AND month = $2", [hoa, M0]);
+  eq("the bill: recorded and paid 300.000, partial", [bill.recorded_payment, bill.paid_amount, bill.status], [300000, 300000, "partial"]);
+  eq("the action keeps what it needs to take it back", [eff.amount, eff.month, eff.invoice_created, eff.ledger_account, eff.recorded_before, eff.recorded_after, typeof eff.ledger_tx_id],
+    [300000, M0, false, "CASH", 0, 300000, "string"]);
+  eq("M03 / M04: the ledger's cash for the month is the bill's recorded payment", await moneyOff(hoa), []);
+  eq("M01: every transaction balances", await unbalanced(), 0);
+  const audits = await rows("SELECT action, diff->>'via' AS via FROM public.audit_log WHERE entity = 'invoice' AND diff->>'student_id' = $1", [hoa]);
+  eq("one audit row for the payment: record_admin_payment's", audits, [{ action: "record_payment", via: "record-payment" }]);
+
+  const before = await ledgerRows();
+  const u = await undo(r.action_id);
+  ok("undo takes it back", u.ok && u.payment_reversed === true && u.student_removed === false && u.student_deactivated === false, JSON.stringify(u));
+  ok("  and says what it did: reversed in the ledger, off the bill, the payment record deleted, as Delete payment does",
+    u.notices?.length === 1 && /300\.000 ₫ payment .* taken back as Delete payment does: two reversing entries were added to the ledger \(it keeps every entry\), it came off the .* bill, and the payment record was deleted/.test(u.notices[0]), JSON.stringify(u.notices));
+  eq("  the payments row is gone", await n("SELECT count(*) AS n FROM public.payments WHERE id = $1", [eff.payment_id]), 0);
+  const rev = await rows(`SELECT e.*, a.code::text AS code FROM public.ledger_entries e JOIN public.ledger_accounts a ON a.id = e.account_id
+    WHERE e.tx_key LIKE $1 ORDER BY a.code`, [`payment-reversal-${eff.payment_id}-%`]);
+  eq("  two reversal legs, keyed payment-reversal-<payment>-<leg>, mirroring the two, one transaction, same month",
+    rev.map((l) => [l.code, l.debit, l.credit, l.month, l.tx_key === `payment-reversal-${eff.payment_id}-${legs.find((x) => x.code === l.code).id}`, l.tx_id === rev[0].tx_id]),
+    [["AR", 300000, 0, M0, true, true], ["CASH", 0, 300000, M0, true, true]]);
+  eq("  nothing in the ledger was updated or deleted: the two legs still there, two added", [await ledgerRows() - before,
+    await n("SELECT count(*) AS n FROM public.ledger_entries WHERE id = ANY($1)", [legs.map((l) => l.id)])], [2, 2]);
+  bill = await one("SELECT recorded_payment, paid_amount, status FROM public.invoices WHERE student_id = $1 AND month = $2", [hoa, M0]);
+  eq("  the bill: back to 0 recorded, 0 paid, issued", [bill.recorded_payment, bill.paid_amount, bill.status], [0, 0, "issued"]);
+  const del = await one("SELECT * FROM public.payment_deletions WHERE payment_id = $1", [eff.payment_id]);
+  ok("  a payment_deletions snapshot, as delete-payment writes: the payment, the reversal, the bill change, who and why",
+    del && del.deleted_by === ADMIN && del.deletion_reason === "Undo of an assistant action" && del.snapshot.payment_data.amount === 300000
+      && del.snapshot.reversal_tx_ids[0] === rev[0].tx_id && del.snapshot.bill_changes[0].recordedAfter === 0 && del.snapshot.ai_action_id === r.action_id, JSON.stringify(del));
+  ok("  an audit row ('payment', 'delete'), as delete-payment writes",
+    (await n("SELECT count(*) AS n FROM public.audit_log WHERE entity = 'payment' AND entity_id = $1 AND action = 'delete' AND diff->>'via' = 'assistant-undo'", [eff.payment_id])) === 1);
+  eq("  M03 / M04 / M01 still hold after the undo", [await moneyOff(hoa), await unbalanced()], [[], 0]);
+  eq("  undoing twice is refused", (await undo(r.action_id)).reasons, ["This was already undone."]);
+
+  // -------------------------------------------------- what undo refuses
+  const r2 = await apply(pay(hoa, 100000));
+  const pid2 = (await one("SELECT effects FROM public.ai_actions WHERE id = $1", [r2.action_id])).effects.payment.payment_id;
+  const snap = async () => JSON.stringify([await ledgerRows(), await n("SELECT count(*) AS n FROM public.payments"), await n("SELECT count(*) AS n FROM public.payment_deletions"),
+    (await one("SELECT recorded_payment FROM public.invoices WHERE student_id = $1 AND month = $2", [hoa, M0])).recorded_payment]);
+  await db.query("UPDATE public.payments SET amount = 90000 WHERE id = $1", [pid2]);
+  let s0 = await snap();
+  let no = await undo(r2.action_id);
+  ok("a payment changed since: refused, nothing changed", !no.ok && no.reasons.some((x) => /changed since/.test(x)) && await snap() === s0, JSON.stringify(no));
+  await db.query("UPDATE public.payments SET amount = 100000 WHERE id = $1", [pid2]);
+  await db.query(`WITH t AS (SELECT gen_random_uuid() AS tx)
+    INSERT INTO public.ledger_entries (tx_id, tx_key, account_id, debit, credit, month)
+    SELECT t.tx, CASE WHEN a.code = 'AR' THEN 'payment-reversal-' || $1 || '-test' END, a.id,
+           CASE WHEN a.code = 'AR' THEN 1 ELSE 0 END, CASE WHEN a.code = 'AR' THEN 0 ELSE 1 END, $3
+    FROM t, public.ledger_accounts a WHERE a.student_id = $2 AND a.code IN ('AR', 'CASH')`, [pid2, hoa, M0]);
+  s0 = await snap();
+  no = await undo(r2.action_id);
+  ok("a payment already reversed in the ledger: refused, nothing changed", !no.ok && no.reasons.some((x) => /already been reversed/.test(x)) && await snap() === s0, JSON.stringify(no));
+  // delete-payment deleted it (the service role may; its reversal legs and bill change are not needed for this check)
+  await asService("DELETE FROM public.payments WHERE id = $1", [pid2]);
+  s0 = await snap();
+  no = await undo(r2.action_id);
+  ok("a payment deleted since (Delete payment): refused, nothing changed", !no.ok && no.reasons.some((x) => /deleted since \(Delete payment\)/.test(x)) && await snap() === s0, JSON.stringify(no));
+
+  const big = await apply(pay(hoa, 600000000));
+  ok("more than 500.000.000 in one payment: refused before anything is written",
+    big.ok === false && big.problems.some((x) => /more than 500\.000\.000 ₫ cannot be recorded in one go/.test(x))
+      && (await n("SELECT count(*) AS n FROM public.payments WHERE amount = 600000000")) === 0, JSON.stringify(big));
+
+  // ------------------------------------------------- the delete rule
+  const r3 = await apply(pay(hoa, 40000));
+  const pid3 = (await one("SELECT effects FROM public.ai_actions WHERE id = $1", [r3.action_id])).effects.payment.payment_id;
+  ok("payments delete rule: an admin's own DELETE is still refused", /Direct payment deletion is not allowed/.test(await fails(ADMIN, "DELETE FROM public.payments WHERE id = $1", [pid3]) ?? ""));
+  await db.exec(`CREATE FUNCTION public.not_undo(p uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+    BEGIN DELETE FROM public.payments WHERE id = p; END $$; GRANT EXECUTE ON FUNCTION public.not_undo(uuid) TO authenticated;`);
+  ok("  so is one made inside any other definer function", /Direct payment deletion is not allowed/.test(await fails(ADMIN, "SELECT public.not_undo($1)", [pid3]) ?? ""));
+  // ai_action_undo called from inside something else: its frame is not the outermost, so the delete is refused and the undo reports it.
+  await db.exec(`CREATE FUNCTION public.wrap_undo(p uuid) RETURNS jsonb LANGUAGE plpgsql AS $$ BEGIN RETURN public.ai_action_undo(p); END $$;
+    GRANT EXECUTE ON FUNCTION public.wrap_undo(uuid) TO authenticated;`);
+  const wrapped = (await as(ADMIN, "SELECT public.wrap_undo($1) AS r", [r3.action_id])).rows[0].r;
+  ok("  ai_action_undo called from inside another function: the delete is refused, and the undo says so and changes nothing",
+    wrapped.ok === false && wrapped.reasons.some((x) => /Direct payment deletion is not allowed/.test(x))
+      && (await n("SELECT count(*) AS n FROM public.payments WHERE id = $1", [pid3])) === 1
+      && (await n("SELECT count(*) AS n FROM public.ledger_entries WHERE tx_key LIKE $1", [`payment-reversal-${pid3}-%`])) === 0, JSON.stringify(wrapped));
+  await db.exec(`CREATE SCHEMA shadow; CREATE FUNCTION shadow.ai_action_undo(p uuid) RETURNS jsonb LANGUAGE sql AS $$ SELECT '{}'::jsonb $$;`);
+  const shadowed = await undo(r3.action_id);
+  ok("  a second function called ai_action_undo anywhere: the real undo's delete is refused too (fails closed)",
+    shadowed.ok === false && shadowed.reasons.some((x) => /Direct payment deletion is not allowed/.test(x)), JSON.stringify(shadowed));
+  await db.exec("DROP SCHEMA shadow CASCADE");
+  ok("  the service role deletes as before", (await asService("DELETE FROM public.payments WHERE id = $1 RETURNING id", [pid3])).rows.length === 1);
+  await db.query("INSERT INTO public.payments (id, student_id, amount, method) VALUES ($1, $2, 40000, 'Cash')", [pid3, hoa]);
+  ok("  a caller with no JWT role (the SQL editor) deletes as before", (await db.query("DELETE FROM public.payments WHERE id = $1 RETURNING id", [pid3])).rows.length === 1);
+  await db.query("INSERT INTO public.payments (id, student_id, amount, method, memo, created_by) VALUES ($1, $2, 40000, 'Cash', 'Zalo', $3)", [pid3, hoa, ADMIN]);
+  ok("  and the real undo, called by the admin, takes it back", (await undo(r3.action_id)).ok);
+
+  // An action recorded before this migration (bill only, no payment_id): undone exactly as before.
+  await db.query("UPDATE public.invoices SET recorded_payment = coalesce(recorded_payment, 0) + 25000 WHERE student_id = $1 AND month = $2", [hoa, M0]);
+  const invId = (await one("SELECT id FROM public.invoices WHERE student_id = $1 AND month = $2", [hoa, M0])).id;
+  const { id: oldAction } = await one(`INSERT INTO public.ai_actions (proposal_id, instruction, plan, summary, effects, student_id, created_by)
+    VALUES (gen_random_uuid(), 'old', '{}', '[]', $1, $2, $3) RETURNING id`,
+    [{ student_id: hoa, student_created: false, nudges: [], payment: { invoice_id: invId, month: M0, amount: 25000, invoice_created: false } }, hoa, ADMIN]);
+  const l0 = await ledgerRows(), rec0 = (await one("SELECT recorded_payment FROM public.invoices WHERE id = $1", [invId])).recorded_payment;
+  const old = await undo(oldAction);
+  ok("an action from before (on the bill only): undone as before - off the bill, its correction audit row, the ledger untouched",
+    old.ok && old.payment_reversed === false && (await ledgerRows()) === l0
+      && (await one("SELECT recorded_payment FROM public.invoices WHERE id = $1", [invId])).recorded_payment === rec0 - 25000
+      && (await n("SELECT count(*) AS n FROM public.audit_log WHERE entity = 'invoice' AND entity_id = $1 AND action = 'payment_correction' AND diff->>'via' = 'assistant'", [invId])) === 1, JSON.stringify(old));
+
+  // ------------------------------------------- a new child and a payment
+  const kidPlan = (name) => ({
+    version: 1, student: { new: { full_name: name, date_of_birth: "2020-05-05" } }, family: { family_id: cherry },
+    sibling_hold: { from: `${M3}-01` }, enrol: { class_id: stars2, start_date: today },
+    discount: { percent: 10, first_month: M0, months: 2 },
+    payment: { amount: 200000, month: M0, method: "Bank Transfer", paid_on: today },
+  });
+  const k = await apply(kidPlan("Bao Cherry"));
+  ok("a new child, enrolled, discounted, in a family, held, and paid for: applies", k.ok, JSON.stringify(k));
+  const kid = k.student_id;
+  const kEff = (await one("SELECT effects FROM public.ai_actions WHERE id = $1", [k.action_id])).effects;
+  eq("  the month had no bill: one with no charge, and the payment on it, on the ledger (BANK)",
+    [kEff.payment.invoice_created, (await one("SELECT recorded_payment FROM public.invoices WHERE student_id = $1 AND month = $2", [kid, M0])).recorded_payment,
+     kEff.payment.ledger_account, await n("SELECT count(*) AS n FROM public.payments WHERE student_id = $1", [kid])], [true, 200000, "BANK", 1]);
+  const actOwn = (await one("SELECT public.ai_student_activity($1, $2) AS a", [kid, [kEff.payment.payment_id]])).a;
+  const actAll = (await one("SELECT public.ai_student_activity($1) AS a", [kid])).a;
+  ok("  ai_student_activity: its own payment and ledger rows are not 'added by people since'; the one-argument form still counts them",
+    !actOwn.some((x) => /payment\(s\)|ledger entry/.test(x)) && actAll.includes("1 payment(s)") && actAll.includes("2 ledger entry(ies)"), JSON.stringify({ actOwn, actAll }));
+  const ku = await undo(k.action_id);
+  ok("undo: everything taken back, and the child kept, made inactive", ku.ok && ku.student_deactivated === true && ku.student_removed === false
+    && ku.payment_reversed === true && ku.open_path === `/students/${kid}`, JSON.stringify(ku));
+  ok("  and it says so: the payment reversed, and why the child is inactive rather than deleted",
+    ku.notices?.length === 2 && /taken back as Delete payment does/.test(ku.notices[0])
+      && /Bao Cherry was not deleted but made inactive: the payment this recorded stays in the ledger's history \(reversed\), and a child with ledger history keeps their record\. Everything else the assistant set up for them was removed\./.test(ku.notices[1]), JSON.stringify(ku.notices));
+  const kidRow = await one("SELECT is_active, family_id, sibling_discount_from FROM public.students WHERE id = $1", [kid]);
+  eq("  the child: inactive, out of the family, no hold", [kidRow?.is_active, kidRow?.family_id, kidRow?.sibling_discount_from], [false, null, null]);
+  eq("  the enrolment, its marks, the discount, the bills and the payment are gone",
+    [await n("SELECT count(*) AS n FROM public.enrollments WHERE student_id = $1", [kid]), await n("SELECT count(*) AS n FROM public.attendance WHERE student_id = $1", [kid]),
+     await n("SELECT count(*) AS n FROM public.discount_assignments WHERE student_id = $1", [kid]), await n("SELECT count(*) AS n FROM public.discount_definitions WHERE name LIKE '%Bao Cherry'"),
+     await n("SELECT count(*) AS n FROM public.invoices WHERE student_id = $1", [kid]), await n("SELECT count(*) AS n FROM public.payments WHERE student_id = $1", [kid])],
+    [0, 0, 0, 0, 0, 0]);
+  eq("  the ledger keeps the payment and its reversal (4 legs, nothing net), and the deletion record",
+    [await n(`SELECT count(*) AS n FROM public.ledger_entries e JOIN public.ledger_accounts a ON a.id = e.account_id WHERE a.student_id = $1`, [kid]),
+     await n(`SELECT coalesce(sum(e.debit - e.credit), 0) AS n FROM public.ledger_entries e JOIN public.ledger_accounts a ON a.id = e.account_id WHERE a.student_id = $1 AND a.code IN ('CASH','BANK')`, [kid]),
+     await n("SELECT count(*) AS n FROM public.payment_deletions WHERE payment_id = $1", [kEff.payment.payment_id])], [4, 0, 1]);
+  const delErr = await db.query("DELETE FROM public.students WHERE id = $1", [kid]).then(() => null, (e) => e.code);
+  ok("  why it is kept: deleting this child is refused by the database itself (G-21 HC121 / the append-only ledger HC130)", ["HC121", "HC130"].includes(delErr), delErr);
+  eq("  M03 / M04 / M01 hold for the child", [await moneyOff(kid), await unbalanced()], [[], 0]);
+
+  // a person's own payment since blocks the undo of a new child (and nothing is changed)
+  // (no discount on this one: a payment on a discounted month is refused by the discount step first, as before)
+  const { discount: _d, ...noDiscount } = kidPlan("Chi Cherry");
+  const k2 = await apply(noDiscount);
+  ok("(a second new child, paid for, no discount)", k2.ok, JSON.stringify(k2));
+  const kid2 = k2.student_id;
+  await as(ADMIN, "SELECT public.record_admin_payment(gen_random_uuid(), $1, $2, 'payment', 50000, 'Cash', now(), 'at the desk', NULL)", [kid2, M0]);
+  const l1 = await ledgerRows();
+  const ku2 = await undo(k2.action_id);
+  ok("a new child with a payment a person recorded since: refused, naming it - the action's own payment is not counted",
+    !ku2.ok && ku2.reasons.some((x) => /People have added records for this student since: .*1 payment\(s\)/.test(x) && /2 ledger entry\(ies\)/.test(x))
+      && (await ledgerRows()) === l1 && (await n("SELECT count(*) AS n FROM public.payments WHERE student_id = $1", [kid2])) === 2
+      && (await one("SELECT is_active FROM public.students WHERE id = $1", [kid2])).is_active === true, JSON.stringify(ku2));
+
+  // a new child with no payment: deleted, exactly as before
+  const k3 = await apply({ version: 1, student: { new: { full_name: "Dung Cherry" } }, enrol: { class_id: stars2, start_date: today } });
+  const ku3 = await undo(k3.action_id);
+  ok("a new child with no payment: deleted, as before", ku3.ok && ku3.student_removed === true && ku3.student_deactivated === false
+    && (ku3.notices ?? []).length === 0 && (await n("SELECT count(*) AS n FROM public.students WHERE id = $1", [k3.student_id])) === 0, JSON.stringify(ku3));
+
+  // ------------------------------------------- all of it or none of it
+  await db.exec(`CREATE FUNCTION public.boom2() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'ledger down'; END $$;
+    CREATE TRIGGER boom2 BEFORE INSERT ON public.ledger_entries FOR EACH ROW EXECUTE FUNCTION public.boom2();`);
+  const kids0 = await n("SELECT count(*) AS n FROM public.students"), pays0 = await n("SELECT count(*) AS n FROM public.payments"), acts0 = await n("SELECT count(*) AS n FROM public.ai_actions");
+  const err = await fails(ADMIN, "SELECT public.ai_action_apply(gen_random_uuid(), 'x', $1)", [kidPlan("Em Cherry")]);
+  ok("the ledger failing inside the payment step: apply fails, and leaves no child, payment, bill or log row",
+    /ledger down/.test(err ?? "") && await n("SELECT count(*) AS n FROM public.students") === kids0 && await n("SELECT count(*) AS n FROM public.payments") === pays0
+      && await n("SELECT count(*) AS n FROM public.ai_actions") === acts0 && await n("SELECT count(*) AS n FROM public.students WHERE full_name = 'Em Cherry'") === 0, err);
+  await db.exec("DROP TRIGGER boom2 ON public.ledger_entries");
+
+  // ------------------------------------------------ the migration itself
+  const md5 = (s) => createHash("md5").update(s.replace(/\r/g, "")).digest("hex");
+  const defOf = async (sig) => (await one(`SELECT pg_get_functiondef('${sig}'::regprocedure) AS d`)).d;
+  const migText = readFileSync(join(migDir, MIG), "utf8");
+  const now = {};
+  for (const [k2_, sig] of [["APPLY", "public.ai_action_apply(uuid, text, jsonb)"], ["UNDO", "public.ai_action_undo(uuid)"],
+    ["ACTIVITY1", "public.ai_student_activity(uuid)"], ["ACTIVITY2", "public.ai_student_activity(uuid, uuid[])"], ["TRIGGER", "public.prevent_direct_payment_deletion()"]]) now[k2_] = md5(await defOf(sig));
+  if (process.env.AI_PRINT_MD5) console.log(JSON.stringify(now));
+  ok("the migration's preflight pins exactly the versions it installs (so a second paste is accepted and anything else refused)",
+    Object.values(now).every((h) => migText.includes(`'${h}'`)), JSON.stringify(now));
+  const defs0 = JSON.stringify(now);
+  const allMd5 = async () => {
+    const o = {};
+    for (const [k2_, sig] of [["APPLY", "public.ai_action_apply(uuid, text, jsonb)"], ["UNDO", "public.ai_action_undo(uuid)"],
+      ["ACTIVITY1", "public.ai_student_activity(uuid)"], ["ACTIVITY2", "public.ai_student_activity(uuid, uuid[])"], ["TRIGGER", "public.prevent_direct_payment_deletion()"]]) o[k2_] = md5(await defOf(sig));
+    return JSON.stringify(o);
+  };
+  let again2 = null;
+  try { await db.exec(migText); } catch (e) { again2 = e.message; }
+  ok("  pasted twice: accepted, nothing changes", again2 === null && (await allMd5()) === defs0, again2);
+  const refuses = async (label, breakIt, restore, re) => {
+    await db.exec(breakIt);
+    const broken = await allMd5();
+    let e2 = null;
+    try { await db.exec(migText); } catch (e) { e2 = e.message; }
+    const afterPaste = await allMd5();
+    await db.exec(restore);
+    ok(`  refuses to install, changing nothing, when ${label}`, re.test(e2 ?? "") && afterPaste === broken && (await allMd5()) === defs0, e2);
+  };
+  const undoSrc = await defOf("public.ai_action_undo(uuid)");
+  await refuses("the installed undo is not a version it knows",
+    undoSrc.replace("All of it or none of it.", "All of it or none of it (edited)."), undoSrc, /ai_action_undo\(uuid\) is not the version this replaces/);
+  const trigSrc = await defOf("public.prevent_direct_payment_deletion()");
+  await refuses("the payments delete rule is not a version it knows",
+    trigSrc.replace("Direct payment deletion is not allowed.", "Deletion is not allowed."), trigSrc, /prevent_direct_payment_deletion\(\) is not the version this replaces/);
+  await refuses("the payments delete trigger is missing",
+    "DROP TRIGGER prevent_client_payment_deletion ON public.payments",
+    "CREATE TRIGGER prevent_client_payment_deletion BEFORE DELETE ON public.payments FOR EACH ROW EXECUTE FUNCTION public.prevent_direct_payment_deletion()",
+    /payments has no prevent_client_payment_deletion trigger/);
+  await refuses("record_admin_payment is not installed",
+    "ALTER FUNCTION public.record_admin_payment(uuid, uuid, text, text, integer, text, timestamptz, text, integer) RENAME TO record_admin_payment_x",
+    "ALTER FUNCTION public.record_admin_payment_x(uuid, uuid, text, text, integer, text, timestamptz, text, integer) RENAME TO record_admin_payment",
+    /record_admin_payment is not installed/);
+  await refuses("payment_deletions lacks a column it writes",
+    "ALTER TABLE public.payment_deletions RENAME COLUMN snapshot TO snapshot_x", "ALTER TABLE public.payment_deletions RENAME COLUMN snapshot_x TO snapshot",
+    /missing column\(s\) payment_deletions\.snapshot/);
+  ok("  the new two-argument activity check is not callable by any API role",
+    !(await one("SELECT has_function_privilege('authenticated', 'public.ai_student_activity(uuid, uuid[])', 'EXECUTE') AS x")).x
+      && !(await one("SELECT has_function_privilege('anon', 'public.ai_student_activity(uuid, uuid[])', 'EXECUTE') AS x")).x);
+  const applyDef = await defOf("public.ai_action_apply(uuid, text, jsonb)");
+  ok("  apply writes no recorded_payment, no ledger and no payments row itself: only through record_admin_payment",
+    /public\.record_admin_payment\(/.test(applyDef) && !/recorded_payment\s*=/.test(applyDef) && !/INTO public\.(ledger_entries|payments)\b/.test(applyDef));
+  const undoDef = await defOf("public.ai_action_undo(uuid)");
+  ok("  undo never updates or deletes a ledger row (G-11), only inserts reversals",
+    !/(UPDATE|DELETE FROM)\s+public\.ledger_entries/i.test(undoDef) && /INSERT INTO public\.ledger_entries/.test(undoDef));
 }
 
 console.log("=== families ===");
@@ -415,7 +747,7 @@ console.log("=== families ===");
 
 console.log("=== the log screen ===");
 {
-  const rows = (await as(ADMIN, "SELECT * FROM public.ai_actions_list(10)")).rows;
+  const rows = (await as(ADMIN, "SELECT * FROM public.ai_actions_list(100)")).rows;
   ok("lists newest first, with who did and undid it", rows.length >= 5 && rows[0].created_at >= rows[1].created_at
     && rows.some((r) => r.created_by_name === "Mai" && r.undone_by_name === "Hoa"), JSON.stringify(rows.slice(0, 2)));
   ok("and says when the student it made is gone", rows.some((r) => r.student_exists === false));

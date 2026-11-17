@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/ui/loading";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
-import { newPaymentKey, receiptDateToday, recordPayment } from "@/lib/recordPayment";
+import { paymentKeys, receiptDateToday, recordPayment } from "@/lib/recordPayment";
 
 interface Invoice {
   id: string;
@@ -54,15 +54,10 @@ export function RecordedPaymentManager() {
   // both are cleared whenever one opens, so a choice never carries to another row.
   const [editMethod, setEditMethod] = useState("");
   const [reverseMethod, setReverseMethod] = useState("");
-  // One key per invoice row per attempt (src/lib/recordPayment.ts): a double
-  // click, or a retry after no answer, records nothing more; another row
-  // never reuses it.
-  const paymentKeys = useRef(new Map<string, string>());
-  const keyFor = (invoiceId: string) => {
-    let k = paymentKeys.current.get(invoiceId);
-    if (!k) { k = newPaymentKey(); paymentKeys.current.set(invoiceId, k); }
-    return k;
-  };
+  // One key per bill (child + month) per attempt, kept outside this screen
+  // (paymentKeys in src/lib/recordPayment.ts, review R-N2): a double click,
+  // or a retry after no answer - even after leaving the screen and coming
+  // back - records nothing more; another row never reuses it.
   const methodField = (id: string, value: string, onChange: (v: string) => void) => (
     <div className="space-y-1 text-left">
       <Label htmlFor={id} className="text-xs">Money in / out by (required)</Label>
@@ -143,18 +138,22 @@ export function RecordedPaymentManager() {
       // recorded by record-payment in the payments list, the ledger and the
       // bill together (D5 G-1), against the figure this screen showed. It
       // labels the bill by the one rule and writes the audit row.
+      const attempt = {
+        studentId: invoice.student_id, month: selectedMonth,
+        kind: newValue > oldValue ? "payment" as const : "correction" as const, amount: Math.abs(newValue - oldValue),
+      };
       const saved = await recordPayment(supabase, {
         studentId: invoice.student_id,
         month: selectedMonth,
-        kind: newValue > oldValue ? "payment" : "correction",
-        amount: Math.abs(newValue - oldValue),
+        kind: attempt.kind,
+        amount: attempt.amount,
         method: editMethod,
         occurredAt: receiptDateToday(),
         memo: `Recorded Payment Manager: ${editingInvoice.reason.trim()}`.slice(0, 500),
-        idempotencyKey: keyFor(invoice.id),
+        idempotencyKey: paymentKeys.keyFor(attempt),
         expectedRecorded: oldValue,
       });
-      if (saved.ok || saved.answered) paymentKeys.current.delete(invoice.id);
+      paymentKeys.settle(attempt, saved);
       if (!saved.ok) {
         // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is
         toast.error(saved.message);
@@ -197,6 +196,7 @@ export function RecordedPaymentManager() {
       // Back to 0: a correction of everything the bill records, through
       // record-payment (payments list, ledger and bill together, D5 G-1),
       // against the figure this screen showed.
+      const attempt = { studentId: invoice.student_id, month: selectedMonth, kind: "correction" as const, amount: current };
       const saved = await recordPayment(supabase, {
         studentId: invoice.student_id,
         month: selectedMonth,
@@ -205,10 +205,10 @@ export function RecordedPaymentManager() {
         method: reverseMethod,
         occurredAt: receiptDateToday(),
         memo: `Reversal (Recorded Payment Manager): ${reversalReason.trim()}`.slice(0, 500),
-        idempotencyKey: keyFor(invoice.id),
+        idempotencyKey: paymentKeys.keyFor(attempt),
         expectedRecorded: current,
       });
-      if (saved.ok || saved.answered) paymentKeys.current.delete(invoice.id);
+      paymentKeys.settle(attempt, saved);
       if (!saved.ok) {
         // Nothing was recorded (the function says why); reload the list so the admin sees the bill as it is
         toast.error(saved.message);

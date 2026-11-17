@@ -56,6 +56,100 @@ export function newPaymentKey(): string {
   return crypto.randomUUID();
 }
 
+/**
+ * What one payment attempt is, for keeping its key across a closed dialog
+ * (review R-N2). A bill is one child and one month, so the child and the
+ * month stand for it: NOT the invoice row's id, because a payment for a
+ * month with no bill yet makes the bill (calculate-tuition) on the way - a
+ * reopened dialog would then see a real id where the first one had a
+ * placeholder, take it for a different payment and make a new key.
+ */
+export interface PaymentAttempt {
+  studentId: string;
+  month: string;
+  kind: "payment" | "correction";
+  amount: number;
+}
+
+/** sessionStorage, or anything with its three methods (tests). */
+export interface KeyStorage {
+  getItem(k: string): string | null;
+  setItem(k: string, v: string): void;
+  removeItem(k: string): void;
+}
+
+const STORE_PREFIX = "hec.record-payment.pending:";
+
+/**
+ * Keys of attempts that got NO definite answer, kept until one arrives.
+ *
+ * The screens used to hold the key in the component (useRef): closing the
+ * dialog after "no answer from the server" and opening it again made a NEW
+ * key, so the retry of a payment that had in fact been recorded recorded it
+ * a second time. The key now lives here - in memory for this page, and in
+ * sessionStorage so a reload of the tab keeps it too - under the attempt
+ * (child, month, kind, amount). It is created when the admin presses Save
+ * (before the request leaves) and removed only when record-payment gives a
+ * definite answer (recorded, or refused with its reason - a duplicate
+ * included). The same entry made again therefore carries the same key: if
+ * the first one was recorded the retry is refused as a duplicate (and that
+ * answer clears it); if it was not, the retry records it once. A different
+ * amount is a different payment and gets its own key.
+ */
+export function createPaymentKeyStore(storage: KeyStorage | null = null, makeKey: () => string = newPaymentKey) {
+  const memory = new Map<string, string>();
+  const name = (a: PaymentAttempt) =>
+    `${STORE_PREFIX}${a.studentId}|${a.month}|${a.kind}|${Math.trunc(Number(a.amount))}`;
+  const read = (n: string): string | null => {
+    const m = memory.get(n);
+    if (m) return m;
+    try {
+      const s = storage?.getItem(n) ?? null;
+      if (s && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(s)) {
+        memory.set(n, s);
+        return s;
+      }
+    } catch {
+      // storage refused (private window, blocked site data): memory only
+    }
+    return null;
+  };
+  return {
+    /** The key for this attempt: the one kept from an unanswered try, or a new one (kept from now on). */
+    keyFor(a: PaymentAttempt): string {
+      const n = name(a);
+      const kept = read(n);
+      if (kept) return kept;
+      const k = makeKey();
+      memory.set(n, k);
+      try { storage?.setItem(n, k); } catch { /* memory only */ }
+      return k;
+    },
+    /** True when an earlier try of this attempt got no answer (the screen can say so). */
+    pending(a: PaymentAttempt): boolean {
+      return read(name(a)) !== null;
+    },
+    /** After a reply: drop the key on a definite answer, keep it otherwise. */
+    settle(a: PaymentAttempt, result: Pick<RecordPaymentResult, "ok" | "answered">): void {
+      if (!(result.ok || result.answered)) return;
+      const n = name(a);
+      memory.delete(n);
+      try { storage?.removeItem(n); } catch { /* memory only */ }
+    },
+  };
+}
+
+function sessionStore(): KeyStorage | null {
+  try {
+    return typeof sessionStorage !== "undefined" ? sessionStorage : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The one store every payment screen shares (module level: it outlives a dialog). */
+export const paymentKeys = createPaymentKeyStore(sessionStore());
+
 /** Today in Hanoi, YYYY-MM-DD (a UTC date is yesterday before 07:00 Hanoi). */
 export function receiptDateToday(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);

@@ -1,9 +1,10 @@
 -- REFERENCE ONLY - do not paste. The source of public.ai_action_apply and
--- public.ai_action_undo as installed after migrations 20261107090000 and
--- 20261113090000 (the label patch). No migration holds this text any more:
--- start any change to either function from here, and keep
--- public.invoice_paid_label as its label. scripts/pgtest/ai-actions.test.mjs
--- fails when the installed functions differ from the text below.
+-- public.ai_action_undo as installed after migrations 20261107090000,
+-- 20261113090000 (the label patch) and 20261117150000 (the payment step
+-- through record_admin_payment; its undo as delete-payment). Start any
+-- change to either function from here, and keep public.invoice_paid_label
+-- as its label. scripts/pgtest/ai-actions.test.mjs fails when the
+-- installed functions differ from the text below.
 
 CREATE OR REPLACE FUNCTION public.ai_action_apply(p_proposal_id uuid, p_instruction text, p_plan jsonb)
  RETURNS jsonb
@@ -24,10 +25,10 @@ DECLARE
   v_invoice uuid;
   v_amount bigint;
   v_month text;
-  v_prev bigint;
-  v_total bigint;
-  v_payable bigint;
   v_created boolean := false;
+  v_bill_created boolean := false;
+  v_payment uuid;
+  v_paid jsonb;
   effects jsonb := '{}';
   v_action uuid;
 BEGIN
@@ -53,6 +54,14 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'problems', chk -> 'problems');
   END IF;
   n := chk -> 'normal';
+
+  -- A payment is recorded by public.record_admin_payment, which takes at
+  -- most 500,000,000 in one payment (the payment screens' bound). Refused
+  -- here, before anything is written.
+  IF n ? 'payment' AND (n -> 'payment' ->> 'amount')::bigint > 500000000 THEN
+    RETURN jsonb_build_object('ok', false, 'problems', jsonb_build_array(format(
+      'A payment of more than %s cannot be recorded in one go. Record it as two payments.', public.ai_vnd(500000000))));
+  END IF;
 
   IF (n -> 'student' ->> 'new')::boolean THEN
     INSERT INTO public.students (full_name, date_of_birth, created_by)
@@ -106,37 +115,33 @@ BEGIN
   IF n ? 'payment' THEN
     v_amount := (n -> 'payment' ->> 'amount')::bigint;
     v_month := n -> 'payment' ->> 'month';
-    SELECT id, recorded_payment, total_amount, carry_in_debt, carry_in_credit INTO inv
-    FROM public.invoices WHERE student_id = v_student AND month = v_month FOR UPDATE;
+    -- record_admin_payment records only on a bill that exists. None yet: a
+    -- bill with no charge on it, as before (calculate-tuition prices it on
+    -- its next read), so the payment shows as credit until then.
+    SELECT id INTO inv FROM public.invoices WHERE student_id = v_student AND month = v_month;
     IF NOT FOUND THEN
-      -- Same shape RecordPaymentDialog writes when there is no bill yet.
       INSERT INTO public.invoices (student_id, month, base_amount, discount_amount, total_amount,
         recorded_payment, paid_amount, status, created_by)
-      VALUES (v_student, v_month, 0, 0, 0, v_amount, 0, 'partial', v_actor)
+      VALUES (v_student, v_month, 0, 0, 0, 0, 0, 'issued', v_actor)
       RETURNING id INTO v_invoice;
-      v_prev := 0;
-      effects := effects || jsonb_build_object('payment', jsonb_build_object(
-        'invoice_id', v_invoice, 'month', v_month, 'amount', v_amount, 'invoice_created', true));
+      v_bill_created := true;
     ELSE
       v_invoice := inv.id;
-      v_prev := coalesce(inv.recorded_payment, 0);
-      v_total := v_prev + v_amount;
-      v_payable := coalesce(inv.total_amount, 0) + coalesce(inv.carry_in_debt, 0) - coalesce(inv.carry_in_credit, 0);
-      UPDATE public.invoices
-      SET recorded_payment = v_total,
-          status = (CASE WHEN invoices.status = 'credit' THEN invoices.status ELSE public.invoice_paid_label(v_total, v_payable, invoices.base_amount, invoices.total_amount) END),
-          updated_at = now(), updated_by = v_actor
-      WHERE id = v_invoice;
-      effects := effects || jsonb_build_object('payment', jsonb_build_object(
-        'invoice_id', v_invoice, 'month', v_month, 'amount', v_amount, 'invoice_created', false));
     END IF;
-    INSERT INTO public.audit_log (entity, entity_id, action, actor_user_id, diff)
-    VALUES ('invoice', v_invoice::text, 'record_payment', v_actor, jsonb_build_object(
-      'student_id', v_student, 'month', v_month, 'previous_recorded_payment', v_prev,
-      'payment_amount', v_amount, 'new_recorded_payment', v_prev + v_amount,
-      'payment_date', n -> 'payment' -> 'paid_on', 'payment_method', n -> 'payment' -> 'method',
-      'memo', n -> 'payment' -> 'note', 'invoice_created', (effects -> 'payment' ->> 'invoice_created')::boolean,
-      'type', 'payment', 'via', 'assistant'));
+    -- The payments row, both ledger legs, the bill and its audit row, as
+    -- every admin payment screen records a payment (D5 G-1). Same
+    -- transaction: a refusal or a failure in it undoes all of this action.
+    v_payment := gen_random_uuid();
+    v_paid := public.record_admin_payment(
+      v_payment, v_student, v_month, 'payment', v_amount::integer,
+      n -> 'payment' ->> 'method',
+      ((n -> 'payment' ->> 'paid_on') || 'T12:00:00+07:00')::timestamptz,
+      coalesce(n -> 'payment' ->> 'note', 'Recorded by the assistant'),
+      NULL);
+    effects := effects || jsonb_build_object('payment', jsonb_build_object(
+      'invoice_id', v_invoice, 'month', v_month, 'amount', v_amount, 'invoice_created', v_bill_created,
+      'payment_id', v_payment, 'ledger_tx_id', v_paid ->> 'ledgerTxId', 'ledger_account', v_paid ->> 'ledgerAccount',
+      'recorded_before', (v_paid ->> 'recordedBefore')::bigint, 'recorded_after', (v_paid ->> 'recordedAfter')::bigint));
   END IF;
 
   INSERT INTO public.ai_actions (proposal_id, instruction, plan, summary, effects, student_id, created_by)
@@ -165,8 +170,10 @@ DECLARE
   e jsonb;
   v_student uuid;
   reasons text[] := '{}';
+  notices text[] := '{}';
   inv record;
   en record;
+  pay record;
   v_class_name text;
   v_amount bigint;
   v_month text;
@@ -178,6 +185,13 @@ DECLARE
   v_login boolean;
   v_since text;
   v_activity text[];
+  v_pid uuid;
+  v_own uuid[] := '{}';
+  v_rtx uuid;
+  v_legs bigint;
+  v_rows bigint;
+  v_kept boolean := false;
+  v_name text;
 BEGIN
   IF NOT public.has_role(v_actor, 'admin'::app_role) THEN
     RAISE EXCEPTION 'Only administrators can do this' USING ERRCODE = '42501';
@@ -210,7 +224,74 @@ BEGIN
       ELSIF coalesce(inv.recorded_payment, 0) < v_amount THEN
         reasons := reasons || format('Only %s is recorded for %s now, less than the %s this added.',
           public.ai_vnd(coalesce(inv.recorded_payment, 0)), public.ai_month_label(v_month), public.ai_vnd(v_amount));
+      ELSIF e -> 'payment' ? 'payment_id' THEN
+        -- Recorded on the ledger (20261117150000): taken back the way
+        -- delete-payment deletes a payment.
+        v_pid := (e -> 'payment' ->> 'payment_id')::uuid;
+        v_own := v_own || v_pid;
+        SELECT * INTO pay FROM public.payments WHERE id = v_pid FOR UPDATE;
+        IF NOT FOUND THEN
+          reasons := reasons || format('The %s payment this recorded for %s has been deleted since (Delete payment), so there is nothing to take back.',
+            public.ai_vnd(v_amount), public.ai_month_label(v_month));
+        ELSIF pay.student_id IS DISTINCT FROM v_student OR pay.amount::bigint IS DISTINCT FROM v_amount THEN
+          reasons := reasons || 'The payment this recorded has been changed since.'::text;
+        ELSIF EXISTS (SELECT 1 FROM public.ledger_entries x WHERE x.tx_key LIKE 'payment-reversal-' || v_pid::text || '-%') THEN
+          reasons := reasons || 'The payment this recorded has already been reversed in the ledger.'::text;
+        ELSE
+          -- 1. Reverse both legs (new legs; the ledger is append-only).
+          v_rtx := gen_random_uuid();
+          INSERT INTO public.ledger_entries (tx_id, tx_key, account_id, debit, credit, occurred_at, memo, month, created_by)
+          SELECT v_rtx, 'payment-reversal-' || v_pid::text || '-' || l.id::text, l.account_id, l.credit, l.debit, now(),
+                 'Reversal of deleted payment: undo of an assistant action', l.month, v_actor
+          FROM public.ledger_entries l
+          WHERE l.tx_id IN (SELECT k.tx_id FROM public.ledger_entries k
+                             WHERE k.tx_key = 'record-payment-' || v_pid::text || '-' || v_student::text);
+          GET DIAGNOSTICS v_legs = ROW_COUNT;
+          IF v_legs <> 2 THEN
+            reasons := reasons || 'The ledger entries of the payment this recorded could not be found whole, so it was not taken back. Use Delete payment.'::text;
+          ELSE
+            -- 2. Off the bill (row locked above; compare-and-set on the value read).
+            v_left := inv.recorded_payment - v_amount;
+            IF (e -> 'payment' ->> 'invoice_created')::boolean AND v_left = 0
+               AND coalesce(inv.total_amount, 0) = 0 AND coalesce(inv.base_amount, 0) = 0 THEN
+              DELETE FROM public.invoices WHERE id = inv.id;
+            ELSE
+              v_payable := coalesce(inv.total_amount, 0) + coalesce(inv.carry_in_debt, 0) - coalesce(inv.carry_in_credit, 0);
+              UPDATE public.invoices
+              SET recorded_payment = v_left,
+                  paid_amount = greatest(0, coalesce(invoices.paid_amount, 0) - v_amount),
+                  status = (CASE WHEN invoices.status = 'credit' THEN invoices.status ELSE public.invoice_paid_label(v_left, v_payable, invoices.base_amount, invoices.total_amount) END),
+                  updated_at = now(), updated_by = v_actor
+              WHERE id = inv.id AND coalesce(invoices.recorded_payment, 0) = inv.recorded_payment;
+              GET DIAGNOSTICS v_rows = ROW_COUNT;
+              IF v_rows <> 1 THEN
+                reasons := reasons || format('The %s bill changed while this was being undone. Try again.', public.ai_month_label(v_month));
+              END IF;
+            END IF;
+            -- 3. The deletion record, then the payment row (as delete-payment).
+            INSERT INTO public.payment_deletions (payment_id, snapshot, deleted_by, deletion_reason)
+            VALUES (v_pid, jsonb_build_object(
+                'payment_data', to_jsonb(pay), 'reversal_tx_ids', jsonb_build_array(v_rtx),
+                'affected_students', jsonb_build_array(v_student), 'affected_months', jsonb_build_array(v_month),
+                'bill_changes', jsonb_build_array(jsonb_build_object('studentId', v_student, 'month', v_month,
+                  'taken', v_amount, 'recordedBefore', inv.recorded_payment, 'recordedAfter', v_left)),
+                'deleted_by', v_actor, 'deleted_at', now(), 'deletion_reason', 'Undo of an assistant action',
+                'ai_action_id', a.id),
+              v_actor, 'Undo of an assistant action');
+            DELETE FROM public.payments WHERE id = v_pid AND student_id = v_student;
+            INSERT INTO public.audit_log (entity, entity_id, action, actor_user_id, diff)
+            VALUES ('payment', v_pid::text, 'delete', v_actor, jsonb_build_object(
+              'reason', 'Undo of an assistant action', 'student_id', v_student, 'month', v_month,
+              'affected_students', jsonb_build_array(v_student), 'affected_months', jsonb_build_array(v_month),
+              'reversal_tx_ids', jsonb_build_array(v_rtx), 'ai_action_id', a.id, 'via', 'assistant-undo',
+              'bill_changes', jsonb_build_array(jsonb_build_object('studentId', v_student, 'month', v_month,
+                'taken', v_amount, 'recordedBefore', inv.recorded_payment, 'recordedAfter', v_left))));
+            notices := notices || format('The %s payment for %s was taken back as Delete payment does: two reversing entries were added to the ledger (it keeps every entry), it came off the %s bill, and the payment record was deleted.',
+              public.ai_vnd(v_amount), public.ai_month_label(v_month), public.ai_month_label(v_month));
+          END IF;
+        END IF;
       ELSE
+        -- Recorded before 20261117150000 (on the bill only): as before.
         v_left := inv.recorded_payment - v_amount;
         IF (e -> 'payment' ->> 'invoice_created')::boolean AND v_left = 0
            AND coalesce(inv.total_amount, 0) = 0 AND coalesce(inv.base_amount, 0) = 0 THEN
@@ -306,10 +387,11 @@ BEGIN
     END IF;
 
     IF (e ->> 'student_created')::boolean AND cardinality(reasons) = 0 THEN
-      SELECT (linked_user_id IS NOT NULL OR secondary_user_id IS NOT NULL) INTO v_login
+      SELECT (linked_user_id IS NOT NULL OR secondary_user_id IS NOT NULL), full_name INTO v_login, v_name
       FROM public.students WHERE id = v_student;
       IF v_login THEN reasons := reasons || 'A login has been set up for this student since.'::text; END IF;
-      v_activity := public.ai_student_activity(v_student);
+      -- The action's own payment (taken back above) is not "added by people since".
+      v_activity := public.ai_student_activity(v_student, v_own);
       IF cardinality(v_activity) > 0 THEN
         reasons := reasons || format('People have added records for this student since: %s.', array_to_string(v_activity, ', '));
       END IF;
@@ -318,7 +400,16 @@ BEGIN
         DELETE FROM public.invoices WHERE student_id = v_student;
         DELETE FROM public.student_points WHERE student_id = v_student;
         DELETE FROM public.sibling_discount_state WHERE winner_student_id = v_student AND NOT public.ai_month_closed(month);
-        DELETE FROM public.students WHERE id = v_student;
+        IF cardinality(v_own) > 0 OR EXISTS (SELECT 1 FROM public.ledger_accounts la WHERE la.student_id = v_student) THEN
+          -- A payment was on the ledger: its entries stay (append-only), so
+          -- the child is kept, switched off, instead of deleted.
+          UPDATE public.students SET is_active = false, updated_by = v_actor WHERE id = v_student;
+          v_kept := true;
+          notices := notices || format('%s was not deleted but made inactive: the payment this recorded stays in the ledger''s history (reversed), and a child with ledger history keeps their record. Everything else the assistant set up for them was removed.',
+            coalesce(v_name, 'The student'));
+        ELSE
+          DELETE FROM public.students WHERE id = v_student;
+        END IF;
       END IF;
     END IF;
 
@@ -337,9 +428,13 @@ BEGIN
   UPDATE public.ai_actions SET status = 'undone', undone_by = v_actor, undone_at = now() WHERE id = a.id;
   INSERT INTO public.audit_log (entity, entity_id, action, actor_user_id, diff)
   VALUES ('ai_action', a.id::text, 'ai_action_undo', v_actor,
-    jsonb_build_object('student_id', v_student, 'summary', a.summary));
+    jsonb_build_object('student_id', v_student, 'summary', a.summary, 'notices', to_jsonb(notices)));
 
-  RETURN jsonb_build_object('ok', true, 'student_removed', (e ->> 'student_created')::boolean,
-    'open_path', CASE WHEN (e ->> 'student_created')::boolean THEN '/students' ELSE '/students/' || v_student END);
+  RETURN jsonb_build_object('ok', true,
+    'student_removed', (e ->> 'student_created')::boolean AND NOT v_kept,
+    'student_deactivated', v_kept,
+    'payment_reversed', v_pid IS NOT NULL,
+    'notices', to_jsonb(notices),
+    'open_path', CASE WHEN (e ->> 'student_created')::boolean AND NOT v_kept THEN '/students' ELSE '/students/' || v_student END);
 END $function$
 ;

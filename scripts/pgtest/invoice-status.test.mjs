@@ -1000,11 +1000,19 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
   await calc(S1, NOV);                                     // November: no lessons in this fixture, charge 0
   await editRecorded(MONTH, 0); await editRecorded(NOV, 400000);
   fixture.payments = [{ id: PAY_ID, student_id: S1, amount: 400000, method: 'cash', occurred_at: '2026-10-20T10:00:00.000Z' }];
+  // payments-followups (D5 G-2): modify-payment is retired - a 410 stub that
+  // reads and writes nothing. A move is now Delete payment + record-payment;
+  // what this case holds is the recalculation of both months after the move,
+  // which modify-payment used to ask for and is asked for directly here.
+  memoryWrites = [];
+  const billsBefore = JSON.stringify((await db.query('SELECT * FROM public.invoices ORDER BY month')).rows);
   r = await call('modify-payment', { paymentId: PAY_ID, studentId: S1, amount: 400000, method: 'cash',
     occurredAt: '2026-11-05T10:00:00.000Z', reason: 'belongs to November' });
+  ok('modify-payment is retired: 410 Gone, and it wrote nothing (no table, no bill)', r.status === 410 && memoryWrites.length === 0
+     && JSON.stringify((await db.query('SELECT * FROM public.invoices ORDER BY month')).rows) === billsBefore, r.body);
+  await calc(S1, MONTH); await calc(S1, NOV);
   b = await bill(); const nov = await bill(S1, NOV);
   console.log(`    moved to November => Oct ${JSON.stringify(money(b))} ; Nov ${JSON.stringify(money(nov))}`);
-  ok('payment MOVED to another month, then modify-payment\'s own recalculation of both months: 200', r.status === 200, r.body);
   ok('  October, where it no longer is: issued, 400,000 owed (was: "paid" left behind)',
      b?.status === 'issued' && b?.recorded_payment === 0 && b?.carry_out_debt === 400000, money(b));
   ok('  November, which now carries October\'s debt and the 400,000: paid',

@@ -133,6 +133,25 @@ const as = async (role, uid, sql) => {
   const fn = (await db.query(`SELECT has_function_privilege('authenticated', 'public.ledger_entries_refuse_change()', 'EXECUTE') a,
                                      has_function_privilege('anon', 'public.ledger_entries_refuse_change()', 'EXECUTE') n`)).rows[0];
   ok('the trigger function is not callable by anon or authenticated', !fn.a && !fn.n, fn);
+
+  // Fix round 2, M-3: created_at is the database's, whatever the writer sends.
+  let k = 0;
+  for (const [who, role, uid] of [['a signed-in admin (authenticated)', 'authenticated', ADMIN], ['the service role', 'service_role', null], ['the SQL editor (owner)', null, null]]) {
+    k += 1;
+    const t0 = (await db.query(`SELECT now() t`)).rows[0].t;
+    const ins = await as(role, uid, `INSERT INTO public.ledger_entries(tx_id, tx_key, account_id, debit, credit, month, occurred_at, created_at) VALUES
+       ('${U(95 + k)}', 'backdated-${k}', ${acc(S1, 'CASH')}, 777000, 0, '2025-10', '2025-10-13 00:00+00', '2025-10-13 00:00+00'),
+       ('${U(95 + k)}', NULL, ${acc(S1, 'AR')}, 0, 777000, '2025-10', '2025-10-13 00:00+00', '2025-10-13 00:00+00')`);
+    const rows = (await db.query(`SELECT created_at, occurred_at FROM public.ledger_entries WHERE tx_id = $1`, [U(95 + k)])).rows;
+    ok(`${who}: an INSERT with created_at backdated to Oct 2025 goes in with created_at = now(); occurred_at (when the money moved) is kept`,
+       ins === null && rows.length === 2
+         && rows.every((r) => new Date(r.created_at).getTime() >= new Date(t0).getTime() - 1000)
+         && rows.every((r) => new Date(r.occurred_at).toISOString() === '2025-10-13T00:00:00.000Z'), { ins, rows, t0 });
+  }
+  const st = (await db.query(`SELECT has_function_privilege('authenticated', 'public.ledger_entries_stamp_created_at()', 'EXECUTE') a,
+                                     has_function_privilege('anon', 'public.ledger_entries_stamp_created_at()', 'EXECUTE') n,
+                                     (SELECT count(*)::int FROM pg_trigger WHERE tgrelid = 'public.ledger_entries'::regclass AND tgname = 'ledger_entries_stamp_created_at') t`)).rows[0];
+  ok('the created_at trigger is installed once, and its function is not callable by anon or authenticated', st.t === 1 && !st.a && !st.n, st);
 }
 
 // =================================================================== 3

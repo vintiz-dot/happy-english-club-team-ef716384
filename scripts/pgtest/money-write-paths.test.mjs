@@ -135,10 +135,7 @@ const PINNED = {
   'supabase/functions/manage-session/index.ts sessions update': 3,
   'supabase/functions/mark-attendance/index.ts attendance upsert': 1,
   'supabase/functions/mark-attendance/index.ts sessions update': 1,
-  'supabase/functions/modify-payment/index.ts ledger_accounts upsert': 1,
-  'supabase/functions/modify-payment/index.ts ledger_entries insert': 3,
-  'supabase/functions/modify-payment/index.ts payment_modifications insert': 1,
-  'supabase/functions/modify-payment/index.ts payments insert': 2,
+  // D5 G-2 (payments-followups): modify-payment is a 410 stub that writes nothing (section 1b).
   // D5 G-1 (fix round 1): record-payment writes no table itself - the payment row, both legs and
   // the bill are one transaction in record_admin_payment (pinned in section 2 and section 4).
   'supabase/functions/schedule-sessions/index.ts sessions delete': 1,
@@ -159,11 +156,16 @@ const PINNED = {
   'src/components/admin/StudentEditDrawer.tsx families insert': 1,
   'src/components/admin/StudentEditDrawer.tsx students update': 1,
   'src/components/admin/StudentForm.tsx students insert': 1,
-  'src/components/shared/EconomyActions.tsx students update': 2,
+  // payments-followups: main's copies, pinned as found (17 Nov) when this suite was brought onto
+  // main - main's EconomyActions writes students once (the economy RPC does the rest), main's
+  // link-student-user deletes no family; create-family / update-enrollment-rate write enrolments
+  // as main has them (on live an enrolment row passes D4 G-14's _enrollment_money_guard).
+  'src/components/shared/EconomyActions.tsx students update': 1,
   'src/components/student/StudentProfileEdit.tsx students update': 2,
+  'supabase/functions/create-family/index.ts enrollments insert': 1,
+  'supabase/functions/update-enrollment-rate/index.ts enrollments update': 1,
   'supabase/functions/create-family/index.ts families insert': 1,
   'supabase/functions/create-family/index.ts students insert': 1,
-  'supabase/functions/link-student-user/index.ts families delete': 1,
   'supabase/functions/link-student-user/index.ts families insert': 1,
   'supabase/functions/link-student-user/index.ts families update': 1,
   'supabase/functions/link-student-user/index.ts students update': 6,
@@ -182,6 +184,20 @@ console.log('\n1. every direct write to a money table is pinned');
   ok(`no new writer (${Object.keys(inventory).length} file/table/op found; read a new one, then pin it here and in D5-audit.md)`, added.length === 0, added);
   ok('no pinned writer has gone (remove it here and from D5-audit.md)', gone.length === 0, gone);
   ok('the number of call sites of each pinned writer is unchanged', moved.length === 0, moved);
+}
+
+console.log('\n1b. modify-payment is retired (D5 G-2, payments-followups): a 410 stub, and nothing reaches it');
+{
+  const stub = src.get('supabase/functions/modify-payment/index.ts') ?? '';
+  const code = stub.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  ok('modify-payment imports nothing, reads no environment, makes no client, reads no body',
+     stub.length > 0 && !/^\s*import\b/m.test(code) && !/Deno\.env|createClient|\bfetch\(|\.from\(|\.rpc\(|functions\.invoke|\.json\(\)|\.text\(\)|\.formData\(/.test(code));
+  ok('  it answers 410 after the CORS preflight', /status: 410/.test(code) && /req\.method === 'OPTIONS'/.test(code));
+  ok('  no table writer is left in it (its six writes are unpinned above)', !Object.keys(inventory).some((k) => k.startsWith('supabase/functions/modify-payment/')));
+  const callers = [...src.keys()].filter((f) => !f.startsWith('supabase/functions/modify-payment/') && /['"`]modify-payment['"`]/.test(src.get(f)));
+  ok('  nothing under src/ or supabase/functions calls it', callers.length === 0, callers);
+  ok('  ModifyPaymentModal is deleted and nothing imports or names it (but the stub\'s own comment)',
+     ![...src.keys()].some((f) => /ModifyPaymentModal/.test(f) || (f !== 'supabase/functions/modify-payment/index.ts' && /ModifyPaymentModal/.test(src.get(f)))));
   if (process.env.D5_PRINT_INVENTORY) console.log(JSON.stringify(inventory, null, 2));
 }
 {
@@ -213,7 +229,16 @@ console.log('\n2. every RPC called is pinned');
     class_overhead_breakdown: 'read', class_overhead_for_month: 'read', class_overhead_pool: 'read', count_vocab_saves_today: 'read',
     get_class_skill_points: 'read', get_class_skill_summary: 'read', get_class_video_wall: 'read', get_student_homeworks: 'read',
     get_student_weekly_stats: 'read', get_video_homework_for_student: 'read', get_video_progress: 'read', has_role: 'read',
-    is_teacher_of_class: 'read', log_money_automation_refused: 'D4 event', log_session_automation_refused: 'D2 event',
+    is_teacher_of_class: 'read', log_money_automation_refused: 'D4 event',
+    // payments-followups: main's RPCs, pinned as found (17 Nov) when this suite was brought onto
+    // main (main's manage-session no longer calls log_session_automation_refused).
+    leaderboard_period: 'read', leaderboard_centre: 'read', leaderboard_board: 'read', leaderboard_json: 'read', leaderboard_tv_feed: 'read',
+    points_manual_changes: 'read', student_points_history: 'read', student_points_summary: 'read',
+    economy_process: 'points (class economy, teacher)', approve_transcript_analysis: 'points (teacher approves the AI draft)',
+    withdraw_transcript_approval: 'points (teacher withdraws an approval)',
+    lesson_monitor_my_classes: 'read', lesson_monitor_my_lessons: 'read', lesson_monitor_report_feedback: 'no (lesson monitor)',
+    lesson_monitor_delete_report: 'no (lesson monitor)', lesson_monitor_set_targets: 'no (lesson monitor)', lesson_monitor_set_class: 'no (lesson monitor)',
+    approve_change_request: 'D4-6 approvals', release_own_request: 'D4-6 approvals', change_approval_status: 'read (D4-6)', change_approval_check: 'read (D4-6)',
     money_change_checked: 'D4 checked path', money_change_preview: 'read', money_changes_checked_bulk: 'D4 checked path',
     post_sibling_retro_credit: 'tuition credit (admin / cron secret only, Q7)', prune_admin_auth_state: 'no',
     record_admin_payment: 'D5 G-1: payment row + both legs + the bill in one transaction (invoker, admin check, FOR UPDATE compare-and-set)',
@@ -279,10 +304,19 @@ console.log('\n4. recorded_payment is written only by compare-and-set (or under 
     'docs/sql/ai_action_apply_undo.installed.sql': 'the same, as installed',
     'scripts/CREDIT-past-unapplied-cash.sql': 'compare-and-set on the value read, all or nothing',
     'supabase/migrations/20261117121000_record_admin_payment.sql': 'record_admin_payment (D5 G-1): SELECT ... FOR UPDATE, then compare-and-set on the value read',
+    'supabase/migrations/20261117150000_ai_action_payment_on_ledger.sql': 'ai_action_undo (payments-followups): SELECT ... FOR UPDATE, then compare-and-set on the value read; apply writes it only through record_admin_payment',
   };
-  ok('SQL that sets recorded_payment: only the pinned four', setters.every((f) => f in SQL_ALLOWED) && Object.keys(SQL_ALLOWED).every((f) => setters.includes(f)), setters);
-  const installed = readFileSync(join(repo, 'docs', 'sql', 'ai_action_apply_undo.installed.sql'), 'utf8');
-  ok('  the AI action reads the bill FOR UPDATE before each recorded_payment write', (installed.match(/FROM public\.invoices[^;]*FOR UPDATE/g) ?? []).length >= 2);
+  ok('SQL that sets recorded_payment: only the pinned five', setters.every((f) => f in SQL_ALLOWED) && Object.keys(SQL_ALLOWED).every((f) => setters.includes(f)), setters);
+  const installed = readFileSync(join(repo, 'docs', 'sql', 'ai_action_apply_undo.installed.sql'), 'utf8').replace(/\r\n/g, '\n');
+  // payments-followups: apply puts the payment on the bill only through record_admin_payment
+  // (which locks it FOR UPDATE and compare-and-sets); undo reads the bill FOR UPDATE before
+  // each of its two recorded_payment writes (the ledger branch also compare-and-sets).
+  const applyText = installed.slice(0, installed.indexOf('CREATE OR REPLACE FUNCTION public.ai_action_undo'));
+  const undoText = installed.slice(installed.indexOf('CREATE OR REPLACE FUNCTION public.ai_action_undo'));
+  ok('  the AI action: apply writes recorded_payment only through record_admin_payment; undo reads the bill FOR UPDATE first',
+     !/recorded_payment\s*=/.test(applyText) && /public\.record_admin_payment\(/.test(applyText)
+     && (undoText.match(/FROM public\.invoices[^;]*FOR UPDATE/g) ?? []).length >= 1
+     && /WHERE id = inv\.id AND coalesce\(invoices\.recorded_payment, 0\) = inv\.recorded_payment/.test(undoText));
   const rap = readFileSync(join(repo, 'supabase', 'migrations', '20261117121000_record_admin_payment.sql'), 'utf8').replace(/\r\n/g, '\n');
   ok('  record_admin_payment reads the bill FOR UPDATE and writes recorded_payment only WHERE it still equals the value read (and record-payment writes no table itself)',
      /FROM public\.invoices i\s+WHERE i\.student_id = p_student_id AND i\.month = p_month\s+FOR UPDATE/.test(rap)
@@ -323,7 +357,8 @@ console.log('\n6. no NEW browser pricing');
       if (hit.length) importers.push(`${file}: ${hit.join(', ')}`);
     }
   }
-  const G8 = ['src/components/admin/reports/OperationalReports.tsx: sessionPayVnd', 'src/components/admin/reports/OperationalReports.tsx: splitPayrollByClass'];
+  // (payments-followups: main's OperationalReports no longer imports sessionPayVnd; splitPayrollByClass stays.)
+  const G8 = ['src/components/admin/reports/OperationalReports.tsx: splitPayrollByClass'];
   // Not payroll figures: the staff rate form shows what one lesson pays at the rate being typed, and which history row is in force.
   const FORM_PREVIEWS = ['src/components/admin/staff/PayRateFields.tsx: sessionPayVnd', 'src/components/admin/staff/PayRateHistory.tsx: rateOnDate'];
   const added = importers.filter((x) => !G8.includes(x) && !FORM_PREVIEWS.includes(x));

@@ -93,7 +93,10 @@ const SUITES = [
   // D5: every write path to the money tables and every RPC, pinned; no browser
   // writes of payments / ledger / payroll; recorded_payment only by
   // compare-and-set; labels from the one rule; no NEW browser pricing.
-  { name: "money write paths", file: "money-write-paths.test.mjs", expect: 23, migrations: [] },
+  { name: "money write paths", file: "money-write-paths.test.mjs", expect: 28, migrations: [] },
+  // payments-followups (R-N1): the Account Statement's source never prints a deleted payment as
+  // money received; every other case as before (the function before and after, over one fixture).
+  { name: "statement: deleted payments", file: "student-audit-statement.test.mjs", expect: 27, migrations: [] },
   // D5: the sibling-discount hold rule (_lib/sibling-hold.ts), its fail-closed
   // read (only 42703 means "column missing", G-10) and its two callers.
   { name: "sibling hold", file: "sibling-hold.test.mjs", expect: 22, migrations: [] },
@@ -408,7 +411,12 @@ const SUITES = [
     file: "ai-actions.test.mjs",
     // 20261113090000 (T4) swaps their label CASE for invoice_paid_label, in
     // whatever definition is installed; run after it, as production will.
-    migrations: ["20261107090000_ai_assisted_admin_actions.sql", "20261113090000_invoice_paid_label.sql"],
+    // payments-followups: then the ledger as live has it (G-11), the one
+    // admin payment transaction (G-1) and the change under test - the
+    // payment step through record_admin_payment, undone as delete-payment.
+    migrations: ["20261107090000_ai_assisted_admin_actions.sql", "20261113090000_invoice_paid_label.sql",
+      "20261117111000_ledger_append_only_and_audit.sql", "20261117121000_record_admin_payment.sql",
+      "20261117150000_ai_action_payment_on_ledger.sql"],
   },
   { name: "payroll session rules", file: "payroll-sessions.test.mjs", migrations: [] },
   // Also not a database test: the admin Payroll screen reads

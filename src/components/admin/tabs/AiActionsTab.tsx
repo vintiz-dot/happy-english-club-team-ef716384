@@ -34,7 +34,10 @@ export default function AiActionsTab() {
     try {
       const r = await undoAiAction(a.id);
       if (r.ok) {
-        toast.success("Undone.");
+        // What the undo did that the admin should know (a payment taken back,
+        // a new child kept inactive), in the database's own words.
+        const notices = r.notices ?? [];
+        toast.success("Undone.", notices.length > 0 ? { description: notices.join(" "), duration: 12_000 } : undefined);
         setBlocked((b) => ({ ...b, [a.id]: [] }));
         await queryClient.invalidateQueries();
       } else {
