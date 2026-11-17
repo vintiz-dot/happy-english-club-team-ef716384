@@ -29,12 +29,18 @@ interface StudentAnalyticsModalProps {
     readingTheoryPoints?: number;
     vocabularyQuizPoints?: number;
     rank: number;
+    /** The child's level from the server (points_level over every point ever). */
+    level?: { level: number; progress: number; to_next: number; from: number; next: number } | null;
+    /** Every point ever earned, every class (server). */
+    allTime?: number | null;
   } | null;
   classId: string;
   selectedMonth: string; // YYYY-MM format
+  /** Staff only: open the list of this child's awards to correct one. */
+  onManagePoints?: () => void;
 }
 
-import { calculateLevel, getLevelTitle } from "@/lib/levelUtils";
+import { getLevelTitle } from "@/lib/levelUtils";
 
 function getRankGlow(rank: number, ivory: boolean): string {
   // Ivory: a plain ring, brass for the podium. No glow.
@@ -74,7 +80,7 @@ function getRankBadge(rank: number, ivory: boolean): React.ReactNode {
   }
 }
 
-export function StudentAnalyticsModal({ open, onOpenChange, student, classId, selectedMonth }: StudentAnalyticsModalProps) {
+export function StudentAnalyticsModal({ open, onOpenChange, student, classId, selectedMonth, onManagePoints }: StudentAnalyticsModalProps) {
   // Opened from the teacher/admin class board too (not migrated yet): old classes there.
   const ivory = useIvory();
   const iv = (n: string, o: string) => (ivory ? n : o);
@@ -116,7 +122,10 @@ export function StudentAnalyticsModal({ open, onOpenChange, student, classId, se
 
   if (!student) return null;
 
-  const levelInfo = calculateLevel(student.totalPoints);
+  // The level is the server's (points_level), the same on every screen. It
+  // was worked out here from the month's points, so it fell back to 1 each
+  // month and never matched the dashboard.
+  const lvl = student.level ?? null;
   return (
     <AnimatePresence>
       {open && (
@@ -208,7 +217,7 @@ export function StudentAnalyticsModal({ open, onOpenChange, student, classId, se
                     transition={{ delay: 0.3 }}
                   >
                     <Sparkles className={iv("h-4 w-4 text-hec-brass", "h-4 w-4 text-primary")} />
-                    <span className={iv("text-hec-small font-semibold text-hec-ink", "text-sm font-bold text-primary")}>Level {levelInfo.level} — {getLevelTitle(levelInfo.level)}</span>
+                    <span className={iv("text-hec-small font-semibold text-hec-ink", "text-sm font-bold text-primary")}>{lvl ? `Level ${lvl.level} — ${getLevelTitle(lvl.level)}` : "Level"}</span>
                     <Sparkles className={iv("h-4 w-4 text-hec-brass", "h-4 w-4 text-primary")} />
                   </motion.div>
 
@@ -220,11 +229,11 @@ export function StudentAnalyticsModal({ open, onOpenChange, student, classId, se
                     transition={{ delay: 0.4 }}
                   >
                     <div className={iv("flex justify-between text-hec-caption text-hec-ink-soft tabular-nums mb-1", "flex justify-between text-xs text-muted-foreground mb-1")}>
-                      <span>XP: {student.totalPoints}</span>
-                      <span>Next: {levelInfo.currentXp}/{levelInfo.nextLevelXp}</span>
+                      <span>All points: {student.allTime ?? "—"}</span>
+                      <span>{lvl ? `${lvl.to_next} to level ${lvl.level + 1}` : ""}</span>
                     </div>
                     <div className="relative overflow-hidden rounded-full">
-                      <Progress value={levelInfo.progress} className={iv("h-3 bg-hec-sunken", "h-3 bg-muted/50")} />
+                      <Progress value={lvl?.progress ?? 0} className={iv("h-3 bg-hec-sunken", "h-3 bg-muted/50")} />
                       {!ivory && (
                       <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
@@ -268,6 +277,17 @@ export function StudentAnalyticsModal({ open, onOpenChange, student, classId, se
 
               {/* Tabs Section */}
               <div className={iv("p-4 sm:p-6", "p-6")}>
+                {onManagePoints && (
+                  <div className="mb-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={onManagePoints}
+                      className="min-h-hec-target rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 text-hec-small font-medium text-hec-ink hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                    >
+                      Manage points
+                    </button>
+                  </div>
+                )}
                 {detailsPrivate ? (
                   <p className={iv("text-center text-hec-small text-hec-ink-soft py-6", "text-center text-sm text-muted-foreground py-6")}>
                     {student.name.split(" ")[0]}'s points are shown above. Skills, attendance and history are private to each student and their family.

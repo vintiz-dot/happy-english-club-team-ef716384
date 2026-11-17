@@ -161,7 +161,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["homework-submissions", homeworkId] });
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["class-board"] });
       queryClient.invalidateQueries({ queryKey: ["monthly-leader"] });
       queryClient.invalidateQueries({ queryKey: ["point-breakdown"] });
       queryClient.invalidateQueries({ queryKey: ["available-months"] });
@@ -224,7 +224,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
     onSuccess: () => {
       toast.success("Early submission bonus reversed (-5 XP)");
       queryClient.invalidateQueries({ queryKey: ["homework-submissions", homeworkId] });
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["class-board"] });
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to reverse bonus");

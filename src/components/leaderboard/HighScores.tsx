@@ -122,7 +122,9 @@ const FLOOR = mix(STAGE, INK, 0.45);
 
 const CAT_COLOR: Record<BoardCategory["key"], string> = {
   homework: CYAN,
+  video: MAGENTA,
   participation: YELLOW,
+  streak: SILVER,
   reading_theory: ORANGE,
   vocabulary_quiz: GREEN,
 };
@@ -535,7 +537,7 @@ function PodiumSlot({
   const label = step ? step.label : STEPS[seat].label;
 
   return (
-    <div style={{ width: geo.colW, display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div data-student-id={row?.studentId} role={row ? "button" : undefined} tabIndex={row ? 0 : undefined} aria-label={row ? `${row.name}, ${row.points} points` : undefined} style={{ width: geo.colW, display: "flex", flexDirection: "column", alignItems: "center" }}>
       {row && (
         <>
           <div className="hs-rv" style={{ position: "relative", animation: anims.disc }}>
@@ -975,7 +977,9 @@ export function HighScores({
         </div>
       </div>
 
-      <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 12 }}>
+      {/* Seven tabs since video and streak got their own: tighter than the
+          four-tab design, so the title keeps its room. */}
+      <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 7 }}>
         {tabs.map((tab) => {
           const on = tab.key === activeCategory;
           return (
@@ -986,10 +990,10 @@ export function HighScores({
               aria-label={tab.label}
               onClick={() => pick(tab.key)}
               style={{
-                height: 76,
+                height: 72,
                 flexShrink: 0,
                 boxSizing: "border-box",
-                padding: "0 16px 0 10px",
+                padding: "0 11px 0 8px",
                 border: `5px solid ${INK}`,
                 borderRadius: 18,
                 background: on ? YELLOW : WHITE,
@@ -997,11 +1001,11 @@ export function HighScores({
                 transform: on ? "translate(4px, 4px)" : undefined,
                 display: "flex",
                 alignItems: "center",
-                gap: 10,
+                gap: 7,
                 color: INK,
                 fontFamily: DISPLAY_FONT,
                 fontWeight: 400,
-                fontSize: 20,
+                fontSize: 16,
                 lineHeight: 1,
                 whiteSpace: "nowrap",
                 transition: "transform 120ms ease, box-shadow 120ms ease",
@@ -1009,8 +1013,8 @@ export function HighScores({
             >
               <span
                 style={{
-                  width: 38,
-                  height: 38,
+                  width: 32,
+                  height: 32,
                   flexShrink: 0,
                   boxSizing: "border-box",
                   border: `3px solid ${INK}`,
@@ -1389,7 +1393,7 @@ export function HighScores({
                   const filled = target > 0 ? Math.round(clamp01(row.points / target) * 6) : 0;
                   return (
                     <div
-                      key={row.studentId}
+                      key={row.studentId} data-student-id={row.studentId} role="button" tabIndex={0} aria-label={`${row.name}, ${row.points} points`}
                       style={{
                         width: CARD_W,
                         height: 136,
@@ -1643,7 +1647,7 @@ export function HighScores({
                 color: INK,
               }}
             >
-              <PanelHead title="COMBO STREAK" sub="Most in a row" chipColor={MAGENTA} titleSize={30}>
+              <PanelHead title="COMBO STREAK" sub="Lessons in a row" chipColor={MAGENTA} titleSize={30}>
                 <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
                   <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" strokeWidth="2.2" />
                   <path d="M8 3v4M16 3v4M3.5 10h17" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
@@ -1697,7 +1701,7 @@ export function HighScores({
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {extras.streak.days}× COMBO
+                        {extras.streak.days}× LESSONS
                       </span>
                     </div>
                     <div style={{ display: "flex", gap: 6 }}>
@@ -1723,8 +1727,8 @@ export function HighScores({
                   head={extras.ledgerAvailable ? "NO COMBO YET" : "NOT READY"}
                   body={
                     extras.ledgerAvailable
-                      ? "Earn points two days in a row to start a combo."
-                      : "This one needs a few days of points. Check back soon."
+                      ? "Come to two lessons in a row to start a combo."
+                      : "Come to two lessons in a row to start a combo."
                   }
                 />
               )}

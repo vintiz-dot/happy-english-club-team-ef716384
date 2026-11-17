@@ -157,7 +157,7 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
       return pointsValue;
     },
     onSuccess: (pointsValue) => {
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard", classId] });
+      queryClient.invalidateQueries({ queryKey: ["class-board", classId] });
       queryClient.invalidateQueries({ queryKey: ["monthly-leader"] });
       queryClient.invalidateQueries({ queryKey: ["student-points"] });
       queryClient.invalidateQueries({ queryKey: ["point-history"] });

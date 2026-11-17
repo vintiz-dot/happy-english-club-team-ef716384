@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { hanoiToday } from "@/lib/leaderboard/board";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -31,7 +32,37 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
   const processMutation = useMutation({
     mutationFn: async ({ txId, status }: { txId: string; status: "approved" | "rejected" }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
+      // The points move first. If the ledger refuses it, nothing else
+      // happens: the request stays pending, the cash does not move, and
+      // the child does not end up holding both.
+      if (status === "approved") {
+        const tx = pendingTransactions.find(t => t.id === txId);
+        if (tx) {
+          // The points side, as a ledger row. This used to edit
+          // student_points directly, and the next award to the child
+          // recalculated the month from the ledger and gave the spent
+          // points back (docs/evidence/LEADERBOARD-audit.md, M10).
+          const moved =
+            (tx.type === "convert_to_cash" && tx.points_impact < 0) ||
+            (tx.type === "deposit_cash" && tx.points_impact > 0);
+          if (moved) {
+            const today = hanoiToday();
+            const { error: pointsError } = await supabase.from("point_transactions").insert({
+              student_id: tx.student_id,
+              class_id: classId,
+              type: "adjustment",
+              points: tx.points_impact,
+              date: today,
+              month: today.slice(0, 7),
+              notes: tx.type === "convert_to_cash" ? "Points changed into class cash" : "Class cash changed back into points",
+              created_by: user?.id ?? null,
+            });
+            if (pointsError) throw pointsError;
+          }
+        }
+      }
+
       const { error } = await supabase
         .from("economy_transactions")
         .update({ 
@@ -66,62 +97,13 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
             .eq("id", tx.student_id);
           if (cashError) throw cashError;
 
-          // For withdrawals, also deduct points from student_points
-          if (tx.type === "convert_to_cash" && tx.points_impact < 0) {
-            // Deduct from the latest month's participation_points
-            const currentMonth = new Date().toISOString().slice(0, 7);
-            const { data: sp } = await supabase
-              .from("student_points")
-              .select("participation_points")
-              .eq("student_id", tx.student_id)
-              .eq("class_id", classId)
-              .eq("month", currentMonth)
-              .single();
-
-            if (sp) {
-              // Same again: a silently refused deduction leaves the student
-              // holding both the cash and the points they spent on it.
-              const { error: pointsError } = await supabase
-                .from("student_points")
-                .update({
-                  participation_points: Math.max(0, (sp.participation_points || 0) + tx.points_impact),
-                })
-                .eq("student_id", tx.student_id)
-                .eq("class_id", classId)
-                .eq("month", currentMonth);
-              if (pointsError) throw pointsError;
-            }
-          }
-
-          // For deposits, add points back
-          if (tx.type === "deposit_cash" && tx.points_impact > 0) {
-            const currentMonth = new Date().toISOString().slice(0, 7);
-            const { data: sp } = await supabase
-              .from("student_points")
-              .select("participation_points")
-              .eq("student_id", tx.student_id)
-              .eq("class_id", classId)
-              .eq("month", currentMonth)
-              .single();
-
-            if (sp) {
-              await supabase
-                .from("student_points")
-                .update({
-                  participation_points: (sp.participation_points || 0) + tx.points_impact,
-                })
-                .eq("student_id", tx.student_id)
-                .eq("class_id", classId)
-                .eq("month", currentMonth);
-            }
-          }
         }
       }
     },
     onSuccess: (_, { status }) => {
       toast.success(`Transaction ${status}`);
       queryClient.invalidateQueries({ queryKey: ["economy-pending", classId] });
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["class-board"] });
       queryClient.invalidateQueries({ queryKey: ["economy-cash-data"] });
     },
     onError: (err: any) => {
@@ -216,7 +198,7 @@ export function LogSpendButton({ studentId, classId, studentName, cashOnHand }: 
 
       toast.success(`Deducted ${amount} cash from ${studentName}`);
       queryClient.invalidateQueries({ queryKey: ["economy-cash-data"] });
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["class-board"] });
       setOpen(false);
       setAmount(1);
     } catch (err: any) {

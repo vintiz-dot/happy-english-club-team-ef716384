@@ -132,7 +132,7 @@ export function VideoReviewPanel({
     qc.invalidateQueries({ queryKey: ["video-review-queue"] });
     qc.invalidateQueries({ queryKey: ["homework-videos"] });
     qc.invalidateQueries({ queryKey: ["homework-submissions"] });
-    qc.invalidateQueries({ queryKey: ["class-leaderboard"] });
+    qc.invalidateQueries({ queryKey: ["class-board"] });
   };
 
   const rerun = useMutation({

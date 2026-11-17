@@ -1,16 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Users, X, CheckSquare, Clock, Monitor, ExternalLink } from "lucide-react";
+import { useClassBoard, NoTermError } from "@/hooks/useClassBoard";
+import { PeriodPicker, THIS_MONTH } from "@/components/leaderboard/PeriodPicker";
+import { toBoardEntries } from "@/components/leaderboard/useBoardData";
+import { hanoiToday, periodKey, type PeriodChoice } from "@/lib/leaderboard/board";
 import { openClassBoardWindow } from "@/pages/ClassBoardWindow";
 import { BoardErrorBoundary } from "@/components/leaderboard/BoardErrorBoundary";
-import { useState, useEffect, useRef, Suspense } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { PointHistoryDialog } from "@/components/admin/PointHistoryDialog";
 import { BulkPointsDialog } from "@/components/shared/BulkPointsDialog";
@@ -38,19 +35,18 @@ interface ClassLeaderboardSharedProps {
   classId: string;
   currentStudentId?: string;
   canManagePoints?: boolean;
+  /**
+   * The board is on a screen the class can see (the classroom tools panel,
+   * often mirrored to the projector): classmates as a family sees them, no
+   * child's attendance streak or lesson count.
+   */
+  wall?: boolean;
 }
 
 interface SelectedStudent {
   id: string;
   name: string;
   avatarUrl?: string | null;
-}
-
-/** "2026-10" -> "October 2026", for the display board's header. */
-function monthLabelOf(ym: string): string {
-  const [y, m] = ym.split("-").map(Number);
-  if (!y || !m) return ym;
-  return new Date(y, m - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
 }
 
 export function ClassLeaderboardShared({
@@ -60,9 +56,10 @@ export function ClassLeaderboardShared({
   // read-only report - would have been handed award, deduct and bulk-points
   // controls by omission. Every caller that should have them now says so.
   canManagePoints = false,
+  wall = false,
 }: ClassLeaderboardSharedProps) {
   const ivory = useIvory();
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [period, setPeriod] = useState<PeriodChoice>(THIS_MONTH);
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(
     null
   );
@@ -83,6 +80,8 @@ export function ClassLeaderboardShared({
     vocabularyQuizPoints: number;
     rank: number;
     selectedMonth: string;
+    level?: BoardEntry["level"];
+    allTime?: number | null;
   } | null>(null);
   if (analyticsStudent) analyticsEverOpened.current = true;
   const queryClient = useQueryClient();
@@ -99,7 +98,6 @@ export function ClassLeaderboardShared({
   const [showClassicBoard, setShowClassicBoard] = useState(false);
   const styleIsDisplay = isDisplayBoard(classBoardInfo?.style ?? "podium");
   const canSwapBoard = styleIsDisplay && canManagePoints;
-  const boardPeriodLabel = monthLabelOf(selectedMonth);
 
   // Fetch economy settings for this class
   const { data: classEconomy } = useQuery({
@@ -163,109 +161,39 @@ export function ClassLeaderboardShared({
     enabled: isEconomyMode && canManagePoints,
   });
 
-  // Realtime: refetch when student_points changes for this class
-  useEffect(() => {
-    const channel = supabase
-      .channel("student-points-changes-shared")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "student_points",
-          filter: `class_id=eq.${classId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["class-leaderboard", classId] });
-          queryClient.invalidateQueries({ queryKey: ["monthly-leader", classId] });
-        }
-      )
-      .subscribe();
+  // One calculation on the server (leaderboard_board): who is on the
+  // board, ranks with ties, categories, level, climber and streak. This
+  // screen used to read enrolments and points itself and rank them, and
+  // disagreed with the children's screen on every tie.
+  const { data: boardResult, isLoading, error: boardError } = useClassBoard(classId, period, "staff", { wall });
+  const serverBoard = boardResult?.board ?? null;
+  const leaderboard = useMemo(() => toBoardEntries(serverBoard), [serverBoard]);
+  const boardPeriodLabel = serverBoard?.period?.label ?? "";
+  // The month the point-history dialog and analytics read.
+  const selectedMonth = (serverBoard?.period?.kind === "month" ? serverBoard.period.from : hanoiToday()).slice(0, 7);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [classId, queryClient]);
-
-  const { data: leaderboard, isLoading } = useQuery({
-    queryKey: ["class-leaderboard", classId, selectedMonth],
-    queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
-      const { data: enrollments, error: enrollError } = await supabase
-        .from("enrollments")
-        .select(`
-          student_id,
-          students (
-            id,
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq("class_id", classId)
-        .or(`end_date.is.null,end_date.gte.${today}`);
-      if (enrollError) throw enrollError;
-
-      const { data: points, error: pointsError } = await supabase
-        .from("student_points")
-        .select("*")
-        .eq("class_id", classId)
-        .eq("month", selectedMonth);
-      if (pointsError) throw pointsError;
-
-      const pointsMap = new Map(points?.map((p) => [p.student_id, p]) || []);
-
-      const combined =
-        enrollments?.map((enrollment) => {
-          const studentPoints = pointsMap.get(enrollment.student_id);
-          return {
-            id: studentPoints?.id || `temp-${enrollment.student_id}`,
-            student_id: enrollment.student_id,
-            class_id: classId,
-            month: selectedMonth,
-            homework_points: studentPoints?.homework_points || 0,
-            participation_points: studentPoints?.participation_points || 0,
-            reading_theory_points: studentPoints?.reading_theory_points || 0,
-            vocabulary_quiz_points: studentPoints?.vocabulary_quiz_points || 0,
-            total_points: studentPoints?.total_points || 0,
-            students: enrollment.students,
-          };
-        }) || [];
-
-      combined.sort((a, b) => {
-        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
-        const nameA = a.students?.full_name || "";
-        const nameB = b.students?.full_name || "";
-        return nameA.localeCompare(nameB);
-      });
-
-      if (combined.length > 0) {
-        let currentRank = 1;
-        let previousPoints = combined[0].total_points;
-        return combined.map((entry, index) => {
-          if (entry.total_points !== previousPoints) {
-            currentRank = index + 1;
-            previousPoints = entry.total_points;
-          }
-          return { ...entry, rank: currentRank };
-        });
-      }
-      return combined;
-    },
-  });
-
-  // Rank-change toasts (kept from original behaviour)
+  // Rank-change toasts. They compared positions in the list, so a tie
+  // announced moves that never happened, and switching month announced
+  // every child; now they compare the server's ranks within one period.
+  const toastPeriodRef = useRef<string>("");
   useEffect(() => {
     if (!leaderboard || leaderboard.length === 0) return;
+    const key = periodKey(period);
+    if (toastPeriodRef.current !== key) {
+      toastPeriodRef.current = key;
+      previousLeaderboardRef.current = leaderboard;
+      return;
+    }
 
     const previousLeaderboard = previousLeaderboardRef.current;
 
     if (previousLeaderboard.length > 0) {
       const previousRanks = new Map(
-        previousLeaderboard.map((entry: any, index: number) => [entry.student_id, index + 1])
+        previousLeaderboard.map((entry: any) => [entry.student_id, entry.rank])
       );
 
-      leaderboard.forEach((entry: any, index: number) => {
-        const currentRank = index + 1;
+      leaderboard.forEach((entry: any) => {
+        const currentRank = entry.rank;
         const previousRank = previousRanks.get(entry.student_id);
 
         if (previousRank && previousRank !== currentRank) {
@@ -292,7 +220,7 @@ export function ClassLeaderboardShared({
     }
 
     previousLeaderboardRef.current = leaderboard;
-  }, [leaderboard, toast]);
+  }, [leaderboard, toast, period]);
 
   const toggleStudentSelection = (student: SelectedStudent, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -323,7 +251,7 @@ export function ClassLeaderboardShared({
   if (isLoading) {
     return (
       <div className={ivory ? "flex min-h-[300px] items-center justify-center rounded-hec-lg border border-hec-line bg-hec-surface p-8 text-center text-hec-small text-hec-ink-soft" : "studio-surface flex min-h-[300px] items-center justify-center rounded-3xl border border-studio p-8 text-center text-sm text-ink-soft"}>
-        Counting up this month's points…
+        Counting up the points…
       </div>
     );
   }
@@ -332,7 +260,6 @@ export function ClassLeaderboardShared({
   const allSelected =
     leaderboard && leaderboard.length > 0 && selectedStudents.size === leaderboard.length;
 
-  const boardEntries: BoardEntry[] = (leaderboard || []) as unknown as BoardEntry[];
   const pendingByStudent = new Map<string, number>();
   (pendingTransactions as any[]).forEach((t) => {
     pendingByStudent.set(t.student_id, (pendingByStudent.get(t.student_id) || 0) + 1);
@@ -393,26 +320,7 @@ export function ClassLeaderboardShared({
               <span className="hidden sm:inline">New window</span>
             </Button>
           )}
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger
-              aria-label={ivory ? "Month" : undefined}
-              className={ivory ? "min-h-hec-target w-auto min-w-[10rem] rounded-hec-md text-hec-small text-hec-ink" : "h-9 w-auto min-w-[130px] rounded-full border-studio bg-studio-card text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0 sm:min-w-[170px]"}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 6 }, (_, i) => {
-                const date = new Date();
-                date.setMonth(date.getMonth() - i);
-                const month = date.toISOString().slice(0, 7);
-                return (
-                  <SelectItem key={month} value={month}>
-                    {date.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <PeriodPicker value={period} onChange={setPeriod} monthOnly={!!boardResult?.legacy} />
           {canManagePoints && leaderboard && leaderboard.length > 0 && (
             <Button
               variant="outline"
@@ -430,8 +338,15 @@ export function ClassLeaderboardShared({
       </div>
 
       <BoardErrorBoundary key={String(showClassicBoard)}>
+      {boardError ? (
+        <p className="mx-4 mb-4 rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-small text-hec-ink-soft sm:mx-6">
+          {boardError instanceof NoTermError
+            ? "No term covers that date. An admin can set term dates in Admin > Overview > Points and leaderboards."
+            : "This board could not be loaded right now."}
+        </p>
+      ) : (
       <StyledClassBoard
-        entries={boardEntries}
+        board={serverBoard}
         periodLabel={boardPeriodLabel}
         forceClassic={showClassicBoard}
         classId={classId}
@@ -455,9 +370,12 @@ export function ClassLeaderboardShared({
             vocabularyQuizPoints: entry.vocabulary_quiz_points || 0,
             rank: entry.rank,
             selectedMonth,
+            level: entry.level ?? null,
+            allTime: entry.all_time ?? null,
           })
         }
       />
+      )}
       </BoardErrorBoundary>
 
       {/* Pending economy requests (only when economy mode + manager) */}
@@ -538,6 +456,16 @@ export function ClassLeaderboardShared({
         student={analyticsStudent}
         classId={classId}
         selectedMonth={analyticsStudent?.selectedMonth || selectedMonth}
+        // Staff can open the award list to correct or remove one. This
+        // dialog was mounted but nothing ever opened it.
+        onManagePoints={
+          canManagePoints && analyticsStudent
+            ? () => {
+                setSelectedStudent({ id: analyticsStudent.id, name: analyticsStudent.name });
+                setAnalyticsStudent(null);
+              }
+            : undefined
+        }
       />
       </Suspense>
       )}

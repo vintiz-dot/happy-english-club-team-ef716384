@@ -46,7 +46,7 @@ export const AvatarPicker = ({ studentId, currentAvatarUrl, onSelect }: AvatarPi
     },
   });
 
-  // Fetch last month's archived leaderboard data
+  // Premium avatars: a top-three place last month in every class
   const { data: premiumEligibility } = useQuery({
     queryKey: ["premium-eligibility", studentId],
     queryFn: async () => {
@@ -57,17 +57,27 @@ export const AvatarPicker = ({ studentId, currentAvatarUrl, onSelect }: AvatarPi
       // Get last month in Asia/Bangkok timezone
       const lastMonth = dayjs().subtract(1, "month").format("YYYY-MM");
 
-      const classIds = enrollments.map(e => e.class_id);
 
-      // Fetch archived leaderboard data for all enrolled classes
-      const { data: leaderboards, error } = await supabase
-        .from("archived_leaderboards")
-        .select("class_id, rank, classes(name)")
-        .eq("student_id", studentId)
-        .eq("month", lastMonth)
-        .in("class_id", classIds);
-
-      if (error) throw error;
+      // Last month's place in each class, from the class board itself
+      // (class-leaderboard -> leaderboard_json). This read archived_leaderboards,
+      // which nothing filled, so no child could ever unlock these.
+      const leaderboards = (
+        await Promise.all(
+          enrollments.map(async (e: any) => {
+            const res = await supabase.functions.invoke("class-leaderboard", {
+              body: { classId: e.class_id, period: "month", anchor: `${lastMonth}-01`, month: lastMonth },
+            });
+            if (res.error || !res.data) return null;
+            const d = res.data as any;
+            // This child's own row (a sibling in the class is also is_self).
+            const mine = d.board
+              ? (d.board.rows ?? []).find((r: any) => r.student_id === studentId)
+              : (d.leaderboard ?? []).find((r: any) => r.student_id === studentId);
+            if (!mine) return null;
+            return { class_id: e.class_id, rank: mine.rank as number, classes: e.classes };
+          }),
+        )
+      ).filter(Boolean) as Array<{ class_id: string; rank: number; classes: { name: string } | null }>;
 
       // Check if we have data for all enrolled classes
       const classesWithData = new Set(leaderboards?.map(l => l.class_id) || []);

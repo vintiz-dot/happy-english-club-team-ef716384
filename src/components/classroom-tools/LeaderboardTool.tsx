@@ -197,7 +197,7 @@ export function LeaderboardTool() {
           </div>
 
           {displayClassId && viewMode === "board" && (
-            <ClassLeaderboardShared classId={displayClassId} canManagePoints />
+            <ClassLeaderboardShared classId={displayClassId} canManagePoints wall />
           )}
 
           {displayClassId && viewMode === "live" && activeSessionForClass && (

@@ -156,7 +156,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
     },
     onSuccess: ({ studentIds, skill, points }) => {
       queryClient.invalidateQueries({ queryKey: ["live-assessment-students", classId] });
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard", classId] });
+      queryClient.invalidateQueries({ queryKey: ["class-board", classId] });
       queryClient.invalidateQueries({ queryKey: ["student-points"] });
       
       // Play sound

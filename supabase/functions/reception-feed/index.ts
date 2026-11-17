@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
 
     const t = hanoiToday();
 
-    const [classesRes, enrollRes, pointsRes, leadersRes, itemsRes, feedbackRes, hwRes, attTotalRes, attPresentRes] = await Promise.all([
+    const [classesRes, enrollRes, pointsRes, leadersRes, itemsRes, feedbackRes, hwRes, attTotalRes, attPresentRes, engineRes] = await Promise.all([
       db.from("classes").select("id, name, curriculum, age_range, description, max_students").eq("is_active", true).order("name"),
       db.from("enrollments").select("student_id, class_id, start_date, end_date, students!inner(id, full_name, avatar_url, is_active)")
         .lte("start_date", t.today).or(`end_date.is.null,end_date.gte.${t.today}`).limit(5000),
@@ -97,6 +97,10 @@ Deno.serve(async (req) => {
         .gte("sessions.date", t.monthStart).lte("sessions.date", t.today),
       db.from("attendance").select("id, sessions!inner(date)", { count: "exact", head: true })
         .eq("status", "Present").gte("sessions.date", t.monthStart).lte("sessions.date", t.today),
+      // The class boards' own calculation (20261117120000): ranks with ties,
+      // and last month's champions from the ledger. Until that migration is
+      // pasted this errors and the screen keeps the reckoning below.
+      db.rpc("leaderboard_tv_feed", { p_top: 10 }),
     ]);
     for (const r of [classesRes, enrollRes, pointsRes, itemsRes]) if (r.error) throw r.error;
 
@@ -134,13 +138,15 @@ Deno.serve(async (req) => {
     const classesOf = (id: string) =>
       classes.filter((c) => roster.get(c.id)?.has(id)).map((c) => c.name).join(" · ");
 
-    const top = [...overall.entries()]
+    const engine: any = engineRes && !engineRes.error ? engineRes.data : null;
+
+    let top = [...overall.entries()]
       .filter(([id, pts]) => kids.has(id) && pts > 0)
       .sort((a, b) => b[1] - a[1] || kids.get(a[0])!.name.localeCompare(kids.get(b[0])!.name))
       .slice(0, 10)
       .map(([id, pts], i) => ({ rank: i + 1, ...person(id, pts), class_name: classesOf(id) }));
 
-    const classBoards = classes
+    let classBoards = classes
       .map((c) => {
         const rows = (perClass.get(c.id) ?? []).filter((r) => r.points > 0 && kids.has(r.id))
           .sort((a, b) => b.points - a.points || kids.get(a.id)!.name.localeCompare(kids.get(b.id)!.name))
@@ -151,10 +157,32 @@ Deno.serve(async (req) => {
       .filter((b) => b.top.length > 0);
 
     // Last month's champions (archived when the month closed).
-    const champions = (leadersRes.data ?? [])
+    let champions = (leadersRes.data ?? [])
       .filter((l) => kids.has(l.student_id) && classById.has(l.class_id))
       .map((l) => ({ ...person(l.student_id, l.total_points, l.class_id) }))
       .sort((a, b) => (a.class_name ?? "").localeCompare(b.class_name ?? ""));
+
+    if (engine) {
+      // Same shape as above, from the one calculation. Only children on
+      // today's register are shown (a champion who has left is not).
+      top = (engine.centre ?? [])
+        .filter((r: any) => kids.has(r.student_id))
+        .map((r: any) => ({ rank: r.rank, ...person(r.student_id, Number(r.points)), class_name: classesOf(r.student_id) }));
+      const rowsOf = new Map<string, any[]>((engine.classes ?? []).map((c: any) => [c.class_id, c.rows ?? []]));
+      classBoards = classes
+        .map((c) => {
+          const rows = (rowsOf.get(c.id) ?? [])
+            .filter((r: any) => kids.has(r.student_id))
+            .slice(0, 5)
+            .map((r: any) => ({ rank: r.rank, ...person(r.student_id, Number(r.points)) }));
+          return { class_name: c.name, curriculum: c.curriculum, students: roster.get(c.id)?.size ?? 0, top: rows };
+        })
+        .filter((b) => b.top.length > 0);
+      champions = (engine.champions ?? [])
+        .filter((w: any) => kids.has(w.student_id) && classById.has(w.class_id))
+        .map((w: any) => ({ ...person(w.student_id, Number(w.points), w.class_id) }))
+        .sort((a: any, b: any) => (a.class_name ?? "").localeCompare(b.class_name ?? ""));
+    }
 
     const courses = classes.map((c) => {
       const note = noteFor(c.name);

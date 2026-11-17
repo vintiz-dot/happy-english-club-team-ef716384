@@ -49,6 +49,16 @@ export function ReadingTheoryScoreEntry({
 }: ReadingTheoryScoreEntryProps) {
   const [selectedReason, setSelectedReason] = useState("");
   const [studentScores, setStudentScores] = useState<Record<string, string>>({});
+  // "add": type the points to add (owner, 17 Nov 2026: teachers should not
+  // have to work out the new total). "set": type the new total, as before.
+  const [mode, setMode] = useState<"add" | "set">("add");
+  /** The change this row will book, or null for none. */
+  const changeOf = (current: number, typed: string): number | null => {
+    const n = parseInt(typed);
+    if (isNaN(n)) return null;
+    const diff = mode === "add" ? n : n - current;
+    return diff === 0 ? null : diff;
+  };
   const queryClient = useQueryClient();
   const ivory = useIvory();
   const currentMonth = dayjs().format("YYYY-MM");
@@ -135,11 +145,9 @@ export function ReadingTheoryScoreEntry({
 
   // Calculate which students have changed scores
   const changedStudents = useMemo(() => {
-    return studentsWithScores.filter((s) => {
-      const newScore = parseInt(s.newScore);
-      return !isNaN(newScore) && newScore !== s.currentScore;
-    });
-  }, [studentsWithScores]);
+    return studentsWithScores.filter((s) => changeOf(s.currentScore, s.newScore) !== null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentsWithScores, mode]);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -151,10 +159,29 @@ export function ReadingTheoryScoreEntry({
         throw new Error("No score changes to submit");
       }
 
+      // "Add points" is new; a teacher used to typing the running total
+      // would add the whole total again. Ask when an amount to add is as
+      // big as the child's current total.
+      if (mode === "add") {
+        const looksLikeTotals = changedStudents.filter((st) => {
+          const n = parseInt(st.newScore);
+          return st.currentScore > 0 && n >= st.currentScore;
+        });
+        if (
+          looksLikeTotals.length > 0 &&
+          !window.confirm(
+            `${looksLikeTotals.length} of these would more than double a score (for example ${looksLikeTotals[0].name}: ${looksLikeTotals[0].currentScore} + ${looksLikeTotals[0].newScore}). ` +
+              `If you typed the new totals, press Cancel and choose "Set new total". Add them anyway?`,
+          )
+        ) {
+          throw new Error("Nothing saved. Choose \"Set new total\" if you typed totals.");
+        }
+      }
+
       // Process each changed student
       for (const student of changedStudents) {
-        const newScore = parseInt(student.newScore);
-        const difference = newScore - student.currentScore;
+        const difference = changeOf(student.currentScore, student.newScore) ?? 0;
+        const newScore = student.currentScore + difference;
 
         if (difference !== 0) {
           await awardPoints({
@@ -163,7 +190,9 @@ export function ReadingTheoryScoreEntry({
             skill: "reading_theory",
             points: difference,
             subTag: selectedReason,
-            notes: `Score updated from ${student.currentScore} to ${newScore}`,
+            notes: mode === "add"
+              ? `Score updated from ${student.currentScore} to ${newScore} (+${difference})`.replace("(+-", "(-")
+              : `Score updated from ${student.currentScore} to ${newScore}`,
           });
         }
       }
@@ -171,7 +200,7 @@ export function ReadingTheoryScoreEntry({
       return changedStudents.length;
     },
     onSuccess: (count) => {
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard", classId] });
+      queryClient.invalidateQueries({ queryKey: ["class-board", classId] });
       queryClient.invalidateQueries({ queryKey: ["monthly-leader"] });
       queryClient.invalidateQueries({ queryKey: ["student-points"] });
       queryClient.invalidateQueries({ queryKey: ["point-history"] });
@@ -199,13 +228,7 @@ export function ReadingTheoryScoreEntry({
     }));
   };
 
-  const getDifference = (currentScore: number, newScoreStr: string) => {
-    const newScore = parseInt(newScoreStr);
-    if (isNaN(newScore)) return null;
-    const diff = newScore - currentScore;
-    if (diff === 0) return null;
-    return diff;
-  };
+  const getDifference = (currentScore: number, typed: string) => changeOf(currentScore, typed);
 
   const isLoading = studentsLoading || pointsLoading;
 
@@ -218,8 +241,24 @@ export function ReadingTheoryScoreEntry({
             Reading Theory Score Entry
           </DialogTitle>
           <DialogDescription>
-            Enter the new cumulative scores for students. The difference will be calculated automatically.
+            {mode === "add"
+              ? "Type the points to add for each student (a minus number takes points away)."
+              : "Type each student's new total. The difference is worked out for you."}
           </DialogDescription>
+          <div role="radiogroup" aria-label="How to enter scores" className="mt-2 inline-flex w-fit rounded-hec-md border border-hec-line bg-hec-raised p-0.5">
+            {(["add", "set"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="radio"
+                aria-checked={mode === m}
+                onClick={() => { setMode(m); setStudentScores({}); }}
+                className={`min-h-[2.25rem] rounded-hec-sm px-3 text-hec-small font-medium ${mode === m ? "bg-hec-action text-hec-on-action" : "text-hec-ink-soft hover:text-hec-ink"}`}
+              >
+                {m === "add" ? "Add points" : "Set new total"}
+              </button>
+            ))}
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
@@ -247,8 +286,8 @@ export function ReadingTheoryScoreEntry({
               : "grid grid-cols-[1fr,80px,100px,60px] gap-2 px-2 py-2 bg-muted/50 rounded-t-lg text-sm font-medium text-muted-foreground"}>
               <span className={ivory ? "col-span-3 sm:col-span-1" : undefined}>Student</span>
               <span className="text-center">Current</span>
-              <span className="text-center">New Score</span>
-              <span className="text-center">Diff</span>
+              <span className="text-center">{mode === "add" ? "Add" : "New total"}</span>
+              <span className="text-center">{mode === "add" ? "New total" : "Diff"}</span>
             </div>
 
             <ScrollArea className={ivory ? "h-[45dvh] border border-hec-line rounded-b-hec-md" : "h-[60vh] border rounded-b-lg"}>
@@ -294,16 +333,21 @@ export function ReadingTheoryScoreEntry({
                             type="number"
                             value={student.newScore}
                             onChange={(e) => handleScoreChange(student.id, e.target.value)}
-                            placeholder={student.currentScore.toString()}
+                            placeholder={mode === "add" ? "0" : student.currentScore.toString()}
                             className={ivory ? "min-h-hec-target w-20 px-1 text-center tabular-nums" : "h-9 w-20 text-center font-mono"}
-                            aria-label={ivory ? `New score for ${student.name}` : undefined}
-                            min={0}
+                            aria-label={mode === "add" ? `Points to add for ${student.name}` : `New total for ${student.name}`}
+                            min={mode === "add" ? undefined : 0}
                           />
                         </div>
 
-                        {/* Difference */}
+                        {/* Difference, or the new total when adding */}
                         <div className="text-center">
-                          {diff !== null && (
+                          {diff !== null && mode === "add" && (
+                            <span className="text-hec-small font-semibold tabular-nums text-hec-ink">
+                              {student.currentScore + diff}
+                            </span>
+                          )}
+                          {diff !== null && mode === "set" && (
                             <span
                               className={ivory
                                 ? `text-hec-small font-semibold tabular-nums ${diff > 0 ? "text-hec-leaf" : "text-hec-danger"}`

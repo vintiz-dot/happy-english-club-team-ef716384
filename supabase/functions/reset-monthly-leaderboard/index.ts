@@ -51,31 +51,10 @@ Deno.serve(async (req) => {
       throw error;
     }
 
-    // If there are economy classes, restore their points (re-set them back)
-    let economyRestored = 0;
-    if (economyClassIds.length > 0) {
-      // Restore student_points for economy classes that were just zeroed
-      const { data: archivedRows } = await supabase
-        .from("archived_leaderboards")
-        .select("student_id, class_id, homework_points, participation_points")
-        .eq("month", monthToArchive)
-        .in("class_id", economyClassIds);
-
-      if (archivedRows && archivedRows.length > 0) {
-        for (const row of archivedRows) {
-          await supabase
-            .from("student_points")
-            .upsert({
-              student_id: row.student_id,
-              class_id: row.class_id,
-              month: monthToArchive,
-              homework_points: row.homework_points,
-              participation_points: row.participation_points,
-            }, { onConflict: 'student_id,class_id,month' });
-          economyRestored++;
-        }
-      }
-    }
+    // archive_and_reset_monthly_leaderboard no longer zeroes anything
+    // (20261117120000), so economy classes need nothing put back. This used
+    // to upsert archived figures straight into student_points.
+    const economyRestored = 0;
 
     console.log(`Successfully archived ${data?.[0]?.archived_count || 0} records and reset ${data?.[0]?.reset_count || 0} student points. Restored ${economyRestored} economy-mode records.`);
 

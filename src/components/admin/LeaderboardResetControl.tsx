@@ -25,7 +25,7 @@ export function LeaderboardResetControl() {
 
       toast({
         title: "Success",
-        description: `Archived ${data.archived} records and reset ${data.reset} student scores for ${targetMonth}`,
+        description: `Saved ${data.archived} final standings for ${targetMonth}. No points were changed.`,
       });
     } catch (error: any) {
       toast({
@@ -43,10 +43,10 @@ export function LeaderboardResetControl() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Archive className="h-5 w-5" />
-          Monthly Leaderboard Reset
+          Save Month Standings
         </CardTitle>
         <CardDescription>
-          Archive current month's scores and start fresh. This preserves historical data in archives.
+          Each month already has its own board, so nothing needs resetting. This saves a month's final places (with ties) and the class champions. It changes no points.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -63,29 +63,28 @@ export function LeaderboardResetControl() {
             max={monthKey()}
           />
           <p className="text-xs text-muted-foreground">
-            Select the month to archive and reset. Current month: {monthKey()}
+            Select the month to save. Current month: {monthKey()}
           </p>
         </div>
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="w-full" disabled={isResetting}>
+            <Button variant="outline" className="w-full" disabled={isResetting}>
               {isResetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Archive className="h-4 w-4 mr-2" />}
-              Reset Leaderboard for {targetMonth}
+              Save standings for {targetMonth}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Archive and Reset Leaderboard?</AlertDialogTitle>
+              <AlertDialogTitle>Save the standings?</AlertDialogTitle>
               <AlertDialogDescription>
                 This will:
                 <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Archive all scores for {targetMonth}</li>
-                  <li>Reset all student points to 0 for this month</li>
-                  <li>Preserve historical data in the archives table</li>
-                  <li>Keep point transaction history for audit trail</li>
+                  <li>Save every class's final places for {targetMonth}</li>
+                  <li>Save each class's champion</li>
+                  <li>Change no points (it used to zero some of them)</li>
                 </ul>
-                <p className="mt-3 font-semibold">This action cannot be undone!</p>
+                <p className="mt-3">Saving again replaces that month's saved standings.</p>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -100,7 +99,7 @@ export function LeaderboardResetControl() {
         <div className="bg-muted/50 p-3 rounded-lg text-sm">
           <p className="font-medium mb-1">💡 Automation Tip</p>
           <p className="text-muted-foreground">
-            You can automate monthly resets using a cron job that calls the reset-monthly-leaderboard function on the 1st of each month.
+            A cron job can call the reset-monthly-leaderboard function on the 1st of each month to save last month's standings. Boards, the TV champions and premium avatars work without it.
           </p>
         </div>
       </CardContent>

@@ -635,7 +635,7 @@ export default function TeacherTranscripts() {
 
   const invalidateSuggestions = () => {
     queryClient.invalidateQueries({ queryKey: ["transcript-point-suggestions", selectedId] });
-    queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+    queryClient.invalidateQueries({ queryKey: ["class-board"] });
     queryClient.invalidateQueries({ queryKey: ["student-points"] });
     queryClient.invalidateQueries({ queryKey: ["point-history"] });
   };

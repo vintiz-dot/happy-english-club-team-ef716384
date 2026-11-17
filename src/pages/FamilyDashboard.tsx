@@ -11,7 +11,9 @@
  * what is visible: their children, and only their children (policies from
  * migration 20260730130000).
  */
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { PointsHistoryDialog } from "@/components/student/PointsHistoryDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
@@ -32,6 +34,8 @@ interface ChildSummary {
   cefr: string | null;
   journey: string | null;
   total_points: number;
+  /** The child's level (server), when the summary is available. */
+  level?: number;
   attendance: { present: number; total: number };
   lessons: Array<{ lesson_date: string; title: string | null; summary: string | null; homework: string | null }>;
 }
@@ -189,20 +193,47 @@ export async function fetchChildren(client: Db): Promise<ChildSummary[]> {
 }
 // END fetchChildren
 
+/**
+ * Each child's points: every point ever earned, every class, with the
+ * level, from student_points_summary (20261117120000). fetchChildren read
+ * "the" student_points row with maybeSingle, but there is one per class
+ * per month, so any child with two came back as 0 - 51 of 57 children on
+ * 17 Nov 2026. fetchChildren is left as it was (its batching is tested
+ * against the original); the figure shown is replaced here.
+ */
+async function withPoints(children: ChildSummary[]): Promise<ChildSummary[]> {
+  if (!children.length) return children;
+  const { data, error } = await supabase.rpc("student_points_summary" as never, {
+    p_students: children.map((c) => c.id),
+  } as never);
+  if (error || !data) return children;
+  const byId = data as unknown as Record<string, { all_time: number; level: { level: number } }>;
+  return children.map((c) => (byId[c.id] ? { ...c, total_points: Number(byId[c.id].all_time) || 0, level: byId[c.id].level?.level } : c));
+}
+
 function useChildren(userId?: string) {
   return useQuery<ChildSummary[]>({
     queryKey: ["family-children", userId],
     enabled: !!userId,
-    queryFn: () => fetchChildren(supabase),
+    queryFn: async () => withPoints(await fetchChildren(supabase)),
   });
 }
 
 export default function FamilyDashboard() {
   const { user } = useAuth();
   const { data: children = [], isLoading } = useChildren(user?.id);
+  const [historyFor, setHistoryFor] = useState<{ id: string; name: string } | null>(null);
 
   return (
     <Layout title="Family Dashboard">
+      {historyFor && (
+        <PointsHistoryDialog
+          studentId={historyFor.id}
+          studentName={historyFor.name}
+          open={!!historyFor}
+          onOpenChange={(o) => !o && setHistoryFor(null)}
+        />
+      )}
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Hero */}
         <div className="flex items-start gap-3">
@@ -256,9 +287,17 @@ export default function FamilyDashboard() {
                               <GraduationCap className="h-4 w-4 shrink-0" />{kid.cefr}
                             </Badge>
                           )}
-                          <Badge variant="secondary" className="gap-1 tabular-nums">
-                            <Star className="h-4 w-4 shrink-0 text-hec-brass" />{kid.total_points} pts
-                          </Badge>
+                          <button
+                            type="button"
+                            onClick={() => setHistoryFor({ id: kid.id, name: kid.full_name })}
+                            className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                            aria-label={`${kid.full_name}: ${kid.total_points} points. Open the points history`}
+                          >
+                            <Badge variant="secondary" className="cursor-pointer gap-1 tabular-nums hover:bg-hec-sunken">
+                              <Star className="h-4 w-4 shrink-0 text-hec-brass" />{kid.total_points} pts
+                              {kid.level ? <span className="text-hec-ink-soft"> · Level {kid.level}</span> : null}
+                            </Badge>
+                          </button>
                           {kid.attendance.total > 0 && (
                             <Badge variant="secondary" className="gap-1 tabular-nums">
                               <CalendarCheck className="h-4 w-4 shrink-0 text-hec-leaf" />

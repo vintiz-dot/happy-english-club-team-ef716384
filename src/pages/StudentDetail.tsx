@@ -188,7 +188,7 @@ const StudentDetail = () => {
                   return (
                     <div key={enrollment.id} className="space-y-2">
                       <h3 className="whitespace-normal break-words text-hec-h3 font-medium text-hec-ink">{classData.name || 'Class'}</h3>
-                      <ClassLeaderboardShared classId={classData.id} />
+                      <ClassLeaderboardShared classId={classData.id} currentStudentId={student.id} />
                     </div>
                   );
                 }).filter(Boolean)}

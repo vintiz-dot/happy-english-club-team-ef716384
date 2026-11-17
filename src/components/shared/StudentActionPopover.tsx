@@ -123,7 +123,7 @@ export function StudentActionPopover({
 
   const invalidateLive = () => {
     queryClient.invalidateQueries({ queryKey: ["student-live-context", studentId, classId] });
-    queryClient.invalidateQueries({ queryKey: ["class-leaderboard", classId] });
+    queryClient.invalidateQueries({ queryKey: ["class-board", classId] });
     queryClient.invalidateQueries({ queryKey: ["monthly-leader"] });
     queryClient.invalidateQueries({ queryKey: ["student-points"] });
     queryClient.invalidateQueries({ queryKey: ["point-history"] });

@@ -127,7 +127,7 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["all-homework-submissions"] });
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["class-board"] });
       queryClient.invalidateQueries({ queryKey: ["monthly-leader"] });
       toast.success("Grade submitted successfully");
       setSelectedSubmission(null);
@@ -186,7 +186,7 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
     onSuccess: () => {
       toast.success("Early submission bonus reversed (-5 XP)");
       queryClient.invalidateQueries({ queryKey: ["all-homework-submissions"] });
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["class-board"] });
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to reverse bonus");

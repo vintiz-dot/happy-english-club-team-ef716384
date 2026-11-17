@@ -1,52 +1,29 @@
 /**
- * The class board, as a student sees it.
+ * The class board, as a student or their family sees it.
  *
- * This used to be a second, independent leaderboard — its own podium, its
- * own rank colours, its own row layout, ~450 lines of it. It drifted from
- * the teacher's board constantly: a child and their teacher would look at
- * the same class on two screens and see two different designs, and only
- * one of them ever got a fix.
+ * The data comes from the class-leaderboard edge function, which decides
+ * whether this viewer may see the class and returns the same calculation
+ * the teacher's screen renders (leaderboard_json), with classmates kept to
+ * a name, an avatar and points. Ranks, ties, the level, the climber and
+ * the streak are the server's; nothing is ranked here.
  *
- * Both now render PodiumBoard. What is genuinely different for a student
- * stays different: no selection, no point controls, no economy actions,
- * and the data comes from the class-leaderboard edge function, which
- * decides for itself whether this viewer is allowed to see the class.
+ * What is genuinely different for a student stays different: no
+ * selection, no point controls, no economy actions.
  */
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { StudentAnalyticsModal } from "@/components/student/StudentAnalyticsModal";
 import { type BoardEntry } from "@/components/shared/PodiumBoard";
 import { StyledClassBoard } from "@/components/leaderboard/StyledClassBoard";
+import { PeriodPicker, THIS_MONTH } from "@/components/leaderboard/PeriodPicker";
 import { useClassMonitor } from "@/hooks/useClassMonitor";
+import { BeforeJoinedError, NoTermError, useClassBoard } from "@/hooks/useClassBoard";
+import { hanoiToday, type PeriodChoice } from "@/lib/leaderboard/board";
 
 interface StudentClassLeaderboardProps {
   classId: string;
   className?: string;
   currentStudentId?: string;
-}
-
-interface EdgeEntry {
-  student_id: string;
-  student_name: string;
-  avatar_url: string | null;
-  participation_points: number;
-  homework_points: number;
-  /** Added later than the rest of the payload; absent on older deploys. */
-  reading_theory_points?: number;
-  /** Likewise. Until class-leaderboard is redeployed this stays undefined. */
-  vocabulary_quiz_points?: number;
-  total_points: number;
-  is_current_user: boolean;
-  rank: number;
 }
 
 const EMPTY_SELECTION = new Map<
@@ -55,19 +32,18 @@ const EMPTY_SELECTION = new Map<
 >();
 const EMPTY_PENDING = new Map<string, number>();
 
-/** "2026-10" -> "October 2026", for the board header. */
-function monthLabel(ym: string): string {
-  const [y, m] = ym.split("-").map(Number);
-  if (!y || !m) return ym;
-  return new Date(y, m - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
-}
+const ordinal = (n: number) => {
+  const r = n % 100;
+  if (r >= 11 && r <= 13) return `${n}th`;
+  return `${n}${["th", "st", "nd", "rd"][n % 10] || "th"}`;
+};
 
 export function StudentClassLeaderboard({
   classId,
   className,
   currentStudentId,
 }: StudentClassLeaderboardProps) {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [period, setPeriod] = useState<PeriodChoice>(THIS_MONTH);
   const [analyticsStudent, setAnalyticsStudent] = useState<{
     id: string;
     name: string;
@@ -78,106 +54,62 @@ export function StudentClassLeaderboard({
     readingTheoryPoints: number;
     vocabularyQuizPoints: number;
     rank: number;
+    level?: BoardEntry["level"];
+    allTime?: number | null;
   } | null>(null);
 
   const { data: monitorStudentId } = useClassMonitor(classId);
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["student-class-leaderboard", classId, selectedMonth],
-    queryFn: async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
-      const response = await supabase.functions.invoke("class-leaderboard", {
-        body: { classId, month: selectedMonth },
-      });
-      if (response.error) throw response.error;
-      return response.data as {
-        leaderboard: EdgeEntry[];
-        currentStudentId: string | null;
-      };
-    },
-  });
-
-  const entries: BoardEntry[] = useMemo(
-    () =>
-      (data?.leaderboard ?? []).map((e) => ({
-        id: `${classId}-${e.student_id}`,
-        student_id: e.student_id,
-        rank: e.rank,
-        total_points: e.total_points,
-        homework_points: e.homework_points,
-        participation_points: e.participation_points,
-        reading_theory_points: e.reading_theory_points ?? 0,
-        vocabulary_quiz_points: e.vocabulary_quiz_points ?? 0,
-        students: { full_name: e.student_name, avatar_url: e.avatar_url },
-      })),
-    [data, classId],
-  );
+  const { data, isLoading, error } = useClassBoard(classId, period, "family");
+  const board = data?.board ?? null;
 
   // The function tells us who the viewer is; the prop is a fallback for
   // callers that already know (a parent looking at one of their children).
   const viewerStudentId = currentStudentId ?? data?.currentStudentId ?? undefined;
+  const self = useMemo(
+    // A family with two children in one class has both marked is_self: the
+    // child this page is for comes first.
+    () => (viewerStudentId ? board?.rows.find((r) => r.student_id === viewerStudentId) : null)
+      ?? board?.rows.find((r) => r.is_self) ?? null,
+    [board, viewerStudentId],
+  );
+  const month = (board?.period?.kind === "month" ? board.period.from : hanoiToday()).slice(0, 7);
 
   return (
-    <div
-      className="relative overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1"
-    >
-      <div
-        className="flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-6"
-      >
+    <div className="relative overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1">
+      <div className="flex flex-wrap items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-6">
         <div className="flex min-w-0 items-start gap-2 pt-2">
-          <Trophy
-            className="mt-1 h-5 w-5 shrink-0 text-hec-ink-soft"
-            aria-hidden
-          />
-          <h3
-            className="min-w-0 whitespace-normal break-words font-display text-hec-h2 font-medium text-hec-ink"
-          >
+          <Trophy className="mt-1 h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
+          <h3 className="min-w-0 whitespace-normal break-words font-display text-hec-h2 font-medium text-hec-ink">
             {className || "Leaderboard"}
           </h3>
         </div>
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger
-            aria-label="Month"
-            className="min-h-hec-target w-36 shrink-0 rounded-hec-md border-hec-line-strong bg-hec-raised text-hec-small text-hec-ink focus:ring-0 focus:ring-offset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent
-            data-hec-theme="ivory"
-            className="rounded-hec-md border-hec-line bg-hec-raised text-hec-ink shadow-hec-2"
-          >
-            {Array.from({ length: 6 }, (_, i) => {
-              const date = new Date();
-              date.setMonth(date.getMonth() - i);
-              const month = date.toISOString().slice(0, 7);
-              return (
-                <SelectItem key={month} value={month}>
-                  {date.toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+        {/* An older class-leaderboard only knows months: offer nothing else. */}
+        {!data?.legacy && <PeriodPicker value={period} onChange={setPeriod} />}
       </div>
+
+      {self?.centre && (
+        <p className="px-4 pb-2 text-hec-small text-hec-ink-soft sm:px-6">
+          {ordinal(self.centre.rank)} of {self.centre.of} in the whole school{board?.period?.label ? ` · ${board.period.label}` : ""}
+        </p>
+      )}
 
       {isLoading ? (
         <div className="grid min-h-[260px] place-items-center p-8 text-hec-small text-hec-ink-soft">
-          Counting up this month's points…
+          Counting up the points…
         </div>
       ) : error ? (
         <div className="grid min-h-[260px] place-items-center p-8 text-center text-hec-small text-hec-ink-soft">
-          This board could not be loaded right now.
+          {error instanceof NoTermError
+            ? "No term has been set for that date yet."
+            : error instanceof BeforeJoinedError
+              ? "This board is from before you joined the class."
+              : "This board could not be loaded right now."}
         </div>
       ) : (
         <StyledClassBoard
-          entries={entries}
+          board={board}
           classId={classId}
-          periodLabel={monthLabel(selectedMonth)}
-          canReadLedger={false}
+          periodLabel={board?.period?.label ?? ""}
           currentStudentId={viewerStudentId}
           canManagePoints={false}
           isEconomyMode={false}
@@ -197,6 +129,8 @@ export function StudentClassLeaderboard({
               readingTheoryPoints: entry.reading_theory_points,
               vocabularyQuizPoints: entry.vocabulary_quiz_points ?? 0,
               rank: entry.rank,
+              level: entry.level ?? null,
+              allTime: entry.all_time ?? null,
             })
           }
         />
@@ -207,7 +141,7 @@ export function StudentClassLeaderboard({
         onOpenChange={(open) => !open && setAnalyticsStudent(null)}
         student={analyticsStudent}
         classId={classId}
-        selectedMonth={selectedMonth}
+        selectedMonth={month}
       />
     </div>
   );

@@ -462,7 +462,7 @@ export function NightLeague({
     const isClimber = climberId === row.studentId;
 
     return (
-      <div style={{ position: "relative", width: g.colW, display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div data-student-id={row.studentId} role="button" tabIndex={0} aria-label={`${row.name}, ${row.points} points`} style={{ position: "relative", width: g.colW, display: "flex", flexDirection: "column", alignItems: "center" }}>
         <div
           className="nl-rv"
           style={{ display: "flex", flexDirection: "column", alignItems: "center", animation: an("nl-card", 700, d + 380) }}
@@ -692,19 +692,21 @@ export function NightLeague({
         type="button"
         aria-pressed={on}
         onClick={() => onCategoryChange(key)}
+        // Seven tabs since video and streak got their own (20261117120000):
+        // tighter than the four-tab design so Reveal still fits the header.
         style={{
           height: 62,
-          padding: "0 22px 0 18px",
+          padding: "0 14px 0 12px",
           border: "none",
           borderRadius: 11,
           background: on ? ACCENT : "rgba(255,255,255,0)",
           color: on ? "#04231F" : SOFT,
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          fontSize: 19,
+          gap: 8,
+          fontSize: 17,
           fontWeight: 700,
-          letterSpacing: "0.14em",
+          letterSpacing: "0.1em",
           textTransform: "uppercase",
           transition: "background 160ms ease, color 160ms ease",
         }}
@@ -1157,7 +1159,7 @@ export function NightLeague({
                                 : "Level with podium";
                           const isClimber = climberId === row.studentId;
                           return (
-                            <tr key={row.studentId}>
+                            <tr key={row.studentId} data-student-id={row.studentId} role="button" tabIndex={0} aria-label={`${row.name}, ${row.points} points`}>
                               <td style={tdFirst(!!row.isSelf)}>
                                 <span style={{ fontFamily: HEAD, fontWeight: 800, fontSize: 32, lineHeight: 1 }}>
                                   {`${row.tied ? "T" : ""}${row.rank}`}
@@ -1376,7 +1378,7 @@ export function NightLeague({
                       <span style={{ display: "flex", alignItems: "baseline", gap: 8, whiteSpace: "nowrap" }}>
                         <span style={{ fontFamily: HEAD, fontWeight: 900, fontSize: 48, lineHeight: 1, color: ACCENT }}>{streak.days}</span>
                         <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: MUTED }}>
-                          days in a row
+                          lessons in a row
                         </span>
                       </span>
                     </div>
@@ -1403,7 +1405,7 @@ export function NightLeague({
               ) : (
                 quiet(
                   extras.ledgerAvailable
-                    ? "No run going yet. Earn points two days in a row to start one."
+                    ? "No run going yet. Come to two lessons in a row to start one."
                     : "Daily history is still loading.",
                 )
               )}
@@ -1411,7 +1413,8 @@ export function NightLeague({
 
             <section style={panelStyle("fill")}>
               {panelHead("Category leaders", "This season")}
-              <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Six rows now, not four: everything a little smaller. */}
+              <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 6 }}>
                 {BOARD_CATEGORIES.map((cat) => {
                   const champ = (extras.champions || []).find((c) => c.category.key === cat.key);
                   const on = activeCategory === cat.key;
@@ -1440,8 +1443,8 @@ export function NightLeague({
                     >
                       <span
                         style={{
-                          width: 46,
-                          height: 46,
+                          width: 36,
+                          height: 36,
                           flexShrink: 0,
                           boxSizing: "border-box",
                           borderRadius: 12,
@@ -1452,17 +1455,17 @@ export function NightLeague({
                           justifyContent: "center",
                         }}
                       >
-                        <Icon size={24} strokeWidth={2} aria-hidden="true" />
+                        <Icon size={20} strokeWidth={2} aria-hidden="true" />
                       </span>
-                      <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, lineHeight: 1, letterSpacing: "0.2em", textTransform: "uppercase", color: DIM }}>
+                      <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, lineHeight: 1, letterSpacing: "0.2em", textTransform: "uppercase", color: DIM }}>
                           {cat.label}
                         </span>
                         <span
                           style={{
                             fontFamily: HEAD,
                             fontWeight: 700,
-                            fontSize: 30,
+                            fontSize: 22,
                             lineHeight: 1,
                             letterSpacing: "0.03em",
                             textTransform: "uppercase",
@@ -1475,7 +1478,7 @@ export function NightLeague({
                           {champ ? champ.name : "No points yet"}
                         </span>
                       </span>
-                      <span style={{ fontFamily: HEAD, fontWeight: 800, fontSize: 38, lineHeight: 1, color: champ ? INK : MUTED }}>
+                      <span style={{ fontFamily: HEAD, fontWeight: 800, fontSize: 28, lineHeight: 1, color: champ ? INK : MUTED }}>
                         {champ ? champ.points : "—"}
                       </span>
                     </button>

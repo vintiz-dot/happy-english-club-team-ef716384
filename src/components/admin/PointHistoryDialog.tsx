@@ -81,7 +81,7 @@ export function PointHistoryDialog({
     queryClient.invalidateQueries({ queryKey: ["point-transactions", studentId, classId, month] });
     queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
     queryClient.invalidateQueries({ queryKey: ["student-points"] });
-    queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+    queryClient.invalidateQueries({ queryKey: ["class-board"] });
   };
 
   const deleteMutation = useMutation({

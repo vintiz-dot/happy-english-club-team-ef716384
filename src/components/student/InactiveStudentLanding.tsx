@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ClassCatalog } from "./ClassCatalog";
 import { LevelProgressRing } from "./LevelProgressRing";
-import { calculateLevel, getLevelTitle } from "@/lib/levelUtils";
+import { getLevelTitle } from "@/lib/levelUtils";
+import { useStudentPointsSummary } from "@/hooks/useClassBoard";
 import { Link } from "react-router-dom";
 import { BookOpen, Trophy, Star, Zap, Clock, FileText, DollarSign, Rocket, Users, TrendingUp } from "lucide-react";
 
@@ -31,18 +32,9 @@ interface InactiveStudentLandingProps {
 }
 
 export function InactiveStudentLanding({ student, isReturning, studentId }: InactiveStudentLandingProps) {
-  // Fetch total XP for returning students
-  const { data: totalPoints } = useQuery({
-    queryKey: ["student-total-points", studentId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("student_points" as any)
-        .select("total_points")
-        .eq("student_id", studentId);
-      return (data as any[])?.reduce((sum: number, p: any) => sum + (p.total_points || 0), 0) || 0;
-    },
-    enabled: !!studentId && isReturning,
-  });
+  // The server's level (student_points_summary), as on every other screen.
+  const { data: pointsSummary } = useStudentPointsSummary(studentId, !!isReturning);
+  const totalPoints = pointsSummary?.all_time ?? 0;
 
   // Count of active students for social proof
   const { data: activeStudentCount } = useQuery({
@@ -56,7 +48,7 @@ export function InactiveStudentLanding({ student, isReturning, studentId }: Inac
     },
   });
 
-  const levelInfo = calculateLevel(totalPoints || 0);
+  const levelInfo = pointsSummary?.hero ?? { level: 1, currentXp: 0, nextLevelXp: 100, progress: 0 };
 
   return (
     <motion.div

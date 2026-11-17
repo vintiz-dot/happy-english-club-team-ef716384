@@ -157,7 +157,7 @@ export function GradeOfflineDialog({ homeworkId, isOpen, onClose, onSuccess }: G
       });
 
       // Invalidate leaderboard queries to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["class-board"] });
       queryClient.invalidateQueries({ queryKey: ["monthly-leader"] });
 
       // Reset form and reload students

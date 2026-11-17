@@ -50,6 +50,14 @@ export interface BoardEntry {
    * Optional because older callers may not select it; treated as 0.
    */
   vocabulary_quiz_points?: number;
+  /** Joined after this period began (server). */
+  is_new?: boolean;
+  /** The viewer's own child (server). */
+  is_self?: boolean;
+  /** The child's level from every point ever earned (server, points_level). */
+  level?: { level: number; progress: number; to_next: number; from: number; next: number } | null;
+  /** Every point ever earned, every class (server). */
+  all_time?: number | null;
   students?: { full_name?: string; avatar_url?: string | null } | null;
 }
 
@@ -69,6 +77,8 @@ export interface PodiumBoardProps {
   onOpenAnalytics: (entry: BoardEntry) => void;
   /** This month's class monitor, marked with a star. */
   monitorStudentId?: string | null;
+  /** Shown above the list when the number is not plain points ("Points per lesson"). */
+  periodNote?: string;
 }
 
 /**
@@ -137,15 +147,15 @@ const TIERS_IVORY: typeof TIERS = {
 };
 
 /**
- * Points → level. Each level costs 25 more than the last, so the first
- * few arrive quickly and the curve stretches afterwards.
+ * The child's level, as the server worked it out (points_level: every point
+ * ever earned, every class). This board used to compute its own, from the
+ * month's points on a different curve, so the level fell back each month
+ * and disagreed with the dashboard. No figure from the server: level 1, no
+ * progress shown, rather than a guess.
  */
-function levelFromPoints(p: number) {
-  const level = Math.floor((-1 + Math.sqrt(1 + (8 * p) / 25)) / 2) + 1;
-  const prev = (25 * (level - 1) * level) / 2;
-  const next = (25 * level * (level + 1)) / 2;
-  const pct = next === prev ? 0 : Math.min(100, ((p - prev) / (next - prev)) * 100);
-  return { level: Math.max(1, level), pct, toNext: Math.max(0, Math.ceil(next - p)) };
+function levelOfEntry(entry: BoardEntry) {
+  const l = entry.level;
+  return { level: l?.level ?? 1, pct: l?.progress ?? 0, toNext: l?.to_next ?? 0, known: !!l };
 }
 
 function Medal({ rank, size = 28 }: { rank: number; size?: number }) {
@@ -256,7 +266,7 @@ function PodiumPlace({
 }) {
   const ivory = useIvory();
   const tier = (ivory ? TIERS_IVORY : TIERS)[entry.rank as 1 | 2 | 3];
-  const { level, pct } = levelFromPoints(entry.total_points);
+  const { level, pct } = levelOfEntry(entry);
   const first = entry.rank === 1;
 
   return (
@@ -414,7 +424,7 @@ function BoardRow({
   classId: string;
 }) {
   const ivory = useIvory();
-  const { level, pct } = levelFromPoints(entry.total_points);
+  const { level, pct } = levelOfEntry(entry);
 
   return (
     <motion.div
@@ -475,6 +485,11 @@ function BoardRow({
           <span className={ivory ? "min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink" : "truncate font-bold text-ink"}>{entry.students?.full_name}</span>
           {isMonitor && <MonitorStar size={10} />}
           {isSelf && <span className={ivory ? "shrink-0 text-hec-caption text-hec-ink-soft" : "shrink-0 text-xs text-ink-faint"}>(you)</span>}
+          {entry.is_new && (
+            <span className="shrink-0 rounded-full border border-hec-line bg-hec-sunken px-2 text-hec-caption font-medium text-hec-ink-soft" title="Joined during this period">
+              New
+            </span>
+          )}
           {pendingCount > 0 && (
             <span className={ivory ? "shrink-0 rounded-full border border-hec-warn/30 bg-hec-warn-tint px-2 text-hec-caption font-medium tabular-nums text-hec-warn" : "shrink-0 rounded-full bg-[hsl(var(--studio-butter))] px-1.5 py-0.5 text-[0.625rem] font-bold text-[hsl(var(--studio-butter-ink))]"}>
               {pendingCount} pending
@@ -546,6 +561,7 @@ export function PodiumBoard({
   onToggleSelect,
   onOpenAnalytics,
   monitorStudentId,
+  periodNote,
 }: PodiumBoardProps) {
   const ivory = useIvory();
   const previousRanksRef = useRef<Map<string, number>>(new Map());
@@ -575,9 +591,10 @@ export function PodiumBoard({
 
   const top3 = useMemo(() => entries.slice(0, 3), [entries]);
   const rest = useMemo(() => entries.slice(3), [entries]);
-  const self = currentStudentId
-    ? entries.find((e) => e.student_id === currentStudentId)
-    : null;
+  // The page's own child first: a family login marks every one of its
+  // children in the class as is_self.
+  const self = (currentStudentId ? entries.find((e) => e.student_id === currentStudentId) : null)
+    ?? entries.find((e) => e.is_self);
 
   if (entries.length === 0) {
     return (
@@ -595,14 +612,20 @@ export function PodiumBoard({
 
   return (
     <div className={ivory ? "px-4 pb-6 pt-2 sm:px-6" : "px-3 pb-6 pt-2 sm:px-6"}>
+      {periodNote && (
+        <p className="mb-3 text-center text-hec-caption text-hec-ink-soft">{periodNote}: fair to children who joined part-way.</p>
+      )}
       {/* Podium — second, first, third, left to right. */}
       <div className="mb-6 flex items-end justify-center gap-2 sm:gap-4">
-        {top3.map((entry) => (
-          <div key={entry.student_id} className={cn("min-w-0 flex-1", (ivory ? TIERS_IVORY : TIERS)[entry.rank as 1 | 2 | 3]?.order)}>
+        {/* Seats go by position, not rank: with a tie (1, 2, 2 or 1, 1, 3)
+            two children share a rank, and seating by rank put first place
+            on the right. The medal still shows the shared rank. */}
+        {top3.map((entry, i) => (
+          <div key={entry.student_id} className={cn("min-w-0 flex-1", (ivory ? TIERS_IVORY : TIERS)[(i + 1) as 1 | 2 | 3]?.order)}>
             <PodiumPlace
               entry={entry}
               movement={movement.get(entry.student_id)}
-              isSelf={currentStudentId === entry.student_id}
+              isSelf={currentStudentId ? currentStudentId === entry.student_id : !!entry.is_self}
               isMonitor={monitorStudentId === entry.student_id}
               onClick={() => onOpenAnalytics(entry)}
             />
@@ -624,7 +647,7 @@ export function PodiumBoard({
                 key={entry.student_id}
                 entry={entry}
                 index={i}
-                isSelf={currentStudentId === entry.student_id}
+                isSelf={currentStudentId ? currentStudentId === entry.student_id : !!entry.is_self}
                 isSelected={selectedStudents.has(entry.student_id)}
                 isMonitor={monitorStudentId === entry.student_id}
                 canManagePoints={canManagePoints}
@@ -658,7 +681,7 @@ export function PodiumBoard({
 
 function SelfCard({ entry, onClick }: { entry: BoardEntry; onClick: () => void }) {
   const ivory = useIvory();
-  const { level, pct, toNext } = levelFromPoints(entry.total_points);
+  const { level, pct, toNext, known } = levelOfEntry(entry);
   return (
     <motion.button
       type="button"
@@ -679,7 +702,7 @@ function SelfCard({ entry, onClick }: { entry: BoardEntry; onClick: () => void }
           {entry.rank === 1 ? "st" : entry.rank === 2 ? "nd" : entry.rank === 3 ? "rd" : "th"}
         </p>
         <p className={ivory ? "text-hec-small tabular-nums text-hec-ink-soft" : "truncate text-xs text-[hsl(var(--studio-card)/0.75)]"}>
-          Level {level} · {toNext} to the next one
+          {known ? `Level ${level} · ${toNext} to the next one` : `Level ${level}`}
         </p>
         <div className={ivory ? "mt-1 h-2 w-full overflow-hidden rounded-full bg-hec-sunken" : "mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[hsl(var(--studio-card)/0.18)]"}>
           <div

@@ -131,7 +131,7 @@ export function ManualPointAdjustment() {
       });
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["class-board"] });
       queryClient.invalidateQueries({ queryKey: ["student-points"] });
       queryClient.invalidateQueries({ queryKey: ["point-history"] });
 

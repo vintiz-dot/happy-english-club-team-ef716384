@@ -75,7 +75,8 @@ function isYoungLearner(dateOfBirth?: string | null): boolean {
   return schoolYear - born - 5 <= 3;
 }
 
-import { calculateLevel, getLevelTitle } from "@/lib/levelUtils";
+import { getLevelTitle } from "@/lib/levelUtils";
+import { useStudentPointsSummary } from "@/hooks/useClassBoard";
 import { useAuth } from "@/hooks/useAuth";
 
 // Launcher tiles for the quick-action dock (presentational config).
@@ -155,19 +156,11 @@ export default function StudentDashboard() {
     enabled: !!studentId,
   });
 
-  // Fetch total XP for level calculation
-  const { data: totalPoints } = useQuery({
-    queryKey: ["student-total-points", studentId],
-    queryFn: async () => {
-      if (!studentId) return 0;
-      const { data } = await supabase
-        .from("student_points")
-        .select("total_points")
-        .eq("student_id", studentId);
-      return data?.reduce((sum, p) => sum + (p.total_points || 0), 0) || 0;
-    },
-    enabled: !!studentId,
-  });
+  // Every point ever earned, the level and the per-class totals: the
+  // server's (student_points_summary), so this card, the boards and the
+  // analytics pop-up show one level. They used three formulas.
+  const { data: pointsSummary } = useStudentPointsSummary(studentId);
+  const totalPoints = pointsSummary?.all_time ?? 0;
 
   const { data: upcomingSessions } = useQuery({
     queryKey: ["student-upcoming-sessions", studentId],
@@ -304,7 +297,7 @@ export default function StudentDashboard() {
     enabled: !!studentId,
   });
 
-  const levelInfo = calculateLevel(totalPoints || 0);
+  const levelInfo = pointsSummary?.hero ?? { level: 1, currentXp: 0, nextLevelXp: 100, progress: 0 };
 
   // Build dynamic challenges based on real data
   const dynamicChallenges = useMemo(() => {
@@ -656,7 +649,8 @@ export default function StudentDashboard() {
                         studentId={studentId}
                         classId={classData.id}
                         className={classData.name}
-                        totalPoints={totalPoints || 0}
+                        // This class's points, not every class's (economy is per class).
+                        totalPoints={Number(pointsSummary?.classes?.find((c) => c.class_id === classData.id)?.all_time ?? 0)}
                         economyMode={classEconomy.economy_mode}
                         pointsToCashRate={classEconomy.points_to_cash_rate || 50}
                       />

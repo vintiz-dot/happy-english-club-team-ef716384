@@ -95,7 +95,9 @@ const STEP: Record<number, { h: number; face: string; lip: string; num: string }
 /** Soft background per category, for the Champions cells. */
 const CAT_TINT: Record<BoardCategory["key"], string> = {
   homework: "#EAF5FF",
+  video: "#FFE6EF",
   participation: "#FFF5D1",
+  streak: "#E3F7EC",
   reading_theory: "#FFEADD",
   vocabulary_quiz: "#EFE6FF",
 };
@@ -200,8 +202,21 @@ function CategoryGlyph({ k, size }: { k: BoardCategory["key"]; size: number }) {
           <path d="M21 5.5c-2.6-1-5.6-1-9 1.2v13c3.4-2.2 6.4-2.2 9-1.2z" fill="#9FD3FF" {...line} />
         </>
       )}
+      {k === "video" && (
+        <>
+          <rect x="2.6" y="6" width="13.4" height="12" rx="3" fill="#FF9EBE" {...line} />
+          <path d="M16 10.5 21.4 7.4v9.2L16 13.5z" fill="#FF9EBE" {...line} />
+        </>
+      )}
       {k === "participation" && (
         <path d="M13.5 2 4.5 13.5h6.5L9.5 22l10-12h-6.5z" fill="#FFE27A" {...line} />
+      )}
+      {k === "streak" && (
+        <>
+          <rect x="3" y="4.6" width="18" height="16" rx="3.2" fill="#9FE3BC" {...line} />
+          <path d="M3 9.4h18M8 2.6v4M16 2.6v4" fill="none" {...line} />
+          <path d="m8.4 14.6 2.4 2.4 4.8-4.8" fill="none" {...line} strokeWidth={2} />
+        </>
       )}
       {k === "reading_theory" && (
         <path
@@ -622,7 +637,7 @@ function PodiumSlot({ row, place, motion }: { row?: BoardRow; place: 1 | 2 | 3; 
   }
 
   return (
-    <div style={{ width: m.col, display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div data-student-id={row.studentId} role="button" tabIndex={0} aria-label={`${row.name}, ${row.points} points`} style={{ width: m.col, display: "flex", flexDirection: "column", alignItems: "center" }}>
       {/* The outer circle IS the level ring; the coloured disc sits inset on it. */}
       <div
         className="sb-rv"
@@ -1236,7 +1251,7 @@ export function StarBoard({
                 <div style={{ flex: 1, minWidth: 0, display: "flex", gap: CARD_GAP, overflow: "hidden" }}>
                   {restShown.map((s) => (
                     <div
-                      key={s.studentId}
+                      key={s.studentId} data-student-id={s.studentId} role="button" tabIndex={0} aria-label={`${s.name}, ${s.points} points`}
                       style={{
                         width: CARD_W,
                         height: 140,
@@ -1501,7 +1516,7 @@ export function StarBoard({
                             whiteSpace: "nowrap",
                           }}
                         >
-                          {streak.days} in a row
+                          {streak.days} lessons in a row
                         </span>
                       </div>
                       <div style={{ display: "flex", gap: 8 }}>

@@ -9,19 +9,16 @@
  *
  * Two facts about this school's data drive the design of `BoardRow`:
  *
- *  - There are FOUR point buckets, not three. `student_points` carries
- *    homework, participation, reading_theory AND vocabulary_quiz, and
- *    `total_points` is generated across all four. The old board showed
- *    only the first three while displaying the four-bucket total, so the
- *    pills never added up to the number beside them. `categories` below
- *    is a list rather than three named fields precisely so that cannot
- *    happen again — a style renders what it is given.
- *  - Levels come from a formula, not a table: level n begins at
- *    25·(n−1)·n/2, giving 0, 25, 75, 150, 250, 375, 525, 700. That is
- *    what the existing board uses and what the three designs were drawn
- *    against, so it is shared here rather than reimplemented per style.
+ *  - Every figure comes from the server (`leaderboard_json`,
+ *    supabase/migrations/20261117120000): the rank (ties share it), the six
+ *    categories that add up to the total, the level, the climber and the
+ *    streak. `src/lib/leaderboard/board.ts` maps them onto `BoardRow`; a
+ *    style renders what it is given and never ranks.
+ *  - The level counts every point a child ever earned in every class
+ *    (owner, 17 Nov 2026), so it is the same number on the dashboard, the
+ *    analytics card and every board, and it does not reset each month.
  */
-import { BookOpen, Flame, SpellCheck, Zap, type LucideIcon } from "lucide-react";
+import { BookOpen, CalendarCheck, Flame, SpellCheck, Video, Zap, type LucideIcon } from "lucide-react";
 
 /* ------------------------------------------------------------- the styles */
 
@@ -65,25 +62,10 @@ export function isDisplayBoard(style: BoardStyle): boolean {
 
 /* ------------------------------------------------------------- the levels */
 
-/**
- * Points to level. Each level costs 25 more than the last, so the first
- * arrive quickly and the curve stretches out. Kept identical to the
- * original board's helper — changing it here would silently relabel every
- * child in the school.
- */
-export function levelOf(points: number): { level: number; pct: number; toNext: number } {
-  const p = Math.max(0, points);
-  const level = Math.floor((-1 + Math.sqrt(1 + (8 * p) / 25)) / 2) + 1;
-  const prev = (25 * (level - 1) * level) / 2;
-  const next = (25 * level * (level + 1)) / 2;
-  const pct = next === prev ? 0 : Math.min(100, Math.max(0, ((p - prev) / (next - prev)) * 100));
-  return { level: Math.max(1, level), pct, toNext: Math.max(0, Math.ceil(next - p)) };
-}
-
 /* --------------------------------------------------------- the categories */
 
 export interface BoardCategory {
-  key: "homework" | "participation" | "reading_theory" | "vocabulary_quiz";
+  key: "homework" | "video" | "participation" | "streak" | "reading_theory" | "vocabulary_quiz";
   label: string;
   /** Short enough for a filter tab on a board. */
   short: string;
@@ -91,13 +73,17 @@ export interface BoardCategory {
 }
 
 /**
- * All four, in the order the awarding screens list them. The icons match
- * what the old board already used, so a child who learned "the book one
- * is homework" is not re-taught.
+ * The six tabs, as the server splits the ledger (points_category in
+ * 20261117120000). The original four keep their keys and icons, so a
+ * child who learned "the book one is homework" is not re-taught; video
+ * homework and attendance-streak bonuses now have tabs of their own
+ * (they used to sit inside Homework and Participation).
  */
 export const BOARD_CATEGORIES: BoardCategory[] = [
   { key: "homework", label: "Homework", short: "Book", icon: BookOpen },
-  { key: "participation", label: "Participation", short: "Bolt", icon: Zap },
+  { key: "video", label: "Video", short: "Video", icon: Video },
+  { key: "participation", label: "Class points", short: "Bolt", icon: Zap },
+  { key: "streak", label: "Streak", short: "Streak", icon: CalendarCheck },
   { key: "reading_theory", label: "Reading", short: "Flame", icon: Flame },
   // Not Sparkles: PodiumBoard already uses that to mark first place, and
   // two meanings for one glyph on the same board is how a child learns
@@ -122,7 +108,7 @@ export interface BoardRow {
   level: number;
   /** Progress through the current level, 0–100, for the avatar ring. */
   levelPct: number;
-  /** Per-category points, always all four, in BOARD_CATEGORIES order. */
+  /** Per-category points, every BOARD_CATEGORIES key. */
   categories: Record<BoardCategory["key"], number>;
   /** Points needed to reach third place. 0 when already on the podium. */
   toPodium: number;
@@ -130,16 +116,22 @@ export interface BoardRow {
   color: string;
   isMonitor?: boolean;
   isSelf?: boolean;
+  /** Joined the class after this period began. */
+  isNew?: boolean;
 }
 
 /* -------------------------------------------------------- the side panels */
 
 export interface BoardExtras {
-  /** Biggest points gain over the last seven days. */
+  /** Biggest points gain over the last seven days of the period. */
   climber?: { studentId: string; name: string; gain: number; color: string; initial: string } | null;
-  /** Longest run of consecutive days earning points. */
+  /**
+   * The longest current attendance streak: lessons in a row attended, the
+   * run the +50 bonus is paid on. `days` keeps its old name; it counts
+   * lessons. A family sees only their own child's.
+   */
   streak?: { studentId: string; name: string; days: number; color: string; initial: string } | null;
-  /** Top scorer in each category. Always derivable from the rows. */
+  /** Top scorer in each category, as the server worked it out. */
   champions: Array<{
     category: BoardCategory;
     studentId: string;
@@ -148,7 +140,7 @@ export interface BoardExtras {
     color: string;
     initial: string;
   }>;
-  /** False while the ledger query is still running or was not permitted. */
+  /** Kept for the boards' wording; the server always sends the panels now. */
   ledgerAvailable: boolean;
 }
 
@@ -168,6 +160,8 @@ export interface BoardViewProps {
   onReveal: () => void;
   /** False when the viewer prefers reduced motion or motion was turned off. */
   motion: boolean;
+  /** Tapping a child opens their points (analytics). Absent: rows are not buttons. */
+  onSelect?: (studentId: string) => void;
 }
 
 /* ------------------------------------------------------------- small helpers */

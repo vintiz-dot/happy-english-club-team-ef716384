@@ -3,6 +3,7 @@ import { TodayAgenda } from "@/components/admin/TodayAgenda";
 import { AdminAlerts } from "@/components/admin/AdminAlerts";
 import { LeaderboardResetControl } from "@/components/admin/LeaderboardResetControl";
 import { PointsResetControl } from "@/components/admin/PointsResetControl";
+import { PointsCentre } from "@/components/admin/PointsCentre";
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
 import { motion } from "framer-motion";
@@ -57,6 +58,16 @@ const OverviewTab = () => {
 
       <section>
         <SectionHeader
+          title="Points and leaderboards"
+          subtitle="The whole centre's board, every manual point change, and term dates."
+        />
+        <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:p-6">
+          <PointsCentre />
+        </div>
+      </section>
+
+      <section>
+        <SectionHeader
           title="Quick Actions"
           subtitle="Manage leaderboards and points."
         />
@@ -65,7 +76,7 @@ const OverviewTab = () => {
           <ControlPanel
             icon={Trophy}
             title="Leaderboard Control"
-            description="Archive and reset monthly rankings."
+            description="Save a month's final standings."
             tone="amber"
             delay={0.05}
           >

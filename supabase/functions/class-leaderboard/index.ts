@@ -51,10 +51,30 @@ Deno.serve(async (req) => {
     const coverFrom = asDate(-COVER_TRAILING_DAYS);
     const coverTo = asDate(COVER_UPCOMING_DAYS);
 
-    // Parse request body
-    const { classId, month } = await req.json();
-    if (!classId || !month) {
-      return new Response(JSON.stringify({ error: "classId and month are required" }), {
+    // Parse request body. `month` ("2026-10") is what every client sent
+    // until the period picker; `period` + `anchor` is the new shape.
+    const body = await req.json().catch(() => ({}));
+    const classId: string | undefined = body?.classId;
+    const month: string | undefined = typeof body?.month === "string" ? body.month : undefined;
+    const PERIODS = ["week", "month", "term", "all"];
+    const period: string = PERIODS.includes(body?.period) ? body.period : "month";
+    const anchor: string | null =
+      typeof body?.anchor === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.anchor)
+        ? body.anchor
+        : month && /^\d{4}-\d{2}$/.test(month) ? `${month}-01` : null;
+    // A real calendar date: "2026-02-31" passes the pattern but not Postgres.
+    const realDate = (d: string) => {
+      const t = new Date(`${d}T00:00:00Z`);
+      return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === d;
+    };
+    if (anchor && !realDate(anchor)) {
+      return new Response(JSON.stringify({ error: "anchor must be a real date (YYYY-MM-DD)" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!classId || (!month && !body?.period)) {
+      return new Response(JSON.stringify({ error: "classId and month (or period) are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -121,9 +141,9 @@ Deno.serve(async (req) => {
         family
           ? adminClient.from("enrollments")
               .select("id, student_id, end_date, students!inner(family_id)")
-              .eq("class_id", classId).eq("students.family_id", family.id).limit(1)
+              .eq("class_id", classId).eq("students.family_id", family.id).limit(20)
           : Promise.resolve({ data: null as any }),
-        studentIds.length
+        studentIds.length && month
           ? adminClient.from("student_points")
               .select("student_id, participation_points, homework_points, reading_theory_points, vocabulary_quiz_points, total_points")
               .eq("class_id", classId).eq("month", month).in("student_id", studentIds)
@@ -132,11 +152,14 @@ Deno.serve(async (req) => {
 
     // ----- Evaluate authorization (same precedence as before) -----
     let isAuthorized = false;
+    let isStaff = false;
     let currentStudentId: string | null = null;
+    // Every child of this viewer in the class: shown in full and marked "you".
+    const viewerIds: string[] = [];
 
     // Admins can see every class board (they are who opens a student's
     // profile). No student is "the viewer", so currentStudentId stays null.
-    if (isAdmin) isAuthorized = true;
+    if (isAdmin) { isAuthorized = true; isStaff = true; }
 
     if (!isAuthorized && teacher) {
       const cls = (classRes as any).data;
@@ -151,6 +174,7 @@ Deno.serve(async (req) => {
       if (!isAuthorized && (teacherSessionRes as any).data && (teacherSessionRes as any).data.length > 0) {
         isAuthorized = true;
       }
+      isStaff = isAuthorized;
     }
 
     if (!isAuthorized && userStudent) {
@@ -158,20 +182,96 @@ Deno.serve(async (req) => {
       const enr = (studentEnrollRes as any).data?.[0];
       if (enr && (!enr.end_date || new Date(enr.end_date) >= new Date())) {
         isAuthorized = true;
+        viewerIds.push(userStudent.id);
       }
     }
 
     if (!isAuthorized && family) {
-      const enr = (familyEnrollRes as any).data?.[0];
-      if (enr && (!enr.end_date || new Date(enr.end_date) >= new Date())) {
+      const current = ((familyEnrollRes as any).data ?? []).filter(
+        (enr: any) => !enr.end_date || new Date(enr.end_date) >= new Date(),
+      );
+      if (current.length > 0) {
         isAuthorized = true;
-        currentStudentId = enr.student_id;
+        currentStudentId = current[0].student_id;
+        for (const enr of current) if (!viewerIds.includes(enr.student_id)) viewerIds.push(enr.student_id);
       }
     }
 
     if (!isAuthorized) {
       return new Response(JSON.stringify({ error: "Not enrolled in this class" }), {
         status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ----- A family sees the class from when their child joined -----
+    // Children who left before then were never this child's classmates
+    // (S1: classmates are a name, an avatar and points - classmates).
+    if (!isStaff && viewerIds.length > 0) {
+      const [{ data: starts }, { data: per, error: perError }] = await Promise.all([
+        adminClient.from("enrollments").select("start_date")
+          .eq("class_id", classId).in("student_id", viewerIds),
+        adminClient.rpc("leaderboard_period", { p_kind: period, p_anchor: anchor }),
+      ]);
+      const firstDay = ((starts ?? []) as Array<{ start_date: string }>)
+        .map((r) => r.start_date).filter(Boolean).sort()[0];
+      const periodRow = Array.isArray(per) ? per[0] : per;
+      if (!perError && periodRow?.to_date && firstDay && periodRow.to_date < firstDay) {
+        return new Response(JSON.stringify({ error: "before_joined" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // ----- The board, from the one calculation (20261117120000) -----
+    // Ranks, ties, categories, level, streak and climber are decided by
+    // leaderboard_json, the same function the staff screens call. A family
+    // gets classmates as name, avatar and points only (p_full = false).
+    const { data: board, error: boardError } = await adminClient.rpc("leaderboard_json", {
+      p_class: classId,
+      p_period: period,
+      p_anchor: anchor,
+      p_viewers: viewerIds,
+      p_full: isStaff,
+    });
+    if (!boardError && board) {
+      const rows = (board as any).rows ?? [];
+      // `leaderboard` keeps the shape older clients read.
+      const leaderboard = rows.map((r: any) => ({
+        student_id: r.student_id,
+        student_name: r.name,
+        avatar_url: r.avatar_url ?? null,
+        participation_points: Number(r.categories?.class ?? 0) + Number(r.categories?.streak ?? 0),
+        homework_points: Number(r.categories?.homework ?? 0) + Number(r.categories?.video ?? 0),
+        reading_theory_points: Number(r.categories?.reading ?? 0),
+        vocabulary_quiz_points: Number(r.categories?.vocabulary ?? 0),
+        total_points: Number(r.total ?? 0),
+        is_current_user: !!r.is_self,
+        rank: r.rank,
+      }));
+      return new Response(JSON.stringify({ board, leaderboard, currentStudentId, engine: "server" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const missing = boardError && (boardError.code === "PGRST202" || boardError.code === "42883");
+    if (boardError && boardError.code === "P0002") {
+      return new Response(JSON.stringify({ error: "no_term", message: "No term covers that date" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (boardError && !missing) {
+      console.error("leaderboard_json failed:", boardError);
+      return new Response(JSON.stringify({ error: "Failed to build the board" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // The migration is not pasted yet: the month board, the old way.
+    if (!month) {
+      return new Response(JSON.stringify({ error: "period_unavailable" }), {
+        status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -235,7 +335,7 @@ Deno.serve(async (req) => {
         rank: index + 1,
       }));
 
-    return new Response(JSON.stringify({ leaderboard, currentStudentId }), {
+    return new Response(JSON.stringify({ leaderboard, currentStudentId, engine: "legacy" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
