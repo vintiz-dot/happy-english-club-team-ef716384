@@ -104,9 +104,9 @@ export function StyledClassBoard({
 
   // On the projector: the styled board, or every child at once.
   const [showAll, setShowAll] = useState(false);
-  const pointsLabel = activeCategory
+  const pointsLabel = (activeCategory
     ? `${BOARD_CATEGORIES.find((c) => c.key === activeCategory)?.label ?? ""} points`
-    : isPerLesson(serverBoard) ? "points per lesson" : "points";
+    : "points") + (isPerLesson(serverBoard) ? " per lesson" : "");
 
   const prefersReduced = useMemo(() => {
     if (typeof window === "undefined" || !window.matchMedia) return false;

@@ -141,7 +141,8 @@ export function toPodium(b: ServerBoard, r: ServerRow, active: ServerCategory | 
   if (mine != null && mine <= 3) return 0;
   const podium = (b.rows ?? []).filter((x) => { const k = shownRank(b, x, active); return k != null && k <= 3; })
     .map((x) => shownPoints(b, x, active));
-  const tenths = isPerLesson(b) && !active;
+  // A per-lesson board is per lesson on every tab (20261117140000).
+  const tenths = isPerLesson(b);
   const bar = podium.length >= 3 ? Math.min(...podium) : 0;
   const gap = bar - shownPoints(b, r, active);
   // A per-lesson board moves in tenths.

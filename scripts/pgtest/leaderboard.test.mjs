@@ -450,6 +450,36 @@ ok("a teacher of another class cannot approve", await refuses(U.otherTeacher, `S
 await as(U.teacher, () => q(`SELECT public.economy_process($1, 'rejected')`, [r2]));
 eq("a rejection moves nothing", [(await one(`SELECT status::text s FROM public.economy_transactions WHERE id=$1`, [r2])).s, await monthPts(Binh)], ["rejected", before2.m - 50]);
 
+
+console.log("re-check fixes (20261117140000)");
+{
+  // M-1: on a per-lesson board, a classmate's six category tabs add up to their
+  // points per lesson, never to a total that would give their lesson count.
+  const fam = (cat) => as("service", async () => (await one(
+    `SELECT public.leaderboard_json($1,'all',null,$2::uuid[],false,$3) AS b`, [cls, [An], cat])).b);
+  const plain = await fam(null);
+  let sum = 0;
+  for (const c of ["homework", "video", "class", "streak", "vocabulary", "reading"]) {
+    sum += Number(row(await fam(c), Binh).points ?? 0);
+  }
+  ok("per-lesson board: a classmate's category tabs add up to their per-lesson figure, not a total",
+    Math.abs(sum - Number(row(plain, Binh).points)) <= 0.6 && Math.abs(sum - Number(row(plain, Binh).points)) < 50,
+    `sum ${sum}, per lesson ${row(plain, Binh).points}`);
+  ok("and no classmate field on any tab is the total", !("total" in row(await fam("reading"), Binh)));
+  const champ = plain.champions.find((c) => c.category === "reading");
+  ok("category leaders on a per-lesson board are per lesson too", champ && Number(champ.points) < 100, JSON.stringify(champ));
+
+  // M-2: two requests of one child, each fine alone, together more than the month holds.
+  const left = await monthPts(Binh);
+  const half = Math.ceil(left * 0.6);
+  const a1 = await req(Binh, "convert_to_cash", -half, 1);
+  const a2 = await req(Binh, "convert_to_cash", -half, 1);
+  await as(U.teacher, () => q(`SELECT public.economy_process($1, 'approved')`, [a1]));
+  ok("the second of two requests that together overdraw the month is refused", await refuses(U.teacher, `SELECT public.economy_process($1, 'approved')`, [a2]));
+  ok("approvals for one child and month take turns (advisory lock in economy_process)",
+    /pg_advisory_xact_lock/.test((await one(`SELECT pg_get_functiondef('public.economy_process(uuid,text)'::regprocedure) AS d`)).d));
+  ok("the month never went below zero", (await monthPts(Binh)) >= 0);
+}
 // Pasting the files again (the owner pastes by hand) changes nothing.
 const ranksBefore = (await board(U.teacher)).rows.map((r) => [r.name, r.rank]);
 for (const f of MIGS) await db.exec(readFileSync(f, "utf8"));

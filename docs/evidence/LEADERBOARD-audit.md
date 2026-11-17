@@ -188,3 +188,10 @@ The three display styles show three on the podium and the rest two at a time. Ev
 ## 10. Every student on the reception TV (owner, 17 Nov 2026)
 
 `reception-feed` now also sends `everyone` (every child on today's register, ranked children first, then children with no points with no rank) and each class's `everyone`; `leaderboard` (top ten) and each class's `top` (top five) keep their old meaning, so the TV app installed before this change keeps working until it is reinstalled. The new TV app adds "Every Student" pages (30 to a page, three columns, with class and points) after the top-ten podium, and lists every child on each class board, carrying a long class on to a second board ("Movers 2 (2/2)"). ES5 checked with acorn; the demo feed gained made-up children to preview it.
+
+## 11. Re-check of 70cad9e0 (conductor): SHIP, two residuals, fixed
+
+Review: `docs/evidence/REVIEW-leaderboard-recheck.md`. Migration `20261117140000_leaderboard_recheck_fixes.sql`:
+
+- M-1 residual: on a per-lesson board (term, all time) every figure a family sees is per lesson, category tabs and category leaders included, and categories are ranked per lesson there; a classmate's six tabs now add up to their per-lesson figure, not a total. class-leaderboard's old-shape `total_points` is only ever a real total. Tests: "per-lesson board: a classmate's category tabs add up to their per-lesson figure", "category leaders on a per-lesson board are per lesson too", leaderboard-board "old-shape total_points is never a per-lesson figure".
+- M-2 residual: `economy_process` takes `pg_advisory_xact_lock` per child, class and month before the month check, so two different requests approved at once take turns. Tests: "the second of two requests that together overdraw the month is refused", "approvals ... take turns (advisory lock)".

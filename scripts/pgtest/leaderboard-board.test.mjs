@@ -110,6 +110,7 @@ console.log("edge functions (review N-1, N-5)");
   ok("class-leaderboard lets staff in by is_teacher_of_class (teaching assistants, cover) and not the teachers table",
     /rpc\("is_teacher_of_class"/.test(cl) && !/from\("teachers"\)/.test(cl));
   ok("class-leaderboard counts a second guardian's children", /secondary_user_id\.eq\./.test(cl));
+  ok("class-leaderboard's old-shape total_points is never a per-lesson figure", /total_points: Number\(r\.total \?\? 0\)/.test(cl));
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -172,7 +172,8 @@ Deno.serve(async (req) => {
         homework_points: Number(r.categories?.homework ?? 0) + Number(r.categories?.video ?? 0),
         reading_theory_points: Number(r.categories?.reading ?? 0),
         vocabulary_quiz_points: Number(r.categories?.vocabulary ?? 0),
-        total_points: Number(r.total ?? r.points ?? 0),
+        // A total only where the board sends one (never a per-lesson figure).
+        total_points: Number(r.total ?? 0),
         is_current_user: !!r.is_self,
         rank: r.rank,
       }));
