@@ -1,9 +1,10 @@
 // D-26: the transcript analysis writes staff-only DRAFTS; only a teacher's
 // approval publishes, and only the teacher's own choices.
 //
-//   node scripts/pgtest/run.mjs   (or this file with the three migrations)
+//   node scripts/pgtest/run.mjs   (or this file with the four migrations)
 //
-// Part 1 drives the REAL migration against an in-process Postgres:
+// Part 1 drives the REAL migrations against an in-process Postgres
+// (transcript-drafts.setup.mjs builds it and installs the first):
 //   20261111110000  the real is_teacher_of_class (TAs included),
 //   20261113140000  the staff policies production has on cefr_assessments
 //                   and student_error_log,
@@ -19,316 +20,18 @@
 //
 // Part 3 is the screen's reasoning (src/lib/transcriptReview.ts) and the
 // suggestion rule (supabase/functions/_lib/speaker-suggestion.ts).
-import { PGlite } from "@electric-sql/pglite";
 import { build, transform } from "esbuild";
 import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  repo, loadTs, loadReview, tally, ok, eq, db, q, one, FIX, UNPUB_MIG, mk, ADMIN, TEA, TEB, TA_ON, PARENT, KID, KIDB, NOROLE, tA, tB, taOn, CA, CB, F1, kid, KIKI, BAO_T, BAO_N, ANH, B1, as, approve, withdraw, draftLesson, ERR1, ERR2, L1, mTeacher, mKiki, mBao, mUnknown, count,
+} from "./transcript-drafts.setup.mjs";
 
-const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const MIGS = process.argv.slice(2);
-const TA_MIG = MIGS.find((f) => f.includes("20261111110000"));
-const STAFF_MIG = MIGS.find((f) => f.includes("20261113140000"));
-const FIX_MIG = MIGS.find((f) => f.includes("20261117100000"));
-if (!TA_MIG || !STAFF_MIG || !FIX_MIG) {
-  console.log("usage: transcript-drafts.test.mjs <20261111110000_...sql> <20261113140000_...sql> <20261117100000_transcript_analysis_drafts.sql>");
-  console.log("0 passed, 1 failed");
-  process.exit(1);
-}
-async function loadTs(rel) {
-  const out = resolve(tmpdir(), `td.${rel.replace(/[^a-z]/gi, "_")}.${process.pid}.mjs`);
-  writeFileSync(out, (await transform(readFileSync(resolve(repo, rel), "utf8"), { loader: "ts", format: "esm" })).code);
-  return import(pathToFileURL(out).href);
-}
-let reviewMod = null;
-async function loadReview() { return (reviewMod ??= await loadTs("src/lib/transcriptReview.ts")); }
-
-let pass = 0, fail = 0;
-const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${!c && x ? " :: " + String(typeof x === "string" ? x : JSON.stringify(x)).slice(0, 400) : ""}`); c ? pass++ : fail++; };
-const eq = (n, got, want) => ok(n, JSON.stringify(got) === JSON.stringify(want), `got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
-
-// =================================================================== part 1
-const PRELUDE = `
-  CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
-  CREATE SCHEMA auth; CREATE TABLE auth.users (id uuid PRIMARY KEY);
-  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
-    $f$ SELECT NULLIF(current_setting('test.uid', true), '')::uuid $f$;
-  GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
-  GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-  CREATE TYPE public.app_role AS ENUM ('admin','teacher','family','student');
-  CREATE TYPE public.session_status AS ENUM ('Scheduled','Held','Canceled');
-  CREATE TABLE public.user_roles (user_id uuid NOT NULL, role public.app_role NOT NULL, UNIQUE (user_id, role));
-  CREATE FUNCTION public.has_role(_user_id uuid, _role public.app_role) RETURNS boolean
-    LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
-    $f$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role) $f$;
-  CREATE TABLE public.teachers (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid, full_name text, is_active boolean NOT NULL DEFAULT true);
-  CREATE TABLE public.teaching_assistants (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid, is_active boolean DEFAULT true);
-  CREATE TABLE public.classes (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text, default_teacher_id uuid, schedule_template jsonb);
-  CREATE TABLE public.sessions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), class_id uuid NOT NULL REFERENCES public.classes(id), teacher_id uuid,
-    date date NOT NULL, start_time time NOT NULL DEFAULT '17:00', end_time time NOT NULL DEFAULT '18:00', status public.session_status NOT NULL DEFAULT 'Held');
-  CREATE TABLE public.homeworks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), class_id uuid);
-  CREATE TABLE public.session_participants (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL REFERENCES public.sessions(id),
-    participant_type text NOT NULL DEFAULT 'teaching_assistant', teaching_assistant_id uuid REFERENCES public.teaching_assistants(id),
-    teacher_id uuid, created_by uuid, UNIQUE (session_id, teaching_assistant_id));
-  CREATE TABLE public.families (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), primary_user_id uuid);
-  CREATE TABLE public.students (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), full_name text, family_id uuid, linked_user_id uuid, secondary_user_id uuid, date_of_birth date);
-  CREATE TABLE public.enrollments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid NOT NULL REFERENCES public.students(id),
-    class_id uuid NOT NULL REFERENCES public.classes(id), start_date date NOT NULL DEFAULT '2026-01-01', end_date date);
-  CREATE SCHEMA storage;
-  CREATE TABLE storage.objects (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), bucket_id text, name text);
-  ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-  CREATE FUNCTION storage.foldername(n text) RETURNS text[] LANGUAGE sql AS
-    $f$ SELECT (string_to_array(n,'/'))[1:array_length(string_to_array(n,'/'),1)-1] $f$;
-  -- 20261113140000 also guards these three; production's shape.
-  CREATE TABLE public.student_work (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, class_id uuid, uploaded_by uuid NOT NULL,
-    status text NOT NULL DEFAULT 'processing', external_url text, member_student_ids uuid[] NOT NULL DEFAULT '{}');
-  CREATE TABLE public.student_reports (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid NOT NULL, class_id uuid, generated_by uuid NOT NULL,
-    published boolean NOT NULL DEFAULT false);
-  CREATE TABLE public.resources (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), title text NOT NULL, external_url text, thumbnail_url text, uploaded_by uuid NOT NULL);
-
-  -- The transcript tables, as 20260712090000 / 20260717090000 / 20260718090000 /
-  -- 20260721090000 / 20260722090000 made them.
-  CREATE TABLE public.class_transcripts (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), class_id uuid NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
-    session_id uuid REFERENCES public.sessions(id) ON DELETE SET NULL, uploaded_by uuid NOT NULL, title text,
-    transcript_date date NOT NULL DEFAULT CURRENT_DATE, source_format text NOT NULL DEFAULT 'txt', raw_text text NOT NULL,
-    status text NOT NULL DEFAULT 'processing' CHECK (status IN ('processing', 'analyzed', 'failed')),
-    summary text, analysis jsonb, error_message text, analyzed_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(),
-    title_covered boolean, title_evidence jsonb, title_note text, lesson_context text, processing_stage text, processing_started_at timestamptz,
-    audio_storage_path text, audio_mime_type text);
-  CREATE TABLE public.transcript_speaker_metrics (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), transcript_id uuid NOT NULL REFERENCES public.class_transcripts(id) ON DELETE CASCADE,
-    class_id uuid NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE, student_id uuid REFERENCES public.students(id) ON DELETE SET NULL,
-    speaker_label text NOT NULL, is_teacher boolean NOT NULL DEFAULT false, utterance_count int NOT NULL DEFAULT 0, word_count int NOT NULL DEFAULT 0,
-    avg_utterance_length numeric, questions_asked int NOT NULL DEFAULT 0, participation_share numeric, vocabulary_richness numeric,
-    errors_count int NOT NULL DEFAULT 0, cefr_estimate text, highlights jsonb, created_at timestamptz NOT NULL DEFAULT now(),
-    contribution text, teacher_feedback text, recommendation text, edited_by_teacher boolean NOT NULL DEFAULT false);
-  CREATE TABLE public.student_error_log (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
-    class_id uuid REFERENCES public.classes(id) ON DELETE SET NULL,
-    source text NOT NULL DEFAULT 'live_flag' CHECK (source IN ('transcript', 'student_work', 'live_flag', 'homework', 'vocab')),
-    source_id uuid, error_text text NOT NULL, corrected_text text,
-    error_type text NOT NULL DEFAULT 'grammar' CHECK (error_type IN ('grammar', 'vocabulary', 'pronunciation', 'spelling', 'syntax', 'other')),
-    cefr_topic text, severity smallint NOT NULL DEFAULT 1 CHECK (severity BETWEEN 1 AND 3), notes text, resolved boolean NOT NULL DEFAULT false,
-    created_by uuid, created_at timestamptz NOT NULL DEFAULT now());
-  CREATE TABLE public.srs_cards (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
-    source text NOT NULL DEFAULT 'error', error_log_id uuid REFERENCES public.student_error_log(id) ON DELETE CASCADE,
-    front text NOT NULL, back text NOT NULL, hint text, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE (student_id, error_log_id));
-  CREATE TABLE public.cefr_assessments (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
-    class_id uuid REFERENCES public.classes(id) ON DELETE SET NULL, source text NOT NULL DEFAULT 'manual',
-    level text NOT NULL CHECK (level IN ('Pre-A1', 'A1', 'A1+', 'A2', 'A2+', 'B1', 'B1+', 'B2', 'B2+', 'C1', 'C2')),
-    level_score numeric NOT NULL, sub_scores jsonb, confidence numeric, evidence text, assessed_at date NOT NULL DEFAULT CURRENT_DATE,
-    created_by uuid, source_id uuid, created_at timestamptz NOT NULL DEFAULT now());
-  CREATE TABLE public.lesson_overviews (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), transcript_id uuid UNIQUE REFERENCES public.class_transcripts(id) ON DELETE CASCADE,
-    class_id uuid NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE, lesson_date date NOT NULL, title text, summary text,
-    materials jsonb NOT NULL DEFAULT '[]'::jsonb, homework text, created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now(), edited_by_teacher boolean NOT NULL DEFAULT false);
-  CREATE TABLE public.class_speaker_aliases (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), class_id uuid NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
-    speaker_label text NOT NULL, student_id uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE, created_by uuid,
-    created_at timestamptz NOT NULL DEFAULT now(), UNIQUE (class_id, speaker_label));
-`;
-const LIVE = `
-  CREATE FUNCTION public.can_view_student(student_id uuid, user_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $function$
-    SELECT EXISTS (SELECT 1 FROM public.students s WHERE s.id = student_id AND (s.linked_user_id = user_id OR s.secondary_user_id = user_id
-      OR EXISTS (SELECT 1 FROM public.families f WHERE f.id = s.family_id AND f.primary_user_id = user_id)));
-  $function$;
-  CREATE FUNCTION public.is_linked_student(_user_id uuid, _student_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $function$
-    SELECT EXISTS (SELECT 1 FROM public.students s WHERE s.id = _student_id AND s.linked_user_id = _user_id);
-  $function$;
-  CREATE FUNCTION public.can_view_student_in_class(_student_id uuid, _user_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $function$
-    SELECT EXISTS (SELECT 1 FROM public.enrollments e WHERE e.student_id = _student_id AND e.end_date IS NULL AND public.is_teacher_of_class(_user_id, e.class_id));
-  $function$;
-  CREATE FUNCTION public.is_enrolled_in_class(_user_id uuid, _class_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $function$
-    SELECT EXISTS (SELECT 1 FROM public.enrollments e JOIN public.students s ON s.id = e.student_id
-                    WHERE s.linked_user_id = _user_id AND e.class_id = _class_id AND (e.end_date IS NULL OR e.end_date >= CURRENT_DATE));
-  $function$;
-  DO $$ DECLARE t text; BEGIN
-    FOREACH t IN ARRAY ARRAY['students','enrollments','class_transcripts','transcript_speaker_metrics','student_error_log','srs_cards',
-                             'cefr_assessments','lesson_overviews','class_speaker_aliases','student_work','student_reports','resources'] LOOP
-      EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
-    END LOOP; END $$;
-  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
-  GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO authenticated, service_role;
-  CREATE POLICY students_own ON public.students FOR SELECT TO authenticated
-    USING (can_view_student(id, auth.uid()) OR can_view_student_in_class(id, auth.uid()) OR has_role(auth.uid(), 'admin'::app_role));
-  CREATE POLICY enrollments_read ON public.enrollments FOR SELECT TO authenticated USING (true);
-
-  -- 20260712090000
-  CREATE POLICY "admins_all_transcripts" ON public.class_transcripts FOR ALL TO authenticated
-    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
-  CREATE POLICY "teachers_manage_class_transcripts" ON public.class_transcripts FOR ALL TO authenticated
-    USING (public.is_teacher_of_class(auth.uid(), class_id)) WITH CHECK (public.is_teacher_of_class(auth.uid(), class_id));
-  CREATE POLICY "admins_all_tsm" ON public.transcript_speaker_metrics FOR ALL TO authenticated
-    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
-  CREATE POLICY "teachers_read_class_tsm" ON public.transcript_speaker_metrics FOR SELECT TO authenticated
-    USING (public.is_teacher_of_class(auth.uid(), class_id));
-  CREATE POLICY "students_read_own_tsm" ON public.transcript_speaker_metrics FOR SELECT TO authenticated
-    USING (student_id IS NOT NULL AND public.is_linked_student(auth.uid(), student_id));
-  CREATE POLICY "admins_all_error_log" ON public.student_error_log FOR ALL TO authenticated
-    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
-  CREATE POLICY "teachers_manage_class_error_log" ON public.student_error_log FOR ALL TO authenticated
-    USING (created_by = auth.uid() OR (class_id IS NOT NULL AND public.is_teacher_of_class(auth.uid(), class_id)))
-    WITH CHECK (created_by = auth.uid() OR (class_id IS NOT NULL AND public.is_teacher_of_class(auth.uid(), class_id)));
-  CREATE POLICY "students_read_own_errors" ON public.student_error_log FOR SELECT TO authenticated
-    USING (public.is_linked_student(auth.uid(), student_id));
-  CREATE POLICY "admins_all_srs" ON public.srs_cards FOR ALL TO authenticated
-    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
-  CREATE POLICY "students_manage_own_srs" ON public.srs_cards FOR ALL TO authenticated
-    USING (public.is_linked_student(auth.uid(), student_id)) WITH CHECK (public.is_linked_student(auth.uid(), student_id));
-  CREATE POLICY "admins_all_cefr" ON public.cefr_assessments FOR ALL TO authenticated
-    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
-  CREATE POLICY "teachers_manage_class_cefr" ON public.cefr_assessments FOR ALL TO authenticated
-    USING (created_by = auth.uid() OR (class_id IS NOT NULL AND public.is_teacher_of_class(auth.uid(), class_id)))
-    WITH CHECK (created_by = auth.uid() OR (class_id IS NOT NULL AND public.is_teacher_of_class(auth.uid(), class_id)));
-  CREATE POLICY "students_read_own_cefr" ON public.cefr_assessments FOR SELECT TO authenticated
-    USING (public.is_linked_student(auth.uid(), student_id));
-  -- 20260718090000
-  CREATE POLICY "admins_all_lesson_overviews" ON public.lesson_overviews FOR ALL TO authenticated
-    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
-  CREATE POLICY "teachers_manage_lesson_overviews" ON public.lesson_overviews FOR ALL TO authenticated
-    USING (public.is_teacher_of_class(auth.uid(), class_id)) WITH CHECK (public.is_teacher_of_class(auth.uid(), class_id));
-  CREATE POLICY "students_read_class_lesson_overviews" ON public.lesson_overviews FOR SELECT TO authenticated
-    USING (public.is_enrolled_in_class(auth.uid(), class_id));
-  -- 20260721090000
-  CREATE POLICY "admins_all_speaker_aliases" ON public.class_speaker_aliases FOR ALL TO authenticated
-    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
-  CREATE POLICY "teachers_manage_speaker_aliases" ON public.class_speaker_aliases FOR ALL TO authenticated
-    USING (public.is_teacher_of_class(auth.uid(), class_id)) WITH CHECK (public.is_teacher_of_class(auth.uid(), class_id));
-  -- 20260722090000
-  CREATE POLICY "teachers_update_class_tsm" ON public.transcript_speaker_metrics FOR UPDATE TO authenticated
-    USING (public.is_teacher_of_class(auth.uid(), class_id)) WITH CHECK (public.is_teacher_of_class(auth.uid(), class_id));
-  -- 20260730130000
-  CREATE POLICY "family_read_children_cefr" ON public.cefr_assessments FOR SELECT TO authenticated
-    USING (public.can_view_student(student_id, auth.uid()));
-  CREATE POLICY "family_read_children_lesson_overviews" ON public.lesson_overviews FOR SELECT TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.enrollments e JOIN public.students s ON s.id = e.student_id JOIN public.families f ON f.id = s.family_id
-                    WHERE e.class_id = lesson_overviews.class_id AND f.primary_user_id = auth.uid()));
-`;
-
-const db = new PGlite();
-const q = async (s, p) => (await db.query(s, p)).rows;
-const one = async (s, p) => (await q(s, p))[0];
-await db.exec(PRELUDE);
-await db.exec(readFileSync(TA_MIG, "utf8"));
-await db.exec(LIVE);
-await db.exec(readFileSync(STAFF_MIG, "utf8"));
-const FIX = readFileSync(FIX_MIG, "utf8");
-
-console.log("=== installing ===");
-{
-  // A policy the file has never seen on a draft table: refuse, change nothing.
-  await db.exec(`CREATE POLICY rogue_class_read ON public.transcript_speaker_metrics FOR SELECT TO authenticated USING (true)`);
-  let err = null; try { await db.exec(FIX); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
-  ok("an unknown policy on transcript_speaker_metrics: the paste refuses and names it", /Refusing to install.*rogue_class_read/.test(err ?? ""), err);
-  eq("  ...and installs nothing", (await one(`SELECT to_regclass('public.transcript_approvals') IS NULL AS none`)).none, true);
-  await db.exec(`DROP POLICY rogue_class_read ON public.transcript_speaker_metrics`);
-  await db.exec(`CREATE POLICY rogue_family ON public.class_transcripts FOR SELECT TO authenticated USING (true)`);
-  err = null; try { await db.exec(FIX); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
-  ok("an unknown policy on class_transcripts (it holds the draft overview): refused", /Refusing to install.*rogue_family/.test(err ?? ""), err);
-  await db.exec(`DROP POLICY rogue_family ON public.class_transcripts`);
-
-  err = null; try { await db.exec(FIX); } catch (e) { err = e.message; }
-  ok("the fix installs on production's state", err === null, err);
-  err = null; try { await db.exec(FIX); } catch (e) { err = e.message; }
-  ok("and pastes a second time", err === null, err);
-}
-{
-  const grants = await q(`SELECT table_name, grantee, string_agg(privilege_type, ',' ORDER BY privilege_type) AS p
-                            FROM information_schema.role_table_grants
-                           WHERE table_schema = 'public' AND table_name IN ('transcript_speaker_suggestions', 'transcript_approvals')
-                           GROUP BY 1, 2 ORDER BY 1, 2`);
-  const g = (t, r) => grants.find((x) => x.table_name === t && x.grantee === r)?.p ?? "";
-  for (const t of ["transcript_speaker_suggestions", "transcript_approvals"]) {
-    ok(`${t}: authenticated holds SELECT, INSERT, UPDATE, DELETE (explicit; 20260712023825 revoked the defaults)`, ["DELETE", "INSERT", "SELECT", "UPDATE"].every((p) => g(t, "authenticated").includes(p)), g(t, "authenticated"));
-    ok(`${t}: service_role holds all`, ["DELETE", "INSERT", "SELECT", "UPDATE"].every((p) => g(t, "service_role").includes(p)), g(t, "service_role"));
-    eq(`${t}: anon holds nothing`, g(t, "anon"), "");
-    const pol = await q(`SELECT policyname, cmd FROM pg_policies WHERE schemaname = 'public' AND tablename = $1`, [t]);
-    eq(`${t}: one policy, a staff SELECT (no family policy, no write policy)`, pol.map((p) => p.cmd), ["SELECT"]);
-  }
-  const fns = await q(`SELECT p.proname, has_function_privilege('anon', p.oid, 'EXECUTE') AS anon, has_function_privilege('authenticated', p.oid, 'EXECUTE') AS auth, p.prosecdef
-                         FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-                        WHERE n.nspname = 'public' AND p.proname IN ('approve_transcript_analysis', 'withdraw_transcript_approval') ORDER BY 1`);
-  eq("approve / withdraw: SECURITY DEFINER, callable by authenticated, not by anon", fns.map((f) => [f.proname, f.prosecdef, f.auth, f.anon]),
-    [["approve_transcript_analysis", true, true, false], ["withdraw_transcript_approval", true, true, false]]);
-}
-
-// ---------------------------------------------------------------- people
-const mk = async (role) => { const id = randomUUID(); await q(`INSERT INTO auth.users VALUES ($1)`, [id]); if (role) await q(`INSERT INTO public.user_roles VALUES ($1,$2)`, [id, role]); return id; };
-const ADMIN = await mk("admin");
-const TEA = await mk("teacher"), TEB = await mk("teacher"), TA_ON = await mk("teacher");
-const PARENT = await mk("family"), KID = await mk("student"), KIDB = await mk("student"), NOROLE = await mk(null);
-const tA = (await one(`INSERT INTO public.teachers (user_id, full_name) VALUES ($1, 'Ms Lan') RETURNING id`, [TEA])).id;
-const tB = (await one(`INSERT INTO public.teachers (user_id, full_name) VALUES ($1, 'Mr Minh') RETURNING id`, [TEB])).id;
-const taOn = (await one(`INSERT INTO public.teaching_assistants (user_id) VALUES ($1) RETURNING id`, [TA_ON])).id;
-const CA = (await one(`INSERT INTO public.classes (name, default_teacher_id) VALUES ('Class A', $1) RETURNING id`, [tA])).id;
-const CB = (await one(`INSERT INTO public.classes (name, default_teacher_id) VALUES ('Class B', $1) RETURNING id`, [tB])).id;
-await q(`INSERT INTO public.class_teaching_assistants (class_id, teaching_assistant_id) VALUES ($1,$2)`, [CA, taOn]);
-await q(`INSERT INTO public.sessions (class_id, teacher_id, date) VALUES ($1,$2,'2026-11-16')`, [CA, tA]);
-const F1 = (await one(`INSERT INTO public.families (primary_user_id) VALUES ($1) RETURNING id`, [PARENT])).id;
-const kid = async (name, cls, { family = null, linked = null } = {}) => {
-  const id = (await one(`INSERT INTO public.students (full_name, family_id, linked_user_id) VALUES ($1,$2,$3) RETURNING id`, [name, family, linked])).id;
-  if (cls) await q(`INSERT INTO public.enrollments (student_id, class_id) VALUES ($1,$2)`, [id, cls]);
-  return id;
-};
-// Pseudonyms, as the children use in class (owner's ruling). Two children share "Bao".
-const KIKI = await kid("Kiki", CA, { family: F1, linked: KID });
-const BAO_T = await kid("Bao Tran", CA, { family: F1 });
-const BAO_N = await kid("Bao Ngoc", CA);
-const ANH = await kid("Anh", CA);
-const B1 = await kid("Lily", CB, { linked: KIDB });
-
-async function as(uid, sql, params = [], { role = "authenticated", keep = false } = {}) {
-  await db.exec("BEGIN");
-  try {
-    await db.query(`SELECT set_config('test.uid', $1, true)`, [uid ?? ""]);
-    await db.exec(`SET LOCAL ROLE ${role}`);
-    const r = await db.query(sql, params);
-    await db.exec(keep ? "COMMIT" : "ROLLBACK");
-    return { rows: r.rows, n: r.affectedRows ?? r.rows.length, err: null };
-  } catch (e) { await db.exec("ROLLBACK"); return { rows: [], n: 0, err: e.message }; }
-}
-const approve = (uid, tr, assignments, { overview = null, replace = false, keep = true } = {}) =>
-  as(uid, `SELECT public.approve_transcript_analysis($1, $2::jsonb, $3::jsonb, $4) AS r`, [tr, JSON.stringify(assignments), overview ? JSON.stringify(overview) : null, replace], { keep });
-const withdraw = (uid, tr) => as(uid, `SELECT public.withdraw_transcript_approval($1) AS r`, [tr], { keep: true });
-
-// A drafted lesson, written as the analysis writes it: service role, no child linked.
-async function draftLesson(cls, { title = "Past simple", date = "2026-11-16" } = {}) {
-  const T = (await one(`INSERT INTO public.class_transcripts (class_id, uploaded_by, title, transcript_date, raw_text, status, summary, analysis, overview_draft, analyzed_at)
-       VALUES ($1,$2,$3,$4,'Teacher: hello','analyzed','We practised the past simple.', $5::jsonb, $6::jsonb, now()) RETURNING id`,
-    [cls, TEA, title, date, JSON.stringify({ drafted_for_review: true, materials: [{ name: "Book 2", pages: "14" }], homework: "Page 15" }),
-     JSON.stringify({ summary: "We practised the past simple.", materials: [{ name: "Book 2", pages: "14" }], homework: "Page 15", edited_by_teacher: false })])).id;
-  const metric = async (label, isTeacher = false) => {
-    const r = await as(null, `INSERT INTO public.transcript_speaker_metrics (transcript_id, class_id, speaker_label, is_teacher, word_count, cefr_estimate, teacher_feedback)
-                              VALUES ($1,$2,$3,$4,20,'A2','Well done') RETURNING id`, [T, cls, label, isTeacher], { role: "service_role", keep: true });
-    if (r.err) throw new Error(r.err);
-    return r.rows[0].id;
-  };
-  const sug = async (m, key, sid, conf, basis, errors = []) => {
-    const r = await as(null, `INSERT INTO public.transcript_speaker_suggestions (metric_id, transcript_id, class_id, speaker_key, suggested_student_id, confidence, basis, draft_errors, cefr_estimate, cefr_confidence, cefr_evidence)
-                              VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,'A2',0.6,'Used past forms with help')`, [m, T, cls, key, sid, conf, basis, JSON.stringify(errors)], { role: "service_role", keep: true });
-    if (r.err) throw new Error(r.err);
-  };
-  return { T, metric, sug };
-}
-const ERR1 = { error_text: "I go to the park yesterday", corrected_text: "I went to the park yesterday", error_type: "grammar", cefr_topic: "past simple" };
-const ERR2 = { error_text: "I goed", corrected_text: "I went", error_type: "grammar", cefr_topic: "irregular verbs" };
-
-const L1 = await draftLesson(CA);
-const mTeacher = await L1.metric("Teacher", true);
-const mKiki = await L1.metric("Kiki");
-const mBao = await L1.metric("Bao");
-const mUnknown = await L1.metric("Unknown");
-await L1.sug(mKiki, "kiki", KIKI, "high", "exact_name", [ERR1]);
-await L1.sug(mBao, "bao", null, "low", "name_contains", [ERR2]);
-await L1.sug(mUnknown, "unknown", null, "low", "none");
-
-const count = async (uid, table, where = "true", params = []) => (await as(uid, `SELECT count(*)::int AS n FROM public.${table} WHERE ${where}`, params)).rows[0]?.n ?? -1;
+// What the screen sends for a speaker given a child: the text the child's page shows (review M-4).
+const TXT = { contribution: "Told us about her weekend.", teacher_feedback: "Well done", recommendation: "Practise -ed", highlights: [] };
 
 console.log("=== a draft reaches no family and no child ===");
 for (const [label, who] of [["the family's primary login", PARENT], ["the child's own login (Kiki)", KID], ["another class's child", KIDB], ["an account with no role", NOROLE]]) {
@@ -370,7 +73,7 @@ console.log("=== only the approval links a speaker to a child ===");
 }
 
 console.log("=== who may approve ===");
-const KIKI_ONLY = [{ metric_id: mKiki, student_id: KIKI, cefr_level: "A2", errors: [ERR1] }];
+const KIKI_ONLY = [{ metric_id: mKiki, student_id: KIKI, cefr_level: "A2", errors: [ERR1], text: TXT }];
 for (const [label, who] of [["the family", PARENT], ["the child", KID], ["a teacher of another class", TEB], ["an account with no role", NOROLE], ["nobody signed in", null]]) {
   const r = await approve(who, L1.T, KIKI_ONLY, { keep: false });
   ok(`${label}: refused`, r.err !== null && /teacher of this class|Sign in/.test(r.err), r);
@@ -383,9 +86,9 @@ eq("  ...and nothing was published by any of them", [await count(ADMIN, "student
   ok("the teacher's own speech assigned to a child: refused", /is the teacher/.test(r2.err ?? ""), r2);
   const r3 = await approve(TEA, L1.T, [{ metric_id: randomUUID(), student_id: KIKI }], { keep: false });
   ok("a speaker from no / another lesson: refused", /not part of this lesson/.test(r3.err ?? ""), r3);
-  const r4 = await approve(TEA, L1.T, [{ metric_id: mKiki, student_id: KIKI, cefr_level: "Z9" }], { keep: false });
+  const r4 = await approve(TEA, L1.T, [{ metric_id: mKiki, student_id: KIKI, cefr_level: "Z9", text: TXT }], { keep: false });
   ok("a CEFR level the scale does not have: refused", /unknown CEFR level/.test(r4.err ?? ""), r4);
-  const r5 = await approve(TEA, L1.T, [{ metric_id: mKiki, student_id: KIKI }, { metric_id: mKiki, student_id: ANH }], { keep: false });
+  const r5 = await approve(TEA, L1.T, [{ metric_id: mKiki, student_id: KIKI, text: TXT }, { metric_id: mKiki, student_id: ANH, text: TXT }], { keep: false });
   ok("one speaker sent twice: refused", /listed twice/.test(r5.err ?? ""), r5);
 }
 
@@ -423,7 +126,7 @@ console.log("=== approve publishes the teacher's choices, exactly once ===");
   const ap = await one(`SELECT jsonb_array_length(history) AS h, array_length(error_log_ids, 1) AS e FROM public.transcript_approvals WHERE transcript_id = $1`, [L1.T]);
   eq("  the approval keeps its history (2 approvals) and lists the 1 error it wrote", [ap.h, ap.e], [2, 1]);
 
-  const changed = await approve(TEA, L1.T, [{ metric_id: mKiki, student_id: KIKI, cefr_level: null, errors: [] }, { metric_id: mBao, student_id: BAO_T, cefr_level: "A1", errors: [ERR2] }],
+  const changed = await approve(TEA, L1.T, [{ metric_id: mKiki, student_id: KIKI, cefr_level: null, errors: [], text: TXT }, { metric_id: mBao, student_id: BAO_T, cefr_level: "A1", errors: [ERR2], text: TXT }],
     { overview: { summary: "Teacher's own summary", materials: [], homework: null } });
   ok("the teacher changes their mind: Kiki without an error or level, Bao chosen by hand as Bao Tran", changed.err === null, changed);
   eq("  Kiki's earlier error, card and level are gone; Bao Tran has the one the teacher kept",
@@ -510,6 +213,338 @@ console.log("=== a lesson the OLD pipeline already published ===");
   const r = await approve(TEA, p.id, []);
   ok("a lesson still analysing cannot be approved", /not finished analysing/.test(r.err ?? ""), r);
 }
+
+// =================================================================== fix round 1
+// The review's findings (REVIEW-transcript.md), each with the safe behaviour.
+const metricRows = (T) => q(`SELECT id, speaker_label, is_teacher, student_id, cefr_estimate, contribution, teacher_feedback, recommendation, highlights, edited_by_teacher
+                               FROM public.transcript_speaker_metrics WHERE transcript_id = $1 ORDER BY speaker_label`, [T]);
+const sugRows = (T) => q(`SELECT metric_id, suggested_student_id, confidence, basis, labels_from_model, draft_errors, cefr_estimate
+                            FROM public.transcript_speaker_suggestions WHERE transcript_id = $1`, [T]);
+const aliasOf = async (label) => (await one(`SELECT student_id FROM public.class_speaker_aliases WHERE class_id = $1 AND speaker_label = $2`, [CA, label]))?.student_id ?? null;
+
+console.log("=== who may be given a speaker (N-2, N-3, N-4) ===");
+{
+  const L = await draftLesson(CA, { title: "Who", date: "2026-11-16" });
+  const mk1 = await L.metric("Kiki");
+  const mU = await L.metric("Unknown");
+  await L.sug(mk1, "kiki", KIKI, "high", "exact_name", [ERR1]);
+  const u = await approve(TEA, L.T, [{ metric_id: mU, student_id: ANH, text: TXT }], { keep: false });
+  ok("N-4: the mixed Unknown speaker cannot be given to a child", /Unknown/.test(u.err ?? ""), u);
+  const GONE = await kid("Old Pupil", null);
+  await q(`INSERT INTO public.enrollments (student_id, class_id, start_date, end_date) VALUES ($1,$2,'2025-01-01','2025-06-01')`, [GONE, CA]);
+  const g = await approve(TEA, L.T, [{ metric_id: mk1, student_id: GONE, text: TXT }], { keep: false });
+  ok("N-3: a child whose enrolment ended before the lesson is refused", /not in this class on the lesson/.test(g.err ?? ""), g);
+  const LATE = await kid("New Pupil", null);
+  await q(`INSERT INTO public.enrollments (student_id, class_id, start_date) VALUES ($1,$2,'2026-11-20')`, [LATE, CA]);
+  const lt = await approve(TEA, L.T, [{ metric_id: mk1, student_id: LATE, text: TXT }], { keep: false });
+  ok("N-3: a child who joined after the lesson is refused", /not in this class on the lesson/.test(lt.err ?? ""), lt);
+  const LEFT = await kid("Left Since", null);
+  await q(`INSERT INTO public.enrollments (student_id, class_id, start_date, end_date) VALUES ($1,$2,'2026-01-01','2026-11-16')`, [LEFT, CA]);
+  const lf = await approve(TEA, L.T, [{ metric_id: mk1, student_id: LEFT, text: TXT }], { keep: false });
+  ok("N-3: a child enrolled on the lesson's date (left since) is accepted", lf.err === null, lf);
+  // N-2: a class-A row inside a class-B lesson (only the owner can place it there now: N-1).
+  const LB = await draftLesson(CB, { title: "B lesson" });
+  await LB.metric("Lily");
+  await q(`UPDATE public.transcript_speaker_metrics SET transcript_id = $1 WHERE id = $2`, [LB.T, mk1]);
+  const x = await approve(TEB, LB.T, [{ metric_id: mk1, student_id: B1, text: TXT }], { keep: false });
+  ok("N-2: a row whose class is not the lesson's class is not part of the lesson", /not part of this lesson/.test(x.err ?? ""), x);
+  await q(`UPDATE public.transcript_speaker_metrics SET transcript_id = $1 WHERE id = $2`, [L.T, mk1]);
+}
+
+console.log("=== the approval publishes the text the teacher saw, and remembers what she kept (M-4, M-2) ===");
+{
+  const review = await loadReview();
+  const L = await draftLesson(CA, { title: "Text", date: "2026-11-16" });
+  const mk1 = await L.metric("Kiki");
+  await q(`UPDATE public.transcript_speaker_metrics SET contribution = 'AI: talked a lot', recommendation = 'AI: try more',
+             highlights = '["AI moment one","AI moment two"]'::jsonb WHERE id = $1`, [mk1]);
+  await L.sug(mk1, "kiki", KIKI, "high", "exact_name", [ERR1, ERR2]);
+  const no = await approve(TEA, L.T, [{ metric_id: mk1, student_id: KIKI, errors: [ERR1] }], { keep: false });
+  ok("M-4: an approval that does not send the text the child's page will show is refused", /send the text/.test(no.err ?? ""), no);
+  let mrows = await metricRows(L.T);
+  const sugs = await sugRows(L.T);
+  const c = review.initialChoices(mrows, sugs, null);
+  eq("M-4: the screen starts from the row's text, every highlight ticked",
+    [c[mk1].text.teacher_feedback, c[mk1].text.contribution, c[mk1].text.recommendation, c[mk1].text.keepHighlights], ["Well done", "AI: talked a lot", "AI: try more", [true, true]]);
+  c[mk1].keepErrors = [true, false];
+  c[mk1].text.teacher_feedback = "";
+  c[mk1].text.contribution = "Kiki told us about her weekend.";
+  c[mk1].text.keepHighlights = [false, true];
+  const a = await approve(TEA, L.T, review.buildAssignments(mrows, sugs, c));
+  ok("the teacher approves her edited choices", a.err === null, a);
+  const kidRow = (await as(KID, `SELECT contribution, teacher_feedback, recommendation, highlights FROM public.transcript_speaker_metrics WHERE transcript_id = $1`, [L.T])).rows[0];
+  eq("M-4: the child reads exactly what the teacher approved: her edit, no feedback, the kept recommendation and highlight",
+    kidRow, { contribution: "Kiki told us about her weekend.", teacher_feedback: null, recommendation: "AI: try more", highlights: ["AI moment two"] });
+  eq("  the row is marked teacher-edited (a re-analysis keeps her words)", (await one(`SELECT edited_by_teacher FROM public.transcript_speaker_metrics WHERE id = $1`, [mk1])).edited_by_teacher, true);
+  eq("  only the kept error is published", [await count(KID, "student_error_log", "source_id = $1", [L.T]), await count(KID, "srs_cards")], [1, 1]);
+  let ap = await one(`SELECT assignments, withdrawn_at FROM public.transcript_approvals WHERE transcript_id = $1`, [L.T]);
+  const entry = ap.assignments.find((x) => x.metric_id === mk1);
+  eq("M-2: the approval records the kept errors, and the text before and after",
+    [entry.kept_errors.map((e) => e.error_text), entry.draft_error_count, entry.text_before.teacher_feedback, entry.text.teacher_feedback], [[ERR1.error_text], 2, "Well done", null]);
+  mrows = await metricRows(L.T);
+  const c2 = review.initialChoices(mrows, sugs, ap);
+  eq("M-2: 'Approve again' starts with the dropped error UNticked", c2[mk1].keepErrors, [true, false]);
+  const again = await approve(TEA, L.T, review.buildAssignments(mrows, sugs, c2));
+  ok("approving again, unchanged", again.err === null, again);
+  eq("  still the one kept error; the dropped one is not republished",
+    [await count(ADMIN, "student_error_log", "source_id = $1", [L.T]), await count(ADMIN, "student_error_log", "source_id = $1 AND error_text = $2", [L.T, ERR2.error_text])], [1, 0]);
+  eq("  the dropped feedback stays dropped, the edit stays",
+    (await as(KID, `SELECT contribution, teacher_feedback FROM public.transcript_speaker_metrics WHERE transcript_id = $1`, [L.T])).rows[0], { contribution: "Kiki told us about her weekend.", teacher_feedback: null });
+  const w = await withdraw(TEA, L.T);
+  ok("withdrawn", w.err === null, w);
+  ap = await one(`SELECT assignments, withdrawn_at FROM public.transcript_approvals WHERE transcript_id = $1`, [L.T]);
+  eq("M-2: after a withdrawal the boxes still start from what she kept", review.initialChoices(await metricRows(L.T), sugs, ap)[mk1].keepErrors, [true, false]);
+}
+
+console.log("=== a withdrawn pick does not live on as a pre-selection (M-3) ===");
+{
+  const review = await loadReview();
+  const sug = await loadTs("supabase/functions/_lib/speaker-suggestion.ts");
+  await q(`INSERT INTO public.class_speaker_aliases (class_id, speaker_label, student_id, created_by) VALUES ($1,'bao',$2,$3)`, [CA, BAO_N, TEA]);
+  const L = await draftLesson(CA, { title: "Room", date: "2026-11-16" });
+  const mb = await L.metric("Bao");
+  await as(null, `INSERT INTO public.transcript_speaker_suggestions (metric_id, transcript_id, class_id, speaker_key, suggested_student_id, confidence, basis, labels_from_model)
+                  VALUES ($1,$2,$3,'bao',$4,'medium','teacher_alias',true)`, [mb, L.T, CA, BAO_N], { role: "service_role", keep: true });
+  eq("M-3: a saved label on a model-made label is NOT pre-selected", review.initialChoices(await metricRows(L.T), await sugRows(L.T))[mb].studentId, null);
+  const a = await approve(TEA, L.T, [{ metric_id: mb, student_id: BAO_T, text: TXT }]);
+  ok("the teacher picks Bao Tran instead and approves", a.err === null, a);
+  eq("  the label now points at Bao Tran", await aliasOf("bao"), BAO_T);
+  const aw = (await one(`SELECT alias_writes FROM public.transcript_approvals WHERE transcript_id = $1`, [L.T])).alias_writes;
+  eq("  the approval recorded the write and what it replaced", aw.map((x) => [x.speaker_label, x.existed, x.before, x.after]), [["bao", true, BAO_N, BAO_T]]);
+  const w = await withdraw(TEA, L.T);
+  eq("M-3: withdrawing puts the label back to what it was (Bao Ngoc)", [w.err, w.rows[0]?.r?.aliases_reverted, await aliasOf("bao")], [null, 1, BAO_N]);
+  eq("  and the approval lists no alias writes any more", (await one(`SELECT alias_writes FROM public.transcript_approvals WHERE transcript_id = $1`, [L.T])).alias_writes, []);
+
+  const L2 = await draftLesson(CA, { title: "Bee", date: "2026-11-16" });
+  const mbee = await L2.metric("Bee");
+  await L2.sug(mbee, "bee", null, "low", "none");
+  const a1 = await approve(TEA, L2.T, [{ metric_id: mbee, student_id: KIKI, text: TXT }]);
+  const a2 = await approve(TEA, L2.T, [{ metric_id: mbee, student_id: ANH, text: TXT }]);
+  ok("a new label approved as Kiki, then re-approved as Anh", a1.err === null && a2.err === null, [a1, a2]);
+  eq("  re-approving replaced the label (Anh), it did not stack", await aliasOf("bee"), ANH);
+  await withdraw(TEA, L2.T);
+  eq("M-3: withdrawing removes a label the approval created (not left at Kiki or Anh)", await aliasOf("bee"), null);
+  const a3 = await approve(TEA, L2.T, [{ metric_id: mbee, student_id: KIKI, text: TXT }]);
+  await q(`UPDATE public.class_speaker_aliases SET student_id = $1 WHERE class_id = $2 AND speaker_label = 'bee'`, [ANH, CA]);
+  await withdraw(TEA, L2.T);
+  eq("  a label somebody changed since the approval is left as they set it", [a3.err, await aliasOf("bee")], [null, ANH]);
+
+  const roster = [{ id: "kiki", full_name: "Kiki" }, { id: "baoT", full_name: "Bao Tran" }];
+  const fromModel = sug.suggestSpeaker("Bao Tran", roster, new Map([["bao tran", "baoT"]]), true);
+  eq("M-3: suggestSpeaker caps a saved label on a model-made label at medium", [fromModel.confidence, fromModel.basis], ["medium", "teacher_alias"]);
+  eq("M-3: preselects - saved label on a model label no; on a text label yes; the old pipeline's match no",
+    [review.preselects({ metric_id: "x", suggested_student_id: "baoT", confidence: "medium", basis: "teacher_alias", labels_from_model: true }),
+     review.preselects({ metric_id: "x", suggested_student_id: "baoT", confidence: "high", basis: "teacher_alias", labels_from_model: false }),
+     review.preselects({ metric_id: "x", suggested_student_id: "baoT", confidence: "medium", basis: "legacy_auto", labels_from_model: true }),
+     review.preselects({ metric_id: "x", suggested_student_id: "baoT", confidence: "medium", basis: "exact_name", labels_from_model: true })],
+    [false, true, false, true]);
+}
+
+console.log("=== the link guard and the approval oracle (N-1, N-5, N-6) ===");
+{
+  const L = await draftLesson(CA, { title: "Guard", date: "2026-11-16" });
+  const mk1 = await L.metric("Kiki");
+  await L.sug(mk1, "kiki", KIKI, "high", "exact_name", []);
+  const a = await approve(TEA, L.T, [{ metric_id: mk1, student_id: KIKI, text: TXT }]);
+  ok("setup: a lesson approved with Kiki", a.err === null, a);
+  const L2 = await draftLesson(CA, { title: "Other", date: "2026-11-17" });
+  const m2 = await L2.metric("Kiki");
+  const t1 = await as(TEA, `UPDATE public.transcript_speaker_metrics SET transcript_id = $1 WHERE id = $2`, [L2.T, mk1]);
+  ok("N-1: the class's teacher cannot move a linked row to another lesson", /stays with its own lesson/.test(t1.err ?? ""), t1);
+  const t2 = await as(null, `UPDATE public.transcript_speaker_metrics SET transcript_id = $1 WHERE id = $2`, [L2.T, mk1], { role: "service_role" });
+  ok("  nor can the service role", /stays with its own lesson/.test(t2.err ?? ""), t2);
+  const t3 = await as(TEA, `UPDATE public.transcript_speaker_metrics SET transcript_id = $1 WHERE id = $2`, [L.T, m2]);
+  ok("N-1: a draft row cannot be moved INTO an approved lesson", /stays with its own lesson/.test(t3.err ?? ""), t3);
+  const t4 = await as(ADMIN, `UPDATE public.transcript_speaker_metrics SET class_id = $1 WHERE id = $2`, [CB, m2]);
+  ok("N-1: nor into another class (even by an admin)", /stays with its own lesson/.test(t4.err ?? ""), t4);
+  const t5 = await as(TEA, `UPDATE public.transcript_speaker_metrics SET contribution = 'Lovely' WHERE id = $1`, [mk1]);
+  ok("  the teacher can still correct the text of a row", t5.err === null && t5.n === 1, t5);
+  // N-5: a linked row on a lesson with no approval (as the old pipeline left them) cannot be deleted by a re-analysis.
+  const L3 = await draftLesson(CA, { title: "Old linked", date: "2026-11-15" });
+  const m3 = (await one(`INSERT INTO public.transcript_speaker_metrics (transcript_id, class_id, speaker_label, student_id) VALUES ($1,$2,'Kiki',$3) RETURNING id`, [L3.T, CA, KIKI])).id;
+  const d = await as(null, `DELETE FROM public.transcript_speaker_metrics WHERE transcript_id = $1`, [L3.T], { role: "service_role" });
+  ok("N-5: the analysis (service role) cannot delete a row linked to a child", /linked to a child/.test(d.err ?? ""), d);
+  await q(`DELETE FROM public.transcript_speaker_metrics WHERE id = $1`, [m3]);
+  const oracle = async (who, role = "authenticated") => (await as(who, `SELECT public.transcript_approval_active($1) AS a`, [L.T], { role })).rows[0]?.a ?? null;
+  eq("N-6: transcript_approval_active answers false to a family, a child, a role-less login and another class's teacher",
+    [await oracle(PARENT), await oracle(KID), await oracle(NOROLE), await oracle(TEB)], [false, false, false, false]);
+  eq("  and true to the class's teacher, an admin and the service role", [await oracle(TEA), await oracle(ADMIN), await oracle(null, "service_role")], [true, true, true]);
+  const an = await as(null, `SELECT public.transcript_approval_active($1) AS a`, [L.T], { role: "anon" });
+  ok("  anon cannot call it", an.err !== null, an);
+  await withdraw(TEA, L.T);
+}
+
+console.log("=== taking back what the old pipeline published (M-1, 20261117100100) ===");
+{
+  const UNPUB = readFileSync(UNPUB_MIG, "utf8");
+  const review = await loadReview();
+  const legacyLesson = async (title, { edited = false, overview = true } = {}) => {
+    const T = (await one(`INSERT INTO public.class_transcripts (class_id, uploaded_by, title, transcript_date, raw_text, status, summary, analysis, analyzed_at, source_format)
+                          VALUES ($1,$2,$3,'2026-10-01','x','analyzed','Old summary','{"materials":[]}'::jsonb, now(), 'audio') RETURNING id`, [CA, TEA, title])).id;
+    if (overview) {
+      await q(`INSERT INTO public.lesson_overviews (transcript_id, class_id, lesson_date, summary, homework, materials, edited_by_teacher)
+               VALUES ($1,$2,'2026-10-01',$3,'p.5','[{"name":"Book","pages":"3"}]'::jsonb,$4)`, [T, CA, edited ? "The teacher's own summary" : "AI summary", edited]);
+    }
+    return T;
+  };
+  // As the old pipeline wrote them: the owner's writes, no created_by.
+  const linked = async (T, label, sid, isTeacher = false) => (await one(`INSERT INTO public.transcript_speaker_metrics
+      (transcript_id, class_id, speaker_label, student_id, is_teacher, word_count, cefr_estimate, contribution, teacher_feedback)
+      VALUES ($1,$2,$3,$4,$5,30,'A2','AI contribution','AI feedback') RETURNING id`, [T, CA, label, sid, isTeacher])).id;
+  const oldErr = async (T, sid, e, at, by = null, source = "transcript") => {
+    const id = (await one(`INSERT INTO public.student_error_log (student_id, class_id, source, source_id, error_text, corrected_text, error_type, cefr_topic, created_by, created_at)
+                           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`, [sid, CA, source, T, e.error_text, e.corrected_text, e.error_type, e.cefr_topic, by, at])).id;
+    await q(`INSERT INTO public.srs_cards (student_id, error_log_id, front, back) VALUES ($1,$2,'f','b')`, [sid, id]);
+    return id;
+  };
+  const oldCefr = (T, sid, level, at, by = null, source = "transcript") =>
+    q(`INSERT INTO public.cefr_assessments (student_id, class_id, source, level, level_score, confidence, evidence, source_id, created_by, created_at)
+       VALUES ($1,$2,$3,$4,1,0.5,'old evidence',$5,$6,$7)`, [sid, CA, source, level, T, by, at]);
+
+  const LA = await legacyLesson("Legacy A");
+  const ma1 = await linked(LA, "Kiki", KIKI);
+  const ma2 = await linked(LA, "Bao", BAO_T);          // the old matcher's guess between two Baos
+  await linked(LA, "Teacher", null, true);
+  await oldErr(LA, KIKI, ERR1, "2026-10-01T10:00:00Z");
+  await oldErr(LA, KIKI, ERR2, "2026-10-01T10:00:01Z");
+  await oldErr(LA, KIKI, ERR1, "2026-10-02T10:00:00Z");  // a re-analysis wrote it again
+  await oldErr(LA, BAO_T, ERR2, "2026-10-01T10:00:02Z");
+  await oldCefr(LA, KIKI, "A1", "2026-10-01T10:00:00Z");
+  await oldCefr(LA, KIKI, "A2", "2026-10-02T10:00:00Z");
+  await oldCefr(LA, BAO_T, "A1", "2026-10-01T10:00:00Z");
+  const LB2 = await legacyLesson("Legacy B", { edited: true });
+  await linked(LB2, "Anh", ANH);
+  await oldCefr(LB2, ANH, "B1", "2026-10-01T10:00:00Z");
+  await q(`INSERT INTO public.class_speaker_aliases (class_id, speaker_label, student_id, created_by) VALUES ($1,'anh',$2,$3) ON CONFLICT (class_id, speaker_label) DO UPDATE SET student_id = EXCLUDED.student_id`, [CA, ANH, TEA]);
+  // Made by a person, about the same lessons: must stay exactly as they are.
+  const handErr = await oldErr(LB2, ANH, { error_text: "teacher's own", corrected_text: "fixed", error_type: "grammar", cefr_topic: null }, "2026-10-03T10:00:00Z", TEA);
+  await oldCefr(LB2, ANH, "A2", "2026-10-03T10:00:00Z", TEA);
+  const LC = await legacyLesson("Legacy C", { edited: true });   // only the teacher's overview
+  // Other features' rows (no created_by on some): must stay too.
+  await oldErr(randomUUID(), KIKI, { error_text: "work error", corrected_text: "x", error_type: "grammar", cefr_topic: null }, "2026-10-01T10:00:00Z", null, "student_work");
+  await oldErr(randomUUID(), KIKI, { error_text: "video error", corrected_text: "x", error_type: "grammar", cefr_topic: null }, "2026-10-01T10:00:00Z", TEA, "homework");
+  await oldCefr(randomUUID(), KIKI, "A1", "2026-10-01T10:00:00Z", null, "ai_report");
+
+  const OURS = [LA, LB2, LC];
+  const snapshotOthers = async () => ({
+    err: (await q(`SELECT id FROM public.student_error_log WHERE NOT (source = 'transcript' AND source_id = ANY ($1::uuid[]) AND created_by IS NULL) ORDER BY id`, [OURS])).map((r) => r.id).join(),
+    cards: (await q(`SELECT s.id FROM public.srs_cards s JOIN public.student_error_log e ON e.id = s.error_log_id WHERE NOT (e.source = 'transcript' AND e.source_id = ANY ($1::uuid[]) AND e.created_by IS NULL) ORDER BY s.id`, [OURS])).map((r) => r.id).join(),
+    cefr: (await q(`SELECT id FROM public.cefr_assessments WHERE NOT (source = 'transcript' AND source_id = ANY ($1::uuid[]) AND created_by IS NULL) ORDER BY id`, [OURS])).map((r) => r.id).join(),
+    ov: (await q(`SELECT id, summary FROM public.lesson_overviews WHERE NOT (transcript_id = ANY ($1::uuid[])) OR edited_by_teacher ORDER BY id`, [OURS])).map((r) => r.id + r.summary).join(),
+    links: (await q(`SELECT id, student_id FROM public.transcript_speaker_metrics WHERE student_id IS NOT NULL AND NOT (transcript_id = ANY ($1::uuid[])) ORDER BY id`, [OURS])).map((r) => r.id + r.student_id).join(),
+    approvals: (await q(`SELECT transcript_id, error_log_ids, cefr_ids, overview_id FROM public.transcript_approvals ORDER BY transcript_id`)).map((r) => JSON.stringify(r)).join(),
+  });
+  // A standing approval elsewhere must not be touched.
+  const LK = await draftLesson(CA, { title: "Approved elsewhere", date: "2026-11-16" });
+  const mK = await LK.metric("Kiki");
+  await LK.sug(mK, "kiki", KIKI, "high", "exact_name", [ERR1]);
+  ok("setup: a lesson approved through the new step", (await approve(TEA, LK.T, [{ metric_id: mK, student_id: KIKI, cefr_level: "A2", errors: [ERR1], text: TXT }])).err === null);
+  const before = await snapshotOthers();
+  eq("before: Kiki's family and login read the old pipeline's rows (the defect)",
+    [await count(KID, "student_error_log", "source_id = $1", [LA]), await count(PARENT, "cefr_assessments", "source_id = $1", [LA]), await count(KID, "transcript_speaker_metrics", "transcript_id = $1", [LA]),
+     await count(PARENT, "lesson_overviews", "transcript_id = $1", [LA])], [3, 3, 1, 1]);
+
+  // Preflight: fails closed.
+  await db.exec(`ALTER TABLE public.transcript_speaker_metrics DISABLE TRIGGER transcript_metrics_link_guard`);
+  let err = null; try { await db.exec(UNPUB); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
+  ok("preflight: without this round's 20261117100000 (the guard) it refuses", /paste 20261117100000/.test(err ?? ""), err);
+  await db.exec(`ALTER TABLE public.transcript_speaker_metrics ENABLE TRIGGER transcript_metrics_link_guard`);
+  const bad = await linked(LA, "Unknown", BAO_N);
+  err = null; try { await db.exec(UNPUB); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
+  ok("preflight: a linked 'Unknown' speaker it does not expect - refuses", /teacher or the "Unknown"/.test(err ?? ""), err);
+  eq("  ...and nothing moved", [await count(ADMIN, "transcript_speaker_metrics", "transcript_id = $1 AND student_id IS NOT NULL", [LA]), await count(ADMIN, "student_error_log", "source_id = $1", [LA]),
+    (await one(`SELECT to_regclass('public.transcript_legacy_holds') IS NULL AS none`)).none], [3, 4, true]);
+  await q(`DELETE FROM public.transcript_speaker_metrics WHERE id = $1`, [bad]);
+  const orphan = await oldErr(LA, ANH, ERR1, "2026-10-01T10:00:00Z");
+  err = null; try { await db.exec(UNPUB); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
+  ok("preflight: a published error of a child no speaker of that lesson is linked to - refuses", /belong to no linked speaker/.test(err ?? ""), err);
+  await q(`DELETE FROM public.student_error_log WHERE id = $1`, [orphan]);
+
+  err = null; let res = null;
+  try { res = await db.exec(UNPUB); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
+  ok("the take-back runs", err === null, err);
+  const summary = res?.find((r) => r.rows?.[0] && "lessons" in r.rows[0])?.rows?.[0];
+  eq("  its counts: 3 lessons, 3 links for 3 children, 4 errors, 4 cards, 4 CEFR points taken down; 1 overview taken down, 2 teacher overviews kept",
+    summary && [summary.lessons, summary.metric_links_unlinked, summary.children, summary.error_rows_removed, summary.cards_removed, summary.cefr_removed, summary.overviews_removed, summary.overviews_kept].map(Number),
+    [3, 3, 3, 4, 4, 4, 1, 2]);
+
+  eq("Kiki's login and family read nothing of the old lesson now",
+    [await count(KID, "student_error_log", "source_id = $1", [LA]), (await one(`SELECT count(*)::int AS n FROM public.srs_cards s WHERE s.error_log_id IN (SELECT id FROM public.student_error_log WHERE source_id = $1)`, [LA])).n, await count(PARENT, "cefr_assessments", "source_id = $1", [LA]),
+     await count(KID, "transcript_speaker_metrics", "transcript_id = $1", [LA]), await count(PARENT, "lesson_overviews", "transcript_id = $1", [LA])],
+    [0, 0, 0, 0, 0]);
+  eq("  no row of these lessons is linked to a child", await count(ADMIN, "transcript_speaker_metrics", "transcript_id = ANY ($1::uuid[]) AND student_id IS NOT NULL", [OURS]), 0);
+  eq("every row a person or another feature made is exactly as it was (ids, overviews' text, links, approvals)", await snapshotOthers(), before);
+  eq("  the teacher's own error and level on Legacy B are still published", [await count(ADMIN, "student_error_log", "id = $1", [handErr]), await count(ADMIN, "cefr_assessments", "source_id = $1 AND created_by IS NOT NULL", [LB2])], [1, 1]);
+  eq("  the two teacher-edited overviews are still published, unchanged", (await q(`SELECT summary FROM public.lesson_overviews WHERE transcript_id = ANY ($1::uuid[]) ORDER BY summary`, [OURS])).map((r) => r.summary),
+    ["The teacher's own summary", "The teacher's own summary"]);
+
+  const holds = await q(`SELECT h.transcript_id, x->>'table' AS t, count(*)::int AS n FROM public.transcript_legacy_holds h, jsonb_array_elements(h.held_rows) x GROUP BY 1, 2 ORDER BY 1, 2`);
+  const held = (T) => Object.fromEntries(holds.filter((h) => h.transcript_id === T).map((h) => [h.t, h.n]));
+  eq("every row taken down was copied, whole, first (Legacy A)", held(LA), { cefr_assessments: 3, lesson_overviews: 1, srs_cards: 4, student_error_log: 4, transcript_speaker_metrics: 2 });
+  eq("  (Legacy B: its link, its pipeline CEFR point, and its kept overview on record)", held(LB2), { cefr_assessments: 1, lesson_overviews: 1, transcript_speaker_metrics: 1 });
+  eq("  (Legacy C: the kept teacher overview on record)", held(LC), { lesson_overviews: 1 });
+  const fullCopy = (await one(`SELECT x->'row' AS r FROM public.transcript_legacy_holds h, jsonb_array_elements(h.held_rows) x WHERE h.transcript_id = $1 AND x->>'table' = 'transcript_speaker_metrics' AND x->'row'->>'speaker_label' = 'Bao'`, [LA])).r;
+  eq("  a held metric row keeps its old child and its text", [fullCopy.student_id, fullCopy.teacher_feedback], [BAO_T, "AI feedback"]);
+  eq("the holding table: staff of the class only", [await count(PARENT, "transcript_legacy_holds"), await count(KID, "transcript_legacy_holds"), await count(NOROLE, "transcript_legacy_holds"),
+    await count(TEB, "transcript_legacy_holds"), await count(TEA, "transcript_legacy_holds"), await count(ADMIN, "transcript_legacy_holds")], [0, 0, 0, 0, 3, 3]);
+  const pol = await q(`SELECT cmd FROM pg_policies WHERE schemaname = 'public' AND tablename = 'transcript_legacy_holds'`);
+  eq("  one SELECT policy, no write policy", pol.map((p) => p.cmd), ["SELECT"]);
+
+  const sA = Object.fromEntries((await sugRows(LA)).map((s) => [s.metric_id, s]));
+  // Kiki: the standing approval above saved the label "kiki" for her, so the basis says so; Bao Tran is the old guess.
+  eq("the old link is kept as a suggestion only: Kiki (a label the teacher saved) and Bao Tran ('legacy_auto'), medium, labels treated as model-made",
+    [[sA[ma1]?.suggested_student_id, sA[ma1]?.confidence, sA[ma1]?.basis, sA[ma1]?.labels_from_model], [sA[ma2]?.suggested_student_id, sA[ma2]?.confidence, sA[ma2]?.basis]],
+    [[KIKI, "medium", "teacher_alias", true], [BAO_T, "medium", "legacy_auto"]]);
+  eq("  Kiki's drafted errors are her published ones, de-duplicated, in order; her level the latest point",
+    [sA[ma1]?.draft_errors.map((e) => e.error_text), sA[ma1]?.cefr_estimate], [[ERR1.error_text, ERR2.error_text], "A2"]);
+  const sB = await sugRows(LB2);
+  eq("  a child the teacher saved for that label (Anh) is 'teacher_alias'", sB.map((s) => [s.suggested_student_id, s.basis]), [[ANH, "teacher_alias"]]);
+  const choices = review.initialChoices(await metricRows(LA), await sugRows(LA));
+  eq("the screen pre-selects NOBODY from the old pipeline's match", Object.values(choices).map((c) => c.studentId), [null, null]);
+  const tr = Object.fromEntries((await q(`SELECT id, overview_draft, analysis, status FROM public.class_transcripts WHERE id = ANY ($1::uuid[])`, [OURS])).map((t) => [t.id, t]));
+  eq("each lesson is a draft for the panel (no re-analysis)", OURS.map((T) => review.reviewState(tr[T], null)), ["draft", "draft", "draft"]);
+  eq("the draft overview: the AI one stays AI; a teacher's own text stays the teacher's (N-9)",
+    [[tr[LA].overview_draft.summary, tr[LA].overview_draft.edited_by_teacher], [tr[LB2].overview_draft.summary, tr[LB2].overview_draft.edited_by_teacher], [tr[LC].overview_draft.summary, tr[LC].overview_draft.edited_by_teacher]],
+    [["AI summary", false], ["The teacher's own summary", true], ["The teacher's own summary", true]]);
+
+  const holdsBefore = JSON.stringify(await q(`SELECT transcript_id, held_rows FROM public.transcript_legacy_holds ORDER BY 1`));
+  const sugsBefore = await count(ADMIN, "transcript_speaker_suggestions");
+  err = null; try { res = await db.exec(UNPUB); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
+  const s2 = res?.find((r) => r.rows?.[0] && "lessons" in r.rows[0])?.rows?.[0];
+  ok("pasted a second time: runs, finds nothing", err === null && Number(s2?.lessons) === 0, [err, s2]);
+  eq("  holds nothing more, drafts nothing more, changes nothing else",
+    [JSON.stringify(await q(`SELECT transcript_id, held_rows FROM public.transcript_legacy_holds ORDER BY 1`)) === holdsBefore, await count(ADMIN, "transcript_speaker_suggestions"), JSON.stringify(await snapshotOthers()) === JSON.stringify(before)],
+    [true, sugsBefore, true]);
+
+  // The teacher approves, through the panel, with no paid re-analysis.
+  const mrows = await metricRows(LA);
+  const sugs = await sugRows(LA);
+  const c = review.initialChoices(mrows, sugs);
+  c[ma1].studentId = KIKI;                    // the teacher confirms Kiki; leaves "Bao" unknown
+  const ap = await approve(TEA, LA, review.buildAssignments(mrows, sugs, c));
+  ok("Legacy A: approved WITHOUT the replace step (nothing of the old pipeline is left published)", ap.err === null, ap);
+  eq("  Kiki gets what the teacher kept; Bao Tran (the old guess) gets nothing",
+    [await count(KID, "student_error_log", "source_id = $1", [LA]), await count(PARENT, "cefr_assessments", "source_id = $1 AND student_id = $2", [LA, KIKI]),
+     await count(ADMIN, "student_error_log", "source_id = $1 AND student_id = $2", [LA, BAO_T]), await count(ADMIN, "transcript_speaker_metrics", "transcript_id = $1 AND student_id = $2", [LA, BAO_T])], [2, 1, 0, 0]);
+  const apC = await approve(TEA, LC, []);
+  ok("Legacy C (the teacher's overview only): approved without the replace step", apC.err === null, apC);
+  eq("  the published overview is still the teacher's text, not the AI's", (await one(`SELECT summary FROM public.lesson_overviews WHERE transcript_id = $1`, [LC])).summary, "The teacher's own summary");
+  const apB = await approve(TEA, LB2, [], { keep: false });
+  ok("Legacy B: the teacher's OWN error and level from the old screen are not silently replaced - the replace step is asked (2 items)",
+    /earlier automatic analysis \(2 item/.test(apB.err ?? ""), apB);
+
+  // Rows the old function wrote after the first paste (deploy order not kept) are taken back by pasting again.
+  const LD = await legacyLesson("Legacy D");
+  const mD = await linked(LD, "Bảo Ngọc", BAO_N);
+  err = null; try { res = await db.exec(UNPUB); } catch (e) { err = e.message; await db.exec("ROLLBACK").catch(() => {}); }
+  const s3 = res?.find((r) => r.rows?.[0] && "lessons" in r.rows[0])?.rows?.[0];
+  ok("a later paste takes back a lesson published after the first one (1 lesson, 1 link)", err === null && Number(s3?.lessons) === 1 && Number(s3?.metric_links_unlinked) === 1, [err, s3]);
+  const sugLib = await loadTs("supabase/functions/_lib/speaker-suggestion.ts");
+  eq("  its speaker key is the one the function computes (diacritics stripped), so the approval saves a usable label",
+    (await one(`SELECT speaker_key FROM public.transcript_speaker_suggestions WHERE metric_id = $1`, [mD])).speaker_key, sugLib.speakerKey("Bảo Ngọc"));
+  eq("  Legacy A, approved meanwhile, was left alone", [await count(ADMIN, "student_error_log", "source_id = $1", [LA]), await count(ADMIN, "transcript_approvals", "transcript_id = $1 AND withdrawn_at IS NULL", [LA])], [2, 1]);
+}
+
 
 // =================================================================== part 2
 console.log("=== the function: what it writes, and what it asks the model ===");
@@ -698,6 +733,7 @@ ok("the real analyze-transcript loads and registers a handler", typeof fn === "f
   resetWorld();
   const r = await call(fn, { token: tokenOf(TEA), body: { transcript_id: T_PASTE } });
   ok("the class's teacher: analysed (200)", r.status === 200 && r.json?.success === true, r);
+  eq("N-8: a synchronous run marks the lesson 'processing' before anything else (no approving the old draft mid-run)", r.writes[0], "update:class_transcripts");
   ok("  the model was asked (vendor calls made)", r.vendor.length >= 3, r.vendor.length);
   eq("  NOTHING was written to a table a child or family reads", r.writes.filter((w) => PUBLISHED.some((t) => w.endsWith(`:${t}`))), []);
   const metrics = world.tables.transcript_speaker_metrics;
@@ -775,6 +811,13 @@ ok("the real analyze-transcript loads and registers a handler", typeof fn === "f
 }
 {
   resetWorld();
+  const tr = world.tables.class_transcripts.find((t) => t.id === T_PASTE);
+  tr.overview_draft = { summary: "The teacher's own summary", materials: [], homework: null, edited_by_teacher: true, from_published: true };
+  const r = await call(fn, { token: tokenOf(TEA), body: { transcript_id: T_PASTE } });
+  eq("N-9: a re-analysis keeps a draft overview that is the teacher's text (as 20261117100100 seeds it)", [r.status, tr.overview_draft?.summary], [200, "The teacher's own summary"]);
+}
+{
+  resetWorld();
   const src = readFileSync(resolve(repo, "supabase", "functions", "analyze-transcript", "index.ts"), "utf8");
   ok("the function writes none of the published tables (source)", !/from\("(student_error_log|srs_cards|cefr_assessments)"\)\s*\.(insert|upsert|update|delete)/.test(src)
     && !/from\("lesson_overviews"\)\s*\.(insert|upsert|update|delete)/.test(src) && !/fireProfileRefresh/.test(src));
@@ -804,14 +847,22 @@ console.log("=== the screen's reasoning (src/lib/transcriptReview.ts) ===");
   eq("medium is pre-selected too", r.initialChoices([metrics[0]], [{ ...sugg[0], confidence: "medium" }]).m1.studentId, "kiki");
   const p = r.buildAssignments(metrics, sugg, c);
   eq("the payload: only the teacher's choices; an unknown speaker carries no errors or level",
-    p, [{ metric_id: "m1", student_id: "kiki", cefr_level: "A2", errors: [ERR1] }, { metric_id: "m2", student_id: null }, { metric_id: "m5", student_id: null }]);
+    p, [{ metric_id: "m1", student_id: "kiki", cefr_level: "A2", errors: [ERR1], text: { contribution: null, teacher_feedback: null, recommendation: null, highlights: [] } }, { metric_id: "m2", student_id: null }, { metric_id: "m5", student_id: null }]);
   c.m1.keepErrors = [false]; c.m1.cefrLevel = "Z9";
-  eq("a dropped error and an invalid level are not sent", r.buildAssignments(metrics, sugg, c)[0], { metric_id: "m1", student_id: "kiki", cefr_level: null, errors: [] });
-  eq("an approved lesson starts from what was approved", r.initialChoices([{ ...metrics[1], student_id: "baoT", cefr_estimate: "A1" }], sugg).m2, { studentId: "baoT", cefrLevel: "A1", keepErrors: [true] });
+  eq("a dropped error and an invalid level are not sent", r.buildAssignments(metrics, sugg, c)[0], { metric_id: "m1", student_id: "kiki", cefr_level: null, errors: [], text: { contribution: null, teacher_feedback: null, recommendation: null, highlights: [] } });
+  eq("an approved lesson starts from what was approved", r.initialChoices([{ ...metrics[1], student_id: "baoT", cefr_estimate: "A1" }], sugg).m2, { studentId: "baoT", cefrLevel: "A1", keepErrors: [true], text: { contribution: "", teacher_feedback: "", recommendation: "", keepHighlights: [] } });
   eq("review states", [r.reviewState({ status: "analyzed", analysis: { drafted_for_review: true } }, null), r.reviewState({ status: "analyzed", analysis: {} }, null),
     r.reviewState({ status: "analyzed" }, { withdrawn_at: null }), r.reviewState({ status: "analyzed", analysis: { drafted_for_review: true } }, { withdrawn_at: "x" }),
     r.reviewState({ status: "processing" }, null)], ["draft", "legacy", "approved", "withdrawn", "processing"]);
   eq("the legacy refusal is recognised by its hint", [r.isLegacyRefusal({ hint: "TRANSCRIPT_LEGACY_ROWS" }), r.isLegacyRefusal({ message: "other" })], [true, false]);
+}
+
+{
+  const page = readFileSync(resolve(repo, "src", "pages", "TeacherTranscripts.tsx"), "utf8");
+  ok("N-7: Retry transcription is disabled on an approved lesson", /disabled={retryTranscriptionMutation.isPending || isApproved}/.test(page));
+  const panel = readFileSync(resolve(repo, "src", "components", "teacher", "TranscriptApprovalPanel.tsx"), "utf8");
+  ok("M-4: the panel edits and names everything the approval publishes about a child",
+    ["\"contribution\"", "\"teacher_feedback\"", "\"recommendation\"", "keepHighlights", "speaking", "An empty box publishes nothing"].every((x) => panel.includes(x)));
 }
 
 console.log("=== the suggestion rule (_lib/speaker-suggestion.ts) ===");
@@ -830,10 +881,11 @@ console.log("=== the suggestion rule (_lib/speaker-suggestion.ts) ===");
   eq("the same from the model: low, no child", t("Duc Minh", true), ["low", null]);
   eq("no match: low, no child", t("Zed"), ["low", null]);
   eq("Unknown and Teacher: low, no child", [t("Unknown"), t("Teacher")], [["low", null], ["low", null]]);
-  eq("a teacher's saved choice for the label: high, even from the model", t("Kiwi", true, new Map([["kiwi", "kiki"]])), ["high", "kiki"]);
+  eq("a teacher's saved choice for a label from the text: high", t("Kiwi", false, new Map([["kiwi", "kiki"]])), ["high", "kiki"]);
+  eq("the same saved choice on a label the MODEL made: only medium (review M-3)", t("Kiwi", true, new Map([["kiwi", "kiki"]])), ["medium", "kiki"]);
   eq("a saved choice for a child no longer in the class is ignored", t("Kiwi", false, new Map([["kiwi", "gone"]])), ["low", null]);
   ok("every low answer names no child", ["Bao", "An", "Zed", "Unknown", "Duc Minh"].every((l) => s.suggestSpeaker(l, roster, none, true).confidence !== "low" || s.suggestSpeaker(l, roster, none, true).studentId === null));
 }
 
-console.log(`${pass} passed, ${fail} failed`);
-process.exit(fail ? 1 : 0);
+console.log(`${tally.pass} passed, ${tally.fail} failed`);
+process.exit(tally.fail ? 1 : 0);
