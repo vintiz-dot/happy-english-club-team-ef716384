@@ -192,6 +192,7 @@ DECLARE
   v_rows bigint;
   v_kept boolean := false;
   v_name text;
+  v_err_detail text;
 BEGIN
   IF NOT public.has_role(v_actor, 'admin'::app_role) THEN
     RAISE EXCEPTION 'Only administrators can do this' USING ERRCODE = '42501';
@@ -423,6 +424,17 @@ BEGIN
     WHEN foreign_key_violation THEN
       RETURN jsonb_build_object('ok', false, 'reasons', jsonb_build_array(
         'Something else in the app still points at this, so nothing was changed.'));
+    WHEN OTHERS THEN
+      -- A D4 money guard (SQLSTATE class HC) refused a write: everything
+      -- above is rolled back; say why in the guard's words (its DETAIL ends
+      -- with the sentence for a person). Any other error propagates.
+      IF SQLSTATE LIKE 'HC%' THEN
+        GET STACKED DIAGNOSTICS v_err_detail = PG_EXCEPTION_DETAIL;
+        RETURN jsonb_build_object('ok', false, 'reasons', jsonb_build_array(format(
+          'The money guard refused part of this undo (%s), so nothing was changed: %s', SQLSTATE,
+          coalesce(nullif(btrim(regexp_replace(coalesce(v_err_detail, ''), '^.*;\s*', '')), ''), SQLERRM))));
+      END IF;
+      RAISE;
   END;
 
   UPDATE public.ai_actions SET status = 'undone', undone_by = v_actor, undone_at = now() WHERE id = a.id;

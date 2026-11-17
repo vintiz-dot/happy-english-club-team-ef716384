@@ -113,6 +113,9 @@ await db.exec(`
     memo text, month text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), created_by uuid, tx_key text UNIQUE,
     CONSTRAINT debit_or_credit CHECK ((debit > 0 AND credit = 0) OR (credit > 0 AND debit = 0)));
   -- D4 (20261114090000): the strongest state a bill had, kept when it is lowered or deleted.
+  -- live's confirmation columns (confirm-tuition sets confirmed / adjusted and confirmed_by;
+  -- calculate-tuition writes auto_approved / needs_review; the default is needs_review)
+  ALTER TABLE public.invoices ADD COLUMN confirmation_status text DEFAULT 'needs_review', ADD COLUMN confirmed_by uuid;
   CREATE TABLE public.invoice_state_floor (student_id uuid NOT NULL, month text NOT NULL,
     ever_paid boolean NOT NULL DEFAULT false, max_recorded_payment numeric NOT NULL DEFAULT 0, PRIMARY KEY (student_id, month));
   CREATE FUNCTION public.test_floor() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -584,6 +587,32 @@ console.log("=== the payment is on the ledger (payments-followups, 2026111715000
   await db.query("INSERT INTO public.payments (id, student_id, amount, method, memo, created_by) VALUES ($1, $2, 40000, 'Cash', 'Zalo', $3)", [pid3, hoa, ADMIN]);
   ok("  and the real undo, called by the admin, takes it back", (await undo(r3.action_id)).ok);
 
+  // Review B-1 (P3): under undo's frame, ONLY the payment that action recorded may go. A trigger on
+  // a table undo writes (here audit_log) that deletes another child's payment is refused as before.
+  const { id: victimKid } = await one("INSERT INTO public.students (full_name) VALUES ('Victim Plum') RETURNING id");
+  await db.query("INSERT INTO public.invoices (student_id, month, base_amount, total_amount) VALUES ($1, $2, 500000, 500000)", [victimKid, M0]);
+  await as(ADMIN, "SELECT public.record_admin_payment(gen_random_uuid(), $1, $2, 'payment', 100000, 'Cash', now(), 'at the desk', NULL)", [victimKid, M0]);
+  const victimPay = (await one("SELECT id FROM public.payments WHERE student_id = $1", [victimKid])).id;
+  const r6 = await apply(pay(hoa, 30000));
+  await db.exec(`CREATE TABLE public.p3_victim (id uuid);
+    CREATE FUNCTION public.p3_side() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+    BEGIN IF NEW.entity = 'payment' AND NEW.action = 'delete' THEN DELETE FROM public.payments WHERE id IN (SELECT id FROM public.p3_victim); END IF; RETURN NEW; END $f$;
+    CREATE TRIGGER p3_side AFTER INSERT ON public.audit_log FOR EACH ROW EXECUTE FUNCTION public.p3_side();`);
+  await db.query("INSERT INTO public.p3_victim VALUES ($1)", [victimPay]);
+  const p3Before = await snap();
+  const p3 = await undo(r6.action_id);
+  ok("B-1 (P3): a trigger fired during undo that deletes ANOTHER child's payment is refused; undo says so and changes nothing",
+    p3.ok === false && p3.reasons.some((x) => /Direct payment deletion is not allowed/.test(x))
+      && (await n("SELECT count(*) AS n FROM public.payments WHERE id = $1", [victimPay])) === 1 && await snap() === p3Before
+      && (await one("SELECT status FROM public.ai_actions WHERE id = $1", [r6.action_id])).status === "applied", JSON.stringify(p3));
+  await db.exec("DROP TRIGGER p3_side ON public.audit_log; DROP FUNCTION public.p3_side(); DROP TABLE public.p3_victim;");
+  ok("  without the side trigger the same undo goes through, and the other child's payment stands",
+    (await undo(r6.action_id)).ok && (await n("SELECT count(*) AS n FROM public.payments WHERE id = $1", [victimPay])) === 1);
+  const trigDef = (await one("SELECT pg_get_functiondef('public.prevent_direct_payment_deletion()'::regprocedure) AS d")).d;
+  ok("  the delete rule names the action's own payment: not undone, same child, effects.payment.payment_id = the row",
+    /x\.status IS DISTINCT FROM 'undone'/.test(trigDef) && /x\.student_id = OLD\.student_id/.test(trigDef)
+      && /x\.effects -> 'payment' ->> 'payment_id' = OLD\.id::text/.test(trigDef));
+
   // An action recorded before this migration (bill only, no payment_id): undone exactly as before.
   await db.query("UPDATE public.invoices SET recorded_payment = coalesce(recorded_payment, 0) + 25000 WHERE student_id = $1 AND month = $2", [hoa, M0]);
   const invId = (await one("SELECT id FROM public.invoices WHERE student_id = $1 AND month = $2", [hoa, M0])).id;
@@ -655,6 +684,56 @@ console.log("=== the payment is on the ledger (payments-followups, 2026111715000
   const ku3 = await undo(k3.action_id);
   ok("a new child with no payment: deleted, as before", ku3.ok && ku3.student_removed === true && ku3.student_deactivated === false
     && (ku3.notices ?? []).length === 0 && (await n("SELECT count(*) AS n FROM public.students WHERE id = $1", [k3.student_id])) === 0, JSON.stringify(ku3));
+
+  // Review M-1 (P4): a bill a PERSON confirmed or froze in between blocks the undo of a new child
+  // (it would otherwise be deleted with the child's other bills); calculate-tuition's own labels do not.
+  for (const [variant, setSql] of [
+    ["confirmed by a person", "UPDATE public.invoices SET base_amount = 700000, total_amount = 700000, confirmation_status = 'confirmed', confirmed_by = $3 WHERE student_id = $1 AND month = $2"],
+    ["frozen by a person", "UPDATE public.invoices SET base_amount = 700000, total_amount = 700000, tuition_frozen = true WHERE student_id = $1 AND month = $2 AND $3::uuid IS NOT NULL"],
+  ]) {
+    const { discount: _x, family: _f, sibling_hold: _h, ...plan } = kidPlan(`P4 ${variant}`);
+    const kx = await apply(plan);
+    await db.query(setSql, [kx.student_id, M0, ADMIN2]);
+    const before4 = await snap();
+    const l4 = await ledgerRows();
+    const ux = await undo(kx.action_id);
+    ok(`M-1 (P4): a new child's bill ${variant} since: undo refuses, naming it, and nothing changes (bill, payment, ledger, child)`,
+      !ux.ok && ux.reasons.some((x) => /bill\(s\) with money on them or confirmed or frozen by a person/.test(x))
+        && (await n("SELECT count(*) AS n FROM public.invoices WHERE student_id = $1", [kx.student_id])) === 1
+        && (await n("SELECT count(*) AS n FROM public.payments WHERE student_id = $1", [kx.student_id])) === 1
+        && (await ledgerRows()) === l4 && (await one("SELECT is_active FROM public.students WHERE id = $1", [kx.student_id])).is_active === true, JSON.stringify(ux));
+  }
+  {
+    const { discount: _x, family: _f, sibling_hold: _h, ...plan } = kidPlan("P4 priced by calculate-tuition");
+    const kx = await apply(plan);
+    await db.query("UPDATE public.invoices SET base_amount = 700000, total_amount = 700000, confirmation_status = 'auto_approved' WHERE student_id = $1 AND month = $2", [kx.student_id, M0]);
+    const ux = await undo(kx.action_id);
+    ok("  a bill only priced and labelled by calculate-tuition (auto_approved) does not block: undone, child inactive",
+      ux.ok && ux.student_deactivated === true && (await n("SELECT count(*) AS n FROM public.invoices WHERE student_id = $1", [kx.student_id])) === 0, JSON.stringify(ux));
+  }
+
+  // Review N-1: a D4 money guard refusing a write during undo (SQLSTATE class HC) is a reason, not a raw error.
+  {
+    const r7 = await apply(pay(hoa, 20000, M2));          // a month with no bill: apply makes one, undo deletes it
+    await db.exec(`CREATE FUNCTION public.n1_guard() RETURNS trigger LANGUAGE plpgsql AS $f$
+      BEGIN RAISE EXCEPTION 'money_change_requires_checked_path' USING ERRCODE = 'HC120',
+        DETAIL = 'kind=invoice_freeze; tier=2; This bill is frozen. Unfreeze it from the bill screen, with a reason.'; END $f$;
+      CREATE TRIGGER n1_guard BEFORE DELETE ON public.invoices FOR EACH ROW EXECUTE FUNCTION public.n1_guard();`);
+    const s7 = await snap();
+    const l7 = await ledgerRows();
+    const u7 = await undo(r7.action_id);
+    ok("N-1: an HC120 refusal during undo comes back as a reason in the guard's own words; nothing changed",
+      u7.ok === false && u7.reasons.length === 1
+        && /The money guard refused part of this undo \(HC120\), so nothing was changed: This bill is frozen\. Unfreeze it from the bill screen, with a reason\./.test(u7.reasons[0])
+        && (await ledgerRows()) === l7 && (await one("SELECT status FROM public.ai_actions WHERE id = $1", [r7.action_id])).status === "applied", JSON.stringify(u7));
+    await db.exec(`CREATE OR REPLACE FUNCTION public.n1_guard() RETURNS trigger LANGUAGE plpgsql AS $f$
+      BEGIN RAISE EXCEPTION 'disk on fire' USING ERRCODE = '22012'; END $f$;`);
+    const e7 = await fails(ADMIN, "SELECT public.ai_action_undo($1)", [r7.action_id]);
+    ok("  any other error still propagates (not turned into a reason)", /disk on fire/.test(e7 ?? ""), e7);
+    await db.exec("DROP TRIGGER n1_guard ON public.invoices; DROP FUNCTION public.n1_guard();");
+    ok("  with the guard gone the undo goes through", (await undo(r7.action_id)).ok);
+    void s7;
+  }
 
   // ------------------------------------------- all of it or none of it
   await db.exec(`CREATE FUNCTION public.boom2() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'ledger down'; END $$;

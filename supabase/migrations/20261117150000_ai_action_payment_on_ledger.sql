@@ -45,8 +45,11 @@
 --   ai_action_undo(uuid), recognised from the server's own call stack (the
 --   outermost frame, the only function of that name, public, plpgsql,
 --   SECURITY DEFINER - the test D4's register guard uses for the same RPCs).
---   A client cannot fake the stack, and ai_action_undo deletes only the one
---   payment its own action recorded (ai_actions is not writable by clients).
+--   A client cannot fake the stack. And the row deleted must be the payment
+--   an assistant action recorded (effects.payment.payment_id), of that
+--   action's child, while that action is not undone (review B-1): any other
+--   payments delete under undo's frame - a cascade, a trigger on a table undo
+--   writes - is refused as before (ai_actions is not writable by clients).
 --   Everything else the trigger did is kept as it was, including its answer
 --   to a caller with no JWT role (the SQL editor): allowed, as before.
 --
@@ -63,8 +66,16 @@
 -- action's own money: its payments rows, the ledger transactions of those
 -- payments and of their reversals (counted as ledger entries now, not
 -- accounts: an account is a container every payment path creates), and the
--- invoice_state_floor rows (D4) of their months. The one-argument form is
--- the same rule with no own payments.
+-- invoice_state_floor rows (D4) of their months. A bill a person confirmed
+-- or froze counts too (review M-1: a new child's bill confirmed in between
+-- would otherwise be deleted by the undo); calculate-tuition's own
+-- 'auto_approved' / 'needs_review' do not. The one-argument form is the same
+-- rule with no own payments.
+--
+-- A refusal by a D4 money guard during undo (SQLSTATE class HC: HC120 a
+-- checked path is needed, HC121 refused, ...) is returned as a reason in the
+-- guard's own words, with everything rolled back - never a raw error (review
+-- N-1). Any other error still propagates.
 --
 -- Fails closed: refuses to install (nothing changed) unless ai_action_apply,
 -- ai_action_undo, ai_student_activity(uuid) and
@@ -92,6 +103,8 @@ BEGIN
       ('ledger_entries', 'credit'), ('ledger_entries', 'occurred_at'), ('ledger_entries', 'memo'), ('ledger_entries', 'month'),
       ('ledger_entries', 'created_by'),
       ('invoices', 'id'), ('invoices', 'recorded_payment'), ('invoices', 'paid_amount'), ('invoices', 'status'),
+      ('invoices', 'confirmation_status'), ('invoices', 'confirmed_by'), ('invoices', 'tuition_frozen'),
+      ('ai_actions', 'status'), ('ai_actions', 'student_id'), ('ai_actions', 'effects'),
       ('students', 'is_active'), ('students', 'updated_by'),
       ('audit_log', 'entity'), ('audit_log', 'entity_id'), ('audit_log', 'action'), ('audit_log', 'actor_user_id'), ('audit_log', 'diff')
     ) AS v(t, c)
@@ -116,7 +129,7 @@ BEGIN
   END IF;
   IF to_regprocedure('public.ai_student_activity(uuid,uuid[])') IS NOT NULL
      AND NOT EXISTS (SELECT 1 FROM pg_proc WHERE oid = to_regprocedure('public.ai_student_activity(uuid,uuid[])')
-                      AND md5(replace(pg_get_functiondef(oid), E'\r', '')) = 'a31cfcbafc496ab4dcf5012feacffd4b') THEN
+                      AND md5(replace(pg_get_functiondef(oid), E'\r', '')) = 'e7f2db8d3265662456b3b462ee6b1c72') THEN
     RAISE EXCEPTION 'ai payment on ledger: another public.ai_student_activity(uuid, uuid[]) exists. Nothing was changed.';
   END IF;
 
@@ -124,9 +137,9 @@ BEGIN
   -- pg_get_functiondef, read on live 17 Nov), or this migration's own.
   FOR r IN SELECT * FROM (VALUES
       ('public.ai_action_apply(uuid,text,jsonb)', '8477e385f87db926fb9b579f3bc59f3d', '7f5b1484fb593b4e351fb473f0e800a4'),
-      ('public.ai_action_undo(uuid)', '1bc731cc701c7f5169bb08f64e48c3d9', 'd8a20222c9d09a3e54d3776efaf07b7f'),
+      ('public.ai_action_undo(uuid)', '1bc731cc701c7f5169bb08f64e48c3d9', 'ef4e1709cd1330753879fd186273c158'),
       ('public.ai_student_activity(uuid)', '81a2e0978c4c08580db4951d3c7edde7', 'ed908438003457e75bb6c9dc7a74c7fe'),
-      ('public.prevent_direct_payment_deletion()', '386cdfe287e67f8146615f871e3dbe96', 'c825892f49f9fe45d2818496d0d57d30')
+      ('public.prevent_direct_payment_deletion()', '386cdfe287e67f8146615f871e3dbe96', 'ef7ae4794e85e4a52d59604719994050')
     ) AS v(sig, was, now_)
   LOOP
     IF to_regprocedure(r.sig) IS NULL THEN
@@ -173,7 +186,17 @@ BEGIN
      AND (SELECT count(*) FROM pg_catalog.pg_proc p WHERE p.proname = 'ai_action_undo') = 1
      AND EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_language l ON l.oid = p.prolang
                   WHERE p.proname = 'ai_action_undo' AND p.pronamespace = 'public'::regnamespace
-                    AND p.prosecdef AND l.lanname = 'plpgsql') THEN
+                    AND p.prosecdef AND l.lanname = 'plpgsql')
+     -- ... and only for THE payment an assistant action recorded, of that
+     -- action's child, while the action is not yet undone (review B-1: the
+     -- frame alone let any payments delete under undo through - a cascade,
+     -- or a trigger on a table undo writes). The status turns 'undone' only
+     -- after undo's DELETE; clients cannot write ai_actions; only apply
+     -- writes payment_id, from record_admin_payment's key.
+     AND EXISTS (SELECT 1 FROM public.ai_actions x
+                  WHERE x.status IS DISTINCT FROM 'undone'
+                    AND x.student_id = OLD.student_id
+                    AND x.effects -> 'payment' ->> 'payment_id' = OLD.id::text) THEN
     RETURN OLD;
   END IF;
   RAISE EXCEPTION 'Direct payment deletion is not allowed. Use the delete-payment edge function instead.';
@@ -235,7 +258,10 @@ BEGIN
     ELSE
       v_extra := CASE r.tbl
         WHEN 'attendance' THEN ' AND (marked_by IS NOT NULL OR status IS DISTINCT FROM ''Present'')'
-        WHEN 'invoices' THEN ' AND (coalesce(recorded_payment, 0) <> 0 OR coalesce(paid_amount, 0) <> 0)'
+        -- money on it, or a person's act on it: confirmed (confirm-tuition: confirmed / adjusted,
+        -- confirmed_by) or frozen. calculate-tuition's auto_approved / needs_review are not a person's.
+        WHEN 'invoices' THEN ' AND (coalesce(recorded_payment, 0) <> 0 OR coalesce(paid_amount, 0) <> 0'
+                          || ' OR confirmed_by IS NOT NULL OR confirmation_status IN (''confirmed'', ''adjusted'') OR coalesce(tuition_frozen, false))'
         WHEN 'student_points' THEN ' AND coalesce(total_points, 0) <> 0'
         WHEN 'payments' THEN ' AND NOT (id = ANY ($2))'
         WHEN 'invoice_state_floor' THEN ' AND NOT (month = ANY ($3))'
@@ -247,7 +273,7 @@ BEGIN
     IF v_n > 0 THEN
       found := found || format('%s %s', v_n, CASE r.tbl
         WHEN 'attendance' THEN 'lesson mark(s) made by a person'
-        WHEN 'invoices' THEN 'bill(s) with money on them'
+        WHEN 'invoices' THEN 'bill(s) with money on them or confirmed or frozen by a person'
         WHEN 'payments' THEN 'payment(s)'
         WHEN 'ledger_accounts' THEN 'ledger entry(ies)'
         WHEN 'point_transactions' THEN 'points award(s)'
@@ -461,6 +487,7 @@ DECLARE
   v_rows bigint;
   v_kept boolean := false;
   v_name text;
+  v_err_detail text;
 BEGIN
   IF NOT public.has_role(v_actor, 'admin'::app_role) THEN
     RAISE EXCEPTION 'Only administrators can do this' USING ERRCODE = '42501';
@@ -692,6 +719,17 @@ BEGIN
     WHEN foreign_key_violation THEN
       RETURN jsonb_build_object('ok', false, 'reasons', jsonb_build_array(
         'Something else in the app still points at this, so nothing was changed.'));
+    WHEN OTHERS THEN
+      -- A D4 money guard (SQLSTATE class HC) refused a write: everything
+      -- above is rolled back; say why in the guard's words (its DETAIL ends
+      -- with the sentence for a person). Any other error propagates.
+      IF SQLSTATE LIKE 'HC%' THEN
+        GET STACKED DIAGNOSTICS v_err_detail = PG_EXCEPTION_DETAIL;
+        RETURN jsonb_build_object('ok', false, 'reasons', jsonb_build_array(format(
+          'The money guard refused part of this undo (%s), so nothing was changed: %s', SQLSTATE,
+          coalesce(nullif(btrim(regexp_replace(coalesce(v_err_detail, ''), '^.*;\s*', '')), ''), SQLERRM))));
+      END IF;
+      RAISE;
   END;
 
   UPDATE public.ai_actions SET status = 'undone', undone_by = v_actor, undone_at = now() WHERE id = a.id;

@@ -409,7 +409,7 @@ const SUITES = [
   {
     name: "AI admin actions",
     file: "ai-actions.test.mjs",
-    expect: 137,
+    expect: 146,
     // 20261113090000 (T4) swaps their label CASE for invoice_paid_label, in
     // whatever definition is installed; run after it, as production will.
     // payments-followups: then the ledger as live has it (G-11), the one
