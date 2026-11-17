@@ -242,6 +242,7 @@ export function PayrollTab() {
 
       <PayrollMonthLock
         month={selectedMonth}
+        liveReady={!!payrollData}
         live={(payrollData ?? []).map((p) => ({
           id: p.staff.id,
           staffType: p.staffType,

@@ -17,6 +17,17 @@
 // month. Setting the lock first would lock out the very insert that is
 // trying to record the month. Lines are written while the period is still
 // open, and the lock is the last thing that happens.
+//
+// WHY ONE DATABASE CALL (D5 G-7, 20261117153000). The writes used to be five
+// PostgREST requests, each its own transaction, and they only upserted: a
+// person who earned at an earlier close and earns nothing now kept their
+// line and their booked cost, so a re-closed month paid someone it no longer
+// owed; and a failure part-way left half a month written. This function now
+// works out the lines and costs exactly as before and hands them to
+// close_payroll_month_apply, which removes whoever is no longer in them,
+// writes the rest and locks the month in that order, in one transaction:
+// all of it or none. Until the migration is pasted the close is refused
+// (503) rather than run the old way.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { requireRole } from "../_lib/auth.ts";
@@ -106,7 +117,9 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       // The lines are deliberately left in place. They are the record of
-      // what the month was closed at, and re-closing upserts over them;
+      // what the month was closed at, and re-closing upserts over them
+      // (and removes the line and booked cost of anyone who no longer
+      // earns in the month, with an audit entry naming them);
       // the audit trail on payroll_lines holds the previous values. A
       // correction to a month that has actually been PAID should not come
       // through here at all - it belongs in payroll_adjustments against a
@@ -119,7 +132,8 @@ Deno.serve(async (req) => {
       return json({ error: `Payroll for ${month} is already closed.`, month }, 409);
     }
 
-    // Ask the owner of the pricing, not the caller.
+    // Ask the owner of the pricing, not the caller. Asked while the month
+    // is open, so it reports the month as it computes now.
     const { data: payroll, error: payrollError } = await supabase.functions.invoke(
       "calculate-payroll",
       {
@@ -127,7 +141,20 @@ Deno.serve(async (req) => {
         headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
       },
     );
-    if (payrollError) throw payrollError;
+    if (payrollError) {
+      // Another close of this month may have won meanwhile: calculate-payroll
+      // then fails on the closed month's payroll_summaries. Say so (409)
+      // rather than a bare 500 - nothing was written either way.
+      const { data: now } = await supabase
+        .from("payroll_periods")
+        .select("month, status")
+        .eq("month", month)
+        .maybeSingle();
+      if (now?.status === "locked") {
+        return json({ error: `Payroll for ${month} is already closed.`, month }, 409);
+      }
+      throw payrollError;
+    }
 
     // The response field is payrollData, not results.
     const rows: PayrollResultRow[] = payroll?.payrollData ?? [];
@@ -138,15 +165,6 @@ Deno.serve(async (req) => {
     if (earning.length === 0) {
       return json({ error: `No earned payroll in ${month}; nothing to close.` }, 409);
     }
-
-    // The period row has to exist before the lines, which reference it.
-    const { error: periodError } = await supabase
-      .from("payroll_periods")
-      .upsert(
-        { month, status: "open", note: note ?? null },
-        { onConflict: "month", ignoreDuplicates: false },
-      );
-    if (periodError) throw periodError;
 
     const isTa = (r: PayrollResultRow) => r.staffType === "teaching_assistant";
     const lines = earning.map((r) => ({
@@ -165,20 +183,6 @@ Deno.serve(async (req) => {
       created_by: gate.userId,
     }));
 
-    // Two upserts rather than one, because the conflict target differs:
-    // teacher rows key on (month, teacher_id) and assistant rows on
-    // (month, assistant_id).
-    for (const [subject, subset] of [
-      ["teacher_id", lines.filter((l) => l.teacher_id)],
-      ["assistant_id", lines.filter((l) => l.assistant_id)],
-    ] as const) {
-      if (subset.length === 0) continue;
-      const { error } = await supabase
-        .from("payroll_lines")
-        .upsert(subset, { onConflict: `month,${subject}`, ignoreDuplicates: false });
-      if (error) throw error;
-    }
-
     // Book the cost, once. source_kind/source_key carry a unique
     // constraint (20261021092000), so closing twice - or closing,
     // reopening and closing again - updates the same rows rather than
@@ -189,38 +193,62 @@ Deno.serve(async (req) => {
       0,
     )).toISOString().slice(0, 10);
 
-    const { error: expError } = await supabase.from("expenditures").upsert(
-      earning.map((r) => ({
-        amount: Math.round(r.totalAmountActual ?? 0),
-        category: isTa(r) ? "TA Payroll" : "Teacher Payroll",
-        memo: `${r.teacherName} – ${month}`,
-        date: lastDay,
-        source_kind: "payroll",
-        source_key: `${month}:${isTa(r) ? "assistant" : "teacher"}:${r.teacherId}`,
-      })),
-      { onConflict: "source_kind,source_key", ignoreDuplicates: false },
-    );
-    if (expError) throw expError;
+    const costs = earning.map((r) => ({
+      amount: Math.round(r.totalAmountActual ?? 0),
+      category: isTa(r) ? "TA Payroll" : "Teacher Payroll",
+      memo: `${r.teacherName} – ${month}`,
+      date: lastDay,
+      source_kind: "payroll",
+      source_key: `${month}:${isTa(r) ? "assistant" : "teacher"}:${r.teacherId}`,
+    }));
 
-    // Last, so the trigger does not refuse the writes above.
-    const lockedAt = new Date().toISOString();
-    const { error: lockError } = await supabase
-      .from("payroll_periods")
-      .update({
-        status: "locked",
-        locked_at: lockedAt,
-        locked_by: gate.userId,
-        note: note ?? null,
-      })
-      .eq("month", month);
-    if (lockError) throw lockError;
+    // One transaction, in this order: the period row (taken FOR UPDATE, a
+    // month closed meanwhile refused), the lines and booked costs of anyone
+    // NOT in `lines` removed while the month is still open, the lines
+    // upserted (teacher rows on (month, teacher_id), assistant rows on
+    // (month, assistant_id)), the costs upserted on (source_kind,
+    // source_key), and the lock last, so the closed-payroll triggers do not
+    // refuse the writes before it. Anything refused rolls all of it back.
+    const { data: closed, error: applyError } = await supabase.rpc("close_payroll_month_apply", {
+      p_month: month,
+      p_lines: lines,
+      p_costs: costs,
+      p_actor: gate.userId,
+      p_note: note ?? null,
+    });
+    if (applyError) {
+      const code = String((applyError as { code?: string }).code ?? "");
+      if (code === "PGRST202" || code === "42883") {
+        return json({
+          error: "Closing a payroll month needs migration 20261117153000 in the database. Nothing was changed.",
+          month,
+        }, 503);
+      }
+      if (code === "HC147") return json({ error: `Payroll for ${month} is already closed.`, month }, 409);
+      // A correction already carried out of this month for someone the close
+      // would remove (HC149): the database names them and says what to do.
+      if (code === "HC149") return json({ error: applyError.message, month }, 409);
+      // A closed-payroll guard (23514) or a plan that disagrees with itself
+      // (HC148): the whole call was rolled back.
+      if (code === "23514" || code === "HC148") {
+        return json({ error: `${applyError.message} Nothing was changed.`, month }, 409);
+      }
+      throw applyError;
+    }
+
+    // Who was taken off the month at this close, so the screen can say so
+    // instead of the month's total simply dropping.
+    const removedLines = Array.isArray(closed?.removedLines) ? closed.removedLines : [];
+    const removedCosts = Array.isArray(closed?.removedCosts) ? closed.removedCosts : [];
 
     return json({
       month,
       status: "locked",
-      lockedAt,
+      lockedAt: closed?.lockedAt ?? null,
       lines: lines.length,
       totalAmountVnd: lines.reduce((n, l) => n + l.total_amount_vnd, 0),
+      removedLines,
+      removedCosts,
     });
   } catch (error) {
     console.error("close-payroll-month failed:", error);
