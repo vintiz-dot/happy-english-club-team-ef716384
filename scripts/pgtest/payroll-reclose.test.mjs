@@ -228,6 +228,7 @@ function pgClient(db, scripted, log) {
       invoke: async (name, opts = {}) => {
         log.push({ invoke: name });
         if (name !== "calculate-payroll") return { data: null, error: { message: `unexpected invoke ${name}` } };
+        if (typeof scripted.__invoke === "function") return scripted.__invoke(db, opts);
         return { data: { payrollData: JSON.parse(JSON.stringify(scripted[opts.body?.month] ?? [])) }, error: null };
       },
     },
@@ -318,7 +319,7 @@ async function snap(db) {
 const rawLines = async (db) => (await db.query(`SELECT id, month, teacher_id, assistant_id, created_at, staff_name, total_amount_vnd FROM public.payroll_lines ORDER BY month, staff_name`)).rows;
 const rawAll = async (db) => {
   const out = {};
-  for (const t of ["payroll_periods", "payroll_lines", "expenditures", "class_overhead_allocations", "audit_log"]) {
+  for (const t of ["payroll_periods", "payroll_lines", "expenditures", "class_overhead_allocations", "payroll_adjustments", "audit_log"]) {
     out[t] = sorted((await db.query(`SELECT * FROM public.${t}`)).rows);
   }
   return out;
@@ -359,6 +360,8 @@ section("1. installs; who may run it; preflight fails closed");
     ["the closed-payroll expenditure guard", "DROP TRIGGER refuse_payroll_expenditure_in_locked_month ON public.expenditures"],
     ["the payroll_lines lock trigger", "DROP TRIGGER refuse_locked_payroll_lines ON public.payroll_lines"],
     ["a plain (month, assistant_id) unique index", "DROP INDEX public.payroll_lines_month_assistant_key"],
+    ["the expenditure guard as 20261022091000 installed it (body changed since)",
+     "CREATE OR REPLACE FUNCTION public.refuse_payroll_expenditure_write_to_locked_month() RETURNS trigger LANGUAGE plpgsql AS $x$ BEGIN RETURN COALESCE(NEW, OLD); END $x$"],
   ]) {
     const d = await fresh({ withNew: false });
     await d.exec(drop);
@@ -619,7 +622,7 @@ section("7. PayrollMonthLock drift: a dropped person is a correction, not nothin
 {
   const p = resolve(tmpdir(), `payrollDrift.${process.pid}.mjs`);
   writeFileSync(p, (await transform(readFileSync(resolve(repo, "src/lib/payrollDrift.ts"), "utf8"), { loader: "ts", format: "esm" })).code);
-  const { payrollDrift, removedLinesText } = await import(pathToFileURL(p).href);
+  const { payrollDrift, removedLinesText, removedCostsText } = await import(pathToFileURL(p).href);
   try { unlinkSync(p); } catch { /* ignore */ }
   const lines = [
     { teacher_id: MAI, assistant_id: null, staff_name: "Mai", total_amount_vnd: 3000000 },
@@ -652,6 +655,214 @@ section("7. PayrollMonthLock drift: a dropped person is a correction, not nothin
   ok("the close's removedLines become one sentence on the toast",
     /Removed 1 line\(s\).*Colleague \(500,000\)/.test(removedLinesText([{ staffName: "Colleague", totalAmountVnd: 500000 }], (n) => n.toLocaleString("en-US"))));
   eq("  nothing removed: no sentence", removedLinesText([], String), "");
+
+  // Review M-1, the reviewer's probe (probe-drift-carried.mts) as assertions.
+  const X = "11111111-1111-1111-1111-111111111111", Y = "22222222-2222-2222-2222-222222222222";
+  const close1 = [{ teacher_id: X, assistant_id: null, staff_name: "X", total_amount_vnd: 500000 }, { teacher_id: Y, assistant_id: null, staff_name: "Y", total_amount_vnd: 300000 }];
+  const liveY = [{ id: Y, staffType: "teacher", name: "Y", totalEarned: 300000 }];
+  eq("M-1 probe: before the carry, X shows -500,000", payrollDrift(true, true, liveY, close1, []).map((r) => [r.id, r.delta]), [[X, -500000]]);
+  const carriedX = [{ teacher_id: X, assistant_id: null, amount_vnd: -500000, staff_name: "X" }];
+  eq("  after carrying it: nothing left to carry", payrollDrift(true, true, liveY, close1, carriedX), []);
+  const afterReclose = payrollDrift(true, true, liveY, [close1[1]], carriedX);
+  eq("  X's line gone with the carry standing (only reachable around HC149): X shows +500,000, carriedOnly, by name (was: nothing)",
+    afterReclose.map((r) => [r.id, r.name, r.paid, r.totalEarned, r.delta, r.carriedOnly]), [[X, "X", 0, 0, 500000, true]]);
+  eq("  an active X still in the live rows at 0: +500,000 as before, not doubled",
+    payrollDrift(true, true, [...liveY, { id: X, staffType: "teacher", name: "X", totalEarned: 0 }], [close1[1]], carriedX).map((r) => [r.id, r.delta, r.carriedOnly]), [[X, 500000, false]]);
+  eq("  a carried-only TA with no name on file: 'Staff member', staffType ta",
+    payrollDrift(true, true, [], [], [{ teacher_id: null, assistant_id: HOA, amount_vnd: 120000 }]).map((r) => [r.name, r.staffType, r.delta]), [["Staff member", "ta", -120000]]);
+  eq("  carries that net to 0 for someone with nothing else: no row",
+    payrollDrift(true, true, [], [], [{ teacher_id: X, assistant_id: null, amount_vnd: 100 }, { teacher_id: X, assistant_id: null, amount_vnd: -100 }]), []);
+
+  // Review M-2: removed costs reach the toast too, with amounts.
+  const fmt = (n) => n.toLocaleString("en-US");
+  eq("M-2: removed costs as one sentence, memo and amount",
+    removedCostsText([{ memo: "Colleague – 2026-08", sourceKey: `2026-08:teacher:${COL}`, amount: 500000 }], fmt),
+    "Removed 1 booked payroll cost(s) of staff who earn nothing in the month now: Colleague – 2026-08 (500,000).");
+  eq("  none: no sentence", removedCostsText([], fmt), "");
+  const lockSrc = readFileSync(resolve(repo, "src/components/admin/payroll/PayrollMonthLock.tsx"), "utf8");
+  ok("  PayrollMonthLock's close toast uses both the removed lines and the removed costs",
+    /removedLinesText\(data\?\.removedLines, vnd\)/.test(lockSrc) && /removedCostsText\(data\?\.removedCosts, vnd\)/.test(lockSrc));
+  ok("  and a refused close shows the function's own sentence (functionErrorMessage), not 'non-2xx'",
+    /functionErrorMessage\(error/.test(lockSrc.slice(lockSrc.indexOf('functions.invoke("close-payroll-month"'), lockSrc.indexOf('functions.invoke("close-payroll-month"') + 600)));
+  ok("  carried rows are read with the person's name (for a row with no line)",
+    /payroll_adjustments[\s\S]{0,200}teachers\(full_name\), teaching_assistants\(full_name\)/.test(lockSrc));
+}
+
+// ==================================================================== 8
+section("8. fix round: carried corrections (M-1), the close lock (N-1), a lost race (N-4), the audit's words (N-5)");
+{
+  // The reviewer's underpay scenario, in the database: September closed with
+  // Hoa (TA) 450,000; her lessons corrected away; the panel's -450,000 carried
+  // into October; September reopened and re-closed without her.
+  const SEP_TWO = { "2026-09": [row(MAI, "Mai", 2000000), row(HOA, "Hoa", 450000, { ta: true, sessions: 2 })] };
+  const SEP_ONE = { "2026-09": [row(MAI, "Mai", 2000000)] };
+  const b = await fresh();
+  await call(closeNow, b, SEP_TWO, { month: "2026-09", action: "close" });
+  await b.query(`INSERT INTO public.payroll_adjustments (month, origin_month, assistant_id, amount_vnd, reason, created_by)
+                 VALUES ('2026-10', '2026-09', $1, -450000, 'Correction to Sep 2026 found after close', $2)`, [HOA, ADMIN]);
+  await reopen(closeNow, b, SEP_ONE, "2026-09");
+  const before = await rawAll(b);
+  const r = await call(closeNow, b, SEP_ONE, { month: "2026-09", action: "close" });
+  ok("M-1: the re-close that would remove Hoa's line is refused (409)", r.status === 409, r);
+  ok("  naming her, her line, what was carried and where, and 'Nothing was changed'",
+    /Hoa \(TA\) \(line 450,000; -450,000 carried from 2026-09 into 2026-10\)/.test(r.json?.error ?? "") && /Nothing was changed/.test(r.json?.error ?? "") && /Undo the carried correction/.test(r.json?.error ?? ""), r.json);
+  eq("  every table as before: Hoa's line, the carry, September open", await rawAll(b), before);
+  const direct = await pgClient(b, {}, []).rpc("close_payroll_month_apply", {
+    p_month: "2026-09", p_actor: ADMIN, p_note: null,
+    p_lines: [{ month: "2026-09", teacher_id: MAI, assistant_id: null, staff_name: "Mai", pay_rate_type: "hourly", hourly_rate_vnd: 200000, per_session_rate_vnd: 0, sessions_count: 4, total_minutes: 360, total_amount_vnd: 2000000, created_by: ADMIN }],
+    p_costs: [{ amount: 2000000, category: "Teacher Payroll", memo: "Mai – 2026-09", date: "2026-09-30", source_kind: "payroll", source_key: `2026-09:teacher:${MAI}` }],
+  });
+  eq("  the database's own code for it: HC149", direct.error?.code, "HC149");
+
+  // Still in the close (amount changed), with a carry: allowed, as before.
+  const SEP_HOA_LESS = { "2026-09": [row(MAI, "Mai", 2000000), row(HOA, "Hoa", 300000, { ta: true, sessions: 1 })] };
+  const r2 = await call(closeNow, b, SEP_HOA_LESS, { month: "2026-09", action: "close" });
+  ok("  a re-close that KEEPS Hoa (her line updated, carry standing) closes as before", r2.status === 200 && r2.json.removedLines.length === 0, r2.json);
+  // ...and someone else without a carry is still removed.
+  const c = await fresh();
+  await call(closeNow, c, { "2026-09": [row(MAI, "Mai", 2000000), row(HOA, "Hoa", 450000, { ta: true }), row(COL, "Colleague", 500000)] }, { month: "2026-09", action: "close" });
+  await c.query(`INSERT INTO public.payroll_adjustments (month, origin_month, assistant_id, amount_vnd, reason) VALUES ('2026-10', '2026-09', $1, 50000, 'x')`, [HOA]);
+  await reopen(closeNow, c, {}, "2026-09");
+  const r3 = await call(closeNow, c, { "2026-09": [row(MAI, "Mai", 2000000), row(HOA, "Hoa", 450000, { ta: true })] }, { month: "2026-09", action: "close" });
+  ok("  a carry for someone who stays does not stop the removal of someone with none", r3.status === 200 && r3.json.removedLines.map((x) => x.staffName).join() === "Colleague", r3.json);
+  await c.close();
+
+  // N-1: the close holds the month's lock exclusively until it commits; the
+  // expenditure guard takes it shared before it checks. (One connection here:
+  // the waiting itself cannot be shown, only that each takes its lock.)
+  const lockOf = async (d, m) => (await d.query(
+    `SELECT mode FROM pg_locks WHERE locktype = 'advisory' AND classid = 1902 AND objsubid = 2
+        AND objid::bigint = ((hashtext($1)::bigint + 4294967296) % 4294967296) AND pid = pg_backend_pid()`, [m])).rows.map((x) => x.mode);
+  await b.exec("BEGIN");
+  await asService(b, () => b.query(`INSERT INTO public.expenditures (amount, category, memo, date, source_kind, source_key)
+                                     VALUES (1, 'Teacher Payroll', 'x', '2026-11-30', 'payroll', '2026-11:teacher:${COL}')`));
+  eq("N-1: a payroll booking holds the month's close lock SHARED until it commits", await lockOf(b, "2026-11"), ["ShareLock"]);
+  await b.exec("ROLLBACK");
+  await b.exec("BEGIN");
+  await asService(b, () => b.query(`INSERT INTO public.expenditures (amount, category, memo, date) VALUES (1, 'Rent', 'not payroll', '2026-11-30')`));
+  eq("  a cost that is not payroll takes no such lock", await lockOf(b, "2026-11"), []);
+  await b.exec("ROLLBACK");
+  const NOV = { "2026-11": [row(MAI, "Mai", 900000)] };
+  await b.exec("BEGIN");
+  const inTx = await pgClient(b, {}, []).rpc("close_payroll_month_apply", {
+    p_month: "2026-11", p_actor: ADMIN, p_note: null,
+    p_lines: [{ month: "2026-11", teacher_id: MAI, assistant_id: null, staff_name: "Mai", pay_rate_type: "hourly", hourly_rate_vnd: 200000, per_session_rate_vnd: 0, sessions_count: 4, total_minutes: 360, total_amount_vnd: 900000, created_by: ADMIN }],
+    p_costs: [{ amount: 900000, category: "Teacher Payroll", memo: "Mai – 2026-11", date: "2026-11-30", source_kind: "payroll", source_key: `2026-11:teacher:${MAI}` }],
+  });
+  const held = await lockOf(b, "2026-11");
+  await b.exec("ROLLBACK");
+  ok("  the close holds it EXCLUSIVELY to its commit (and its own cost writes, taking it shared, do not block on it)",
+    !inTx.error && held.includes("ExclusiveLock"), { inTx, held });
+  const guardSrc = (await b.query(`SELECT prosrc FROM pg_proc WHERE proname = 'refuse_payroll_expenditure_write_to_locked_month'`)).rows[0].prosrc;
+  ok("  the installed guard takes the lock BEFORE it checks the period",
+    guardSrc.indexOf("pg_advisory_xact_lock_shared") > -1 && guardSrc.indexOf("pg_advisory_xact_lock_shared") < guardSrc.indexOf("payroll_month_is_locked"));
+  await b.close();
+
+  // N-4: another close won while this one was asking calculate-payroll, which
+  // then fails on the closed month's payroll_summaries: 409, not 500.
+  const d = await fresh();
+  const raced = { __invoke: async (db) => {
+    await db.exec(`INSERT INTO public.payroll_periods (month, status, locked_at, locked_by) VALUES ('2026-08', 'locked', now(), '${ADMIN}')`);
+    return { data: null, error: { message: "Failed to calculate payroll" } };
+  } };
+  const before4 = await rawAll(d);
+  const r4 = await call(closeNow, d, raced, { month: "2026-08", action: "close" });
+  ok("N-4: a close that lost the race answers 409 'already closed'", r4.status === 409 && /already closed/.test(r4.json?.error ?? ""), r4);
+  ok("  and wrote nothing itself (only the winner's period row is new)",
+    JSON.stringify((await rawAll(d)).payroll_lines) === JSON.stringify(before4.payroll_lines)
+      && !r4.log.some((e) => e.rpc || (e.op && e.op !== "select")), r4.log);
+  const r5 = await call(closeNow, d, { "2026-09": [] , __invoke: async () => ({ data: null, error: { message: "Failed to calculate payroll" } }) }, { month: "2026-09", action: "close" });
+  ok("  a calculate-payroll failure on a month still open stays a 500", r5.status === 500, r5);
+  await d.close();
+
+  // N-5: the audit says exactly what went.
+  const e = await fresh();
+  await e.query(`INSERT INTO public.expenditures (amount, category, memo, date, source_kind, source_key) VALUES
+    (500000, 'Teacher Payroll', 'Colleague – 2026-08', '2026-08-31', 'payroll', '2026-08:teacher:${COL}')`);
+  await call(closeNow, e, AUG, { month: "2026-08", action: "close" });
+  const why1 = (await e.query(`SELECT diff ->> 'why' w FROM public.audit_log WHERE action = 'payroll_close_removed_not_owed'`)).rows.map((x) => x.w);
+  ok("N-5: first close, a Payroll-tab booking removed: 'booked cost (500,000) only, no line'",
+    why1.length === 1 && /Colleague – 2026-08: booked cost \(500,000\) only, no line/.test(why1[0]) && !/line \(/.test(why1[0]), why1);
+  await reopen(closeNow, e, AUG, "2026-08");
+  await e.close();
+  const f = await fresh();
+  await call(closeNow, f, AUG_COL, { month: "2026-08", action: "close" });
+  await reopen(closeNow, f, AUG_NO_COL, "2026-08");
+  await call(closeNow, f, AUG_NO_COL, { month: "2026-08", action: "close" });
+  const why2 = (await f.query(`SELECT diff ->> 'why' w FROM public.audit_log WHERE action = 'payroll_close_removed_not_owed'`)).rows.map((x) => x.w);
+  ok("  re-close, both removed: 'Colleague: line (500,000) and booked cost (500,000)'",
+    why2.length === 1 && /Colleague: line \(500,000\) and booked cost \(500,000\)/.test(why2[0]), why2);
+  await f.close();
+}
+
+// ==================================================================== 9
+// The reviewer's probes (scratchpad/reviews/probe-reclose-appendix.mjs),
+// copied in; what they printed is asserted now.
+section("R1. first close: Payroll-tab booking for a non-earner (owner ruling: removed AND listed)");
+{
+  const b = await fresh();
+  await b.query(`INSERT INTO public.expenditures (amount, category, memo, date, source_kind, source_key) VALUES
+    (500000, 'Teacher Payroll', 'Colleague – 2026-08', '2026-08-31', 'payroll', '2026-08:teacher:${COL}')`);
+  const r = await call(closeNow, b, AUG, { month: "2026-08", action: "close" });
+  ok("closes", r.status === 200, r.json);
+  eq("response removedCosts lists Colleague", r.json.removedCosts?.map((c) => [c.sourceKey, c.amount]), [[`2026-08:teacher:${COL}`, 500000]]);
+  eq("response removedLines empty (first close)", r.json.removedLines, []);
+  const au = (await b.query(`SELECT actor_user_id, diff FROM public.audit_log WHERE action = 'payroll_close_removed_not_owed'`)).rows;
+  ok("audit entry exists naming the admin with the cost", au.length === 1 && au[0].actor_user_id === ADMIN && au[0].diff.removed_costs.length === 1, au);
+  const p = resolve(tmpdir(), `payrollDrift.r1.${process.pid}.mjs`);
+  writeFileSync(p, (await transform(readFileSync(resolve(repo, "src/lib/payrollDrift.ts"), "utf8"), { loader: "ts", format: "esm" })).code);
+  const { removedLinesText, removedCostsText } = await import(pathToFileURL(p).href);
+  try { unlinkSync(p); } catch { /* ignore */ }
+  const toast = [removedLinesText(r.json.removedLines, String), removedCostsText(r.json.removedCosts, String)].filter(Boolean).join(" ");
+  ok("the toast now says it (was: nothing - removedLines only)", /booked payroll cost\(s\).*Colleague – 2026-08 \(500000\)/.test(toast), toast);
+  await b.close();
+}
+section("R2. first close: stale keyed cost of a non-earner dated in a CLOSED month (N-2: left as is, fails safe)");
+{
+  const a = await fresh(), b = await fresh();
+  for (const [fn, d] of [[closeBase, a], [closeNow, b]]) {
+    await call(fn, d, { "2026-07": [row(MAI, "Mai", 1000000)] }, { month: "2026-07", action: "close" });
+    await d.exec(`ALTER TABLE public.expenditures DISABLE TRIGGER USER`);
+    await d.query(`INSERT INTO public.expenditures (amount, category, memo, date, source_kind, source_key) VALUES
+      (500000, 'Teacher Payroll', 'Colleague – 2026-08', '2026-07-31', 'payroll', '2026-08:teacher:${COL}')`);
+    await d.exec(`ALTER TABLE public.expenditures ENABLE TRIGGER USER`);
+  }
+  const ra = await call(closeBase, a, AUG, { month: "2026-08", action: "close" });
+  const rb = await call(closeNow, b, AUG, { month: "2026-08", action: "close" });
+  ok("BASE closes August and leaves the stale cost (200)", ra.status === 200, ra.json);
+  ok("new refuses the whole close, naming the closed month (409, 'Nothing was changed')",
+    rb.status === 409 && /Payroll for 2026-07 is closed/.test(rb.json?.error ?? "") && /Nothing was changed/.test(rb.json?.error ?? ""), rb.json);
+  await a.close(); await b.close();
+}
+section("R3. a payroll_lines row with neither person: can it exist, and would the close delete it?");
+{
+  const b = await fresh();
+  let e = null;
+  try { await b.query(`INSERT INTO public.payroll_lines (month, staff_name, pay_rate_type, total_amount_vnd) VALUES ('2026-08','ghost','hourly',1)`); } catch (x) { e = x.message; }
+  ok("a line with neither person cannot be stored (payroll_lines_one_subject_check)", !!e && /one_subject/.test(e), e);
+  await b.close();
+}
+section("R4. direct rpc as authenticated admin with forged actor");
+{
+  const b = await fresh();
+  await b.exec(`SET ROLE authenticated; SELECT set_config('test.uid', '${ADMIN}', false)`);
+  let e = null;
+  try { await b.query(`SELECT public.close_payroll_month_apply('2026-08', '[{"month":"2026-08","teacher_id":"${MAI}","total_amount_vnd":1}]', '[{"source_kind":"payroll","source_key":"2026-08:teacher:${MAI}","amount":1,"category":"Teacher Payroll","date":"2026-08-31"}]', '${ADMIN}', NULL)`); } catch (x) { e = x.message; }
+  await b.exec(`RESET ROLE`);
+  ok("admin JWT cannot execute it", !!e && /permission denied/i.test(e), e);
+  await b.close();
+}
+section("R5. plan where costs omit a line person but lines include them is refused");
+{
+  const b = await fresh();
+  await b.exec("SET ROLE service_role");
+  let e = null;
+  try { await b.query(`SELECT public.close_payroll_month_apply('2026-08', '[{"month":"2026-08","teacher_id":"${MAI}","total_amount_vnd":1,"staff_name":"Mai","pay_rate_type":"hourly"}]', '[]', '${ADMIN}', NULL)`); } catch (x) { e = x.code; }
+  await b.exec("RESET ROLE");
+  eq("  lines without costs: HC148", e, "HC148");
+  const n = (await b.query(`SELECT count(*)::int c FROM public.payroll_periods`)).rows[0].c;
+  ok("  nothing written (no period row)", n === 0, n);
+  await b.close();
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
