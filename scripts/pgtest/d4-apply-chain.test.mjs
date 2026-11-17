@@ -60,7 +60,7 @@ const D4_JSON = 'docs/evidence/D4-release-fingerprint.expected.json';
 const D_SQL = 'docs/evidence/D-release-fingerprint.sql';
 const D_JSON = 'docs/evidence/D-release-fingerprint.expected.json';
 // Objects per step (functions / triggers / relations), from the build docs.
-const COUNT = { base: [41, 19, 6], '2': [8, 5, 1], '3A': [9, 3, 0], '3B': [41, 19, 0], '4': [30, 11, 4] };
+const COUNT = { base: [41, 19, 6], '2': [8, 5, 1], '3A': [9, 3, 0], '3B': [41, 19, 0], '4': [32, 11, 4] };   // fix round 1: + change_approval_check, _approval_impact_tier
 // The 1b bodies a later step replaces (and its rollback leaves, by design).
 const REPLACES = { '3A': ['public.d4_guard_status()'], '3B': ['public._money_enrollment_rpc_call()'],
   '4': ['public._change_request_claim(p_kind text, p_fingerprint text)', 'public._money_change_full_plan(p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text)',

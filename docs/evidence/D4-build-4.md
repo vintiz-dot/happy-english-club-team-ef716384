@@ -102,3 +102,47 @@ with and without file 6 and comparing every answer, tier and row).
 - Bulk screens, 3A's lesson-pay dialog and `manage-admin-users` are not wired for requests (decision 9).
 - `npm run test:bun` not run (no bun-tested file touched).
 - Root `AGENTS.md` rule ("approval is decided in `change_approval_needed` only") not added: conductor's file.
+
+## Fix round 1 (review REVIEW-d4-step4.md, SHIP WITH CHANGES)
+
+Branch `d4-step4-fix` from `2d076ccb`. Pglite and the type-checker only: nothing deployed, nothing on the live
+database, nothing pushed. Only file 6 (`20261114095000`, not applied anywhere) and step 4's screens / functions
+changed; every pinned body of 1a..3B is untouched and the 28 preflight pins are unchanged except file 6's OWN
+`_money_change_full_plan` md5 (`5bcb5952...` -> `b27d8f2f6fd43ed006ce43ff180359c6`, because of N-3; 1b's
+`8f8b9abd...` is still accepted, so the paste over live works as before).
+
+**File 6 LF md5 (CR stripped): `2138769745a241da0797e9655cf69a8a`** (was `a2fb36e52c1df3664621ebae0d8a90d7`). 1600 lines.
+
+| Finding | Change | Test |
+|---|---|---|
+| B-1 carry rewritten / deleted | `zz_pay_adjustment_approval` is now `BEFORE INSERT OR UPDATE OR DELETE`. While on (and `on_pay_adjustment`), outside the owner lane: an UPDATE that changes anything but `reason` / `created_by` is HC060, a DELETE is HC060 (no request kind writes either, so no claim can allow them; the correction is a carry of the difference, which is a request). Off, or the owner lane: as before. Fails closed: row missing = HC050 on UPDATE too. | d4-approvals: raise / move teacher / move month / service lane / delete refused, reason-only rewording accepted, owner lane accepted, the negative carry by request applied; OFF scenario now also UPDATEs and DELETEs a carry (identical with and without file 6). Probe P1, P2a, P2b now pass. Mutants A31-A33. |
+| B-2 approval never refreshes bills | `guarded-change-refresh` gains `approve`, `release` and `approval-refresh`: it calls `approve_change_request` / `release_own_request` with the admin's OWN JWT, then `refreshApprovedChange` (`_lib/money-guard.ts`) reads the request's kind and override ids from `change_approval_queue` as the caller and runs the direct path's refresh - `refreshMoneyChange` for money, `refreshAndRecord` for a D2 lesson override (skipping one already `tuition_refreshed`) - recording each outcome on the override as the approver, plus an `approval_applied` / `approval_released_alone` audit row. The inbox (`approvals/api.ts`) approves and releases only through it, says whether every bill came back, and offers "Work out the bills again" (`approval-refresh`, idempotent) on an applied money / lesson request. A function too old for the actions answers `bad_action` before doing anything: the inbox says "not updated yet, nothing was done". | Probe P4 (registered): the RPC alone leaves the bill pending (characterisation) and approval-refresh clears it; through the function a money change and a D2 cancel end `tuition_refreshed`, nothing pending, calculate-tuition on the service client for the child and month, the decision on the approver's client; a failed refresh is reported failed and the retry finishes it; stale, not-applied, teacher and self-approval answered correctly. approvals-lib static checks. |
+| M-1 bulk cancel half done | Chose BOTH: before the first chunk of a batch over 50 lessons, `bulk-cancel-sessions` asks the new read-only RPC `change_approval_check` for the WHOLE batch (the same plan and rule `request_change_approval` uses; a whole-batch "not required" implies every row passes, as each row is judged on its own impact plus the rows before it). Required: 409 `approval_required`, nothing cancelled, the one request offered with the items as sent. More than 200 lessons while on: 413, nothing changed. The race left (something changes between the question and a later chunk) is no longer an early return: what was cancelled is refreshed, audited and answered `ok: true, partial, stopped: approval_required` with the rest `not_attempted` and offered as one request. `BulkSessionDelete` keeps the offer and sends it ("Send these N lessons for approval"). Check missing (step 4 not installed) = off. | Probe P5: 51 plain + 1 T3 lesson: nothing cancelled, the offered params accepted by `request_change_approval` (52 fingerprints); with the check taken away the first 50 are cancelled, audited (count 50, 2 not attempted), reported truthfully; off: cancelled at once. d4-approvals: check required / not required / teacher refused. Mutant A36. The 3A single-chunk case (d4 functions lessons) unchanged. |
+| M-2 admin role, orphan account | `manage-admin-users` asks `change_approval_status` as the caller BEFORE `createUser` (create), before the insert (promote) and before deleting roles (updateRole to admin): on = 409 `approval_required` with a sentence (and, for an existing account, the grant request offered). If the role insert is refused anyway the new account is deleted again (`account_removed`); updateRole puts the earlier roles back. `AdminUsersManager` reads the function's own error body and turns a refused Promote into "Send for approval" (`grant_admin_role`, with a reason). | Probe P6 (fake auth admin): create on = no account; promote / updateRole on = no role, teacher role kept; the offered grant approved through the function gives the role; check missing = account removed again; off = as before. approvals-lib static checks. |
+| M-3 wording | `approval_required` (and `approval_already_pending`) in `sessionGuard` `ERROR_TEXT`, `approval_required` in `lessonPayGuard` `PAY_ERROR_TEXT`, each with the next step. The 3A lesson-pay dialog now offers "Send for approval" (the checked money op `('session', op)` as previewed, with its token). Money bulk's rare race names the reasons and says what was and was not made. | approvals-lib. |
+| Decision 4 addition | `_change_approval_settings_guard` refuses DELETE of the settings row for everyone, the owner included (HC041, naming the switch-off function and the rollback). A missing row is still HC050 (A-15); removing it needs a deliberate DROP / DISABLE of the trigger. | d4-approvals (owner and service delete refused; the A-15 cases now disable the guard first); probe P3-0. Mutant A34. |
+| N-3 | `_approval_impact_tier`: the higher of the plan's tier and the impact's own (not 0-3 = 3), in `_money_change_full_plan` and both item branches of `_approval_plan`. | d4-approvals; mutants A12 (updated), A35. |
+| N-1 | `reasonText` / `reasonSentence(reasons, thresholds)` name the setting's own families / paid figures (from the preview's `approval.thresholds`, the stored request preview in the inbox); HC064 no longer says "7 days". | approvals-lib. |
+| N-2 | `MoneyChangesReview` names who asked and who approved, from `change_approval_queue` (never the row's context). | approvals-lib static. |
+| N-6 | A change sent for approval from a `runMany` queue stops it and says how many were not made (toast); every send now confirms itself with a toast. | approvals-lib static. |
+| N-4 | `_approval_plan` keeps only `source` (100 chars) and `set_manual = 'true'` of the requester's context. | d4-approvals; mutant A37. |
+| N-5 | Not changed: the owner's `off_statement` writes no `settings_changed` event and revoking an admin is not guarded while on; both belong in the live-apply / switch-on brief. | - |
+
+Also found and fixed: `updateRole` to admin deleted the account's roles before the (refused) insert. Nothing found
+that could not be fixed, so `set_change_approval_settings` still accepts `enabled = true` (two administrators). The
+switch must not be turned on before the step 4 client and the three functions below are deployed: an older inbox
+approves through the bare RPC and leaves the bills unrefreshed (B-2).
+
+Functions to deploy (all three type-check in `edge functions typecheck`; `_lib` files are bundled with each):
+
+- `guarded-change-refresh` - `index.ts`, `_lib/money-guard.ts`, `_lib/session-guard.ts`, `_lib/auth.ts`
+- `bulk-cancel-sessions` - `index.ts`, `_lib/session-guard.ts`
+- `manage-admin-users` - `index.ts`, `_lib/rate-limit.ts`
+
+(`_lib/money-guard.ts` and `_lib/session-guard.ts` are also bundled by manage-session, mark-attendance,
+repair-attendance and the 3B functions; their changes there are additions only - `refreshApprovedChange`,
+`approvalPrecheck`, `APPROVAL_BATCH_CAP` - so those need no redeploy.)
+
+### Fix round 1 results
+
+RESULTS_PLACEHOLDER
