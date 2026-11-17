@@ -239,6 +239,20 @@ the database, the undo keeps it inactive, out of the family, ledger 4 legs net
 everything written, assistant payments and undos included: **M01 0, M03 0,
 M04 0, M08 0** (control: an old-style bill write makes M03 1).
 
+**Mutation pass** (scratchpad `pf/mutants.mjs` + `pf/mutant1.cjs`; each mutant
+a copy of the migration passed to ai-actions.test.mjs in place of the real one,
+the repo file never touched; the md5-pin / re-paste assertions, which fail for
+any edit, not counted): **12 of 13 killed** - the delete rule accepting any
+outermost function; skipping its only-one-of-that-name check; refusing the
+no-role SQL editor; activity counting the action's own payments; ... its own
+ledger entries; deleting the child instead of deactivating; leaving
+paid_amount; keeping the payments row; no payment_deletions; skipping the
+already-reversed check; no 500,000,000 bound; recording on the receipt month.
+**Survived:** undo's bill write without its compare-and-set condition - the
+bill row is already held FOR UPDATE by the same transaction, so pglite's one
+connection cannot show a difference; the condition is belt and braces (as in
+record_admin_payment).
+
 ## Test harness brought onto this branch (said, as the common rules ask)
 
 main's `scripts/pgtest` lagged: no record-payment suite, run.mjs registered
