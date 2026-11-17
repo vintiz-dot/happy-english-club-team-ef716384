@@ -412,7 +412,7 @@ Mutations, each caught:
 
 Full-run failures are harness lag, not this work, and are unchanged from round 1. The conductor tree's suites read files `origin/main` lacks: the D4 migrations 20261114093000 / 094000, `scripts/ROLLBACK-d4-*`, `docs/evidence/S1-*`, `S2-*` and `T2-*`, lesson-eval, csp and the CHECK/CREDIT scripts. A few also assert money or payroll behaviour main does not have yet: invoice status, d4, and teacher / TA payroll. None of the 36 loads a file this branch changes. Every suite that does is green: cefr drafts 191, ai spend gate 340, chat assistant 201, transcribe gate 133, transcript drafts 221, review probes 34, edge functions typecheck 5, app typecheck 3.
 
-### Files (LF md5, CR stripped) - round 2
+### Files (LF md5, CR stripped) - round 2, superseded by round 3 below
 
 | File | md5 |
 |---|---|
@@ -434,7 +434,7 @@ Function imports:
 
 Screens: `src/pages/FamilyDashboard.tsx`, `src/pages/StudentDefendLevel.tsx`, `src/components/cefr/CefrDraftsCard.tsx`, plus the round 1 screens.
 
-### Deploy order (owner) - round 2, replaces the one above
+### Deploy order (owner) - round 2, superseded by round 3 below
 
 1. **Paste `20261117151000_cefr_model_drafts.sql`.** Expected output: `held_this_paste 9, children 9, drafts_waiting 9, held_total 9`. From here the deployed functions can no longer publish a model's level.
 2. **Paste `20261117152000_family_reads_without_ai.sql`.** It refuses until step 1 is in. If it refuses on a policy, send back the name.
@@ -457,3 +457,151 @@ Screens: `src/pages/FamilyDashboard.tsx`, `src/pages/StudentDefendLevel.tsx`, `s
 - The screens were type-checked, not opened in a browser.
 - The model is a stand-in.
 - The 152000 policy drops ran only in the in-process Postgres. Live: only the read-only policy list and counts.
+
+## Round 3 (independent review `REVIEW-privacy-followups.md`: SHIP WITH CHANGES)
+
+Nothing applied, deployed or pushed. N-5, N-6 and N-7 are left to another builder, as ruled.
+
+### N-2 (treated as MUST): a child reads a published report only with the approved level
+
+- **The defect.** A published report's JSON carries the model's `cefr` (level, confidence, rationale). The child read the whole row through `students_read_published_reports`. The suite shows it before the paste.
+- **What 20261117152000 now does:**
+  - It drops that policy too. The preflight now also knows `student_reports`' six live policies.
+  - It adds `get_my_published_reports(p_student)`: SECURITY DEFINER, STABLE, authenticated only (anon refused).
+  - That RPC returns the same rows as before: published, and the caller's own linked student record.
+  - It removes `report.cefr`. Where a teacher approved a point for that report (`cefr_assessments`, `source 'ai_report'`, `source_id` = the report), it puts `{level, approved: true}` in its place.
+  - It keeps the narrative: the text the teacher read and published.
+- **Who can read what:**
+  - Staff policies and the teacher's copy are unchanged.
+  - The family had no report policy before, and has none now.
+  - No child screen reads reports today.
+- **Wording.** `AIReportDialog` no longer says publishing does not approve the level. The header and the publish toast now say:
+  - the child sees the report's CEFR level only once it is approved, and never the AI's estimate or reasoning;
+  - the PDF is the teacher's copy and shows the model's estimate.
+- **Proof:**
+  - the child reads no report row directly;
+  - the RPC returns the published report with no CEFR, and nowhere the model's B2 or rationale;
+  - once a teacher has approved the report's point, it returns `{level: the approved level, approved: true}`;
+  - nothing for the family, another child, a role-less account, another class's teacher, or an unpublished report;
+  - staff still read the full JSON.
+- **Not changed:** the model-written narrative can mention a level in its prose. The teacher reads it before publishing, so it is teacher-released text.
+
+### N-1: the guard no longer depends on source_id
+
+`cefr_model_point_guard` refuses an API role (anon, authenticated, service_role) writing any row whose source is `ai_report`, `level_defense_evidence` or `level_defense_test`, on INSERT or on an UPDATE of source or source_id. It refuses whatever the `source_id` says: NULL, dangling, or a report that does not exist yet.
+
+`cefr_point_is_model_made` is now the take-back's rule only. EXECUTE is revoked from PUBLIC, anon, authenticated and service_role, which removes the report-id oracle.
+
+The only legitimate writers of those sources are owner-run functions, so they are unaffected:
+- `approve_cefr_draft`;
+- `approve_video_feedback`;
+- the transcript approval, whose source is `transcript`.
+
+Probes R1 (NULL and dangling, as the service role and as a teacher), R2 (a report not yet created) and R9 (the oracle) are turned round in the suite.
+
+### M-1: rollback files, run by the suite
+
+- **`scripts/ROLLBACK-family-reads-without-ai.sql`** puts back the four dropped policies exactly as live has them (read 17 Nov: roles `{authenticated}`, PERMISSIVE, same expressions) and drops the report RPC. It changes no rows.
+- **`scripts/ROLLBACK-cefr-model-drafts.sql`**, run after the family rollback:
+  1. drops the three triggers;
+  2. puts back every held point that is not published, from `held_row` with the same id. Teacher-approved points stay as the teacher published them;
+  3. copies every draft into `cefr_assessment_drafts_rolled_back`, which no API role can read, then drops the drafts table;
+  4. drops the functions;
+  5. restores production's five-value source CHECK, unless an approved level-defense point exists. Then it keeps the wider CHECK and says so.
+  It publishes no undecided model output.
+- **What the suite runs:**
+  - both rollbacks, twice each;
+  - the policies compared with live's text;
+  - held rows back byte for byte;
+  - the copy unreadable by admin and service role;
+  - triggers and functions gone;
+  - then both migrations pasted again, which hold every model point again (approvals go back to the teachers' queue) and make the reads staff-only again;
+  - finally, the narrow-CHECK path.
+
+### M-2: deploy order
+
+The new `StudentDefendLevel` works against the OLD cefr-defense:
+- it reads none of `result`, `stage_score`, `evidence`, `level_estimate`, `rationale`, `defended`, `skill_notes` or `next_steps` (asserted on the source, comments stripped);
+- it counts a test as "reviewed" only on the two statuses the new function sends;
+- every other status, including the old AI ones, reads "Test submitted - your teacher will review it".
+
+The reverse does not hold: the old page against the new function shows "0% correct". So the app goes out first, then cefr-defense straight after. Until then the old function still carries the AI result in its API reply, as today, but the screen shows none of it.
+
+### N-3: the child's status moves on
+
+`get_state` for a child, after the latest graded test, gives:
+
+| What the teacher did | Status | Level shown |
+|---|---|---|
+| Approved a point for the test | `reviewed` | the approved level |
+| Set a level of their own (`set_level` after the test, or a manual point dated after it) | `set_by_teacher` | the manual level, as `teacher_level` |
+| Discarded the test's draft | `reviewed` | none |
+| Nothing yet | `submitted` | none |
+
+A lookup error leaves `submitted` and shows nothing. The child page shows each case. Tests cover all five cases, plus a manual point from before the test, which does not count.
+
+### N-4: the OpenAI limit counts only calls that reach the model
+
+The 20 per 10 minutes is checked inside each action, after its own checks (claim found, not graded, stage present) and right before the model call.
+
+Tests:
+- 25 "Already graded" submits are not counted, so the child's real submit still goes through.
+- A teacher's evidence audits: exactly 20 reach OpenAI, and the 21st is a 429 that calls nothing.
+- ai-gate: 25 refused audits are never counted, the overall 60 still holds, and the source order is asserted.
+
+### N-8 (note only)
+
+Class-less drafts (a defence claim set with no class) show only on the admin StudentDetail page. Teachers' class pages filter by class. This matches who runs defences today (the panel is admin-only). Live: 0 of the 9 held points are class-less.
+
+### Tests (round 3)
+
+| Check | Result |
+|---|---|
+| `cefr drafts` (pinned 245; was 191) | 245 passed, 0 failed |
+| `ai spend gate (F-02)` | 337 passed, 0 failed (its cefr-defense spend cases moved to cefr-drafts, where real model calls can be driven) |
+| `chat assistant` | 201 passed, 0 failed |
+| `transcribe gate` | 133 passed, 0 failed |
+| `transcript drafts (D-26)` / `transcript review probes` | 221 / 34 passed, 0 failed |
+| `edge functions typecheck` | 5 passed, 0 failed |
+| `tsc --noEmit -p tsconfig.app.json` | TSC3 |
+
+The full `run.mjs` was not re-run this round. Round 2's full run had the same 36 harness-lag failures, none in a suite that loads a changed file, and no suite outside the ones above loads a file round 3 changed.
+
+Mutations, each caught by the suite:
+
+| Mutation | Result |
+|---|---|
+| guard back on `source_id` (N-1) | the suite stops |
+| RPC returns the model's `cefr` (N-2) | 3 failures |
+| "discarded" stays "submitted" (N-3) | 1 failure |
+| limit counted before the checks (N-4) | 3 failures |
+
+### Files (LF md5, CR stripped) - round 3
+
+| File | md5 |
+|---|---|
+| `supabase/migrations/20261117151000_cefr_model_drafts.sql` | 4f8f29f0e72c32ed510232043f3f454c |
+| `supabase/migrations/20261117152000_family_reads_without_ai.sql` | d833c23919cfb6a23e8b19b17a4a7808 |
+| `scripts/ROLLBACK-cefr-model-drafts.sql` (new) | ea07a09d5166af217a14a7a265bbe515 |
+| `scripts/ROLLBACK-family-reads-without-ai.sql` (new) | ba58b6439914b042b36b9e243804b9f2 |
+| `supabase/functions/cefr-defense/index.ts` | 4f40982ec369a0145aaf7debc74c74a8 |
+| `supabase/functions/generate-student-report/index.ts` (unchanged since round 2) | 769c904089d9478b1f32850e515916e4 |
+| `supabase/functions/transcribe-lesson-audio/index.ts` (unchanged since round 1) | 2d637c062aed9c5e5752d93c36ae9665 |
+| `_lib/ai-gate.ts`, `_lib/rate-limit.ts`, `_lib/auth.ts`, `_lib/text.ts` (unchanged) | as in round 2 |
+
+Function imports are as in round 2.
+
+Screens: `StudentDefendLevel.tsx`, `AIReportDialog.tsx`, plus those from rounds 1 and 2.
+
+### Deploy order (owner) - round 3, replaces every order above
+
+1. **Paste `20261117151000_cefr_model_drafts.sql`.** Expected output: held 9, children 9, drafts waiting 9. From here no deployed function can publish a model level.
+2. **Paste `20261117152000_family_reads_without_ai.sql`.** It refuses until step 1 is in. If it names a policy, send that back.
+   - Families and children now read no profile and no claim, and the child reads published reports only through the RPC.
+   - The old FamilyDashboard shows no level and no text until step 3.
+3. **Publish the app.** The new screens work against the old functions: the approval card needs only steps 1 and 2, and the child's page renders no AI field from the old cefr-defense.
+4. **Deploy `cefr-defense` straight after step 3,** then `generate-student-report` and `transcribe-lesson-audio`, in any order.
+   - Until cefr-defense is deployed, its API reply still carries the AI test result (as today). The new screen shows none of it.
+   - The old screen with the new function would show "0% correct", which is why step 3 comes first.
+
+**Rollback** (only to undo a broken paste): `scripts/ROLLBACK-family-reads-without-ai.sql`, then `scripts/ROLLBACK-cefr-model-drafts.sql`.
