@@ -1025,6 +1025,8 @@ console.log('\n11b. the assistant\'s payment step (payments-followups, 202611171
       ADD COLUMN IF NOT EXISTS sibling_discount_from date, ADD COLUMN IF NOT EXISTS created_by uuid, ADD COLUMN IF NOT EXISTS updated_by uuid;
     ALTER TABLE public.monthly_finance_snapshots ADD COLUMN IF NOT EXISTS superseded_at timestamptz;
     ALTER TABLE public.classes ADD COLUMN IF NOT EXISTS max_students integer;
+    ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS confirmation_status text DEFAULT 'needs_review',
+      ADD COLUMN IF NOT EXISTS confirmed_by uuid, ADD COLUMN IF NOT EXISTS tuition_frozen boolean NOT NULL DEFAULT false;
     CREATE TABLE IF NOT EXISTS public.profiles (id uuid PRIMARY KEY, display_name text);
     CREATE TABLE IF NOT EXISTS public.student_points (student_id uuid REFERENCES public.students(id), class_id uuid, month text);
     ALTER TABLE public.student_points ADD COLUMN IF NOT EXISTS total_points integer DEFAULT 0;
@@ -1088,6 +1090,60 @@ console.log('\n11b. the assistant\'s payment step (payments-followups, 202611171
      u3?.ok === true && u3.student_deactivated === true && u3.student_removed === false && k?.is_active === false && k?.family_id === null
      && (await paymentsOf(kid)).length === 0 && !(await billOf(kid, MN)) && (await legsOf(kid)).length === 4 && balanced(await legsOf(kid))
      && Object.values(await net(kid)).every((v) => v === 0) && (u3.notices ?? []).length === 2, { u3, k, e3 });
+
+  // Review B-1 (P3): a trigger fired during undo (here on audit_log, a table undo writes) that
+  // deletes ANOTHER child's person-recorded payment is refused: only the action's own payment goes.
+  const victim = await child('ReviewVictim');
+  await bill(victim, MN, 500000);
+  await pay({ studentId: victim, month: MN, amount: 100000, occurredAt: today });
+  const victimPay = (await paymentsOf(victim))[0]?.id;
+  const actor = await child('ReviewActor');
+  await bill(actor, MN, 500000);
+  const ap = await apply({ version: 1, student: { id: actor }, payment: { amount: 50000, month: MN, method: 'Cash', paid_on: today } });
+  await db.exec(`CREATE TABLE public.p3_victim (id uuid);
+    CREATE FUNCTION public.p3_side() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+    BEGIN IF NEW.entity = 'payment' AND NEW.action = 'delete' THEN DELETE FROM public.payments WHERE id IN (SELECT id FROM public.p3_victim); END IF; RETURN NEW; END $f$;
+    CREATE TRIGGER p3_side AFTER INSERT ON public.audit_log FOR EACH ROW EXECUTE FUNCTION public.p3_side();`);
+  await sql('INSERT INTO public.p3_victim VALUES ($1)', [victimPay]);
+  const outside = await tryIt(() => asRole('user', ADMIN.id, `INSERT INTO public.audit_log (entity, entity_id, action, actor_user_id, diff) VALUES ('payment', 'x', 'delete', $1, '{}')`, [ADMIN.id]));
+  const before3 = await snapshot();
+  const up = await undo(ap.action_id);
+  ok('B-1 (P3): the same side effect is refused outside undo AND inside it - the victim\'s payment stands, the undo refuses and changes nothing',
+     /Direct payment deletion is not allowed/.test(outside?.message ?? '') && up?.ok === false
+     && up.reasons.some((x) => /Direct payment deletion is not allowed/.test(x)) && (await paymentsOf(victim)).length === 1
+     && same(await snapshot(), before3), { outside, up });
+  await db.exec('DROP TRIGGER p3_side ON public.audit_log; DROP FUNCTION public.p3_side(); DROP TABLE public.p3_victim;');
+  ok('  without it the undo goes through and the other child\'s payment, bill and legs stand', (await undo(ap.action_id))?.ok === true
+     && (await paymentsOf(victim)).length === 1 && Number((await billOf(victim, MN)).recorded_payment) === 100000);
+
+  // Review M-1 (P4): a person confirms or freezes the new child's bill in between: undo refuses
+  // with a reason, the bill and everything else stay (before: the confirmed bill was deleted).
+  for (const variant of ['confirmed', 'frozen']) {
+    const apx = await apply({ version: 1, student: { new: { full_name: `Review P4 ${variant}` } }, payment: { amount: 100000, month: MN, method: 'Cash', paid_on: today } });
+    const kx = apx.student_id;
+    await asRole('service', null, `UPDATE public.invoices SET base_amount = 700000, total_amount = 700000 WHERE student_id = $1 AND month = $2`, [kx, MN]);
+    if (variant === 'confirmed') await asRole('user', ADMIN2.id, `UPDATE public.invoices SET confirmation_status = 'confirmed', confirmed_by = $3, updated_by = $3 WHERE student_id = $1 AND month = $2`, [kx, MN, ADMIN2.id]);
+    else await asRole('user', ADMIN2.id, `UPDATE public.invoices SET tuition_frozen = true, updated_by = $3 WHERE student_id = $1 AND month = $2`, [kx, MN, ADMIN2.id]);
+    const b4 = await snapshot();
+    const ux = await tryIt(async () => { const v = await undo(apx.action_id); if (v?.ok !== false) throw Object.assign(new Error('undone'), { v }); return v; });
+    const bx = await billOf(kx, MN);
+    ok(`M-1 (P4, ${variant} by a person): undo refuses with a reason (never a raw error), the bill stays ${variant}, nothing changes`,
+       ux === null && !!bx && (variant === 'confirmed' ? bx.confirmation_status === 'confirmed' : bx.tuition_frozen === true)
+       && same(await snapshot(), b4) && (await paymentsOf(kx)).length === 1, { ux, bx });
+  }
+
+  // Review N-1: the D4 frozen-bill guard refusing undo's own write is a reason, not HC120 raw.
+  {
+    const s6 = await child('ReviewFrozenEmpty');
+    const MX = (await one(`SELECT to_char(((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date + interval '1 month'), 'YYYY-MM') AS m`)).m;
+    const ap6 = await apply({ version: 1, student: { id: s6 }, payment: { amount: 40000, month: MX, method: 'Cash', paid_on: today } });
+    // the bill the assistant made for the month (no charge) is frozen by a person
+    await asRole('user', ADMIN2.id, `UPDATE public.invoices SET tuition_frozen = true WHERE student_id = $1 AND month = $2`, [s6, MX]);
+    const b6 = await snapshot();
+    const res = await undo(ap6.action_id).catch((e) => ({ threw: e.code, message: e.message }));
+    ok('N-1: a D4 guard refusing undo (a frozen bill it would delete) comes back as a reason with the guard\'s code, nothing changed',
+       res?.ok === false && res.reasons.some((x) => /The money guard refused part of this undo \(HC1\d\d\)/.test(x)) && same(await snapshot(), b6), res);
+  }
 }
 
 // =================================================================== 12
