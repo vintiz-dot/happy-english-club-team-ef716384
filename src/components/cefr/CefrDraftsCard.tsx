@@ -7,7 +7,8 @@
  * (migration 20261117151000); nothing reaches the child or the family until
  * a teacher approves it here (approve_cefr_draft, optionally with a level of
  * their own) or discards it. The database checks who may decide: an admin,
- * or staff of the draft's class / of a class the child is in.
+ * or staff of the draft's class / of a class the child is in. Deleting an
+ * approved point from the chart puts its draft back here, re-approvable.
  *
  * Shown on a student's page (studentId) and on a class page (classId).
  */
@@ -39,6 +40,7 @@ interface DraftRow {
   evidence: string | null;
   assessed_at: string;
   held_row: unknown | null;
+  history: Array<{ event: string }> | null;
   students?: { full_name: string | null } | null;
 }
 
@@ -60,7 +62,7 @@ export function CefrDraftsCard({ studentId, classId }: Props) {
     queryFn: async () => {
       let q = (supabase as any)
         .from("cefr_assessment_drafts")
-        .select("id, student_id, class_id, source, level, confidence, evidence, assessed_at, held_row, students(full_name)")
+        .select("id, student_id, class_id, source, level, confidence, evidence, assessed_at, held_row, history, students(full_name)")
         .eq("status", "draft")
         .order("created_at", { ascending: false })
         .limit(50);
@@ -129,7 +131,8 @@ export function CefrDraftsCard({ studentId, classId }: Props) {
                 {!studentId && <span className="font-medium text-hec-ink">{d.students?.full_name ?? "Student"}</span>}
                 <Badge variant="outline">{SOURCE_LABEL[d.source] ?? d.source}</Badge>
                 <span className="text-hec-ink-soft">{d.assessed_at}</span>
-                {d.held_row ? <Badge variant="outline">Taken off the chart until approved</Badge> : null}
+                {d.held_row || (d.history ?? []).some((h) => h.event === "unpublished")
+                  ? <Badge variant="outline">Taken off the chart until approved</Badge> : null}
               </div>
               <div className="text-hec-small text-hec-ink">
                 AI suggests <span className="font-medium">{d.level}</span>

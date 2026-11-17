@@ -1,11 +1,17 @@
 /**
  * StudentDefendLevel — the student's side of the CEFR Level Defense.
  *
- * Shows the level their teacher set and its verification status, and — when
+ * Shows the level their teacher set and where things stand, and — when
  * a defense test is assigned — walks them through the adaptive multistage
  * test: three stages of CEFR-aligned questions (the difficulty adapts to how
  * they do), finishing with short writing tasks. Grading happens server-side
  * in the cefr-defense edge function; the student never sees answer keys.
+ *
+ * The child never sees what the AI made of the test (estimate, defended or
+ * not, rationale) or the evidence audit: cefr-defense gives a child progress
+ * only - "submitted, your teacher will review it" - and the level once a
+ * teacher has approved one (approved_level). Nothing derived from an AI
+ * reaches a child before a teacher approves.
  */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
-  Scale, Loader2, ShieldCheck, ShieldAlert, PenLine, CheckCircle2, Sparkles, ArrowRight,
+  Scale, Loader2, ShieldCheck, PenLine, CheckCircle2, ArrowRight,
 } from "lucide-react";
 
 const invokeDefense = async (body: Record<string, unknown>) => {
@@ -51,6 +57,7 @@ export default function StudentDefendLevel() {
   const tests: any[] = state?.tests || [];
   const activeTest = tests.find((t) => t.status !== "graded");
   const gradedTest = tests.find((t) => t.status === "graded");
+  const approved: { level: string; assessed_at: string } | null = state?.approved_level ?? null;
   const stage = activeTest?.active_stage;
 
   const submitMutation = useMutation({
@@ -68,9 +75,9 @@ export default function StudentDefendLevel() {
     onSuccess: (d) => {
       setAnswers({});
       if (d.test?.status === "graded") {
-        toast.success("Test complete! Your result is ready 🎉");
+        toast.success("Test submitted! Your teacher will review it.");
       } else {
-        toast.success(`Stage done — ${Math.round((d.stage_score ?? 0) * 100)}% correct. Next stage ready!`);
+        toast.success("Stage done. Next stage ready!");
       }
       queryClient.invalidateQueries({ queryKey: ["cefr-defense-own"] });
     },
@@ -120,14 +127,13 @@ export default function StudentDefendLevel() {
                 <div className="min-w-0">
                   <p className="text-hec-body font-semibold text-hec-ink">Your teacher believes you're {claim.claimed_level}</p>
                   <p className="mt-0.5 text-hec-small text-hec-ink-soft">
-                    {claim.status === "defended" ? "You defended it — brilliant! 🏆"
-                      : claim.status === "not_defended" ? "The test suggests a different level for now — keep going!"
+                    {claim.status === "reviewed" && approved ? `Your teacher reviewed your test: your level is ${approved.level}.`
+                      : claim.status === "submitted" ? "Test submitted — your teacher will review it."
                       : claim.status === "test_assigned" ? "A defense test is waiting for you below."
-                      : claim.status === "supported" ? "The evidence from your lessons already supports it!"
                       : "Show what you can do to prove it."}
                   </p>
                 </div>
-                {claim.status === "defended" && <ShieldCheck className="ml-auto h-8 w-8 shrink-0 text-hec-leaf" />}
+                {claim.status === "reviewed" && <ShieldCheck className="ml-auto h-8 w-8 shrink-0 text-hec-leaf" />}
               </CardContent>
             </Card>
 
@@ -201,58 +207,36 @@ export default function StudentDefendLevel() {
                   >
                     {submitMutation.isPending ? (
                       <><Loader2 className="h-4 w-4 animate-spin" />
-                        {activeTest.current_stage === 3 ? "Grading your test…" : "Preparing the next stage…"}</>
+                        {activeTest.current_stage === 3 ? "Sending your test…" : "Preparing the next stage…"}</>
                     ) : (
-                      <>{activeTest.current_stage === 3 ? "Finish & get my result" : "Submit stage"}<ArrowRight className="h-4 w-4" /></>
+                      <>{activeTest.current_stage === 3 ? "Finish & send to my teacher" : "Submit stage"}<ArrowRight className="h-4 w-4" /></>
                     )}
                   </Button>
                 </CardContent>
               </Card>
             )}
 
-            {/* Result */}
-            {!activeTest && gradedTest?.result && (
-              <Card className={gradedTest.result.defended ? "border-hec-leaf/30" : "border-hec-warn/30"}>
+            {/* After the test: progress, then the level a teacher approved */}
+            {!activeTest && gradedTest && (
+              <Card className={approved ? "border-hec-leaf/30" : undefined}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    {gradedTest.result.defended ? (
-                      <><ShieldCheck className="h-5 w-5 text-hec-leaf" />Level defended: {gradedTest.target_level} 🎉</>
+                    {approved ? (
+                      <><ShieldCheck className="h-5 w-5 text-hec-leaf" />Your teacher's review: {approved.level}</>
                     ) : (
-                      <><ShieldAlert className="h-5 w-5 text-hec-warn" />Your level right now: {gradedTest.result.level_estimate}</>
+                      <><CheckCircle2 className="h-5 w-5 text-hec-ink-soft" />Test submitted</>
                     )}
                   </CardTitle>
-                  <CardDescription className="text-hec-small">{gradedTest.result.rationale}</CardDescription>
+                  <CardDescription className="text-hec-small">
+                    {approved
+                      ? "Your teacher looked at your test and confirmed this level."
+                      : "Your teacher will review your test. Your level shows here once they have."}
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {gradedTest.result.skill_notes && (
-                    <div className="grid sm:grid-cols-2 gap-2">
-                      {Object.entries(gradedTest.result.skill_notes).map(([skill, note]) => (
-                        <div key={skill} className="rounded-hec-sm bg-hec-sunken p-3">
-                          <p className="text-hec-caption font-medium capitalize text-hec-ink">{skill}</p>
-                          <p className="text-hec-caption text-hec-ink-soft">{String(note)}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {Array.isArray(gradedTest.result.next_steps) && gradedTest.result.next_steps.length > 0 && (
-                    <div>
-                      <p className="mb-1 flex items-center gap-1.5 text-hec-small font-medium text-hec-ink">
-                        <Sparkles className="h-3.5 w-3.5 text-hec-brass" />Your next steps
-                      </p>
-                      <ul className="space-y-1">
-                        {gradedTest.result.next_steps.map((s: string, i: number) => (
-                          <li key={i} className="flex gap-1.5 text-hec-small text-hec-ink-soft">
-                            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-hec-leaf" />{s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </CardContent>
               </Card>
             )}
 
-            {!activeTest && !gradedTest && claim.status !== "supported" && (
+            {!activeTest && !gradedTest && (
               <Card>
                 <CardContent className="py-10 text-center text-hec-small text-hec-ink-soft">
                   No defense test yet — your teacher can assign one when you're ready.
