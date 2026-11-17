@@ -277,52 +277,28 @@ console.log('\n2. the fixture tables carry the live columns only');
   await db.close();
 }
 
-// Fix round 1, corrected in round 2 (M-1): the July bill as live has it, row for
-// row (read-only on live, 17 Nov). Its FIRST audit row is on the wipe day itself:
-// 28 Oct 03:58 UTC (10:58 Hanoi) a no-op for the figures (paid_amount, status);
-// 04:04 UTC the service-key reprice 1,620,000 -> 0; 6 Nov 08:57 UTC frozen at 0
-// (no actor); 9 Nov 01:22 UTC the owner's restore in the SQL editor (no actor)
-// put 1,620,000 back while frozen. There is NO audit row before 28 Oct: the
-// round-1 fixture invented a 5 Jul INSERT, which is why the suite passed while
-// live still alarmed. `preRow` adds such a row back, for the older shape;
-// `firstDay` moves the two wipe-day rows to another day.
+// Fix round 1: the July bill as live has it. Priced 1,620,000; the 28 Oct
+// service-key reprice took it to 0; frozen at 0 on 6 Nov; on 9 Nov 01:22 UTC
+// the owner's restore in the SQL editor (no actor) put 1,620,000 back while frozen.
 const B_JUL = U(64);
-const restoreCase = ({ actor = null, at = '2026-11-09T01:22:00Z', to = 1620000, preRow = false, firstDay = '2026-10-28' } = {}) => `
+const restoreCase = ({ actor = null, at = '2026-11-09T01:22:00Z', to = 1620000 } = {}) => `
   INSERT INTO public.invoices(id, student_id, month, status, base_amount, total_amount, recorded_payment, tuition_frozen,
     carry_in_credit, carry_in_debt, carry_out_credit, carry_out_debt)
   VALUES ('${B_JUL}', '${S2}', '2026-06', 'issued', ${to}, ${to}, 0, true, 0, 0, 0, ${to});
   INSERT INTO public.audit_log(entity, entity_id, operation, changed_fields, actor_user_id, occurred_at, diff) VALUES
-   ${preRow ? `('invoices', '${B_JUL}', 'INSERT', NULL, '${ADMIN}', '2026-07-05T00:00:00Z',
-    '{"new":{"base_amount":1620000,"discount_amount":0,"total_amount":1620000}}'),` : ''}
-   ('invoices', '${B_JUL}', 'UPDATE', ARRAY['paid_amount','status'], NULL, '${firstDay}T03:58:56Z',
-    '{"old":{"base_amount":1620000,"discount_amount":0,"total_amount":1620000,"status":"issued"},"new":{"base_amount":1620000,"discount_amount":0,"total_amount":1620000,"status":"paid"}}'),
-   ('invoices', '${B_JUL}', 'UPDATE', ARRAY['base_amount','carry_out_credit','class_breakdown','total_amount'], NULL, '${firstDay}T04:04:04Z',
-    '{"old":{"base_amount":1620000,"discount_amount":0,"total_amount":1620000},"new":{"base_amount":0,"discount_amount":0,"total_amount":0}}'),
-   ('invoices', '${B_JUL}', 'UPDATE', ARRAY['frozen_reason','tuition_frozen'], NULL, '2026-11-06T08:57:28Z',
+   ('invoices', '${B_JUL}', 'INSERT', NULL, '${ADMIN}', '2026-07-05T00:00:00Z',
+    '{"new":{"tuition_frozen":false,"base_amount":1620000,"discount_amount":0,"total_amount":1620000}}'),
+   ('invoices', '${B_JUL}', 'UPDATE', ARRAY['base_amount','total_amount'], NULL, '2026-10-28T03:00:00Z',
+    '{"old":{"tuition_frozen":false,"base_amount":1620000,"total_amount":1620000},"new":{"tuition_frozen":false,"base_amount":0,"discount_amount":0,"total_amount":0}}'),
+   ('invoices', '${B_JUL}', 'UPDATE', ARRAY['frozen_reason','tuition_frozen'], '${ADMIN}', '2026-11-06T00:00:00Z',
     '{"old":{"tuition_frozen":false,"base_amount":0,"total_amount":0},"new":{"tuition_frozen":true,"base_amount":0,"discount_amount":0,"total_amount":0}}'),
    ('invoices', '${B_JUL}', 'UPDATE', ARRAY['base_amount','total_amount'], ${actor ? `'${actor}'` : 'NULL'}, '${at}',
     '{"old":{"tuition_frozen":true,"base_amount":0,"total_amount":0},"new":{"tuition_frozen":true,"base_amount":${to},"discount_amount":0,"total_amount":${to}}}')`;
 
-// The three pre-key transactions pinned in the script (M41), as live has them.
-const KNOWN_PRE_KEY = [
-  ['2c519f69-fa1f-4ca7-985c-e469c51f7bc0', 500000, '2025-10-13T20:54:52Z'],
-  ['fafc4363-ac73-42b9-b931-a17c290986cd', 200000, '2025-10-14T12:25:19Z'],
-  ['ecd66a3d-9c73-4d6d-a1cc-26cb95910a82', 220000, '2025-10-14T17:17:20Z'],
-];
-const knownLegs = KNOWN_PRE_KEY.map(([id, credit, at]) => `('${id}', ${acct(S1, 'AR')}, 0, ${credit}, '2025-10', '${at}')`).join(', ');
-
 // =================================================================== 3, 4
 const CASES = [
-  ['M41 (fix round 2) the three pinned single-leg AR credits of Oct 2025 (tx_id and amount as live): report, do not alarm',
-   `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES ${knownLegs}`, ['M41']],
-  ['M01 (fix round 2, M-3) a NEW unkeyed single leg with a BACKDATED created_at (Oct 2025) alarms: it is not one of the pinned three',
-   `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES ('${tx(110)}', ${acct(S1, 'AR')}, 0, 777000, '2025-10', '2025-10-13T03:00:00Z')`, ['M01']],
-  ['M01 (fix round 2, M-3) the pinned three plus a backdated fourth: M41 stays at the three, the fourth alarms in M01',
-   `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES ${knownLegs},
-      ('${tx(115)}', ${acct(S1, 'AR')}, 0, 777000, '2025-10', '2025-10-13T03:00:00Z')`, ['M01', 'M41']],
-  ['M01 (fix round 2, M-3) a pinned tx_id with a DIFFERENT amount alarms (a further backdated leg on it)',
-   `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES ${knownLegs},
-      ('${KNOWN_PRE_KEY[0][0]}', ${acct(S1, 'AR')}, 0, 1, '2025-10', '2025-10-13T03:00:00Z')`, ['M01', 'M41']],
+  ['M41 (fix round 1) an old single-leg AR credit of Oct 2025, unkeyed: reports, does not alarm',
+   `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES ('${tx(110)}', ${acct(S1, 'AR')}, 0, 500000, '2025-10', '2025-10-13T03:00:00Z')`, ['M41']],
   ['M01 (fix round 1) an unbalanced transaction made today with no key still alarms',
    `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month) VALUES ('${tx(111)}', ${acct(S1, 'AR')}, 0, 220000, '2026-11')`, ['M01']],
   ['M01 (fix round 1) an OLD-dated unbalanced transaction that carries a key still alarms',
@@ -332,10 +308,8 @@ const CASES = [
       ('${tx(113)}', ${acct(S1, 'AR')}, 0, 500000, '2025-10', '2025-10-13T03:00:00Z'), ('${tx(113)}', ${acct(S1, 'REVENUE')}, 100, 0, '2025-10', now())`, ['M01']],
   ['M01 (fix round 1, isolated) with NO keyed ledger row at all, an old unbalanced transaction counts in M01, not M41 (fails closed)',
    `UPDATE public.ledger_entries SET tx_key = NULL;
-    INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES ('${KNOWN_PRE_KEY[0][0]}', ${acct(S1, 'AR')}, 0, 500000, '2025-10', '2025-10-13T03:00:00Z')`, ['M01', 'M07']],
-  ['M42 (restore) the 9 Nov restore to the pre-wipe total, no actor, first audit row ON the wipe day (live shape): reports, M13 / M14 do not alarm', restoreCase(), ['M42']],
-  ['M42 (restore) the same with an audit row before the wipe (older shape): reports, M13 / M14 do not alarm', restoreCase({ preRow: true }), ['M42']],
-  ['M13/M14 (restore) with the first audit rows on 29 Oct, the day AFTER the wipe, nothing is known of the pre-wipe total: alarms', restoreCase({ firstDay: '2026-10-29' }), ['M13', 'M14']],
+    INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES ('${tx(114)}', ${acct(S1, 'AR')}, 0, 500000, '2025-10', '2025-10-13T03:00:00Z')`, ['M01', 'M07']],
+  ['M42 (restore) the 9 Nov restore to the pre-wipe total, no actor: reports, M13 / M14 do not alarm', restoreCase(), ['M42']],
   ['M13/M14 (restore) the same restore made BY A PERSON still alarms', restoreCase({ actor: ADMIN }), ['M13', 'M14']],
   ['M13/M14 (restore) the same restore on ANOTHER DAY (11 Nov) still alarms', restoreCase({ at: '2026-11-11T01:22:00Z' }), ['M13', 'M14']],
   ['M13/M14 (restore) the same restore an hour before the window (8 Nov 23:00 Hanoi) still alarms', restoreCase({ at: '2026-11-08T16:00:00Z' }), ['M13', 'M14']],

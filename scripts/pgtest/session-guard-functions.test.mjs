@@ -1052,7 +1052,10 @@ await section('no person-initiated sessions write on the service key', async () 
   const svc = log.writes.filter((w) => w.table === 'sessions' && w.who === 'service' && w.op !== 'insert');
   ok('no UPDATE/DELETE of sessions by the service client in either function', svc.length === 0, svc);
   const ins = log.writes.filter((w) => w.table === 'sessions' && w.who === 'service' && w.op === 'insert');
-  ok('  (the only service-key sessions write is manage-session create, an INSERT - kept unchanged)', ins.length === 1, ins.length);
+  // D4 step 3A (docs/evidence/D4-design.md (d), D4-build-3a.md decision 18):
+  // `create` left the service key - the insert is the admin's own. D2 said
+  // "the only service-key sessions write is manage-session create (1)".
+  ok('  (no service-key sessions write at all: since D4 3A manage-session create inserts on the caller\'s client)', ins.length === 0, ins.length);
   const guardRpcs = ['session_change_preview', 'cancel_session_checked', 'move_session_checked', 'uncancel_session_checked',
                      'cancel_sessions_checked_bulk', 'record_session_override_event'];
   const bad = log.rpcs.filter((x) => guardRpcs.includes(x.name) && x.who !== 'user');

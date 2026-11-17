@@ -139,6 +139,8 @@ const PINNED = {
   'supabase/functions/modify-payment/index.ts ledger_entries insert': 3,
   'supabase/functions/modify-payment/index.ts payment_modifications insert': 1,
   'supabase/functions/modify-payment/index.ts payments insert': 2,
+  // D5 G-1 (fix round 1): record-payment writes no table itself - the payment row, both legs and
+  // the bill are one transaction in record_admin_payment (pinned in section 2 and section 4).
   'supabase/functions/schedule-sessions/index.ts sessions delete': 1,
   'supabase/functions/schedule-sessions/index.ts sessions insert': 1,
   'supabase/functions/schedule-sessions/index.ts sessions update': 3,
@@ -214,6 +216,7 @@ console.log('\n2. every RPC called is pinned');
     is_teacher_of_class: 'read', log_money_automation_refused: 'D4 event', log_session_automation_refused: 'D2 event',
     money_change_checked: 'D4 checked path', money_change_preview: 'read', money_changes_checked_bulk: 'D4 checked path',
     post_sibling_retro_credit: 'tuition credit (admin / cron secret only, Q7)', prune_admin_auth_state: 'no',
+    record_admin_payment: 'D5 G-1: payment row + both legs + the bill in one transaction (invoker, admin check, FOR UPDATE compare-and-set)',
     record_money_change_event: 'D4 event', record_session_override_event: 'D2 event', recorder_class_missing_consent: 'read',
     recorder_confirm_chunk: 'evidence', recorder_expire_stale: 'evidence', recorder_mark_audio_deleted: 'evidence',
     recorder_register_chunk: 'evidence', recorder_retention_due: 'read', recorder_server_time: 'read',
@@ -237,6 +240,15 @@ console.log('\n3. money tables the browser never writes');
   ok(`no file under src/ writes ${NEVER_FROM_BROWSER.join(', ')} directly`, hits.length === 0, hits);
   const svc = [...src].filter(([f, t]) => f.startsWith('src/') && /SERVICE_ROLE|service_role_key|serviceRoleKey/i.test(t) && /createClient\(/.test(t)).map(([f]) => f);
   ok('no file under src/ builds a client with a service-role key', svc.length === 0, svc);
+  // D5 G-1: the four admin payment screens put money on a bill only through record-payment,
+  // which writes the payment row and both ledger legs with it; the browser no longer writes
+  // recorded_payment for them (setRecordedPayment has no caller left in src/).
+  const SCREENS = ['RecordPaymentDialog', 'QuickPayPanel', 'BatchPaymentDialog', 'RecordedPaymentManager'].map((n) => `src/components/admin/${n}.tsx`);
+  const notMoved = SCREENS.filter((f) => !src.has(f) || !/recordPayment\(supabase,/.test(src.get(f)) || /setRecordedPayment|addToRecordedPayment/.test(src.get(f))
+    || writes.some((w) => w.file === f));
+  ok('G-1: the four payment screens call record-payment and write no money table themselves', notMoved.length === 0, notMoved);
+  const setters = [...src].filter(([f, t]) => f.startsWith('src/') && f !== 'src/lib/recordedPaymentWrite.ts' && /setRecordedPayment\s*\(/.test(t)).map(([f]) => f);
+  ok('  G-1: nothing under src/ calls setRecordedPayment any more (the browser copy stays only as the mirror)', setters.length === 0, setters);
 }
 
 // ------------------------------------------------------- 4. recorded_payment
@@ -266,10 +278,16 @@ console.log('\n4. recorded_payment is written only by compare-and-set (or under 
     'supabase/migrations/20261107090000_ai_assisted_admin_actions.sql': 'ai_action_apply / undo: SELECT ... FOR UPDATE, then add',
     'docs/sql/ai_action_apply_undo.installed.sql': 'the same, as installed',
     'scripts/CREDIT-past-unapplied-cash.sql': 'compare-and-set on the value read, all or nothing',
+    'supabase/migrations/20261117121000_record_admin_payment.sql': 'record_admin_payment (D5 G-1): SELECT ... FOR UPDATE, then compare-and-set on the value read',
   };
-  ok('SQL that sets recorded_payment: only the pinned three', setters.every((f) => f in SQL_ALLOWED) && Object.keys(SQL_ALLOWED).every((f) => setters.includes(f)), setters);
+  ok('SQL that sets recorded_payment: only the pinned four', setters.every((f) => f in SQL_ALLOWED) && Object.keys(SQL_ALLOWED).every((f) => setters.includes(f)), setters);
   const installed = readFileSync(join(repo, 'docs', 'sql', 'ai_action_apply_undo.installed.sql'), 'utf8');
   ok('  the AI action reads the bill FOR UPDATE before each recorded_payment write', (installed.match(/FROM public\.invoices[^;]*FOR UPDATE/g) ?? []).length >= 2);
+  const rap = readFileSync(join(repo, 'supabase', 'migrations', '20261117121000_record_admin_payment.sql'), 'utf8').replace(/\r\n/g, '\n');
+  ok('  record_admin_payment reads the bill FOR UPDATE and writes recorded_payment only WHERE it still equals the value read (and record-payment writes no table itself)',
+     /FROM public\.invoices i\s+WHERE i\.student_id = p_student_id AND i\.month = p_month\s+FOR UPDATE/.test(rap)
+     && /WHERE i\.id = v_bill\.id AND coalesce\(i\.recorded_payment, 0\) = v_before/.test(rap)
+     && !writes.some((w) => w.file === 'supabase/functions/record-payment/index.ts'));
   ok('  the past-credit script writes only WHERE recorded_payment still equals the value read',
      /AND coalesce\(recorded_payment, 0\) = v_bill\.recorded/.test(readFileSync(join(repo, 'scripts', 'CREDIT-past-unapplied-cash.sql'), 'utf8')));
 }
