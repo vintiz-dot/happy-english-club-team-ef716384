@@ -105,6 +105,9 @@ with and without file 6 and comparing every answer, tier and row).
 
 ## Fix round 1 (review REVIEW-d4-step4.md, SHIP WITH CHANGES)
 
+**Where I am / next step:** every finding answered and tested (below). Next step is not mine: a re-review of this
+round, then the conductor's merge, deploys (client and the three functions) and the paste.
+
 Branch `d4-step4-fix` from `2d076ccb`. Pglite and the type-checker only: nothing deployed, nothing on the live
 database, nothing pushed. Only file 6 (`20261114095000`, not applied anywhere) and step 4's screens / functions
 changed; every pinned body of 1a..3B is untouched and the 28 preflight pins are unchanged except file 6's OWN
@@ -145,4 +148,23 @@ repair-attendance and the 3B functions; their changes there are additions only -
 
 ### Fix round 1 results
 
-RESULTS_PLACEHOLDER
+- Full `node scripts/pgtest/run.mjs` (08:39 Hanoi, real clock - inside 08:00-20:00, so not moved back): **8538
+  assertions across 89 suites, 1 failed: `d4 apply chain` 326 / 18** - its object count for step 4 was still 30
+  functions; file 6 now adds 32 (`change_approval_check`, `_approval_impact_tier`). Count updated
+  (`'4': [32, 11, 4]`) and the suite re-run alone: **344 / 0**. Every other suite green and at or above its pin,
+  including `d4 approvals` **157 / 0** (pin 141 -> 157), `approvals lib` **50 / 0** (35 -> 50), `d4 approvals review
+  probe` **47 / 0** (new, registered, pinned 47), `d4 functions lessons` 74 / 0 (the 3A single-chunk HC060 case
+  unchanged), `d4 functions register` 34 / 0, `edge functions typecheck` 5 / 0, `app typecheck`, `shared-module
+  mirrors` 19 / 0.
+- OFF stays today's: the builder's OFF-equivalence scenario (one scenario with and without file 6, every answer,
+  tier and row compared) passes, now also UPDATEing and DELETEing a carry; the only OFF-path additions outside the
+  database are a read-only `change_approval_check` before a bulk cancel of more than 50 lessons and a read-only
+  `change_approval_status` before an admin grant (both answer "off" at once; missing function = off).
+- `tsc --noEmit -p tsconfig.app.json`: exit 0. `npm run test:bun`: 250 pass, 0 fail, 1801 expects, 18 files.
+- Fingerprint `--release d4` regenerated: 131 functions, 57 triggers, 11 relations (step 4: 32 / 11 / 4);
+  `--release d4 --check` up to date; `--check-unchanged`: only the two 1a functions differ.
+- Mutants (file 6, suite d4 approvals): **37 / 37 caught** - A01-A30 (A12 re-pointed at the N-3 expression) and
+  the new A31 (carry UPDATE passes), A32 (carry DELETE passes), A33 (trigger back to INSERT only), A34 (owner may
+  delete the settings row), A35 (impact tier lowered), A36 (whole-batch check never requires), A37 (whole context
+  replayed). Run in two passes (A01-A08, then A09-A37: the scratch folder holding the first pass's log was cleared
+  mid-run by someone else; A01-A08 had all been reported caught before it went).
