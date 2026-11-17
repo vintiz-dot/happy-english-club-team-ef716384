@@ -125,7 +125,7 @@ Azure fast transcription with diarization on the room track; talk-time from the 
 ### 7.1 One-command deletion
 
 - Evaluation data today: `python scripts\lesson-eval\delete_voiceprints.py --yes` (all voiceprints and embeddings) and `delete_all_derived.py --yes` (everything derived), under `C:\Users\Dell\hec-audio-eval\`. When the evaluation ends these should be run, and `audit-eval-proxy` torn down (`scripts/lesson-eval/teardown_audit_eval.md`).
-- Product: one command deletes every draft and audio copy; Option B adds one command for all voiceprints and one for one child's voiceprint plus every suggestion that used it. Each prints counts and writes an audit line, never content.
+- Product: one command deletes every draft and audio copy; Option B adds one command for all voiceprints and one for one child's voiceprint plus every suggestion that used it. Each prints counts and writes an audit line, never content. (Pilot, fix round 1: after `delete_everything` the audit holds no child ids; it keeps event names, dates, class and recording ids and counts. And "only the teacher can read it" is a promise about the app's database: whoever sits at the laptop while the job runs, and whoever can open `pilot\drafts`, can read a report there. Owner's ruling on spoken names, verbatim: "it's ok to send names. the students use psuedo names in class".)
 
 ## 8. Teacher workload
 

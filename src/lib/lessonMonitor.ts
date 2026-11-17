@@ -15,7 +15,7 @@ export const SCHEMA = "hec-lesson-monitor/1";
 
 /** The design's wording (s.2, s.10), in one place so the screen and the tests agree. */
 export const WORDING = {
-  forYouOnly: "Only you can open these reports. Not the office, not parents, not children.",
+  forYouOnly: "In this app only you can open these reports: not the office, not parents, not children. While the school laptop writes them overnight, whoever is sitting at that laptop could read what it writes.",
   uncertainLine: "Words may be wrong or missing.",
   fadedLine: "No matching sound here - this line may not be speech.",
   unwritten: (dur: string) => `The room had speech here that was not written down (about ${dur}). This is an estimate.`,

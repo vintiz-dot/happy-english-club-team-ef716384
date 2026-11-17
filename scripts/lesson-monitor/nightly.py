@@ -24,7 +24,9 @@ before it keeps or saves anything (lesson_monitor_may_continue): if the class wa
 switched off or a child's consent was withdrawn, it stops and deletes its audio copy
 and any draft of that lesson. At the start it also deletes every local draft the
 database no longer allows (lesson_monitor_keep_check), and a STOP file makes it delete
-all local audio and drafts before it exits.
+all local audio and drafts before it exits. A database that cannot be reached is not a yes: after a
+2-minute grace the job stops and deletes the same way, and nothing is kept or saved unless the database
+answers "ok" at that moment (a pasted --token lasts about an hour: finish inside it).
 
 Refuses to start: while pilot\\STOP exists (the kill switch); before step 0 has
 passed for words (step0.py score); if the pilot folder is inside a git repo.

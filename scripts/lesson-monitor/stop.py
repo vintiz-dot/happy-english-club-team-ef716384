@@ -16,7 +16,7 @@ Victor can do the same from his Lesson reports screen ("Stop the pilot").
 `off` only removes the laptop switch; it never switches a class back on
 (that is the admin's pilot_admin.py switch-on, with the consent checks).
 `on` also deletes this laptop's working copies: every audio copy and every local draft
-(pilot\audio, pilot\drafts). Nothing is kept "for later" once the pilot is stopped; the
+(pilot\\audio, pilot\\drafts). Nothing is kept "for later" once the pilot is stopped; the
 database side is switched off with --class-id or the screen. delete_pilot.py removes the
 rest (step 0 files, logs) and the app's rows.
 """

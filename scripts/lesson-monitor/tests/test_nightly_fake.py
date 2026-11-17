@@ -29,7 +29,12 @@ def flac(seconds: float, amp: float, odd: bool, sr: int = 48000) -> bytes:
 
 
 class FakeApi:
-    def __init__(self, begin=None, corrupt=False, save_status=None):
+    def __init__(self, begin=None, corrupt=False, save_status=None, may=None, keep=None, keep_status=None):
+        # may: the answers lesson_monitor_may_continue gives, one per call, the last one repeating. An
+        #      item is a word ('ok', 'consent_missing', ...) or an int HTTP status the call fails with.
+        # keep: {recording id: bool} for lesson_monitor_keep_check; keep_status: it fails with that status.
+        self.may, self.may_calls = list(may or ["ok"]), 0
+        self.keep, self.keep_status = keep or {}, keep_status
         self.calls, self.saved, self.runs = [], [], []
         self.objects, self.chunks = {}, []
         for track, amp in (("teacher", 0.3), ("room", 0.1)):
@@ -49,6 +54,16 @@ class FakeApi:
         self.calls.append(fn)
         if fn == "lesson_monitor_begin":
             return self.begin
+        if fn == "lesson_monitor_may_continue":
+            a = self.may[min(self.may_calls, len(self.may) - 1)]
+            self.may_calls += 1
+            if isinstance(a, int):
+                raise ApiError(a, "no")
+            return a
+        if fn == "lesson_monitor_keep_check":
+            if self.keep_status is not None:
+                raise ApiError(self.keep_status, "no")
+            return [{"recording_id": r, "keep": self.keep.get(r, False)} for r in args["p_recordings"]]
         if fn == "lesson_monitor_record_run":
             self.runs.append((args["p_outcome"], args["p_reason"]))
             return None

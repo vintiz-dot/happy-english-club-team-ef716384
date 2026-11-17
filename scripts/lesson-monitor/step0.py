@@ -16,6 +16,9 @@ LOCAL transcript and of the teacher/others split before anything is shown.
   words    at most 5 % of the written words wrong or missed            (bar from the design)
   grammar  children's grammar mistakes kept as said in at least 9 of 10 (needs at least 10 cases)
   talk     teacher's share of speaking time within 10 points of the teacher's own marks
+`make --recording` goes through lesson_monitor_begin (class on, consent, audit line), stops at the kill switch,
+and deletes everything it wrote if anything fails; `score` deletes the sample (audio and sheets) and keeps only
+result.json.
 The overnight job starts only when words and grammar pass; it shows talk-time only when talk passes.
 """
 from __future__ import annotations
@@ -23,6 +26,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -156,6 +160,21 @@ def write_sheets(folder: Path, segs: list[dict], seconds: int) -> None:
 def make(teacher: np.ndarray, room: np.ndarray, sr: int, folder: Path, model=None) -> Path:
     import soundfile as sf
     import transcribe
+    try:
+        return _make(teacher, room, sr, folder, model, sf, transcribe)
+    except BaseException:
+        # Any failure (or Ctrl-C) leaves no children's audio and no transcript sheet behind.
+        remove_sample(folder)
+        raise
+
+
+def remove_sample(folder: Path) -> None:
+    """Delete one step 0 sample folder (audio, sheets, the computer's split): only a folder directly under pilot\\step0."""
+    if folder.exists() and folder.resolve().parent == pc.step0_dir().resolve():
+        shutil.rmtree(folder, ignore_errors=True)
+
+
+def _make(teacher, room, sr, folder, model, sf, transcribe) -> Path:
     n = min(len(teacher), len(room))
     teacher, room = teacher[:n], room[:n]
     sf.write(str(pc.out(folder / "sample_room.wav")), room, sr, subtype="PCM_16")
@@ -190,10 +209,11 @@ def load_recording(rid: str, start: float, seconds: float) -> tuple[np.ndarray, 
     rows = api.select("class_recordings", {"id": f"eq.{rid}", "select": "id,class_id,session_date,started_at,pre_start_ms,scheduled_start,scheduled_end"})
     if not rows:
         sys.exit("no such recording, or you may not listen to it")
-    # A recorder lesson goes through the transcriber only with the monitor's own consent lines.
-    missing = api.rpc("lesson_monitor_class_missing_consent", {"p_class": rows[0]["class_id"], "p_on": rows[0]["session_date"]})
-    if missing is None or missing > 0:
-        sys.exit(f"REFUSED: {missing} child(ren) of that lesson have no monitor consent on record")
+    # The same door as the overnight job: the database checks the class is on and every child has the
+    # monitor consent, and writes the audit line for the download. Nothing is downloaded without it.
+    b = api.rpc("lesson_monitor_begin", {"p_recording": rid})
+    if not b or not b.get("ok"):
+        sys.exit(f"REFUSED by the database: {(b or {}).get('reason', 'refused')}")
     a, _b = plan.lesson_window(rows[0])
     win = (a + start, a + start + seconds)
     chunks = api.select("class_recording_chunks", {"recording_id": f"eq.{rid}", "select": "track,seq,storage_path,byte_size,sha256,t_start_ms,t_end_ms,confirmed_at"})
@@ -206,6 +226,8 @@ def load_recording(rid: str, start: float, seconds: float) -> tuple[np.ndarray, 
         for track in ("teacher", "room"):
             j = audio.TrackJoiner(win, pc.out(tmp / f"{track}.wav"))
             for c in by[track]:
+                if pc.stopped():
+                    sys.exit("The kill switch is on: stopped, nothing kept.")
                 if c["t_end_ms"] / 1000 < win[0] or c["t_start_ms"] / 1000 > win[1]:
                     continue
                 data = api.download(c["storage_path"])
@@ -248,6 +270,8 @@ def main(argv=None) -> int:
     pc.check_root()
 
     if a.cmd == "make":
+        if pc.stopped():
+            sys.exit(f"The kill switch is on ({pc.stop_file()}): step 0 does not start. stop.py off removes it.")
         secs = a.minutes * 60
         if a.recording:
             teacher, room = load_recording(a.recording, a.start, secs)
@@ -269,8 +293,10 @@ def main(argv=None) -> int:
     res["scored_at"] = datetime.now().isoformat(timespec="seconds")
     res["folder"] = folder.name
     pc.out(pc.step0_result_file()).write_text(json.dumps(res, indent=1), encoding="utf-8")
+    remove_sample(folder)  # the 5 minutes of audio and the transcript sheets are gone; only result.json stays
     print(json.dumps({k: v for k, v in res.items() if k != "bars"}, indent=1))
     print("PILOT MAY START" if res["words_pass"] and res["grammar_pass"] else "PILOT DOES NOT START (see the design: words failing -> consider Option C)")
+    print("The step 0 sample (audio and sheets) has been deleted from this laptop; result.json stays.")
     print("talk-time WILL be shown" if res["talk_pass"] else "talk-time will NOT be shown (feature B dropped)")
     return 0
 
