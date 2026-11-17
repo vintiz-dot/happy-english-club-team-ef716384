@@ -47,7 +47,8 @@ function keyKind(key: string, id: string): 'allocation' | 'leftover' | null {
   if (key === `past-leftover-credit-${id}`) return 'allocation';
   if (key === `past-leftover-credit-${id}-reclass`) return 'leftover';
   const own = (prefix: string) => key === `${prefix}-${id}` || key.startsWith(`${prefix}-${id}-`);
-  if (own('payment') || own('family-payment') || own('smart-family')) return 'allocation';
+  // record-payment (D5 G-1): one child, one month, 'record-payment-<id>-<student>'.
+  if (own('payment') || own('family-payment') || own('smart-family') || own('record-payment')) return 'allocation';
   if (own('family-contribution') || own('family-credit') || own('smart-family-contribution') || own('smart-family-credit')) return 'leftover';
   return null; // e.g. payment-reversal-<id>-..., or another payment whose key merely contains the id
 }
@@ -175,9 +176,26 @@ Deno.serve(async (req) => {
     // it. If it holds less, it was edited since (Recorded Payment Manager) and
     // taking the payment off could take another payment's money with it:
     // refuse before anything is written.
+    // A record-payment CORRECTION took money off its bill (its AR leg is a
+    // debit, so `amount` is negative): deleting it puts that money back. No
+    // other payment path posts a negative allocation.
     const bills: Array<{ invoice: any; studentId: string; month: string; amount: number }> = [];
     for (const { studentId, month, amount } of onBill.values()) {
-      if (amount <= 0) continue;
+      if (amount === 0) continue;
+      if (amount < 0) {
+        const { data: invoice, error: invError } = await supabase
+          .from('invoices')
+          .select('id, student_id, month, recorded_payment, paid_amount, base_amount, total_amount, carry_in_debt, carry_in_credit, status')
+          .eq('student_id', studentId)
+          .eq('month', month)
+          .maybeSingle();
+        if (invError) throw new Error(`Unable to read the ${month} bill: ${invError.message}`);
+        if (!invoice) {
+          return respond({ error: `This correction took ${-amount} off the ${month} bill, which no longer exists. Nothing was changed.` }, 409);
+        }
+        bills.push({ invoice, studentId, month, amount });
+        continue;
+      }
       const { data: invoice, error: invError } = await supabase
         .from('invoices')
         .select('id, recorded_payment, paid_amount, base_amount, total_amount, carry_in_debt, carry_in_credit, status')
