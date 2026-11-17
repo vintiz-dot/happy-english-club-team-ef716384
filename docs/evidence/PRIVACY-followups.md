@@ -228,7 +228,7 @@ Mutation runs, each caught:
 
 Harness: `scripts/pgtest` came from `transcript-fix` (= `origin/conductor/work` + the transcript suites, which main lacks). Main's leaderboard suites were re-registered in `run.mjs`. Main-only files the conductor tree lacks stay on disk, unregistered as on main.
 
-## Files (LF md5, CR stripped)
+## Files (LF md5, CR stripped) - round 1, superseded by round 2 below
 
 | File | md5 |
 |---|---|
@@ -249,7 +249,7 @@ Function imports:
 
 Screens: `src/components/cefr/CefrDraftsCard.tsx` (new), `src/pages/StudentDetail.tsx`, `src/pages/TeacherClassDetail.tsx`, `src/components/reports/AIReportDialog.tsx`, `src/components/cefr/CefrDefensePanel.tsx`, `src/components/charts/CefrGrowthChart.tsx`.
 
-## Deploy order (owner)
+## Deploy order (owner) - round 1, superseded by round 2 below
 
 1. Paste `20261117151000_cefr_model_drafts.sql`.
    - Expected output: `held_this_paste 9, children 9, drafts_waiting 9, held_total 9`.
@@ -287,3 +287,173 @@ Screens: `src/components/cefr/CefrDraftsCard.tsx` (new), `src/pages/StudentDetai
 - **The screens were type-checked, not opened in a browser.**
 - **The model is a stand-in in the tests.**
 - **Known harness lag, not this work:** `s2-edge-functions.test.mjs` fails on this tree before reaching these functions. Its "before" copy of calculate-tuition-bulk at `5594ca32` no longer bundles against today's `_lib/invoice-status.ts` (`settledWriteOff`), and its F-09 config checks fail. Run with that load skipped, its cefr-defense and generate-student-report sections pass, with 3 unrelated failures.
+
+## Round 2 (conductor rulings, owner: "use your recommendations")
+
+Nothing applied, deployed or pushed. The live database was used only for read-only counts.
+
+### 0. Rename
+
+The payments branch also has a `20261117150000_*`, so this migration is now `supabase/migrations/20261117151000_cefr_model_drafts.sql`. Every reference was updated: the function headers, `CefrDraftsCard`, the suite, `run.mjs` and this file.
+
+### 1. The learning profile reaches no family or child
+
+New migration `supabase/migrations/20261117152000_family_reads_without_ai.sql`, pasted after 151000:
+
+- **Preflight (fails closed).** It refuses unless 151000 is in, RLS is on for the four tables, and every policy on `student_learning_profiles`, `cefr_level_claims` and `cefr_defense_tests` is one it knows. The known set is the live set, read 17 Nov.
+- **It drops** `family_read_children_learning_profiles` and `students_read_own_learning_profile`.
+- **What stays:** staff keep `admins_all_learning_profiles` and `teachers_read_class_learning_profiles`. The edge functions keep the profile as context for the drafts teachers review.
+- **Live:** 42 profiles carry a model CEFR estimate. No row is touched.
+
+Changes in `src/pages/FamilyDashboard.tsx`:
+
+- A new exported `withApprovedLevels(client, children)` sets each card's level from the latest `cefr_assessments` row (published only), read through the family's own session. It clears `journey`, the model summary.
+- The text is cleared even if a request still returned it, and also when the level cannot be read (fails closed).
+- `fetchChildren` is unchanged, because `familyDashboardBatch.test.ts` compares its batching with the original. It still asks for the profile, and RLS now returns nothing.
+
+Other readers:
+
+- The only other browser reader is `LearningJourneyCard`, rendered on the admin-only StudentDetail page. The suite asserts this.
+- The chat assistant's `get_student_overview` reads the profile through the caller's client, so a family or child now gets the numbers and no AI summary. `chat-assistant` 201/0.
+
+### 2. cefr-defense: the child sees progress, then the approved level
+
+The child's direct SELECT `students_read_own_cefr_claim` is dropped (same migration). It exposed the whole evidence JSON (verdict, recommended level, rationale) and the AI-driven status. No screen read the table as a child.
+
+In `supabase/functions/cefr-defense/index.ts`, a caller who is not staff of the child gets only:
+
+- **from `get_state`:**
+  - the teacher's level;
+  - a child status: `set_by_teacher`, `test_assigned`, `submitted` or `reviewed`;
+  - tests with `result: null` and `submitted`, and the active stage's questions without its routed `level`;
+  - `approved_level` once a teacher has approved a `level_defense_test` point for one of the child's own tests (published rows only).
+- **from `submit_stage`:** the next stage without its level and without `stage_score`. On the last stage, "Submitted - your teacher will review your test."
+
+Staff see everything, as before. `src/pages/StudentDefendLevel.tsx` shows exactly that: progress, then "Your teacher's review: X".
+
+### 3. Spend gates
+
+`generate-student-report`:
+
+- `requireSpender` first: staff only, 60 per account per 10 minutes.
+- Live, 17 Nov: the biggest class has 10 active children (top three 10, 9, 9), so 60 is six full BulkReportExport runs back to back.
+- Its old `authenticateUser` gate is gone. The service-role key is refused: nothing calls the function with it.
+
+`cefr-defense`:
+
+- `requireSpender` first: any role (`SIGNED_IN_ROLES`). The child takes the test; a shared family login may hold `family`; staff run the rest.
+- The gate allows 60 calls per account per 10 minutes, `get_state` included. The child's page and the staff panel reload state after every step.
+- The three actions that call OpenAI (`mine_evidence`, `generate_test`, `submit_stage`) share a tighter 20 per 10 minutes. A whole test is 4 OpenAI calls and a child makes 3 of them, so 20 is about five tests or audits in ten minutes for one teacher.
+- Its own `getUser` / `user_roles` lookup is gone (the gate's identity is used).
+
+### 4. Deleting an approved point
+
+Chosen: re-approvable. Applied to 151000, which is not yet applied anywhere.
+
+- A new `AFTER DELETE` trigger `cefr_published_point_removed` (SECURITY DEFINER) handles a teacher or admin deleting a published point through the existing staff delete policy. The point's draft goes back to `draft`: off the chart, back in the teacher's queue, approvable or discardable again.
+- `cefr_assessment_drafts.history` records every approval, discard and removal (who, when, level).
+- The card marks such a draft "Taken off the chart until approved".
+- The service role cannot insert a draft with a history.
+- Deleting a teacher's own point touches no draft.
+
+### Tests (round 2)
+
+| Check | Result |
+|---|---|
+| `cefr drafts` (pinned 191; was 139) | 191 passed, 0 failed |
+| `ai spend gate (F-02)` (generate-student-report and cefr-defense sections added) | 340 passed, 0 failed |
+| `chat assistant` | 201 passed, 0 failed |
+| `transcribe gate` | 133 passed, 0 failed |
+| `transcript drafts (D-26)` / `transcript review probes` | 221 / 34 passed, 0 failed |
+| `edge functions typecheck` | 5 passed, 0 failed |
+| `tsc --noEmit -p tsconfig.app.json` standalone | FULL_TSC |
+| full `node scripts/pgtest/run.mjs` | FULL_RUN |
+| `npm run test:bun` | 142 pass, 3 fail, 2 errors: same as round 1. `familyDashboardBatch.test.ts` passes. |
+
+New cases in `cefr-drafts.test.mjs`:
+
+- **Before the paste:** the family and the child read the model summary and estimate, and the child reads the AI audit's recommended level.
+- **152000:**
+  - It refuses before 151000 and drops nothing.
+  - An unknown policy on profiles, or on claims, is refused and named.
+  - It installs, and pastes twice.
+  - The family, the child, another child and a role-less account read no profile and no claim.
+  - The class teacher and the TA read Kiki's; another class's teacher reads neither; an admin reads both.
+  - The family still reads approved levels.
+  - Exactly the six staff policies remain, and the rows are untouched.
+- **Re-approval:**
+  - The class teacher deletes the approved point. The family stops seeing it, and the draft is `draft` again with history approved, unpublished (by the teacher, A2) and back in the queue.
+  - Re-approved at B1, it is published again under the same id, with three history steps.
+  - Deleting a teacher's own point leaves the drafts as they were.
+  - A forged history is refused.
+- **cefr-defense, bundled:**
+  - The child's `get_state` carries no evidence, no AI status, no rationale, recommended level, stage level or answer key anywhere in the reply.
+  - Staff see the full audit.
+  - The child's final submit replies "submitted - your teacher will review", with nothing of the result, while the result is stored for staff.
+  - After the test the child's state says "submitted", with no result and no approved level.
+  - A published (approved) point for the child's own test shows as `reviewed`, A2. Another test's point does not show.
+  - A child's stage-1 submit carries no level, score or key; staff get both.
+- **FamilyDashboard:** the real `withApprovedLevels`, extracted from the page, run against Postgres as the family through a PostgREST stand-in.
+  - Kiki's card shows the latest approved level and no journey text, even when the input carried the model's B2 and summary.
+  - A child the family cannot read gets nothing.
+  - A read error gives no level and no text.
+  - The page wires it in.
+- **Source:** the browser reads the profile only in `LearningJourneyCard` (admin StudentDetail) and FamilyDashboard. It never reads `cefr_level_claims` or `cefr_defense_tests` directly.
+
+Mutations, each caught:
+
+| Mutation | Result |
+|---|---|
+| family policy kept | the paste's own commit check refuses (suite fails) |
+| unpublish trigger removed | 6 failures |
+| child given the staff `get_state` | 6 failures |
+| child given the staff final submit | 2 failures |
+| FamilyDashboard keeps the model text | 4 failures |
+
+FULL_LAG
+
+### Files (LF md5, CR stripped) - round 2
+
+| File | md5 |
+|---|---|
+| `supabase/migrations/20261117151000_cefr_model_drafts.sql` (renamed from 150000; re-approval added) | 1c4d394d2d3658cf22d09c7e2af037aa |
+| `supabase/migrations/20261117152000_family_reads_without_ai.sql` (new) | beef1b3903e7062709fbc75a99d5f6cf |
+| `supabase/functions/generate-student-report/index.ts` | 769c904089d9478b1f32850e515916e4 |
+| `supabase/functions/cefr-defense/index.ts` | 5417666eadbf68bc9aebc95c1a8fe897 |
+| `supabase/functions/transcribe-lesson-audio/index.ts` (unchanged since round 1) | 2d637c062aed9c5e5752d93c36ae9665 |
+| `supabase/functions/_lib/ai-gate.ts` (unchanged) | e5d4d3c66e6d6cb35219ad7e72f20cb7 |
+| `supabase/functions/_lib/rate-limit.ts` (unchanged) | aad3d996bc38a83848e33bd1cb88415e |
+| `supabase/functions/_lib/auth.ts` (unchanged) | 92b44db93cd2614a2fb3011e3a9063ba |
+| `supabase/functions/_lib/text.ts` (unchanged) | 41a119cc74c73f197cf8fd6c84c3f33a |
+
+Function imports:
+
+- **generate-student-report:** `../_lib/auth.ts` and `../_lib/ai-gate.ts` (new; it imports `./auth.ts` and `./rate-limit.ts`), plus esm.sh supabase-js@2.75.0.
+- **cefr-defense:** `../_lib/text.ts`, `../_lib/auth.ts`, `../_lib/ai-gate.ts` (new) and `../_lib/rate-limit.ts` (new).
+- **transcribe-lesson-audio:** as round 1.
+
+Screens: `src/pages/FamilyDashboard.tsx`, `src/pages/StudentDefendLevel.tsx`, `src/components/cefr/CefrDraftsCard.tsx`, plus the round 1 screens.
+
+### Deploy order (owner) - round 2, replaces the one above
+
+1. **Paste `20261117151000_cefr_model_drafts.sql`.** Expected output: `held_this_paste 9, children 9, drafts_waiting 9, held_total 9`. From here the deployed functions can no longer publish a model's level.
+2. **Paste `20261117152000_family_reads_without_ai.sql`.** It refuses until step 1 is in. If it refuses on a policy, send back the name.
+   - From here, families and children read no learning profile and no level claim.
+   - The family card shows no level until step 4, and no AI text.
+3. **Deploy `cefr-defense`, `generate-student-report` and `transcribe-lesson-audio`.**
+   - Deploy `cefr-defense` promptly: until it is out, the old function still hands the child the test's AI result in its reply.
+   - A function deployed before step 1 logs a failed draft insert and shares nothing.
+4. **Publish the app.** This brings the approval card, the family card's approved level and the child's progress-only defence page. Until it is out, the old child page shows "Show what you can do" for the new statuses.
+
+### What a reviewer should attack (round 2)
+
+- **The unpublish trigger** runs as the owner and trusts `OLD.id` = draft id. Only the approval publishes under a draft's id, and the take-back refuses a shared id.
+- **The child-view rule** is "not staff of this child". An admin or teacher looking at their own linked student record would get the staff view. That is the existing `staffHolds` predicate.
+- **cefr-defense's two limits** are in memory and per instance (audit F-12), like every gate.
+- **`withApprovedLevels`** takes the latest by `assessed_at`, then `created_at`. A teacher's backdated manual point can be "older" than an AI point approved today. That is by design: it is the date assessed.
+
+### Not verified (round 2)
+
+- The screens were type-checked, not opened in a browser.
+- The model is a stand-in.
+- The 152000 policy drops ran only in the in-process Postgres. Live: only the read-only policy list and counts.
