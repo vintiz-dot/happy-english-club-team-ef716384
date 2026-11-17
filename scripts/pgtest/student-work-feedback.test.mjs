@@ -71,6 +71,16 @@ const TABLE = `
   CREATE POLICY students_read_approved_work ON public.student_work FOR SELECT TO authenticated
     USING (status = 'approved' AND EXISTS (SELECT 1 FROM public.students s
             WHERE s.linked_user_id = auth.uid() AND (s.id = student_work.student_id OR s.id = ANY (student_work.member_student_ids))));
+  -- The child's word bank, as far as these cases need (the live columns the
+  -- scan writes; a child reads their own).
+  CREATE TABLE public.student_vocabulary_entries (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid, student_id uuid, class_id uuid,
+    word text NOT NULL, root_word text NOT NULL, definition_en text,
+    user_examples jsonb NOT NULL DEFAULT '[]', enrichment jsonb, image_url text,
+    created_at timestamptz NOT NULL DEFAULT now());
+  ALTER TABLE public.student_vocabulary_entries ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY own_words ON public.student_vocabulary_entries FOR SELECT TO authenticated
+    USING (EXISTS (SELECT 1 FROM public.students s WHERE s.id = student_id AND s.linked_user_id = auth.uid()));
   GRANT USAGE ON SCHEMA auth TO authenticated, service_role;
   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
   GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
@@ -236,6 +246,34 @@ console.log("=== the teacher approves: one click, the draft becomes what the chi
   eq("the child now reads the approved note", [r.rows[0].teacher_notes, r.rows[0].ai_feedback], ["OLD FN DRAFT", null]);
   const err = await tryAs(null, null, () => db.query(`UPDATE public.student_work_ai_drafts SET feedback = 'regenerated' WHERE work_id = $1`, [waiting]), "service_role");
   ok("and the draft can no longer be regenerated", /has been reviewed/.test(err ?? ""), err ?? "written");
+}
+
+// ------------------------------------------- review N-8: scanned words
+if (MIGS.some((f) => f.includes("20261117160300"))) {
+  console.log("=== review N-8: scanned words wait for a teacher ===");
+  const page = (await one(
+    `INSERT INTO public.student_work (student_id, class_id, uploaded_by, storage_path, status, workflow)
+     VALUES ($1, $2, $3, 'v.jpg', 'needs_review', 'vocab') RETURNING id`, [kid, cls, U.teacher])).id;
+  await service(() => db.query(
+    `INSERT INTO public.student_work_vocab_drafts (work_id, student_id, class_id, entries)
+     VALUES ($1, $2, $3, '[{"word":"elephant","status":"new"}]')`, [page, kid, cls]));
+  eq("the child reads none of the words waiting for review", (await as(U.child, "student", () => db.query(`SELECT * FROM public.student_work_vocab_drafts`))).rows.length, 0);
+  eq("  nor does a family account", (await as(U.child, "family", () => db.query(`SELECT * FROM public.student_work_vocab_drafts`))).rows.length, 0);
+  eq("the class's teacher does", (await as(U.teacher, "teacher", () => db.query(`SELECT work_id FROM public.student_work_vocab_drafts`))).rows.map((r) => r.work_id), [page]);
+  eq("another teacher does not", (await as(U.otherTeacher, "teacher", () => db.query(`SELECT * FROM public.student_work_vocab_drafts`))).rows.length, 0);
+  const tw = await tryAs(U.teacher, "teacher", () => db.query(`UPDATE public.student_work_vocab_drafts SET entries = '[]'`));
+  ok("a teacher cannot edit the pending set directly (only the approval in the function moves it)", /permission denied/.test(tw ?? ""), tw ?? "allowed");
+  const bad = await tryAs(null, null, () => db.query(
+    `INSERT INTO public.student_vocabulary_entries (student_id, word, root_word, enrichment) VALUES ($1, 'elephant', 'elephant', '{"source":"ocr_scan","work_id":"x"}')`, [kid]), "service_role");
+  ok("a scanned word without a teacher's approval cannot enter the word bank (the old function's write)", /only after a teacher approves/.test(bad ?? ""), bad ?? "inserted");
+  await service(() => db.query(
+    `INSERT INTO public.student_vocabulary_entries (student_id, word, root_word, enrichment) VALUES ($1, 'elephant', 'elephant', $2)`,
+    [kid, JSON.stringify({ source: "ocr_scan", work_id: page, approved_by: U.teacher })]));
+  await service(() => db.query(
+    `INSERT INTO public.student_vocabulary_entries (student_id, word, root_word, enrichment) VALUES ($1, 'cat', 'cat', '{"source":"save_word"}')`, [kid]));
+  eq("with the approval it does; a word the child saved needs none", (await as(U.child, "student", () => db.query(`SELECT word FROM public.student_vocabulary_entries ORDER BY word`))).rows.map((r) => r.word), ["cat", "elephant"]);
+  eq("no policy on the pending set names a student or a family",
+    (await db.query(`SELECT policyname FROM pg_policies WHERE tablename = 'student_work_vocab_drafts'`)).rows.map((r) => r.policyname), ["student_work_vocab_drafts_staff_read"]);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -242,7 +242,8 @@ const SUITES = [
   {
     name: "student work feedback",
     file: "student-work-feedback.test.mjs",
-    migrations: ["20261117160000_student_work_ai_feedback_staff_only.sql"],
+    // Review N-8: the words a vocab scan reads wait for a teacher too.
+    migrations: ["20261117160000_student_work_ai_feedback_staff_only.sql", "20261117160300_vocab_scan_teacher_review.sql"],
   },
   // F-02 and N-5: every function that spends AI / speech / image credit for
   // a browser stands behind requireSpender (the real functions, bundled).

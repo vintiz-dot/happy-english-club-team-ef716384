@@ -362,7 +362,7 @@ function fake8(key, opts) {
         rows = W[table].filter((r) => matches(r, st.filters));
         for (const r of rows) Object.assign(r, st.payload);
       } else if (st.op === "delete") {
-        rows = []; W[table] = W[table].filter((r) => !matches(r, st.filters));
+        rows = W[table].filter((r) => matches(r, st.filters)); W[table] = W[table].filter((r) => !matches(r, st.filters));
       } else {
         rows = W[table].filter((r) => matches(r, st.filters) && visible(table, r));
       }
@@ -443,7 +443,7 @@ async function fetch8(url, init = {}) {
     return new Response(sse, { status: 200, headers: { "content-type": "text/event-stream" } });
   }
   if (u.pathname.includes("/audio/transcriptions")) return new Response(JSON.stringify({ text: "I go to the park", segments: [] }), { status: 200 });
-  return new Response(JSON.stringify({ choices: [{ message: { role: "assistant", content: MODEL_JSON } }] }), { status: 200, headers: { "content-type": "application/json" } });
+  return new Response(JSON.stringify({ choices: [{ message: { role: "assistant", content: W?.llm ?? MODEL_JSON } }] }), { status: 200, headers: { "content-type": "application/json" } });
 }
 
 async function load8(name, source) {
@@ -494,7 +494,9 @@ const EIGHT = {
   "video-rubric":             { roles: STAFF, limit: 20, windowMs: 10 * MIN, body: { homework_id: IDS.hw } },
   "explain-family-tuition":   { roles: ["admin"], limit: 20, windowMs: 10 * MIN, body: { studentId: IDS.student, month: "2026-11" } },
   "audit-eval-proxy":         { roles: ["admin"], limit: 60, windowMs: 10 * MIN, body: { run_id: "R1", vendor: "openai", mode: "gpt-transcribe", object_path: "lessons/L1/p0001.wav", audio_seconds: 10 } },
-  "ocr-vocab-scan":           { roles: STAFF, limit: 20, windowMs: 10 * MIN, body: { work_id: IDS.vocabWork, student_id: IDS.student } },
+  "ocr-vocab-scan":           { roles: STAFF, limit: 40, windowMs: 10 * MIN, body: { work_id: IDS.vocabWork, student_id: IDS.student } },
+  // Found in the review fix round: Vision for a browser, no per-account limit.
+  "ocr-student-work":         { roles: STAFF, limit: 60, windowMs: 10 * MIN, body: { work_id: IDS.work } },
   "chat":                     { roles: ANY, limit: 30, windowMs: 5 * MIN, body: { messages: [{ role: "user", content: "Hello" }] } },
   "analyze-video-submission": { roles: ANY, limit: 30, windowMs: 60 * MIN, body: { video_submission_id: IDS.video } },
 };
@@ -618,6 +620,50 @@ console.log("=== generate-work-feedback: a teacher's decision stands (N-6) ===")
   ok("naming a child the teacher does not teach (whose profile would go into the prompt): 403, no vendor call", o.status === 403 && o.vendor.length === 0, o);
 }
 
+console.log("=== ocr-vocab-scan: a teacher approves the words first (review N-8) ===");
+{
+  const fn = await load8("ocr-vocab-scan", readFileSync(resolve(FUNCTIONS, "ocr-vocab-scan", "index.ts"), "utf8"));
+  const LLM = JSON.stringify({ entries: [
+    { word: "elephant", meaning: "con voi", example: "The elephant is big.", is_grammatical: true, corrected_example: null },
+    { word: "giraffe", meaning: "huou cao co", example: "The giraffe are tall.", is_grammatical: false, corrected_example: "The giraffe is tall." },
+    { word: "tiger", meaning: "con ho", example: "", is_grammatical: true, corrected_example: null },
+  ] });
+  const CHILD_TABLES = ["student_vocabulary_entries", "point_transactions", "vocab_activity_log", "student_error_log", "srs_cards"];
+  W = world({ llm: LLM, student_vocabulary_entries: [{ id: "v0", student_id: IDS.student, word: "tiger" }] });
+  const scan = await call8(fn, "ocr-vocab-scan", { token: tokenOf(U.teacher), body: { work_id: IDS.vocabWork, student_id: IDS.student } });
+  ok("the scan reads the page (Vision, the model)", scan.status === 200 && scan.vendor.length > 0 && scan.json?.pending_review === true, scan);
+  eq("  and writes nothing a child reads: no word, point, activity, error-log entry or card",
+    scan.writes.filter((w) => CHILD_TABLES.includes(w.table)).map((w) => w.table), []);
+  eq("  the proposed words wait, staff-only, for the teacher", [W.student_work_vocab_drafts?.length, W.student_work_vocab_drafts?.[0]?.entries.map((e) => [e.word, e.status])],
+    [1, [["elephant", "new"], ["giraffe", "new"], ["tiger", "duplicate"]]]);
+  eq("  and the page waits in the review queue (it used to approve itself)", [W.student_work[1].status, W.student_work[1].approved_by], ["needs_review", null]);
+  eq("  the screen is told they are proposed, not added", scan.json?.words?.map((w) => w.status), ["proposed", "proposed", "duplicate"]);
+
+  const kid = await call8(fn, "ocr-vocab-scan", { token: tokenOf(U.student), body: { work_id: IDS.vocabWork, approve: true } });
+  ok("a child cannot approve them (403 at the gate)", kid.status === 403 && kid.writes.length === 0, kid);
+
+  const ap = await call8(fn, "ocr-vocab-scan", { token: tokenOf(U.teacher), body: { work_id: IDS.vocabWork, approve: true, words: ["elephant", "giraffe"], student_id: "50000000-0000-4000-8000-0000000000ff" } });
+  ok("the teacher approves two of the three: no model call", ap.status === 200 && ap.vendor.length === 0, ap);
+  eq("  exactly the kept new words reach the word bank", W.student_vocabulary_entries.filter((r) => r.enrichment?.source === "ocr_scan").map((r) => r.word), ["elephant", "giraffe"]);
+  ok("  each carrying the approving teacher (the database refuses one without)", W.student_vocabulary_entries.filter((r) => r.enrichment?.source === "ocr_scan").every((r) => r.enrichment.approved_by === U.teacher));
+  eq("  for the child the page was scanned for, not one named in the approval", [...new Set(W.student_vocabulary_entries.map((r) => r.student_id))], [IDS.student]);
+  eq("  points for those two only, and the grammar slip goes to the error log and a card",
+    [W.point_transactions?.length, W.student_error_log?.length, W.srs_cards?.length], [2, 1, 1]);
+  eq("  the pending set is used up and the page is approved by the teacher", [W.student_work_vocab_drafts.length, W.student_work[1].status, W.student_work[1].approved_by], [0, "approved", U.teacher]);
+  const again = await call8(fn, "ocr-vocab-scan", { token: tokenOf(U.teacher), body: { work_id: IDS.vocabWork, approve: true } });
+  ok("approving again: 409, nothing added twice", again.status === 409 && again.writes.filter((w) => CHILD_TABLES.includes(w.table)).length === 0, again);
+
+  W = world({ claim: "claimed" });
+  const none = await call8(fn, "ocr-vocab-scan", { token: tokenOf(U.teacher), body: { work_id: IDS.vocabWork, approve: true } });
+  ok("approving a page with no scanned words waiting: 409", none.status === 409 && none.writes.length === 0, none);
+
+  W = world({ llm: LLM });
+  vendorDown = true;
+  const failed = await call8(fn, "ocr-vocab-scan", { token: tokenOf(U.teacher), body: { work_id: IDS.vocabWork, student_id: IDS.student } });
+  vendorDown = false;
+  eq("a scan that fails leaves the page failed (retryable), not processing (review N-7)", [failed.status, W.student_work[1].status], [500, "failed"]);
+}
+
 console.log("=== video-rubric: a teacher's rubric stands (review N-1) ===");
 {
   const fn = await load8("video-rubric", readFileSync(resolve(FUNCTIONS, "video-rubric", "index.ts"), "utf8"));
@@ -719,7 +765,10 @@ console.log("=== the eight: callers and the gateway setting ===");
     const entry = new RegExp(`\\[functions\\.${name}\\]\\nverify_jwt = (true|false)`).exec(toml);
     ok(`${name}: verify_jwt is on (${entry ? "set" : "the default"})`, !entry || entry[1] === "true");
     const users = files.filter(([, t]) => t.includes(`"${name}"`) || t.includes(`/functions/v1/${name}`));
+    // Through supabase.functions.invoke (the name literal, or chosen in a
+    // ternary just before it), or a raw fetch carrying the session's token.
     const viaInvokeOrSession = users.every(([, t]) => new RegExp(`supabase\\s*\\.functions\\s*\\.invoke\\(\\s*["']${name}["']`).test(t)
+      || (new RegExp(`["']${name}["']`).test(t) && /supabase\s*\.functions\s*\.invoke\(\s*(fn|vocab \?)/.test(t) && !t.includes(`/functions/v1/${name}`))
       || (t.includes(`/functions/v1/${name}`) && /Authorization: `Bearer \$\{s\.session\?\.access_token/.test(t)));
     ok(`${name}: ${users.length} caller file(s) in src/, each sending the signed-in session's token`, viaInvokeOrSession);
   }
