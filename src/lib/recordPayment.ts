@@ -69,10 +69,15 @@ export async function recordPayment(client: any, args: RecordPaymentArgs): Promi
     return { ok: false, message: NO_ANSWER_MESSAGE, answered: false, conflict: false, duplicate: false };
   }
   if (!error && data?.success) return { ok: true, data, message: "", answered: true, conflict: false, duplicate: false };
-  if (!error && data) {
-    // A 2xx from the function without success: it answered, but not with a payment.
-    const message = (typeof data.error === "string" && data.error) || "The payment could not be recorded";
-    return { ok: false, message, answered: !data.unknown, conflict: !!data.conflict, duplicate: !!data.duplicate };
+  if (!error) {
+    // A 2xx without success. Only record-payment's own JSON `error` is an
+    // answer; anything else (no body, a page from something in between) is not.
+    const own = !!data && typeof data === "object" && typeof data.error === "string" && data.error.length > 0;
+    const answered = own && data.unknown !== true;
+    return {
+      ok: false, message: own ? data.error : NO_ANSWER_MESSAGE, answered,
+      conflict: answered && !!data.conflict, duplicate: answered && !!data.duplicate,
+    };
   }
   // functions-js does not throw on a network failure: it returns a
   // FunctionsFetchError whose `context` is the fetch error. Only an HTTP
@@ -90,6 +95,6 @@ export async function recordPayment(client: any, args: RecordPaymentArgs): Promi
   }
   const fromFunction = isReply && !!body && typeof body.error === "string" && body.error.length > 0;
   const answered = fromFunction && body.unknown !== true;
-  const message = answered ? body.error : fromFunction ? `${body.error}` : NO_ANSWER_MESSAGE;
+  const message = fromFunction ? body.error : NO_ANSWER_MESSAGE;
   return { ok: false, message, answered, conflict: answered && !!body?.conflict, duplicate: answered && !!body?.duplicate };
 }

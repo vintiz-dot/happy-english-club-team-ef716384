@@ -1,5 +1,7 @@
 // D5 G-1: supabase/functions/record-payment, the one admin payment path
-// (docs/evidence/G1-record-payment.md), and delete-payment taking one back.
+// (docs/evidence/G1-record-payment.md), its database function
+// public.record_admin_payment (20261117120000, fix round 1), and
+// delete-payment taking one back.
 //
 // What runs: the REAL record-payment and delete-payment handlers, bundled
 // with esbuild (remote imports stubbed), against a PostgREST stand-in over
@@ -16,12 +18,25 @@
 //   live's admin policies (20251012023454) and grants (20260712023825);
 //   the carry trigger 20261009120000, invoice_paid_label (20261113090000),
 //   the relabelling carry refresh 20261117110000 (G-4) and the append-only
-//   ledger 20261117111000 (G-11).
+//   ledger 20261117111000 (G-11);
+//   and EVERY OTHER trigger live has on payments, ledger_accounts,
+//   ledger_entries and invoices (pg_trigger, read-only, 17 Nov): payments'
+//   prevent_client_payment_deletion (20251024152825 - review B-1: the suite
+//   before fix round 1 lacked it), the updated_at triggers (20251012022746),
+//   and G-11 round 2's ledger_entries_stamp_created_at plus its revoke of
+//   refresh_invoice_carry (live, from main; this branch's copy of the file
+//   predates round 2);
+//   then the file under test, 20261117120000_record_admin_payment.sql.
 //
 // The stand-in runs a client made with the caller's JWT as `authenticated`
 // (auth.uid() = the caller, row security on), the service key as
-// `service_role`. Every write is logged with who made it, so "the payment is
-// written as the admin, not the service key" is asserted, not assumed.
+// `service_role`, and supabase.rpc() as one SELECT - one transaction, as
+// PostgREST does. A test trigger records the database role that made every
+// payments / ledger / bill write, so "written as the admin" is asserted.
+// Faults are raised INSIDE the transaction by test triggers (a bill write
+// that times out, a ledger insert that fails, the audit row failing), and
+// lost replies are scripted on the rpc call (before it ran, or after it
+// committed).
 //
 // The figures checked at the end are scripts/CHECK-money-invariants.sql
 // itself (M01 / M03 / M04), run over a copy of the rows the functions wrote,
@@ -29,6 +44,7 @@
 // columns.
 import { PGlite } from '@electric-sql/pglite';
 import { build } from 'esbuild';
+import { FunctionsClient } from '@supabase/functions-js';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -37,13 +53,16 @@ import { randomUUID } from 'node:crypto';
 import { repo } from './d4-prelude.mjs';
 import { D4_BUILD } from './guard-fingerprint.mjs';
 
+const PROBE = !!process.env.G1_PROBE_LIVE_DELETE_TRIGGER;
 let pass = 0, fail = 0;
 const ok = (name, value, extra) => {
-  console.log(`  ${value ? 'PASS' : 'FAIL'} ${name}${!value && extra !== undefined ? `  -- ${JSON.stringify(extra).slice(0, 900)}` : ''}`);
+  console.log(`  ${value ? 'PASS' : 'FAIL'} ${name}${!value && extra !== undefined ? `  -- ${JSON.stringify(extra, (_, v) => (typeof v === 'bigint' ? String(v) : v)).slice(0, 900)}` : ''}`);
   value ? pass++ : fail++;
 };
 const migText = (n) => readFileSync(join(repo, 'supabase', 'migrations', n), 'utf8').replace(/\r\n/g, '\n');
 const tryIt = async (fn) => { try { await fn(); return null; } catch (e) { return { code: e.code, message: e.message }; } };
+const RP_MIGRATION = '20261117120000_record_admin_payment.sql';
+const RP_SIG = 'public.record_admin_payment(uuid, uuid, text, text, integer, text, timestamptz, text, integer)';
 
 // ------------------------------------------------------------- database
 const db = new PGlite();
@@ -156,15 +175,168 @@ await db.exec(mig('20261009120000_keep_invoice_carry_balances_correct.sql'));
 await db.exec(mig('20261117110000_carry_refresh_relabels.sql'));
 await db.exec(mig('20261117111000_ledger_append_only_and_audit.sql'));
 
-console.log('\n0. the database carries the real money triggers');
+// ---- the rest of live's triggers on the money tables (pg_trigger, 17 Nov)
+// payments.prevent_client_payment_deletion: the function and trigger text of
+// 20251024152825, verbatim (review B-1).
+const DELETE_TRIGGER_SQL = (() => {
+  const t = migText('20251024152825_6747d865-6888-4aa4-b728-fdb8e5a109d3.sql');
+  const a = t.indexOf('CREATE OR REPLACE FUNCTION public.prevent_direct_payment_deletion()');
+  const b = t.indexOf('EXECUTE FUNCTION public.prevent_direct_payment_deletion();', a);
+  return t.slice(a, b + 'EXECUTE FUNCTION public.prevent_direct_payment_deletion();'.length);
+})();
+await db.exec(DELETE_TRIGGER_SQL);
+// updated_at triggers (20251012022746:90-102); payments has none on live.
+await db.exec(`
+  CREATE TRIGGER update_ledger_accounts_updated_at BEFORE UPDATE ON public.ledger_accounts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+  CREATE TRIGGER update_ledger_entries_updated_at BEFORE UPDATE ON public.ledger_entries FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+  DROP TRIGGER IF EXISTS update_invoices_updated_at ON public.invoices;
+  CREATE TRIGGER update_invoices_updated_at BEFORE UPDATE ON public.invoices FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+`);
+// G-11 fix round 2 as live has it (pg_get_functiondef, 17 Nov; main's copy of 20261117111000).
+await db.exec(`
+  CREATE OR REPLACE FUNCTION public.ledger_entries_stamp_created_at()
+  RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $function$
+  BEGIN
+    NEW.created_at := now();
+    RETURN NEW;
+  END
+  $function$;
+  REVOKE ALL ON FUNCTION public.ledger_entries_stamp_created_at() FROM PUBLIC, anon, authenticated;
+  DROP TRIGGER IF EXISTS ledger_entries_stamp_created_at ON public.ledger_entries;
+  CREATE TRIGGER ledger_entries_stamp_created_at BEFORE INSERT ON public.ledger_entries FOR EACH ROW EXECUTE FUNCTION public.ledger_entries_stamp_created_at();
+  -- G-4 fix round 2 as live has it: only the trigger (definer) calls the refresh.
+  REVOKE EXECUTE ON FUNCTION public.refresh_invoice_carry(uuid) FROM PUBLIC, anon, authenticated;
+  GRANT EXECUTE ON FUNCTION public.refresh_invoice_carry(uuid) TO service_role;
+`);
+
+// ---- the file under test
+await db.exec(mig(RP_MIGRATION));
+
+// ---- test instruments (not live): who wrote, and faults inside the transaction
+await db.exec(`
+  CREATE TABLE public.test_write_role(id bigserial PRIMARY KEY, tbl text, op text, role text, uid uuid, row_id text);
+  GRANT ALL ON public.test_write_role TO PUBLIC; GRANT ALL ON SEQUENCE public.test_write_role_id_seq TO PUBLIC;
+  CREATE FUNCTION public.test_log_write() RETURNS trigger LANGUAGE plpgsql AS $f$
+  BEGIN
+    INSERT INTO public.test_write_role(tbl, op, role, uid, row_id)
+    VALUES (TG_TABLE_NAME, lower(TG_OP), current_user, auth.uid(), to_jsonb(CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END)->>'id');
+    RETURN NULL;
+  END $f$;
+  CREATE TRIGGER zz_test_log AFTER INSERT OR UPDATE OR DELETE ON public.payments FOR EACH ROW EXECUTE FUNCTION public.test_log_write();
+  CREATE TRIGGER zz_test_log AFTER INSERT ON public.ledger_entries FOR EACH ROW EXECUTE FUNCTION public.test_log_write();
+  CREATE TRIGGER zz_test_log AFTER INSERT ON public.ledger_accounts FOR EACH ROW EXECUTE FUNCTION public.test_log_write();
+  CREATE TRIGGER zz_test_log AFTER UPDATE ON public.invoices FOR EACH ROW EXECUTE FUNCTION public.test_log_write();
+
+  CREATE TABLE public.test_faults(name text PRIMARY KEY, only_action text, code text NOT NULL DEFAULT '57014',
+    message text NOT NULL DEFAULT 'canceling statement due to statement timeout');
+  GRANT ALL ON public.test_faults TO PUBLIC;
+  CREATE FUNCTION public.test_fault() RETURNS trigger LANGUAGE plpgsql AS $f$
+  DECLARE f record;
+  BEGIN
+    SELECT * INTO f FROM public.test_faults WHERE name = TG_TABLE_NAME || '.' || lower(TG_OP);
+    IF FOUND AND (f.only_action IS NULL OR f.only_action = to_jsonb(NEW)->>'action') THEN
+      RAISE EXCEPTION '%', f.message USING ERRCODE = f.code;
+    END IF;
+    RETURN NEW;
+  END $f$;
+  CREATE TRIGGER aa_test_fault BEFORE UPDATE ON public.invoices FOR EACH ROW EXECUTE FUNCTION public.test_fault();
+  CREATE TRIGGER aa_test_fault BEFORE INSERT ON public.ledger_entries FOR EACH ROW EXECUTE FUNCTION public.test_fault();
+  CREATE TRIGGER aa_test_fault BEFORE INSERT ON public.payments FOR EACH ROW EXECUTE FUNCTION public.test_fault();
+  CREATE TRIGGER aa_test_fault BEFORE INSERT ON public.audit_log FOR EACH ROW EXECUTE FUNCTION public.test_fault();
+`);
+const withFault = async (fault, fn) => {
+  await sql('INSERT INTO public.test_faults(name, only_action, code, message) VALUES ($1, $2, coalesce($3, \'57014\'), coalesce($4, \'canceling statement due to statement timeout\'))',
+    [fault.name, fault.only_action ?? null, fault.code ?? null, fault.message ?? null]);
+  try { return await fn(); } finally { await sql('DELETE FROM public.test_faults WHERE name = $1', [fault.name]); }
+};
+
+console.log('\n0. the database carries the real money triggers, and the function as the migration states it');
 {
   const trg = (await rows(`SELECT c.relname || '.' || t.tgname AS n FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
                              WHERE NOT t.tgisinternal AND t.tgenabled <> 'D'`)).map((r) => r.n);
   const want = ['invoices.zz_invoice_state_floor', 'invoices.zz_invoice_unfreeze_guard', 'invoices.zz_invoice_frozen_keep_guard',
     'invoices.zz_invoice_frozen_delete_guard', 'invoices.keep_frozen_invoice_amounts', 'invoices.invoices_carry_sync', 'invoices.audit_invoices',
-    'ledger_entries.ledger_entries_append_only', 'ledger_entries.ledger_entries_no_truncate', 'payments.audit_payments', 'ledger_accounts.audit_ledger_accounts'];
+    'invoices.update_invoices_updated_at',
+    'ledger_entries.ledger_entries_append_only', 'ledger_entries.ledger_entries_no_truncate', 'ledger_entries.ledger_entries_stamp_created_at',
+    'ledger_entries.update_ledger_entries_updated_at', 'ledger_accounts.audit_ledger_accounts', 'ledger_accounts.update_ledger_accounts_updated_at',
+    'payments.audit_payments', 'payments.prevent_client_payment_deletion'];
   const missing = want.filter((w) => !trg.includes(w));
-  ok(`every D4 file loaded (${D4_FILES.length}) with G-4 and G-11; the invoice, ledger and audit triggers are on`, D4_FILES.length === 5 && missing.length === 0, { missing, trg });
+  ok(`every D4 file loaded (${D4_FILES.length}) with G-4 and G-11; every trigger live has on invoices, payments, ledger_accounts and ledger_entries is on (${want.length})`,
+     D4_FILES.length === 5 && missing.length === 0, { missing, trg });
+  const fn = await one(`SELECT p.prosecdef, p.provolatile, p.proconfig::text AS cfg,
+      has_function_privilege('authenticated', p.oid, 'EXECUTE') AS auth, has_function_privilege('anon', p.oid, 'EXECUTE') AS anon,
+      has_function_privilege('service_role', p.oid, 'EXECUTE') AS svc,
+      EXISTS (SELECT 1 FROM aclexplode(p.proacl) a WHERE a.grantee = 0) AS public_exec
+    FROM pg_proc p WHERE p.oid = '${RP_SIG}'::regprocedure`);
+  ok('record_admin_payment: SECURITY INVOKER, volatile, fixed search_path; EXECUTE for authenticated only (not PUBLIC, anon or service_role)',
+     fn && fn.prosecdef === false && fn.provolatile === 'v' && /search_path=public, pg_temp/.test(fn.cfg) && fn.auth === true && fn.anon === false && fn.svc === false && fn.public_exec === false, fn);
+  const body = migText(RP_MIGRATION).replace(/--[^\n]*/g, '');
+  ok('  its body deletes nothing and updates no ledger row (there is no undo path); it locks the bill FOR UPDATE and writes recorded_payment only WHERE it still holds the value read',
+     !/\bDELETE\b/i.test(body) && !/UPDATE\s+public\.ledger_entries/i.test(body) && /FROM public\.invoices i\s+WHERE i\.student_id = p_student_id AND i\.month = p_month\s+FOR UPDATE/.test(body)
+     && /WHERE i\.id = v_bill\.id AND coalesce\(i\.recorded_payment, 0\) = v_before/.test(body));
+  if (PROBE) {
+    const live = (await one(`SELECT prosrc FROM pg_proc WHERE proname = 'prevent_direct_payment_deletion'`)).prosrc;
+    ok('PROBE (review B-1): the payments delete trigger is the text of 20251024152825 verbatim, and it refuses an admin\'s DELETE',
+       /IF auth\.role\(\) != 'service_role' THEN/.test(live) && DELETE_TRIGGER_SQL.includes(live.trim().split('\n')[0].trim()));
+  }
+}
+
+console.log('\n0b. the migration refuses to install when something it needs is missing (nothing created)');
+{
+  const MINIMAL = `
+    CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
+    CREATE SCHEMA auth;
+    CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $f$ SELECT NULLIF(current_setting('test.uid', true), '')::uuid $f$;
+    CREATE TYPE public.app_role AS ENUM ('admin','teacher','family','student');
+    CREATE TABLE public.user_roles(user_id uuid, role public.app_role);
+    CREATE FUNCTION public.has_role(_user_id uuid, _role app_role) RETURNS boolean LANGUAGE sql STABLE AS
+      $f$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role) $f$;
+    CREATE TYPE public.account_code AS ENUM ('AR', 'REVENUE', 'DISCOUNT', 'CASH', 'BANK', 'CREDIT');
+    CREATE TYPE public.invoice_status AS ENUM ('draft', 'issued', 'paid', 'partial', 'credit');
+    CREATE TABLE public.students(id uuid PRIMARY KEY, full_name text);
+    CREATE TABLE public.payments(id uuid PRIMARY KEY, student_id uuid, amount integer, method text, occurred_at timestamptz, memo text, created_by uuid);
+    CREATE TABLE public.ledger_accounts(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, code public.account_code, UNIQUE(student_id, code));
+    CREATE TABLE public.ledger_entries(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tx_id uuid, tx_key text UNIQUE, account_id uuid,
+      debit integer, credit integer, occurred_at timestamptz, memo text, month text, created_by uuid);
+    CREATE TABLE public.invoices(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, month text, recorded_payment integer, paid_amount integer,
+      base_amount integer, total_amount integer, carry_in_debt integer, carry_in_credit integer, status public.invoice_status,
+      updated_at timestamptz, updated_by uuid, UNIQUE(student_id, month));
+    CREATE TABLE public.audit_log(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), entity text, entity_id text, action text, actor_user_id uuid, diff jsonb);
+    CREATE FUNCTION public.invoice_paid_label(p_recorded bigint, p_payable bigint, p_base bigint, p_total bigint) RETURNS public.invoice_status
+      LANGUAGE sql IMMUTABLE AS $f$ SELECT 'issued'::public.invoice_status $f$;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;`;
+  const attempt = async (mutate) => {
+    const c = new PGlite();
+    await c.exec(MINIMAL);
+    if (mutate) await c.exec(mutate);
+    let error = null;
+    try { await c.exec(migText(RP_MIGRATION)); } catch (e) { error = e.message; }
+    const made = (await c.query(`SELECT count(*)::int AS n FROM pg_proc WHERE proname = 'record_admin_payment'`)).rows[0].n;
+    await c.close();
+    return { error, made };
+  };
+  const good = await attempt(null);
+  ok('with everything it needs it installs', good.error === null && good.made === 1, good);
+  const cases = [
+    ['payments.created_by missing', 'ALTER TABLE public.payments DROP COLUMN created_by', /missing column\(s\) payments\.created_by/],
+    ['invoices.updated_by missing', 'ALTER TABLE public.invoices DROP COLUMN updated_by', /invoices\.updated_by/],
+    ['no audit_log table', 'DROP TABLE public.audit_log', /audit_log\.entity/],
+    ['invoice_paid_label missing', 'DROP FUNCTION public.invoice_paid_label(bigint,bigint,bigint,bigint)', /invoice_paid_label is not installed/],
+    ['ledger_accounts unique is partial', `ALTER TABLE public.ledger_accounts DROP CONSTRAINT ledger_accounts_student_id_code_key;
+       CREATE UNIQUE INDEX la_partial ON public.ledger_accounts(student_id, code) WHERE student_id IS NOT NULL`, /no plain unique index on ledger_accounts/],
+    ['ledger_entries.tx_key not unique', 'ALTER TABLE public.ledger_entries DROP CONSTRAINT ledger_entries_tx_key_key', /no plain unique index on ledger_entries/],
+    ['authenticated lacks INSERT on ledger_entries', 'REVOKE INSERT ON public.ledger_entries FROM authenticated', /authenticated lacks INSERT on public\.ledger_entries/],
+    ['account_code lacks BANK', `ALTER TABLE public.ledger_accounts ALTER COLUMN code TYPE text; DROP TYPE public.account_code;
+       CREATE TYPE public.account_code AS ENUM ('AR', 'CASH', 'REVENUE', 'CREDIT')`, /account_code lacks/],
+    ['another signature exists', `CREATE FUNCTION public.record_admin_payment(p uuid) RETURNS jsonb LANGUAGE sql AS $f$ SELECT '{}'::jsonb $f$`, /another public\.record_admin_payment signature/],
+  ];
+  const results = [];
+  for (const [name, mutate, re] of cases) {
+    const r = await attempt(mutate);
+    results.push({ name, ok: !!r.error && re.test(r.error) && r.made === (name === 'another signature exists' ? 1 : 0), r });
+  }
+  ok(`each of ${cases.length} missing pieces refuses the install with a reason and creates nothing (${cases.map((c) => c[0]).join('; ')})`,
+     results.every((x) => x.ok), results.filter((x) => !x.ok));
 }
 
 // ------------------------------------------------------ PostgREST stand-in
@@ -173,7 +345,8 @@ const ANON_KEY = 'anon-key';
 const jwts = new Map();                         // token -> user id
 const log = [];                                 // { table, op, who }
 const invokes = [];                             // { name, who, body }
-let faults = [];                                // { table, op, match?(q), error, after?() }
+let faults = [];                                // { table, op, match?(q), error, before?() }
+let rpcFaults = [];                             // { name, when: 'before' | 'after', error }
 const tuition = { fail: new Set(), price: new Map() };
 const val = (v) => (v !== null && typeof v === 'object' ? JSON.stringify(v) : v);
 
@@ -259,8 +432,27 @@ function fakeClient(key, opts) {
     return q;
   };
 
+  // PostgREST /rpc/<name>: one SELECT, so one transaction - a raised error rolls all of it back.
+  const rpc = async (name, args = {}) => {
+    log.push({ table: `rpc:${name}`, op: 'rpc', who });
+    const f = rpcFaults.find((x) => x.name === name);
+    if (f) rpcFaults = rpcFaults.filter((x) => x !== f);
+    if (f?.when === 'before') return { data: null, error: f.error };   // the request never reached the database
+    const keys = Object.keys(args).filter((k) => args[k] !== undefined);
+    const text = `SELECT public.${name}(${keys.map((k, i) => `${k} => $${i + 1}`).join(', ')}) AS r`;
+    try {
+      const res = await run(text, keys.map((k) => val(args[k])));
+      if (f?.when === 'after') return { data: null, error: f.error };  // committed; the reply was lost
+      return { data: res.rows[0]?.r ?? null, error: null };
+    } catch (e) {
+      if (f?.when === 'after') return { data: null, error: f.error };
+      return { data: null, error: { code: e.code, message: e.message, details: e.detail ?? null, hint: e.hint ?? null } };
+    }
+  };
+
   return {
     from,
+    rpc,
     auth: {
       getUser: async (t) => {
         const tok = t ?? token;
@@ -275,7 +467,8 @@ function fakeClient(key, opts) {
         // calculate-tuition, as far as these functions use it: it prices and
         // saves a missing bill (the price is the fixture's); otherwise it
         // leaves the figures alone. Its own behaviour is invoice-status's.
-        if (tuition.fail.has(body.studentId)) return { data: null, error: { message: 'scripted failure' } };
+        // Like functions-js, an HTTP error is RETURNED, not thrown (review N-2).
+        if (tuition.fail.has(body.studentId)) return { data: null, error: { name: 'FunctionsHttpError', message: 'scripted failure' } };
         const price = tuition.price.get(body.studentId);
         if (price !== undefined) {
           await sql(`INSERT INTO public.invoices (student_id, month, base_amount, total_amount, status)
@@ -354,9 +547,19 @@ const balanced = (legs) => {
   for (const l of legs) by.set(l.tx_id, (by.get(l.tx_id) ?? 0) + Number(l.debit) - Number(l.credit));
   return [...by.values()].every((d) => d === 0);
 };
+/** Everything a request could have written, counted: equal before and after = it wrote nothing. */
+const snapshot = () => one(`SELECT (SELECT count(*) FROM public.payments)::int AS payments, (SELECT count(*) FROM public.ledger_entries)::int AS legs,
+    (SELECT count(*) FROM public.ledger_accounts)::int AS accounts, (SELECT count(*) FROM public.invoices)::int AS bills,
+    (SELECT coalesce(sum(recorded_payment), 0) FROM public.invoices)::text AS recorded,
+    (SELECT count(*) FROM public.audit_log)::int AS audit, (SELECT count(*) FROM public.test_write_role)::int AS writes`);
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const reversalLegs = async (key) => (await rows(`SELECT 1 FROM public.ledger_entries WHERE tx_key LIKE $1`, [`payment-reversal-${key}-%`])).length;
 const M = '2026-08', M2 = '2026-09';
 const pay = (body, tok = ADMIN.tok) => call(recordFn, tok, { month: M, kind: 'payment', method: 'Cash', occurredAt: '2026-08-10', idempotencyKey: randomUUID(), ...body });
 const writesSince = (n) => log.slice(n);
+const userClient = (tok) => fakeClient(ANON_KEY, { global: { headers: { Authorization: `Bearer ${tok}` } } });
+const rpcArgs = (o) => ({ p_payment_id: randomUUID(), p_student_id: null, p_month: M, p_kind: 'payment', p_amount: 1000, p_method: 'Cash',
+  p_occurred_at: '2026-08-10T12:00:00+07:00', p_memo: null, p_expected_recorded: null, ...o });
 
 // =================================================================== 1
 console.log('\n1. only an admin, with their own session; nothing written otherwise');
@@ -364,7 +567,7 @@ console.log('\n1. only an admin, with their own session; nothing written otherwi
   const s = await child('Gate');
   await bill(s, M, 1000000);
   const body = { studentId: s, month: M, kind: 'payment', amount: 100000, method: 'Cash', occurredAt: '2026-08-10', idempotencyKey: randomUUID() };
-  const before = log.length;
+  const before = log.length, snap0 = await snapshot();
   const r0 = await call(recordFn, null, body);
   const r1 = await call(recordFn, TEACHER.tok, body);
   const r2 = await call(recordFn, PARENT.tok, body);
@@ -376,19 +579,39 @@ console.log('\n1. only an admin, with their own session; nothing written otherwi
   const bad = [
     { ...body, amount: 0 }, { ...body, amount: -5 }, { ...body, amount: 1.5 }, { ...body, month: '2026-8' }, { ...body, studentId: 'x' },
     { ...body, idempotencyKey: 'not-a-uuid' }, { ...body, kind: 'refund' }, { ...body, method: '' }, { ...body, occurredAt: 'yesterday' },
-    { ...body, amount: 500000001 }, { ...body, kind: 'correction', memo: '   ' },
+    { ...body, amount: 500000001 }, { ...body, kind: 'correction', memo: '   ' }, { ...body, month: '2026-13' },
   ];
   const statuses = [];
   for (const b of bad) statuses.push((await call(recordFn, ADMIN.tok, b)).status);
-  ok(`11 malformed requests (amount 0 / negative / fractional / too big, bad month, student, key, kind, method, date, a correction with no note): all 400`,
+  ok(`12 malformed requests (amount 0 / negative / fractional / too big, bad month x2, student, key, kind, method, date, a correction with no note): all 400`,
      statuses.every((x) => x === 400), statuses);
   ok('  and nothing written by any of them', log.length === before && (await paymentsOf(s)).length === 0);
   const nobody = await call(recordFn, ADMIN.tok, { ...body, studentId: randomUUID() });
   ok('a student that does not exist: 404, nothing written', nobody.status === 404 && log.length === before, nobody);
+
+  // The database function on its own: the same gate, whoever calls it.
+  const direct = async (client, o) => client.rpc('record_admin_payment', rpcArgs({ p_student_id: s, ...o }));
+  const dt = await direct(userClient(TEACHER.tok));
+  const dp = await direct(userClient(PARENT.tok));
+  const da = await direct(fakeClient(ANON_KEY));
+  const ds = await direct(fakeClient(SERVICE_KEY));
+  ok('record_admin_payment called directly: a teacher and a parent refused RP403; anon and the service key cannot execute it (42501)',
+     dt.error?.code === 'RP403' && dp.error?.code === 'RP403' && da.error?.code === '42501' && ds.error?.code === '42501', [dt.error, dp.error, da.error, ds.error]);
+  const admin = userClient(ADMIN.tok);
+  const outOfRange = [
+    await direct(admin, { p_amount: 0 }), await direct(admin, { p_amount: 500000001 }), await direct(admin, { p_kind: 'refund' }),
+    await direct(admin, { p_month: '2026-8' }), await direct(admin, { p_method: '  ' }), await direct(admin, { p_kind: 'correction', p_memo: ' ' }),
+    await direct(admin, { p_expected_recorded: -1 }), await direct(admin, { p_occurred_at: null }), await direct(admin, { p_memo: 'x'.repeat(501) }),
+  ];
+  ok('  an admin with values out of range: 22023 for each of 9 (it does not rely on the edge function\'s check)', outOfRange.every((r) => r.error?.code === '22023'), outOfRange.map((r) => r.error));
+  const noKid = await direct(admin, { p_student_id: randomUUID() });
+  const noBill = await direct(admin, { p_month: '2027-01' });
+  ok('  no such student: RP404; no bill for the month: RP424', noKid.error?.code === 'RP404' && noBill.error?.code === 'RP424', [noKid.error, noBill.error]);
+  ok('  and none of these wrote anything', same(await snapshot(), snap0), { before: snap0, after: await snapshot() });
 }
 
 // =================================================================== 2
-console.log('\n2. a payment writes the payments row, two balanced legs and the bill - as the admin');
+console.log('\n2. a payment writes the payments row, two balanced legs and the bill - as the admin, in one call');
 {
   const s = await child('Anh');
   const inv = await bill(s, M, 1000000);
@@ -398,35 +621,40 @@ console.log('\n2. a payment writes the payments row, two balanced legs and the b
   const r = await call(recordFn, ADMIN.tok, { studentId: s, month: M, kind: 'payment', amount: 400000, method: 'Cash',
     occurredAt: '2026-07-28', memo: 'paid at the desk', idempotencyKey: key });
   ok('200, and the answer says what the bill records before and after', r.status === 200 && r.body?.success && r.body.paymentId === key
-     && r.body.recordedBefore === 0 && r.body.recordedAfter === 400000 && r.body.ledgerAccount === 'CASH', r);
+     && r.body.recordedBefore === 0 && r.body.recordedAfter === 400000 && r.body.ledgerAccount === 'CASH' && r.body.invoiceId === inv, r);
   const ps = await paymentsOf(s);
   ok('one payments row: id = the screen\'s key, amount, method as labelled, the receipt date, the memo, created_by the admin',
      ps.length === 1 && ps[0].id === key && Number(ps[0].amount) === 400000 && ps[0].method === 'Cash' && ps[0].memo === 'paid at the desk'
      && ps[0].created_by === ADMIN.id && new Date(ps[0].occurred_at).toISOString() === '2026-07-28T05:00:00.000Z', ps);
   const legs = await legsOf(s);
   const cash = legs.find((l) => l.code === 'CASH'), ar = legs.find((l) => l.code === 'AR');
-  ok('two legs in one transaction: DR CASH 400,000, CR AR 400,000, balanced',
+  ok('two legs in one transaction: DR CASH 400,000, CR AR 400,000, balanced, created_by the admin',
      legs.length === 2 && cash && ar && cash.tx_id === ar.tx_id && Number(cash.debit) === 400000 && Number(cash.credit) === 0
-     && Number(ar.credit) === 400000 && Number(ar.debit) === 0 && balanced(legs), legs);
+     && Number(ar.credit) === 400000 && Number(ar.debit) === 0 && balanced(legs) && legs.every((l) => l.created_by === ADMIN.id), legs);
   ok(`  the cash leg keyed record-payment-<payment>-<student>, the AR leg unkeyed (as every payment path)`,
      cash?.tx_key === `record-payment-${key}-${s}` && ar?.tx_key === null, legs.map((l) => l.tx_key));
   ok('  both legs on the CONFIRMED tuition month (2026-08), not the receipt month (July), and dated by the receipt',
      legs.every((l) => l.month === M && new Date(l.occurred_at).toISOString() === '2026-07-28T05:00:00.000Z'), legs.map((l) => [l.month, l.occurred_at]));
   const b = await billOf(s, M);
-  ok('the bill: recorded_payment 400,000, partial (the one rule), the next month untouched',
-     Number(b.recorded_payment) === 400000 && b.status === 'partial' && b.id === inv && Number((await billOf(s, M2)).recorded_payment) === 0, b);
+  ok('the bill: recorded_payment 400,000, partial (the one rule), paid_amount moved with it, updated_by the admin, the next month untouched',
+     Number(b.recorded_payment) === 400000 && b.status === 'partial' && b.id === inv && Number(b.paid_amount) === 400000 && b.updated_by === ADMIN.id
+     && Number((await billOf(s, M2)).recorded_payment) === 0, b);
   ok('  the carry follows: carry_out_debt 600,000, and the next month\'s carry_in_debt 600,000 (the carry trigger)',
      Number(b.carry_out_debt) === 600000 && Number((await billOf(s, M2)).carry_in_debt) === 600000);
   const audit = await rows(`SELECT * FROM public.audit_log WHERE action = 'record_payment' AND entity_id = $1`, [inv]);
   ok('an audit row record_payment by the admin, naming the payment and ledger transaction',
      audit.length === 1 && audit[0].actor_user_id === ADMIN.id && audit[0].diff.payment_id === key && audit[0].diff.ledger_tx_id === cash?.tx_id
-     && audit[0].diff.new_recorded_payment === 400000, audit);
+     && audit[0].diff.new_recorded_payment === 400000 && audit[0].diff.via === 'record-payment', audit);
   const writes = writesSince(w0);
-  ok('every write was made with the admin\'s own session (RLS on), none with the service key',
-     writes.length > 0 && writes.every((x) => x.who === 'user'), writes);
-  ok('  writes: ledger accounts, the payment, the legs, the bill, the audit row - nothing else',
-     JSON.stringify([...new Set(writes.map((x) => `${x.table}.${x.op}`))].sort()) === JSON.stringify(['audit_log.insert', 'invoices.update', 'ledger_accounts.upsert', 'ledger_entries.insert', 'payments.insert']),
-     writes);
+  ok('the function made ONE call that writes - record_admin_payment, with the admin\'s own session - and no table write of its own',
+     writes.length === 1 && writes[0].table === 'rpc:record_admin_payment' && writes[0].who === 'user', writes);
+  const roleLog = await rows(`SELECT tbl, op, role, uid FROM public.test_write_role WHERE row_id = ANY($1::text[]) OR (tbl = 'ledger_entries' AND row_id = ANY($2::text[]))`,
+    [[key, inv], legs.map((l) => l.id)]);
+  ok('  in the database every payment, leg and bill write was made by role authenticated as the admin (invoker: row security on), none by a definer or the service role',
+     roleLog.filter((x) => x.tbl === 'payments' && x.op === 'insert').length === 1 && roleLog.filter((x) => x.tbl === 'ledger_entries').length === 2
+     && roleLog.some((x) => x.tbl === 'invoices' && x.op === 'update')
+     && roleLog.filter((x) => x.tbl !== 'invoices' || x.role === 'authenticated').every((x) => x.role === 'authenticated' && x.uid === ADMIN.id)
+     && roleLog.filter((x) => x.tbl === 'invoices' && x.role === 'authenticated').length === 1, roleLog);
   ok('  calculate-tuition asked once, afterwards, to refresh the bill (the internal call every payment path makes)',
      invokes.slice(i0).length === 1 && invokes[i0].name === 'calculate-tuition' && invokes[i0].body.month === M, invokes.slice(i0));
 
@@ -464,23 +692,24 @@ console.log('\n4. a correction takes money off - never below 0, never without a 
      && Number((await billOf(s, M)).recorded_payment) === 500000, { r, n });
   const ck = (await legsOf(s)).find((l) => l.tx_key === `record-payment-${key}-${s}`);
   const ca = (await legsOf(s)).find((l) => l.tx_id === ck?.tx_id && l.id !== ck?.id);
-  ok('  its legs: DR AR 200,000, CR CASH 200,000 (one transaction, balanced); its payments row is -200,000 with the note',
+  ok('  its legs: DR AR 200,000, CR CASH 200,000 (one transaction, balanced); its payments row is -200,000 with the note; audit payment_correction',
      ck && ca && Number(ck.credit) === 200000 && ca.code === 'AR' && Number(ca.debit) === 200000 && balanced(await legsOf(s))
-     && p && Number(p.amount) === -200000 && p.memo === 'entered 200,000 too much', { ck, ca, p });
-  const w0 = log.length;
+     && p && Number(p.amount) === -200000 && p.memo === 'entered 200,000 too much'
+     && (await rows(`SELECT 1 FROM public.audit_log WHERE action = 'payment_correction' AND entity_id = $1`, [inv])).length === 1, { ck, ca, p });
+  const s0 = await snapshot();
   const below = await pay({ studentId: s, kind: 'correction', amount: 500001, memo: 'too much' });
-  ok('a correction of 500,001 on a bill recording 500,000: 409, nothing written', below.status === 409 && log.length === w0
-     && Number((await billOf(s, M)).recorded_payment) === 500000, below);
+  ok('a correction of 500,001 on a bill recording 500,000: 409, nothing written', below.status === 409 && same(await snapshot(), s0)
+     && Number((await billOf(s, M)).recorded_payment) === 500000 && /below 0/.test(below.body?.error ?? ''), below);
   const toZero = await pay({ studentId: s, kind: 'correction', amount: 500000, memo: 'all of it was a mistake' });
   const bz = await billOf(s, M);
-  ok('a correction of exactly what is recorded: 0 recorded, issued again (the one rule)', toZero.status === 200 && Number(bz.recorded_payment) === 0 && bz.status === 'issued', bz);
+  ok('a correction of exactly what is recorded: 0 recorded, issued again (the one rule), paid_amount floored at 0',
+     toZero.status === 200 && Number(bz.recorded_payment) === 0 && bz.status === 'issued' && Number(bz.paid_amount) === 0, bz);
   const s2 = await child('NoBill');
   tuition.price.set(s2, 900000);
   const w1 = log.length, i1 = invokes.length;
   const nb = await pay({ studentId: s2, kind: 'correction', amount: 1000, memo: 'nothing to correct' });
   ok('a correction for a month with no bill: 409, no bill created, nothing written, calculate-tuition not asked',
      nb.status === 409 && log.length === w1 && invokes.length === i1 && !(await billOf(s2, M)), nb);
-  void inv;
 }
 
 // =================================================================== 5
@@ -491,6 +720,8 @@ console.log('\n5. the label rule, frozen bills and the D4 floors do not get in t
   const r = await pay({ studentId: s, amount: 500000 });
   const b = await billOf(s, M);
   ok('an admin\'s \'credit\' label is kept when money comes in (labelAfterPayment)', r.status === 200 && b.status === 'credit' && Number(b.recorded_payment) === 500000, b);
+  const rc0 = await pay({ studentId: s, kind: 'correction', amount: 500000, memo: 'returned' });
+  ok('  and when money goes out', rc0.status === 200 && (await billOf(s, M)).status === 'credit');
 
   const f = await child('Frozen');
   const fid = await bill(f, M, 800000);
@@ -511,6 +742,15 @@ console.log('\n5. the label rule, frozen bills and the D4 floors do not get in t
   const floor = await one('SELECT * FROM public.invoice_state_floor WHERE student_id = $1 AND month = $2', [fl, M]);
   ok('a correction that un-pays a paid bill is let through; the D4 bill floor keeps that it was paid (max 400,000, ever_paid)',
      rr.status === 200 && Number((await billOf(fl, M)).recorded_payment) === 0 && floor?.ever_paid === true && Number(floor?.max_recorded_payment) === 400000, { rr, floor });
+
+  // The label against the month's payable: carry-in debt must be covered too.
+  const cd = await child('CarryDebt');
+  await bill(cd, '2026-07', 300000);
+  await bill(cd, M, 500000);
+  const rd = await pay({ studentId: cd, amount: 500000 });
+  const bd = await billOf(cd, M);
+  ok('a payment of the month\'s charge with 300,000 debt carried in: partial, not paid (invoice_paid_label over charge + carry-in debt)',
+     rd.status === 200 && Number(bd.carry_in_debt) === 300000 && bd.status === 'partial', bd);
 }
 
 // =================================================================== 6
@@ -528,7 +768,14 @@ console.log('\n6. a month with no bill yet: calculate-tuition makes it first, or
   tuition.fail.add(s2);
   const w0 = log.length;
   const r2 = await pay({ studentId: s2, amount: 100000 });
-  ok('calculate-tuition cannot make it: 409 "try again", nothing written', r2.status === 409 && log.length === w0 && (await paymentsOf(s2)).length === 0, r2);
+  ok('calculate-tuition answers an error (returned, not thrown): 409 "try again" naming it, nothing written (review N-2)',
+     r2.status === 409 && log.length === w0 && (await paymentsOf(s2)).length === 0 && /calculate-tuition: scripted failure/.test(r2.body?.error ?? ''), r2);
+  const s3 = await child('RefreshFails');
+  await bill(s3, M, 500000);
+  tuition.fail.add(s3);
+  const r3 = await pay({ studentId: s3, amount: 100000 });
+  ok('  the refresh after a payment fails: the payment stands (200), and the answer says the refresh failed', r3.status === 200
+     && r3.body?.refreshFailed === 'scripted failure' && Number((await billOf(s3, M)).recorded_payment) === 100000, r3);
 }
 
 // =================================================================== 7
@@ -537,9 +784,9 @@ console.log('\n7. the screen\'s figure: an edit against a stale screen writes no
   const s = await child('Stale');
   await bill(s, M, 1000000);
   await pay({ studentId: s, amount: 300000 });
-  const w0 = log.length;
+  const s0 = await snapshot();
   const r = await pay({ studentId: s, amount: 100000, expectedRecorded: 0 });
-  ok('expectedRecorded 0 while the bill records 300,000: 409 conflict, nothing written', r.status === 409 && r.body?.conflict === true && log.length === w0, r);
+  ok('expectedRecorded 0 while the bill records 300,000: 409 conflict, nothing written', r.status === 409 && r.body?.conflict === true && same(await snapshot(), s0), r);
   const r2 = await pay({ studentId: s, kind: 'correction', amount: 100000, memo: 'fix', expectedRecorded: 300000 });
   ok('  with the right figure it goes through', r2.status === 200 && Number((await billOf(s, M)).recorded_payment) === 200000, r2);
 }
@@ -557,87 +804,145 @@ console.log('\n8. a double click (or a retry) pays once');
   ok('two requests with one key at the same moment: one 200, one 409 duplicate', statuses[0] === 200 && statuses[1] === 409 && dup.body?.duplicate === true, [a, b]);
   ok('  recorded once: one payments row, two legs, 250,000 on the bill', (await paymentsOf(s)).length === 1 && (await legsOf(s)).length === 2
      && Number((await billOf(s, M)).recorded_payment) === 250000);
-  const w0 = log.length;
+  const s0 = await snapshot();
   const again = await pay(body);
-  ok('the same key later (a retry after a lost reply): 409 duplicate, nothing written', again.status === 409 && again.body?.duplicate && log.length === w0, again);
+  ok('the same key later (a retry after a lost reply): 409 duplicate, nothing written', again.status === 409 && again.body?.duplicate && same(await snapshot(), s0), again);
   const three = await Promise.all([1, 2, 3].map(() => pay({ studentId: s, amount: 10000, idempotencyKey: key })));
   ok('  three more at once with that key: all refused, still once', three.every((x) => x.status === 409) && (await paymentsOf(s)).length === 1
      && Number((await billOf(s, M)).recorded_payment) === 250000, three.map((x) => x.status));
+  const other = await child('DoubleOther');
+  await bill(other, M, 1000000);
+  const s1 = await snapshot();
+  const cross = await pay({ studentId: other, amount: 250000, idempotencyKey: key });
+  ok('  that key on ANOTHER child: refused as a duplicate too (the key is the payment), nothing written', cross.status === 409 && cross.body?.duplicate && same(await snapshot(), s1), cross);
+  const stale = await pay({ ...body, expectedRecorded: 0 });
+  ok('  a retry with the same key and the stale screen figure: reported as a duplicate (already recorded), not as "the bill changed"',
+     stale.status === 409 && stale.body?.duplicate === true && !stale.body?.conflict, stale);
 }
 
 // =================================================================== 9
-console.log('\n9. two payments on one bill at the same moment both land');
+console.log('\n9. two payments on one bill at the same moment');
 {
   const s = await child('Busy');
-  await bill(s, M, 1000000);
-  const casBefore = log.filter((x) => x.table === 'invoices' && x.op === 'update').length;
+  const inv = await bill(s, M, 1000000);
+  const w0 = (await one('SELECT count(*)::int AS n FROM public.test_write_role')).n;
   const [a, b] = await Promise.all([pay({ studentId: s, amount: 300000 }), pay({ studentId: s, amount: 200000, method: 'Bank Transfer' })]);
-  const casAfter = log.filter((x) => x.table === 'invoices' && x.op === 'update').length;
   const n = await net(s);
   ok('both 200; the bill records 500,000 (neither overwrote the other)', a.status === 200 && b.status === 200
      && Number((await billOf(s, M)).recorded_payment) === 500000, [a, b]);
-  ok('  the compare-and-set missed once and re-read (3 bill writes for 2 payments)', casAfter - casBefore === 3, casAfter - casBefore);
+  const billWrites = await rows(`SELECT role FROM public.test_write_role WHERE id > $1 AND tbl = 'invoices' AND op = 'update' AND row_id = $2 AND role = 'authenticated'`, [w0, inv]);
+  ok('  two bill writes, one per payment, each a compare-and-set under the bill\'s row lock (no re-read and retry needed)', billWrites.length === 2, billWrites);
   ok('  two payments rows, four legs, CASH 300,000 + BANK 200,000 = AR -500,000', (await paymentsOf(s)).length === 2 && (await legsOf(s)).length === 4
      && n.CASH === 300000 && n.BANK === 200000 && n.AR === -500000, n);
 
+  // Review B-1, case 1: two screens both showing 0.
   const s2 = await child('BusyScreens');
   await bill(s2, M, 1000000);
   const [c, d] = await Promise.all([pay({ studentId: s2, amount: 300000, expectedRecorded: 0 }), pay({ studentId: s2, amount: 200000, expectedRecorded: 0 })]);
   const won = c.status === 200 ? c : d, lost = c.status === 200 ? d : c;
   const n2 = await net(s2);
-  ok('two screens both showing 0 (expectedRecorded 0): one lands, the other is refused as changed (409) - as the screens did before',
-     won.status === 200 && lost.status === 409 && Number((await billOf(s2, M)).recorded_payment) === won.body.amount, [c, d]);
-  ok('  the refused one is undone completely: its payments row deleted, its legs reversed by new legs (net = the winner only)',
-     (await paymentsOf(s2)).length === 1 && (n2.CASH ?? 0) === won.body.amount && n2.AR === -won.body.amount && balanced(await legsOf(s2))
-     && (await legsOf(s2)).filter((l) => (l.tx_key ?? '').startsWith(`payment-reversal-${lost.body.paymentId}-`)).length === 2, { n2, lost });
+  ok('two screens both showing 0 (expectedRecorded 0): one lands, the other is refused as changed (409 conflict) - as the screens did before',
+     won.status === 200 && lost.status === 409 && lost.body?.conflict === true && Number((await billOf(s2, M)).recorded_payment) === won.body.amount, [c, d]);
+  ok('  the refused one wrote NOTHING: no payments row, no legs, no reversal legs, nothing to undo (net = the winner only)',
+     (await paymentsOf(s2)).length === 1 && (await legsOf(s2)).length === 2 && (n2.CASH ?? 0) === won.body.amount && n2.AR === -won.body.amount
+     && (await reversalLegs(lost.body.paymentId)) === 0 && !(await paymentsOf(s2)).some((p) => p.id === lost.body.paymentId), { n2, lost });
 
-  // Two corrections at once, each fine alone, together below 0: the retry re-checks the floor.
+  // Review B-1, case 2: two corrections at once, each fine alone, together below 0.
   const s3 = await child('BusyCorrections');
   await bill(s3, M, 1000000);
   await pay({ studentId: s3, amount: 300000 });
   const [e, g] = await Promise.all([pay({ studentId: s3, kind: 'correction', amount: 200000, memo: 'one' }),
                                     pay({ studentId: s3, kind: 'correction', amount: 200000, memo: 'two' })]);
   const n3 = await net(s3);
-  ok('two corrections of 200,000 at once on 300,000 recorded: one lands, the other is refused at the re-read (never below 0) and undone',
-     [e.status, g.status].sort().join() === '200,409' && Number((await billOf(s3, M)).recorded_payment) === 100000
-     && n3.CASH === 100000 && n3.AR === -100000 && (await paymentsOf(s3)).length === 2 && balanced(await legsOf(s3)), { e, g, n3 });
+  const loser = e.status === 200 ? g : e;
+  ok('two corrections of 200,000 at once on 300,000 recorded: one lands, the other is refused (never below 0) and wrote nothing',
+     [e.status, g.status].sort().join() === '200,409' && /below 0/.test(loser.body?.error ?? '') && Number((await billOf(s3, M)).recorded_payment) === 100000
+     && n3.CASH === 100000 && n3.AR === -100000 && (await paymentsOf(s3)).length === 2 && (await legsOf(s3)).length === 4 && balanced(await legsOf(s3))
+     && (await reversalLegs(loser.body.paymentId)) === 0, { e, g, n3 });
 }
 
 // =================================================================== 10
-console.log('\n10. a failure after the legs leaves nothing half-done');
+console.log('\n10. a failure anywhere inside the transaction leaves NOTHING (no undo, no delete)');
 {
   const s = await child('Fails');
-  const inv = await bill(s, M, 1000000);
+  await bill(s, M, 1000000);
   await pay({ studentId: s, amount: 100000 });
-  const key = randomUUID();
-  faults.push({ table: 'invoices', op: 'update', error: { code: '57014', message: 'canceling statement due to statement timeout' } });
-  const r = await pay({ studentId: s, amount: 300000, idempotencyKey: key });
-  const legs = await legsOf(s);
-  const rev = legs.filter((l) => (l.tx_key ?? '').startsWith(`payment-reversal-${key}-`));
-  const n = await net(s);
-  ok('the bill write fails: 409 "nothing was recorded (undone)"', r.status === 409 && r.body?.undone === true && /Nothing was recorded/.test(r.body?.error ?? ''), r);
-  ok('  the bill is as it was (100,000), the payments row is gone', Number((await billOf(s, M)).recorded_payment) === 100000
-     && !(await paymentsOf(s)).some((p) => p.id === key));
-  ok('  its two legs are still there (append-only) and reversed by two NEW legs keyed payment-reversal-<payment>-<leg>, net 0',
-     rev.length === 2 && legs.filter((l) => l.tx_key === `record-payment-${key}-${s}`).length === 1 && n.CASH === 100000 && n.AR === -100000 && balanced(legs), { rev, n });
-  const w0 = log.length;
-  const again = await pay({ studentId: s, amount: 300000, idempotencyKey: key });
-  ok('the same key again: 409 (tried before and undone), nothing written - the screen makes a new key', again.status === 409 && log.length === w0, again);
+  const ledgerFor = async (k) => (await rows(`SELECT 1 FROM public.ledger_entries WHERE tx_key LIKE $1`, [`%${k}%`])).length;
 
+  // Review B-1, case 3: the bill write fails after the legs.
+  const key = randomUUID();
+  const s0 = await snapshot();
+  const r = await withFault({ name: 'invoices.update' }, () => pay({ studentId: s, amount: 300000, idempotencyKey: key }));
+  ok('the bill write fails (a statement timeout inside the transaction): 500 "Nothing was recorded", not halfDone, not undone',
+     r.status === 500 && /^Nothing was recorded/.test(r.body?.error ?? '') && !r.body?.halfDone && !r.body?.undone && !r.body?.unknown, r);
+  ok('  everything rolled back: no payments row, no legs (none keyed, no reversals), the bill as it was (100,000), no audit row - the counts are unchanged',
+     same(await snapshot(), s0) && !(await paymentsOf(s)).some((p) => p.id === key) && (await ledgerFor(key)) === 0
+     && Number((await billOf(s, M)).recorded_payment) === 100000, { before: s0, after: await snapshot() });
+  const r1 = await pay({ studentId: s, amount: 300000, idempotencyKey: key });
+  ok('  nothing was written, so the same key then records the payment once', r1.status === 200 && Number((await billOf(s, M)).recorded_payment) === 400000
+     && (await paymentsOf(s)).filter((p) => p.id === key).length === 1 && (await ledgerFor(key)) === 1, r1);
+
+  // Review B-1, case 4: the ledger insert fails.
   const key2 = randomUUID();
-  faults.push({ table: 'ledger_entries', op: 'insert', error: { code: '08006', message: 'connection failure' } });
-  const r2 = await pay({ studentId: s, amount: 50000, idempotencyKey: key2 });
-  ok('the ledger insert fails: 500, the payments row removed, no legs, the bill untouched', r2.status === 500 && r2.body?.undone === true
-     && !(await paymentsOf(s)).some((p) => p.id === key2) && !(await legsOf(s)).some((l) => (l.tx_key ?? '').includes(key2))
-     && Number((await billOf(s, M)).recorded_payment) === 100000, r2);
+  const s1 = await snapshot();
+  const r2 = await withFault({ name: 'ledger_entries.insert', code: '08006', message: 'connection failure' }, () => pay({ studentId: s, amount: 50000, idempotencyKey: key2 }));
+  ok('the ledger insert fails: 500, no payments row, no legs, the bill untouched - unchanged counts', r2.status === 500 && same(await snapshot(), s1)
+     && !(await paymentsOf(s)).some((p) => p.id === key2) && Number((await billOf(s, M)).recorded_payment) === 400000, r2);
   const r3 = await pay({ studentId: s, amount: 50000, idempotencyKey: key2 });
-  ok('  that key had written nothing, so a retry with it records the payment once', r3.status === 200 && Number((await billOf(s, M)).recorded_payment) === 150000
+  ok('  and the retry with that key is NOT refused as "already submitted": it records once', r3.status === 200 && Number((await billOf(s, M)).recorded_payment) === 450000
      && (await paymentsOf(s)).filter((p) => p.id === key2).length === 1, r3);
 
+  // The very last write fails: the payment row, the legs and the bill written before it go too.
+  const key3 = randomUUID();
+  const s2 = await snapshot();
+  const r4 = await withFault({ name: 'audit_log.insert', only_action: 'record_payment' }, () => pay({ studentId: s, amount: 70000, idempotencyKey: key3 }));
+  ok('the audit row (the last write) fails: 500, and the payments row, both legs and the bill written before it are rolled back',
+     r4.status === 500 && same(await snapshot(), s2) && Number((await billOf(s, M)).recorded_payment) === 450000 && (await ledgerFor(key3)) === 0, r4);
+  const key4 = randomUUID();
+  const s3 = await snapshot();
+  const r5 = await withFault({ name: 'payments.insert' }, () => pay({ studentId: s, amount: 70000, idempotencyKey: key4 }));
+  ok('the payments insert fails: 500, nothing written', r5.status === 500 && same(await snapshot(), s3), r5);
+
+  // Live's delete trigger is on, and nothing in this path needs a delete.
+  const p0 = (await paymentsOf(s))[0];
+  const del = await tryIt(() => asRole('user', ADMIN.id, 'DELETE FROM public.payments WHERE id = $1', [p0.id]));
+  ok('live\'s prevent_client_payment_deletion is on: an admin\'s own DELETE of a payment is refused (so an undo could never have worked)',
+     /Direct payment deletion is not allowed/.test(del?.message ?? ''), del);
   const appendOnly = await tryIt(() => sql(`UPDATE public.ledger_entries SET memo = 'x' WHERE tx_key = $1`, [`record-payment-${key}-${s}`]));
-  const del = await tryIt(() => sql(`DELETE FROM public.ledger_entries WHERE tx_key = $1`, [`record-payment-${key}-${s}`]));
-  ok('the undone legs cannot be tidied away: UPDATE and DELETE of the ledger are refused (HC130, G-11)', appendOnly?.code === 'HC130' && del?.code === 'HC130', { appendOnly, del });
-  void inv;
+  const delLeg = await tryIt(() => sql(`DELETE FROM public.ledger_entries WHERE tx_key = $1`, [`record-payment-${key}-${s}`]));
+  ok('the ledger stays append-only: UPDATE and DELETE are refused (HC130, G-11)', appendOnly?.code === 'HC130' && delLeg?.code === 'HC130', { appendOnly, delLeg });
+}
+
+// =================================================================== 10b
+console.log('\n10b. a reply that never arrives (review M-3): the outcome is reported unknown, and the same key cannot pay twice');
+{
+  const s = await child('LostReply');
+  await bill(s, M, 1000000);
+  // Committed in the database, the reply lost on the way back to the function.
+  const key = randomUUID();
+  rpcFaults.push({ name: 'record_admin_payment', when: 'after', error: { message: 'TypeError: fetch failed', details: '', hint: '', code: '' } });
+  const r = await pay({ studentId: s, amount: 400000, idempotencyKey: key });
+  ok('the database committed but its reply was lost: 503 unknown (not "nothing was recorded"), naming the payment',
+     r.status === 503 && r.body?.unknown === true && r.body?.paymentId === key && !/^Nothing was recorded/.test(r.body?.error ?? ''), r);
+  ok('  and it IS recorded, whole: one payments row, two legs, 400,000 on the bill', (await paymentsOf(s)).length === 1 && (await legsOf(s)).length === 2
+     && Number((await billOf(s, M)).recorded_payment) === 400000);
+  const s0 = await snapshot();
+  const retry = await pay({ studentId: s, amount: 400000, idempotencyKey: key, expectedRecorded: 0 });
+  ok('  the retry with the same key: 409 duplicate, nothing more', retry.status === 409 && retry.body?.duplicate === true && same(await snapshot(), s0), retry);
+  // Never reached the database.
+  const key2 = randomUUID();
+  rpcFaults.push({ name: 'record_admin_payment', when: 'before', error: { message: 'TypeError: fetch failed', details: '', hint: '', code: '' } });
+  const s1 = await snapshot();
+  const r2 = await pay({ studentId: s, amount: 100000, idempotencyKey: key2 });
+  ok('the request never reached the database: 503 unknown too, and nothing was written', r2.status === 503 && r2.body?.unknown === true && same(await snapshot(), s1), r2);
+  const r3 = await pay({ studentId: s, amount: 100000, idempotencyKey: key2 });
+  ok('  the retry with the same key records it once', r3.status === 200 && Number((await billOf(s, M)).recorded_payment) === 500000
+     && (await paymentsOf(s)).filter((p) => p.id === key2).length === 1, r3);
+  // A database error (it answered): rolled back, so definite.
+  rpcFaults.push({ name: 'record_admin_payment', when: 'before', error: { message: 'Could not find the function public.record_admin_payment', code: 'PGRST202' } });
+  const r4 = await pay({ studentId: s, amount: 1000 });
+  ok('a PostgREST error with a code (e.g. the function not installed): 500 "Nothing was recorded" (definite, not unknown)',
+     r4.status === 500 && /^Nothing was recorded/.test(r4.body?.error ?? '') && !r4.body?.unknown, r4);
 }
 
 // =================================================================== 11
@@ -651,12 +956,17 @@ console.log('\n11. delete-payment takes a record-payment payment back from all t
   const r = await call(deleteFn, ADMIN.tok, { paymentId: key, deleteReason: 'entered on the wrong child' });
   const legs = await legsOf(s);
   const n = await net(s);
-  ok('200: the bill back to 200,000, the payments row gone, a deletion record kept', r.status === 200 && Number((await billOf(s, M)).recorded_payment) === 200000
+  ok('200: the bill back to 200,000, the payments row gone (delete-payment deletes as the service role, which live\'s trigger lets through), a deletion record kept',
+     r.status === 200 && Number((await billOf(s, M)).recorded_payment) === 200000
      && !(await paymentsOf(s)).some((p) => p.id === key) && (await rows('SELECT 1 FROM public.payment_deletions WHERE payment_id = $1', [key])).length === 1, r);
   ok('  both legs reversed by two new legs (BANK nets 0, AR nets -200,000), balanced', legs.filter((l) => (l.tx_key ?? '').startsWith(`payment-reversal-${key}-`)).length === 2
      && (n.BANK ?? 0) === 0 && n.CASH === 200000 && n.AR === -200000 && balanced(legs), n);
   const twice = await call(deleteFn, ADMIN.tok, { paymentId: key, deleteReason: 'again' });
   ok('  deleting it again: refused (no payment), nothing changed', twice.status >= 400 && Number((await billOf(s, M)).recorded_payment) === 200000, twice);
+  const s0 = await snapshot();
+  const reuse = await pay({ studentId: s, amount: 300000, idempotencyKey: key });
+  ok('  the deleted payment\'s key sent again (a stale screen\'s retry): 409, never recorded a second time', reuse.status === 409 && same(await snapshot(), s0)
+     && /deleted or reversed/.test(reuse.body?.error ?? ''), reuse);
 
   const ckey = randomUUID();
   await pay({ studentId: s, kind: 'correction', amount: 50000, memo: 'thought it was too much', idempotencyKey: ckey });
@@ -700,7 +1010,7 @@ async function invariants() {
   const inv = await invariants();
   const counts = await one(`SELECT (SELECT count(*) FROM public.payments)::int AS p, (SELECT count(*) FROM public.ledger_entries)::int AS l,
                                    (SELECT count(*) FROM public.invoices WHERE recorded_payment > 0)::int AS b`);
-  ok(`after every case above (${counts.p} payments, ${counts.l} legs, ${counts.b} bills with money): M01 0 (no unbalanced transaction), M03 0 (no bill shows more than the ledger), M04 0 (no ledger cash off a bill), M08 0`,
+  ok(`after every case above, faults and lost replies included (${counts.p} payments, ${counts.l} legs, ${counts.b} bills with money): M01 0 (no unbalanced transaction), M03 0 (no bill shows more than the ledger), M04 0 (no ledger cash off a bill), M08 0`,
      inv.M01 === 0 && inv.M03 === 0 && inv.M04 === 0 && inv.M08 === 0 && counts.p >= 25, { inv, counts });
   // Control: the write the screens used to make (recorded_payment only) is what M03 counts.
   const s = await child('Legacy');
@@ -713,39 +1023,106 @@ async function invariants() {
 }
 
 // =================================================================== 13
-console.log('\n13. if the undo itself fails, the answer says exactly what is left');
+console.log('\n13. no payment is on one record and not the others (what M01-M04 cannot see, review B-1)');
 {
-  const s = await child('HalfDone');
-  await bill(s, M, 1000000);
-  const key = randomUUID();
-  faults.push({ table: 'invoices', op: 'update', error: { code: '57014', message: 'statement timeout' } });
-  faults.push({ table: 'ledger_entries', op: 'insert', match: ({ payload }) => Array.isArray(payload) && String(payload[0]?.tx_key ?? '').startsWith('payment-reversal-'),
-                error: { code: '08006', message: 'connection failure' } });
-  const r = await pay({ studentId: s, amount: 100000, idempotencyKey: key });
-  ok('500 halfDone, naming the payment, saying it is NOT on the bill and must not go through Delete payment',
-     r.status === 500 && r.body?.halfDone === true && r.body?.paymentId === key && /NOT on the bill/.test(r.body?.error ?? '') && /Do not delete it with Delete payment/.test(r.body?.error ?? ''), r);
-  const inv = await invariants();
-  ok('  and that state is the one M04 reports (ledger cash 100,000 with no bill money): M04 1, M01 0', inv.M04 === 1 && inv.M01 === 0 && Number((await billOf(s, M)).recorded_payment) === 0, inv);
+  // Every child in this suite was paid only through record-payment (and
+  // delete-payment): for each, the payments rows, the bill and the AR ledger
+  // must say the same, and every payments row must have its keyed leg.
+  const perChild = await rows(`
+    SELECT s.full_name,
+      (SELECT coalesce(sum(p.amount), 0) FROM public.payments p WHERE p.student_id = s.id)::text AS paid_rows,
+      (SELECT coalesce(sum(i.recorded_payment), 0) FROM public.invoices i WHERE i.student_id = s.id)::text AS on_bills,
+      (SELECT coalesce(sum(e.credit - e.debit), 0) FROM public.ledger_entries e JOIN public.ledger_accounts a ON a.id = e.account_id
+        WHERE a.student_id = s.id AND a.code = 'AR')::text AS ar_credit
+    FROM public.students s`);
+  const off = perChild.filter((r) => !(r.paid_rows === r.on_bills && r.on_bills === r.ar_credit));
+  ok(`for each of ${perChild.length} children: sum of payments rows = money on the bills = AR credited`, off.length === 0, off);
+  const orphans = await rows(`SELECT p.id FROM public.payments p
+    WHERE NOT EXISTS (SELECT 1 FROM public.ledger_entries e WHERE e.tx_key = 'record-payment-' || p.id::text || '-' || p.student_id::text)`);
+  ok('  no payments row without its record-payment ledger leg (an orphan like the review found cannot be made)', orphans.length === 0, orphans);
 }
 
 // =================================================================== 14
-console.log('\n14. the screens, statically: they call record-payment and write no recorded_payment');
+console.log('\n14. the screens and the function, statically');
 {
-  const read = (f) => readFileSync(join(repo, f), 'utf8');
+  const read = (f) => readFileSync(join(repo, f), 'utf8').replace(/\r\n/g, '\n');
   const screens = ['RecordPaymentDialog', 'QuickPayPanel', 'BatchPaymentDialog', 'RecordedPaymentManager'].map((n) => `src/components/admin/${n}.tsx`);
   const bad = screens.filter((f) => { const t = read(f); return !/recordPayment\(supabase,/.test(t) || /setRecordedPayment|addToRecordedPayment|from\(\s*["']invoices["']\s*\)\s*\.(update|insert|upsert)|from\(\s*["']audit_log["']\s*\)\s*\.insert/.test(t); });
   // (recorded_payment still appears in their react-query cache patches: the figure the function returned.)
   ok('the four payment screens call recordPayment and neither write the bill nor its audit row themselves', bad.length === 0, bad);
   ok('  every one keeps the tuition-month confirmation (useTuitionMonthConfirmation) and checks it before sending',
      screens.every((f) => /useTuitionMonthConfirmation\(/.test(read(f)) && /\.confirmed\)/.test(read(f))));
+  ok('  every one prefills the receipt date with today in Hanoi (receiptDateToday), never a UTC date (review M-2)',
+     screens.every((f) => /receiptDateToday\(\)/.test(read(f)) && !/new Date\(\)\.toISOString\(\)\.(split\("T"\)\[0\]|slice\(0, 10\))/.test(read(f))));
+  const rpm = read('src/components/admin/RecordedPaymentManager.tsx');
+  ok('  RecordedPaymentManager pre-selects no method: two separate choices start empty, are cleared when an edit or reversal opens, and are required (review M-1)',
+     !/useState\(\s*["'](Cash|Bank Transfer)["']\s*\)/.test(rpm) && /\[editMethod, setEditMethod\] = useState\(""\)/.test(rpm) && /\[reverseMethod, setReverseMethod\] = useState\(""\)/.test(rpm)
+     && /handleStartEdit = \(invoice: Invoice\) => \{\n\s*setEditMethod\(""\);/.test(rpm) && /setReverseMethod\(""\);\n\s*setReversingInvoice\(/.test(rpm)
+     && /if \(!editMethod\) \{ toast\.error\(METHOD_REQUIRED\); return; \}/.test(rpm) && /if \(!reverseMethod\) \{ toast\.error\(METHOD_REQUIRED\); return; \}/.test(rpm)
+     && /method: editMethod,/.test(rpm) && /method: reverseMethod,/.test(rpm) && /placeholder="Choose cash or bank"/.test(rpm));
+  ok('  RecordedPaymentManager keeps one key per invoice row (review N-1)', /idempotencyKey: keyFor\(invoice\.id\)/.test(rpm) && !/paymentKey\.current/.test(rpm)
+     && (rpm.match(/paymentKeys\.current\.delete\(invoice\.id\)/g) ?? []).length === 2);
   ok('  src/lib/recordPayment.ts reaches the function only through supabase.functions.invoke("record-payment")',
      /client\.functions\.invoke\("record-payment"/.test(read('src/lib/recordPayment.ts')) && !/fetch\(/.test(read('src/lib/recordPayment.ts')));
-  const toml = read('supabase/config.toml').replace(/\r/g, '');
+  const toml = read('supabase/config.toml');
   ok('  [functions.record-payment] verify_jwt = true in supabase/config.toml', /\[functions\.record-payment\]\nverify_jwt = true/.test(toml));
   const fn = read('supabase/functions/record-payment/index.ts');
-  ok('  record-payment: requireRole(["admin"]) with allowServiceRole false, and its data through callerClient',
+  ok('  record-payment: requireRole(["admin"]) with allowServiceRole false; its data through callerClient; the writes only through the caller\'s rpc',
      /requireRole\(req, service, \["admin"\], corsHeaders, \{ allowServiceRole: false \}\)/.test(fn) && /callerClient\(createClient/.test(fn)
-     && !/service\s*\.from\(/.test(fn));
+     && !/service\s*\.(from|rpc)\(/.test(fn) && /supabase\.rpc\("record_admin_payment"/.test(fn)
+     && !/\.(insert|update|upsert|delete)\s*\(/.test(fn));
+  ok('  record-payment reads calculate-tuition\'s returned error instead of trusting a try/catch (review N-2)',
+     /const \{ error \} = await service\.functions\.invoke\("calculate-tuition"/.test(fn) && /if \(!error\) return null;/.test(fn));
+  const audit = read('supabase/functions/student-audit/index.ts');
+  ok('  student-audit (the account statement\'s source) lists a record-payment payment once, and a correction row as an adjustment, signed - never as money received (review N-4)',
+     /diff\.via === "record-payment" && typeof diff\.payment_id === "string" && paymentIds\.has\(diff\.payment_id\)\) continue;/.test(audit)
+     && /kind: correction \? "adjustment" : "payment"/.test(audit));
+}
+
+// =================================================================== 15
+console.log('\n15. the screens\' answer rule over the REAL functions-js client (review B-2)');
+{
+  const out = await build({ entryPoints: [join(repo, 'src/lib/recordPayment.ts')], bundle: true, format: 'esm', platform: 'neutral', write: false, logLevel: 'silent' });
+  const p = resolve(tmpdir(), `g1.recordPayment.${process.pid}.mjs`);
+  writeFileSync(p, out.outputFiles[0].text);
+  const lib = await import(pathToFileURL(p).href);
+  const via = (customFetch) => ({ functions: new FunctionsClient('https://example.supabase.co/functions/v1', { headers: { Authorization: `Bearer ${ADMIN.tok}` }, customFetch }) });
+  // The real handler behind functions-js.
+  const serve = (u, init) => recordFn(new Request('http://localhost/fn', { method: init.method, headers: init.headers, body: init.body }));
+  const args = (o) => ({ month: M, kind: 'payment', amount: 1, method: 'Cash', occurredAt: '2026-08-10', idempotencyKey: randomUUID(), ...o });
+
+  const drop = await lib.recordPayment(via(async () => { throw new TypeError('Failed to fetch'); }), args({ studentId: randomUUID() }));
+  ok('a dropped connection (fetch rejects): answered false - the screen keeps the key', drop.ok === false && drop.answered === false && drop.message === lib.NO_ANSWER_MESSAGE, drop);
+  const gateway = await lib.recordPayment(via(async () => new Response('<html>502 Bad Gateway</html>', { status: 502, headers: { 'Content-Type': 'text/html' } })), args({ studentId: randomUUID() }));
+  const relay = await lib.recordPayment(via(async () => new Response('{"message":"relay"}', { status: 502, headers: { 'Content-Type': 'application/json', 'x-relay-error': 'true' } })), args({ studentId: randomUUID() }));
+  const limit = await lib.recordPayment(via(async () => new Response('{"code":"WORKER_LIMIT","message":"limit"}', { status: 546, headers: { 'Content-Type': 'application/json' } })), args({ studentId: randomUUID() }));
+  ok('  a gateway 502 page, a relay error and a runtime 546 without record-payment\'s own `error`: not answered (key kept)',
+     [gateway, relay, limit].every((r) => r.ok === false && r.answered === false), [gateway, relay, limit]);
+  const unknown = await lib.recordPayment(via(async () => new Response(JSON.stringify({ error: 'The database did not answer...', unknown: true }), { status: 503, headers: { 'Content-Type': 'application/json' } })), args({ studentId: randomUUID() }));
+  ok('  record-payment\'s own 503 unknown: not answered (key kept), its words shown', unknown.answered === false && /did not answer/.test(unknown.message), unknown);
+  const dup = await lib.recordPayment(via(async () => new Response(JSON.stringify({ error: 'dup', duplicate: true }), { status: 409, headers: { 'Content-Type': 'application/json' } })), args({ studentId: randomUUID() }));
+  const nothing = await lib.recordPayment(via(async () => new Response(JSON.stringify({ error: 'Nothing was recorded: x' }), { status: 500, headers: { 'Content-Type': 'application/json' } })), args({ studentId: randomUUID() }));
+  ok('  a 409 duplicate and a 500 "Nothing was recorded" from record-payment: answered (definite)', dup.answered && dup.duplicate && nothing.answered && !nothing.duplicate, [dup, nothing]);
+
+  // End to end: the request reaches record-payment and is recorded, the reply is lost.
+  const s = await child('ScreenRetry');
+  await bill(s, M, 1000000);
+  let key = randomUUID();
+  const entry = { studentId: s, amount: 500000, expectedRecorded: 0 };
+  const lost = await lib.recordPayment(via(async (u, i) => { const res = await serve(u, i); await res.text(); throw new TypeError('Failed to fetch'); }), args({ ...entry, idempotencyKey: key }));
+  if (lost.ok || lost.answered) key = randomUUID(); // the screens' rule
+  ok('the payment was recorded but the reply was lost: answered false, so the screen keeps the key', lost.answered === false
+     && Number((await billOf(s, M)).recorded_payment) === 500000, lost);
+  const retried = await lib.recordPayment(via(serve), args({ ...entry, expectedRecorded: 500000, idempotencyKey: key }));
+  ok('  the admin retries (the screen reloaded, so it now shows 500,000): refused as already submitted - paid ONCE',
+     retried.ok === false && retried.answered && retried.duplicate && Number((await billOf(s, M)).recorded_payment) === 500000 && (await paymentsOf(s)).length === 1, retried);
+  // The same flow under the old rule (answered = a context or data): a new key, so the retry pays again.
+  const c = await child('ScreenRetryOldRule');
+  await bill(c, M, 1000000);
+  await lib.recordPayment(via(async (u, i) => { const res = await serve(u, i); await res.text(); throw new TypeError('Failed to fetch'); }), args({ studentId: c, amount: 500000, idempotencyKey: randomUUID() }));
+  await lib.recordPayment(via(serve), args({ studentId: c, amount: 500000, idempotencyKey: randomUUID() }));
+  ok('  control: had the screen made a new key (the old answered = true), the retry would have recorded 1,000,000',
+     Number((await billOf(c, M)).recorded_payment) === 1000000 && (await paymentsOf(c)).length === 2);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
