@@ -982,6 +982,17 @@ const uses = (files, table) => files.flatMap(([f, t]) => {
     [...new Set(prof)].sort(), ["src/components/student/LearningJourneyCard.tsx", "src/pages/FamilyDashboard.tsx"]);
   ok("  ...LearningJourneyCard is shown only on the admin StudentDetail", srcFiles.filter(([f, t]) => /<LearningJourneyCard\b/.test(t)).map(([f]) => f).join() === "src/pages/StudentDetail.tsx");
   eq("the browser never reads cefr_level_claims or cefr_defense_tests directly", [...uses(srcFiles, "cefr_level_claims"), ...uses(srcFiles, "cefr_defense_tests")], []);
+  // Review M-2: the new child page is safe against the OLD cefr-defense too
+  // (so the app can go out first): it renders no field the old function
+  // filled with AI output, and treats any status it does not know as "waiting".
+  {
+    const page = srcFiles.find(([f]) => f === "src/pages/StudentDefendLevel.tsx")[1]
+      .replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+    eq("StudentDefendLevel reads none of result, stage_score, evidence, level_estimate, rationale, defended, skill_notes, next_steps",
+      ["result", "stage_score", "evidence", "level_estimate", "rationale", "defended", "skill_notes", "next_steps"].filter((w) => new RegExp(`\\b${w}\\b`).test(page)), []);
+    ok("  ...'reviewed' only for the two statuses the new function sends; anything else reads 'submitted, waiting'",
+      /const reviewedByTeacher = claim\?\.status === "reviewed" \|\| claim\?\.status === "set_by_teacher";/.test(page));
+  }
   const card = srcFiles.find(([f]) => f === "src/components/cefr/CefrDraftsCard.tsx")[1];
   ok("the card decides only through approve_cefr_draft / discard_cefr_draft", /rpc\("approve_cefr_draft"/.test(card) && /rpc\("discard_cefr_draft"/.test(card) && !/\.(insert|update|upsert|delete)\(/.test(card));
 }

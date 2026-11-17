@@ -599,7 +599,7 @@ const SUITES = [
   {
     name: "cefr drafts",
     file: "cefr-drafts.test.mjs",
-    expect: 243,
+    expect: 245,
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql", "20260730100000_cefr_level_defense.sql",
       "20261117151000_cefr_model_drafts.sql", "20261117152000_family_reads_without_ai.sql"],
   },

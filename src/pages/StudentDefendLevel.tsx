@@ -58,6 +58,11 @@ export default function StudentDefendLevel() {
   const activeTest = tests.find((t) => t.status !== "graded");
   const gradedTest = tests.find((t) => t.status === "graded");
   const approved: { level: string; assessed_at: string } | null = state?.approved_level ?? null;
+  const teacherLevel: { level: string; assessed_at: string } | null = state?.teacher_level ?? null;
+  // Only the statuses the reviewed function sends count as "a teacher acted".
+  // Anything else - including the AI statuses an older cefr-defense still
+  // sends (defended, not_supported, ...) - reads as "submitted, waiting".
+  const reviewedByTeacher = claim?.status === "reviewed" || claim?.status === "set_by_teacher";
   const stage = activeTest?.active_stage;
 
   const submitMutation = useMutation({
@@ -225,16 +230,16 @@ export default function StudentDefendLevel() {
                   <CardTitle className="text-base flex items-center gap-2">
                     {approved ? (
                       <><ShieldCheck className="h-5 w-5 text-hec-leaf" />Your teacher's review: {approved.level}</>
-                    ) : claim.status === "submitted" ? (
-                      <><CheckCircle2 className="h-5 w-5 text-hec-ink-soft" />Test submitted</>
-                    ) : (
+                    ) : reviewedByTeacher ? (
                       <><CheckCircle2 className="h-5 w-5 text-hec-leaf" />Reviewed by your teacher</>
+                    ) : (
+                      <><CheckCircle2 className="h-5 w-5 text-hec-ink-soft" />Test submitted</>
                     )}
                   </CardTitle>
                   <CardDescription className="text-hec-small">
                     {approved
                       ? "Your teacher looked at your test and confirmed this level."
-                      : claim.status === "submitted"
+                      : !reviewedByTeacher
                         ? "Your teacher will review your test. Your level shows here once they have."
                         : teacherLevel
                           ? `Your teacher set your level: ${teacherLevel.level}.`
