@@ -529,8 +529,16 @@ Deno.serve(async (req) => {
           // would have added to the month before the month-level discounts
           // (enrollment terms, special, referral, sibling): the reports'
           // "tuition lost". Not part of any total above.
-          excusedLessons,
-          ...(cancelledLessons ? { cancelledLessons } : {}),
+          //
+          // Left out for a FROZEN bill: its charge is the saved figure, not
+          // today's register, so a lesson marked Excused after the freeze may
+          // still be charged (and one charged now may not have been). Listing
+          // it as forgone would call billed tuition lost. Absent, the screens
+          // show "figure unavailable" rather than a guess.
+          ...(frozenInv?.tuition_frozen ? {} : {
+            excusedLessons,
+            ...(cancelledLessons ? { cancelledLessons } : {}),
+          }),
         });
       } catch (err) {
         console.error(`Error processing student ${sid}:`, err);

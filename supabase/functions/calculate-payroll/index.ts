@@ -825,6 +825,36 @@ Deno.serve(async (req) => {
       }
     };
 
+    /**
+     * Staff with NO payroll row this month whose cancelled lessons still
+     * count toward the month's Lost Income: an archived teacher with no
+     * held or scheduled lesson, an assistant with no paid minutes. They are
+     * kept out of payrollData on purpose - close-payroll-month books one
+     * payroll_lines row per entry there, and a 0 row would change a closed
+     * month's lines. Display only, like `lostIncome`.
+     */
+    const lostIncomeOnly: Array<{
+      teacherId: string;
+      teacherName: string;
+      staffName: string;
+      isActive: boolean;
+      staffType: string;
+      lostIncome: LostIncome;
+    }> = [];
+    /** False once anyone's cancelled lessons could not be read or priced. */
+    let lostIncomeOnlyComplete = true;
+    const noteLostIncomeOnly = (
+      who: Omit<(typeof lostIncomeOnly)[number], "lostIncome">,
+      cancelled: SessionRow[] | null,
+      lost: LostIncome | undefined,
+    ) => {
+      if (cancelled === null || lost === undefined) {
+        lostIncomeOnlyComplete = false;
+        return;
+      }
+      if (lost.sessionsCount > 0) lostIncomeOnly.push({ ...who, lostIncome: lost });
+    };
+
     for (const t of teachers ?? []) {
       // Actual and projected are defined in ../_lib/payroll-sessions.ts,
       // which is a byte-identical copy of src/lib/payrollSessions.ts. The
@@ -860,7 +890,24 @@ Deno.serve(async (req) => {
       // An archived teacher with nothing on the books this month is noise;
       // one with sessions is owed money. This is the filter that replaces
       // the blanket .eq("is_active", true) on the query.
-      if (t.is_active === false && (projected?.length ?? 0) === 0) continue;
+      //
+      // Their cancelled lessons still count toward the month's Lost Income
+      // (Saved Payroll on Reports), so they are noted in lostIncomeOnly -
+      // never as a payroll row, which would reach payroll_lines at close.
+      if (t.is_active === false && (projected?.length ?? 0) === 0) {
+        noteLostIncomeOnly(
+          {
+            teacherId: t.id,
+            teacherName: `${t.full_name} (archived)`,
+            staffName: t.full_name,
+            isActive: false,
+            staffType: "teacher",
+          },
+          cancelled,
+          lostIncomeFor(cancelled, t, teacherRates, headline.rate),
+        );
+        continue;
+      }
 
       results.push({
         teacherId: t.id,
@@ -1031,6 +1078,23 @@ Deno.serve(async (req) => {
             lostIncome: lostIncomeFor(cancelled, ta, taRates, headline.rate),
             staffType: "teaching_assistant",
           });
+        } else {
+          // No paid minutes this month, so no payroll row (a 0 row would
+          // reach payroll_lines at close). Lessons of theirs that were
+          // cancelled still count toward the month's Lost Income.
+          noteLostIncomeOnly(
+            {
+              teacherId: ta.id,
+              teacherName: ta.is_active === false
+                ? `${ta.full_name} (TA, archived)`
+                : `${ta.full_name} (TA)`,
+              staffName: ta.full_name,
+              isActive: ta.is_active !== false,
+              staffType: "teaching_assistant",
+            },
+            cancelled,
+            lostIncomeFor(cancelled, ta, taRates, headline.rate),
+          );
         }
       }
     }
@@ -1090,6 +1154,16 @@ Deno.serve(async (req) => {
       grandTotalVariance: results.reduce((s, r) => s + r.varianceAmountProjected, 0),
       totalDiscrepancies: results.reduce((s, r) => s + r.discrepancyCount, 0),
       payrollData: results,
+      // What the month's cancelled lessons would have paid, over EVERY staff
+      // member: each row's lostIncome plus lostIncomeOnly (staff with no
+      // row). Saved Payroll on Reports is this figure. Null when anyone's
+      // cancelled lessons could not be read - a part would read as the
+      // whole. Display only: in no pay total, never booked.
+      lostIncomeTotal: lostIncomeOnlyComplete && results.every((r) => r.lostIncome)
+        ? results.reduce((s, r) => s + (r.lostIncome?.totalAmount ?? 0), 0)
+          + lostIncomeOnly.reduce((s, x) => s + x.lostIncome.totalAmount, 0)
+        : null,
+      lostIncomeOnly,
     };
 
     return new Response(JSON.stringify(body), {

@@ -362,10 +362,13 @@ await section("an admin may ask for anyone", async () => {
 });
 
 // ===================================================================== 2
-const NEW_FIELDS = new Set(["lostIncome", "payRateType", "rateVnd"]);
+const NEW_FIELDS = new Set(["lostIncome", "payRateType", "rateVnd", "lostIncomeTotal", "lostIncomeOnly"]);
+// The month-wide Lost Income (CALC-fix M-1): two top-level fields after
+// payrollData, display only. Every row and every other figure is compared.
+const LOST_KEYS = new Set(["lostIncome", "lostIncomeTotal", "lostIncomeOnly"]);
 const stripNew = (v) => JSON.parse(JSON.stringify(v), function (k, x) {
   // payRateType is new only inside per-session detail; the row has had one.
-  if (k === "lostIncome") return undefined;
+  if (LOST_KEYS.has(k)) return undefined;
   if ((k === "payRateType" || k === "rateVnd") && this && "amount" in this && "minutes" in this) return undefined;
   return x;
 });
@@ -432,7 +435,7 @@ await section("the new fields", async () => {
 globalThis.__t5PayrollFn = fn;
 const CLOSE_DIR = resolve(repo, "supabase", "functions", "close-payroll-month");
 const closeFn = await load(readFileSync(resolve(CLOSE_DIR, "index.ts"), "utf8"), "close", CLOSE_DIR);
-const dropLost = (v) => JSON.parse(JSON.stringify(v), (k, x) => (k === "lostIncome" ? undefined : x));
+const dropLost = (v) => JSON.parse(JSON.stringify(v), (k, x) => (LOST_KEYS.has(k) ? undefined : x));
 const closeWrites = (r) => r.log.filter((e) => e.op === "upsert" && (e.table === "payroll_lines" || e.table === "expenditures")).map((e) => [e.table, e.payload]);
 
 await section("the cancelled-lessons read fails", async () => {
@@ -455,9 +458,10 @@ await section("the cancelled-lessons read fails", async () => {
       failCancelled = null;
       ok(`${mode}: ${label} -> 200`, r.status === 200, { status: r.status, json: r.json });
       ok(`${mode}: ${label}: every pay figure identical to the run where it was read`,
-        JSON.stringify(r.json) === JSON.stringify(dropLost(normal[label].json)), { got: r.json, want: dropLost(normal[label].json) });
+        JSON.stringify(dropLost(r.json)) === JSON.stringify(dropLost(normal[label].json)), { got: dropLost(r.json), want: dropLost(normal[label].json) });
       ok(`${mode}: ${label}: lostIncome absent on every row (the screen shows "Figure unavailable")`,
         (r.json?.payrollData ?? []).length > 0 && r.json.payrollData.every((x) => !("lostIncome" in x)));
+      eq(`${mode}: ${label}: lostIncomeTotal null (Saved Payroll shows "Figure unavailable")`, r.json?.lostIncomeTotal, null);
       eq(`${mode}: ${label}: same writes`, writes(r).map((e) => [e.table, e.op, e.payload]), writes(normal[label]).map((e) => [e.table, e.op, e.payload]));
     }
     failCancelled = mode;

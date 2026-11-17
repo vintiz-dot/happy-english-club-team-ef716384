@@ -61,6 +61,19 @@ const SUITES = [
       "20261106120000_invoice_tuition_freeze.sql",
     ],
   },
+  // CALC-fix round 1 (M-2, N-3): a frozen bill's lessons are not reported as
+  // forgone tuition; the Reports cards show a dash, not 0, until known.
+  {
+    name: "calc probe: frozen",
+    file: "review-calc-probe-frozen.test.mjs",
+    expect: 368,
+    migrations: [
+      "20251117061416_2afa5f4f-f2a4-48ba-9c52-9939e4ece5e9.sql",
+      "20261009120000_keep_invoice_carry_balances_correct.sql",
+      "20261009130000_audit_every_admin_action.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+    ],
+  },
   // Voluntary contributions and Settle Bill are removed (D-23): settle-bill
   // is a 410 stub that touches nothing, nothing can create either any more,
   // and the preflight for dropping the write-off reader counts zero.
@@ -377,6 +390,9 @@ const SUITES = [
   // TA-PAY: a teaching assistant reads their own row (JWT-scoped), and the
   // TA screens show calculate-payroll's figures, open and closed month.
   { name: "TA payroll function", file: "ta-payroll.test.mjs", migrations: [] },
+  // CALC-fix round 1 (M-1): staff whose month is all cancelled reach Saved
+  // Payroll through lostIncomeTotal, never as a payroll row.
+  { name: "calc probe: payroll", file: "review-calc-probe-payroll.test.mjs", expect: 182, migrations: [] },
   {
     name: "pay-rate history",
     file: "payhist.mjs",

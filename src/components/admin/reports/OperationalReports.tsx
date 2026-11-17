@@ -157,8 +157,9 @@ const OperationalReports = () => {
       // calculate-tuition-bulk's cancelledLessons: what each cancelled lesson
       // would have added to each enrolled student's month.
       const lostTuition = forgoneTuition(tuition.results, "cancelledLessons", tuition.ids).total;
-      // calculate-payroll's lostIncome: what they would have paid, teachers
-      // and assistants, at the rate in force on each lesson's date.
+      // calculate-payroll's lostIncomeTotal: what they would have paid,
+      // teachers and assistants (staff with no payroll row that month
+      // included), at the rate in force on each lesson's date.
       const savedPayroll = payroll.error ? null : cancelledPayTotal(payroll.data as Parameters<typeof cancelledPayTotal>[0]);
 
       return {
@@ -498,10 +499,10 @@ const OperationalReports = () => {
             <CardDescription>Potential profit lost from cancelled sessions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="whitespace-nowrap font-sans text-hec-display font-semibold tabular-nums text-hec-ink">{lostRevenue ? vnd(lostRevenue.lostProfit) : formatVND(0)}</div>
+            <div className="whitespace-nowrap font-sans text-hec-display font-semibold tabular-nums text-hec-ink">{vnd(lostRevenue?.lostProfit ?? null)}</div>
             <div className="mt-2 space-y-1 text-hec-small tabular-nums text-hec-ink-soft">
-              <p>Lost Tuition: {lostRevenue ? vnd(lostRevenue.lostTuition) : formatVND(0)}</p>
-              <p>Saved Payroll: {lostRevenue ? vnd(lostRevenue.savedPayroll) : formatVND(0)}</p>
+              <p>Lost Tuition: {vnd(lostRevenue?.lostTuition ?? null)}</p>
+              <p>Saved Payroll: {vnd(lostRevenue?.savedPayroll ?? null)}</p>
             </div>
           </CardContent>
         </Card>
@@ -515,7 +516,7 @@ const OperationalReports = () => {
             Excused Absences
           </CardTitle>
           <CardDescription>
-            Students excused — tuition lost: {excusedData ? vnd(excusedData.totalLoss) : formatVND(0)} ({excusedData?.count || 0} absences)
+            Students excused — tuition lost: {vnd(excusedData?.totalLoss ?? null)} ({excusedData?.count || 0} absences)
           </CardDescription>
         </CardHeader>
         <CardContent>

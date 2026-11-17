@@ -12,9 +12,9 @@
  *     (added for BROWSER-PRICING): per student, each lesson not charged and
  *     what it would have added to that student's month, on the student's own
  *     enrolled dates, weekdays and rate override.
- *   pay - calculate-payroll's `lostIncome` per staff row: what the month's
+ *   pay - calculate-payroll's `lostIncomeTotal`: what the month's
  *     cancelled lessons would have paid, at the rate in force on each date,
- *     teachers and assistants both.
+ *     teachers and assistants both, staff with no payroll row included.
  *
  * Only sums and look-ups over figures the functions decided. A figure the
  * function did not send - not redeployed yet, a read it could not make, a
@@ -64,8 +64,9 @@ const figure = (v: unknown): number | null =>
  * The lessons of one kind across a calculate-tuition-bulk answer.
  *
  * `asked` is the roster the screen sent. A student on it with no answer, an
- * errored answer, or one without the field (the function predates it, or
- * could not read the cancelled lessons) makes the total unknown - leaving
+ * errored answer, or one without the field (the function predates it,
+ * could not read the cancelled lessons, or the student's bill is frozen, so
+ * what it charged is not today's register) makes the total unknown - leaving
  * them out would understate it while looking complete.
  */
 export function forgoneTuition(
@@ -111,29 +112,28 @@ export function forgoneByLesson(f: ForgoneTuition): Map<string, number> {
   return new Map(f.lessons.map((l) => [`${l.sessionId}:${l.studentId}`, l.amount]));
 }
 
-/** One calculate-payroll row, narrowed to its Lost Income. */
-export interface PayrollLostIncomeRow {
-  lostIncome?: { totalAmount?: number | null; sessionsCount?: number | null } | null;
+/** calculate-payroll's answer, narrowed to its month-wide Lost Income. */
+export interface PayrollLostIncomeResponse {
+  lostIncomeTotal?: number | null;
 }
 
 /**
  * The pay the month's cancelled lessons would have cost: calculate-payroll's
- * `lostIncome.totalAmount` summed over every staff row. Null when the
- * function did not answer, or any row came without it (its cancelled lessons
- * could not be read) - a partial sum would read as the whole.
+ * `lostIncomeTotal`, worked out over EVERY staff member - each payroll row's
+ * `lostIncome` plus `lostIncomeOnly`, the staff with no row that month (an
+ * archived teacher with no lesson held or scheduled, an assistant with no
+ * paid minutes) whose lessons were cancelled.
+ *
+ * Not summed here over `payrollData`: those rows leave out exactly the staff
+ * whose month was all cancelled, so the sum read as complete while it was
+ * not. Null when the function did not answer, predates the field (not yet
+ * redeployed), or could not read someone's cancelled lessons - the screen
+ * shows "figure unavailable".
  */
 export function cancelledPayTotal(
-  response: { payrollData?: PayrollLostIncomeRow[] | null } | null | undefined,
+  response: PayrollLostIncomeResponse | null | undefined,
 ): number | null {
-  const rows = response?.payrollData;
-  if (!Array.isArray(rows)) return null;
-  let total = 0;
-  for (const r of rows) {
-    const amount = figure(r?.lostIncome?.totalAmount);
-    if (amount === null) return null;
-    total += amount;
-  }
-  return total;
+  return figure(response?.lostIncomeTotal);
 }
 
 /** a - b, or null when either is unknown. */
