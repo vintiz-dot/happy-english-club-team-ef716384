@@ -35,11 +35,16 @@
 --
 -- History explained on live (fix round 1, 17 Nov), reported, never hidden:
 --   M41  ledger transactions unbalanced from BEFORE the first keyed ledger
---        write (3 single-leg AR credits of Oct 2025). M01 counts every other one.
+--        write: exactly the 3 single-leg AR credits of Oct 2025, PINNED by
+--        tx_id and amount (fix round 2: created_at alone can be backdated by
+--        an INSERT). M01 counts every other unbalanced transaction, so a new
+--        one, backdated or not, or a known one whose amount moved, alarms.
 --   M13 / M14 exempt exactly one pattern: a frozen bill's figures put back,
---        with no actor, inside the restore window, to the total an audit row
---        showed BEFORE the 28 Oct wipe. Any other day, any actor, any other
---        total still counts.
+--        with no actor, inside the restore window, to the total the bill had
+--        BEFORE the 28 Oct wipe - its last audit image before that day, or,
+--        when its first audit row is ON the wipe day (the July bill on live:
+--        28 Oct 10:58 Hanoi), the "old" image of that first row. Any other
+--        day, any actor, any other total still counts.
 WITH
 params AS (
   SELECT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date        AS today,
@@ -56,24 +61,53 @@ params AS (
          coalesce((SELECT min(e.created_at) FROM public.ledger_entries e WHERE e.tx_key IS NOT NULL),
                   timestamptz '-infinity')                    AS first_keyed
 ),
--- Unbalanced transactions, split: "before keys" = every leg unkeyed AND every
--- leg created before the first keyed write. Every writer since keys at least
--- one leg of each transaction, but the split does not rely on that: an
--- unkeyed transaction written today is after first_keyed, so it is in M01.
-unbalanced AS (
-  SELECT e.tx_id, sum(e.debit - e.credit) AS d,
-         bool_and(e.tx_key IS NULL) AND max(e.created_at) < (SELECT first_keyed FROM params) AS before_keys
-    FROM public.ledger_entries e
-   GROUP BY e.tx_id
-  HAVING sum(e.debit) <> sum(e.credit)
+-- The pre-key history explained on live (17 Nov), pinned: tx_id and its
+-- debit - credit. Read-only on live: these three are the only unbalanced
+-- transactions, each one unkeyed leg of Oct 2025.
+known_pre_key (tx_id, d) AS (
+  VALUES (uuid '2c519f69-fa1f-4ca7-985c-e469c51f7bc0', -500000::bigint),
+         (uuid 'fafc4363-ac73-42b9-b931-a17c290986cd', -200000::bigint),
+         (uuid 'ecd66a3d-9c73-4d6d-a1cc-26cb95910a82', -220000::bigint)
 ),
--- The total each bill had before the 28 Oct wipe: its last audit image before that day.
-pre_wipe AS (
+-- Unbalanced transactions, split: "before keys" = one of the pinned three,
+-- with its pinned amount, AND every leg unkeyed AND every leg created before
+-- the first keyed write. Anything else is in M01: an unkeyed transaction
+-- written today (after first_keyed), an INSERT with a backdated created_at
+-- (not pinned), a further leg on a pinned one (its amount moves).
+unbalanced AS (
+  SELECT u.tx_id, u.d,
+         u.all_unkeyed AND u.last_at < (SELECT first_keyed FROM params)
+           AND EXISTS (SELECT 1 FROM known_pre_key k WHERE k.tx_id = u.tx_id AND k.d = u.d) AS before_keys
+    FROM (SELECT e.tx_id, sum(e.debit - e.credit)::bigint AS d,
+                 bool_and(e.tx_key IS NULL) AS all_unkeyed, max(e.created_at) AS last_at
+            FROM public.ledger_entries e
+           GROUP BY e.tx_id
+          HAVING sum(e.debit) <> sum(e.credit)) u
+),
+-- The total each bill had before the 28 Oct wipe: its last audit image before
+-- that day; with no audit row before it, the "old" image of its first audit
+-- row ON the wipe day (Hanoi) - the row the wipe wrote, or one just before it.
+-- (On live the July bill's first audit row is 28 Oct 03:58 UTC, so the
+-- before-the-day image alone never matched it: fix round 2, M-1.)
+pre_wipe_before AS (
   SELECT DISTINCT ON (a.entity_id) a.entity_id,
          coalesce(a.diff -> 'new' ->> 'total_amount', a.diff -> 'old' ->> 'total_amount') AS total
     FROM public.audit_log a, params
    WHERE a.entity = 'invoices' AND a.occurred_at < params.wipe_day
    ORDER BY a.entity_id, a.occurred_at DESC, a.id DESC
+),
+pre_wipe_on_day AS (
+  SELECT DISTINCT ON (a.entity_id) a.entity_id, a.diff -> 'old' ->> 'total_amount' AS total
+    FROM public.audit_log a, params
+   WHERE a.entity = 'invoices' AND a.operation = 'UPDATE'
+     AND a.occurred_at >= params.wipe_day AND a.occurred_at < params.wipe_day + interval '1 day'
+   ORDER BY a.entity_id, a.occurred_at ASC, a.id ASC
+),
+pre_wipe AS (
+  SELECT b.entity_id, b.total FROM pre_wipe_before b
+  UNION ALL
+  SELECT d.entity_id, d.total FROM pre_wipe_on_day d
+   WHERE NOT EXISTS (SELECT 1 FROM pre_wipe_before b WHERE b.entity_id = d.entity_id)
 ),
 -- Audit rows where a bill stayed frozen and a charged figure moved.
 frozen_moves AS (
@@ -195,7 +229,7 @@ SELECT check_id, check_name, kind, violations, total_vnd, meaning FROM (
 -- ------------------------------------------------------------ the ledger
 SELECT 'M01' AS check_id, 'ledger_transactions_unbalanced' AS check_name, 'must be 0' AS kind,
        count(*)::bigint AS violations, coalesce(sum(abs(d)), 0)::bigint AS total_vnd,
-       'ledger transactions (tx_id) whose debits and credits differ, apart from the pre-key history in M41; every writer posts both legs in one insert' AS meaning
+       'ledger transactions (tx_id) whose debits and credits differ, apart from the 3 pinned pre-key transactions in M41; every writer posts both legs in one insert' AS meaning
   FROM unbalanced WHERE NOT before_keys
 UNION ALL
 SELECT 'M02', 'ledger_entries_malformed', 'must be 0', count(*)::bigint, NULL,
@@ -468,7 +502,7 @@ SELECT 'M40', 'guard_installed', 'report', (SELECT count(*) FROM params WHERE gu
 -- -------------------------- history explained on live (fix round 1), reported
 UNION ALL
 SELECT 'M41', 'ledger_unbalanced_before_keys', 'report', count(*)::bigint, coalesce(sum(abs(d)), 0)::bigint,
-       'unbalanced ledger transactions wholly from before the first keyed ledger write (3 / 920,000 on live: single-leg AR credits of Oct 2025); M01 counts every other one'
+       'the 3 unbalanced ledger transactions of Oct 2025 from before the first keyed ledger write, pinned by tx_id and amount (3 / 920,000 on live: single-leg AR credits); any other unbalanced transaction, backdated or not, is in M01'
   FROM unbalanced WHERE before_keys
 UNION ALL
 SELECT 'M42', 'frozen_bill_restored_to_pre_wipe_total', 'report', count(*)::bigint,
