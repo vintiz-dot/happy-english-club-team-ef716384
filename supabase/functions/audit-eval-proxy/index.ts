@@ -36,8 +36,7 @@
  *   GEMINI_API_KEY (+ optional GEMINI_MODEL, as analyze-video-submission).
  *   GOOGLE_CREDENTIALS is NOT used: Google Chirp 3 is a stub (501).
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { requireRole } from "../_lib/auth.ts";
+import { requireSpender, type SpendGate } from "../_lib/ai-gate.ts";
 import {
   ALLOWED_FIELDS,
   ALLOWED_OPTIONS,
@@ -226,16 +225,22 @@ function parseAsk(body: any): Ask | Response {
   return { run_id, spec, object_path, audio_seconds, options };
 }
 
+// Admins only. Its own caps (calls and audio minutes per run, a global
+// minute cap, the kill switch) are durable, in audit_eval_reserve; this is
+// the per-account door in front of them. The busiest evaluation run so far
+// made 33 calls in ten minutes.
+const GATE: SpendGate = { name: "audit-eval-proxy", roles: ["admin"], limit: 60, windowMs: 10 * 60_000 };
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // Identity only: the gate's service client verifies the token and reads
+  // roles. It reads no data; the bucket and the runs table are read as the
+  // caller. The service role is refused.
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
   const url = Deno.env.get("SUPABASE_URL")!;
-  // Identity only: the service client verifies the token and reads roles.
-  // It reads no data; the bucket and the runs table are read as the caller.
-  const sb = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const gate = await requireRole(req, sb, ["admin"], corsHeaders, { allowServiceRole: false });
-  if (gate instanceof Response) return gate;
 
   if (!(req.headers.get("Content-Type") ?? "").toLowerCase().includes("application/json")) {
     return json({ error: "Send a JSON body; audio is never accepted in the request" }, 415);

@@ -21,7 +21,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { visionDocumentOcr } from "../_lib/google.ts";
-import { authenticateUser, callerHoldsClass } from "../_lib/auth.ts";
+import { callerHoldsClass } from "../_lib/auth.ts";
+import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,8 +70,16 @@ function scoreNameMatch(ocrText: string, fullName: string): number {
   return Math.min(base * 0.85 + headBonus, 0.99);
 }
 
+// Found in the fix round: it calls Google Vision for a browser and had a
+// role check but no per-account limit. Staff only; one call per scanned
+// page (25 in ten minutes at the busiest), plus retries from the queue.
+// Nothing calls it on the service key.
+const GATE: SpendGate = { name: "ocr-student-work", roles: STAFF_ROLES, limit: 60, windowMs: 10 * 60_000 };
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
   const respond = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
@@ -87,12 +96,8 @@ Deno.serve(async (req) => {
     // Staff only. This runs on the service role and routes/relabels student
     // work, so `verify_jwt` alone is not enough — that only proves the caller
     // is signed in, not that they are allowed to act on other people's work.
-    const caller = await authenticateUser(req, sb);
-    if (!caller) return respond({ success: false, error: "Unauthorized" }, 401);
-    if (!(caller.isServiceRole || caller.roles.has("admin") || caller.roles.has("teacher"))) {
-      console.warn(`ocr-student-work denied for non-staff user ${caller.userId}`);
-      return respond({ success: false, error: "Forbidden — teachers and admins only" }, 403);
-    }
+    // The role and the per-account limit are the gate's, above.
+    const caller = spender;
 
     const body = await req.json().catch(() => ({}));
     workId = String(body.work_id ?? "").trim() || null;

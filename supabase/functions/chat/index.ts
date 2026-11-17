@@ -63,7 +63,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { authenticateUser } from "../_lib/auth.ts";
+import { requireSpender, SIGNED_IN_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
 import { safeParseJson } from "../_lib/text.ts";
 import {
   asDate,
@@ -1668,8 +1668,18 @@ async function describePage(userDb: any, page: PageRef | null): Promise<string |
 
 // ── Handler ────────────────────────────────────────────────────────────────
 
+// Every role keeps the assistant. A real session holding a role (the
+// service key and role-less accounts are refused - none of the live
+// role-less accounts is linked to a child or a family), 30 messages in five
+// minutes, and the daily cap below on top.
+const GATE: SpendGate = { name: "chat", roles: SIGNED_IN_ROLES, limit: 30, windowMs: 5 * 60_000 };
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // Identity from the JWT through the gate's service client (reads
+  // user_roles only); everything after reads as the caller.
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
   const respond = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
@@ -1677,12 +1687,7 @@ Deno.serve(async (req) => {
     });
 
   try {
-    // Service client ONLY for identity resolution (reads).
-    const adminDb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const caller = await authenticateUser(req, adminDb);
-    if (!caller || caller.isServiceRole) {
-      return respond({ success: false, error: "Unauthorized" }, 401);
-    }
+    const caller = spender;
     if (overDailyCap(caller.userId)) {
       return respond({ success: false, error: "Daily assistant limit reached — try again tomorrow." }, 429);
     }

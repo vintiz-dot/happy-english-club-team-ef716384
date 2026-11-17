@@ -272,7 +272,21 @@ export default function TeacherSmartUpload() {
         .in("status", ["needs_review", "processing", "failed"])
         .order("created_at", { ascending: false })
         .limit(40);
-      return data || [];
+      const rows = data || [];
+      // The AI's draft note is staff-only (student_work_ai_drafts, N-6): it
+      // pre-fills the review box, and reaches the child only as the
+      // teacher_notes a teacher approves.
+      const ids = rows.filter((w: any) => w.status === "needs_review").map((w: any) => w.id);
+      if (!ids.length) return rows;
+      // The words a vocab scan proposed wait here too, staff-only, until
+      // the teacher approves them (student_work_vocab_drafts, review N-8).
+      const [{ data: drafts }, { data: vocab }] = await Promise.all([
+        (supabase as any).from("student_work_ai_drafts").select("work_id, feedback").in("work_id", ids),
+        (supabase as any).from("student_work_vocab_drafts").select("work_id, entries").in("work_id", ids),
+      ]);
+      const byId = new Map<string, string>((drafts || []).map((d: any) => [d.work_id, d.feedback]));
+      const vocabById = new Map<string, any[]>((vocab || []).map((d: any) => [d.work_id, d.entries || []]));
+      return rows.map((w: any) => ({ ...w, ai_draft: byId.get(w.id) ?? null, vocab_pending: vocabById.get(w.id) ?? null }));
     },
   });
 
@@ -327,6 +341,7 @@ export default function TeacherSmartUpload() {
 
     for (const file of Array.from(files)) {
       setJobs((prev) => [...prev, { fileName: file.name, status: "uploading" }]);
+      let rowId: string | null = null;
       try {
         const ext = file.name.split(".").pop() || "jpg";
         const path = `incoming/${crypto.randomUUID()}.${ext}`;
@@ -350,6 +365,7 @@ export default function TeacherSmartUpload() {
           .select("id")
           .single();
         if (insErr) throw insErr;
+        rowId = row.id;
 
         updateJob(file.name, { status: "processing", message: "Reading with Cloud Vision…" });
 
@@ -364,17 +380,19 @@ export default function TeacherSmartUpload() {
         if (result?.success === false) throw new Error(result.error || "pipeline failed");
 
         if (workflow === "vocab") {
-          const added = (result.words || []).filter((w: any) => w.status === "added" || w.status === "corrected");
+          // The words wait for the teacher (review N-8): nothing reaches the
+          // child's word bank until they are approved in the queue below.
+          const proposed = (result.words || []).filter((w: any) => w.status === "proposed");
           updateJob(file.name, {
             status: "done",
-            message: `${added.length} word(s) added, +${result.points_awarded} pts`,
+            message: `${proposed.length} word(s) to review below`,
             vocabResult: result,
             workId: row.id,
             studentId,
             classId,
           });
-          toast.success(`${file.name}: ${added.length} words added to the word bank`, {
-            description: `+${result.points_awarded} points awarded automatically`,
+          toast.success(`${file.name}: ${proposed.length} word(s) read`, {
+            description: "Check them in the review queue, then approve to add them to the word bank",
           });
         } else {
           updateJob(file.name, {
@@ -386,8 +404,20 @@ export default function TeacherSmartUpload() {
         }
       } catch (err: any) {
         console.error("smart-upload pipeline error:", err);
-        updateJob(file.name, { status: "failed", message: err.message });
-        toast.error(`${file.name} failed`, { description: err.message });
+        // Review N-7: a refusal (429 from the spend limit, or any error)
+        // must not leave the row stuck at 'processing'. If the function did
+        // not get to mark it, mark it failed here so it can be retried.
+        let detail = err?.message ?? "pipeline failed";
+        try { const b = await err?.context?.json?.(); if (b?.error) detail = b.error; } catch { /* not json */ }
+        if (rowId) {
+          await (supabase as any)
+            .from("student_work")
+            .update({ status: "failed", error_message: String(detail).slice(0, 500), updated_at: new Date().toISOString() })
+            .eq("id", rowId)
+            .eq("status", "processing");
+        }
+        updateJob(file.name, { status: "failed", message: detail });
+        toast.error(`${file.name} failed`, { description: detail });
       }
     }
     refetchQueue();
@@ -407,15 +437,15 @@ export default function TeacherSmartUpload() {
       });
       if (fnErr) throw fnErr;
       if (result?.success === false) throw new Error(result.error || "rescan failed");
-      const added = (result.words || []).filter((w: any) => w.status === "added" || w.status === "corrected");
+      const proposed = (result.words || []).filter((w: any) => w.status === "proposed");
       updateJob(job.fileName, {
         rescanning: false,
         status: "done",
-        message: `Rescanned — ${added.length} new word(s), +${result.points_awarded} pts`,
+        message: `Rescanned — ${proposed.length} new word(s) to review below`,
         vocabResult: result,
       });
       toast.success(`Rescanned ${job.fileName}`, {
-        description: added.length ? `${added.length} new word(s) added` : "No new words found",
+        description: proposed.length ? `${proposed.length} new word(s) waiting for your approval` : "No new words found",
       });
       refetchQueue();
     } catch (err: any) {
@@ -541,8 +571,9 @@ export default function TeacherSmartUpload() {
         .update({
           status: decision,
           student_id: chosenStudent,
-          // Falls back to the AI draft shown in the box when untouched.
-          teacher_notes: reviewNotes[work.id] ?? work.teacher_notes ?? work.ai_feedback,
+          // Falls back to the AI draft shown in the box when untouched: the
+          // teacher approving is what lets the child read it.
+          teacher_notes: reviewNotes[work.id] ?? work.teacher_notes ?? work.ai_draft,
           approved_by: user?.id,
           approved_at: decision === "approved" ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
@@ -566,6 +597,52 @@ export default function TeacherSmartUpload() {
       }
     },
     onError: (e: any) => toast.error("Review failed", { description: e.message }),
+  });
+
+  // ── Vocab scans: the teacher approves the words (review N-8) ───────────
+  const [vocabDrop, setVocabDrop] = useState<Record<string, string[]>>({});
+  const approveVocabMutation = useMutation({
+    mutationFn: async (work: any) => {
+      const drop = vocabDrop[work.id] ?? [];
+      const keep = (work.vocab_pending ?? []).filter((e: any) => e.status === "new" && !drop.includes(e.word)).map((e: any) => e.word);
+      const { data, error } = await supabase.functions.invoke("ocr-vocab-scan", {
+        body: { work_id: work.id, approve: true, words: keep },
+      });
+      if (error) {
+        let detail = error.message;
+        try { const b = await (error as any).context?.json?.(); if (b?.error) detail = b.error; } catch { /* not json */ }
+        throw new Error(detail);
+      }
+      if (data?.success === false) throw new Error(data.error || "approval failed");
+      return data as { points_awarded: number; entry_ids: string[] };
+    },
+    onSuccess: (data) => {
+      toast.success(`${data.entry_ids?.length ?? 0} word(s) added to the word bank`, {
+        description: data.points_awarded ? `+${data.points_awarded} points` : undefined,
+      });
+      refetchQueue();
+    },
+    onError: (e: any) => toast.error("Couldn't approve the words", { description: e.message }),
+  });
+
+  // A page that failed (a refusal, a timeout, an unreadable photo) can be
+  // read again from the queue (review N-7).
+  const retryMutation = useMutation({
+    mutationFn: async (work: any) => {
+      const vocab = work.workflow === "vocab";
+      const { data, error } = await supabase.functions.invoke(vocab ? "ocr-vocab-scan" : "ocr-student-work", {
+        body: vocab ? { work_id: work.id, student_id: work.student_id, class_id: work.class_id } : { work_id: work.id },
+      });
+      if (error) {
+        let detail = error.message;
+        try { const b = await (error as any).context?.json?.(); if (b?.error) detail = b.error; } catch { /* not json */ }
+        throw new Error(detail);
+      }
+      if (data?.success === false) throw new Error(data.error || "it failed again");
+      return data;
+    },
+    onSuccess: () => { toast.success("Read again - check it in the queue"); refetchQueue(); },
+    onError: (e: any) => { toast.error("Still failing", { description: e.message }); refetchQueue(); },
   });
 
   const activeJobs = useMemo(() => jobs.slice(-8).reverse(), [jobs]);
@@ -852,6 +929,7 @@ export default function TeacherSmartUpload() {
                   {activeJobs.filter((j) => j.vocabResult).map((j, i) => {
                     const words: any[] = j.vocabResult.words || [];
                     const counts = {
+                      proposed: words.filter((w) => w.status === "proposed").length,
                       added: words.filter((w) => w.status === "added").length,
                       corrected: words.filter((w) => w.status === "corrected").length,
                       duplicate: words.filter((w) => w.status === "duplicate").length,
@@ -886,6 +964,7 @@ export default function TeacherSmartUpload() {
                         </div>
 
                         <div className="flex flex-wrap gap-3 mb-2 text-hec-caption tabular-nums">
+                          {counts.proposed > 0 && <span className="text-hec-brass">{counts.proposed} waiting for your approval (review queue below)</span>}
                           {counts.added > 0 && <span className="text-hec-leaf">{counts.added} added</span>}
                           {counts.corrected > 0 && <span className="text-hec-warn">{counts.corrected} corrected</span>}
                           {counts.duplicate > 0 && <span className="text-hec-ink-soft">{counts.duplicate} already known</span>}
@@ -903,7 +982,8 @@ export default function TeacherSmartUpload() {
                                 <span
                                   className={cn(
                                     "mt-2 h-2 w-2 rounded-full shrink-0",
-                                    w.status === "added" ? "bg-hec-leaf"
+                                    w.status === "proposed" ? "bg-hec-brass"
+                                    : w.status === "added" ? "bg-hec-leaf"
                                     : w.status === "corrected" ? "bg-hec-warn"
                                     : w.status === "duplicate" ? "bg-hec-line-strong"
                                     : "bg-hec-danger",
@@ -1025,7 +1105,81 @@ export default function TeacherSmartUpload() {
                       </div>
                     </div>
 
-                    {w.status === "needs_review" && (
+                    {w.status === "failed" && w.storage_path && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                        disabled={retryMutation.isPending}
+                        onClick={() => retryMutation.mutate(w)}
+                      >
+                        {retryMutation.isPending && retryMutation.variables?.id === w.id
+                          ? <Loader2 className="h-4 w-4 animate-spin" />
+                          : <RotateCw className="h-4 w-4" />}
+                        Try again
+                      </Button>
+                    )}
+
+                    {w.status === "needs_review" && w.workflow === "vocab" && (
+                      <div className="space-y-2 rounded-hec-md border border-hec-line bg-hec-sunken p-3">
+                        <p className="text-hec-small font-medium text-hec-ink">
+                          Words read from this page - untick any that are wrong, then approve. Nothing reaches the child's word bank before you do.
+                        </p>
+                        {(w.vocab_pending ?? []).length === 0 ? (
+                          <p className="text-hec-small text-hec-ink-soft">No words are waiting on this page. Rescan it, or reject it.</p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {(w.vocab_pending ?? []).map((e: any) => {
+                              const isNew = e.status === "new";
+                              const dropped = (vocabDrop[w.id] ?? []).includes(e.word);
+                              return (
+                                <li key={e.word} className="flex items-start gap-2 text-hec-small">
+                                  <input
+                                    type="checkbox"
+                                    className="mt-1 h-4 w-4"
+                                    aria-label={`Keep ${e.word}`}
+                                    disabled={!isNew}
+                                    checked={isNew && !dropped}
+                                    onChange={() => setVocabDrop((p) => {
+                                      const cur = p[w.id] ?? [];
+                                      return { ...p, [w.id]: cur.includes(e.word) ? cur.filter((x) => x !== e.word) : [...cur, e.word] };
+                                    })}
+                                  />
+                                  <span className="min-w-0">
+                                    <span className={cn("font-semibold text-hec-ink", !isNew && "text-hec-ink-soft")}>{e.word}</span>
+                                    {e.meaning && <span className="text-hec-ink-soft"> — {e.meaning}</span>}
+                                    {!isNew && <span className="text-hec-caption text-hec-ink-soft"> (already in the word bank)</span>}
+                                    {e.is_grammatical === false && e.corrected_example && (
+                                      <span className="block text-hec-caption text-hec-warn">✎ {e.corrected_example}</span>
+                                    )}
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Button
+                            size="sm"
+                            className="flex-1 gap-2"
+                            disabled={approveVocabMutation.isPending || !(w.vocab_pending ?? []).some((e: any) => e.status === "new" && !(vocabDrop[w.id] ?? []).includes(e.word))}
+                            onClick={() => approveVocabMutation.mutate(w)}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />Approve & add to word bank
+                          </Button>
+                          <Button
+                            size="sm" variant="outline"
+                            className="gap-2 border-hec-danger text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger"
+                            disabled={reviewMutation.isPending}
+                            onClick={() => reviewMutation.mutate({ work: w, decision: "rejected" })}
+                          >
+                            <XCircle className="h-4 w-4" />Reject
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {w.status === "needs_review" && w.workflow !== "vocab" && (
                       <>
                         {w.is_teamwork ? (
                           <div className="flex flex-wrap items-center gap-1 rounded-hec-md bg-hec-sunken px-3 py-2">
@@ -1050,7 +1204,7 @@ export default function TeacherSmartUpload() {
                           <Textarea
                             placeholder="Teacher notes for the student — or let AI draft them…"
                             className="min-h-[64px] pr-12"
-                            value={reviewNotes[w.id] ?? w.ai_feedback ?? ""}
+                            value={reviewNotes[w.id] ?? w.teacher_notes ?? w.ai_draft ?? ""}
                             onChange={(e) => setReviewNotes((p) => ({ ...p, [w.id]: e.target.value }))}
                           />
                           {w.storage_path && (

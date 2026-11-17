@@ -77,6 +77,9 @@
 - Nothing reaches a family before a teacher approves. `video_analyses` has no family policy; families read the approved report through `get_video_homework_for_student`, which returns only the `final_*` fields. Keep it that way: do not add a family SELECT policy to `video_analyses`.
 - Classmates see videos, never scores: the wall is `get_class_video_wall` and the storage policy lets a classmate read only an approved, shared video and its frames, not the audio track.
 - `approve_video_feedback` writes the grade, points (`award_homework_points`), error log + SRS cards, a `speaking` skill score and a CEFR point in one transaction, and replaces what an earlier approval wrote. Add any new side effect there, with a case in the test.
+- `video_analyses.final_criteria` is the teacher's per-criterion scores as they stood at approval (a trigger on `approved_at`); the family RPCs read it and the `final_*` fields, never `criteria_scores`, strengths, focus points or comments. Staff views are per video class.
+- analyze-video-submission starts only through `video_analysis_claim` (20261117160200, service role only): families a new or failed take, 3 a take / 10 a submission; staff 6 / 20. Every write of a run is conditional on `processing` and its run number, and the guard refuses an approval while a fresh run is under way: an approved video is never moved back.
+- video-rubric replaces an existing rubric only with `redo: true` (the editor's button).
 
 # Language Support and the easy video recorder
 - Language Support is a teacher menu (`/teacher/language-support`) and a child page (`/student/language-support`, "Picture Reader"). A set (`language_support_sets`) holds frozen strips: which ARASAAC pictogram sits over which words. Approval freezes pictures, so a lexicon change can never alter a set a teacher saved. `language_support_set_classes` is the per-class switch; a teacher can switch a set on only for a class they teach (`is_teacher_of_class`), and a child sees it only while it is `active` for a class they are enrolled in NOW. Migration `20261110090000`, tested by `language-support.test.mjs`.
@@ -93,6 +96,9 @@
 - A stored link is opened only through `safeHttpUrl` / `openHttpUrl` (`src/lib/safeUrl.ts`); the tables refuse anything but http(s).
 - Every function that calls a paid vendor for a browser starts with `requireSpender` (`_lib/ai-gate.ts`): a real session, a role, a per-account limit. `verify_jwt = true` only proves the caller has the public key. A new one goes into `ai-gate.test.mjs`.
 - A rollback that recreates production's policies is kept as a file the suite runs (`docs/evidence/S1-F14-rollback.sql`, `-F16-`, `-F21-`); it doubles as the suite's "before".
+- AI feedback on student work is a staff-only draft in `student_work_ai_drafts` (20261117160000); `student_work.ai_feedback` is retired (always NULL, CHECK). The child reads `teacher_notes`, which only a teacher's approval writes.
+- Words ocr-vocab-scan reads off a page wait in `student_work_vocab_drafts` (20261117160300) until a teacher approves them in Smart Upload; an `ocr_scan` word without `enrichment.approved_by` cannot enter a word bank.
+- Model-made CEFR points (student reports, level defence) are staff-only drafts in `cefr_assessment_drafts` until a teacher approves (20261117151000); families and children read no AI learning profile, no AI level-defence evidence and only the approved level of a published report (`get_my_published_reports`, 20261117152000).
 
 # Documents (HEC Docs)
 - Every PDF/PNG the app makes (homework, progress reports, statements, invoices single and bulk, access cards, the profile card) goes through `src/lib/hecDocs` first: the browser renders the shared template (`engine.generated.js`), the printer Worker (`hec-docs/worker`, Cloudflare free plan) prints it, the browser finishes the PDF. Each button keeps its old generator as the fallback; do not remove those.

@@ -5,9 +5,14 @@
  * (gpt-4o-mini vision) together with the OCR text and the student's living
  * learning profile — so feedback is grounded in what's on the page AND in
  * the student's journey (their known struggles get gentle attention, their
- * strengths get recognized). The result lands in student_work.ai_feedback
- * and pre-fills the teacher-notes box, where the teacher can edit it
- * before approving.
+ * strengths get recognized). The result is a STAFF-ONLY DRAFT in
+ * student_work_ai_drafts (N-6, migration 20261117160000) and pre-fills the
+ * teacher-notes box, where the teacher can edit it before approving. The
+ * child reads only teacher_notes - what the teacher approved - never this.
+ *
+ * Only for work still waiting on the teacher (needs_review): approved or
+ * rejected work keeps what the teacher decided, and the database refuses a
+ * draft for it too.
  *
  * Input:  { work_id: string, student_id?: string }
  *         (student_id override for unassigned/low-confidence work — the
@@ -16,7 +21,8 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { callerHoldsClass, requireRole } from "../_lib/auth.ts";
+import { callerHoldsClass, callerHoldsStudent } from "../_lib/auth.ts";
+import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +31,10 @@ const corsHeaders = {
 };
 
 const MODEL = "gpt-4o-mini";
+
+// One click per scanned page in the smart-upload review queue; the busiest
+// teacher so far uploaded 25 pages in ten minutes.
+const GATE: SpendGate = { name: "generate-work-feedback", roles: STAFF_ROLES, limit: 40, windowMs: 10 * 60_000 };
 
 function toBase64(buf: Uint8Array): string {
   let binary = "";
@@ -37,6 +47,8 @@ function toBase64(buf: Uint8Array): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
   const respond = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
@@ -57,7 +69,7 @@ Deno.serve(async (req) => {
     // scoped against the same two clauses student_work's RLS uses.
     const { data: work } = await sb
       .from("student_work")
-      .select("id, student_id, class_id, uploaded_by, storage_path, mime_type, ocr_text, workflow")
+      .select("id, student_id, class_id, uploaded_by, storage_path, mime_type, ocr_text, workflow, status")
       .eq("id", workId)
       .single();
     if (!work) return respond({ success: false, error: "work row not found" }, 404);
@@ -73,17 +85,27 @@ Deno.serve(async (req) => {
     // review queue holds work that has not been assigned to a class yet -
     // so checking the class alone would lock a teacher out of feedback on
     // a scan they uploaded themselves. The aim is to match the policy, not
-    // to be stricter than it.
-    const gate = await requireRole(req, sb, ["admin", "teacher"], corsHeaders);
-    if (gate instanceof Response) return gate;
-    const ownUpload = !!gate.userId && work.uploaded_by === gate.userId;
-    if (!ownUpload && !(await callerHoldsClass(sb, gate, work.class_id))) {
+    // to be stricter than it. The role and the per-account limit are the
+    // gate's, above.
+    const ownUpload = !!spender.userId && work.uploaded_by === spender.userId;
+    if (!ownUpload && !(await callerHoldsClass(sb, spender, work.class_id))) {
       return respond({ success: false, error: "This work belongs to a class you do not hold." }, 403);
+    }
+
+    // N-6: a teacher's decision stands. Approved or rejected work is not
+    // re-drafted (and student_work_ai_drafts refuses it as well).
+    if (work.status !== "needs_review") {
+      return respond({ success: false, error: "This work has already been reviewed; its feedback is the teacher's." }, 409);
     }
 
     const studentId = String(body.student_id ?? "").trim() || work.student_id;
     if (!studentId) {
       return respond({ success: false, error: "Assign a student first so feedback can be personalized" }, 400);
+    }
+    // The override names whose learning profile goes into the prompt (and
+    // so into the draft): only a child the caller may see.
+    if (studentId !== work.student_id && !(await callerHoldsStudent(sb, spender, studentId))) {
+      return respond({ success: false, error: "You do not teach this student." }, 403);
     }
 
     const [{ data: student }, { data: profile }] = await Promise.all([
@@ -165,10 +187,17 @@ Deno.serve(async (req) => {
     const composed =
       feedback + (focus.length ? `\n\nNext: ${focus.join(" · ")}` : "");
 
-    await sb
-      .from("student_work")
-      .update({ ai_feedback: composed, updated_at: new Date().toISOString() })
-      .eq("id", workId);
+    // Staff-only draft. The table's trigger refuses it if the work was
+    // approved or rejected while the model was writing.
+    const { error: draftErr } = await sb
+      .from("student_work_ai_drafts")
+      .upsert(
+        { work_id: workId, feedback: composed, generated_by: spender.userId, generated_at: new Date().toISOString() },
+        { onConflict: "work_id" },
+      );
+    if (draftErr) {
+      return respond({ success: false, error: "The draft could not be saved: this work may have been reviewed meanwhile." }, 409);
+    }
 
     return respond({
       success: true,

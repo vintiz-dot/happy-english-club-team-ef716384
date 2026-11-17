@@ -5129,6 +5129,38 @@ export type Database = {
           },
         ]
       }
+      student_work_ai_drafts: {
+        Row: {
+          feedback: string
+          generated_at: string
+          generated_by: string | null
+          source: string
+          work_id: string
+        }
+        Insert: {
+          feedback: string
+          generated_at?: string
+          generated_by?: string | null
+          source?: string
+          work_id: string
+        }
+        Update: {
+          feedback?: string
+          generated_at?: string
+          generated_by?: string | null
+          source?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_work_ai_drafts_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: true
+            referencedRelation: "student_work"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           avatar_url: string | null
@@ -5717,6 +5749,7 @@ export type Database = {
           criteria_scores: Json
           feedback_parent: string | null
           feedback_student: string | null
+          final_criteria: Json | null
           final_feedback_parent: string | null
           final_feedback_student: string | null
           final_gaps: Json | null
@@ -5746,6 +5779,7 @@ export type Database = {
           criteria_scores?: Json
           feedback_parent?: string | null
           feedback_student?: string | null
+          final_criteria?: Json | null
           final_feedback_parent?: string | null
           final_feedback_student?: string | null
           final_gaps?: Json | null
@@ -5775,6 +5809,7 @@ export type Database = {
           criteria_scores?: Json
           feedback_parent?: string | null
           feedback_student?: string | null
+          final_criteria?: Json | null
           final_feedback_parent?: string | null
           final_feedback_student?: string | null
           final_gaps?: Json | null
@@ -5933,6 +5968,8 @@ export type Database = {
       }
       video_submissions: {
         Row: {
+          analysis_runs: number
+          analysis_take_runs: number
           attempt: number
           audio_mime: string | null
           audio_path: string | null
@@ -5959,6 +5996,8 @@ export type Database = {
           video_path: string
         }
         Insert: {
+          analysis_runs?: number
+          analysis_take_runs?: number
           attempt?: number
           audio_mime?: string | null
           audio_path?: string | null
@@ -5985,6 +6024,8 @@ export type Database = {
           video_path: string
         }
         Update: {
+          analysis_runs?: number
+          analysis_take_runs?: number
           attempt?: number
           audio_mime?: string | null
           audio_path?: string | null
