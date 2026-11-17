@@ -361,6 +361,114 @@ console.log("=== transcribe-lesson-audio (privacy follow-ups) ===");
   ok("verify_jwt = true in supabase/config.toml", /\[functions\.transcribe-lesson-audio\]\r?\nverify_jwt = true/.test(readFileSync(resolve(repo, "supabase", "config.toml"), "utf8")));
 }
 
+// PRIVACY follow-ups round 2: generate-student-report (staff; 60 per 10 min -
+// BulkReportExport generates a class one report at a time, the biggest class
+// had 10 children on 17 Nov) and cefr-defense (the child takes the test, staff
+// run the rest: any role; 60 calls per 10 min overall, get_state included,
+// and 20 per 10 min for the three actions that call OpenAI). The stand-in has
+// no rows, so a caller let through gets a 404 / 400 / 403 from the function
+// itself, past the gate, with nothing spent.
+const gateSource = (src, name, limit, staffOnly, rolesName) => {
+  const iOpt = src.indexOf('req.method === "OPTIONS"'), iGate = src.indexOf("await requireSpender(req, corsHeaders, GATE)"), iJson = src.indexOf("req.json()", iOpt);
+  const between = iOpt >= 0 && iGate > iOpt ? src.slice(iOpt, iGate) : "await";
+  ok("the gate comes first after the preflight: nothing awaited and the body not read before it",
+    iGate > iOpt && !/\bawait\b/.test(between) && iJson > iGate
+    && /const spender = await requireSpender\(req, corsHeaders, GATE\);\s*if \(spender instanceof Response\) return spender;/.test(src));
+  const gateLine = /const GATE: SpendGate = \{([^}]*)\}/.exec(src)?.[1] ?? "";
+  ok(`its settings are the ones tested here (${limit} per 10 min, ${staffOnly ? "staff only" : "any role"})`,
+    gateLine.includes(`name: "${name}"`) && gateLine.includes(`limit: ${limit}`) && gateLine.includes("windowMs: 10 * 60_000") && gateLine.includes(`roles: ${rolesName}`), gateLine);
+  ok("no gate of its own is left (authenticateUser / getUser / user_roles before the gate)", !/authenticateUser\(|sb\.auth\.getUser\(|from\("user_roles"\)/.test(src));
+  ok(`verify_jwt = true in supabase/config.toml`, new RegExp(`\\[functions\\.${name}\\]\\r?\\nverify_jwt = true`).test(readFileSync(resolve(repo, "supabase", "config.toml"), "utf8")));
+};
+
+console.log("=== generate-student-report (privacy follow-ups round 2) ===");
+{
+  const name = "generate-student-report";
+  const src = readFileSync(resolve(FUNCTIONS, name, "index.ts"), "utf8");
+  const body = { report_id: "00000000-0000-4000-8000-0000000000cc" };
+  const fn = await load(name, src);
+  ok("the function registers a handler", typeof fn === "function");
+  const pre = await call(fn, name, { method: "OPTIONS" });
+  ok("the CORS preflight still answers without a token", pre.status === 200 && pre.cors === "*" && spentNothing(pre), pre);
+  for (const [label, token, status] of [
+    ["no Authorization header", null, 401], ["the public (anon) key as the bearer", ANON_KEY, 401], ["a token that is not a session", "not-a-jwt", 401],
+    ["an empty bearer", " ", 401], ["the service-role key (nothing calls it with one)", SERVICE_KEY, 403],
+    ["an account with no role", tokenOf(U.norole), 403], ["an account whose role lookup fails", tokenOf(U.rolesBroken), 403],
+    ["a student", tokenOf(U.student), 403], ["a family", tokenOf(U.family), 403],
+  ]) {
+    const r = await call(fn, name, { token, body });
+    ok(`${label}: ${status}, nothing spent, nothing read`, r.status === status && spentNothing(r) && r.cors === "*", r);
+  }
+  for (const [label, token] of [["a teacher", tokenOf(U.teacher)], ["an admin", tokenOf(U.admin)], ["an admin who also holds student", tokenOf(U.adminAndStudent)]]) {
+    const r = await call(fn, name, { token, body });
+    ok(`${label}: past the gate (404 for a report that does not exist), nothing spent`, r.status === 404 && r.vendor.length === 0, r);
+  }
+  const fresh = await load(name, src);
+  let passed = 0, firstRefusal = null;
+  for (let i = 0; i < 63; i++) {
+    const r = await call(fresh, name, { token: tokenOf(U.teacher), body });
+    if (r.status === 429) firstRefusal ??= { at: i + 1, r }; else if (r.status === 404) passed++;
+  }
+  eq("exactly 60 calls per account get through, then 429 (a class of 10 six times over)", [passed, firstRefusal?.at], [60, 61]);
+  ok("the 429 says when to retry and spends nothing", !!firstRefusal && Number(firstRefusal.r.retryAfter) > 0 && Number(firstRefusal.r.retryAfter) <= 600 && spentNothing(firstRefusal.r), firstRefusal?.r);
+  const other = await call(fresh, name, { token: tokenOf(U.admin), body });
+  ok("another account is not held back by it", other.status === 404, other);
+  gateSource(src, name, 60, true, "STAFF_ROLES");
+}
+
+console.log("=== cefr-defense (privacy follow-ups round 2) ===");
+{
+  const name = "cefr-defense";
+  const src = readFileSync(resolve(FUNCTIONS, name, "index.ts"), "utf8");
+  const fn = await load(name, src);
+  ok("the function registers a handler", typeof fn === "function");
+  const pre = await call(fn, name, { method: "OPTIONS" });
+  ok("the CORS preflight still answers without a token", pre.status === 200 && pre.cors === "*" && spentNothing(pre), pre);
+  const state = { action: "get_state" };
+  for (const [label, token, status] of [
+    ["no Authorization header", null, 401], ["the public (anon) key as the bearer", ANON_KEY, 401], ["a token that is not a session", "not-a-jwt", 401],
+    ["an empty bearer", " ", 401], ["the service-role key", SERVICE_KEY, 403],
+    ["an account with no role", tokenOf(U.norole), 403], ["an account whose role lookup fails", tokenOf(U.rolesBroken), 403],
+  ]) {
+    const r = await call(fn, name, { token, body: state });
+    ok(`${label}: ${status}, nothing spent, nothing read`, r.status === status && spentNothing(r) && r.cors === "*", r);
+  }
+  for (const role of ["student", "family", "teacher", "admin"]) {
+    const r = await call(fn, name, { token: tokenOf(U[role]), body: state });
+    ok(`${role}: past the gate (400 "No student in scope": the stand-in has no linked child), nothing spent`, r.status === 400 && r.vendor.length === 0, r);
+  }
+  // The three OpenAI actions share 20 per 10 min; get_state counts only towards the 60.
+  const fresh = await load(name, src);
+  const mine = { action: "mine_evidence", student_id: "00000000-0000-4000-8000-0000000000dd" };
+  let spendPassed = 0, spendRefusal = null;
+  for (let i = 0; i < 22; i++) {
+    const r = await call(fresh, name, { token: tokenOf(U.teacher), body: mine });
+    if (r.status === 429) spendRefusal ??= { at: i + 1, r }; else if (r.status === 403) spendPassed++;
+  }
+  eq("the OpenAI actions: exactly 20 per account, then 429 (here each is refused later as not the teacher's child)", [spendPassed, spendRefusal?.at], [20, 21]);
+  ok("  ...that 429 spends nothing", !!spendRefusal && spendRefusal.r.vendor.length === 0, spendRefusal?.r);
+  for (const action of ["generate_test", "submit_stage"]) {
+    const r = await call(fresh, name, { token: tokenOf(U.teacher), body: { action, student_id: mine.student_id, test_id: "t" } });
+    ok(`  ...${action} shares that limit (429)`, r.status === 429 && spentNothing(r), r);
+  }
+  const look = await call(fresh, name, { token: tokenOf(U.teacher), body: state });
+  ok("  ...while get_state still answers (400 here: past both gates)", look.status === 400, look);
+  // 22 + 2 + 1 = 25 calls so far; 35 more reach 60, the 61st is refused.
+  let left = 0, overall = null;
+  for (let i = 0; i < 37; i++) {
+    const r = await call(fresh, name, { token: tokenOf(U.teacher), body: state });
+    if (r.status === 429) overall ??= i + 1; else left++;
+  }
+  eq("the overall gate: 60 calls per account in all, then 429", [left, overall], [35, 36]);
+  const other = await call(fresh, name, { token: tokenOf(U.student), body: state });
+  ok("another account is not held back by it", other.status === 400, other);
+  const st = await call(fresh, name, { token: tokenOf(U.student), body: mine });
+  ok("a student asking for the evidence audit is still refused by the function (403), after the gate", st.status === 403 && st.vendor.length === 0, st);
+  gateSource(src, name, 60, false, "SIGNED_IN_ROLES");
+  ok("the OpenAI actions' own limit is 20 per 10 min, on mine_evidence, generate_test and submit_stage",
+    /const SPEND = \{ limit: 20, windowMs: 10 \* 60_000 \}/.test(src) && /SPENDING_ACTIONS = new Set\(\["mine_evidence", "generate_test", "submit_stage"\]\)/.test(src));
+}
+
 console.log("=== image-search: the cache-bypassing switches ===");
 {
   const src = readFileSync(resolve(FUNCTIONS, "image-search", "index.ts"), "utf8");
