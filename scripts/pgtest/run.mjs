@@ -129,6 +129,21 @@ const SUITES = [
   // calculate-payroll instead of recomputing the month, and this is the
   // mapping that stands between the two.
   { name: "payroll screen rows", file: "payroll-rows.test.mjs", migrations: [] },
+  // The teacher's own payroll page and the admin's view of one teacher read
+  // calculate-payroll too (T5): the mapping, and the function itself as a
+  // teacher, TA, admin and the service role call it.
+  { name: "teacher payroll view", file: "teacher-payroll-view.test.mjs", migrations: [] },
+  { name: "teacher payroll function", file: "teacher-payroll.test.mjs", migrations: [] },
+  // TA screens show calculate-payroll's figures, open and closed month.
+  { name: "TA payroll function", file: "ta-payroll.test.mjs", migrations: [] },
+  // D5 G-7: re-closing a month removes whoever no longer earns in it, in one
+  // transaction with the rest of the close (20261117153000). The real
+  // close-payroll-month, and main's before it, over the real migration
+  // chain; it loads the migrations itself, in paste order.
+  { name: "payroll re-close", file: "payroll-reclose.test.mjs", migrations: [] },
+  // D5: scripts/CHECK-money-invariants.sql, the owner's read-only check of the
+  // money invariants on live data - one broken row per check, each caught.
+  { name: "money invariants check", file: "money-invariants-check.test.mjs", migrations: [] },
   {
     name: "pay-rate history",
     file: "payhist.mjs",

@@ -206,7 +206,18 @@ function fakeClient(key) {
   };
   return {
     from,
-    rpc: async (name) => { log.push({ client: who, rpc: name }); return { data: null, error: { message: `unexpected rpc ${name}` } }; },
+    rpc: async (name, args = {}) => {
+      // close-payroll-month writes the month in one database call since
+      // D5 G-7 (20261117153000; its own suite is payroll-reclose.test.mjs).
+      // Here it only records what the close would write.
+      if (name === "close_payroll_month_apply") {
+        log.push(clone({ client: who, rpc: name, args }));
+        return { data: { month: args.p_month, status: "locked", lockedAt: "2026-11-13T10:00:00Z", lines: args.p_lines.length,
+          totalAmountVnd: args.p_lines.reduce((n, l) => n + l.total_amount_vnd, 0), removedLines: [], removedCosts: [] }, error: null };
+      }
+      log.push({ client: who, rpc: name });
+      return { data: null, error: { message: `unexpected rpc ${name}` } };
+    },
     // close-payroll-month asks calculate-payroll over the service role.
     functions: {
       invoke: async (name, opts = {}) => {
@@ -436,7 +447,13 @@ globalThis.__t5PayrollFn = fn;
 const CLOSE_DIR = resolve(repo, "supabase", "functions", "close-payroll-month");
 const closeFn = await load(readFileSync(resolve(CLOSE_DIR, "index.ts"), "utf8"), "close", CLOSE_DIR);
 const dropLost = (v) => JSON.parse(JSON.stringify(v), (k, x) => (LOST_KEYS.has(k) ? undefined : x));
-const closeWrites = (r) => r.log.filter((e) => e.op === "upsert" && (e.table === "payroll_lines" || e.table === "expenditures")).map((e) => [e.table, e.payload]);
+// What the close hands the database: the teacher lines, the assistant lines
+// and the costs, in the shape the three upserts had before G-7.
+const closeWrites = (r) => r.log.filter((e) => e.rpc === "close_payroll_month_apply").flatMap((e) => [
+  ["payroll_lines", e.args.p_lines.filter((l) => l.teacher_id)],
+  ["payroll_lines", e.args.p_lines.filter((l) => l.assistant_id)],
+  ["expenditures", e.args.p_costs],
+].filter(([, p]) => p.length > 0));
 
 await section("the cancelled-lessons read fails", async () => {
   failCancelled = null;
@@ -496,7 +513,7 @@ await section("a teaching assistant's lessons cannot be read: the call and the c
       teacher.status === 200 && JSON.stringify(ids(teacher)) === JSON.stringify([T_A]) && !teacher.log.some(parts), { status: teacher.status, ids: ids(teacher) });
     ok(`${mode}: close-payroll-month refuses to close October`, close.status === 500 && close.json?.status !== "locked", { status: close.status, json: close.json });
     ok(`${mode}: and books nothing - no payroll line, no expenditure, no period lock`,
-      !close.log.some((e) => e.op !== "select" && ["payroll_lines", "expenditures", "payroll_periods"].includes(e.table)),
+      !close.log.some((e) => (e.op !== "select" && ["payroll_lines", "expenditures", "payroll_periods"].includes(e.table)) || e.rpc === "close_payroll_month_apply"),
       close.log.filter((e) => e.op !== "select").map((e) => [e.table, e.op]));
   }
 });

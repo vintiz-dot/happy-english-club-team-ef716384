@@ -35,6 +35,7 @@ import { dayjs } from "@/lib/date";
 import { approvalErrorText, isApprovalRequired, payApprovalParams, type PayAdjustmentRow } from "@/lib/approvals";
 import { requestApproval } from "@/components/admin/approvals/api";
 import { PendingApprovalBadge } from "@/components/admin/approvals/PendingApprovalBadge";
+import { payrollDrift, removedLinesText } from "@/lib/payrollDrift";
 
 export interface LiveStaffTotal {
   id: string;
@@ -47,6 +48,8 @@ export interface LiveStaffTotal {
 export interface PayrollMonthLockProps {
   month: string;
   live: LiveStaffTotal[];
+  /** False while the live figures are loading (or failed): no drift is shown. */
+  liveReady?: boolean;
 }
 
 const vnd = (n: number) => `${Math.round(n).toLocaleString()} ₫`;
@@ -59,7 +62,7 @@ function nextOpenMonth(lockedMonth: string): string {
   return after > now ? after : now;
 }
 
-export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
+export function PayrollMonthLock({ month, live, liveReady = true }: PayrollMonthLockProps) {
   const queryClient = useQueryClient();
   const [reason, setReason] = useState("");
   const [showReopen, setShowReopen] = useState(false);
@@ -106,23 +109,13 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
 
   // What has moved since the month was closed, per person. Anything already
   // carried is netted off, so a difference does not keep being offered
-  // after it has been dealt with.
-  const drift = useMemo(() => {
-    if (!locked) return [];
-    const paid = new Map(lines.map((l) => [l.teacher_id ?? l.assistant_id ?? "", l.total_amount_vnd]));
-    const done = new Map<string, number>();
-    for (const a of carried) {
-      const id = a.teacher_id ?? a.assistant_id ?? "";
-      done.set(id, (done.get(id) ?? 0) + a.amount_vnd);
-    }
-    return live
-      .map((s) => ({
-        ...s,
-        paid: paid.get(s.id) ?? 0,
-        delta: Math.round(s.totalEarned - (paid.get(s.id) ?? 0) - (done.get(s.id) ?? 0)),
-      }))
-      .filter((s) => s.delta !== 0);
-  }, [locked, lines, carried, live]);
+  // after it has been dealt with. Someone with a line who is no longer in
+  // the live figures earns nothing now and shows as minus what they were
+  // paid (@/lib/payrollDrift).
+  const drift = useMemo(
+    () => payrollDrift(locked, liveReady, live, lines, carried),
+    [locked, liveReady, lines, carried, live],
+  );
 
   const invalidate = () => {
     for (const k of ["payroll-period", "payroll-period-status", "payroll-lines", "payroll-adjustments-from", "admin-payroll", "expenditures", "finance-summary", "finance-overview", "class-finance"]) {
@@ -140,10 +133,14 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
       return data;
     },
     onSuccess: (data, vars) => {
+      // A re-close that took people off the month says who, and stays up
+      // until dismissed: it is a correction to what the month pays.
+      const removed = vars.action === "close" ? removedLinesText(data?.removedLines, vnd) : "";
       toast.success(
         vars.action === "close"
           ? `${dayjs(`${month}-01`).format("MMMM YYYY")} closed — ${data.lines} line(s), ${vnd(data.totalAmountVnd)}`
           : `${dayjs(`${month}-01`).format("MMMM YYYY")} reopened`,
+        removed ? { description: removed, duration: Infinity } : undefined,
       );
       setReason("");
       setShowReopen(false);
@@ -287,6 +284,7 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
             {drift.map((d) => (
               <p key={d.id} className="text-hec-small tabular-nums text-hec-ink">
                 <span className="font-medium">{d.name}</span> — paid {vnd(d.paid)}, now computes {vnd(d.totalEarned)}
+                {d.noLongerEarns ? " (no longer earns in this month)" : ""}
                 {" "}(<span className="font-medium">{signed(d.delta)}</span>)
               </p>
             ))}

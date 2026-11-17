@@ -115,10 +115,9 @@ const PINNED = {
   'supabase/functions/auto-mark-attendance/index.ts attendance insert': 1,
   'supabase/functions/calculate-payroll/index.ts payroll_summaries upsert': 1,
   'supabase/functions/calculate-tuition/index.ts invoices upsert': 2,
-  'supabase/functions/close-payroll-month/index.ts expenditures upsert': 1,
-  'supabase/functions/close-payroll-month/index.ts payroll_lines upsert': 1,
-  'supabase/functions/close-payroll-month/index.ts payroll_periods update': 2,
-  'supabase/functions/close-payroll-month/index.ts payroll_periods upsert': 1,
+  // The close itself is one rpc since G-7 (close_payroll_month_apply); the
+  // update left is the reopen.
+  'supabase/functions/close-payroll-month/index.ts payroll_periods update': 1,
   'supabase/functions/compute-sibling-discounts/index.ts sibling_discount_state upsert': 3,
   'supabase/functions/confirm-tuition/index.ts invoices update': 2,
   'supabase/functions/delete-payment/index.ts ledger_entries insert': 1,
@@ -208,6 +207,7 @@ console.log('\n2. every RPC called is pinned');
     ai_action_preview: 'read', approve_video_feedback: 'points', archive_and_reset_monthly_leaderboard: 'points',
     assert_job_lock: 'lock', audit_clip_enrol: 'no', award_homework_points: 'points', can_view_student_in_class: 'read',
     cancel_session_checked: 'D2 checked path', cancel_sessions_checked_bulk: 'D2 checked path', claim_vocab_for_student: 'no',
+    close_payroll_month_apply: 'payroll close in one transaction (service role, admin actor; G-7, 20261117153000)',
     class_overhead_breakdown: 'read', class_overhead_for_month: 'read', class_overhead_pool: 'read', count_vocab_saves_today: 'read',
     get_class_skill_points: 'read', get_class_skill_summary: 'read', get_class_video_wall: 'read', get_student_homeworks: 'read',
     get_student_weekly_stats: 'read', get_video_homework_for_student: 'read', get_video_progress: 'read', has_role: 'read',
