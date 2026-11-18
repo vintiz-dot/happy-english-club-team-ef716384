@@ -38,8 +38,23 @@ import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { teacherPayrollView } from "@/lib/teacherPayrollView";
 import { VideoReviewQueue } from "@/components/video-homework/VideoReviewQueue";
+import {
+  FinancialPrivacyProvider,
+  FinancialPrivacyToggle,
+  PrivateValue,
+  useFinancialPrivacy,
+} from "@/components/teacher/FinancialPrivacy";
 
 export default function TeacherDashboard() {
+  return (
+    <FinancialPrivacyProvider>
+      <TeacherDashboardInner />
+    </FinancialPrivacyProvider>
+  );
+}
+
+function TeacherDashboardInner() {
+  const { hidden: financialsHidden } = useFinancialPrivacy();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const currentMonth = dayjs().format("YYYY-MM");
@@ -352,16 +367,18 @@ export default function TeacherDashboard() {
                       {/* This month's rate as calculate-payroll reports it,
                           not the staff row's: the row is only today's and a
                           dated change makes the two differ. */}
-                      {payrollView?.rateVnd != null && payrollView.payBasis ? (
-                        <>
-                          <span className="whitespace-nowrap tabular-nums">{payrollView.rateVnd.toLocaleString()} ₫</span>
-                          <span className="text-hec-small font-normal text-hec-ink-soft">
-                            /{payrollView.payBasis === "per_session" ? "session" : "hour"}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="whitespace-nowrap tabular-nums">{unavailable}</span>
-                      )}
+                      <PrivateValue mask="•••• ₫">
+                        {payrollView?.rateVnd != null && payrollView.payBasis ? (
+                          <>
+                            <span className="whitespace-nowrap tabular-nums">{payrollView.rateVnd.toLocaleString()} ₫</span>
+                            <span className="ml-2 text-hec-small font-normal text-hec-ink-soft">
+                              /{payrollView.payBasis === "per_session" ? "session" : "hour"}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="whitespace-nowrap tabular-nums">{unavailable}</span>
+                        )}
+                      </PrivateValue>
                     </div>
                   </div>
 
@@ -387,6 +404,11 @@ export default function TeacherDashboard() {
           <div className="mt-2 flex justify-end">
             <Button asChild variant="ghost" size="sm"><Link to="/teacher/videos">Video homework progress →</Link></Button>
           </div>
+        </motion.div>
+
+        {/* Privacy switch: covers every money figure on this page */}
+        <motion.div variants={itemVariants} className="-mb-4 flex justify-end">
+          <FinancialPrivacyToggle />
         </motion.div>
 
         {/* Stats Grid */}
@@ -449,7 +471,7 @@ export default function TeacherDashboard() {
                 </div>
               </div>
               <div className="space-y-1">
-                <p className={STAT_VALUE}>{payrollKnown ? `${((payrollView?.earned ?? 0) / 1000).toFixed(0)}K` : unavailable}</p>
+                <p className={STAT_VALUE}><PrivateValue>{payrollKnown ? `${((payrollView?.earned ?? 0) / 1000).toFixed(0)}K` : unavailable}</PrivateValue></p>
                 <p className="text-hec-small text-hec-ink-soft">Earned (VND)</p>
               </div>
             </CardContent>
@@ -465,12 +487,14 @@ export default function TeacherDashboard() {
                 <span className="text-hec-caption tabular-nums text-hec-ink-soft">{progressPercent}%</span>
               </div>
               <div className="space-y-2">
-                <p className={STAT_VALUE}>{payrollKnown ? `${((payrollView?.projectedTotal ?? 0) / 1000).toFixed(0)}K` : unavailable}</p>
-                <DurationVarianceNotice
-                  className="mt-1"
-                  count={payrollView?.discrepancyCount ?? 0}
-                  varianceAmount={payrollView?.varianceAmount}
-                />
+                <p className={STAT_VALUE}><PrivateValue>{payrollKnown ? `${((payrollView?.projectedTotal ?? 0) / 1000).toFixed(0)}K` : unavailable}</PrivateValue></p>
+                {!financialsHidden && (
+                  <DurationVarianceNotice
+                    className="mt-1"
+                    count={payrollView?.discrepancyCount ?? 0}
+                    varianceAmount={payrollView?.varianceAmount}
+                  />
+                )}
                 <p className="text-hec-small text-hec-ink-soft mb-2">Projected (VND)</p>
                 <Progress value={progressPercent} className="h-2" aria-label="Sessions held of those projected this month" />
               </div>
