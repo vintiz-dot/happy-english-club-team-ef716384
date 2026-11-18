@@ -278,3 +278,7 @@ verify_jwt = true
 [functions.recorder-retention]
 verify_jwt = true
 
+
+# Class work gallery: serves an approved share's file; the database decides who may (work_share_file).
+[functions.work-gallery-file]
+verify_jwt = true

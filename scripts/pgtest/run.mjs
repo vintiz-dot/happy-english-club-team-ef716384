@@ -226,6 +226,11 @@ const SUITES = [
     migrations: ["20261110090000_language_support.sql"],
   },
   {
+    name: "student work gallery",
+    file: "work-gallery.test.mjs",
+    migrations: ["20261118100000_student_work_gallery.sql"],
+  },
+  {
     name: "video homework",
     file: "video-homework.test.mjs",
     migrations: [

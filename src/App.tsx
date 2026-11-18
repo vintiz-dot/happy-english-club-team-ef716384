@@ -65,6 +65,9 @@ const TeacherRecorder = lazy(() => import("./pages/TeacherRecorder"));
 const TeacherSmartUpload = lazy(() => import("./pages/TeacherSmartUpload"));
 const TeacherTranscripts = lazy(() => import("./pages/TeacherTranscripts"));
 const StudentMyWork = lazy(() => import("./pages/StudentMyWork"));
+const StudentClassGallery = lazy(() => import("./pages/StudentClassGallery"));
+const AdminStudentWork = lazy(() => import("./pages/AdminStudentWork"));
+const TeacherStudentWorks = lazy(() => import("./pages/TeacherStudentWorks"));
 const StudentVideos = lazy(() => import("./pages/StudentVideos"));
 const StudentRecord = lazy(() => import("./pages/StudentRecord"));
 const StudentPictureReader = lazy(() => import("./pages/StudentPictureReader"));
@@ -153,6 +156,9 @@ function AppContent() {
                   {/* Lesson monitor pilot (D-28): the lesson's teacher only; the database lets nobody else read a report. */}
                   <Route path="/teacher/lesson-reports" element={<ProtectedRoute allowedRole={["teacher"]}><TeacherLessonReports /></ProtectedRoute>} />
                   <Route path="/teacher/recorder" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherRecorder /></ProtectedRoute>} />
+                  {/* Student works gallery: admin sees all; a teacher only their own window (database functions decide). */}
+                  <Route path="/admin/student-work" element={<ProtectedRoute allowedRole="admin"><AdminStudentWork /></ProtectedRoute>} />
+                  <Route path="/teacher/my-student-works" element={<ProtectedRoute allowedRole="teacher"><TeacherStudentWorks /></ProtectedRoute>} />
                   <Route path="/teacher/smart-upload" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherSmartUpload /></ProtectedRoute>} />
                   <Route path="/teacher/transcripts" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherTranscripts /></ProtectedRoute>} />
 
@@ -162,6 +168,7 @@ function AppContent() {
                   <Route path="/student/journal" element={<StudentJournal />} />
                   <Route path="/student/resources" element={<StudentResources />} />
                   <Route path="/student/my-work" element={<StudentMyWork />} />
+                  <Route path="/student/class-gallery" element={<StudentClassGallery />} />
                   <Route path="/student/videos" element={<StudentVideos />} />
                   <Route path="/student/record" element={<StudentRecord />} />
                   <Route path="/student/language-support" element={<StudentPictureReader />} />

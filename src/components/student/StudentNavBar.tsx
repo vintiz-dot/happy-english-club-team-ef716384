@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useRef, useEffect } from "react";
-import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, FolderOpen, Sparkles, FileImage, BookOpenCheck, Scale, Video, Languages, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, FolderOpen, Sparkles, FileImage, BookOpenCheck, Scale, Video, Languages, Images, ChevronLeft, ChevronRight } from "lucide-react";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { useSetsForStudent } from "@/hooks/useLanguageSupport";
 
@@ -20,6 +20,7 @@ const allNavItems = [
   { id: "resources", label: "Resources", emoji: "📚", path: "/student/resources", icon: FolderOpen, primary: false },
   { id: "vocabulary", label: "Vocabulary", emoji: "✨", path: "/student/vocabulary", icon: Sparkles, primary: false },
   { id: "mywork", label: "My Work", emoji: "🖼️", path: "/student/my-work", icon: FileImage, primary: false },
+  { id: "class-gallery", label: "Class Gallery", emoji: "🖼️", path: "/student/class-gallery", icon: Images, primary: false },
   { id: "videos", label: "My Videos", emoji: "🎥", path: "/student/videos", icon: Video, primary: false },
   { id: "picture-reader", label: "Picture Reader", emoji: "🖼️", path: "/student/language-support", icon: Languages, primary: false },
   { id: "defend", label: "Defend My Level", emoji: "🛡️", path: "/student/defend-level", icon: Scale, primary: false },

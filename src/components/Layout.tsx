@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History, Plug, Bot, Languages, Mic, Tv, FileAudio} from "lucide-react";
+import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History, Plug, Bot, Languages, Mic, Tv, FileAudio, Images} from "lucide-react";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
 import { ChangePassword } from "@/components/auth/ChangePassword";
 import NotificationBell from "@/components/NotificationBell";
@@ -94,6 +94,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: Megaphone, label: "Announcements", path: "/admin?tab=announcements" },
           { icon: Tv, label: "Reception TV", path: "/admin?tab=reception" },
           { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
+          { icon: Images, label: "Student Work", path: "/admin/student-work" },
           { icon: AudioLines, label: "Transcripts", path: "/teacher/transcripts" },
           { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
           { icon: Languages, label: "Language Support", path: "/teacher/language-support" },
@@ -111,6 +112,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: FileBarChart2, label: "Exam Reports", path: "/teacher/exam-reports" },
           { icon: Sparkles, label: "Vocabulary Audit", path: "/teacher/vocabulary-audit" },
           { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
+          { icon: Images, label: "My Student Works", path: "/teacher/my-student-works" },
           { icon: AudioLines, label: "Transcripts", path: "/teacher/transcripts" },
           { icon: FolderOpen, label: "Resources", path: "/teacher/resources" },
           { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
