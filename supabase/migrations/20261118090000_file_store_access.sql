@@ -140,6 +140,24 @@ $f$;
 REVOKE ALL ON FUNCTION public.file_access_can(text, text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.file_access_can(text, text, text) TO authenticated, service_role;
 
+-- The same question for up to 200 paths at once: which of them may the
+-- caller read / write / delete? One call per gallery, because a free Worker
+-- may make only 50 outside calls per request.
+CREATE OR REPLACE FUNCTION public.file_access_can_many(_bucket text, _paths text[], _op text)
+RETURNS SETOF text
+LANGUAGE plpgsql STABLE SECURITY INVOKER
+SET search_path = public
+AS $f$
+BEGIN
+  IF cardinality(_paths) > 200 THEN
+    RAISE EXCEPTION 'file_access_can_many: at most 200 paths at a time, not %', cardinality(_paths);
+  END IF;
+  RETURN QUERY SELECT DISTINCT p FROM unnest(_paths) AS p WHERE public.file_access_can(_bucket, p, _op);
+END
+$f$;
+REVOKE ALL ON FUNCTION public.file_access_can_many(text, text[], text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.file_access_can_many(text, text[], text) TO authenticated, service_role;
+
 -- A new file fits its bucket's limits.
 CREATE OR REPLACE FUNCTION public.file_objects_fit_bucket()
 RETURNS trigger

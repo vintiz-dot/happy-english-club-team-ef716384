@@ -246,6 +246,8 @@ const SUITES = [
     file: "file-store-access.test.mjs",
     migrations: ["20261118090000_file_store_access.sql"],
   },
+  { name: "hec-files worker", file: "hec-files-worker.test.mjs", migrations: [] },
+  { name: "file store client", file: "file-store-client.test.mjs", migrations: [] },
   {
     name: "ta standing assignments",
     file: "ta-standing.test.mjs",

@@ -208,6 +208,16 @@ ok("anon cannot call it",
     catch (e) { return e.message; } finally { await db.exec("ROLLBACK"); }
   })()));
 
+console.log("=== many paths at once ===");
+eq("the batch answer is the single answers, for a mixed list",
+  await as(TEACHER, "teacher", async () => (await db.query(
+    `SELECT p FROM public.file_access_can_many('work', $1, 'read') AS p ORDER BY p`,
+    [["classes/c1/a.jpg", "classes/c2/b.jpg", "classes/c1/a.jpg", "/bad.jpg", "classes/c1/c.jpg"]])).rows.map((r) => r.p)),
+  ["classes/c1/a.jpg", "classes/c1/c.jpg"]);
+ok("more than 200 paths is refused",
+  /at most 200/.test(await tryAs(ADMIN, "admin", () => db.query(
+    `SELECT public.file_access_can_many('work', $1, 'read')`, [Array.from({ length: 201 }, (_, i) => `p${i}`)])) ?? ""));
+
 console.log("=== file_objects rows ===");
 const add = (uid, role, b, p, owner, size, mime = null) => tryAs(uid, role, () => db.query(
   `INSERT INTO public.file_objects (bucket_id, path, owner, size_bytes, mime_type) VALUES ($1, $2, $3, $4, $5)`,

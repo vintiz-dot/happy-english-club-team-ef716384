@@ -1,0 +1,30 @@
+# HEC Files (Cloudflare Workers + R2, free plan). See src/index.ts for what it does.
+# Free plan: 10 GB stored, 1M uploads and 10M reads a month, no download fees;
+# 100,000 Worker requests a day, 100 MB per upload.
+name = "hec-files"
+main = "src/index.ts"
+compatibility_date = "2026-03-16"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "hec-files"
+
+[vars]
+SUPABASE_URL = "https://aswgmbefikhsnhogtryv.supabase.co"
+# Public (publishable) key, already shipped in the web app.
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzd2dtYmVmaWtoc25ob2d0cnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MzQwNTYsImV4cCI6MjA5MzMxMDA1Nn0.ELWucKWBlB-SSW5XfewHiNeHWpIkzHe2W_gQYlJc2Gw"
+ALLOWED_ORIGINS = "https://user.hanoienglish.com,https://user.hanoienglish.vip,http://localhost:8080,http://localhost:5173"
+ALLOWED_ORIGIN_SUFFIX = ".happy-class-mate.pages.dev"
+# The buckets this Worker serves. The app decides separately which buckets it
+# reads from here (src/lib/fileStore.ts), so a bucket can be listed here
+# before its files are copied.
+R2_BUCKETS = "student-work,homework,homework-videos,class-recordings,lesson-resources"
+
+# Secrets, set once by the owner and never committed:
+#   npx wrangler secret put LINK_SECRET   (any random text of 32+ characters)
+#   npx wrangler secret put SERVER_KEY    (another one; also set in Supabase
+#                                          function secrets as HEC_FILES_SERVER_KEY)
+
+[observability]
+enabled = true
