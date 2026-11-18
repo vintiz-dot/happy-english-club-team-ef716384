@@ -14,6 +14,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { shrinkPhoto } from "@/lib/shrinkPhoto";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchAccessibleClasses } from "@/lib/teacherAccess";
 import Layout from "@/components/Layout";
@@ -339,7 +340,8 @@ export default function TeacherSmartUpload() {
     if (!classId) { toast.error("Choose a class first"); return; }
     if (workflow === "vocab" && !studentId) { toast.error("Choose the student whose vocab page this is"); return; }
 
-    for (const file of Array.from(files)) {
+    for (const picked of Array.from(files)) {
+      const file = await shrinkPhoto(picked);
       setJobs((prev) => [...prev, { fileName: file.name, status: "uploading" }]);
       let rowId: string | null = null;
       try {
@@ -463,7 +465,8 @@ export default function TeacherSmartUpload() {
     if (!classId) { toast.error("Choose a class first"); return; }
     if (teamIds.length < 2) { toast.error("Pick at least two students for a team"); return; }
 
-    for (const file of Array.from(files)) {
+    for (const picked of Array.from(files)) {
+      const file = await shrinkPhoto(picked);
       setJobs((prev) => [...prev, { fileName: file.name, status: "uploading" }]);
       try {
         const ext = file.name.split(".").pop() || "jpg";

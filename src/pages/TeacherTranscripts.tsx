@@ -13,6 +13,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { shrinkPhoto } from "@/lib/shrinkPhoto";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -545,7 +546,8 @@ export default function TeacherTranscripts() {
     if (!user || !selected) return;
     setResourceUploading(true);
     try {
-      for (const file of Array.from(files)) {
+      for (const picked of Array.from(files)) {
+        const file = await shrinkPhoto(picked);
         const ext = file.name.split(".").pop() || "jpg";
         // Path starts with class_id so the storage policy can map the object
         // back to its class for enrolled-student reads.

@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { FileText, Upload, Trash2, Edit } from "lucide-react";
 // Staff only (/admin/classes/:id?tab=homework). The shared editor draws itself from the hec tokens, light and dark.
 import { RichTextEditor, RichTextView } from "@/components/rich-text";
+import { shrinkPhoto } from "@/lib/shrinkPhoto";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const ClassHomework = ({ classId }: { classId: string }) => {
@@ -79,7 +80,9 @@ const ClassHomework = ({ classId }: { classId: string }) => {
     }
   };
 
-  const handleFileUpload = async (homeworkId: string, file: File) => {
+  const handleFileUpload = async (homeworkId: string, picked: File) => {
+    // Shrink a phone photo first, so the 5 MB limit applies to what is stored.
+    const file = await shrinkPhoto(picked);
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File size must be less than 5MB");
       return;

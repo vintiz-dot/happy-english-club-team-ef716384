@@ -13,6 +13,7 @@ import { soundManager } from "@/lib/soundManager";
 import { motion, AnimatePresence } from "framer-motion";
 import { SubmitCheckmark } from "./SubmitCheckmark";
 import { useIvory } from "@/hooks/useIvory";
+import { shrinkPhoto } from "@/lib/shrinkPhoto";
 import VideoHomeworkSubmission, { useVideoHomework } from "@/components/video-homework/VideoHomeworkSubmission";
 
 interface HomeworkSubmissionProps {
@@ -106,17 +107,19 @@ function WrittenHomeworkSubmission({
       let fileSize = existingSubmission?.file_size;
 
       if (file) {
-        if (file.size > 5 * 1024 * 1024) {
+        // Shrink a phone photo first, so the 5 MB limit applies to what is stored.
+        const upload = await shrinkPhoto(file);
+        if (upload.size > 5 * 1024 * 1024) {
           throw new Error("File size must be less than 5MB");
         }
 
         const timestamp = Date.now();
-        const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const sanitizedFileName = upload.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const filePath = `submissions/${homeworkId}/${studentId}/${timestamp}-${sanitizedFileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("homework")
-          .upload(filePath, file, { cacheControl: "3600", upsert: false });
+          .upload(filePath, upload, { cacheControl: "3600", upsert: false });
 
         if (uploadError) {
           console.error("Storage upload error:", uploadError);
@@ -124,8 +127,8 @@ function WrittenHomeworkSubmission({
         }
 
         storageKey = filePath;
-        fileName = file.name;
-        fileSize = file.size;
+        fileName = upload.name;
+        fileSize = upload.size;
       }
 
       const { data: rpcData } = await supabase.rpc("get_student_homeworks", {

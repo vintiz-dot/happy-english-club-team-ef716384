@@ -17,6 +17,7 @@ import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
 import { useAuth } from "@/hooks/useAuth";
 import { VideoRubricEditor } from "@/components/video-homework/VideoRubricEditor";
 import { HomeworkVideosDialog } from "@/components/video-homework/VideoReviewQueue";
+import { shrinkPhoto } from "@/lib/shrinkPhoto";
 
 interface Class {
   id: string;
@@ -238,8 +239,10 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
     },
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0];
+    // Shrink a phone photo first, so the 5 MB limit applies to what is stored.
+    const selectedFile = picked ? await shrinkPhoto(picked) : undefined;
     if (selectedFile) {
       if (selectedFile.size > 5 * 1024 * 1024) {
         toast({ title: "File too large", description: "Maximum file size is 5MB", variant: "destructive" });

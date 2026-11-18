@@ -240,6 +240,12 @@ const SUITES = [
     file: "audit-clips.test.mjs",
     migrations: ["20261111090000_audit_voice_clips.sql", "20261111100000_audit_clips_youtube_links.sql"],
   },
+  // R2 file store: files there obey the storage.objects policies as installed.
+  {
+    name: "file store access",
+    file: "file-store-access.test.mjs",
+    migrations: ["20261118090000_file_store_access.sql"],
+  },
   {
     name: "ta standing assignments",
     file: "ta-standing.test.mjs",
