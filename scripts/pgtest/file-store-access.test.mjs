@@ -26,7 +26,7 @@ const PRELUDE = `
   CREATE TABLE storage.buckets (id text PRIMARY KEY, name text, public boolean DEFAULT false,
     file_size_limit bigint, allowed_mime_types text[]);
   CREATE TABLE storage.objects (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    bucket_id text, name text, owner uuid, owner_id text);
+    bucket_id text, name text, owner uuid, owner_id text, metadata jsonb);
   ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
     $f$ SELECT NULLIF(current_setting('test.uid', true), '')::uuid $f$;
@@ -217,6 +217,20 @@ eq("the batch answer is the single answers, for a mixed list",
 ok("more than 200 paths is refused",
   /at most 200/.test(await tryAs(ADMIN, "admin", () => db.query(
     `SELECT public.file_access_can_many('work', $1, 'read')`, [Array.from({ length: 201 }, (_, i) => `p${i}`)])) ?? ""));
+
+console.log("=== the copier's listing ===");
+await db.query(`INSERT INTO storage.objects (bucket_id, name, owner, owner_id, metadata) VALUES
+  ('work', 'incoming/z.jpg', $1::uuid, $2::text, '{"size": 2048, "mimetype": "image/jpeg"}'),
+  ('vid', 'other.mp4', NULL, NULL, '{"size": 9}')`, [TEACHER, TEACHER]);
+{
+  await db.exec("BEGIN"); await db.exec("SET LOCAL ROLE service_role");
+  const rows = (await db.query(`SELECT * FROM public.file_store_copy_list('work')`)).rows;
+  await db.exec("ROLLBACK");
+  eq("lists a bucket's files with uploader, size and type",
+    rows.map((r) => [r.name, r.owner, Number(r.size_bytes), r.mime_type]), [["incoming/z.jpg", TEACHER, 2048, "image/jpeg"]]);
+}
+ok("a signed-in person cannot list a bucket this way",
+  /permission denied/.test(await tryAs(ADMIN, "admin", () => db.query(`SELECT * FROM public.file_store_copy_list('work')`)) ?? ""));
 
 console.log("=== file_objects rows ===");
 const add = (uid, role, b, p, owner, size, mime = null) => tryAs(uid, role, () => db.query(

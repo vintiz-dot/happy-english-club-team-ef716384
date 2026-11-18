@@ -158,6 +158,24 @@ $f$;
 REVOKE ALL ON FUNCTION public.file_access_can_many(text, text[], text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.file_access_can_many(text, text[], text) TO authenticated, service_role;
 
+-- What the copier (scripts/copy-bucket-to-r2.mjs) moves: every object in a
+-- Supabase bucket with its uploader, which the Storage list API does not
+-- return and some policies test. Service role only.
+CREATE OR REPLACE FUNCTION public.file_store_copy_list(_bucket text)
+RETURNS TABLE (name text, owner uuid, owner_id text, size_bytes bigint, mime_type text)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $f$
+  SELECT o.name, o.owner, o.owner_id,
+         coalesce((o.metadata ->> 'size')::bigint, 0),
+         o.metadata ->> 'mimetype'
+    FROM storage.objects o
+   WHERE o.bucket_id = _bucket
+   ORDER BY o.name
+$f$;
+REVOKE ALL ON FUNCTION public.file_store_copy_list(text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.file_store_copy_list(text) TO service_role;
+
 -- A new file fits its bucket's limits.
 CREATE OR REPLACE FUNCTION public.file_objects_fit_bucket()
 RETURNS trigger
