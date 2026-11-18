@@ -28,6 +28,9 @@ const PRELUDE = `
   CREATE TABLE storage.objects (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     bucket_id text, name text, owner uuid, owner_id text, metadata jsonb);
   ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+  -- As in Supabase: buckets has row security and no policy, so a signed-in
+  -- person sees no bucket rows at all (the 18 Nov upload failure).
+  ALTER TABLE storage.buckets ENABLE ROW LEVEL SECURITY;
   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
     $f$ SELECT NULLIF(current_setting('test.uid', true), '')::uuid $f$;
   CREATE FUNCTION public.has_role(_user_id uuid, _role public.app_role)

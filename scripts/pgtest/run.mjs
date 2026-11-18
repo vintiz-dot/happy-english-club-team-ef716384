@@ -244,7 +244,7 @@ const SUITES = [
   {
     name: "file store access",
     file: "file-store-access.test.mjs",
-    migrations: ["20261118090000_file_store_access.sql"],
+    migrations: ["20261118090000_file_store_access.sql", "20261118110000_file_store_bucket_lookup.sql"],
   },
   { name: "hec-files worker", file: "hec-files-worker.test.mjs", migrations: [] },
   { name: "file store client", file: "file-store-client.test.mjs", migrations: [] },
