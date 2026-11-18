@@ -248,6 +248,7 @@ const SUITES = [
   },
   { name: "hec-files worker", file: "hec-files-worker.test.mjs", migrations: [] },
   { name: "file store client", file: "file-store-client.test.mjs", migrations: [] },
+  { name: "edge file store", file: "edge-file-store.test.mjs", migrations: [] },
   { name: "copy bucket to r2", file: "copy-bucket.test.mjs", migrations: [] },
   {
     name: "ta standing assignments",

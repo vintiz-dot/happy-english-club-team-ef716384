@@ -24,9 +24,10 @@
 // stops two uploads to one path. Deleting: the row goes first (its delete
 // policy is the check), then the R2 object.
 //
-// Edge functions call with `x-hec-server-key: <SERVER_KEY>` instead of a
-// user token. They run as the service role and manage file_objects
-// themselves; the Worker then signs without asking.
+// Server callers sign without the per-file question and manage file_objects
+// themselves: the copier sends `x-hec-server-key: <SERVER_KEY>`; edge
+// functions send their own service key as the bearer token with
+// `x-hec-as: service`, which the database confirms (isServiceToken).
 //
 // Free plan: 10 ms CPU and 50 outside calls per request, 100 MB per upload.
 // One sign request makes ONE call to the database however many paths it has.
@@ -131,15 +132,24 @@ export function tokenSubject(token: string): string | null {
 }
 
 function rest(env: Env, token: string, path: string, init: RequestInit = {}): Promise<Response> {
+  // A new-style secret key (sb_secret_...) is not a JWT: it goes as the apikey.
+  const auth: Record<string, string> = token.startsWith("sb_secret_")
+    ? { apikey: token }
+    : { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` };
   return fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
     ...init,
-    headers: {
-      apikey: env.SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...(init.headers ?? {}),
-    },
+    headers: { ...auth, "Content-Type": "application/json", ...(init.headers ?? {}) },
   });
+}
+
+/**
+ * Is this the project's service key? Asked of the database itself: only the
+ * service role may run file_store_copy_list (migration 20261118090000), so
+ * a 200 proves it. Used by edge functions, which hold that key already.
+ */
+async function isServiceToken(env: Env, token: string): Promise<boolean> {
+  const r = await rest(env, token, "rpc/file_store_copy_list", { method: "POST", body: JSON.stringify({ _bucket: "" }) });
+  return r.ok;
 }
 
 // ---------- HTTP ----------
@@ -175,9 +185,13 @@ const keyOf = (bucket: string, path: string) => `${bucket}/${path}`;
 async function handleSign(req: Request, env: Env, now: number, h: Record<string, string>): Promise<Response> {
   const origin = new URL(req.url).origin;
   const serverKey = req.headers.get("x-hec-server-key");
-  const asServer = !!env.SERVER_KEY && !!serverKey && equalStrings(serverKey, env.SERVER_KEY);
+  let asServer = !!env.SERVER_KEY && !!serverKey && equalStrings(serverKey, env.SERVER_KEY);
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (!asServer && !token) return json({ error: "Sign in first" }, 401, h);
+  if (!asServer && req.headers.get("x-hec-as") === "service") {
+    if (!(await isServiceToken(env, token))) return json({ error: "Not the service key" }, 401, h);
+    asServer = true;
+  }
 
   let body: any;
   try { body = await req.json(); } catch { return json({ error: "Body must be JSON" }, 400, h); }

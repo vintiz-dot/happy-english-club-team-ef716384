@@ -20,6 +20,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { downloadFile, moveFile, fileStoreEnvFromDeno } from "../_lib/file-store.ts";
 import { visionDocumentOcr } from "../_lib/google.ts";
 import { callerHoldsClass } from "../_lib/auth.ts";
 import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
@@ -117,10 +118,7 @@ Deno.serve(async (req) => {
     }
 
     // ── 1. Download + OCR ────────────────────────────────────────────────
-    const { data: file, error: dlErr } = await sb.storage
-      .from("student-work")
-      .download(work.storage_path);
-    if (dlErr || !file) throw new Error(`storage download failed: ${dlErr?.message}`);
+    const file = await downloadFile(sb, fileStoreEnvFromDeno(), "student-work", work.storage_path);
 
     const buf = new Uint8Array(await file.arrayBuffer());
     let binary = "";
@@ -171,11 +169,12 @@ Deno.serve(async (req) => {
     if (matched && work.storage_path.startsWith("incoming/")) {
       const fileName = work.storage_path.split("/").pop()!;
       const target = `students/${matched.id}/${work.workflow}/${fileName}`;
-      const { error: moveErr } = await sb.storage
-        .from("student-work")
-        .move(work.storage_path, target);
-      if (!moveErr) finalPath = target;
-      else console.warn("ocr-student-work: move failed, keeping incoming path:", moveErr.message);
+      try {
+        await moveFile(sb, fileStoreEnvFromDeno(), "student-work", work.storage_path, target);
+        finalPath = target;
+      } catch (moveErr) {
+        console.warn("ocr-student-work: move failed, keeping incoming path:", (moveErr as Error).message);
+      }
     }
 
     // ── 4. Persist results, hand off to teacher review ───────────────────

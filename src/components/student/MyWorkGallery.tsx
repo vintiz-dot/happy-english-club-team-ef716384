@@ -8,6 +8,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { files as fileStore } from "@/lib/files";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,9 +39,7 @@ export function MyWorkGallery() {
       const withUrls = await Promise.all(
         rows.map(async (w: any) => {
           if (!w.storage_path) return { ...w, url: null };
-          const { data: signed } = await supabase.storage
-            .from("student-work")
-            .createSignedUrl(w.storage_path, 3600);
+          const signed = { signedUrl: await fileStore.signedUrl("student-work", w.storage_path, 3600) };
           return { ...w, url: signed?.signedUrl ?? null };
         }),
       );

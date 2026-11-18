@@ -43,6 +43,7 @@
  */
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { downloadFile, fileStoreEnvFromDeno } from "../_lib/file-store.ts";
 import { visionDocumentOcr, customSearchImages } from "../_lib/google.ts";
 import { fireProfileRefresh } from "../_lib/profile.ts";
 import { safeParseJson } from "../_lib/text.ts";
@@ -234,10 +235,7 @@ Deno.serve(async (req) => {
     }
 
     // ── 1. OCR ───────────────────────────────────────────────────────────
-    const { data: file, error: dlErr } = await sb.storage
-      .from("student-work")
-      .download(work.storage_path);
-    if (dlErr || !file) throw new Error(`storage download failed: ${dlErr?.message}`);
+    const file = await downloadFile(sb, fileStoreEnvFromDeno(), "student-work", work.storage_path);
     const buf = new Uint8Array(await file.arrayBuffer());
     let binary = "";
     const CHUNK = 0x8000;

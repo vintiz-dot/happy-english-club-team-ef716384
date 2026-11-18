@@ -45,6 +45,11 @@ globalThis.fetch = async (url, init) => {
   const u = String(url);
   calls.push({ url: u, method: init.method, auth: init.headers.Authorization, body: init.body ? JSON.parse(init.body) : null });
   if (init.headers.Authorization === "Bearer expired") return new Response("{}", { status: 401 });
+  if (u.endsWith("/rpc/file_store_copy_list")) {
+    // Only the service role may run it: the legacy JWT, or the new secret key as apikey.
+    const isService = init.headers.Authorization === "Bearer service-jwt" || init.headers.apikey === "sb_secret_abc";
+    return isService ? Response.json([]) : new Response('{"message":"permission denied"}', { status: 403 });
+  }
   if (u.endsWith("/rpc/file_access_can_many")) {
     const b = JSON.parse(init.body);
     return Response.json(b._paths.filter((p) => db.allowedRead.includes(p)));
@@ -132,6 +137,19 @@ calls.length = 0;
 r = await sign({ op: "read", bucket: "homework", paths: ["any/where.jpg"] }, null, { "x-hec-server-key": env.SERVER_KEY });
 eq("the server key gets a link without asking the database", [Object.keys((await r.json()).urls), calls.length], [["any/where.jpg"], 0]);
 eq("a wrong server key does not", (await sign({ op: "read", bucket: "homework", paths: ["a.jpg"] }, null, { "x-hec-server-key": "s".repeat(39) + "t" })).status, 401);
+
+console.log("=== the service key (edge functions) ===");
+const asService = (token, body) => sign(body, token, { "x-hec-as": "service" });
+calls.length = 0;
+r = await asService("service-jwt", { op: "read", bucket: "homework", paths: ["any/where.jpg"] });
+eq("the service JWT, confirmed by the database, gets a link without the per-file question",
+  [Object.keys((await r.json()).urls), calls.map((c) => c.url.split("/rest/v1/")[1])], [["any/where.jpg"], ["rpc/file_store_copy_list"]]);
+r = await asService("sb_secret_abc", { op: "read", bucket: "homework", paths: ["x.jpg"] });
+eq("so does a new-style secret key, sent as the apikey", Object.keys((await r.json()).urls), ["x.jpg"]);
+eq("a teacher's token claiming to be the service is refused", (await asService(TEACHER, { op: "read", bucket: "homework", paths: ["x.jpg"] })).status, 401);
+calls.length = 0;
+await asService("service-jwt", { op: "write", bucket: "homework", path: "moved/x.jpg", size: 3, type: "image/jpeg" });
+eq("a service write records no row itself (the function does)", calls.filter((c) => c.url.includes("file_objects")).length, 0);
 
 console.log("=== set-up and CORS ===");
 eq("no LINK_SECRET, nothing served", (await handle(new Request(`${W}/healthz`), { ...env, LINK_SECRET: "" })).status, 500);

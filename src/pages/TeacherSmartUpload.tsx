@@ -14,6 +14,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { files as fileStore } from "@/lib/files";
 import { shrinkPhoto } from "@/lib/shrinkPhoto";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchAccessibleClasses } from "@/lib/teacherAccess";
@@ -321,9 +322,7 @@ export default function TeacherSmartUpload() {
       await Promise.all(
         reviewQueue.map(async (w) => {
           if (!w.storage_path) return; // link uploads have no stored file
-          const { data } = await supabase.storage
-            .from("student-work")
-            .createSignedUrl(w.storage_path, 3600);
+          const data = { signedUrl: await fileStore.signedUrl("student-work", w.storage_path, 3600) };
           if (data?.signedUrl) out[w.id] = data.signedUrl;
         }),
       );
@@ -347,10 +346,7 @@ export default function TeacherSmartUpload() {
       try {
         const ext = file.name.split(".").pop() || "jpg";
         const path = `incoming/${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("student-work")
-          .upload(path, file, { contentType: file.type || "image/jpeg" });
-        if (upErr) throw upErr;
+        await fileStore.upload("student-work", path, file, file.type || "image/jpeg");
 
         const { data: row, error: insErr } = await (supabase as any)
           .from("student_work")
@@ -471,10 +467,7 @@ export default function TeacherSmartUpload() {
       try {
         const ext = file.name.split(".").pop() || "jpg";
         const path = `teams/${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("student-work")
-          .upload(path, file, { contentType: file.type || "image/jpeg" });
-        if (upErr) throw upErr;
+        await fileStore.upload("student-work", path, file, file.type || "image/jpeg");
 
         const { error: insErr } = await (supabase as any)
           .from("student_work")

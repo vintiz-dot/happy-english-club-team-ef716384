@@ -21,6 +21,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { downloadFile, fileStoreEnvFromDeno } from "../_lib/file-store.ts";
 import { callerHoldsClass, callerHoldsStudent } from "../_lib/auth.ts";
 import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
 
@@ -118,7 +119,7 @@ Deno.serve(async (req) => {
     // The actual image, so the model sees handwriting, drawings, layout —
     // things OCR flattens away.
     let imageContent: any = null;
-    const { data: file } = await sb.storage.from("student-work").download(work.storage_path);
+    const file = await downloadFile(sb, fileStoreEnvFromDeno(), "student-work", work.storage_path).catch(() => null);
     if (file) {
       const bytes = new Uint8Array(await file.arrayBuffer());
       if (bytes.length <= 6 * 1024 * 1024) {
