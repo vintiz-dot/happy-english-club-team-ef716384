@@ -11,9 +11,10 @@ import { makeFileStore, type StorageLike } from "./fileStore";
  *              included, no difference; the OCR functions read and move
  *              files through supabase/functions/_lib/file-store.ts)
  */
-// PAUSED 18 Nov 2026: uploads through R2 failed ("No bucket called ...")
-// until migration 20261118110000 is applied. Put both back after it is.
-export const R2_BUCKETS: ReadonlySet<string> = new Set<string>([]);
+// Paused for a few hours on 18 Nov 2026: uploads failed with "No bucket
+// called ..." until migration 20261118110000; re-enabled after it, with 121
+// real upload records by 10 accounts checked (all recorded, then undone).
+export const R2_BUCKETS: ReadonlySet<string> = new Set<string>(["homework", "student-work"]);
 
 const DEFAULT_WORKER = "https://hec-files.vintizfjes.workers.dev";
 const WORKER: string = (import.meta.env.VITE_HEC_FILES_URL as string | undefined) ?? DEFAULT_WORKER;
