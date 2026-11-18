@@ -1,6 +1,7 @@
 import { useState, useId } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { files } from "@/lib/files";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -117,11 +118,9 @@ function WrittenHomeworkSubmission({
         const sanitizedFileName = upload.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const filePath = `submissions/${homeworkId}/${studentId}/${timestamp}-${sanitizedFileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from("homework")
-          .upload(filePath, upload, { cacheControl: "3600", upsert: false });
-
-        if (uploadError) {
+        try {
+          await files.upload("homework", filePath, upload);
+        } catch (uploadError: any) {
           console.error("Storage upload error:", uploadError);
           throw new Error(`Upload failed: ${uploadError.message}`);
         }
@@ -236,10 +235,9 @@ function WrittenHomeworkSubmission({
 
   const downloadFile = async () => {
     if (!existingSubmission?.storage_key) return;
-    const { data, error } = await supabase.storage
-      .from("homework")
-      .download(existingSubmission.storage_key);
-    if (error) { toast.error("Failed to download file"); return; }
+    let data: Blob;
+    try { data = await files.download("homework", existingSubmission.storage_key); }
+    catch { toast.error("Failed to download file"); return; }
     const url = URL.createObjectURL(data);
     const a = document.createElement("a");
     a.href = url;

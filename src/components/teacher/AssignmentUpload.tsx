@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { files } from "@/lib/files";
 import { RichTextEditor, RichTextView } from "@/components/rich-text";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -198,11 +199,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${homework.id}/${Date.now()}.${fileExt}`;
         
-        const { error: uploadError } = await supabase.storage
-          .from("homework")
-          .upload(fileName, file);
-
-        if (uploadError) throw uploadError;
+        await files.upload("homework", fileName, file);
 
         const { error: fileError } = await supabase
           .from("homework_files")
@@ -265,14 +262,9 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
 
   const viewFile = async (storageKey: string) => {
     try {
-      const { data, error } = await supabase.storage
-        .from("homework")
-        .createSignedUrl(storageKey, 3600); // 1 hour expiry
-      
-      if (error) throw error;
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, "_blank");
-      }
+      const signedUrl = await files.signedUrl("homework", storageKey, 3600);
+      if (!signedUrl) throw new Error("File not found, or not yours to open.");
+      window.open(signedUrl, "_blank");
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }

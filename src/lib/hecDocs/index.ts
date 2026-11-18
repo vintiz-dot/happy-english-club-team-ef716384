@@ -20,6 +20,7 @@
  * to "off" in the build environment.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { files as fileStore } from "@/lib/files";
 import { cleanRichHtml } from "@/lib/richText";
 
 const DEFAULT_PRINTER = "https://hec-docs-printer.vintizfjes.workers.dev";
@@ -77,8 +78,8 @@ export async function appendHomeworkAttachments(
   const extras: { name: string; bytes: Uint8Array }[] = [];
   const skipped: string[] = [];
   for (const f of pdfs) {
-    const { data, error: dlErr } = await supabase.storage.from("homework").download(f.storage_key);
-    if (dlErr || !data) skipped.push(f.file_name);
+    const data = await fileStore.download("homework", f.storage_key).catch(() => null);
+    if (!data) skipped.push(f.file_name);
     else extras.push({ name: f.file_name, bytes: new Uint8Array(await data.arrayBuffer()) });
   }
   if (!extras.length) return { blob, pages: null, appended: [], skipped };

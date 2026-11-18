@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { files } from "@/lib/files";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -99,14 +100,9 @@ const SessionDrawer = ({ session, onClose, onEdit, onRefresh }: SessionDrawerPro
   };
 
   const downloadFile = async (storageKey: string, fileName: string) => {
-    const { data, error } = await supabase.storage
-      .from("homework")
-      .download(storageKey);
-
-    if (error) {
-      toast.error("Failed to download file");
-      return;
-    }
+    let data: Blob;
+    try { data = await files.download("homework", storageKey); }
+    catch { toast.error("Failed to download file"); return; }
 
     const url = URL.createObjectURL(data);
     const a = document.createElement("a");

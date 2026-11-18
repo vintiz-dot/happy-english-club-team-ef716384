@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { files as fileStore } from "@/lib/files";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { CalendarDays, Download, FileText, Loader2, X } from "lucide-react";
@@ -79,9 +80,8 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
 
   const downloadFile = async (storageKey: string) => {
     try {
-      const { data, error } = await supabase.storage.from("homework").createSignedUrl(storageKey, 3600);
-      if (error) throw error;
-      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+      const signedUrl = await fileStore.signedUrl("homework", storageKey, 3600);
+      if (signedUrl) window.open(signedUrl, "_blank");
     } catch (error: any) {
       console.error("Error downloading file:", error);
     }

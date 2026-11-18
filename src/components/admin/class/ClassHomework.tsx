@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { files } from "@/lib/files";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -95,14 +96,9 @@ const ClassHomework = ({ classId }: { classId: string }) => {
       const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       const filePath = `assignments/${homeworkId}/${timestamp}-${sanitizedFileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("homework")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (uploadError) {
+      try {
+        await files.upload("homework", filePath, file);
+      } catch (uploadError: any) {
         console.error("Storage upload error:", uploadError);
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
@@ -134,14 +130,9 @@ const ClassHomework = ({ classId }: { classId: string }) => {
 
   const openFile = async (storageKey: string) => {
     try {
-      const { data, error } = await supabase.storage
-        .from("homework")
-        .createSignedUrl(storageKey, 3600); // 1 hour expiry
-      
-      if (error) throw error;
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, "_blank");
-      }
+      const signedUrl = await files.signedUrl("homework", storageKey, 3600);
+      if (!signedUrl) throw new Error("File not found, or not yours to open.");
+      window.open(signedUrl, "_blank");
     } catch (error: any) {
       console.error("Error opening file:", error);
       toast.error(error.message || "Failed to open file");

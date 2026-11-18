@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { files } from "@/lib/files";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -233,9 +234,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
 
   const downloadFile = async (storageKey: string, fileName: string) => {
     try {
-      const { data, error } = await supabase.storage.from("homework").download(storageKey);
-
-      if (error) throw error;
+      const data = await files.download("homework", storageKey);
 
       const url = URL.createObjectURL(data);
       const a = document.createElement("a");
