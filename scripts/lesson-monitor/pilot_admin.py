@@ -3,7 +3,7 @@
   PY scripts\\lesson-monitor\\pilot_admin.py find --class Venus --teacher Victor
   PY scripts\\lesson-monitor\\pilot_admin.py consent-all --class-id <id> --note "signed monitor lines, office folder M"
   PY scripts\\lesson-monitor\\pilot_admin.py consent --student-id <id> --withdrawn --note "parent phoned 21 Nov"
-  PY scripts\\lesson-monitor\\pilot_admin.py switch-on --class-id <id> --teacher-id <id> --note "office folder M"
+  PY scripts\\lesson-monitor\\pilot_admin.py switch-on --class-id <id> --teacher-id <id> --note "office folder M" [--from 2026-11-19]
   PY scripts\\lesson-monitor\\pilot_admin.py switch-off --class-id <id> [--reason ...]
   PY scripts\\lesson-monitor\\pilot_admin.py status
 
@@ -13,6 +13,12 @@ of them. It prints the number of children, never their names, and asks YES.
 A child's withdrawal (`consent --withdrawn`) switches the class off and deletes
 its reports at once. The student id is the last part of the child's page
 address in the app (/students/<id>).
+
+`switch-on --from DATE` also covers lessons recorded from DATE on (at most 30
+days back), not only from today: the owner's ruling of 20 Nov 2026, "cover all
+available recordings". The database refuses it if any of those earlier lessons
+had a child without the monitor consent, and still refuses a lesson a cover
+teacher taught.
 
 `status` is for the stop rules (design s.12): reports made, opened, the
 teacher's median reading minutes, and per pilot week whether she said she used
@@ -79,6 +85,8 @@ def main(argv=None) -> int:
     on.add_argument("--teacher-id", required=True)
     on.add_argument("--note", required=True, help="where the signed monitor lines are kept")
     on.add_argument("--days", type=int, default=28)
+    on.add_argument("--from", dest="from_date", type=date.fromisoformat, default=None,
+                    help="also cover lessons recorded from this date (YYYY-MM-DD, at most 30 days back)")
     off = sp.add_parser("switch-off")
     off.add_argument("--class-id", required=True)
     off.add_argument("--reason", default="stopped by the owner")
@@ -118,6 +126,9 @@ def main(argv=None) -> int:
         api.rpc("lesson_monitor_set_class", {"p_class": a.class_id, "p_enabled": True, "p_wording_version": version,
                                              "p_consent_note": a.note, "p_days": a.days, "p_teacher": a.teacher_id})
         print(f"the lesson monitor is ON for that class for {a.days} days (wording {version})")
+        if a.from_date is not None:
+            res = api.rpc("lesson_monitor_cover_from", {"p_class": a.class_id, "p_from": a.from_date.isoformat()}) or {}
+            print(f"it also covers lessons from {res.get('starts_on')}: {res.get('lessons_added', 0)} earlier lesson day(s) with a recording")
         return 0
     if a.cmd == "switch-off":
         api.rpc("lesson_monitor_set_class", {"p_class": a.class_id, "p_enabled": False, "p_consent_note": a.reason})

@@ -28,8 +28,9 @@ const PIPE_MIG = MIGS.find((f) => f.includes("20260717090000"));
 const TA_MIG = MIGS.find((f) => f.includes("20261111110000"));
 const REC_MIG = MIGS.find((f) => f.includes("class_recorder"));
 const LM_MIG = MIGS.find((f) => f.includes("lesson_monitor_pilot"));
-if (!PIPE_MIG || !TA_MIG || !REC_MIG || !LM_MIG) {
-  console.log("usage: lesson-monitor.test.mjs <20260717090000_...> <20261111110000_...> <20261112100000_class_recorder.sql> <20261117090000_lesson_monitor_pilot.sql>");
+const COVER_MIG = MIGS.find((f) => f.includes("lesson_monitor_cover_earlier"));
+if (!PIPE_MIG || !TA_MIG || !REC_MIG || !LM_MIG || !COVER_MIG) {
+  console.log("usage: lesson-monitor.test.mjs <20260717090000_...> <20261111110000_...> <20261112100000_class_recorder.sql> <20261117090000_lesson_monitor_pilot.sql> <20261120090000_lesson_monitor_cover_earlier.sql>");
   console.log("0 passed, 1 failed");
   process.exit(1);
 }
@@ -100,11 +101,21 @@ await db.exec(readFileSync(TA_MIG, "utf8"));
 await db.exec(`GRANT EXECUTE ON FUNCTION public.is_teacher_of_class(uuid, uuid) TO authenticated`);
 await db.exec(readFileSync(REC_MIG, "utf8"));
 await db.exec(readFileSync(LM_MIG, "utf8"));
+await db.exec(readFileSync(COVER_MIG, "utf8"));
 ok("applies on top of the class recorder", true);
 {
   let again = null;
-  try { await db.exec(readFileSync(LM_MIG, "utf8")); } catch (e) { again = e.message; }
-  ok("and applies a second time unchanged", again === null, again ?? "");
+  try { await db.exec(readFileSync(LM_MIG, "utf8")); await db.exec(readFileSync(COVER_MIG, "utf8")); } catch (e) { again = e.message; }
+  ok("and both apply a second time unchanged, in that order", again === null, again ?? "");
+  const n = (await one(`SELECT count(*)::int n FROM pg_proc WHERE proname = 'lesson_monitor_set_class'`)).n;
+  eq("...leaving ONE switch function (pasting the pilot again cannot make calls ambiguous)", n, 1);
+}
+{
+  const bare = new PGlite();
+  await bare.exec(PRELUDE);
+  let msg = null;
+  try { await bare.exec(readFileSync(COVER_MIG, "utf8")); } catch (e) { msg = e.message; }
+  refused("the start-date step refuses to install without the pilot", msg, /lesson monitor pilot \(20261117090000\) is not installed/);
 }
 {
   const bare = new PGlite();
@@ -236,8 +247,38 @@ refused("who must teach the class", await setClass(ADMIN, VENUS, true, tOther), 
 refused("a pilot is at most six weeks", await setClass(ADMIN, VENUS, true, tVictor, WORDING, "forms", 60), /1 to 42 days/);
 eq("with all of that, the admin switches Venus on for Victor", await setClass(ADMIN, VENUS, true), null);
 eq("four weeks from today", (await one(`SELECT (ends_on - starts_on)::int d, starts_on::text s FROM public.lesson_monitor_classes WHERE class_id = $1`, [VENUS])), { d: 27, s: today });
-eq("lessons recorded before the pilot started are never processed", await pendingFor(ADMIN), []);
-// From here on the pilot started ten days ago (as the superuser, no API can move it).
+eq("lessons recorded before the pilot started are not processed by switching on alone", await pendingFor(ADMIN), []);
+{
+  // 20 Nov 2026, the owner: "cover all available recordings". An admin moves the start back.
+  const coverFrom = (uid, cls, back) => tryAs(uid, () => db.query(`SELECT public.lesson_monitor_cover_from($1, $3::date - $2::int)`, [cls, back, today]));
+  refused("a teacher cannot move the start back", await coverFrom(VICTOR, VENUS, 10), /Only an admin/);
+  refused("nor a parent", await coverFrom(PARENT, VENUS, 10), /Only an admin/);
+  refused("anon cannot call it", await tryAs(null, () => db.query(`SELECT public.lesson_monitor_cover_from($1, current_date)`, [VENUS]), "anon"), /permission denied/);
+  refused("only for a class that is switched on", await coverFrom(ADMIN, MARS, 10), /Switch the lesson monitor on for this class first/);
+  refused("at most 30 days back (the report window)", await coverFrom(ADMIN, VENUS, 31), /At most 30 days back/);
+  // A child who was in Venus until yesterday (so at all three earlier lessons) and has no monitor consent.
+  const gone = (await one(`INSERT INTO public.students (full_name) VALUES ('Child Gone') RETURNING id`)).id;
+  await q(`INSERT INTO public.enrollments (student_id, class_id, end_date) VALUES ($1, $2, public.lesson_monitor__today() - 1)`, [gone, VENUS]);
+  refused("an earlier lesson day with a child lacking consent: not moved, and says how many",
+    await coverFrom(ADMIN, VENUS, 10), /Not moved: 3 of the 3 earlier lesson day\(s\) have a child without the monitor consent/);
+  eq("...the start is unchanged", (await one(`SELECT starts_on::text s FROM public.lesson_monitor_classes WHERE class_id = $1`, [VENUS])).s, today);
+  await q(`DELETE FROM public.enrollments WHERE student_id = $1`, [gone]);
+  await q(`DELETE FROM public.students WHERE id = $1`, [gone]);
+  // A six-week pilot cannot also reach ten days back (the table's 42-day span).
+  eq("switched on for 42 days", await setClass(ADMIN, VENUS, true, tVictor, WORDING, "held by the school's lawyer", 42), null);
+  refused("then ten days back would span more than 42: refused", await coverFrom(ADMIN, VENUS, 10), /spans at most 42 days/);
+  eq("switched on again for 28 days", await setClass(ADMIN, VENUS, true), null);
+  const res = (await valAs(ADMIN, `SELECT public.lesson_monitor_cover_from($1, $2::date - 10) j`, [VENUS, today])).j;
+  eq("the admin moves Venus's start ten days back: three earlier lessons", res.lessons_added, 3);
+  eq("...the class now starts then and still ends four weeks from today",
+    await one(`SELECT (starts_on = public.lesson_monitor__today() - 10) a, (ends_on = public.lesson_monitor__today() + 27) b FROM public.lesson_monitor_classes WHERE class_id = $1`, [VENUS]), { a: true, b: true });
+  eq("...and those lessons are now waiting (the cover teacher's too: begin refuses it)", await pendingFor(ADMIN), [rV1, rV2, rVcover].sort());
+  eq("...logged as a switch_on with the dates and a count, nothing else",
+    (await one(`SELECT detail ? 'cover_from' a, (detail->>'earlier_lesson_days')::int n, actor = $2 b FROM public.lesson_monitor_audit
+                 WHERE class_id = $1 AND action = 'switch_on' ORDER BY id DESC LIMIT 1`, [VENUS, ADMIN])), { a: true, n: 3, b: true });
+  eq("a date not earlier than the start changes nothing", (await valAs(ADMIN, `SELECT public.lesson_monitor_cover_from($1, $2::date) j`, [VENUS, today])).j.lessons_added, 0);
+}
+// From here on the pilot started ten days ago and ends in 17 days (as the superuser, to keep the dates below).
 const backdate = (cls) => raw(`UPDATE public.lesson_monitor_classes SET starts_on = public.lesson_monitor__today() - 10,
   ends_on = public.lesson_monitor__today() + 17 WHERE class_id = $1`, [cls]);
 await backdate(VENUS);

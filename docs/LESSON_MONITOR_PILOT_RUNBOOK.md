@@ -100,6 +100,8 @@ PY scripts\lesson-monitor\step0.py score
 
 The result is saved in `pilot\step0\result.json`. The overnight job refuses to start until words and grammar have passed.
 
+**Your ruling, 20 Nov 2026:** Victor's check of 12 Nov stands for step 0. He marked a 5-minute clip: about 17 wrong or missed words in about 540 (about 3 %), and children's mistakes kept as said in 39 of 40 turns. Both pass the bars above. That clip was the Azure transcript (the evaluation), not the laptop's own program, which agrees with Azure about 87 % on clips but has not been checked by a person. `result.json` records it that way, and talk-time is left out of every report (it was never marked per 10 seconds).
+
 ### Condition 4 - BitLocker on, and a separate Windows account for the job
 
 **BitLocker.** Open PowerShell **as administrator** and run `manage-bde -status C:`. It must say `Protection Status: Protection On` and `Conversion Status: Fully Encrypted`. Or open Settings > Privacy & security > Device encryption (or Control Panel > BitLocker Drive Encryption): it must say **On** for drive C:. If it is off, turn it on there and keep the recovery key somewhere safe away from the laptop. This was not checked during the build.
@@ -122,6 +124,7 @@ The result is saved in `pilot\step0\result.json`. The overnight job refuses to s
 ## 2. Paste the database change and release the screen
 
 1. Paste `supabase/migrations/20261117090000_lesson_monitor_pilot.sql` into the Supabase SQL editor and run it. It refuses to install if the class recorder is not there. It is safe to run twice.
+   Then paste `supabase/migrations/20261120090000_lesson_monitor_cover_earlier.sql` (it lets `switch-on --from` cover lessons already recorded). It refuses to install without the first one, and is safe to run twice.
 2. Publish the app: the new screen is `/teacher/lesson-reports` ("Lesson reports"). It appears in the menu only for a teacher of a pilot class.
 3. No edge function is added or changed.
 
@@ -129,9 +132,11 @@ The result is saved in `pilot\step0\result.json`. The overnight job refuses to s
 
 ```powershell
 PY scripts\lesson-monitor\pilot_admin.py switch-on --class-id <Venus id> --teacher-id <Victor's teacher id> --note "signed monitor lines, office folder M"
+#   cover lessons already recorded too (your ruling, 20 Nov: "cover all available recordings"):
+PY scripts\lesson-monitor\pilot_admin.py switch-on --class-id <Venus id> --teacher-id <Victor's teacher id> --note "held by the school's lawyer" --from 2026-11-19
 ```
 
-It runs for 28 days from today. The app refuses if any Venus child lacks the lines, if the note is empty, or if the teacher does not teach Venus. Only lessons **Victor** taught, from today on, are processed. A lesson a cover teacher taught is refused: that teacher was not asked.
+It runs for 28 days from today. The app refuses if any Venus child lacks the lines, if the note is empty, or if the teacher does not teach Venus. Only lessons **Victor** taught, from today on (or from the `--from` date, at most 30 days back), are processed. With `--from`, every earlier recorded lesson must also have had every child in it consented on that day, or nothing is moved. A lesson a cover teacher taught is refused: that teacher was not asked.
 
 ## 4. Each evening
 

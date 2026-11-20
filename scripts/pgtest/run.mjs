@@ -273,6 +273,9 @@ const SUITES = [
   // 20260717090000 first: the existing class-recordings bucket and its policy,
   // so the suite proves the recorder leaves them alone (C1 critic 2, N1).
   { name: "class recorder", file: "recorder.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql"] },
+  // The lesson monitor pilot on top of the recorder (were run by hand only until 20 Nov 2026).
+  { name: "lesson monitor", file: "lesson-monitor.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql"] },
+  { name: "lesson monitor review", file: "lesson-monitor-review.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql"] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
