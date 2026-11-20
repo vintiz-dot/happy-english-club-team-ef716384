@@ -132,5 +132,23 @@ console.log("=== admin: which teachers of a switched-on class have set up the mi
   eq("dates read as day and month", [U.shortDate("2026-11-17"), U.shortDate("2027-01-05"), U.shortDate("odd")], ["17 Nov", "5 Jan", "odd"]);
 }
 
+console.log("=== admin card: saved, not only verified (19 Nov 2026) ===");
+{
+  const M = 60000;
+  // Venus: all 79 min saved, 78 of them late (a slow upload), complete.
+  const venus = U.savedLines({ status: "complete", saved_ms: 79.3 * M, late_ms: 77.8 * M, recorded_ms: null }, "Teacher V");
+  ok("complete: says how much is on the server", venus[0].tone === "ok" && /On the server: 1 h 19 min\./.test(venus[0].text), venus[0].text);
+  ok("...and that most of it arrived late, kept but not verified", /1 h 18 min of it reached the server more than 10 minutes after/.test(venus[1]?.text ?? "") && /not counted as verified/.test(venus[1].text), venus[1]?.text);
+  // Jupiter: 30 min on the server, 77 recorded, still uploading.
+  const jup = U.savedLines({ status: "uploading", saved_ms: 30.5 * M, late_ms: 2 * M, recorded_ms: 77.2 * M }, "Teacher V");
+  ok("still sending: so far, of how much, and what the teacher must do", jup[0].tone === "warn" && /31 min of 1 h 17 min recorded/.test(jup[0].text) && /Teacher V signs in on that laptop and opens Class recorder/.test(jup[0].text), jup[0].text);
+  const nearly = U.savedLines({ status: "uploading", saved_ms: 30 * M, late_ms: 0, recorded_ms: 30.5 * M }, "T");
+  ok("sending, almost all there: no alarm, 'so far'", nearly[0].tone === "info" && /so far/.test(nearly[0].text) && nearly.length === 1, JSON.stringify(nearly));
+  const onTime = U.savedLines({ status: "complete", saved_ms: 88 * M, late_ms: 0, recorded_ms: null }, "T");
+  ok("all on time: one line, no 'late' line", onTime.length === 1);
+  ok("the late allowance is the recording's own", /more than 15 minutes after/.test(U.savedLines({ status: "complete", saved_ms: 60 * M, late_ms: 5 * M, recorded_ms: null, late_after_ms: 15 * M }, "T")[1].text));
+  ok("nothing yet (an old row with no figures): 0 min, no crash", /On the server: 0 min/.test(U.savedLines({ status: "abandoned", saved_ms: null, late_ms: null, recorded_ms: null }, "T")[0].text));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

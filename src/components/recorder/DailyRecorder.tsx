@@ -28,7 +28,7 @@ import type { RecorderLike } from "./engine";
 import { dayDeps, fetchClassSwitch, fetchEnrolled, fetchMissingConsentCount, fetchRecorderSettings, fetchTodayLessons } from "./data";
 import { LevelMeter, MicTick, Notice, Status } from "./pieces";
 import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
-import { adopt, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
+import { adopt, askNotifications, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
 
 // `stalled` is a capturing state: Stop stays, the screen must not be left (C2 review 2, item 1).
 const CAPTURING: RecorderState[] = CAPTURING_STATES;   // one list, shared with the floating bar (tested)
@@ -182,7 +182,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
 
   const ready = async (byClick = true) => {
     setBusy(true);
-    if (byClick) { setBoard([]); setClicked(true); pressReady(userId, today); }
+    if (byClick) { setBoard([]); setClicked(true); pressReady(userId, today); askNotifications(); }
     try {
       let r = rec.current;
       if (!r) {
@@ -404,7 +404,12 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
               {`The recorder could not get the lesson ready (${ss.notArmed}). It keeps trying by itself. If this stays until the lesson starts, use the backup recorder.`}
             </Notice>
           ) : null}
-          {clicked && (state === "ready" || state === "armed") && lesson && !ss?.refusal && !(ss?.notArmed && state === "ready") ? (
+          {ss?.startOverdue && state === "armed" ? (
+            <Notice tone="error" title="Not recording yet" role="alert">
+              Click anywhere on this page: the browser may be holding the microphones until you do. If it still does not start within a minute, check the messages above, use the backup recorder and tell the office.
+            </Notice>
+          ) : null}
+          {clicked && (state === "ready" || state === "armed") && lesson && !ss?.refusal && !(ss?.notArmed && state === "ready") && !(ss?.startOverdue && state === "armed") ? (
             <Status
               live
               line={{ tone: "ok", text: state === "armed"

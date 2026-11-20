@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { dayjs } from "@/lib/date";
 import {
-  auditActionLabel, consentGapText, consentGaps, durationWords, hanoiDate, recordingStatusLabel, noTeacherLine, retentionText, teacherSetupFor, teacherSetupLine, validReason,
+  auditActionLabel, consentGapText, consentGaps, durationWords, hanoiDate, recordingStatusLabel, noTeacherLine, retentionText, savedLines, teacherSetupFor, teacherSetupLine, validReason,
   type ClassSetup, type ConsentGap,
 } from "@/lib/recorderUi";
 import { useRecorderDeps } from "./RecorderDeps";
@@ -314,6 +314,9 @@ function RecordingItem({ r, className, by, onChanged }: { r: RecordingRow; class
           <p className="text-sm text-muted-foreground">Lesson {dayjs(r.scheduled_start).tz().format("HH:mm")}-{dayjs(r.scheduled_end).tz().format("HH:mm")}, recorded by {by}</p>
         </div>
         <Badge variant={r.status === "complete" && !requested ? "secondary" : "outline"}>{recordingStatusLabel(r.status, requested)}</Badge>
+      </div>
+      <div className="space-y-1 text-sm" data-saved-lines="">
+        {savedLines(r, by).map((l) => <Status key={l.text} line={l} className="text-sm" />)}
       </div>
       <dl className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1 text-sm">
         <div><dt className="text-muted-foreground inline">Verified: </dt><dd className="inline font-medium">{r.verified_audio_ms === null ? "not yet" : durationWords(r.verified_audio_ms)}</dd></div>

@@ -334,6 +334,8 @@ class FakeSource {
   async rebuild() { this.rebuilds++; if (this.rebuildHeals) this.stalled = false; return !this.stalled; }
   async listDevices() { return this.devices; }
   async openTracks(ids) {
+    this.opens = (this.opens ?? 0) + 1;
+    if (this.holdOpen) await this.holdOpen;   // 19 Nov 2026: Chrome holds getUserMedia until the page has focus
     this.open = true;
     const t = (role, id) => ({ role, deviceId: id, label: this.devices.find((d) => d.deviceId === id).label, groupId: this.devices.find((d) => d.deviceId === id).groupId,
       requested: R.buildConstraints(id, {}), applied: { deviceId: id, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1, sampleRate: 48000 }, notHonoured: [] });
@@ -1908,6 +1910,113 @@ console.log("=== C3-a: dispose() while capturing ends the capture properly ===")
   await r.dispose();
   ok("C3-a: the microphones are closed", !src.open);
   ok("C3-a: the Stop was sent (not a silent abandon)", ["uploading", "complete"].includes(w.server.recordings.get(row.id).status), w.server.recordings.get(row.id).status);
+}
+
+console.log("=== 19 Nov 2026: the microphones are opened early, while the page has focus ===");
+{
+  // Field: armed at 19:10, the teacher in another window; Chrome held the microphones until they clicked back at 19:52.
+  clock = Date.parse("2026-11-12T09:40:00.000Z");
+  const w = world({ start: clock + 15 * 60000 });
+  const store = new R.MemoryStore(), src = new FakeSource();
+  let focus = true;
+  const { r } = recorder(w, store, src, { hasFocus: () => focus });
+  await r.prepare();
+  const row = await r.arm(E(w));
+  await r.settle();
+  ok("armed before the window opens", r.state === "armed" && Date.parse(row.capture_opens_at) > clock);
+  eq("the microphones are opened at once, while the page has focus", src.opens, 1);
+  ok("...and nothing is forwarded (stored) before the capture", src.open && src.fwd === false);
+  focus = false;   // the teacher goes to another window
+  clock = Date.parse(row.capture_opens_at) + 1000;
+  r.tick(); await r.settle();
+  eq("at the window the capture starts without focus", r.state, "recording");
+  eq("...on the microphones already open: none asked for again", src.opens, 1);
+  await src.play(12, r);
+  await r.stop("manual"); await r.settle();
+  ok("and the lesson is recorded as usual", w.server.chunkRows(row.id).length >= 2 && ["uploading", "complete"].includes(w.server.recordings.get(row.id).status));
+}
+{
+  clock = Date.parse("2026-11-12T09:40:00.000Z");
+  const w = world({ start: clock + 15 * 60000 });
+  const store = new R.MemoryStore(), src = new FakeSource();
+  let focus = false;
+  const { r } = recorder(w, store, src, { hasFocus: () => focus });
+  await r.prepare();
+  const row = await r.arm(E(w));
+  r.tick(); await r.settle();
+  eq("no focus: nothing is opened early (it would hang)", src.opens ?? 0, 0);
+  clock += 60000; focus = true;
+  r.tick(); await r.settle();
+  eq("focus comes back before the window: opened then", src.opens, 1);
+  await r.stop("manual"); await r.settle();
+  ok("Stop while armed gives the row up and closes the microphones", r.state === "abandoned" && !src.open && w.server.recordings.get(row.id).status === "abandoned");
+}
+{
+  clock = Date.parse("2026-11-12T09:40:00.000Z");
+  const w = world({ start: clock + 15 * 60000 });
+  const store = new R.MemoryStore(), src = new FakeSource();
+  const { r } = recorder(w, store, src, { hasFocus: () => true });
+  await r.prepare();
+  const row = await r.arm(E(w));
+  await r.settle();
+  src.open = false;   // the browser ended them (a plug pulled) before the window: trackLive says so
+  src.trackLive = () => src.open;
+  clock = Date.parse(row.capture_opens_at) + 1000;
+  r.tick(); await r.settle();
+  ok("early microphones that died are opened again at the start", r.state === "recording" && src.opens === 2 && src.open, `${r.state} ${src.opens}`);
+  await r.dispose();
+}
+{
+  clock = Date.parse("2026-11-12T09:40:00.000Z");
+  const w = world({ start: clock + 15 * 60000 });
+  const store = new R.MemoryStore(), src = new FakeSource();
+  const { r } = recorder(w, store, src, { hasFocus: () => true });
+  await r.prepare();
+  await r.arm(E(w)); await r.settle();
+  await r.dispose();
+  ok("disposed while armed: the early microphones are closed", !src.open);
+}
+{
+  // No early open (no focus all along): the start waits for the browser, and starts when it gives the microphones.
+  clock = Date.parse("2026-11-12T09:40:00.000Z");
+  const w = world({ start: clock + 15 * 60000 });
+  const store = new R.MemoryStore(), src = new FakeSource();
+  let release; src.holdOpen = new Promise((res) => { release = res; });
+  let focus = false;
+  const { r } = recorder(w, store, src, { hasFocus: () => focus });
+  await r.prepare();
+  const row = await r.arm(E(w));
+  clock = Date.parse(row.capture_opens_at) + 1000;
+  r.tick();
+  // Not settle(): the control queue is held by the open, exactly as in the field.
+  await new Promise((res) => setTimeout(res, 50));
+  eq("held by the browser: still armed, not recording", r.state, "armed");
+  // Review finding: the teacher clicks back (focus) while the start's own open is still held - no second open.
+  focus = true;
+  for (let i = 0; i < 5; i++) { clock += 3000; r.tick(); }
+  await new Promise((res) => setTimeout(res, 50));
+  eq("focus while the start is opening them: no early open beside it", src.opens, 1);
+  src.holdOpen = null; release();
+  await r.settle(); r.tick(); await r.settle();
+  eq("given the microphones (the teacher clicked the page): recording", r.state, "recording");
+  eq("...on that one pair only", src.opens, 1);
+  await r.dispose();
+}
+{
+  // Review finding: a context suspended since the early open (the laptop slept) is woken before the reuse.
+  clock = Date.parse("2026-11-12T09:40:00.000Z");
+  const w = world({ start: clock + 15 * 60000 });
+  const store = new R.MemoryStore(), src = new FakeSource();
+  const { r } = recorder(w, store, src, { hasFocus: () => true });
+  await r.prepare();
+  const row = await r.arm(E(w)); await r.settle();
+  src.contextState = "suspended";
+  const before = src.resumes;
+  src.resume = async function () { this.resumes++; this.contextState = "running"; return true; };
+  clock = Date.parse(row.capture_opens_at) + 1000;
+  r.tick(); await r.settle();
+  ok("early microphones reused after a sleep: the context is resumed first", r.state === "recording" && src.resumes > before && src.opens === 1, `${r.state} ${src.resumes - before} ${src.opens}`);
+  await r.dispose();
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

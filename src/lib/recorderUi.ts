@@ -672,3 +672,26 @@ export function teacherSetupLine(t: TeacherSetup, name: string, fmt: (iso: strin
 export function noTeacherLine(n: number): StatusLine | null {
   return n > 0 ? { tone: "warn", text: `${n} ${n === 1 ? "lesson" : "lessons"} in the next two weeks ${n === 1 ? "has" : "have"} no teacher with a login, so ${n === 1 ? "it is" : "they are"} NOT recorded.` } : null;
 }
+
+// ---------------------------------------------------------------- saved vs verified (19 Nov 2026)
+//
+// The admin card showed only "Verified" (audio that reached the server within
+// late_after of being recorded). A slow upload made a fully saved 79-minute
+// lesson read "14 min", and a lesson still on the laptop looked finished.
+
+/** What the card says about how much is saved, beside "Verified". */
+export function savedLines(r: { status: string; saved_ms: number | null; late_ms: number | null; recorded_ms: number | null; late_after_ms?: number | null }, by: string): StatusLine[] {
+  const out: StatusLine[] = [];
+  const saved = r.saved_ms ?? 0;
+  const sending = r.status === "recording" || r.status === "uploading";
+  if (sending && r.recorded_ms !== null && r.recorded_ms > saved + 60_000) {
+    out.push({ tone: "warn", text: `On the server so far: ${durationWords(saved)} of ${durationWords(r.recorded_ms)} recorded. The rest is still on the laptop that recorded it; it is sent when ${by} signs in on that laptop and opens Class recorder, and keeps the page open until this says Saved.` });
+  } else {
+    out.push({ tone: sending ? "info" : "ok", text: `On the server: ${durationWords(saved)}${sending ? " so far" : ""}.` });
+  }
+  if ((r.late_ms ?? 0) >= 60_000) {
+    const late = Math.round((r.late_after_ms ?? 600_000) / MIN);
+    out.push({ tone: "info", text: `${durationWords(r.late_ms)} of it reached the server more than ${late} ${late === 1 ? "minute" : "minutes"} after it was recorded (a slow upload): kept and usable, but not counted as verified.` });
+  }
+  return out;
+}

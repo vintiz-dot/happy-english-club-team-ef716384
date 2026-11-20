@@ -20,7 +20,7 @@ import {
 /** What the daily screen uses of a Recorder. */
 export type RecorderLike = Pick<Recorder,
   "state" | "recordingId" | "on" | "prepare" | "recover" | "arm" | "marker" | "stop" | "swapMeasurement" | "extend" | "uploadProgress" | "dispose" | "serverNow" | "setProfile"
-  | "signOut" | "othersPending" | "heldAudio" | "durable" | "discardLocal" | "current">;
+  | "signOut" | "othersPending" | "heldAudio" | "durable" | "discardLocal" | "current"> & Partial<Pick<Recorder, "micsOpen">>;
 
 export interface ProbeClip { url: string; seconds: number; peakDb: number }
 export interface ProbeResult { teacher: ProbeClip; room: ProbeClip; swap: SwapMeasurement }

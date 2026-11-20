@@ -104,6 +104,12 @@ export interface RecorderOptions {
   memoryHoldBytes?: number;
   /** m1: false when the store is not crash-safe (no IndexedDB). arm() refuses then. Default true. */
   durable?: boolean;
+  /**
+   * 19 Nov 2026: does the page have focus? Chrome keeps getUserMedia pending
+   * until it does, so the microphones are opened early while it has
+   * (`openEarly`). Default document.hasFocus(); true where there is no document.
+   */
+  hasFocus?: () => boolean;
 }
 
 interface PreBatch { frame: number; t: Int16Array; r: Int16Array }
@@ -197,6 +203,18 @@ export class Recorder {
   private io: Promise<unknown> = Promise.resolve();
   private pageWatched = false;
   private lastBeginTry = -1e15;
+  /**
+   * 19 Nov 2026 (field): the armed lesson's microphones, opened while the page
+   * had focus, before its capture window. Chrome holds getUserMedia until the
+   * page has focus: opened only at the start, a lesson whose teacher was in
+   * another window began 27 minutes late, when they clicked back. Nothing is
+   * kept from them until capture: the worklet forwards no audio before then.
+   */
+  private early: { recId: string; tracks: Record<TrackRole, TrackOpen> } | null = null;
+  private earlyP: Promise<void> | null = null;
+  private lastEarlyTry = -1e15;
+  /** beginCapture is running (it may be opening the microphones itself): no early open meanwhile. */
+  private beginning = false;
   private health: HealthMonitor;
   private lastLevelAt = 0;
   private wakeLock: any = null;
@@ -244,6 +262,8 @@ export class Recorder {
   get recordingId(): string | null { return this.active?.rec.id ?? null; }
   /** m1: false when this engine cannot keep audio across a crash (no IndexedDB). */
   get durable(): boolean { return this.o.durable; }
+  /** 19 Nov 2026: the armed lesson's microphones are already open (opened early). False while armed without them. */
+  get micsOpen(): boolean { return !!this.early && this.active?.rec.id === this.early.recId; }
   /**
    * The server's time (B2): measured, then carried on the monotonic clock.
    * Before the first measurement: the laptop clock.
@@ -342,6 +362,7 @@ export class Recorder {
         // Armed, nothing recorded: give the row up.
         await this.o.backend.abandon(a.rec.id, reason === "manual" ? "stopped before the lesson" : reason).catch((e) => this.events.emit("error", toRecorderError(e)));
         a.rec.phase = "abandoned"; a.rec.serverStatus = "abandoned";
+        this.dropEarly();
         await this.saveRec(a.rec);
         this.setState("abandoned");
         this.releaseWakeLock();
@@ -626,6 +647,8 @@ export class Recorder {
       await this.work; await this.io;
       // A Start in flight is waited for briefly, never indefinitely (it may hang: B3).
       await Promise.race([this.startP, new Promise((r) => setTimeout(r, 0))]);
+      // An early microphone open (19 Nov 2026) is waited for briefly too: it may hang until the page has focus.
+      await Promise.race([this.earlyP ?? Promise.resolve(), new Promise((r) => setTimeout(r, 0))]);
       await Promise.all([...this.driving.values()]);
     }
   }
@@ -658,6 +681,7 @@ export class Recorder {
       await Promise.race([this.endCapture("manual").catch(() => null), new Promise((r) => setTimeout(r, 5000))]);
       this.o.source.closeTracks();
     }
+    this.dropEarly();
     this.disposed = true;
     if (this.interval) clearInterval(this.interval);
     this.interval = null;
@@ -736,8 +760,15 @@ export class Recorder {
     const now = this.serverNow();
     if (perf - this.lastOffsetAt > 10 * 60000) void this.measureClock();
     if (perf - this.lastStorageCheck > 60000) void this.checkStorage(false);
+    // 19 Nov 2026: microphones opened early belong to the armed lesson only.
+    if (this.early && (!a || a.rec.id !== this.early.recId || a.rec.phase !== "armed")) this.dropEarly();
     if (a) {
       const rec = a.rec;
+      // Only BEFORE the window: from then on beginCapture opens them, and two opens at once would leave a pair switched on.
+      if (rec.phase === "armed" && !a.capturing && !this.early && !this.earlyP && !this.beginning && now < ms(rec.captureOpensAt) && perf - this.lastEarlyTry > 10000 && this.focused()) {
+        this.lastEarlyTry = perf;
+        this.earlyP = this.openEarly().finally(() => { this.earlyP = null; });
+      }
       if (rec.phase === "armed" && !a.capturing && now >= ms(rec.captureOpensAt) && now < ms(rec.captureClosesAt) && perf - this.lastBeginTry > 2000) {
         this.lastBeginTry = perf;
         this.serial(() => this.beginCapture());
@@ -939,21 +970,75 @@ export class Recorder {
     };
   }
 
+  private focused(): boolean {
+    if (this.o.hasFocus) return this.o.hasFocus();
+    if (typeof document === "undefined" || typeof document.hasFocus !== "function") return true;
+    try { return document.hasFocus(); } catch { return true; }
+  }
+
+  /** 19 Nov 2026: open the armed lesson's microphones now, while the page has focus (see `early`). */
+  private async openEarly(): Promise<void> {
+    const a = this.active;
+    if (!a || a.capturing || a.rec.phase !== "armed" || this.early) return;
+    const recId = a.rec.id;
+    try {
+      const devices = resolveProfile(this.o.profile, await this.o.source.listDevices());
+      if (devices.status !== "ok") return;   // beginCapture says why, at the start
+      const tracks = await this.o.source.openTracks({ teacher: devices.teacher.deviceId, room: devices.room.deviceId });
+      const still = this.active;
+      if (!this.disposed && still && still.rec.id === recId && still.rec.phase === "armed" && !still.capturing) this.early = { recId, tracks };
+      else if (!still?.capturing) this.o.source.closeTracks();
+    } catch { /* beginCapture opens them again at the start and says why */ }
+  }
+
+  /** The early microphones are no longer wanted: closed, unless a capture is using the source. */
+  private dropEarly() {
+    if (!this.early) return;
+    this.early = null;
+    if (!this.active?.capturing) this.o.source.closeTracks();
+  }
+
   private async beginCapture() {
+    if (this.beginning) return;
+    this.beginning = true;
+    try { await this.beginCaptureOnce(); } finally { this.beginning = false; }
+  }
+
+  private async beginCaptureOnce() {
     const a = this.active;
     if (!a || a.capturing || a.rec.phase !== "armed") return;
+    // An early open still under way is waited for, not doubled.
+    if (this.earlyP) await this.earlyP;
+    if (this.active !== a || a.capturing || a.rec.phase !== "armed") return;
     const devices = resolveProfile(this.o.profile, await this.o.source.listDevices());
     if (devices.status !== "ok") {
+      this.dropEarly();
       const code = devices.status === "same_device" ? "same_device_twice" : devices.status === "ambiguous" ? "device_ambiguous" : "device_missing";
       this.events.emit("error", new RecorderError(code, "Run the microphone check: the saved microphones were not found", { detail: devices }));
       return; // tick() tries again; never falls back to another microphone
     }
     let opened: Record<TrackRole, TrackOpen>;
-    try {
-      opened = await this.o.source.openTracks({ teacher: devices.teacher.deviceId, room: devices.room.deviceId });
-    } catch (e) {
-      this.events.emit("error", toRecorderError(e));
-      return;
+    const early = this.early;
+    this.early = null;
+    const earlyOk = !!early && early.recId === a.rec.id
+      && early.tracks.teacher.deviceId === devices.teacher.deviceId && early.tracks.room.deviceId === devices.room.deviceId
+      && (!this.o.source.trackLive || (this.o.source.trackLive("teacher") && this.o.source.trackLive("room")));
+    if (earlyOk) {
+      opened = early!.tracks;
+      // openTracks would have woken a suspended context (a sleep since the early open): so must this path.
+      // Never reopened here: a reopen can be held by the browser until the page has focus.
+      if (this.o.source.contextState !== "running") {
+        const running = await this.o.source.resume().catch(() => false);
+        if (!running && this.o.source.rebuild) await this.o.source.rebuild().catch(() => false);
+      }
+    } else {
+      if (early) this.o.source.closeTracks();
+      try {
+        opened = await this.o.source.openTracks({ teacher: devices.teacher.deviceId, room: devices.room.deviceId });
+      } catch (e) {
+        this.events.emit("error", toRecorderError(e));
+        return;
+      }
     }
     const rec = a.rec;
     rec.tracks = [];
@@ -1893,6 +1978,8 @@ export class Recorder {
       if (document.visibilityState === "visible") { void this.acquireWakeLock(); this.tick(); }
     });
     if (typeof window !== "undefined") {
+      // 19 Nov 2026: the page got focus - the armed lesson's microphones can be opened now (tick).
+      window.addEventListener("focus", () => { this.lastEarlyTry = -1e15; this.tick(); });
       window.addEventListener("online", () => void this.kickUploads());
       window.addEventListener("beforeunload", (e) => {
         if ((this.active && (this.active.capturing || this.active.rec.phase === "armed")) || this.parked.size) { e.preventDefault(); (e as any).returnValue = ""; }

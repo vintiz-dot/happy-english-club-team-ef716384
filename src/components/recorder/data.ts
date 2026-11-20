@@ -191,13 +191,21 @@ export interface RecordingRow {
   deletion_reason: string | null;
   audio_deleted_at: string | null;
   verified_audio_ms: number | null;
+  /** Audio confirmed on the server, longest track (the view's claimed_audio_ms), on time or late. */
+  saved_ms: number | null;
+  /** Of that, what arrived more than late_after after it was recorded: kept, never verified. */
+  late_ms: number | null;
+  /** How long the laptop recorded, by its own start and stop (null until it has stopped). A laptop's claim. */
+  recorded_ms: number | null;
+  /** The recording's own "late" allowance (late_after_ms). */
+  late_after_ms: number | null;
   verified_lesson_ms: number | null;
   ran: boolean | null;
 }
 
 export async function fetchRecordings(client: Client): Promise<RecordingRow[]> {
   const { data } = await client.from("class_recordings")
-    .select("id, class_id, session_date, scheduled_start, scheduled_end, status, started_by, stop_reason, abandon_reason, delete_after, deletion_requested_at, deletion_reason, audio_deleted_at")
+    .select("id, class_id, session_date, scheduled_start, scheduled_end, status, started_by, stop_reason, abandon_reason, delete_after, deletion_requested_at, deletion_reason, audio_deleted_at, client_started_at, client_ended_at, late_after_ms")
     .order("scheduled_start", { ascending: false })
     .limit(200);
   const rows = data ?? [];
@@ -206,13 +214,22 @@ export async function fetchRecordings(client: Client): Promise<RecordingRow[]> {
   if (ids.length) {
     // Duration "verified by the server": the view's figures, never the laptop's claim.
     const { data: e } = await client.from("recorder_session_evidence")
-      .select("recording_id, verified_audio_ms, verified_lesson_ms, recording_ran_evidence")
+      .select("recording_id, verified_audio_ms, verified_lesson_ms, recording_ran_evidence, claimed_audio_ms, late_audio_ms")
       .in("recording_id", ids);
     for (const x of e ?? []) ev.set(x.recording_id, x);
   }
+  // 19 Nov 2026: how long the laptop recorded, by its own start and stop (pieces it never registered count too).
+  const recordedMs = (r: any): number | null => {
+    const a = Date.parse(r.client_started_at ?? ""), b = Date.parse(r.client_ended_at ?? "");
+    return Number.isFinite(a) && Number.isFinite(b) && b > a ? b - a : null;
+  };
   return rows.map((r: any) => ({
     ...r,
     verified_audio_ms: ev.get(r.id)?.verified_audio_ms ?? null,
+    saved_ms: ev.get(r.id)?.claimed_audio_ms ?? null,
+    late_ms: ev.get(r.id)?.late_audio_ms ?? null,
+    recorded_ms: recordedMs(r),
+    late_after_ms: r.late_after_ms ?? null,
     verified_lesson_ms: ev.get(r.id)?.verified_lesson_ms ?? null,
     ran: ev.get(r.id)?.recording_ran_evidence ?? null,
   }));

@@ -435,5 +435,24 @@ console.log("=== the screen uses the session, not its own engine lifetime ===");
   ok("R4-2: RecorderBoot is mounted once in App", (app.match(/<RecorderBoot \/>/g) ?? []).length === 1);
 }
 
+console.log("=== 19 Nov 2026: a start held back is said loudly ===");
+{
+  const at = (hm) => U.hanoiMs("2026-11-19", hm);
+  ok("armed 30 s after the capture should have begun: overdue", S.isStartOverdue("armed", "2026-11-19", "19:25", at("19:10:12"), at("19:25:30")));
+  ok("...not before", !S.isStartOverdue("armed", "2026-11-19", "19:25", at("19:10:12"), at("19:25:29")));
+  ok("Ready pressed after the lesson began: counted from the arming, not the lesson", !S.isStartOverdue("armed", "2026-11-19", "17:25", at("17:41:34"), at("17:41:40")) && S.isStartOverdue("armed", "2026-11-19", "17:25", at("17:41:34"), at("17:42:05")));
+  ok("only while armed (recording, saving, idle are not)", ["recording", "starting", "uploading", "ready", "idle"].every((st) => !S.isStartOverdue(st, "2026-11-19", "19:25", null, at("20:00"))));
+  ok("nothing known about the lesson: never overdue", !S.isStartOverdue("armed", null, null, null, at("20:00")));
+  const b = S.floatingBarModel("armed", "Jupiter", false, { armedAt: "19:25", startOverdue: true });
+  ok("the bar: an alert that it is NOT recording, and what to do", b.show && b.alert && /NOT RECORDING YET/.test(b.text) && /click anywhere on this page/.test(b.text), b.text);
+  ok("an ordinary armed bar stays calm", !S.floatingBarModel("armed", "Jupiter", false, { armedAt: "19:25" }).alert);
+  ok("'Allow sound' still comes first", /Allow sound/.test(S.floatingBarModel("armed", "", false, { needsClick: true, startOverdue: true }).text));
+  const pre = S.floatingBarModel("armed", "Jupiter", false, { armedAt: "19:25", micsOpen: false });
+  ok("armed, microphones not open yet: asks for one click before the start, calmly", pre.show && !pre.alert && /click anywhere on this page once before 19:25/.test(pre.text), pre.text);
+  ok("microphones open: the usual 'by itself'", /by itself/.test(S.floatingBarModel("armed", "Jupiter", false, { armedAt: "19:25", micsOpen: true }).text));
+  ok("overdue wording does not claim one cause", /if it still does not start, open the recorder/.test(b.text));
+  ok("the notification ask is safe where there is no browser", (() => { try { S.askNotifications(); return true; } catch { return false; } })());
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -29,7 +29,7 @@
  */
 import type { RecorderError, RecorderState, ServerRefusal } from "@/lib/recorder";
 import { backoffDelay } from "@/lib/recorder/backoff";
-import { addMinutes, DEFAULT_MINUTES, hanoiDate, lessonPhase, lessonTimes, nextAfter, pickLesson, refusalView, type LessonLike, type WindowMinutes } from "@/lib/recorderUi";
+import { addMinutes, DEFAULT_MINUTES, hanoiDate, hanoiMs, lessonPhase, lessonTimes, nextAfter, pickLesson, refusalView, type LessonLike, type WindowMinutes } from "@/lib/recorderUi";
 import type { RecorderLike } from "./engine";
 import { registerSignOutHook } from "./signOutGuard";
 
@@ -128,7 +128,7 @@ interface Day {
   /** R5-1: a lesson the server refused today (not over yet): said until it is over. */
   refusal: { className: string; reason: string } | null;
   /** R5-2: the ARMED lesson's own start of capture (the next lesson's is in `next`). */
-  armedAt: { sessionId: string; className: string; at: string } | null;
+  armedAt: { sessionId: string; className: string; at: string; since?: number } | null;
 }
 
 interface Session {
@@ -157,6 +157,14 @@ export interface BarExtra {
   notArmed?: string | null;
   /** R5-1: the server refused a lesson of today (final). */
   refusal?: { className: string; reason: string } | null;
+  /**
+   * 19 Nov 2026: still armed well after the armed lesson's capture should have
+   * begun - in the field, the browser holding the microphones until the page
+   * had focus. Said loudly: the teacher must click the page.
+   */
+  startOverdue?: boolean;
+  /** 19 Nov 2026: false = armed, the microphones not opened yet (the browser opens them only once the page has focus). */
+  micsOpen?: boolean | null;
 }
 export interface BarModel { show: boolean; text: string; redDot: boolean; alert: boolean; stop: boolean; allowSound: boolean }
 
@@ -171,9 +179,11 @@ export function floatingBarModel(state: RecorderState, label: string, attached: 
     case "recording": return bar(`Recording${what}`, { redDot: true, stop: true });
     case "stalled": return bar(`NOT RECORDING - the audio stopped${what}`, { alert: true, stop: true });
     case "starting": return bar(`Saving on this laptop - waiting for the school server${what}`, { stop: true });
-    case "armed": return extra.needsClick
-      ? bar(`NOT READY - click "Allow sound" or this lesson is not recorded${what}`, { alert: true })
-      : bar(`Armed${what} - recording starts at ${extra.armedAt ?? "the lesson's start"} by itself`);
+    case "armed":
+      if (extra.needsClick) return bar(`NOT READY - click "Allow sound" or this lesson is not recorded${what}`, { alert: true });
+      if (extra.startOverdue) return bar(`NOT RECORDING YET${what} - click anywhere on this page; if it still does not start, open the recorder to see why`, { alert: true });
+      if (extra.micsOpen === false) return bar(`Armed${what} - click anywhere on this page once before ${extra.armedAt ?? "the lesson's start"} so the browser lets the recorder open the microphones`);
+      return bar(`Armed${what} - recording starts at ${extra.armedAt ?? "the lesson's start"} by itself`);
     case "stopping": case "uploading": case "finalizing":
       if (extra.refusal) return refused(extra.refusal);
       if (extra.next && extra.problem) return bar(`NOT armed: ${extra.problem} - open the recorder`, { alert: true });
@@ -312,7 +322,7 @@ export async function armTick(): Promise<void> {
     try {
       await s.rec.arm({ sessionId: lesson.sessionId, classId: lesson.classId, className: lesson.className, date: lesson.date, startTime: lesson.startTime, endTime: lesson.endTime, status: lesson.status ?? undefined }, { stopAt });
       d.lastArmed = lesson.sessionId; d.retryAt = 0; d.armAttempts = 0; d.notArmed = null;
-      d.armedAt = { sessionId: lesson.sessionId, className: lesson.className, at: addMinutes(lesson.startTime, -d.w.preRoll) };
+      d.armedAt = { sessionId: lesson.sessionId, className: lesson.className, at: addMinutes(lesson.startTime, -d.w.preRoll), since: serverNow(s) };
       s.label = lesson.className;
       updateReady(s.userId, date, (x) => { if (!x.armed.includes(lesson.sessionId)) x.armed.push(lesson.sessionId); });
     } catch (e) {
@@ -374,10 +384,10 @@ export function detachScreen() {
 }
 
 /** For tests and the screen: what the session holds. */
-export function sessionState(): { userId: string; state: RecorderState; attached: number; next: Day["next"]; problem: string | null; pending: number; notArmed: string | null; refusal: Day["refusal"]; armedAt: Day["armedAt"] } | null {
+export function sessionState(): { userId: string; state: RecorderState; attached: number; next: Day["next"]; problem: string | null; pending: number; notArmed: string | null; refusal: Day["refusal"]; armedAt: Day["armedAt"]; startOverdue: boolean } | null {
   const c = current;
   return c ? { userId: c.userId, state: c.state, attached: c.attached, next: c.day?.next ?? null, problem: c.day?.problem ?? null, pending: c.pending,
-    notArmed: c.day?.notArmed ?? null, refusal: c.day?.refusal ?? null, armedAt: c.day?.armedAt ?? null } : null;
+    notArmed: c.day?.notArmed ?? null, refusal: c.day?.refusal ?? null, armedAt: c.day?.armedAt ?? null, startOverdue: startOverdue(c) } : null;
 }
 
 export async function endSession() {
@@ -494,12 +504,70 @@ export function barExtra(): BarExtra {
     armedAt: d?.armedAt?.at ?? null,
     notArmed: d?.notArmed ?? null,
     refusal: d?.refusal ?? null,
+    startOverdue: startOverdue(s),
+    micsOpen: s.state === "armed" ? (s.rec.micsOpen ?? null) : null,
   };
 }
+
+/** How long after the capture should have begun an armed lesson counts as late to start. */
+export const START_OVERDUE_MS = 30_000;
+
+/**
+ * Pure: still armed START_OVERDUE_MS after the capture should have begun -
+ * `at` ("HH:MM", Hanoi) on `date`, or when it was armed (`since`) if later
+ * (Ready pressed after the lesson began).
+ */
+export function isStartOverdue(state: RecorderState, date: string | null, at: string | null, since: number | null, nowMs: number): boolean {
+  if (state !== "armed" || !date || !at) return false;
+  return nowMs >= Math.max(hanoiMs(date, at), since ?? 0) + START_OVERDUE_MS;
+}
+
+/** The school server's time where the engine has it (a laptop clock that runs fast must not raise the alert). */
+function serverNow(s: Session): number {
+  try { const t = s.rec.serverNow(); if (Number.isFinite(t)) return t; } catch { /* a stand-in without it */ }
+  return s.day?.deps.now() ?? Date.now();
+}
+
+function startOverdue(s: Session): boolean {
+  const d = s.day;
+  return !!d && isStartOverdue(s.state, d.date, d.armedAt?.at ?? null, d.armedAt?.since ?? null, serverNow(s));
+}
+
+// 19 Nov 2026: a start held back by the browser is said outside the page too,
+// once per lesson, where the browser allows notifications (asked at "Ready").
+let notifiedFor: string | null = null;
+/** "Ready for today" (a click): ask once whether the recorder may show a notification. */
+export function askNotifications() {
+  try {
+    const N = typeof window !== "undefined" ? (window as any).Notification : undefined;
+    if (N && N.permission === "default") void N.requestPermission();
+  } catch { /* no notifications here */ }
+}
+function notifyOverdue(s: Session) {
+  const sid = s.day?.armedAt?.sessionId ?? null;
+  if (!sid || notifiedFor === sid || !startOverdue(s)) return;
+  notifiedFor = sid;
+  try {
+    const N = typeof window !== "undefined" ? (window as any).Notification : undefined;
+    if (!N || N.permission !== "granted") return;
+    const n = new N(`Class recorder: ${s.label || "the lesson"} is NOT recording yet`, {
+      body: "Click here, then click anywhere on the page, so the browser lets the recorder use the microphones.",
+      requireInteraction: true, tag: "hec-recorder-start",
+    });
+    n.onclick = () => { try { window.focus(); n.close(); } catch { /* */ } };
+  } catch { /* notifications refused or unsupported: the bar and the title still say it */ }
+}
+const OVERDUE_TITLE = "⚠ NOT RECORDING - ";
+const TITLE_PREFIXES = /^(● RECORDING|◌ ARMED|⚠ NOT RECORDING|◌ WAITING FOR THE SERVER) - /;
 
 function redraw() {
   if (typeof document === "undefined") return;
   hookFullscreen();
+  if (current && startOverdue(current)) {
+    // The tab title too (the engine rewrites it on its next state change).
+    if (!document.title.startsWith(OVERDUE_TITLE)) document.title = OVERDUE_TITLE + document.title.replace(TITLE_PREFIXES, "");
+    notifyOverdue(current);
+  }
   const m = current ? floatingBarModel(current.state, current.label, current.attached > 0, barExtra()) : floatingBarModel("idle", "", true);
   let el = document.getElementById(BAR_ID);
   if (!m.show) { el?.remove(); return; }
