@@ -454,5 +454,137 @@ console.log("=== 19 Nov 2026: a start held back is said loudly ===");
   ok("the notification ask is safe where there is no browser", (() => { try { S.askNotifications(); return true; } catch { return false; } })());
 }
 
+const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), JSON.stringify(g) === JSON.stringify(w) ? "" : `got ${JSON.stringify(g)}, want ${JSON.stringify(w)}`);
+console.log("=== 20 Nov 2026: earlier recordings still on this laptop are said, and sent ===");
+const U0 = (id, phase, total, confirmed, refused = 0) => ({ recordingId: id, sessionDate: "2026-11-19", phase, total, confirmed, refused });
+function sendRec(list) {
+  const r = fakeRec("ready");
+  r.list = list;
+  r.unfinished = async () => r.list;
+  r.heldAudio = async () => { throw new Error("heldAudio must not be used for this (it reads the audio)"); };
+  r.resends = 0; r.resend = async () => { r.resends++; };
+  const up = new Set(); const on0 = r.on;
+  r.on = (k, fn) => { if (k === "upload") { up.add(fn); return () => up.delete(fn); } return on0(k, fn); };
+  r.upload = (p) => { for (const fn of up) fn({ offline: false, refused: 0, halted: null, ...p }); };
+  return r;
+}
+const settle = async () => { await flush(); await new Promise((res) => setTimeout(res, 20)); await flush(); };
+{
+  await S.endSession();
+  const st = mem(); S.setStorageForTests(st);
+  const r = sendRec([U0("rec-j", "stopped", 310, 116)]);
+  S.adopt("t-h", r);
+  r.upload({ recordingId: "rec-j", total: 310, confirmed: 116, pending: 194 });
+  await settle();
+  const ss = S.sessionState();
+  ok("the held recording is listed, with its progress (from the pieces' records, not the audio)", ss?.held.length === 1 && ss.held[0].onServer === 116 && ss.held[0].total === 310, JSON.stringify(ss?.held));
+  ok("this laptop has been checked (so 'not here' can be said)", Array.isArray(ss?.localIds) && ss.localIds.includes("rec-j"));
+  ok("a hint is left for the next sign-in (a count, no names)", S.unsentHint("t-h") && st.getItem(S.UNSENT_PREFIX + "t-h") === "1");
+  const b = S.floatingBarModel("ready", "", false, S.barExtra());
+  ok("any page: the bar says it is being sent, and how far", b.show && /Sending the recording of 19 Nov to the school server/.test(b.text) && /116 of 310 pieces/.test(b.text) && !b.allowSound, b.text);
+  ok("the engine is kept while it is being sent", r.disposed === 0);
+  S.attachScreen();
+  await S.resendHeld(); await flush();
+  eq("'Send now' asks the engine to send at once", r.resends, 1);
+  r.list = [U0("rec-j", "finalized", 310, 310)];
+  r.upload({ recordingId: "rec-j", total: 310, confirmed: 310, pending: 0 });
+  await S.resendHeld(); await settle();
+  ok("all pieces there, still being finished: said, and kept", S.sessionState()?.held[0]?.finishing === true && r.disposed === 0);
+  r.list = [];
+  await S.resendHeld(); await settle();
+  const after = S.sessionState();
+  ok("finished and gone from the laptop: 'Saved' with the date", /Saved: all of the recording of 19 Nov is on the school server/.test(after?.saved ?? ""), after?.saved);
+  ok("...the list is empty and the hint gone", after?.held.length === 0 && !S.unsentHint("t-h"));
+  ok("...and, sent from here, it is never called 'on another laptop'", after?.localIds?.includes("rec-j"));
+  S.detachScreen(); await flush();
+  ok("nothing left to send and no screen: the engine is ended", r.disposed === 1);
+  ok("the bar still says Saved, to that teacher, once the engine is gone", /Saved/.test(S.floatingBarModel("idle", "", false, { saved: "Saved: x" }).text));
+}
+{
+  // Review: a lesson whose tab died mid-capture leaves the hint (the original incident).
+  await S.endSession();
+  const st = mem(); S.setStorageForTests(st);
+  const r = sendRec([U0("rec-live", "capturing", 40, 10)]);
+  r.recordingId = "rec-live";
+  S.adopt("t-l", r);
+  r.emit("recording");
+  r.upload({ recordingId: "rec-live", total: 40, confirmed: 10, pending: 30 });
+  await settle();
+  ok("the lesson being captured is not listed as 'earlier'", S.sessionState()?.held.length === 0);
+  ok("...but it leaves the hint, so the next sign-in sends it if this tab dies", S.unsentHint("t-l"));
+}
+{
+  // Review: pieces the server refused for good - said, but no engine kept for them, no hint.
+  await S.endSession();
+  const st = mem(); S.setStorageForTests(st);
+  const r = sendRec([U0("rec-r", "stopped", 10, 7, 3)]);
+  S.adopt("t-r", r); S.attachScreen();
+  r.upload({ recordingId: "rec-r", total: 10, confirmed: 7, pending: 0, refused: 3 });
+  await settle();
+  const ss = S.sessionState();
+  ok("refused pieces: said as a problem", /would not take 3 pieces/.test(ss?.held[0]?.problem ?? ""), JSON.stringify(ss?.held));
+  ok("...no hint (no engine at every sign-in for it)", !S.unsentHint("t-r"));
+  S.detachScreen(); await flush();
+  ok("...and the engine is not kept for it once the screen goes", r.disposed === 1);
+}
+{
+  // Review: given up by the server - never 'Saved'.
+  await S.endSession();
+  const st = mem(); S.setStorageForTests(st);
+  const r = sendRec([U0("rec-g", "stopped", 10, 4)]);
+  S.adopt("t-g", r); S.attachScreen();
+  r.upload({ recordingId: "rec-g", total: 10, confirmed: 4, pending: 6 });
+  await settle();
+  r.list = [U0("rec-g", "abandoned", 10, 4)];
+  await S.resendHeld(); await settle();
+  const t = S.sessionState()?.saved ?? "";
+  ok("given up: said so, never 'Saved'", /gave up the recording of 19 Nov/.test(t) && !/^Saved/.test(t), t);
+  S.detachScreen();
+}
+{
+  // Review: gone from the laptop while pieces were still pending (a deleted server row purged it) - not 'Saved'.
+  await S.endSession();
+  const st = mem(); S.setStorageForTests(st);
+  const r = sendRec([U0("rec-p", "stopped", 10, 4)]);
+  S.adopt("t-p", r); S.attachScreen();
+  r.upload({ recordingId: "rec-p", total: 10, confirmed: 4, pending: 6 });
+  await settle();
+  r.list = [];
+  await S.resendHeld(); await settle();
+  eq("purged with pieces pending: no 'Saved'", S.sessionState()?.saved ?? null, null);
+  S.detachScreen();
+}
+{
+  const offline = S.sendingText({ count: 1, dates: ["19 Nov"], onServer: 10, total: 310, offline: true, problem: null });
+  ok("offline: said loudly, waiting for the internet", offline.alert && /waiting for the internet/.test(offline.text));
+  const refused = S.sendingText({ count: 1, dates: ["19 Nov"], onServer: 10, total: 310, offline: false, problem: "the server would not take 3 pieces" });
+  ok("a refusal: said loudly, open the recorder", refused.alert && /would not take 3 pieces/.test(refused.text));
+  eq("still to send: stopped, finalized, or left mid-capture by a dead tab; never the lesson being captured, never given up",
+    S.stillToSend([U0("a", "stopped", 1, 0), U0("b", "finalized", 1, 1), U0("c", "capturing", 1, 0), U0("d", "abandoned", 1, 0), U0("f", "stopped", 1, 0)], "f").map((h) => h.recordingId), ["a", "b", "c"]);
+}
+{
+  // Sign-in on any page: no Ready today, but the hint says this teacher's audio waits here - the engine comes up to send it.
+  await S.endSession();
+  const st = mem(); S.setStorageForTests(st);
+  st.setItem(S.UNSENT_PREFIX + "t-b", "1");
+  const r = armRec("idle");
+  r.unfinished = async () => [U0("rec-x", "stopped", 20, 3)];
+  let made = 0;
+  await S.boot({ userId: "t-b", createRecorder: async () => { made++; return r; }, day: day([]) });
+  await flush();
+  ok("hint, no Ready: the engine is made, prepared and recovers (sends)", made === 1 && r.prepares === 1 && r.recovers === 1 && S.sessionState()?.userId === "t-b");
+  ok("...nothing is armed (no day started)", r.arms.length === 0 && !S.sessionState()?.next);
+  ok("...and the bar says it is sending", /Sending the recording of 19 Nov/.test(S.floatingBarModel(S.sessionState().state, "", false, S.barExtra()).text));
+  // Review: the recorder page already made this teacher's engine: boot's own is dropped, the page's stays.
+  let made3 = 0; const other = armRec("idle"); other.unfinished = async () => [];
+  await S.boot({ userId: "t-b", createRecorder: async () => { made3++; return other; }, day: day([]) });
+  ok("an engine for this teacher already there: it stays", S.sessionState() && r.disposed === 0 && made3 === 0);
+  await S.endSession();
+  let made2 = 0;
+  await S.boot({ userId: "t-c", createRecorder: async () => { made2++; return armRec("idle"); }, day: day([]) });
+  eq("no hint and no Ready: nothing is loaded", made2, 0);
+  S.setStorageForTests(store);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

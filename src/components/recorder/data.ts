@@ -154,6 +154,19 @@ export async function fetchTeacherSetup(client: Client, classIds: string[], from
   return { lessons, profiles: p ?? [] };
 }
 
+/** 20 Nov 2026: this teacher's own recordings the server has not got all of yet (they may read these rows), with class names. */
+export interface OwnUnfinished { id: string; class_id: string; className: string; session_date: string; status: string }
+export async function fetchOwnUnfinished(client: Client, userId: string): Promise<OwnUnfinished[]> {
+  const { data, error } = await client.from("class_recordings").select("id, class_id, session_date, status")
+    .eq("started_by", userId).in("status", ["recording", "uploading"]);
+  if (error) throw new Error(String(error.message ?? error));
+  const rows = data ?? [];
+  const ids = [...new Set(rows.map((r: any) => r.class_id).filter(Boolean))];
+  const { data: cls } = ids.length ? await client.from("classes").select("id, name").in("id", ids) : { data: [] };
+  const name = new Map<string, string>((cls ?? []).map((c: any) => [c.id, c.name]));
+  return rows.map((r: any) => ({ id: r.id, class_id: r.class_id, className: name.get(r.class_id) ?? "A class", session_date: r.session_date, status: r.status }));
+}
+
 export async function fetchConsents(client: Client): Promise<ConsentRow[]> {
   const { data } = await client.from("recorder_child_consents").select("student_id, status, wording_version");
   return data ?? [];

@@ -6,14 +6,15 @@
  * brings the engine back when this teacher pressed Ready today, so the
  * day's lessons still arm and start by themselves.
  *
- * Only a teacher or an admin, and only with Ready set today: the capture
+ * Only a teacher or an admin, and only with Ready set today (or audio of
+ * theirs still to send from this laptop, 20 Nov 2026): the capture
  * engine is loaded on demand (a dynamic import), never into every page.
  */
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { hanoiDate } from "@/lib/recorderUi";
-import { boot, followUser, readyFor } from "./session";
+import { boot, followUser, readyFor, unsentHint } from "./session";
 import { dayDeps } from "./data";
 
 export function RecorderBoot() {
@@ -22,7 +23,8 @@ export function RecorderBoot() {
   useEffect(() => { if (!loading) followUser(uid); }, [uid, loading]);
   useEffect(() => {
     if (!uid || (role !== "teacher" && role !== "admin")) return;
-    if (!readyFor(uid, hanoiDate(Date.now()))) return;
+    // 20 Nov 2026: also when this teacher's audio waits on this laptop - it is sent from any page after sign-in.
+    if (!readyFor(uid, hanoiDate(Date.now())) && !unsentHint(uid)) return;
     void import("./engine").then(({ browserEngine }) => boot({
       userId: uid,
       createRecorder: () => browserEngine.createRecorder({ client: supabase as any, userId: uid, profile: browserEngine.loadProfile(uid) }),

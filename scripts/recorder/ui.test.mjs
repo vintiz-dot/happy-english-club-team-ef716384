@@ -150,5 +150,32 @@ console.log("=== admin card: saved, not only verified (19 Nov 2026) ===");
   ok("nothing yet (an old row with no figures): 0 min, no crash", /On the server: 0 min/.test(U.savedLines({ status: "abandoned", saved_ms: null, late_ms: null, recorded_ms: null }, "T")[0].text));
 }
 
+console.log("=== teacher screen: earlier recordings not all on the server (20 Nov 2026) ===");
+{
+  const server = [
+    { id: "rec-j", className: "Jupiter", session_date: "2026-11-19", status: "uploading" },
+    { id: "rec-v", className: "Venus", session_date: "2026-11-18", status: "uploading" },
+    { id: "rec-now", className: "Mars", session_date: "2026-11-20", status: "recording" },
+  ];
+  const held = [{ recordingId: "rec-j", sessionDate: "2026-11-19", onServer: 116, total: 310, offline: false, problem: null }];
+  const items = U.earlierRecordings(held, server, ["rec-j"], "rec-now");
+  eq("this laptop's one is listed (named), the one elsewhere too, the lesson being recorded not", items.map((i) => i.title), ["Jupiter - 19 Nov", "Venus - 18 Nov"]);
+  ok("being sent: the progress and 'keep this page open'", /116 of 310 pieces/.test(items[0].text) && /until it says Saved/.test(items[0].text) && items[0].canSend);
+  ok("elsewhere: where it is and what to do, no Send button", /laptop it was recorded on/.test(items[1].text) && !items[1].canSend && items[1].tone === "warn");
+  eq("until this laptop has been checked, 'elsewhere' is not said", U.earlierRecordings(held, server, null, null).map((i) => i.id), ["rec-j"]);
+  ok("offline: waiting for the internet", /Waiting for the internet/.test(U.earlierRecordings([{ ...held[0], offline: true }], server, ["rec-j"], null)[0].text));
+  ok("a refusal: an error, kept on this laptop", U.earlierRecordings([{ ...held[0], problem: "the server will not take more of it" }], server, ["rec-j"], null)[0].tone === "error");
+  ok("a recording this laptop still has (finishing) is never called 'elsewhere'", U.earlierRecordings([], server, ["rec-j", "rec-v"], "rec-now").length === 0);
+  eq("no class name known yet: 'Recording'", U.earlierRecordings(held, [], ["rec-j"], null)[0].title, "Recording - 19 Nov");
+}
+
+{
+  const server = [{ id: "rec-live", className: "Mars", session_date: "2026-11-20", status: "recording" }];
+  const live = U.earlierRecordings([], server, [], null)[0];
+  ok("a lesson being recorded on another laptop: calm, where it is sent from", live.tone === "info" && /Being recorded on another laptop/.test(live.text) && !live.canSend, live.text);
+  const fin = U.earlierRecordings([{ recordingId: "r", sessionDate: "2026-11-19", onServer: 310, total: 310, offline: false, problem: null, finishing: true }], [], ["r"], null)[0];
+  ok("all pieces there, being finished: said so", /being finished there/.test(fin.text) && /until it says Saved/.test(fin.text), fin.text);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

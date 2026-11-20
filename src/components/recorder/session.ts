@@ -27,9 +27,9 @@
  * The bar is plain DOM (no React tree above the router to render into), built
  * from `floatingBarModel`, which is pure and tested.
  */
-import type { RecorderError, RecorderState, ServerRefusal } from "@/lib/recorder";
+import type { RecorderError, RecorderState, ServerRefusal, UploadProgress } from "@/lib/recorder";
 import { backoffDelay } from "@/lib/recorder/backoff";
-import { addMinutes, DEFAULT_MINUTES, hanoiDate, hanoiMs, lessonPhase, lessonTimes, nextAfter, pickLesson, refusalView, type LessonLike, type WindowMinutes } from "@/lib/recorderUi";
+import { addMinutes, DEFAULT_MINUTES, hanoiDate, hanoiMs, shortDate, lessonPhase, lessonTimes, nextAfter, pickLesson, refusalView, type LessonLike, type WindowMinutes } from "@/lib/recorderUi";
 import type { RecorderLike } from "./engine";
 import { registerSignOutHook } from "./signOutGuard";
 
@@ -136,6 +136,19 @@ interface Session {
   pending: number; contextRunning: boolean | null; devicesOk: boolean | null; day: Day | null;
   /** boot: kept until the day is started (prepare() moves the state before the lessons are known). */
   holding: boolean;
+  /**
+   * 20 Nov 2026: this teacher's finished recordings whose audio is still only
+   * partly on the server, held on this laptop and being sent (not the lesson
+   * being captured). Shown on the screen and the bar; the engine is kept while any.
+   */
+  held: Unfinished[];
+  /** The laptop has been looked at at least once (until then "not here" cannot be said). */
+  heldChecked: boolean;
+  /** Every recording this session has seen held here: once sent it is never called "on another laptop". */
+  everHeld: Set<string>;
+  /** The last upload report per recording. */
+  progress: Map<string, UploadProgress>;
+  refreshing: boolean; refreshAgain: boolean; lastRefresh: number; refreshTimer: ReturnType<typeof setTimeout> | null;
 }
 let current: Session | null = null;
 let unhookSignOut: (() => void) | null = null;
@@ -165,6 +178,22 @@ export interface BarExtra {
   startOverdue?: boolean;
   /** 19 Nov 2026: false = armed, the microphones not opened yet (the browser opens them only once the page has focus). */
   micsOpen?: boolean | null;
+  /** 20 Nov 2026: earlier recordings of this teacher still being sent from this laptop. */
+  sending?: SendingView | null;
+  /** 20 Nov 2026: said for a while once they have all reached the server. */
+  saved?: string | null;
+}
+
+/** What the bar and the screen say about earlier recordings still on this laptop. */
+export interface SendingView { count: number; dates: string[]; onServer: number; total: number; offline: boolean; problem: string | null }
+
+/** Pure: the sending bar (no "Allow sound": sending needs no sound). */
+export function sendingText(v: SendingView): { text: string; alert: boolean } {
+  const which = v.dates.length ? `the recording of ${v.dates.join(" and ")}` : v.count === 1 ? "an earlier recording" : `${v.count} earlier recordings`;
+  if (v.offline) return { text: `Not all of ${which} is on the school server yet - waiting for the internet. Keep this tab open.`, alert: true };
+  if (v.problem) return { text: `Not all of ${which} is on the school server yet: ${v.problem}. Open the recorder.`, alert: true };
+  const pieces = v.total > 0 ? ` (${v.onServer} of ${v.total} pieces there)` : "";
+  return { text: `Sending ${which} to the school server${pieces} - keep this tab open`, alert: false };
 }
 export interface BarModel { show: boolean; text: string; redDot: boolean; alert: boolean; stop: boolean; allowSound: boolean }
 
@@ -191,6 +220,8 @@ export function floatingBarModel(state: RecorderState, label: string, attached: 
       return bar(extra.interrupted ? "The page was reloaded during the lesson: the recording so far is being saved - keep this tab open" : "Saving the recording - keep this tab open");
     default:
       if (extra.refusal) return refused(extra.refusal);
+      if (!extra.next && extra.sending) { const t = sendingText(extra.sending); return bar(t.text, { alert: t.alert, allowSound: false }); }
+      if (!extra.next && extra.saved) return bar(extra.saved, { allowSound: false });
       if (!extra.next) return off;
       if (extra.problem) return bar(`NOT armed: ${extra.problem} - open the recorder`, { alert: true });
       if (extra.notArmed) return bar(`Not armed yet - retrying (${extra.notArmed}) - ${extra.next.className} should record from ${extra.next.at}`, { alert: true });
@@ -208,9 +239,11 @@ export function sessionFor(userId: string): RecorderLike | null {
 /** A new engine for this user: owned here from now on. */
 export function adopt(userId: string, rec: RecorderLike) {
   if (current && current.rec !== rec) void endSession();
-  const s: Session = { userId, rec, label: "", attached: 0, state: rec.state, offs: [], pending: 0, contextRunning: null, devicesOk: null, day: null, holding: false };
+  const s: Session = { userId, rec, label: "", attached: 0, state: rec.state, offs: [], pending: 0, contextRunning: null, devicesOk: null, day: null, holding: false,
+    held: [], heldChecked: false, everHeld: new Set(), progress: new Map(), refreshing: false, refreshAgain: false, lastRefresh: 0, refreshTimer: null };
   s.offs.push(rec.on("state", ({ state }) => { s.state = state; onState(s); redraw(); maybeEnd(); }));
-  s.offs.push(rec.on("upload", (p) => { s.pending = p?.pending ?? 0; maybeEnd(); }));
+  s.offs.push(rec.on("upload", (p) => { s.pending = p?.pending ?? 0; if (p?.recordingId) s.progress.set(p.recordingId, p); requestRefresh(s); redraw(); maybeEnd(); }));
+  s.offs.push(rec.on("recovered", () => { void refreshHeld(s); }));
   current = s;
   unhookSignOut?.();
   unhookSignOut = registerSignOutHook(async () => {
@@ -384,10 +417,131 @@ export function detachScreen() {
 }
 
 /** For tests and the screen: what the session holds. */
-export function sessionState(): { userId: string; state: RecorderState; attached: number; next: Day["next"]; problem: string | null; pending: number; notArmed: string | null; refusal: Day["refusal"]; armedAt: Day["armedAt"]; startOverdue: boolean } | null {
+export interface HeldView { recordingId: string; sessionDate: string; onServer: number; total: number; offline: boolean; problem: string | null; finishing: boolean }
+export function sessionState(): { userId: string; state: RecorderState; attached: number; next: Day["next"]; problem: string | null; pending: number; notArmed: string | null; refusal: Day["refusal"]; armedAt: Day["armedAt"]; startOverdue: boolean;
+  held: HeldView[]; localIds: string[] | null; saved: string | null } | null {
   const c = current;
   return c ? { userId: c.userId, state: c.state, attached: c.attached, next: c.day?.next ?? null, problem: c.day?.problem ?? null, pending: c.pending,
-    notArmed: c.day?.notArmed ?? null, refusal: c.day?.refusal ?? null, armedAt: c.day?.armedAt ?? null, startOverdue: startOverdue(c) } : null;
+    notArmed: c.day?.notArmed ?? null, refusal: c.day?.refusal ?? null, armedAt: c.day?.armedAt ?? null, startOverdue: startOverdue(c),
+    held: heldViews(c), localIds: c.heldChecked ? [...c.everHeld] : null, saved: savedText(c.userId) } : null;
+}
+
+// ------------------------------------------------------------ earlier recordings still on this laptop (20 Nov 2026)
+//
+// Field: the teacher signed in the next day on the laptop that held 48 minutes
+// of a lesson; the recorder page sent it in three minutes and said nothing -
+// it shows the upload of the lesson being recorded only. These are said now,
+// on the screen and on the bar of any page, and the engine starts sending
+// them after sign-in on any page (RecorderBoot, through the hint below).
+// Everything here is read from the pieces' records (engine.unfinished()),
+// never their audio, so it can be asked every few seconds, even mid-lesson.
+
+/** An own recording on this laptop not finished yet (engine.unfinished()). */
+export interface Unfinished { recordingId: string; sessionDate: string; phase: string; total: number; confirmed: number; refused: number }
+
+export const UNSENT_PREFIX = "hec-recorder-unsent:";
+/** This teacher had a recording on this laptop not finished, last time the engine looked (a count; no names). */
+export function unsentHint(userId: string): boolean {
+  try { return Number(ls()?.getItem(UNSENT_PREFIX + userId) ?? 0) > 0; } catch { return false; }
+}
+function writeUnsentHint(userId: string, n: number) {
+  try { if (n > 0) ls()?.setItem(UNSENT_PREFIX + userId, String(n)); else ls()?.removeItem(UNSENT_PREFIX + userId); } catch { /* */ }
+}
+
+/** Said for a while after a recording finished (or was given up), for the teacher whose it was. */
+let lastSaved: { userId: string; text: string; until: number } | null = null;
+const SAVED_SHOW_MS = 30_000;
+function savedText(userId: string | null): string | null {
+  return lastSaved && userId && lastSaved.userId === userId && Date.now() < lastSaved.until ? lastSaved.text : null;
+}
+
+/** Pure: what can still be sent from here, and what the server will not take more of. */
+export function unfinishedState(u: Unfinished, p: Pick<UploadProgress, "pending" | "refused" | "halted" | "offline"> | undefined): { stuck: boolean; problem: string | null } {
+  if (p?.halted) return { stuck: true, problem: "the school server will not take more of it" };
+  const refused = Math.max(u.refused, p?.refused ?? 0);
+  // Pieces refused for good and nothing else left to send: no amount of retrying finishes it.
+  if (refused > 0 && u.total - u.confirmed - refused <= 0) return { stuck: true, problem: `the school server would not take ${refused} ${refused === 1 ? "piece" : "pieces"}` };
+  return { stuck: false, problem: null };
+}
+
+/** Pure: the earlier recordings to say - finished on this laptop (or left mid-capture by a tab that died), not the lesson being captured, not given up. */
+export function stillToSend(all: Unfinished[], capturingId: string | null): Unfinished[] {
+  return all.filter((u) => u.recordingId !== capturingId && (u.phase === "stopped" || u.phase === "finalized" || u.phase === "capturing"));
+}
+
+function heldViews(s: Session): HeldView[] {
+  return s.held.map((u) => {
+    const p = s.progress.get(u.recordingId);
+    const { problem } = unfinishedState(u, p);
+    return { recordingId: u.recordingId, sessionDate: u.sessionDate, onServer: u.confirmed, total: u.total, offline: !!p?.offline, problem,
+      finishing: u.total > 0 && u.confirmed === u.total };
+  });
+}
+function sendingView(s: Session): SendingView | null {
+  const v = heldViews(s);
+  if (!v.length) return null;
+  return { count: v.length, dates: [...new Set(v.map((x) => shortDate(x.sessionDate)))], onServer: v.reduce((n, x) => n + x.onServer, 0), total: v.reduce((n, x) => n + x.total, 0),
+    offline: v.some((x) => x.offline), problem: v.find((x) => x.problem)?.problem ?? null };
+}
+/** The engine is kept (and comes up after sign-in) for what can still be sent; not for what the server refused for good. */
+function sendable(s: Session): Unfinished[] {
+  return s.held.filter((u) => !unfinishedState(u, s.progress.get(u.recordingId)).stuck);
+}
+
+/** The pieces' records are looked at every few seconds while anything moves, not after each piece. */
+const REFRESH_EVERY_MS = 5000;
+function requestRefresh(s: Session) {
+  if (s.refreshTimer) return;
+  const wait = Math.max(0, s.lastRefresh + REFRESH_EVERY_MS - Date.now());
+  if (!wait || typeof setTimeout === "undefined") { void refreshHeld(s); return; }
+  s.refreshTimer = setTimeout(() => { s.refreshTimer = null; void refreshHeld(s); }, wait);
+}
+
+async function refreshHeld(s: Session): Promise<void> {
+  if (s.refreshing) { s.refreshAgain = true; return; }
+  s.refreshing = true;
+  s.lastRefresh = Date.now();
+  try {
+    const list = await Promise.resolve().then(() => (s.rec.unfinished ? s.rec.unfinished() : null)).catch(() => null);
+    if (!list || current !== s) return;
+    s.heldChecked = true;
+    for (const u of list) s.everHeld.add(u.recordingId);
+    const capturingId = CAPTURING_STATES.includes(s.state) ? s.rec.recordingId : null;
+    const now = stillToSend(list, capturingId);
+    // A recording that left the list: finished and removed from the laptop (Saved), when its
+    // last report had nothing left, refused or halted. One the server gave up (abandoned) is said so.
+    const saved: string[] = [], gaveUp: string[] = [];
+    for (const before of s.held) {
+      const after = list.find((u) => u.recordingId === before.recordingId);
+      const p = s.progress.get(before.recordingId);
+      if (after?.phase === "abandoned") gaveUp.push(shortDate(before.sessionDate));
+      else if (!after && (!p || (p.pending === 0 && !p.refused && !p.halted))) saved.push(shortDate(before.sessionDate));
+    }
+    if (saved.length || gaveUp.length) {
+      const text = gaveUp.length
+        ? `The school server gave up the recording of ${[...new Set(gaveUp)].join(" and ")}: what did not reach it stays on this laptop. Tell the office.`
+        : `Saved: all of the recording of ${[...new Set(saved)].join(" and ")} is on the school server.`;
+      lastSaved = { userId: s.userId, text, until: Date.now() + SAVED_SHOW_MS };
+      if (typeof setTimeout !== "undefined") setTimeout(redraw, SAVED_SHOW_MS + 500);
+    }
+    s.held = now;
+    // The hint for the next sign-in: everything not finished here, the lesson being captured too (a tab
+    // that dies mid-lesson leaves it), but not what the server gave up or refused for good.
+    writeUnsentHint(s.userId, list.filter((u) => u.phase !== "abandoned" && !unfinishedState(u, s.progress.get(u.recordingId)).stuck).length);
+  } finally {
+    s.refreshing = false;
+    if (s.refreshAgain) { s.refreshAgain = false; void refreshHeld(s); }
+    redraw();
+    maybeEnd();
+  }
+}
+
+/** The screen's "Send now". */
+export async function resendHeld(): Promise<void> {
+  const s = current;
+  if (!s) return;
+  await s.rec.resend?.().catch(() => null);
+  void refreshHeld(s);
 }
 
 export async function endSession() {
@@ -403,12 +557,13 @@ function teardown() {
   unhookSignOut?.(); unhookSignOut = null;
   for (const off of s?.offs ?? []) off();
   if (s?.day?.timer) clearInterval(s.day.timer);
+  if (s?.refreshTimer) clearTimeout(s.refreshTimer);
   redraw();
 }
 
 /** Kept while busy, while uploads of any recording are pending, or while Ready waits for a lesson today. */
 function keep(s: Session) {
-  return s.holding || s.attached > 0 || isBusy(s.state) || s.pending > 0
+  return s.holding || s.attached > 0 || isBusy(s.state) || s.pending > 0 || sendable(s).length > 0 || s.refreshing
     || !!(s.day && readyFor(s.userId, s.day.date) && (s.day.next || s.day.lessons === null || s.day.refusal));
 }
 function maybeEnd() {
@@ -446,11 +601,19 @@ let booting: Promise<void> | null = null;
 export async function boot(deps: BootDeps): Promise<void> {
   if (current?.userId === deps.userId) { startDay(deps.day); return; }
   const r = readyFor(deps.userId, hanoiDate(deps.day.now()));
-  if (!r) return;
+  // 20 Nov 2026: no Ready today, but audio of this teacher waits on this laptop: the engine comes up to send it.
+  const sendOnly = !r && unsentHint(deps.userId);
+  if (!r && !sendOnly) return;
   if (booting) return booting;
   booting = (async () => {
     try {
       const rec = await deps.createRecorder();
+      // The recorder page made this teacher's engine meanwhile: that one stays (review, 20 Nov 2026).
+      if (current?.userId === deps.userId) {
+        await rec.dispose().catch(() => null);
+        if (sendOnly) void refreshHeld(current); else startDay(deps.day);
+        return;
+      }
       if (current && current.userId !== deps.userId) await endSession();
       adopt(deps.userId, rec);
       if (current) current.holding = true;
@@ -462,7 +625,13 @@ export async function boot(deps: BootDeps): Promise<void> {
         await endSession();
         return;
       }
+      if (current?.rec !== rec) return;   // replaced while preparing
       await rec.recover().catch(() => null);
+      if (current?.rec !== rec) return;
+      if (sendOnly) {
+        if (current) { current.holding = false; await refreshHeld(current); }
+        return;
+      }
       startDay(deps.day);
     } catch { /* the engine could not be made here; the recorder page says why */ }
     finally { booting = null; }
@@ -506,6 +675,8 @@ export function barExtra(): BarExtra {
     refusal: d?.refusal ?? null,
     startOverdue: startOverdue(s),
     micsOpen: s.state === "armed" ? (s.rec.micsOpen ?? null) : null,
+    sending: sendingView(s),
+    saved: savedText(s.userId),
   };
 }
 
@@ -568,7 +739,8 @@ function redraw() {
     if (!document.title.startsWith(OVERDUE_TITLE)) document.title = OVERDUE_TITLE + document.title.replace(TITLE_PREFIXES, "");
     notifyOverdue(current);
   }
-  const m = current ? floatingBarModel(current.state, current.label, current.attached > 0, barExtra()) : floatingBarModel("idle", "", true);
+  const m = current ? floatingBarModel(current.state, current.label, current.attached > 0, barExtra())
+    : floatingBarModel("idle", "", !savedText(lastUser), { saved: savedText(lastUser) });
   let el = document.getElementById(BAR_ID);
   if (!m.show) { el?.remove(); return; }
   if (!el) {

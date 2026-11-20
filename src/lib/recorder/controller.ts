@@ -289,7 +289,7 @@ export class Recorder {
     await this.checkStorage(true);
     await this.measureClock();
     const devices = resolveProfile(this.o.profile, await this.o.source.listDevices());
-    if (this.o.autoTick && !this.interval) this.interval = setInterval(() => this.tick(), 1000);
+    if (this.o.autoTick && !this.interval && !this.disposed) this.interval = setInterval(() => this.tick(), 1000);
     this.watchPage();
     if (this._state === "idle") this.setState("ready");
     return { contextRunning: running, devices, offsetMs: this.offsetMs };
@@ -607,6 +607,38 @@ export class Recorder {
   }
 
   /** M2: this user's audio still held here and not on the server, with its age. */
+  /**
+   * 20 Nov 2026: the teacher's "Send now" for audio still on this laptop: every
+   * own recording that can still be sent gets a sending pass now (a piece that
+   * failed is retried by its own backoff, at most a minute). Safe to call any time.
+   */
+  async resend(): Promise<void> {
+    await this.kickUploads();
+  }
+
+  /** Own recordings this laptop still holds and has not finished (any phase but complete). */
+  async localIds(): Promise<string[]> {
+    return (await this.mine()).filter((r) => r.phase !== "complete").map((r) => r.id);
+  }
+
+  /**
+   * 20 Nov 2026: own recordings on this laptop that are not finished, with
+   * their piece counts - from the pieces' records only, never their audio
+   * (heldAudio() reads every unsent piece; this is cheap enough to ask every
+   * few seconds). A complete recording is removed from the laptop, so it is
+   * not here; one never captured (armed) is left out.
+   */
+  async unfinished(): Promise<{ recordingId: string; sessionDate: string; phase: string; total: number; confirmed: number; refused: number }[]> {
+    const out: { recordingId: string; sessionDate: string; phase: string; total: number; confirmed: number; refused: number }[] = [];
+    for (const r of await this.mine()) {
+      if (r.phase === "complete" || r.phase === "armed") continue;
+      const chunks = await this.o.store.listChunks(r.id);
+      out.push({ recordingId: r.id, sessionDate: r.sessionDate, phase: r.phase, total: chunks.length,
+        confirmed: chunks.filter((c) => c.state === "confirmed").length, refused: chunks.filter((c) => c.state === "refused").length });
+    }
+    return out;
+  }
+
   async heldAudio(): Promise<HeldAudio[]> {
     const out: HeldAudio[] = [];
     for (const r of await this.mine()) {
@@ -1958,6 +1990,8 @@ export class Recorder {
   }
 
   private async takeLock() {
+    // 20 Nov 2026 (review): a disposed engine (replaced by another while booting) never takes the lock again.
+    if (this.disposed) throw new RecorderError("another_tab", "This recorder was closed");
     if (this.lockRelease || !this.o.useLocks) return;
     const locks = typeof navigator !== "undefined" ? (navigator as any).locks : null;
     if (!locks?.request) { this.lockRelease = () => {}; return; }

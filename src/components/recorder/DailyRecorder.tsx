@@ -19,16 +19,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
-  boardAdd, boardClear, boardForScreen, clock, hanoiDate, type BoardEntry, hhmm, lessonHeadline, lessonPhase, noSetupNotice, pickLesson, stopConfirmText,
+  boardAdd, boardClear, boardForScreen, clock, hanoiDate, type BoardEntry, hhmm, earlierRecordings, lessonHeadline, lessonPhase, noSetupNotice, pickLesson, stopConfirmText,
   trackName, uploadMbps, uploadSpeedLine, uploadStatus, addMinutes, type LessonLike,
 } from "@/lib/recorderUi";
 import type { ChunkMeta, DeviceProfile, HeldAudio, Level, ProfileResolution, RecorderError, RecorderState, TrackRole, UploadProgress, MarkerKind } from "@/lib/recorder";
 import { useRecorderDeps } from "./RecorderDeps";
 import type { RecorderLike } from "./engine";
-import { dayDeps, fetchClassSwitch, fetchEnrolled, fetchMissingConsentCount, fetchRecorderSettings, fetchTodayLessons } from "./data";
+import { dayDeps, fetchClassSwitch, fetchEnrolled, fetchMissingConsentCount, fetchOwnUnfinished, fetchRecorderSettings, fetchTodayLessons } from "./data";
 import { LevelMeter, MicTick, Notice, Status } from "./pieces";
 import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
-import { adopt, askNotifications, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
+import { adopt, askNotifications, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, resendHeld, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
 
 // `stalled` is a capturing state: Stop stays, the screen must not be left (C2 review 2, item 1).
 const CAPTURING: RecorderState[] = CAPTURING_STATES;   // one list, shared with the floating bar (tested)
@@ -62,6 +62,9 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const [profile, setProfile] = useState<DeviceProfile | null>(() => engine.loadProfile(userId));
   // No setup: the backup recorder is suggested only when the server counts no child without permission today.
   const consentQ = useQuery({ queryKey: ["recorder-missing-consent", lesson?.classId, today], enabled: !!lesson && !profile, queryFn: () => fetchMissingConsentCount(client, lesson!.classId), refetchInterval: 5 * 60_000 });
+  // 20 Nov 2026: own recordings the server has not got all of (the Earlier recordings panel).
+  const mine = useQuery({ queryKey: ["recorder-own-unfinished", userId], queryFn: () => fetchOwnUnfinished(client, userId), refetchInterval: 60_000 });
+  const [sendBusy, setSendBusy] = useState(false);
   const rec = useRef<RecorderLike | null>(null);
   const [state, setState] = useState<RecorderState>("idle");
   const [busy, setBusy] = useState(false);
@@ -148,7 +151,8 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     r.on("level", (l) => { setLevels({ teacher: l.teacher, room: l.room }); if (l.clipping) setClipping(l.clipping); });
     r.on("stuck", ({ recordings }) => setStuck(recordings));
     r.on("recovered", ({ othersPending }) => setOthers(othersPending && othersPending.recordings > 0 ? othersPending : null));
-    r.on("upload", (p) => setUpload(p));
+    // Only this screen's lesson: earlier recordings being sent have their own panel (20 Nov 2026).
+    r.on("upload", (p) => { if (!p?.recordingId || p.recordingId === r0.recordingId) setUpload(p); });
     r.on("error", showError);
     r.on("stop_requested", ({ reason }) => setStopAsked(reason === "switch_off" ? "Recording was switched off for this class. It is finishing and saving." : "This lesson was cancelled. The recording is finishing and saving."));
     r.on("health", (h: any) => {
@@ -235,6 +239,11 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     void ready(false).finally(() => { autoPrep.current = false; });
   }, [profile, lessons.isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (lesson) setLessonLabel(lesson.className); }, [lesson?.className]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 20 Nov 2026: a recording just saved - read the server's list again at once, not in a minute.
+  const savedNow = sessionState()?.saved ?? null;
+  const heldIds = (sessionState()?.held ?? []).map((h) => h.recordingId).join(",");
+  // ...and whenever this laptop's list changes (a recording finished here must not read "on another laptop").
+  useEffect(() => { void mine.refetch(); }, [savedNow, heldIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ------------------------------------------------------------ render
 
@@ -271,6 +280,31 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
         >{e.view.body}</Notice>
       ))}
     </div>
+  ) : null;
+
+  // 20 Nov 2026: earlier recordings not all on the server - sent from this laptop (with progress and Send now), or held on another one.
+  const ssNow = sessionState();
+  const sendNow = async () => { setSendBusy(true); try { await resendHeld(); } finally { setSendBusy(false); void mine.refetch(); } };
+  const earlier = earlierRecordings(ssNow && ssNow.userId === userId ? ssNow.held : [], mine.data ?? [],
+    ssNow && ssNow.userId === userId ? ssNow.localIds : null, rec.current?.recordingId ?? null);
+  const savedNote = ssNow && ssNow.userId === userId ? ssNow.saved : null;
+  const earlierBox = earlier.length || savedNote ? (
+    <section aria-label="Earlier recordings" className="space-y-3" data-earlier-recordings="">
+      {savedNote ? (/^Saved:/.test(savedNote)
+        ? <Notice tone="ok" title="Saved" role="status">{savedNote.replace(/^Saved:\s*/, "")}</Notice>
+        : <Notice tone="error" title="Not finished" role="alert">{savedNote}</Notice>) : null}
+      {earlier.length ? <h3 className="text-lg font-semibold">Not yet all on the school server</h3> : null}
+      {earlier.map((it) => (
+        <Notice key={it.id} tone={it.tone} title={it.title} role={it.tone === "error" ? "alert" : "status"}
+          action={it.canSend ? (
+            <Button variant="outline" className="min-h-11" disabled={sendBusy} onClick={() => void sendNow()}>
+              {sendBusy ? <Loader2 className="h-4 w-4 mr-2 motion-safe:animate-spin" aria-hidden /> : null}Send now
+            </Button>
+          ) : undefined}>
+          {it.text}
+        </Notice>
+      ))}
+    </section>
   ) : null;
 
   const discard = async () => {
@@ -320,9 +354,12 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     // Without a setup the engine never starts: say whether THIS lesson goes unrecorded (17 Nov 2026).
     const n = noSetupNotice(lesson, tick, w, switchQ.isSuccess ? switchQ.data === true : null, consentQ.isSuccess ? consentQ.data : null);
     return (
-      <Notice tone={n.tone} title={n.title} role={n.alert ? "alert" : undefined} action={<Button size="lg" className="min-h-12 text-base" onClick={onSetup}><Settings2 className="h-5 w-5 mr-2" aria-hidden /> Set up the microphones</Button>}>
-        {n.body}
-      </Notice>
+      <div className="space-y-4">
+        <Notice tone={n.tone} title={n.title} role={n.alert ? "alert" : undefined} action={<Button size="lg" className="min-h-12 text-base" onClick={onSetup}><Settings2 className="h-5 w-5 mr-2" aria-hidden /> Set up the microphones</Button>}>
+          {n.body}
+        </Notice>
+        {earlierBox}
+      </div>
     );
   }
 
@@ -330,6 +367,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     return (
       <div className="space-y-4">
         <Notice tone="info" title="No more lessons to record today">The recorder shows your next lesson here on the day.</Notice>
+        {earlierBox}
         {/* C3-b: earlier unsent audio still goes up today (the page prepared by itself), and what is stuck is shown. */}
         {upload && upload.pending > 0 ? uploadStatus(upload, online).map((l) => <Status key={l.text} line={l} live />) : null}
         {errorBox}
@@ -366,6 +404,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
           ) : null}
           {errorBox}
           {heldBox}
+          {earlierBox}
           {stopAsked ? <Notice tone="info" title="The school stopped this recording" role="status">{stopAsked}</Notice> : null}
 
           <section aria-label="Microphones" className="rounded-xl border border-border p-4 space-y-3">

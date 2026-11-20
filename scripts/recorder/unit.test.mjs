@@ -2019,5 +2019,27 @@ console.log("=== 19 Nov 2026: the microphones are opened early, while the page h
   await r.dispose();
 }
 
+console.log("=== 20 Nov 2026: what is unfinished on this laptop, from the pieces' records ===");
+{
+  clock = Date.parse("2026-11-12T09:55:00.000Z");
+  const w = world();
+  const store = new R.MemoryStore(), src = new FakeSource();
+  const { r } = recorder(w, store, src);
+  await r.prepare();
+  eq("nothing recorded: nothing unfinished", await r.unfinished(), []);
+  const row = await r.arm(E(w));
+  eq("armed, nothing captured: not listed", (await r.unfinished()).length, 0);
+  r.tick(); await r.settle();
+  await src.play(25, r);
+  const mid = await r.unfinished();
+  ok("while capturing: listed as capturing, with its pieces", mid.length === 1 && mid[0].recordingId === row.id && mid[0].phase === "capturing" && mid[0].total >= 2, JSON.stringify(mid));
+  await r.stop("manual"); await r.settle();
+  await r.resend(); await r.settle();
+  eq("finished and complete: removed from the laptop, so not listed", await r.unfinished(), []);
+  ok("the server has it all", w.server.recordings.get(row.id).status === "complete");
+  eq("localIds: none left", await r.localIds(), []);
+  await r.dispose();
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

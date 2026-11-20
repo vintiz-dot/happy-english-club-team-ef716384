@@ -695,3 +695,39 @@ export function savedLines(r: { status: string; saved_ms: number | null; late_ms
   }
   return out;
 }
+
+// ---------------------------------------------------------------- earlier recordings, on the teacher's screen (20 Nov 2026)
+
+export interface EarlierHeld { recordingId: string; sessionDate: string; onServer: number; total: number; offline: boolean; problem: string | null; finishing?: boolean }
+export interface EarlierServer { id: string; className: string; session_date: string; status: string }
+export interface EarlierItem { id: string; title: string; tone: Tone; text: string; canSend: boolean }
+
+/**
+ * What the recorder screen lists about this teacher's earlier recordings that
+ * the server does not have all of: those on this laptop (being sent, with
+ * progress) and, once this laptop has been checked, those held on another
+ * laptop. The lesson being recorded now is not listed (the screen shows it).
+ */
+export function earlierRecordings(held: EarlierHeld[], server: EarlierServer[], localIds: string[] | null, activeId: string | null): EarlierItem[] {
+  const nameOf = (id: string) => server.find((x) => x.id === id)?.className ?? null;
+  const out: EarlierItem[] = [];
+  for (const h of held) {
+    if (h.recordingId === activeId) continue;
+    const title = `${nameOf(h.recordingId) ?? "Recording"} - ${shortDate(h.sessionDate)}`;
+    if (h.problem) out.push({ id: h.recordingId, title, tone: "error", canSend: true, text: `Not all of it is on the school server: ${h.problem}. It stays on this laptop; tell the office.` });
+    else if (h.offline) out.push({ id: h.recordingId, title, tone: "warn", canSend: true, text: "Waiting for the internet: it is sent as soon as this laptop is back online. Keep this page open." });
+    else if (h.finishing) out.push({ id: h.recordingId, title, tone: "info", canSend: true, text: "All of its audio is on the school server; it is being finished there. Keep this page open until it says Saved." });
+    else out.push({ id: h.recordingId, title, tone: "info", canSend: true,
+      text: h.total > 0 ? `Sending: ${h.onServer} of ${h.total} pieces are on the school server. Keep this page open until it says Saved.` : "Sending to the school server. Keep this page open until it says Saved." });
+  }
+  if (localIds) {
+    for (const r of server) {
+      if (r.id === activeId || localIds.includes(r.id) || held.some((h) => h.recordingId === r.id)) continue;
+      out.push({ id: r.id, title: `${r.className} - ${shortDate(r.session_date)}`, tone: r.status === "recording" ? "info" : "warn", canSend: false,
+        text: r.status === "recording"
+          ? "Being recorded on another laptop (or that laptop stopped during the lesson). It is sent from that laptop: sign in there as yourself and open Class recorder."
+          : "Not all of it is on the school server, and this laptop does not have it. It is on the laptop it was recorded on: sign in there as yourself and open Class recorder, and it is sent." });
+    }
+  }
+  return out;
+}
