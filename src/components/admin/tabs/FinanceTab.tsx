@@ -8,6 +8,7 @@ import { FinanceSummary } from "@/components/admin/FinanceSummary";
 import { ExpendituresManager } from "@/components/admin/ExpendituresManager";
 import { RecurringExpendituresManager } from "@/components/admin/RecurringExpendituresManager";
 import { RecordedPaymentManager } from "@/components/admin/RecordedPaymentManager";
+import { ReconciliationRegister } from "@/components/admin/ReconciliationRegister";
 import { MonthPicker } from "@/components/MonthPicker";
 import { dayjs } from "@/lib/date";
 import { useEarliestFinanceMonth } from "@/hooks/useEarliestFinanceMonth";
@@ -51,6 +52,7 @@ const FinanceTab = () => {
               <TabsTrigger value="quickpay" className="whitespace-nowrap">Quick Pay</TabsTrigger>
               <TabsTrigger value="bulk" className="whitespace-nowrap">Bulk Download</TabsTrigger>
               <TabsTrigger value="recorded" className="whitespace-nowrap">Recorded</TabsTrigger>
+              <TabsTrigger value="audit" className="whitespace-nowrap">Audit</TabsTrigger>
               <TabsTrigger value="expenditures" className="whitespace-nowrap">Expenditures</TabsTrigger>
               <TabsTrigger value="discounts" className="whitespace-nowrap">Discounts</TabsTrigger>
               <TabsTrigger value="sibling" className="whitespace-nowrap">Siblings</TabsTrigger>
@@ -96,6 +98,10 @@ const FinanceTab = () => {
 
       <TabsContent value="recorded">
         <RecordedPaymentManager />
+      </TabsContent>
+
+      <TabsContent value="audit">
+        <ReconciliationRegister />
       </TabsContent>
 
       <TabsContent value="discounts">
