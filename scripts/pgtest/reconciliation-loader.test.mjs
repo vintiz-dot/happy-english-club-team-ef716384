@@ -100,6 +100,17 @@ const mapping = {
 const lookup = readMapping(mapping);
 eq("a month|name key wins over the plain name", [lookup("2026-02", "kaka"), lookup("2026-03", "KAKA"), lookup("2026-03", "Rồng"), lookup("2026-03", "Nobody")], [KAKA_A, KAKA_B, null, undefined]);
 eq("the list form reads the same", readMapping([{ name: "Kaka", student_id: KAKA_A }, { month: "T3", name: "Kaka", student_id: KAKA_B }])("2026-03", "kaka"), KAKA_B);
+// Two rows of one name in one month, two children: a month#row key wins over month|name and the name.
+{
+  const byRow = readMapping({ Kaka: KAKA_A, "T3|Kaka": KAKA_B, "2026-03#9": KAKA_A, "T 4#3": null });
+  eq("a month#row key wins over month|name for that row only",
+     [byRow("2026-03", "Kaka", 9), byRow("2026-03", "Kaka", 7), byRow("2026-03", "Kaka"), byRow("2026-04", "Kaka", 3), byRow("2026-04", "Kaka", 4)],
+     [KAKA_A, KAKA_B, KAKA_B, null, KAKA_A]);
+  eq("the list form takes a row too", readMapping([{ name: "Kaka", student_id: KAKA_A }, { month: "T3", row: 9, student_id: KAKA_B }])("2026-03", "Kaka", 9), KAKA_B);
+  let bad = null;
+  try { readMapping({ "#9": KAKA_A }); } catch (e) { bad = e.message; }
+  ok("a row key without a month is refused", bad !== null, bad);
+}
 let threw = null;
 try { readMapping({ Kaka: "not-an-id" }); } catch (e) { threw = e.message; }
 ok("a mapping value that is not an id is refused", /not a student id/.test(threw ?? ""), threw);

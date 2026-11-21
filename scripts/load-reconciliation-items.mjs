@@ -30,7 +30,9 @@
 //                 { "<sheet name>": "<student uuid>" | null, "T10|<name>": ... }
 //               (a "<month>|<name>" key, month as T10 or 2025-10, wins over a
 //               plain name: two children with one nickname are told apart per
-//               month), or a list [{ "month"?: ..., "name": ..., "student_id": ... }].
+//               month; a "<month>#<row>" key, the sheet's row number, wins over
+//               both, for two rows of one name in one month), or a list
+//               [{ "month"?: ..., "row"?: ..., "name": ..., "student_id": ... }].
 //               null means "not in the app" - a pattern A child. Every name
 //               on the sheet must be mapped; the script lists the ones that
 //               are not and stops.
@@ -148,24 +150,39 @@ export function sheetRows(sheets, firstYear = 2025) {
 export const normName = (s) => String(s).normalize("NFC").replace(/\s+/g, " ").trim().toLowerCase();
 const normMonth = (m, firstYear) => (/^\d{4}-\d{2}$/.test(String(m).trim()) ? String(m).trim() : sheetMonth(String(m), firstYear));
 
-/** Returns lookup(month, name) -> uuid | null (not in the app) | undefined (unmapped). */
+/** Returns lookup(month, name, row?) -> uuid | null (not in the app) | undefined (unmapped). */
 export function readMapping(json, firstYear = 2025) {
-  const byName = new Map(), byMonth = new Map();
+  const byName = new Map(), byMonth = new Map(), byRow = new Map();
+  const check = (what, id) => {
+    if (id !== null && !(typeof id === "string" && UUID.test(id))) throw new Error(`Mapping for "${what}" is not a student id or null: ${JSON.stringify(id)}`);
+  };
   const put = (month, name, id) => {
     if (id === undefined) return;
-    if (id !== null && !(typeof id === "string" && UUID.test(id))) throw new Error(`Mapping for "${name}" is not a student id or null: ${JSON.stringify(id)}`);
+    check(name, id);
     if (month) byMonth.set(`${month}|${normName(name)}`, id); else byName.set(normName(name), id);
   };
+  const putRow = (month, row, id) => {
+    if (id === undefined) return;
+    if (!month || !Number.isInteger(row) || row < 1) throw new Error(`A row key needs a month and a row number: ${month}#${row}`);
+    check(`${month}#${row}`, id);
+    byRow.set(`${month}#${row}`, id);
+  };
   if (Array.isArray(json)) {
-    for (const e of json) put(e.month ? normMonth(e.month, firstYear) : null, e.name, e.student_id ?? null);
+    for (const e of json) {
+      const month = e.month ? normMonth(e.month, firstYear) : null;
+      if (e.row != null) putRow(month, Number(e.row), e.student_id ?? null); else put(month, e.name, e.student_id ?? null);
+    }
   } else {
     for (const [k, id] of Object.entries(json)) {
+      const hash = /^(.*)#(\d+)$/.exec(k);
+      if (hash && !k.includes("|")) { putRow(normMonth(hash[1], firstYear), Number(hash[2]), id); continue; }
       const bar = k.indexOf("|");
       const month = bar > 0 ? normMonth(k.slice(0, bar), firstYear) : null;
       put(month, bar > 0 && month ? k.slice(bar + 1) : k, id);
     }
   }
-  return (month, name) => {
+  return (month, name, row) => {
+    if (row != null && byRow.has(`${month}#${row}`)) return byRow.get(`${month}#${row}`);
     const k = `${month}|${normName(name)}`;
     if (byMonth.has(k)) return byMonth.get(k);
     if (byName.has(normName(name))) return byName.get(normName(name));
@@ -213,7 +230,7 @@ export function compare({ rows, lookup, invoices, students, months, patterns = [
 
   for (const r of rows) {
     if (!monthSet.has(r.month)) continue;
-    const id = lookup(r.month, r.name);
+    const id = lookup(r.month, r.name, r.row);
     if (id === undefined) { unmapped.push(r); continue; }
     if (id === null) {
       const g = group(`sheet:${shortHash(r.name)}`, r.month, { unmatched: r.name });
