@@ -26,24 +26,34 @@ export async function askClaudeJson<T>(opts: {
   system: string;
   content: unknown[];
   schema: Record<string, unknown>;
+  /**
+   * Default true: structured outputs enforce the schema. false for a shape too
+   * big for the API's grammar ("The compiled grammar is too large" - the lesson
+   * report draft, 21 Nov 2026): the schema then goes into the instructions as
+   * text, the reply is parsed, and the CALLER must check every field
+   * (lesson-report-draft's cleanDraft does).
+   */
+  strict?: boolean;
   maxTokens?: number;
   effort?: "low" | "medium" | "high";
 }): Promise<ClaudeJsonResult<T>> {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) throw new ClaudeUnavailable("ANTHROPIC_API_KEY is not set");
 
+  const strict = opts.strict !== false;
   const client = new Anthropic({ apiKey });
+  const system = strict ? opts.system
+    : `${opts.system}\n\nReply with ONE JSON object and nothing else (no prose, no code fences), shaped as this JSON schema:\n${JSON.stringify(opts.schema)}`;
   const response = await client.beta.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: opts.maxTokens ?? 16000,
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
     thinking: { type: "adaptive" },
-    output_config: {
-      effort: opts.effort ?? "high",
-      format: { type: "json_schema", schema: opts.schema },
-    },
-    system: opts.system,
+    output_config: strict
+      ? { effort: opts.effort ?? "high", format: { type: "json_schema", schema: opts.schema } }
+      : { effort: opts.effort ?? "high" },
+    system,
     messages: [{ role: "user", content: opts.content }],
   });
 
@@ -60,7 +70,9 @@ export async function askClaudeJson<T>(opts: {
     .join("");
   let data: T;
   try {
-    data = JSON.parse(text) as T;
+    // Without structured outputs the object may arrive wrapped in a fence or a line of prose.
+    const body = strict ? text : text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
+    data = JSON.parse(body) as T;
   } catch {
     throw new Error("The model's reply was not valid JSON");
   }

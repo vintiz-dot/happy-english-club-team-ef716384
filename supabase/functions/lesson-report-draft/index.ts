@@ -205,6 +205,8 @@ async function build(asCaller: SupabaseClient, token: string, session: any, isAd
     system: DRAFT_SYSTEM,
     content: [{ type: "text", text: intro }, ...content, { type: "text", text: "Write the draft lesson report now, as the schema says." }],
     schema: DRAFT_JSON_SCHEMA,
+    // Too big for structured outputs' grammar (the API refused it, 21 Nov 2026); cleanDraft checks every field.
+    strict: false,
     maxTokens: 20000,
     effort: "medium",
   });
