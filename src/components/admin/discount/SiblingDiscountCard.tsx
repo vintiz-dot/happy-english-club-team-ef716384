@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, TrendingDown, Check } from "lucide-react";
-import { formatVND } from "@/lib/invoice/formatter";
+import { formatVND } from "@/lib/money";
 import { Loading } from "@/components/ui/loading";
 import { siblingDiscountView } from "@/lib/siblingDiscountView";
 

@@ -12,6 +12,7 @@ import { FileText, Undo2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { formatVND } from "@/lib/money";
 
 interface Student {
   id: string;
@@ -232,7 +233,7 @@ export function LedgerBalanceInspector() {
                       <TableCell>{contribution.student_name}</TableCell>
                       <TableCell>{contribution.month}</TableCell>
                       <TableCell className="text-right">
-                        {contribution.amount.toLocaleString()} ₫
+                        {formatVND(contribution.amount)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {contribution.memo || "—"}
@@ -300,7 +301,7 @@ export function LedgerBalanceInspector() {
             <div className="flex items-center justify-between p-4 border rounded-lg bg-muted">
               <span className="font-semibold">Current Balance:</span>
               <Badge variant={balance > 0 ? "default" : balance < 0 ? "destructive" : "secondary"} className="text-lg">
-                {balance.toLocaleString()} ₫
+                {formatVND(balance)}
               </Badge>
             </div>
 
@@ -329,10 +330,10 @@ export function LedgerBalanceInspector() {
                         <TableCell>{new Date(entry.occurred_at).toLocaleDateString()}</TableCell>
                         <TableCell>{entry.month}</TableCell>
                         <TableCell className="text-right">
-                          {entry.debit > 0 ? entry.debit.toLocaleString() : "—"}
+                          {entry.debit > 0 ? formatVND(entry.debit) : "—"}
                         </TableCell>
                         <TableCell className="text-right">
-                          {entry.credit > 0 ? entry.credit.toLocaleString() : "—"}
+                          {entry.credit > 0 ? formatVND(entry.credit) : "—"}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {entry.memo || "—"}

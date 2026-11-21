@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Fragment, useState } from "react";
 import { monthKey } from "@/lib/date";
-import { formatVND } from "@/lib/invoice/formatter";
+import { formatVND } from "@/lib/money";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaymentDetailsTable } from "@/components/admin/tabs/PaymentDetailsTable";
 import { FamilyPaymentActivityLog } from "@/components/admin/FamilyPaymentActivityLog";

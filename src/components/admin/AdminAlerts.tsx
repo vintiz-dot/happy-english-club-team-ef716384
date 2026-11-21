@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { formatVND } from "@/lib/money";
 
 interface Alert {
   id: string;
@@ -87,7 +88,7 @@ export function AdminAlerts() {
               type: "overdue",
               severity: info.months.size >= 2 ? "high" : "medium",
               title: `${info.name} — overdue payment`,
-              detail: `${new Intl.NumberFormat("vi-VN").format(netDebt)}₫ across ${info.months.size} month(s)`,
+              detail: `${formatVND(netDebt)} across ${info.months.size} month(s)`,
               icon: DollarSign,
               link: `/students/${sid}`,
             });
@@ -102,8 +103,8 @@ export function AdminAlerts() {
         const owingStudents = group.students.filter((s) => s.netDebt > 0);
         const allMonths = new Set(group.students.flatMap((s) => [...s.months]));
         const detail = owingStudents.length > 0
-          ? `${owingStudents.map((s) => s.name).join(", ")} — net ${new Intl.NumberFormat("vi-VN").format(group.netBalance)}₫`
-          : `${new Intl.NumberFormat("vi-VN").format(group.netBalance)}₫ across ${allMonths.size} month(s)`;
+          ? `${owingStudents.map((s) => s.name).join(", ")} — net ${formatVND(group.netBalance)}`
+          : `${formatVND(group.netBalance)} across ${allMonths.size} month(s)`;
         results.push({
           id: `overdue-family-${familyId}`,
           type: "overdue",

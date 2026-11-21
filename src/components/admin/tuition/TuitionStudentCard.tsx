@@ -17,6 +17,7 @@ import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButto
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatVND } from "@/lib/money";
 
 interface TuitionStudentCardProps {
   item: any;
@@ -27,7 +28,6 @@ interface TuitionStudentCardProps {
   onToggleSelect?: (studentId: string) => void;
 }
 
-const fmt = (n: number) => n.toLocaleString("vi-VN") + " ₫";
 
 export function TuitionStudentCard({
   item,
@@ -116,7 +116,7 @@ export function TuitionStudentCard({
             {/* Balance + chevron */}
             <div className="text-right shrink-0">
               <p className={`whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums ${balance === 0 ? "text-hec-ink-soft" : "text-hec-ink"}`}>
-                {balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "Settled"}
+                {balance > 0 ? formatVND(balance) : balance < 0 ? `+${formatVND(Math.abs(balance))}` : "Settled"}
               </p>
               <p className="text-hec-caption text-hec-ink-soft">{balance < 0 ? "Credit (overpaid)" : "Balance"}</p>
             </div>
@@ -128,12 +128,12 @@ export function TuitionStudentCard({
         <CollapsibleContent>
           <div className="space-y-4 border-t border-hec-line p-4">
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
-              <FinanceCell label="Base" value={fmt(item.base_amount)} />
-              <FinanceCell label="Discount" value={item.discount_amount > 0 ? `−${fmt(item.discount_amount)}` : "—"} />
-              <FinanceCell label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? fmt(priorNet) : `+${fmt(Math.abs(priorNet))}`} />
-              <FinanceCell label="Payable" value={fmt(item.finalPayable)} bold />
-              <FinanceCell label="Paid" value={fmt(item.recorded_payment ?? 0)} />
-              <FinanceCell total label={balance < 0 ? "Credit (overpaid)" : "Balance"} value={balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "0 ₫"} bold />
+              <FinanceCell label="Base" value={formatVND(item.base_amount)} />
+              <FinanceCell label="Discount" value={item.discount_amount > 0 ? `−${formatVND(item.discount_amount)}` : "—"} />
+              <FinanceCell label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? formatVND(priorNet) : `+${formatVND(Math.abs(priorNet))}`} />
+              <FinanceCell label="Payable" value={formatVND(item.finalPayable)} bold />
+              <FinanceCell label="Paid" value={formatVND(item.recorded_payment ?? 0)} />
+              <FinanceCell total label={balance < 0 ? "Credit (overpaid)" : "Balance"} value={balance > 0 ? formatVND(balance) : balance < 0 ? `+${formatVND(Math.abs(balance))}` : "0 ₫"} bold />
             </div>
 
             {/* Smart Tuition Flags */}
@@ -178,7 +178,7 @@ function TuitionFlags({ item }: { item: any }) {
   // Check discount
   if (item.discount_amount > 0) {
     flags.push({
-      label: `Discount: −${fmt(item.discount_amount)}`,
+      label: `Discount: −${formatVND(item.discount_amount)}`,
       detail: item.discountReasons?.join(", ") || "Enrollment or student discount applied",
       color: "green",
     });
@@ -192,7 +192,7 @@ function TuitionFlags({ item }: { item: any }) {
         const diff = flag.details?.difference;
         if (diff && diff !== 0) {
           flags.push({
-            label: `Adjusted: ${diff > 0 ? "−" : "+"}${fmt(Math.abs(diff))}`,
+            label: `Adjusted: ${diff > 0 ? "−" : "+"}${formatVND(Math.abs(diff))}`,
             detail: flag.details?.reasons?.join(", ") || "Rate adjustment or cancelled sessions",
             color: diff > 0 ? "green" : "orange",
           });
@@ -205,7 +205,7 @@ function TuitionFlags({ item }: { item: any }) {
   const carryInCredit = item.carry_in_credit ?? 0;
   if (carryInCredit > 0) {
     flags.push({
-      label: `Prior credit: +${fmt(carryInCredit)}`,
+      label: `Prior credit: +${formatVND(carryInCredit)}`,
       detail: "Credit carried forward from previous month",
       color: "green",
     });
@@ -215,7 +215,7 @@ function TuitionFlags({ item }: { item: any }) {
   const carryInDebt = item.carry_in_debt ?? 0;
   if (carryInDebt > 0) {
     flags.push({
-      label: `Prior debt: ${fmt(carryInDebt)}`,
+      label: `Prior debt: ${formatVND(carryInDebt)}`,
       detail: "Unpaid balance from previous month",
       color: "orange",
     });

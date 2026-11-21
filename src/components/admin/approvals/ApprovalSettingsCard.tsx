@@ -8,6 +8,7 @@ import { ReasonField } from "@/components/admin/session-guard/Fields";
 import { checkReason, cleanReason, REASON_MIN } from "@/lib/sessionGuard";
 import { approvalErrorText, isApprovalRequired, settingsLoosen, type ApprovalSettings } from "@/lib/approvals";
 import { approvalStatus, requestApproval, setApprovalSettings } from "./api";
+import { formatVND } from "@/lib/money";
 
 /**
  * The approval setting (D4 step 4). Ships OFF; while off nothing waits for a
@@ -70,7 +71,7 @@ export function ApprovalSettingsCard() {
         </CardTitle>
         <CardDescription>
           When this is on, a change that corrects a confirmed month, reaches a closed payroll month, unfreezes a bill, carries pay
-          forward, or reaches settled bills of {s?.min_families ?? 3}+ families or {Number(s?.min_paid_vnd ?? 5000000).toLocaleString()} VND+
+          forward, or reaches settled bills of {s?.min_families ?? 3}+ families or {formatVND(Number(s?.min_paid_vnd ?? 5000000))}+
           paid waits until another administrator approves it. The person who asks can never approve it themselves.
         </CardDescription>
       </CardHeader>

@@ -8,6 +8,7 @@ import {
   ArchivedClassesSection,
 } from "@/components/admin/class/ClassAdminActions";
 import { PlaceholderCard } from "@/components/ui/loading";
+import { formatVND } from "@/lib/money";
 
 export function ClassesList() {
   const { data: classes, isLoading } = useQuery({
@@ -50,7 +51,7 @@ export function ClassesList() {
 
                 <div className="flex items-center gap-2 text-sm">
                   <Badge variant="secondary">
-                    {(cls.session_rate_vnd / 1000).toLocaleString()}k VND/buổi
+                    {formatVND(cls.session_rate_vnd)}/buổi
                   </Badge>
                 </div>
 

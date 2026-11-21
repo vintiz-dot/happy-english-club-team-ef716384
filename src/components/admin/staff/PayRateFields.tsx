@@ -26,6 +26,7 @@ import {
   sessionPayVnd,
   type PayRateType,
 } from "@/lib/payRate";
+import { formatVND } from "@/lib/money";
 
 export interface PayRateFieldsProps {
   payRateType: PayRateType;
@@ -95,8 +96,8 @@ export function PayRateFields({
         >
           {error ?? (
             payRateType === "per_session"
-              ? `${perLesson.toLocaleString()} ₫ a lesson, however long it runs.`
-              : `${perLesson.toLocaleString()} ₫ for a ${formatMinutes(previewMinutes)} lesson — longer lessons cost more.`
+              ? `${formatVND(perLesson)} a lesson, however long it runs.`
+              : `${formatVND(perLesson)} for a ${formatMinutes(previewMinutes)} lesson — longer lessons cost more.`
           )}
         </p>
       </div>

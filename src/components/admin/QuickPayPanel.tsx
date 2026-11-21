@@ -28,6 +28,7 @@ import { earlierOwing, owingRowNote } from "@/lib/owingMonth";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
+import { formatVND } from "@/lib/money";
 
 interface QuickPayPanelProps {
   month: string;
@@ -95,7 +96,6 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
   const selectedRows = unpaid.filter((i) => getEntryAmount(i) > 0);
   const totalToCollect = selectedRows.reduce((sum, i) => sum + getEntryAmount(i), 0);
 
-  const fmt = (n: number) => n.toLocaleString("vi-VN") + " ₫";
 
   const clearAll = () => setAmounts({});
 
@@ -188,7 +188,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
       queryClient.invalidateQueries({ queryKey: ["finance-summary"] });
 
       if (failCount === 0) {
-        toast.success(`Recorded ${successCount} payment${successCount === 1 ? "" : "s"} totalling ${fmt(totalToCollect)}`);
+        toast.success(`Recorded ${successCount} payment${successCount === 1 ? "" : "s"} totalling ${formatVND(totalToCollect)}`);
       } else {
         toast.warning(`${successCount} succeeded, ${failCount} failed`);
       }
@@ -261,7 +261,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
             <Wallet className="h-4 w-4 text-hec-ink-soft" />
             <span className="text-hec-ink-soft">Typed:</span>
             <span className="whitespace-nowrap font-sans font-semibold text-hec-body text-hec-ink tabular-nums">
-              {fmt(totalToCollect)}
+              {formatVND(totalToCollect)}
             </span>
           </div>
         </div>
@@ -320,7 +320,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
             <span className="hidden sm:inline">
               Outstanding total:{" "}
               <span className="whitespace-nowrap font-semibold text-hec-ink tabular-nums">
-                {fmt(unpaid.reduce((s, i) => s + getOutstanding(i), 0))}
+                {formatVND(unpaid.reduce((s, i) => s + getOutstanding(i), 0))}
               </span>
             </span>
           </div>
@@ -374,7 +374,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
                   <p className="text-hec-small text-hec-ink-soft">
                     Outstanding:{" "}
                     <span className="whitespace-nowrap font-semibold text-hec-ink tabular-nums">
-                      {fmt(outstanding)}
+                      {formatVND(outstanding)}
                     </span>
                   </p>
                   {warning && !isDone && (
@@ -409,7 +409,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
           <div className="text-hec-small">
             <div className="text-hec-ink-soft">Will record</div>
             <div className="whitespace-nowrap font-sans text-hec-h1 font-semibold text-hec-ink tabular-nums">
-              {fmt(totalToCollect)}
+              {formatVND(totalToCollect)}
             </div>
           </div>
           <Button

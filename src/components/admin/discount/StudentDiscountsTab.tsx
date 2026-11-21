@@ -31,6 +31,7 @@ import {
 import { PlaceholderCard } from "@/components/ui/loading";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
+import { formatVND } from "@/lib/money";
 
 interface StudentDiscountsTabProps {
   studentId: string;
@@ -203,7 +204,7 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
                         {hasRateOverride ? (
                           <div className="space-y-1">
                             <Badge variant="default" className="whitespace-nowrap border-hec-line bg-transparent text-hec-ink tabular-nums">
-                              {enrollment.rate_override_vnd.toLocaleString('vi-VN')} ₫
+                              {formatVND(enrollment.rate_override_vnd)}
                             </Badge>
                             <p className="text-hec-caption text-hec-ink-soft">
                               Custom rate

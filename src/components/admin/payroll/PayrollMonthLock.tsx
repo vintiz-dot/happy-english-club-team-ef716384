@@ -37,6 +37,7 @@ import { requestApproval } from "@/components/admin/approvals/api";
 import { PendingApprovalBadge } from "@/components/admin/approvals/PendingApprovalBadge";
 import { payrollDrift, removedCostsText, removedLinesText } from "@/lib/payrollDrift";
 import { functionErrorMessage } from "@/lib/functionError";
+import { formatVND } from "@/lib/money";
 
 export interface LiveStaffTotal {
   id: string;
@@ -53,7 +54,7 @@ export interface PayrollMonthLockProps {
   liveReady?: boolean;
 }
 
-const vnd = (n: number) => `${Math.round(n).toLocaleString()} ₫`;
+const vnd = (n: number) => `${formatVND(Math.round(n))}`;
 const signed = (n: number) => `${n > 0 ? "+" : ""}${vnd(n)}`;
 
 /** The month a correction gets paid in: the later of next month and this one. */

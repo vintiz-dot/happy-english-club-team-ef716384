@@ -15,6 +15,7 @@ import { TeacherBankingInfo } from "@/components/teacher/TeacherBankingInfo";
 import { School, TrendingUp } from "lucide-react";
 import { MonthPicker } from "@/components/MonthPicker";
 import { teacherPayrollView } from "@/lib/teacherPayrollView";
+import { formatVND } from "@/lib/money";
 
 interface TeacherProfilePayrollProps {
   teacherId: string;
@@ -63,7 +64,7 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, onMonthChange 
           <CardHeader className="pb-2">
             <CardDescription>Projected Total</CardDescription>
             <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">
-              {(payrollData?.projectedTotal || 0).toLocaleString()} ₫
+              {formatVND(payrollData?.projectedTotal || 0)}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -82,7 +83,7 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, onMonthChange 
           <CardHeader className="pb-2">
             <CardDescription>Current (Actual)</CardDescription>
             <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">
-              {(payrollData?.earned || 0).toLocaleString()} ₫
+              {formatVND(payrollData?.earned || 0)}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
@@ -211,7 +212,7 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, onMonthChange 
                       <TableCell className="px-2 sm:px-4 whitespace-nowrap text-right font-medium tabular-nums">
                         {amount === null
                           ? <span title="Figure unavailable"><span aria-hidden="true">—</span><span className="sr-only">Figure unavailable</span></span>
-                          : `${amount.toLocaleString()} ₫`}
+                          : `${formatVND(amount)}`}
                       </TableCell>
                     </TableRow>
                   );

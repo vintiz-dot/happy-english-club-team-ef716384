@@ -15,6 +15,7 @@ import { RecordPaymentDialog } from "@/components/admin/RecordPaymentDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { fetchBulkTuition, liveTuitionItem } from "@/hooks/useLiveTuitionData";
 import { siblingRetryDelayMs } from "@/lib/siblingRetry";
+import { formatVND } from "@/lib/money";
 import {
   carriedOut,
   figurePlaceholder,
@@ -24,7 +25,6 @@ import {
   tuitionStatusInput,
 } from "@/lib/tuitionRows";
 
-const fmt = (n: number) => n.toLocaleString("vi-VN") + " ₫";
 
 // The status is judged on the calculator's carry-out; a row without figures
 // has no status and matches no status filter.
@@ -343,7 +343,7 @@ function TuitionStudentRow({
   // (src/lib/tuitionRows.ts, tested in scripts/tuitionRows.test.ts). Nothing
   // is worked out here. `item.finalPayable` is read only for an answer from
   // a function too old to send carry.payable.
-  const cells = tuitionRowCells(item.figures, fmt, item.finalPayable);
+  const cells = tuitionRowCells(item.figures, (n: number) => formatVND(n), item.finalPayable);
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>

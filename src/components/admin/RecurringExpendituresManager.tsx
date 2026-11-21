@@ -36,6 +36,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { formatVND } from "@/lib/money";
 
 interface RecurringExpenditure {
   id: string;
@@ -70,8 +71,6 @@ interface RecurringExpendituresManagerProps {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const untyped = supabase as any;
 
-const fmtVND = (n: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 
 export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendituresManagerProps) {
   const queryClient = useQueryClient();
@@ -633,7 +632,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
                 <p className="mt-1 text-hec-small text-hec-ink-soft">
                   Total:{" "}
                   <span className="whitespace-nowrap font-bold tabular-nums text-hec-ink">
-                    {fmtVND(dueThisMonth.reduce((s, t) => s + t.amount, 0))}
+                    {formatVND(dueThisMonth.reduce((s, t) => s + t.amount, 0))}
                   </span>{" "}
                   · {dueThisMonth.map((t) => t.category).join(", ")}
                 </p>
@@ -701,7 +700,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
                       )}
                     </div>
                     <p className="mt-1 text-hec-small text-hec-ink-soft">
-                      <span className="whitespace-nowrap font-semibold tabular-nums text-hec-ink">{fmtVND(t.amount)}</span>
+                      <span className="whitespace-nowrap font-semibold tabular-nums text-hec-ink">{formatVND(t.amount)}</span>
                       {" · "}Day {t.day_of_month}
                       {t.memo ? ` · ${t.memo}` : ""}
                     </p>

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calculator } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { formatVND } from "@/lib/money";
 
 interface Student {
   id: string;
@@ -121,15 +122,15 @@ export function ManualTuitionRecalc() {
                 <p className="font-semibold">Recalculation Complete</p>
                 <div className="text-sm space-y-1">
                   <p>Sessions: {result.sessionCount}</p>
-                  <p>Base Amount: {result.baseAmount?.toLocaleString() || 0} ₫</p>
-                  <p>Total Discount: {result.totalDiscount?.toLocaleString() || 0} ₫</p>
-                  <p>Total Amount: {result.totalAmount?.toLocaleString() || 0} ₫</p>
+                  <p>Base Amount: {formatVND(result.baseAmount)}</p>
+                  <p>Total Discount: {formatVND(result.totalDiscount)}</p>
+                  <p>Total Amount: {formatVND(result.totalAmount)}</p>
                   <p>Status: {result.carry?.status || "unknown"}</p>
                   {result.carry?.carryOutDebt > 0 && (
-                    <p className="text-destructive">Debt: {result.carry.carryOutDebt.toLocaleString()} ₫</p>
+                    <p className="text-destructive">Debt: {formatVND(result.carry.carryOutDebt)}</p>
                   )}
                   {result.carry?.carryOutCredit > 0 && (
-                    <p className="text-success">Credit: {result.carry.carryOutCredit.toLocaleString()} ₫</p>
+                    <p className="text-success">Credit: {formatVND(result.carry.carryOutCredit)}</p>
                   )}
                 </div>
               </div>

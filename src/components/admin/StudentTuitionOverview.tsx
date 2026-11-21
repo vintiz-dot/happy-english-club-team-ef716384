@@ -10,6 +10,7 @@ import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButto
 import { useState, useMemo, useEffect } from "react";
 import { siblingRetryDelayMs } from "@/lib/siblingRetry";
 import { useNavigate } from "react-router-dom";
+import { formatVND } from "@/lib/money";
 
 interface TuitionData {
   studentId: string;
@@ -154,13 +155,7 @@ export function StudentTuitionOverview() {
     return () => clearTimeout(timer);
   }, [unresolvedIds, retryAttempt, selectedMonth, students, queryClient]);
 
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
-
+  
   const getMonthOptions = () => {
     const options = [];
     const now = new Date();

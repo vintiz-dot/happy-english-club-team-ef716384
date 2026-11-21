@@ -13,6 +13,7 @@ import { StudentTuitionReviewCard } from "./StudentTuitionReviewCard";
 import { Accordion } from "@/components/ui/accordion";
 import Layout from "@/components/Layout";
 import { useSearchParams } from "react-router-dom";
+import { formatVND } from "@/lib/money";
 
 export function TuitionReviewQueue() {
   const [searchParams] = useSearchParams();
@@ -137,14 +138,7 @@ export function TuitionReviewQueue() {
     setSelectedStudents(newSet);
   };
 
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
+  
   const getFlagLabel = (flagType: string) => {
     const labels: Record<string, string> = {
       tuition_adjustment: "Tuition Adjustments",

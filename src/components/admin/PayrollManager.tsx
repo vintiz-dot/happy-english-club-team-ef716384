@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DollarSign, Download, FileText } from "lucide-react";
 import { format } from "date-fns";
 import type { PayRateType } from "@/lib/payRate";
+import { formatVND } from "@/lib/money";
 
 interface PayrollData {
   teacherId: string;
@@ -155,12 +156,12 @@ export function PayrollManager() {
                     <p className="text-xs text-muted-foreground">
                       {/* Not a hardcoded "/hour": a per-session teacher's
                           hourly column is 0, so this read "0 ₫/hour". */}
-                      Rate: {(teacher.hourlyRate || 0).toLocaleString('vi-VN')} ₫/
+                      Rate: {formatVND(teacher.hourlyRate || 0)}/
                       {teacher.payRateType === "per_session" ? "session" : "hour"}
                     </p>
                   </div>
                   <p className="text-lg font-semibold text-primary">
-                    {(teacher.totalAmount || 0).toLocaleString('vi-VN')} ₫
+                    {formatVND(teacher.totalAmount || 0)}
                   </p>
                 </div>
               ))}
@@ -168,7 +169,7 @@ export function PayrollManager() {
               <div className="border-t-2 pt-3 flex items-center justify-between">
                 <p className="text-lg font-bold">Grand Total</p>
                 <p className="text-xl font-bold text-primary">
-                  {(grandTotal || 0).toLocaleString('vi-VN')} ₫
+                  {formatVND(grandTotal || 0)}
                 </p>
               </div>
             </div>

@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatVND } from "@/lib/invoice/formatter";
+import { formatVND } from "@/lib/money";
 import { monthKey } from "@/lib/date";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 

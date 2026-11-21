@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreditCard, Eye, Award, Percent } from "lucide-react";
 import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { getAvatarUrl } from "@/lib/avatars";
+import { formatVND } from "@/lib/money";
 
 interface TuitionStudentTableProps {
   items: any[];
@@ -25,7 +26,6 @@ interface TuitionStudentTableProps {
   onToggleAll: () => void;
 }
 
-const fmt = (n: number) => n.toLocaleString("vi-VN") + " ₫";
 
 /**
  * Dense table view of the tuition list — optimised for desktop power
@@ -137,15 +137,15 @@ export function TuitionStudentTable({
                   </TableCell>
                   <TableCell>{getTuitionStatusBadge(status, item.settled_in_month)}</TableCell>
                   <TableCell className="whitespace-nowrap text-right font-sans font-medium tabular-nums text-hec-ink">
-                    {fmt(item.finalPayable)}
+                    {formatVND(item.finalPayable)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right font-sans tabular-nums text-hec-ink">
-                    {fmt(item.recorded_payment ?? 0)}
+                    {formatVND(item.recorded_payment ?? 0)}
                   </TableCell>
                   <TableCell
                     className={`whitespace-nowrap text-right font-sans font-semibold tabular-nums ${balance === 0 ? "text-hec-ink-soft" : "text-hec-ink"}`}
                   >
-                    {balance > 0 ? fmt(balance) : balance < 0 ? `Credit +${fmt(Math.abs(balance))}` : "—"}
+                    {balance > 0 ? formatVND(balance) : balance < 0 ? `Credit +${formatVND(Math.abs(balance))}` : "—"}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex items-center gap-2">

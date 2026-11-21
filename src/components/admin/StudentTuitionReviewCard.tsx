@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {  ChevronDown, CheckCircle, Edit, FileText, Loader2 } from "lucide-react";
 import { EnrollmentRateEditor } from "./EnrollmentRateEditor";
 import { Textarea } from "@/components/ui/textarea";
+import { formatVND } from "@/lib/money";
 
 interface StudentTuitionReviewCardProps {
   invoice: any;
@@ -69,14 +70,7 @@ export function StudentTuitionReviewCard({
     },
   });
 
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
+  
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string }> = {
       needs_review: { variant: "destructive", label: "Needs Review" },

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Users } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { formatVND } from "@/lib/money";
 
 interface FamilyPaymentEditModalProps {
   paymentId: string | null;
@@ -83,7 +84,7 @@ export function FamilyPaymentEditModal({ paymentId, onClose }: FamilyPaymentEdit
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="font-semibold">{payment.amount?.toLocaleString() || 0} ₫</p>
+                <p className="font-semibold">{formatVND(payment.amount)}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Method</p>
@@ -128,7 +129,7 @@ export function FamilyPaymentEditModal({ paymentId, onClose }: FamilyPaymentEdit
                           </TableCell>
                           <TableCell className="text-right">
                             <Badge variant="secondary">
-                              {allocation.allocated_amount.toLocaleString()} ₫
+                              {formatVND(allocation.allocated_amount)}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -137,10 +138,7 @@ export function FamilyPaymentEditModal({ paymentId, onClose }: FamilyPaymentEdit
                     <TableRow className="font-semibold bg-muted">
                       <TableCell>Total Allocated</TableCell>
                       <TableCell className="text-right">
-                        {allocations
-                          .reduce((sum, a) => sum + a.allocated_amount, 0)
-                          .toLocaleString()}{" "}
-                        ₫
+                        {formatVND(allocations.reduce((sum, a) => sum + a.allocated_amount, 0))}
                       </TableCell>
                     </TableRow>
                   </TableBody>

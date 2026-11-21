@@ -8,6 +8,7 @@ import {
   Wallet,
   BadgePercent
 } from "lucide-react";
+import { formatVND } from "@/lib/money";
 
 interface TuitionStats {
   totalStudents: number;
@@ -28,13 +29,6 @@ interface TuitionSummaryCardsProps {
   isLoading?: boolean;
 }
 
-const formatVND = (amount: number) => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    minimumFractionDigits: 0,
-  }).format(amount);
-};
 
 const StatCard = ({ 
   icon: Icon, 

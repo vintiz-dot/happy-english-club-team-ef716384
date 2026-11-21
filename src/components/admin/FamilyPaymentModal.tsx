@@ -15,6 +15,7 @@ import { Users, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { formatVND } from "@/lib/money";
 
 interface FamilyPaymentModalProps {
   open: boolean;
@@ -365,14 +366,14 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                           </div>
                         </div>
                         <Badge variant={balance > 0 ? "destructive" : "secondary"} className="shrink-0 whitespace-nowrap tabular-nums">
-                          {balance > 0 ? "+" : ""}{balance.toLocaleString()} ₫
+                          {balance > 0 ? "+" : ""}{formatVND(balance)}
                         </Badge>
                       </div>
                     );
                   })}
                 </div>
                 <p className="text-hec-small text-hec-ink-soft">
-                  Total AR Balance: <span className="whitespace-nowrap font-semibold text-hec-ink tabular-nums">{getTotalBalance().toLocaleString()} ₫</span>
+                  Total AR Balance: <span className="whitespace-nowrap font-semibold text-hec-ink tabular-nums">{formatVND(getTotalBalance())}</span>
                 </p>
               </div>
 
@@ -506,21 +507,21 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                   <AlertDescription>
                     <div className="space-y-3">
                       <p className="font-medium">
-                        Leftover amount: {preview.leftover.toLocaleString()} ₫
+                        Leftover amount: {formatVND(preview.leftover)}
                       </p>
                       {formData.allocationMode === "manual" ? (
                         // Money not split out goes on the first selected
                         // student's bill: it pays what they still owe first,
                         // and only the rest is credit (as the function says).
                         <p>
-                          The {preview.leftover.toLocaleString()} ₫ not split out goes on {firstSelectedName}'s bill:
+                          The {formatVND(preview.leftover)} not split out goes on {firstSelectedName}'s bill:
                           {" "}{preview.manualCredit > 0
-                            ? `${preview.manualCredit.toLocaleString()} ₫ of it is more than they owe and will show as credit on their next bill.`
+                            ? `${formatVND(preview.manualCredit)} of it is more than they owe and will show as credit on their next bill.`
                             : "it pays what they still owe; none of it becomes credit."}
                         </p>
                       ) : (
                         <p>
-                          The extra {preview.leftover.toLocaleString()} ₫ will show as credit on{" "}
+                          The extra {formatVND(preview.leftover)} will show as credit on{" "}
                           {firstSelectedName}'s next bill.
                         </p>
                       )}
@@ -538,11 +539,11 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
               <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-4 space-y-2">
                 <div className="font-medium text-hec-ink">Allocation Preview</div>
                 <div className="text-hec-small text-hec-ink tabular-nums space-y-1">
-                  <p>• Payment Amount: {preview.totalAmount.toLocaleString()} ₫</p>
-                  <p>• Total AR Balance: {preview.totalBalance.toLocaleString()} ₫</p>
-                  <p>• Will Apply: {preview.willApply.toLocaleString()} ₫</p>
+                  <p>• Payment Amount: {formatVND(preview.totalAmount)}</p>
+                  <p>• Total AR Balance: {formatVND(preview.totalBalance)}</p>
+                  <p>• Will Apply: {formatVND(preview.willApply)}</p>
                   {preview.leftover > 0 && (
-                    <p>• Leftover: {preview.leftover.toLocaleString()} ₫</p>
+                    <p>• Leftover: {formatVND(preview.leftover)}</p>
                   )}
                   <p>• Students: {selectedSiblings.size}</p>
                 </div>

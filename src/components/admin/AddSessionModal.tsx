@@ -23,6 +23,7 @@ import { manageSession } from "@/components/admin/session-guard/api";
 import { PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
 import { errorText } from "@/lib/sessionGuard";
 import { payDialogFrom, type PayOp } from "@/lib/lessonPayGuard";
+import { formatVND } from "@/lib/money";
 
 interface AddSessionModalProps {
   classId: string;
@@ -236,7 +237,7 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
             <Input
               id="rate"
               type="number"
-              placeholder={`Default: ${classData?.session_rate_vnd?.toLocaleString('vi-VN') || '210,000'} ₫`}
+              placeholder={`Default: ${classData?.session_rate_vnd ? formatVND(classData.session_rate_vnd) : formatVND(210000)}`}
               value={rateOverride}
               onChange={(e) => setRateOverride(e.target.value)}
             />

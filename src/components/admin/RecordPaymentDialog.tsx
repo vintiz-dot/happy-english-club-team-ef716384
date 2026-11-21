@@ -15,6 +15,7 @@ import { getPaymentStatus, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatu
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, waitingNotice } from "@/lib/recordPayment";
+import { formatVND } from "@/lib/money";
 
 interface RecordPaymentDialogProps {
   open: boolean;
@@ -157,8 +158,8 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
 
       toast.success(
         mode === "correction" 
-          ? `Corrected payment by -${enteredAmount.toLocaleString()} ₫ for ${studentName}`
-          : `Recorded ${enteredAmount.toLocaleString()} ₫ for ${studentName}`
+          ? `Corrected payment by -${formatVND(enteredAmount)} for ${studentName}`
+          : `Recorded ${formatVND(enteredAmount)} for ${studentName}`
       );
       onSuccess?.();
       handleClose();
@@ -179,7 +180,6 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
     onClose();
   };
 
-  const fmt = (v: number) => v.toLocaleString() + " ₫";
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
@@ -192,7 +192,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
           {item && (
             <DialogDescription className="break-words">
               {mode === "correction" ? "Deduct" : "Record"}{" "}
-              <span className="tabular-nums">{enteredAmount > 0 && !isNaN(enteredAmount) ? fmt(enteredAmount) : "an amount"}</span>{" "}
+              <span className="tabular-nums">{enteredAmount > 0 && !isNaN(enteredAmount) ? formatVND(enteredAmount) : "an amount"}</span>{" "}
               {mode === "correction" ? "from" : "for"} {studentName}, {month} tuition. It is saved as soon as you confirm.
             </DialogDescription>
           )}
@@ -218,16 +218,16 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
             <div className="grid grid-cols-1 min-[400px]:grid-cols-3 gap-2 rounded-hec-md border border-hec-line bg-hec-sunken p-3">
               <div className="flex items-baseline justify-between gap-4 min-[400px]:block min-[400px]:text-center">
                 <p className="text-hec-caption text-hec-ink-soft">Payable</p>
-                <p className="whitespace-nowrap font-semibold text-hec-small text-hec-ink tabular-nums">{fmt(payable)}</p>
+                <p className="whitespace-nowrap font-semibold text-hec-small text-hec-ink tabular-nums">{formatVND(payable)}</p>
               </div>
               <div className="flex items-baseline justify-between gap-4 min-[400px]:block min-[400px]:text-center">
                 <p className="text-hec-caption text-hec-ink-soft">Paid</p>
-                <p className="whitespace-nowrap font-semibold text-hec-small text-hec-ink tabular-nums">{fmt(alreadyPaid)}</p>
+                <p className="whitespace-nowrap font-semibold text-hec-small text-hec-ink tabular-nums">{formatVND(alreadyPaid)}</p>
               </div>
               <div className="flex items-baseline justify-between gap-4 min-[400px]:block min-[400px]:text-center">
                 <p className={`text-hec-caption font-medium ${outstanding > 0 ? "text-hec-danger" : "text-hec-leaf"}`}>Outstanding</p>
                 <p className="whitespace-nowrap font-semibold text-hec-small text-hec-ink tabular-nums">
-                  {fmt(outstanding)}
+                  {formatVND(outstanding)}
                 </p>
               </div>
             </div>
@@ -308,7 +308,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
                   : "border-hec-warn/30 bg-hec-warn-tint"
               }`}>
                 After this {mode}: Balance will be{" "}
-                <span className="whitespace-nowrap font-semibold tabular-nums">{fmt(newBalance)}</span>
+                <span className="whitespace-nowrap font-semibold tabular-nums">{formatVND(newBalance)}</span>
                 {newBalance < 0 && " (overpaid)"}
               </div>
             )}

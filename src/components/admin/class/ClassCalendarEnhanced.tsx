@@ -23,6 +23,7 @@ import {
   isSameMonth,
   isSameDay,
 } from "date-fns";
+import { formatVND } from "@/lib/money";
 
 interface EnhancedClassCalendarProps {
   classId: string;
@@ -236,7 +237,7 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
                       <span className="sr-only">Figure unavailable</span>
                     </>
                   ) : (
-                    `${classPay.toLocaleString('vi-VN')} ₫`
+                    `${formatVND(classPay)}`
                   )}
                 </span>
               </div>

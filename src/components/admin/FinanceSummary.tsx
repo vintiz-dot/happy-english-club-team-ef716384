@@ -22,10 +22,8 @@ import { useFinanceOverview, LOST_REVENUE_THRESHOLD_VND, FinanceMetrics } from "
 import { useEarliestFinanceMonth } from "@/hooks/useEarliestFinanceMonth";
 import { MonthPicker } from "@/components/MonthPicker";
 import { dayjs } from "@/lib/date";
+import { formatVND } from "@/lib/money";
 
-function formatVND(amount: number): string {
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
-}
 
 function formatClosedDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });

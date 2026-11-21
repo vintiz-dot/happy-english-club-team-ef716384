@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { PlaceholderCard } from "@/components/ui/loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ALLOCATION_MODES, describeAllocation, staffKey, splitStaffKey } from "@/lib/finance/allocationTarget";
+import { formatVND } from "@/lib/money";
 
 export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -178,13 +179,7 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
     setAllocationStaff("");
   };
 
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
-
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">

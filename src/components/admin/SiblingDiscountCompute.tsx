@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Calculator, Loader2, Eye, CheckCircle2, AlertCircle, Users, Settings2 } from "lucide-react";
-import { formatVND } from "@/lib/invoice/formatter";
+import { formatVND } from "@/lib/money";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
