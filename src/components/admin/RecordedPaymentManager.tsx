@@ -459,8 +459,10 @@ export function RecordedPaymentManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reverse Recorded Payment</AlertDialogTitle>
             <AlertDialogDescription>
-              This will reset the recorded_payment to 0 for this invoice, recorded as a correction in the payments list and the ledger.
-              Current value: {reversingInvoice?.currentValue.toLocaleString('vi-VN')} ₫
+              This will reset the recorded payment to 0 for{" "}
+              {(invoices.find((i) => i.id === reversingInvoice?.id) as any)?.students?.full_name ?? "this student"}, {selectedMonth} tuition,
+              recorded as a correction in the payments list and the ledger.{" "}
+              Current value: <span className="tabular-nums">{reversingInvoice?.currentValue.toLocaleString('vi-VN')} ₫</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 py-4">
@@ -475,12 +477,12 @@ export function RecordedPaymentManager() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setReversalReason("")}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel autoFocus onClick={() => setReversalReason("")}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleReversePayment}
               disabled={!reversalReason.trim() || !reverseMethod || loading}
             >
-              Reverse Payment
+              {loading ? "Working…" : "Reverse payment"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

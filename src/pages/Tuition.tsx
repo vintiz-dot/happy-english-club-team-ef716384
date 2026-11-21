@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
 import Layout from "@/components/Layout";
@@ -19,7 +20,22 @@ import { PageLoading } from "@/components/ui/loading";
 export default function Tuition() {
   const { role } = useAuth();
   const { studentId } = useStudentProfile();
-  const [month, setMonth] = useState(dayjs().format("YYYY-MM"));
+  // The admin view keeps month and filters in the URL so Back and shared
+  // links return to the same place. Other roles keep their own month.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [ownMonth, setOwnMonth] = useState(dayjs().format("YYYY-MM"));
+  const urlMonth = searchParams.get("month");
+  const month = role === "admin" && urlMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(urlMonth) ? urlMonth : ownMonth;
+  const setParam = (key: string, value: string, fallback: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === fallback) next.delete(key);
+    else next.set(key, value);
+    setSearchParams(next, { replace: true });
+  };
+  const setMonth = (m: string) => {
+    if (role === "admin") setParam("month", m, "");
+    else setOwnMonth(m);
+  };
   const currentMonth = dayjs().format("YYYY-MM");
   const [smartPayOpen, setSmartPayOpen] = useState(false);
 
@@ -35,7 +51,13 @@ export default function Tuition() {
               Smart Family Payment
             </Button>
           </div>
-          <AdminTuitionList month={month} />
+          <AdminTuitionList
+            month={month}
+            filter={searchParams.get("filter") || "all"}
+            onFilterChange={(v) => setParam("filter", v, "all")}
+            confirmation={searchParams.get("confirmation") || "all"}
+            onConfirmationChange={(v) => setParam("confirmation", v, "all")}
+          />
         </div>
         <SmartFamilyPaymentModal open={smartPayOpen} onClose={() => setSmartPayOpen(false)} />
       </Layout>

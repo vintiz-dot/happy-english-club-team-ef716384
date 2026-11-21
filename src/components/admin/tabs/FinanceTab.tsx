@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminTuitionListEnhanced } from "@/components/admin/AdminTuitionListEnhanced";
 import { TuitionBulkDownload } from "@/components/admin/TuitionBulkDownload";
@@ -21,6 +22,8 @@ import { CloseMonthDialog } from "@/components/admin/CloseMonthDialog";
 import { PageHero } from "@/components/quest/PageHero";
 
 const FinanceTab = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sub = searchParams.get("sub") || "summary";
   const [smartPaymentOpen, setSmartPaymentOpen] = useState(false);
   const [batchPaymentOpen, setBatchPaymentOpen] = useState(false);
   const [closeMonthOpen, setCloseMonthOpen] = useState(false);
@@ -42,7 +45,7 @@ const FinanceTab = () => {
         className="mb-6"
       />
 
-      <Tabs defaultValue="summary" className="space-y-4">
+      <Tabs value={sub} onValueChange={(v) => { const next = new URLSearchParams(searchParams); next.set("sub", v); setSearchParams(next, { replace: true }); }} className="space-y-4">
         <div className="space-y-3">
           {/* Tabs — horizontally scrollable on mobile, wrap on tablet+, no overflow */}
           <div className="-mx-4 sm:mx-0 overflow-x-auto scrollbar-hide">

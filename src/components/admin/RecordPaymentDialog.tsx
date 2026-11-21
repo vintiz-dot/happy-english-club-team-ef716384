@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -189,6 +189,13 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
             <CreditCard className="h-5 w-5" />
             Manage Payment
           </DialogTitle>
+          {item && (
+            <DialogDescription className="break-words">
+              {mode === "correction" ? "Deduct" : "Record"}{" "}
+              <span className="tabular-nums">{enteredAmount > 0 && !isNaN(enteredAmount) ? fmt(enteredAmount) : "an amount"}</span>{" "}
+              {mode === "correction" ? "from" : "for"} {studentName}, {month} tuition. It is saved as soon as you confirm.
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         {item && (
@@ -237,7 +244,6 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="min-w-0 flex-1 tabular-nums"
-                  autoFocus
                 />
                 <Button 
                   variant="outline" 
@@ -310,12 +316,12 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
         )}
 
         <DialogFooter>
-          <Button variant="ghost" onClick={handleClose} disabled={saving}>
+          <Button variant="ghost" autoFocus onClick={handleClose} disabled={saving}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving || enteredAmount <= 0 || isNaN(enteredAmount) || (mode === "correction" && enteredAmount > alreadyPaid)}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {mode === "payment" ? "Record Payment" : "Apply Correction"}
+            {saving ? "Working…" : mode === "payment" ? "Record payment" : "Apply correction"}
           </Button>
         </DialogFooter>
       </DialogContent>
