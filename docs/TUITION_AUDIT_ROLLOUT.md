@@ -113,6 +113,29 @@ ones are corrected. Each phase ships on its own.
 - Every decision is a payment or correction row, so the ledger and
   `recorded_payment` follow from it. Nothing edits a bill directly.
 
+**As built (21 Nov 2026, migration `20261121100000_tuition_reconciliation_register.sql`).**
+- `tuition_reconciliation_items`: one row per family-month (`family_id`,
+  `student_ids`, month, sheet / app recorded / app billed, `difference`,
+  pattern, evidence). Admin-only RLS. The loaded facts never change; a
+  decision is written only by `decide_tuition_reconciliation_item` (a trigger
+  checks a transaction-local flag only the RPC sets), once, and a decided row
+  cannot be deleted.
+- Decisions: `sheet_missed` (no money; the historical row is phase 3's),
+  `not_received` (corrections, memo `audit: not received`, at most what each
+  bill holds and at most the audit's gap), `wrong_month` (corrections on one
+  month, equal payments on the other, one receipt date), `rounding_accepted`
+  (at most 10,000), `refer_phase4` (pattern A only). Money goes through
+  `record_admin_payment`, all of a decision or none of it.
+- Loader: `scripts/load-reconciliation-items.mjs` reads the fee workbook
+  directly (no `categories.tsv` needed; `--patterns` takes it if supplied),
+  the owner's mapping (sheet name -> student id, `null` = not in the app)
+  and the bills (read-only), and compares per family. Dry run by default;
+  `--emit-sql <file>` for the SQL editor. Inputs and output stay outside the repo.
+- Screen: Finance > Audit (`ReconciliationRegister.tsx`, logic in
+  `src/lib/reconciliation.ts`). Totals are over the facts as loaded, so the
+  whole register ties to -14,174,001.
+- Tests: `reconciliation-register`, `-loader`, `-lib` in `scripts/pgtest`.
+
 ### Phase 3 - rebuild Oct 2025 - May 2026 as payment rows
 - For every bill whose `recorded_payment` has no payment rows behind it, write
   one "opening balance" payment row (method `historical`, memo with the audit
