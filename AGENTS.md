@@ -75,6 +75,7 @@
 
 # Payment month
 - Payment forms share `useTuitionMonthConfirmation`: explicitly confirm the target invoice month separately from receipt date, resetting on reopen/month changes; `family-payment` requires and filters by that month, using monthly `recorded_payment` rather than cumulative `paid_amount`.
+- `payments.source` is `receipt` or `historical` (`20261121110000`). A historical row is an OPENING BALANCE: money already on the bill before 17 Nov 2026, with no receipt, no ledger legs and `payments.month` set. Never count one as cash received: student-audit lists it as an adjustment (`_lib/payment-source.ts`), and delete-payment and a guard trigger refuse to change or delete it. Only `admin_backfill_historical_payments` writes them. What a row put on a bill is `payment_bill_amounts`; a new reader of `payments` decides what it does with historical rows and gets a case in `historical-payments.test.mjs`.
 
 # Video homework
 - `homeworks.submission_type = 'video'` switches a homework to the in-app recorder (`src/components/video-homework/`). Schema, policies and the approval RPC are `supabase/migrations/20261109090000_video_homework.sql`; `scripts/pgtest/video-homework.test.mjs` runs it.

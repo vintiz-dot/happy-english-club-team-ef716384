@@ -36,6 +36,7 @@
  * the thing it is reporting on.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { paymentAuditEvent, receiptRows } from "../_lib/payment-source.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -241,28 +242,30 @@ Deno.serve(async (req) => {
     // an actor, all on one row.
     const { data: payments } = await admin
       .from("payments")
-      .select("id, amount, method, memo, occurred_at, created_at, created_by, parent_payment_id")
+      // "*": source and month exist only once 20261121110000 is applied.
+      .select("*")
       .eq("student_id", studentId)
       .order("occurred_at", { ascending: true });
 
     for (const p of payments ?? []) {
       if (p.created_by) actorIds.add(p.created_by);
-      const amount = Number(p.amount ?? 0);
       // A NEGATIVE row is a record-payment correction (D5 G-1): money taken
       // back off the bill, not money received. It is listed as an
       // adjustment, signed, so the account statement's "Payments received"
       // (which lists payment and correction events by absolute amount) never
       // prints it as a payment; the month's Paid column already nets it.
-      const correction = amount < 0;
+      // A HISTORICAL row (tuition audit phase 3) is an opening balance, also
+      // an adjustment: the money was already on the bill (and its audit_log
+      // bump is listed below), so it is never shown as money received.
+      const ev = paymentAuditEvent(p);
       events.push({
         id: `pay:${p.id}`,
-        kind: correction ? "adjustment" : "payment",
-        label: correction ? "Payment correction (taken off the bill)"
-          : p.parent_payment_id ? "Payment (part of a family payment)" : "Payment",
-        amount,
+        kind: ev.kind,
+        label: ev.label,
+        amount: ev.amount,
         occurredAt: p.occurred_at ?? null,
         recordedAt: p.created_at,
-        month: p.occurred_at ? String(p.occurred_at).slice(0, 7) : null,
+        month: ev.month,
         method: p.method ?? null,
         memo: p.memo ?? null,
         actorId: p.created_by ?? null,
@@ -503,7 +506,7 @@ Deno.serve(async (req) => {
       // Said out loud so the screen never implies more certainty than
       // the data supports.
       caveats: {
-        scalarPayments: (payments ?? []).length === 0 && events.length > 0,
+        scalarPayments: receiptRows(payments).length === 0 && events.length > 0,
         auditOnlyEvents: events.filter((e) => e.provenance === "audit_log").length,
         unattributedEvents: events.filter((e) => !e.actorId).length,
       },

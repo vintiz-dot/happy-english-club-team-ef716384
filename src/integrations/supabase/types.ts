@@ -2906,8 +2906,10 @@ export type Database = {
           id: string
           memo: string | null
           method: string
+          month: string | null
           occurred_at: string
           parent_payment_id: string | null
+          source: string
           student_id: string
         }
         Insert: {
@@ -2918,8 +2920,10 @@ export type Database = {
           id?: string
           memo?: string | null
           method: string
+          month?: string | null
           occurred_at?: string
           parent_payment_id?: string | null
+          source?: string
           student_id: string
         }
         Update: {
@@ -2930,8 +2934,10 @@ export type Database = {
           id?: string
           memo?: string | null
           method?: string
+          month?: string | null
           occurred_at?: string
           parent_payment_id?: string | null
+          source?: string
           student_id?: string
         }
         Relationships: [

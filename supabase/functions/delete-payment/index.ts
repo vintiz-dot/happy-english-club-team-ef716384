@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { labelAfterPayment } from '../_lib/invoice-status.ts';
 import { addToRecordedPayment } from '../_lib/recorded-payment-write.ts';
+import { HISTORICAL_DELETE_REFUSAL, isHistoricalPayment } from '../_lib/payment-source.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -111,6 +112,14 @@ Deno.serve(async (req) => {
 
     if (paymentError || !payment) {
       throw new Error(`Payment not found: ${paymentError?.message}`);
+    }
+
+    // An opening-balance row (tuition audit phase 3, 20261121110000) is not a
+    // receipt: it has no ledger legs and stands behind money the bill already
+    // held. It is never deleted (the payments_historical_guard trigger also
+    // refuses it, service_role included).
+    if (isHistoricalPayment(payment)) {
+      return respond({ error: HISTORICAL_DELETE_REFUSAL }, 409);
     }
 
     const isFamilyPayment = payment.parent_payment_id == null && payment.family_id != null;
