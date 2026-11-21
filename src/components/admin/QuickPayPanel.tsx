@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { useOwingMonths } from "@/hooks/useOwingMonths";
+import { earlierOwing, owingRowNote } from "@/lib/owingMonth";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
@@ -81,6 +83,11 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
 
   const getOutstanding = (item: any) =>
     Math.max(0, (item.finalPayable ?? 0) - (item.recorded_payment ?? 0));
+
+  // A child who still owes an EARLIER month is marked on their row (pattern D:
+  // cash for February typed into March). The list is one month, so the note
+  // says to switch the month; nothing is moved here.
+  const owingByChild = useOwingMonths(useMemo(() => unpaid.map((i) => i.student_id), [unpaid]));
 
   // Only what was typed: an empty row is 0 and is not recorded.
   const getEntryAmount = (item: any) => parseCash(amounts[item.student_id]);
@@ -334,6 +341,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
             const isPartial = entryAmount > 0 && entryAmount < outstanding;
             const warning = cashWarning(entryAmount, outstanding);
             const studentName = (item.students as any)?.full_name || "Unknown";
+            const earlier = earlierOwing(owingByChild.get(item.student_id), month);
             return (
               <div
                 key={item.student_id}
@@ -371,6 +379,9 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
                   </p>
                   {warning && !isDone && (
                     <p className="text-hec-caption text-hec-warn" role="status">{warning}</p>
+                  )}
+                  {earlier && !isDone && (
+                    <p className="text-hec-caption text-hec-warn" role="status" data-owing-month={earlier.month}>{owingRowNote(earlier)}</p>
                   )}
                 </div>
                 <div className="ml-auto shrink-0 flex items-center gap-2">

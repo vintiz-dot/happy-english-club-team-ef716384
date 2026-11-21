@@ -16,6 +16,8 @@ import { getPaymentStatus, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatu
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { useOwingMonths } from "@/hooks/useOwingMonths";
+import { earlierOwing, owingRowNote } from "@/lib/owingMonth";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
@@ -49,6 +51,10 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
   const queryClient = useQueryClient();
 
   const getOutstanding = (item: any) => Math.max(0, (item.finalPayable ?? 0) - (item.recorded_payment ?? 0));
+
+  // A child who still owes an EARLIER month is marked on their row (pattern D).
+  // This dialog records one month, so the note says to switch; nothing is moved.
+  const owingByChild = useOwingMonths(useMemo(() => items.map((i) => i.student_id), [items]), open);
 
   // No buttons that fill in the balance: the amount is the cash handed over, typed
   // (src/lib/cashEntry.ts, the Nov 2026 tuition audit).
@@ -247,6 +253,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
                 const outstanding = getOutstanding(item);
                 const enteredAmount = parseCash(entries[item.student_id]);
                 const isCompleted = completed.includes(item.student_id);
+                const earlier = earlierOwing(owingByChild.get(item.student_id), month);
                 const status = getPaymentStatus({
                   carryOutDebt: item.carry_out_debt ?? 0,
                   carryOutCredit: item.carry_out_credit ?? 0,
@@ -282,6 +289,9 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
                           <span>Payable: <span className="whitespace-nowrap text-hec-ink tabular-nums">{fmt(item.finalPayable ?? 0)}</span></span>
                           <span>Outstanding: <span className="whitespace-nowrap text-hec-ink tabular-nums">{fmt(outstanding)}</span></span>
                         </div>
+                        {earlier && !isCompleted && (
+                          <p className="text-hec-caption text-hec-warn" role="status" data-owing-month={earlier.month}>{owingRowNote(earlier)}</p>
+                        )}
                       </div>
                       <span className="shrink-0">{getIvoryTuitionStatusBadge(status, item.settled_in_month)}</span>
                     </div>

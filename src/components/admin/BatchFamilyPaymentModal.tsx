@@ -54,6 +54,8 @@ interface FamilyPaymentEntry {
 
 type Step = "select" | "configure" | "processing" | "results";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { useOwingBills } from "@/hooks/useOwingMonths";
+import { earlierOwing, familyOldestOwingMonth, owingRowNote, type FamilyOwingMonth } from "@/lib/owingMonth";
 
 interface ProcessingResult {
   familyId: string;
@@ -230,6 +232,18 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
       .map(id => familyDebts.get(id))
       .filter((d): d is FamilyDebtInfo => !!d && d.loaded);
   }, [selectedFamilyIds, familyDebts]);
+
+  // A family that still owes an EARLIER month is marked on its row (pattern D).
+  // One month is recorded for every family here, so the note says to switch.
+  const { data: owingBills } = useOwingBills(
+    useMemo(() => selectedFamiliesWithDebt.flatMap(f => f.siblings.map(s => s.id)), [selectedFamiliesWithDebt]),
+    open && step === "configure",
+  );
+  const earlierFor = (family: FamilyDebtInfo): FamilyOwingMonth | null => {
+    if (!owingBills) return null;
+    const bills = Object.fromEntries(family.siblings.map(s => [s.id, owingBills[s.id] ?? []]));
+    return earlierOwing(familyOldestOwingMonth(bills), sharedSettings.month);
+  };
 
   const grandTotalDebt = useMemo(() =>
     selectedFamiliesWithDebt.reduce((sum, f) => sum + f.totalDebt, 0),
@@ -474,6 +488,7 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                       const amountStr = familyAmounts.get(family.familyId) || "0";
                       const amount = parseInt(amountStr) || 0;
                       const isFullSettle = amount >= family.totalDebt && family.totalDebt > 0;
+                      const earlier = earlierFor(family);
 
                       return (
                         <div key={family.familyId} className="p-3 space-y-2">
@@ -497,6 +512,10 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                               </span>
                             ))}
                           </div>
+
+                          {earlier && (
+                            <p className="text-hec-caption text-hec-warn" role="status" data-owing-month={earlier.month}>{owingRowNote(earlier)}</p>
+                          )}
 
                           {/* Amount input */}
                           {family.totalDebt > 0 && (

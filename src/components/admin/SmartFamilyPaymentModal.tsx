@@ -76,7 +76,12 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
   });
 
   const queryClient = useQueryClient();
-  const tuitionMonth = useTuitionMonthConfirmation(formData.month, open);
+  const tuitionMonth = useTuitionMonthConfirmation(formData.month, open, {
+    // The oldest month the family still owes (pattern D). Picking it changes the
+    // month, which resets the confirmation: the admin still confirms by hand.
+    studentIds: siblings.map(s => s.id),
+    onUseMonth: (m) => setFormData(prev => ({ ...prev, month: m })),
+  });
 
   // Load families with multiple students
   useEffect(() => {
