@@ -99,11 +99,27 @@ Built 21 Nov 2026 as migration `20261121090000_recorded_payment_guard.sql`
   hole the audit found was a signed-in person setting the figure.
 - The migration refuses to install while any other function writes
   `recorded_payment`. Checked on live, read-only, 21 Nov: none does.
-- **Left for phase 1b:** `family-payment` and `smart-family-payment` still save
-  the payments row, the ledger legs and each bill in separate calls, so a
-  failure part-way can leave a payment row without its bill. Moving them onto
-  one database transaction (as `record_admin_payment` did for single payments)
-  is a larger change and still to do.
+- **Phase 1b (built 21 Nov 2026, migration `20261121130000_record_family_payment.sql`,
+  tested by `family-payment-tx.test.mjs`):** `family-payment` and
+  `smart-family-payment` saved the payments row, the ledger legs and each bill
+  in separate calls, so a failure part-way left a payment row without its bill.
+  Now they work out the split as before and hand it to
+  `public.record_family_payment`. In one transaction, that function writes:
+  - the payments row;
+  - each child's allocation;
+  - one ledger pair per child, keyed `family-payment-…` / `smart-family-…`;
+  - each child's bill, locked in child-id order and labelled by the one rule;
+  - the caller's audit rows.
+
+  It refuses with nothing written when a child has no bill and no figures, the
+  shares do not add up to the payment, the id repeats, or the actor is not an
+  admin. Only service_role may call it. The edge functions must be deployed
+  AFTER the migration is pasted: they call the function.
+- The three bills the phase 3 backfill skipped (Kaka of JollyBee Mar, William
+  Mar, Baby Chicken Aug) are older family payments whose ledger split and bill
+  split disagree. The family totals differ too (by 224,500, 178,000 and
+  -48,500), so it is not a simple move between siblings. The owner settles
+  them against the bank statement, then corrects through Record Payment.
 - The suggestion of the oldest month still owed was split into its own session.
 
 ### Phase 2 - reconciliation register (owner works the B and F lists)
