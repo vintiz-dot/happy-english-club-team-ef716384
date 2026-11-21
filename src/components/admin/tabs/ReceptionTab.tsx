@@ -14,7 +14,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, CheckCircle2, Copy, Eye, EyeOff, Film, Images, ImagePlus, Loader2, MonitorPlay, Pencil, Plus, RefreshCw, Star, Trash2, Tv, Upload, Volume2, VolumeX, Youtube } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, Copy, Eye, EyeOff, Film, Images, ImagePlus, Loader2, MonitorPlay, Pencil, Plus, RefreshCw, Star, Trash2, Tv, Upload, Volume2, VolumeX, Youtube, Power, PowerOff } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { MAX_VIDEO_BYTES, VIDEO_BUCKET, looksLikeDriveLink, uploadForTv, uploadPhotoForTv, videoExt } from "@/lib/receptionMedia";
 import { parseYoutubeId } from "@/lib/auditClips";
@@ -51,6 +51,9 @@ type Feedback = {
 type Settings = {
   display_token: string; feedback_url: string | null; zalo_url: string; google_review_url: string;
   scene_seconds: number; sections: Record<string, boolean>; last_seen_at: string | null; youtube_every_minutes: number;
+  // Power buttons (migration 20261121090000); absent until it is pasted.
+  tv_command?: "on" | "off" | "show" | null; tv_command_at?: string | null; tv_command_done_at?: string | null;
+  tv_command_result?: string | null; helper_seen_at?: string | null;
 };
 
 const KINDS: { value: Kind; label: string; hint: string }[] = [
@@ -138,7 +141,10 @@ export default function ReceptionTab() {
         </TabsList>
         <TabsContent value="content"><ContentPanel items={data.items} students={data.students} onChange={refresh} /></TabsContent>
         <TabsContent value="feedback"><FeedbackPanel feedback={data.feedback} onChange={refresh} /></TabsContent>
-        <TabsContent value="screen">{data.settings && <ScreenPanel settings={data.settings} onChange={refresh} />}</TabsContent>
+        <TabsContent value="screen" className="space-y-6">
+          {data.settings && <TvPowerCard settings={data.settings} onChange={refresh} />}
+          {data.settings && <ScreenPanel settings={data.settings} onChange={refresh} />}
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -594,6 +600,86 @@ function FeedbackPanel({ feedback, onChange }: { feedback: Feedback[]; onChange:
             </div>
           </div>
         ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ------------------------------------------------------------------ TV power
+// The admin page cannot reach the TV, so a button leaves a command in
+// reception_settings; the helper on the centre's computer picks it up within
+// 20 seconds (scripts/reception-tv.mjs) and writes back what happened.
+const COMMAND_LABEL: Record<string, string> = { on: "Turn on", off: "Turn off", show: "Show the display" };
+
+function TvPowerCard({ settings, onChange }: { settings: Settings; onChange: () => void }) {
+  const qc = useQueryClient();
+  const installed = "tv_command" in settings || "helper_seen_at" in settings;
+  const helperSeen = settings.helper_seen_at ? new Date(settings.helper_seen_at) : null;
+  const helperLive = !!helperSeen && Date.now() - helperSeen.getTime() < 2 * 60 * 1000;
+  const at = settings.tv_command_at ? Date.parse(settings.tv_command_at) : 0;
+  const done = settings.tv_command_done_at ? Date.parse(settings.tv_command_done_at) : 0;
+  const pending = !!settings.tv_command && at > done && Date.now() - at < 15 * 60 * 1000;
+  const expired = !!settings.tv_command && at > done && !pending;
+
+  // While a command waits, look again every 4 s for the helper's answer.
+  useQuery({
+    queryKey: [...KEY, "power-poll", settings.tv_command_at],
+    enabled: pending,
+    refetchInterval: 4000,
+    queryFn: async () => { await qc.invalidateQueries({ queryKey: [...KEY, "all"] }); return Date.now(); },
+  });
+
+  const send = useMutation({
+    mutationFn: async (command: "on" | "off" | "show") => {
+      const { error } = await db.from("reception_settings")
+        .update({ tv_command: command, tv_command_at: new Date().toISOString(), tv_command_result: null })
+        .eq("id", true);
+      if (error) throw error;
+    },
+    onSuccess: (_d, c) => { toast.success(`${COMMAND_LABEL[c]}: sent to the reception computer.`); onChange(); },
+    onError: (e: any) => toast.error(/tv_command|schema cache|column/i.test(e.message ?? "")
+      ? "The power buttons are not installed yet: paste migration 20261121090000_reception_tv_commands.sql in Supabase."
+      : e.message),
+  });
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
+        <div>
+          <CardTitle className="flex items-center gap-2"><Tv className="h-5 w-5" /> Reception TV</CardTitle>
+          <CardDescription>
+            Switch the TV from here. The computer at the centre does it within about 20 seconds; it switches the TV on and off by itself at opening and closing times too.
+          </CardDescription>
+        </div>
+        <Badge variant={helperLive ? "default" : "secondary"} className="gap-1.5 py-1">
+          <span className={`h-2 w-2 rounded-full ${helperLive ? "bg-green-400" : "bg-muted-foreground"}`} />
+          {helperLive ? "Reception computer connected" : helperSeen ? `Reception computer last seen ${helperSeen.toLocaleString()}` : "Reception computer not connected"}
+        </Badge>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => send.mutate("on")} disabled={send.isPending || pending}><Power className="h-4 w-4 mr-1" /> Turn on</Button>
+          <Button variant="outline" onClick={() => send.mutate("show")} disabled={send.isPending || pending}><MonitorPlay className="h-4 w-4 mr-1" /> Show the display</Button>
+          <Button variant="outline" onClick={() => { if (confirm("Turn the reception TV off? It stays off until its next opening time.")) send.mutate("off"); }} disabled={send.isPending || pending}>
+            <PowerOff className="h-4 w-4 mr-1" /> Turn off
+          </Button>
+        </div>
+        {!installed && <p className="text-sm text-muted-foreground">Not installed yet: paste migration 20261121090000_reception_tv_commands.sql in Supabase.</p>}
+        {pending && (
+          <p className="text-sm flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />
+            {COMMAND_LABEL[settings.tv_command!]}: waiting for the reception computer{helperLive ? "…" : " (it has not checked in recently, so this may not happen)."}
+          </p>
+        )}
+        {!pending && settings.tv_command_result && (
+          <p className="text-sm text-muted-foreground">
+            Last: {COMMAND_LABEL[settings.tv_command ?? ""] ?? settings.tv_command} · {settings.tv_command_result}
+            {settings.tv_command_done_at ? ` (${new Date(settings.tv_command_done_at).toLocaleTimeString()})` : ""}
+          </p>
+        )}
+        {expired && <p className="text-sm text-destructive">The reception computer did not pick up the last command within 15 minutes. Check it is switched on and signed in.</p>}
+        {installed && !helperLive && (
+          <p className="text-xs text-muted-foreground">The buttons work while the computer at the centre is on and signed in (later, the Raspberry Pi).</p>
+        )}
       </CardContent>
     </Card>
   );
