@@ -45,6 +45,13 @@ const SUITES = [
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   // Payment screens take typed cash, never the balance (Nov 2026 tuition audit).
   { name: "cash entry", file: "cash-entry.test.mjs", migrations: [] },
+  // Tuition audit phase 2: the reconciliation register. Every decision is a
+  // payment or correction through record_admin_payment, decided once.
+  {
+    name: "reconciliation register",
+    file: "reconciliation-register.test.mjs",
+    migrations: ["20261113090000_invoice_paid_label.sql", "20261117121000_record_admin_payment.sql", "20261121100000_tuition_reconciliation_register.sql"],
+  },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.
