@@ -37,6 +37,17 @@ Visual rules for all: existing Ivory tokens/classes only (`hec-*`, `nova/ivory.t
 ink button per task block, ≥44 px targets, text beside every status colour, long Vietnamese
 names wrap, honour reduced motion.
 
+## Second round (all remaining phases), 21 Nov 2026
+
+| # | Section | What was built |
+|---|---------|----------------|
+| E | §08 operations | Admin alerts: loading / failed / empty kept apart, failed counts say "unavailable" never 0; "Review N" rows for bills needing review, open audit items, unread reception feedback, pending enrolment requests, each linking with its filters. Tuition keeps `?month` / `?filter` / `?confirmation` in the URL (Back returns). Finance keeps `?sub=`. Credits labelled in words. Payroll shows month + Open/Closed above the rows. Close-month, record-payment and reverse-payment dialogs: focus on Cancel, verb labels, what/whom/period/amount, "Working…" while pending. No figure is read or computed differently. |
+| F | §09-10 secondary + visual | Calendar opens on the linked session's week. Reward overlay: visible Close, focus returns. Homework list revalidates whenever the detail closes. Recorder: "Saved on this device … still uploading" vs "Uploaded", "Interrupted - NOT RECORDING". Kid video recorder: "Recording" label. Reduced motion was already global (index.css + MotionConfig). |
+| G | Handoff | `preview/visual-ux/`: the real student, homework, family and teacher pages on a fake client with made-up data (`?screen=…&state=ok|error|empty&theme=light|dark`, launch entry `visual-ux-preview`). Never reads production. |
+| — | Found by the harness | Student Home hero said "All homework done!" / 0 open quests when the read failed: now a dash and no homework message. On a phone the hero is one compact line so the next homework follows the greeting. Family lesson dates read "Fri 20 Nov". |
+
+Suite note: 4 suites (invoice status, AI admin actions, stars sync core, student work gallery) fail identically on clean main at the time of this work; nothing here touches them.
+
 ## Checks before push
 - `npx tsc --noEmit -p tsconfig.app.json`
 - `node scripts/pgtest/run.mjs`
@@ -44,8 +55,9 @@ names wrap, honour reduced motion.
 - Preview the student/family/teacher screens with a fake client (no real data).
 
 ## Still open (needs people or owner sign-off)
-- Baseline and after captures at 375/1280 px, light/dark, per role.
+- Baseline ("before") captures from the old build; "after" can be taken any time with `preview/visual-ux`.
 - Five-participant task tests per journey (report p.12).
 - Bilingual (Vietnamese) copy for the new strings, reviewed by a teacher.
-- Admin exception routes and finance presentation (report §08) — owner + finance review.
+- Finance owner review of the §08 presentation (figures unchanged, wording and layout new).
+- Recorder wording change: the recorder owner should glance at it on the classroom device.
 - Verified office contact route for the family "not linked" state.
