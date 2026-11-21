@@ -219,6 +219,96 @@ eq("anon cannot call approval", (await one(`SELECT has_function_privilege('anon'
 // ---------------------------------------------------------------- stage A (draft builder) adds cases here
 
 // ---------------------------------------------------------------- stage B (families) adds cases here
+// 20261121131000_lesson_report_family: get_lesson_reports_for_student and lesson_report_file.
+// Its own lesson (in March), so the other stages' state does not matter.
+{
+  const B_MIG = EXTRA.find((f) => f.includes("lesson_report_family"));
+  ok("stage B: the family migration is loaded", !!B_MIG, "pass 20261121131000_lesson_report_family.sql to the suite");
+  // production's student_work, the columns the file function reads
+  await db.exec(`CREATE TABLE IF NOT EXISTS public.student_work (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id uuid, class_id uuid, is_teamwork boolean NOT NULL DEFAULT false,
+    member_student_ids uuid[] NOT NULL DEFAULT '{}', storage_path text, status text NOT NULL DEFAULT 'approved')`);
+  const PARENT3 = U(8), PARENT4 = U(9);
+  await q(`INSERT INTO auth.users (id) VALUES ($1),($2)`, [PARENT3, PARENT4]);
+  await q(`INSERT INTO public.user_roles VALUES ($1,'family'),($2,'family')`, [PARENT3, PARENT4]);
+  const kLate = await kid("Child Late", VENUS, "2026-04-01");
+  const kNoPart = await kid("Child Quiet", VENUS);
+  // STUDENT is k1's own login (the stand-in can_view_student reads family_students for both)
+  await q(`INSERT INTO public.family_students VALUES ($1,$2),($3,$4),($5,$6)`, [STUDENT, k1, PARENT3, kLate, PARENT4, k3]);
+  const B_LESSON = (await one(`INSERT INTO public.sessions (class_id, teacher_id, date, start_time, end_time)
+    VALUES ($1,$2,'2026-03-10','17:30','19:00') RETURNING id`, [VENUS, tVictor])).id;
+  const bPhoto = async (f) => (await one(`INSERT INTO public.lesson_report_photos (session_id, class_id, storage_path, uploaded_by)
+    VALUES ($1,$2,$3,$4) RETURNING id`, [B_LESSON, VENUS, path(VENUS, B_LESSON, f), VICTOR])).id;
+  const shared = await bPhoto("board.jpg"), unshared = await bPhoto("faces.jpg");
+  const work = async (owner, p, team = []) => (await one(`INSERT INTO public.student_work (student_id, class_id, is_teamwork, member_student_ids, storage_path)
+    VALUES ($1,$2,$3,$4,$5) RETURNING id`, [owner, VENUS, team.length > 0, team, p])).id;
+  const w1 = await work(k1, "k1/poster.jpg"), w2 = await work(k2, "k2/poster.jpg");
+  const wTeam = await work(k2, "team/poster.jpg", [k1, k2]), wUnlisted = await work(k1, "k1/other.jpg");
+  const classPart = {
+    schema: "hec-lesson-report/1",
+    lesson: { title: "Animals", title_vi: "Động vật", summary: "We learned animals", summary_vi: "Chúng con học về động vật" },
+    objectives: [{ text: "Name 5 animals", text_vi: "Gọi tên 5 con vật", met: "yes", evidence: "STAFF-EVIDENCE" }],
+    words: [{ en: "cat", vi: "con mèo" }],
+    photo_captions: { [shared]: { caption: "Our board", caption_vi: "Bảng của lớp" }, [unshared]: { caption: "SECRET-CAPTION" } },
+    gaps: [{ issue: "STAFF-GAP" }], // a writer slipping a staff key in: the family function drops it
+  };
+  const bParts = [
+    { student_id: k1, part: { highlight: "One B", attendance: "Present", points: 3, work_ids: [w1, wTeam, w2], name_moments: [{ quote: "STAFF-MOMENT" }] } },
+    { student_id: k2, part: { highlight: "Two B", work_ids: [w2] } },
+  ];
+  eq("stage B: the teacher approves the March lesson", await tryAs(VICTOR, () => db.query(
+    `SELECT public.approve_lesson_report($1, $2::jsonb, '{"gaps":["STAFF-ONLY plural -s"]}'::jsonb, $3::jsonb, $4::uuid[], $5::jsonb)`,
+    [B_LESSON, JSON.stringify(classPart), JSON.stringify(bParts), [shared], JSON.stringify(QUIZ)])), null);
+
+  const reportsAs = async (uid, student, limit = 20, before = null) =>
+    rowsAs(uid, `SELECT * FROM public.get_lesson_reports_for_student($1, $2, $3::date)`, [student, limit, before]);
+  const bRow = (rows) => rows.find((r) => r.session_id === B_LESSON);
+  const r1 = bRow(await reportsAs(PARENT, k1));
+  ok("a parent reads their child's March report", !!r1);
+  eq("...with their own child's part", r1?.part?.highlight, "One B");
+  eq("...and the class part", r1?.class_part?.lesson?.title, "Animals");
+  const text = JSON.stringify(r1 ?? {});
+  ok("...never the staff part", !text.includes("STAFF-ONLY") && !("staff_part" in (r1 ?? {})));
+  ok("...never another child's part", !text.includes("Two B"));
+  ok("...never a staff key slipped into the class part", !text.includes("STAFF-GAP") && !("gaps" in (r1?.class_part ?? {})));
+  ok("...objectives keep met, lose evidence", r1?.class_part?.objectives?.[0]?.met === "yes" && !text.includes("STAFF-EVIDENCE"));
+  ok("...nor name moments in the child's part", !text.includes("STAFF-MOMENT"));
+  eq("...only the shared photo, with its approved caption", r1?.photos, [{ id: shared, caption: "Our board", caption_vi: "Bảng của lớp" }]);
+  ok("...and the review homework", !!r1?.review_homework_id);
+  eq("the other child's parent gets their own child's part", bRow(await reportsAs(PARENT2, k2))?.part?.highlight, "Two B");
+  eq("the child's own login reads it", bRow(await reportsAs(STUDENT, k1))?.part?.highlight, "One B");
+  const quiet = bRow(await reportsAs(ADMIN, kNoPart));
+  ok("a child in the class without a part gets the class part and no part", quiet?.class_part?.lesson?.title === "Animals" && quiet?.part === null);
+  refused("a parent cannot read another family's child",
+    await tryAs(PARENT2, () => db.query(`SELECT * FROM public.get_lesson_reports_for_student($1)`, [k1])), /Not your child/);
+  refused("nor can a signed-out caller",
+    await tryAs(null, () => db.query(`SELECT * FROM public.get_lesson_reports_for_student($1)`, [k1])), /Not your child/);
+  eq("a child who joined after the lesson sees nothing of it", bRow(await reportsAs(PARENT3, kLate)), undefined);
+  eq("a child of another class sees nothing", (await reportsAs(PARENT4, k3)).length, 0);
+  eq("newest first, and p_before pages back",
+    [(await reportsAs(PARENT, k1, 1))[0]?.session_id === LESSON, (await reportsAs(PARENT, k1, 5, "2026-11-01")).map((r) => r.session_id)],
+    [true, [B_LESSON]]);
+  eq("anon cannot call the family functions",
+    (await one(`SELECT has_function_privilege('anon','public.get_lesson_reports_for_student(uuid, integer, date)','EXECUTE')
+              OR has_function_privilege('anon','public.lesson_report_file(text, uuid, uuid)','EXECUTE') p`)).p, false);
+
+  const fileAs = async (uid, kind, id, student) =>
+    (await rowsAs(uid, `SELECT public.lesson_report_file($1, $2, $3) f`, [kind, id, student]))[0].f;
+  eq("the shared photo comes to the parent", await fileAs(PARENT, "photo", shared, k1),
+    { path: path(VENUS, B_LESSON, "board.jpg"), bucket: "lesson-photos" });
+  eq("an unshared photo does not", await fileAs(PARENT, "photo", unshared, k1), null);
+  eq("another class's photo does not", await fileAs(PARENT, "photo", plutoPhoto, k1), null);
+  eq("a stranger naming a child they cannot view gets nothing", await fileAs(PARENT2, "photo", shared, k1), null);
+  eq("a child who joined later gets nothing", await fileAs(PARENT3, "photo", shared, kLate), null);
+  eq("the lesson's teacher fetches an unshared photo", (await fileAs(VICTOR, "photo", unshared, null))?.path, path(VENUS, B_LESSON, "faces.jpg"));
+  eq("another teacher does not", await fileAs(OTHER, "photo", unshared, null), null);
+  eq("the child's own work listed in their part comes", await fileAs(PARENT, "work", w1, k1), { path: "k1/poster.jpg", bucket: "student-work" });
+  eq("teamwork the child is a member of comes", (await fileAs(PARENT, "work", wTeam, k1))?.path, "team/poster.jpg");
+  eq("another child's work does not, even listed in this child's part", await fileAs(PARENT, "work", w2, k1), null);
+  eq("the child's own work not listed in the report does not", await fileAs(PARENT, "work", wUnlisted, k1), null);
+  eq("a parent cannot fetch another child's work by naming that child", await fileAs(PARENT, "work", w2, k2), null);
+  eq("an unknown kind gives nothing", await fileAs(PARENT, "other", w1, k1), null);
+}
 
 // ---------------------------------------------------------------- stage C (review quiz) adds cases here
 
