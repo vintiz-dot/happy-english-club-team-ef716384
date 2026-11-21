@@ -9,7 +9,7 @@ import { useIvory } from "@/hooks/useIvory";
 // system (OUTSIDE_ROUTES in src/lib/ivoryScope.ts: the recorder and audit
 // clips) and for print copies. Delete it when those are released.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 premium-click hover:scale-[1.02] active:transition-transform active:duration-100",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 premium-click hover:scale-[1.02] active:scale-[0.98] active:brightness-95 active:transition-transform active:duration-100",
   {
     variants: {
       variant: {
@@ -45,12 +45,12 @@ const FOCUS =
 
 // The Ivory recipe (docs/DESIGN_SYSTEM.md s.15). Every button is at least 44 px.
 const ivoryButtonVariants = cva(
-  `inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-md font-medium transition-colors duration-hec-1 ease-hec disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 ${FOCUS}`,
+  `inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 whitespace-nowrap rounded-hec-md font-medium transition-colors duration-hec-1 ease-hec motion-safe:active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 ${FOCUS}`,
   {
     variants: {
       variant: {
         default: "bg-hec-action text-hec-on-action hover:bg-hec-action/90 active:bg-hec-action/80",
-        destructive: "bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90",
+        destructive: "bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90 active:bg-hec-danger-fill/75",
         outline: "border border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken",
         secondary: "bg-hec-sunken text-hec-ink hover:bg-hec-line",
         ghost: "text-hec-ink hover:bg-hec-sunken",

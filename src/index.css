@@ -1954,3 +1954,15 @@ All colors MUST be HSL.
     animation-duration: 0.01ms !important;
   }
 }
+
+
+/* Press feedback for anything clickable: instant, cheap (filter on :active,
+   no layout), and low specificity (:where) so component styles win. Reduced
+   motion only loses movement, never this. public/reception-tv is not built. */
+:where(a[href], button, [role="button"], summary, [role="tab"], [role="menuitem"]):active:not(:disabled):not([aria-disabled="true"]) {
+  filter: brightness(0.94);
+}
+:where(a[href], button, [role="button"], summary, [role="tab"], [role="menuitem"]) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
