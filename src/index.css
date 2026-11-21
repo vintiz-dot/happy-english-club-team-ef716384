@@ -1966,3 +1966,24 @@ All colors MUST be HSL.
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
+
+/* Top progress bar (src/components/NavProgress.tsx): a click on a link or nav
+   item, or a save in flight. Brass on the Ivory screens, primary elsewhere. */
+.hec-progress {
+  position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 2147483000;
+  pointer-events: none; background: hsl(var(--hec-brass, var(--primary)));
+  transform-origin: left center;
+}
+.hec-progress-nav { animation: hec-progress-crawl 10s cubic-bezier(0.1, 0.6, 0.3, 1) forwards; }
+.hec-progress-saving {
+  width: 100%; background: linear-gradient(90deg, transparent 0, hsl(var(--hec-brass, var(--primary))) 40%, hsl(var(--hec-brass, var(--primary))) 60%, transparent 100%);
+  background-size: 40% 100%; background-repeat: no-repeat; animation: hec-progress-sweep 1.1s ease-in-out infinite;
+}
+.hec-progress-leave { opacity: 0; transition: opacity 200ms ease-out; }
+@keyframes hec-progress-crawl { from { transform: scaleX(0.02); } 20% { transform: scaleX(0.5); } to { transform: scaleX(0.92); } }
+@keyframes hec-progress-sweep { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .hec-progress-nav { animation: none; transform: scaleX(1); opacity: 0.7; }
+  .hec-progress-saving { animation: none; background: hsl(var(--hec-brass, var(--primary))); opacity: 0.5; }
+}

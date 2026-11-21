@@ -24,6 +24,7 @@ import { useIvory } from "@/hooks/useIvory";
 import { UserMenu } from "@/components/theme/UserMenu";
 import { guardedSignOut } from "@/components/recorder/signOutGuard";
 import { useMyPilotClasses } from "@/hooks/useLessonMonitor";
+import { navProgress } from "@/lib/navProgress";
 
 interface LayoutProps {
   children: ReactNode;
@@ -258,7 +259,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                     !sidebarOpen && "justify-center px-0",
                     isActive ? "bg-hec-sunken font-medium text-hec-ink" : "text-hec-ink-soft hover:bg-hec-sunken hover:text-hec-ink",
                   )}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => { if (item.path !== location.pathname) navProgress.start(); navigate(item.path); }}
                 >
                   {isActive && <span aria-hidden className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-hec-brass" />}
                   <item.icon className="h-5 w-5 shrink-0" aria-hidden />
@@ -274,7 +275,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                       ? "text-blue-700 dark:text-blue-300"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   )}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => { if (item.path !== location.pathname) navProgress.start(); navigate(item.path); }}
                 >
                   {/* Spring-animated active pill glides between items */}
                   {isActive && (
@@ -407,6 +408,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                       isActive && (ivory ? "font-medium" : "bg-blue-600/15 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400")
                     )}
                     onClick={() => {
+                      if (item.path !== location.pathname) navProgress.start();
                       navigate(item.path);
                       setMobileMenuOpen(false);
                     }}

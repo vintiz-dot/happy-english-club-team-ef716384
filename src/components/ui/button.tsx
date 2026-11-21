@@ -3,7 +3,9 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 import { useIvory } from "@/hooks/useIvory";
+import { isClickBlocked, trackClickResult } from "@/lib/pendingClick";
 
 // The old look, kept ONLY for the screens whose owners keep them outside the
 // system (OUTSIDE_ROUTES in src/lib/ivoryScope.ts: the recorder and audit
@@ -77,21 +79,39 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  /** Busy state: spinner, aria-busy, disabled; the label stays so the width holds.
+   *  Also automatic when onClick returns a promise (not for asChild / type=submit). */
+  loading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, onClick, onMouseEnter, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, loading, onClick, onMouseEnter, children, disabled, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     const ivory = useIvory();
+    const [pending, setPending] = React.useState(false);
+    const inFlight = React.useRef(false);
+    const mounted = React.useRef(true);
+    React.useEffect(() => () => { mounted.current = false; }, []);
+    // Sync handlers, submit buttons and asChild keep their old behaviour.
+    const tracksPromise = !asChild && props.type !== "submit";
+    const busy = pending || !!loading;
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       // Play click sound
-      if (typeof window !== 'undefined' && !props.disabled) {
+      if (typeof window !== 'undefined' && !disabled && !busy) {
         import('@/lib/soundManager').then(({ soundManager }) => {
           soundManager.play('click');
         });
       }
-      onClick?.(e);
+      if (inFlight.current || loading) { e.preventDefault(); return; }
+      const result = onClick?.(e);
+      if (tracksPromise) {
+        trackClickResult(
+          result,
+          () => { inFlight.current = true; setPending(true); },
+          () => { inFlight.current = false; if (mounted.current) setPending(false); },
+        );
+      }
     };
 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -108,12 +128,23 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <Comp
-        className={cn((ivory ? ivoryButtonVariants : buttonVariants)({ variant, size, className }))}
+        className={cn((ivory ? ivoryButtonVariants : buttonVariants)({ variant, size, className }), busy && !asChild && "relative cursor-progress")}
         ref={ref}
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
+        disabled={isClickBlocked({ busy: false, loading: !asChild && busy, disabled })}
+        aria-busy={busy && !asChild ? true : undefined}
         {...props}
-      />
+      >
+        {busy && !asChild ? (
+          <>
+            <span className="invisible inline-flex items-center justify-center gap-2">{children}</span>
+            <Loader2 aria-hidden className="absolute !size-4 motion-safe:animate-spin" />
+          </>
+        ) : (
+          children
+        )}
+      </Comp>
     );
   },
 );
