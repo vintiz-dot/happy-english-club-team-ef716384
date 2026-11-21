@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { navProgress } from "@/lib/navProgress";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useRef, useEffect } from "react";
@@ -114,6 +115,7 @@ export function StudentNavBar() {
                   <button
                     key={item.id}
                     onClick={() => {
+                      if (item.path !== location.pathname) navProgress.start();
                       navigate(item.path);
                       setMoreOpen(false);
                     }}
@@ -146,7 +148,7 @@ export function StudentNavBar() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => { if (item.path !== location.pathname) navProgress.start(); navigate(item.path); }}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "relative flex min-h-hec-target min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 pb-2 pt-3 text-hec-caption text-hec-ink-soft transition-colors duration-hec-1 ease-hec",
@@ -226,7 +228,7 @@ export function StudentNavBar() {
               <button
                 key={item.id}
                 ref={active ? activeRef : undefined}
-                onClick={() => navigate(item.path)}
+                onClick={() => { if (item.path !== location.pathname) navProgress.start(); navigate(item.path); }}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative inline-flex min-h-hec-target shrink-0 items-center whitespace-nowrap px-3 text-hec-small text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink",

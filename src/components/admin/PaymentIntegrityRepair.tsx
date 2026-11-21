@@ -198,7 +198,7 @@ export function PaymentIntegrityRepair() {
 
           {issues.length > 0 && (
             <Button
-              onClick={() => repairMutation.mutate()}
+              onClick={() => repairMutation.mutateAsync().catch(() => {})}
               disabled={repairMutation.isPending}
               variant="default"
             >

@@ -200,7 +200,7 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
           </Button>
           <Button
             variant="destructive"
-            onClick={() => closeMutation.mutate()}
+            onClick={() => closeMutation.mutateAsync().catch(() => {})}
             disabled={
               closeMutation.isPending ||
               loadingTargets ||

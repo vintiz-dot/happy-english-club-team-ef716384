@@ -16,6 +16,8 @@ import { OfflineFallback } from "./components/OfflineFallback";
 import { Suspense, lazy } from "react";
 import { lazyRetry } from "./lib/lazyRetry";
 import { AppLoader } from "./components/AppLoader";
+import { NavProgress } from "./components/NavProgress";
+import { RouteFallback } from "./components/RouteFallback";
 const AnnouncementRenderer = lazyRetry(() => import("./components/announcements/AnnouncementRenderer").then((m) => ({ default: m.AnnouncementRenderer })));
 const RecorderBoot = lazyRetry(() => import("./components/recorder/RecorderBoot").then((m) => ({ default: m.RecorderBoot })));
 import { AuthProvider } from "@/hooks/useAuth";
@@ -110,11 +112,12 @@ function AppContent() {
           <AuthProvider>
             {/* The "Ivory" design system on migrated routes + the theme choice (src/lib/ivoryScope.ts) */}
             <IvoryScope>
+            <NavProgress />
             <ProfilePicker />
             <Suspense fallback={null}><AnnouncementRenderer /></Suspense>
             <Suspense fallback={null}><RecorderBoot /></Suspense>
             <StartupGuard>
-              <Suspense fallback={<AppLoader />}>
+              <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />

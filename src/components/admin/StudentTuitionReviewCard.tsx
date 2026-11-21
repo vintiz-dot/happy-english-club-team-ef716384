@@ -142,7 +142,7 @@ export function StudentTuitionReviewCard({
                   <Button
                     size="icon"
                     variant="default"
-                    onClick={() => confirmMutation.mutate()}
+                    onClick={() => confirmMutation.mutateAsync().catch(() => {})}
                     disabled={confirmMutation.isPending}
                     aria-label="Confirm tuition"
                     title="Confirm tuition"
@@ -243,7 +243,7 @@ export function StudentTuitionReviewCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => recalculateMutation.mutate()}
+                  onClick={() => recalculateMutation.mutateAsync().catch(() => {})}
                   disabled={recalculateMutation.isPending}
                   className="w-full"
                 >

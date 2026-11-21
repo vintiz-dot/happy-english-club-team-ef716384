@@ -93,11 +93,11 @@ export function ApprovalSettingsCard() {
             <ReasonField label="Why are you changing this? (required)" value={reason} onChange={setReason} min={REASON_MIN} disabled={busy} />
             <div className="flex flex-wrap gap-2">
               {!st.enabled ? (
-                <Button className="min-h-11" disabled={busy || !reasonOk || !st.can_switch_on} onClick={() => void change({ enabled: true })}>
+                <Button className="min-h-11" disabled={busy || !reasonOk || !st.can_switch_on} onClick={() => change({ enabled: true })}>
                   {busy && <Loader2 className="animate-spin" aria-hidden="true" />} Switch on
                 </Button>
               ) : (
-                <Button variant="outline" className="min-h-11" disabled={busy || !reasonOk} onClick={() => void change({ enabled: false })}>
+                <Button variant="outline" className="min-h-11" disabled={busy || !reasonOk} onClick={() => change({ enabled: false })}>
                   {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
                   {turnOff && settingsLoosen(s, turnOff) ? "Ask the other administrator to switch it off" : "Switch off"}
                 </Button>

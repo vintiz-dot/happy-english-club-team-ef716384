@@ -240,7 +240,7 @@ export function PayrollTab() {
           </SelectContent>
         </Select>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => addToExpendituresMutation.mutate()} variant="outline" size="sm" disabled={!bookingAllowed || addToExpendituresMutation.isPending || !payrollData?.some(p => p.totalEarned > 0)}>
+          <Button onClick={() => addToExpendituresMutation.mutateAsync().catch(() => {})} variant="outline" size="sm" disabled={!bookingAllowed || addToExpendituresMutation.isPending || !payrollData?.some(p => p.totalEarned > 0)}>
             <Receipt className="h-4 w-4 mr-2" />
             Add to Expenditures
           </Button>

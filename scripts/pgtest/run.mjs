@@ -42,6 +42,8 @@ const migrations = resolve(here, "..", "..", "supabase", "migrations");
 const m = (name) => join(migrations, name);
 
 const SUITES = [
+  // Button busy state for async onClick (instant feedback, no double submit).
+  { name: "pending click", file: "pending-click.test.mjs", migrations: [] },
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   // Payment screens take typed cash, never the balance (Nov 2026 tuition audit).
   { name: "cash entry", file: "cash-entry.test.mjs", migrations: [] },

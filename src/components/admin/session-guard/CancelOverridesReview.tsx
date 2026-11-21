@@ -381,7 +381,7 @@ function MarkReviewed({ overrideId, onDone }: { overrideId: string; onDone: () =
           {err}
         </p>
       )}
-      <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={!check.ok || busy} onClick={() => void submit()}>
+      <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={!check.ok || busy} onClick={() => submit()}>
         {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
         Mark as reviewed
       </Button>
