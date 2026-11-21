@@ -1,5 +1,5 @@
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface CelebrationOverlayProps {
   show: boolean;
@@ -29,6 +29,17 @@ export function CelebrationOverlay({
 }: CelebrationOverlayProps) {
   const config = celebrationConfig[type];
   const reduced = useReducedMotion();
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  // Move focus to the Close button while the card is up, and give it back to where it was.
+  useEffect(() => {
+    if (!show) return;
+    const before = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus({ preventScroll: true });
+    return () => {
+      if (before && before.isConnected) before.focus({ preventScroll: true });
+    };
+  }, [show]);
 
   useEffect(() => {
     if (!show) return;
@@ -80,6 +91,17 @@ export function CelebrationOverlay({
             <p className="text-hec-body text-hec-ink-soft">
               {subtitle}
             </p>
+            <button
+              ref={closeRef}
+              type="button"
+              className="mt-5 inline-flex min-h-hec-target min-w-hec-target items-center justify-center rounded-hec-md border border-hec-line px-5 text-hec-small font-medium text-hec-ink hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+              onClick={(e) => {
+                e.stopPropagation();
+                onComplete?.();
+              }}
+            >
+              Close
+            </button>
           </motion.div>
         </motion.div>
       )}
