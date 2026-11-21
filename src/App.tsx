@@ -62,6 +62,7 @@ const TeacherBooks = lazy(() => import("./pages/TeacherBooks"));
 const TeacherLanguageSupport = lazy(() => import("./pages/TeacherLanguageSupport"));
 const TeacherLessonReports = lazy(() => import("./pages/TeacherLessonReports"));
 const TeacherLessonReportReview = lazy(() => import("./pages/TeacherLessonReportReview"));
+const TeacherClassReports = lazy(() => import("./pages/TeacherClassReports"));
 const TeacherRecorder = lazy(() => import("./pages/TeacherRecorder"));
 const LessonSpeakers = lazy(() => import("./pages/LessonSpeakers"));
 const TeacherSmartUpload = lazy(() => import("./pages/TeacherSmartUpload"));
@@ -158,6 +159,7 @@ function AppContent() {
                   <Route path="/teacher/language-support" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLanguageSupport /></ProtectedRoute>} />
                   {/* Lesson monitor pilot (D-28): the lesson's teacher only; the database lets nobody else read a report. */}
                   <Route path="/teacher/lesson-reports" element={<ProtectedRoute allowedRole={["teacher"]}><TeacherLessonReports /></ProtectedRoute>} />
+                  <Route path="/teacher/class-reports" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherClassReports /></ProtectedRoute>} />
                   <Route path="/teacher/lesson-report/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLessonReportReview /></ProtectedRoute>} />
                   <Route path="/teacher/speakers" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />
                   <Route path="/teacher/speakers/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />

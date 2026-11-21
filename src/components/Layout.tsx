@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History, Plug, Bot, Languages, Mic, Tv, FileAudio, Images} from "lucide-react";
+import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History, Plug, Bot, Languages, Mic, Tv, FileAudio, Images, ClipboardList} from "lucide-react";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
 import { ChangePassword } from "@/components/auth/ChangePassword";
 import NotificationBell from "@/components/NotificationBell";
@@ -99,6 +99,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
           { icon: Languages, label: "Language Support", path: "/teacher/language-support" },
           { icon: Mic, label: "Class recorder", path: "/teacher/recorder" },
+          { icon: ClipboardList, label: "Class reports", path: "/teacher/class-reports" },
         ];
       case "teacher":
         return [
@@ -118,6 +119,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
           { icon: Languages, label: "Language Support", path: "/teacher/language-support" },
           { icon: Mic, label: "Class recorder", path: "/teacher/recorder" },
+          { icon: ClipboardList, label: "Class reports", path: "/teacher/class-reports" },
           ...((pilotClasses.data ?? []).length ? [{ icon: FileAudio, label: "Lesson reports", path: "/teacher/lesson-reports" }] : []),
         ];
       default:
