@@ -21,10 +21,11 @@ import TeacherPayrollCalendar from "@/components/teacher/TeacherPayrollCalendar"
 import { TeacherBankingInfo } from "@/components/teacher/TeacherBankingInfo";
 import { PageLoading } from "@/components/ui/loading";
 import { teacherPayrollView, type TeacherPayrollView } from "@/lib/teacherPayrollView";
+import { formatVND } from "@/lib/money";
 
 /** A figure the function decided, or a dash when it did not send one. */
 const vnd = (amount: number | null) =>
-  amount === null ? "—" : `${amount.toLocaleString()} ₫`;
+  amount === null ? "—" : `${formatVND(amount)}`;
 
 export default function TeacherPayroll() {
   const queryClient = useQueryClient();
@@ -265,18 +266,18 @@ export default function TeacherPayroll() {
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>Amount Earned</CardDescription>
-                  <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">{totalEarned.toLocaleString()} ₫</CardTitle>
+                  <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">{formatVND(totalEarned)}</CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>Projected Total</CardDescription>
                   <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">
-                    {totalProjected.toLocaleString()} ₫
+                    {formatVND(totalProjected)}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-hec-small tabular-nums text-hec-ink-soft">
-                  +{projectedEarnings.toLocaleString()} ₫ from {scheduledSessionsCount} scheduled
+                  +{formatVND(projectedEarnings)} from {scheduledSessionsCount} scheduled
                 </CardContent>
               </Card>
               <Card className="border-hec-warn/30 bg-hec-warn-tint">
@@ -347,7 +348,7 @@ export default function TeacherPayroll() {
                           <TableCell className="px-2 sm:px-4 whitespace-nowrap text-right tabular-nums">
                             {session.amount === null
                               ? <span title="Figure unavailable"><span aria-hidden="true">—</span><span className="sr-only">Figure unavailable</span></span>
-                              : `${session.amount.toLocaleString()} ₫`}
+                              : `${formatVND(session.amount)}`}
                           </TableCell>
                         </TableRow>
                       ))

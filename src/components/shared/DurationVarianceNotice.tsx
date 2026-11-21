@@ -1,5 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatVND } from "@/lib/money";
 
 interface Props {
   /** Number of sessions whose length disagrees with their class setting. */
@@ -25,7 +26,7 @@ export function DurationVarianceNotice({ count, varianceAmount, variant = "inlin
 
   const money =
     typeof varianceAmount === "number" && varianceAmount !== 0
-      ? `${varianceAmount > 0 ? "+" : "−"}${Math.abs(varianceAmount).toLocaleString("vi-VN")} ₫`
+      ? `${varianceAmount > 0 ? "+" : "−"}${formatVND(Math.abs(varianceAmount))}`
       : null;
 
   const title = `${count} session${count === 1 ? "" : "s"} ${

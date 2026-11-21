@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButton";
 import { Loading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
+import { formatVND } from "@/lib/money";
 
 interface TuitionData {
   baseAmount: number;
@@ -159,7 +160,7 @@ export function TuitionCard({ studentId }: { studentId: string }) {
         <div className="space-y-2">
           <div className={cn("flex items-baseline justify-between gap-4 text-hec-small")}>
             <span className={cn("min-w-0 text-hec-ink-soft")}>Base Amount</span>
-            <span className={cn("shrink-0 whitespace-nowrap font-medium tabular-nums text-hec-ink")}>{currentMonth.baseAmount.toLocaleString('vi-VN')} ₫</span>
+            <span className={cn("shrink-0 whitespace-nowrap font-medium tabular-nums text-hec-ink")}>{formatVND(currentMonth.baseAmount)}</span>
           </div>
 
           {currentMonth.discounts.length > 0 && (
@@ -173,9 +174,9 @@ export function TuitionCard({ studentId }: { studentId: string }) {
                   {currentMonth.discounts.map((discount, idx) => (
                     <div key={idx} className={cn("text-hec-caption tabular-nums text-hec-ink")}>
                       {/* The amount keeps its ₫ on its own line at 320 px; the badge is a figure too, so ink (R23v). */}
-                      {discount.name}:{" "}<span className={cn("whitespace-nowrap")}>-{discount.amount.toLocaleString('vi-VN')} ₫</span>
+                      {discount.name}:{" "}<span className={cn("whitespace-nowrap")}>-{formatVND(discount.amount)}</span>
                       <Badge variant="secondary" className={cn("ml-2 whitespace-nowrap tabular-nums text-hec-ink")}>
-                        {discount.value}{discount.type === 'percent' ? '%' : ' ₫'}
+                        {discount.type === 'percent' ? `${discount.value}%` : formatVND(discount.value)}
                       </Badge>
                       {discount.isSiblingWinner && discount.appliedToClass && (
                         <span className={cn("mt-0.5 block text-hec-caption text-hec-ink-soft")}>
@@ -190,7 +191,7 @@ export function TuitionCard({ studentId }: { studentId: string }) {
               <div className={cn("flex items-baseline justify-between gap-4 border-t border-hec-line pt-2 text-hec-small")}>
                 <span className={cn("min-w-0 text-hec-ink-soft")}>Total Discount</span>
                 <span className={cn("shrink-0 whitespace-nowrap font-medium tabular-nums text-hec-ink")}>
-                  -{currentMonth.totalDiscount.toLocaleString('vi-VN')} ₫
+                  -{formatVND(currentMonth.totalDiscount)}
                 </span>
               </div>
             </>
@@ -198,7 +199,7 @@ export function TuitionCard({ studentId }: { studentId: string }) {
 
           <div className={cn("flex items-baseline justify-between gap-4 border-t-2 border-hec-ink pt-3 text-hec-ink")}>
             <span className={cn("min-w-0 text-hec-body font-semibold")}>Total Due</span>
-            <span className={cn("shrink-0 whitespace-nowrap text-hec-h1 font-semibold tabular-nums")}>{currentMonth.totalAmount.toLocaleString('vi-VN')} ₫</span>
+            <span className={cn("shrink-0 whitespace-nowrap text-hec-h1 font-semibold tabular-nums")}>{formatVND(currentMonth.totalAmount)}</span>
           </div>
         </div>
       </CardContent>

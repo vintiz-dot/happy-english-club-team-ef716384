@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
 import ClassSelector from "@/components/schedule/ClassSelector";
 import type { TeacherPayrollSession } from "@/lib/teacherPayrollView";
+import { formatVND } from "@/lib/money";
 
 /** The shape ClassSelector reads. */
 interface Session {
@@ -150,7 +151,7 @@ export default function TeacherPayrollCalendar({
                       )}
                       {typeof totalEarned === "number" && totalEarned > 0 && (
                         <div className="mt-1 text-hec-caption font-semibold tabular-nums text-hec-ink">
-                          {totalEarned.toLocaleString()} ₫
+                          {formatVND(totalEarned)}
                         </div>
                       )}
                       {totalEarned === null && (
