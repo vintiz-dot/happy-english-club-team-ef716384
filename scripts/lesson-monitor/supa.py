@@ -166,6 +166,14 @@ class Api:
             raise ApiError(st, _message(raw))
         return json.loads(raw) if raw else None
 
+    def function(self, name: str, args: dict | None = None):
+        """An edge function, as the signed-in person (their JWT)."""
+        st, raw = self.s._http("POST", f"{self.s.url}/functions/v1/{name}",
+                               self._h({"Content-Type": "application/json"}), json.dumps(args or {}).encode())
+        if st // 100 != 2:
+            raise ApiError(st, _message(raw))
+        return json.loads(raw) if raw else None
+
     def select(self, table: str, query: dict) -> list:
         qs = urllib.parse.urlencode(query, safe="(),.*:")
         st, raw = self.s._http("GET", f"{self.s.url}/rest/v1/{table}?{qs}", self._h(), None)

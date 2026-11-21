@@ -294,6 +294,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
         api.rpc("lesson_monitor_save_report", {"p_recording": rid, "p_job_version": pc.JOB_VERSION, "p_body": body,
                                                "p_audio_seconds": audio_s, "p_processing_seconds": proc_s})
         pc.log(f"{rid} report saved for the lesson's teacher")
+        request_lesson_report(api, row)
         return "saved"
     except ApiError as e:
         if e.status in (0, 401):
@@ -302,6 +303,22 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             return "draft"
         pc.log(f"{rid} refused by the database: {e.message}; nothing kept")
         return "refused"
+
+
+def request_lesson_report(api, row: dict) -> None:
+    """Best effort: ask lesson-report-draft to draft this lesson's report for its teacher, as the same
+    signed-in person. Logs a status code only, never content; a refusal (already approved, built today,
+    not this person's lesson) or an outage changes nothing here."""
+    call = getattr(api, "function", None)
+    sid = row.get("session_id")
+    if call is None or not sid:
+        return
+    rid = row.get("recording_id", "")
+    try:
+        call("lesson-report-draft", {"session_id": sid})
+        pc.log(f"{rid} lesson report draft requested")
+    except Exception as e:  # noqa: BLE001 - never let the report request fail the night's run
+        pc.log(f"{rid} lesson report draft not requested (HTTP {getattr(e, 'status', 0)})")
 
 
 def upload_drafts(api) -> dict:
