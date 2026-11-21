@@ -231,10 +231,12 @@ eq("anon cannot call approval", (await one(`SELECT has_function_privilege('anon'
 
   refused("a TA cannot save a draft", await tryAs(TAU, () => db.query(
     `SELECT public.lesson_report_finish($1, 1, '{"x":1}'::jsonb)`, [LESSON])), /Only a teacher of this class or an admin/);
-  eq("an admin may rebuild an approved lesson with redo", (await rowsAs(ADMIN, `SELECT public.lesson_report_claim($1, true) r`, [LESSON]))[0].r, 2);
-  eq("...and save that run (left ready for the later stages)",
-    (await rowsAs(ADMIN, `SELECT public.lesson_report_finish($1, 2, '{"schema":"hec-lesson-report-draft/1"}'::jsonb) r`, [LESSON]))[0].r, true);
 
+  // A lesson of its own (yesterday's), so the contract's LESSON stays as the later stages expect it.
+  const L2 = (await one(`INSERT INTO public.sessions (class_id, teacher_id, date, start_time, end_time)
+    VALUES ($1,$2, CURRENT_DATE - 1, '17:30','19:00') RETURNING id`, [VENUS, tVictor])).id;
+  const photo2 = (await one(`INSERT INTO public.lesson_report_photos (session_id, class_id, storage_path, uploaded_by)
+    VALUES ($1,$2,$3,$4) RETURNING id`, [L2, VENUS, path(VENUS, L2, "w.jpg"), VICTOR])).id;
   const draft = A.readDraft({
     lesson: { title: "Animals", title_vi: "", summary: "We learned animals.", summary_vi: "" },
     objectives: [{ text: "Name animals", text_vi: "", met: "yes", evidence: "STAFF-EVIDENCE" }, { text: "Plurals", text_vi: "", met: "partly", evidence: "" }],
@@ -244,22 +246,27 @@ eq("anon cannot call approval", (await one(`SELECT has_function_privilege('anon'
         name_moments: [{ t: 90, quote: "STAFF-MOMENT", why: "", decision: "accepted" }] },
       { student_id: k2, highlight: "", work_ids: [], points: 0, attendance: "Present", name_moments: [] },
     ],
-    photos: [{ photo_id: photoA, share: true, caption: "The board", caption_vi: "" }],
+    photos: [{ photo_id: photo2, share: true, caption: "The board", caption_vi: "" }],
     quiz: { title: "Review", questions: [{ id: "q1", kind: "gap", prompt: "Two ___ are sleeping", options: [], answer: "cats", accept: ["Cats"] }] },
     sources: { transcript: true, transcript_lines: 2 },
   });
   const args = A.buildApproval(draft, { comments: { [k1]: "Well done" }, excluded: [], quiz: { include: true, due_date: null, points: 10, body: null } },
-    { sessionId: LESSON, enrolled: [k1, k2], workOwner: {}, lessonPhotoIds: [photoA], model: "test" });
+    { sessionId: L2, enrolled: [k1, k2], workOwner: {}, lessonPhotoIds: [photo2], model: "test" });
   eq("the screen's mapping is accepted by approve_lesson_report", await tryAs(VICTOR, () => db.query(
     `SELECT public.approve_lesson_report($1, $2::jsonb, $3::jsonb, $4::jsonb, $5::uuid[], $6::jsonb)`,
     [args.p_session, JSON.stringify(args.p_class_part), JSON.stringify(args.p_staff_part), JSON.stringify(args.p_students), args.p_photo_ids, JSON.stringify(args.p_quiz)])), null);
   const stored = await one(`SELECT r.class_part::text cp, r.staff_part::text sp,
       (SELECT string_agg(part::text, '|') FROM public.lesson_report_students WHERE report_id = r.id) parts
-    FROM public.lesson_reports r WHERE r.session_id = $1`, [LESSON]);
+    FROM public.lesson_reports r WHERE r.session_id = $1`, [L2]);
   ok("what families read holds no gap, name moment, evidence or source",
     !/STAFF-|"gaps"|"name_moments|"evidence"|"sources"/.test(stored.cp + stored.parts), stored.cp + stored.parts);
   ok("...and staff_part keeps them", /STAFF-GAP/.test(stored.sp) && /STAFF-MOMENT/.test(stored.sp));
   ok("a work id that is not the child's is not stored", !/not-theirs/.test(stored.parts));
+  // The screen's Rebuild on an approved lesson sends redo; the claim refuses without it.
+  refused("rebuilding an approved lesson without redo is refused",
+    await tryAs(ADMIN, () => db.query(`SELECT public.lesson_report_claim($1)`, [L2])), /already approved/);
+  eq("an admin may rebuild it with redo", (await rowsAs(ADMIN, `SELECT public.lesson_report_claim($1, true) r`, [L2]))[0].r, 1);
+  eq("...and save that run", (await rowsAs(ADMIN, `SELECT public.lesson_report_finish($1, 1, '{"schema":"hec-lesson-report-draft/1"}'::jsonb) r`, [L2]))[0].r, true);
 }
 
 // ---------------------------------------------------------------- stage B (families) adds cases here
