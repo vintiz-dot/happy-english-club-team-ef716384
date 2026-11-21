@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,7 +41,27 @@ interface GlobalCalendarProps {
    * everywhere; a caller with its own drawer passes this instead.
    */
   onSelectSession?: (session: CalendarSessionRow) => void;
+  /**
+   * Open the register for this session once, e.g. from a "Mark attendance"
+   * link. It is fetched as the signed-in user, so RLS decides what is found.
+   */
+  initialSessionId?: string;
 }
+
+const SESSION_SELECT = `
+  id,
+  date,
+  start_time,
+  end_time,
+  status,
+  notes,
+  rate_override_vnd,
+  class_id,
+  teacher_id,
+  classes!inner (id, name, default_session_length_minutes, schedule_template),
+  teachers (id, full_name),
+  attendance (student_id, status)
+`;
 
 /** The joined session row this calendar selects, for callers that take it. */
 export interface CalendarSessionRow {
@@ -70,8 +91,12 @@ const GlobalCalendar = ({
   onAddSession,
   onEditSession,
   onSelectSession,
+  initialSessionId,
 }: GlobalCalendarProps) => {
   const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openedFor = useRef<string | null>(null);
+  const [openFailed, setOpenFailed] = useState(false);
   const { studentId } = useStudentProfile();
   const { user } = useAuth();
 
@@ -94,20 +119,7 @@ const GlobalCalendar = ({
     queryFn: async () => {
       let query = supabase
         .from("sessions")
-        .select(`
-          id,
-          date,
-          start_time,
-          end_time,
-          status,
-          notes,
-          rate_override_vnd,
-          class_id,
-          teacher_id,
-          classes!inner (id, name, default_session_length_minutes, schedule_template),
-          teachers (id, full_name),
-          attendance (student_id, status)
-        `)
+        .select(SESSION_SELECT)
         .gte("date", range.start)
         .lte("date", range.end)
         .order("date");
@@ -179,6 +191,42 @@ const GlobalCalendar = ({
       return data || [];
     },
   });
+
+  // Deep link: open the register for one session, once.
+  const wantsDeepLink = !!initialSessionId && role !== "student" && !onSelectSession;
+  const { data: linked, isFetched: linkFetched } = useQuery({
+    queryKey: ["calendar-session-link", initialSessionId, user?.id],
+    enabled: wantsDeepLink && !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select(SESSION_SELECT)
+        .eq("id", initialSessionId!)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (!wantsDeepLink || !linkFetched || openedFor.current === initialSessionId) return;
+    openedFor.current = initialSessionId!;
+    if (linked && linked.status !== "Canceled") setSelectedSession(linked);
+    else setOpenFailed(true);
+  }, [wantsDeepLink, linkFetched, linked, initialSessionId]);
+
+  const dropSessionParam = useCallback(() => {
+    if (!searchParams.has("session")) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("session");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const closeDrawer = useCallback(() => {
+    setSelectedSession(null);
+    dropSessionParam();
+    void refetch();
+  }, [dropSessionParam, refetch]);
 
   /* ------------------------------------------------- reschedule, checked */
 
@@ -281,6 +329,25 @@ const GlobalCalendar = ({
 
   return (
     <div className="space-y-4">
+      {openFailed && (
+        <div
+          role="status"
+          className="flex items-start justify-between gap-3 rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-body text-hec-ink"
+        >
+          <p>We couldn't open that class register. Pick the class from the calendar.</p>
+          <button
+            type="button"
+            className="min-h-hec-target min-w-hec-target shrink-0 rounded-hec-md px-3 text-hec-small font-medium text-hec-ink-soft hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+            onClick={() => {
+              setOpenFailed(false);
+              dropSessionParam();
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <PremiumCalendar
         events={calendarEvents}
         isLoading={isLoading}
@@ -348,10 +415,7 @@ const GlobalCalendar = ({
       {selectedSession && !onSelectSession && role !== "student" && (
         <AttendanceDrawer
           session={selectedSession}
-          onClose={() => {
-            setSelectedSession(null);
-            refetch();
-          }}
+          onClose={closeDrawer}
         />
       )}
 

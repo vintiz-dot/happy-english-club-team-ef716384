@@ -256,6 +256,18 @@ function TeacherDashboardInner() {
     return "ongoing";
   };
 
+  // "Today's class": the ongoing lesson that can still be marked, else the next
+  // scheduled one. Reuses todaySessions and getTimeStatus; no extra query.
+  const markable = (todaySessions || []).filter((s: any) => s.status === "Scheduled");
+  const focusSession: any =
+    markable.find((s: any) => getTimeStatus(s.start_time, s.end_time) === "ongoing") ||
+    markable.find((s: any) => getTimeStatus(s.start_time, s.end_time) === "upcoming") ||
+    null;
+  const cancelledToday: any =
+    focusSession ? null : (todaySessions || []).find((s: any) => s.status === "Canceled") || null;
+  const classNameOf = (s: any) =>
+    (Array.isArray(s.classes) ? s.classes[0]?.name : s.classes?.name) || "Class";
+
   const projectedCount = (payrollView?.heldSessions ?? 0) + (payrollView?.scheduledSessions ?? 0);
   const progressPercent = projectedCount
     ? Math.round((payrollView?.heldSessions ?? 0) / projectedCount * 100)
@@ -319,6 +331,64 @@ function TeacherDashboardInner() {
         initial="hidden"
         animate="visible"
       >
+        {/* Today's class: one clear next step */}
+        {todaySessions && (
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                {focusSession || cancelledToday ? (
+                  (() => {
+                    const s = focusSession || cancelledToday;
+                    const live = focusSession && getTimeStatus(s.start_time, s.end_time) === "ongoing";
+                    return (
+                      <>
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-hec-small font-medium text-hec-ink-soft">Today's class</p>
+                          <h2 className="font-display text-hec-h2 font-medium text-hec-ink break-words">{classNameOf(s)}</h2>
+                          <p className="text-hec-body tabular-nums text-hec-ink-soft">
+                            {dayjs(s.date).format("ddd D MMM")} · {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            {live ? (
+                              <Badge variant="brass">In Progress</Badge>
+                            ) : (
+                              <Badge variant="secondary">{focusSession ? "Scheduled" : "Cancelled"}</Badge>
+                            )}
+                          </div>
+                          {!focusSession && (
+                            <p className="text-hec-small text-hec-ink-soft">
+                              This class was cancelled, so there is no register to mark.
+                            </p>
+                          )}
+                        </div>
+                        {focusSession && (
+                          <Button
+                            className="w-full shrink-0 sm:w-auto"
+                            onClick={() => navigate(`/teacher/attendance?session=${s.id}`)}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            Mark attendance
+                          </Button>
+                        )}
+                      </>
+                    );
+                  })()
+                ) : (
+                  <p className="text-hec-body text-hec-ink-soft">
+                    No more classes today.{" "}
+                    <Link
+                      to="/schedule"
+                      className="inline-flex min-h-hec-target items-center font-medium text-hec-ink underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                    >
+                      See the schedule
+                    </Link>
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Hero Profile Section */}
         {teacherProfile && (
           <motion.div variants={itemVariants}>
