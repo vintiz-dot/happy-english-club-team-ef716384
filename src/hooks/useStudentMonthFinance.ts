@@ -208,16 +208,8 @@ export function useStudentMonthFinance(
   });
 }
 
-/**
- * Format VND currency - identical to Admin Finance
- * Asia/Bangkok timezone
- */
-export function formatVND(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(amount);
-}
+/** Kept so existing callers keep working: the one formatter is `@/lib/money`. */
+export { formatVND } from '@/lib/money';
 
 /**
  * Get month options for selector - identical to Admin
