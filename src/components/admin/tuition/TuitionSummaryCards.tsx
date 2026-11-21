@@ -124,9 +124,13 @@ export function TuitionSummaryCards({ stats, isLoading }: TuitionSummaryCardsPro
               <div className="min-w-0 space-y-1 border-t-2 border-hec-ink pt-3">
                 <div className="flex items-center gap-2">
                   <Wallet className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden="true" />
-                  <span className="text-hec-small font-semibold text-hec-ink">Total Billed</span>
+                  <span className="text-hec-small font-semibold text-hec-ink">Payable incl. carry-over</span>
                 </div>
                 <p className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{formatVND(stats.totalBilled)}</p>
+                {/* It is carry.payable summed, not this month's charges: a
+                    family's earlier debt adds to it and their credit takes
+                    away, so it does not match the reports' tuition. */}
+                <p className="text-hec-caption text-hec-ink-soft">This month's charges, plus debt and less credit carried in</p>
               </div>
 
               {/* Collected */}

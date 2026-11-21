@@ -14,7 +14,8 @@ import { FileText, XCircle, TrendingDown, UserX, Download, ChevronRight, Chevron
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { splitPayrollByClass } from "@/lib/finance/classPayroll";
-import { fetchBilledStudentIds } from "@/lib/finance/studentsInMonth";
+import { fetchEnrollmentsInMonth, fetchStudentsInMonth } from "@/lib/finance/studentsInMonth";
+import { tuitionByClass, type ClassTuitionResult } from "@/lib/finance/classTuition";
 import {
   cancelledPayTotal,
   difference,
@@ -67,7 +68,9 @@ interface PayrollAnswer {
 /** calculate-tuition-bulk over the month's billed roster; results null when any chunk failed. */
 interface TuitionAnswer {
   ids: string[];
-  results: BulkTuitionResult[] | null;
+  /** student -> the active classes they were enrolled in that month. */
+  enrolledClasses: Map<string, string[]>;
+  results: (BulkTuitionResult & ClassTuitionResult)[] | null;
 }
 const BULK_CHUNK = 200;
 
@@ -91,22 +94,31 @@ const OperationalReports = () => {
       queryKey: ["ops-tuition-bulk", month],
       staleTime: 30_000,
       queryFn: async () => {
-        // The same roster the Finance tab and the tuition list price.
+        // The same roster the Finance tab and the tuition list price
+        // (fetchBilledStudentIds, kept apart here for the class map).
         let ids: string[] = [];
+        const enrolledClasses = new Map<string, string[]>();
         try {
-          ids = await fetchBilledStudentIds(month);
+          const students = await fetchStudentsInMonth(month);
+          const enrollments = await fetchEnrollmentsInMonth(month, students.map((s) => s.id));
+          for (const e of enrollments) {
+            const list = enrolledClasses.get(e.student_id) ?? [];
+            if (!list.includes(e.class_id)) list.push(e.class_id);
+            enrolledClasses.set(e.student_id, list);
+          }
+          ids = students.map((s) => s.id).filter((id) => enrolledClasses.has(id));
         } catch {
-          return { ids, results: null };
+          return { ids, enrolledClasses, results: null };
         }
-        const results: BulkTuitionResult[] = [];
+        const results: (BulkTuitionResult & ClassTuitionResult)[] = [];
         for (let i = 0; i < ids.length; i += BULK_CHUNK) {
           const { data, error } = await supabase.functions.invoke("calculate-tuition-bulk", {
             body: { studentIds: ids.slice(i, i + BULK_CHUNK), month },
           });
-          if (error || !Array.isArray(data?.results)) return { ids, results: null };
+          if (error || !Array.isArray(data?.results)) return { ids, enrolledClasses, results: null };
           results.push(...data.results);
         }
-        return { ids, results };
+        return { ids, enrolledClasses, results };
       },
     });
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
@@ -193,7 +205,7 @@ const OperationalReports = () => {
 
       if (error) throw error;
 
-      const tuition = excused?.length ? await tuitionFor(selectedMonth) : { ids: [], results: [] };
+      const tuition = excused?.length ? await tuitionFor(selectedMonth) : { ids: [] as string[], results: [] };
       const forgone = forgoneTuition(tuition.results, "excusedLessons", tuition.ids);
       const byLesson = forgoneByLesson(forgone);
 
@@ -246,7 +258,12 @@ const OperationalReports = () => {
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       const monthEnd = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
 
-      const [classesRes, sessionsRes, enrollmentsRes, invoicesRes, payrollRes, overheadRes, poolRes, breakdownRes, periodRes] = await Promise.all([
+      // Tuition per class is calculate-tuition-bulk's `classNet`: each
+      // student's charge split by class after EVERY discount, live, on the
+      // billed roster - the same answer the Tuition tab shows. It used to be
+      // read off invoices.class_breakdown, whose net leaves out sibling and
+      // student discounts and is only as fresh as the bill's last save.
+      const [classesRes, sessionsRes, tuition, payrollRes, overheadRes, poolRes, breakdownRes, periodRes] = await Promise.all([
         // No is_active filter. A class archived since the month ran
         // still held its lessons and still used the room; dropping it
         // would hand its share of the rent to the classes still open.
@@ -258,15 +275,7 @@ const OperationalReports = () => {
           .in("status", ["Scheduled", "Held"])
           .gte("date", monthStart)
           .lt("date", monthEnd),
-        supabase
-          .from("enrollments")
-          .select("student_id, class_id")
-          .lte("start_date", monthEnd)
-          .or(`end_date.is.null,end_date.gte.${monthStart}`),
-        supabase
-          .from("invoices")
-          .select("class_breakdown, student_id")
-          .eq("month", selectedMonth),
+        tuitionFor(selectedMonth),
         payrollFor(selectedMonth),
         // Cast on purpose: src/integrations/supabase/types.ts is
         // regenerated from the live database by the other agent working
@@ -280,8 +289,7 @@ const OperationalReports = () => {
 
       const classes = classesRes.data || [];
       const sessions = sessionsRes.data || [];
-      const enrollments = enrollmentsRes.data || [];
-      const invoices = invoicesRes.data || [];
+      const tuitionSplit = tuitionByClass(tuition.results, tuition.ids, tuition.enrolledClasses);
       const locked = (periodRes.data as { status?: string } | null)?.status === "locked";
 
       // Pay, per class, from the function that owns pricing. If it cannot
@@ -328,52 +336,31 @@ const OperationalReports = () => {
         sessionsByClass[s.class_id].push(s);
       }
 
-      const enrollmentsByClass: Record<string, Set<string>> = {};
-      for (const e of enrollments) {
-        if (!enrollmentsByClass[e.class_id]) enrollmentsByClass[e.class_id] = new Set();
-        enrollmentsByClass[e.class_id].add(e.student_id);
-      }
-
-      const invoicesByStudent: Record<string, typeof invoices> = {};
-      for (const inv of invoices) {
-        if (!invoicesByStudent[inv.student_id]) invoicesByStudent[inv.student_id] = [];
-        invoicesByStudent[inv.student_id].push(inv);
-      }
-
       const rows = classes.map((cls) => {
         const classSessions = sessionsByClass[cls.id] || [];
-        const classEnrollments = enrollmentsByClass[cls.id] || new Set();
-        const studentCount = classEnrollments.size;
 
-        let grossTuition = 0;
-        let netTuition = 0;
-        for (const sid of classEnrollments) {
-          const studentInvoices = invoicesByStudent[sid] || [];
-          for (const inv of studentInvoices) {
-            const breakdown = inv.class_breakdown as Array<{ class_id: string; amount_vnd: number; net_amount_vnd?: number }> | null;
-            const entry = breakdown?.find((c) => c.class_id === cls.id);
-            if (entry) {
-              grossTuition += entry.amount_vnd || 0;
-              netTuition += entry.net_amount_vnd ?? entry.amount_vnd ?? 0;
-            }
-          }
-        }
+        // Null (figure unavailable) when the function did not answer for
+        // the roster, or for a student enrolled in this class.
+        const known =
+          tuitionSplit !== null && !tuitionSplit.allUnknown && !tuitionSplit.unknownClasses.has(cls.id);
+        const t = known ? (tuitionSplit.byClass.get(cls.id) ?? { gross: 0, net: 0, students: 0 }) : null;
 
         const payroll: number | null = paySplit ? (paySplit.byClass.get(cls.id) ?? 0) : null;
 
         const overhead = overheadByClass.get(cls.id) ?? 0;
-        const discounts = grossTuition - netTuition;
-        const net = payroll === null ? null : netTuition - payroll - overhead;
+        const net = payroll === null || t === null ? null : t.net - payroll - overhead;
 
         return {
           id: cls.id,
           name: cls.name,
           isActive: cls.is_active !== false,
           sessionCount: classSessions.length,
-          studentCount,
-          grossTuition: Math.round(grossTuition),
-          discounts: Math.round(discounts),
-          tuition: Math.round(netTuition),
+          // Students billed for this class this month, not every enrollment
+          // that touches it: a child with no charge here is not revenue.
+          studentCount: t === null ? null : t.students,
+          grossTuition: t === null ? null : Math.round(t.gross),
+          discounts: t === null ? null : Math.round(t.gross - t.net),
+          tuition: t === null ? null : Math.round(t.net),
           payroll: payroll === null ? null : Math.round(payroll),
           overhead: Math.round(overhead),
           net: net === null ? null : Math.round(net),
@@ -386,6 +373,10 @@ const OperationalReports = () => {
       return {
         rows,
         locked,
+        tuitionUnavailable: tuitionSplit === null || tuitionSplit.allUnknown,
+        tuitionUnanswered: tuitionSplit?.unanswered.length ?? 0,
+        tuitionProvisional: tuitionSplit?.provisional ?? 0,
+        unattributedTuition: tuitionSplit?.unattributed ?? 0,
         payrollEstimated,
         overheadUnavailable,
         overheadFrozen,
@@ -399,19 +390,22 @@ const OperationalReports = () => {
   });
 
   const classRows = classFinance?.rows ?? [];
-  const totalGrossTuition = classRows.reduce((sum, c) => sum + c.grossTuition, 0);
-  const totalDiscounts = classRows.reduce((sum, c) => sum + c.discounts, 0);
-  const totalTuition = classRows.reduce((sum, c) => sum + c.tuition, 0);
-  // Null (figure unavailable) when pay could not be loaded: one unknown row
-  // makes the total unknown.
+  // Null (figure unavailable) when pay or tuition could not be loaded: one
+  // unknown row makes the total unknown.
   const sumKnown = (values: Array<number | null>): number | null =>
     values.some((v) => v === null) ? null : values.reduce<number>((sum, v) => sum + (v as number), 0);
+  const totalGrossTuition = sumKnown(classRows.map((c) => c.grossTuition));
+  const totalDiscounts = sumKnown(classRows.map((c) => c.discounts));
+  const totalTuition = sumKnown(classRows.map((c) => c.tuition));
   const totalPayroll = sumKnown(classRows.map((c) => c.payroll));
   const totalOverhead = classRows.reduce((sum, c) => sum + c.overhead, 0);
   const totalNet = sumKnown(classRows.map((c) => c.net));
-  /** Break-even needs the pay; without it there is no answer to give. */
+  /** Break-even needs the pay and the tuition; without either there is no answer to give. */
   const breakEvenOf = (c: (typeof classRows)[number]) =>
-    c.payroll === null ? null : breakEven({ ...c, payroll: c.payroll });
+    c.payroll === null || c.tuition === null || c.studentCount === null
+      ? null
+      : breakEven({ tuition: c.tuition, studentCount: c.studentCount, payroll: c.payroll, overhead: c.overhead });
+  const minus = (v: number | null) => (v === null ? <Unavailable /> : v > 0 ? `-${formatVND(v)}` : "-");
   // Standing costs that belong to the month but are not in the column
   // above. Measured against the DISPLAYED total, not against the full
   // RPC result: a share belonging to a class the table filtered out would
@@ -428,17 +422,17 @@ const OperationalReports = () => {
         `"${c.name}"`,
         c.isActive ? "Active" : "Archived",
         c.sessionCount,
-        c.studentCount,
-        c.grossTuition,
-        c.discounts,
-        c.tuition,
-        // Empty, not 0, when pay could not be loaded.
+        // Empty, not 0, when a figure could not be loaded.
+        c.studentCount ?? "",
+        c.grossTuition ?? "",
+        c.discounts ?? "",
+        c.tuition ?? "",
         c.payroll ?? "",
         c.overhead,
         c.net ?? "",
         breakEvenOf(c)?.students ?? "",
       ].join(",")),
-      ["TOTAL", "-", "-", "-", totalGrossTuition, totalDiscounts, totalTuition, totalPayroll ?? "", totalOverhead, totalNet ?? "", ""].join(","),
+      ["TOTAL", "-", "-", "-", totalGrossTuition ?? "", totalDiscounts ?? "", totalTuition ?? "", totalPayroll ?? "", totalOverhead, totalNet ?? "", ""].join(","),
       ...(unallocatedOverhead > 0
         ? [["UNALLOCATED OVERHEAD", "-", "-", "-", "", "", "", "", unallocatedOverhead, "", ""].join(",")]
         : []),
@@ -592,6 +586,30 @@ const OperationalReports = () => {
                   Standing costs are not included: the class-overhead migration has not been applied yet.
                 </p>
               )}
+              {classFinance?.tuitionUnavailable && (
+                <p className="mt-1 text-hec-caption text-hec-warn">
+                  Tuition could not be loaded from the tuition calculation, so the tuition columns, Profit and
+                  break-even read as figure unavailable.
+                </p>
+              )}
+              {!classFinance?.tuitionUnavailable && (classFinance?.tuitionUnanswered ?? 0) > 0 && (
+                <p className="mt-1 text-hec-caption text-hec-warn">
+                  {classFinance?.tuitionUnanswered} student{classFinance?.tuitionUnanswered === 1 ? "" : "s"} could
+                  not be priced, so the classes they are in read as figure unavailable.
+                </p>
+              )}
+              {(classFinance?.tuitionProvisional ?? 0) > 0 && (
+                <p className="mt-1 text-hec-caption text-hec-ink-soft">
+                  {classFinance?.tuitionProvisional} student{classFinance?.tuitionProvisional === 1 ? "'s" : "s'"} family
+                  discount is still being decided, so their tuition here leaves it out for now.
+                </p>
+              )}
+              {(classFinance?.unattributedTuition ?? 0) > 0 && (
+                <p className="mt-1 text-hec-caption text-hec-ink-soft">
+                  {formatVND(classFinance?.unattributedTuition ?? 0)} of tuition is on frozen bills saved without a
+                  class breakdown and is not in the rows below.
+                </p>
+              )}
               {classFinance?.payrollEstimated && (
                 <p className="mt-1 text-hec-caption text-hec-warn">
                   Payroll could not be loaded, so Payroll, Profit and break-even read as figure unavailable.
@@ -668,12 +686,12 @@ const OperationalReports = () => {
                     )}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{cls.sessionCount}</TableCell>
-                  <TableCell className="text-right tabular-nums">{cls.studentCount}</TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(cls.grossTuition)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{cls.studentCount ?? <Unavailable />}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{vnd(cls.grossTuition)}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
-                    {cls.discounts > 0 ? `-${formatVND(cls.discounts)}` : '-'}
+                    {minus(cls.discounts)}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right font-medium tabular-nums">{formatVND(cls.tuition)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right font-medium tabular-nums">{vnd(cls.tuition)}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">{vnd(cls.payroll)}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
                     {cls.overhead > 0 ? formatVND(cls.overhead) : '-'}
@@ -766,7 +784,9 @@ const OperationalReports = () => {
                           <p className="mb-2 text-hec-caption font-semibold text-hec-ink">Break-even</p>
                           {be === null ? (
                             <p className="text-hec-caption text-hec-ink-soft">
-                              Payroll could not be loaded, so what this class costs is unknown.
+                              {cls.payroll === null
+                                ? "Payroll could not be loaded, so what this class costs is unknown."
+                                : "Tuition could not be loaded, so what a student here is worth is unknown."}
                             </p>
                           ) : be.students === null ? (
                             <p className="text-hec-caption text-hec-ink-soft">
@@ -778,8 +798,8 @@ const OperationalReports = () => {
                                 One student here is worth{" "}
                                 <span className="whitespace-nowrap font-medium tabular-nums">{formatVND(Math.round(be.revenuePerStudent))}</span>
                                 <span className="text-hec-ink-soft">
-                                  {" "}— this class's own net tuition over its {cls.studentCount} student
-                                  {cls.studentCount === 1 ? "" : "s"}, discounts included.
+                                  {" "}— this class's own net tuition over its {cls.studentCount} billed student
+                                  {cls.studentCount === 1 ? "" : "s"}, every discount included (sibling and student ones too).
                                 </span>
                               </p>
                               <p>
@@ -813,11 +833,11 @@ const OperationalReports = () => {
                 <TableCell>TOTAL</TableCell>
                 <TableCell className="text-right">-</TableCell>
                 <TableCell className="text-right">-</TableCell>
-                <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(totalGrossTuition)}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">{vnd(totalGrossTuition)}</TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
-                  {totalDiscounts > 0 ? `-${formatVND(totalDiscounts)}` : '-'}
+                  {minus(totalDiscounts)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(totalTuition)}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">{vnd(totalTuition)}</TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums">{vnd(totalPayroll)}</TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
                   {totalOverhead > 0 ? formatVND(totalOverhead) : '-'}

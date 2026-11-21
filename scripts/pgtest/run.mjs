@@ -79,6 +79,7 @@ const SUITES = [
   { name: "student homework", file: "student-homework.test.mjs", migrations: [] },
   { name: "leftover dong", file: "leftover-dong.test.mjs", migrations: ["20261117121000_record_admin_payment.sql", "20261113090000_invoice_paid_label.sql", "20261121090000_recorded_payment_guard.sql"] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
+  { name: "class finance tuition", file: "class-tuition.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.
   { name: "enrollment row order", file: "enrollment-order.test.mjs", migrations: [] },

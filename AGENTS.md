@@ -62,6 +62,7 @@
 
 # Tuition screens and AI explanations
 - Screens that read calculate-tuition retry on their own while `siblingState.status === "unresolved"`, using `src/lib/siblingRetry.ts` (bounded backoff); the overview retries only the unresolved students, so retries don't re-contend the month lock for everyone.
+- The Class Finance report (Reports > Operational) takes tuition per class from calculate-tuition-bulk's `classNet` (`_lib/class-net.ts`: each student's charge split by class after every discount, summing to `totalAmount` exactly), summed by `src/lib/finance/classTuition.ts`. Do not read `invoices.class_breakdown` for it: its `net_amount_vnd` leaves out sibling and student discounts and is only as fresh as the bill's last save. `class-tuition.test.mjs` holds it.
 - `explain-family-tuition` (admin-only) words figures fetched from calculate-tuition as the calling admin; the model never prices anything and refuses (409) while the family discount is unresolved.
 
 # Nested rules
