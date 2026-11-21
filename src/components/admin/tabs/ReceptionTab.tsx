@@ -68,6 +68,7 @@ const KINDS: { value: Kind; label: string; hint: string }[] = [
 ];
 const SECTIONS: { key: string; label: string }[] = [
   { key: "welcome", label: "Welcome" },
+  { key: "parents", label: "For parents (why HEC, Zalo, short messages)" },
   { key: "leaderboard", label: "Centre leaderboard" },
   { key: "classes", label: "Class stars" },
   { key: "awards", label: "Champions & awards" },

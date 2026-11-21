@@ -34,8 +34,8 @@ body { font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif; color: #f7f
 .brand-name { font-family: "Playfair Display", Georgia, serif; font-size: 36px; font-weight: 700; color: #f7f1e3; letter-spacing: 0.5px; }
 .brand-sub { font-size: 15px; color: #e2c078; letter-spacing: 1.5px; white-space: nowrap; text-transform: uppercase; margin-top: 2px; }
 #section-title { -webkit-flex: 1; flex: 1; text-align: center; }
-#section-title .en { font-family: "Playfair Display", Georgia, serif; font-size: 40px; font-weight: 700; color: #f7f1e3; }
-#section-title .vi { font-size: 22px; margin-top: 2px; }
+#section-title .vi-t { font-family: "Playfair Display", Georgia, serif; font-size: 40px; font-weight: 700; color: #f7f1e3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#section-title .en-t { font-size: 18px; margin-top: 4px; color: #e2c078; letter-spacing: 3px; text-transform: uppercase; }
 .clock { width: 560px; text-align: right; }
 #clock-time { font-family: "Playfair Display", Georgia, serif; font-size: 50px; font-weight: 700; color: #e2c078; line-height: 1; }
 #clock-date { font-size: 20px; color: #aebbd6; margin-top: 6px; }
@@ -75,7 +75,7 @@ body { font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif; color: #f7f
 
 /* photo / initials */
 .ph { border-radius: 50%; background: #1d3266; border: 3px solid #e2c078; overflow: hidden; position: relative; }
-.ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pic { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background-size: cover; background-position: center 30%; background-repeat: no-repeat; }
 .ph .ini { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: -webkit-flex; display: flex;
   -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center;
   font-family: "Playfair Display", Georgia, serif; font-weight: 700; color: #e2c078; }
@@ -143,7 +143,7 @@ body { font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif; color: #f7f
 
 .feature { height: 100%; -webkit-align-items: center; align-items: center; }
 .feature .media { width: 760px; height: 760px; border-radius: 28px; overflow: hidden; border: 2px solid rgba(226,192,120,0.5); background: #13254d; position: relative; }
-.feature .media img { width: 100%; height: 100%; object-fit: cover; }
+/* .feature .media .pic fills the square */
 .feature .media .ph { position: absolute; left: 130px; top: 130px; }
 .feature .copy { margin-left: 80px; -webkit-flex: 1; flex: 1; }
 .ribbon { display: inline-block; background: #e2c078; color: #0b1b3a; font-weight: 700; font-size: 22px; letter-spacing: 3px; text-transform: uppercase; padding: 10px 24px; border-radius: 999px; }
@@ -172,17 +172,14 @@ body { font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif; color: #f7f
 .seats .st { font-size: 18px; color: #aebbd6; margin-top: 8px; }
 
 /* photos */
-.photo { position: absolute; left: 0; top: 0; width: 1920px; height: 880px; }
-.photo img { width: 100%; height: 100%; object-fit: cover; }
-.photo .cap { position: absolute; left: 0; bottom: 0; width: 100%; padding: 60px 80px 50px;
-  background: -webkit-linear-gradient(top, rgba(7,19,48,0), rgba(7,19,48,0.92)); background: linear-gradient(180deg, rgba(7,19,48,0), rgba(7,19,48,0.92)); }
+
 
 /* announcements */
 .notes { height: 100%; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
 .notes .note { width: 576px; margin-right: 24px; padding: 34px 34px; max-height: 760px; overflow: hidden; }
 .notes .note:last-child { margin-right: 0; }
 .note .when { font-size: 20px; color: #e2c078; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
-.note img { width: 100%; height: 250px; object-fit: cover; border-radius: 14px; margin-bottom: 22px; }
+.note .pic { position: relative; height: 250px; border-radius: 14px; margin-bottom: 22px; }
 
 /* feedback */
 .quotes { width: 1150px; }
@@ -218,15 +215,15 @@ body { font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif; color: #f7f
 .album, .videoscene { position: absolute; left: 0; top: 0; width: 1920px; height: 880px; overflow: hidden; background: #071330; }
 .album .slide { position: absolute; left: 0; top: 0; width: 1920px; height: 880px; opacity: 0;
   -webkit-transition: opacity 1200ms ease; transition: opacity 1200ms ease; overflow: hidden; }
-.album .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 .album .slide.show { opacity: 1; }
 .album .slide.leaving { opacity: 0; }
-.album .slide.show img, .album .slide.leaving img { -webkit-animation-duration: 7500ms; animation-duration: 7500ms;
+.album .slide.show .kb, .album .slide.leaving .kb, .pf .kb { -webkit-animation-duration: 8500ms; animation-duration: 8500ms;
   -webkit-animation-timing-function: linear; animation-timing-function: linear; -webkit-animation-fill-mode: both; animation-fill-mode: both; }
-.album .pan-a img { -webkit-animation-name: pan-a; animation-name: pan-a; }
-.album .pan-b img { -webkit-animation-name: pan-b; animation-name: pan-b; }
-.album .pan-c img { -webkit-animation-name: pan-c; animation-name: pan-c; }
-.album .pan-d img { -webkit-animation-name: pan-d; animation-name: pan-d; }
+.pan-a.kb, .pan-a .kb { -webkit-animation-name: pan-a; animation-name: pan-a; }
+.pan-b.kb, .pan-b .kb { -webkit-animation-name: pan-b; animation-name: pan-b; }
+.pan-c.kb, .pan-c .kb { -webkit-animation-name: pan-c; animation-name: pan-c; }
+.pan-d.kb, .pan-d .kb { -webkit-animation-name: pan-d; animation-name: pan-d; }
 @-webkit-keyframes pan-a { from { -webkit-transform: scale(1.0) translate(0, 0); } to { -webkit-transform: scale(1.12) translate(-30px, -14px); } }
 @keyframes pan-a { from { transform: scale(1.0) translate(0, 0); } to { transform: scale(1.12) translate(-30px, -14px); } }
 @-webkit-keyframes pan-b { from { -webkit-transform: scale(1.12) translate(30px, 10px); } to { -webkit-transform: scale(1.0) translate(0, 0); } }
@@ -235,8 +232,74 @@ body { font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif; color: #f7f
 @keyframes pan-c { from { transform: scale(1.04) translate(-36px, 0); } to { transform: scale(1.14) translate(24px, -10px); } }
 @-webkit-keyframes pan-d { from { -webkit-transform: scale(1.14) translate(0, -16px); } to { -webkit-transform: scale(1.02) translate(-20px, 8px); } }
 @keyframes pan-d { from { transform: scale(1.14) translate(0, -16px); } to { transform: scale(1.02) translate(-20px, 8px); } }
-.album .cap, .videoscene .cap { position: absolute; left: 0; bottom: 0; width: 100%; padding: 70px 80px 40px;
-  background: -webkit-linear-gradient(top, rgba(7,19,48,0), rgba(7,19,48,0.9)); background: linear-gradient(180deg, rgba(7,19,48,0), rgba(7,19,48,0.9)); }
+.videoscene .cap { position: absolute; left: 0; bottom: 0; width: 100%; padding: 120px 80px 44px;
+  background: linear-gradient(180deg, rgba(7,19,48,0) 0%, rgba(7,19,48,0.75) 45%, rgba(7,19,48,0.95) 100%); }
 
 /* videos: full screen, letterboxed */
 .videoscene video { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
+
+/* ------------------------------------------------------------ picture frames
+   picFrame() in app.js. Two layouts, chosen per picture from its shape:
+   .full    - wide pictures fill the screen; .scrim is a shade whose depth
+              app.js sets from the picture's own brightness and busyness
+   .gallery - every other shape is shown whole in a .frame over a blurred,
+              darkened copy of itself, with the words beside it.
+   Words carry a soft shadow as a last guard. */
+.pf { position: absolute; left: 0; top: 0; width: 1920px; height: 880px; overflow: hidden; background: #071330; }
+.pf .kb { position: absolute; left: 0; top: 0; width: 1920px; height: 880px; background-size: cover; background-position: center 35%; background-repeat: no-repeat;
+  -webkit-transform-origin: 50% 40%; transform-origin: 50% 40%; }
+.pf .scrim, .pf .veil { position: absolute; left: 0; top: 0; width: 1920px; height: 880px; }
+/* a small blurred copy scaled up: smooth, and cheap for a 2016 TV */
+.pf .blur { position: absolute; left: -16px; top: -16px; width: 244px; height: 114px; background-size: cover; background-position: center;
+  -webkit-filter: blur(5px) saturate(1.25); -webkit-transform: scale(8.1); transform: scale(8.1); -webkit-transform-origin: 0 0; transform-origin: 0 0; }
+.pf .frame { position: absolute; right: 64px; background-position: center; background-repeat: no-repeat; border-radius: 20px;
+  border: 2px solid rgba(226,192,120,0.6); box-shadow: 0 30px 90px rgba(0,0,0,0.6), 0 0 0 10px rgba(255,255,255,0.04); }
+.pf .frame.loose { border: 0; box-shadow: none; border-radius: 0; }
+.slide.show .frame.float, .pf .frame.float { -webkit-animation: float 9000ms ease-out both; animation: float 9000ms ease-out both; }
+@-webkit-keyframes float { from { -webkit-transform: scale(0.97); } to { -webkit-transform: scale(1.015); } }
+@keyframes float { from { transform: scale(0.97); } to { transform: scale(1.015); } }
+
+.pcap { position: absolute; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.55), 0 4px 28px rgba(0,0,0,0.5); }
+.pcap.low { left: 80px; bottom: 56px; width: 1250px; }
+.pcap.side { left: 64px; top: 0; height: 880px; padding-right: 10px;
+  display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; -webkit-justify-content: center; justify-content: center; }
+.pcap .eyebrow { color: #f0d595; }
+.t-vi { font-family: "Playfair Display", Georgia, serif; font-size: 58px; font-weight: 700; line-height: 1.15; color: #fff; margin-top: 14px; }
+.t-en { font-size: 30px; color: #f0d595; margin-top: 10px; font-weight: 600; }
+.t-quote { font-family: "Playfair Display", Georgia, serif; font-size: 66px; font-weight: 700; line-height: 1.18; color: #fff; margin-top: 18px; }
+.pcap.side .t-quote { font-size: 58px; }
+.b-vi { font-size: 28px; color: #fff; margin-top: 16px; line-height: 1.45; }
+.b-en { font-size: 26px; color: #e6ebf5; margin-top: 12px; line-height: 1.4; }
+.note-s { font-size: 20px; color: #d6deee; margin-top: 22px; letter-spacing: 0.5px; }
+.count { font-size: 18px; color: #f0d595; margin-top: 10px; letter-spacing: 2px; }
+
+/* Vietnamese first: the English is the smaller, quieter line */
+.en-s { display: block; font-size: 0.78em; color: #aebbd6; margin-top: 4px; font-weight: 400; }
+.eyebrow .en-s, .findme .en-s { display: inline; margin: 0 0 0 10px; }
+.vi-strong { display: block; font-size: 32px; line-height: 1.45; color: #f7f1e3; font-weight: 500; margin-top: 12px; }
+
+/* why families choose HEC */
+.pillars { margin-top: 44px; -webkit-justify-content: space-between; justify-content: space-between; }
+.pillar { width: 430px; height: 470px; padding: 34px 32px; }
+.pillar .pk { font-family: "Playfair Display", Georgia, serif; font-size: 34px; font-weight: 800; color: #0b1b3a; background: #e2c078;
+  width: 96px; height: 96px; line-height: 96px; border-radius: 50%; text-align: center; }
+.pillar .pt { font-family: "Playfair Display", Georgia, serif; font-size: 36px; font-weight: 700; color: #f7f1e3; margin-top: 26px; line-height: 1.15; }
+.pillar .pd { font-size: 24px; color: #dfe6f5; margin-top: 14px; line-height: 1.45; }
+.pillar .pe { font-size: 18px; color: #e2c078; margin-top: 14px; letter-spacing: 1px; display: -webkit-flex; display: flex; -webkit-align-items: flex-end; align-items: flex-end; }
+.proof { margin-top: 34px; text-align: center; font-size: 28px; color: #dfe6f5; }
+.proof b { color: #e2c078; font-family: "Playfair Display", Georgia, serif; font-size: 38px; }
+.proof .sep { color: rgba(226,192,120,0.5); margin: 0 26px; }
+
+/* talk to us */
+.ask .hotline { margin-top: 40px; font-size: 30px; color: #aebbd6; }
+.ask .hotline b { color: #e2c078; font-family: "Playfair Display", Georgia, serif; font-size: 52px; margin-left: 14px; }
+.bigqr { width: 520px; margin-left: 60px; padding: 34px; background: rgba(255,255,255,0.05); border: 1px solid rgba(226,192,120,0.35); border-radius: 28px; }
+.bigqr .code { width: 380px; height: 380px; background: #fff; border-radius: 20px; padding: 16px; }
+.bigqr .code svg { width: 100%; height: 100%; display: block; }
+.bigqr .a { font-size: 30px; font-weight: 700; margin-top: 22px; }
+.bigqr .b { font-size: 20px; color: #aebbd6; margin-top: 4px; }
+
+/* find your child */
+.findme { text-align: center; font-size: 30px; font-weight: 600; color: #e2c078; margin: -18px 0 16px; }
+.everyone .ev-line { padding: 6px 0; }
+.seats .st .hot { color: #ffd27a; }
