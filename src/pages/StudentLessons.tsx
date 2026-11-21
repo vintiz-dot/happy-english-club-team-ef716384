@@ -13,7 +13,7 @@ import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  BookOpenCheck, Loader2, NotebookPen, ChevronRight, BookOpen, CalendarDays,
+  BookOpenCheck, Loader2, NotebookPen, ChevronRight, BookOpen, CalendarDays, ClipboardList,
 } from "lucide-react";
 
 export default function StudentLessons() {
@@ -58,6 +58,19 @@ export default function StudentLessons() {
             <p className="text-hec-small text-hec-ink-soft">Every lesson — what we covered, your feedback, and your work.</p>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => navigate("/student/lesson-reports")}
+          className="flex min-h-hec-target w-full items-center gap-3 rounded-hec-lg border border-hec-brass/40 bg-hec-surface p-4 text-left shadow-hec-1 hover:shadow-hec-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+        >
+          <ClipboardList className="h-5 w-5 shrink-0 text-hec-brass" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-hec-body font-medium text-hec-ink">Daily class reports</span>
+            <span lang="vi" className="block text-hec-small text-hec-ink-soft">Báo cáo buổi học: hôm nay con học gì</span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-hec-ink-faint" />
+        </button>
 
         {isLoading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-hec-ink-faint" /></div>

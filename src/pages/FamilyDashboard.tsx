@@ -12,6 +12,7 @@
  * migration 20260730130000).
  */
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PointsHistoryDialog } from "@/components/student/PointsHistoryDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
 import {
   Sparkles, GraduationCap, Star, CalendarCheck, BookOpen, NotebookPen,
-  TrendingUp, Users, MessageCircleQuestion,
+  TrendingUp, Users, MessageCircleQuestion, ClipboardList, ChevronRight,
 } from "lucide-react";
 
 interface ChildSummary {
@@ -336,6 +337,17 @@ export default function FamilyDashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    <Link
+                      to={`/student/lesson-reports?student=${kid.id}`}
+                      className="flex min-h-hec-target items-center gap-3 rounded-hec-md border border-hec-brass/40 px-4 py-3 hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                    >
+                      <ClipboardList className="h-4 w-4 shrink-0 text-hec-brass" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-hec-small font-semibold text-hec-ink">Daily class reports</span>
+                        <span lang="vi" className="block text-hec-caption text-hec-ink-soft">Báo cáo buổi học của con</span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-hec-ink-faint" />
+                    </Link>
                     {kid.journey && (
                       <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-4">
                         <p className="mb-2 flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">

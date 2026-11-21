@@ -73,6 +73,7 @@ const StudentRecord = lazy(() => import("./pages/StudentRecord"));
 const StudentPictureReader = lazy(() => import("./pages/StudentPictureReader"));
 const StudentLessons = lazy(() => import("./pages/StudentLessons"));
 const StudentLessonDetail = lazy(() => import("./pages/StudentLessonDetail"));
+const StudentLessonReports = lazy(() => import("./pages/StudentLessonReports"));
 const StudentDefendLevel = lazy(() => import("./pages/StudentDefendLevel"));
 const FamilyDashboard = lazy(() => import("./pages/FamilyDashboard"));
 const TuitionReviewQueue = lazy(() =>
@@ -174,6 +175,7 @@ function AppContent() {
                   <Route path="/student/language-support" element={<StudentPictureReader />} />
                   <Route path="/student/lessons" element={<StudentLessons />} />
                   <Route path="/student/lessons/:id" element={<StudentLessonDetail />} />
+                  <Route path="/student/lesson-reports" element={<StudentLessonReports />} />
                   <Route path="/student/defend-level" element={<StudentDefendLevel />} />
                   <Route path="/family/dashboard" element={<FamilyDashboard />} />
 
