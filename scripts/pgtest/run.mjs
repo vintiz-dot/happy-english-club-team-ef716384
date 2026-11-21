@@ -49,6 +49,8 @@ const SUITES = [
   { name: "recorded payment guard", file: "recorded-payment-guard.test.mjs", migrations: [] },
   // Payment screens suggest the oldest month still owed; the admin confirms (pattern D).
   { name: "owing month", file: "owing-month.test.mjs", migrations: [] },
+  // A family payment is one transaction (audit phase 1b). The suite pastes its own migrations in order.
+  { name: "family payment transaction", file: "family-payment-tx.test.mjs", migrations: [] },
   // Tuition audit phase 2: the reconciliation register. Every decision is a
   // payment or correction through record_admin_payment, decided once.
   {

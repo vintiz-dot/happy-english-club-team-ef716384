@@ -58,7 +58,7 @@ BEGIN
    WHERE n.nspname = 'public'
      AND p.prosrc ~* 'update\s+(public\.)?invoices'
      AND p.prosrc ~* 'recorded_payment\s*='
-     AND p.proname NOT IN ('record_admin_payment', 'ai_action_undo', '_invoice_recorded_payment_guard');
+     AND p.proname NOT IN ('record_admin_payment', 'record_family_payment', 'ai_action_undo', '_invoice_recorded_payment_guard');
   IF v_other IS NOT NULL THEN
     RAISE EXCEPTION 'Audit phase 1: these functions write invoices.recorded_payment and are not known payment writers: %. Read each, then add it to this migration. Nothing was changed.', v_other;
   END IF;
