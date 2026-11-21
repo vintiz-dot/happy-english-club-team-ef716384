@@ -12,7 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Save, Award, Settings, ArrowLeftRight } from "lucide-react";
+import { Users, Save, Award, Settings, ArrowLeftRight, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
+import LessonPhotoCapture from "@/components/lessonReports/LessonPhotoCapture";
 import { toast } from "sonner";
 import { dayjs } from "@/lib/date";
 import { useAuth } from "@/hooks/useAuth";
@@ -480,6 +482,18 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
             </>
           )}
         </div>
+
+        {session.status !== 'Canceled' && (role === "admin" || role === "teacher") && (
+          <section className="mt-6 space-y-3 border-t pt-4" aria-label="Lesson report">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-medium flex items-center gap-2"><FileText className="h-4 w-4" /> Lesson report</h3>
+              <Button asChild size="sm" variant="outline">
+                <Link to={`/teacher/lesson-report/${session.id}`}>Open lesson report</Link>
+              </Button>
+            </div>
+            <LessonPhotoCapture sessionId={session.id} classId={session.class_id} compact />
+          </section>
+        )}
       </SheetContent>
       
       {showParticipationPoints && (

@@ -120,7 +120,7 @@ export function readDraft(body: unknown): Draft {
         work_ids: arr(s.work_ids).map(str).filter(Boolean), points: num(s.points), attendance: str(s.attendance) || "unknown",
         name_moments: arr(s.name_moments).map((m) => {
           const o = obj(m);
-          const d = o.decision === "accepted" || o.decision === "deleted" ? o.decision : null;
+          const d: NameMoment["decision"] = o.decision === "accepted" || o.decision === "deleted" ? o.decision : null;
           return { t: num(o.t), quote: str(o.quote), why: str(o.why), decision: d };
         }),
       };
