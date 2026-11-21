@@ -17,6 +17,7 @@
 //      the legs already written for the same decision.
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
+import { compare, readMapping, toSql } from "../load-reconciliation-items.mjs";
 
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${!c && x ? " :: " + x : ""}`); c ? pass++ : fail++; };
@@ -273,6 +274,31 @@ console.log("=== refer only pattern A ===");
   const noKids = await refusal(ADMIN, `INSERT INTO public.tuition_reconciliation_items (item_key, month, sheet_amount, app_recorded, pattern)
     VALUES ('k', '2026-05', 0, 1, 'B')`);
   eq("only pattern A may name no child", noKids?.code, "23514");
+}
+
+console.log("=== the loader's SQL, pasted ===");
+{
+  // The loader over this database's bills, as the owner would run it.
+  const invoices = (await db.query("SELECT student_id, month, recorded_payment, total_amount FROM public.invoices")).rows;
+  const students = (await db.query("SELECT id, family_id FROM public.students")).rows;
+  const rows = [
+    { month: "2026-04", sheet: "T 4", row: 2, name: "Oak", amount: 1700000 }, // the bills hold 1,800,000 since the correction above
+    { month: "2026-03", sheet: "T3", row: 5, name: "Elm", amount: 1000000 },
+    { month: "2026-03", sheet: "T3", row: 9, name: "Dragon", amount: 1200000 },
+  ];
+  const lookup = readMapping({ Oak: o1, Elm: e1, Dragon: null });
+  const r = compare({ rows, lookup, invoices, students, months: ["2026-03", "2026-04"] });
+  const sql = toSql(r.items, { auditRef: "loader-test" });
+  await db.exec(sql);
+  const loaded = await one("SELECT count(*)::int AS n, sum(difference)::bigint AS d FROM public.tuition_reconciliation_items WHERE audit_ref = 'loader-test'");
+  eq("every item lands, and the total ties to sheet minus recorded", [loaded.n, Number(loaded.d)], [r.items.length, r.difference]);
+  await db.exec(sql);
+  const again = await one("SELECT count(*)::int AS n FROM public.tuition_reconciliation_items WHERE audit_ref = 'loader-test'");
+  eq("pasting it twice adds nothing", again.n, r.items.length);
+  const oakRow = await one("SELECT student_ids, family_id FROM public.tuition_reconciliation_items WHERE audit_ref = 'loader-test' AND month = '2026-04' AND family_id = $1", [oak]);
+  eq("Oak's April is one family item naming both children", [oakRow?.student_ids?.slice().sort(), oakRow?.family_id], [[o1, o2].sort(), oak]);
+  const dragon = await one("SELECT pattern, cardinality(student_ids) AS n, family_id FROM public.tuition_reconciliation_items WHERE audit_ref = 'loader-test' AND item_key LIKE 'sheet:%'");
+  eq("an unmatched child is pattern A with no child named", [dragon.pattern, dragon.n, dragon.family_id], ["A", 0, null]);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
