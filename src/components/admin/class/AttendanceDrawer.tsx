@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Save, Award, Settings, ArrowLeftRight, FileText } from "lucide-react";
+import { Users, Save, Award, Settings, ArrowLeftRight, FileText, Mic } from "lucide-react";
 import { Link } from "react-router-dom";
 import LessonPhotoCapture from "@/components/lessonReports/LessonPhotoCapture";
 import { toast } from "sonner";
@@ -290,6 +290,14 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
             {session.class_name || session.classes?.name || "Session"} • {dayjs(session.date).format("MMM D, YYYY")} • {session.start_time?.slice(0, 5)}
           </SheetDescription>
         </SheetHeader>
+
+        {/* Who's speaking (21 Nov 2026): tap who talks while the lesson is recorded. Today's lessons only. */}
+        {session.status !== 'Canceled' && (role === "admin" || role === "teacher")
+          && session.date === dayjs().tz('Asia/Bangkok').format('YYYY-MM-DD') && (
+          <Button asChild className="mt-4 w-full min-h-12 text-base">
+            <Link to={`/teacher/speakers/${session.id}`}><Mic className="h-5 w-5 mr-2" aria-hidden /> Who's speaking (tap during the recording)</Link>
+          </Button>
+        )}
 
         {/* Quick Swap Teacher — admin only */}
         {role === "admin" && (

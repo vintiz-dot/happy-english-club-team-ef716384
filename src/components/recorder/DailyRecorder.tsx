@@ -473,6 +473,14 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
 
               <section aria-labelledby="mk-h" className="space-y-3">
                 <h3 id="mk-h" className="text-lg font-semibold">Mark a moment</h3>
+                {lesson ? (
+                  <p className="text-sm">
+                    <a href={`/teacher/speakers/${lesson.sessionId}`} target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                      Open "Who's speaking"
+                    </a>{" "}
+                    - the TA taps who talks, on a phone: {typeof window !== "undefined" ? window.location.origin : ""}/teacher/speakers/{lesson.sessionId}
+                  </p>
+                ) : null}
                 <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
                   <Button variant="outline" className="min-h-16 text-base whitespace-normal" onClick={() => void addMarker("roll_call_start", "Roll-call start")}><ListChecks className="h-5 w-5 mr-2 shrink-0" aria-hidden /> Roll-call start</Button>
                   <Button variant="outline" className="min-h-16 text-base whitespace-normal" onClick={() => void addMarker("roll_call_end", "Roll-call end")}><ListChecks className="h-5 w-5 mr-2 shrink-0" aria-hidden /> Roll-call end</Button>
