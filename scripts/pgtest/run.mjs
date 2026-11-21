@@ -151,6 +151,12 @@ const SUITES = [
     file: "homework-grading.test.mjs",
     migrations: ["20261023090000_homework_grading_integrity.sql"],
   },
+  // A class's Facebook group link reaches only its families and teachers.
+  {
+    name: "class Facebook group",
+    file: "class-facebook-group.test.mjs",
+    migrations: ["20261110090000_class_facebook_groups.sql"],
+  },
   // Video homework: families never see the AI draft, classmates never see
   // a score, a child cannot approve their own, and re-approving replaces.
   { name: "video homework rules", file: "video-homework-rules.test.mjs", migrations: [] },

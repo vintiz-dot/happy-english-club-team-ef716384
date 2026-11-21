@@ -246,6 +246,7 @@ export function VideoReviewPanel({
       {v.status === "approved" && (
         <ShareVideoButton
           path={v.video_path}
+          classId={v.class_id}
           title={`${String(v.students?.full_name ?? "").split(" ").slice(-1)[0]} - ${v.homeworks?.title ?? "video homework"}`}
           size="sm"
         />

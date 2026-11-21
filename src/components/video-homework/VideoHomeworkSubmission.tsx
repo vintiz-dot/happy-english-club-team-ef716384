@@ -66,6 +66,17 @@ export default function VideoHomeworkSubmission({
 }: { homeworkId: string; studentId: string; onSuccess?: () => void }) {
   const qc = useQueryClient();
   const { data: state, isLoading } = useVideoHomework(homeworkId, studentId);
+  // Only wanted once the video is approved, for its class's Facebook group.
+  const approved = state?.submission?.status === "approved";
+  const { data: homeworkClassId } = useQuery({
+    queryKey: ["homework-class", homeworkId],
+    enabled: approved,
+    staleTime: 60 * 60_000,
+    queryFn: async () => {
+      const { data } = await videoDb.from("homeworks").select("class_id").eq("id", homeworkId).maybeSingle();
+      return (data?.class_id as string | undefined) ?? null;
+    },
+  });
   const [recording, setRecording] = useState(false);
   const [progress, setProgress] = useState(0);
   const [share, setShare] = useState(true);
@@ -220,7 +231,7 @@ export default function VideoHomeworkSubmission({
         <div className="space-y-2">
           <SignedVideo path={sub.video_path} className="w-full rounded-2xl bg-black aspect-video" />
           {sub.status === "approved" && (
-            <ShareVideoButton path={sub.video_path} title={state.title} className="w-full h-11" />
+            <ShareVideoButton path={sub.video_path} title={state.title} classId={homeworkClassId} className="w-full h-11" />
           )}
           {sub.status !== "approved" && (
             <div className="flex items-center justify-between gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 p-3">

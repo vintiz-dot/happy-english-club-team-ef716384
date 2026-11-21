@@ -13,13 +13,16 @@
  */
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, Share2 } from "lucide-react";
+import { Download, ExternalLink, Loader2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { extFor, signedVideoUrl } from "@/lib/video/recorder";
+import { useClassFacebookGroup } from "@/lib/facebookGroup";
 
 interface Props {
   path: string;
   title: string;
+  /** The class whose Facebook group to offer beside the button, if one is set. */
+  classId?: string | null;
   /** e.g. "Minh's video homework: My weekend" */
   text?: string;
   size?: "sm" | "default" | "lg";
@@ -28,7 +31,8 @@ interface Props {
 
 const safeName = (s: string) => s.replace(/[^\p{L}\p{N} _-]+/gu, "").trim().slice(0, 60) || "homework-video";
 
-export function ShareVideoButton({ path, title, text, size = "default", className }: Props) {
+export function ShareVideoButton({ path, title, classId, text, size = "default", className }: Props) {
+  const { data: groupUrl } = useClassFacebookGroup(classId);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -83,17 +87,28 @@ export function ShareVideoButton({ path, title, text, size = "default", classNam
     }
   };
 
-  if (file) {
-    return (
-      <Button size={size} className={`bg-[#1877F2] hover:bg-[#166FE5] text-white ${className ?? ""}`} onClick={share}>
-        <Share2 className="h-4 w-4 mr-2" /> Share now - choose Facebook
-      </Button>
-    );
-  }
-  return (
+  const button = file ? (
+    <Button size={size} className={`bg-[#1877F2] hover:bg-[#166FE5] text-white ${className ?? ""}`} onClick={share}>
+      <Share2 className="h-4 w-4 mr-2" /> Share now - choose Facebook
+    </Button>
+  ) : (
     <Button size={size} variant="outline" className={className} onClick={prepare} disabled={loading}>
       {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
       {loading ? "Getting the video…" : "Share to Facebook"}
     </Button>
+  );
+  if (!groupUrl) return button;
+  return (
+    <div className="flex flex-col gap-1.5">
+      {button}
+      <a
+        href={groupUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center gap-1 text-sm text-[#1877F2] underline-offset-2 hover:underline"
+      >
+        Open our class group <ExternalLink className="h-3.5 w-3.5" />
+      </a>
+    </div>
   );
 }

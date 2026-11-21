@@ -15,6 +15,7 @@ import { PastAttendanceEditor } from "@/components/admin/PastAttendanceEditor";
 import { assertClassNameAvailable } from "@/components/admin/class/ClassAdminActions";
 import { useQueryClient } from "@tanstack/react-query";
 import { describePattern, parseWeeklySlots } from "@/lib/classSchedule";
+import { ClassFacebookGroupField } from "@/components/admin/class/ClassFacebookGroupField";
 
 const ClassSettings = ({ classId }: { classId: string }) => {
   const queryClient = useQueryClient();
@@ -329,6 +330,8 @@ const ClassSettings = ({ classId }: { classId: string }) => {
                   placeholder="No limit"
                 />
               </div>
+
+              <ClassFacebookGroupField classId={classId} />
 
               <Separator className="my-4" />
 
