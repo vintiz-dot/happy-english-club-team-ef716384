@@ -162,7 +162,7 @@ export default function TeacherLessonReportReview() {
             <Badge className="gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Approved {new Date(approved.data.approved_at).toLocaleString()}</Badge>
           )}
           {canEdit && (
-            <Button onClick={() => void onBuild()} disabled={buildDraft.isPending || row?.status === "building"}>
+            <Button onClick={() => onBuild()} disabled={buildDraft.isPending || row?.status === "building"}>
               {buildDraft.isPending || row?.status === "building" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 : row ? <RefreshCw className="h-4 w-4 mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
               {row ? "Rebuild" : "Build report"}
@@ -361,7 +361,7 @@ export default function TeacherLessonReportReview() {
                 {problems.length > 0 && (
                   <ul className="text-sm text-destructive list-disc pl-5">{problems.map((p) => <li key={p}>{p}</li>)}</ul>
                 )}
-                <Button className="w-full" onClick={() => void onApprove()} disabled={approve.isPending || problems.length > 0 || !records.data}>
+                <Button className="w-full" onClick={() => onApprove()} disabled={approve.isPending || problems.length > 0 || !records.data}>
                   {approve.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
                   {approved.data ? "Approve again" : "Approve and share with families"}
                 </Button>

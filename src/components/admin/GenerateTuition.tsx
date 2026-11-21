@@ -110,7 +110,7 @@ export function GenerateTuition() {
           <Button
             variant="destructive-quiet"
             className="w-full sm:w-auto"
-            onClick={() => generateMutation.mutate(selectedMonth)}
+            onClick={() => generateMutation.mutateAsync(selectedMonth).catch(() => {})}
             disabled={generateMutation.isPending}
           >
             {generateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

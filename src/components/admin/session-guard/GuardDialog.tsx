@@ -281,7 +281,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                     <p>Sent. The lesson stays as it is until another administrator approves it in Automation, Approvals.</p>
                   ) : (
                     <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={!!g.approval?.busy}
-                      onClick={() => void g.requestApproval(form)}>
+                      onClick={() => g.requestApproval(form)}>
                       {g.approval?.busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : null} Send for approval
                     </Button>
                   )}
@@ -309,7 +309,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                   {phase === "failed" ? "Close" : COPY.keep[op]}
                 </Button>
                 {phase === "failed" && !blockingError && (
-                  <Button variant="outline" size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => void g.reload()}>
+                  <Button variant="outline" size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => g.reload()}>
                     Check again
                   </Button>
                 )}
@@ -524,7 +524,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
                     <p>Sent. Nothing changes until another administrator approves it in Automation, Approvals.</p>
                   ) : (
                     <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={!!g.approval?.busy || !canGo}
-                      onClick={() => void g.requestApproval(form)}>
+                      onClick={() => g.requestApproval(form)}>
                       {g.approval?.busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : null} Send for approval
                     </Button>
                   )}
@@ -552,7 +552,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
                   {phase === "failed" ? "Close" : PAY_COPY.keep[op]}
                 </Button>
                 {phase === "failed" && !blockingError && (
-                  <Button variant="outline" size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => void g.reload()}>
+                  <Button variant="outline" size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => g.reload()}>
                     Check again
                   </Button>
                 )}

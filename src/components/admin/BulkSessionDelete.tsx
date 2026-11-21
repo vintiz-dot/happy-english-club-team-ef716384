@@ -380,7 +380,7 @@ export function BulkSessionDelete() {
         )}
 
         {!preview && !result && (
-          <Button size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => void handlePreview()} disabled={!datesOk || busy !== null}>
+          <Button size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => handlePreview()} disabled={!datesOk || busy !== null}>
             {busy === "preview" ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
             Check these lessons
           </Button>
@@ -539,7 +539,7 @@ function BulkResultView({
                         variant="outline"
                         className="min-h-11 shrink-0 border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive"
                         disabled={!!st?.busy}
-                        onClick={() => void retryOne(t.id, t.override_id)}
+                        onClick={() => retryOne(t.id, t.override_id)}
                       >
                         {st?.busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />}
                         Retry the bill refresh
@@ -598,7 +598,7 @@ function SendBatchForApproval({ offer }: { offer: ApprovalOffer }) {
       {state.sent ? (
         <p>Sent: {offer.count} {offer.count === 1 ? "lesson waits" : "lessons wait"}, unchanged, until another administrator approves them in Automation, Approvals.</p>
       ) : (
-        <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={state.busy} onClick={() => void send()}>
+        <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={state.busy} onClick={() => send()}>
           {state.busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
           Send {offer.count === 1 ? "this lesson" : `these ${offer.count} lessons`} for approval
         </Button>

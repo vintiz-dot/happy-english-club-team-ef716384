@@ -611,7 +611,7 @@ export function DiscountManager() {
             <AlertDialogCancel>{"Keep the discounts"}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90"
-              onClick={() => bulkEndMutation.mutate(selectedAssignments)}
+              onClick={() => bulkEndMutation.mutateAsync(selectedAssignments).catch(() => {})}
             >
               {"End the selected discounts"}
             </AlertDialogAction>

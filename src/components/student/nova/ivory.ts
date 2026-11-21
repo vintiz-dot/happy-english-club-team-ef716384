@@ -32,10 +32,10 @@ export const BADGE_BRASS = `${BADGE} border-hec-brass/40 bg-transparent text-hec
 
 /** Button base + variants (section 15). */
 export const BUTTON =
-  `inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 rounded-hec-md px-6 text-hec-body font-medium transition-colors duration-hec-1 ease-hec disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS}`;
-export const BUTTON_SECONDARY = `${BUTTON} border border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken`;
-export const BUTTON_QUIET = `${BUTTON} text-hec-ink hover:bg-hec-sunken`;
-export const BUTTON_BRASS = `${BUTTON} bg-hec-brass-fill text-hec-on-brass hover:bg-hec-brass-fill/90`;
+  `inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 rounded-hec-md px-6 text-hec-body font-medium transition-colors duration-hec-1 ease-hec motion-safe:active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS}`;
+export const BUTTON_SECONDARY = `${BUTTON} border border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken active:bg-hec-line`;
+export const BUTTON_QUIET = `${BUTTON} text-hec-ink hover:bg-hec-sunken active:bg-hec-line`;
+export const BUTTON_BRASS = `${BUTTON} bg-hec-brass-fill text-hec-on-brass hover:bg-hec-brass-fill/90 active:bg-hec-brass-fill/75`;
 
 /**
  * framer-motion's useReducedMotion() can answer null on the very first render,
