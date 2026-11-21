@@ -45,6 +45,14 @@ const SUITES = [
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   // Payment screens take typed cash, never the balance (Nov 2026 tuition audit).
   { name: "cash entry", file: "cash-entry.test.mjs", migrations: [] },
+  // Tuition audit phase 3: a historical (opening-balance) payments row behind
+  // every recorded dong from before 17 Nov 2026, on the real record_admin_payment;
+  // no ledger or invoice change, idempotent, readers do not double-count.
+  {
+    name: "historical payments",
+    file: "historical-payments.test.mjs",
+    migrations: ["20261117121000_record_admin_payment.sql", "20261121110000_historical_payment_rows.sql"],
+  },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.

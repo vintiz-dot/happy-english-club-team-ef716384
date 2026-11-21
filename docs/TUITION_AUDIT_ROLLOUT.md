@@ -121,6 +121,35 @@ ones are corrected. Each phase ships on its own.
   corrections net against it.
 - Dry run by default, then `--apply`. The script refuses a bill that already
   has payment rows summing to something else.
+- **Built (21 Nov 2026), migration `20261121110000_historical_payment_rows.sql`.**
+  - `payments.source` is `receipt` (default, every existing row) or
+    `historical`. `payments.month` (YYYY-MM) is set on historical rows only.
+    A CHECK fixes the shape of a historical row: method `historical`, amount
+    > 0, no family or parent, dated the 1st of its month at 00:00 Hanoi time.
+    There is one per child-month.
+  - `payment_bill_amounts` (view): what each payments row put on each bill.
+    A historical row counts its own amount. A receipt counts the AR legs of
+    its allocation ledger transactions, by delete-payment's key rule. Phase 2
+    nets against this view.
+  - `admin_backfill_historical_payments(p_dry_run boolean DEFAULT true)`.
+    Bills where the rows explain more than the bill records are refused and
+    listed. It is idempotent, and a bill that grows afterwards is listed as
+    `still_short`, never given a second row. It runs for an admin or in the
+    SQL editor.
+  - A guard trigger: only the backfill writes a historical row. The API
+    cannot edit or delete one, service_role included; delete-payment refuses
+    it with 409. student-audit lists it as an opening-balance adjustment, so
+    the Account Statement does not print it as money received.
+  - Tested by `scripts/pgtest/historical-payments.test.mjs`. The delete-payment
+    case is in `invoice-status.test.mjs`.
+- **Live dry run (read-only, 21 Nov 2026).** 536 rows, 834,616,403. Of that,
+  Oct 2025 - May 2026 is 355 rows and 523,386,001. Recorded there is
+  549,685,501; the old rows explain 27,025,000 of it, 725,500 of that on 2
+  refused March bills. The figures tie: recorded
+  873,895,403 - 40,098,500 explained by the 14 rows + 819,500 on 3 refused
+  bills = 834,616,403. The 3 refused bills (2 March, 1 August 2026) have family
+  payments that put 819,500 more on them than they now record. They go to
+  phase 2.
 
 ### Phase 4 - data hygiene
 - Bills for the pattern-A children, or a decision that they are outside the app.

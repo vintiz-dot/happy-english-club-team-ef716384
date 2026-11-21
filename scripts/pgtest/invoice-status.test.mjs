@@ -1201,6 +1201,25 @@ console.log('\nT4 fault 1 - deleting a payment takes it off the bill');
   ok('a single payment (key on the cash leg only): its AR leg is found by the transaction, and the bill is lowered (was: unchanged)',
      r.status === 200 && b?.recorded_payment === 0 && reversalOf(PAY_ID).length === 2 && balances(reversalOf(PAY_ID)), { r: r.body, b: money(b), rev: reversalOf(PAY_ID) });
 
+  // Tuition audit phase 3 (20261121110000): an opening-balance row is never
+  // deleted. The same legacy fixture as above, which delete-payment would
+  // take off the bill (200) - but the row is marked historical, so it is
+  // refused on the marker itself, before any ledger read or write.
+  await withHistory();
+  await editRecorded(MONTH, 400000); await calc();
+  fixture.payments = [{ id: PAY_ID, student_id: S1, parent_payment_id: null, family_id: null, amount: 400000,
+    method: 'historical', source: 'historical', month: MONTH, occurred_at: '2026-09-30T17:00:00.000Z' }];
+  fixture.ledger_entries = [
+    { id: 'le-1', tx_id: 'tx-legacy', tx_key: `payment-${PAY_ID}`, account_id: 'acc-CASH', debit: 400000, credit: 0, month: MONTH },
+    { id: 'le-2', tx_id: 'tx-legacy', tx_key: null, account_id: 'acc-AR', debit: 0, credit: 400000, month: MONTH },
+  ];
+  memoryWrites = [];
+  r = await delPay(PAY_ID); b = await bill();
+  ok('a historical (opening-balance) payment row: delete-payment refuses it (409), the bill keeps 400,000, nothing reversed or deleted',
+     r.status === 409 && /opening-balance/.test(String(r.body?.error)) && b?.recorded_payment === 400000
+       && reversalOf(PAY_ID).length === 0 && !memoryWrites.some((w) => ['ledger_entries', 'payments', 'payment_deletions'].includes(w.table)),
+     { r: r.body, b: money(b), memoryWrites });
+
   // Never below what the bill still records.
   await withHistory();
   await smartPay(400000); await editRecorded(MONTH, 100000); await calc();
