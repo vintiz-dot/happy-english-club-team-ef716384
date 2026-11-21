@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { dayjs } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, DollarSign, BookOpen, UserX, ChevronRight } from "lucide-react";
+import { AlertTriangle, DollarSign, BookOpen, UserX, ChevronRight, ClipboardCheck, Scale, MessageSquare, UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -19,7 +20,7 @@ interface Alert {
 }
 
 export function AdminAlerts() {
-  const { data: alerts, isLoading } = useQuery({
+  const { data: alerts, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["admin-alerts"],
     queryFn: async () => {
       const now = dayjs();
@@ -28,7 +29,7 @@ export function AdminAlerts() {
 
       // 1. Overdue payments: compute net balance across ALL historical invoices per student
       //    Then net within families so sibling overpayments offset debts.
-      const [{ data: allInvoices }, { data: allFamilies }] = await Promise.all([
+      const [{ data: allInvoices, error: invErr }, { data: allFamilies, error: famErr }] = await Promise.all([
         supabase
           .from("invoices")
           .select("student_id, month, total_amount, recorded_payment, students:student_id(full_name, family_id)")
@@ -37,6 +38,9 @@ export function AdminAlerts() {
           .from("families")
           .select("id, name"),
       ]);
+
+      if (invErr) throw invErr;
+      if (famErr) throw famErr;
 
       const familyNameMap = new Map<string, string>();
       for (const f of allFamilies || []) {
@@ -113,12 +117,13 @@ export function AdminAlerts() {
 
       // 2. Ungraded homework submissions (older than 3 days)
       const threeDaysAgo = now.subtract(3, "day").toISOString();
-      const { count: ungradedCount } = await supabase
+      const { count: ungradedCount, error: ungradedErr } = await supabase
         .from("homework_submissions")
         .select("id", { count: "exact", head: true })
         .eq("status", "submitted")
         .lt("submitted_at", threeDaysAgo);
 
+      if (ungradedErr) throw ungradedErr;
       if (ungradedCount && ungradedCount > 0) {
         results.push({
           id: "ungraded-hw",
@@ -133,13 +138,14 @@ export function AdminAlerts() {
 
       // 3. Students with low attendance this month (< 50% of held sessions)
       const monthStart = now.startOf("month").format("YYYY-MM-DD");
-      const { data: heldSessions } = await supabase
+      const { data: heldSessions, error: heldErr } = await supabase
         .from("sessions")
         .select("id, class_id")
         .gte("date", monthStart)
         .lte("date", now.format("YYYY-MM-DD"))
         .eq("status", "Held");
 
+      if (heldErr) throw heldErr;
       if (heldSessions && heldSessions.length > 0) {
         const sessionIds = heldSessions.map((s) => s.id);
         const classIds = [...new Set(heldSessions.map((s) => s.class_id))];
@@ -156,6 +162,9 @@ export function AdminAlerts() {
             .in("session_id", sessionIds)
             .eq("status", "Present"),
         ]);
+
+        if (enrollmentsRes.error) throw enrollmentsRes.error;
+        if (attendanceRes.error) throw attendanceRes.error;
 
         const sessionsPerClass: Record<string, number> = {};
         for (const s of heldSessions) {
@@ -217,6 +226,45 @@ export function AdminAlerts() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Queues that wait for a person. Each count is read on its own, so one that
+  // fails shows as "unavailable" and is never mistaken for zero.
+  const { data: queues, refetch: refetchQueues } = useQuery({
+    queryKey: ["admin-alerts-queues"],
+    queryFn: async () => {
+      const db = supabase as any;
+      const month = dayjs().format("YYYY-MM");
+      const count = async (q: PromiseLike<{ count: number | null; error: unknown }>): Promise<number | null> => {
+        try {
+          const { count: c, error } = await q;
+          return error ? null : (c ?? 0);
+        } catch {
+          return null;
+        }
+      };
+      const head = { count: "exact" as const, head: true };
+      const [review, recon, feedback, enrol] = await Promise.all([
+        count(supabase.from("invoices").select("id", head).eq("month", month).eq("confirmation_status", "needs_review")),
+        count(db.from("tuition_reconciliation_items").select("id", head).eq("status", "open")),
+        count(db.from("reception_feedback").select("id", head).is("approved_at", null)),
+        count(supabase.from("enrollment_requests").select("id", head).eq("status", "pending")),
+      ]);
+      return { month, review, recon, feedback, enrol };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const queueRows: { id: string; label: string; count: number | null; icon: typeof AlertTriangle; link: string }[] = queues
+    ? [
+        { id: "q-review", label: `bills needing review (${dayjs(queues.month + "-01").format("MMMM")})`, count: queues.review, icon: ClipboardCheck, link: `/admin/tuition-review?month=${queues.month}` },
+        { id: "q-recon", label: "open audit items (Finance > Audit)", count: queues.recon, icon: Scale, link: "/admin?tab=finance&sub=audit" },
+        { id: "q-feedback", label: "unread reception feedback", count: queues.feedback, icon: MessageSquare, link: "/admin?tab=reception" },
+        { id: "q-enrol", label: "pending enrollment requests", count: queues.enrol, icon: UserPlus, link: "/admin?tab=students" },
+      ]
+    : [];
+  const queueUnavailable = queueRows.filter((r) => r.count === null);
+  const queueOpen = queueRows.filter((r) => r.count !== null && r.count > 0);
+  const queuesLoading = !queues;
+
   if (isLoading) {
     return (
       <Card>
@@ -234,7 +282,75 @@ export function AdminAlerts() {
     );
   }
 
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-hec-danger" aria-hidden /> Alerts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3">
+            <p className="text-hec-small text-hec-ink">Alerts couldn't load. This is not an all-clear.</p>
+            <Button variant="outline" size="sm" onClick={() => { refetch(); refetchQueues(); }} disabled={isFetching}>
+              {isFetching ? "Retrying…" : "Try again"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const queueBlock = (
+    <>
+      {queueOpen.map((r) => {
+        const Icon = r.icon;
+        return (
+          <Link
+            key={r.id}
+            to={r.link}
+            className="flex min-h-hec-target items-center gap-3 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+          >
+            <Icon aria-hidden className="h-4 w-4 shrink-0 text-hec-warn" />
+            <p className="min-w-0 flex-1 break-words text-hec-small font-medium text-hec-ink">
+              Review <span className="tabular-nums">{r.count}</span> {r.label}
+            </p>
+            <ChevronRight className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
+          </Link>
+        );
+      })}
+      {queueUnavailable.map((r) => {
+        const Icon = r.icon;
+        return (
+          <div key={r.id} className="flex min-h-hec-target items-center gap-3 rounded-hec-md border border-hec-line bg-hec-sunken p-3">
+            <Icon aria-hidden className="h-4 w-4 shrink-0 text-hec-ink-soft" />
+            <p className="min-w-0 flex-1 text-hec-small text-hec-ink-soft">Count unavailable: {r.label}</p>
+          </div>
+        );
+      })}
+      {queuesLoading && <p className="text-hec-caption text-hec-ink-soft">Checking review queues…</p>}
+    </>
+  );
+  const alertCount = (alerts?.length ?? 0) + queueOpen.length;
+
   if (!alerts || alerts.length === 0) {
+    if (queueOpen.length > 0 || queueUnavailable.length > 0 || queuesLoading) {
+      return (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-hec-ink-soft" aria-hidden /> Alerts
+              </CardTitle>
+              {queueOpen.length > 0 && <Badge variant="destructive" className="tabular-nums">{alertCount}</Badge>}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">{queueBlock}</CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card>
         <CardHeader className="pb-3">
@@ -263,11 +379,12 @@ export function AdminAlerts() {
             Alerts
           </CardTitle>
           <Badge variant="destructive" className="tabular-nums">
-            {alerts.length}
+            {alertCount}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
+        {queueBlock}
         {alerts.map((alert, i) => {
           const Icon = alert.icon;
           const content = (

@@ -118,7 +118,7 @@ export function TuitionStudentCard({
               <p className={`whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums ${balance === 0 ? "text-hec-ink-soft" : "text-hec-ink"}`}>
                 {balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "Settled"}
               </p>
-              <p className="text-hec-caption text-hec-ink-soft">Balance</p>
+              <p className="text-hec-caption text-hec-ink-soft">{balance < 0 ? "Credit (overpaid)" : "Balance"}</p>
             </div>
             <ChevronDown className={`mt-1 h-5 w-5 shrink-0 text-hec-ink-soft transition-transform duration-hec-1 ease-hec ${open ? "rotate-180" : ""}`} />
           </button>
@@ -133,7 +133,7 @@ export function TuitionStudentCard({
               <FinanceCell label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? fmt(priorNet) : `+${fmt(Math.abs(priorNet))}`} />
               <FinanceCell label="Payable" value={fmt(item.finalPayable)} bold />
               <FinanceCell label="Paid" value={fmt(item.recorded_payment ?? 0)} />
-              <FinanceCell total label="Balance" value={balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "0 ₫"} bold />
+              <FinanceCell total label={balance < 0 ? "Credit (overpaid)" : "Balance"} value={balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "0 ₫"} bold />
             </div>
 
             {/* Smart Tuition Flags */}
@@ -165,7 +165,7 @@ export function TuitionStudentCard({
 
 function FinanceCell({ label, value, bold, total }: { label: string; value: string; bold?: boolean; total?: boolean }) {
   return (
-    <div className={`min-w-0 ${total ? "border-t-2 border-hec-ink pt-2" : "pt-2"}`}>
+    <div className={`min-w-0 text-right ${total ? "border-t-2 border-hec-ink pt-2" : "pt-2"}`}>
       <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">{label}</p>
       <p className={`whitespace-nowrap font-sans tabular-nums text-hec-ink ${total ? "text-hec-h3 font-semibold" : bold ? "text-hec-small font-semibold" : "text-hec-small"}`}>{value}</p>
     </div>

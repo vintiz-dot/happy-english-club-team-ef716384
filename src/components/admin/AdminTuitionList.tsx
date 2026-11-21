@@ -355,7 +355,7 @@ function TuitionStudentRow({
               <p className={`whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums ${cells.headerBalance.tone === "quiet" ? "text-hec-ink-soft" : "text-hec-ink"}`}>
                 {cells.headerBalance.text}
               </p>
-              <p className="text-hec-caption text-hec-ink-soft">Balance</p>
+              <p className="text-hec-caption text-hec-ink-soft">{cells.headerBalance.tone === "credit" ? "Credit (overpaid)" : cells.headerBalance.tone === "owed" ? "Balance owed" : "Balance"}</p>
             </div>
             <ChevronDown className={`mt-1 h-5 w-5 shrink-0 text-hec-ink-soft transition-transform duration-hec-1 ease-hec ${open ? "rotate-180" : ""}`} />
           </button>
@@ -405,7 +405,7 @@ function FinanceCell({
   total?: boolean;
 }) {
   return (
-    <div className={`min-w-0 ${total ? "border-t-2 border-hec-ink pt-2" : "pt-2"}`}>
+    <div className={`min-w-0 text-right ${total ? "border-t-2 border-hec-ink pt-2" : "pt-2"}`}>
       <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">{label}</p>
       <p className={`whitespace-nowrap font-sans tabular-nums text-hec-ink ${total ? "text-hec-h3 font-semibold" : bold ? "text-hec-small font-semibold" : "text-hec-small"}`}>
         {value}

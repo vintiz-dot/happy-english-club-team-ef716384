@@ -217,6 +217,17 @@ export function PayrollTab() {
 
       <SectionHeader title="This Month" subtitle={dayjs(selectedMonth).format("MMMM YYYY")} />
 
+      <div className="flex flex-wrap items-center gap-2" role="status">
+        <span className="text-hec-body font-semibold text-hec-ink">{dayjs(selectedMonth).format("MMMM YYYY")}</span>
+        {!periodLoaded ? (
+          <Badge variant="secondary">Checking whether this month is closed…</Badge>
+        ) : period?.status === "locked" ? (
+          <Badge variant="secondary">Closed - figures are as closed; recomputed values are shown for comparison</Badge>
+        ) : (
+          <Badge variant="secondary">Open - figures can still change</Badge>
+        )}
+      </div>
+
       <div className="flex items-center justify-between flex-wrap gap-2">
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger className="w-full sm:w-[200px]" aria-label="Month">

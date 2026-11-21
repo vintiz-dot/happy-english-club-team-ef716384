@@ -145,7 +145,7 @@ export function TuitionStudentTable({
                   <TableCell
                     className={`whitespace-nowrap text-right font-sans font-semibold tabular-nums ${balance === 0 ? "text-hec-ink-soft" : "text-hec-ink"}`}
                   >
-                    {balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "—"}
+                    {balance > 0 ? fmt(balance) : balance < 0 ? `Credit +${fmt(Math.abs(balance))}` : "—"}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex items-center gap-2">
