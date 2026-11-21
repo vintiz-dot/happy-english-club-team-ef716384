@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import LessonPhotoCapture from "@/components/lessonReports/LessonPhotoCapture";
+import LessonPlanPicker from "@/components/lessonReports/LessonPlanPicker";
 import { mmss } from "@/lib/lessonMonitor";
 import {
   approvalProblems, buildApproval, readDraft, type Draft, type Met, type QuizKind, type QuizQuestion, type Review,
@@ -169,6 +170,12 @@ export default function TeacherLessonReportReview() {
             </Button>
           )}
         </header>
+
+        {L && (
+          <Section title="What this lesson covered" staff>
+            <LessonPlanPicker sessionId={sessionId} classId={L.class_id} date={L.date} canEdit={canEdit} />
+          </Section>
+        )}
 
         {L && (
           <Section title="Lesson photos" staff>

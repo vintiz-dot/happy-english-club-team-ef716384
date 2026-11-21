@@ -35,6 +35,7 @@ import {
   DRAFT_JSON_SCHEMA,
   DRAFT_SYSTEM,
   lessonWindow,
+  plannedLessons,
   readTranscript,
   transcriptText,
   type DraftContext,
@@ -98,7 +99,7 @@ async function build(asCaller: SupabaseClient, token: string, session: any, isAd
   const win = lessonWindow(date, String(session.start_time), String(session.end_time));
   const since = new Date(new Date(`${date}T00:00:00+07:00`).getTime() - 30 * 86400_000).toISOString();
 
-  const [enr, att, pts, photos, works, hws, targets, monitor] = await Promise.all([
+  const [enr, att, pts, photos, works, hws, targets, monitor, plan] = await Promise.all([
     asCaller.from("enrollments").select("student_id, start_date, end_date, students!inner(id, full_name)")
       .eq("class_id", cls).lte("start_date", date).or(`end_date.is.null,end_date.gte.${date}`),
     asCaller.from("attendance").select("student_id, status").eq("session_id", sid),
@@ -110,6 +111,9 @@ async function build(asCaller: SupabaseClient, token: string, session: any, isAd
       .eq("class_id", cls).gte("created_at", since).order("created_at", { ascending: false }).limit(20),
     asCaller.from("lesson_monitor_targets").select("words, structures").eq("session_id", sid).maybeSingle(),
     asCaller.from("lesson_monitor_reports").select("body").eq("session_id", sid).order("made_at", { ascending: false }).limit(1),
+    // What the course book planned for this lesson (20261121150000). Optional: a
+    // database without that migration, or a lesson nobody planned, builds as before.
+    asCaller.from("session_lesson_plans").select("position, curriculum_lessons(*)").eq("session_id", sid).order("position"),
   ]);
   for (const [name, r] of Object.entries({ enr, att, pts, photos, works, hws })) {
     if ((r as any).error) throw new Error(`could not read ${name}`);
@@ -197,6 +201,7 @@ async function build(asCaller: SupabaseClient, token: string, session: any, isAd
     homework_set_today: setToday.map((h: any) => ({ title: h.title, due_date: h.due_date, body: String(h.body ?? "").replace(/<[^>]+>/g, " ").slice(0, 600) })),
     recent_homework_results: results,
     target_words: targets.data ? { words: targets.data.words ?? [], structures: targets.data.structures ?? [] } : null,
+    planned_lessons: plan.error ? null : plannedLessons((plan.data ?? []).map((p: any) => p.curriculum_lessons)),
     photos: [...photoMap].map(([id, p]) => ({ photo_id: id, kind: p.kind, caption: p.caption })),
   };
   const intro = `EVIDENCE (JSON):\n${JSON.stringify(evidence)}\n\nTRANSCRIPT:\n${transcript ? transcriptText(transcript) : `(none - ${transcriptNote})`}`;

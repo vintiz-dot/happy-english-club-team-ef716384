@@ -5,6 +5,7 @@ import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
 import { monthPayable } from "../_lib/invoice-status.ts";
+import { classNetAmounts } from "../_lib/class-net.ts";
 import { classFeeOn, indexClassFees, isMissingFeeHistory, type ClassFeeHistory } from "../_lib/class-fee.ts";
 
 const corsHeaders = {
@@ -319,7 +320,7 @@ Deno.serve(async (req) => {
     // 11. Current month invoices
     const currentInvoices: any[] = await fetchChunked(
       supabase, "invoices",
-      "student_id, id, recorded_payment, confirmation_status, status, tuition_frozen, base_amount, discount_amount, total_amount",
+      "student_id, id, recorded_payment, confirmation_status, status, tuition_frozen, base_amount, discount_amount, total_amount, class_breakdown",
       "student_id", studentIds,
       (q: any) => q.eq("month", month)
     );
@@ -413,15 +414,23 @@ Deno.serve(async (req) => {
 
         // Discounts
         let totalDiscount = 0;
+        // class -> the discounts that belong to that class, for classNet.
+        const classDiscounts = new Map<string, number>();
+        const toClass = (classId: string, amount: number) =>
+          classDiscounts.set(classId, (classDiscounts.get(classId) || 0) + amount);
 
         // Rate adjustments
-        for (const [, savings] of rateAdjustmentSavings) {
-          if (savings > 0) totalDiscount += savings;
+        for (const [classId, savings] of rateAdjustmentSavings) {
+          if (savings > 0) {
+            totalDiscount += savings;
+            toClass(classId, savings);
+          }
         }
 
         // Enrollment-level discounts
         for (const discount of enrollmentDiscounts(datedEnrollmentBases)) {
           totalDiscount += discount.amount;
+          toClass(discount.class_id, discount.amount);
         }
 
         // Student-level discounts
@@ -450,7 +459,10 @@ Deno.serve(async (req) => {
           if (sd && sd.status === "assigned" && sd.winner_student_id === sid && sd.winner_class_id) {
             const winnerClassBase = enrollmentBaseAmounts.get(sd.winner_class_id) || 0;
             const amt = Math.round(winnerClassBase * (sd.sibling_percent / 100));
-            if (amt > 0) totalDiscount += amt;
+            if (amt > 0) {
+              totalDiscount += amt;
+              toClass(sd.winner_class_id, amt);
+            }
           }
         }
 
@@ -461,6 +473,26 @@ Deno.serve(async (req) => {
           baseAmount = Number(frozenInv.base_amount ?? 0);
           totalDiscount = Number(frozenInv.discount_amount ?? 0);
           totalAmount = Number(frozenInv.total_amount ?? 0);
+        }
+
+        // The charge split by class, after EVERY discount (student, referral
+        // and sibling included), summing to totalAmount exactly. For the
+        // per-class report; see _lib/class-net.ts. A frozen bill is split
+        // along the class breakdown it was saved with, not today's register.
+        let classNet;
+        if (frozenInv?.tuition_frozen) {
+          const savedBases = new Map<string, number>();
+          const savedClassDiscounts = new Map<string, number>();
+          for (const c of (Array.isArray(frozenInv.class_breakdown) ? frozenInv.class_breakdown : []) as any[]) {
+            if (!c?.class_id) continue;
+            const amount = Number(c.amount_vnd ?? 0);
+            savedBases.set(c.class_id, (savedBases.get(c.class_id) || 0) + amount);
+            const own = amount - Number(c.net_amount_vnd ?? amount);
+            savedClassDiscounts.set(c.class_id, (savedClassDiscounts.get(c.class_id) || 0) + Math.max(0, own));
+          }
+          classNet = classNetAmounts(savedBases, savedClassDiscounts, totalAmount);
+        } else {
+          classNet = classNetAmounts(enrollmentBaseAmounts, classDiscounts, totalAmount);
         }
 
         // Payments / carry
@@ -522,6 +554,7 @@ Deno.serve(async (req) => {
           // out, so the figures are provisional (same meaning as in calculate-tuition).
           siblingUnresolved: family?.id ? siblingStateMap.get(family.id)?.status === "unresolved" : false,
           breakdown: { classes: classBreakdown },
+          classNet,
           invoiceId: currentInvoice?.id || null,
           invoiceStatus: currentInvoice?.status || null,
           confirmationStatus: currentInvoice?.confirmation_status || null,

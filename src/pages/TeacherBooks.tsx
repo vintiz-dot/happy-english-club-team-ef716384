@@ -53,7 +53,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   Loader2,
+  Layers,
 } from "lucide-react";
+import { LessonDecksPanel } from "@/components/lessonDecks/LessonDecksPanel";
 
 interface Flipbook {
   id: string;
@@ -473,6 +475,10 @@ export default function TeacherBooks() {
                 <Presentation className="h-4 w-4" />
                 Presenter
               </TabsTrigger>
+              <TabsTrigger value="decks">
+                <Layers className="h-4 w-4" />
+                Lesson Decks
+              </TabsTrigger>
               <TabsTrigger value="manage">
                 <Settings className="h-4 w-4" />
                 Settings (CRUD)
@@ -581,6 +587,10 @@ export default function TeacherBooks() {
         </TabsContent>
 
         {/* Tab 2: Settings (CRUD) */}
+        <TabsContent value="decks" className="flex-1 min-h-0">
+          <LessonDecksPanel classes={classes} />
+        </TabsContent>
+
         <TabsContent value="manage">
           <Card>
             <CardHeader className="flex flex-col gap-4 space-y-0 border-b border-hec-line pb-4 sm:flex-row sm:items-center sm:justify-between">

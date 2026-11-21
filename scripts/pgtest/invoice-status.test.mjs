@@ -1209,10 +1209,11 @@ console.log('\nRound 2 - carry.payable and siblingUnresolved (T3)');
      [one.body, many.body.results[0]].every((x) => x.carry.payable - x.payments.monthPayments === x.carry.carryOutDebt - x.carry.carryOutCredit));
   // Every existing field of the bulk answer is where it was.
   // carry.payable and siblingUnresolved came with T1; excusedLessons / cancelledLessons
-  // (e604b4bf: the Lost Tuition screens read them instead of pricing in the browser) after.
-  ok('bulk: the existing fields are unchanged; carry.payable and siblingUnresolved were added, then excusedLessons and cancelledLessons',
+  // (e604b4bf: the Lost Tuition screens read them instead of pricing in the browser) after,
+  // then classNet (the Class Finance report's per-class charge; class-tuition.test.mjs).
+  ok('bulk: the existing fields are unchanged; carry.payable and siblingUnresolved were added, then excusedLessons, cancelledLessons and classNet',
      same(Object.keys(many.body.results[0]), ['studentId', 'baseAmount', 'totalDiscount', 'totalAmount', 'payments', 'carry',
-       'siblingUnresolved', 'breakdown', 'invoiceId', 'invoiceStatus', 'confirmationStatus', 'excusedLessons', 'cancelledLessons'])
+       'siblingUnresolved', 'breakdown', 'classNet', 'invoiceId', 'invoiceStatus', 'confirmationStatus', 'excusedLessons', 'cancelledLessons'])
        && same(Object.keys(many.body.results[0].carry), ['carryInCredit', 'carryInDebt', 'carryOutCredit', 'carryOutDebt', 'settledInMonth', 'payable']),
      Object.keys(many.body.results[0]));
 
