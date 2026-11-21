@@ -1,7 +1,10 @@
 // Made-up people and records for the preview. Nobody here is real.
 // Dates are relative to today so the screens always look "current".
+import { adminDb } from "./adminFixtures";
 
-export type Screen = "student-home" | "student-homework" | "family" | "teacher";
+export type Screen =
+  | "student-home" | "student-homework" | "family" | "teacher"
+  | "admin-overview" | "admin-tuition" | "admin-payroll" | "admin-dialogs";
 export type State = "ok" | "error" | "empty";
 
 // Read once: the app may rewrite the URL, the preview must not forget what it was asked for.
@@ -14,23 +17,31 @@ export const getScreen = (): Screen => SCREEN;
 export const getState = (): State => STATE;
 export const getTheme = () => THEME;
 
-export const ROLE_OF: Record<Screen, "student" | "family" | "teacher"> = {
+export const ROLE_OF: Record<Screen, "student" | "family" | "teacher" | "admin"> = {
   "student-home": "student",
   "student-homework": "student",
   family: "family",
   teacher: "teacher",
+  "admin-overview": "admin",
+  "admin-tuition": "admin",
+  "admin-payroll": "admin",
+  "admin-dialogs": "admin",
 };
 export const PATH_OF: Record<Screen, string> = {
   "student-home": "/student/dashboard",
   "student-homework": "/student/assignments",
   family: "/family/dashboard",
   teacher: "/teacher/dashboard",
+  "admin-overview": "/admin",
+  "admin-tuition": "/tuition",
+  "admin-payroll": "/admin",
+  "admin-dialogs": "/tuition",
 };
 
 export const STUDENT_ID = "stu-quynh-tram-anh";
 export const ME = {
   userId: "user-preview-1",
-  name: { "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà" }[SCREEN],
+  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -134,5 +145,16 @@ export function buildDb() {
     emptyOn = ["sessions"];
   }
 
-  return { tables, errorOn, emptyOn, homeworkRpc, points };
+  let functions: Record<string, (body: any) => { data: any; error: any }> = {};
+  let rpcs: Record<string, (args: any) => any> = {};
+  if (ROLE_OF[SCREEN] === "admin") {
+    const admin = adminDb();
+    Object.assign(tables, admin.tables);
+    errorOn = admin.errorOn;
+    emptyOn = admin.emptyOn;
+    functions = admin.functions;
+    rpcs = admin.rpcs;
+  }
+
+  return { tables, errorOn, emptyOn, homeworkRpc, points, functions, rpcs };
 }
