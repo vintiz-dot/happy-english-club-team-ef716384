@@ -875,8 +875,10 @@ console.log('\nRound 2 - ONE rule for the paid label, and every writer agrees wi
      && fns.every((f) => true
        && !/status:[^\n]*\?\s*['"]paid['"]/.test(src(`supabase/functions/${f}/index.ts`))
        && !/newStatus = ['"](paid|partial|draft)['"]/.test(src(`supabase/functions/${f}/index.ts`))));
-  ok('  settle-bill writes no label at all any more: its write-off reaches the bill through the recalculation',
-     !/from\(['"]invoices['"]\)[\s\S]{0,80}\.update\(/.test(src('supabase/functions/settle-bill/index.ts')) && !/status:/.test(src('supabase/functions/settle-bill/index.ts')));
+  // Settle Bill was removed (owner, D-23): the function is a 410 stub that reads and writes nothing.
+  const stub = src('supabase/functions/settle-bill/index.ts').replace(/\/\/[^\n]*/g, '');
+  ok('  settle-bill writes no label at all: it is a 410 stub with no database client',
+     !/createClient|\.from\(|\.rpc\(|\.update\(|\.insert\(/.test(stub) && /status:\s*410/.test(stub));
   ok('  and none of them judges a bill by cumulative paid_amount',
      fns.every((f) => !/paid_amount[^\n]*>=|>=[^\n]*paid_amount|<=[^\n]*paid_amount \+/.test(src(`supabase/functions/${f}/index.ts`))));
 }
@@ -1000,26 +1002,26 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
   await editRecorded(MONTH, 810000); await calc();
   ok('  and 810,000 is paid', (await bill())?.status === 'paid' && (await bill())?.total_amount === 810000);
 
-  // ---- settle-bill (T4 changed it: see "T4 fault 2" for the full set)
+  // ---- settle-bill: removed (owner, D-23). It refuses and writes nothing; the
+  // bill is whatever the recalculation says ("T4 fault 2" below has the rest).
   await reset(); world(); await calc();
+  memoryWrites = [];
   r = await settle(400000);
   await calc(); b = await bill();
   console.log(`    settle-bill, write-off in full => ${r.status} ${JSON.stringify(r.body)} ; bill ${JSON.stringify(money(b))}`);
-  ok('settle-bill, write-off IN FULL: the ledger is posted and (T4) the bill carries it - charge 0, nothing owed',
-     r.status === 200 && r.body.amount === 400000 && memoryWrites.some((w) => w.table === 'ledger_entries')
-       && b?.total_amount === 0 && b?.carry_out_debt === 0, money(b));
-  ok('  so the label is paid: nothing is left to pay (round 2: issued, with the 400,000 still on the bill)', b?.status === 'paid', money(b));
+  ok('settle-bill is removed: 410, nothing written, and the bill still charges 400,000 (issued)',
+     r.status === 410 && /removed/.test(String(r.body.error)) && memoryWrites.length === 0
+       && b?.total_amount === 400000 && b?.carry_out_debt === 400000 && b?.status === 'issued', { r: r.body, b: money(b) });
   await reset(); world(); await calc();
   await pay((await bill()).id, 100000, 'partial'); await calc();
   r = await settle(100000);
   await calc(); b = await bill();
-  ok('settle-bill, write-off IN PART on a part-paid bill: stays partial, 200,000 left',
-     r.status === 200 && b?.status === 'partial' && b?.recorded_payment === 100000 && b?.carry_out_debt === 200000, { r: r.body, b: money(b) });
+  ok('  on a part-paid bill the refusal leaves it partial, 300,000 left',
+     r.status === 410 && b?.status === 'partial' && b?.recorded_payment === 100000 && b?.carry_out_debt === 300000, { r: r.body, b: money(b) });
   await withHistory();
   r = await settle(400000);
-  console.log(`    settle-bill, family with a paid September, October unpaid => ${r.status} ${JSON.stringify(r.body)}`);
-  ok('FIXED in T4: for a family with paid history settle-bill accepts the real 400,000 debt (round 2: refused, "balance: 0")',
-     r.status === 200 && r.body.beforeBalance === 400000 && (await bill())?.carry_out_debt === 0, { r: r.body, b: money(await bill()) });
+  ok('  for a family with paid history it is refused too, and October still owes 400,000',
+     r.status === 410 && (await bill())?.carry_out_debt === 400000, { r: r.body, b: money(await bill()) });
 
   // ---- delete-payment (T4 changed it: see "T4 fault 1" for the full set)
   const ledgerPayment = () => {
@@ -1062,11 +1064,17 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
   await calc(S1, NOV);                                     // November: no lessons in this fixture, charge 0
   await editRecorded(MONTH, 0); await editRecorded(NOV, 400000);
   fixture.payments = [{ id: PAY_ID, student_id: S1, amount: 400000, method: 'cash', occurred_at: '2026-10-20T10:00:00.000Z' }];
+  // modify-payment is retired (D5 G-2): a 410 that writes nothing. A payment
+  // that belongs to another month is deleted and recorded again; both months'
+  // bills are then recalculated, as here.
+  memoryWrites = [];
   r = await call('modify-payment', { paymentId: PAY_ID, studentId: S1, amount: 400000, method: 'cash',
     occurredAt: '2026-11-05T10:00:00.000Z', reason: 'belongs to November' });
+  ok('modify-payment is removed: 410, nothing written', r.status === 410 && /removed/.test(String(r.body.error)) && memoryWrites.length === 0, r.body);
+  await calc(); await calc(S1, NOV);
   b = await bill(); const nov = await bill(S1, NOV);
   console.log(`    moved to November => Oct ${JSON.stringify(money(b))} ; Nov ${JSON.stringify(money(nov))}`);
-  ok('payment MOVED to another month, then modify-payment\'s own recalculation of both months: 200', r.status === 200, r.body);
+  ok('payment MOVED to another month (recorded again there), both months recalculated', !!b && !!nov);
   ok('  October, where it no longer is: issued, 400,000 owed (was: "paid" left behind)',
      b?.status === 'issued' && b?.recorded_payment === 0 && b?.carry_out_debt === 400000, money(b));
   ok('  November, which now carries October\'s debt and the 400,000: paid',
@@ -1200,9 +1208,11 @@ console.log('\nRound 2 - carry.payable and siblingUnresolved (T3)');
   ok('  payable - month payment = carry-out debt - carry-out credit, in both',
      [one.body, many.body.results[0]].every((x) => x.carry.payable - x.payments.monthPayments === x.carry.carryOutDebt - x.carry.carryOutCredit));
   // Every existing field of the bulk answer is where it was.
-  ok('bulk: the existing fields are unchanged; two were added (carry.payable, siblingUnresolved)',
+  // carry.payable and siblingUnresolved came with T1; excusedLessons / cancelledLessons
+  // (e604b4bf: the Lost Tuition screens read them instead of pricing in the browser) after.
+  ok('bulk: the existing fields are unchanged; carry.payable and siblingUnresolved were added, then excusedLessons and cancelledLessons',
      same(Object.keys(many.body.results[0]), ['studentId', 'baseAmount', 'totalDiscount', 'totalAmount', 'payments', 'carry',
-       'siblingUnresolved', 'breakdown', 'invoiceId', 'invoiceStatus', 'confirmationStatus'])
+       'siblingUnresolved', 'breakdown', 'invoiceId', 'invoiceStatus', 'confirmationStatus', 'excusedLessons', 'cancelledLessons'])
        && same(Object.keys(many.body.results[0].carry), ['carryInCredit', 'carryInDebt', 'carryOutCredit', 'carryOutDebt', 'settledInMonth', 'payable']),
      Object.keys(many.body.results[0]));
 
@@ -1346,109 +1356,61 @@ console.log('\nT4 fault 1 - deleting a payment takes it off the bill');
      r.status === 409 && (await bill())?.recorded_payment === 400000 && !memoryWrites.some((w) => w.table === 'payments'), { r: r.body });
 }
 
-console.log('\nT4 fault 2 - Settle Bill: the balance is the bill\'s own, and a write-off counts on the bill');
+console.log('\nT4 fault 2 - Settle Bill was removed (owner, D-23): it refuses, and an old write-off no longer reprices a bill');
 {
+  // The function is a 410 stub: every kind of settlement, on every kind of bill, is
+  // refused before anything is read or written, and the bill is whatever the calculators say.
+  const refused = async (label, type, amount, month = MONTH, extra = {}) => {
+    memoryWrites = []; invoiceWrites = [];
+    const before = await bill();
+    const r = await settleAs(type, amount, month, extra);
+    ok(`settle-bill (${label}): 410 "removed", nothing written, the bill is untouched`,
+       r.status === 410 && /removed/.test(String(r.body.error)) && memoryWrites.length === 0 && invoiceWrites.length === 0
+         && same(await bill(), before), { r: r.body, memoryWrites });
+  };
   await withHistory();
-  memoryWrites = [];
-  let r = await settleAs('discount', 400000);
-  let b = await bill();
-  console.log(`    write-off, family with a paid September => ${r.status} ${JSON.stringify(r.body)} ; bill ${JSON.stringify(money(b))}`);
-  ok('a family with a paid September, October unpaid: a 400,000 write-off is accepted against a balance of 400,000 (was: refused, "balance: 0")',
-     r.status === 200 && r.body.amount === 400000 && r.body.beforeBalance === 400000 && r.body.afterBalance === 0, r.body);
-  ok('  the bill carries it: charge 0, nothing owed (was: the debt stayed on the bill)', b?.total_amount === 0 && b?.carry_out_debt === 0, money(b));
-  ok('  and it reads paid - nothing is left to pay (was: issued)', b?.status === 'paid', money(b));
-  const one = await calc(); const many = await bulk();
-  ok('  both calculators show it as one discount line, "Settle Bill write-off", and agree',
-     one.body.totalAmount === 0 && one.body.discounts?.some((d) => d.name === 'Settle Bill write-off' && d.amount === 400000)
-       && many.body.results?.[0]?.totalAmount === 0 && many.body.results?.[0]?.totalDiscount === one.body.totalDiscount,
-     { one: one.body.discounts, many: many.body.results?.[0] });
-  ok('  the ledger pair and the settlements row were written',
-     memoryWrites.filter((w) => w.table === 'ledger_entries').length === 1 && (fixture.settlements || []).length === 1);
-  r = await settleAs('discount', 100000);
-  ok('  a second write-off of the same month: refused, nothing left to write off', r.status === 400 && (fixture.settlements || []).length === 1, r.body);
+  await refused('write-off, a family with a paid September', 'discount', 400000);
+  ok('  October still charges 400,000 and owes it', (await bill())?.total_amount === 400000 && (await bill())?.carry_out_debt === 400000, money(await bill()));
+  await refused('a second write-off', 'discount', 100000);
+  await refused('voluntary contribution', 'voluntary_contribution', 100000, MONTH, { consentGiven: true });
+  await refused('unapplied cash', 'unapplied_cash', 100000);
 
   await reset(); world(); await calc();
-  r = await settleAs('discount', 100000); b = await bill();
-  ok('a write-off IN PART: 300,000 still owed, issued', r.status === 200 && b?.total_amount === 300000 && b?.carry_out_debt === 300000 && b?.status === 'issued', money(b));
-  await editRecorded(MONTH, 300000); await calc(); b = await bill();
-  ok('  the rest paid: paid', b?.status === 'paid' && b?.carry_out_debt === 0, money(b));
-
-  await reset(); world();
-  await seedBill(SEP, 400000, 100000, 'partial');            // 300,000 owed from September
-  await calc();
-  r = await settleAs('discount', 700000); b = await bill();
-  ok('700,000 owed (300,000 of it from September): the write-off on October is capped at October\'s 400,000 charge',
-     r.status === 200 && r.body.amount === 400000 && b?.total_amount === 0 && b?.carry_out_debt === 300000 && b?.status === 'issued', { r: r.body, b: money(b) });
+  await confirm([(await bill()).id]);
+  await refused('a confirmed bill', 'discount', 100000);
+  ok('  the confirmed bill stays confirmed', (await bill())?.confirmation_status === 'confirmed', brief(await bill()));
 
   await reset(); world();
   await db.query(`INSERT INTO public.invoices (student_id, month, base_amount, discount_amount, total_amount, recorded_payment, status, tuition_frozen)
     VALUES ($1, $2, 900000, 90000, 810000, 0, 'issued', true)`, [S1, MONTH]);
-  memoryWrites = [];
-  r = await settleAs('discount', 100000);
-  ok('a frozen bill: refused before anything is posted (its charge cannot change, so a write-off would never show)',
-     r.status === 409 && !memoryWrites.some((w) => w.table === 'ledger_entries' || w.table === 'settlements') && (await bill())?.total_amount === 810000, r.body);
+  await refused('a frozen bill', 'discount', 100000);
 
-  await reset(); world(); inFamilyOf();
-  globalThis.__t1Sibling = async () => [{ family_id: FAMILY, status: 'unresolved', winner_student_id: null, winner_class_id: null, sibling_percent: 0, reason: 'busy' }];
-  memoryWrites = [];
-  r = await settleAs('discount', 100000);
-  ok('the family discount still being decided: refused, nothing posted', r.status === 409 && !memoryWrites.some((w) => w.table === 'ledger_entries'), r.body);
-
-  // Which write-offs count is decided by what posted them, not by a date
-  // (T4 review M2): the old settle-bill keyed its ledger 'settlement-discount-'.
-  const oldStyle = (when) => {
+  // The calculators no longer read settlements (the write-off reader went with
+  // Settle Bill: scripts/CHECK-writeoff-reader-removal.sql counted 0 rows it
+  // would have counted). Whatever key or date a settlement row has, it does not
+  // lower the charge, in either calculator.
+  const oldStyle = (key, when) => {
     fixture.settlements = [{ id: 'old-1', student_id: S1, month: MONTH, settlement_type: 'discount', amount: 100000, tx_id: 'tx-old-wo', created_at: when }];
     fixture.ledger_entries = [
-      { id: 'lo-1', tx_id: 'tx-old-wo', tx_key: `settlement-discount-${S1}-${MONTH}-1`, account_id: 'acc-DISCOUNT', debit: 100000, credit: 0, month: MONTH },
+      { id: 'lo-1', tx_id: 'tx-old-wo', tx_key: `${key}${S1}-${MONTH}-1`, account_id: 'acc-DISCOUNT', debit: 100000, credit: 0, month: MONTH },
       { id: 'lo-2', tx_id: 'tx-old-wo', tx_key: null, account_id: 'acc-AR', debit: 0, credit: 100000, month: MONTH },
     ];
   };
-  for (const [label, when] of [['made on 7 Oct', '2026-10-07T03:00:00.000Z'], ['made TODAY by the old function, before the deploy', new Date().toISOString()]]) {
-    await reset(); world(); oldStyle(when);
-    const one = await calc(); const many = await bulk();
-    ok(`a write-off posted by the OLD settle-bill (${label}) does not reprice the bill, in either calculator`,
-       one.body.totalAmount === 400000 && many.body.results?.[0]?.totalAmount === 400000, { one: one.body.discounts, many: many.body.results?.[0] });
+  for (const key of ['settlement-discount-', 'settlement-writeoff-']) {
+    for (const [label, when] of [['made on 7 Oct', '2026-10-07T03:00:00.000Z'], ['made today', new Date().toISOString()]]) {
+      await reset(); world(); oldStyle(key, when);
+      const one = await calc(); const many = await bulk();
+      ok(`a settlement row keyed ${key}... (${label}) does not reprice the bill, in either calculator`,
+         one.status === 200 && one.body.totalAmount === 400000 && !one.body.discounts?.some((d) => d.isSettlement)
+           && many.body.results?.[0]?.totalAmount === 400000, { one: one.body.discounts, many: many.body.results?.[0] });
+    }
   }
-  await reset(); world(); oldStyle('2026-10-07T03:00:00.000Z');
-  fixture.ledger_entries[0].tx_key = `settlement-writeoff-${S1}-${MONTH}-1`;
-  const counted = await calc(); const countedBulk = await bulk();
-  ok('  the same row with the T4 key counts, in both (so the filter is the key alone)',
-     counted.body.totalAmount === 300000 && countedBulk.body.results?.[0]?.totalAmount === 300000, { one: counted.body.totalAmount, many: countedBulk.body.results?.[0]?.totalAmount });
-  await reset(); world(); oldStyle('2026-10-07T03:00:00.000Z');
-  fixture.ledger_entries[0].tx_key = `settlement-writeoff-${S1}-${MONTH}-1`;
-  failTables.add('ledger_entries');
-  const s2 = await calc(); const m2 = await bulk();
-  failTables.delete('ledger_entries');
-  ok('  their ledger legs cannot be read: both calculators fail', s2.status === 400 && m2.status === 400, { s2: s2.body, m2: m2.body });
-
   await reset(); world(); await calc();
-  await confirm([(await bill()).id]);
-  await settleAs('discount', 100000); b = await bill();
-  ok('a confirmed bill written off goes back to review with the before/after flag',
-     b?.confirmation_status === 'needs_review' && changedFlag(b)?.details?.difference === -100000, brief(b));
-
-  // Voluntary contribution: a credit that is not there.
-  await withHistory();
-  await editRecorded(MONTH, 300000); await calc();
-  b = await bill();
-  r = await settleAs('voluntary_contribution', 300000, MONTH, { consentGiven: true });
-  console.log(`    contribution, 100,000 still owed, cumulative paid ${b?.paid_amount} => ${r.status} ${JSON.stringify(r.body)}`);
-  ok('a contribution where the family OWES 100,000: refused (was: a 300,000 "credit" read from cumulative paid_amount)',
-     b?.carry_out_debt === 100000 && r.status === 400 && /No credit balance/.test(r.body.error), { r: r.body, b: money(b) });
-  await reset(); world();
-  await seedBill(SEP, 400000, 650000, 'paid'); await calc();
-  await editRecorded(MONTH, 400000); await calc();
-  r = await settleAs('voluntary_contribution', 900000, MONTH, { consentGiven: true });
-  ok('  a real 250,000 credit: converted, capped at 250,000', r.status === 200 && r.body.amount === 250000 && r.body.beforeBalance === -250000, r.body);
-
-  // Fail closed on the new read.
-  await reset(); world(); await calc();
-  const before = await bill();
-  failTables.add('settlements'); invoiceWrites = [];
+  failTables.add('settlements'); failTables.add('ledger_entries');
   const s = await calc(); const m = await bulk();
-  failTables.delete('settlements');
-  ok('the month\'s settlements cannot be read: both calculators fail, nothing is written',
-     s.status === 400 && m.status === 400 && !m.body.results && invoiceWrites.length === 0 && same(await bill(), before), { s: s.body, m: m.body });
+  failTables.delete('settlements'); failTables.delete('ledger_entries');
+  ok('the calculators read neither settlements nor a write-off\'s ledger legs: with both unreadable they still answer',
+     s.status === 200 && m.status === 200 && m.body.results?.[0]?.totalAmount === 400000, { s: s.body?.error, m: m.body?.error });
 }
 
 console.log('\nT4 fault 5 - nothing left to pay reads paid');
@@ -1523,8 +1485,10 @@ console.log('\nT4 faults 3 and 4 - the browser writes the label by the same rule
   const writers = ['RecordPaymentDialog.tsx', 'QuickPayPanel.tsx', 'BatchPaymentDialog.tsx', 'RecordedPaymentManager.tsx', 'PaymentIntegrityRepair.tsx'];
   for (const f of writers) {
     const t = src(`src/components/admin/${f}`);
-    ok(`  ${f}: takes the label from @/lib/invoiceStatus and states no rule of its own`,
-       /from "@\/lib\/invoiceStatus"/.test(t)
+    // RecordedPaymentManager records through record-payment, which labels the bill by the
+    // one rule on the server; it needs no label import. The others still label their cache.
+    ok(`  ${f}: takes the label from @/lib/invoiceStatus (or record-payment) and states no rule of its own`,
+       (f === 'RecordedPaymentManager.tsx' ? /from "@\/lib\/recordPayment"/ : /from "@\/lib\/invoiceStatus"/).test(t)
          && !/>=\s*(payable|fp)\s*&&\s*(payable|fp)\s*>\s*0/.test(t)
          && !/(newStatus|status|expectedStatus|correctStatus)\s*=\s*['"](paid|partial|draft|issued)['"]/.test(t)
          && !/paid_amount\s*===\s*0|total_amount\s*-\s*invoice\.paid_amount/.test(t));
@@ -1624,9 +1588,13 @@ console.log('\nT4 r2 - two payments on one bill at the same moment: neither is l
     const src = (rel) => readFileSync(join(repo, rel), 'utf8');
     for (const f of ['RecordPaymentDialog.tsx', 'QuickPayPanel.tsx', 'BatchPaymentDialog.tsx', 'RecordedPaymentManager.tsx']) {
       const t = src(`src/components/admin/${f}`);
-      ok(`  ${f} writes recorded_payment only through setRecordedPayment and handles a conflict`,
-         /from "@\/lib\/recordedPaymentWrite"/.test(t) && /setRecordedPayment\(/.test(t) && /conflict/.test(t)
-           && !/\.(update|upsert)\(\s*\[?\s*\{[^}]*recorded_payment/.test(t));
+      // These screens record through record-payment (-> record_admin_payment, migration
+      // 20261121090000's guard): they send the figure they showed as expectedRecorded, and
+      // a refusal (a changed bill, a duplicate) is shown, never written over.
+      ok(`  ${f} writes recorded_payment only through recordPayment (record-payment) and handles a refusal`,
+         /from "@\/lib\/recordPayment"/.test(t) && /\brecordPayment\(supabase/.test(t) && /!saved\.ok/.test(t)
+           && /expectedRecorded/.test(t) && !/\.(update|upsert)\(\s*\[?\s*\{[^}]*recorded_payment/.test(t)
+           && !/from\(["']invoices["']\)[\s\S]{0,120}\.(update|upsert)\(/.test(t));
     }
   }
 
@@ -1660,15 +1628,6 @@ console.log('\nT4 r2 - two payments on one bill at the same moment: neither is l
   ok('delete-payment while a 100,000 payment lands: 400,000 comes off, the 100,000 stays, partial (was: the 100,000 was overwritten)',
      r.status === 200 && b?.recorded_payment === 100000 && b?.status === 'partial', { r: r.body, b: money(b) });
 
-  // settle-bill writes no recorded_payment: a payment landing mid-settlement survives.
-  await reset(); world(); await calc();
-  beforeNextMemoryInsert = { table: 'settlements', fn: async () => { await db.query(
-    'UPDATE public.invoices SET recorded_payment = recorded_payment + 100000 WHERE student_id = $1 AND month = $2', [S1, MONTH]); } };
-  r = await settleAs('discount', 400000);
-  b = await bill();
-  ok('settle-bill while a 100,000 payment lands: the payment stays on the bill (100,000 credit after the 400,000 write-off), paid',
-     r.status === 200 && b?.recorded_payment === 100000 && b?.carry_out_credit === 100000 && b?.status === 'paid', { r: r.body, b: money(b) });
-
   const fnSrc = (f) => readFileSync(join(repo, 'supabase', 'functions', f, 'index.ts'), 'utf8');
   ok('  delete-payment writes recorded_payment only through addToRecordedPayment; the two family payment functions only through record_family_payment (phase 1b)',
      /recorded-payment-write\.ts/.test(fnSrc('delete-payment')) && !/\.update\(\{[^}]*recorded_payment:/.test(fnSrc('delete-payment'))
@@ -1678,17 +1637,23 @@ console.log('\nT4 r2 - two payments on one bill at the same moment: neither is l
 
 console.log('\nT4 r2 - the mutations the review left alive');
 {
-  // d2: a payment with a leftover (unapplied cash) deleted - only the allocation comes off the bill.
+  // d2: a payment with a leftover (money beyond what the family owes). Since the owner's
+  // OVERPAYMENT ruling the leftover goes ON the first child's bill as credit - the screen must
+  // say so (leftoverHandling 'credit_next_bill'); unapplied cash is no longer kept off every bill.
   await withHistory();
-  await smartPay(500000);                              // 400,000 on October, 100,000 left over as unapplied cash
+  let r = await smartPay(500000);
+  ok('a 500,000 Smart Family Payment with no word on where the 100,000 leftover goes: refused, nothing recorded',
+     r.status !== 200 && (await bill())?.recorded_payment === 0 && familyPayments().length === 0, { r: r.body, b: money(await bill()) });
+  r = await call('smart-family-payment', { familyId: FAMILY, amount: 500000, method: 'Cash', occurredAt: '2026-10-20T10:00:00.000Z', month: MONTH, leftoverHandling: 'credit_next_bill' });
   const [p] = familyPayments();
   const legs = (fixture.ledger_entries || []).filter((e) => String(e.tx_key || '').includes(p?.id));
-  ok('(setup: a 500,000 Smart Family Payment - 400,000 on the bill, a smart-family-credit leftover of 100,000)',
-     (await bill())?.recorded_payment === 400000 && legs.some((e) => e.tx_key.startsWith(`smart-family-credit-${p?.id}`)), legs.map((e) => e.tx_key));
-  let r = await delPay(p?.id); let b = await bill();
+  ok('(setup: a 500,000 payment - all 500,000 on the bill, 100,000 of it credit for the next bill, no unapplied-cash leg)',
+     r.status === 200 && (await bill())?.recorded_payment === 500000 && (await bill())?.carry_out_credit === 100000
+       && !legs.some((e) => e.tx_key.startsWith('smart-family-credit-')), { r: r.body, legs: legs.map((e) => e.tx_key), b: money(await bill()) });
+  r = await delPay(p?.id); let b = await bill();
   const rev = reversalOf(p?.id);
-  ok('deleting a payment WITH a leftover: 400,000 off the bill (the leftover was never on it), all four legs reversed, balanced',
-     r.status === 200 && b?.recorded_payment === 0 && rev.length === 4 && balances(rev), { r: r.body, b: money(b), rev: rev.length });
+  ok('deleting it: all 500,000 off the bill (the leftover was on it), both legs reversed, balanced',
+     r.status === 200 && b?.recorded_payment === 0 && rev.length === 2 && balances(rev), { r: r.body, b: money(b), rev: rev.length });
 
   // d4: a retry when the bill still holds enough - only "already reversed" can stop it.
   await withHistory();
@@ -1715,12 +1680,13 @@ console.log('\nT4 r2 - the mutations the review left alive');
   ok('a payment whose allocation legs name no month (no bill to take it off): refused, nothing reversed or deleted',
      r.status === 409 && !memoryWrites.some((w) => w.table === 'ledger_entries' || w.table === 'payments'), r.body);
 
-  // h4 is gone by construction: the write-off filter is the ledger key, applied once (settledWriteOff);
-  // the two "old settle-bill" cases above fail if it is dropped.
-  ok('the write-off filter is applied in one place: neither calculator filters settlements by key or date in its query',
+  // The write-off reader was removed from both calculators with Settle Bill (e604b4bf): there
+  // is no filter left to apply, and a settlement can never lower a bill. The "settlement row
+  // does not reprice" cases above fail if a reader comes back.
+  ok('neither calculator reads settlements or filters write-offs any more',
      ['calculate-tuition', 'calculate-tuition-bulk'].every((f) => {
        const t = readFileSync(join(repo, 'supabase', 'functions', f, 'index.ts'), 'utf8');
-       return !/settlement-writeoff/.test(t) && !/gte\(["']created_at/.test(t) && /settledWriteOff\(/.test(t);
+       return !/settlement/i.test(t.replace(/\/\/[^\n]*/g, '')) && !/settledWriteOff|WRITE_OFF/.test(t);
      }));
 }
 

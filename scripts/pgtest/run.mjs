@@ -360,7 +360,7 @@ const run = (suite) =>
 let failed = 0;
 let total = 0;
 
-for (const suite of SUITES) {
+for (const suite of SUITES.filter((s) => !process.env.ONLY || process.env.ONLY.split(",").includes(s.name))) {
   const r = await run(suite);
   const summary = r.out.trim().split("\n").pop() ?? "";
   const counted = /^(\d+) passed, (\d+) failed$/.exec(summary);
