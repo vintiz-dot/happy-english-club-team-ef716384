@@ -1,4 +1,3 @@
-import { formatVND } from "./money";
 // Which month a payment is probably FOR: the oldest month a child (or a
 // family) still owes. The payment screens SUGGEST it; the admin still
 // confirms the month by hand (useTuitionMonthConfirmation never confirms on
@@ -110,7 +109,9 @@ export function earlierOwing<T extends OwingMonth>(owing: T | null | undefined, 
 
 /** "1.260.000 ₫" */
 export function formatOwed(amount: number): string {
-  return `${formatVND(Math.round(amount))}`;
+  // Same figure as formatVND in src/lib/money.ts (this helper imports nothing).
+  const whole = Math.round(Math.abs(amount));
+  return `${amount < 0 && whole > 0 ? "−" : ""}${String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ₫`;
 }
 
 /** The one line the payment screens show. */

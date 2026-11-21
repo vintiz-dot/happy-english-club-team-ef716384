@@ -59,6 +59,11 @@ writeFileSync(pr, prOut.outputFiles[0].text);
 const { describeRate } = await import(pathToFileURL(pr).href);
 eq("describeRate uses dot separators", describeRate({ pay_rate_type: "per_session", per_session_rate_vnd: 250000, hourly_rate_vnd: 0 }), `250.000 ${D} / session`);
 
+const om = join(mkdtempSync(join(tmpdir(), "money-format-om-")), "om.mjs");
+writeFileSync(om, (await build({ entryPoints: [resolve(repo, "src/lib/owingMonth.ts")], bundle: true, write: false, format: "esm", platform: "neutral", logLevel: "silent" })).outputFiles[0].text);
+const { formatOwed } = await import(pathToFileURL(om).href);
+for (const v of [0, 5, 1000, 1260000, 3780000, -250000, 0.4]) eq(`formatOwed(${v}) equals formatVND`, formatOwed(v), formatVND(v));
+
 // Guard: no new local money formatter in src/. Printed documents (hecDocs,
 // lib/invoice, the invoice and statement print views) keep their own wording.
 const EXEMPT = [
@@ -66,6 +71,8 @@ const EXEMPT = [
   /StudentStatementPrint\.tsx$/, /src[\\/]lib[\\/]money\.ts$/,
   // Mirrored with supabase/functions/_lib/pay-rate.ts, which imports nothing: it groups the digits itself.
   /src[\\/]lib[\\/]payRate\.ts$/,
+  // The owing-month helper must import nothing (its own suite), so it groups the digits itself; compared above.
+  /src[\\/]lib[\\/]owingMonth\.ts$/,
   // Server-worded messages whose exact text other suites pin ("5,000,000 VND").
   /src[\\/]lib[\\/]approvals\.ts$/,
 ];
