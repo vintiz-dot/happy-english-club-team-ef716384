@@ -307,9 +307,10 @@ const SUITES = [
   { name: "lesson monitor", file: "lesson-monitor.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql"] },
   { name: "lesson monitor review", file: "lesson-monitor-review.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql"] },
   // Lesson reports (21 Nov 2026): the contract, then each stage's migration (2026112113xxxx_lesson_report_*).
-  { name: "lesson reports", file: "lesson-reports.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121131000_lesson_report_family.sql"] },
+  { name: "lesson reports", file: "lesson-reports.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121131000_lesson_report_family.sql", "20261121132000_lesson_report_quiz.sql"] },
   // How the family / child screen reads one of those reports (stage B).
   { name: "lesson report view", file: "lesson-report-view.test.mjs", migrations: [] },
+  { name: "lesson quiz helpers", file: "lesson-quiz-lib.test.mjs", migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

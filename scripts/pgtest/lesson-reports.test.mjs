@@ -310,7 +310,76 @@ eq("anon cannot call approval", (await one(`SELECT has_function_privilege('anon'
   eq("an unknown kind gives nothing", await fileAs(PARENT, "other", w1, k1), null);
 }
 
-// ---------------------------------------------------------------- stage C (review quiz) adds cases here
+// ---------------------------------------------------------------- stage C (review quiz)
+{
+  const LESSON2 = (await one(`INSERT INTO public.sessions (class_id, teacher_id, date, start_time, end_time)
+    VALUES ($1,$2, CURRENT_DATE - 1, '17:30','19:00') RETURNING id`, [VENUS, tVictor])).id;
+  const QZ = { title: "Review: food", points: 8, questions: [
+    { id: "q1", kind: "choice", prompt: "An apple is...", prompt_vi: "Quả táo là...", options: ["a fruit", "a shoe"], answer: "a fruit", explain: "Apples are fruit.", explain_vi: "Táo là trái cây." },
+    { id: "q2", kind: "gap", prompt: "I ___ rice.", answer: "like", accept: ["love", "eat"], explain: "like + noun" },
+    { id: "q3", kind: "order", prompt: "Make a sentence", options: ["I", "like", "milk."], answer: "I like milk.", explain: "Subject, verb, object." },
+    { id: "q4", kind: "gap", prompt: "Two ___", answer: "cats" }] };
+  const ap = await tryAs(VICTOR, () => db.query(
+    `SELECT public.approve_lesson_report($1, '{"summary":"food"}'::jsonb, '{}'::jsonb, '[]'::jsonb, '{}'::uuid[], $2::jsonb)`, [LESSON2, JSON.stringify(QZ)]));
+  eq("a lesson with a richer quiz is approved", ap, null);
+  const HW = (await one(`SELECT review_homework_id h FROM public.lesson_reports WHERE session_id = $1`, [LESSON2])).h;
+  await q(`INSERT INTO public.family_students VALUES ($1,$2)`, [STUDENT, k1]);
+  const getQ = (uid, kidId, hwId = HW) => as(uid, async () => (await db.query(`SELECT public.get_lesson_review_quiz($1,$2) r`, [hwId, kidId])).rows[0].r);
+  const submit = (uid, kidId, ans, hwId = HW) => as(uid, async () => (await db.query(`SELECT public.submit_lesson_review($1,$2,$3::jsonb) r`, [hwId, kidId, JSON.stringify(ans)])).rows[0].r);
+  const award = (kidId) => q(`SELECT points FROM public.point_awards WHERE homework_id = $1 AND student_id = $2`, [HW, kidId]);
+
+  // before submitting: no answers anywhere in what a child receives
+  const before = await getQ(PARENT, k1);
+  eq("the child gets 4 questions and no submission yet", [before.questions.length, before.submission], [4, null]);
+  const text = JSON.stringify(before);
+  ok("no answer, accepted spelling or explanation reaches the child before submitting",
+    !/"answer"|"accept"|"explain/.test(text) && !text.includes("Apples are fruit") && !text.includes("Subject, verb") && !text.includes("love"), text.slice(0, 160));
+  const order = before.questions[2].options;
+  ok("an order question's pieces come back shuffled, not solved",
+    order.join(" ") !== "I like milk." && [...order].sort().join() === ["I", "like", "milk."].sort().join(), order.join("|"));
+  eq("the child's own login reads it too", (await getQ(STUDENT, k1)).questions.length, 4);
+
+  // who is refused
+  const rpc = (name, uid, kidId, extra = "") => tryAs(uid, () => db.query(`SELECT public.${name}($1,$2${extra})`, [HW, kidId]));
+  refused("a parent of another child is refused", await rpc("get_lesson_review_quiz", PARENT2, k1), /not your child/);
+  refused("...and cannot submit for the child", await rpc("submit_lesson_review", PARENT2, k1, ",'{}'::jsonb"), /not your child/);
+  refused("a stranger (any signed-in account) is refused", await rpc("get_lesson_review_quiz", OTHER, k1), /not your child/);
+  refused("a signed-out caller is refused", await rpc("get_lesson_review_quiz", null, k1), /Sign in/);
+  await q(`INSERT INTO public.family_students VALUES ($1,$2)`, [PARENT, k3]);
+  refused("a parent's own child who is not in the class is refused", await rpc("get_lesson_review_quiz", PARENT, k3), /not in the class/);
+  eq("anon cannot call it", (await one(`SELECT has_function_privilege('anon','public.submit_lesson_review(uuid, uuid, jsonb)','EXECUTE') p`)).p, false);
+  eq("the answers table stays closed to a child", (await rowsAs(PARENT, `SELECT 1 FROM public.lesson_review_quizzes`)).length, 0);
+  const plain = (await one(`INSERT INTO public.homeworks (class_id, title) VALUES ($1,'Plain') RETURNING id`, [VENUS])).id;
+  eq("an ordinary homework is not a quiz (null)", await getQ(PARENT, k1, plain), null);
+
+  // marking
+  const r1 = await submit(PARENT, k1, { q1: "  A FRUIT. ", q2: "LOVE", q3: ["I", "like", "milk."], q4: "cat" });
+  eq("marks: trim/case/trailing dot, an accepted spelling, the right order; one wrong", [r1.score, r1.total], [3, 4]);
+  eq("per-question flags", r1.results.map((x) => x.correct), [true, true, true, false]);
+  eq("the result shows the answer and the explanation", [r1.results[3].answer, r1.results[0].explain_vi], ["cats", "Táo là trái cây."]);
+  eq("points are proportional (8 x 3/4)", r1.points_awarded, 6);
+  eq("the homework is graded 3/4 with no teacher text",
+    await one(`SELECT grade, status, teacher_feedback FROM public.homework_submissions WHERE homework_id = $1 AND student_id = $2`, [HW, k1]),
+    { grade: "3/4", status: "graded", teacher_feedback: null });
+  eq("one point award of 6", await award(k1), [{ points: 6 }]);
+  const after = await getQ(PARENT, k1);
+  eq("afterwards the child sees the result with explanations", [after.submission.score, after.submission.results[0].explain], [3, "Apples are fruit."]);
+
+  const rw = await submit(PARENT2, k2, { q1: "a shoe", q3: ["milk.", "like", "I"] });
+  eq("a wrong choice, a wrong order and blanks all mark wrong", rw.results.map((x) => x.correct), [false, false, false, false]);
+  eq("a zero score awards nothing", (await award(k2)).length, 0);
+
+  // retakes
+  const r2 = await submit(PARENT, k1, { q1: "a fruit", q2: "like", q3: ["I", "like", "milk."], q4: "cats" });
+  eq("a better retake counts: 4/4 and 8 points", [r2.score, r2.points_awarded, r2.improved, r2.attempts], [4, 8, true, 2]);
+  eq("the award was replaced, not paid twice", await award(k1), [{ points: 8 }]);
+  const r3 = await submit(PARENT, k1, { q1: "a shoe" });
+  eq("a worse retake keeps the best score and points", [r3.best_score, r3.points_awarded, r3.improved, r3.attempts], [4, 8, false, 3]);
+  eq("...and the submission still reads 4/4 with one award",
+    [(await one(`SELECT grade FROM public.homework_submissions WHERE homework_id = $1 AND student_id = $2`, [HW, k1])).grade, (await award(k1)).length], ["4/4", 1]);
+  await q(`UPDATE public.homeworks SET due_date = CURRENT_DATE - 1 WHERE id = $1`, [HW]);
+  refused("after the due date a retake is refused", await rpc("submit_lesson_review", PARENT2, k2, `,'{"q1":"a fruit"}'::jsonb`), /closed/);
+}
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

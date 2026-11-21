@@ -15,6 +15,7 @@ import { dayjs } from "@/lib/date";
 import { RichTextView } from "@/components/rich-text";
 import { useAuth } from "@/hooks/useAuth";
 import { VideoReviewPanel } from "@/components/video-homework/VideoReviewPanel";
+import { QuizResultReadOnly } from "@/components/homework/QuizResultReadOnly";
 
 const GRADE_PRESETS = [
   { label: "⭐ Superstar", value: "Superstar", minPoints: 90, maxPoints: 100 },
@@ -356,7 +357,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                       </Badge>
                     </div>
 
-                    {item.submission?.submission_text && (
+                    {item.submission?.submission_text && (homework as any)?.submission_type !== "quiz" && (
                       <div className="rounded-hec-md bg-hec-sunken p-3">
                         <p className="line-clamp-3 whitespace-pre-wrap break-words text-hec-small text-hec-ink">{item.submission.submission_text}</p>
                       </div>
@@ -392,7 +393,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                         className="min-h-hec-target w-full sm:flex-1"
                         onClick={() => openGradeView(item)}
                       >
-                        {item.submission?.status === "graded" ? "Update Grade" : "Grade"}
+                        {(homework as any)?.submission_type === "quiz" ? "View result" : item.submission?.status === "graded" ? "Update Grade" : "Grade"}
                       </Button>
                       {!item.submission && (
                         <Button
@@ -409,6 +410,16 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                 ))
               )}
             </div>
+          ) : (homework as any)?.submission_type === "quiz" ? (
+            /* ===== LESSON REVIEW QUIZ: marked by the database, read-only here ===== */
+            <QuizResultReadOnly
+              submission={selectedSubmission?.submission}
+              studentName={selectedSubmission?.student?.full_name}
+              onBack={() => {
+                setView("list");
+                setSelectedSubmission(null);
+              }}
+            />
           ) : (homework as any)?.submission_type === "video" ? (
             /* ===== VIDEO HOMEWORK: the AI draft, edited and approved ===== */
             <VideoReviewPanel
