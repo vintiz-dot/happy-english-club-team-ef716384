@@ -1,6 +1,9 @@
 // Visual UX preview: the real pages and providers over a fake Supabase client
 // (see vite.config.ts), so no sign-in and no real data.
 //   ?screen=student-home|student-homework|family|teacher
+//          |admin-overview|admin-tuition|admin-payroll|admin-dialogs
+//   admin extras: &month=YYYY-MM (tuition, dialogs)  &period=closed (payroll)
+//                 &part=counts (overview, state=error)  &dialog=close|payment (dialogs)
 //   &state=ok|error|empty   &theme=light|dark
 import React, { Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
@@ -38,6 +41,9 @@ const StudentDashboard = lazy(() => import("@/pages/StudentDashboard"));
 const StudentAssignments = lazy(() => import("@/pages/StudentAssignments"));
 const FamilyDashboard = lazy(() => import("@/pages/FamilyDashboard"));
 const TeacherDashboard = lazy(() => import("@/pages/TeacherDashboard"));
+const Admin = lazy(() => import("@/pages/Admin"));
+const Tuition = lazy(() => import("@/pages/Tuition"));
+const AdminDialogs = lazy(() => import("./AdminDialogs"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false, staleTime: 60_000 } },
@@ -59,6 +65,8 @@ createRoot(document.getElementById("root")!).render(
                   <Route path="/student/assignments" element={<StudentAssignments />} />
                   <Route path="/family/dashboard" element={<FamilyDashboard />} />
                   <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+                  <Route path="/admin" element={<Admin defaultTab={screen === "admin-payroll" ? "payroll" : "overview"} />} />
+                  <Route path="/tuition" element={screen === "admin-dialogs" ? <AdminDialogs /> : <Tuition />} />
                   <Route path="*" element={<Navigate to={PATH_OF[screen] + window.location.search} replace />} />
                 </Routes>
               </Suspense>

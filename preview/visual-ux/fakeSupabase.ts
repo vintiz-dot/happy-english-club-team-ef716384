@@ -54,7 +54,7 @@ class Query implements PromiseLike<Result> {
   private run(): Result {
     const state = getState();
     const db = buildDb();
-    if (state === "error" && db.errorOn.includes(this.table)) return { data: null, error: { message: "offline" } };
+    if (state === "error" && (db.errorOn.includes(this.table) || (this.head && db.errorOn.includes(this.table + "#head")))) return { data: null, error: { message: "offline" } };
     const source = state === "empty" && db.emptyOn.includes(this.table) ? [] : db.tables[this.table] ?? [];
     let rows = copy(source) as Row[];
     rows = rows.filter((r) => this.filters.every((fn) => fn(r)));
@@ -94,6 +94,9 @@ const rpc = (name: string, args: Row = {}): PromiseLike<Result> => {
     for (const id of ids) if (db.points[id]) data[id] = copy(db.points[id]);
     out = { data, error: null };
   }
+  // Admin screens: a few rpcs answer with made-up data (adminFixtures.ts).
+  const custom = db.rpcs[name];
+  if (custom) out = { data: copy(custom(args)), error: null };
   return Promise.resolve(out);
 };
 
@@ -115,7 +118,13 @@ const channel = () => {
 export const supabase: any = {
   from: (t: string) => new Query(t),
   rpc,
-  functions: { invoke: () => Promise.resolve({ data: null, error: null }) },
+  functions: {
+    // A function the preview knows (adminFixtures.ts) answers with made-up data; any other answers nothing.
+    invoke: (name: string, opts?: { body?: any }) => {
+      const fn = buildDb().functions[name];
+      return Promise.resolve(fn ? copy(fn(opts?.body)) : { data: null, error: null });
+    },
+  },
   auth: {
     getSession: () => Promise.resolve({ data: { session }, error: null }),
     getUser: () => Promise.resolve({ data: { user }, error: null }),
