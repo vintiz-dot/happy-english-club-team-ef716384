@@ -746,15 +746,15 @@ window.HEC_DEMO_FEED = {
    "title_vi": "Trại hè 2026",
    "images": [
     {
-     "url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221920%22%20height%3D%221080%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%231d3266%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b8954a%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221920%22%20height%3D%221080%22%20fill%3D%22url(%23g)%22%2F%3E%3Ctext%20x%3D%22960%22%20y%3D%22560%22%20font-size%3D%2264%22%20fill%3D%22rgba(255%2C255%2C255%2C0.4)%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%22%3ECamp%20picture%201%3C%2Ftext%3E%3C%2Fsvg%3E",
+     "url": "https://hanoienglish.com/assets/pictures/ok/hero-1.webp",
      "caption": "Day one: team games"
     },
     {
-     "url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221920%22%20height%3D%221080%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%233a1d66%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%234ab89a%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221920%22%20height%3D%221080%22%20fill%3D%22url(%23g)%22%2F%3E%3Ctext%20x%3D%22960%22%20y%3D%22560%22%20font-size%3D%2264%22%20fill%3D%22rgba(255%2C255%2C255%2C0.4)%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%22%3ECamp%20picture%202%3C%2Ftext%3E%3C%2Fsvg%3E",
+     "url": "https://hanoienglish.com/assets/pictures/ok/hero-2.webp",
      "caption": "Science afternoon"
     },
     {
-     "url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221920%22%20height%3D%221080%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23664a1d%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231d5a66%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221920%22%20height%3D%221080%22%20fill%3D%22url(%23g)%22%2F%3E%3Ctext%20x%3D%22960%22%20y%3D%22560%22%20font-size%3D%2264%22%20fill%3D%22rgba(255%2C255%2C255%2C0.4)%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%22%3ECamp%20picture%203%3C%2Ftext%3E%3C%2Fsvg%3E",
+     "url": "https://hanoienglish.com/assets/pictures/ok/hero-3.webp",
      "caption": "Final show"
     }
    ]
@@ -825,15 +825,15 @@ window.HEC_DEMO_FEED = {
    "title_en": "Life at HEC",
    "images": [
     {
-     "url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221920%22%20height%3D%221080%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%231d3266%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b8954a%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221920%22%20height%3D%221080%22%20fill%3D%22url(%23g)%22%2F%3E%3Ctext%20x%3D%22960%22%20y%3D%22560%22%20font-size%3D%2264%22%20fill%3D%22rgba(255%2C255%2C255%2C0.4)%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%22%3ECamp%20picture%201%3C%2Ftext%3E%3C%2Fsvg%3E",
+     "url": "https://hanoienglish.com/camp/media/landing/hero-main.jpg",
      "caption": "Day one: team games"
     },
     {
-     "url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221920%22%20height%3D%221080%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%233a1d66%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%234ab89a%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221920%22%20height%3D%221080%22%20fill%3D%22url(%23g)%22%2F%3E%3Ctext%20x%3D%22960%22%20y%3D%22560%22%20font-size%3D%2264%22%20fill%3D%22rgba(255%2C255%2C255%2C0.4)%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%22%3ECamp%20picture%202%3C%2Ftext%3E%3C%2Fsvg%3E",
+     "url": "https://hanoienglish.com/camp/media/landing/journey-1.jpg",
      "caption": "Science afternoon"
     },
     {
-     "url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221920%22%20height%3D%221080%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23664a1d%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231d5a66%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221920%22%20height%3D%221080%22%20fill%3D%22url(%23g)%22%2F%3E%3Ctext%20x%3D%22960%22%20y%3D%22560%22%20font-size%3D%2264%22%20fill%3D%22rgba(255%2C255%2C255%2C0.4)%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%22%3ECamp%20picture%203%3C%2Ftext%3E%3C%2Fsvg%3E",
+     "url": "https://hanoienglish.com/camp/media/landing/journey-2.jpg",
      "caption": "Final show"
     }
    ]

@@ -54,11 +54,100 @@
     var a = p[p.length - 1] || "?";
     return (p.length > 1 ? p[0].charAt(0) : "") + a.charAt(0);
   }
+  // ------------------------------------------------------------ pictures
+  // The TV's browser (Chromium 38 on webOS) ignores object-fit, so an <img>
+  // sized to a box is STRETCHED. Pictures are background images instead,
+  // and each one is measured once: its shape decides the layout, and how
+  // bright and busy it is under the words decides how deep the shade is.
+  var picInfo = {};
+  function bgUrl(u) {
+    return "url(" + String(u || "").replace(/["'()\\s]/g, function (c) { return encodeURIComponent(c); }) + ")";
+  }
+  function measure(url, cb) {
+    if (!url) return;
+    var info = picInfo[url];
+    if (info) { if (cb) { if (info.ready) cb(info); else info.waiting.push(cb); } return; }
+    info = picInfo[url] = { ready: false, waiting: cb ? [cb] : [] };
+    var img = new Image();
+    var finish = function () {
+      info.ready = true;
+      var w = info.waiting; info.waiting = [];
+      for (var i = 0; i < w.length; i++) { try { w[i](info); } catch (e) {} }
+    };
+    img.onload = function () {
+      info.w = img.naturalWidth; info.h = img.naturalHeight;
+      sample(img, info);
+      img.onload = img.onerror = null; img = null;
+      finish();
+    };
+    img.onerror = function () {
+      img.onload = img.onerror = null;
+      if (img.crossOrigin) {
+        // the host does not allow reading pixels: take the shape only
+        img = new Image();
+        img.onload = function () { info.w = img.naturalWidth; info.h = img.naturalHeight; img.onload = img.onerror = null; img = null; finish(); };
+        img.onerror = function () { img = null; info.failed = true; finish(); };
+        img.src = url;
+      } else { img = null; info.failed = true; finish(); }
+    };
+    if (!/^data:/.test(url)) img.crossOrigin = "anonymous";
+    img.src = url;
+  }
+  // Mean brightness (0-1) and busyness (spread) of the lower-left of the
+  // picture, where the words sit.
+  function sample(img, info) {
+    try {
+      var c = document.createElement("canvas"); c.width = 48; c.height = 27;
+      var x = c.getContext("2d");
+      x.drawImage(img, 0, 0, 48, 27);
+      var d = x.getImageData(0, 12, 34, 15).data, sum = 0, sq = 0, n = 0;
+      for (var i = 0; i < d.length; i += 4) {
+        var l = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+        sum += l; sq += l * l; n++;
+      }
+      info.lum = sum / n;
+      info.busy = Math.sqrt(Math.max(0, sq / n - info.lum * info.lum));
+    } catch (e) { /* unreadable: the deepest shade is used */ }
+  }
+  // How dark the shade behind the words must be (0-1). An unmeasured picture
+  // gets the deepest one, so words are readable whatever the picture.
+  function shadeFor(info) {
+    if (!info || info.lum == null) return 0.93;
+    return Math.max(0.62, Math.min(0.95, 0.5 + info.lum * 0.5 + info.busy * 0.9));
+  }
+  function navy(a) { return "rgba(7,19,48," + (Math.round(a * 100) / 100) + ")"; }
+
+  // One picture filling a 1920x880 frame, never stretched or squashed.
+  //  - close to the screen's shape: it fills the screen with a slow pan, and
+  //    the words sit on a shade fitted to that picture;
+  //  - any other shape (portraits, 3:2 photos): the WHOLE picture, framed,
+  //    over a soft blurred copy of itself, with the words beside it.
+  var FW = 1920, FH = 880;
+  function picFrame(url, capHtml, pan) {
+    var info = picInfo[url];
+    var a = info && info.w && info.h ? info.w / info.h : 0;
+    var shade = shadeFor(info);
+    var bg = bgUrl(url);
+    if (a >= 1.78) {
+      return '<div class="pf full"><div class="kb ' + (pan || "") + '" style="background-image:' + bg + '"></div>' +
+        '<div class="scrim" style="background:linear-gradient(180deg,' + navy(0) + ' 30%,' + navy(shade) + ' 100%),linear-gradient(90deg,' +
+          navy(shade * 0.8) + ' 0%,' + navy(0) + ' 62%)"></div>' +
+        '<div class="pcap low">' + capHtml + "</div></div>";
+    }
+    var maxH = 772, maxW = 1120, h = maxH, w = a ? Math.round(maxH * a) : maxW;
+    if (w > maxW) { w = maxW; h = Math.round(maxW / a); }
+    var veil = Math.max(0.55, shade - 0.05);
+    return '<div class="pf gallery"><div class="blur" style="background-image:' + bg + '"></div>' +
+      '<div class="veil" style="background:linear-gradient(90deg,' + navy(Math.min(0.94, veil + 0.25)) + ' 0%,' + navy(veil) + ' 48%,' + navy(veil * 0.55) + ' 100%)"></div>' +
+      '<div class="frame' + (a ? "" : " loose") + (pan ? " float" : "") + '" style="width:' + w + "px;height:" + h + "px;top:" + Math.round((FH - h) / 2) +
+        "px;background-image:" + bg + ";background-size:" + (a ? "cover" : "contain") + '"></div>' +
+      '<div class="pcap side" style="width:' + (FW - w - 64 * 3) + 'px">' + capHtml + "</div></div>";
+  }
+
   function photo(person, size) {
     var px = size + "px";
-    var inner = person && person.photo
-      ? '<img src="' + esc(person.photo) + '" alt="" onerror="this.style.display=\'none\'">'
-      : "";
+    // a picture that fails to load leaves the initials showing underneath
+    var inner = person && person.photo ? '<div class="pic" style="background-image:' + bgUrl(person.photo) + '"></div>' : "";
     return '<div class="ph" style="width:' + px + ";height:" + px + '"><div class="ini" style="font-size:' +
       Math.round(size * 0.36) + 'px">' + esc(initials(person && person.name)) + "</div>" + inner + "</div>";
   }
@@ -134,7 +223,8 @@
     var items = f.items || [];
     var ofKind = function (k) { return filter(items, function (i) { return i.kind === k; }); };
 
-    if (on("welcome")) list.push({ t: ["Welcome", "Chào mừng"], html: welcome(f), secs: 1.2 });
+    if (on("welcome")) list.push({ t: ["Welcome", "Chào mừng ba mẹ và các con"], html: welcome(f), secs: 1.2 });
+    if (on("parents")) list.push({ t: ["Why families choose HEC", "Vì sao ba mẹ chọn HEC"], html: whyHec(f), secs: 1.5 });
     if (on("leaderboard") && ranked(f.leaderboard).length) list.push({ t: ["Leaderboard · " + monthName(f.month), "Bảng xếp hạng · " + monthVi(f.month)], html: leaderboard(f), secs: 1.4 });
     // Every student and their points, EVERYONE_PER_PAGE to a page (owner,
     // 17 Nov 2026: "show every student in the reception tv").
@@ -166,13 +256,14 @@
       var aw = ofKind("award");
       for (var a = 0; a < aw.length; a++) list.push({ t: ["Student Awards", "Giải thưởng học sinh"], html: feature(aw[a], "Award · Giải thưởng") });
     }
-    if (on("success")) list.push({ t: ["Our Success", "Thành tích của chúng tôi"], html: success(f, ofKind("success")), secs: 1.2 });
+    if (on("success")) list.push({ t: ["Our Success", "Thành tích của HEC"], html: success(f, ofKind("success")), secs: 1.2 });
     if (on("courses")) {
       var cc = chunk(f.courses || [], 6);
       for (var k = 0; k < cc.length; k++) list.push({ t: ["Our Programmes", "Chương trình học"], html: courses(cc[k]), secs: 1.3 });
       var extra = ofKind("course");
-      for (var x = 0; x < extra.length; x++) list.push({ t: ["Our Programmes", "Chương trình học"], html: feature(extra[x], "Programme · Khoá học") });
+      for (var x = 0; x < extra.length; x++) list.push({ t: ["Our Programmes", "Chương trình học"], html: feature(extra[x], "Khoá học · Programme") });
     }
+    if (on("parents") && f.qr && f.qr.zalo && f.qr.zalo.svg) list.push({ t: ["Talk to us", "Tư vấn cho con"], html: askZalo(f), secs: 1.2 });
     // Albums and videos are spread through the loop (see the end of build).
     // Videos take turns: VIDEOS_PER_LOOP a loop, moving on each time round.
     var media = [];
@@ -189,7 +280,7 @@
     }
     if (on("photos")) {
       var ph = filter(ofKind("photo"), function (p) { return !!p.image_url; });
-      for (var p = 0; p < ph.length; p++) list.push({ t: ["Life at HEC", "Cuộc sống tại HEC"], html: photoScene(ph[p]) });
+      for (var p = 0; p < ph.length; p++) list.push({ t: ["Life at HEC", "Cuộc sống tại HEC"], html: photoHtml(ph[p]) });
     }
     if (on("announcements")) {
       var notes = ofKind("announcement").concat(ofKind("event"));
@@ -201,9 +292,21 @@
       if (!fb.length) fb = [[]];
       for (var q = 0; q < fb.length; q++) list.push({ t: ["Families Say", "Phụ huynh nói gì"], html: feedback(f, fb[q]), secs: 1.3 });
     }
-    // Mix: albums and videos alternate, one after every two other scenes.
-    var mix = [], mi = 0, vj = 0;
-    while (mi < media.length || vj < vids.length) {
+    // Short messages for parents over a picture from the albums.
+    var moms = [];
+    if (on("parents")) {
+      var pool = [];
+      var albs = filter(ofKind("album"), function (x) { return x.images && x.images.length; });
+      for (var pa = 0; pa < albs.length; pa++) for (var pb = 0; pb < albs[pa].images.length; pb++) pool.push(albs[pa].images[pb].url);
+      for (var mo = 0; mo < MOMENTS.length; mo++) {
+        moms.push({ t: ["Happy English Club", "Happy English Club"], html: momentHtml(MOMENTS[(momentOffset + mo) % MOMENTS.length], pool.length ? pool[(momentOffset * 7 + mo * 13) % pool.length] : null), secs: 0.8 });
+      }
+      momentOffset++;
+    }
+    // Mix: albums, videos and messages take turns, one after every few other scenes.
+    var mix = [], mi = 0, vj = 0, mk = 0;
+    while (mi < media.length || vj < vids.length || mk < moms.length) {
+      if (mk < moms.length) mix.push(moms[mk++]);
       if (mi < media.length) mix.push(media[mi++]);
       if (vj < vids.length) mix.push(vids[vj++]);
     }
@@ -227,17 +330,78 @@
         '<div class="eyebrow rise">English the ELA way · Hanoi</div>' +
         '<div class="h-xl rise d1" style="margin-top:22px">Use it,<br>don’t just <span class="gold">memorise</span> it.</div>' +
         '<div class="lead rise d2" style="margin-top:26px">US Common Core ELA with a US-certified teacher and foreign &amp; Vietnamese TAs. Never more than 12 in a class.' +
-          '<span class="vi" style="display:block;font-size:24px;margin-top:10px">Tiếng Anh theo chuẩn ELA Hoa Kỳ — tối đa 12 học sinh mỗi lớp.</span></div>' +
+          '<span class="vi-strong">Dùng tiếng Anh, không chỉ học thuộc. Chuẩn ELA Hoa Kỳ, giáo viên Mỹ, tối đa 12 học sinh mỗi lớp.</span></div>' +
         '<div class="row stats rise d3">' +
-          stat(s.students, "Students learning now", "Học sinh đang học") +
+          stat(s.students, "Students learning now", "Học sinh đang theo học") +
           stat(s.classes, "Classes this term", "Lớp học") +
-          stat((s.review_score || "5.0") + "★", (s.review_count || 47) + " parent reviews", "Đánh giá của phụ huynh") +
+          stat((s.review_score || "5.0") + "★", (s.review_count || 47) + " parent reviews", (s.review_count || 47) + " đánh giá của phụ huynh") +
         "</div>" +
       "</div>" +
       '<div class="col center"><img class="logo-big rise d2" src="assets/logo-gold.png" alt=""></div>' +
     "</div>";
   }
-  function stat(n, en, vi) { return '<div class="stat"><div class="n">' + esc(typeof n === "number" ? fmt(n) : n) + '</div><div class="l">' + esc(en) + '<span class="vi">' + esc(vi) + "</span></div></div>"; }
+  function stat(n, en, vi) { return '<div class="stat"><div class="n">' + esc(typeof n === "number" ? fmt(n) : n) + '</div><div class="l">' + esc(vi) + '<span class="en-s">' + esc(en) + "</span></div></div>"; }
+
+  // ------------------------------------------------------------ for parents
+  // Four reasons, each one a fact about how HEC teaches, in the parents'
+  // language first, with the centre's live figures underneath as proof.
+  var PILLARS = [
+    ["ELA", "Chuẩn ELA Hoa Kỳ", "Con học đọc hiểu, viết và thuyết trình theo chuẩn Common Core ELA của Mỹ, không chỉ từ vựng và ngữ pháp.", "US Common Core ELA"],
+    ["US", "Giáo viên Mỹ có chứng chỉ", "Cùng trợ giảng nước ngoài và Việt Nam: con nói tiếng Anh cả buổi, ba mẹ luôn có người trao đổi bằng tiếng Việt.", "US-certified teacher, foreign & Vietnamese TAs"],
+    ["12", "Tối đa 12 học sinh", "Lớp nhỏ để thầy cô biết tên, hiểu điểm mạnh và kèm sát từng con.", "Never more than 12 in a class"],
+    ["App", "Ba mẹ theo dõi mỗi ngày", "Điểm thưởng, bài tập, video bài nói và báo cáo tiến bộ của con, ngay trên app HEC.", "Follow your child's progress in the HEC app"]
+  ];
+  function whyHec(f) {
+    var s = f.stats || {}, cards = "";
+    for (var i = 0; i < PILLARS.length; i++) {
+      var p = PILLARS[i];
+      cards += '<div class="pillar card col rise d' + (i + 1) + '"><div class="pk">' + esc(p[0]) + '</div><div class="pt">' + esc(p[1]) +
+        '</div><div class="pd">' + esc(p[2]) + '</div><div class="pe grow">' + esc(p[3]) + "</div></div>";
+    }
+    var proof = [];
+    if (s.students) proof.push("<b>" + fmt(s.students) + "</b> học sinh đang theo học");
+    proof.push("<b>" + esc(s.review_score || "5.0") + "★</b> từ " + esc(s.review_count || 47) + " phụ huynh");
+    if (s.homework_this_month) proof.push("<b>" + fmt(s.homework_this_month) + "</b> bài tập đã nộp tháng này");
+    return '<div class="col" style="height:100%">' +
+      '<div class="h-lg rise" style="text-align:center">Vì sao ba mẹ <span class="gold">tin chọn</span> HEC?</div>' +
+      '<div class="lead rise d1" style="text-align:center;margin-top:6px;color:#aebbd6">Why families choose Happy English Club</div>' +
+      '<div class="row pillars">' + cards + "</div>" +
+      '<div class="proof rise d5">' + proof.join('<span class="sep">·</span>') + "</div></div>";
+  }
+
+  function askZalo(f) {
+    var z = f.qr.zalo;
+    return '<div class="row ask" style="height:100%;-webkit-align-items:center;align-items:center">' +
+      '<div class="grow">' +
+        '<div class="eyebrow rise">Tư vấn lộ trình · Talk to us</div>' +
+        '<div class="h-xl rise d1" style="margin-top:22px;font-size:84px">Con nhà mình<br>hợp với <span class="gold">lớp nào</span>?</div>' +
+        '<div class="vi-strong rise d2" style="margin-top:28px;max-width:1000px">Nhắn Zalo cho HEC: thầy cô tư vấn lộ trình học phù hợp với độ tuổi và trình độ của con.</div>' +
+        '<div class="lead rise d3" style="margin-top:14px;color:#aebbd6">Which class suits your child? Message us on Zalo and we will suggest the right path.</div>' +
+        '<div class="hotline rise d4">Zalo / Hotline <b>0975 679 889</b></div>' +
+      "</div>" +
+      '<div class="bigqr col center rise d2"><div class="code">' + z.svg + '</div><div class="a">Quét mã để nhắn Zalo</div><div class="b">Scan to chat on Zalo</div></div>' +
+    "</div>";
+  }
+
+  // A short line over a picture. Vietnamese first and large.
+  var MOMENTS = [
+    ["Mỗi buổi học, con tự tin hơn một chút.", "A little more confident, every lesson."],
+    ["Con không chỉ học thuộc tiếng Anh, con dùng tiếng Anh.", "Use it, don't just memorise it."],
+    ["Ở HEC, thầy cô biết tên và hiểu từng con.", "Here, every child is known by name."],
+    ["Trên đường về, ba mẹ hỏi con nhé: “Hôm nay con nói được gì bằng tiếng Anh?”", "On the way home, ask: “What did you say in English today?”"],
+    ["Tiếng Anh hôm nay, cánh cửa rộng mở cho con ngày mai.", "English today opens doors tomorrow."],
+    ["Một lời khen của ba mẹ là động lực lớn nhất của con.", "Your praise is your child's biggest motivation."]
+  ];
+  var momentOffset = 0;
+  function momentHtml(m, url) { measure(url); return function () { return moment(m, url); }; }
+  function moment(m, url) {
+    var cap = '<div class="eyebrow rise">Happy English Club</div>' +
+      '<div class="t-quote rise d1">' + esc(m[0]) + "</div>" +
+      '<div class="b-en rise d2" style="font-style:italic">' + esc(m[1]) + "</div>";
+    if (!url) return '<div class="col center" style="height:100%;text-align:center;padding:0 160px">' + cap + "</div>";
+    measure(url);
+    return picFrame(url, cap, "pan-b");
+  }
 
   function leaderboard(f) {
     var top = ranked(f.leaderboard).slice(0, 10);
@@ -290,7 +454,7 @@
       }
       html += '<div class="ev-col card col rise d' + (c + 1) + '">' + lines + "</div>";
     }
-    return '<div class="row everyone">' + html + "</div>";
+    return '<div class="findme rise">Ba mẹ tìm tên con trên bảng nhé! <span class="en-s">Find your child on the board</span></div><div class="row everyone">' + html + "</div>";
   }
 
   function champions(list) {
@@ -300,14 +464,15 @@
       html += '<div class="tile card row rise d' + ((i % 5) + 1) + '">' + photo(c, 130) + '<div class="txt grow"><div class="nm">' + esc(c.name) +
         '</div><div class="sub">' + esc(c.class_name || "") + '</div><div class="badge">♛ ' + fmt(c.points) + " pts</div></div></div>";
     }
-    return '<div class="col center" style="height:100%"><div class="lead rise" style="text-align:center;margin-bottom:34px">Top of their class last month · <span class="vi">Dẫn đầu lớp tháng trước</span></div>' +
+    return '<div class="col center" style="height:100%"><div class="h-md rise" style="text-align:center">Chúc mừng các con <span class="gold">dẫn đầu lớp</span> tháng trước!</div>' +
+      '<div class="lead rise d1" style="text-align:center;margin:6px 0 30px;color:#aebbd6">Top of their class last month</div>' +
       '<div class="row wrap tiles">' + html + "</div></div>";
   }
 
   function feature(item, label) {
     var media = item.image_url
-      ? '<img src="' + esc(item.image_url) + '" alt="">'
-      : (item.student ? photo(item.student, 500) : '<img src="assets/logo-gold.png" alt="" style="object-fit:contain;padding:120px">');
+      ? '<div class="pic" style="background-image:' + bgUrl(item.image_url) + '"></div>'
+      : (item.student ? photo(item.student, 500) : '<div class="pic" style="background-image:url(assets/logo-gold.png);background-size:60%"></div>');
     return '<div class="row feature">' +
       '<div class="media rise">' + media + "</div>" +
       '<div class="copy">' +
@@ -330,7 +495,7 @@
     ];
     var html = "";
     for (var i = 0; i < nums.length; i++) {
-      html += '<div class="bignum card rise d' + (i + 1) + '"><div class="n">' + esc(nums[i][0]) + '</div><div class="l">' + esc(nums[i][1]) + '<span class="vi">' + esc(nums[i][2]) + "</span></div></div>";
+      html += '<div class="bignum card rise d' + (i + 1) + '"><div class="n">' + esc(nums[i][0]) + '</div><div class="l">' + esc(nums[i][2]) + '<span class="en-s">' + esc(nums[i][1]) + "</span></div></div>";
     }
     var w = "";
     for (var j = 0; j < wins.length && j < 6; j++) {
@@ -350,7 +515,9 @@
         '<div class="cn">' + esc(c.name) + '</div><div class="cc">' + esc(filter([c.curriculum, c.age_range], function (x) { return !!x; }).join(" · ")) + "</div>" +
         '<div class="cd">' + esc(c.description_en || "") + '</div><div class="cdv">' + esc(c.description_vi || "") + "</div>" +
         '<div class="seats grow col" style="-webkit-justify-content:flex-end;justify-content:flex-end"><div class="bar"><div style="width:' + pct + '%"></div></div>' +
-        '<div class="st">' + (left > 0 ? left + (left === 1 ? " place left" : " places left") + " · còn " + left + " chỗ" : "Full · đã đủ chỗ") + "</div></div></div>";
+        '<div class="st">' + (left > 0
+          ? (left <= 3 ? '<b class="hot">Chỉ còn ' + left + " chỗ!</b>" : "Còn " + left + " chỗ") + " · " + left + (left === 1 ? " place left" : " places left")
+          : "Đã đủ chỗ, đăng ký danh sách chờ · Full, join the waiting list") + "</div></div></div>";
     }
     return '<div class="row wrap courses">' + html + "</div>";
   }
@@ -361,36 +528,60 @@
   var albumOffset = {};
   var VIDEOS_PER_LOOP = 4, videoOffset = 0, videoCount = 0;
   var PANS = ["pan-a", "pan-b", "pan-c", "pan-d"];
+  // A line for parents under each album picture, in turn.
+  var ALBUM_LINES = [
+    ["Khoảnh khắc con tự tin nói tiếng Anh", "Confidence you can see"],
+    ["Học mà chơi, chơi mà học", "Learning through play"],
+    ["Mỗi buổi học là một kỷ niệm đẹp", "Every lesson, a memory"],
+    ["Bạn bè, thầy cô và tiếng Anh mỗi ngày", "Friends, teachers and English every day"],
+    ["Con lớn lên cùng HEC", "Growing up with HEC"],
+    ["Niềm vui học tập của con", "The joy of learning"]
+  ];
+  function albumCap(a, pic, k, total) {
+    var line = ALBUM_LINES[(k + (a.sort_order || 0)) % ALBUM_LINES.length];
+    return '<div class="eyebrow">' + esc(a.title_vi || a.title_en) + (a.title_vi && a.title_en ? ' &middot; <span class="en-s">' + esc(a.title_en) + "</span>" : "") + "</div>" +
+      '<div class="t-vi">' + esc(line[0]) + "</div>" +
+      '<div class="b-en">' + esc(line[1]) + "</div>" +
+      ((pic.caption || a.body_en) ? '<div class="note-s">' + esc(pic.caption || a.body_en) + "</div>" : "") +
+      '<div class="count">' + (k + 1) + " / " + total + "</div>";
+  }
   function albumScene(a) {
     var all = a.images, per = Math.min(12, all.length);
     var start = albumOffset[a.id] || 0;
     var pics = [];
-    for (var i = 0; i < per; i++) pics.push(all[(start + i) % all.length]);
+    for (var i = 0; i < per; i++) { pics.push(all[(start + i) % all.length]); measure(pics[i].url); }
     var nextStart = (start + per) % all.length;
+    var slide = function (k) { return picFrame(pics[k].url, albumCap(a, pics[k], k, pics.length), PANS[k % PANS.length]); };
     var slides = "";
     for (var j = 0; j < pics.length; j++) {
-      slides += '<div class="slide' + (j === 0 ? " show " + PANS[0] : "") + '"><img src="' + esc(pics[j].url) + '" alt=""></div>';
+      slides += '<div class="slide' + (j === 0 ? " show " + PANS[0] : "") + '"></div>';
     }
-    var html = '<div class="album">' + slides + '<div class="cap">' +
-      '<div class="eyebrow">' + esc(a.title_en) + (a.title_vi ? ' &middot; <span class="vi">' + esc(a.title_vi) + "</span>" : "") + "</div>" +
-      '<div class="h-md album-caption" style="margin-top:10px">' + esc(pics[0].caption || a.body_en || "") + "</div>" +
-      '<div class="album-count small" style="margin-top:8px">1 / ' + pics.length + "</div></div></div>";
+    var html = function () { return '<div class="album">' + slides.replace("></div>", ">" + slide(0) + "</div>") + "</div>"; };
     var t;
     return {
-      t: ["Life at HEC", "Cuộc sống tại HEC"], html: html, maxMs: (pics.length * 6 + 6) * 1000,
+      t: ["Life at HEC", "Cuộc sống tại HEC"], html: html, maxMs: (pics.length * 7 + 6) * 1000,
       play: function (el, done) {
         albumOffset[a.id] = nextStart; // the next pass shows the next pictures
         var k = 0, slidesEl = el.getElementsByClassName("slide");
-        var cap = el.getElementsByClassName("album-caption")[0], cnt = el.getElementsByClassName("album-count")[0];
-        var step = pics.length === 1 ? 8000 : 6000;
+        // build a picture ahead; if it is still being measured, build it again
+        // when it is, as long as it has not come on screen yet
+        var ahead = function (n) {
+          if (!slidesEl[n]) return;
+          slidesEl[n].innerHTML = slide(n);
+          var info = picInfo[pics[n].url];
+          if (info && !info.ready) measure(pics[n].url, function () { if (n > k && slidesEl[n]) slidesEl[n].innerHTML = slide(n); });
+        };
+        ahead(1);
+        var step = pics.length === 1 ? 9000 : 7000;
         t = setInterval(function () {
           k++;
           if (k >= pics.length) { clearInterval(t); done(); return; }
           for (var m = 0; m < slidesEl.length; m++) {
             slidesEl[m].className = "slide" + (m === k ? " show " + PANS[k % PANS.length] : (m === k - 1 ? " leaving " + PANS[(k - 1) % PANS.length] : ""));
           }
-          if (cap) cap.innerHTML = esc(pics[k].caption || a.body_en || "");
-          if (cnt) cnt.innerHTML = (k + 1) + " / " + pics.length;
+          // build the next picture ahead, free the one two back (a 2016 TV's memory)
+          ahead(k + 1);
+          if (k >= 2 && slidesEl[k - 2]) slidesEl[k - 2].innerHTML = "";
         }, step);
       },
       stop: function () { clearInterval(t); }
@@ -403,8 +594,8 @@
   // admin switched sound on. A video that will not play is skipped.
   function videoScene(v) {
     var html = '<div class="videoscene"><video preload="auto"' + (v.sound ? "" : " muted") + ' src="' + esc(v.video_url) + '"></video>' +
-      ((v.title_en || v.body_en) ? '<div class="cap"><div class="h-md">' + esc(v.title_en) + "</div>" +
-        (v.title_vi ? '<div class="vi" style="font-size:24px;margin-top:6px">' + esc(v.title_vi) + "</div>" : "") + "</div>" : "") + "</div>";
+      ((v.title_en || v.title_vi) ? '<div class="cap">' + (v.title_vi ? '<div class="t-vi">' + esc(v.title_vi) + "</div>" : "") +
+        (v.title_en ? '<div class="b-en">' + esc(v.title_en) + "</div>" : "") + "</div>" : "") + "</div>";
     var cut, stall, vid;
     return {
       t: ["Life at HEC", "Cuộc sống tại HEC"], html: html,
@@ -432,11 +623,13 @@
     };
   }
 
+  function photoHtml(p) { measure(p.image_url); return function () { return photoScene(p); }; }
   function photoScene(p) {
-    return '<div class="photo"><img src="' + esc(p.image_url) + '" alt=""><div class="cap">' +
-      '<div class="h-lg rise">' + esc(p.title_en) + "</div>" +
-      (p.title_vi ? '<div class="vi rise d1" style="font-size:30px;margin-top:8px">' + esc(p.title_vi) + "</div>" : "") +
-      (p.body_en ? '<div class="lead rise d2" style="margin-top:14px">' + esc(p.body_en) + "</div>" : "") + "</div></div>";
+    return picFrame(p.image_url,
+      (p.title_vi ? '<div class="t-vi rise">' + esc(p.title_vi) + "</div>" : "") +
+      '<div class="t-en rise d1">' + esc(p.title_en) + "</div>" +
+      (p.body_vi ? '<div class="b-vi rise d2">' + esc(p.body_vi) + "</div>" : "") +
+      (p.body_en ? '<div class="b-en rise d2">' + esc(p.body_en) + "</div>" : ""), "pan-a");
   }
 
   function announcements(list) {
@@ -444,7 +637,7 @@
     for (var i = 0; i < list.length; i++) {
       var a = list[i];
       var when = a.kind === "event" && a.starts_on ? "Event · " + a.starts_on.split("-").reverse().join("/") : (a.kind === "event" ? "Event" : "Notice · Thông báo");
-      html += '<div class="note card col rise d' + (i + 1) + '">' + (a.image_url ? '<img src="' + esc(a.image_url) + '" alt="">' : "") +
+      html += '<div class="note card col rise d' + (i + 1) + '">' + (a.image_url ? '<div class="pic" style="background-image:' + bgUrl(a.image_url) + '"></div>' : "") +
         '<div class="when">' + esc(when) + '</div><div class="h-md" style="margin-top:14px">' + esc(a.title_en) + "</div>" +
         (a.title_vi ? '<div class="vi" style="font-size:24px;margin-top:6px">' + esc(a.title_vi) + "</div>" : "") +
         (a.body_en ? '<div class="lead" style="font-size:24px;margin-top:18px">' + esc(a.body_en) + "</div>" : "") +
@@ -453,25 +646,25 @@
     return '<div class="row notes">' + html + "</div>";
   }
 
-  var RELATION = { parent: "Parent · Phụ huynh", student: "Student · Học sinh", visitor: "Visitor · Khách", other: "" };
+  var RELATION = { parent: "Phụ huynh", student: "Học sinh", visitor: "Khách", other: "" };
   function feedback(f, quotes) {
     var q = "";
     for (var i = 0; i < quotes.length; i++) {
       var x = quotes[i];
       q += '<div class="quote card rise d' + (i + 1) + '">' + (x.rating ? '<div class="stars">' + stars(x.rating) + "</div>" : "") +
-        '<div class="q">“' + esc(x.message) + '”</div><div class="who">' + esc(x.name || "A HEC family") +
+        '<div class="q">“' + esc(x.message) + '”</div><div class="who">' + esc(x.name || "Phụ huynh HEC") +
         (RELATION[x.relation] ? " · " + esc(RELATION[x.relation]) : "") + "</div></div>";
     }
     if (!quotes.length) {
-      q = '<div class="rise"><div class="eyebrow">We are listening · Chúng tôi lắng nghe</div>' +
-        '<div class="h-lg" style="margin-top:24px">Your words help us<br>teach <span class="gold">better</span>.</div>' +
-        '<div class="lead" style="margin-top:24px">Scan a code to tell us how your child is doing, chat with us on Zalo, or leave a review.' +
-        '<span class="vi" style="display:block;font-size:24px;margin-top:10px">Quét mã để góp ý, nhắn Zalo hoặc đánh giá trên Google.</span></div></div>';
+      q = '<div class="rise"><div class="eyebrow">HEC luôn lắng nghe · We are listening</div>' +
+        '<div class="h-lg" style="margin-top:24px">Mỗi góp ý của ba mẹ giúp<br>HEC dạy con <span class="gold">tốt hơn</span>.</div>' +
+        '<div class="vi-strong" style="margin-top:24px">Quét mã để góp ý, nhắn Zalo hoặc đánh giá HEC trên Google.</div>' +
+        '<div class="lead" style="margin-top:12px;color:#aebbd6">Your words help us teach better: share feedback, chat on Zalo or leave a review.</div></div>';
     }
     var codes = f.qr || {};
-    var qrs = qrBox(codes.feedback, "Share feedback", "Góp ý cho HEC", 1) +
-      qrBox(codes.zalo, "Chat on Zalo", "Nhắn tin Zalo · 0975 679 889", 2) +
-      qrBox(codes.google, "Review us on Google", "Đánh giá trên Google", 3);
+    var qrs = qrBox(codes.feedback, "Góp ý cho HEC", "Share feedback", 1) +
+      qrBox(codes.zalo, "Nhắn Zalo · 0975 679 889", "Chat on Zalo", 2) +
+      qrBox(codes.google, "Đánh giá 5★ trên Google", "Review us on Google", 3);
     return '<div class="row" style="height:100%;-webkit-align-items:center;align-items:center"><div class="quotes">' + q + '</div><div class="qrs col">' + qrs + "</div></div>";
   }
   function qrBox(code, en, vi, d) {
@@ -482,10 +675,13 @@
   function ticker(f) {
     var bits = [];
     var top = ranked(f.leaderboard)[0];
-    if (top) bits.push("<b>Top of the month:</b> " + esc(top.name) + " · " + fmt(top.points) + " pts");
+    if (top) bits.push("<b>Dẫn đầu tháng này:</b> " + esc(top.name) + " · " + fmt(top.points) + " điểm");
+    var champs = f.champions || [];
+    for (var c = 0; c < champs.length && c < 8; c++) bits.push("<b>Chúc mừng</b> " + esc(champs[c].name) + " dẫn đầu lớp " + esc(champs[c].class_name || ""));
     var notes = filter(f.items || [], function (i) { return i.kind === "announcement" || i.kind === "event"; });
     for (var i = 0; i < notes.length; i++) bits.push("<b>" + esc(notes[i].title_en) + "</b>" + (notes[i].title_vi ? " · " + esc(notes[i].title_vi) : ""));
-    bits.push("<b>Zalo / Hotline:</b> 0975 679 889");
+    bits.push("<b>Tư vấn lộ trình cho con · Zalo / Hotline:</b> 0975 679 889");
+    bits.push("<b>Ba mẹ theo dõi</b> điểm thưởng, bài tập và báo cáo tiến bộ của con trên app HEC");
     bits.push("<b>25 Ngõ 242 Láng, Đống Đa, Hà Nội</b> · hanoienglish.com");
     var track = $("ticker-track");
     track.innerHTML = "<span>" + bits.join("</span><span>") + "</span><span>" + bits.join("</span><span>") + "</span>";
@@ -528,8 +724,9 @@
     var back = front === "scene-a" ? "scene-b" : "scene-a";
     var el = $(back), old = $(front);
     releaseMedia(old);
-    el.innerHTML = sc.html;
-    $("section-title").innerHTML = '<div class="en">' + esc(sc.t[0]) + '</div><div class="vi">' + esc(sc.t[1]) + "</div>";
+    // a scene with pictures lays itself out now, when its pictures have been measured
+    el.innerHTML = typeof sc.html === "function" ? sc.html() : sc.html;
+    $("section-title").innerHTML = '<div class="vi-t">' + esc(sc.t[1]) + "</div>" + (sc.t[0] !== sc.t[1] ? '<div class="en-t">' + esc(sc.t[0]) + "</div>" : "");
     // let the new content lay out before fading it in
     setTimeout(function () { old.className = "scene"; el.className = "scene on"; }, 30);
     setTimeout(function () { if (old.className === "scene") old.innerHTML = ""; }, 1200);
