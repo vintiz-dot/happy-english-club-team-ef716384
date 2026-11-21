@@ -419,7 +419,9 @@ console.log("=== a lesson end to end: arm, capture, stop, finalize, complete ===
   eq("capture starts at once inside the window", r.state, "recording");
   const rec = w.server.recordings.get(row.id);
   ok("server stamped started_at (its clock)", rec.started_at === new Date(clock).toISOString() || Math.abs(Date.parse(rec.started_at) - clock) < 1000);
-  await r.marker("roll_call_start");
+  // A named case, not a crash (round 3 verification, mutant G: t0 back at the server's answer).
+  const mk = await r.marker("roll_call_start").then(() => null, (e) => e);
+  ok("N-B1: a marker is taken as soon as capture runs (t = 0 is the first captured sample)", mk === null, mk?.message);
   await src.play(35, r);
   const mid = w.server.chunkRows(row.id);
   ok("chunks registered and confirmed during the lesson (uploads keep up)", mid.length >= 6 && mid.every((c) => c.confirmed_at), `${mid.length} rows`);
@@ -1350,6 +1352,33 @@ console.log("=== N-B1 (P2b): offline for the whole capture window ===");
   ok("N-B1: the outage is not hundreds of errors", errors.length < 60, JSON.stringify(countCodes(errors)));
 }
 
+console.log("=== N-B1 (round 3 verification, mutant I): a recovery before the server's Start is still `starting` ===");
+{
+  // A stall healed, and both microphones lost and found, while the server has
+  // not started the recording: the state goes back to `starting`, never `recording`.
+  const { w, src, r, row } = await started();
+  w.server.offline = true;
+  r.tick(); await r.settle(); await src.play(6, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+  await src.play(10, r, 24);
+  eq("N-B1: a stall before the server's Start is `stalled`", r.state, "stalled");
+  src.stalled = false; src.resumeHeals = true;
+  await src.play(4, r);
+  eq("N-B1: healed before the server's Start: `starting`, not `recording`", r.state, "starting");
+  const devs = src.devices;
+  src.dead.room = true; src.dead.teacher = true; src.devices = [];
+  src.onTrackEnded("room"); src.onTrackEnded("teacher");
+  eq("N-B1: both microphones gone before the Start: `stalled`", r.state, "stalled");
+  src.devices = devs; src.dead.room = false; src.dead.teacher = false;
+  src.onDeviceChange?.(); await r.settle(); await src.play(4, r);
+  eq("N-B1: a microphone back before the server's Start: `starting`, not `recording`", r.state, "starting");
+  w.server.offline = false;
+  await src.play(10, r, 200);
+  eq("N-B1: once the server answers: recording", r.state, "recording");
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  eq("N-B1: completes", w.server.recordings.get(row.id).status, "complete");
+}
+
 console.log("=== N-B2 (P3): an unclassified answer to Start is retried, capture goes on ===");
 for (const [label, e] of [["429 Too Many Requests", { message: "Too Many Requests", code: "429" }], ["PGRST116 no rows", { message: "JSON object requested, multiple (or no) rows returned", code: "PGRST116" }], ["409 conflict", { message: "Conflict", code: "409" }]]) {
   const { w, src, r, errors, states, row } = await started();
@@ -1600,6 +1629,9 @@ console.log("=== mutants C and D: the other microphone, and one loss reported tw
   src.devices = [src.devices[0]];
   src.onTrackEnded("room");
   src.onDeviceChange?.(); await r.settle();
+  // The source may report the same track's `ended` again (a second listener,
+  // a stream and its clone): still one loss (round 3 verification, mutant D).
+  src.onTrackEnded("room");
   await src.play(3, r);
   const cur = await r.current();
   eq("D: one device_unplugged alert and one device_lost entry, not two", [errors.filter((e) => e.code === "device_unplugged").length, cur.discontinuities.filter((d) => d.kind === "device_lost" && d.track === "room").length], [1, 1]);
