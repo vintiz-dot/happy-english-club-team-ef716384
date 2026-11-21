@@ -148,3 +148,11 @@ test("a batched result at the 1000-row cap, or an error, falls back to the per-c
   expect(errAfter).toBe(errBefore);
   expect(expected.length).toBeGreaterThan(0);
 });
+
+// A failed first lookup of the children must reach the page as an error,
+// never as "no children linked"; a real empty answer stays an empty list.
+test("a failed students lookup throws; a confirmed empty family returns []", async () => {
+  await expect(loadAfter()(fakeClient(family(2), { errorOn: "students" }))).rejects.toThrow();
+  const empty = family(0);
+  expect(await loadAfter()(fakeClient(empty))).toEqual([]);
+});
