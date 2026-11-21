@@ -1,0 +1,29 @@
+/**
+ * Who's speaking: the pure part. A mark says who speaks FROM that moment on;
+ * the screen's "active" tiles are just the latest mark read back.
+ * Teacher and chorus are exclusive tiles; children can be several at once.
+ */
+export type SpeakerKind = "student" | "teacher" | "chorus" | "stop";
+export interface SpeakerState { kind: SpeakerKind; studentIds: string[] }
+export const NOBODY: SpeakerState = { kind: "stop", studentIds: [] };
+
+export function stateOf(latest: { kind: SpeakerKind; student_ids: string[] | null } | null | undefined): SpeakerState {
+  if (!latest) return NOBODY;
+  return { kind: latest.kind, studentIds: latest.kind === "student" ? [...(latest.student_ids ?? [])] : [] };
+}
+
+/** What tapping a tile makes the next mark. */
+export function tap(cur: SpeakerState, tile: { kind: "teacher" | "chorus" } | { kind: "student"; id: string }): SpeakerState {
+  if (tile.kind !== "student") return cur.kind === tile.kind ? NOBODY : { kind: tile.kind, studentIds: [] };
+  const ids = cur.kind === "student" ? cur.studentIds : [];
+  const next = ids.includes(tile.id) ? ids.filter((x) => x !== tile.id) : [...ids, tile.id];
+  return next.length ? { kind: "student", studentIds: next } : NOBODY;
+}
+
+/** "1:05:09" / "4:07" into the recording. */
+export function offsetLabel(ms: number | null | undefined): string {
+  if (ms == null || !Number.isFinite(ms)) return "";
+  const t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return h ? `${h}:${p(m)}:${p(s)}` : `${m}:${p(s)}`;
+}

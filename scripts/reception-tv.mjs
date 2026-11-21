@@ -286,6 +286,73 @@ function openNow(at = hanoiNow()) {
 const describeSchedule = () =>
   DAY_NAMES.map((n, i) => `${n} ${(cfg.schedule?.[String(i)] ?? []).map((w) => w.join("-")).join(", ") || "off"}`).join("; ");
 
+/** The TV answered at a new address (DHCP): remember it. True when it moved. */
+async function relocate() {
+  const moved = await findTv().catch(() => null);
+  if (!moved || moved === cfg.tvIp) return false;
+  log(`TV found at a new address ${moved} (was ${cfg.tvIp})`);
+  cfg.tvIp = moved;
+  saveCfg();
+  try { ares("ares-setup-device", ["--modify", DEVICE, "--info", `host=${moved}`]); } catch (err) { log(`could not update the LG tools: ${err.message}`); }
+  return true;
+}
+
+async function tvAnswers() {
+  try { await ssap([["ssap://com.webos.applicationManager/getForegroundAppInfo"]], { timeoutMs: 6000 }); return true; }
+  catch { return (await relocate()) ? tvAnswersAt() : false; }
+}
+async function tvAnswersAt() {
+  try { await ssap([["ssap://com.webos.applicationManager/getForegroundAppInfo"]], { timeoutMs: 6000 }); return true; } catch { return false; }
+}
+
+// ------------------------------------------------------------------ admin power buttons
+// Admin > Reception > Screen leaves a command in reception_settings; the
+// feed hands it over to this helper (op "command") and takes the result
+// back (op "ack"). The admin page cannot reach the TV itself.
+async function feedCall(payload) {
+  const conf = cfg.feedUrl && cfg.apiKey ? cfg : publicConfig();
+  if (!conf.feedUrl || !cfg.token) return null;
+  const res = await fetch(conf.feedUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: conf.apiKey, Authorization: `Bearer ${conf.apiKey}` },
+    body: JSON.stringify({ token: cfg.token, screen: "helper", ...payload }),
+  });
+  if (!res.ok) throw new Error(`feed ${res.status}`);
+  return res.json();
+}
+
+async function runAdminCommand() {
+  const r = await feedCall({ op: "command" });
+  if (!r?.command) return;
+  let result;
+  try {
+    if (r.command === "off") {
+      if (!(await tvAnswers())) result = "The TV was already off.";
+      else { await ssap([["ssap://system/turnOff"]]); result = "TV switched off."; }
+      state.manualOffWindow = openNow().window; // stays off until the next opening window
+    } else {
+      delete state.manualOffWindow;
+      let up = await tvAnswers();
+      if (!up && r.command === "on") {
+        for (let i = 0; i < 9 && !up; i++) { await wake(); await sleep(10000); up = await tvAnswers(); }
+      }
+      if (!up) {
+        result = r.command === "on"
+          ? "The TV did not wake up. Turn it on with the remote once, and check TV Settings > General > Mobile TV On (Turn on via Wi-Fi) is on."
+          : "The TV is off. Press Turn on first.";
+      } else {
+        await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]);
+        result = r.command === "on" ? "TV is on and showing the display." : "The display is in front.";
+      }
+    }
+  } catch (e) {
+    result = `Could not do it: ${e.message}`;
+  }
+  saveState();
+  log(`admin pressed ${r.command}: ${result}`);
+  await feedCall({ op: "ack", at: r.at, result }).catch((e) => log(`could not report back: ${e.message}`));
+}
+
 async function check() {
   const { open, window, day } = openNow();
   if (!open) {
@@ -298,6 +365,8 @@ async function check() {
     return;
   }
   state.lastWindow = window;
+  // An admin switched it off from Admin > Reception during this window: leave it off until the next one.
+  if (state.manualOffWindow === window) return;
   let front = null;
   try {
     const [info] = await ssap([["ssap://com.webos.applicationManager/getForegroundAppInfo"]]);
@@ -305,14 +374,7 @@ async function check() {
   } catch (e) {
     // The router may have given the TV a new address (it did on 16 Nov):
     // look for it by its MAC before deciding it is off.
-    const moved = await findTv().catch(() => null);
-    if (moved && moved !== cfg.tvIp) {
-      log(`TV found at a new address ${moved} (was ${cfg.tvIp})`);
-      cfg.tvIp = moved;
-      saveCfg();
-      try { ares("ares-setup-device", ["--modify", DEVICE, "--info", `host=${moved}`]); } catch (err) { log(`could not update the LG tools: ${err.message}`); }
-      return; // the next pass talks to it there
-    }
+    if (await relocate()) return; // the next pass talks to it there
     log(`TV not answering (${e.message}); sending Wake-on-LAN`);
     await wake();
     saveState();
@@ -421,6 +483,7 @@ async function watch() {
       lastCheck = Date.now();
       try { await check(); } catch (e) { log(`check failed: ${e.message}`); }
     }
+    try { await runAdminCommand(); } catch (e) { if (!/fetch failed/.test(e.message)) log(`admin command check failed: ${e.message}`); }
     try { await youtubeBreak(); } catch (e) { log(`YouTube break failed: ${e.message}`); }
     await sleep(20 * 1000);
   }

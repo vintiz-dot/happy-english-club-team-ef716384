@@ -78,6 +78,27 @@ Deno.serve(async (req) => {
     if (settingsErr) throw settingsErr;
     if (!settings || !sameToken(token, settings.display_token)) return json({ error: "Display not recognised" }, 401);
 
+    // The helper on the centre's computer asks for a power command from
+    // Admin > Reception every 20 s ("command") and reports what it did
+    // ("ack"). Both are cheap: nothing below runs for them. Until migration
+    // 20261121090000 is pasted the columns are absent and there is never a command.
+    if (body?.op === "command") {
+      await db.from("reception_settings").update({ helper_seen_at: new Date().toISOString() }).eq("id", true).then(() => {}, () => {});
+      const at = settings.tv_command_at ? Date.parse(settings.tv_command_at) : 0;
+      const done = settings.tv_command_done_at ? Date.parse(settings.tv_command_done_at) : 0;
+      const waiting = settings.tv_command && at > done && Date.now() - at < 15 * 60 * 1000;
+      return json({ command: waiting ? settings.tv_command : null, at: waiting ? settings.tv_command_at : null });
+    }
+    if (body?.op === "ack") {
+      const result = typeof body.result === "string" ? body.result.slice(0, 300) : null;
+      if (typeof body.at === "string" && body.at === settings.tv_command_at) {
+        await db.from("reception_settings")
+          .update({ tv_command_done_at: new Date().toISOString(), tv_command_result: result })
+          .eq("id", true).eq("tv_command_at", body.at);
+      }
+      return json({ ok: true });
+    }
+
     const t = hanoiToday();
 
     const [classesRes, enrollRes, pointsRes, leadersRes, itemsRes, feedbackRes, hwRes, attTotalRes, attPresentRes, engineRes] = await Promise.all([
