@@ -97,10 +97,10 @@ class FakeModel:
 
     def transcribe(self, audio, **kw):
         self.kw = kw
-        import soundfile as sf
-        info = sf.info(audio)
-        assert info.samplerate == 16000
-        self.seconds = info.duration
+        # 21 Nov 2026: the model gets the samples, never a path (a path goes through PyAV, which
+        # failed both real lessons). The samples are 16 kHz mono float32.
+        assert isinstance(audio, np.ndarray) and audio.dtype == np.float32 and audio.ndim == 1, type(audio)
+        self.seconds = len(audio) / 16000
 
         def gen():
             for i, (a, b, text) in enumerate([(5, 9, "Who has an apple?"), (40, 44, "I have apple.")]):

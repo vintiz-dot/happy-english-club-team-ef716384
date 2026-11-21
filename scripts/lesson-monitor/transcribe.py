@@ -40,11 +40,26 @@ def load_model():
                         download_root=str(pc.models_dir() / "faster-whisper"), local_files_only=True)
 
 
+def read_wav16k(path: str):
+    """The job's own 16 kHz mono WAV as a float32 array.
+
+    The model is never handed a file path: faster-whisper then opens it with PyAV, and
+    faster-whisper 1.2.1 passes PyAV an option (metadata_errors) that PyAV 15+ refuses.
+    That failed both real lessons on 21 Nov 2026 ("error_typeerror") while every fake
+    test passed. soundfile reads what audio.TrackJoiner wrote, and nothing else is needed."""
+    import numpy as np
+    import soundfile as sf
+    x, sr = sf.read(path, dtype="float32", always_2d=True)
+    if sr != 16000:
+        raise ValueError("the lesson cut is not 16 kHz")
+    return np.ascontiguousarray(x.mean(axis=1), dtype=np.float32)
+
+
 def transcribe(model, audio, should_stop=pc.stopped, on_progress=None) -> list[dict]:
     """Segments [{start, end, text, avg_logprob, no_speech_prob, compression_ratio, words}].
     `audio` is a 16 kHz WAV path or a float32 array. Checks the kill switch after every segment."""
     segs, _info = model.transcribe(
-        audio if isinstance(audio, str) else audio,
+        read_wav16k(audio) if isinstance(audio, str) else audio,
         beam_size=B2B["beam_size"], language=B2B["language"], vad_filter=B2B["vad_filter"],
         vad_parameters={"threshold": B2B["vad_threshold"]},
         condition_on_previous_text=B2B["condition_on_previous_text"], word_timestamps=B2B["word_timestamps"])
