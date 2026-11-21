@@ -8,7 +8,7 @@ export interface HomeworkItem {
   id: string;
   title?: string | null;
   due_date?: string | null;
-  submission?: { status?: string | null; submitted_at?: string | null; graded_at?: string | null } | null;
+  submission?: { status?: string | null; submitted_at?: string | null; graded_at?: string | null; [key: string]: any } | null;
   [key: string]: any;
 }
 
