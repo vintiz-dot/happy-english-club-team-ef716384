@@ -36,6 +36,7 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   // A4.2 pilot, approved by the owner (D-12). Every tab of the dashboard.
   { path: "/student/dashboard" },
   { path: "/student" },
+  { path: "/student/assignments" }, // R01 LOCAL ONLY - do not commit
 ];
 
 const trimSlash = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);
