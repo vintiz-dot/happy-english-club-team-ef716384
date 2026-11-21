@@ -13,6 +13,7 @@ import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
 import { EmptyState } from "@/components/quest/EmptyState";
 import { describePattern, parseWeeklySlots } from "@/lib/classSchedule";
+import { formatVND } from "@/lib/money";
 
 const ClassesTab = () => {
   const queryClient = useQueryClient();
@@ -129,7 +130,7 @@ const ClassesTab = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="whitespace-nowrap font-sans text-hec-body tabular-nums text-hec-ink">
-                      {cls.session_rate_vnd?.toLocaleString("vi-VN")} ₫ / session
+                      {formatVND(cls.session_rate_vnd)} / session
                     </p>
                   </CardContent>
                 </Link>

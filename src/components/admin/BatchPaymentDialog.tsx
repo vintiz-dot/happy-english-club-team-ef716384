@@ -22,6 +22,7 @@ import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
 import { cashWarning, parseCash } from "@/lib/cashEntry";
+import { formatVND } from "@/lib/money";
 
 interface BatchPaymentDialogProps {
   open: boolean;
@@ -192,7 +193,6 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
     onClose();
   };
 
-  const fmt = (v: number) => v.toLocaleString() + " ₫";
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
@@ -286,8 +286,8 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
                           {isCompleted && <CheckCircle2 className="h-4 w-4 text-hec-leaf shrink-0" aria-label="Recorded" />}
                         </div>
                         <div className="flex flex-wrap gap-x-3 gap-y-1 text-hec-caption text-hec-ink-soft">
-                          <span>Payable: <span className="whitespace-nowrap text-hec-ink tabular-nums">{fmt(item.finalPayable ?? 0)}</span></span>
-                          <span>Outstanding: <span className="whitespace-nowrap text-hec-ink tabular-nums">{fmt(outstanding)}</span></span>
+                          <span>Payable: <span className="whitespace-nowrap text-hec-ink tabular-nums">{formatVND(item.finalPayable ?? 0)}</span></span>
+                          <span>Outstanding: <span className="whitespace-nowrap text-hec-ink tabular-nums">{formatVND(outstanding)}</span></span>
                         </div>
                         {earlier && !isCompleted && (
                           <p className="text-hec-caption text-hec-warn" role="status" data-owing-month={earlier.month}>{owingRowNote(earlier)}</p>
@@ -315,7 +315,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
 
                     {enteredAmount > 0 && (
                       <p className="text-hec-caption font-medium text-hec-ink tabular-nums">
-                        → New balance: {fmt((item.finalPayable ?? 0) - (item.recorded_payment ?? 0) - enteredAmount)}
+                        → New balance: {formatVND((item.finalPayable ?? 0) - (item.recorded_payment ?? 0) - enteredAmount)}
                       </p>
                     )}
                   </div>
@@ -328,7 +328,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
           {totalPayment > 0 && (
             <div className="sticky bottom-0 z-10 shrink-0 bg-hec-raised border-t-2 border-hec-ink pt-3 pb-1 flex flex-wrap items-baseline justify-between gap-2">
               <span className="text-hec-body font-medium text-hec-ink">
-                Total: <span className="whitespace-nowrap font-sans text-hec-h3 font-semibold text-hec-ink tabular-nums">{fmt(totalPayment)}</span>
+                Total: <span className="whitespace-nowrap font-sans text-hec-h3 font-semibold text-hec-ink tabular-nums">{formatVND(totalPayment)}</span>
               </span>
               <span className="text-hec-caption text-hec-ink-soft tabular-nums">
                 {validEntries.length} of {items.length} students

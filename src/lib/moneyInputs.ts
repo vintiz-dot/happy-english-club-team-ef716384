@@ -8,6 +8,7 @@
  */
 import type { MoneyPlan } from "@/lib/moneyGuard";
 import { moneyErrorText } from "@/lib/moneyGuard";
+import { formatVND } from "./money";
 
 export type MoneyInputEntity =
   | "enrollment" | "discount_assignment" | "referral_bonus" | "pay_rate" | "invoice_freeze" | "family_link";
@@ -85,7 +86,7 @@ export const INPUT_TEXT = {
   wholeEnrollment: "Correct a mistake for the whole enrolment",
 };
 
-const vnd = (v: unknown) => (v === null || v === undefined || v === "" ? "none" : `${Number(v).toLocaleString("en-US")} VND`);
+const vnd = (v: unknown) => (v === null || v === undefined || v === "" ? "none" : formatVND(Number(v)));
 const day = (v: unknown) => (v === null || v === undefined || v === "" ? "no date" : String(v));
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const days = (v: unknown) => (Array.isArray(v) && v.length > 0 ? v.map((d) => DAY_NAMES[Number(d)] ?? String(d)).join(", ") : "every lesson day");

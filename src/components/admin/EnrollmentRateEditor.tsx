@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { INPUT_TEXT, functionErrorBody, functionErrorText, needsInputDialogBody } from "@/lib/moneyInputs";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
+import { formatVND } from "@/lib/money";
 
 interface EnrollmentRateEditorProps {
   studentId: string;
@@ -187,14 +188,7 @@ export function EnrollmentRateEditor({ studentId, month, onClose }: EnrollmentRa
     },
   });
 
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
+  
   const handleRateChange = (enrollmentId: string, value: string) => {
     const newMap = new Map(rateOverrides);
     if (value === "" || value === "0") {

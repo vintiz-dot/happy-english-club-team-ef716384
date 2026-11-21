@@ -30,6 +30,7 @@ import {
   withdrawRequest,
   type ApprovalError,
 } from "./api";
+import { formatVND } from "@/lib/money";
 
 const db = supabase as any;
 
@@ -179,7 +180,7 @@ function RequestDetail({ id, row, me, onChanged }: { id: string; row: ApprovalQu
             </ul>
             {look.now?.approval?.totals && (
               <p className="text-xs text-muted-foreground">
-                Reaches {String(look.now.approval.totals.families)} famil(ies) with settled bills and {Number(look.now.approval.totals.paid_vnd ?? 0).toLocaleString()} VND recorded (with the same person's last 24 hours).
+                Reaches {String(look.now.approval.totals.families)} famil(ies) with settled bills and {formatVND(Number(look.now.approval.totals.paid_vnd ?? 0))} recorded (with the same person's last 24 hours).
               </p>
             )}
             {look.error && <p className="text-xs text-muted-foreground">It could not be worked out now ({look.error.code}).</p>}

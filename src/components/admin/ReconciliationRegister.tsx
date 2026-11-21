@@ -26,11 +26,12 @@ import {
   AUDIT_DIFFERENCE, DECISIONS, PATTERNS, allowedDecisions, buildLegs, filterItems, legsProblem, totals,
   type Decision, type Pattern, type ReconciliationItem,
 } from "@/lib/reconciliation";
+import { formatVND } from "@/lib/money";
 
 // The table and the RPC are newer than the generated types.
 const db = supabase as any;
-const vnd = (n: number | null | undefined) => (n === null || n === undefined ? "–" : `${Number(n).toLocaleString("vi-VN")} ₫`);
-const signed = (n: number) => `${n > 0 ? "+" : ""}${Number(n).toLocaleString("vi-VN")} ₫`;
+const vnd = (n: number | null | undefined) => formatVND(n);
+const signed = (n: number) => formatVND(n, { signed: true });
 const ALL = "all";
 
 interface Names { students: Record<string, string>; families: Record<string, string> }

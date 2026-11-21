@@ -30,6 +30,7 @@ import { INPUT_TEXT } from "@/lib/moneyInputs";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 import type { MoneyRequest } from "@/components/admin/money-guard/useMoneyChange";
+import { formatVND } from "@/lib/money";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -496,12 +497,12 @@ export function ModifyEnrollmentModal({
                 type="number"
                 value={rateOverride}
                 onChange={(e) => setRateOverride(e.target.value)}
-                placeholder={classSchedule?.session_rate_vnd?.toLocaleString() || "Default rate"}
+                placeholder={classSchedule?.session_rate_vnd ? formatVND(classSchedule.session_rate_vnd) : "Default rate"}
               />
               <p className="text-sm text-muted-foreground">
                 Leave empty to use class default rate
                 {classSchedule?.session_rate_vnd && 
-                  ` (${classSchedule.session_rate_vnd.toLocaleString()} VND)`
+                  ` (${formatVND(classSchedule.session_rate_vnd)})`
                 }
               </p>
             </div>

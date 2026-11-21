@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/ui/loading";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage } from "@/lib/recordPayment";
+import { formatVND } from "@/lib/money";
 
 interface Invoice {
   id: string;
@@ -348,13 +349,13 @@ export function RecordedPaymentManager() {
                           {invoice.students.full_name}
                         </TableCell>
                         <TableCell className="text-right">
-                          {invoice.base_amount.toLocaleString('vi-VN')} ₫
+                          {formatVND(invoice.base_amount)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {invoice.total_amount.toLocaleString('vi-VN')} ₫
+                          {formatVND(invoice.total_amount)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {invoice.paid_amount.toLocaleString('vi-VN')} ₫
+                          {formatVND(invoice.paid_amount)}
                         </TableCell>
                         <TableCell className="text-right">
                           {isEditing ? (
@@ -383,7 +384,7 @@ export function RecordedPaymentManager() {
                             </div>
                           ) : (
                             <span className={hasDiscrepancy ? "text-destructive font-semibold" : ""}>
-                              {recordedPayment.toLocaleString('vi-VN')} ₫
+                              {formatVND(recordedPayment)}
                             </span>
                           )}
                         </TableCell>
@@ -462,7 +463,7 @@ export function RecordedPaymentManager() {
               This will reset the recorded payment to 0 for{" "}
               {(invoices.find((i) => i.id === reversingInvoice?.id) as any)?.students?.full_name ?? "this student"}, {selectedMonth} tuition,
               recorded as a correction in the payments list and the ledger.{" "}
-              Current value: <span className="tabular-nums">{reversingInvoice?.currentValue.toLocaleString('vi-VN')} ₫</span>
+              Current value: <span className="tabular-nums">{formatVND(reversingInvoice?.currentValue)}</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 py-4">

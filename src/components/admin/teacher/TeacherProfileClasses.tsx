@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
+import { formatVND } from "@/lib/money";
 
 interface TeacherProfileClassesProps {
   teacherId: string;
@@ -68,7 +69,7 @@ export function TeacherProfileClasses({ teacherId }: TeacherProfileClassesProps)
                   <div>
                     <p className="font-medium">{cls.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {cls.session_rate_vnd?.toLocaleString()} VND/session
+                      {formatVND(cls.session_rate_vnd)}/session
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -101,7 +102,7 @@ export function TeacherProfileClasses({ teacherId }: TeacherProfileClassesProps)
                   <div>
                     <p className="font-medium">{cls.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {cls.session_rate_vnd?.toLocaleString()} VND/session
+                      {formatVND(cls.session_rate_vnd)}/session
                     </p>
                   </div>
                   <div className="flex gap-2">

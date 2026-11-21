@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
+import { formatVND } from "@/lib/money";
 
 interface AssignDiscountModalProps {
   open: boolean;
@@ -167,7 +168,7 @@ export function AssignDiscountModal({ open, onOpenChange, studentId, onSuccess }
                 Expected effect:{" "}
                 {selectedDef.type === "percent"
                   ? `${selectedDef.value}% off`
-                  : `${selectedDef.value.toLocaleString()} VND off`}{" "}
+                  : `${formatVND(selectedDef.value)} off`}{" "}
                 {selectedDef.cadence === "monthly" ? "every month" : "once"}
               </p>
             )}

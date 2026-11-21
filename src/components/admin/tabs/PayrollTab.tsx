@@ -24,6 +24,7 @@ import { AlertTriangle } from "lucide-react";
 import { describeRate, effectiveRateVnd } from "@/lib/payRate";
 import { canBookPayroll } from "@/lib/payrollCalculation";
 import { payrollRows } from "@/lib/payrollRows";
+import { formatVND } from "@/lib/money";
 
 /**
  * WHERE THE NUMBERS COME FROM.
@@ -266,13 +267,13 @@ export function PayrollTab() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Earned (Held Sessions)</CardDescription>
-            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{grandTotalEarned.toLocaleString()} ₫</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{formatVND(grandTotalEarned)}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Projected (Held + Scheduled)</CardDescription>
-            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{grandTotalProjected.toLocaleString()} ₫</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{formatVND(grandTotalProjected)}</CardTitle>
           </CardHeader>
         </Card>
         {/* The same month with every wrong-length session re-costed at the
@@ -285,11 +286,11 @@ export function PayrollTab() {
               {grandVariance !== 0 && <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-hec-warn" />}
               Projected at scheduled lengths
             </CardDescription>
-            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{grandTotalExpected.toLocaleString()} ₫</CardTitle>
+            <CardTitle className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{formatVND(grandTotalExpected)}</CardTitle>
             {grandVariance !== 0 && (
               <p className="pt-1 text-hec-caption font-medium tabular-nums text-hec-warn">
                 {grandVariance > 0 ? "+" : "−"}
-                {Math.abs(grandVariance).toLocaleString()} ₫ against the scheduled lengths
+                {formatVND(Math.abs(grandVariance))} against the scheduled lengths
               </p>
             )}
           </CardHeader>
@@ -310,7 +311,7 @@ export function PayrollTab() {
                   For staff paid by the hour these change this month's total by{" "}
                   <strong className="whitespace-nowrap tabular-nums text-hec-ink">
                     {grandVariance > 0 ? "+" : "−"}
-                    {Math.abs(grandVariance).toLocaleString()} ₫
+                    {formatVND(Math.abs(grandVariance))}
                   </strong>
                   .{" "}
                 </>
@@ -348,7 +349,7 @@ export function PayrollTab() {
                       <>
                         {" · "}
                         {m.deltaAmount > 0 ? "+" : "−"}
-                        {Math.abs(m.deltaAmount).toLocaleString()} ₫
+                        {formatVND(Math.abs(m.deltaAmount))}
                       </>
                     ) : (
                       <span className="font-normal text-hec-ink-soft"> · no cost</span>
@@ -409,12 +410,12 @@ export function PayrollTab() {
                     <TableCell className="text-center">
                       <Badge variant="secondary">{payroll.scheduledSessions}</Badge>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right tabular-nums">{payroll.totalEarned.toLocaleString()} ₫</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(payroll.totalEarned)}</TableCell>
                     <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
-                      +{payroll.projectedEarnings.toLocaleString()} ₫
+                      +{formatVND(payroll.projectedEarnings)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums">
-                      {payroll.totalProjected.toLocaleString()} ₫
+                      {formatVND(payroll.totalProjected)}
                     </TableCell>
                     <TableCell className="text-right">
                       {payroll.mismatchedSessions.length === 0 ? (
@@ -434,7 +435,7 @@ export function PayrollTab() {
                         >
                           <AlertTriangle className="h-3 w-3" />
                           {payroll.varianceAmount > 0 ? "+" : "−"}
-                          {Math.abs(payroll.varianceAmount).toLocaleString()} ₫
+                          {formatVND(Math.abs(payroll.varianceAmount))}
                         </span>
                       )}
                     </TableCell>
@@ -448,18 +449,18 @@ export function PayrollTab() {
                   <TableCell className="text-center tabular-nums">
                     {payrollData.reduce((sum, p) => sum + p.scheduledSessions, 0)}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">{grandTotalEarned.toLocaleString()} ₫</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(grandTotalEarned)}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">
-                    +{(grandTotalProjected - grandTotalEarned).toLocaleString()} ₫
+                    +{formatVND(grandTotalProjected - grandTotalEarned)}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">{grandTotalProjected.toLocaleString()} ₫</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(grandTotalProjected)}</TableCell>
                   <TableCell className="text-right">
                     {grandVariance === 0 ? (
                       <span className="text-hec-caption font-normal text-hec-ink-soft">matches</span>
                     ) : (
                       <span className="whitespace-nowrap tabular-nums text-hec-warn">
                         {grandVariance > 0 ? "+" : "−"}
-                        {Math.abs(grandVariance).toLocaleString()} ₫
+                        {formatVND(Math.abs(grandVariance))}
                       </span>
                     )}
                   </TableCell>

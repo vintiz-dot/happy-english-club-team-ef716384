@@ -36,7 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatVND } from "@/lib/invoice/formatter";
+import { formatVND } from "@/lib/money";
 import { dayjs } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import {
@@ -58,7 +58,7 @@ function Signed({ value, className }: { value: number; className?: string }) {
   return (
     <span className={cn("whitespace-nowrap font-semibold tabular-nums", ahead ? "text-hec-leaf" : "text-hec-danger", className)}>
       {ahead ? "+" : "−"}
-      {formatVND(Math.abs(value))} ₫
+      {formatVND(Math.abs(value))}
     </span>
   );
 }
@@ -75,7 +75,7 @@ function Money({ value, tone, className }: { value: number; tone?: "charge" | "p
         className,
       )}
     >
-      {formatVND(value)} ₫
+      {formatVND(value)}
     </span>
   );
 }
@@ -214,7 +214,7 @@ function MonthRow({
         </td>
         <td className="py-3 pr-3 text-right text-hec-small">
           {month.discountAmount > 0 ? (
-            <span className="whitespace-nowrap tabular-nums text-hec-ink">−{formatVND(month.discountAmount)} ₫</span>
+            <span className="whitespace-nowrap tabular-nums text-hec-ink">−{formatVND(month.discountAmount)}</span>
           ) : (
             <span className="text-hec-ink-soft">—</span>
           )}
@@ -260,7 +260,7 @@ function MonthRow({
                   <Field label="Gross">{<Money value={month.baseAmount} />}</Field>
                   <Field label="Discounts">
                     {month.discountAmount > 0 ? (
-                      <span className="whitespace-nowrap tabular-nums text-hec-ink">−{formatVND(month.discountAmount)} ₫</span>
+                      <span className="whitespace-nowrap tabular-nums text-hec-ink">−{formatVND(month.discountAmount)}</span>
                     ) : (
                       <span className="text-hec-ink-soft">none</span>
                     )}

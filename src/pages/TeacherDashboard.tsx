@@ -44,6 +44,7 @@ import {
   PrivateValue,
   useFinancialPrivacy,
 } from "@/components/teacher/FinancialPrivacy";
+import { formatVND } from "@/lib/money";
 
 export default function TeacherDashboard() {
   return (
@@ -440,7 +441,7 @@ function TeacherDashboardInner() {
                       <PrivateValue mask="•••• ₫">
                         {payrollView?.rateVnd != null && payrollView.payBasis ? (
                           <>
-                            <span className="whitespace-nowrap tabular-nums">{payrollView.rateVnd.toLocaleString()} ₫</span>
+                            <span className="whitespace-nowrap tabular-nums">{formatVND(payrollView.rateVnd)}</span>
                             <span className="ml-2 text-hec-small font-normal text-hec-ink-soft">
                               /{payrollView.payBasis === "per_session" ? "session" : "hour"}
                             </span>

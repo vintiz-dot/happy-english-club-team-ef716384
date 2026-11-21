@@ -40,7 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loading, PlaceholderCard } from "@/components/ui/loading";
-import { formatVND } from "@/lib/invoice/formatter";
+import { formatVND } from "@/lib/money";
 import { dayjs } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { StudentAuditPanel } from "./StudentAuditPanel";
@@ -179,7 +179,7 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
           {owing.length > 0 && (
             <Badge variant="destructive" className="shrink-0 whitespace-nowrap tabular-nums">
               <TriangleAlert className="h-3.5 w-3.5" aria-hidden />
-              {owing.length} owing · {formatVND(Math.abs(totalOwed))} ₫
+              {owing.length} owing · {formatVND(Math.abs(totalOwed))}
             </Badge>
           )}
         </div>
@@ -276,12 +276,12 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
 
                     <span className="hidden shrink-0 text-right sm:block">
                       <span className="block text-hec-caption text-hec-ink-soft">charged</span>
-                      <span className="block whitespace-nowrap text-hec-small tabular-nums text-hec-ink">{formatVND(r.charged)} ₫</span>
+                      <span className="block whitespace-nowrap text-hec-small tabular-nums text-hec-ink">{formatVND(r.charged)}</span>
                     </span>
 
                     <span className="hidden shrink-0 text-right md:block">
                       <span className="block text-hec-caption text-hec-ink-soft">paid</span>
-                      <span className="block whitespace-nowrap text-hec-small tabular-nums text-hec-ink">{formatVND(r.paid)} ₫</span>
+                      <span className="block whitespace-nowrap text-hec-small tabular-nums text-hec-ink">{formatVND(r.paid)}</span>
                     </span>
 
                     <span className="min-w-[7rem] shrink-0 text-right">
@@ -296,7 +296,7 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
                       >
                         {r.balance === 0
                           ? "0 ₫"
-                          : `${r.balance > 0 ? "+" : "−"}${formatVND(Math.abs(r.balance))} ₫`}
+                          : `${r.balance > 0 ? "+" : "−"}${formatVND(Math.abs(r.balance))}`}
                       </span>
                     </span>
                   </button>

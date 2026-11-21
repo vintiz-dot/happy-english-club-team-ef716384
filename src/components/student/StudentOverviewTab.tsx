@@ -11,6 +11,7 @@ import { ProfilePictureUpload } from "./ProfilePictureUpload";
 import { PointsBreakdownChart } from "./PointsBreakdownChart";
 import { Users, BookOpen, User, Clock } from "lucide-react";
 import { describePattern, parseWeeklySlots } from "@/lib/classSchedule";
+import { formatVND } from "@/lib/money";
 
 export function StudentOverviewTab({ student }: { student: any }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -262,11 +263,11 @@ export function StudentOverviewTab({ student }: { student: any }) {
                   </div>
                   <div className="text-right">
                     <p className="font-medium">
-                      {enrollment.class?.session_rate_vnd?.toLocaleString("vi-VN")} ₫
+                      {formatVND(enrollment.class?.session_rate_vnd)}
                     </p>
                     {enrollment.discount_type && (
                       <Badge variant="secondary" className="text-xs">
-                        {enrollment.discount_type === "percent" ? `${enrollment.discount_value}%` : `${enrollment.discount_value?.toLocaleString("vi-VN")} ₫`} 
+                        {enrollment.discount_type === "percent" ? `${enrollment.discount_value}%` : `${formatVND(enrollment.discount_value)}`} 
                         {" "}off - {enrollment.discount_cadence}
                       </Badge>
                     )}
