@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   DndContext,
@@ -76,6 +76,8 @@ interface PremiumCalendarProps {
   isAdmin?: boolean;
   isLoading?: boolean;
   className?: string;
+  /** YYYY-MM-DD to show once when it arrives (e.g. a linked session's date). */
+  initialDate?: string;
 }
 
 const VIEWS: { key: CalendarViewType; label: string; icon: React.ReactNode }[] = [
@@ -139,11 +141,19 @@ export default function PremiumCalendar({
   isAdmin = false,
   isLoading,
   className,
+  initialDate,
 }: PremiumCalendarProps) {
   const isMobile = useIsMobile();
   const reduceMotion = useReducedMotion();
   const [view, setView] = usePersistedView("week");
   const [cursor, setCursor] = useState(() => nowBangkok());
+  const focusedDate = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialDate || focusedDate.current === initialDate) return;
+    focusedDate.current = initialDate;
+    const d = dayjs(initialDate);
+    if (d.isValid()) setCursor(d);
+  }, [initialDate]);
   const [showMiniCalendar, setShowMiniCalendar] = useState(false);
   const [filters, setFilters] = useUrlFilters();
   const [dragging, setDragging] = useState<CalendarEvent | null>(null);

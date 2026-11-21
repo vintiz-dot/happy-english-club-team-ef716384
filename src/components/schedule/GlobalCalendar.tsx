@@ -356,6 +356,7 @@ const GlobalCalendar = ({
         onReschedule={role === "admin" ? handleReschedule : undefined}
         onRangeChange={handleRangeChange}
         isAdmin={role === "admin"}
+        initialDate={wantsDeepLink && linked?.date ? linked.date : undefined}
       />
 
       {moveDialog && (
