@@ -427,7 +427,7 @@ export default function StudentDashboard() {
           progress={levelInfo.progress}
           totalXp={totalPoints || 0}
           streak={streakData.currentStreak}
-          pendingHomework={homeworkTodo}
+          pendingHomework={homeworkReady ? homeworkTodo : null}
           classesThisWeek={upcomingSessions?.length || 0}
           isMonitor={isMonitor}
           onEditProfile={() => setShowEditProfile(true)}

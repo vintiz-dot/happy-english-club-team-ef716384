@@ -19,7 +19,8 @@ import { BADGE_NEUTRAL, BADGE_BRASS, FOCUS, LABEL, WARM_CARD, reducedMotion } fr
 interface Vital {
   icon: React.ElementType;
   label: string;
-  value: number;
+  /** null: not known (homework still loading or failed) - shown as a dash, never as 0. */
+  value: number | null;
 }
 
 interface Props {
@@ -35,7 +36,7 @@ interface Props {
   progress: number;
   totalXp: number;
   streak: number;
-  pendingHomework: number;
+  pendingHomework: number | null;
   classesThisWeek: number;
   isMonitor?: boolean;
   onEditProfile: () => void;
@@ -153,7 +154,7 @@ export function HeroCommandDeck({
               <v.icon className="h-4 w-4 shrink-0 text-hec-ink-faint" aria-hidden />
               <span className="min-w-0">{v.label}</span>
             </dt>
-            <dd className="font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{v.value}</dd>
+            <dd className="font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{v.value ?? <><span aria-hidden>–</span><span className="sr-only">not available</span></>}</dd>
           </div>
         ))}
       </dl>

@@ -5,7 +5,8 @@ import { givenName } from "@/lib/givenName";
 interface MascotCompanionProps {
   studentName?: string;
   streak?: number;
-  pendingHomework?: number;
+  /** null: not known yet (loading or a failed read) - the mascot then says nothing about homework. */
+  pendingHomework?: number | null;
   level?: number;
   /**
    * Where the message is drawn. The hero passes a row in the normal flow
