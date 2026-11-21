@@ -80,6 +80,10 @@ export type Deck = {
   minutes: number; // planned length (a class is 90)
   inquiryPhases: ("Engage" | "Focus" | "Investigate" | "Organize" | "Generalize" | "Transfer" | "Reflect")[];
   book: BookRef[]; // every SB / WB page this lesson covers
+  // The course book lesson this deck teaches (a row of public.curriculum_lessons).
+  // Presenting the deck to a class marks it as covered in today's lesson, so the
+  // lesson report starts from the book's objectives.
+  covers?: { unitFrom: number; lesson: "Big Question" | "Get Ready" | "Read" | "Understand" | "Communicate" | "Wrap Up" };
   slides: Slide[];
 };
 

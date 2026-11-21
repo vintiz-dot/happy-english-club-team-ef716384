@@ -12,10 +12,44 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Play, Printer, Users, BookOpen, CalendarDays } from "lucide-react";
+import { toast } from "sonner";
+import { pickSession } from "@/lib/lessonDecks/covered";
 
 type ClassLite = { id: string; name: string };
 
 const todayHanoi = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
+const nowHanoi = () => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit" });
+// curriculum_lessons / session_lesson_plans (20261121150000) are not in the generated types yet.
+const db = supabase as any;
+
+/**
+ * Presenting a deck to a class marks its book lesson as covered in that class's
+ * lesson today, so the lesson report starts from the book's objectives. Quiet
+ * when there is no lesson today or it is already marked; the teacher can undo.
+ */
+async function markCovered(deck: Deck, classId: string, className: string) {
+  if (!deck.covers) return;
+  const { data: sessions } = await db.from("sessions").select("id, start_time, end_time, status")
+    .eq("class_id", classId).eq("date", todayHanoi());
+  const session = pickSession(sessions ?? [], nowHanoi());
+  if (!session) return;
+  const { data: lesson } = await db.from("curriculum_lessons").select("id")
+    .eq("curriculum", deck.curriculum).eq("level", deck.level).eq("unit_from", deck.covers.unitFrom)
+    .eq("lesson", deck.covers.lesson).maybeSingle();
+  if (!lesson) return;
+  const { data: had } = await db.from("session_lesson_plans").select("position").eq("session_id", session.id);
+  const position = (had ?? []).reduce((m: number, p: { position: number }) => Math.max(m, p.position), 0) + 1;
+  const { data: row, error } = await db.from("session_lesson_plans")
+    .insert({ session_id: session.id, lesson_id: lesson.id, position }).select("id").maybeSingle();
+  if (error) {
+    if (error.code !== "23505") toast.error("Could not mark this lesson as covered", { description: error.message });
+    return;
+  }
+  toast.success(`Marked for today's ${className} lesson`, {
+    description: `${deck.title} will be the starting point of the lesson report.`,
+    action: { label: "Undo", onClick: () => { void db.from("session_lesson_plans").delete().eq("id", row?.id); } },
+  });
+}
 
 export function LessonDecksPanel({ classes }: { classes: ClassLite[] }) {
   const [classId, setClassId] = useState<string | null>(null);
@@ -115,7 +149,10 @@ export function LessonDecksPanel({ classes }: { classes: ClassLite[] }) {
                     <TableCell className="text-hec-small">{d.book.map((b) => `${b.book} ${b.pages}`).join(" · ")}</TableCell>
                     <TableCell className="text-hec-small">{d.inquiryPhases.join(", ")}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">
-                      <Button size="sm" onClick={() => setPlaying(d)}><Play className="h-4 w-4" />Present</Button>
+                      <Button size="sm" onClick={() => {
+                        setPlaying(d);
+                        if (classId) void markCovered(d, classId, classes.find((c) => c.id === classId)?.name ?? "class");
+                      }}><Play className="h-4 w-4" />Present</Button>
                       <Button size="sm" variant="outline" className="ml-2" onClick={() => printDeck(d, names)} title="Print or save as PDF"><Printer className="h-4 w-4" /></Button>
                     </TableCell>
                   </TableRow>

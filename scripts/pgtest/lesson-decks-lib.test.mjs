@@ -63,6 +63,19 @@ const paced = P.paceLessons(["L1", "L2", "L3", "L4", "L5"], slots, "2026-11-23")
 eq("lessons in order with week numbers", paced.map((p) => [p.item, p.week, p.startTime]),
   [["L1", 1, "17:30"], ["L2", 1, "16:15"], ["L3", 2, "17:30"], ["L4", 2, "16:15"], ["L5", 3, "17:30"]]);
 
+console.log("which of today's lessons a deck is presented in");
+const C = await load("src/lib/lessonDecks/covered.ts", "ld-covered");
+const day = [
+  { id: "am", start_time: "09:00:00", end_time: "10:30:00", status: "Scheduled" },
+  { id: "pm", start_time: "17:30:00", end_time: "19:00:00", status: "Scheduled" },
+  { id: "x", start_time: "14:00:00", end_time: "15:30:00", status: "Canceled" },
+];
+eq("during a lesson, that lesson", C.pickSession(day, "18:10")?.id, "pm");
+eq("half an hour before it starts counts as that lesson", C.pickSession(day, "17:05")?.id, "pm");
+eq("between lessons, the nearest start", C.pickSession(day, "12:00")?.id, "am");
+eq("a cancelled lesson is never picked, even while 'on'", C.pickSession(day, "14:30")?.id, "pm");
+eq("no lessons today, nothing", C.pickSession([day[2]], "14:30"), null);
+
 console.log("decks in src/content/lessonDecks");
 const contentDir = resolve(repo, "src/content/lessonDecks");
 const files = existsSync(contentDir) ? readdirSync(contentDir, { recursive: true }).filter((f) => /\.ts$/.test(f) && !/index\.ts$/.test(f)) : [];
@@ -86,6 +99,8 @@ for (const { f, u } of units) {
     ok(`${d.id}: timed activities add up to the lesson (${timed} of ${d.minutes})`, timed <= d.minutes && timed >= d.minutes - 15);
     ok(`${d.id}: names the Student Book or Workbook pages it covers`, d.book.length > 0 && d.book.every((b) => b.pages));
     ok(`${d.id}: has a speaking activity`, d.slides.some((s) => s.kind === "speaking" || (s.kind === "activity" && s.tag === "Speaking")));
+    ok(`${d.id}: says which book lesson it covers`, !!d.covers && Number.isInteger(d.covers.unitFrom) &&
+      ["Big Question", "Get Ready", "Read", "Understand", "Communicate", "Wrap Up"].includes(d.covers.lesson));
   }
 }
 
