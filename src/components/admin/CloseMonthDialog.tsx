@@ -195,7 +195,7 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
         <DialogFooter>
           {/* Ivory: the safe way out is the secondary (outline) button; closing the
               month writes immutable snapshots, so it is the one red fill. */}
-          <Button variant="outline" onClick={onClose} disabled={closeMutation.isPending}>
+          <Button variant="outline" autoFocus onClick={onClose} disabled={closeMutation.isPending}>
             Cancel
           </Button>
           <Button
@@ -214,7 +214,7 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
             ) : (
               <CheckCircle2 className="h-4 w-4" />
             )}
-            {closeMutation.isPending ? "Closing month..." : "Close Month"}
+            {closeMutation.isPending ? "Working…" : `Close ${formatMonthLabel(month).split(" ")[0]}`}
           </Button>
         </DialogFooter>
       </DialogContent>

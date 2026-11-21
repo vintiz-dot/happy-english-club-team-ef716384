@@ -35,12 +35,22 @@ const statusOf = (item: any) => {
 
 interface AdminTuitionListProps {
   month: string;
+  /** Display filters a page may keep in its URL. Both are optional and pure
+   *  filters of the rows already fetched; without them the list keeps its own. */
+  filter?: string;
+  onFilterChange?: (value: string) => void;
+  confirmation?: string;
+  onConfirmationChange?: (value: string) => void;
 }
 
-export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
+export const AdminTuitionList = ({ month, filter, onFilterChange, confirmation, onConfirmationChange }: AdminTuitionListProps) => {
   const [sortBy, setSortBy] = useState<"name" | "balance" | "total" | "class">("name");
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [confirmationFilter, setConfirmationFilter] = useState<string>("all");
+  const [ownFilter, setOwnFilter] = useState("all");
+  const [ownConfirmation, setOwnConfirmation] = useState<string>("all");
+  const activeFilter = filter ?? ownFilter;
+  const setActiveFilter = onFilterChange ?? setOwnFilter;
+  const confirmationFilter = confirmation ?? ownConfirmation;
+  const setConfirmationFilter = onConfirmationChange ?? setOwnConfirmation;
   const [paymentItem, setPaymentItem] = useState<any>(null);
   const navigate = useNavigate();
 
