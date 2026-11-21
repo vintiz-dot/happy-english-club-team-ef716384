@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { files as fileStore } from "@/lib/files";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -51,6 +51,12 @@ function fileSize(bytes?: number | null) {
 
 export default function HomeworkDetailDialog({ homework, studentId, isReadOnly = false, onClose }: HomeworkDetailDialogProps) {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  // Home and Homework list the same query: refresh it whenever this closes, so the list is right on return.
+  const closeAndRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["student-assignments", studentId] });
+    onClose();
+  };
   // "Ivory" design system on a listed route; today's classes elsewhere (the teacher's student analytics opens this too).
   const ivory = useIvory();
   const c = (next: string, old: string) => (ivory ? next : old);
@@ -94,7 +100,7 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
   const closeButton = (
     <button
       type="button"
-      onClick={onClose}
+      onClick={closeAndRefresh}
       aria-label="Close"
       className={c("flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center rounded-full border border-hec-line bg-hec-raised text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-border backdrop-blur transition hover:bg-background")}
     >
@@ -232,7 +238,7 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
               </div>
             }
           >
-            <HomeworkSubmission homeworkId={homework.id} studentId={studentId} existingSubmission={submission} onSuccess={onClose} />
+            <HomeworkSubmission homeworkId={homework.id} studentId={studentId} existingSubmission={submission} onSuccess={closeAndRefresh} />
           </Suspense>
         )}
       </Step>
@@ -242,7 +248,7 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
 
   if (isMobile) {
     return (
-      <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
+      <Sheet open={true} onOpenChange={(open) => !open && closeAndRefresh()}>
         <SheetContent
           side="bottom"
           className={c("flex h-[94dvh] max-h-[94dvh] flex-col gap-0 overflow-hidden rounded-t-hec-lg border-0 p-0 [&>button.absolute]:hidden", "flex h-[94dvh] max-h-[94dvh] flex-col gap-0 overflow-hidden rounded-t-[1.75rem] border-0 !bg-background !backdrop-blur-none p-0 [&>button.absolute]:hidden")}
@@ -259,7 +265,7 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
   }
 
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={true} onOpenChange={(open) => !open && closeAndRefresh()}>
       <DialogContent className={c("flex max-h-[90vh] flex-col gap-0 overflow-hidden rounded-hec-lg p-0 sm:max-w-2xl [&>button.absolute]:hidden", "flex max-h-[90vh] flex-col gap-0 overflow-hidden rounded-3xl !bg-background p-0 sm:max-w-2xl [&>button.absolute]:hidden")}>
         {header}
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{body}</div>

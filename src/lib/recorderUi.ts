@@ -175,9 +175,9 @@ export function uploadStatus(p: UploadLike | null, online = true): StatusLine[] 
   } else if (offline && p.pending > 0) {
     out.push({ tone: "warn", text: "Offline - recording continues and will upload when the internet is back" });
   } else if (p.pending > 0) {
-    out.push({ tone: "info", text: `Saving ${p.pending} ${p.pending === 1 ? "piece" : "pieces"}` });
+    out.push({ tone: "info", text: `Saved on this device: ${p.pending} ${p.pending === 1 ? "piece" : "pieces"}, still uploading` });
   } else {
-    out.push({ tone: "ok", text: "All saved" });
+    out.push({ tone: "ok", text: "Uploaded - every piece is on the school server" });
   }
   if (p && p.late > 0) {
     const minutes = Math.max(1, Math.ceil(p.lateMs / MIN));

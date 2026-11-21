@@ -347,7 +347,7 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
         {phase === "recording" && (
           <div className="absolute top-2 left-2 right-2 flex items-center justify-between">
             <span className={ivory ? "flex items-center gap-1.5 rounded-full bg-hec-danger-fill px-3 py-1 text-hec-caption font-medium tabular-nums text-hec-on-danger" : "flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white"}>
-              <span className={ivory ? "h-2 w-2 rounded-full bg-hec-on-danger" : "h-2 w-2 rounded-full bg-white animate-pulse"} /> {formatTimestamp(elapsed)}
+              <span className={ivory ? "h-2 w-2 rounded-full bg-hec-on-danger" : "h-2 w-2 rounded-full bg-white animate-pulse"} /> {label("Recording", "Đang quay")} {formatTimestamp(elapsed)}
             </span>
             <span className={ivory
               ? `rounded-full border px-3 py-1 text-hec-caption font-medium tabular-nums ${remaining < 20 ? "border-hec-warn/30 bg-hec-warn-tint text-hec-warn" : "border-hec-line bg-hec-surface text-hec-ink"}`
