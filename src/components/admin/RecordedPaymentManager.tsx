@@ -45,8 +45,21 @@ export function RecordedPaymentManager() {
   const [editingInvoice, setEditingInvoice] = useState<EditingInvoice | null>(null);
   const [reversingInvoice, setReversingInvoice] = useState<{ id: string; currentValue: number } | null>(null);
   const [reversalReason, setReversalReason] = useState("");
-  const editMonth = useTuitionMonthConfirmation(selectedMonth, !!editingInvoice);
-  const reverseMonth = useTuitionMonthConfirmation(selectedMonth, !!reversingInvoice);
+  // Both suggest the oldest month this child still owes when it is earlier
+  // than the one shown (pattern D: a February debt booked on March). "Use"
+  // closes the row and opens that month; nothing is moved, and the admin
+  // still confirms the month by hand.
+  const studentOf = (invoiceId?: string) => invoices.find(i => i.id === invoiceId)?.student_id;
+  const editStudent = studentOf(editingInvoice?.id);
+  const reverseStudent = studentOf(reversingInvoice?.id);
+  const editMonth = useTuitionMonthConfirmation(selectedMonth, !!editingInvoice, {
+    studentIds: editStudent ? [editStudent] : [],
+    onUseMonth: (m) => { setEditingInvoice(null); setSelectedMonth(m); },
+  });
+  const reverseMonth = useTuitionMonthConfirmation(selectedMonth, !!reversingInvoice, {
+    studentIds: reverseStudent ? [reverseStudent] : [],
+    onUseMonth: (m) => { setReversingInvoice(null); setReversalReason(""); setSelectedMonth(m); },
+  });
   // Which ledger account the money went into or came out of: cash or bank.
   // Nothing is pre-selected: the admin chooses every time (a default would
   // book every unexamined edit to one account and skew the CASH/BANK split).

@@ -64,7 +64,12 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
   const [manualAllocations, setManualAllocations] = useState<Record<string, string>>({});
 
   const queryClient = useQueryClient();
-  const tuitionMonth = useTuitionMonthConfirmation(formData.month, open);
+  const tuitionMonth = useTuitionMonthConfirmation(formData.month, open, {
+    // The oldest month the family still owes (pattern D). Picking it changes the
+    // month, which resets the confirmation: the admin still confirms by hand.
+    studentIds: siblings.length ? siblings.map(s => s.id) : selectedStudent ? [selectedStudent.id] : [],
+    onUseMonth: (m) => setFormData(prev => ({ ...prev, month: m })),
+  });
 
   useEffect(() => {
     if (open) {

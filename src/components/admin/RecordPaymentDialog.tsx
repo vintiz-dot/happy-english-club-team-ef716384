@@ -25,7 +25,10 @@ interface RecordPaymentDialogProps {
 }
 
 export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: RecordPaymentDialogProps) => {
-  const tuitionMonth = useTuitionMonthConfirmation(month, open);
+  const tuitionMonth = useTuitionMonthConfirmation(month, open, {
+    // Suggests the oldest month this child still owes (pattern D); the admin still confirms.
+    studentIds: item?.student_id ? [item.student_id] : [],
+  });
   const [mode, setMode] = useState<"payment" | "correction">("payment");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(() => receiptDateToday());
