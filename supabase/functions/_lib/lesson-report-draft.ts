@@ -1,0 +1,280 @@
+/**
+ * _lib/lesson-report-draft.ts - what lesson-report-draft asks Claude for, and
+ * how the reply is checked before it is saved (docs/LESSON_REPORTS.md, "The
+ * draft body").
+ *
+ * THE MODEL WRITES WORDS; THE RECORDS DECIDE FACTS. Attendance, points, the
+ * homework set that day and which photos exist come from the app's records,
+ * never from the reply. Anything in the reply that points at a record - a
+ * child, a piece of work, a photo - is kept only if it is that record:
+ *   - a child part only for a child enrolled in the class on the lesson's date;
+ *   - a work id only if it is THAT child's own student_work from the lesson;
+ *   - a photo id only if it is one of this lesson's photos;
+ *   - a quoted transcript line (gap evidence, a name moment) only if the line
+ *     is in the transcript, and it carries the line's own time, not the model's.
+ * A name moment is a staff-only suggestion; with no transcript there are none.
+ *
+ * Imports nothing, so scripts/pgtest/lesson-report-approval.test.mjs runs it
+ * in Node.
+ */
+
+export const DRAFT_SCHEMA_ID = "hec-lesson-report-draft/1";
+
+export interface TranscriptLine { t: number; text: string; teacher: boolean }
+export interface DraftContext {
+  enrolled: Set<string>;
+  /** student_work id -> the child it belongs to (student_id), lesson window only. */
+  workOwner: Map<string, string>;
+  /** this lesson's photo ids -> their kind and the staff caption. */
+  photos: Map<string, { kind: string; caption: string | null }>;
+  attendance: Map<string, string>;
+  points: Map<string, number>;
+  homework: { homework_id: string; title: string; due_date: string | null }[];
+  transcript: TranscriptLine[] | null;
+  /** Why there is no transcript, for `sources` (null when there is one). */
+  transcriptNote: string | null;
+  workCount: number;
+}
+
+const MET = ["yes", "partly", "no", "unknown"];
+const GAP_KINDS = ["misconception", "gap", "grammar", "vocabulary", "pronunciation"];
+const ATTENDANCE = ["Present", "Late", "Absent", "Excused"];
+const QUIZ_KINDS = ["choice", "gap", "order"];
+/** Photos a family may be shown by default: material, not children. The teacher decides. */
+const SHARE_BY_DEFAULT = new Set(["screen", "whiteboard", "worksheet", "material"]);
+
+const str = (v: unknown, max = 2000): string => (typeof v === "string" ? v.trim().slice(0, max) : "");
+const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+const obj = (v: unknown): Record<string, unknown> =>
+  v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+const enVi = (v: unknown) => { const o = obj(v); return { en: str(o.en, 600), vi: str(o.vi, 600) }; };
+const fold = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}']+/gu, " ").replace(/\s+/g, " ").trim();
+
+// ------------------------------------------------------------------ the JSON schema
+
+const S = { type: "string" };
+const object = (props: Record<string, unknown>) => ({
+  type: "object", additionalProperties: false, required: Object.keys(props), properties: props,
+});
+const list = (items: unknown) => ({ type: "array", items });
+const pair = object({ en: S, vi: S });
+const quote = object({ t: { type: "number" }, quote: S });
+
+export const DRAFT_JSON_SCHEMA = object({
+  lesson: object({ title: S, title_vi: S, summary: S, summary_vi: S }),
+  objectives: list(object({ text: S, text_vi: S, met: { type: "string", enum: MET }, evidence: S })),
+  taught: list(object({ topic: S, detail: S, detail_vi: S })),
+  words: list(object({ en: S, vi: S, example: S })),
+  structures: list(object({ pattern: S, example: S })),
+  activities: list(object({ name: S, description: S, description_vi: S })),
+  gaps: list(object({
+    issue: S, kind: { type: "string", enum: GAP_KINDS }, who: { type: "string", enum: ["class", "some"] },
+    evidence: list(quote), suggestion: S,
+  })),
+  class_focus: list(pair),
+  students: list(object({
+    student_id: S, highlight: S, highlight_vi: S, focus_next: S, focus_next_vi: S,
+    work_ids: list(S), name_moments: list(object({ t: { type: "number" }, quote: S, why: S })),
+  })),
+  parents: object({ tips: list(pair), ask_your_child: list(pair), next_lesson: pair }),
+  photos: list(object({ photo_id: S, caption: S, caption_vi: S })),
+  quiz: object({
+    title: S,
+    questions: list(object({
+      id: S, kind: { type: "string", enum: QUIZ_KINDS }, prompt: S, prompt_vi: S, options: list(S),
+      answer: S, accept: list(S), explain: S, explain_vi: S, objective: { type: "integer" },
+    })),
+  }),
+});
+
+// ------------------------------------------------------------------ the instructions
+
+export const DRAFT_SYSTEM = `You write the first draft of a daily lesson report for an English school for Vietnamese children.
+A teacher checks and edits every word before any family sees it. Write only what the evidence shows.
+
+Evidence you are given (some may be missing): the lesson's transcript (lines "[mm:ss] T: ..." are the teacher,
+"[mm:ss] S: ..." anyone else; names in it may be in-class nicknames), photos staff took of the screen, whiteboard,
+worksheets and materials, the children's work uploaded during the lesson (with OCR text), attendance, points given,
+homework, target words, and the list of enrolled children with their ids.
+
+Rules:
+- Never invent. If something is not in the evidence, leave it out or mark an objective "unknown".
+- Objectives: 2 to 4, what the lesson set out to teach, each with met = yes/partly/no/unknown and a short evidence note.
+- Gaps and misconceptions (staff only): every one must quote the transcript line(s) that show it, copied exactly,
+  with the line's time in seconds (t). A gap seen only in children's work quotes the work's text instead, with t = -1.
+  who = "class" when many showed it, "some" otherwise. Never name a child in a gap.
+- class_focus: the gaps, softened and positive, for families (no names, no blame).
+- students: one entry per enrolled child you have evidence for, by student_id from the list. A highlight or focus
+  comes ONLY from that child's own records (their work, their points, their attendance). If a child has no records
+  beyond attendance, leave highlight and focus empty. work_ids: only that child's own work ids.
+- name_moments (staff only): only where a transcript line names the child (by name or a nickname you can match
+  to the list with confidence). Quote the line exactly with its t and say why it matters. Never guess.
+- photos: a caption for each photo id you were shown (what it shows, for a parent).
+- Parent-facing text is warm, plain English, with natural Vietnamese (not word-for-word) in every _vi field and vi.
+- parents: 2-3 tips for home, 2-3 questions to ask your child, and what comes next if the evidence says.
+- quiz: 5 to 8 questions for the children to review at home, from this lesson's words and structures and the class's
+  gaps. kind "choice": options are 3-4 choices, answer is one of them exactly. kind "gap": prompt has "___" for the
+  missing word(s), options empty, answer the text, accept other correct spellings. kind "order": options are the
+  sentence's pieces shuffled, answer is the pieces in the right order joined by one space. objective = the index (0-based)
+  of the objective it checks. Child-friendly English prompts, prompt_vi a short Vietnamese help line.
+- ids in the quiz: q1, q2, ...`;
+
+// ------------------------------------------------------------------ checking the reply
+
+function cleanQuestion(v: unknown, i: number, objectives: number) {
+  const q = obj(v);
+  const kind = QUIZ_KINDS.includes(str(q.kind)) ? str(q.kind) : "";
+  const prompt = str(q.prompt, 400), answer = str(q.answer, 200);
+  if (!kind || !prompt || !answer) return null;
+  const options = arr(q.options).map((o) => str(o, 120)).filter(Boolean).slice(0, 8);
+  if (kind === "choice" && (options.length < 2 || !options.includes(answer))) return null;
+  if (kind === "order") {
+    const words = (s: string) => s.split(/\s+/).filter(Boolean).sort().join(" ");
+    if (options.length < 2 || words(options.join(" ")) !== words(answer)) return null;
+  }
+  const objective = Number.isInteger(q.objective) && (q.objective as number) >= 0 && (q.objective as number) < objectives
+    ? (q.objective as number) : 0;
+  return {
+    id: `q${i + 1}`, kind, prompt, prompt_vi: str(q.prompt_vi, 400),
+    options: kind === "gap" ? [] : options, answer,
+    ...(kind === "gap" ? { accept: arr(q.accept).map((a) => str(a, 200)).filter(Boolean).slice(0, 6) } : {}),
+    explain: str(q.explain, 400), explain_vi: str(q.explain_vi, 400), objective,
+  };
+}
+
+/** The transcript line a quote comes from: exact (folded) containment, nearest the model's time. */
+function findLine(lines: TranscriptLine[], quoteText: string, t: number): TranscriptLine | null {
+  const want = fold(quoteText);
+  if (want.length < 2) return null;
+  let best: TranscriptLine | null = null;
+  for (const l of lines) {
+    if (!fold(l.text).includes(want)) continue;
+    if (!best || Math.abs(l.t - t) < Math.abs(best.t - t)) best = l;
+  }
+  return best;
+}
+
+/** The model's reply, checked against the records; the draft body as saved. */
+export function cleanDraft(raw: unknown, ctx: DraftContext, workText: Map<string, string>) {
+  const r = obj(raw);
+  const lines = ctx.transcript ?? [];
+  const lesson = obj(r.lesson);
+  const objectives = arr(r.objectives).map((v) => {
+    const o = obj(v);
+    return { text: str(o.text, 300), text_vi: str(o.text_vi, 300),
+      met: MET.includes(str(o.met)) ? str(o.met) : "unknown", evidence: str(o.evidence, 500) };
+  }).filter((o) => o.text).slice(0, 4);
+
+  const quoteOk = (e: Record<string, unknown>) => {
+    const text = str(e.quote, 500);
+    if (!text) return null;
+    const line = findLine(lines, text, Number(e.t) || 0);
+    if (line) return { t: line.t, quote: text };
+    // Seen in children's work only: the quote must be in that work's OCR text.
+    const f = fold(text);
+    for (const w of workText.values()) if (f.length >= 2 && fold(w).includes(f)) return { t: -1, quote: text };
+    return null;
+  };
+  const gaps = arr(r.gaps).map((v) => {
+    const g = obj(v);
+    const evidence = arr(g.evidence).map((e) => quoteOk(obj(e))).filter((e): e is { t: number; quote: string } => !!e).slice(0, 4);
+    return { issue: str(g.issue, 400), kind: GAP_KINDS.includes(str(g.kind)) ? str(g.kind) : "gap",
+      who: str(g.who) === "class" ? "class" : "some", evidence, suggestion: str(g.suggestion, 400) };
+  }).filter((g) => g.issue && g.evidence.length > 0).slice(0, 10);
+
+  const seen = new Set<string>();
+  const byChild = new Map<string, Record<string, unknown>>();
+  for (const v of arr(r.students)) {
+    const s = obj(v);
+    const id = str(s.student_id, 40);
+    if (ctx.enrolled.has(id) && !seen.has(id)) { seen.add(id); byChild.set(id, s); }
+  }
+  // Every enrolled child gets a part: the records are theirs whatever the model said.
+  const students = [...ctx.enrolled].map((id) => {
+    const s = byChild.get(id) ?? {};
+    const work_ids = [...new Set(arr(s.work_ids).map((w) => str(w, 40)))].filter((w) => ctx.workOwner.get(w) === id);
+    for (const [w, owner] of ctx.workOwner) if (owner === id && !work_ids.includes(w)) work_ids.push(w);
+    const name_moments = ctx.transcript ? arr(s.name_moments).flatMap((m) => {
+      const o = obj(m);
+      const text = str(o.quote, 500);
+      const line = text ? findLine(lines, text, Number(o.t) || 0) : null;
+      return line ? [{ t: line.t, quote: text, why: str(o.why, 300) }] : [];
+    }).slice(0, 5) : [];
+    const att = ctx.attendance.get(id);
+    return {
+      student_id: id,
+      highlight: str(s.highlight, 600), highlight_vi: str(s.highlight_vi, 600),
+      focus_next: str(s.focus_next, 600), focus_next_vi: str(s.focus_next_vi, 600),
+      work_ids, points: ctx.points.get(id) ?? 0,
+      attendance: att && ATTENDANCE.includes(att) ? att : "unknown",
+      name_moments,
+    };
+  });
+
+  const captions = new Map<string, Record<string, unknown>>();
+  for (const v of arr(r.photos)) { const p = obj(v); const id = str(p.photo_id, 40); if (ctx.photos.has(id)) captions.set(id, p); }
+  const photos = [...ctx.photos].map(([id, p]) => {
+    const c = captions.get(id) ?? {};
+    return { photo_id: id, share: SHARE_BY_DEFAULT.has(p.kind),
+      caption: str(c.caption, 300) || (p.caption ?? ""), caption_vi: str(c.caption_vi, 300) };
+  });
+
+  const quiz = obj(r.quiz);
+  const questions = arr(quiz.questions).map((q, i) => cleanQuestion(q, i, Math.max(1, objectives.length)))
+    .filter((q): q is NonNullable<typeof q> => !!q).slice(0, 8).map((q, i) => ({ ...q, id: `q${i + 1}` }));
+  const parents = obj(r.parents);
+
+  return {
+    schema: DRAFT_SCHEMA_ID,
+    lesson: { title: str(lesson.title, 200), title_vi: str(lesson.title_vi, 200),
+      summary: str(lesson.summary, 1500), summary_vi: str(lesson.summary_vi, 1500) },
+    objectives,
+    taught: arr(r.taught).map((v) => { const o = obj(v); return { topic: str(o.topic, 200), detail: str(o.detail, 600), detail_vi: str(o.detail_vi, 600) }; })
+      .filter((o) => o.topic).slice(0, 10),
+    words: arr(r.words).map((v) => { const o = obj(v); return { en: str(o.en, 80), vi: str(o.vi, 120), example: str(o.example, 200) }; })
+      .filter((o) => o.en).slice(0, 25),
+    structures: arr(r.structures).map((v) => { const o = obj(v); return { pattern: str(o.pattern, 160), example: str(o.example, 200) }; })
+      .filter((o) => o.pattern).slice(0, 10),
+    activities: arr(r.activities).map((v) => { const o = obj(v); return { name: str(o.name, 160), description: str(o.description, 600), description_vi: str(o.description_vi, 600) }; })
+      .filter((o) => o.name).slice(0, 10),
+    gaps,
+    class_focus: arr(r.class_focus).map(enVi).filter((o) => o.en).slice(0, 6),
+    students,
+    parents: {
+      tips: arr(parents.tips).map(enVi).filter((o) => o.en).slice(0, 4),
+      ask_your_child: arr(parents.ask_your_child).map(enVi).filter((o) => o.en).slice(0, 4),
+      next_lesson: enVi(parents.next_lesson),
+    },
+    homework: ctx.homework.map((h) => ({ homework_id: h.homework_id, title: h.title, due_date: h.due_date })),
+    photos,
+    quiz: { title: str(quiz.title, 200) || "Lesson review", questions },
+    sources: {
+      transcript: !!ctx.transcript, transcript_lines: lines.length, ...(ctx.transcriptNote ? { transcript_note: ctx.transcriptNote } : {}),
+      photos: ctx.photos.size, works: ctx.workCount, attendance: ctx.attendance.size,
+      points: [...ctx.points.values()].filter((p) => p !== 0).length,
+    },
+  };
+}
+
+/** "[mm:ss] T: text" lines for the prompt. */
+export function transcriptText(lines: TranscriptLine[]): string {
+  const mmss = (s: number) => { const r = Math.max(0, Math.round(s)); return `${Math.floor(r / 60)}:${String(r % 60).padStart(2, "0")}`; };
+  return lines.map((l) => `[${mmss(l.t)} t=${Math.round(l.t)}] ${l.teacher ? "T" : "S"}: ${l.text}`).join("\n");
+}
+
+/** The lesson monitor report's lines, in order. */
+export function readTranscript(body: unknown, maxLines = 2500): TranscriptLine[] {
+  return arr(obj(body).lines).flatMap((x) => {
+    const l = obj(x);
+    const t = typeof l.t === "number" && Number.isFinite(l.t) ? l.t : null;
+    const text = str(l.text, 500);
+    return t === null || !text ? [] : [{ t, text, teacher: l.who === "T" }];
+  }).sort((a, b) => a.t - b.t).slice(0, maxLines);
+}
+
+/** Hanoi has no daylight saving: a lesson's local date and time is +07:00. */
+export function lessonWindow(date: string, start: string, end: string, afterMinutes = 30) {
+  const at = (t: string) => new Date(`${date}T${t.length === 5 ? t + ":00" : t.slice(0, 8)}+07:00`);
+  const from = at(start), to = at(end);
+  return { from: from.toISOString(), to: new Date(to.getTime() + afterMinutes * 60_000).toISOString() };
+}

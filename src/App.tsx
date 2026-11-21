@@ -61,6 +61,7 @@ const TeacherVocabularyAudit = lazy(() => import("./pages/TeacherVocabularyAudit
 const TeacherBooks = lazy(() => import("./pages/TeacherBooks"));
 const TeacherLanguageSupport = lazy(() => import("./pages/TeacherLanguageSupport"));
 const TeacherLessonReports = lazy(() => import("./pages/TeacherLessonReports"));
+const TeacherLessonReportReview = lazy(() => import("./pages/TeacherLessonReportReview"));
 const TeacherRecorder = lazy(() => import("./pages/TeacherRecorder"));
 const TeacherSmartUpload = lazy(() => import("./pages/TeacherSmartUpload"));
 const TeacherTranscripts = lazy(() => import("./pages/TeacherTranscripts"));
@@ -156,6 +157,7 @@ function AppContent() {
                   <Route path="/teacher/language-support" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLanguageSupport /></ProtectedRoute>} />
                   {/* Lesson monitor pilot (D-28): the lesson's teacher only; the database lets nobody else read a report. */}
                   <Route path="/teacher/lesson-reports" element={<ProtectedRoute allowedRole={["teacher"]}><TeacherLessonReports /></ProtectedRoute>} />
+                  <Route path="/teacher/lesson-report/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLessonReportReview /></ProtectedRoute>} />
                   <Route path="/teacher/recorder" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherRecorder /></ProtectedRoute>} />
                   {/* Student works gallery: admin sees all; a teacher only their own window (database functions decide). */}
                   <Route path="/admin/student-work" element={<ProtectedRoute allowedRole="admin"><AdminStudentWork /></ProtectedRoute>} />

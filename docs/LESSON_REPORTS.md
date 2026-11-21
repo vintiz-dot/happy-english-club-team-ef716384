@@ -48,7 +48,8 @@ Every family-facing text has an English field and a `_vi` Vietnamese field.
   "homework":   [ { "homework_id": null, "title": "", "due_date": null } ],
   "photos":     [ { "photo_id": "", "share": true, "caption": "", "caption_vi": "" } ],
   "quiz":       { "title": "", "questions": [ /* see below */ ] },
-  "sources":    { "transcript": true, "transcript_lines": 0, "photos": 0, "works": 0, "attendance": 0, "points": 0 }
+  "sources":    { "transcript": true, "transcript_lines": 0, "transcript_note": "", "photos": 0, "works": 0, "attendance": 0, "points": 0 }
+                // transcript_note only when there is no transcript (e.g. an admin built it: only the lesson's teacher reads it)
 }
 ```
 

@@ -311,6 +311,8 @@ const SUITES = [
   // How the family / child screen reads one of those reports (stage B).
   { name: "lesson report view", file: "lesson-report-view.test.mjs", migrations: [] },
   { name: "lesson quiz helpers", file: "lesson-quiz-lib.test.mjs", migrations: [] },
+  // Stage A without a database: the AI reply checked against the records, and what approval sends.
+  { name: "lesson report approval", file: "lesson-report-approval.test.mjs", migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
