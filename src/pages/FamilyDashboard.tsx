@@ -279,6 +279,12 @@ function Notice({ children }: { children: ReactNode }) {
   );
 }
 
+/** "2026-11-20" -> "Fri 20 Nov" (a calendar date, so read at local midnight; never shifted by time zone). */
+function lessonDay(d: string): string {
+  const t = new Date(`${d}T00:00:00`);
+  return Number.isNaN(t.getTime()) ? d : t.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+}
+
 export default function FamilyDashboard() {
   const { user } = useAuth();
   const { data: children = [], isLoading, isError, refetch, isFetching } = useChildren(user?.id);
@@ -407,7 +413,7 @@ export default function FamilyDashboard() {
                       <p className="flex items-start gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
                         <BookOpen className="mt-0.5 h-4 w-4 shrink-0" />
                         <span className="min-w-0 whitespace-normal break-words">
-                          {latest ? `Latest lesson · ${latest.title || "Lesson"} · ${latest.lesson_date}` : "Latest lesson"}
+                          {latest ? `Latest lesson · ${latest.title || "Lesson"} · ${lessonDay(latest.lesson_date)}` : "Latest lesson"}
                         </span>
                       </p>
                       {latest ? (
@@ -443,7 +449,7 @@ export default function FamilyDashboard() {
                           <div key={k} className="rounded-hec-md border border-hec-line px-4 py-3">
                             <p className="text-hec-small font-semibold text-hec-ink">
                               {l.title || "Lesson"}{" "}
-                              <span className="whitespace-nowrap font-normal tabular-nums text-hec-ink-soft">· {l.lesson_date}</span>
+                              <span className="whitespace-nowrap font-normal tabular-nums text-hec-ink-soft">· {lessonDay(l.lesson_date)}</span>
                             </p>
                             {l.summary && (
                               <p className="mt-1 line-clamp-2 text-hec-caption text-hec-ink-soft">{l.summary}</p>
