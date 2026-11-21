@@ -68,6 +68,11 @@ const SUITES = [
     file: "historical-payments.test.mjs",
     migrations: ["20261117121000_record_admin_payment.sql", "20261121090000_recorded_payment_guard.sql", "20261121110000_historical_payment_rows.sql"],
   },
+  // Tuition audit phase 4: merging duplicate students (every student_id
+  // table, read at run time) and the leftover-dong corrections through the
+  // real record_admin_payment.
+  { name: "merge students", file: "merge-students.test.mjs", migrations: ["20261121120000_admin_merge_students.sql"] },
+  { name: "leftover dong", file: "leftover-dong.test.mjs", migrations: ["20261117121000_record_admin_payment.sql", "20261113090000_invoice_paid_label.sql"] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.
