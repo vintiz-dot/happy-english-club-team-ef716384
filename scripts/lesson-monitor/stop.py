@@ -15,7 +15,10 @@ Victor can do the same from his Lesson reports screen ("Stop the pilot").
 
 `off` only removes the laptop switch; it never switches a class back on
 (that is the admin's pilot_admin.py switch-on, with the consent checks).
-Stopping deletes nothing: delete_pilot.py does that.
+`on` also deletes this laptop's working copies: every audio copy and every local draft
+(pilot\audio, pilot\drafts). Nothing is kept "for later" once the pilot is stopped; the
+database side is switched off with --class-id or the screen. delete_pilot.py removes the
+rest (step 0 files, logs) and the app's rows.
 """
 from __future__ import annotations
 
@@ -58,7 +61,8 @@ def main(argv=None) -> int:
         print("This does not switch any class back on; an admin does that with pilot_admin.py switch-on.")
         return 0
     switch_on_local(a.reason)
-    print(f"kill switch ON: {pc.stop_file()}")
+    audio_n, drafts_n = pc.wipe_work()
+    print(f"kill switch ON: {pc.stop_file()}; deleted {audio_n} audio files and {drafts_n} local draft files from this laptop")
     if a.class_id:
         import supa
         api = supa.open_api(a.token)
