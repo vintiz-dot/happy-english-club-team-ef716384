@@ -10,6 +10,7 @@
 //   node scripts/reception-tv.mjs watch      run the helper for ever (Task Scheduler / systemd)
 //   node scripts/reception-tv.mjs status     print what the helper knows
 //   node scripts/reception-tv.mjs youtube-now  play the next YouTube item now (a test)
+//   node scripts/reception-tv.mjs show         put the display in front now and renew Developer Mode
 //   node scripts/reception-tv.mjs autostart  copy the helper to ~/.hec-reception and start it at logon
 //
 // The helper, every 3 minutes during opening hours:
@@ -25,6 +26,7 @@
 // Node 22+ (built-in WebSocket). Runs the same on Windows and a Raspberry Pi.
 import { execFileSync, spawnSync } from "node:child_process";
 import { createSocket } from "node:dgram";
+import { connect as netConnect } from "node:net";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -198,6 +200,14 @@ function ssap(requests, { pairing = false, timeoutMs = 15000 } = {}) {
  * fills the ARP table, then pick the responder whose MAC is the TV's.
  * Returns its address, or null when it is not on the network (off).
  */
+function portOpen(host, port, ms = 3000) {
+  return new Promise((ok) => {
+    const sock = netConnect({ host, port });
+    const end = (v) => { sock.destroy(); ok(v); };
+    sock.setTimeout(ms, () => end(false));
+    sock.on("connect", () => end(true)).on("error", () => end(false));
+  });
+}
 async function findTv() {
   const responders = await new Promise((done) => {
     const found = new Set();
@@ -210,7 +220,6 @@ async function findTv() {
       setTimeout(() => { try { s.close(); } catch {} done(found); }, 4000);
     });
   });
-  if (!responders.size) return null;
   const mac = cfg.tvMac.toLowerCase().replace(/[:-]/g, "");
   const table = platform() === "win32"
     ? spawnSync("arp", ["-a"], { encoding: "utf8" }).stdout ?? ""
@@ -218,7 +227,9 @@ async function findTv() {
   for (const line of table.split(/\r?\n/)) {
     const ip = line.match(/(\d+\.\d+\.\d+\.\d+)/)?.[1];
     const m = line.match(/([0-9a-f]{2}[:-]){5}[0-9a-f]{2}/i)?.[0]?.toLowerCase().replace(/[:-]/g, "");
-    if (ip && m === mac && responders.has(ip)) return ip;
+    // SSDP can miss the TV when this machine has a second network (a hotspot),
+    // so the MAC match alone is enough if the TV's control port answers.
+    if (ip && m === mac && (responders.has(ip) || (await portOpen(ip, 3000)))) return ip;
   }
   return null;
 }
@@ -552,6 +563,14 @@ try {
   }
   else if (cmd === "pair") { console.log("Look at the TV and accept the prompt with the remote…"); await ssap([], { pairing: true }); console.log("Paired."); }
   else if (cmd === "check") await check();
+  else if (cmd === "show") {
+    // Put the display in front now (the TV must be on), and renew Developer Mode while it answers.
+    if (!(await tvAnswers())) throw new Error("The TV does not answer: is it on and on the Wi-Fi?");
+    await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]);
+    console.log(`Display launched on ${cfg.tvIp}.`);
+    try { await extendDevMode(); state.extendedOn = openNow().day; saveState(); console.log("Developer Mode renewed."); }
+    catch (e) { console.log(`Developer Mode not renewed: ${e.message}`); }
+  }
   else if (cmd === "youtube-now") { feedCache.at = 0; await youtubeBreak({ force: true }); }
   else if (cmd === "watch") await watch();
   else if (cmd === "autostart") autostart();
