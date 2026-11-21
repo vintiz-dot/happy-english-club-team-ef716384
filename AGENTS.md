@@ -69,6 +69,10 @@
 - calculate-tuition does not write `recorded_payment` (it belongs to the payment paths; writing back the value read at the start overwrote payments made meanwhile) and fails rather than saves when the month's bill or the earlier months cannot be read.
 - Both calculators return `carry.payable` from the same helper; a screen should show that, not add it up. A new invoice writer needs a case in `scripts/pgtest/invoice-status.test.mjs`, which also compares every figure with `fixtures/tuition-figures.golden.json` (the function before these changes); regenerate the golden only from figures known to be right.
 
+# Tuition audit reconciliation register
+- `tuition_reconciliation_items` (`20261121100000`) holds the 16 Nov 2026 audit's disputed family-months; Finance > Audit settles each once through `decide_tuition_reconciliation_item`, which moves money only via `record_admin_payment`. Never update the table directly or edit a bill for a decision. A new decision kind needs its check in the RPC, its legs in `src/lib/reconciliation.ts` and cases in `reconciliation-register.test.mjs`.
+- `scripts/load-reconciliation-items.mjs` compares the fee sheet per family (`students.family_id`) and only writes SQL to a file for the owner; its mapping names children and stays outside the repo.
+
 # Payment month
 - Payment forms share `useTuitionMonthConfirmation`: explicitly confirm the target invoice month separately from receipt date, resetting on reopen/month changes; `family-payment` requires and filters by that month, using monthly `recorded_payment` rather than cumulative `paid_amount`.
 
