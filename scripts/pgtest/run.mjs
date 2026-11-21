@@ -155,7 +155,7 @@ const SUITES = [
     file: "ai-actions.test.mjs",
     // 20261113090000 (T4) swaps their label CASE for invoice_paid_label, in
     // whatever definition is installed; run after it, as production will.
-    migrations: ["20261107090000_ai_assisted_admin_actions.sql", "20261113090000_invoice_paid_label.sql"],
+    migrations: ["20261107090000_ai_assisted_admin_actions.sql", "20261113090000_invoice_paid_label.sql", "20261117121000_record_admin_payment.sql", "20261117150000_ai_action_payment_on_ledger.sql"],
   },
   { name: "payroll session rules", file: "payroll-sessions.test.mjs", migrations: [] },
   // Also not a database test: the admin Payroll screen reads
@@ -360,7 +360,7 @@ const run = (suite) =>
 let failed = 0;
 let total = 0;
 
-for (const suite of SUITES) {
+for (const suite of SUITES.filter((s) => !process.env.ONLY || process.env.ONLY.split(",").includes(s.name))) {
   const r = await run(suite);
   const summary = r.out.trim().split("\n").pop() ?? "";
   const counted = /^(\d+) passed, (\d+) failed$/.exec(summary);
