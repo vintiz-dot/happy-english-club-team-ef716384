@@ -37,11 +37,12 @@ import { DemoDashboard } from "@/components/student/DemoDashboard";
 import { MonitorStatusCard } from "@/components/student/MonitorStatusCard";
 import { useStudentMonitorClasses } from "@/hooks/useClassMonitor";
 import { StudentExamReportsTab } from "@/components/exam-reports/StudentExamReportsTab";
+import { fetchStudentHomework, groupHomework, nextAction, studentHomeworkKey, todoCount } from "@/lib/studentHomework";
 import { HeroCommandDeck } from "@/components/student/nova/HeroCommandDeck";
 import { NovaStatCard } from "@/components/student/nova/NovaStatCard";
 import { QuickActionDock, type DockAction } from "@/components/student/nova/QuickActionDock";
 import { SectionHeading } from "@/components/student/nova/SectionHeading";
-import { BUTTON_QUIET, CARD, CARD_TITLE, reducedMotion } from "@/components/student/nova/ivory";
+import { BUTTON, BUTTON_QUIET, CARD, CARD_TITLE, LABEL, reducedMotion } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
 
 // Animation variants. "Ivory" design system: the page arrives once, as one
@@ -197,36 +198,25 @@ export default function StudentDashboard() {
     enabled: !!studentId,
   });
 
-  const { data: pendingHomework } = useQuery({
-    queryKey: ["student-pending-homework", studentId],
-    queryFn: async () => {
-      if (!studentId) return [];
-
-      // Use RPC to bypass RLS
-      const { data, error } = await supabase.rpc("get_student_homeworks", {
-        p_student_id: studentId,
-      });
-
-      if (error) {
-        console.error("get_student_homeworks RPC error:", error);
-        return [];
-      }
-
-      const result = data as any;
-      const homeworks: any[] = result?.homeworks || [];
-      const submissions: any[] = result?.submissions || [];
-      const submissionMap = new Map(submissions.map((s: any) => [s.homework_id, s]));
-
-      // Filter to pending (no submission or status is "pending")
-      const pending = homeworks.filter((hw: any) => {
-        const submission = submissionMap.get(hw.id);
-        return !submission || submission.status === "pending";
-      });
-
-      return pending.slice(0, 5);
-    },
+  // The same query the homework page runs, so the two share one cache entry.
+  const {
+    data: homeworkList,
+    isLoading: homeworkLoading,
+    isError: homeworkError,
+    refetch: refetchHomework,
+    isFetching: homeworkFetching,
+  } = useQuery({
+    queryKey: studentHomeworkKey(studentId),
+    queryFn: () => fetchStudentHomework(supabase, studentId!),
     enabled: !!studentId,
+    staleTime: 2 * 60 * 1000,
   });
+  const homeworkGroups = useMemo(() => groupHomework(homeworkList ?? []), [homeworkList]);
+  const homeworkReady = !!homeworkList && !homeworkError;
+  const homeworkTodo = homeworkReady ? todoCount(homeworkGroups) : 0;
+  const nextHomework = useMemo(() => nextAction(homeworkGroups), [homeworkGroups]);
+  /** Things to do now, in the same order as the homework page. */
+  const pendingHomework = useMemo(() => [...homeworkGroups.late, ...homeworkGroups.next], [homeworkGroups]);
 
   const { data: tuitionData } = useStudentMonthFinance(studentId, currentMonth);
 
@@ -301,7 +291,7 @@ export default function StudentDashboard() {
 
   // Build dynamic challenges based on real data
   const dynamicChallenges = useMemo(() => {
-    const hasCompletedHomework = (pendingHomework?.length || 0) === 0;
+    const hasCompletedHomework = homeworkReady && homeworkTodo === 0;
     const hasAttendedToday = upcomingSessions?.some((s: any) => 
       dayjs(s.date).isSame(dayjs(), 'day') && s.status === 'Held'
     ) || false;
@@ -338,7 +328,7 @@ export default function StudentDashboard() {
         icon: '🎓' 
       },
     ];
-  }, [pendingHomework, upcomingSessions, streakData]);
+  }, [homeworkReady, homeworkTodo, upcomingSessions, streakData]);
 
   // New student-role user with no student record at all → show DemoDashboard
   if (!studentId && isHydrated && role === "student") {
@@ -437,11 +427,73 @@ export default function StudentDashboard() {
           progress={levelInfo.progress}
           totalXp={totalPoints || 0}
           streak={streakData.currentStreak}
-          pendingHomework={pendingHomework?.length || 0}
+          pendingHomework={homeworkTodo}
           classesThisWeek={upcomingSessions?.length || 0}
           isMonitor={isMonitor}
           onEditProfile={() => setShowEditProfile(true)}
         />
+
+        {/* What do I need to do next? One answer, one button. */}
+        <motion.section
+          variants={itemVariants}
+          aria-labelledby="next-homework-title"
+          aria-busy={homeworkLoading}
+          className={cn(CARD, "min-h-[10rem] min-w-0")}
+        >
+          <p className={LABEL}>Homework</p>
+          <h2 id="next-homework-title" className={cn(CARD_TITLE, "mt-1")}>What do I need to do next?</h2>
+          {homeworkLoading ? (
+            <p className="mt-3 text-hec-body text-hec-ink-soft">Finding your homework…</p>
+          ) : homeworkError ? (
+            <div role="alert" className="mt-3 space-y-3">
+              <p className="text-hec-body text-hec-ink">We couldn't load your homework.</p>
+              <button
+                type="button"
+                onClick={() => refetchHomework()}
+                disabled={homeworkFetching}
+                className={cn(BUTTON, "bg-hec-action text-hec-on-action hover:bg-hec-action/90")}
+              >
+                {homeworkFetching ? "Trying…" : "Try again"}
+              </button>
+            </div>
+          ) : nextHomework ? (
+            <div className="mt-3 space-y-3">
+              <div className="min-w-0 space-y-1">
+                <p className="whitespace-normal break-words text-hec-h3 font-semibold text-hec-ink">{nextHomework.title || "Homework"}</p>
+                <p className="whitespace-normal break-words text-hec-small text-hec-ink-soft">{nextHomework.classes?.name || "Class"}</p>
+                <p className={cn("text-hec-small font-medium tabular-nums", homeworkGroups.late[0] === nextHomework ? "text-hec-danger" : "text-hec-ink")}>
+                  {nextHomework.due_date
+                    ? `${homeworkGroups.late[0] === nextHomework ? "Late · due" : "Due"} ${dayjs(nextHomework.due_date).format("ddd D MMM")}`
+                    : "No due date"}
+                </p>
+                <p className="text-hec-small tabular-nums text-hec-ink-soft">
+                  {homeworkTodo} {homeworkTodo === 1 ? "thing" : "things"} to do
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpenHomework(nextHomework)}
+                className={cn(BUTTON, "bg-hec-action text-hec-on-action hover:bg-hec-action/90")}
+              >
+                Open homework
+              </button>
+            </div>
+          ) : homeworkGroups.oldMisses.length > 0 ? (
+            <div className="mt-3 space-y-1">
+              <p className="text-hec-body text-hec-ink">Nothing due now.</p>
+              <Link to="/student/assignments" className={cn(BUTTON_QUIET, "-ml-3 px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
+                See older homework <ChevronRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-3 space-y-1">
+              <p className="text-hec-body text-hec-ink">No homework due.</p>
+              <Link to="/student/dashboard?tab=schedule" className={cn(BUTTON_QUIET, "-ml-3 px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
+                See my lessons <ChevronRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
+          )}
+        </motion.section>
 
         {/* Monitor Status Card */}
         {isMonitor && (
@@ -510,7 +562,7 @@ export default function StudentDashboard() {
           <NovaStatCard
             icon={Target}
             label="Active Quests"
-            value={pendingHomework?.length || 0}
+            value={homeworkTodo}
             caption="Homework to complete"
             gradient="from-violet-500 to-fuchsia-600"
             delay={0.12}
@@ -553,9 +605,13 @@ export default function StudentDashboard() {
                 </Link>
               </div>
 
-              {pendingHomework && pendingHomework.length > 0 ? (
+              {homeworkLoading ? (
+                <p className="rounded-hec-md bg-hec-sunken/60 px-6 py-8 text-center text-hec-small text-hec-ink-soft">Finding your homework…</p>
+              ) : homeworkError ? (
+                <p role="alert" className="rounded-hec-md bg-hec-sunken/60 px-6 py-8 text-center text-hec-small text-hec-ink-soft">We couldn't load your homework. Use "Try again" above.</p>
+              ) : pendingHomework.length > 0 ? (
                 <div className="space-y-3">
-                  {pendingHomework.slice(0, 3).map((hw: any, index: number) => (
+                  {pendingHomework.slice(0, 5).map((hw: any, index: number) => (
                     <HomeworkCard key={hw.id} homework={hw} index={index} compact onOpen={() => setOpenHomework(hw)} />
                   ))}
                 </div>
