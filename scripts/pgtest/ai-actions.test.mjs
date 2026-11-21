@@ -23,8 +23,11 @@ await db.exec(`
   CREATE SCHEMA auth;
   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
     $$ SELECT nullif(current_setting('test.uid', true), '')::uuid $$;
+  -- Supabase's: the role claim of the request's JWT (none here: the SQL editor / this harness).
+  CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS
+    $$ SELECT nullif(current_setting('request.jwt.claim.role', true), '') $$;
   GRANT USAGE ON SCHEMA public, auth TO authenticated, anon;
-  GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated, anon;
+  GRANT EXECUTE ON FUNCTION auth.uid(), auth.role() TO authenticated, anon;
 
   CREATE TYPE public.app_role AS ENUM ('admin','teacher','family','student');
   CREATE TYPE public.invoice_status AS ENUM ('draft','issued','paid','partial','credit');
@@ -90,7 +93,36 @@ await db.exec(`
   CREATE TABLE public.point_transactions (student_id uuid REFERENCES public.students(id), points integer);
   CREATE TABLE public.audit_log (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), entity text NOT NULL,
     entity_id text, action text NOT NULL, actor_user_id uuid, diff jsonb, occurred_at timestamptz DEFAULT now());
+  -- The payment ledger that 20261117121000 (record_admin_payment) and 20261117150000
+  -- (the assistant's payment step) work on, shaped as production's.
+  CREATE TYPE public.account_code AS ENUM ('AR','CASH','BANK','REVENUE','CREDIT','DISCOUNT');
+  CREATE TABLE public.payments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id uuid NOT NULL REFERENCES public.students(id), amount integer NOT NULL,
+    method text, occurred_at timestamptz DEFAULT now(), memo text, created_by uuid);
+  CREATE TABLE public.payment_deletions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), payment_id uuid,
+    snapshot jsonb, deleted_by uuid, deletion_reason text, deleted_at timestamptz DEFAULT now());
+  CREATE TABLE public.ledger_accounts (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id uuid NOT NULL REFERENCES public.students(id), code public.account_code NOT NULL, UNIQUE (student_id, code));
+  CREATE TABLE public.ledger_entries (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tx_id uuid NOT NULL, tx_key text UNIQUE,
+    account_id uuid NOT NULL REFERENCES public.ledger_accounts(id), debit integer NOT NULL DEFAULT 0,
+    credit integer NOT NULL DEFAULT 0, occurred_at timestamptz, memo text, month text, created_by uuid);
+  ALTER TABLE public.invoices ADD COLUMN confirmation_status text, ADD COLUMN confirmed_by uuid;
+  -- record_admin_payment runs as its caller: production's table rights (the migration's own preflight checks these).
+  GRANT SELECT ON public.students, public.payments, public.ledger_accounts, public.ledger_entries, public.invoices TO authenticated;
+  GRANT INSERT ON public.payments, public.ledger_accounts, public.ledger_entries, public.audit_log TO authenticated;
+  GRANT UPDATE ON public.invoices TO authenticated;
 `);
+
+// The payments delete guard as production installed it (20251024152825): 20261117150000 replaces it
+// only if it is exactly this (md5-checked), so it is taken from that migration, not retyped.
+{
+  const origin = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "supabase", "migrations",
+    "20251024152825_6747d865-6888-4aa4-b728-fdb8e5a109d3.sql"), "utf8");
+  const a = origin.indexOf("CREATE OR REPLACE FUNCTION public.prevent_direct_payment_deletion()");
+  const endMark = "EXECUTE FUNCTION public.prevent_direct_payment_deletion();";
+  const b = origin.indexOf(endMark, a) + endMark.length;
+  await db.exec(origin.slice(a, b));
+}
 
 for (const file of process.argv.slice(2)) {
   try { await db.exec(readFileSync(file, "utf8")); ok(`migration applies: ${file.split(/[\\/]/).pop()}`, true); }
@@ -310,7 +342,7 @@ console.log("=== recording tuition ===");
   let inv = await one("SELECT recorded_payment, status FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0]);
   eq("added to the month's payments", [inv.recorded_payment, inv.status], [123000, "partial"]);
   const a = await one("SELECT diff FROM public.audit_log WHERE entity = 'invoice' AND action = 'record_payment' ORDER BY occurred_at DESC LIMIT 1");
-  eq("with the same audit entry the payment dialog writes", [a.diff.payment_amount, a.diff.payment_method, a.diff.memo, a.diff.via], [123000, "Bank Transfer", "Zalo", "assistant"]);
+  eq("with the same audit entry the payment dialog writes (record_admin_payment, since 20261117150000)", [a.diff.payment_amount, a.diff.method, a.diff.memo, a.diff.via], [123000, "Bank Transfer", "Zalo", "record-payment"]);
 
   await db.query("UPDATE public.invoices SET recorded_payment = recorded_payment + 200000 WHERE student_id = $1 AND month = $2", [lan, M0]);
   ok("undo", (await undo(r.action_id)).ok);
@@ -354,7 +386,10 @@ console.log("=== recording tuition ===");
   try { await db.exec(readFileSync(t4mig, "utf8")); again = null; } catch (e) { again = e.message; }
   const def2 = (await one("SELECT pg_get_functiondef('public.ai_action_apply(uuid, text, jsonb)'::regprocedure) AS d")).d
     + (await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d;
-  ok("T4: the migration run a second time changes nothing", again === null && def2 === def, again);
+  // 20261117150000 has replaced both functions since, so a second paste of 20261113090000 no longer finds the
+  // CASE it patches: it must refuse (fail closed) and leave the installed functions exactly as they are.
+  ok("T4: 20261113090000 pasted again after 20261117150000 refuses and changes nothing",
+     /expected exactly one label expression/.test(again ?? "") && def2 === def, again);
 
   // T4 r2 (review m1): an admin's credit label is kept by the assistant too.
   await db.query("UPDATE public.invoices SET status = 'credit' WHERE student_id = $1 AND month = $2", [lan, M0]);
@@ -372,11 +407,12 @@ console.log("=== recording tuition ===");
     + `${(await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d};`);
   if (process.env.T4_WRITE_REFERENCE === "1") {
     writeFileSync(refPath, `-- REFERENCE ONLY - do not paste. The source of public.ai_action_apply and\n`
-      + `-- public.ai_action_undo as installed after migrations 20261107090000 and\n`
-      + `-- 20261113090000 (the label patch). No migration holds this text any more:\n`
-      + `-- start any change to either function from here, and keep\n`
-      + `-- public.invoice_paid_label as its label. scripts/pgtest/ai-actions.test.mjs\n`
-      + `-- fails when the installed functions differ from the text below.\n\n${installed}\n`);
+      + `-- public.ai_action_undo as installed after migrations 20261107090000,\n`
+      + `-- 20261113090000 (the label patch) and 20261117150000 (the payment step\n`
+      + `-- through record_admin_payment; its undo as delete-payment). Start any\n`
+      + `-- change to either function from here, and keep public.invoice_paid_label\n`
+      + `-- as its label. scripts/pgtest/ai-actions.test.mjs fails when the\n`
+      + `-- installed functions differ from the text below.\n\n${installed}\n`);
   }
   // The file is its header comment, one blank line, then the source.
   const refText = existsSync(refPath) ? readFileSync(refPath, "utf8").replace(/\r\n/g, "\n") : "";
