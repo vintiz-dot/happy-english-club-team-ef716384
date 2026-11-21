@@ -16,7 +16,7 @@ export function RecordingBar({ state, startingLong, elapsed, className, bothMics
 }) {
   const loud = state === "stalled" || startingLong;
   const text = state === "recording" ? "Recording"
-    : state === "stalled" ? (bothMicsGone ? "NOT RECORDING - both microphones are gone" : "NOT RECORDING - restarting the audio")
+    : state === "stalled" ? (bothMicsGone ? "Interrupted - NOT RECORDING - both microphones are gone" : "Interrupted - NOT RECORDING - restarting the audio")
     : startingLong ? "Saving on this laptop - the school server has not confirmed yet" : "Starting...";
   return (
     <div
