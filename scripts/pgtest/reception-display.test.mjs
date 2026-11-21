@@ -123,5 +123,19 @@ if (MIGS.some((m) => m.includes("reception_media"))) {
   ok("a parent cannot", (await tryAs(PARENT, "family", "authenticated", () => db.query(`INSERT INTO storage.objects (bucket_id, name) VALUES ('reception-video','w.mp4')`))) !== null);
 }
 
+if (MIGS.some((m) => m.includes("reception_tv_commands"))) {
+  console.log("=== TV power buttons ===");
+  ok("an admin presses Turn on", (await tryAs(ADMIN, "admin", "authenticated", () => db.query(
+    `UPDATE public.reception_settings SET tv_command = 'on', tv_command_at = now(), tv_command_result = NULL`))) === null);
+  eq("the command is waiting", (await one(`SELECT tv_command FROM public.reception_settings`)).tv_command, "on");
+  ok("an unknown command is refused", (await tryAs(ADMIN, "admin", "authenticated", () => db.query(
+    `UPDATE public.reception_settings SET tv_command = 'reboot'`))) !== null);
+  await as(PARENT, "family", "authenticated", () => db.query(`UPDATE public.reception_settings SET tv_command = 'off'`));
+  eq("a parent cannot press it (no row is theirs)", (await one(`SELECT tv_command FROM public.reception_settings`)).tv_command, "on");
+  ok("anon cannot read or press it", (await tryAs(null, null, "anon", () => db.query(`UPDATE public.reception_settings SET tv_command = 'off'`))) !== null);
+  ok("a result over 300 characters is refused", (await tryAs(ADMIN, "admin", "authenticated", () => db.query(
+    `UPDATE public.reception_settings SET tv_command_result = repeat('x', 301)`))) !== null);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
