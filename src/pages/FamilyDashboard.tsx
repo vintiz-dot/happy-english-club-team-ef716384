@@ -322,7 +322,7 @@ export default function FamilyDashboard() {
             {!isLoading && isError && (
               <Notice>
                 <p role="alert">We couldn't load your family's records.</p>
-                <Button type="button" className="min-h-11" onClick={() => void refetch()} disabled={isFetching}>
+                <Button type="button" className="min-h-11" onClick={() => refetch()} disabled={isFetching}>
                   <RefreshCw className="h-4 w-4 shrink-0" />Try again
                 </Button>
               </Notice>

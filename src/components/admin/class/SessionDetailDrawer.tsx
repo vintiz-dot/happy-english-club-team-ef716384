@@ -264,7 +264,7 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
                     </Select>
                     <div className="flex flex-wrap gap-2">
                       <Button 
-                        onClick={() => updateSessionMutation.mutate({ teacherId: selectedTeacher })}
+                        onClick={() => updateSessionMutation.mutateAsync({ teacherId: selectedTeacher }).catch(() => {})}
                         size="sm"
                       >
                         Save

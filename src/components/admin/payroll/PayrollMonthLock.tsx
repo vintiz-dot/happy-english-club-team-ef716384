@@ -241,7 +241,7 @@ export function PayrollMonthLock({ month, live, liveReady = true }: PayrollMonth
         ) : (
           <Button
             size="sm"
-            onClick={() => act.mutate({ action: "close" })}
+            onClick={() => act.mutateAsync({ action: "close" }).catch(() => {})}
             disabled={act.isPending || earned <= 0}
           >
             <Lock className="mr-2 h-4 w-4" />
@@ -280,7 +280,7 @@ export function PayrollMonthLock({ month, live, liveReady = true }: PayrollMonth
             size="sm"
             variant="destructive"
             disabled={reason.trim().length < 3 || act.isPending}
-            onClick={() => act.mutate({ action: "reopen", reason: reason.trim() })}
+            onClick={() => act.mutateAsync({ action: "reopen", reason: reason.trim() }).catch(() => {})}
           >
             Reopen {label}
           </Button>
@@ -316,13 +316,13 @@ export function PayrollMonthLock({ month, live, liveReady = true }: PayrollMonth
               {approvalSent ? (
                 <p className="text-hec-small text-hec-ink-soft">Sent. It is carried when another administrator approves it.</p>
               ) : (
-                <Button size="sm" variant="outline" disabled={askApproval.isPending} onClick={() => askApproval.mutate()}>
+                <Button size="sm" variant="outline" disabled={askApproval.isPending} onClick={() => askApproval.mutateAsync().catch(() => {})}>
                   {askApproval.isPending ? "Sending…" : "Send for approval"}
                 </Button>
               )}
             </div>
           ) : (
-            <Button size="sm" variant="outline" disabled={carry.isPending} onClick={() => carry.mutate()}>
+            <Button size="sm" variant="outline" disabled={carry.isPending} onClick={() => carry.mutateAsync().catch(() => {})}>
               <ArrowRightLeft className="mr-2 h-4 w-4" />
               {carry.isPending ? "Carrying…" : `Carry into ${dayjs(`${nextOpenMonth(month)}-01`).format("MMM YYYY")}`}
             </Button>

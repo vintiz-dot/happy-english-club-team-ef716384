@@ -356,7 +356,7 @@ export function AdminUsersManager() {
           <ReasonField label="Why this account needs the administrator role (required)" value={grantReason} onChange={setGrantReason} min={REASON_MIN} disabled={grantBusy} />
           <AlertDialogFooter>
             <AlertDialogCancel disabled={grantBusy}>Cancel</AlertDialogCancel>
-            <Button onClick={() => void sendGrant()} disabled={grantBusy || !checkReason(grantReason, REASON_MIN).ok}>
+            <Button onClick={() => sendGrant()} disabled={grantBusy || !checkReason(grantReason, REASON_MIN).ok}>
               Send for approval
             </Button>
           </AlertDialogFooter>

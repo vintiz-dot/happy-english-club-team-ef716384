@@ -116,7 +116,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
       // Play subtle hover sound
-      if (typeof window !== 'undefined' && !props.disabled) {
+      if (typeof window !== 'undefined' && !disabled) {
         import('@/lib/soundManager').then(({ soundManager }) => {
           if (soundManager.getVolume() > 0.5) { // Only on higher volume settings
             soundManager.play('hover');

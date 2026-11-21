@@ -228,7 +228,7 @@ export function PayRateHistory({ staffId, staffType, staff, previewMinutes = DEF
       )}
 
       <Button
-        onClick={() => save.mutate()}
+        onClick={() => save.mutateAsync().catch(() => {})}
         disabled={!rate || !!error || save.isPending}
         className="w-full"
       >

@@ -401,7 +401,7 @@ export function EnrollmentRateEditor({ studentId, month, onClose }: EnrollmentRa
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
+          <Button onClick={() => updateMutation.mutateAsync().catch(() => {})} disabled={updateMutation.isPending}>
             {updateMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Save Changes
           </Button>

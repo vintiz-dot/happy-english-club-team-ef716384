@@ -75,7 +75,7 @@ export function MoneyGuardDialog({ guard, names, title, intro, submitLabel }: {
         <div className="flex flex-wrap justify-end gap-2 pt-2">
           <Button variant="outline" onClick={close} disabled={busy}>Keep as it was</Button>
           {needsApproval
-            ? <Button onClick={() => void requestApproval()} disabled={!canRequestApproval || busy}>Send for approval</Button>
+            ? <Button onClick={() => requestApproval()} disabled={!canRequestApproval || busy}>Send for approval</Button>
             : <Button onClick={submit} disabled={!canSubmit || busy}>{submitLabel ?? MONEY_COPY.submit[op] ?? "Confirm"}</Button>}
         </div>
       </DialogContent>

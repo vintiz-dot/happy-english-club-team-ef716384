@@ -189,7 +189,7 @@ function RequestDetail({ id, row, me, onChanged }: { id: string; row: ApprovalQu
             <section aria-label="Approve" className="space-y-2">
               <ReasonField label="Note (optional)" help="What you checked." value={note} onChange={setNote} min={0} disabled={busy} />
               <Button className="min-h-11 w-full sm:w-auto" disabled={busy || !look.token}
-                onClick={() => void act(() => approveRequest(row.request_id, look.token, note.trim() ? cleanReason(note) : null),
+                onClick={() => act(() => approveRequest(row.request_id, look.token, note.trim() ? cleanReason(note) : null),
                   (d) => { const t = decidedText(d?.decision, d?.tuition); setBillsLeft(t.billsLeft); return t.text; })}>
                 {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
                 Approve and make the change
@@ -200,27 +200,27 @@ function RequestDetail({ id, row, me, onChanged }: { id: string; row: ApprovalQu
             <section aria-label="Reject" className="space-y-2">
               {!look.can_approve && <ReasonField label="Why not (required to reject)" value={note} onChange={setNote} min={REASON_MIN} disabled={busy} />}
               <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy || !noteOk}
-                onClick={() => void act(() => rejectRequest(row.request_id, cleanReason(note)), () => "Rejected: nothing was changed.")}>
+                onClick={() => act(() => rejectRequest(row.request_id, cleanReason(note)), () => "Rejected: nothing was changed.")}>
                 Reject{noteOk ? "" : " (write why first)"}
               </Button>
             </section>
           )}
           {look.can_release && (
             <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy}
-              onClick={() => void act(() => releaseOwnRequest(row.request_id, look.token),
+              onClick={() => act(() => releaseOwnRequest(row.request_id, look.token),
                 (d) => { const t = decidedText(d?.decision, d?.tuition, true); setBillsLeft(t.billsLeft); return t.text; })}>
               Do it alone (the other administrator is away)
             </Button>
           )}
           {look.can_withdraw && (
             <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy}
-              onClick={() => void act(() => withdrawRequest(row.request_id), () => "Withdrawn: nothing was changed.")}>
+              onClick={() => act(() => withdrawRequest(row.request_id), () => "Withdrawn: nothing was changed.")}>
               Withdraw my request
             </Button>
           )}
           {look.needs_acknowledgement && (
             <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy}
-              onClick={() => void act(() => acknowledgeReleased(row.request_id, null), () => "Marked as read.")}>
+              onClick={() => act(() => acknowledgeReleased(row.request_id, null), () => "Marked as read.")}>
               I have read this
             </Button>
           )}
@@ -228,7 +228,7 @@ function RequestDetail({ id, row, me, onChanged }: { id: string; row: ApprovalQu
             <section aria-label="Bills" className="space-y-1">
               {billsLeft && <p role="alert" className="text-sm">Until its bills are worked out again, families may see a bill that does not include this change.</p>}
               <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy}
-                onClick={() => void act(() => refreshApprovedBills(row.request_id),
+                onClick={() => act(() => refreshApprovedBills(row.request_id),
                   (d) => { const t = decidedText(null, d?.tuition); setBillsLeft(t.billsLeft); return t.text; })}>
                 Work out the bills again
               </Button>
@@ -273,7 +273,7 @@ function AskAgain({ row, onDone }: { row: ApprovalQueueRow; onDone: (text: strin
     }
   };
   return (
-    <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy || !req} onClick={() => void again()}>
+    <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy || !req} onClick={() => again()}>
       Ask again with today's figures
     </Button>
   );

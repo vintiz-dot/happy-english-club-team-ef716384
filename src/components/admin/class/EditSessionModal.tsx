@@ -200,7 +200,7 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => void handleSave(false)} disabled={saving}>
+          <Button onClick={() => handleSave(false)} disabled={saving}>
             {saving ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>
