@@ -56,6 +56,8 @@ const SUITES = [
     file: "reconciliation-register.test.mjs",
     migrations: ["20261113090000_invoice_paid_label.sql", "20261117121000_record_admin_payment.sql", "20261121090000_recorded_payment_guard.sql", "20261121100000_tuition_reconciliation_register.sql"],
   },
+  // Its loader: the fee sheet and the app's bills compared per family, with a pattern.
+  { name: "reconciliation loader", file: "reconciliation-loader.test.mjs", migrations: [] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.
