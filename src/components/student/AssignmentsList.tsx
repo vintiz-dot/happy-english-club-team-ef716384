@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchStudentHomework } from "@/lib/studentHomework";
 import { RichText } from "@/components/homework/RichText";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,23 +22,8 @@ export default function AssignmentsList({ studentId }: AssignmentsListProps) {
 
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["student-assignments", studentId],
-    queryFn: async () => {
-      // Use RPC to bypass RLS
-      const { data, error } = await supabase.rpc("get_student_homeworks", {
-        p_student_id: studentId,
-      });
-
-      if (error) {
-        console.error("AssignmentsList RPC error:", error);
-        return [];
-      }
-
-      const result = data as any;
-      const homeworks: any[] = result?.homeworks || [];
-      const submissions: any[] = result?.submissions || [];
-      const submissionMap = new Map(submissions.map((s: any) => [s.homework_id, s]));
-      return homeworks.map((hw: any) => ({ ...hw, submission: submissionMap.get(hw.id) || null }));
-    },
+    // Shared with the homework page and Home: a failed read throws, so it is never cached as "no homework".
+    queryFn: () => fetchStudentHomework(supabase, studentId),
     staleTime: 2 * 60 * 1000,
   });
 

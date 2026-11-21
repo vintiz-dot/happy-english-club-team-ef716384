@@ -5,6 +5,7 @@ import { CheckCircle2, ChevronLeft, Clock, Video } from "lucide-react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchStudentHomework } from "@/lib/studentHomework";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import VideoHomeworkSubmission from "@/components/video-homework/VideoHomeworkSubmission";
 import { videoDb } from "@/lib/video/recorder";
@@ -30,14 +31,8 @@ export default function StudentRecord() {
     queryKey: ["student-assignments", studentId],
     enabled: !!studentId,
     staleTime: 2 * 60 * 1000,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_student_homeworks", { p_student_id: studentId! });
-      if (error) return [];
-      const result = data as any;
-      const subs: any[] = result?.submissions || [];
-      const byHw = new Map(subs.map((s) => [s.homework_id, s]));
-      return ((result?.homeworks || []) as any[]).map((hw) => ({ ...hw, submission: byHw.get(hw.id) || null }));
-    },
+    // Shared cache key: a failed read throws rather than caching "no homework" for the other screens.
+    queryFn: () => fetchStudentHomework(supabase, studentId!),
   });
 
   // Recent first; only as many as a child could plausibly have open at once.
