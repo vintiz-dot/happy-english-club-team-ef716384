@@ -16,6 +16,7 @@ import { SubmitCheckmark } from "./SubmitCheckmark";
 import { useIvory } from "@/hooks/useIvory";
 import { shrinkPhoto } from "@/lib/shrinkPhoto";
 import VideoHomeworkSubmission, { useVideoHomework } from "@/components/video-homework/VideoHomeworkSubmission";
+import LessonQuizPlayer, { useLessonQuiz } from "@/components/homework/LessonQuizPlayer";
 
 interface HomeworkSubmissionProps {
   homeworkId: string;
@@ -29,7 +30,12 @@ export default function HomeworkSubmission(props: HomeworkSubmissionProps) {
   // Until the video migration is applied the lookup fails and this falls
   // through to the written form, exactly as before.
   const { data: video, isLoading } = useVideoHomework(props.homeworkId, props.studentId);
-  if (isLoading) return null;
+  // A lesson review quiz (set by an approved lesson report) is answered in the app and marked by the database.
+  const { data: quiz, isLoading: quizLoading } = useLessonQuiz(props.homeworkId, props.studentId);
+  if (isLoading || quizLoading) return null;
+  if (quiz) {
+    return <LessonQuizPlayer homeworkId={props.homeworkId} studentId={props.studentId} quiz={quiz} />;
+  }
   if (video?.submission_type === "video") {
     return <VideoHomeworkSubmission homeworkId={props.homeworkId} studentId={props.studentId} onSuccess={props.onSuccess} kid />;
   }

@@ -113,7 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     setStudentId(undefined);
     try {
-      const { error } = await supabase.auth.signOut();
+      // This device only (owner, 21 Nov 2026). The default scope is "global",
+      // which revoked every session of the account: signing out on a phone
+      // ended the laptop's lesson-monitor job mid-lesson. "local" still revokes
+      // this session's refresh token on the server, so it cannot be reused.
+      const { error } = await supabase.auth.signOut({ scope: "local" });
       if (error) {
         // Server revoke failed (offline, 5xx): supabase-js keeps the local
         // session, which would bounce the user back in from /auth.

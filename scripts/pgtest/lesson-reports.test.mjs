@@ -217,10 +217,220 @@ refused("a claim after approval needs redo", await tryAs(VICTOR, () => db.query(
 eq("anon cannot call approval", (await one(`SELECT has_function_privilege('anon','public.approve_lesson_report(uuid, jsonb, jsonb, jsonb, uuid[], jsonb)','EXECUTE') p`)).p, false);
 
 // ---------------------------------------------------------------- stage A (draft builder) adds cases here
+{
+  // What the review screen sends (src/lib/lessonReportApproval.ts), through the real approval.
+  const { transform } = await import("esbuild");
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { join, resolve, dirname } = await import("node:path");
+  const { tmpdir } = await import("node:os");
+  const { fileURLToPath, pathToFileURL } = await import("node:url");
+  const src = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "src", "lib", "lessonReportApproval.ts"), "utf8");
+  const tmp = join(mkdtempSync(join(tmpdir(), "lr-a-")), "approval.mjs");
+  writeFileSync(tmp, (await transform(src, { loader: "ts", format: "esm" })).code);
+  const A = await import(pathToFileURL(tmp).href);
+
+  refused("a TA cannot save a draft", await tryAs(TAU, () => db.query(
+    `SELECT public.lesson_report_finish($1, 1, '{"x":1}'::jsonb)`, [LESSON])), /Only a teacher of this class or an admin/);
+
+  // A lesson of its own (yesterday's), so the contract's LESSON stays as the later stages expect it.
+  const L2 = (await one(`INSERT INTO public.sessions (class_id, teacher_id, date, start_time, end_time)
+    VALUES ($1,$2, CURRENT_DATE - 1, '17:30','19:00') RETURNING id`, [VENUS, tVictor])).id;
+  const photo2 = (await one(`INSERT INTO public.lesson_report_photos (session_id, class_id, storage_path, uploaded_by)
+    VALUES ($1,$2,$3,$4) RETURNING id`, [L2, VENUS, path(VENUS, L2, "w.jpg"), VICTOR])).id;
+  const draft = A.readDraft({
+    lesson: { title: "Animals", title_vi: "", summary: "We learned animals.", summary_vi: "" },
+    objectives: [{ text: "Name animals", text_vi: "", met: "yes", evidence: "STAFF-EVIDENCE" }, { text: "Plurals", text_vi: "", met: "partly", evidence: "" }],
+    gaps: [{ issue: "STAFF-GAP", kind: "grammar", who: "some", evidence: [{ t: 61, quote: "two cat" }], suggestion: "" }],
+    students: [
+      { student_id: k1, highlight: "Named five animals", work_ids: ["not-theirs"], points: 3, attendance: "Present",
+        name_moments: [{ t: 90, quote: "STAFF-MOMENT", why: "", decision: "accepted" }] },
+      { student_id: k2, highlight: "", work_ids: [], points: 0, attendance: "Present", name_moments: [] },
+    ],
+    photos: [{ photo_id: photo2, share: true, caption: "The board", caption_vi: "" }],
+    quiz: { title: "Review", questions: [{ id: "q1", kind: "gap", prompt: "Two ___ are sleeping", options: [], answer: "cats", accept: ["Cats"] }] },
+    sources: { transcript: true, transcript_lines: 2 },
+  });
+  const args = A.buildApproval(draft, { comments: { [k1]: "Well done" }, excluded: [], quiz: { include: true, due_date: null, points: 10, body: null } },
+    { sessionId: L2, enrolled: [k1, k2], workOwner: {}, lessonPhotoIds: [photo2], model: "test" });
+  eq("the screen's mapping is accepted by approve_lesson_report", await tryAs(VICTOR, () => db.query(
+    `SELECT public.approve_lesson_report($1, $2::jsonb, $3::jsonb, $4::jsonb, $5::uuid[], $6::jsonb)`,
+    [args.p_session, JSON.stringify(args.p_class_part), JSON.stringify(args.p_staff_part), JSON.stringify(args.p_students), args.p_photo_ids, JSON.stringify(args.p_quiz)])), null);
+  const stored = await one(`SELECT r.class_part::text cp, r.staff_part::text sp,
+      (SELECT string_agg(part::text, '|') FROM public.lesson_report_students WHERE report_id = r.id) parts
+    FROM public.lesson_reports r WHERE r.session_id = $1`, [L2]);
+  ok("what families read holds no gap, name moment, evidence or source",
+    !/STAFF-|"gaps"|"name_moments|"evidence"|"sources"/.test(stored.cp + stored.parts), stored.cp + stored.parts);
+  ok("...and staff_part keeps them", /STAFF-GAP/.test(stored.sp) && /STAFF-MOMENT/.test(stored.sp));
+  ok("a work id that is not the child's is not stored", !/not-theirs/.test(stored.parts));
+  // The screen's Rebuild on an approved lesson sends redo; the claim refuses without it.
+  refused("rebuilding an approved lesson without redo is refused",
+    await tryAs(ADMIN, () => db.query(`SELECT public.lesson_report_claim($1)`, [L2])), /already approved/);
+  eq("an admin may rebuild it with redo", (await rowsAs(ADMIN, `SELECT public.lesson_report_claim($1, true) r`, [L2]))[0].r, 1);
+  eq("...and save that run", (await rowsAs(ADMIN, `SELECT public.lesson_report_finish($1, 1, '{"schema":"hec-lesson-report-draft/1"}'::jsonb) r`, [L2]))[0].r, true);
+}
 
 // ---------------------------------------------------------------- stage B (families) adds cases here
+// 20261121131000_lesson_report_family: get_lesson_reports_for_student and lesson_report_file.
+// Its own lesson (in March), so the other stages' state does not matter.
+{
+  const B_MIG = EXTRA.find((f) => f.includes("lesson_report_family"));
+  ok("stage B: the family migration is loaded", !!B_MIG, "pass 20261121131000_lesson_report_family.sql to the suite");
+  // production's student_work, the columns the file function reads
+  await db.exec(`CREATE TABLE IF NOT EXISTS public.student_work (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id uuid, class_id uuid, is_teamwork boolean NOT NULL DEFAULT false,
+    member_student_ids uuid[] NOT NULL DEFAULT '{}', storage_path text, status text NOT NULL DEFAULT 'approved')`);
+  const PARENT3 = U(8), PARENT4 = U(9);
+  await q(`INSERT INTO auth.users (id) VALUES ($1),($2)`, [PARENT3, PARENT4]);
+  await q(`INSERT INTO public.user_roles VALUES ($1,'family'),($2,'family')`, [PARENT3, PARENT4]);
+  const kLate = await kid("Child Late", VENUS, "2026-04-01");
+  const kNoPart = await kid("Child Quiet", VENUS);
+  // STUDENT is k1's own login (the stand-in can_view_student reads family_students for both)
+  await q(`INSERT INTO public.family_students VALUES ($1,$2),($3,$4),($5,$6)`, [STUDENT, k1, PARENT3, kLate, PARENT4, k3]);
+  const B_LESSON = (await one(`INSERT INTO public.sessions (class_id, teacher_id, date, start_time, end_time)
+    VALUES ($1,$2,'2026-03-10','17:30','19:00') RETURNING id`, [VENUS, tVictor])).id;
+  const bPhoto = async (f) => (await one(`INSERT INTO public.lesson_report_photos (session_id, class_id, storage_path, uploaded_by)
+    VALUES ($1,$2,$3,$4) RETURNING id`, [B_LESSON, VENUS, path(VENUS, B_LESSON, f), VICTOR])).id;
+  const shared = await bPhoto("board.jpg"), unshared = await bPhoto("faces.jpg");
+  const work = async (owner, p, team = []) => (await one(`INSERT INTO public.student_work (student_id, class_id, is_teamwork, member_student_ids, storage_path)
+    VALUES ($1,$2,$3,$4,$5) RETURNING id`, [owner, VENUS, team.length > 0, team, p])).id;
+  const w1 = await work(k1, "k1/poster.jpg"), w2 = await work(k2, "k2/poster.jpg");
+  const wTeam = await work(k2, "team/poster.jpg", [k1, k2]), wUnlisted = await work(k1, "k1/other.jpg");
+  const classPart = {
+    schema: "hec-lesson-report/1",
+    lesson: { title: "Animals", title_vi: "Động vật", summary: "We learned animals", summary_vi: "Chúng con học về động vật" },
+    objectives: [{ text: "Name 5 animals", text_vi: "Gọi tên 5 con vật", met: "yes", evidence: "STAFF-EVIDENCE" }],
+    words: [{ en: "cat", vi: "con mèo" }],
+    photo_captions: { [shared]: { caption: "Our board", caption_vi: "Bảng của lớp" }, [unshared]: { caption: "SECRET-CAPTION" } },
+    gaps: [{ issue: "STAFF-GAP" }], // a writer slipping a staff key in: the family function drops it
+  };
+  const bParts = [
+    { student_id: k1, part: { highlight: "One B", attendance: "Present", points: 3, work_ids: [w1, wTeam, w2], name_moments: [{ quote: "STAFF-MOMENT" }] } },
+    { student_id: k2, part: { highlight: "Two B", work_ids: [w2] } },
+  ];
+  eq("stage B: the teacher approves the March lesson", await tryAs(VICTOR, () => db.query(
+    `SELECT public.approve_lesson_report($1, $2::jsonb, '{"gaps":["STAFF-ONLY plural -s"]}'::jsonb, $3::jsonb, $4::uuid[], $5::jsonb)`,
+    [B_LESSON, JSON.stringify(classPart), JSON.stringify(bParts), [shared], JSON.stringify(QUIZ)])), null);
 
-// ---------------------------------------------------------------- stage C (review quiz) adds cases here
+  const reportsAs = async (uid, student, limit = 20, before = null) =>
+    rowsAs(uid, `SELECT * FROM public.get_lesson_reports_for_student($1, $2, $3::date)`, [student, limit, before]);
+  const bRow = (rows) => rows.find((r) => r.session_id === B_LESSON);
+  const r1 = bRow(await reportsAs(PARENT, k1));
+  ok("a parent reads their child's March report", !!r1);
+  eq("...with their own child's part", r1?.part?.highlight, "One B");
+  eq("...and the class part", r1?.class_part?.lesson?.title, "Animals");
+  const text = JSON.stringify(r1 ?? {});
+  ok("...never the staff part", !text.includes("STAFF-ONLY") && !("staff_part" in (r1 ?? {})));
+  ok("...never another child's part", !text.includes("Two B"));
+  ok("...never a staff key slipped into the class part", !text.includes("STAFF-GAP") && !("gaps" in (r1?.class_part ?? {})));
+  ok("...objectives keep met, lose evidence", r1?.class_part?.objectives?.[0]?.met === "yes" && !text.includes("STAFF-EVIDENCE"));
+  ok("...nor name moments in the child's part", !text.includes("STAFF-MOMENT"));
+  eq("...only the shared photo, with its approved caption", r1?.photos, [{ id: shared, caption: "Our board", caption_vi: "Bảng của lớp" }]);
+  ok("...and the review homework", !!r1?.review_homework_id);
+  eq("the other child's parent gets their own child's part", bRow(await reportsAs(PARENT2, k2))?.part?.highlight, "Two B");
+  eq("the child's own login reads it", bRow(await reportsAs(STUDENT, k1))?.part?.highlight, "One B");
+  const quiet = bRow(await reportsAs(ADMIN, kNoPart));
+  ok("a child in the class without a part gets the class part and no part", quiet?.class_part?.lesson?.title === "Animals" && quiet?.part === null);
+  refused("a parent cannot read another family's child",
+    await tryAs(PARENT2, () => db.query(`SELECT * FROM public.get_lesson_reports_for_student($1)`, [k1])), /Not your child/);
+  refused("nor can a signed-out caller",
+    await tryAs(null, () => db.query(`SELECT * FROM public.get_lesson_reports_for_student($1)`, [k1])), /Not your child/);
+  eq("a child who joined after the lesson sees nothing of it", bRow(await reportsAs(PARENT3, kLate)), undefined);
+  eq("a child of another class sees nothing", (await reportsAs(PARENT4, k3)).length, 0);
+  eq("newest first, and p_before pages back",
+    [(await reportsAs(PARENT, k1, 1))[0]?.session_id === LESSON, (await reportsAs(PARENT, k1, 5, "2026-11-01")).map((r) => r.session_id)],
+    [true, [B_LESSON]]);
+  eq("anon cannot call the family functions",
+    (await one(`SELECT has_function_privilege('anon','public.get_lesson_reports_for_student(uuid, integer, date)','EXECUTE')
+              OR has_function_privilege('anon','public.lesson_report_file(text, uuid, uuid)','EXECUTE') p`)).p, false);
+
+  const fileAs = async (uid, kind, id, student) =>
+    (await rowsAs(uid, `SELECT public.lesson_report_file($1, $2, $3) f`, [kind, id, student]))[0].f;
+  eq("the shared photo comes to the parent", await fileAs(PARENT, "photo", shared, k1),
+    { path: path(VENUS, B_LESSON, "board.jpg"), bucket: "lesson-photos" });
+  eq("an unshared photo does not", await fileAs(PARENT, "photo", unshared, k1), null);
+  eq("another class's photo does not", await fileAs(PARENT, "photo", plutoPhoto, k1), null);
+  eq("a stranger naming a child they cannot view gets nothing", await fileAs(PARENT2, "photo", shared, k1), null);
+  eq("a child who joined later gets nothing", await fileAs(PARENT3, "photo", shared, kLate), null);
+  eq("the lesson's teacher fetches an unshared photo", (await fileAs(VICTOR, "photo", unshared, null))?.path, path(VENUS, B_LESSON, "faces.jpg"));
+  eq("another teacher does not", await fileAs(OTHER, "photo", unshared, null), null);
+  eq("the child's own work listed in their part comes", await fileAs(PARENT, "work", w1, k1), { path: "k1/poster.jpg", bucket: "student-work" });
+  eq("teamwork the child is a member of comes", (await fileAs(PARENT, "work", wTeam, k1))?.path, "team/poster.jpg");
+  eq("another child's work does not, even listed in this child's part", await fileAs(PARENT, "work", w2, k1), null);
+  eq("the child's own work not listed in the report does not", await fileAs(PARENT, "work", wUnlisted, k1), null);
+  eq("a parent cannot fetch another child's work by naming that child", await fileAs(PARENT, "work", w2, k2), null);
+  eq("an unknown kind gives nothing", await fileAs(PARENT, "other", w1, k1), null);
+}
+
+// ---------------------------------------------------------------- stage C (review quiz)
+{
+  const LESSON2 = (await one(`INSERT INTO public.sessions (class_id, teacher_id, date, start_time, end_time)
+    VALUES ($1,$2, CURRENT_DATE - 1, '17:30','19:00') RETURNING id`, [VENUS, tVictor])).id;
+  const QZ = { title: "Review: food", points: 8, questions: [
+    { id: "q1", kind: "choice", prompt: "An apple is...", prompt_vi: "Quả táo là...", options: ["a fruit", "a shoe"], answer: "a fruit", explain: "Apples are fruit.", explain_vi: "Táo là trái cây." },
+    { id: "q2", kind: "gap", prompt: "I ___ rice.", answer: "like", accept: ["love", "eat"], explain: "like + noun" },
+    { id: "q3", kind: "order", prompt: "Make a sentence", options: ["I", "like", "milk."], answer: "I like milk.", explain: "Subject, verb, object." },
+    { id: "q4", kind: "gap", prompt: "Two ___", answer: "cats" }] };
+  const ap = await tryAs(VICTOR, () => db.query(
+    `SELECT public.approve_lesson_report($1, '{"summary":"food"}'::jsonb, '{}'::jsonb, '[]'::jsonb, '{}'::uuid[], $2::jsonb)`, [LESSON2, JSON.stringify(QZ)]));
+  eq("a lesson with a richer quiz is approved", ap, null);
+  const HW = (await one(`SELECT review_homework_id h FROM public.lesson_reports WHERE session_id = $1`, [LESSON2])).h;
+  await q(`INSERT INTO public.family_students VALUES ($1,$2)`, [STUDENT, k1]);
+  const getQ = (uid, kidId, hwId = HW) => as(uid, async () => (await db.query(`SELECT public.get_lesson_review_quiz($1,$2) r`, [hwId, kidId])).rows[0].r);
+  const submit = (uid, kidId, ans, hwId = HW) => as(uid, async () => (await db.query(`SELECT public.submit_lesson_review($1,$2,$3::jsonb) r`, [hwId, kidId, JSON.stringify(ans)])).rows[0].r);
+  const award = (kidId) => q(`SELECT points FROM public.point_awards WHERE homework_id = $1 AND student_id = $2`, [HW, kidId]);
+
+  // before submitting: no answers anywhere in what a child receives
+  const before = await getQ(PARENT, k1);
+  eq("the child gets 4 questions and no submission yet", [before.questions.length, before.submission], [4, null]);
+  const text = JSON.stringify(before);
+  ok("no answer, accepted spelling or explanation reaches the child before submitting",
+    !/"answer"|"accept"|"explain/.test(text) && !text.includes("Apples are fruit") && !text.includes("Subject, verb") && !text.includes("love"), text.slice(0, 160));
+  const order = before.questions[2].options;
+  ok("an order question's pieces come back shuffled, not solved",
+    order.join(" ") !== "I like milk." && [...order].sort().join() === ["I", "like", "milk."].sort().join(), order.join("|"));
+  eq("the child's own login reads it too", (await getQ(STUDENT, k1)).questions.length, 4);
+
+  // who is refused
+  const rpc = (name, uid, kidId, extra = "") => tryAs(uid, () => db.query(`SELECT public.${name}($1,$2${extra})`, [HW, kidId]));
+  refused("a parent of another child is refused", await rpc("get_lesson_review_quiz", PARENT2, k1), /not your child/);
+  refused("...and cannot submit for the child", await rpc("submit_lesson_review", PARENT2, k1, ",'{}'::jsonb"), /not your child/);
+  refused("a stranger (any signed-in account) is refused", await rpc("get_lesson_review_quiz", OTHER, k1), /not your child/);
+  refused("a signed-out caller is refused", await rpc("get_lesson_review_quiz", null, k1), /Sign in/);
+  await q(`INSERT INTO public.family_students VALUES ($1,$2)`, [PARENT, k3]);
+  refused("a parent's own child who is not in the class is refused", await rpc("get_lesson_review_quiz", PARENT, k3), /not in the class/);
+  eq("anon cannot call it", (await one(`SELECT has_function_privilege('anon','public.submit_lesson_review(uuid, uuid, jsonb)','EXECUTE') p`)).p, false);
+  eq("the answers table stays closed to a child", (await rowsAs(PARENT, `SELECT 1 FROM public.lesson_review_quizzes`)).length, 0);
+  const plain = (await one(`INSERT INTO public.homeworks (class_id, title) VALUES ($1,'Plain') RETURNING id`, [VENUS])).id;
+  eq("an ordinary homework is not a quiz (null)", await getQ(PARENT, k1, plain), null);
+
+  // marking
+  const r1 = await submit(PARENT, k1, { q1: "  A FRUIT. ", q2: "LOVE", q3: ["I", "like", "milk."], q4: "cat" });
+  eq("marks: trim/case/trailing dot, an accepted spelling, the right order; one wrong", [r1.score, r1.total], [3, 4]);
+  eq("per-question flags", r1.results.map((x) => x.correct), [true, true, true, false]);
+  eq("the result shows the answer and the explanation", [r1.results[3].answer, r1.results[0].explain_vi], ["cats", "Táo là trái cây."]);
+  eq("points are proportional (8 x 3/4)", r1.points_awarded, 6);
+  eq("the homework is graded 3/4 with no teacher text",
+    await one(`SELECT grade, status, teacher_feedback FROM public.homework_submissions WHERE homework_id = $1 AND student_id = $2`, [HW, k1]),
+    { grade: "3/4", status: "graded", teacher_feedback: null });
+  eq("one point award of 6", await award(k1), [{ points: 6 }]);
+  const after = await getQ(PARENT, k1);
+  eq("afterwards the child sees the result with explanations", [after.submission.score, after.submission.results[0].explain], [3, "Apples are fruit."]);
+
+  const rw = await submit(PARENT2, k2, { q1: "a shoe", q3: ["milk.", "like", "I"] });
+  eq("a wrong choice, a wrong order and blanks all mark wrong", rw.results.map((x) => x.correct), [false, false, false, false]);
+  eq("a zero score awards nothing", (await award(k2)).length, 0);
+
+  // retakes
+  const r2 = await submit(PARENT, k1, { q1: "a fruit", q2: "like", q3: ["I", "like", "milk."], q4: "cats" });
+  eq("a better retake counts: 4/4 and 8 points", [r2.score, r2.points_awarded, r2.improved, r2.attempts], [4, 8, true, 2]);
+  eq("the award was replaced, not paid twice", await award(k1), [{ points: 8 }]);
+  const r3 = await submit(PARENT, k1, { q1: "a shoe" });
+  eq("a worse retake keeps the best score and points", [r3.best_score, r3.points_awarded, r3.improved, r3.attempts], [4, 8, false, 3]);
+  eq("...and the submission still reads 4/4 with one award",
+    [(await one(`SELECT grade FROM public.homework_submissions WHERE homework_id = $1 AND student_id = $2`, [HW, k1])).grade, (await award(k1)).length], ["4/4", 1]);
+  await q(`UPDATE public.homeworks SET due_date = CURRENT_DATE - 1 WHERE id = $1`, [HW]);
+  refused("after the due date a retake is refused", await rpc("submit_lesson_review", PARENT2, k2, `,'{"q1":"a fruit"}'::jsonb`), /closed/);
+}
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -282,3 +282,11 @@ verify_jwt = true
 # Class work gallery: serves an approved share's file; the database decides who may (work_share_file).
 [functions.work-gallery-file]
 verify_jwt = true
+
+# Lesson reports (families): a shared lesson photo or the child's own work; the database decides who may (lesson_report_file).
+[functions.lesson-report-file]
+verify_jwt = true
+
+# Lesson reports, stage A: the AI draft for a lesson's teacher or an admin; reads everything as the caller.
+[functions.lesson-report-draft]
+verify_jwt = true

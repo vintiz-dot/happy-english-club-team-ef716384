@@ -8,12 +8,15 @@ import { z } from 'zod';
 globalThis.__paymentZod = z;
 const studentId = '00000000-0000-0000-0000-000000000001';
 const changes = [];
+const rpcs = [];
 const invoices = ['2026-07', '2026-08'].map(month => ({ id: month, month,
   student_id: studentId, total_amount: 100000, paid_amount: 900000,
   recorded_payment: 0, status: 'issued' }));
 globalThis.__paymentClient = () => ({
   auth: { getUser: async () => ({ data: { user: { id: studentId } } }) },
   functions: { invoke: async () => ({ error: null }) },
+  // Phase 1b: the payment is written by record_family_payment, in one transaction.
+  rpc: async (name, args) => { rpcs.push({ name, args }); return { data: { success: true }, error: null }; },
   from(table) {
     let rows = table === 'invoices' ? invoices : table === 'ledger_accounts'
       ? ['AR', 'CASH', 'BANK'].map(code => ({ code, id: code })) : [{ role: 'admin' }];
@@ -54,12 +57,14 @@ async function call(payload) { return handler(new Request('http://localhost/paym
   method: 'POST', headers: { Authorization: 'Bearer test' }, body: JSON.stringify(payload),
 })); }
 assert.equal((await call(body)).status, 400, 'missing tuition month rejected');
-assert.equal(changes.length, 0, 'missing month makes no financial writes');
+assert.equal(changes.length + rpcs.length, 0, 'missing month makes no financial writes');
 assert.equal((await call({ ...body, month: '2026-08' })).status, 200);
-const invoiceChange = changes.find(c => c.table === 'invoices');
-assert.deepEqual(invoiceChange.rows, ['2026-08'], 'July receipt credited only to August invoice');
-assert.equal(invoiceChange.value.recorded_payment, 50000, 'monthly aggregate updated, not cumulative paid');
-for (const c of changes.filter(c => c.table === 'ledger_entries')) {
-  for (const entry of c.value) assert.equal(entry.month, '2026-08');
-}
-console.log('6 passed, 0 failed');
+assert.equal(rpcs.length, 1, 'one call to record_family_payment');
+const rec = rpcs[0];
+assert.equal(rec.name, 'record_family_payment');
+assert.equal(rec.args.p_month, '2026-08', 'July receipt credited only to the August bill and ledger month');
+assert.deepEqual(rec.args.p_allocations.map(a => [a.student_id, a.amount]), [[studentId, 50000]], 'the whole 50,000 on the child, once');
+assert.equal(rec.args.p_amount, 50000);
+assert.equal(changes.filter(c => ['payments', 'payment_allocations', 'ledger_entries', 'invoices'].includes(c.table)).length, 0,
+  'no separate writes to payments, allocations, ledger or bills');
+console.log('7 passed, 0 failed');

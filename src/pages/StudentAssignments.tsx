@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import Layout from "@/components/Layout";
@@ -72,12 +73,25 @@ export default function StudentAssignments() {
     if (studentId) recordHomeworkVisit();
   }, [studentId]);
 
+  // ?homework=<id> (the lesson report's "Review quiz" button) opens that homework once the list is in.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const wantedHomework = searchParams.get("homework");
+
   const { data: assignments = [], isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: studentHomeworkKey(studentId),
     queryFn: () => fetchStudentHomework(supabase, studentId!),
     enabled: !!studentId,
     staleTime: 2 * 60 * 1000,
   });
+
+  useEffect(() => {
+    if (!wantedHomework || isLoading) return;
+    const hw = (assignments as any[]).find((a) => a.id === wantedHomework);
+    if (hw) setSelectedHomework(hw);
+    const next = new URLSearchParams(searchParams);
+    next.delete("homework");
+    setSearchParams(next, { replace: true });
+  }, [wantedHomework, isLoading, assignments]);
 
   // Group by what the student has to DO, not by date: anything not yet sent
   // is "to do" (late first), anything sent or marked is "done".

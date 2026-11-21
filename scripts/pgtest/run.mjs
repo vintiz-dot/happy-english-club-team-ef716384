@@ -49,6 +49,8 @@ const SUITES = [
   { name: "recorded payment guard", file: "recorded-payment-guard.test.mjs", migrations: [] },
   // Payment screens suggest the oldest month still owed; the admin confirms (pattern D).
   { name: "owing month", file: "owing-month.test.mjs", migrations: [] },
+  // A family payment is one transaction (audit phase 1b). The suite pastes its own migrations in order.
+  { name: "family payment transaction", file: "family-payment-tx.test.mjs", migrations: [] },
   // Tuition audit phase 2: the reconciliation register. Every decision is a
   // payment or correction through record_admin_payment, decided once.
   {
@@ -308,7 +310,12 @@ const SUITES = [
   { name: "lesson monitor", file: "lesson-monitor.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql"] },
   { name: "lesson monitor review", file: "lesson-monitor-review.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql"] },
   // Lesson reports (21 Nov 2026): the contract, then each stage's migration (2026112113xxxx_lesson_report_*).
-  { name: "lesson reports", file: "lesson-reports.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql"] },
+  { name: "lesson reports", file: "lesson-reports.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121131000_lesson_report_family.sql", "20261121132000_lesson_report_quiz.sql"] },
+  // How the family / child screen reads one of those reports (stage B).
+  { name: "lesson report view", file: "lesson-report-view.test.mjs", migrations: [] },
+  { name: "lesson quiz helpers", file: "lesson-quiz-lib.test.mjs", migrations: [] },
+  // Stage A without a database: the AI reply checked against the records, and what approval sends.
+  { name: "lesson report approval", file: "lesson-report-approval.test.mjs", migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

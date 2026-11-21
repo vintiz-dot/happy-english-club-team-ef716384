@@ -1,8 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
-import { labelAfterPayment, monthPayable } from '../_lib/invoice-status.ts';
-import { addToRecordedPayment } from '../_lib/recorded-payment-write.ts';
+import { monthPayable } from '../_lib/invoice-status.ts';
 
 const VOLUNTARY_REMOVED =
   'Voluntary contributions have been removed. Money paid beyond what the bills owe now goes on a bill as credit. '
@@ -279,127 +278,52 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create parent payment
+    // One database transaction (record_family_payment, 20261121130000): the
+    // payments row, each child's allocation, ledger pair and bill, all of it
+    // or none of it. It used to be a string of separate writes, so a failure
+    // part-way left a payment row with no bill, or one child paid and not the
+    // other (tuition audit phase 1b). The split decided above is sent as it is.
     const parentPaymentId = crypto.randomUUID();
-    const parentTxId = crypto.randomUUID();
-
-    await supabase.from('payments').insert({
-      id: parentPaymentId,
-      student_id: selectedStudentIds[0], // Primary student
-      amount,
-      method,
-      occurred_at: occurredAt,
-      memo: memo || `Family payment for ${selectedStudentIds.length} students`,
-      created_by: user.id,
-      family_id: familyId
+    const placed = allocations.filter((a) => a.amount > 0);
+    const legMemo = (i: number, studentId: string) => {
+      const extra = studentId === creditStudentId ? leftover : 0;
+      return `Family payment allocation (${i + 1}/${placed.length})`
+        + (extra <= 0 ? ''
+          : allocationMode === 'manual'
+            ? `, including ${extra} not split out (${creditPart > 0
+              ? `${creditPart} of it beyond what the bill owes, kept as credit`
+              : 'all of it towards what the bill owes'})`
+            : `, including ${extra} beyond what the bills owe, kept on the bill as credit`);
+    };
+    const { error: recordError } = await supabase.rpc('record_family_payment', {
+      p_payment_id: parentPaymentId,
+      p_actor: user.id,
+      p_family_id: familyId,
+      p_primary_student_id: selectedStudentIds[0],
+      p_amount: amount,
+      p_method: method,
+      p_occurred_at: occurredAt,
+      p_memo: memo || `Family payment for ${selectedStudentIds.length} students`,
+      p_month: month,
+      p_key_prefix: 'family-payment',
+      p_allocations: placed.map((a, i) => ({
+        student_id: a.studentId,
+        amount: a.amount,
+        order: i + 1,
+        leg_memo: legMemo(i, a.studentId),
+        ar_memo: 'Family payment allocation',
+      })),
+      p_audit: [],
     });
+    if (recordError) {
+      throw new Error(`${recordError.message || 'The payment could not be recorded'}${/Nothing (more )?was recorded/.test(recordError.message ?? '') ? '' : ' Nothing was recorded.'}`);
+    }
 
-    // Create allocation records and apply payments
-    for (let i = 0; i < allocations.length; i++) {
-      const allocation = allocations[i];
-      
-      // Create allocation record
-      await supabase.from('payment_allocations').insert({
-        parent_payment_id: parentPaymentId,
-        student_id: allocation.studentId,
-        allocated_amount: allocation.amount,
-        allocation_order: i + 1,
-        created_by: user.id
-      });
-
-      // Ensure student has accounts
-      const accountCodes = ['AR', 'CASH', 'BANK', 'REVENUE', 'CREDIT'];
-      for (const code of accountCodes) {
-        await supabase
-          .from('ledger_accounts')
-          .upsert(
-            { student_id: allocation.studentId, code },
-            { onConflict: 'student_id,code', ignoreDuplicates: true }
-          );
-      }
-
-      // Get account IDs
-      const { data: accounts } = await supabase
-        .from('ledger_accounts')
-        .select('id, code')
-        .eq('student_id', allocation.studentId);
-
-      const accountMap = new Map(accounts?.map(a => [a.code, a.id]));
-      const allocationTxId = crypto.randomUUID();
-      // The screens send 'Cash'; compared case-insensitively, as
-      // smart-family-payment does (it was `=== 'cash'`, so every Family
-      // Payment in cash was debited to BANK; past rows stay as they are).
-      const cashAccount = method.toLowerCase() === 'cash' ? accountMap.get('CASH') : accountMap.get('BANK');
-      // The bill is written only after its ledger pair is: never a bill
-      // that records money the ledger does not (an insert with no account
-      // id, or one that failed, used to go unnoticed).
-      if (!cashAccount || !accountMap.get('AR')) {
-        throw new Error(`Payment recorded, but a student's ledger accounts are missing, so ${allocation.amount} was not posted to the ledger or their ${month} bill`);
-      }
-      const extra = allocation.studentId === creditStudentId ? leftover : 0;
-
-      // Post ledger entries for this allocation
-      const { error: ledgerError } = await supabase.from('ledger_entries').insert([
-        {
-          tx_id: allocationTxId,
-          tx_key: `family-payment-${parentPaymentId}-${allocation.studentId}-${Date.now()}`,
-          account_id: cashAccount,
-          debit: allocation.amount,
-          credit: 0,
-          occurred_at: occurredAt,
-          memo: `Family payment allocation (${i + 1}/${allocations.length})`
-            + (extra <= 0 ? ''
-              : allocationMode === 'manual'
-                ? `, including ${extra} not split out (${creditPart > 0
-                  ? `${creditPart} of it beyond what the bill owes, kept as credit`
-                  : 'all of it towards what the bill owes'})`
-                : `, including ${extra} beyond what the bills owe, kept on the bill as credit`),
-          month,
-          created_by: user.id
-        },
-        {
-          tx_id: allocationTxId,
-          account_id: accountMap.get('AR'),
-          debit: 0,
-          credit: allocation.amount,
-          occurred_at: occurredAt,
-          memo: `Family payment allocation`,
-          month,
-          created_by: user.id
-        }
-      ]);
-      if (ledgerError) {
-        throw new Error(`Payment recorded, but ${allocation.amount} could not be posted to the ledger, so their ${month} bill was not changed: ${ledgerError.message}`);
-      }
-
-      // Apply to invoices (FIFO within student). The bills record exactly
-      // what the ledger just posted for this student: each takes what it
-      // owes, and the last one takes whatever is left (a manual amount above
-      // what is owed, or the leftover, becomes credit through the carry).
-      let studentRemaining = allocation.amount;
-      for (const [k, inv] of allocation.invoices.entries()) {
-        if (studentRemaining <= 0) break;
-        const last = k === allocation.invoices.length - 1;
-        const applied = last ? studentRemaining : Math.min(studentRemaining, owedOn(inv));
-        if (applied <= 0) continue;
-        // Compare-and-set on the value read (_lib/recorded-payment-write.ts):
-        // another payment landing in between is re-read and kept.
-        try {
-          await addToRecordedPayment(supabase, inv, applied, (fresh, newRecorded) => {
-            const label = labelAfterPayment(fresh, newRecorded);
-            return label ? { status: label } : {};
-          });
-        } catch (e) {
-          throw new Error(`Payment posted to the ledger but the bill could not be updated: ${(e as Error).message}`);
-        }
-
-        studentRemaining -= applied;
-      }
-
-      // Trigger tuition recalc
+    // Recalculate each child's month, as every payment path does.
+    for (const a of placed) {
       try {
         await supabase.functions.invoke('calculate-tuition', {
-          body: { studentId: allocation.studentId, month }
+          body: { studentId: a.studentId, month }
         });
       } catch (e) {
         console.error('Failed to recalc tuition:', e);

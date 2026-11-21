@@ -289,6 +289,9 @@ globalThis.__t1Sibling = async () => { throw new Error('Unexpected family calcul
 globalThis.__t1Client = () => ({
   auth: { getUser: async () => ({ data: { user: { id: ADMIN } }, error: null }) },
   from: (table) => (table === 'invoices' ? invoiceQuery() : memoryQuery(table)),
+  rpc: async (name, args) => (name === 'record_family_payment'
+    ? recordFamilyPaymentStandIn(args)
+    : { data: null, error: { message: `the stand-in has no rpc ${name}` } }),
   functions: { invoke: async (name, { body }) => {
     const res = await handlers[name](post(body));
     const data = await res.json();
@@ -296,8 +299,86 @@ globalThis.__t1Client = () => ({
   } },
 });
 
+// record_family_payment (20261121130000, tuition audit phase 1b) as this
+// stand-in answers it: the rows the SQL function writes - the payments row,
+// per child the allocation, a ledger pair keyed '<prefix>-<payment>-<child>'
+// and the month's bill raised by the share (under the bill's lock, so a
+// payment landing meanwhile is added to, never overwritten), the label by the
+// one rule, an admin's credit kept - refused whole when a child has no bill
+// and no figures, or the shares are not the payment. The SQL itself runs
+// against Postgres in family-payment-tx.test.mjs.
+let familyLabel = null;
+async function recordFamilyPaymentStandIn(a) {
+  const err = (code, message) => ({ data: null, error: { code, message } });
+  const allocs = Array.isArray(a.p_allocations) ? a.p_allocations : [];
+  const sum = allocs.reduce((s, x) => s + Number(x.amount || 0), 0);
+  if (!allocs.length || allocs.some((x) => !(Number(x.amount) >= 1))) return err('22023', 'Every child\'s share must be a whole number of dong above 0. Nothing was recorded.');
+  if (sum !== a.p_amount) return err('FP422', `The children's shares add up to ${sum}, not the payment of ${a.p_amount}. Nothing was recorded.`);
+  if ((fixture.payments || []).some((p) => p.id === a.p_payment_id)) return err('FP409', 'This payment was already recorded. Nothing more was recorded: reload to see it.');
+  for (const x of [...allocs].sort((p, q) => String(p.student_id).localeCompare(String(q.student_id)))) {
+    const found = (await db.query('SELECT id FROM public.invoices WHERE student_id = $1 AND month = $2', [x.student_id, a.p_month])).rows[0];
+    if (!found && !x.new_bill) return err('FP424', `A child in this payment has no ${a.p_month} bill to put it on. Nothing was recorded: open their tuition for that month first.`);
+  }
+  for (const x of allocs) {
+    const found = (await db.query('SELECT id FROM public.invoices WHERE student_id = $1 AND month = $2', [x.student_id, a.p_month])).rows[0];
+    if (found) continue;
+    const payload = { student_id: x.student_id, month: a.p_month, base_amount: x.new_bill.base_amount ?? 0,
+      discount_amount: x.new_bill.discount_amount ?? 0, total_amount: x.new_bill.total_amount ?? 0 };
+    if (beforeNextInvoiceWrite && beforeNextInvoiceWrite.mode === 'insert') { const f = beforeNextInvoiceWrite.fn; beforeNextInvoiceWrite = null; await f(); }
+    invoiceWrites.push({ mode: 'insert', payload });
+    await db.query(`INSERT INTO public.invoices (student_id, month, base_amount, discount_amount, total_amount) VALUES ($1, $2, $3, $4, $5)
+                    ON CONFLICT (student_id, month) DO NOTHING`,
+      [payload.student_id, payload.month, payload.base_amount, payload.discount_amount, payload.total_amount]);
+  }
+  const keepRow = (table, row) => {
+    fixture[table] = fixture[table] || [];
+    const r = { id: row.id ?? `${table}-ins-${String(++insertSeq).padStart(6, '0')}`, created_at: new Date().toISOString(), ...row };
+    fixture[table].push(r); memoryWrites.push({ table, op: 'insert', value: row }); return r;
+  };
+  keepRow('payments', { id: a.p_payment_id, student_id: a.p_primary_student_id, amount: a.p_amount, method: a.p_method,
+    occurred_at: a.p_occurred_at, memo: a.p_memo, created_by: a.p_actor, family_id: a.p_family_id, source: 'receipt', month: null });
+  const code = String(a.p_method || '').trim().toLowerCase() === 'cash' ? 'CASH' : 'BANK';
+  const account = (studentId, c) => {
+    fixture.ledger_accounts = fixture.ledger_accounts || [];
+    let acc = fixture.ledger_accounts.find((x) => x.student_id === studentId && x.code === c);
+    if (!acc) { acc = { id: `acc-${studentId}-${c}`, student_id: studentId, code: c }; fixture.ledger_accounts.push(acc); }
+    return acc.id;
+  };
+  const bills = [];
+  for (const [i, x] of allocs.entries()) {
+    keepRow('payment_allocations', { parent_payment_id: a.p_payment_id, student_id: x.student_id, allocated_amount: x.amount,
+      allocation_order: x.order ?? i + 1, created_by: a.p_actor });
+    const tx = `tx-${a.p_payment_id}-${x.student_id}`;
+    for (const leg of [
+      { tx_id: tx, tx_key: `${a.p_key_prefix}-${a.p_payment_id}-${x.student_id}`, account_id: account(x.student_id, code), debit: x.amount, credit: 0,
+        occurred_at: a.p_occurred_at, memo: x.leg_memo || 'Family payment allocation', month: a.p_month, created_by: a.p_actor },
+      { tx_id: tx, tx_key: null, account_id: account(x.student_id, 'AR'), debit: 0, credit: x.amount,
+        occurred_at: a.p_occurred_at, memo: x.ar_memo || 'Family payment allocation', month: a.p_month, created_by: a.p_actor },
+    ]) keepRow('ledger_entries', leg);
+    if (beforeNextInvoiceWrite && beforeNextInvoiceWrite.mode === 'update') { const f = beforeNextInvoiceWrite.fn; beforeNextInvoiceWrite = null; await f(); }
+    const bill = (await db.query('SELECT * FROM public.invoices WHERE student_id = $1 AND month = $2', [x.student_id, a.p_month])).rows[0];
+    const after = Number(bill.recorded_payment || 0) + x.amount;
+    const label = familyLabel.labelAfterPayment(bill, after);
+    const payload = { recorded_payment: after, paid_amount: Number(bill.paid_amount || 0) + x.amount, ...(label ? { status: label } : {}) };
+    invoiceWrites.push({ mode: 'update', payload });
+    await db.query(`UPDATE public.invoices SET recorded_payment = $1, paid_amount = $2, status = coalesce($3, status) WHERE id = $4`,
+      [after, payload.paid_amount, label ?? null, bill.id]);
+    bills.push({ studentId: x.student_id, recordedBefore: bill.recorded_payment, recordedAfter: after });
+  }
+  for (const au of Array.isArray(a.p_audit) ? a.p_audit : []) {
+    await db.query('INSERT INTO public.audit_log (entity, entity_id, action, actor_user_id, diff) VALUES ($1, $2, $3, $4, $5::jsonb)',
+      [au.entity ?? 'family_payment', au.entity_id ?? a.p_payment_id, au.action ?? 'family_payment', a.p_actor, JSON.stringify(au.diff ?? {})]);
+  }
+  return { data: { success: true, paymentId: a.p_payment_id, month: a.p_month, amount: a.p_amount, bills }, error: null };
+}
+
 // ------------------------------------------------------------ the bundles
 const out = mkdtempSync(join(tmpdir(), 't1-invoice-status-'));
+{
+  const f = join(out, 'family-label.mjs');
+  writeFileSync(f, (await build({ entryPoints: [resolve(repo, 'supabase', 'functions', '_lib', 'invoice-status.ts')], bundle: true, format: 'esm', write: false })).outputFiles[0].text);
+  familyLabel = await import(pathToFileURL(f).href);
+}
 const libDir = resolve(repo, 'supabase', 'functions', '_lib');
 globalThis.Deno = { env: { get: () => 'synthetic-test-only' }, serve: (h) => { handlers.current = h; } };
 for (const name of ['calculate-tuition', 'calculate-tuition-bulk', 'confirm-tuition',
@@ -785,8 +866,13 @@ console.log('\nRound 2 - ONE rule for the paid label, and every writer agrees wi
   ok(`  and the old CASE agrees with the helper on all ${grid.length} (recorded, payable > 0) pairs - T4 changed only "nothing left to pay"`,
      grid.every(([r, pv], i) => paidLabel(r, pv, 400000) === sqlSays[i]));
   const fns = ['calculate-tuition', 'smart-family-payment', 'family-payment', 'delete-payment'];
-  ok('  every edge function that writes invoices.status imports the helper and has no rule of its own',
-     fns.every((f) => /from ['"]\.\.\/_lib\/invoice-status\.ts['"]/.test(src(`supabase/functions/${f}/index.ts`))
+  // Phase 1b: the two family payment functions write the label through
+  // record_family_payment (public.invoice_paid_label), not themselves.
+  ok('  every edge function that writes invoices.status imports the helper and has no rule of its own (the family payment functions write it through record_family_payment)',
+     ['smart-family-payment', 'family-payment'].every((f) => /\.rpc\(\s*['"]record_family_payment['"]/.test(src(`supabase/functions/${f}/index.ts`))
+       && !/\bstatus\s*:\s*(label|paidLabel|['"](paid|partial|issued)['"])/.test(src(`supabase/functions/${f}/index.ts`).replace(/\/\/[^\n]*/g, '')))
+     && ['calculate-tuition', 'delete-payment'].every((f) => /from ['"]\.\.\/_lib\/invoice-status\.ts['"]/.test(src(`supabase/functions/${f}/index.ts`)))
+     && fns.every((f) => true
        && !/status:[^\n]*\?\s*['"]paid['"]/.test(src(`supabase/functions/${f}/index.ts`))
        && !/newStatus = ['"](paid|partial|draft)['"]/.test(src(`supabase/functions/${f}/index.ts`))));
   ok('  settle-bill writes no label at all any more: its write-off reaches the bill through the recalculation',
@@ -1584,9 +1670,10 @@ console.log('\nT4 r2 - two payments on one bill at the same moment: neither is l
      r.status === 200 && b?.recorded_payment === 100000 && b?.carry_out_credit === 100000 && b?.status === 'paid', { r: r.body, b: money(b) });
 
   const fnSrc = (f) => readFileSync(join(repo, 'supabase', 'functions', f, 'index.ts'), 'utf8');
-  ok('  smart-family-payment, family-payment, delete-payment write recorded_payment only through addToRecordedPayment / setRecordedPayment',
-     ['smart-family-payment', 'family-payment', 'delete-payment'].every((f) => /recorded-payment-write\.ts/.test(fnSrc(f))
-       && !/\.update\(\{[^}]*recorded_payment:/.test(fnSrc(f))));
+  ok('  delete-payment writes recorded_payment only through addToRecordedPayment; the two family payment functions only through record_family_payment (phase 1b)',
+     /recorded-payment-write\.ts/.test(fnSrc('delete-payment')) && !/\.update\(\{[^}]*recorded_payment:/.test(fnSrc('delete-payment'))
+       && ['smart-family-payment', 'family-payment'].every((f) => /\.rpc\(\s*['"]record_family_payment['"]/.test(fnSrc(f))
+         && !/recorded_payment\s*:/.test(fnSrc(f).replace(/\/\/[^\n]*/g, ''))));
 }
 
 console.log('\nT4 r2 - the mutations the review left alive');
