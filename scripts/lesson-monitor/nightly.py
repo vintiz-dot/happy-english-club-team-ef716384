@@ -28,6 +28,9 @@ all local audio and drafts before it exits. A database that cannot be reached is
 2-minute grace the job stops and deletes the same way, and nothing is kept or saved unless the database
 answers "ok" at that moment (a pasted --token lasts about an hour: finish inside it).
 
+progress.py, in a second window, shows a bar for each lesson and the time left. It reads
+pilot\\progress.json, which this writes as it goes: recording ids, steps and numbers only.
+
 Refuses to start: while pilot\\STOP exists (the kill switch); before step 0 has
 passed for words (step0.py score); if the pilot folder is inside a git repo.
 Logs (pilot\\logs) carry recording ids, counts and short codes only.
@@ -170,7 +173,7 @@ def fetch_targets(api, row: dict) -> dict:
 
 
 # ------------------------------------------------------------------ one lesson
-def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
+def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None) -> str:
     """Returns a short outcome code. Never raises for a lesson-level problem."""
     from supa import ApiError
     import audio
@@ -203,11 +206,15 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
         window = plan.lesson_window(row)
         room = audio.TrackJoiner(window, pc.out(folder / "room16k.wav"))
         teacher = audio.TrackJoiner(window, None)
-        n_bytes = 0
+        n_bytes, n_done = 0, 0
+        n_all = len(by["room"]) + (len(by["teacher"]) if use_teacher else 0)
         for track, joiner in (("room", room), ("teacher", teacher)):
             if track == "teacher" and not use_teacher:
                 continue
             for c in by[track]:
+                if prog:
+                    prog.step(rid, "downloading", n_done, n_all)
+                n_done += 1
                 if guard.should_stop():
                     raise transcribe.Stopped()
                 data = api.download(c["storage_path"])
@@ -228,8 +235,15 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool) -> str:
 
         if guard.should_stop():
             raise transcribe.Stopped()
-        segs = transcribe.transcribe(model, str(folder / "room16k.wav"), should_stop=guard.should_stop)
         duration = window[1] - window[0]
+        t_tr = time.time()
+        if prog:
+            prog.step(rid, "transcribing", 0, duration)
+        segs = transcribe.transcribe(model, str(folder / "room16k.wav"), should_stop=guard.should_stop,
+                                     on_progress=(lambda t: prog.step(rid, "transcribing", t, duration)) if prog else None)
+        if prog:
+            prog.transcribed(rid, time.time() - t_tr, duration)
+            prog.step(rid, "saving")
         body = report.build_report(
             segs, {"teacher_db": lv_teacher["db"], "teacher_cov": lv_teacher["cov"], "teacher_peak": lv_teacher["peak"],
                    "room_db": lv_room["db"], "room_cov": lv_room["cov"]},
@@ -376,8 +390,17 @@ def main(argv=None) -> int:
     if not tonight.process:
         return 0
 
+    import progress
     import transcribe
     model = transcribe.load_model()
+
+    def length(r):
+        try:
+            w = plan.lesson_window(r)
+            return w[1] - w[0]
+        except (ValueError, KeyError, TypeError):
+            return 5400.0
+    prog = progress.Tracker([(r["recording_id"], length(r)) for r in tonight.process])
     outcomes = []
     for r in tonight.process:
         if pc.stopped():
@@ -386,7 +409,9 @@ def main(argv=None) -> int:
         if plan.lessons_that_fit(datetime.now().astimezone(), until) < 1:
             pc.log(f"stopping: another lesson would not finish before {a.until}")
             break
-        outcomes.append(process_one(api, r, model, step0, a.no_upload))
+        outcomes.append(process_one(api, r, model, step0, a.no_upload, prog))
+        prog.finish(r["recording_id"], outcomes[-1])
+    prog.end()
     pc.log(f"done: {', '.join(outcomes) or 'nothing processed'}")
     return 0
 
