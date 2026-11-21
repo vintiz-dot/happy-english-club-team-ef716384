@@ -1,0 +1,136 @@
+// Made-up people and records for the preview. Nobody here is real.
+// Dates are relative to today so the screens always look "current".
+
+export type Screen = "student-home" | "student-homework" | "family" | "teacher";
+export type State = "ok" | "error" | "empty";
+
+// Read once: the app may rewrite the URL, the preview must not forget what it was asked for.
+const params = new URLSearchParams(window.location.search);
+const SCREEN = (params.get("screen") as Screen) || "student-home";
+const STATE = (params.get("state") as State) || "ok";
+const THEME = params.get("theme") === "dark" ? "dark" : "light";
+
+export const getScreen = (): Screen => SCREEN;
+export const getState = (): State => STATE;
+export const getTheme = () => THEME;
+
+export const ROLE_OF: Record<Screen, "student" | "family" | "teacher"> = {
+  "student-home": "student",
+  "student-homework": "student",
+  family: "family",
+  teacher: "teacher",
+};
+export const PATH_OF: Record<Screen, string> = {
+  "student-home": "/student/dashboard",
+  "student-homework": "/student/assignments",
+  family: "/family/dashboard",
+  teacher: "/teacher/dashboard",
+};
+
+export const STUDENT_ID = "stu-quynh-tram-anh";
+export const ME = {
+  userId: "user-preview-1",
+  name: { "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà" }[SCREEN],
+};
+
+const pad = (n: number) => String(n).padStart(2, "0");
+const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
+const day = (n: number) => ymd(addDays(n));
+const hm = (minutesFromNow: number) => {
+  const d = new Date(Date.now() + minutesFromNow * 60_000);
+  const m = Math.min(23 * 60 + 59, Math.max(0, d.getHours() * 60 + d.getMinutes()));
+  return `${pad(Math.floor(m / 60))}:${pad(m % 60)}:00`;
+};
+
+const LEVEL = (all: number) => ({
+  all_time: all,
+  level: { level: 4, from: 300, next: 600, progress: 0.4, to_next: 180 },
+  classes: [],
+  month: all,
+});
+
+export function buildDb() {
+  const roles = [{ user_id: ME.userId, role: ROLE_OF[SCREEN] }];
+  const tables: Record<string, any[]> = { user_roles: roles };
+  let errorOn: string[] = [];
+  let emptyOn: string[] = [];
+  let homeworkRpc: any = { homeworks: [], submissions: [] };
+  const points: Record<string, any> = {};
+
+  if (SCREEN === "student-home" || SCREEN === "student-homework") {
+    const cls = { id: "cls-1", name: "Starters Stars (Mon/Wed)" };
+    const hw = (id: string, title: string, due: string | null, body = "Do the pages in your book and be ready to read aloud.") => ({
+      id, title, due_date: due, body, class_id: cls.id, classes: { name: cls.name }, homework_files: [],
+    });
+    homeworkRpc = {
+      homeworks: [
+        hw("hw-late", "Unit 5 reading log", day(-2)),
+        hw("hw-old", "Summer holiday diary", day(-31)),
+        hw("hw-tie-b", "Speaking card B: my family", day(3)),
+        hw("hw-tie-a", "Speaking card A: my pet", day(3)),
+        hw("hw-undated", "Bring a photo of your favourite toy", null),
+        hw("hw-soon", "Spelling list 12", day(1)),
+        hw("hw-later", "Poster: healthy food", day(7)),
+        hw("hw-done", "Colours worksheet", day(-1)),
+      ],
+      submissions: [
+        { id: "sub-1", homework_id: "hw-done", status: "submitted", submitted_at: new Date().toISOString(), grade: null },
+      ],
+    };
+    tables.students = [{
+      id: STUDENT_ID, full_name: ME.name, email: null, phone: null, date_of_birth: "2017-05-04",
+      avatar_url: null, is_active: true, status_message: null, family: { name: "Nguyễn family" }, updated_at: new Date().toISOString(),
+    }];
+    tables.enrollments = [{ id: "enr-1", student_id: STUDENT_ID, class_id: cls.id, end_date: null, classes: { ...cls, economy_mode: false, points_to_cash_rate: 0 } }];
+    tables.sessions = [{ id: "ses-s1", class_id: cls.id, date: day(1), start_time: "17:00:00", end_time: "18:30:00", status: "Scheduled", classes: { name: cls.name } }];
+    tables.attendance = [{ id: "att-1", student_id: STUDENT_ID, status: "Present", date: day(-3) }];
+    points[STUDENT_ID] = LEVEL(420);
+  }
+
+  if (SCREEN === "family") {
+    const kid1 = { id: "kid-khoi", full_name: "Lê Minh Khôi", avatar_url: null, is_active: true };
+    const kid2 = { id: "kid-chau", full_name: "Lê Bảo Châu", avatar_url: null, is_active: true };
+    tables.students = [kid1, kid2];
+    tables.enrollments = [{ student_id: kid1.id, class_id: "cls-f1", end_date: null }];
+    tables.lesson_overviews = [
+      { class_id: "cls-f1", lesson_date: day(-1), title: "Animals on the farm", summary: "We learned farm animal names and the sentence pattern 'It has got ...'. Khôi spoke clearly and helped a partner with spelling. Next lesson we will start a short farm story.", homework: "Draw your favourite farm animal and write two sentences: 'It is a ... It has got ...'." },
+      { class_id: "cls-f1", lesson_date: day(-8), title: "Fruit and colours", summary: "Reviewed fruit words and colours.", homework: null },
+    ];
+    tables.attendance = [
+      { student_id: kid1.id, status: "Present", date: day(-1) }, { student_id: kid1.id, status: "Present", date: day(-8) },
+      { student_id: kid1.id, status: "Late", date: day(-15) }, { student_id: kid2.id, status: "Present", date: day(-2) },
+    ];
+    tables.student_points = [];
+    tables.student_learning_profiles = [];
+    tables.cefr_assessments = [{ student_id: kid1.id, level: "A1", assessed_at: day(-20), created_at: day(-20) }];
+    points[kid1.id] = LEVEL(380);
+    points[kid2.id] = LEVEL(95);
+    errorOn = ["students"];
+    emptyOn = ["students"];
+  }
+
+  if (SCREEN === "teacher") {
+    const teacherId = "teacher-ha";
+    tables.teachers = [{ id: teacherId, user_id: ME.userId, full_name: ME.name, email: null, phone: null, avatar_url: null, is_active: true }];
+    tables.teaching_assistants = [];
+    const c1 = { id: "cls-t1", name: "Movers Sparks (Tue/Thu)" };
+    const c2 = { id: "cls-t2", name: "Flyers Comets" };
+    const c3 = { id: "cls-t3", name: "Kindy Sunbeams" };
+    const mk = (id: string, c: { id: string; name: string }, a: number, b: number, status: string) => ({
+      id, class_id: c.id, teacher_id: teacherId, date: day(0), start_time: hm(a), end_time: hm(b), status, classes: { id: c.id, name: c.name },
+    });
+    tables.sessions = [
+      mk("ses-t-cancel", c3, -180, -120, "Canceled"),
+      mk("ses-t-now", c1, -30, 45, "Scheduled"),
+      mk("ses-t-next", c2, 120, 195, "Scheduled"),
+    ];
+    tables.homeworks = [];
+    tables.homework_submissions = [];
+    tables.session_participants = [];
+    errorOn = ["sessions"];
+    emptyOn = ["sessions"];
+  }
+
+  return { tables, errorOn, emptyOn, homeworkRpc, points };
+}

@@ -96,3 +96,7 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Visual UX preview
+
+`preview/visual-ux/` renders four real screens (student home, student homework, family, teacher) over a fake Supabase client with made-up data, no sign-in: `node ./node_modules/vite/bin/vite.js --config preview/visual-ux/vite.config.ts`, then open `http://localhost:8091/?screen=student-home&state=ok&theme=light` (screens: student-home, student-homework, family, teacher; states: ok, error, empty). It never talks to the real project.
