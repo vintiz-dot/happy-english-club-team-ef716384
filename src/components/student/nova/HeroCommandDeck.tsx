@@ -102,8 +102,9 @@ export function HeroCommandDeck({
           <div ref={setMessageSlot} className="mt-4" />
         </div>
 
-        {/* Level: ring + one meter */}
-        <div className="flex items-center gap-6 lg:w-96 lg:shrink-0">
+        {/* Level: ring + one meter. Phone: folded into the one-line strip below, so the
+            homework card ("What do I need to do next?") follows the greeting (design report p.6). */}
+        <div className="hidden items-center gap-6 sm:flex lg:w-96 lg:shrink-0">
           <div className="shrink-0">
             <LevelProgressRing
               ivory
@@ -146,8 +147,26 @@ export function HeroCommandDeck({
         </div>
       </div>
 
+      {/* Phone: one compact line in place of the ring and the four vitals. */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-hec-line pt-3 sm:hidden">
+        <p className="min-w-0 text-hec-small tabular-nums text-hec-ink-soft">
+          {totalXp} XP · {streak}-day streak
+        </p>
+        <button
+          type="button"
+          onClick={onEditProfile}
+          className={cn(
+            "-mr-3 inline-flex min-h-hec-target items-center gap-2 rounded-hec-md px-3 text-hec-small text-hec-ink-soft hover:bg-hec-sunken hover:text-hec-ink",
+            FOCUS,
+          )}
+        >
+          <Edit className="h-4 w-4" aria-hidden />
+          Edit profile
+        </button>
+      </div>
+
       {/* Vitals */}
-      <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 border-t border-hec-line pt-6 sm:grid-cols-4">
+      <dl className="mt-6 hidden sm:grid grid-cols-2 gap-x-4 gap-y-6 border-t border-hec-line pt-6 sm:grid-cols-4">
         {vitals.map((v) => (
           <div key={v.label} className="min-w-0 space-y-1">
             <dt className={cn(LABEL, "flex items-center gap-2")}>
