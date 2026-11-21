@@ -49,6 +49,13 @@ const SUITES = [
   { name: "recorded payment guard", file: "recorded-payment-guard.test.mjs", migrations: [] },
   // Payment screens suggest the oldest month still owed; the admin confirms (pattern D).
   { name: "owing month", file: "owing-month.test.mjs", migrations: [] },
+  // Tuition audit phase 2: the reconciliation register. Every decision is a
+  // payment or correction through record_admin_payment, decided once.
+  {
+    name: "reconciliation register",
+    file: "reconciliation-register.test.mjs",
+    migrations: ["20261113090000_invoice_paid_label.sql", "20261117121000_record_admin_payment.sql", "20261121090000_recorded_payment_guard.sql", "20261121100000_tuition_reconciliation_register.sql"],
+  },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.
