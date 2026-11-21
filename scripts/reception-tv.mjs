@@ -488,6 +488,9 @@ async function youtubeBreak({ force = false } = {}) {
 async function watch() {
   log(`helper started (TV ${cfg.tvIp}; on, Hanoi time: ${describeSchedule()})`);
   publicConfig();
+  // The copy in ~/.hec-reception has no public/reception-tv beside it, so the
+  // feed address must already be in config.json (saved by any run from the repo).
+  if (!cfg.feedUrl || !cfg.apiKey) log("no feed address saved: the admin buttons and YouTube breaks are off. Run `node scripts/reception-tv.mjs show` once from the repo.");
   let lastCheck = 0;
   for (;;) {
     if (Date.now() - lastCheck >= 3 * 60 * 1000) {
@@ -504,6 +507,7 @@ async function watch() {
 // The repo copy may be a temporary worktree, so the helper runs from its own
 // copy in ~/.hec-reception (watch needs nothing else from the repo).
 function autostart() {
+  publicConfig();
   const dest = join(HOME, "reception-tv.mjs");
   cpSync(fileURLToPath(import.meta.url), dest);
   if (platform() === "win32") {
@@ -564,6 +568,7 @@ try {
   else if (cmd === "pair") { console.log("Look at the TV and accept the prompt with the remote…"); await ssap([], { pairing: true }); console.log("Paired."); }
   else if (cmd === "check") await check();
   else if (cmd === "show") {
+    publicConfig();
     // Put the display in front now (the TV must be on), and renew Developer Mode while it answers.
     if (!(await tvAnswers())) throw new Error("The TV does not answer: is it on and on the Wi-Fi?");
     await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]);
