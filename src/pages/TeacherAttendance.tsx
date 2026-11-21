@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/Layout";
 import GlobalCalendar from "@/components/schedule/GlobalCalendar";
 
@@ -16,9 +17,12 @@ import GlobalCalendar from "@/components/schedule/GlobalCalendar";
  * into the next month.
  */
 export default function TeacherAttendance() {
+  // "Mark attendance" on the dashboard links here with ?session=<id>.
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get("session") || undefined;
   return (
     <Layout title="Attendance">
-      <GlobalCalendar role="teacher" />
+      <GlobalCalendar role="teacher" initialSessionId={sessionId} />
     </Layout>
   );
 }
