@@ -352,7 +352,7 @@ async function runAdminCommand() {
           ? "The TV did not wake up. Turn it on with the remote once, and check TV Settings > General > Mobile TV On (Turn on via Wi-Fi) is on."
           : "The TV is off. Press Turn on first.";
       } else {
-        await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]);
+        if (!installPending()) await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]);
         result = r.command === "on" ? "TV is on and showing the display." : "The display is in front.";
       }
     }
@@ -362,6 +362,23 @@ async function runAdminCommand() {
   saveState();
   log(`admin pressed ${r.command}: ${result}`);
   await feedCall({ op: "ack", at: r.at, result }).catch((e) => log(`could not report back: ${e.message}`));
+}
+
+/** Install an update packaged while the TV was off (`install-later`) and launch it. True when it did. */
+function installPending() {
+  if (!state.pendingInstall || !existsSync(state.pendingInstall)) return false;
+    try {
+      ares("ares-install", ["--device", DEVICE, state.pendingInstall], { timeout: 300000 });
+      ares("ares-launch", ["--device", DEVICE, APP_ID]);
+      log(`display updated (${state.pendingInstall.split(/[\\/]/).pop()})`);
+      state.installedAt = new Date().toISOString();
+      delete state.pendingInstall;
+      saveState();
+      return true;
+    } catch (e) {
+      log(`display update failed, will retry: ${e.message.split("\n").slice(-1)[0]}`);
+    }
+  return false;
 }
 
 async function check() {
@@ -392,19 +409,7 @@ async function check() {
     return; // the next pass launches the app once the TV is up
   }
   // An update packaged while the TV was off (`install-later`) goes on now.
-  if (state.pendingInstall && existsSync(state.pendingInstall)) {
-    try {
-      ares("ares-install", ["--device", DEVICE, state.pendingInstall], { timeout: 300000 });
-      ares("ares-launch", ["--device", DEVICE, APP_ID]);
-      log(`display updated (${state.pendingInstall.split(/[\\/]/).pop()})`);
-      state.installedAt = new Date().toISOString();
-      delete state.pendingInstall;
-      saveState();
-      return;
-    } catch (e) {
-      log(`display update failed, will retry: ${e.message.split("\n").slice(-1)[0]}`);
-    }
-  }
+  if (installPending()) return;
   if (front !== APP_ID) {
     try { await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]); log(`display relaunched (was: ${front || "home screen"})`); }
     catch (e) { log(`could not launch the display: ${e.message}`); }
@@ -571,7 +576,7 @@ try {
     publicConfig();
     // Put the display in front now (the TV must be on), and renew Developer Mode while it answers.
     if (!(await tvAnswers())) throw new Error("The TV does not answer: is it on and on the Wi-Fi?");
-    await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]);
+    if (!installPending()) await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]);
     console.log(`Display launched on ${cfg.tvIp}.`);
     try { await extendDevMode(); state.extendedOn = openNow().day; saveState(); console.log("Developer Mode renewed."); }
     catch (e) { console.log(`Developer Mode not renewed: ${e.message}`); }
