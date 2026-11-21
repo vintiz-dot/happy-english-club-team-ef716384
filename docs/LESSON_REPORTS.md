@@ -25,6 +25,20 @@ suite: `scripts/pgtest/lesson-reports.test.mjs`.
 - **C - review quiz.** `get_lesson_review_quiz` (no answers) and `submit_lesson_review` (marks, grades the
   homework, awards points through `award_homework_points`), rendered in the Homework section.
 
+## What the lesson set out to teach (`20261121150000`, `20261121151000`)
+- `curriculum_lessons` holds one row per course-book lesson (Oxford Discover 2e Level 3 so far: 90 rows,
+  Get Ready / Read / Understand / Communicate per unit, Big Question and Wrap Up per unit pair), generated
+  from the school's own Teacher's Guide by `scripts/build-curriculum-seed.mjs` - objectives, words, reading
+  strategy, grammar point, skills focus, Big Question and Student Book page, no teaching notes. Any staff
+  member reads it; only an admin changes it. Another level is another generated seed migration.
+- `session_lesson_plans` says which of those a session covered, set on the review screen ("What this lesson
+  covered", which suggests the lesson after the class's last one). Staff of the session only; who and when
+  are the server's.
+- `lesson-report-draft` reads the plan as the caller and passes it as `planned_lessons` in the evidence;
+  the instructions make it the starting point for the 2-4 objectives and say a plan is intent, never proof
+  (no evidence means `unknown`). No plan, or a database without the migration, builds exactly as before.
+- `scripts/pgtest/curriculum-lessons.test.mjs` runs both migrations.
+
 ## The draft body (`lesson_report_drafts.body`, written by A)
 Every family-facing text has an English field and a `_vi` Vietnamese field.
 

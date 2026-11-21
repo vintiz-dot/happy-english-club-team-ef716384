@@ -316,9 +316,13 @@ const SUITES = [
   { name: "lesson reports", file: "lesson-reports.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121131000_lesson_report_family.sql", "20261121132000_lesson_report_quiz.sql"] },
   // Who's speaking (21 Nov 2026): staff tap who talks during a recorded lesson.
   { name: "lesson speaker marks", file: "lesson-speaker-marks.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121140000_lesson_speaker_marks.sql"] },
+  // Course book lessons: what a lesson set out to teach, given to the report draft as context.
+  { name: "curriculum lessons", file: "curriculum-lessons.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121150000_curriculum_lessons.sql", "20261121151000_od2e_level3_lessons.sql"] },
   // How the family / child screen reads one of those reports (stage B).
   { name: "lesson report view", file: "lesson-report-view.test.mjs", migrations: [] },
   { name: "lesson quiz helpers", file: "lesson-quiz-lib.test.mjs", migrations: [] },
+  // Lesson decks (Flipbooks): name slots, pacing guide, and the rules every deck keeps.
+  { name: "lesson decks lib", file: "lesson-decks-lib.test.mjs", migrations: [] },
   // Stage A without a database: the AI reply checked against the records, and what approval sends.
   { name: "lesson report approval", file: "lesson-report-approval.test.mjs", migrations: [] },
   {

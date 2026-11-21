@@ -1,3 +1,6 @@
+# No Lovable
+- The owner does not use Lovable anymore. Functions and migrations here reach production only when you deploy / apply them yourself; read "THE OWNER DOES NOT USE LOVABLE ANYMORE" and "Deploying" at the top of the root `AGENTS.md`.
+
 # Stars / Pixel Pal sync
 - One-way: Pixel Pal's feed -> HEC. Every decision about a child's record lives in `stars_sync__apply_event` (`supabase/migrations/20261027100000_stars_sync_engine.sql`), one transaction per page. The edge function `stars-sync` only fetches, calls it, and runs after-effects. Do not move decisions into TypeScript.
 - What a register mark does besides the row - tuition recalc for Absent/Excused, streaks for Present - is defined once, in `supabase/functions/_lib/attendance-effects.ts`. `mark-attendance` runs it inline. The sync does not: `stars_sync__apply_event` queues each follow-up in `stars_sync_effects` in the same transaction as the mark, and `stars-sync` drains the queue with `recalcTuition` / `advanceStreaks`, a bounded amount per run (calculate-tuition allows 30 calls a minute), keeping anything refused. Do not go back to running them after the commit - that is how they were lost. The Scheduled->Held flip that pays the teacher is in both the SQL engine and mark-attendance; change one, change the other.

@@ -50,6 +50,50 @@ const obj = (v: unknown): Record<string, unknown> =>
 const enVi = (v: unknown) => { const o = obj(v); return { en: str(o.en, 600), vi: str(o.vi, 600) }; };
 const fold = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}']+/gu, " ").replace(/\s+/g, " ").trim();
 
+// ------------------------------------------------------------------ the planned lesson
+
+/** A curriculum_lessons row as the draft function reads it (the fields it uses). */
+export interface CurriculumLessonRow {
+  curriculum?: unknown; level?: unknown; unit_from?: unknown; unit_to?: unknown; lesson?: unknown; sb_page?: unknown;
+  objectives?: unknown; vocabulary?: unknown; words_in_context?: unknown; reading_strategy?: unknown; grammar?: unknown;
+  focus?: unknown; big_question?: unknown;
+}
+
+const strList = (v: unknown, n: number, max = 200) =>
+  arr(v).map((x) => str(x, max)).filter(Boolean).slice(0, n);
+
+/**
+ * What the session's plan tells the model: the course book lesson(s) the
+ * teacher said this lesson covered, trimmed to short, labelled facts. Rows
+ * that are not a curriculum lesson are dropped; an empty plan is null, so the
+ * evidence simply has no planned_lessons.
+ */
+export function plannedLessons(rows: unknown) {
+  const out = arr(rows)
+    .map((r) => obj(r) as CurriculumLessonRow)
+    .filter((r) => str(r.lesson) && Number.isInteger(r.level) && Number.isInteger(r.unit_from))
+    .slice(0, 4)
+    .map((r) => {
+      const from = r.unit_from as number;
+      const to = Number.isInteger(r.unit_to) ? (r.unit_to as number) : from;
+      const focus = Object.fromEntries(Object.entries(obj(r.focus)).map(([k, v]) => [k, str(v, 240)]).filter(([, v]) => v));
+      return {
+        book: str(r.curriculum) === "oxford-discover-2e" ? `Oxford Discover (2nd edition) Level ${r.level}` : `${str(r.curriculum, 60)} Level ${r.level}`,
+        unit: to > from ? `Units ${from} and ${to}` : `Unit ${from}`,
+        lesson: str(r.lesson, 40),
+        student_book_page: Number.isInteger(r.sb_page) ? r.sb_page : null,
+        big_question: str(r.big_question, 160) || null,
+        objectives: strList(r.objectives, 6, 300),
+        vocabulary: strList(r.vocabulary, 20, 60),
+        words_in_context: strList(r.words_in_context, 12, 60),
+        reading_strategy: str(r.reading_strategy, 120) || null,
+        grammar: str(r.grammar, 160) || null,
+        focus,
+      };
+    });
+  return out.length ? out : null;
+}
+
 // ------------------------------------------------------------------ the JSON schema
 
 const S = { type: "string" };
@@ -100,6 +144,11 @@ homework, target words, and the list of enrolled children with their ids.
 Rules:
 - Never invent. If something is not in the evidence, leave it out or mark an objective "unknown".
 - Objectives: 2 to 4, what the lesson set out to teach, each with met = yes/partly/no/unknown and a short evidence note.
+  When the evidence has planned_lessons (the course book's lesson the teacher said this lesson covered), start from
+  those: turn the book's objectives, words, grammar point and skills focus into 2-4 child-friendly objectives and judge
+  each against the transcript, photos and work. The plan says what was intended, never what happened: an objective
+  with no evidence in the lesson is "unknown", not "yes". If the lesson clearly did something else, say so in the
+  evidence note. Use the plan's words and grammar point for the quiz where the lesson practised them.
 - Gaps and misconceptions (staff only): every one must quote the transcript line(s) that show it, copied exactly,
   with the line's time in seconds (t). A gap seen only in children's work quotes the work's text instead, with t = -1.
   who = "class" when many showed it, "some" otherwise. Never name a child in a gap.
