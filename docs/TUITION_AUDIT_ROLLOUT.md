@@ -85,18 +85,26 @@ ones are corrected. Each phase ships on its own.
   saved bill. **Redeploy calculate-tuition.**
 
 ### Phase 1 - make the database refuse a paid figure with no receipt
-- A trigger on `invoices`: `recorded_payment` may change only inside a
-  sanctioned writer. The writer sets a transaction-local flag (`record_admin_payment`,
-  `delete-payment`'s reversal, `ai_action_apply/undo`, `settle-bill`). Anything
-  else is refused with a message that points to Record Payment.
-- Before the trigger, `family-payment` and `smart-family-payment` must stop
-  writing the payment row and the bill in separate PostgREST calls. Move them
-  onto `record_admin_payment`, one call per child bill, under one family
-  idempotency key.
-- The payment screens suggest the oldest month that still owes as the target,
-  still confirmed by hand (fixes pattern D at the source).
-- Tests: a direct PostgREST update of `recorded_payment` is refused. Every
-  sanctioned path still passes `invoice-status.test.mjs` and `ai-actions.test.mjs`.
+Built 21 Nov 2026 as migration `20261121090000_recorded_payment_guard.sql`
+(owner pastes it), tested by `recorded-payment-guard.test.mjs`.
+- Trigger `a_invoice_recorded_payment_guard` on `invoices` refuses (RP451) any
+  change to `recorded_payment` made as `authenticated` or `anon`, unless a
+  payment writer has set the transaction-local flag `hec.payment_writer`.
+  `record_admin_payment` (re-created byte for byte, plus the flag around its one
+  update) is the only one that does. A new bill with nothing paid, label and
+  carry writes, and rewriting the same figure all pass.
+- `service_role` (family-payment, smart-family-payment, delete-payment), SECURITY
+  DEFINER functions (`ai_action_undo`, the D4 approval executors) and the owner
+  pass. Those are server code that writes its own payments and ledger rows. The
+  hole the audit found was a signed-in person setting the figure.
+- The migration refuses to install while any other function writes
+  `recorded_payment`. Checked on live, read-only, 21 Nov: none does.
+- **Left for phase 1b:** `family-payment` and `smart-family-payment` still save
+  the payments row, the ledger legs and each bill in separate calls, so a
+  failure part-way can leave a payment row without its bill. Moving them onto
+  one database transaction (as `record_admin_payment` did for single payments)
+  is a larger change and still to do.
+- The suggestion of the oldest month still owed was split into its own session.
 
 ### Phase 2 - reconciliation register (owner works the B and F lists)
 - A new table `tuition_reconciliation_items`: one row per family-month

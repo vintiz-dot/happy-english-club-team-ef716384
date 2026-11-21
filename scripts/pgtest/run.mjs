@@ -45,6 +45,8 @@ const SUITES = [
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   // Payment screens take typed cash, never the balance (Nov 2026 tuition audit).
   { name: "cash entry", file: "cash-entry.test.mjs", migrations: [] },
+  // A bill's paid figure moves only with a payment behind it (audit phase 1).
+  { name: "recorded payment guard", file: "recorded-payment-guard.test.mjs", migrations: [] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.
