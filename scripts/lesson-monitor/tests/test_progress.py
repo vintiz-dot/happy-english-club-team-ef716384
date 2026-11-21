@@ -68,6 +68,13 @@ def test_an_older_job_is_estimated_from_its_log(pilot_root):
     assert s["lessons"][1]["lesson_s"] == 4039                        # its length, from the morning's attempt
     out = progress.render(s, s["lessons"][0]["step_started"] + 3600)
     assert "ESTIMATES" in out and "about" in out
+    with open(log, "a", encoding="utf-8") as fh:  # Venus finishes: Jupiter is estimated at Venus's pace
+        fh.write(f"{d} 14:10:55 {A} report built (928 lines); audio copy deleted (0 files left)\n"
+                 f"{d} 14:10:56 {A} report saved for the lesson's teacher\n")
+    s = progress.read_state(datetime.now())
+    assert abs(s["speed"] - (2 * 3600 + 4 * 60 + 45) / 4704) < 0.01
+    assert s["lessons"][0]["outcome"] == "saved" and s["lessons"][1]["step"] == "downloading"
+    assert "the lesson this run already finished" in progress.render(s, time.time())
 
 
 def test_the_measured_speed_is_kept_for_the_next_estimate(pilot_root):

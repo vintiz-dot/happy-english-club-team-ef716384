@@ -200,7 +200,14 @@ def from_log(today: datetime) -> dict | None:
         nxt = next((x for x in lessons if x["step"] == "waiting"), None)
         if nxt is not None and all(x["step"] in ("done", "waiting") for x in lessons) and last_done:
             nxt.update(step="downloading", step_started=last_done[-1]["step_started"], measured=False)
-    return {"job_started": stamp(run[0]), "speed": measured_speed(), "lessons": lessons,
+    speed = measured_speed()
+    for ln in run:  # a lesson this run finished: its own download-to-report time is the best speed
+        m = re.match(r"\S+ \S+ ([0-9a-f-]{36}) report built", ln)
+        if m:
+            got = next((ln2 for ln2 in run if re.match(rf"\S+ \S+ {m.group(1)} downloaded", ln2)), None)
+            if got and lengths.get(m.group(1)):
+                speed = (stamp(ln) - stamp(got)) / lengths[m.group(1)]
+    return {"job_started": stamp(run[0]), "speed": speed, "lessons": lessons,
             "finished": stamp(run[-1]) if finished else None, "estimated": True}
 
 
@@ -233,7 +240,12 @@ def render(s: dict | None, now: float) -> str:
     speed = s.get("speed") or DEFAULT_SPEED
     out = []
     if s.get("estimated"):
-        src = "this laptop's last measured speed" if speed_file().exists() else "the B2b benchmark (about 2 h per 90-min lesson)"
+        if abs(speed - measured_speed()) > 0.001:
+            src = f"the lesson this run already finished ({speed * 90 / 60:.1f} h per 90-min lesson)"
+        elif speed_file().exists():
+            src = "this laptop's last measured speed"
+        else:
+            src = "the B2b benchmark (about 2 h per 90-min lesson)"
         out.append("This job started before progress reporting existed, so these times are ESTIMATES")
         out.append(f"from {src}. The next run reports its real progress.")
         out.append("")
