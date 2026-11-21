@@ -11,18 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssignmentCalendar } from "@/components/assignments/AssignmentCalendar";
 import { useLoginChallenge } from "@/hooks/useLoginChallenge";
 import { GradeCelebration } from "@/components/student/GradeCelebration";
-import { getHomeworkStatus } from "@/lib/homeworkStatus";
-import { dayjs } from "@/lib/date";
+import { fetchStudentHomework, groupHomework, studentHomeworkKey } from "@/lib/studentHomework";
 import { PlaceholderCard } from "@/components/ui/loading";
 import { PagedListControls, usePagedList } from "@/components/shared/PagedListControls";
 import { HomeworkCard } from "@/components/student/homework/HomeworkCard";
 import { cn } from "@/lib/utils";
-import { BADGE_NEUTRAL, BUTTON_SECONDARY, CARD, CARD_TITLE, LABEL } from "@/components/student/nova/ivory";
-
-/** Late homework older than this folds away, so a long-ago miss doesn't bury this week's work. */
-const OLD_MISS_DAYS = 30;
-
-const dueTime = (a: any) => (a.due_date ? dayjs(a.due_date).valueOf() : Number.POSITIVE_INFINITY);
+import { BADGE_NEUTRAL, BUTTON, BUTTON_SECONDARY, CARD, CARD_TITLE, LABEL } from "@/components/student/nova/ivory";
 
 function Section({ emoji, title, count, children }: { emoji: string; title: string; count?: number; children: React.ReactNode }) {
   return (
@@ -78,55 +72,16 @@ export default function StudentAssignments() {
     if (studentId) recordHomeworkVisit();
   }, [studentId]);
 
-  const { data: assignments = [], isLoading } = useQuery({
-    queryKey: ["student-assignments", studentId],
-    queryFn: async () => {
-      if (!studentId) return [];
-
-      // Use RPC to bypass RLS — the function does its own auth check
-      const { data, error } = await supabase.rpc("get_student_homeworks", {
-        p_student_id: studentId,
-      });
-
-      if (error) {
-        console.error("get_student_homeworks RPC error:", error);
-        return [];
-      }
-
-      const result = data as any;
-      const homeworks: any[] = result?.homeworks || [];
-      const submissions: any[] = result?.submissions || [];
-      const submissionMap = new Map(submissions.map((s: any) => [s.homework_id, s]));
-      return homeworks.map((hw: any) => ({ ...hw, submission: submissionMap.get(hw.id) || null }));
-    },
+  const { data: assignments = [], isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: studentHomeworkKey(studentId),
+    queryFn: () => fetchStudentHomework(supabase, studentId!),
     enabled: !!studentId,
     staleTime: 2 * 60 * 1000,
   });
 
   // Group by what the student has to DO, not by date: anything not yet sent
   // is "to do" (late first), anything sent or marked is "done".
-  const groups = useMemo(() => {
-    const oldCutoff = dayjs().startOf("day").subtract(OLD_MISS_DAYS, "day").valueOf();
-    const late: any[] = [];
-    const oldMisses: any[] = [];
-    const next: any[] = [];
-    const done: any[] = [];
-    for (const a of assignments as any[]) {
-      const st = getHomeworkStatus(a);
-      if (st === "submitted" || st === "graded") done.push(a);
-      else if (st === "overdue") (dueTime(a) < oldCutoff ? oldMisses : late).push(a);
-      else next.push(a);
-    }
-    late.sort((a, b) => dueTime(b) - dueTime(a));
-    oldMisses.sort((a, b) => dueTime(b) - dueTime(a));
-    next.sort((a, b) => dueTime(a) - dueTime(b));
-    done.sort((a, b) => {
-      const ta = a.submission?.graded_at || a.submission?.submitted_at || a.due_date || "";
-      const tb = b.submission?.graded_at || b.submission?.submitted_at || b.due_date || "";
-      return tb.localeCompare(ta);
-    });
-    return { late, oldMisses, next, done };
-  }, [assignments]);
+  const groups = useMemo(() => groupHomework(assignments), [assignments]);
 
   const todoCount = groups.late.length + groups.next.length;
 
@@ -144,10 +99,12 @@ export default function StudentAssignments() {
     );
   }
 
-  const heroTitle = todoCount === 0 && !isLoading ? "All done! 🎉" : "Let's do this! 💪";
+  const heroTitle = isError ? "My homework" : todoCount === 0 && !isLoading ? "All done! 🎉" : "Let's do this! 💪";
   const heroSubtitle = isLoading
     ? "Finding your homework…"
-    : todoCount === 0
+    : isError
+      ? "We couldn't load your homework."
+      : todoCount === 0
       ? "You have nothing to do right now. Great job!"
       : `You have ${todoCount} ${todoCount === 1 ? "thing" : "things"} to do.`;
   const hero = (
@@ -155,7 +112,7 @@ export default function StudentAssignments() {
       <p className={LABEL}>My homework</p>
       <h1 className="mt-2 font-display text-hec-h1 font-medium text-hec-ink [[data-hec-scale=young]_&]:font-bold">{heroTitle}</h1>
       <p className="mt-1 max-w-2xl text-hec-body text-hec-ink-soft">{heroSubtitle}</p>
-      {!isLoading && assignments.length > 0 && (
+      {!isLoading && !isError && assignments.length > 0 && (
         <div className="mt-4 grid grid-cols-3 gap-2">
           <Stat value={todoCount} label="To do" />
           <Stat value={groups.late.length} label="Late" />
@@ -171,6 +128,29 @@ export default function StudentAssignments() {
         <div className="space-y-4 sm:space-y-6 min-w-0">
           {hero}
           <PlaceholderCard rows={4} />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Layout title="Homework">
+        <div className="mx-auto max-w-5xl space-y-5 sm:space-y-6 min-w-0">
+          {hero}
+          <div role="alert" className={cn(CARD, "flex flex-col items-center text-center")}>
+            <FileText className="h-6 w-6 text-hec-danger" aria-hidden />
+            <p className={cn(CARD_TITLE, "mt-3 break-words")}>We couldn't load your homework.</p>
+            <p className="mt-1 max-w-sm text-hec-body text-hec-ink-soft">Check your internet and try again. Your homework is still safe.</p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className={cn(BUTTON, "mt-4 bg-hec-action text-hec-on-action hover:bg-hec-action/90")}
+            >
+              {isFetching ? "Trying…" : "Try again"}
+            </button>
+          </div>
         </div>
       </Layout>
     );
