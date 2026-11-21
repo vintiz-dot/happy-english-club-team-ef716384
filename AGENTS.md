@@ -68,6 +68,9 @@
 - calculate-tuition does not write `recorded_payment` (it belongs to the payment paths; writing back the value read at the start overwrote payments made meanwhile) and fails rather than saves when the month's bill or the earlier months cannot be read.
 - Both calculators return `carry.payable` from the same helper; a screen should show that, not add it up. A new invoice writer needs a case in `scripts/pgtest/invoice-status.test.mjs`, which also compares every figure with `fixtures/tuition-figures.golden.json` (the function before these changes); regenerate the golden only from figures known to be right.
 
+# Merging duplicate students
+- Two records of one child are merged only by `public.admin_merge_students(keep, drop, dry_run)` (`20261121120000`, SQL editor only), dry run first. It finds every `student_id` / students-FK column at run time, so a new table needs no change. Its fixed lists are the exceptions: tables whose rows stay with the dropped record (`ai_actions`, the floor, the append-only audits), `student_points` (rebuilt by its trigger), and caches where the kept row wins. A new table of history or of caches belongs in one of those lists, with a case in `merge-students.test.mjs`. It never deletes the dropped child and never merges two bills that both hold money.
+
 # Payment month
 - Payment forms share `useTuitionMonthConfirmation`: explicitly confirm the target invoice month separately from receipt date, resetting on reopen/month changes; `family-payment` requires and filters by that month, using monthly `recorded_payment` rather than cumulative `paid_amount`.
 

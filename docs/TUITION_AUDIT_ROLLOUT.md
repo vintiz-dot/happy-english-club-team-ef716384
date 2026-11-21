@@ -128,6 +128,27 @@ ones are corrected. Each phase ships on its own.
   their families. This is needed for the sibling discount and family statements.
 - Clean up the 1- and 2-đồng leftovers on the 100%-discount account.
 
+Built (21 Nov 2026, not applied; the findings with names are in the owner's
+private folder, not here):
+- `public.admin_merge_students(keep, drop, dry_run default true)`
+  (`20261121120000`). It moves every row of every `student_id` column and
+  every foreign key to students, read from the catalog at run time. Register
+  rows and enrolments are copied, because their guards refuse a change of
+  child. Of two same-month bills only an empty one gives way; if both hold
+  money the merge refuses. The ledger is append-only, so a clashing account
+  with entries stays on the dropped record. The dropped child is deactivated
+  with a note, and one audit row is written. The dry run performs every write
+  and rolls it back. It runs in the SQL editor only (owner lane).
+  `merge-students.test.mjs`.
+- Family links: the admin UI already sets them (student drawer and family
+  members, through the checked `family_link` path). Nothing new was needed.
+- `scripts/audit-leftover-dong.mjs`: dry run by default; `--write` produces a
+  dry-run SQL (ROLLBACK) and an apply SQL. Each correction goes through
+  `record_admin_payment` (memo `audit: edit leftover`) with compare-and-set and
+  a fixed key per bill. `leftover-dong.test.mjs` runs it against the real
+  function. Live has 4 bills holding 4 đồng in all.
+- Pattern A: a checklist for the owner. Nothing in the app guesses.
+
 ### Process (owner, from now on)
 - Record each payment on the day it arrives, with the cash amount and the month
   it pays for.
