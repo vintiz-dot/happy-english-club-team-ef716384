@@ -11,7 +11,7 @@
  * what is visible: their children, and only their children (policies from
  * migration 20260730130000).
  */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PointsHistoryDialog } from "@/components/student/PointsHistoryDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,10 +21,11 @@ import { AssistantChat } from "@/components/chat/AssistantChat";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import {
   Sparkles, GraduationCap, Star, CalendarCheck, BookOpen, NotebookPen,
-  TrendingUp, Users, MessageCircleQuestion,
+  TrendingUp, Users, MessageCircleQuestion, RefreshCw,
 } from "lucide-react";
 
 interface ChildSummary {
@@ -181,11 +182,13 @@ async function fetchChildrenBatched(client: Db, children: Kid[], since: string):
 
 export async function fetchChildren(client: Db): Promise<ChildSummary[]> {
   // RLS: a family user's students select returns exactly their children.
-  const { data: kids } = await client
+  const { data: kids, error: kidsError } = await client
     .from("students")
     .select("id, full_name, avatar_url")
     .eq("is_active", true)
     .order("full_name");
+  // A failed lookup is not "no children": let the page say it could not load.
+  if (kidsError) throw new Error(kidsError.message || "Could not load the family's students");
   const children: Kid[] = kids || [];
   const since = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
   if (!children.length) return [];
@@ -246,10 +249,40 @@ function useChildren(userId?: string) {
   });
 }
 
+/** The newest lesson first (lesson_overviews arrive newest first; sort anyway). */
+function latestLessonOf(lessons: ChildSummary["lessons"]) {
+  return [...lessons].sort((a, b) => (a.lesson_date < b.lesson_date ? 1 : a.lesson_date > b.lesson_date ? -1 : 0))[0] ?? null;
+}
+
+function LessonNote({ id, summary }: { id: string; summary: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-2">
+      <p id={id} className={`whitespace-pre-line text-hec-small text-hec-ink-soft ${open ? "" : "line-clamp-2"}`}>{summary}</p>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((v) => !v)}
+        className="mt-1 inline-flex min-h-11 items-center rounded-hec-md px-1 text-hec-small font-medium text-hec-ink underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+      >
+        {open ? "Show less" : "Read lesson note"}
+      </button>
+    </div>
+  );
+}
+
+function Notice({ children }: { children: ReactNode }) {
+  return (
+    <Card><CardContent className="space-y-4 py-12 text-center text-hec-body text-hec-ink-soft sm:py-12">{children}</CardContent></Card>
+  );
+}
+
 export default function FamilyDashboard() {
   const { user } = useAuth();
-  const { data: children = [], isLoading } = useChildren(user?.id);
+  const { data: children = [], isLoading, isError, refetch, isFetching } = useChildren(user?.id);
   const [historyFor, setHistoryFor] = useState<{ id: string; name: string } | null>(null);
+  const reduceMotion = useReducedMotion();
 
   return (
     <Layout title="Family Dashboard">
@@ -278,22 +311,44 @@ export default function FamilyDashboard() {
         <div className="grid items-start gap-6 lg:grid-cols-5">
           {/* Children column */}
           <div className="space-y-4 lg:col-span-3">
-            {isLoading && (
-              <Card><CardContent className="py-12 text-center text-hec-body text-hec-ink-soft sm:py-12">Loading your children…</CardContent></Card>
+            {isLoading && <Notice>Loading your children…</Notice>}
+            {!isLoading && isError && (
+              <Notice>
+                <p role="alert">We couldn't load your family's records.</p>
+                <Button type="button" className="min-h-11" onClick={() => void refetch()} disabled={isFetching}>
+                  <RefreshCw className="h-4 w-4 shrink-0" />Try again
+                </Button>
+              </Notice>
             )}
-            {!isLoading && children.length === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center text-hec-body text-hec-ink-soft sm:py-12">
-                  No students are linked to your family account yet — please contact the school.
-                </CardContent>
-              </Card>
+            {!isLoading && !isError && children.length === 0 && (
+              <Notice>
+                <p>No children are linked to this account yet.</p>
+                <p>The school links your account to your child. Please contact the school office and ask them to link it.</p>
+              </Notice>
             )}
-            {children.map((kid, i) => (
+            {children.length > 1 && (
+              <nav aria-label="Jump to a child" className="flex flex-wrap gap-2">
+                {children.map((kid) => (
+                  <a
+                    key={kid.id}
+                    href={`#child-${kid.id}`}
+                    className="inline-flex min-h-11 items-center rounded-full border border-hec-line bg-hec-surface px-4 text-hec-small font-medium text-hec-ink hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                  >
+                    {kid.full_name}
+                  </a>
+                ))}
+              </nav>
+            )}
+            {children.map((kid, i) => {
+              const latest = latestLessonOf(kid.lessons);
+              return (
               <motion.div
                 key={kid.id}
-                initial={{ opacity: 0, y: 10 }}
+                id={`child-${kid.id}`}
+                className="scroll-mt-24"
+                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
+                transition={reduceMotion ? { duration: 0 } : { delay: i * 0.06 }}
               >
                 <Card className="overflow-hidden">
                   <CardHeader className="pb-4 sm:pb-4">
@@ -336,6 +391,29 @@ export default function FamilyDashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    <div className="rounded-hec-md border border-hec-line bg-hec-surface p-4">
+                      <p className="flex items-start gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
+                        <BookOpen className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span className="min-w-0 whitespace-normal break-words">
+                          {latest ? `Latest lesson · ${latest.title || "Lesson"} · ${latest.lesson_date}` : "Latest lesson"}
+                        </span>
+                      </p>
+                      {latest ? (
+                        <>
+                          {latest.summary && <LessonNote id={`note-${kid.id}`} summary={latest.summary} />}
+                          {latest.homework && (
+                            <div className="mt-3 rounded-hec-md border border-hec-line bg-hec-sunken p-3">
+                              <p className="mb-1 flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
+                                <NotebookPen className="h-4 w-4 shrink-0" />Practice at home
+                              </p>
+                              <p className="whitespace-pre-line text-hec-small text-hec-ink">{latest.homework}</p>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="mt-2 text-hec-small text-hec-ink-soft">No recent lesson note</p>
+                      )}
+                    </div>
                     {kid.journey && (
                       <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-4">
                         <p className="mb-2 flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
@@ -344,12 +422,12 @@ export default function FamilyDashboard() {
                         <p className="text-hec-small text-hec-ink">{kid.journey}</p>
                       </div>
                     )}
-                    {kid.lessons.length > 0 && (
+                    {kid.lessons.filter((l) => l !== latest).length > 0 && (
                       <div className="space-y-2">
                         <p className="flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
-                          <BookOpen className="h-4 w-4 shrink-0" />Recent lessons
+                          <BookOpen className="h-4 w-4 shrink-0" />Earlier lessons
                         </p>
-                        {kid.lessons.map((l, k) => (
+                        {kid.lessons.filter((l) => l !== latest).map((l, k) => (
                           <div key={k} className="rounded-hec-md border border-hec-line px-4 py-3">
                             <p className="text-hec-small font-semibold text-hec-ink">
                               {l.title || "Lesson"}{" "}
@@ -371,7 +449,8 @@ export default function FamilyDashboard() {
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Assistant column */}
