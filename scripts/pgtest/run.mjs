@@ -308,6 +308,8 @@ const SUITES = [
   { name: "lesson monitor review", file: "lesson-monitor-review.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql"] },
   // Lesson reports (21 Nov 2026): the contract, then each stage's migration (2026112113xxxx_lesson_report_*).
   { name: "lesson reports", file: "lesson-reports.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql"] },
+  // Stage A without a database: the AI reply checked against the records, and what approval sends.
+  { name: "lesson report approval", file: "lesson-report-approval.test.mjs", migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
