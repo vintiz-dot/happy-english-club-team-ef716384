@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
-  GraduationCap,
   Sparkles,
   Lock,
   Mail,
@@ -53,7 +51,6 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [demoPassword, setDemoPassword] = useState("");
   const [role, setRole] = useState<UserRole>("student");
-  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showBootstrap, setShowBootstrap] = useState(false);
   const [checkingAdmins, setCheckingAdmins] = useState(true);
@@ -206,7 +203,7 @@ const Auth = () => {
     mode === "login" ? "Welcome back" : mode === "signup" ? "Join the club" : "Reset password";
   const subhead =
     mode === "login"
-      ? "Pick up where you left off."
+      ? "Sign in with your school account."
       : mode === "signup"
       ? "Start your learning quest today."
       : "We'll send a reset link to your inbox.";
@@ -221,10 +218,7 @@ const Auth = () => {
               <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-contain rounded-hec-md" />
             </div>
             <div className="min-w-0">
-              <p className="text-hec-caption font-medium tracking-wider uppercase text-hec-ink-soft">
-                Happy English Club
-              </p>
-              <p className="font-display text-hec-h2 font-medium text-hec-ink">Learning, levelled up.</p>
+              <p className="font-display text-hec-h2 font-medium text-hec-ink">Happy English Club</p>
             </div>
           </div>
         </div>
@@ -232,19 +226,18 @@ const Auth = () => {
         <div className="relative space-y-8 max-w-md">
           <div>
             <h2 className="font-display text-hec-display font-medium text-hec-ink">
-              Earn XP. <span className="text-hec-ink">Climb ranks.</span>{" "}
-              Level up your English.
+              Your school day starts here.
             </h2>
             <p className="mt-4 text-hec-body text-hec-ink-soft">
-              Track every quest, celebrate every grade, and watch your streak grow.
+              Lessons, progress and school news for students, families and staff.
             </p>
           </div>
 
-          {/* Three quiet tiles: what the club has */}
+          {/* Three quiet tiles: what the school offers */}
           <div className="grid grid-cols-3 gap-3">
-            <FeatureTile icon={Trophy} label="Class Arena" tone="amber" />
-            <FeatureTile icon={Flame} label="Streaks" tone="rose" />
-            <FeatureTile icon={Star} label="Achievements" tone="violet" />
+            <FeatureTile icon={Trophy} label="Lessons and homework" tone="amber" />
+            <FeatureTile icon={Flame} label="Progress for families" tone="rose" />
+            <FeatureTile icon={Star} label="Class schedule" tone="violet" />
           </div>
         </div>
 
@@ -262,10 +255,7 @@ const Auth = () => {
               <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-contain rounded-hec-md" />
             </div>
             <div className="min-w-0">
-              <p className="text-hec-caption font-medium tracking-wider uppercase text-hec-ink-soft">
-                Happy English Club
-              </p>
-              <p className="font-display text-hec-h3 font-medium text-hec-ink">Learning, levelled up.</p>
+              <p className="font-display text-hec-h3 font-medium text-hec-ink">Happy English Club</p>
             </div>
           </div>
 
@@ -359,28 +349,25 @@ const Auth = () => {
                   </SelectContent>
                 </Select>
                 <p className="text-hec-caption text-hec-ink-soft">
-                  The school links your account to your child before you can see anything. Teachers and staff: the school creates your login.
+                  {role === "student"
+                    ? "Choose this if you are learning at HEC."
+                    : "The school will link your account to your child."}
+                </p>
+                <p className="text-hec-caption text-hec-ink-soft">
+                  Teachers and staff: the school creates your login.
                 </p>
               </div>
             )}
 
             {mode === "login" && (
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <label className="flex min-h-hec-target items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(c) => setRememberMe(c as boolean)}
-                  />
-                  <span className="text-hec-small font-medium text-hec-ink">Remember me</span>
-                </label>
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="link"
                   className="text-hec-small font-semibold"
                   onClick={() => setMode("forgot")}
                 >
-                  Forgot?
+                  Forgot password?
                 </Button>
               </div>
             )}
@@ -447,12 +434,15 @@ const Auth = () => {
                 <KeyRound className="h-5 w-5 shrink-0 text-hec-brass" />
                 <span className="min-w-0">
                   <span className="block text-hec-small font-semibold text-hec-ink">
-                    Have an access code from the school?
+                    Have a school access card?
                   </span>
                   <span className="block text-hec-caption text-hec-ink-soft">
                     {mode === "forgot"
                       ? "Forgot your email too? Use the code on your access card instead."
                       : "Use the code on your card to set a new password."}
+                  </span>
+                  <span className="mt-1 block text-hec-small font-semibold text-hec-brass">
+                    Use my access code
                   </span>
                 </span>
                 <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-hec-ink-soft" />
@@ -464,31 +454,35 @@ const Auth = () => {
               set. This is a live app holding real student and family data:
               there is deliberately no admin/teacher/family demo, and no
               password is published here or anywhere in the source. */}
-          <div className="mt-8 pt-6 border-t border-hec-line">
-            <p className="text-hec-small font-semibold text-center text-hec-ink">Want to look around?</p>
-            <p className="text-hec-caption text-center text-hec-ink-soft mt-1 mb-3">
-              Ask us for the demo password — the demo is a sample student account with fictional data.
-            </p>
-            <div className="space-y-2">
-              <Input
-                type="password"
-                placeholder="Demo password"
-                aria-label="Demo password"
-                value={demoPassword}
-                onChange={(e) => setDemoPassword(e.target.value)}
-                autoComplete="off"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => handleDemoLogin(demoPassword)}
-                disabled={loading || demoPassword.length < 4}
-              >
-                Enter student demo
-              </Button>
+          <details className="group mt-8 pt-6 border-t border-hec-line">
+            <summary className="flex min-h-hec-target cursor-pointer list-none items-center justify-center rounded-hec-sm text-hec-small font-semibold text-hec-brass underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring [&::-webkit-details-marker]:hidden">
+              Explore the student demo
+            </summary>
+            <div className="mt-3">
+              <p className="text-hec-caption text-center text-hec-ink-soft mb-3">
+                Ask us for the demo password — the demo is a sample student account with fictional data.
+              </p>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="Demo password"
+                  aria-label="Demo password"
+                  value={demoPassword}
+                  onChange={(e) => setDemoPassword(e.target.value)}
+                  autoComplete="off"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleDemoLogin(demoPassword)}
+                  disabled={loading || demoPassword.length < 4}
+                >
+                  Enter student demo
+                </Button>
+              </div>
             </div>
-          </div>
+          </details>
 
           {/* Trust marker */}
           <div className="mt-6 flex items-center justify-center gap-2 text-hec-caption text-hec-ink-faint">
