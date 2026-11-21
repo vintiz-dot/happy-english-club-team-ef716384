@@ -8,12 +8,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
+import { TimerProvider } from "@/contexts/TimerContext";
+import { NoiseMeterProvider } from "@/contexts/NoiseMeterContext";
 import { StudentProfileProvider } from "@/contexts/StudentProfileContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import { IvoryScope } from "@/components/theme/IvoryScope";
 import { themeKey } from "@/lib/ivoryScope";
 import "@/index.css";
 import { ME, PATH_OF, ROLE_OF, STUDENT_ID, getScreen, getTheme } from "./fixtures";
+
+// A second createRoot on hot reload breaks the page; reload instead.
+if (import.meta.hot) import.meta.hot.accept(() => window.location.reload());
 
 const screen = getScreen();
 const theme = getTheme();
@@ -40,6 +45,8 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
+    <TimerProvider>
+    <NoiseMeterProvider>
     <StudentProfileProvider>
       <TooltipProvider>
         <Toaster />
@@ -60,5 +67,7 @@ createRoot(document.getElementById("root")!).render(
         </BrowserRouter>
       </TooltipProvider>
     </StudentProfileProvider>
+    </NoiseMeterProvider>
+    </TimerProvider>
   </QueryClientProvider>,
 );

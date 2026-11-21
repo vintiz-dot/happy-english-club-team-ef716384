@@ -85,6 +85,8 @@ export function buildDb() {
     tables.enrollments = [{ id: "enr-1", student_id: STUDENT_ID, class_id: cls.id, end_date: null, classes: { ...cls, economy_mode: false, points_to_cash_rate: 0 } }];
     tables.sessions = [{ id: "ses-s1", class_id: cls.id, date: day(1), start_time: "17:00:00", end_time: "18:30:00", status: "Scheduled", classes: { name: cls.name } }];
     tables.attendance = [{ id: "att-1", student_id: STUDENT_ID, status: "Present", date: day(-3) }];
+    // Another child is the monitor: useClassMonitor reads `data?.student_id`, which is undefined (a react-query error) for a class with none.
+    tables.class_monitors = [{ class_id: cls.id, student_id: "stu-someone-else" }];
     points[STUDENT_ID] = LEVEL(420);
   }
 

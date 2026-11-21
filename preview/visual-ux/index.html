@@ -8,6 +8,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Errors of THIS load only (the pane's console log keeps older loads): read window.__errs.
+      window.__errs = [];
+      window.addEventListener("error", function (e) { window.__errs.push(String(e.message)); });
+      window.addEventListener("unhandledrejection", function (e) { window.__errs.push("rejection: " + String(e.reason && e.reason.message || e.reason)); });
+      var ce = console.error;
+      console.error = function () { window.__errs.push(Array.prototype.join.call(arguments, " ").slice(0, 300)); ce.apply(console, arguments); };
+    </script>
     <script type="module" src="./main.tsx"></script>
   </body>
 </html>
