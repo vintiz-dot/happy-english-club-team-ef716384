@@ -1,3 +1,4 @@
+import { formatVND } from "./money";
 /**
  * Pure helpers for the "Check before cancelling" dialogs (task D3).
  *
@@ -558,7 +559,7 @@ export function floorNote(p: GuardPreview): string | null {
 /** Display only: no arithmetic. */
 export function formatVnd(n: number | null | undefined): string {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return "-";
-  return `${new Intl.NumberFormat("vi-VN").format(Number(n))} ₫`;
+  return formatVND(Number(n));
 }
 
 export interface ConsequenceRow {

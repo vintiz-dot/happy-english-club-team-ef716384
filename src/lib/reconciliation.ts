@@ -1,3 +1,4 @@
+import { formatVND } from "./money";
 // The tuition audit's reconciliation register (phase 2,
 // supabase/migrations/20261121100000_tuition_reconciliation_register.sql).
 //
@@ -52,7 +53,7 @@ export const DECISIONS: Record<Decision, { label: string; help: string; money: b
   sheet_missed: { label: "Sheet missed it", help: "The app is right; the cash came and the sheet left it out. No money moves.", money: false },
   not_received: { label: "Not received", help: "The money never came. A correction takes it off the bill (memo \"audit: not received\") and the debt reopens.", money: true },
   wrong_month: { label: "Wrong month", help: "The cash came but was booked on another month. A correction on one month and a payment on the other, same receipt date.", money: true },
-  rounding_accepted: { label: "Rounding accepted", help: `A difference of at most ${ROUNDING_LIMIT.toLocaleString("vi-VN")} ₫ is accepted. No money moves.`, money: false },
+  rounding_accepted: { label: "Rounding accepted", help: `A difference of at most ${formatVND(ROUNDING_LIMIT)} is accepted. No money moves.`, money: false },
   refer_phase4: { label: "Refer to phase 4", help: "A child who paid and has no bill in the app: referred to data hygiene (a student and a bill, or outside the app).", money: false },
 };
 
@@ -133,7 +134,7 @@ export function legsProblem(item: Pick<ReconciliationItem, "app_recorded" | "she
     if (l.kind !== "correction") continue;
     const held = holds[`${l.student_id}|${l.month}`];
     if (held === undefined) return `There is no ${l.month} bill for one of the children.`;
-    if (l.amount > held) return `A correction of ${l.amount.toLocaleString("vi-VN")} ₫ is more than the ${held.toLocaleString("vi-VN")} ₫ that bill holds.`;
+    if (l.amount > held) return `A correction of ${formatVND(l.amount)} is more than the ${formatVND(held)} that bill holds.`;
   }
   for (const l of legs) {
     if (l.kind === "payment" && holds[`${l.student_id}|${l.month}`] === undefined) return `There is no ${l.month} bill for one of the children.`;
@@ -141,7 +142,7 @@ export function legsProblem(item: Pick<ReconciliationItem, "app_recorded" | "she
   if (decision === "not_received") {
     const total = legs.reduce((s, l) => s + l.amount, 0);
     const gap = item.app_recorded - item.sheet_amount;
-    if (total > gap) return `That is more than the ${Math.max(gap, 0).toLocaleString("vi-VN")} ₫ the app holds over the sheet.`;
+    if (total > gap) return `That is more than the ${formatVND(Math.max(gap, 0))} the app holds over the sheet.`;
   }
   return null;
 }

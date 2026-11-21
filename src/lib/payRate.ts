@@ -118,7 +118,9 @@ export function rateUnit(staff?: StaffPayRate | null): "hour" | "session" {
 
 /** "250,000 ₫ / session". The one place this string is composed. */
 export function describeRate(staff?: StaffPayRate | null): string {
-  return `${effectiveRateVnd(staff).toLocaleString()} ₫ / ${rateUnit(staff)}`;
+  // Same figure as formatVND in src/lib/money.ts (this file imports nothing).
+  const digits = String(Math.round(effectiveRateVnd(staff))).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${digits} ₫ / ${rateUnit(staff)}`;
 }
 
 /** "Per hour" / "Per session", for a select or a badge. */

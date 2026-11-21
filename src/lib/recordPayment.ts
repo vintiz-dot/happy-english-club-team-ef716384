@@ -1,3 +1,4 @@
+import { formatVND } from "./money";
 // The admin screens' one way to put money on (or take it off) a child's bill:
 // the record-payment edge function (D5 G-1). It writes the payments row, both
 // ledger legs and the bill's recorded_payment together, or nothing. The
@@ -159,7 +160,7 @@ export const DIFFERENT_PAYMENT_LABEL = "This is a different payment - record it 
 /** What a screen says when record-payment refused an attempt as a duplicate of one that got no answer before. */
 export function waitingDuplicateMessage(a: PaymentAttempt, who?: string): string {
   const what = a.kind === "correction" ? "correction" : "payment";
-  return `An identical ${what} of ${Math.trunc(Number(a.amount)).toLocaleString()} ₫ for ${a.month}${who ? ` (${who})` : ""} was sent earlier `
+  return `An identical ${what} of ${formatVND(Math.trunc(Number(a.amount)))} for ${a.month}${who ? ` (${who})` : ""} was sent earlier `
     + `and got no answer at the time. It WAS recorded, so this one was not recorded again (that would count it twice). `
     + `Reload to see it. If this really is a different ${what} of the same amount, choose "${DIFFERENT_PAYMENT_LABEL}" and save again.`;
 }
@@ -167,7 +168,7 @@ export function waitingDuplicateMessage(a: PaymentAttempt, who?: string): string
 /** What a screen shows before saving when the entry is exactly one that got no answer before. */
 export function waitingNotice(a: PaymentAttempt): string {
   const what = a.kind === "correction" ? "correction" : "payment";
-  return `An identical ${what} of ${Math.trunc(Number(a.amount)).toLocaleString()} ₫ for ${a.month} was sent earlier and got no answer. `
+  return `An identical ${what} of ${formatVND(Math.trunc(Number(a.amount)))} for ${a.month} was sent earlier and got no answer. `
     + `Saving again is safe: if that one was recorded, nothing more is recorded.`;
 }
 
