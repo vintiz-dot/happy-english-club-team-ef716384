@@ -231,8 +231,8 @@ let shareId;
 
   eq("the owner sees its status", (await as(U.minh, "student", async () => (await db.query(`SELECT status FROM public.work_shares`)).rows.map((x) => x.status))), ["approved"]);
   eq("a classmate reads no request rows", await as(U.an, "student", async () => (await db.query(`SELECT 1 FROM public.work_shares`)).rows.length), 0);
-  eq("a child's direct UPDATE of the table changes nothing (RLS: no write policy)",
-    await as(U.minh, "student", async () => (await db.query(`UPDATE public.work_shares SET status = 'approved' RETURNING id`)).rows.length), 0);
+  ok("a child's direct UPDATE of the table is refused (SELECT is the only grant; writes go through the functions)",
+    /permission denied/.test(await tryAs(U.minh, "student", () => db.query(`UPDATE public.work_shares SET status = 'approved'`)) ?? ""));
 
   eq("a teacher takes it down", (await rpc(U.ada, "teacher", `SELECT public.decide_work_share($1, false) r`, [shareId])).status, "declined");
   eq("...and it leaves the class gallery", await rpc(U.lan, "student", `SELECT public.class_work_gallery($1) r`, [lan]), []);
