@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-import { CreditCard, Loader2, Zap, Users, CheckCircle2 } from "lucide-react";
+import { CreditCard, Loader2, Users, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
+import { cashWarning, parseCash } from "@/lib/cashEntry";
 
 interface BatchPaymentDialogProps {
   open: boolean;
@@ -49,31 +50,19 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
 
   const getOutstanding = (item: any) => Math.max(0, (item.finalPayable ?? 0) - (item.recorded_payment ?? 0));
 
-  const handlePayFullAll = () => {
-    const newEntries: Record<string, string> = {};
-    items.forEach((item) => {
-      const outstanding = getOutstanding(item);
-      if (outstanding > 0) {
-        newEntries[item.student_id] = String(outstanding);
-      }
-    });
-    setEntries(newEntries);
-  };
-
-  const handlePayFull = (studentId: string, outstanding: number) => {
-    setEntries((prev) => ({ ...prev, [studentId]: String(outstanding) }));
-  };
+  // No buttons that fill in the balance: the amount is the cash handed over, typed
+  // (src/lib/cashEntry.ts, the Nov 2026 tuition audit).
 
   const handleAmountChange = (studentId: string, value: string) => {
     setEntries((prev) => ({ ...prev, [studentId]: value }));
   };
 
   const totalPayment = useMemo(() => {
-    return items.reduce((sum, item) => sum + (parseInt(entries[item.student_id] || "0") || 0), 0);
+    return items.reduce((sum, item) => sum + (parseCash(entries[item.student_id])), 0);
   }, [entries, items]);
 
   const validEntries = useMemo(() => {
-    return items.filter((item) => (parseInt(entries[item.student_id] || "0") || 0) > 0);
+    return items.filter((item) => (parseCash(entries[item.student_id])) > 0);
   }, [entries, items]);
 
   const handleSave = async () => {
@@ -97,7 +86,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
       const recordedAfter = new Map<string, number>();
 
       for (const item of validEntries) {
-        const enteredAmount = parseInt(entries[item.student_id] || "0") || 0;
+        const enteredAmount = parseCash(entries[item.student_id]);
         if (enteredAmount <= 0) continue;
 
         const alreadyPaid = item.recorded_payment ?? 0;
@@ -244,11 +233,8 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
           </div>
 
           <div className="shrink-0 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-hec-small font-medium text-hec-ink">Student Amounts</span>
-            <Button variant="outline" size="sm" onClick={handlePayFullAll} className="gap-1">
-              <Zap className="h-3 w-3" />
-              Pay Full All
-            </Button>
+            <span className="text-hec-small font-medium text-hec-ink">Cash received from each family</span>
+            <span className="text-hec-caption text-hec-ink-soft">Rows left empty are not recorded.</span>
           </div>
 
           <Separator className="shrink-0" />
@@ -259,7 +245,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
               {items.map((item) => {
                 const studentName = item.students?.full_name || "Student";
                 const outstanding = getOutstanding(item);
-                const enteredAmount = parseInt(entries[item.student_id] || "0") || 0;
+                const enteredAmount = parseCash(entries[item.student_id]);
                 const isCompleted = completed.includes(item.student_id);
                 const status = getPaymentStatus({
                   carryOutDebt: item.carry_out_debt ?? 0,
@@ -302,27 +288,20 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
 
                     <div className="flex gap-2">
                       <Input
-                        type="number"
-                        placeholder="0"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Cash received"
                         value={entries[item.student_id] || ""}
                         onChange={(e) => handleAmountChange(item.student_id, e.target.value)}
                         className="min-w-0 flex-1 tabular-nums"
                         disabled={saving}
-                        aria-label={`Amount for ${studentName}`}
+                        aria-label={`Cash received from ${studentName}`}
                       />
-                      {outstanding > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1 shrink-0"
-                          onClick={() => handlePayFull(item.student_id, outstanding)}
-                          disabled={saving}
-                        >
-                          <Zap className="h-3 w-3" />
-                          Full
-                        </Button>
-                      )}
                     </div>
+
+                    {cashWarning(enteredAmount, outstanding) && !isCompleted && (
+                      <p className="text-hec-caption text-hec-warn" role="status">{cashWarning(enteredAmount, outstanding)}</p>
+                    )}
 
                     {enteredAmount > 0 && (
                       <p className="text-hec-caption font-medium text-hec-ink tabular-nums">

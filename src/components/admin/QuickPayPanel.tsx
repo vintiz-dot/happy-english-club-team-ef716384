@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { cashWarning, parseCash } from "@/lib/cashEntry";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
 import { useLiveTuitionData } from "@/hooks/useLiveTuitionData";
@@ -32,15 +32,15 @@ interface QuickPayPanelProps {
 }
 
 /**
- * QuickPay — one screen, one click "Mark Paid" for monthly tuition.
- * Replaces the multi-step open-dialog → enter-amount → submit dance.
+ * QuickPay — one screen for the month's cash.
  *
  * Workflow:
  *   1. Select month (parent supplies it).
  *   2. See every student with outstanding > 0.
- *   3. Pre-checked by default. Amount auto-filled to outstanding.
- *   4. Edit per-row if needed; uncheck to skip.
- *   5. Hit "Record N payments" — one batched mutation runs the full set.
+ *   3. Type the cash each family handed over. Nothing is pre-ticked or
+ *      pre-filled: a child is recorded only once an amount is typed
+ *      (src/lib/cashEntry.ts says why - the Nov 2026 tuition audit).
+ *   4. Hit "Record N payments" — one batched mutation runs the set.
  */
 export function QuickPayPanel({ month }: QuickPayPanelProps) {
   const tuitionMonth = useTuitionMonthConfirmation(month);
@@ -51,8 +51,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
   const [search, setSearch] = useState("");
   const [date, setDate] = useState(() => receiptDateToday());
   const [method, setMethod] = useState("Cash");
-  const [skipped, setSkipped] = useState<Set<string>>(new Set());
-  const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   // One key per student per attempt, kept outside this panel (paymentKeys in
@@ -83,33 +82,20 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
   const getOutstanding = (item: any) =>
     Math.max(0, (item.finalPayable ?? 0) - (item.recorded_payment ?? 0));
 
-  const getEntryAmount = (item: any) => {
-    const override = overrides[item.student_id];
-    if (override !== undefined) return parseInt(override) || 0;
-    return getOutstanding(item);
-  };
+  // Only what was typed: an empty row is 0 and is not recorded.
+  const getEntryAmount = (item: any) => parseCash(amounts[item.student_id]);
 
-  const selectedRows = unpaid.filter((i) => !skipped.has(i.student_id));
+  const selectedRows = unpaid.filter((i) => getEntryAmount(i) > 0);
   const totalToCollect = selectedRows.reduce((sum, i) => sum + getEntryAmount(i), 0);
 
   const fmt = (n: number) => n.toLocaleString("vi-VN") + " ₫";
 
-  const toggleRow = (id: string) => {
-    setSkipped((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const skipAll = () => setSkipped(new Set(unpaid.map((i) => i.student_id)));
-  const selectAll = () => setSkipped(new Set());
+  const clearAll = () => setAmounts({});
 
   const handleRecord = async () => {
     if (!tuitionMonth.confirmed) { toast.error("Confirm the tuition month before recording payments"); return; }
     if (selectedRows.length === 0) {
-      toast.error("Select at least one student");
+      toast.error("Type the cash received for at least one student");
       return;
     }
     setSaving(true);
@@ -173,7 +159,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
       queryClient.setQueryData(["admin-tuition-live", month], (old: any[] | undefined) => {
         if (!old) return old;
         return old.map((row) => {
-          if (skipped.has(row.student_id) || !savedIds.has(row.student_id)) return row; // only what was really saved
+          if (!savedIds.has(row.student_id)) return row; // only what was really saved
           // What the function says the bill now records.
           const newRecorded = recordedAfter.get(row.student_id);
           if (newRecorded === undefined) return row;
@@ -214,7 +200,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         });
       }
 
-      setOverrides({});
+      setAmounts({});
       tuitionMonth.reset();
       // Soft reset: leave checkmarks visible briefly so admin sees what landed
       setTimeout(() => {
@@ -261,12 +247,12 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
               Quick Pay
             </CardTitle>
             <CardDescription>
-              One screen. One click. Mark every paid student in seconds.
+              Type the cash each family handed over. Rows left empty are not recorded.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 text-hec-small">
             <Wallet className="h-4 w-4 text-hec-ink-soft" />
-            <span className="text-hec-ink-soft">To collect:</span>
+            <span className="text-hec-ink-soft">Typed:</span>
             <span className="whitespace-nowrap font-sans font-semibold text-hec-body text-hec-ink tabular-nums">
               {fmt(totalToCollect)}
             </span>
@@ -321,7 +307,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
           <div className="flex items-center gap-3 text-hec-ink-soft">
             <span>
               <span className="font-semibold text-hec-ink tabular-nums">{selectedRows.length}</span> of{" "}
-              {unpaid.length} selected
+              {unpaid.length} with an amount
             </span>
             <span className="hidden sm:inline">·</span>
             <span className="hidden sm:inline">
@@ -332,11 +318,8 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
             </span>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={selectAll}>
-              Select all
-            </Button>
-            <Button variant="ghost" size="sm" onClick={skipAll}>
-              Clear
+            <Button variant="ghost" size="sm" onClick={clearAll} disabled={selectedRows.length === 0}>
+              Clear amounts
             </Button>
           </div>
         </div>
@@ -346,27 +329,19 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
           {unpaid.map((item) => {
             const outstanding = getOutstanding(item);
             const entryAmount = getEntryAmount(item);
-            const isSkipped = skipped.has(item.student_id);
+            const isSkipped = entryAmount <= 0;
             const isDone = completedIds.has(item.student_id);
             const isPartial = entryAmount > 0 && entryAmount < outstanding;
+            const warning = cashWarning(entryAmount, outstanding);
             const studentName = (item.students as any)?.full_name || "Unknown";
             return (
               <div
                 key={item.student_id}
                 className={cn(
                   "flex flex-wrap items-center gap-3 px-4 py-3 transition-colors duration-hec-1 ease-hec",
-                  isSkipped && "opacity-50",
                   isDone && "bg-hec-leaf-tint"
                 )}
               >
-                <label className="-m-3 flex min-h-hec-target min-w-hec-target shrink-0 cursor-pointer items-center justify-center">
-                    <Checkbox
-                      checked={!isSkipped}
-                      onCheckedChange={() => toggleRow(item.student_id)}
-                      className="shrink-0"
-                      aria-label={`Include ${studentName}`}
-                    />
-                  </label>
                 <Avatar className="h-11 w-11 shrink-0">
                   <AvatarImage src={getAvatarUrl((item.students as any)?.avatar_url) || undefined} />
                   <AvatarFallback className="bg-hec-sunken text-hec-caption text-hec-ink-soft">
@@ -394,22 +369,22 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
                       {fmt(outstanding)}
                     </span>
                   </p>
+                  {warning && !isDone && (
+                    <p className="text-hec-caption text-hec-warn" role="status">{warning}</p>
+                  )}
                 </div>
                 <div className="ml-auto shrink-0 flex items-center gap-2">
                   <Input
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    value={
-                      overrides[item.student_id] !== undefined
-                        ? overrides[item.student_id]
-                        : String(outstanding)
-                    }
+                    placeholder="Cash received"
+                    value={amounts[item.student_id] ?? ""}
                     onChange={(e) =>
-                      setOverrides((prev) => ({ ...prev, [item.student_id]: e.target.value }))
+                      setAmounts((prev) => ({ ...prev, [item.student_id]: e.target.value }))
                     }
-                    className="w-32 text-right tabular-nums"
-                    disabled={isSkipped || isDone}
-                    aria-label={`Amount for ${studentName}`}
+                    className={cn("w-36 text-right tabular-nums", isSkipped && "placeholder:text-hec-ink-faint")}
+                    disabled={isDone || saving}
+                    aria-label={`Cash received from ${studentName}`}
                   />
                   <span className="text-hec-caption text-hec-ink-soft hidden sm:inline">₫</span>
                 </div>

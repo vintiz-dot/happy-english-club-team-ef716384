@@ -1784,6 +1784,7 @@ console.log('\nFigures: byte-identical to the function before T1');
   ];
   const produced = {};
   const payableChecks = [];
+  const replyMonthChecks = [];
   for (const [name, month, setup] of CASES) {
     await reset(); await setup();
     const first = await calc(S1, month);
@@ -1804,6 +1805,16 @@ console.log('\nFigures: byte-identical to the function before T1');
         { single: c, bulk: row?.carry }]);
       if (c) delete c.payable;
     }
+    // invoice.recorded_payment in the reply was the running total (prior
+    // months + this one) until the Nov 2026 tuition audit; it is now this
+    // month's, as the column. Checked against the saved bill on its own and
+    // left out of the golden comparison (the golden predates it).
+    for (const [r, stored] of [[first, stored1], [second, stored2]]) {
+      const inv = r.body?.invoice;
+      replyMonthChecks.push([name, inv && Number(inv.recorded_payment) === Number(stored?.recorded_payment ?? 0),
+        { reply: inv?.recorded_payment, bill: stored?.recorded_payment }]);
+      if (inv) delete inv.recorded_payment;
+    }
     produced[name] = JSON.parse(JSON.stringify({ month, first, stored1, second, stored2, others }));
   }
   if (writeGolden) {
@@ -1813,6 +1824,12 @@ console.log('\nFigures: byte-identical to the function before T1');
   const golden = existsSync(goldenPath) ? JSON.parse(readFileSync(goldenPath, 'utf8')) : {};
   ok(`the golden file covers exactly these ${CASES.length} fixtures`,
      same(Object.keys(golden), CASES.map((c) => c[0])), Object.keys(golden));
+  // The golden keeps the old running total under that name; drop it there too.
+  for (const g of Object.values(golden)) for (const r of [g?.first, g?.second]) if (r?.body?.invoice) delete r.body.invoice.recorded_payment;
+  if (!altSource) {
+    ok(`the reply's invoice.recorded_payment is this month's, as saved on the bill, on all ${CASES.length} fixtures`,
+       replyMonthChecks.length === CASES.length * 2 && replyMonthChecks.every((c) => c[1]), replyMonthChecks.filter((c) => !c[1]));
+  }
   for (const [name] of CASES) {
     const g = golden[name] || {}, n = produced[name];
     ok(`${name}: the response is identical, first call and repeat`,

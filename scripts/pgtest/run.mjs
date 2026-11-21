@@ -43,6 +43,8 @@ const m = (name) => join(migrations, name);
 
 const SUITES = [
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
+  // Payment screens take typed cash, never the balance (Nov 2026 tuition audit).
+  { name: "cash entry", file: "cash-entry.test.mjs", migrations: [] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.

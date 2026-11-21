@@ -724,8 +724,11 @@ Deno.serve(async (req) => {
         base_amount: baseAmount,
         discount_amount: totalDiscount,
         total_amount: totalAmount,
-        paid_amount: cumulativePaidAmount,
-        recorded_payment: cumulativePaidAmount,
+        paid_amount: cumulativePaidAmount, // cumulative across months, as the column
+        // This month's payments, as the column means. It was the running total
+        // (prior months + this one) under this name until the Nov 2026 tuition
+        // audit flagged it: anything reading it would have shown inflated payments.
+        recorded_payment: monthPayments,
       },
       priorBalanceBreakdown,
     };
