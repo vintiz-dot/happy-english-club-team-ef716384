@@ -170,6 +170,9 @@ for (const { f, u } of units) {
     for (const s of d.slides.filter((x) => x.media)) {
       ok(`${d.id} / ${s.title ?? s.kind}: media links each have a track and a Drive id`, s.media.length > 0 && s.media.every((m) =>
         m.label && m.tracks.length > 0 && m.tracks.every((t) => /^[A-Za-z0-9_-]{20,}$/.test(t.driveId) && (m.kind === "video" || RH_AUDIO_IDS.has(t.driveId)))));
+      // A copy in the school's R2 store (course-media) is a lower-case key of the right kind.
+      ok(`${d.id} / ${s.title ?? s.kind}: R2 copies are course-media keys`, s.media.every((m) => m.tracks.every((t) => t.r2 === undefined
+        || (/^[a-z0-9][a-z0-9/_.-]{0,200}\.(mp4|mp3|m4a)$/.test(t.r2) && !t.r2.includes("..") && (m.kind === "video" ? /\.mp4$/.test(t.r2) : /\.(mp3|m4a)$/.test(t.r2))))));
     }
     ok(`${d.id}: has a speaking activity`, d.slides.some((s) => s.kind === "speaking" || (s.kind === "activity" && s.tag === "Speaking")));
     ok(`${d.id}: supplementary links point only at the publisher's own resource pages`,
@@ -227,6 +230,9 @@ for (const { f, u } of units) {
       ok(`${f}: printable grammar worksheets attached`, (u.worksheets ?? []).length >= 3);
       // Every unit of 3A and 3B has its publisher video in the school's Drive; one slide plays it.
       eq(`${f}: one slide plays the unit video`, u.decks.flatMap((d) => d.slides).filter((s) => (s.media ?? []).some((m) => m.kind === "video")).length, 1);
+      eq(`${f}: the unit video plays from R2, with the Drive copy as backup`,
+        u.decks.flatMap((d) => d.slides).flatMap((s) => s.media ?? []).filter((m) => m.kind === "video").flatMap((m) => m.tracks).map((t) => t.r2),
+        [`reach-higher/${u.unit <= 4 ? "3a" : "3b"}/unit-${u.unit}-video.mp4`]);
       ok(`${f}: every creative homework has its football edition`, u.decks.flatMap((d) => d.slides.filter((s) => s.kind === "creative"))
         .every((s) => (s.variants ?? []).some((v) => v.interest === "football" && v.task?.title)));
     }

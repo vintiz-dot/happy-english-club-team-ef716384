@@ -10,11 +10,14 @@ import { makeFileStore, type StorageLike } from "./fileStore";
  *   student-work  18 Nov 2026 (2,541 reads and 286 uploads, uploader rules
  *              included, no difference; the OCR functions read and move
  *              files through supabase/functions/_lib/file-store.ts)
+ *   course-media  22 Nov 2026: the course books' videos and audio, uploaded
+ *              straight to R2 (scripts/upload-course-media.mjs); Supabase never
+ *              had them, and a slide falls back to the Google Drive copy.
  */
 // Paused for a few hours on 18 Nov 2026: uploads failed with "No bucket
 // called ..." until migration 20261118110000; re-enabled after it, with 121
 // real upload records by 10 accounts checked (all recorded, then undone).
-export const R2_BUCKETS: ReadonlySet<string> = new Set<string>(["homework", "student-work"]);
+export const R2_BUCKETS: ReadonlySet<string> = new Set<string>(["homework", "student-work", "course-media"]);
 
 const DEFAULT_WORKER = "https://hec-files.vintizfjes.workers.dev";
 const WORKER: string = (import.meta.env.VITE_HEC_FILES_URL as string | undefined) ?? DEFAULT_WORKER;

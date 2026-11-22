@@ -51,11 +51,13 @@ export type Tier = { level: TierLevel; task: string; frames?: string[] };
 /** One line of an original listening script, read aloud by the browser. */
 export type ScriptLine = { speaker: string; text: string };
 
-// Class audio or video the school keeps in its own Google Drive (Reach Higher's
-// tracks and unit videos). A slide LINKS to the Drive file and plays Drive's own
-// player; the app never copies the file. `tracks` play in order (a reading is one
+// Class audio or video from the course book (Reach Higher's tracks and unit
+// videos). `r2` is the file's key in the school's own R2 store (bucket
+// `course-media`, read through the hec-files Worker as the signed-in teacher);
+// the Google Drive copy (`driveId`) is the backup, played in Drive's own player
+// when the R2 copy cannot be read. `tracks` play in order (a reading is one
 // track per Student Book page).
-export type MediaLink = { kind: "audio" | "video"; label: string; tracks: { label: string; driveId: string }[] };
+export type MediaLink = { kind: "audio" | "video"; label: string; tracks: { label: string; driveId: string; r2?: string }[] };
 
 export type Thinking = "Create" | "Design" | "Evaluate" | "Argue" | "Compare and justify";
 

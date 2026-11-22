@@ -47,21 +47,27 @@ export function wordAudio(unit: number, part: Part, words: string[], label = "Sa
   return { kind: "audio", label, tracks: tracksOf(words.map((w) => [w, `${prefix(unit, part)}AV_${w}`])) };
 }
 
-// The unit videos, one file per unit in the school's Drive: 3A's from the shared
-// course folder, 3B's from the owner's 3B video folder (uploaded 22 Nov 2026).
-const VIDEOS: Record<number, { title: string; driveId?: string }> = {
-  1: { title: "Saving Stranded Whales", driveId: "1SU7Qtc8F7S1hb9cfZHGqw4wgjBXBkNCi" },
-  2: { title: "The Great Barrier Reef", driveId: "1_H0vBv9AGzl0rlAtG0ZskXXnbtUwmoDg" },
-  3: { title: "Rainforests Around the World", driveId: "1WBiPXBjY5nhSPzVPsR4BkNJbrAzqnJ8x" },
-  4: { title: "Clean Up the Coasts", driveId: "1UXg8TN7ptcyUpPpVPAtBjM3sfXiPHABR" },
-  5: { title: "Matter Is Everywhere!", driveId: "1WoAkAtMUaOwfCdinmnhcYlFZX9LP0iCv" },
-  6: { title: "Traditions of Japan", driveId: "1oNHsjLU7AvUGpLn5Y2ITaTrCAlCnQPra" },
-  7: { title: "Amazing Volcanoes", driveId: "1ciMYPMIKMFbDEqBcL3usq6fDF-OqwTKf" },
-  8: { title: "Never Give Up on Your Goals!", driveId: "1_K-5Bsaua3NB86qsfadW56z9hmbvtjsI" },
+// The unit videos. Each plays from the school's R2 store (`r2`, bucket
+// course-media, uploaded from the publisher's file `file` by
+// scripts/upload-course-media.mjs, which reads this list); the Google Drive copy
+// is the backup: 3A's in the shared course folder, 3B's in the owner's 3B video
+// folder (22 Nov 2026). The unit order of the files was read from their own
+// metadata: 1e = the first unit of the book, 1e_2 the second, and so on.
+const VIDEOS: Record<number, { title: string; driveId?: string; r2?: string; file?: string }> = {
+  1: { title: "Saving Stranded Whales", driveId: "1SU7Qtc8F7S1hb9cfZHGqw4wgjBXBkNCi", r2: "reach-higher/3a/unit-1-video.mp4", file: "Video Level 3A - Reach Higher 1e.mp4" },
+  2: { title: "The Great Barrier Reef", driveId: "1_H0vBv9AGzl0rlAtG0ZskXXnbtUwmoDg", r2: "reach-higher/3a/unit-2-video.mp4", file: "Video Level 3A - Reach Higher 1e_2.mp4" },
+  3: { title: "Rainforests Around the World", driveId: "1WBiPXBjY5nhSPzVPsR4BkNJbrAzqnJ8x", r2: "reach-higher/3a/unit-3-video.mp4", file: "Video Level 3A - Reach Higher 1e_3.mp4" },
+  4: { title: "Clean Up the Coasts", driveId: "1UXg8TN7ptcyUpPpVPAtBjM3sfXiPHABR", r2: "reach-higher/3a/unit-4-video.mp4", file: "Video Level 3A - Reach Higher 1e_4.mp4" },
+  5: { title: "Matter Is Everywhere!", driveId: "1WoAkAtMUaOwfCdinmnhcYlFZX9LP0iCv", r2: "reach-higher/3b/unit-5-video.mp4", file: "Video Level 3B - Reach Higher 1e.mp4" },
+  6: { title: "Traditions of Japan", driveId: "1oNHsjLU7AvUGpLn5Y2ITaTrCAlCnQPra", r2: "reach-higher/3b/unit-6-video.mp4", file: "Video Level 3B - Reach Higher 1e_2.mp4" },
+  7: { title: "Amazing Volcanoes", driveId: "1ciMYPMIKMFbDEqBcL3usq6fDF-OqwTKf", r2: "reach-higher/3b/unit-7-video.mp4", file: "Video Level 3B - Reach Higher 1e_3.mp4" },
+  8: { title: "Never Give Up on Your Goals!", driveId: "1_K-5Bsaua3NB86qsfadW56z9hmbvtjsI", r2: "reach-higher/3b/unit-8-video.mp4", file: "Video Level 3B - Reach Higher 1e_4.mp4" },
 };
 
 /** The unit video, or null while its file is not in the Drive yet. */
 export function unitVideo(unit: number): MediaLink | null {
   const v = VIDEOS[unit];
-  return v?.driveId ? { kind: "video", label: `Unit ${unit} video: ${v.title}`, tracks: [{ label: "watch", driveId: v.driveId }] } : null;
+  return v?.driveId
+    ? { kind: "video", label: `Unit ${unit} video: ${v.title}`, tracks: [{ label: "watch", driveId: v.driveId, ...(v.r2 ? { r2: v.r2 } : {}) }] }
+    : null;
 }

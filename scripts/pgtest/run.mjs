@@ -291,6 +291,8 @@ const SUITES = [
     file: "file-store-access.test.mjs",
     migrations: ["20261118090000_file_store_access.sql", "20261118110000_file_store_bucket_lookup.sql"],
   },
+  // Course-book videos and audio in R2 (course-media/): staff read, admins write (22 Nov 2026).
+  { name: "course media", file: "course-media.test.mjs", migrations: ["20261118090000_file_store_access.sql", "20261118110000_file_store_bucket_lookup.sql", "20261122190000_course_media_bucket.sql"] },
   { name: "hec-files worker", file: "hec-files-worker.test.mjs", migrations: [] },
   { name: "file store client", file: "file-store-client.test.mjs", migrations: [] },
   { name: "edge file store", file: "edge-file-store.test.mjs", migrations: [] },
