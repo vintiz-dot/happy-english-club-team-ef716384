@@ -27,6 +27,7 @@ import { useMyPilotClasses } from "@/hooks/useLessonMonitor";
 import { navProgress } from "@/lib/navProgress";
 import { dur, ease, snappy, useMotionLevel, useSyncMotionLevel } from "@/components/fx/motion";
 import { carriedRecently } from "@/components/fx/Carry";
+import { AgeBandProvider } from "@/hooks/useAgeBand";
 
 interface LayoutProps {
   children: ReactNode;
@@ -156,6 +157,8 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   if (!showSidebar) {
     return (
       <MotionConfig reducedMotion="user">
+        {/* The age band of the selected child (brief F2): data-hec-band / data-hec-scale on a wrapper, on the child's own pages only. */}
+        <AgeBandProvider>
         <div className="min-h-screen bg-hec-paper text-hec-ink">
           <header className="sticky top-0 z-50 border-b border-hec-line bg-hec-paper">
             <div className="container mx-auto flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:py-3">
@@ -191,6 +194,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           >{children}</main>
           <AssistantLauncher />
         </div>
+        </AgeBandProvider>
       </MotionConfig>
     );
   }
