@@ -57,12 +57,13 @@ function plainPrint(deck: Deck, kids: Kid[], interests: Record<string, string[]>
   w.document.close();
 }
 
-export function WeekHomeworkButtons({ deck, classId, present, enrolled, interests, due }: {
-  deck: Deck; classId: string | null; present: Kid[] | null; enrolled: number; interests: Record<string, string[]>; due: string | null;
+export function WeekHomeworkButtons({ deck, classId, getPresent, enrolled, interests, due }: {
+  deck: Deck; classId: string | null; getPresent: () => Promise<Kid[] | null>; enrolled: number; interests: Record<string, string[]>; due: string | null;
 }) {
   const [busy, setBusy] = useState(false);
   const post = async () => {
     if (!classId) return;
+    const present = await getPresent();
     if (!present || present.length === 0) { toast.error(NO_ATTENDANCE); return; }
     const groups = byTier(present, interests);
     const tiers = TIERS.filter((t) => groups[t].length > 0);
@@ -85,7 +86,11 @@ export function WeekHomeworkButtons({ deck, classId, present, enrolled, interest
   return (
     <>
       <Button size="sm" variant="outline" title="One week plan per child present today, in their tier"
-        onClick={() => (present?.length ? void printWeekSheets(deck, present, interests) : toast.error(NO_ATTENDANCE))}>
+        onClick={async () => {
+          const present = await getPresent();
+          if (present?.length) void printWeekSheets(deck, present, interests);
+          else toast.error(NO_ATTENDANCE);
+        }}>
         <PenLine className="h-4 w-4" />Homework sheets
       </Button>
       {classId && (

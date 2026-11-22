@@ -102,7 +102,11 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
   const roster = useClassRoster(classId);
   const names = roster.data?.names ?? [];
   // Homework is for the children who were in the lesson: today's Present and Late marks.
-  const presentKids = roster.data?.from === "present" ? roster.data.students : null;
+  // Read today's attendance again at the click: it is often taken after the panel opened.
+  const getPresent = async () => {
+    const r = await roster.refetch();
+    return r.data?.from === "present" ? r.data.students : null;
+  };
   const place = useClassDeckState(classId);
   const flipbook = flipbooks.find((b) => b.class_id === classId) ?? null;
   const className = classes.find((c) => c.id === classId)?.name ?? "class";
@@ -261,25 +265,27 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                         <Button size="sm" variant="outline" onClick={() => printDeck(d, names, unit, "student")} title="Student copy: no answers, scripts or teacher notes"><Printer className="h-4 w-4" />Student</Button>
                         {hw && (
                           <Button size="sm" variant="outline" title="One sheet per child present today, each with their own version"
-                            onClick={() => {
-                              if (!presentKids) { toast.error(NO_ATTENDANCE); return; }
-                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {}, "student", unit);
+                            onClick={async () => {
+                              const kids = await getPresent();
+                              if (!kids?.length) { toast.error(NO_ATTENDANCE); return; }
+                              printHomeworkSheets(d, kids, place.state?.interests ?? {}, "student", unit);
                             }}>
                             <PenLine className="h-4 w-4" />Homework sheets
                           </Button>
                         )}
                         {hw && (
                           <Button size="sm" variant="outline" title="Who gets which version, and one copy of each version"
-                            onClick={() => {
-                              if (!presentKids) { toast.error(NO_ATTENDANCE); return; }
-                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {}, "teacher", unit);
+                            onClick={async () => {
+                              const kids = await getPresent();
+                              if (!kids?.length) { toast.error(NO_ATTENDANCE); return; }
+                              printHomeworkSheets(d, kids, place.state?.interests ?? {}, "teacher", unit);
                             }}>
                             <PenLine className="h-4 w-4" />Homework (teacher)
                           </Button>
                         )}
                         {hw && classId && <SetHomework classId={classId} title={hw.title} body={hw.body} due={paced[k + 1]?.date ?? null}
-                          present={presentKids} enrolled={roster.data?.enrolled.length ?? 0} />}
-                        {!hw && isWeekHomework(d) && <WeekHomeworkButtons deck={d} classId={classId} present={presentKids}
+                          getPresent={getPresent} enrolled={roster.data?.enrolled.length ?? 0} />}
+                        {!hw && isWeekHomework(d) && <WeekHomeworkButtons deck={d} classId={classId} getPresent={getPresent}
                           enrolled={roster.data?.enrolled.length ?? 0} interests={place.state?.interests ?? {}} due={paced[k + 1]?.date ?? null} />}
                       </div>
                       {checks.map((a) => (
@@ -422,13 +428,14 @@ const NO_ATTENDANCE = "Take today's attendance first: homework goes only to the 
  * is told about it. Refuses until attendance is taken, and never falls back to
  * the whole class when the column is not there yet.
  */
-function SetHomework({ classId, title, body, due, present, enrolled }: {
-  classId: string; title: string; body: string; due: string | null; present: { id: string }[] | null; enrolled: number;
+function SetHomework({ classId, title, body, due, getPresent, enrolled }: {
+  classId: string; title: string; body: string; due: string | null; getPresent: () => Promise<{ id: string }[] | null>; enrolled: number;
 }) {
   const [busy, setBusy] = useState(false);
   return (
     <Button size="sm" variant="outline" disabled={busy} title="Adds it in the app for the children present today, due the next class"
       onClick={async () => {
+        const present = await getPresent();
         if (!present || present.length === 0) { toast.error(NO_ATTENDANCE); return; }
         const away = Math.max(enrolled - present.length, 0);
         if (!confirm(`Post "${title}" for the ${present.length} children present today${away ? ` (${away} absent get nothing)` : ""}${due ? `, due ${due}` : ""}? The football edition is listed as an option, with no names.`)) return;
