@@ -103,7 +103,8 @@ const count = async (uid, s, p) => Number((await rowsAs(uid, s, p))[0].n);
 
 console.log("who reads and writes the book's lessons");
 for (const [who, uid] of [["a teacher", VICTOR], ["a TA (no teacher role)", TAU], ["an admin", ADMIN]]) {
-  eq(`${who} reads them`, await count(uid, `SELECT count(*) n FROM public.curriculum_lessons`), 90);
+  // three levels of 90 lessons
+  eq(`${who} reads them`, await count(uid, `SELECT count(*) n FROM public.curriculum_lessons`), 270);
 }
 for (const [who, uid] of [["a parent", PARENT], ["a child", CHILD], ["a signed-out visitor", null]]) {
   eq(`${who} reads none`, await count(uid, `SELECT count(*) n FROM public.curriculum_lessons`), 0);

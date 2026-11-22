@@ -40,6 +40,8 @@ export type Slide =
       minutes: number;
       steps: string[];
       prompts?: string[];
+      frames?: string[]; // sentence frames on the board, as on a speaking slide
+      fluencyTip?: string;
       book?: BookRef;
       teacherNote?: string;
     }

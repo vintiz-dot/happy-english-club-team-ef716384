@@ -226,6 +226,13 @@ function SlideBody({ slide }: { slide: Slide }) {
               <List items={slide.prompts} say />
             </div>
           ) : null}
+          {slide.frames?.length ? (
+            <div className="rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-950/40">
+              <p className="mb-2 text-sm uppercase tracking-widest text-emerald-800 dark:text-emerald-200">Sentence frames</p>
+              <List items={slide.frames} />
+            </div>
+          ) : null}
+          {slide.fluencyTip && <p className="text-xl text-hec-ink"><strong>Fluency tip:</strong> {slide.fluencyTip}</p>}
           {slide.teacherNote && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
         </div>
       );

@@ -88,7 +88,29 @@ unit.decks.forEach((d, i) => {
   ok(`${tag}: ends with reflect or homework near the end`, d.slides.slice(-3).some((s) => s.kind === "reflect" || s.kind === "homework"));
   ok(`${tag}: inquiry phases set`, Array.isArray(d.inquiryPhases) && d.inquiryPhases.length > 0);
   for (const r of d.resources ?? []) ok(`${tag}: resource link ${r.url}`, /^https:\/\/www\.twinkl\.com\/resource\/[a-z0-9-]+$/.test(r.url) && !!r.title && !!r.use);
+  const deckKeys = ["id", "curriculum", "level", "unit", "lesson", "title", "minutes", "inquiryPhases", "book", "covers", "resources", "slides"];
+  ok(`${tag}: only known deck fields`, Object.keys(d).every((k) => deckKeys.includes(k)), Object.keys(d).filter((k) => !deckKeys.includes(k)).join(", "));
   d.slides.forEach((s, j) => {
+    // The fields each slide kind may carry (src/lib/lessonDecks/types.ts); anything else fails the app typecheck.
+    const KEYS = {
+      title: ["title", "subtitle", "bigQuestion"], objectives: ["title", "items"],
+      activity: ["title", "tag", "mode", "minutes", "steps", "prompts", "frames", "fluencyTip", "book", "teacherNote"],
+      vocab: ["title", "words", "book"], grammar: ["title", "hook", "form", "explanation", "examples", "pitfalls", "book"],
+      speaking: ["title", "mode", "minutes", "frames", "prompts", "fluencyTip", "steps"], book: ["title", "ref", "steps"],
+      homework: ["title", "items"], project: ["project", "title", "goal", "steps", "criteria", "frames"],
+      vlog: ["title", "prompt", "length", "tiers"], reflect: ["title", "prompts"],
+    };
+    const allowed = KEYS[s.kind];
+    const extra = allowed ? Object.keys(s).filter((k) => k !== "kind" && !allowed.includes(k)) : ["unknown kind " + s.kind];
+    ok(`${tag} slide ${j + 1} (${s.kind}): only fields its kind has`, extra.length === 0, extra.join(", "));
+    const TAGS = ["Warm-up", "Vocabulary", "Reading", "Listening", "Grammar", "Speaking", "Writing", "Game", "Phonics", "Review", "Cool-down"];
+    if (s.kind === "activity" && s.tag) ok(`${tag} slide ${j + 1}: activity tag is one of ${TAGS.join("/")}`, TAGS.includes(s.tag), s.tag);
+    if (s.kind === "vocab") ok(`${tag} slide ${j + 1}: vocab words have word, meaning, example`, s.words.every((w) => w.word && w.meaning && w.example && Object.keys(w).length === 3));
+    if (s.kind === "homework") ok(`${tag} slide ${j + 1}: homework items have label and detail only (+book)`, s.items.every((it) => it.label && it.detail && Object.keys(it).every((k) => ["label", "detail", "book"].includes(k))));
+    if (s.kind === "vlog") ok(`${tag} slide ${j + 1}: vlog tiers have level, who, frames, tips`, s.tiers.every((t) => Object.keys(t).every((k) => ["level", "who", "frames", "tips"].includes(k)) && t.who && Array.isArray(t.frames) && Array.isArray(t.tips)));
+    if (s.kind === "grammar") ok(`${tag} slide ${j + 1}: grammar form/examples/pitfalls shapes`, s.form.every((f) => f.label && f.pattern) && s.examples.every((e) => e.text) && (s.pitfalls ?? []).every((p) => p.wrong && p.right && p.why));
+    const books = [s.book, s.ref].filter(Boolean);
+    ok(`${tag} slide ${j + 1}: book refs are {book: SB|WB, pages, activities?, note?}`, books.every((b) => ["SB", "WB"].includes(b.book) && typeof b.pages === "string" && Object.keys(b).every((k) => ["book", "pages", "activities", "note"].includes(k))));
     if (s.kind === "grammar") { grammar++; ok(`${tag} slide ${j + 1}: grammar has hook, form, examples, pitfalls`, !!s.hook && s.form.length > 0 && s.examples.length >= 3 && (s.pitfalls ?? []).length > 0); }
     if (s.kind === "vlog") { vlog++; ok(`${tag} slide ${j + 1}: vlog has Support, Core and Stretch`, ["Support", "Core", "Stretch"].every((l) => s.tiers.some((t) => t.level === l))); }
     if (typeof s.minutes === "number") ok(`${tag} slide ${j + 1}: 3-20 minutes`, s.minutes >= 3 && s.minutes <= 20, `${s.minutes}`);
