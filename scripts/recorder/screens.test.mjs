@@ -428,9 +428,9 @@ console.log("=== the screen uses the session, not its own engine lifetime ===");
   ok("minor: the screens' engine type leaves out kill() (the crash simulation)", pick.includes('"dispose"') && !pick.includes('"kill"'));
   const lay = (await import("node:fs")).readFileSync(resolve(repo, "src/components/Layout.tsx"), "utf8");
   const nav = lay.slice(lay.indexOf("const getNavigationItems"), lay.indexOf("const navItems"));
-  const entry = /\{ icon: Mic, label: "Class recorder", path: "\/teacher\/recorder" \}/g;
+  const entry = /\{ icon: Mic, label: "Record & transcripts", path: "\/teacher\/recorder" \}/g;
   const adminPart = nav.slice(nav.indexOf('case "admin"'), nav.indexOf('case "teacher"')), teacherPart = nav.slice(nav.indexOf('case "teacher"'), nav.indexOf("default:"));
-  ok("sidebar: 'Class recorder' for teachers and admins, and nobody else", (adminPart.match(entry) ?? []).length === 1 && (teacherPart.match(entry) ?? []).length === 1 && (nav.match(entry) ?? []).length === 2 && /default:\s*return \[\];/.test(nav));
+  ok("sidebar: Record & transcripts (the merged recorder page) for teachers and admins, and nobody else", (adminPart.match(entry) ?? []).length === 1 && (teacherPart.match(entry) ?? []).length === 1 && (nav.match(entry) ?? []).length === 2 && /default:\s*return \[\];/.test(nav));
   const app = (await import("node:fs")).readFileSync(resolve(repo, "src/App.tsx"), "utf8");
   ok("R4-2: RecorderBoot is mounted once in App", (app.match(/<RecorderBoot \/>/g) ?? []).length === 1);
 }
