@@ -21,8 +21,8 @@ const MIGS = process.argv.slice(2);
 const find = (s) => MIGS.find((f) => f.includes(s));
 const CHAIN = ["20260717090000", "20261111110000", "class_recorder", "lesson_monitor_pilot", "lesson_monitor_cover_earlier",
   "20261121130000_lesson_reports", "20261121150000_curriculum_lessons", "20261121151000_od2e_level3_lessons",
-  "20261122100000_od2e_level1_lessons", "20261122101000_od2e_level2_lessons", "20261122130000_reach_higher_3a_lessons"].map(find);
-if (CHAIN.some((f) => !f)) { console.log("usage: curriculum-lessons.test.mjs <its 11 migrations>"); console.log("0 passed, 1 failed"); process.exit(1); }
+  "20261122100000_od2e_level1_lessons", "20261122101000_od2e_level2_lessons", "20261122130000_reach_higher_3a_lessons", "20261122140000_reach_higher_3b_lessons"].map(find);
+if (CHAIN.some((f) => !f)) { console.log("usage: curriculum-lessons.test.mjs <its 12 migrations>"); console.log("0 passed, 1 failed"); process.exit(1); }
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
 const eq = (n, got, want) => ok(n, JSON.stringify(got) === JSON.stringify(want),
@@ -63,13 +63,18 @@ eq("pages run in book order through Units 11 and 12",
   (await q(`SELECT sb_page FROM public.curriculum_lessons WHERE level = 3 AND curriculum = 'oxford-discover-2e' AND unit_from IN (11, 12) ORDER BY sb_page`)).map((r) => r.sb_page),
   [106, 108, 110, 112, 114, 116, 118, 120, 122, 124]);
 
-console.log("the Reach Higher 3A seed");
-eq("32 blocks: 4 units x 8", Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE curriculum = 'reach-higher'`)).n), 32);
+console.log("the Reach Higher 3A and 3B seeds");
+eq("64 blocks: 8 units x 8", Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE curriculum = 'reach-higher'`)).n), 64);
 const RH_ORDER = ["Unit Launch", "Part 1 Language", "Part 1 Reading", "Part 1 Review", "Part 2 Language", "Part 2 Reading", "Writing Project", "Unit Wrap-Up"];
 const rh = (await q(`SELECT unit_from, lesson, sb_page FROM public.curriculum_lessons WHERE curriculum = 'reach-higher'`))
   .sort((x, y) => x.unit_from - y.unit_from || RH_ORDER.indexOf(x.lesson) - RH_ORDER.indexOf(y.lesson));
-eq("every unit has the eight blocks", rh.map((x) => x.lesson).join(), [1, 2, 3, 4].flatMap(() => RH_ORDER).join());
-ok("pages rise through the book block by block", rh.every((x, i) => i === 0 || x.sb_page > rh[i - 1].sb_page), rh.map((x) => x.sb_page).join(","));
+eq("every unit has the eight blocks", rh.map((x) => x.lesson).join(), [1, 2, 3, 4, 5, 6, 7, 8].flatMap(() => RH_ORDER).join());
+// 3A (Units 1-4) and 3B (Units 5-8) are separate books, each starting near page 2.
+for (const [book, units] of [["3A", [1, 4]], ["3B", [5, 8]]]) {
+  const part = rh.filter((x) => x.unit_from >= units[0] && x.unit_from <= units[1]);
+  ok(`${book}: pages rise through the book block by block`, part.every((x, i) => i === 0 || x.sb_page > part[i - 1].sb_page), part.map((x) => x.sb_page).join(","));
+}
+eq("3B opens on page 2 and Unit 8 wraps up on 296", [rh.find((x) => x.unit_from === 5)?.sb_page, rh.at(-1)?.sb_page], [2, 296]);
 eq("Unit 2 blocks start on the Teacher's Edition pages", rh.filter((x) => x.unit_from === 2).map((x) => x.sb_page), [74, 78, 92, 100, 110, 126, 142, 148]);
 
 console.log("the Level 1 and Level 2 seeds");
@@ -112,8 +117,8 @@ const count = async (uid, s, p) => Number((await rowsAs(uid, s, p))[0].n);
 
 console.log("who reads and writes the book's lessons");
 for (const [who, uid] of [["a teacher", VICTOR], ["a TA (no teacher role)", TAU], ["an admin", ADMIN]]) {
-  // three Oxford Discover levels of 90 lessons and Reach Higher 3A's 32 blocks
-  eq(`${who} reads them`, await count(uid, `SELECT count(*) n FROM public.curriculum_lessons`), 302);
+  // three Oxford Discover levels of 90 lessons and Reach Higher 3A and 3B (64 blocks)
+  eq(`${who} reads them`, await count(uid, `SELECT count(*) n FROM public.curriculum_lessons`), 334);
 }
 for (const [who, uid] of [["a parent", PARENT], ["a child", CHILD], ["a signed-out visitor", null]]) {
   eq(`${who} reads none`, await count(uid, `SELECT count(*) n FROM public.curriculum_lessons`), 0);

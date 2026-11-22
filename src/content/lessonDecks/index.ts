@@ -42,6 +42,10 @@ import { odL3U12 } from "./od2e-l3-u12";
 import { rhL3U2 } from "./rh-l3-u2";
 import { rhL3U3 } from "./rh-l3-u3";
 import { rhL3U4 } from "./rh-l3-u4";
+import { rhL3U5 } from "./rh-l3-u5";
+import { rhL3U6 } from "./rh-l3-u6";
+import { rhL3U7 } from "./rh-l3-u7";
+import { rhL3U8 } from "./rh-l3-u8";
 import { odL3U13 } from "./od2e-l3-u13";
 import { odL3U14 } from "./od2e-l3-u14";
 import { odL3U15 } from "./od2e-l3-u15";
@@ -97,6 +101,10 @@ export const UNITS: Unit[] = [
   rhL3U2,
   rhL3U3,
   rhL3U4,
+  rhL3U5,
+  rhL3U6,
+  rhL3U7,
+  rhL3U8,
   hecIeltsY1T1,
 ];
 
