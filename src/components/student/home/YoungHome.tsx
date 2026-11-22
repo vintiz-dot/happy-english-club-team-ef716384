@@ -27,11 +27,12 @@ export function YoungHome({ data }: { data: HomeData }) {
   return (
     <div className="space-y-6">
       <section className="space-y-3">
-        <div className="flex items-start gap-3">
+        {/* Beside the card from a wider phone; stacked on the narrowest, where the card would be too narrow to read. */}
+        <div className="flex flex-col items-center gap-3 min-[420px]:flex-row min-[420px]:items-start">
           <div className="shrink-0">
             <MascotCompanion pendingHomework={data.homework.ready ? data.homework.todo : null} messageSlot={slot} />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="w-full min-w-0 flex-1">
             <NextThing data={data} band="young" />
           </div>
         </div>

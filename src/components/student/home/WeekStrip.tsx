@@ -21,12 +21,12 @@ export function WeekStrip({ week, best, big = false }: { week: boolean[]; best?:
       <h2 id="week-strip" className={CARD_TITLE}>
         <Bi k="week.title" />
       </h2>
-      <ol className="flex justify-between gap-1" aria-label={`${en("week.title")}: ${withSticker.join(", ") || "-"}`}>
+      <ol className="flex justify-between gap-1.5" aria-label={`${en("week.title")}: ${withSticker.join(", ") || "-"}`}>
         {DAYS.map((day, i) => (
-          <li key={day} className="flex flex-col items-center gap-1">
+          <li key={day} className="flex min-w-0 flex-1 flex-col items-center gap-1">
             <span
               aria-hidden
-              className={cn("flex items-center justify-center rounded-full border border-hec-line bg-hec-surface", big ? "h-11 w-11" : "h-9 w-9")}
+              className={cn("flex aspect-square w-full items-center justify-center rounded-full border border-hec-line bg-hec-surface", big ? "max-w-[2.75rem]" : "max-w-[2.25rem]")}
             >
               {week[i] && <Star className={cn("fill-hec-leaf text-hec-leaf", big ? "h-6 w-6" : "h-5 w-5")} />}
             </span>

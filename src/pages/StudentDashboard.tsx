@@ -29,19 +29,9 @@ import { BUTTON_QUIET, CARD, CARD_TITLE, reducedMotion } from "@/components/stud
 import { cn } from "@/lib/utils";
 import { LookChoice } from "@/components/student/band/LookChoice";
 import { GrownUps } from "@/components/student/home/GrownUps";
-import { EarlyHome } from "@/components/student/home/EarlyHome";
-import { YoungHome } from "@/components/student/home/YoungHome";
-import { JuniorHome } from "@/components/student/home/JuniorHome";
-import { MeLinks } from "@/components/student/home/MeLinks";
-import { TeenHome } from "@/components/student/home/TeenHome";
-import { Bi } from "@/components/student/band/Bi";
+import { BandHome, MeLinksGate, MovingUpGate } from "@/components/student/home/BandHome";
 import type { HomeData } from "@/components/student/home/types";
-import { useAgeBand } from "@/hooks/useAgeBand";
 import { givenName } from "@/lib/givenName";
-import { useMovingUp } from "@/components/student/band/useMovingUp";
-
-// The "new school year" moment loads only on the day it plays.
-const MovingUpMoment = lazy(() => import("@/components/student/band/MovingUpMoment"));
 
 // Animation variants. "Ivory" design system: the page arrives once, as one
 // slow fade with an 8 px rise; the cards do not each fly in (DESIGN_SYSTEM section 9).
@@ -78,8 +68,6 @@ export default function StudentDashboard() {
   const tabFromUrl = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "dashboard");
   const reduceMotion = reducedMotion(useReducedMotion());
-  const movingUp = useMovingUp();
-  const { band } = useAgeBand();
 
   // Sync tab with URL
   useEffect(() => {
@@ -400,11 +388,7 @@ export default function StudentDashboard() {
         data-hec-theme="ivory"
         className="relative"
       >
-      {movingUp.due && (
-        <Suspense fallback={null}>
-          <MovingUpMoment onDone={movingUp.done} />
-        </Suspense>
-      )}
+      <MovingUpGate />
       {/* Celebration Overlay */}
       <CelebrationOverlay
         show={showCelebration}
@@ -424,24 +408,11 @@ export default function StudentDashboard() {
         animate="visible"
       >
         {/* Tab Content */}
-        {/* Badges, reports and the schedule are pages under "Me" for the three younger bands (their URLs are unchanged). */}
-        {band !== "teen" && (activeTab === "achievements" || activeTab === "reports" || activeTab === "schedule") && <MeLinks active={activeTab} />}
+        <MeLinksGate tab={activeTab} />
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="mt-2 space-y-6 sm:mt-6">
-            {band === "early" ? (
-              <EarlyHome data={home} />
-            ) : band === "young" ? (
-              <YoungHome data={home} />
-            ) : band === "junior" ? (
-              <JuniorHome data={home} />
-            ) : (
-              <TeenHome data={home} />
-            )}
-            {isMonitor && <MonitorStatusCard classNames={monitorClasses!.map((c) => c.className)} />}
-            <button type="button" onClick={home.onEditProfile} className={cn(BUTTON_QUIET, "px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
-              <Bi k="profile.edit" />
-            </button>
+            <BandHome data={home} monitorClassNames={(monitorClasses ?? []).map((c) => c.className)} />
           </TabsContent>
 
           {/* Achievements Tab */}

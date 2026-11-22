@@ -12,6 +12,13 @@ const params = new URLSearchParams(window.location.search);
 const SCREEN = (params.get("screen") as Screen) || "student-home";
 const STATE = (params.get("state") as State) || "ok";
 const THEME = params.get("theme") === "dark" ? "dark" : "light";
+// The child's year of birth (made up): &born=2020 gives the youngest band, &born=2009 the oldest, &born=none no date at all.
+// &second=YYYY (or "none") adds a second child on the same login, so the profile switch can be seen.
+const dobOf = (value: string | null, fallback: string | null) =>
+  value === null ? fallback : value === "none" ? null : /^\d{4}$/.test(value) ? `${value}-05-04` : fallback;
+const BORN = dobOf(params.get("born"), "2017-05-04");
+const SECOND = params.get("second");
+export const SECOND_ID = "stu-second-child";
 
 export const getScreen = (): Screen => SCREEN;
 export const getState = (): State => STATE;
@@ -56,7 +63,7 @@ const hm = (minutesFromNow: number) => {
 
 const LEVEL = (all: number) => ({
   all_time: all,
-  level: { level: 4, from: 300, next: 600, progress: 0.4, to_next: 180 },
+  level: { level: 4, from: 300, next: 600, progress: 40, to_next: 180 },
   classes: [],
   month: all,
 });
@@ -84,16 +91,33 @@ export function buildDb() {
         hw("hw-soon", "Spelling list 12", day(1)),
         hw("hw-later", "Poster: healthy food", day(7)),
         hw("hw-done", "Colours worksheet", day(-1)),
+        { ...hw("hw-video", "Say hello to your class (video)", day(5)), submission_type: "video" },
       ],
       submissions: [
         { id: "sub-1", homework_id: "hw-done", status: "submitted", submitted_at: new Date().toISOString(), grade: null },
       ],
     };
     tables.students = [{
-      id: STUDENT_ID, full_name: ME.name, email: null, phone: null, date_of_birth: "2017-05-04",
+      id: STUDENT_ID, full_name: ME.name, email: null, phone: null, date_of_birth: BORN,
       avatar_url: null, is_active: true, status_message: null, family: { name: "Nguyễn family" }, updated_at: new Date().toISOString(),
+      linked_user_id: SECOND ? ME.userId : undefined,
     }];
     tables.enrollments = [{ id: "enr-1", student_id: STUDENT_ID, class_id: cls.id, end_date: null, classes: { ...cls, economy_mode: false, points_to_cash_rate: 0 } }];
+    if (SECOND) {
+      tables.students.push({
+        id: SECOND_ID, full_name: "Trần Gia Bảo", email: null, phone: null, date_of_birth: dobOf(SECOND, "2012-03-02"),
+        avatar_url: null, is_active: true, status_message: null, family: { name: "Nguyễn family" }, updated_at: new Date().toISOString(),
+        linked_user_id: ME.userId,
+      });
+      tables.enrollments.push({ id: "enr-2", student_id: SECOND_ID, class_id: cls.id, end_date: null, classes: { ...cls, economy_mode: false, points_to_cash_rate: 0 } });
+      points[SECOND_ID] = LEVEL(1330);
+    }
+    // This week's streak and stickers (Monday and Tuesday rewarded), for whichever child is open.
+    // the week the streak hook reads: its Monday is dayjs().startOf("week") + 1 day
+    const monday = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1); return d; })();
+    const dayOfWeek = (i: number) => { const d = new Date(monday); d.setDate(d.getDate() + i); return ymd(d); };
+    tables.student_login_streaks = [STUDENT_ID, SECOND_ID].map((id) => ({ student_id: id, current_streak: 5, longest_streak: 12, last_homework_check: day(0) }));
+    tables.daily_login_rewards = [STUDENT_ID, SECOND_ID].flatMap((id) => [0, 1].map((i) => ({ id: `${id}-${i}`, student_id: id, reward_date: dayOfWeek(i) })));
     tables.sessions = [{ id: "ses-s1", class_id: cls.id, date: day(1), start_time: "17:00:00", end_time: "18:30:00", status: "Scheduled", classes: { name: cls.name } }];
     tables.attendance = [{ id: "att-1", student_id: STUDENT_ID, status: "Present", date: day(-3) }];
     // Another child is the monitor: useClassMonitor reads `data?.student_id`, which is undefined (a react-query error) for a class with none.
@@ -146,6 +170,20 @@ export function buildDb() {
   }
 
   let functions: Record<string, (body: any) => { data: any; error: any }> = {};
+  if (SCREEN === "student-home") {
+    const classmates = [
+      ["stu-lan", "Phạm Ngọc Lan", 980, 40], ["stu-minh", "Đỗ Quang Minh", 870, 25], ["stu-hana", "Vũ Hana", 760, 30],
+      [STUDENT_ID, ME.name, 420, 15], ["stu-son", "Lê Thanh Sơn", 390, 10], ["stu-mai", "Bùi Mai Chi", 310, 5],
+    ] as const;
+    const rows = classmates.map(([id, name, pts, gain], i) => ({ student_id: id, name, avatar_url: null, rank: i + 1, points: pts, total: pts, all_time: pts, gain_week: gain, is_self: id === STUDENT_ID }));
+    functions["class-leaderboard"] = (body: any) => ({
+      data: {
+        board: { period: { kind: "all", from: "2025-09-01", to: "2026-08-31", label: "All time", term_id: null, basis: "total" }, class_id: body?.classId ?? "cls-1", rows, champions: [], climber: null, streak: null },
+        currentStudentId: STUDENT_ID,
+      },
+      error: null,
+    });
+  }
   let rpcs: Record<string, (args: any) => any> = {};
   if (ROLE_OF[SCREEN] === "admin") {
     const admin = adminDb();
