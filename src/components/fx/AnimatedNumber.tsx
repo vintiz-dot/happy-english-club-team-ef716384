@@ -14,6 +14,8 @@ interface AnimatedNumberProps {
   /** custom formatter; defaults to locale-rounded integer */
   format?: (n: number) => string;
   className?: string;
+  /** the figure shown on the first paint, before any count; default 0 (so the first value counts up from 0) */
+  startAt?: number;
 }
 
 export function AnimatedNumber({
@@ -21,9 +23,10 @@ export function AnimatedNumber({
   duration = 900,
   format,
   className,
+  startAt = 0,
 }: AnimatedNumberProps) {
-  const [display, setDisplay] = useState(0);
-  const shown = useRef(0);
+  const [display, setDisplay] = useState(startAt);
+  const shown = useRef(startAt);
 
   useEffect(() => {
     if (
