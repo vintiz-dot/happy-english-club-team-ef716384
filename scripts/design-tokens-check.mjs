@@ -15,7 +15,11 @@
 //      does not exist in the base;
 //   5. a documented text/surface pair is under its WCAG threshold in either theme;
 //   6. the raw logo green would pass as text on a light surface (it must not be
-//      mistaken for a text colour: the doc forbids it, this keeps the doc true).
+//      mistaken for a text colour: the doc forbids it, this keeps the doc true);
+//   7. the Signature tier tokens (s.9b) are missing, wrong, not zeroed under
+//      reduced motion, or have no Tailwind class; or the Tide shift of `paper`
+//      (inert rule in index.css) exceeds 4 degrees / 2 % or drops a pair on
+//      `paper` under its threshold at either end of the day.
 //
 // It prints the markdown tables that are pasted into the document.
 
@@ -144,9 +148,35 @@ const used = new Set();
 for (const m of css.matchAll(/var\(\s*(--hec-[A-Za-z0-9_-]+)/g)) used.add(m[1]);
 const usedTw = new Set();
 for (const m of tw.matchAll(/var\(\s*(--hec-[A-Za-z0-9_-]+)/g)) usedTw.add(m[1]);
+// Variables that script sets on <html> at run time, so no stylesheet scope defines them:
+// --hec-tide is written by src/components/fx/Tide.tsx (Signature tier, DESIGN_SYSTEM s.9b).
+const RUNTIME_VARS = new Set(["--hec-tide"]);
 for (const name of new Set([...used, ...usedTw])) {
+  if (RUNTIME_VARS.has(name)) continue;
   if (!light.has(name)) fail(`var(${name}) is used but not defined in the light scope`);
   if (!dark.has(name)) fail(`var(${name}) is used but not defined in the dark scope`);
+}
+
+// ------------------------------------------------------------------ 3b Signature tier tokens
+// DESIGN_SYSTEM s.9b: the four tokens exist with their documented values, are zeroed under
+// reduced motion, and are reachable as Tailwind classes.
+const SIGNATURE = [
+  ["--hec-dur-4", "700ms", /"hec-4":\s*"var\(--hec-dur-4\)"/],
+  ["--hec-dur-5", "1200ms", /"hec-5":\s*"var\(--hec-dur-5\)"/],
+  ["--hec-ease-draw", "cubic-bezier(0.65, 0, 0.35, 1)", /"hec-draw":\s*"var\(--hec-ease-draw\)"/],
+  ["--hec-stagger", "40ms", null],
+];
+for (const [name, value, twPattern] of SIGNATURE) {
+  if (light.get(name) !== value) fail(`${name} should be ${value} in the light scope, found ${light.get(name) ?? "nothing"}`);
+  if (dark.get(name) !== value) fail(`${name} should be ${value} in the dark scope, found ${dark.get(name) ?? "nothing"}`);
+  if (twPattern && !twPattern.test(tw)) fail(`${name} has no class in tailwind.config.ts`);
+}
+const reducedScope = scopes.get("@media (prefers-reduced-motion: reduce)");
+for (const [name, want] of [["--hec-dur-1", "0.01ms"], ["--hec-dur-2", "0.01ms"], ["--hec-dur-3", "0.01ms"], ["--hec-dur-4", "0.01ms"], ["--hec-dur-5", "0.01ms"], ["--hec-stagger", "0ms"]]) {
+  for (const scope of ["light", "darkRoot", "darkInner"]) {
+    const got = reducedScope?.get(scope)?.get(name);
+    if (got !== want) fail(`reduced motion: ${name} should be ${want} in the ${scope} scope, found ${got ?? "nothing"}`);
+  }
 }
 const hecTokens = [...light.keys()].filter((k) => k.startsWith("--hec-"));
 const legacyTokens = [...light.keys()].filter((k) => !k.startsWith("--hec-"));
@@ -256,6 +286,61 @@ for (const [fg, bg, min, what] of pairs) {
   pairRows.push(`| \`${fg}\` | \`${bg}\` | ${what} | ${min} | ${cells[0]} | ${cells[1]} |`);
 }
 
+// 7. Tide (DESIGN_SYSTEM s.9b): the rule in index.css that shifts `paper` by the time of day is
+// evaluated at both ends (--hec-tide 0 and 1) and every pair that sits on `paper` is checked again.
+// The shift is bounded at 4 degrees of hue and 2 % of lightness. Light only: in dark it does nothing.
+const TIDE_SELECTOR = 'html[data-hec-theme="ivory"][data-hec-tide]:not(.dark)';
+const TIDE_MAX = { hue: 4, light: 2 };
+const tideRows = [];
+function splitTop(value) {
+  const out = [];
+  let depth = 0, cur = "";
+  for (const ch of value) {
+    if (ch === "(") depth++;
+    if (ch === ")") depth--;
+    if (ch === " " && depth === 0) { if (cur) out.push(cur); cur = ""; } else cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+function evalTide(component, t) {
+  const expr = component.replace(/var\(\s*--hec-tide\s*\)/g, String(t)).replace(/calc/g, "").replace(/%/g, "");
+  if (!/^[\d\s().+\-*/]+$/.test(expr)) throw new Error(`cannot evaluate "${component}"`);
+  return Function(`"use strict"; return (${expr});`)();
+}
+const tideRule = rules.find((r) => r.selectors.includes(TIDE_SELECTOR));
+const tidePaper = tideRule?.decls.find(([k]) => k === "--hec-paper")?.[1];
+if (!tidePaper) {
+  fail(`Tide: no --hec-paper declaration under ${TIDE_SELECTOR} in src/index.css`);
+} else {
+  const base = light.get("--hec-paper").match(TRIPLET);
+  const parts = splitTop(tidePaper);
+  if (!base || parts.length !== 3) {
+    fail(`Tide: cannot read "${tidePaper}" as three components`);
+  } else {
+    for (const t of [0, 1]) {
+      let h, s, l;
+      try { h = evalTide(parts[0], t); s = parseFloat(parts[1]); l = evalTide(parts[2], t); } catch (e) { fail(`Tide: ${e.message}`); continue; }
+      const dh = Math.abs(h - Number(base[1])), dl = Math.abs(l - Number(base[3]));
+      if (dh > TIDE_MAX.hue + 1e-9) fail(`Tide at ${t}: paper hue moves ${dh} degrees, the limit is ${TIDE_MAX.hue}`);
+      if (dl > TIDE_MAX.light + 1e-9) fail(`Tide at ${t}: paper lightness moves ${dl} %, the limit is ${TIDE_MAX.light}`);
+      if (s !== Number(base[2])) fail(`Tide at ${t}: paper saturation changes (${s} against ${base[2]}); only hue and lightness may move`);
+      const shifted = new Map(light);
+      shifted.set("--hec-paper", `${h} ${s}% ${l}%`);
+      let worst = Infinity;
+      for (const [fg, bg, min, what] of pairs) {
+        if (bg !== "paper") continue;
+        const a = rgbOf(shifted, fg), b = rgbOf(shifted, bg);
+        if (!a || !b) { fail(`Tide at ${t}: pair ${fg} on paper is not a colour token`); continue; }
+        const r = contrast(a, b);
+        worst = Math.min(worst, r);
+        if (r < min) fail(`Tide at ${t}: ${fg} on paper is ${fmt(r)}:1, needs ${min}:1 (${what})`);
+      }
+      tideRows.push(`tide ${t}: paper \`${h.toFixed(1)} ${s}% ${l.toFixed(1)}%\` (${hex(rgbOf(shifted, "paper"))}), lowest pair on paper ${fmt(worst)}:1`);
+    }
+  }
+}
+
 // 6. raw logo green is not a text colour
 const logoRows = [];
 for (const bg of SURFACES) {
@@ -288,6 +373,10 @@ console.log("|---|---|---|---|---|---|");
 for (const r of pairRows) console.log(r);
 console.log(`\nRaw logo green on light surfaces (must stay under 3, it is not a text colour): ${logoRows.join(", ")}.`);
 if (lowest.fg) console.log(`Lowest text pair: \`${lowest.fg}\` on \`${lowest.bg}\` (${lowest.themeName}) ${fmt(lowest.ratio)}:1.`);
+
+console.log("\n## Tide (paper at both ends of the day, light theme)\n");
+for (const r of tideRows) console.log(`- ${r}`);
+console.log(`Signature tier tokens (${SIGNATURE.map(([n]) => n).join(", ")}) checked in both themes and under reduced motion.`);
 
 console.log(`\n${pairs.length} pairs x 2 themes checked.`);
 if (failures.length) {

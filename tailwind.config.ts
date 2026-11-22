@@ -166,10 +166,13 @@ export default {
         "hec-1": "var(--hec-dur-1)",
         "hec-2": "var(--hec-dur-2)",
         "hec-3": "var(--hec-dur-3)",
+        "hec-4": "var(--hec-dur-4)",
+        "hec-5": "var(--hec-dur-5)",
       },
       transitionTimingFunction: {
         hec: "var(--hec-ease)",
         "hec-in-out": "var(--hec-ease-in-out)",
+        "hec-draw": "var(--hec-ease-draw)",
       },
       backdropBlur: {
         xs: "2px",

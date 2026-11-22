@@ -1805,6 +1805,12 @@ All colors MUST be HSL.
   --hec-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --hec-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
+  /* Signature tier (DESIGN_SYSTEM s.9b) */
+  --hec-dur-4: 700ms;           /* a signature moment: the Seal, a Carry between pages */
+  --hec-dur-5: 1200ms;          /* the ceiling for a reward moment                     */
+  --hec-ease-draw: cubic-bezier(0.65, 0, 0.35, 1); /* ink drawing along a path         */
+  --hec-stagger: 40ms;          /* gap between siblings entering                       */
+
   /* Bridge: inside the scope the existing token names take the new values,
      so shared primitives (Button, Card, Dialog ...) follow without an edit.
      Outside the scope these names keep the values declared further up. */
@@ -1927,6 +1933,9 @@ All colors MUST be HSL.
     --hec-dur-1: 0.01ms;
     --hec-dur-2: 0.01ms;
     --hec-dur-3: 0.01ms;
+    --hec-dur-4: 0.01ms;
+    --hec-dur-5: 0.01ms;
+    --hec-stagger: 0ms;
   }
 
   /* The display boards keep their own motion rules (they read the same
@@ -1953,6 +1962,15 @@ All colors MUST be HSL.
   .data-\[state\=closed\]\:animate-spring-out[data-state="closed"] {
     animation-duration: 0.01ms !important;
   }
+}
+
+/* ---- Tide (DESIGN_SYSTEM s.9b): INERT. Nothing sets data-hec-tide yet; when
+   something does, --hec-tide (0 at 07:00 to 1 at 19:00, Hanoi) moves paper's
+   hue by at most 4 degrees and its lightness by at most 2 %. Light only: the
+   dark theme is untouched. design-tokens-check.mjs evaluates this rule at
+   both ends and checks the contrast pairs on paper. ---- */
+html[data-hec-theme="ivory"][data-hec-tide]:not(.dark) {
+  --hec-paper: calc(42 - (var(--hec-tide) - 0.5) * 8) 45% calc(94% - (var(--hec-tide) - 0.5) * 4%);
 }
 
 
