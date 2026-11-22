@@ -47,6 +47,7 @@ import { cn } from "@/lib/utils";
 import { LookChoice } from "@/components/student/band/LookChoice";
 import { GrownUps } from "@/components/student/home/GrownUps";
 import { EarlyHome } from "@/components/student/home/EarlyHome";
+import { YoungHome } from "@/components/student/home/YoungHome";
 import type { HomeData } from "@/components/student/home/types";
 import { useAgeBand } from "@/hooks/useAgeBand";
 import { givenName } from "@/lib/givenName";
@@ -463,6 +464,8 @@ export default function StudentDashboard() {
           <TabsContent value="dashboard" className="mt-2 space-y-8 sm:mt-6 lg:space-y-12">
         {band === "early" ? (
           <EarlyHome data={home} />
+        ) : band === "young" ? (
+          <YoungHome data={home} />
         ) : (
           <>
         {/* Hero */}

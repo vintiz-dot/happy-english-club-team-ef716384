@@ -23,6 +23,11 @@ interface AchievementBadgesProps {
   classesAttended: number;
   featuredBadgeId?: string;
   onFeatureBadge?: (badgeId: string | null) => void;
+  /**
+   * A shelf, not the whole catalogue: the earned badges and at most this many of the nearest unearned ones as
+   * outlined empty places (brief G3). Unset: every badge, as before.
+   */
+  lockedLimit?: number;
 }
 
 const badgeDefinitions: Omit<Badge, "earned" | "earnedAt">[] = [
@@ -64,6 +69,7 @@ export function AchievementBadges({
   classesAttended,
   featuredBadgeId,
   onFeatureBadge,
+  lockedLimit,
 }: AchievementBadgesProps) {
   // Calculate which badges are earned
   const badges: Badge[] = badgeDefinitions.map((def) => {
@@ -103,6 +109,17 @@ export function AchievementBadges({
   });
 
   const earnedCount = badges.filter(b => b.earned).length;
+  // The shelf: earned ones, then the first unearned badges in each kind's order (the nearest ones), up to the limit.
+  const shelf = lockedLimit === undefined
+    ? badges
+    : [
+        ...badges.filter((b) => b.earned),
+        // the nearest one of each kind (the catalogue lists each kind from easiest to hardest), then up to the limit
+        ...(["homework", "xp", "attendance", "streak", "special"] as const)
+          .map((kind) => badges.find((b) => b.category === kind && !b.earned))
+          .filter((b): b is Badge => !!b)
+          .slice(0, lockedLimit),
+      ];
 
   return (
     <div className="space-y-4">
@@ -112,7 +129,7 @@ export function AchievementBadges({
           <h2 className={CARD_TITLE}>Achievements</h2>
         </div>
         <span className="text-hec-small tabular-nums text-hec-ink-soft">
-          {earnedCount}/{badges.length} earned
+          {lockedLimit === undefined ? `${earnedCount}/${badges.length} earned` : `${earnedCount} earned`}
         </span>
       </div>
 
@@ -125,7 +142,7 @@ export function AchievementBadges({
       >
         <div className="flex gap-3 px-1 pb-3 pt-2">
           <TooltipProvider>
-            {badges.map((badge) => (
+            {shelf.map((badge) => (
               <Tooltip key={badge.id}>
                 <TooltipTrigger asChild>
                   <div
