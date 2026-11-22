@@ -28,6 +28,8 @@
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Deck, MediaLink, Slide, Unit } from "@/lib/lessonDecks/types";
 import { rhL3U2Assessments } from "./rh-l3-u2/assessments";
+import { rhL3U2Football } from "./rh-l3-u2/football";
+import { rhL3U2Worksheets } from "./rh-l3-u2/worksheets";
 import { rhL3U2Creative } from "./rh-l3-u2/homework";
 import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, unitVideo, wordAudio } from "./rh-l3/media";
 
@@ -1638,7 +1640,10 @@ const lessons: Deck[] = [
 // Each lesson's creative homework goes just before its homework slide.
 const withCreative = (d: Deck): Deck => {
   const at = d.slides.findIndex((s) => s.kind === "homework");
-  const c: Slide | undefined = rhL3U2Creative[d.lesson];
+  const base: Slide | undefined = rhL3U2Creative[d.lesson];
+  // The football edition of the same task, for the children the class marks as football fans.
+  const fb = rhL3U2Football[d.id];
+  const c: Slide | undefined = base?.kind === "creative" && fb ? { ...base, variants: [...(base.variants ?? []), fb] } : base;
   return at < 0 || !c ? d : { ...d, slides: [...d.slides.slice(0, at), c, ...d.slides.slice(at)] };
 };
 const decks = lessons.map(withCreative);
@@ -1674,4 +1679,5 @@ export const rhL3U2: Unit = {
   ],
   decks,
   assessments: rhL3U2Assessments,
+  worksheets: rhL3U2Worksheets,
 };

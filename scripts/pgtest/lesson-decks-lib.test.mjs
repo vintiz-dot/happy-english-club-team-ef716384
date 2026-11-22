@@ -222,6 +222,12 @@ for (const { f, u } of units) {
       u.decks.flatMap((d) => d.slides.filter((s) => s.kind === "exam").flatMap((s) => s.items)),
       ...(u.assessments ?? []).map((a) => a.sections.flatMap((s) => s.items)),
     ].map((items) => items.filter((it) => it.options?.length >= 3).map(where).filter((i) => i >= 0));
+    if (u.decks.length > 1) {
+      // The worksheets and football editions are wired in, not just sitting beside the unit.
+      ok(`${f}: printable grammar worksheets attached`, (u.worksheets ?? []).length >= 3);
+      ok(`${f}: every creative homework has its football edition`, u.decks.flatMap((d) => d.slides.filter((s) => s.kind === "creative"))
+        .every((s) => (s.variants ?? []).some((v) => v.interest === "football" && v.task?.title)));
+    }
     ok(`${f}: right answers are spread over A-D`, sets.every((pos) => {
       const most = Math.max(0, ...[0, 1, 2, 3].map((p) => pos.filter((x) => x === p).length));
       let run = 0, longest = 0;
