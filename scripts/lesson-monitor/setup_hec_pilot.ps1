@@ -45,6 +45,11 @@ if (-not $SupabaseUrl -or -not $SupabaseKey) { throw "Could not read the two pub
 if (-not (Test-Path $ModelSource)) { throw "Model folder not found: $ModelSource" }
 Write-Host "repo: $repo`nroot: $Root"
 
+if (Test-Path $Root) {
+  Step "Unlocking an earlier $Root (a re-run)"
+  takeown /f $Root /r /d y | Out-Null
+  icacls $Root /reset /T /C | Out-Null
+}
 Step "Copying the job's files"
 $code = Join-Path $Root "code"
 New-Item -ItemType Directory -Force "$code\scripts\lesson-monitor", "$code\scripts\lesson-eval", "$Root\models\faster-whisper", "$Root\pilot\step0" | Out-Null
@@ -84,17 +89,18 @@ Set-Location '$code'
 & '$vpy' ("scripts\lesson-monitor\" + `$Script) @Rest
 "@ | Set-Content -Encoding UTF8 "$Root\run-pilot.ps1"
 
-Step "Locking C:\hec-pilot to $User, SYSTEM and Administrators"
-icacls $Root /inheritance:r /grant:r "${User}:(OI)(CI)F" "SYSTEM:(OI)(CI)F" "Administrators:(OI)(CI)F" /T /C | Out-Null
-if ($LASTEXITCODE) { throw "icacls failed" }
-
 Step "Offline tests (made-up data only)"
 $env:HEC_EVAL_ROOT = $Root
 Push-Location $code
-& $vpy -m pytest scripts\lesson-monitor\tests\test_plan.py scripts\lesson-monitor\tests\test_nightly_fake.py -q
-$testExit = $LASTEXITCODE
+try {
+  & $vpy -m pytest "scripts\lesson-monitor\tests\test_plan.py" "scripts\lesson-monitor\tests\test_nightly_fake.py" -q
+  if ($LASTEXITCODE) { Write-Warning "Some offline tests failed (see above). Fix before relying on the job." }
+} catch { Write-Warning "Could not run the offline tests here: $($_.Exception.Message). Setup continues." }
 Pop-Location
-if ($testExit) { Write-Warning "Some offline tests failed (see above). The task is still installed; fix before relying on it." }
+
+Step "Locking C:\hec-pilot to $User, SYSTEM and Administrators"
+icacls $Root /inheritance:r /grant:r "${User}:(OI)(CI)F" "SYSTEM:(OI)(CI)F" "Administrators:(OI)(CI)F" /T /C | Out-Null
+if ($LASTEXITCODE) { throw "icacls failed" }
 
 Step "Scheduled task"
 & (Join-Path $PSScriptRoot "install_watch_task.ps1") -Root $Root -User $User
