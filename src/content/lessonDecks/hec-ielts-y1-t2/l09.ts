@@ -56,6 +56,24 @@ export const l09: Deck = {
       teacherNote: "Clothes and appearance can be sensitive: talk about choices, never bodies or prices a family paid. Recycle Term 1 'I tend to' and 'these days' here.",
     },
     {
+      kind: "activity",
+      title: "Homework check: health logs and cards",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students, chosen by the teacher, each get 60 seconds on one episode from their log. The teacher plays one of their timestamps, stops it, and asks what the speaker said next.",
+        "Quick-fire phrase quiz, 2 minutes, spoken only: the teacher reads back-of-card sentences from last week's health phrases (get enough sleep, work out, cut down on) and the class calls out the phrase.",
+        "The teacher plays one voice note from the week and asks its owner one follow-up question.",
+      ],
+      tiers: [
+        { level: "Support", task: "Hold your log and read the timestamp line first; then say one more thing about the episode in your own words." },
+        { level: "Core", task: "No log in your hand. Say what followed your timestamp and why it mattered to the episode." },
+        { level: "Stretch", task: "No log. Tell the class where your speaker was wrong or went too far, with a reason of your own." },
+      ],
+      teacherNote: "Keep a tick list of who was checked and who answered the quiz unprompted; across the term, every student should be checked twice. Follow up a log someone cannot talk about privately, not in front of the class.",
+    },
+    {
       kind: "vocab",
       title: "Words for clothes and style",
       words: [
@@ -282,7 +300,7 @@ export const l09: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a piece of clothing, and fashion today",
-      prompt: "Record your Part 2 talk again: 'Describe a piece of clothing you like wearing.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Why do some young people care so much about fashion?'",
+      prompt: "On Wednesday, in the app's video homework, record one take with no cuts. Say the date and the code word from the end of today's class (it is on the board, not in any file), then give your Part 2 talk again: 'Describe a piece of clothing you like wearing.' Take 1 minute to prepare (off camera), talk for 2 minutes, then in the same take answer one Part 3 question: 'Why do some young people care so much about fashion?' Finish with the surprise question posted in the class group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["It's a ... ... ...", "I got it when ...", "I think young people care about fashion because ..."], tips: ["Keep your four keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },
@@ -292,15 +310,18 @@ export const l09: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: what counts is said in the student's own voice, at a set
+      // moment, and checked live on Sunday. An AI can fill in a log; it cannot tell
+      // the teacher what was said at 01:50 or take a follow-up question.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about fashion, design or daily life, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one detail you heard (a number, a name or a place).", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about clothes, shopping or style. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a teen podcast about fashion, fast fashion or design, at normal speed, no transcript first. Log: the main point, 3 phrases, one argument you could use for or against uniforms.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening with names or numbers in it. Speak WITH the speaker, copying the small pauses between chunks. Repeat 3 times. Once a week, read today's six invented emails aloud as fast as you can without a mistake.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's health phrases (get enough sleep, work out, cut down on) in the pile, plus three Term 1 cards. Test yourself from the BACK: say the phrase in a sentence before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Is it better to be good at many things or excellent at one?' Write one PREP point for EACH side with a real example (a person, a hobby, a school subject), and one 'That's true, but ...' against the other side's STRONGEST point.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story about fashion, design or daily life at the slow level, transcript on the second listen. Log: date, title, ONE timestamp (for example 01:50) and the exact 5-8 words you heard there, plus one detail (a number, a name or a place). Then a 20-second voice note in your own words, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays a story from your log at your timestamp and asks you for the detail you wrote down; voice notes are opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about clothes, shopping or style, once without the transcript, once with. Log: date, title, TWO timestamps with the exact words said there, three phrases. Then a 30-second voice note recorded straight after listening, one take: what the presenters think about clothes and whether you agree.", minutes: 60, tier: "Core", check: "Sunday: the teacher picks two logs, plays one timestamp and asks what came next; one voice note per student is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or a teen podcast about fashion, fast fashion or design, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, and one argument you could use for or against uniforms. Then a 45-second voice note using that argument against the speaker.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds to argue live with your speaker's main point, then one question from the class about the episode." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: take 30 seconds of the day's listening with names or numbers in it and speak WITH the speaker, copying the small pauses between chunks, 3 times. On Thursday, also read today's six invented emails aloud as fast as you can without a mistake. On Saturday record your best shadowing as audio and keep it.", minutes: 25, check: "Your Saturday audio is played beside the original; the teacher listens for clean chunking of names and numbers and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The Part 2 + Part 3 recording on the previous slide: one take, no cuts, in the app. Open with the date and this week's code word, close with Wednesday's surprise question.", minutes: 15, check: "The teacher scores it on the HEC rubric; a take missing the code word or the surprise question is not accepted." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 clothes phrases on cards, phrase on the front and a sentence about something YOU own on the back, with last week's health phrases (get enough sleep, work out, cut down on) and three Term 1 cards still in the pile. Test from the back: say the phrase before you turn over. Missed cards return tomorrow.", minutes: 25, check: "Next Sunday's Homework check starts with a 2-minute spoken quiz built from your back-of-card sentences." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Is it better to be good at many things or excellent at one?', no full sentences, 6 words a card at most: a PREP point for each side with a real example (a person, a hobby, a school subject) and a 'That's true, but ...' against the other side's strongest point. Friday, 10 minutes: say it aloud from the cards, 45 seconds a side, timed. AI rule: ONE argument for the side you disagree with may come from an AI; log the question you asked on the back of a card and one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "In class you speak from your keyword cards only and take one follow-up question from the teacher; an AI argument has to be explained, with its weakness, to the class." },
       ],
     },
   ],

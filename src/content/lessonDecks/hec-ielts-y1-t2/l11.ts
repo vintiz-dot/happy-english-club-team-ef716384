@@ -56,6 +56,24 @@ export const l11: Deck = {
       teacherNote: "Some stories may be personal; students choose what to share. Collect good past perfect sentences (no names) for the grammar slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: what came next?",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students picked by the teacher talk for 60 seconds about one episode they logged. The teacher plays the recording from one of their timestamps, pauses, and asks what the speaker said next.",
+        "Two-minute spoken quiz on last week's photo phrases (capture a moment, bring back memories ...): the teacher reads the back-of-card sentence, the class says the phrase.",
+        "One voice note from the week is played; its owner answers one question from the class.",
+      ],
+      tiers: [
+        { level: "Support", task: "You may read from your log; say the timestamp line, then one more detail in your own words." },
+        { level: "Core", task: "Without the log, say what came after the timestamp and why the speaker said it." },
+        { level: "Stretch", task: "Without the log, take on your speaker: one claim you doubt, and your counter-example." },
+      ],
+      teacherNote: "Note who was checked and who answered the quiz alone, so everyone is checked twice this term. Handle a log the student cannot talk about after class, one to one.",
+    },
+    {
       kind: "vocab",
       title: "Words for helping and community",
       words: [
@@ -299,7 +317,7 @@ export const l11: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a time you helped, and volunteering",
-      prompt: "Record your Part 2 talk again: 'Describe a time when you helped someone.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Is it better to give money or time to help others?'",
+      prompt: "Record it on Wednesday in the app, in one take with no cuts. Begin with the date and this week's code word (the teacher gives it out at the end of class; it is not written in any file). Then give your Part 2 talk again: 'Describe a time when you helped someone.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Is it better to give money or time to help others?' Close with the surprise question posted in the class group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I helped ...", "The problem was that ...", "I think time is better because ..."], tips: ["Keep your four keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },
@@ -309,15 +327,18 @@ export const l11: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: the work that counts is spoken by the student, at a set
+      // moment, and checked live on Sunday. A chatbot can invent a log; it cannot
+      // say what the speaker said at 02:45 or answer a follow-up.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about volunteers, charities or communities, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one reason someone helped.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about kindness, communities or volunteering. Listen ONCE only without stopping, then once with the transcript. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a news podcast for young people about community projects, at normal speed, no transcript first and no pausing. Log: the main point, 3 phrases, one argument for or against compulsory service.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening. Underline the stressed new-information word in each sentence, then speak WITH the speaker, copying it. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's photo phrases (capture a moment, bring back memories ...) and the clothes phrases from two weeks ago in the pile. Test yourself from the BACK: say the phrase in a sentence before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week, a 2v2 round: 'Should parents check their children's phones?' With your likely partner, write one PREP point each for BOTH sides (so four points), real examples, and one 'That's true, but ...' against the other side's strongest point.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story about volunteers, charities or communities at the slow level, transcript on the second listen. Log: date, title, ONE timestamp (for example 02:45) with the exact 5-8 words said there, and one reason someone helped. Then a 20-second voice note in your own words: would you have helped too? No script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays a story from your log at your timestamp and asks why the person helped; voice notes are opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about kindness, communities or volunteering. Listen ONCE without stopping, then once with the transcript. Log: date, title, TWO timestamps with the exact words there, three phrases. Then a 30-second voice note, one take, straight after: what the episode says about helping and one example from your own life.", minutes: 60, tier: "Core", check: "Sunday: the teacher picks two logs, plays one of your timestamps and asks what came next; one voice note per student is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or a news podcast for young people about community projects, normal speed, no transcript first and no pausing. Log: two timestamps with the exact words, the main point, one argument for or against compulsory service. Then a 45-second voice note putting that argument to the speaker.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds live arguing with your speaker about compulsory service, then one question from the class about the episode." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: take 30 seconds of the day's listening. Underline the stressed new-information word in each sentence, then speak WITH the speaker, copying it, 3 times. On Saturday record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played beside the original; the teacher listens for stress on the new information and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The Part 2 + Part 3 recording on the previous slide, in the app: one take, no cuts, the date and the week's code word first and Wednesday's surprise question last.", minutes: 15, check: "Scored on the HEC rubric. A recording without the code word or the surprise question does not count, however good it is." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 helping phrases on cards (phrase on the front, a sentence about someone YOU helped or who helped you on the back), keeping last week's photo phrases (capture a moment, bring back memories ...) and the clothes phrases from two weeks ago in the pile. Test from the back: say the phrase first, then turn over. Missed cards come back tomorrow.", minutes: 25, check: "Next Sunday's Homework check opens with a 2-minute spoken quiz using your back-of-card sentences." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Next week is a 2v2 round: 'Should parents check their children's phones?' Wednesday, 10 minutes: five keyword cards, no full sentences, at most 6 words a card: with your likely partner, one PREP point each for BOTH sides with real examples, plus a 'That's true, but ...' card against the other side's strongest point. Friday, 10 minutes: speak from the cards aloud to your partner or a timer, 45 seconds a side. AI rule: ONE argument for the side you disagree with may come from an AI; write the question you asked on the back of a card and one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "In the 2v2 round you speak from keyword cards only and answer one follow-up from the teacher; an AI argument is explained to the class with its weakness." },
       ],
     },
   ],

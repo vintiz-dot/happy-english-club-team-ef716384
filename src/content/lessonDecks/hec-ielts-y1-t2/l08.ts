@@ -57,6 +57,24 @@ export const l08: Deck = {
       teacherNote: "Health and bodies can be sensitive: talk about habits, never weight or appearance. Note advice and auxiliary slips you hear (no names) for the grammar and pronunciation slides.",
     },
     {
+      kind: "activity",
+      title: "Homework check: logs and phrases",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "The teacher names two students. Each talks for 60 seconds about one episode in their log; the teacher plays the recording at one of their timestamps and asks: 'What did the speaker say next?'",
+        "Two-minute spoken phrase quiz: the teacher reads sentences from the backs of last week's cards (places and people) and the class says the phrase aloud. No pens.",
+        "One voice note from last week is played to the class. The owner answers one question about it.",
+      ],
+      tiers: [
+        { level: "Support", task: "You may read your log while you talk, and point to the timestamp before the teacher plays it." },
+        { level: "Core", task: "Talk without the log. Say what came after your timestamp and one phrase you took from the episode." },
+        { level: "Stretch", task: "Talk without the log and disagree with your speaker on one point, giving your own reason." },
+      ],
+      teacherNote: "Write down who was checked today and who answered the quiz alone, so every student is checked twice a term. A log nobody can talk about is a conversation after class, not a mark in front of the group.",
+    },
+    {
       kind: "vocab",
       title: "Words for health and exercise",
       words: [
@@ -285,7 +303,7 @@ export const l08: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a healthy change, and health in society",
-      prompt: "Record a Part 2 talk: 'Describe a time you tried to change a habit to be healthier. You should say: what the habit was, when and why you tried to change it, what happened, and explain how you felt about the result.' Take 1 minute to prepare (setting, turning point, feelings), talk for 2 minutes, then in the same take answer one Part 3 question: 'Should schools spend more time on PE and sport? Why or why not?'",
+      prompt: "Wednesday, in the app, one take with no cuts. Open by saying the date and this week's code word (given on the board at the end of class, written nowhere else). Then record a Part 2 talk: 'Describe a time you tried to change a habit to be healthier. You should say: what the habit was, when and why you tried to change it, what happened, and explain how you felt about the result.' Take 1 minute to prepare (setting, turning point, feelings), talk for 2 minutes, then in the same take answer one Part 3 question: 'Should schools spend more time on PE and sport? Why or why not?' End with the surprise question the teacher posts in the class group on Wednesday morning, answered without stopping the video.",
       length: "3 minutes (plus 1 minute of preparation, not recorded)",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The habit was ...", "I tried to change it because ...", "At first ..., but then ...", "I think schools should ..."], tips: ["Keep three keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },
@@ -295,15 +313,18 @@ export const l08: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: the evidence is the student's own voice at a set moment,
+      // checked live on Sunday. A chatbot can write a log; it cannot say what the
+      // speaker said at 04:15 or answer a follow-up question about it.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English health report, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one piece of advice the report gives.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about sleep, sport or food. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary, and any change of mind you noticed.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a health podcast at normal speed, no transcript first. Log: the main point, 3 phrases, and one claim you would want evidence for.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening with questions or 'was / were' in it. Circle each auxiliary, then speak WITH the speaker, keeping the auxiliaries weak and quick. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's people-and-places words (picturesque, determined, show someone around) and last term's food phrases in the pile. Test yourself from the BACK: say the phrase in a sentence before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should students wear a school uniform?' Write one PREP point for EACH side with a real example (your school, a school you know, a film), and one sentence that questions an example the other side might use.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English health report at the slow level, transcript on the second listen. Log: date, title, ONE timestamp (for example 02:30) with the exact 5-8 words said there, and the piece of advice the report gives. Then a 20-second voice note: would you follow that advice? No script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays one report from your log at your timestamp and asks what the reporter said just before; one voice note is opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about sleep, sport or food, once without the transcript, once with. Log: date, title, TWO timestamps with the exact words heard there, three phrases, and any change of mind you noticed. Then a 30-second voice note, one take, no script: what the episode advises and whether it fits your week.", minutes: 60, tier: "Core", check: "Sunday: two logs are picked; the teacher plays one of your timestamps and you say what came next and whether you believe it. One voice note per student is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or a health podcast at normal speed, no transcript first. Log: two timestamps with the exact words, the main point, and one claim you would want evidence for. Then a 45-second voice note asking the speaker for that evidence and saying what would convince you.", minutes: 90, tier: "Stretch", check: "Sunday: you have 60 seconds to challenge your speaker's weakest claim live, then answer one question from the class about the episode." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: take 30 seconds of the day's listening with questions or 'was / were' in it. Circle each auxiliary, then speak WITH the speaker, keeping the auxiliaries weak and quick, 3 times. On Saturday record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played next to the original 30 seconds; the teacher listens for weak 'do you / was / were' and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The Part 2 + Part 3 recording on the previous slide, in the app: one take, no cuts. Date and this week's code word first, Wednesday's surprise question last.", minutes: 15, check: "Scored on the HEC rubric. Without the code word or the surprise question the recording does not count, however polished it is." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 health phrases on cards (phrase on the front, a sentence about YOUR sleep, food or sport on the back), with last week's people-and-places words (picturesque, determined, show someone around) and last term's food phrases still in the pile. Test yourself from the back: say the phrase before you turn over. Missed cards come back tomorrow.", minutes: 25, check: "Next Sunday's Homework check opens with a 2-minute spoken quiz: the teacher reads your back-of-card sentence and you say the phrase." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Should students wear a school uniform?', no full sentences, at most 6 words a card: one PREP point for each side with a real example (your school, a school you know, a film), and one card questioning an example the other side might use. Friday, 10 minutes: speak from the cards aloud, 45 seconds a side, with a timer. AI rule: you may ask an AI for ONE argument for the side you disagree with; write the question you asked on the back of a card and one reason its answer is weak. Nothing else from an AI.", minutes: 20, check: "In the debate you speak from your cards only and the teacher asks you one follow-up; if you used the AI argument, you tell the class why it is weak." },
       ],
     },
   ],

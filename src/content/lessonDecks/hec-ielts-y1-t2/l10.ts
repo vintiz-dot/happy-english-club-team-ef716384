@@ -66,6 +66,24 @@ export const l10: Deck = {
       teacherNote: "Keep phones away: the point is describing from memory, which is what Part 2 asks. Note good speculation words you hear for the grammar slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: timestamps and clothes phrases",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "The teacher calls on two students for 60 seconds each about an episode in their log, then plays the audio from one of their timestamps and pauses: 'What comes next?'",
+        "Spoken phrase quiz, 2 minutes: the teacher reads sentences from the backs of last week's clothes cards (dress up, go with, a hand-me-down ...) and the class answers with the phrase.",
+        "One student's voice note is played; the class asks them one question about it.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read your timestamp line from the log, then add one sentence of your own about the episode." },
+        { level: "Core", task: "Log closed. Say what happened after your timestamp and one phrase you kept from it." },
+        { level: "Stretch", task: "Log closed. Argue with your speaker: one point you think is wrong, and why." },
+      ],
+      teacherNote: "Record in the register who was checked today; the aim is every student twice a term. If someone cannot talk about their own log, speak to them after class rather than in front of the group.",
+    },
+    {
       kind: "vocab",
       title: "Words for photos and creativity",
       words: [
@@ -307,7 +325,7 @@ export const l10: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a photo you like, and photos today",
-      prompt: "Record your Part 2 talk again: 'Describe a photo that you like.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Why do people take so many photos these days?'",
+      prompt: "Wednesday, one take, no cuts, in the app. First say the date and this week's code word (written on the board at the end of class and nowhere else). Then give your Part 2 talk again: 'Describe a photo that you like.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Why do people take so many photos these days?' Last, answer the surprise question the teacher posts in the class group on Wednesday morning, without stopping the recording.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["In the photo there's ...", "It was taken ... by ...", "I think people take so many photos because ..."], tips: ["Keep your four keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },
@@ -317,15 +335,18 @@ export const l10: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence is the student's own voice at a fixed moment,
+      // checked live on Sunday. A chatbot can produce a log; it cannot say what the
+      // speaker said at 05:10 or answer the question that follows.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about art, photos or museums, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one person mentioned and what they did.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about art, creativity or design. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or an art podcast for young people, at normal speed, no transcript first. Log: the main point, 3 phrases, and one opinion of a speaker you would argue against.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening. Mark the one word in each sentence that carries the most stress, then speak WITH the speaker, copying that stress. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's clothes phrases (dress up, go with, a hand-me-down ...) in the pile, plus three Term 1 cards. Test yourself from the BACK: say the phrase in a sentence before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should students do community service to graduate?' Write one PREP point for EACH side with a real example (a volunteer project, a time someone helped your family), and plan with a classmate so your two points don't repeat each other.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story about art, photos or museums at the slow level, transcript on the second listen. Log: date, title, ONE timestamp with the exact 5-8 words said there, and one person mentioned and what they did. Then a 20-second voice note, no script: what you would ask that person.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays a story from your log at your timestamp and asks who is speaking and what they did; voice notes are opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about art, creativity or design, once without the transcript, once with. Log: date, title, TWO timestamps (for example 05:10) with the exact words there, three phrases. Then a 30-second voice note in one take: the episode's idea about creativity and whether it is true for you.", minutes: 60, tier: "Core", check: "Sunday: two logs are chosen; the teacher plays one of your timestamps and asks what came next and what you think of it. One voice note per student is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or an art podcast for young people, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, and one opinion of a speaker you would argue against. Then a 45-second voice note doing exactly that.", minutes: 90, tier: "Stretch", check: "Sunday: you argue live for 60 seconds against the opinion you logged, then answer one question from the class about the episode." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: take 30 seconds of the day's listening. Mark the one word in each sentence that carries the most stress, then speak WITH the speaker, copying that stress, 3 times. On Saturday record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played next to the original 30 seconds; the teacher listens for the stressed word in each sentence and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The Part 2 + Part 3 recording on the previous slide, one take with no cuts in the app: date and code word at the start, Wednesday's surprise question at the end.", minutes: 15, check: "The teacher scores it on the HEC rubric. No code word or no surprise question means it does not count." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 photo and creativity phrases on cards (phrase on the front, a sentence about one of YOUR photos on the back), with last week's clothes phrases (dress up, go with, a hand-me-down ...) and three Term 1 cards kept in the pile. Test from the back: say the phrase before turning over. Missed cards come back tomorrow.", minutes: 25, check: "Next Sunday's Homework check begins with a 2-minute spoken quiz from your back-of-card sentences." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Should students do community service to graduate?', no full sentences, at most 6 words a card: a PREP point for each side with a real example (a volunteer project, a time someone helped your family). Check with a classmate that your points don't repeat theirs. Friday, 10 minutes: speak from the cards aloud, 45 seconds a side, on a timer. AI rule: you may ask an AI for ONE argument for the side you disagree with; write the question on the back of a card with one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "You debate from your keyword cards only and the teacher asks you one follow-up; if you used the AI argument, you explain its weakness to the class." },
       ],
     },
   ],

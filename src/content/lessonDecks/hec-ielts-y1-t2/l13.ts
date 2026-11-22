@@ -56,6 +56,24 @@ export const l13: Deck = {
       teacherNote: "Keep it light and fast; no correction in this round. Nerves drop when the voice is warm.",
     },
     {
+      kind: "activity",
+      title: "Homework check: last logs of the term",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students the teacher picks (start with anyone checked only once this term) talk for 60 seconds about an episode in their log. The teacher plays one of their timestamps and asks what was said next.",
+        "Two-minute spoken phrase quiz across the term: the teacher reads back-of-card sentences, mostly last week's rules phrases (break a rule, get away with, fair on someone ...), and the class says the phrase.",
+        "One voice note from the week is played; its owner answers one follow-up question.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read the timestamp line from your log, then add one detail without reading." },
+        { level: "Core", task: "No log. Say what came after the timestamp and one phrase you have used since." },
+        { level: "Stretch", task: "No log. Argue against your speaker's main point in one minute, with a reason from your own life." },
+      ],
+      teacherNote: "Last lesson of the term: finish the record so every student has been checked twice. Anyone still at one goes first today; anyone who could not talk about their log gets a private conversation, not a public mark.",
+    },
+    {
       kind: "vocab",
       title: "Term 2 chunks to recycle",
       words: [
@@ -281,7 +299,7 @@ export const l13: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a Term 1 Part 2 again",
-      prompt: "Re-record the Term 1 full-mock Part 2 in one take. Take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a day out that you enjoyed. You should say: where you went, who you went with, what you did, and explain why you enjoyed it. Then watch your Term 1 recording and say, at the end of the video, two things that have changed and one you still want to fix.",
+      prompt: "Wednesday, in the app: re-record the Term 1 full-mock Part 2 in one take, no cuts. Say the date and this week's code word first (the teacher gives it at the end of class; it is in no file). Take 1 minute to make notes off camera, then speak for up to 2 minutes. Cue card: Describe a day out that you enjoyed. You should say: where you went, who you went with, what you did, and explain why you enjoyed it. Watch your Term 1 recording beforehand, and at the end of the video say two things that have changed and one you still want to fix. Then answer the surprise question the teacher posts in the class group on Wednesday morning, still in the same take.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The day out I'd like to talk about is ...", "We went to ..., where ...", "In Term 1 I ..., but now I ..."], tips: ["Try to speak for longer than in Term 1.", "Use the skeleton: where, what happened, how you felt, why."] },
@@ -291,15 +309,18 @@ export const l13: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: what counts is the student's own voice at a set moment,
+      // checked live in the first lesson of Term 3. A chatbot can summarise an
+      // episode; it cannot say what was said at 06:20 or take a follow-up question.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about it. Go back over your Term 2 log and star your three favourite episodes.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about school, learning or exams. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary, and who agreed or disagreed with whom.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a podcast for young people about education, at normal speed, no transcript first. Log: the main point, 3 phrases, and one argument you could use in next week's debate.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: pick 30 seconds of your listening. Speak WITH the speaker, working only on the two weakest items from today's pronunciation self-check. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "Re-record the Term 1 full-mock Part 2 (the previous slide), watch your Term 1 recording and say what changed. One take, sent by Thursday. The teacher scores both with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: go through your whole Term 2 pack and the Term 1 'nearly' pile. Sort into 'know it', 'nearly' and 'lost'. Test the 'nearly' and 'lost' piles from the BACK every day; move a card up when you get it right twice.", minutes: 25 },
-        { label: "Debate prep", detail: "Term 3 starts with a 2v2 mini-debate: 'This House would replace school exams with projects.' Write one PREP point for EACH side, with a real example of an exam or a project you did, and one 'That's true, but ...' against each.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story at the slow level, transcript on the second listen. Log: date, title, ONE timestamp with the exact 5-8 words said there, one sentence about the story. Then a 20-second voice note, no script. On Saturday, go back over your Term 2 log and star your three favourite episodes.", minutes: 40, tier: "Support", check: "First lesson of Term 3: the teacher plays one of your starred episodes at your timestamp and asks what was said just before; voice notes are opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about school, learning or exams, once without the transcript, once with. Log: date, title, TWO timestamps (for example 06:20) with the exact words there, three phrases, and who agreed or disagreed with whom. Then a 30-second voice note in one take: which presenter you side with, and why.", minutes: 60, tier: "Core", check: "First lesson of Term 3: two logs are picked; the teacher plays one timestamp and asks who disagreed with whom next. One voice note per student is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or a podcast for young people about education, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, and one argument you could use in the first debate of Term 3. Then a 45-second voice note trying that argument out against the speaker.", minutes: 90, tier: "Stretch", check: "First lesson of Term 3: 60 seconds live using your logged argument against the speaker, then one question from the class about the episode." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: pick 30 seconds of the day's listening and speak WITH the speaker, working only on the two weakest items from today's pronunciation self-check, 3 times. On Saturday record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played next to the original; the teacher listens for your two self-check items and writes one Term 3 target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "Re-record the Term 1 full-mock Part 2 (the previous slide) in the app, one take with no cuts: date and code word first, the changes you hear since Term 1, and Wednesday's surprise question last.", minutes: 15, check: "The teacher scores both recordings on the HEC rubric; without the code word or the surprise question the new one does not count." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: go through your whole Term 2 pack and the Term 1 'nearly' pile, each card with a sentence about YOUR term on the back. Sort into 'know it', 'nearly' and 'lost'. Test the 'nearly' and 'lost' piles from the back every day; a card moves up when you get it right twice.", minutes: 25, check: "Term 3's first Homework check opens with a 2-minute spoken quiz drawn from your 'nearly' and 'lost' back-of-card sentences." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Term 3 starts with a 2v2 mini-debate: 'This House would replace school exams with projects.' Wednesday, 10 minutes: five keyword cards, no full sentences, at most 6 words a card: a PREP point for each side with a real example of an exam or a project you did, and a 'That's true, but ...' against each. Friday, 10 minutes: speak from the cards aloud, 45 seconds a side, with a timer. AI rule: you may ask an AI for ONE argument for the side you disagree with; write your question on the back of a card and one reason its answer is weak. Nothing else from an AI.", minutes: 20, check: "In the mini-debate you speak from keyword cards only and answer one follow-up from the teacher; an AI argument is explained to the class along with its weakness." },
       ],
     },
   ],

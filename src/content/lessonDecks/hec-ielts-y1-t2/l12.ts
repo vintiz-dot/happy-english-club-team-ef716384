@@ -59,6 +59,24 @@ export const l12: Deck = {
       teacherNote: "Keep it about rules, not about named teachers or family members. Recycle 'so that' from last week.",
     },
     {
+      kind: "activity",
+      title: "Homework check: logs, cards and a voice note",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "The teacher chooses two students to talk for 60 seconds each about an episode in their log. One of their timestamps is played and stopped: what did the speaker say next?",
+        "Two minutes of spoken retrieval: the teacher reads back-of-card sentences from last week's helping phrases (lend a hand, make a difference ...) and the class says each phrase.",
+        "One voice note is played to the class, and its owner answers a follow-up question.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read the timestamp line from your log, then tell the class one more thing about the episode." },
+        { level: "Core", task: "Log face down. Say what followed your timestamp and give one phrase you took from it." },
+        { level: "Stretch", task: "Log face down. Argue with your speaker on one point, and say what would change your mind." },
+      ],
+      teacherNote: "Mark who was checked on the class list so every student is checked twice a term; next week's mock lesson checks the rest. Speak privately to anyone who cannot talk about their own log.",
+    },
+    {
       kind: "vocab",
       title: "Words for rules and fairness",
       words: [
@@ -283,7 +301,7 @@ export const l12: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a Part 3 on rules",
-      prompt: "Record three Part 3 answers in one take, about a minute each, starting each one with agree, partly agree or disagree: 1) 'Some people say schools today have too many rules. Do you agree?' 2) 'Should teenagers be allowed to decide their own bedtime?' 3) 'Should parents check their children's phones?'",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then record three Part 3 answers, about a minute each, starting each one with agree, partly agree or disagree: 1) 'Some people say schools today have too many rules. Do you agree?' 2) 'Should teenagers be allowed to decide their own bedtime?' 3) 'Should parents check their children's phones?' Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, in the same take.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I agree / disagree because ...", "For example, ...", "So I think ..."], tips: ["Write one keyword per question next to the camera.", "Four sentences for each answer is enough."] },
@@ -293,15 +311,18 @@ export const l12: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence is in the student's own voice, made at a set
+      // moment and checked live on Sunday. An AI can write synonym pairs; it cannot
+      // say what was said at 03:05 or answer the teacher's next question.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about schools, rules or young people, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, and one pair of words that mean the same thing.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about school, family or technology. Once without the transcript, once with. Log: title, 3 phrases, 2 synonym pairs, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a news podcast for young people about rules, privacy or fairness, at normal speed, no transcript first. Log: the main point, 3 phrases, 3 synonym pairs, one view you partly agree with.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening. Tap the stressed syllables on the table as you listen, then speak WITH the speaker, keeping the beat. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The three Part 3 answers on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards, keep last week's helping phrases (lend a hand, make a difference ...) in the pile, and start the term review: pick five cards from each lesson of Term 2. Test yourself from the BACK. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Is it fair to judge people by their exam results?' Write one PREP point for EACH side with a real example (a test you took, a person you know), and one 'That's true, but ...' against the other side's strongest point.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story about schools, rules or young people at the slow level, transcript on the second listen. Log: date, title, ONE timestamp (for example 03:05) with the exact 5-8 words said there, and one pair of words that mean the same thing. Then a 20-second voice note: is the rule in the story fair? No script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays a story from your log at your timestamp and asks you for your synonym pair; voice notes are opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about school, family or technology, once without the transcript, once with. Log: date, title, TWO timestamps with the exact words there, three phrases, two synonym pairs. Then a 30-second voice note in one take: agree, partly agree or disagree with the presenters, and why.", minutes: 60, tier: "Core", check: "Sunday: two logs are picked; the teacher plays one timestamp and asks what came next and which word it paraphrased. One voice note per student is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or a news podcast for young people about rules, privacy or fairness, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, three synonym pairs, and one view you partly agree with. Then a 45-second voice note: where you agree with the speaker and where you stop agreeing.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds live on the view you partly agree with, then one question from the class about the episode." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: take 30 seconds of the day's listening. Tap the stressed syllables on the table as you listen, then speak WITH the speaker, keeping the beat, 3 times. On Saturday record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played next to the original 30 seconds; the teacher listens for even beats and squeezed small words and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The three Part 3 answers on the previous slide, in the app: one take, no cuts. Date and this week's code word first, Wednesday's surprise question last.", minutes: 15, check: "The teacher scores it on the HEC rubric; a take with no code word or no surprise question is not counted." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 rules phrases on cards (phrase on the front, a sentence about a rule in YOUR school or home on the back), last week's helping phrases (lend a hand, make a difference ...) kept in the pile, and the term review begun: five cards from each lesson of Term 2. Test from the back, phrase before you turn over. Missed cards come back tomorrow.", minutes: 25, check: "Next Sunday's mock lesson opens with a 2-minute spoken quiz from your back-of-card sentences, across the whole term." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Is it fair to judge people by their exam results?', no full sentences, 6 words a card at most: a PREP point for each side with a real example (a test you took, a person you know) and a 'That's true, but ...' against the other side's strongest point. Friday, 10 minutes: speak from the cards aloud, 45 seconds a side, timed. AI rule: you may ask an AI for ONE argument for the side you disagree with; log the question on the back of a card with one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "In the debate you speak from your cards only and the teacher asks one follow-up; if you used the AI argument, you show the class why it is weak." },
       ],
     },
   ],
