@@ -671,13 +671,8 @@ function TeacherDashboardInner() {
               </h3>
             </div>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {activeClasses.map((classData: any, index: number) => (
-                <motion.div
-                  key={classData.id}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                >
+              {activeClasses.map((classData: any) => (
+                <div key={classData.id}>
                   <Link to={`/teacher/classes/${classData.id}`} onClick={carryLink(`class:${classData.id}`, `/teacher/classes/${classData.id}`)} className={LINK_CARD}>
                     <BrassEdge>
                     <Card className={`${CARD_HOVER} cursor-pointer`}>
@@ -694,7 +689,7 @@ function TeacherDashboardInner() {
                     </Card>
                     </BrassEdge>
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
           </ArriveItem>
