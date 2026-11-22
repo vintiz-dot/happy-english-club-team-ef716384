@@ -79,7 +79,16 @@ for (const u of UNITS) {
         { const v = shown(s.questions, s.context, s.strategy, s.tiers); for (const it of s.questions.items) if (leaked(it, v.replace(/"answer":"[^"]*"/g, ""), st)) leaks.push(`answer: ${it.answer}`); }
         ok(`${d.id}: the teacher copy prints "${s.title}"'s script and answers open`, te.includes("Script (teacher)") && te.includes("Answers (teacher)"));
       }
-      if (s.kind === "exam") for (const it of s.items) if (distinctive(it.answer) && !it.q.includes(it.answer) && !(it.options ?? []).some((o) => o.includes(it.answer)) && st.includes(`→ ${it.answer}`)) leaks.push(`exam answer: ${it.answer}`);
+      if (s.kind === "exam") {
+        // On its own, so a worked example elsewhere in the lesson is not taken for a leak.
+        const one = text(P.deckMarkup({ ...d, slides: [s] }, roster, u, "student"));
+        for (const it of s.items) {
+          const bare = it.answer.replace(/^[A-D][.)]\s*/, ""); // "B. Yes, please." is also option B as printed
+          // Any question or option on the slide may show the phrase ("Yes, please." is option B of one item and the answer of another).
+          const visible = shown(s.instructions, s.items.map((x) => [x.q, x.options]));
+          if (distinctive(bare) && !visible.includes(bare) && one.includes(bare)) leaks.push(`exam answer: ${it.answer}`);
+        }
+      }
       if ((s.kind === "activity" || s.kind === "speaking") && distinctive(s.teacherNote)) ok(`${d.id}: the teacher copy keeps the note on "${s.title}"`, te.includes(s.teacherNote.slice(0, 40)));
     }
     ok(`${d.id}: nothing for the teacher only reaches the student copy`, leaks.length === 0, leaks.slice(0, 3).join(" | "));
