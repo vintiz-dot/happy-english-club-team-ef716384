@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import LessonPhotoCapture from "@/components/lessonReports/LessonPhotoCapture";
 import LessonPlanPicker from "@/components/lessonReports/LessonPlanPicker";
+import { ReportStage, useClassReportDownload } from "@/components/lessonReports/ClassReportDownload";
+import { Download } from "lucide-react";
 import { mmss } from "@/lib/lessonMonitor";
 import {
   approvalProblems, buildApproval, readDraft, type Draft, type Met, type QuizKind, type QuizQuestion, type Review,
@@ -91,6 +93,7 @@ export default function TeacherLessonReportReview() {
   const photos = useLessonPhotos(sessionId);
   const buildDraft = useBuildDraft(sessionId ?? "");
   const approve = useApproveReport(sessionId ?? "");
+  const download = useClassReportDownload();
 
   const [draft, setDraft] = useState<Draft | null>(null);
   const [review, setReview] = useState<Review>({ comments: {}, excluded: [], quiz: { include: true, due_date: null, points: 10, body: null } });
@@ -137,10 +140,13 @@ export default function TeacherLessonReportReview() {
     });
     try {
       await approve.mutateAsync(args);
-      toast.success("Report approved and shared with families");
+      toast.success("Report approved and shared with families. Downloading every child's report…");
     } catch (e: any) {
       toast.error(e?.message ?? "The report could not be approved");
+      return;
     }
+    // As soon as it is approved, fetch every child's PDF in one zip.
+    void download.run(sessionId);
   };
 
   if (!sessionId) return null;
@@ -162,6 +168,15 @@ export default function TeacherLessonReportReview() {
           {approved.data && (
             <Badge className="gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Approved {new Date(approved.data.approved_at).toLocaleString()}</Badge>
           )}
+          {approved.data && (
+            <Button variant="outline" onClick={() => download.run(sessionId)} disabled={download.busy}>
+              {download.busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+              {download.busy && download.progress?.total
+                ? `Building ${download.progress.done + (download.progress.done < download.progress.total ? 1 : 0)} of ${download.progress.total}…`
+                : "Download all children's reports"}
+            </Button>
+          )}
+          <ReportStage stageRef={download.stageRef} />
           {canEdit && (
             <Button onClick={() => onBuild()} disabled={buildDraft.isPending || row?.status === "building"}>
               {buildDraft.isPending || row?.status === "building" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ClipboardList, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
+import ClassReportDownloadButton from "@/components/lessonReports/ClassReportDownload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -87,7 +88,7 @@ export default function TeacherClassReports() {
           <div className="min-w-0">
             <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Class reports</h1>
             <p className="text-sm text-hec-ink-soft">
-              Your lessons of the last {DAYS} days. Open one to add photos, build the AI draft, edit it and approve it for families.
+              Your lessons of the last {DAYS} days. Open one to add photos, build the AI draft, edit it and approve it for families. Once a report is approved, download every child's report as one zip.
             </p>
           </div>
         </header>
@@ -100,9 +101,9 @@ export default function TeacherClassReports() {
 
         <ul className="space-y-2">
           {rows.map((r) => (
-            <li key={r.id}>
+            <li key={r.id} className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
               <Link to={`/teacher/lesson-report/${r.id}`}
-                className={`${card} flex items-center gap-3 p-4 min-h-[56px] hover:bg-hec-sunken transition-colors`}>
+                className={`${card} flex flex-1 min-w-0 items-center gap-3 p-4 min-h-[56px] hover:bg-hec-sunken transition-colors`}>
                 <div className="min-w-0 flex-1">
                   <div className="font-medium text-hec-ink truncate">{r.className || "Lesson"}</div>
                   <div className="text-sm text-hec-ink-soft">{r.date} · {r.start}-{r.end}</div>
@@ -110,6 +111,11 @@ export default function TeacherClassReports() {
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${LABEL[r.state].cls}`}>{LABEL[r.state].text}</span>
                 <ChevronRight className="h-5 w-5 shrink-0 text-hec-ink-soft" />
               </Link>
+              {r.state === "approved" && (
+                <div className="flex items-center sm:shrink-0">
+                  <ClassReportDownloadButton sessionId={r.id} label="Download reports" />
+                </div>
+              )}
             </li>
           ))}
         </ul>

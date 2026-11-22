@@ -322,6 +322,7 @@ const SUITES = [
   { name: "curriculum lessons", file: "curriculum-lessons.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121150000_curriculum_lessons.sql", "20261121151000_od2e_level3_lessons.sql", "20261122100000_od2e_level1_lessons.sql", "20261122101000_od2e_level2_lessons.sql", "20261122130000_reach_higher_3a_lessons.sql", "20261122140000_reach_higher_3b_lessons.sql"] },
   // How the family / child screen reads one of those reports (stage B).
   { name: "lesson report view", file: "lesson-report-view.test.mjs", migrations: [] },
+  { name: "lesson report batch download", file: "lesson-report-batch.test.mjs", migrations: [] },
   { name: "lesson quiz helpers", file: "lesson-quiz-lib.test.mjs", migrations: [] },
   // Lesson decks (Flipbooks): name slots, pacing guide, and the rules every deck keeps.
   { name: "lesson decks lib", file: "lesson-decks-lib.test.mjs", migrations: [] },
