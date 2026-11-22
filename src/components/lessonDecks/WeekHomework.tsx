@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Deck } from "@/lib/lessonDecks/types";
-import { TIERS, byTier, weekPlan, weekText } from "@/lib/lessonDecks/weekHomework";
+import { TIERS, byTier, weekMaterial, weekPlan, weekText } from "@/lib/lessonDecks/weekHomework";
+import { ruleFor } from "@/lib/lessonDecks/curricula";
+import { downloadBlob, tryMakeDocument } from "@/lib/hecDocs";
 import type { TierLevel } from "@/lib/lessonDecks/types";
 import { Button } from "@/components/ui/button";
 import { PenLine, Send } from "lucide-react";
@@ -33,7 +35,20 @@ export function weekSheetsMarkup(deck: Deck, kids: Kid[], interests: Record<stri
   })).join("");
 }
 
-function printWeekSheets(deck: Deck, kids: Kid[], interests: Record<string, string[]>) {
+/** HEC Docs first (one student copy per child, in turn); the plain print if the printer cannot be reached. */
+async function printWeekSheets(deck: Deck, kids: Kid[], interests: Record<string, string[]>) {
+  const groups = byTier(kids, interests);
+  const course = ruleFor(deck.curriculum)?.name ?? "Lesson materials";
+  const run = TIERS.flatMap((t) => groups[t].map((k) => ({ k, t })));
+  for (const { k, t } of run) {
+    const doc = await tryMakeDocument("lesson-material", weekMaterial(deck, t, k.name, course) as unknown as Record<string, unknown>,
+      { variant: "student", bulk: run.length > 1 });
+    if (!doc) { plainPrint(deck, kids, interests); return; }
+    downloadBlob(doc.blob, doc.filename);
+  }
+}
+
+function plainPrint(deck: Deck, kids: Kid[], interests: Record<string, string[]>) {
   const w = window.open("", "_blank");
   if (!w) { toast.error("Allow pop-ups to print the homework sheets"); return; }
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(deck.title)} homework</title>
@@ -70,7 +85,7 @@ export function WeekHomeworkButtons({ deck, classId, present, enrolled, interest
   return (
     <>
       <Button size="sm" variant="outline" title="One week plan per child present today, in their tier"
-        onClick={() => (present ? printWeekSheets(deck, present, interests) : toast.error(NO_ATTENDANCE))}>
+        onClick={() => (present?.length ? void printWeekSheets(deck, present, interests) : toast.error(NO_ATTENDANCE))}>
         <PenLine className="h-4 w-4" />Homework sheets
       </Button>
       {classId && (

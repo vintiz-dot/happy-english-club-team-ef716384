@@ -54,6 +54,18 @@ for (const { f, u } of ielts) {
   }
 }
 
+console.log("the printed week (HEC Docs lesson-material, student copy)");
+{
+  const d = ielts[0].u.decks.find((x) => W.isWeekHomework(x));
+  const m = W.weekMaterial(d, "Core", "Kid A", "HEC IELTS Speaking & Listening");
+  const items = W.itemsFor(d, "Core");
+  eq("a homework document for the named child", [m.kind, m.studentName, m.nameLine], ["homework", "Kid A", undefined]);
+  eq("a Mon-Sun plan, then one row per task", [m.blocks[0].table.head, m.blocks[1].table.rows.length], [["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], items.length]);
+  ok("every task says how it is checked", m.blocks[1].table.rows.every((r, i) => !items[i].check || r[3].includes(items[i].check)));
+  ok("nothing only a teacher may see", m.blocks.every((b) => !b.teacher));
+  eq("no name given: a name line instead", [W.weekMaterial(d, "Core", undefined, "x").nameLine, W.weekMaterial(d, "Core", undefined, "x").studentName], [true, undefined]);
+}
+
 console.log("a child's tier");
 const A = "aaaaaaaa-0000-4000-8000-000000000000", B = "bbbbbbbb-0000-4000-8000-000000000000", C = "cccccccc-0000-4000-8000-000000000000";
 const groups = { "tier-support": [A], "tier-stretch": [B, A] };

@@ -7,6 +7,7 @@
 // else Core. A child on both lists gets Support, the safer week.
 
 import type { Deck, Slide, TierLevel, Unit } from "./types";
+import type { LessonMaterial } from "./docBlocks";
 
 export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 export type Day = (typeof DAYS)[number];
@@ -79,4 +80,30 @@ export function weekText(deck: Deck, tier: TierLevel): string {
   ].join("\n");
   const plan = p.days.filter((d) => d.items.length).map((d) => `${d.day}: ${d.items.map((x) => x.label).join(" + ")}${d.minutes ? ` (about ${d.minutes} min)` : ""}`);
   return [`${tier} week, about ${p.minutes} minutes in all.`, "", "Day by day:", ...plan, "", ...p.items.map(line)].join("\n");
+}
+
+/**
+ * One child's week as HEC Docs `lesson-material` data (kind "homework", student
+ * copy): the Mon-Sun plan, then each task with how it is checked (the check is
+ * for the student too: knowing it is checked live is the point).
+ */
+export function weekMaterial(deck: Deck, tier: TierLevel, studentName: string | undefined, course: string): LessonMaterial {
+  const p = weekPlan(deck, tier);
+  return {
+    kind: "homework", title: `${deck.title} · Homework this week`, course, subtitle: `${tier} · about ${p.minutes} minutes in all`,
+    ...(studentName ? { studentName } : { nameLine: true }),
+    blocks: [
+      {
+        heading: "Day by day", eyebrow: "Tick each one when it is done",
+        table: { head: [...DAYS], rows: [p.days.map((d) => d.items.map((x) => `${x.label}${x.minutes ? ` (${x.minutes} min)` : ""} [ ]`).join(" / ") || "Rest")] },
+      },
+      {
+        heading: "What to do", eyebrow: "Homework",
+        table: {
+          head: ["Task", "Days", "Min / week", "What to do, and how your teacher checks it"],
+          rows: p.items.map((i) => [i.label, (i.days ?? []).join(" "), i.minutes ? String(i.minutes) : "", i.check ? `${i.detail} Checked: ${i.check}` : i.detail]),
+        },
+      },
+    ],
+  };
 }
