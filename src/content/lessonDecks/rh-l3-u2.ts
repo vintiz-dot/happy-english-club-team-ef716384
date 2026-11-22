@@ -26,11 +26,14 @@
 // each of its twenty lessons in the unit (two or three of them per Jupiter lesson).
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
+import type { Deck, MediaLink, Slide, Unit } from "@/lib/lessonDecks/types";
 import { rhL3U2Assessments } from "./rh-l3-u2/assessments";
 import { rhL3U2Creative } from "./rh-l3-u2/homework";
+import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, unitVideo, wordAudio } from "./rh-l3/media";
 
 const base = { curriculum: "reach-higher" as const, level: 3, unit: 2, minutes: 90 };
+// The Unit 2 video (The Great Barrier Reef), opened from the school's Drive.
+const VIDEO: MediaLink[] = [unitVideo(2)].filter((m): m is MediaLink => m !== null);
 
 const lessons: Deck[] = [
   // ------------------------------------------------------------------ Lesson 1
@@ -41,7 +44,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 2, lesson: "Unit Launch" },
     title: "Unit Launch: What is balance?",
     inquiryPhases: ["Engage", "Focus"],
-    book: [{ book: "SB", pages: "74-77", note: "Unit opener (Big Question) and the Part 1 Language Focus: ask and answer questions." }],
+    book: [{ book: "SB", pages: "74-77", note: "Unit opener with the Big Question and Share What You Know (74-75), the Part 1 Language Focus: ask and answer questions (76), and the Part 1 science words (77)." }],
     slides: [
       { kind: "title", title: "Unit 2: Nature's Balance", subtitle: "Lesson 1 · Unit Launch", bigQuestion: "What happens when nature loses its balance?" },
       {
@@ -65,7 +68,7 @@ const lessons: Deck[] = [
           { q: "Choose the complete sentence.", options: ["Cleaning the park on Sunday.", "The volunteers cleaned the park.", "Because the park was dirty.", "Lots of plastic bags."], answer: "B", why: "it has a subject and a verb and makes sense alone" },
           { q: "Sharing your lunch with a friend is an act of ___.", options: ["kind", "kindly", "kindness", "unkind"], answer: "C. kindness", why: "after 'an act of' we need a noun: kind → kindness" },
           { q: "The broken swing was a problem, but {s2} found a ___.", options: ["solve", "solution", "solving", "solved"], answer: "B. solution", why: "a + noun: solve → solution" },
-          { q: "Which word has a different vowel sound? ", options: ["flute", "rule", "tune", "much"], answer: "D. much", why: "flute, rule, tune have /uː/ (u_e); much has /ʌ/" },
+          { q: "Which word is a compound word (two words joined into one)?", options: ["kindness", "sailboat", "solution", "volunteer"], answer: "B. sailboat", why: "sail + boat; the others are one word with an ending or several syllables" },
         ],
       },
       {
@@ -86,22 +89,20 @@ const lessons: Deck[] = [
           "I moved because {s3} said ... and that made me think ...",
           "I see your point, but what about ...?",
         ],
-        teacherNote: "Engage phase: collect their reasons without correcting. Note anyone who thinks one animal does not matter (Statement 2): Lesson 6's wolves case study is built to test that belief, and the class comes back to these corners in Lesson 8.",
+        teacherNote: "Engage phase: collect their reasons without correcting. Note anyone who thinks one animal does not matter (Statement 2): the wolves case study in Lessons 5 and 6 is built to test that belief, and the class comes back to these corners in Lesson 8.",
       },
       {
         kind: "vocab",
-        title: "Part 1 words: amounts and changes",
-        book: { book: "SB", pages: "78-79" },
+        title: "Part 1 science words: amounts and changes",
+        book: { book: "SB", pages: "77", note: "Science words; the academic words (79) come in Lesson 2." },
         words: [
-          { word: "balance", meaning: "when the parts are right for each other and nothing is too much or too little", example: "A seesaw is in balance when {s1} and {s2} weigh the same." },
           { word: "amount", meaning: "how much of something there is", example: "The amount of rice in the jar goes down every day." },
-          { word: "increase / decrease", meaning: "to become more / to become less", example: "When it rains, the water in the lake increases." },
+          { word: "increase", meaning: "to become more", example: "When it rains, the water in the lake increases." },
+          { word: "decrease", meaning: "to become less", example: "In winter, the number of mosquitoes decreases." },
           { word: "supply", meaning: "the amount of something that is ready to use", example: "Our class has a big supply of pencils." },
-          { word: "scarce", meaning: "hard to find because there is very little", example: "In the dry season, water is scarce." },
-          { word: "behavior", meaning: "the way an animal or person usually acts", example: "Hiding food for winter is part of a squirrel's behavior." },
-          { word: "interact / react", meaning: "to act together / to do something because something else happened", example: "When {s3} poked the snail, it reacted by hiding in its shell." },
-          { word: "control", meaning: "to make something do what you want", example: "Farmers try to control the number of rats in the fields." },
+          { word: "behavior", meaning: "the way an animal or person usually acts", example: "Purring when it is happy is part of a cat's behavior." },
         ],
+        media: [keyWordAudio(2, 1, "Part 1 key words (science words, then the academic words for Lesson 2)")],
       },
       {
         kind: "activity",
@@ -125,12 +126,14 @@ const lessons: Deck[] = [
       {
         kind: "book",
         title: "Unit opener and Language Focus",
-        ref: { book: "SB", pages: "74-77", note: "Opener photo, then the Language Focus on asking and answering questions." },
+        ref: { book: "SB", pages: "74-76", note: "Opener photo and Share What You Know (74-75), then the Language Focus on asking and answering questions (76)." },
         steps: [
-          "Look at the opener photo for one minute in silence. Then say one thing you notice and one thing you wonder.",
-          "Do the Language Focus talk on the pages with a partner: one asks, one answers, then swap.",
+          "Look at the opener photo of the polar bears for one minute in silence. Then say one thing you notice and one thing you wonder.",
+          "Share What You Know (page 75): draw a place where plants and animals live, and one thing that could change it. Tell your partner what could happen to the animals.",
+          "Language Focus (page 76): listen to the dialogue, then say it with the audio. Ask and answer Who / What / Where / When / Why / How questions about your partner's drawing.",
           "Copy three of the best wonderings onto our Wonder Wall. We will try to answer them during the unit.",
         ],
+        media: [talkAudio(2, 1, 76, "Language Focus dialogue (page 76)")],
       },
       {
         kind: "activity",
@@ -178,7 +181,7 @@ const lessons: Deck[] = [
           { wrong: "What you saw at the zoo?", right: "What did you see at the zoo?", why: "past question needs did + base verb" },
           { wrong: "How many water does a camel drink?", right: "How much water does a camel drink?", why: "water is uncountable: how much" },
         ],
-        book: { book: "SB", pages: "76-77" },
+        book: { book: "SB", pages: "76", note: "Language Focus: ask and answer questions." },
       },
       {
         kind: "exam",
@@ -186,14 +189,14 @@ const lessons: Deck[] = [
         format: "question",
         mode: "pairs",
         minutes: 8,
-        school: "Lương Thế Vinh",
+        school: "Cầu Giấy",
         instructions: "Write a question for the underlined words (shown in CAPITALS). Check your partner's: question word, helper, subject, verb.",
         items: [
-          { q: "Elephants drink about 200 litres of water A DAY.", answer: "How much water do elephants drink a day?" },
+          { q: "{s7}'s grandmother keeps ABOUT FIFTY chickens on her farm.", answer: "How many chickens does {s7}'s grandmother keep on her farm?" },
           { q: "{s6} visits her grandparents in Ba Vì EVERY SUMMER.", answer: "How often does {s6} visit her grandparents in Ba Vì?" },
           { q: "The farmers planted trees BECAUSE THE HILL WAS EMPTY.", answer: "Why did the farmers plant trees?" },
           { q: "THE WIND carried the seeds across the river.", answer: "What carried the seeds across the river?", why: "What is the subject: no did" },
-          { q: "The nearest national park is 120 KILOMETRES from Hanoi.", answer: "How far is the nearest national park from Hanoi?" },
+          { q: "The zoo is 3 KILOMETRES from our school.", answer: "How far is the zoo from our school?" },
         ],
       },
       {
@@ -250,6 +253,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheet 2.1: the unit concept map. Write what you already think happens when nature loses its balance; we add to it all unit.", book: { book: "WB", pages: "2.1", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "Write questions for 8 underlined parts on the homework sheet. Check: question word, helper, subject, verb." },
           { label: "Words of the week (F): weather and seasons", detail: "Learn 8 words (drought, flood, humid, dry season, rainy season, temperature, storm, freezing) with one sentence each about Hanoi's weather." },
           { label: "Function of the week (B): offers and requests", detail: "Practise 4 exchanges with a family member: Would you like ...? / Yes, please. / Could you ...? / Sure, here you are." },
@@ -266,7 +270,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 2, lesson: "Part 1 Language" },
     title: "Part 1 Language: kinds of sentences, cause and effect",
     inquiryPhases: ["Focus", "Investigate"],
-    book: [{ book: "SB", pages: "78-91", note: "Key words, thinking map and academic words; phonics u_e (82-83); the first part of \"It's All in the Balance\" (84-91)." }],
+    book: [{ book: "SB", pages: "78-91", note: "Thinking map: compare and contrast (78), academic words (79), reading strategy: ask questions (80-81), phonics u_e (82-83) and the first part of the humorous story \"It's All in the Balance\" (84-91)." }],
     slides: [
       { kind: "title", title: "Unit 2: Nature's Balance", subtitle: "Lesson 2 · Part 1 Language", bigQuestion: "What happens when nature loses its balance?" },
       {
@@ -274,6 +278,7 @@ const lessons: Deck[] = [
         items: [
           "I can use four kinds of sentences, including exclamations with What a ...! and How ...!",
           "I can join a cause and an effect with because and so.",
+          "I can compare two animals on a Venn diagram and read words with u_e.",
           "I can ask questions before and while I read.",
           "I can write a 'chain reaction' story start.",
         ],
@@ -287,10 +292,10 @@ const lessons: Deck[] = [
         instructions: "Whiteboards. Answer, show, give a reason.",
         items: [
           { q: "___ does a koala sleep every day? About 20 hours.", options: ["How often", "How long", "How much", "How far"], answer: "B. How long" },
-          { q: "In the dry season, water becomes ___ in the countryside.", options: ["scarce", "supply", "increase", "behavior"], answer: "A. scarce" },
+          { q: "In the dry season, the ___ of water in the countryside goes down.", options: ["supply", "behavior", "scarce", "react"], answer: "A. supply", why: "the + noun + of: the supply of water" },
           { q: "Where ___ {s1} put the seeds yesterday?", options: ["does", "do", "did", "is"], answer: "C. did" },
           { q: "Choose the best reply. 'Would you like some water?'", options: ["Yes, I would like.", "Yes, please.", "No, I don't.", "You're welcome."], answer: "B. Yes, please.", why: "function of the week: offers" },
-          { q: "Odd one out (sound): tube, June, rude, cup", options: ["tube", "June", "rude", "cup"], answer: "D. cup" },
+          { q: "Which word has three syllables?", options: ["garden", "volunteer", "happy", "trash"], answer: "B. volunteer", why: "vol-un-teer (Unit 1 syllables); gar-den and hap-py have two, trash has one" },
         ],
       },
       {
@@ -305,17 +310,46 @@ const lessons: Deck[] = [
           "When the chain reaches a surprising end, stop. Was the end good or bad for the village? Was it what the first person expected?",
         ],
         prompts: ["The cats went away, so the mice ...", "Because there were more mice, ...", "I didn't expect that because ..."],
-        teacherNote: "This is a provocation for the story the class starts today, where villagers remove one plant and the whole garden changes. Do not tell them the story.",
+        teacherNote: "This is a provocation for the story the class starts today, where villagers dig out one kind of plant and the whole garden changes. Do not tell them the story.",
+      },
+      {
+        kind: "vocab",
+        title: "Part 1 academic words",
+        book: { book: "SB", pages: "79" },
+        words: [
+          { word: "balance", meaning: "when nothing is too much and nothing is too little, so things stay steady", example: "A seesaw is in balance when {s1} and {s2} weigh the same." },
+          { word: "control", meaning: "to make something do what you want, or to stop it from growing too much", example: "Farmers try to control the number of rats in the fields." },
+          { word: "interact", meaning: "to act together or do things with each other", example: "In a game of football, the players interact all the time." },
+          { word: "react", meaning: "to do something because something else happened", example: "When the cat saw the dog, it reacted by running up a tree." },
+          { word: "scarce", meaning: "hard to find because there is very little", example: "In the dry season, water is scarce." },
+        ],
+        media: [wordAudio(2, 1, ["balance", "control", "interact", "react", "scarce"], "Say the academic words")],
       },
       {
         kind: "book",
-        title: "Thinking map, academic words and reading strategy",
-        ref: { book: "SB", pages: "80-83", note: "Thinking map (cause and effect), academic words, and the phonics page on u_e." },
+        title: "Thinking map and reading strategy",
+        ref: { book: "SB", pages: "78-81", note: "Thinking map: compare and contrast on a Venn diagram (78), academic words (79), reading strategy: ask questions (80-81)." },
         steps: [
-          "Complete the thinking map with the domino chain from the warm-up: cause → effect → effect.",
-          "Academic words: say each one in a sentence about our chain (balance, control, interact, react).",
-          "Reading strategy: before reading, each pair writes two questions on sticky notes from the title and the first picture.",
+          "Thinking map (page 78): see how the book compares a squirrel and a gopher on a Venn diagram. Make your own for two animals you know: what is different goes in the outer parts, what is the same goes in the middle.",
+          "Academic words (page 79): say each one in a sentence about our domino chain or your Venn diagram.",
+          "Reading strategy (pages 80-81): read the How-to, then the short text \"The Gopher and the Squirrel\". Stop at each red arrow and ask an 'I wonder ...?' question, then read on to find the answer.",
+          "Before the story, each pair writes two questions on sticky notes from the title and the first picture.",
         ],
+      },
+      {
+        kind: "activity",
+        title: "Phonics: the u_e sound",
+        tag: "Phonics",
+        mode: "pairs",
+        minutes: 6,
+        book: { book: "SB", pages: "82-83", note: "Phonics u_e and the decodable text." },
+        steps: [
+          "Say flute, tube, June, rule. What sound do they share? How is it spelled? (/uː/, u_e: the e at the end is silent.)",
+          "Sort quickly with your partner: tube, cup, rule, bus, June, sun, tune, rude. Which have the u_e sound? Which have the short u in cup?",
+          "Listen to the text on page 83 with the audio, then read it to each other. Point to every u_e word and give one example from the text of animals keeping each other in balance.",
+        ],
+        prompts: ["I hear /uː/ in ___.", "___ has the short u sound.", "In the text, the ___ control the ___."],
+        media: [phonicsAudio(2, 1, "Phonics text (page 83)")],
       },
       {
         kind: "activity",
@@ -325,12 +359,14 @@ const lessons: Deck[] = [
         minutes: 15,
         book: { book: "SB", pages: "84-91" },
         steps: [
+          "Read the note on page 84: what is a humorous story, and what is the setting? Find the setting in the first picture.",
           "Listen to the first part once, books open. Stop at each picture: one new question on a sticky note.",
           "Reread in pairs, a paragraph each. Move your sticky notes: answered (green side) or still a question.",
-          "Fill the first three boxes of a cause-and-effect chain: what the villagers did, why, and what happened first.",
+          "Fill the first three boxes of a cause-and-effect chain: what the visitor told the villagers, what they did, and what happened first.",
           "Predict: what will happen next? Write it as 'I think ... because ...'.",
         ],
-        prompts: ["Why did the villagers ...?", "What will happen to the ... if ...?", "I think ... because the story says ..."],
+        prompts: ["Why did the visitor want ...?", "What will happen to the ... if ...?", "I think ... because the story says ..."],
+        media: [readingAudio(2, 1, 84, 91, "It's All in the Balance (pages 84-91)")],
       },
       {
         kind: "activity",
@@ -345,10 +381,10 @@ const lessons: Deck[] = [
         ],
         prompts: [
           "The garden is beautiful.",
-          "Don't pull out those bushes!",
+          "Don't dig out those bushes!",
           "Where have all the butterflies gone?",
           "What a mess the garden is!",
-          "How quickly the weeds grew!",
+          "How quiet the garden is now!",
           "Plant the bushes again.",
           "Are the villagers happy?",
           "The butterflies flew away.",
@@ -362,7 +398,7 @@ const lessons: Deck[] = [
           { label: "Statement", pattern: "The bees left. (.)" },
           { label: "Question", pattern: "Why did the bees leave? (?)" },
           { label: "Command", pattern: "Plant more flowers. (. or !)" },
-          { label: "Exclamation", pattern: "What a + (adjective) + noun + subject + verb! · How + adjective/adverb + subject + verb!" },
+          { label: "Exclamation", pattern: "strong feeling, ends with ! (Wow, it's huge!) · What a + (adjective) + noun + subject + verb! · How + adjective/adverb + subject + verb!" },
           { label: "Cause first", pattern: "The flowers died, so the bees left." },
           { label: "Effect first", pattern: "The bees left because the flowers died." },
         ],
@@ -374,7 +410,7 @@ const lessons: Deck[] = [
         examples: [
           { text: "What a clever idea {s2} had!" },
           { text: "How fast the river is flowing!" },
-          { text: "The villagers were tired of the bushes, so they dug them out." },
+          { text: "The visitor didn't like the holes in the leaves, so the villagers dug out the butterfly bushes." },
           { text: "The garden changed because the butterflies left." },
         ],
         pitfalls: [
@@ -382,7 +418,7 @@ const lessons: Deck[] = [
           { wrong: "How a beautiful day!", right: "What a beautiful day!", why: "How + adjective only; What a + noun" },
           { wrong: "Because it rained. We stayed in.", right: "Because it rained, we stayed in.", why: "a because-part cannot stand alone" },
         ],
-        book: { book: "SB", pages: "108-109", note: "Part 1 grammar: kinds of sentences and questions." },
+        book: { book: "SB", pages: "109", note: "Part 1 grammar: kinds of sentences (statements, questions, commands, exclamations)." },
       },
       {
         kind: "exam",
@@ -444,6 +480,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Book", detail: "Finish reading the first part of the story and answer the pair's two sticky-note questions in full sentences.", book: { book: "SB", pages: "84-91" } },
+          { label: "Practice Book", detail: "Sheets 2.2 and 2.7: a Venn diagram that compares two animals (the thinking map), and the u_e phonics practice.", book: { book: "WB", pages: "2.2, 2.7", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "8 rewrites: What a ...! / How ...! / because ↔ so / Don't ..." },
           { label: "Words of the week (F)", detail: "Write a 5-sentence weather report for Hanoi today using 5 of this week's words." },
         ],
@@ -459,7 +496,10 @@ const lessons: Deck[] = [
     covers: { unitFrom: 2, lesson: "Part 1 Reading" },
     title: "Part 1 Reading: more or less",
     inquiryPhases: ["Investigate", "Organize"],
-    book: [{ book: "SB", pages: "92-107", note: "The rest of \"It's All in the Balance\", think and respond, word work, and the riddles \"Animals, More or Less\" (103-107)." }],
+    book: [
+      { book: "SB", pages: "92-99", note: "The rest of the humorous story \"It's All in the Balance\"." },
+      { book: "SB", pages: "103-107", note: "The riddles \"Animals, More or Less\"." },
+    ],
     slides: [
       { kind: "title", title: "Unit 2: Nature's Balance", subtitle: "Lesson 3 · Part 1 Reading", bigQuestion: "What happens when nature loses its balance?" },
       {
@@ -481,7 +521,7 @@ const lessons: Deck[] = [
           { q: "What a beautiful flowers they are!", answer: "a → (delete): What beautiful flowers!", why: "plural noun: no a" },
           { q: "The rats ate the rice, because the farmers were angry.", answer: "because → so", why: "the anger is the result" },
           { q: "How often does {s1} feeds the chickens?", answer: "feeds → feed", why: "does + base verb" },
-          { q: "Could you pass me the salt? — Yes, I could.", answer: "Yes, I could → Sure, here you are.", why: "a request needs an action reply" },
+          { q: "Where did the bees went after the bushes were gone?", answer: "went → go", why: "did + base verb" },
           { q: "The amount of rain increase in the rainy season.", answer: "increase → increases", why: "the amount (it) + verb-s" },
         ],
       },
@@ -491,14 +531,16 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "pairs",
         minutes: 17,
-        book: { book: "SB", pages: "92-101" },
+        book: { book: "SB", pages: "92-99" },
         steps: [
           "Check yesterday's prediction: read the next part and tell your partner 'I was right / wrong because ...'.",
           "Finish the cause-and-effect chain: every time the villagers change something, add a box. Use arrows.",
-          "Mark each box: did the number of something go UP or DOWN? Write the thing and the arrow (caterpillars ↑, butterflies ↓).",
-          "Find the funniest moment. Why is it funny? (Hint: people keep 'fixing' the problem and making it bigger.)",
+          "Mark each box: did the number of something go UP or DOWN? Write the thing and the arrow (holes in the leaves ↓, butterflies ↓, bees ↓).",
+          "Find the funniest moment. Why is it funny? (Hint: the villagers keep following the visitor's advice, and each 'fix' makes the garden worse.)",
+          "Read pages 94-95 again with the audio, copying its expression: sad, surprised, cross.",
         ],
         prompts: ["At first ..., but then ...", "Every time they ..., the ... got worse.", "In the end, the villagers learned ..."],
+        media: [readingAudio(2, 1, 92, 99, "It's All in the Balance (pages 92-99)")],
       },
       {
         kind: "activity",
@@ -509,9 +551,11 @@ const lessons: Deck[] = [
         book: { book: "SB", pages: "103-107" },
         steps: [
           "Read the riddles aloud in pairs. Cover the answer and guess first.",
-          "What makes a riddle work? List three features (a clue that tricks you, a clue that helps, a surprise answer).",
+          "Find the trick in each answer: two words that sound the same but mean different things, one word with two meanings, or a rhyme.",
+          "Which riddle links best to the story? Which key word fits it (react, interact, behavior)?",
         ],
-        prompts: ["I think the answer is ___ because the clue says ___.", "This clue tricked me because ..."],
+        prompts: ["I think the answer is ___ because the clue says ___.", "This answer is funny because ___ sounds like ___.", "The word ___ has two meanings: ___ and ___."],
+        media: [readingAudio(2, 1, 103, 107, "Animals, More or Less (pages 103-107)")],
       },
       {
         kind: "activity",
@@ -527,10 +571,10 @@ const lessons: Deck[] = [
         prompts: [
           "There were fewer butterflies after the bushes went.",
           "There was less food for the birds.",
-          "There were many caterpillars but not much shade.",
+          "At first there were many caterpillars and a lot of colour.",
           "A few bees came back.",
           "A little rain fell in May.",
-          "There was more grass and more weeds.",
+          "In the end there were more flowers and more birds.",
         ],
       },
       {
@@ -549,7 +593,7 @@ const lessons: Deck[] = [
           "We use much mostly in questions and negatives. In statements, a lot of sounds more natural: There is a lot of rain.",
         ],
         examples: [
-          { text: "After the wolves left, there were more deer and fewer young trees." },
+          { text: "Without the butterfly bushes, there were fewer caterpillars and less colour in the garden." },
           { text: "There is less water in the lake than last year." },
           { text: "{s2} gave the cat a little milk and a few biscuits." },
           { text: "Would you like some juice? — Is there any orange juice?" },
@@ -597,6 +641,7 @@ const lessons: Deck[] = [
         steps: [
           "Choose an animal. Note what it eats, what eats it, and what would happen if it disappeared.",
           "Write a riddle of five clues. Clue 1 is the hardest; clue 5 gives it away. Use at least two quantity words.",
+          "If you can, add a funny last line with a play on words, like the book's riddles (two words that sound the same, or a word with two meanings).",
           "Swap with a partner. How many clues did they need?",
         ],
       },
@@ -617,6 +662,7 @@ const lessons: Deck[] = [
         items: [
           { label: "Rewrite track (A)", detail: "8 items: much / many / a few / a little / fewer / less, and How much / How many questions." },
           { label: "Listening (E)", detail: "Listen to the story's audio once more and write down five things that increased or decreased." },
+          { label: "Practice Book", detail: "Sheets 2.4, 2.8 and 2.9: the key points of the story, the fluency passage (read it aloud with expression), and your dialogue journal for the riddles.", book: { book: "WB", pages: "2.4, 2.8-2.9", note: "Practice Book sheets" } },
           { label: "Function of the week (B)", detail: "Thanks and apologies: write four mini-dialogues (Thank you so much! / You're welcome. / I'm sorry I'm late. / That's OK.)." },
         ],
       },
@@ -631,13 +677,17 @@ const lessons: Deck[] = [
     covers: { unitFrom: 2, lesson: "Part 1 Review" },
     title: "Part 1 Review: if ... will ... (checkpoint)",
     inquiryPhases: ["Organize", "Generalize", "Reflect"],
-    book: [{ book: "SB", pages: "100-109", note: "Think and respond and word work (100-102), respond and extend, grammar (kinds of sentences) and the Part 1 review." }],
+    book: [
+      { book: "SB", pages: "100-102", note: "Think and respond, with a Venn diagram of the visitor and the boy (100-101), and word work: syllables and the dictionary (102)." },
+      { book: "SB", pages: "108-109", note: "Respond and extend: compare the story and the riddles (108), and grammar: kinds of sentences (109)." },
+    ],
     slides: [
       { kind: "title", title: "Unit 2: Nature's Balance", subtitle: "Lesson 4 · Part 1 Review", bigQuestion: "What happens when nature loses its balance?" },
       {
         kind: "objectives",
         items: [
           "I can predict effects with the first conditional: If ... + present, ... will ...",
+          "I can compare a humorous story with riddles, and the visitor with the boy.",
           "I can say what I understand about balance in my own words.",
           "I can show what I know in a timed checkpoint quiz.",
           "I can plan an advice leaflet for the villagers.",
@@ -661,13 +711,28 @@ const lessons: Deck[] = [
         tag: "Review",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "100-102", note: "Think and respond (100-101) and word work (102)." },
+        book: { book: "SB", pages: "100-102", note: "Think and respond (100), compare the visitor and the boy (101) and word work: syllables (102)." },
         steps: [
-          "Answer the book's think-and-respond questions with your partner. Each answer must point to a page: 'On page ___ it says ...'.",
-          "Word work: build word families from our key words on a chart (balance - balanced - unbalanced; behave - behaviour; compete - competition - competitive; react - reaction; increase - increasing).",
-          "Exam skill: cover one word in each family; your partner says the missing form and uses it in a sentence.",
+          "Answer the book's Talk About It questions on page 100 with your partner. Each answer must point to a page: 'On page ___ it says ...'.",
+          "Page 101: put the visitor and the boy on a Venn diagram. Tell your partner how they are the same and how they are different, then swap.",
+          "Word work (page 102): clap the syllables of story words (vil-lag-ers, go-pher, gar-den), then use a dictionary entry to say a new word correctly.",
+          "Exam skill: word families from our key words (balance - balanced - unbalanced; behave - behavior; react - reaction). Clap the syllables of each form, then cover one; your partner says it and uses it in a sentence.",
         ],
-        prompts: ["The noun of compete is ___.", "The opposite of balanced is ___.", "On page ___ the story shows that ..."],
+        prompts: ["The visitor and the boy are the same because ___.", "They are different because ___.", "The word ___ has ___ syllables.", "On page ___ the story shows that ..."],
+      },
+      {
+        kind: "activity",
+        title: "Story or riddle? Compare the genres",
+        tag: "Review",
+        mode: "groups",
+        minutes: 6,
+        book: { book: "SB", pages: "108-109", note: "Respond and extend: compare genres (108); the grammar page on kinds of sentences (109)." },
+        steps: [
+          "Make a checklist chart for \"It's All in the Balance\" and \"Animals, More or Less\": Does it want to make you laugh or give facts? Does it have characters and a plot? Does it play with words?",
+          "Say one way they are alike and one way they are different, using while or although.",
+          "Grammar page (109): find one statement, one question, one command and one exclamation in the story and the riddles, and name the end mark of each.",
+        ],
+        prompts: ["The story has ___, but the riddles do not have ___.", "Both of them ___.", "While the story ___, the riddles ___."],
       },
       {
         kind: "activity",
@@ -682,7 +747,7 @@ const lessons: Deck[] = [
         ],
         prompts: [
           "If the villagers plant the bushes again, the butterflies will return.",
-          "If there are no butterflies, the flowers won't make seeds.",
+          "If there are no butterfly bushes, the butterflies won't come back.",
           "The garden will grow weeds if nobody looks after it.",
           "If {s2} forgets to water the plants, they will die.",
         ],
@@ -774,6 +839,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Rewrite track (A)", detail: "Correct your checkpoint mistakes in your error log: write the rule and one new example for each." },
+          { label: "Practice Book", detail: "Sheets 2.3, 2.5 and 2.11: kinds of sentences and writing questions; sheets 2.6 and 2.10: the visitor and the boy compared, and the story compared with the riddles.", book: { book: "WB", pages: "2.3, 2.5-2.6, 2.10-2.11", note: "Practice Book sheets" } },
           { label: "Words of the week (F): animals and their bodies", detail: "Learn 8 words: wing, fin, beak, claw, fur, feather, tail, shell, with one sentence each." },
         ],
       },
@@ -788,14 +854,15 @@ const lessons: Deck[] = [
     covers: { unitFrom: 2, lesson: "Part 2 Language" },
     title: "Part 2 Language: when the wolves went away",
     inquiryPhases: ["Engage", "Investigate"],
-    book: [{ book: "SB", pages: "110-125", note: "Part 2 Language Focus (give and carry out commands, 110-111), key words (112-115), phonics oo (116-117), and the first part of \"When the Wolves Returned\" (118-125)." }],
+    book: [{ book: "SB", pages: "110-125", note: "Part 2 Language Focus: give and carry out commands, with the song (110), science words (111), thinking map: cause and effect (112), academic words (113), reading strategy: ask questions (114-115), phonics oo (116-117), and the first part of the science article \"When the Wolves Returned\" (118-125)." }],
     slides: [
       { kind: "title", title: "Unit 2: Nature's Balance", subtitle: "Lesson 5 · Part 2 Language", bigQuestion: "What happens when nature loses its balance?" },
       {
         kind: "objectives",
         items: [
           "I can tell the past with the past simple and say what used to be true.",
-          "I can say -ed endings correctly: /t/, /d/, /ɪd/.",
+          "I can say -ed endings correctly: /t/, /d/, /ɪd/, and read words with oo as in book.",
+          "I can give and carry out commands.",
           "I can find cause and effect in a science article.",
           "I can write a 'then and now' diary entry by a tree.",
         ],
@@ -818,17 +885,19 @@ const lessons: Deck[] = [
       {
         kind: "vocab",
         title: "Part 2 words: ecosystems",
-        book: { book: "SB", pages: "112-113" },
+        book: { book: "SB", pages: "111, 113", note: "Science words (111) and academic words (113)." },
         words: [
           { word: "ecosystem", meaning: "all the living things in a place and how they live together", example: "A rice field is an ecosystem with frogs, fish, insects and plants." },
           { word: "food chain", meaning: "the order in which living things eat each other", example: "grass → deer → wolf is a food chain." },
-          { word: "competition", meaning: "when animals try to get the same food or space", example: "There is competition for food when the forest is dry." },
           { word: "drought", meaning: "a long time with little or no rain", example: "During the drought, the river almost disappeared." },
-          { word: "resources", meaning: "things living things need and use: water, food, space", example: "Clean water is our most important resource." },
-          { word: "level", meaning: "how high something is", example: "The water level in the lake fell by two metres." },
+          { word: "level", meaning: "how high something is, like water in a lake", example: "The water level in the lake fell by two metres." },
+          { word: "river", meaning: "a long, wide line of water that flows across the land to the sea or a lake", example: "The Red River flows through Hanoi." },
+          { word: "competition", meaning: "when animals or people try to get the same thing, like food or space", example: "There is competition for food when the forest is dry." },
+          { word: "resources", meaning: "things living things need and use: water, food, space", example: "Clean water is one of our most important resources." },
           { word: "positive / negative", meaning: "good / bad in its effect", example: "The wolves had a positive effect on the trees." },
           { word: "nature", meaning: "plants, animals, land and weather, not made by people", example: "{s1} loves walking in nature at Cúc Phương." },
         ],
+        media: [keyWordAudio(2, 2, "Part 2 key words")],
       },
       {
         kind: "activity",
@@ -836,12 +905,39 @@ const lessons: Deck[] = [
         tag: "Speaking",
         mode: "pairs",
         minutes: 10,
-        book: { book: "SB", pages: "110-111" },
+        book: { book: "SB", pages: "110-111", note: "Language Focus with its song (110); the pictures on 110-111 for commands." },
         steps: [
-          "Do the book's Language Focus with your partner: give commands about the photo and carry them out.",
+          "Listen to the Language Focus song on page 110, then join in the second time.",
+          "With your partner, give commands about the pictures on pages 110-111 and carry them out: 'Show me ...', 'Point to ...'.",
           "Then play Ranger Says: one child is a park ranger giving safety commands; the others act only if the command starts with 'Ranger says'.",
         ],
         prompts: ["Point to the ___ and tell me what it eats.", "Keep away from ___!", "Be careful! Don't ___!", "Watch out for ___!"],
+        media: [talkAudio(2, 2, 110, "Language Focus song (page 110)")],
+      },
+      {
+        kind: "book",
+        title: "Thinking map and reading strategy (Part 2)",
+        ref: { book: "SB", pages: "112-115", note: "Thinking map: cause and effect (112), academic words (113), reading strategy: ask questions (114-115)." },
+        steps: [
+          "Thinking map (page 112): how does one event make another happen? Draw a cause box and an effect box for 'There is a drought.' Then add a second effect.",
+          "Academic words (page 113): make a word web for one word with your partner (competition, nature, negative, positive or resources).",
+          "Reading strategy (pages 114-115): read \"What Makes an Ecosystem?\" and ask one 'I wonder ...?' question about each paragraph. Who can answer it from the text?",
+        ],
+      },
+      {
+        kind: "activity",
+        title: "Phonics: oo as in book",
+        tag: "Phonics",
+        mode: "pairs",
+        minutes: 5,
+        book: { book: "SB", pages: "116-117", note: "Phonics oo and the decodable text." },
+        steps: [
+          "Say book, foot, wood, good. The oo here is short, like the u in put.",
+          "Careful: oo can also be long. Sort with your partner: book, moon, hook, food, stood, room, cook, cool. Which sound does each have?",
+          "Listen to the text on page 117 with the audio, then read it to each other and find every word with the oo in book.",
+        ],
+        prompts: ["___ has the short oo, like book.", "___ has the long oo, like moon."],
+        media: [phonicsAudio(2, 2, "Phonics text (page 117)")],
       },
       {
         kind: "activity",
@@ -851,13 +947,14 @@ const lessons: Deck[] = [
         minutes: 16,
         book: { book: "SB", pages: "118-125" },
         steps: [
-          "Before reading: look at the photos and headings. Write two questions about wolves and the park.",
-          "Read the first part. Make a timeline: what the park was like before, what people did to the wolves, what happened after.",
+          "Before reading: look at the photos and headings, and read the note on page 118 about a science article and its time line. Write two questions about wolves and Yellowstone National Park.",
+          "Read the first part. Use the article's time line to make your own: what the park was like before, what people did to the wolves, what happened after.",
           "Underline every verb in the past. Which are regular (-ed)? Which are irregular?",
-          "Organize: a T-chart 'With wolves / Without wolves'. Add a number word to each line (more elk, fewer trees).",
+          "Organize: a T-chart 'With wolves / Without wolves'. Add a number word to each line (more elk, more coyotes, fewer young trees).",
         ],
         prompts: ["Long ago, the park ___.", "Then people ___, so ___.", "Without wolves, there were more ___ and fewer ___."],
         teacherNote: "Investigate phase: this is the unit's main case study for the Statement 2 belief from Lesson 1 ('If one kind of animal disappears, nothing important changes').",
+        media: [readingAudio(2, 2, 118, 125, "When the Wolves Returned (pages 118-125)")],
       },
       {
         kind: "activity",
@@ -938,7 +1035,7 @@ const lessons: Deck[] = [
         mode: "solo",
         minutes: 14,
         steps: [
-          "You are an old tree in the park. Tell your partner three things you saw before the wolves left, and three after.",
+          "You are an old tree in the park. Tell your partner three things you saw while the wolves still lived there, and three after the hunters killed them.",
           "Write a diary entry (8-10 sentences): how the park used to be, what happened, how you feel now.",
           "Read it aloud to yourself in a whisper: are your -ed endings right?",
         ],
@@ -963,6 +1060,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Book", detail: "Reread the first part of the article and add three more lines to your 'With wolves / Without wolves' chart.", book: { book: "SB", pages: "118-125" } },
+          { label: "Practice Book", detail: "Sheets 2.12 and 2.17: a cause-and-effect diagram (the thinking map), and the oo phonics practice.", book: { book: "WB", pages: "2.12, 2.17", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "8 items: used to / didn't use to / Did ... use to ...? and past simple irregular verbs." },
           { label: "Function of the week (B): invitations", detail: "Write and practise 3 invitations with an accept and a refuse: Would you like to come ...? / I'd love to. / I'm afraid I can't because ..." },
         ],
@@ -978,7 +1076,10 @@ const lessons: Deck[] = [
     covers: { unitFrom: 2, lesson: "Part 2 Reading" },
     title: "Part 2 Reading: since the wolves returned",
     inquiryPhases: ["Investigate", "Organize", "Generalize"],
-    book: [{ book: "SB", pages: "126-141", note: "The rest of \"When the Wolves Returned\", think and respond (134-135), and \"Megafish Man\" (137-141)." }],
+    book: [
+      { book: "SB", pages: "126-135", note: "The rest of \"When the Wolves Returned\" (126-133) and think and respond: retell it with a cause-and-effect diagram (134-135)." },
+      { book: "SB", pages: "136-141", note: "Word work: the pronunciation key (136) and the human interest feature \"Megafish Man\" (137-141)." },
+    ],
     slides: [
       { kind: "title", title: "Unit 2: Nature's Balance", subtitle: "Lesson 6 · Part 2 Reading", bigQuestion: "What happens when nature loses its balance?" },
       {
@@ -1011,11 +1112,22 @@ const lessons: Deck[] = [
         minutes: 15,
         book: { book: "SB", pages: "126-133" },
         steps: [
-          "Read on. Add to your timeline: when the wolves came back and what changed after that, step by step.",
+          "Read on. Add to your timeline: what went wrong without the wolves, when and how the wolves were brought back, and what changed after that, step by step.",
           "Find the main idea of each section; check it against the heading. Does the heading tell the main idea?",
-          "Draw the chain as a flow diagram: wolves → elk → trees → birds / beavers → river. Put + or − on each arrow.",
+          "Draw the chains as a flow diagram: wolves → elk → young trees → birds' nests and beavers → ponds; wolves → coyotes → pronghorn fawns. Put + or − on each arrow.",
         ],
         prompts: ["The main idea of this section is ___.", "When the wolves came back, the elk ___, so ___.", "That surprised me because ___."],
+        media: [readingAudio(2, 2, 126, 133, "When the Wolves Returned (pages 126-133)")],
+      },
+      {
+        kind: "book",
+        title: "Think and respond, word work",
+        ref: { book: "SB", pages: "134-136", note: "Think and respond (134), retell with the cause-and-effect diagram (135), word work: the pronunciation key (136)." },
+        steps: [
+          "Talk About It (page 134): answer one question with your partner and point to the page that proves it.",
+          "Retell (page 135): use your flow diagram to retell the article to your partner in one minute: cause, effect, effect.",
+          "Word work (page 136): find ecosystem in a dictionary. How many syllables? Which syllable is stressed? Say it, then try species and benefit.",
+        ],
       },
       {
         kind: "activity",
@@ -1023,13 +1135,14 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "groups",
         minutes: 12,
-        book: { book: "SB", pages: "136-141" },
+        book: { book: "SB", pages: "137-141" },
         steps: [
-          "Read the feature about the explorer who studies giant river fish. Use the text features (headings, captions, maps) to find: which rivers, which fish, and why he studies them.",
-          "One of his rivers is the Mekong, which flows through Vietnam. Find it on the map.",
-          "Why can one giant fish tell scientists if a whole river is healthy? Agree on an answer in your group.",
+          "Read the human interest feature about Zeb Hogan, a scientist who studies very big river fish. Use the photos, captions, headings and the globe to find: which river, which fish, and why he studies them.",
+          "His river is the Mekong in Southeast Asia, which also flows through Vietnam. Find Vietnam on the globe and trace the river.",
+          "Why can giant fish tell scientists if a whole river is healthy? Why is the Mekong in trouble today? Agree on answers in your group, with a page for each.",
         ],
         prompts: ["The caption says ___.", "Scientists study the biggest fish because ___.", "If the giant fish disappear, it means ___."],
+        media: [readingAudio(2, 2, 137, 141, "Megafish Man (pages 137-141)")],
       },
       {
         kind: "activity",
@@ -1044,7 +1157,8 @@ const lessons: Deck[] = [
           "Add the reef as a third column to your 'With wolves / Without wolves' chart: what is the key living thing, and what happens when it is harmed?",
         ],
         prompts: ["The reef is losing ___ because ___.", "When the coral ___, the fish ___.", "This is like the wolves because ___."],
-        teacherNote: "Play the Reach Higher 3A video for Unit 2, The Great Barrier Reef (file 'Video Level 3A - Reach Higher 1e_2' in the school's copy; it is not hosted in the app). The publisher's video worksheet for Unit 2 can go home as extra practice.",
+        teacherNote: "Play the Reach Higher 3A video for Unit 2, The Great Barrier Reef (file 'Video Level 3A - Reach Higher 1e_2'). The link opens the school's own copy in Google Drive's player; the video is not copied into the app. The publisher's video worksheet for Unit 2 can go home as extra practice.",
+        media: VIDEO,
       },
       {
         kind: "activity",
@@ -1053,11 +1167,11 @@ const lessons: Deck[] = [
         mode: "pairs",
         minutes: 6,
         steps: [
-          "Compare: 'Wolves returned in 1995.' and 'Since the wolves returned, the trees have grown taller.' Which one gives a finished time? Which one connects the past to NOW?",
+          "Compare: 'Wolves returned in 1995.' and 'Since the wolves returned, more young trees have grown up.' Which one gives a finished time? Which one connects the past to NOW?",
           "Find the helper and the verb form in the second sentence.",
           "When do we use for and when since? Sort: 30 years, 1995, a long time, last summer, three months, I was six.",
         ],
-        prompts: ["The trees have grown taller.", "Beavers have built new dams.", "The river has changed its shape.", "Scientists have studied the park for 30 years."],
+        prompts: ["More young trees have grown up.", "Beavers have built new dams.", "More pronghorn fawns have survived.", "Wolves have lived in the park again since 1995."],
       },
       {
         kind: "grammar",
@@ -1076,10 +1190,10 @@ const lessons: Deck[] = [
           "Exam rewrite: 'I started learning English three years ago.' → 'I have learned English for three years.' / 'The last time I saw him was in May.' → 'I haven't seen him since May.'",
         ],
         examples: [
-          { text: "Since the wolves returned, the elk have moved away from the rivers." },
+          { text: "Since the wolves returned, the elk have kept on the move, so more young trees have grown." },
           { text: "{s4} has lived in Long Biên for five years." },
           { text: "How long have you known {s5}? — Since we were in Grade 1." },
-          { text: "The explorer has studied giant fish for many years. He first went to the Mekong in 2005." },
+          { text: "{s6} has collected shells since 2023. The first one came from a beach in Hạ Long." },
         ],
         pitfalls: [
           { wrong: "I have seen him yesterday.", right: "I saw him yesterday.", why: "finished time: past simple" },
@@ -1097,8 +1211,8 @@ const lessons: Deck[] = [
         items: [
           { q: "The Mekong is longer than the Red River. → The Red River is not as ...", answer: "The Red River is not as long as the Mekong." },
           { q: "No fish in this river is bigger than the giant catfish. → The giant catfish is ...", answer: "The giant catfish is the biggest fish in this river." },
-          { q: "The park is as healthy as it was 100 years ago. (no change in meaning; use same)", answer: "The park is the same as it was 100 years ago. / The park is as healthy now as then." },
-          { q: "We started protecting the river five years ago. → We have ...", answer: "We have protected the river for five years." },
+          { q: "The park is bigger than our school garden. → Our school garden is not as ...", answer: "Our school garden is not as big as the park." },
+          { q: "We started protecting the river five years ago. → We have ...", answer: "We have protected the river for five years. / We have been protecting the river for five years." },
           { q: "The last time I saw a wild elephant was in 2024. → I haven't ...", answer: "I haven't seen a wild elephant since 2024." },
         ],
       },
@@ -1108,13 +1222,14 @@ const lessons: Deck[] = [
         mode: "pairs",
         minutes: 12,
         steps: [
-          "Partner A is a scientist from the wolf park. Partner B is the giant-fish explorer. Each talks for one minute: what has changed in your place, and why one animal matters so much.",
+          "Partner A is a scientist from Yellowstone, the wolf park. Partner B is Zeb Hogan, the megafish scientist. Each talks for one minute: what has changed in your place, and why one animal matters so much.",
           "Find the connection. Finish together: 'In both cases, ...'. Use one comparative and one present perfect.",
           "Two pairs join. Compare your 'In both cases' sentences and choose the stronger one. Is it true of a rice field too?",
         ],
         frames: ["In my park, since ___, ___ has / have ___.", "One animal can tell us ___.", "In both cases, ___ because ___."],
         prompts: ["What has changed most?", "Which ecosystem is healthier now?", "Would the same thing happen in Cúc Phương forest?"],
         fluencyTip: "Answer, then add one more: a reason, an example or a comparison. Never stop at one sentence.",
+        book: { book: "SB", pages: "142", note: "Respond and extend: compare the Yellowstone and Mekong ecosystems (taken again in Lesson 7)." },
       },
       {
         kind: "activity",
@@ -1149,6 +1264,7 @@ const lessons: Deck[] = [
         items: [
           { label: "Rewrite track (A)", detail: "8 items: present perfect with for / since, past simple vs present perfect, comparatives and as ... as." },
           { label: "Listening (E)", detail: "Listen to the article's audio and write down five numbers or dates and what each one is about." },
+          { label: "Practice Book", detail: "Sheets 2.14, 2.16, 2.18 and 2.19: the key points of the wolves article, its cause-and-effect diagram, the fluency passage (read it with good phrasing), and your reflection journal for \"Megafish Man\".", book: { book: "WB", pages: "2.14, 2.16, 2.18-2.19", note: "Practice Book sheets" } },
           { label: "Words of the week (F): health and the body", detail: "Learn 8 words: healthy, exercise, vegetables, fit, sore throat, headache, rest, balanced diet. Use 'balanced' in a sentence about food." },
         ],
       },
@@ -1163,7 +1279,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 2, lesson: "Writing Project" },
     title: "Writing Project: a summary that keeps the balance",
     inquiryPhases: ["Organize", "Transfer"],
-    book: [{ book: "SB", pages: "142-147", note: "Respond and extend, grammar (compound sentences, 142-143) and the writing project: a summary (144-147)." }],
+    book: [{ book: "SB", pages: "142-147", note: "Respond and extend: compare the two ecosystems (142), grammar: compound sentences (143) and the writing project: a summary (144-147)." }],
     slides: [
       { kind: "title", title: "Unit 2: Nature's Balance", subtitle: "Lesson 7 · Writing Project", bigQuestion: "What happens when nature loses its balance?" },
       {
@@ -1183,11 +1299,11 @@ const lessons: Deck[] = [
         instructions: "Write ONE word in each gap.",
         items: [
           { q: "Wolves (1) ___ to live in the park, but people killed them.", answer: "used" },
-          { q: "(2) ___ the wolves returned, the elk have changed their behaviour.", answer: "Since" },
-          { q: "There are (3) ___ elk near the rivers now, so the young trees can grow.", answer: "fewer" },
+          { q: "(2) ___ the wolves returned, the elk have changed their behavior.", answer: "Since" },
+          { q: "The elk keep moving now, so (3) ___ young trees are eaten.", answer: "fewer" },
           { q: "If the trees grow, the birds (4) ___ come back.", answer: "will" },
-          { q: "The river is healthier (5) ___ it was thirty years ago.", answer: "than" },
-          { q: "How (6) ___ fish live in the Mekong? Hundreds of kinds!", answer: "many" },
+          { q: "The park is healthier (5) ___ it was thirty years ago.", answer: "than" },
+          { q: "How (6) ___ kinds of fish live in the Mekong? Hundreds!", answer: "many" },
         ],
       },
       {
@@ -1196,14 +1312,14 @@ const lessons: Deck[] = [
         tag: "Grammar",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "142-143", note: "Part 2 grammar: compound sentences." },
+        book: { book: "SB", pages: "143", note: "Part 2 grammar: compound sentences with and, but, or." },
         steps: [
           "Read the four pairs of short sentences. Join each pair with and, but, or or so. Where does the comma go?",
           "Now join two of them with although. What changes? Can although go at the start?",
           "Make your rule: which word adds, which contrasts, which gives a choice, which gives a result?",
         ],
         prompts: [
-          "The elk ate the young trees. The river banks fell in.",
+          "The elk ate the young trees. The birds had nowhere to build nests.",
           "The wolves are dangerous. They help the park.",
           "We can protect the river. We can lose the giant fish.",
           "People killed the wolves. The elk had no enemies.",
@@ -1220,16 +1336,17 @@ const lessons: Deck[] = [
           { label: "both ... and / either ... or", pattern: "Both the wolves and the beavers help the river." },
         ],
         explanation: [
-          "and adds, but contrasts, or gives a choice, so gives a result. Use a comma before them when they join two complete sentences.",
+          "The book's three joining words: and joins ideas that are alike, but shows a difference, or gives a choice. We add so for a result. Use a comma before the joining word when it joins two complete sentences.",
           "although joins inside one sentence; however starts a new sentence and takes a comma after it.",
           "Never use although and but together: NOT 'Although wolves are dangerous, but they help.'",
         ],
         examples: [
-          { text: "The elk ate the young trees, so the river banks fell in." },
+          { text: "The elk ate the young trees, so the birds had nowhere to build nests." },
           { text: "Although wolves are dangerous, they help the park stay healthy." },
           { text: "{s1} wanted to see the giant fish. However, the river was too muddy." },
           { text: "We can protect the river, or we can lose the giant fish forever." },
         ],
+        book: { book: "SB", pages: "143", note: "Grammar Rules: compound sentences." },
         pitfalls: [
           { wrong: "Although it rained, but we played.", right: "Although it rained, we played.", why: "one linking word is enough" },
           { wrong: "The fish are big, however they are rare.", right: "The fish are big. However, they are rare.", why: "however starts a new sentence" },
@@ -1257,11 +1374,12 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "groups",
         minutes: 12,
-        book: { book: "SB", pages: "144-145", note: "Writing project: read the model summary and the checklist." },
+        book: { book: "SB", pages: "144-145", note: "Writing project: the prompt and the model summary (144); choose a topic and plan on a cause-and-effect diagram (145)." },
         steps: [
-          "Read the book's model summary and its checklist.",
+          "Read the book's prompt and model summary (page 144). What is the summary about? Does it tell the beginning, the middle and the end?",
           "Sort 10 sentence cards about the wolves article into KEEP (main idea) and LEAVE OUT (detail, example, number that does not change the meaning).",
           "What rule did your group use to decide? Write it as 'A summary keeps ... and leaves out ...'.",
+          "Plan (page 145): put your KEEP cards on a cause-and-effect diagram, in the order of the article.",
         ],
         prompts: ["We kept this because without it the reader would not understand ...", "We left this out because it is only an example of ..."],
         teacherNote: "This sort is the Organize step for the process generalization about summaries; let each group word its own rule.",
@@ -1286,11 +1404,12 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "solo",
         minutes: 24,
-        book: { book: "SB", pages: "146-147", note: "Draft, revise and edit with the editing marks." },
+        book: { book: "SB", pages: "145-147", note: "Draft (145), revise with a partner (146), edit and proofread, then share (147)." },
         steps: [
           "Set your goal: write it at the top (for example: 'two although-sentences, no small details').",
-          "Write the summary: 70-90 words, your own words, no copying sentences from the book.",
-          "Edit in two rounds: first your partner uses the editing marks to find mistakes (exam skill: error spotting!); then you check your goal.",
+          "Draft the summary: 70-90 words, your own words, no copying sentences from the book.",
+          "Revise (page 146): your partner retells your summary and says one thing to add or take out; use the revising marks.",
+          "Edit and proofread (page 147) with the editing marks (exam skill: error spotting!): a comma before and / but / or in every compound sentence, an apostrophe in every short form (don't, isn't). Then check your goal.",
           "Combine two short sentences into one better sentence before you hand it in.",
         ],
       },
@@ -1315,7 +1434,7 @@ const lessons: Deck[] = [
         thinking: "Evaluate",
         steps: ["Main idea in the first sentence.", "The chain of changes in order, linked.", "A last sentence that answers the Big Question."],
         criteria: [
-          "Only main ideas; no small details or copied sentences.",
+          "Only the important ideas, covering the beginning, middle and end of the article; no small details or copied sentences.",
           "At least four different linking words, including although or however, used correctly.",
           "70-90 words, edited with the editing marks.",
         ],
@@ -1326,7 +1445,8 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
-          { label: "Final copy", detail: "Write the final copy of your summary and record the 30-second news flash as a video.", book: { book: "SB", pages: "146-147" } },
+          { label: "Final copy", detail: "Write the final copy of your summary and record the 30-second news flash as a video.", book: { book: "SB", pages: "147" } },
+          { label: "Practice Book", detail: "Sheets 2.13, 2.15 and 2.21: compound sentences with and, but, or; sheet 2.20: the two ecosystems compared; sheets 2.22-2.25: the summary rubric, plan, revising and editing.", book: { book: "WB", pages: "2.13, 2.15, 2.20-2.25", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "8 sentence-combining items with and, but, so, or, although, however, both ... and." },
           { label: "Function of the week (B): directions", detail: "Draw a map of your street and write directions from your house to a shop: Go straight, turn left, it's next to / opposite ..." },
         ],
@@ -1342,7 +1462,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 2, lesson: "Unit Wrap-Up" },
     title: "Unit Wrap-Up: the more ..., the more ... (mock test)",
     inquiryPhases: ["Generalize", "Transfer", "Reflect"],
-    book: [{ book: "SB", pages: "148-149", note: "Unit wrap-up: the Big Question and the unit review." }],
+    book: [{ book: "SB", pages: "148-149", note: "Unit wrap-up: finish the unit concept map (148) and share your ideas (149)." }],
     slides: [
       { kind: "title", title: "Unit 2: Nature's Balance", subtitle: "Lesson 8 · Unit Wrap-Up", bigQuestion: "What happens when nature loses its balance?" },
       {
@@ -1424,6 +1544,22 @@ const lessons: Deck[] = [
         ],
       },
       {
+        kind: "exam",
+        title: "Exam practice: change together, too and enough",
+        format: "rewrite",
+        mode: "solo",
+        minutes: 8,
+        school: "Cầu Giấy",
+        instructions: "Rewrite each sentence so that it means the same. Start with the words given.",
+        items: [
+          { q: "When the river gets cleaner, more fish live in it. → The cleaner ...", answer: "The cleaner the river gets, the more fish live in it." },
+          { q: "If we use less plastic, the sea will be safer for turtles. → The less ...", answer: "The less plastic we use, the safer the sea will be for turtles." },
+          { q: "The water is so dirty that the fish can't live in it. → The water is too ...", answer: "The water is too dirty for the fish to live in." },
+          { q: "{s3} is too young to join the hiking club. → {s3} isn't old ...", answer: "{s3} isn't old enough to join the hiking club." },
+          { q: "The rain was very heavy. The river flooded the fields. → The rain was so ...", answer: "The rain was so heavy that the river flooded the fields." },
+        ],
+      },
+      {
         kind: "speaking",
         title: "Transfer: test our big idea on a new case",
         mode: "groups",
@@ -1437,6 +1573,15 @@ const lessons: Deck[] = [
         frames: ["Our idea fits this case because ___.", "We need to change it, because in this case ___.", "The more ___, the ___.", "I used to think ___, but now I think ___ because ___."],
         prompts: ["Is it always true, or only often?", "What would happen if the farmers stopped using ducks?", "Which case was the strongest evidence for you?"],
         fluencyTip: "'I used to think ..., but now I think ...' is a powerful way to show how your thinking has changed.",
+      },
+      {
+        kind: "book",
+        title: "Unit wrap-up: the concept map",
+        ref: { book: "SB", pages: "148-149", note: "Finish the unit concept map (148); choose a way to share your ideas (149)." },
+        steps: [
+          "Page 148: finish your unit concept map with the class. Add one thing from each selection and one from the video: what happens when nature loses its balance?",
+          "Page 149: choose one way to share your ideas this week (a card, a riddle, a short skit) and tell your partner which ecosystem it will be about.",
+        ],
       },
       {
         kind: "activity",
@@ -1481,6 +1626,7 @@ const lessons: Deck[] = [
         items: [
           { label: "Error log", detail: "Copy every mock-test mistake into your error log with the rule and a new example. Bring it to Lesson 1 of Unit 3." },
           { label: "Self-introduction (I)", detail: "Record the 90-second self-introduction video at your level." },
+          { label: "Get ready for the Unit 2 test", detail: "Next lesson is the end-of-unit test. Revise the 20 key words, the four kinds of sentence, compound sentences with and / but / or, and your error log." },
         ],
       },
     ],
@@ -1520,7 +1666,7 @@ export const rhL3U2: Unit = {
     { point: "Past simple vs used to; -ed endings /t/ /d/ /ɪd/", lesson: 5, source: "added" },
     { point: "Present perfect with for / since vs past simple", lesson: 6, source: "stretch" },
     { point: "Comparatives, superlatives, (not) as ... as", lesson: 6, source: "added" },
-    { point: "Compound sentences and / but / or / so; although, however, both ... and", lesson: 7, source: "book" },
+    { point: "Compound sentences with and / but / or (book), so; although, however, both ... and", lesson: 7, source: "book" },
     { point: "The more ..., the more ...", lesson: 8, source: "stretch" },
     { point: "too ... to, enough, so ... that", lesson: 8, source: "added" },
   ],

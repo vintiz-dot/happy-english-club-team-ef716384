@@ -86,7 +86,7 @@ export const rhL3U3Creative: Record<number, Creative> = {
         "Write five sentences with who / which / where explaining what makes it unique.",
         "Explain how it protects itself and which organisms depend on it.",
       ],
-      frames: ["The ___ is a plant which ___.", "It grows in places where ___.", "Animals who ___ depend on it."],
+      frames: ["The ___ is a plant which ___.", "It grows in places where ___.", "Animals that ___ depend on it."],
       success: ["Five correct relative clauses.", "The plant suits its environment.", "At least three Part 2 words."],
       challenge: "Add a short entry for an animal whose life depends on your plant, using whose.",
     },

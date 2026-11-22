@@ -11,6 +11,7 @@
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
 import { rhL3U6Assessments } from "./rh-l3-u6/assessments";
 import { rhL3U6Creative } from "./rh-l3-u6/homework";
+import { keyWordAudio, phonicsAudio, readingAudio, talkAudio } from "./rh-l3/media";
 
 const base = { curriculum: "reach-higher" as const, level: 3, unit: 6, minutes: 90 };
 const BQ = "How can we preserve our traditions?";
@@ -25,7 +26,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 6, lesson: "Unit Launch" },
     title: "Unit Launch: what makes a tradition?",
     inquiryPhases: ["Engage", "Focus"],
-    book: [{ book: "SB", pages: "74-77", note: "Unit opener (Big Question) and the Part 1 Language Focus: ask for and give information." }],
+    book: [{ book: "SB", pages: "74-77", note: "Unit opener (Big Question, Share What You Know, 74-75), the Part 1 Language Focus: ask for and give information (76) and the Key Words (77)." }],
     slides: [
       { kind: "title", title: UNIT, subtitle: "Lesson 1 · Unit Launch", bigQuestion: BQ },
       {
@@ -84,10 +85,12 @@ const lessons: Deck[] = [
       {
         kind: "book",
         title: "Unit opener and Language Focus",
-        ref: { book: "SB", pages: "74-77", note: "Opener photo and Big Question; the Language Focus on asking for and giving information." },
+        ref: { book: "SB", pages: "74-77", note: "Opener photo (children performing a folk dance at a festival in Trujillo, Peru) and Big Question; Share What You Know (75); the Language Focus dialogue and frames (76); Key Words with photos of music in three regions (77)." },
         steps: [
-          "Opener: one minute of silent looking. Who are these people? What are they keeping alive? Say: I notice ... / I wonder ...",
-          "Do the Language Focus with a partner, then ask and answer two questions about one card from the sort.",
+          "Opener (74-75): one minute of silent looking at the folk dancers. Who are these children? What are they keeping alive? Say: I notice ... / I wonder ...",
+          "Share What You Know (75): tell a partner one tradition in your home, and one song, story or recipe an older relative taught you.",
+          "Language Focus (76): listen to the dialogue between Jesse and Inez about a yearly celebration, then use the How do ...? / Why do ...? / It's ... frames to ask and answer about one card from the sort.",
+          "Key Words (77): look at the three photos. How does the music vary from region to region?",
         ],
       },
       {
@@ -96,7 +99,7 @@ const lessons: Deck[] = [
         tag: "Grammar",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "106-107", note: "Part 1 grammar: subject and object pronouns (taught first here, reviewed in Lesson 4)." },
+        book: { book: "SB", pages: "107", note: "Part 1 grammar: subject and object pronouns (pronoun agreement); taught first here, reviewed in Lesson 4. Reflexives are the school's addition." },
         steps: [
           "Look at the words in bold. Which ones DO the action (before the verb)? Which ones RECEIVE it (after the verb or a preposition)?",
           "Find the -self / -selves words. Who are they about: someone else, or the same person as the subject?",
@@ -138,7 +141,7 @@ const lessons: Deck[] = [
           { wrong: "The teacher gave the prize to {s3} and I.", right: "The teacher gave the prize to {s3} and me.", why: "after a preposition: me" },
           { wrong: "He made the kite by hisself.", right: "He made the kite by himself.", why: "himself, themselves (never hisself, theirselves)" },
         ],
-        book: { book: "SB", pages: "106-107" },
+        book: { book: "SB", pages: "107" },
       },
       {
         kind: "exam",
@@ -197,6 +200,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheet 6.1: start the unit concept map with the traditions you talked about today.", book: { book: "WB", pages: "6.1", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 pronoun items (subject / object / reflexive) and 4 Unit 5 rewrites (past passive, present perfect)." },
           { label: "Words of the week (F): festivals and celebrations", detail: "Learn 8 words (lantern, firework, decorate, celebrate, costume, parade, feast, lucky money). Write 4 sentences about Tết or the Mid-Autumn Festival with a pronoun in each." },
           { label: "Function of the week (B): asking for information", detail: "Practise: Excuse me, could you tell me ...? / Do you know ...? / Sure, it's ... / Sorry, I'm not sure. / Thanks for your help." },
@@ -213,7 +217,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 6, lesson: "Part 1 Language" },
     title: "Part 1 Language: music that carries a place",
     inquiryPhases: ["Focus", "Investigate"],
-    book: [{ book: "SB", pages: "78-91", note: "Key words (78-79), thinking map and academic words (80-81), phonics: prefixes un-, re- (82-83), and the first part of \"Shakira, Shakira!\" (84-91)." }],
+    book: [{ book: "SB", pages: "78-91", note: "Thinking map: classify details in a details web (78), More Key Words (79), reading strategy: visualize (80-81), phonics: prefixes un-, re- (82-83), and the first part of \"Shakira, Shakira! A Song\" (84-91)." }],
     slides: [
       { kind: "title", title: UNIT, subtitle: "Lesson 2 · Part 1 Language", bigQuestion: BQ },
       {
@@ -243,7 +247,8 @@ const lessons: Deck[] = [
       {
         kind: "vocab",
         title: "Part 1 words: music and heritage",
-        book: { book: "SB", pages: "78-79" },
+        book: { book: "SB", pages: "77-79", note: "Key Words (77: heritage, music, region, rhythm, vary) and More Key Words (79: express, feelings, perform, popular, style)." },
+        media: [keyWordAudio(6, 1, "Part 1 Key Words")],
         words: [
           { word: "music / perform", meaning: "sounds arranged to be beautiful / sing, play or act for an audience", example: "Water puppeteers perform with live music." },
           { word: "style", meaning: "a special way of doing something", example: "Quan họ is a style of singing in pairs." },
@@ -252,37 +257,42 @@ const lessons: Deck[] = [
           { word: "popular", meaning: "liked by many people", example: "K-pop is popular with my classmates." },
           { word: "region", meaning: "a large area of a country or the world", example: "Each region of Vietnam has its own way of making bánh." },
           { word: "vary", meaning: "be different from one to another", example: "Tết foods vary from the north to the south." },
+          { word: "rhythm", meaning: "the regular pattern of strong and weak beats in music", example: "The drummer keeps the rhythm for the lion dance." },
         ],
       },
       {
         kind: "activity",
-        title: "Thinking map and prefix spot",
+        title: "Details web, visualize and prefix spot",
         tag: "Vocabulary",
         mode: "pairs",
-        minutes: 10,
-        book: { book: "SB", pages: "80-83" },
+        minutes: 12,
+        book: { book: "SB", pages: "78-83", note: "Thinking map: details web (78), More Key Words (79), Learn to Visualize with Inez's online chat (80-81), phonics: un-, re- and the passage \"The Magic of Music\" (82-83)." },
+        media: [phonicsAudio(6, 1, "Phonics passage: The Magic of Music")],
         steps: [
-          "Use the book's thinking map to show how one style of music can vary from region to region (north / centre / south).",
-          "Phonics (82-83): read the un- and re- words aloud. What does un- add to a word? What does re- add?",
+          "Thinking map (78): tell a partner what you see, hear, smell and taste at a celebration (a Tết flower market, the Mid-Autumn Festival). Your partner classifies the details in a details web: I see / I hear / I smell and taste.",
+          "Visualize (80-81): read Inez's online chat about the fair. Close your eyes and use the frames: I read ... I picture ... I feel ...",
+          "Phonics (82-83): un- means 'not' or 'the opposite of'; re- means 'again' or 'back'. Listen to \"The Magic of Music\" and list its un- and re- words with their base words.",
           "Make four new words with un- or re- and say them in a sentence (unhappy, unwrap, retell, replay ...).",
         ],
-        prompts: ["In the north, ___, but in the south ___.", "un- means ___, so unknown means ___.", "re- means ___, so retell means ___."],
+        prompts: ["In my web, under 'I hear', I put ___.", "I read ___. I picture ___. I feel ___.", "un- means ___, so unknown means ___.", "re- means ___, so retell means ___."],
       },
       {
         kind: "activity",
-        title: "Listen and read: \"Shakira, Shakira!\" (first part)",
+        title: "Listen and read: \"Shakira, Shakira! A Song\" (first part)",
         tag: "Reading",
         mode: "pairs",
         minutes: 15,
-        book: { book: "SB", pages: "84-91" },
+        book: { book: "SB", pages: "84-91", note: "Genre (song lyrics) and sensory language (84), the cover (84-85), the song to page 91." },
+        media: [readingAudio(6, 1, 84, 91, "Shakira, Shakira! A Song (pages 84-91)")],
         steps: [
-          "Before: look at the title and pictures. What kind of song is this going to be? Who is it about? Which region of the world?",
-          "Listen with the book open. Mark the parts that repeat. Why do songs repeat a part?",
-          "Visualize: close your eyes for the second listening. What do you see? What instruments do you hear? Draw one picture in 60 seconds.",
-          "Talk about the music, not the words: what feelings does it express? How does it show where it comes from?",
+          "Before (84-85): read about song lyrics and sensory language. Look at the cover. Who is Shakira? Who do you think is singing about her? Predict with a Key Word.",
+          "Map and labels (86-87): which three places on the map are in Shakira's music? Why?",
+          "Listen with the book open. Visualize: close your eyes for the second listening. What do you see and hear? Draw one picture in 60 seconds.",
+          "Classify (88-89): name at least three instruments the song mentions, and find the sound words (onomatopoeia). How do they help you hear the music?",
+          "Predict (90): how will Shakira's music make the girl feel? Read on to 91 and check. In your own words: what does she dream of doing one day?",
         ],
-        prompts: ["I visualized ___ because the music sounds ___.", "The song repeats ___ times because ___.", "It shows its region through ___."],
-        teacherNote: "The words of the song are read and sung from the book only. Do not copy, display or write out any line on the board, and do not ask children to retell lines; the discussion is about style, structure, feelings and place.",
+        prompts: ["I read ___. I picture ___. I feel ___.", "Shakira's music has sounds from ___, ___ and ___.", "The instruments are ___, ___ and ___."],
+        teacherNote: "The song is a girl's thoughts and feelings about the singer Shakira (lyrics by Eloise Vivanco). On the pages: Shakira was born in Colombia, her father in New York and her grandparents came from Lebanon, and all three are heard in her music (86-87); the instruments named on 88-89 are the tambora, the lute and the mijwiz (Before You Continue, item 1). The words of the song are read and sung from the book only: do not copy, display or write out any line, and do not ask children to retell lines. Talk is about sounds, instruments, feelings and places.",
       },
       {
         kind: "activity",
@@ -391,6 +401,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Book", detail: "Listen to the song again at home with the book and draw what you visualize; label the instruments you hear.", book: { book: "SB", pages: "84-91" } },
+          { label: "Practice Book", detail: "Sheets 6.2 and 6.7: a details web for a celebration, and words with the prefixes un- and re-.", book: { book: "WB", pages: "6.2, 6.7", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: question tags and turning direct questions into indirect ones." },
           { label: "Words of the week (F): clothes and accessories", detail: "Learn 8 words (áo dài, conical hat, scarf, silk, sleeve, button, embroidered, sandals). Write 4 sentences, each with a question tag." },
         ],
@@ -406,7 +417,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 6, lesson: "Part 1 Reading" },
     title: "Part 1 Reading: traditions that changed and stayed",
     inquiryPhases: ["Investigate", "Organize"],
-    book: [{ book: "SB", pages: "92-99", note: "The rest of \"Shakira, Shakira!\" (92-97) and think and respond (98-99)." }],
+    book: [{ book: "SB", pages: "92-99", note: "The rest of \"Shakira, Shakira! A Song\" with Meet the Author (92-97) and think and respond: talk about it, write about it, a details web (98-99)." }],
     slides: [
       { kind: "title", title: UNIT, subtitle: "Lesson 3 · Part 1 Reading", bigQuestion: BQ },
       {
@@ -414,7 +425,7 @@ const lessons: Deck[] = [
         items: [
           "I can say how traditions used to be with used to.",
           "I can choose the present perfect for what still continues and the past simple for finished times.",
-          "I can explain how one kind of music mixes old and new.",
+          "I can explain how one singer's music mixes the heritage of three cultures.",
         ],
       },
       {
@@ -434,18 +445,20 @@ const lessons: Deck[] = [
       },
       {
         kind: "activity",
-        title: "Listen and read: \"Shakira, Shakira!\" (to the end)",
+        title: "Listen and read: \"Shakira, Shakira! A Song\" (to the end)",
         tag: "Reading",
         mode: "pairs",
         minutes: 16,
-        book: { book: "SB", pages: "92-97" },
+        book: { book: "SB", pages: "92-97", note: "The song from page 92 to its end, and Meet the Author (97)." },
+        media: [readingAudio(6, 1, 92, 97, "Shakira, Shakira! A Song (pages 92-97)")],
         steps: [
           "Finish the song with the audio. Visualize again: does your picture change in the second half? How?",
-          "Organize: a two-column chart, OLD (what comes from the singer's heritage) and NEW (what is modern or borrowed). Use the pictures and the notes on the pages.",
-          "Why do you think this music became popular far outside its own region? Find one piece of evidence on the pages.",
+          "Predict (94): the music has very strong rhythms. What will the girls do when they hear it? Check in the picture and the words.",
+          "Organize: a chart with three columns, one for each culture heard in Shakira's music (Classify, 96). What sound or instrument comes from each, and how does it make the girl feel?",
+          "Generations (96-97): at the end, years have passed. Who loves the music now? Read Meet the Author: what did the music make the writer want to learn?",
         ],
-        prompts: ["The old part is ___, and the new part is ___.", "In my picture I see ___.", "It became popular because ___."],
-        teacherNote: "As in Lesson 2: the song's words stay in the book. Charts and talk are about music, style and heritage, never retold lines.",
+        prompts: ["Shakira's music is a blend of ___, ___ and ___ cultures.", "In my picture I see ___.", "Now the music inspires ___, so it passes from one generation to the next."],
+        teacherNote: "On the pages: the girl hears the fusion of three regions; at the end, twenty years later, the music inspires her daughters too; Shakira's music is a blend of American, Colombian and Lebanese cultures (96, Before You Continue 2). Meet the Author: Eloise Vivanco, from the United Kingdom, learned Spanish because of the music and now lives in Mexico. As in Lesson 2, the song's words stay in the book: charts and talk are about cultures, sounds and feelings, never retold lines.",
       },
       {
         kind: "activity",
@@ -453,9 +466,13 @@ const lessons: Deck[] = [
         tag: "Review",
         mode: "pairs",
         minutes: 8,
-        book: { book: "SB", pages: "98-99" },
-        steps: ["Answer the book's questions with page evidence.", "Talk about it: is a song still a tradition when it mixes in new styles? Or is that how traditions stay alive?"],
-        prompts: ["On page ___ it shows ___.", "I think mixing styles keeps / weakens a tradition because ___."],
+        book: { book: "SB", pages: "98-99", note: "Talk About It and Write About It (98); Reread and Classify: a details web of sounds and feelings, and Talk Together (99)." },
+        steps: [
+          "Talk about it (98): how does the girl feel about Shakira? Is the narrator first person or third person, and how do you know?",
+          "Details web (99): classify the sounds and the feelings of Shakira's music, then describe it to a partner.",
+          "Talk together (99): how does Shakira preserve the traditions of different countries in her music? Does mixing styles keep a tradition alive, or weaken it?",
+        ],
+        prompts: ["Shakira's music sounds like ___.", "It has a first-person narrator. I know because ___.", "I think mixing styles keeps / weakens a tradition because ___."],
       },
       {
         kind: "activity",
@@ -557,10 +574,11 @@ const lessons: Deck[] = [
         frames: ["Long ago, people used to ___.", "Since then, ___ has changed, but ___ has stayed the same.", "I think the change ___ because ___."],
         challenge: "Write one sentence from the year 2060: how will a child describe today's version of the tradition? Use 'used to' about us.",
       },
-      { kind: "reflect", prompts: ["What did the singer keep from the past, and what did she add?", "used to or present perfect: how do you decide?", "Can a tradition change and still be the same tradition?"] },
+      { kind: "reflect", prompts: ["Which three cultures meet in Shakira's music, and how did it reach the girl and, later, her daughters?", "used to or present perfect: how do you decide?", "Can a tradition change and still be the same tradition?"] },
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheets 6.6 and 6.8: a details web for the song, and the fluency passage (read it aloud with expression).", book: { book: "WB", pages: "6.6, 6.8", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: used to, past simple vs present perfect, for / since." },
           { label: "Listening (E)", detail: "Listen to the song's audio again and write a short note: three instruments or sounds you hear, and the feeling each one gives." },
           { label: "Function of the week (B): checking information", detail: "Write a 6-line dialogue with a relative about a family custom, using two question tags and two replies (Yes, it is. / No, we didn't.)." },
@@ -577,7 +595,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 6, lesson: "Part 1 Review" },
     title: "Part 1 Review: a life in music (checkpoint)",
     inquiryPhases: ["Organize", "Generalize", "Reflect"],
-    book: [{ book: "SB", pages: "100-107", note: "Word work (100), the biography \"Blues Legend: Blind Lemon Jefferson\" (101-105) and respond and extend with grammar: subject and object pronouns (106-107)." }],
+    book: [{ book: "SB", pages: "100-107", note: "Word work: playful language, tongue twisters (100), the biography \"Blues Legend: Blind Lemon Jefferson\" (101-105), respond and extend: compare language in the two selections (106) and grammar: subject and object pronouns (107)." }],
     slides: [
       { kind: "title", title: UNIT, subtitle: "Lesson 4 · Part 1 Review", bigQuestion: BQ },
       {
@@ -603,25 +621,29 @@ const lessons: Deck[] = [
       },
       {
         kind: "activity",
-        title: "Read: \"Blues Legend\" and compare",
+        title: "Read: \"Blues Legend: Blind Lemon Jefferson\" and compare",
         tag: "Reading",
         mode: "pairs",
         minutes: 15,
-        book: { book: "SB", pages: "100-105" },
+        book: { book: "SB", pages: "101-105", note: "The biography by Libby Lewis. Word work first (100): say the tongue twister and find the sound that repeats." },
+        media: [readingAudio(6, 1, 101, 105, "Blues Legend: Blind Lemon Jefferson")],
         steps: [
-          "Word work (100) first. Then read the biography and make a timeline of the musician's life: at least five events with dates or ages.",
+          "Word work (100): say the tongue twister five times, fast. Which sound repeats?",
+          "Read the biography and make a timeline of the musician's life: at least five events with dates or ages.",
           "Cross-comparison chart for both Part 1 selections: who the musician is, where the music comes from, what is old, what is new, how the music reached other people.",
           "What is the same about how both musicians kept a tradition alive? What is different?",
         ],
         prompts: ["In both selections, ___.", "The song shows ___, while the biography shows ___.", "His music reached other people because ___."],
+        teacherNote: "Timeline from the pages: born blind on a farm in Texas around 1893; played on street corners in small towns as a boy; travelled the southern states as a teenager and played in big cities such as Dallas; went to Chicago in 1925 to record; made more than 100 recordings before he died in 1929. The blues grew from songs sung by enslaved people, later mixed with church hymns and newer music (103). He was one of the first African American blues singers with a big audience, and B.B. King, Bob Dylan and The White Stripes have recorded his songs (104-105).",
       },
       {
         kind: "book",
-        title: "Respond and extend: pronouns in the biography",
-        ref: { book: "SB", pages: "106-107", note: "Respond and extend and the grammar: subject and object pronouns." },
+        title: "Respond and extend: compare and use pronouns",
+        ref: { book: "SB", pages: "106-107", note: "Compare Language: a T chart and Talk Together (106); grammar: pronoun agreement, subject and object pronouns (107)." },
         steps: [
-          "Do the book's grammar activities with a partner (the rule was taught in Lesson 1).",
-          "Find four pronouns in the biography and say who each one stands for.",
+          "Compare language (106): make the T chart, three examples of sensory language from the song and three facts from the biography (point to them in the book; don't copy lines onto the board).",
+          "Talk together (106): how can we preserve our musical traditions? Use Key Words.",
+          "Grammar (107): read the Grammar Rules box, do Read Pronouns with a partner, then write two sentences about Shakira or Jefferson with a subject and an object pronoun (the rule was taught in Lesson 1).",
         ],
       },
       {
@@ -649,7 +671,7 @@ const lessons: Deck[] = [
         title: "The past passive and non-defining relative clauses",
         hook: "A life story: was born, was taught, was recorded. Extra facts go between commas, with who or which.",
         form: [
-          { label: "Past passive", pattern: "was / were + past participle (+ by ...): The song was recorded in 1926." },
+          { label: "Past passive", pattern: "was / were + past participle (+ by ...): The song was recorded in Chicago." },
           { label: "Negative / question", pattern: "wasn't / weren't + past participle · Was it written by ...?" },
           { label: "Always passive", pattern: "be born: She was born in Nam Định. (NOT She born)" },
           { label: "Non-defining clause (stretch)", pattern: "noun, who / which / whose ..., rest of the sentence" },
@@ -681,8 +703,8 @@ const lessons: Deck[] = [
         school: "Cầu Giấy",
         instructions: "Rewrite each sentence so that it means the same. Begin with the words given.",
         items: [
-          { q: "Someone recorded his first song in 1925. → His first song ...", answer: "His first song was recorded in 1925." },
-          { q: "His uncle taught him the guitar. → He ...", answer: "He was taught the guitar by his uncle." },
+          { q: "Someone recorded the singer's first song in a studio in Hanoi. → The singer's first song ...", answer: "The singer's first song was recorded in a studio in Hanoi." },
+          { q: "Her uncle taught her the đàn bầu. → She ...", answer: "She was taught the đàn bầu by her uncle." },
           { q: "People built this pagoda 500 years ago. → This pagoda ...", answer: "This pagoda was built 500 years ago." },
           { q: "My grandmother is 80. She still sings quan họ. → My grandmother, who ...", answer: "My grandmother, who is 80, still sings quan họ." },
           { q: "Hội An is in central Vietnam. It is famous for lanterns. → Hội An, which ...", answer: "Hội An, which is in central Vietnam, is famous for lanterns." },
@@ -730,6 +752,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheets 6.3, 6.5, 6.10 and 6.11: subject pronouns, object pronouns, the comparison chart for the two selections, and pronoun agreement.", book: { book: "WB", pages: "6.3, 6.5, 6.10, 6.11", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "Correct your checkpoint mistakes in your error log, with the rule and a new example. Then 8 past-passive rewrites." },
           { label: "Words of the week (F): feelings", detail: "Learn 8 words (proud, nervous, homesick, grateful, embarrassed, relieved, curious, disappointed). Write how a performer might feel before, during and after a show." },
         ],
@@ -745,7 +768,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 6, lesson: "Part 2 Language" },
     title: "Part 2 Language: first, next, finally",
     inquiryPhases: ["Engage", "Focus"],
-    book: [{ book: "SB", pages: "108-115", note: "Part 2 Language Focus: give and follow instructions (108-109), key words (110-111), thinking map and academic words (112-113), phonics: prefixes mis-, dis- (114-115)." }],
+    book: [{ book: "SB", pages: "108-115", note: "Part 2 Language Focus: give and follow instructions, with the song \"Spoon Fish\" (108), Key Words (109), thinking map: steps in a process in a flow chart (110), More Key Words (111), reading strategy: visualize (112-113), phonics: prefixes mis-, dis- (114-115)." }],
     slides: [
       { kind: "title", title: UNIT, subtitle: "Lesson 5 · Part 2 Language", bigQuestion: BQ },
       {
@@ -777,9 +800,10 @@ const lessons: Deck[] = [
         tag: "Speaking",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "108-109" },
+        book: { book: "SB", pages: "108", note: "Language Focus: give and follow instructions; Ben's song \"Spoon Fish\" and the First / Then / Next / Finally frames." },
+        media: [talkAudio(6, 2, 108, "Spoon Fish (Language Focus song)")],
         steps: [
-          "Do the book's instructions talk with your partner.",
+          "Listen to Ben's song and join in the second time. Which four order words does it use? Then use the frames to tell a partner how to make something that helps preserve a tradition (a family photo album).",
           "Back to back: Partner A has a simple paper-folding picture (a boat or a hat) and gives instructions; Partner B folds without seeing it. 3 minutes, then compare.",
           "Swap with a new shape. What made instructions easy to follow: order words, exact verbs, checking questions?",
         ],
@@ -789,7 +813,8 @@ const lessons: Deck[] = [
       {
         kind: "vocab",
         title: "Part 2 words: art, wood and stories",
-        book: { book: "SB", pages: "110-111" },
+        book: { book: "SB", pages: "109-111", note: "Key Words (109: artist, carve, storyteller, tale, tradition, wood) and More Key Words (111: communicate, generation, preservation, process, represent)." },
+        media: [keyWordAudio(6, 2, "Part 2 Key Words")],
         words: [
           { word: "artist / carve / wood", meaning: "a person who makes art / cut a shape into wood or stone / the hard material of trees", example: "The artist carves water puppets from fig wood." },
           { word: "tradition / generation", meaning: "a custom passed down / all the people born around the same time", example: "The tradition passes from one generation to the next." },
@@ -802,15 +827,17 @@ const lessons: Deck[] = [
       },
       {
         kind: "activity",
-        title: "Thinking map and prefix sort",
+        title: "Flow chart, visualize and prefix sort",
         tag: "Vocabulary",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "112-115" },
+        book: { book: "SB", pages: "110-115", note: "Thinking map: steps in a process (110), More Key Words (111), Learn to Visualize with Ben's \"How to Prepare to Tell a Story\" (112-113), phonics: mis-, dis- and the passage \"Cave Paintings\" (114-115)." },
+        media: [phonicsAudio(6, 2, "Phonics passage: Cave Paintings")],
         steps: [
-          "Fill the book's thinking map with the steps of a process you know (making a paper lantern): first → next → then → finally.",
-          "Phonics (114-115): read the mis- and dis- words aloud. What does mis- mean? What does dis- mean?",
-          "Sort 12 word cards by prefix: un-, re-, mis-, dis-. Which base words can take two different prefixes? (unload / reload, dislike / ...)",
+          "Thinking map (110): the book shows four steps for making a mask. Make your own flow chart for a process you know (making a paper lantern): one step in each box. Your partner restates each step and mimes it.",
+          "Visualize (112-113): read Ben's steps for preparing to tell a story. I read ... I picture ... I draw ... Now I understand ...",
+          "Phonics (114-115): mis- means 'wrong' or 'wrongly'; dis- means 'not' or 'the opposite of'. Listen to \"Cave Paintings\" and find its mis- and dis- words.",
+          "Sort 12 word cards by prefix: un-, re-, mis-, dis-. Which base words can take two different prefixes? (tie: untie / retie; read: misread / reread; place: misplace / replace)",
         ],
         prompts: ["mis- means ___, so misread means ___.", "dis- means ___, so disagree means ___.", "The process starts with ___ and ends with ___."],
       },
@@ -871,8 +898,8 @@ const lessons: Deck[] = [
         school: "Thanh Xuân",
         instructions: "Write the correct form of the word in brackets. Some need a prefix.",
         items: [
-          { q: "I'm sorry, I (understand) ___ your question. Can you repeat it?", answer: "misunderstood" },
-          { q: "The magician made the coin (appear) ___.", answer: "disappear" },
+          { q: "I'm sorry, I (understand) ___ your question, so I gave the wrong answer.", answer: "misunderstood" },
+          { q: "The magician waved his hand and the coin (appear) ___. Where did it go?", answer: "disappeared" },
           { q: "This old letter is very hard to read. The writing is almost (read) ___.", answer: "unreadable" },
           { q: "The temple was damaged in the storm, so they had to (build) ___ it.", answer: "rebuild" },
           { q: "The (preserve) ___ of old songs is important for the next generation.", answer: "preservation" },
@@ -919,6 +946,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheets 6.12 and 6.18: a flow chart of steps in a process, and words with the prefixes mis- and dis-.", book: { book: "WB", pages: "6.12, 6.18", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 word-formation items with un-, re-, mis-, dis- and 4 imperative rewrites (You must not ... → Don't ...)." },
           { label: "Words of the week (F): cooking and the kitchen", detail: "Learn 8 words (boil, fry, steam, stir, chop, wrap, pan, chopping board). Write the steps of a family recipe with them." },
           { label: "Function of the week (B): giving and checking instructions", detail: "Practise: First ... / Is that clear? / Sorry, could you say that again? / What do I do after that? / Like this? - Yes, exactly." },
@@ -935,7 +963,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 6, lesson: "Part 2 Reading" },
     title: "Part 2 Reading: carved in wood, told in tales",
     inquiryPhases: ["Investigate", "Organize", "Generalize"],
-    book: [{ book: "SB", pages: "116-131", note: "The descriptive article \"Make a Totem Pole\" (116-125), the legend \"The Legend of Raven and Fog Woman\" (126-129), and think and respond (130-131)." }],
+    book: [{ book: "SB", pages: "116-131", note: "The descriptive article \"Carving Stories in Cedar: How to Make a Totem Pole\" (116-125), the legend \"The Legend of Raven and Fog Woman\" (126-129), and think and respond (130-131)." }],
     slides: [
       { kind: "title", title: UNIT, subtitle: "Lesson 6 · Part 2 Reading", bigQuestion: BQ },
       {
@@ -957,37 +985,56 @@ const lessons: Deck[] = [
           { q: "It is (polite) ___ to talk during the performance.", answer: "impolite" },
           { q: "Please (write) ___ your story; it has too many mistakes.", answer: "rewrite" },
           { q: "My grandfather (use) ___ to carve toys for us.", answer: "used" },
-          { q: "I (agree) ___ with you. I think the old way is better.", answer: "disagree" },
+          { q: "You say the new way is better, but I (agree) ___ with you. I think the old way is better.", answer: "disagree" },
           { q: "She has been a (story) ___ since she was young.", answer: "storyteller" },
         ],
       },
       {
         kind: "activity",
-        title: "Read: \"Make a Totem Pole\"",
+        title: "Read: \"Carving Stories in Cedar: How to Make a Totem Pole\"",
         tag: "Reading",
         mode: "pairs",
         minutes: 15,
-        book: { book: "SB", pages: "116-125" },
+        book: { book: "SB", pages: "116-125", note: "Descriptive article by Kristine F. Anderson: title and subtitle (116-117), what a totem pole is (118-121), six numbered steps (121-125)." },
+        media: [readingAudio(6, 2, 116, 125, "Carving Stories in Cedar: How to Make a Totem Pole")],
         steps: [
-          "Preview: the title, photos and headings. What is a totem pole? Who makes it, and why?",
-          "Visualize: as you read, sketch the pole from bottom to top. Label what each figure represents.",
-          "Organize: a process chart (choose the tree → carve → paint → raise) and a 'why' column: what does each step preserve?",
+          "Preview (116-117): what does the subtitle tell us that the title does not? What is a totem pole? Who makes it, and why?",
+          "Read 118-121: why are totem poles sometimes called 'silent books'? What did each family's animal represent?",
+          "Visualize: as you read each numbered step, sketch what you picture (the tree, the tools, the painting, the raising, the party).",
+          "Organize: a flow chart of the six steps and a 'why' column: what does each step keep from the past?",
         ],
-        prompts: ["This figure represents ___.", "First the carver ___, then ___.", "The pole preserves ___ because ___."],
+        prompts: ["Totem poles are called silent books because ___.", "First the carver ___, then ___.", "The pole preserves ___ because ___."],
+        teacherNote: "From the pages: the native people of the northwest coast of the United States and Canada had no written language, so master carvers carved family stories into tall cedar trees. The carver is Israel Shotridge, a Tlingit carver from Ketchikan, Alaska, who uses the old methods. His six steps: he chooses a design with the person who wants the pole; he prepares the tree (cuts a tall, straight cedar, removes the bark, draws the design, sometimes adds pieces for wings or fins); he carves it with an adze and a chisel (some poles take almost a year); he paints it in the traditional red, teal, blue and black; people raise it with cranes or with ropes and many hands; everyone celebrates at a potlatch.",
       },
       {
         kind: "activity",
         title: "Read: \"The Legend of Raven and Fog Woman\"",
         tag: "Reading",
         mode: "groups",
-        minutes: 12,
-        book: { book: "SB", pages: "126-131", note: "The legend (126-129) and think and respond (130-131)." },
+        minutes: 10,
+        book: { book: "SB", pages: "126-129", note: "The legend, retold by Susan Blackaby." },
+        media: [readingAudio(6, 2, 126, 129, "The Legend of Raven and Fog Woman")],
         steps: [
-          "Read the legend in threes: narrator and two characters. What does the legend explain about the world?",
-          "Connect: which figure from a totem pole could tell this story? Why do communities carve AND tell their stories?",
-          "Think and respond (130-131): answer two of the book's questions with evidence.",
+          "Set a purpose (126): this legend reminds people to value the gifts of others. Read it in threes: a narrator, Raven and Fog Woman.",
+          "Character traits: what kind of character is Fog Woman? What kind is Raven? Find one action that shows each trait.",
+          "What does the legend explain about the world? Connect: look at the photo of Shotridge's pole on page 126. How does a carving tell this story?",
         ],
-        prompts: ["The legend explains why ___.", "A carving and a tale both ___.", "On page ___ it says ___."],
+        prompts: ["Fog Woman is ___. I know because she ___.", "Raven is ___ because he ___.", "The legend explains why ___."],
+        teacherNote: "The plot on the pages: Raven, fishing with no luck, is lost in thick fog and meets Fog Woman, who clears the fog with his hat; they marry. In a hungry winter she makes a basket that brings salmon to the creek, and the village is fed. Raven wants her secret; when she will not tell him, he sends her away, she turns into mist, and every year she still sends salmon to the village. Fog Woman is generous; Raven is ungrateful and selfish.",
+      },
+      {
+        kind: "activity",
+        title: "Think and respond: pole and legend",
+        tag: "Review",
+        mode: "pairs",
+        minutes: 6,
+        book: { book: "SB", pages: "130-131", note: "Talk About It and Write About It (130); a flow chart of the steps and Talk Together (131)." },
+        steps: [
+          "Talk about it (130): pretend to make a totem pole. One partner gives the instructions (First, Then, Next, Finally); the other follows and mimes.",
+          "How does the pole on page 126 represent the story of Raven and Fog Woman?",
+          "Talk together (131): how do artists and storytellers preserve traditions?",
+        ],
+        prompts: ["First, the carver ___. Then ___.", "The totem pole shows ___.", "Artists and storytellers preserve traditions by ___."],
       },
       {
         kind: "activity",
@@ -995,7 +1042,7 @@ const lessons: Deck[] = [
         tag: "Grammar",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "140-141", note: "Part 2 grammar: demonstrative and possessive pronouns." },
+        book: { book: "SB", pages: "141", note: "Part 2 grammar: pronoun agreement, possessive pronouns (with demonstratives in the Teacher's Edition lesson); taught here, practised in the book in Lesson 7." },
         steps: [
           "Group A: this / that / these / those. Which mean near and which far? One or many? Can they stand alone without a noun?",
           "Group B: mine, yours, hers, ours, theirs. Do they come before a noun or replace one? Is there an apostrophe?",
@@ -1006,7 +1053,7 @@ const lessons: Deck[] = [
           "**These** carvings are old. **Those** over there are new.",
           "This kite is **mine**. Is that one **yours**?",
           "The red lantern is **hers**; the blue ones are **theirs**.",
-          "The fog was **so** thick **that** nobody could see the boats.",
+          "The rain was **so** heavy **that** the boats stayed on the shore.",
           "It was **such** a strange tale **that** we asked to hear it again.",
         ],
       },
@@ -1031,7 +1078,7 @@ const lessons: Deck[] = [
           { text: "Those carvings are ours; these are theirs." },
           { text: "Whose áo dài is this? - It's hers. She wore it at Tết." },
           { text: "The pole was so tall that we had to look straight up." },
-          { text: "Raven told such a clever lie that everyone believed him." },
+          { text: "Raven was so angry that he sent Fog Woman away." },
         ],
         pitfalls: [
           { wrong: "This books are mine.", right: "These books are mine.", why: "plural: these / those" },
@@ -1048,7 +1095,7 @@ const lessons: Deck[] = [
         school: "Thanh Xuân",
         instructions: "Rewrite each sentence so that it means the same. Use the word in brackets.",
         items: [
-          { q: "The wood was very hard. The carver broke his knife. (so)", answer: "The wood was so hard that the carver broke his knife." },
+          { q: "The pole was very heavy. Thirty people had to pull the ropes. (so)", answer: "The pole was so heavy that thirty people had to pull the ropes." },
           { q: "It was a very beautiful legend. We remembered it for years. (such)", answer: "It was such a beautiful legend that we remembered it for years." },
           { q: "The song was so popular that everyone sang it. (such)", answer: "It was such a popular song that everyone sang it." },
           { q: "This is my kite. (mine)", answer: "This kite is mine." },
@@ -1085,7 +1132,7 @@ const lessons: Deck[] = [
         kind: "project",
         project: "writing",
         title: "A new legend that explains",
-        goal: "Write an original legend that explains something real about a Vietnamese place or plant, the way the book's legend explains the fog.",
+        goal: "Write an original legend that explains something real about a Vietnamese place or plant, the way the legend of Raven and Fog Woman explains why the salmon come back every year.",
         thinking: "Create",
         steps: ["Open with a time and place long ago.", "A problem, a magical event and a choice a character makes.", "End with what the legend explains today."],
         criteria: ["The legend explains something real and is your own tale.", "One so ... that and one such ... that, correct.", "Dialogue with a possessive pronoun (\"The river is mine!\")."],
@@ -1096,6 +1143,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheets 6.13, 6.15, 6.17 and 6.19: demonstrative pronouns, possessive pronouns, a flow chart of how a totem pole is made, and the fluency passage.", book: { book: "WB", pages: "6.13, 6.15, 6.17, 6.19", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: so / such ... that rewrites, and possessive adjectives vs pronouns." },
           { label: "Listening (E)", detail: "Listen to the legend's audio and write the four main events in order, in your own words." },
           { label: "Words of the week (F): animals in stories", detail: "Learn 8 words (dragon, phoenix, turtle, buffalo, carp, unicorn, crane, tiger). Write what each represents in Vietnamese stories." },
@@ -1112,7 +1160,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 6, lesson: "Writing Project" },
     title: "Writing Project: an interview with a keeper of tradition",
     inquiryPhases: ["Organize", "Transfer"],
-    book: [{ book: "SB", pages: "132-145", note: "Word work (132), the profile \"Stories to Tell\" (133-135), the folk tale \"The Rainbow Bridge\" (136-139), grammar: demonstrative and possessive pronouns (140-141), and the writing project: an interview (142-145)." }],
+    book: [{ book: "SB", pages: "132-145", note: "Word work: homophones (132), the profile \"Stories to Tell\" (133-135), the folk tale \"The Rainbow Bridge: A Native Folk Tale from Hawaii\" (136-139), respond and extend: compare themes (140), grammar: possessive pronouns (141), and the writing project: an interview (142-145)." }],
     slides: [
       { kind: "title", title: UNIT, subtitle: "Lesson 7 · Writing Project", bigQuestion: BQ },
       {
@@ -1144,13 +1192,19 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "pairs",
         minutes: 14,
-        book: { book: "SB", pages: "132-139" },
+        book: { book: "SB", pages: "133-139", note: "The profile \"Stories to Tell\" by Janine Boylan (133-135) and \"The Rainbow Bridge: A Native Folk Tale from Hawaii\" (136-139). Word work first (132): homophones such as tale / tail." },
+        media: [
+          readingAudio(6, 2, 133, 135, "Stories to Tell"),
+          readingAudio(6, 2, 136, 139, "The Rainbow Bridge: A Native Folk Tale from Hawaii"),
+        ],
         steps: [
-          "Word work (132), then read the profile of a storyteller. Note how she learned, why she tells stories, and who listens.",
-          "Read the folk tale from Hawaii. What does it teach, and what does it explain?",
+          "Word work (132): homophones sound the same but have different spellings and meanings (tale / tail). Answer the two Try It Together questions.",
+          "Read the profile of the storyteller Elizabeth Lindsey (133-135). Note where she grew up, who taught her, why she tells stories, and what she does now.",
+          "Read the folk tale from Hawaii (136-139). Set a purpose: find out how a rainbow came to be. What else does it explain?",
           "Compare: a storyteller is a person, a folk tale is a story. How does each one keep a culture's memory alive? Which one needs the other?",
         ],
         prompts: ["The storyteller ___ because ___.", "The folk tale explains ___.", "Without storytellers, folk tales would ___."],
+        teacherNote: "From the pages: Elizabeth Lindsey was born and raised in Hawaii; when she was seven, the elders predicted she would keep her ancestors' voices alive, and she said she would tell stories. Like other native Hawaiian children she was raised by elders as well as her parents, who taught respect for nature and the cycles of the moon. Now she travels to listen to stories from little-known native cultures, and \"The Rainbow Bridge\" is one of the stories she tells. The tale: long ago Hawaiians rowed north to a cold land, were welcomed and had families there, but missed their warm home; kind-hearted Weasel played his flute and a rainbow bridge rose between the two homes; he warned them not to look down; some did, fell into the sea and became dolphins. It explains how rainbows and dolphins came to be; the rainbow stands for the colours of people around the world and the bridge that brings them together.",
       },
       {
         kind: "activity",
@@ -1221,14 +1275,15 @@ const lessons: Deck[] = [
         title: "Plan the interview (writing project)",
         tag: "Writing",
         mode: "pairs",
-        minutes: 10,
-        book: { book: "SB", pages: "140-143", note: "Grammar: demonstrative and possessive pronouns (140-141); the model interview and the checklist (142-143)." },
+        minutes: 12,
+        book: { book: "SB", pages: "140-143", note: "Respond and extend: compare themes (140); grammar: possessive pronouns (141); the model interview (142) and prewrite: choose a topic, organise with a details web (143)." },
         steps: [
-          "Do the book's grammar practice (140-141) quickly: it was taught in Lesson 6.",
-          "Read the model interview and checklist. Find the introduction, the questions, the answers and the ending.",
-          "Choose your interviewee (the person from your Lesson 2 question plan, or a classmate playing a craftsperson). Choose your six best questions.",
+          "Compare themes (140): make a quick theme web for each tale. What does the storyteller want us to learn from Raven and Fog Woman? From The Rainbow Bridge?",
+          "Grammar (141): do the possessive pronoun practice quickly (it was taught in Lesson 6).",
+          "Read Kia's model interview with her aunt, who makes Hmong story cloths (142). Find the introduction, the questions in a natural order, and the answers in the person's own words.",
+          "Prewrite (143): choose your interviewee (the person from your Lesson 2 question plan, or a classmate playing a craftsperson), put the tradition in the middle of a details web and choose your six best questions.",
         ],
-        prompts: ["My interviewee is ___, who ___.", "My first question will be ___.", "I want the reader to learn ___."],
+        prompts: ["The theme of ___ is ___.", "My interviewee is ___, who ___.", "My first question will be ___.", "I want the reader to learn ___."],
       },
       {
         kind: "speaking",
@@ -1250,12 +1305,12 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "solo",
         minutes: 25,
-        book: { book: "SB", pages: "144-145", note: "Draft, revise and edit with the editing marks." },
+        book: { book: "SB", pages: "143-145", note: "Draft (143), revise with a partner: read, retell, respond (144), edit and proofread, paying special attention to pronouns (145)." },
         steps: [
           "Set your goal at the top (e.g. 'two reported questions, one indirect question, one non-defining clause').",
-          "Write 120-150 words: an introduction that presents the person, the interview in Q and A form, and a closing paragraph that reports two things they asked or told you.",
-          "Edit with the editing marks: question word order first, then reported speech, then pronouns and spelling.",
-          "Swap with a partner for two stars and a wish; make the change they wish for.",
+          "Draft (143): write 120-150 words: an introduction that presents the person, the interview in Q and A form, and a closing paragraph that reports two things they asked or told you.",
+          "Revise (144): read your draft to a partner; the partner retells it and checks that the questions are in a natural order. Make the change with the revising marks.",
+          "Edit and proofread (145): pronouns first, then question word order and reported speech, then homophones (one / won, wood / would), capital letters and spelling.",
         ],
       },
       {
@@ -1277,7 +1332,8 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
-          { label: "Final copy", detail: "Write the final copy of your interview. If you can, hold the real interview at home and add one answer the person really gave.", book: { book: "SB", pages: "144-145" } },
+          { label: "Final copy", detail: "Write the final copy of your interview and get ready to present it (pause between each question and answer). If you can, hold the real interview at home and add one answer the person really gave.", book: { book: "SB", pages: "145" } },
+          { label: "Practice Book", detail: "Sheets 6.21, 6.22 and 6.26: theme webs for the two tales, possessive pronouns, and editing practice. Score your interview with the rubric on 6.23.", book: { book: "WB", pages: "6.21-6.23, 6.26", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "8 items: reported questions and commands." },
           { label: "Words of the week (F): technology and keeping memories", detail: "Learn 8 words (record, upload, video call, podcast, album, scan, website, download). Write how families can use them to keep old stories." },
         ],
@@ -1293,7 +1349,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 6, lesson: "Unit Wrap-Up" },
     title: "Unit Wrap-Up: worth keeping (mock test)",
     inquiryPhases: ["Generalize", "Transfer", "Reflect"],
-    book: [{ book: "SB", pages: "146-147", note: "Unit wrap-up: the Big Question and the unit review." }],
+    book: [{ book: "SB", pages: "146-147", note: "Unit wrap-up: complete the concept map and write a personal narrative (146); Share Your Ideas, four ways to answer the Big Question (147)." }],
     slides: [
       { kind: "title", title: UNIT, subtitle: "Lesson 8 · Unit Wrap-Up", bigQuestion: BQ },
       {
@@ -1331,14 +1387,23 @@ const lessons: Deck[] = [
         tag: "Listening",
         mode: "pairs",
         minutes: 10,
-        book: { book: "SB", pages: "146-147" },
         steps: [
           "Before: which Vietnamese tradition would you show a visitor from Japan? Tell your partner in 30 seconds.",
           "Watch the Unit 6 video. Note three traditions, who keeps each one alive, and how it is passed on.",
-          "Compare: which Japanese tradition is most like one of ours? Then do the book's wrap-up talk on the Big Question.",
+          "Compare: which Japanese tradition is most like one of ours? Add it to the unit concept map.",
         ],
         prompts: ["In Japan, people ___.", "This is like ___ in Vietnam because ___.", "It is passed on by ___."],
         teacherNote: "Play the Reach Higher 3B video for Unit 6, Traditions of Japan (file 'Video Level 3B - Reach Higher 1e_2' in the school's copy; not hosted in the app).",
+      },
+      {
+        kind: "book",
+        title: "Unit wrap-up: the concept map and Share Your Ideas",
+        ref: { book: "SB", pages: "146-147", note: "Talk Together with the concept map, Write a Personal Narrative (146); Share Your Ideas (147)." },
+        steps: [
+          "Talk together (146): finish the unit concept map with the class: every selection, the video and our own cases.",
+          "Share Your Ideas (147): in fours, do Interview a Musician: two of you are Shakira and Blind Lemon Jefferson, two are interviewers. Ask why they would pass their music on to future generations.",
+          "The other three choices (write your own song lyrics, make instructions, a time-capsule letter to the children of the future) and the personal narrative (146) are extra homework options.",
+        ],
       },
       {
         kind: "activity",
@@ -1457,12 +1522,12 @@ export const rhL3U6: Unit = {
     "Readers visualize to build a picture of a text, which helps them understand and remember what it describes.",
   ],
   grammarStrand: [
-    { point: "Subject, object and reflexive pronouns", lesson: 1, source: "book" },
+    { point: "Subject and object pronouns (the book's, SB 107); reflexive pronouns added", lesson: 1, source: "book" },
     { point: "Question tags; indirect questions (Can you tell me where ...?)", lesson: 2, source: "added" },
     { point: "used to; present perfect vs past simple for traditions that changed or continue", lesson: 3, source: "added" },
     { point: "Past passive (was born / was taught); non-defining relative clauses", lesson: 4, source: "stretch" },
     { point: "Imperatives and sequencing for instructions; prefixes un- / re- / mis- / dis-", lesson: 5, source: "added" },
-    { point: "Demonstrative and possessive pronouns; so / such ... that", lesson: 6, source: "book" },
+    { point: "Demonstrative and possessive pronouns (the book's, SB 141); so / such ... that", lesson: 6, source: "book" },
     { point: "Reported questions and commands", lesson: 7, source: "stretch" },
     { point: "-ing as subject; It's important to ...; It's worth -ing", lesson: 8, source: "added" },
   ],

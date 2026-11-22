@@ -11,7 +11,7 @@ export const rhL3U2Creative: Record<number, Creative> = {
   1: {
     kind: "creative",
     thinking: "Create",
-    uses: { words: ["balance", "amount", "scarce", "supply", "react"], grammar: ["Wh- and How questions"] },
+    uses: { words: ["balance", "amount", "supply", "behavior", "increase"], grammar: ["Wh- and How questions"] },
     base: {
       title: "The Balance Quiz Show",
       task: "Write a quiz of eight questions about animals and their homes for your family, with the answers on the back.",
@@ -20,7 +20,7 @@ export const rhL3U2Creative: Record<number, Creative> = {
         "Write eight questions, each starting with a different question word (Who, What, Where, When, Why, How many, How much, How often).",
         "Write the answers on the back, then test someone at home and note their score.",
       ],
-      frames: ["How many ___ live in ___?", "Why do ___ need ___?", "What happens to ___ when ___ is scarce?"],
+      frames: ["How many ___ live in ___?", "Why do ___ need ___?", "What happens to ___ when the supply of ___ decreases?"],
       success: ["Eight correct questions (helper verb before the subject).", "At least three of the unit's words.", "Answers that are true facts."],
       challenge: "Add a bonus question that has two possible answers, and explain which one you think is better.",
     },
@@ -62,7 +62,7 @@ export const rhL3U2Creative: Record<number, Creative> = {
   4: {
     kind: "creative",
     thinking: "Argue",
-    uses: { words: ["balance", "resources", "control", "behavior"], grammar: ["first conditional", "unless"] },
+    uses: { words: ["balance", "scarce", "control", "behavior"], grammar: ["first conditional", "unless"] },
     base: {
       title: "Exam-topic paragraph: a place out of balance",
       task: "Write 60-80 words about a place you know where nature is out of balance, and what will happen if nobody helps.",
@@ -90,7 +90,7 @@ export const rhL3U2Creative: Record<number, Creative> = {
       ],
       frames: ["When my grandmother was young, there used to be ___.", "People didn't use to ___.", "I think it is better / worse now because ___."],
       success: ["At least three used to and four past simple verbs, correctly formed.", "A clear opinion with two reasons.", "The -ed endings said correctly when you read it aloud."],
-      challenge: "Compare their answer with the wolves story: write two ways the two places are alike and one way they are different.",
+      challenge: "Compare their answer with the wolves article: write two ways the two places are alike and one way they are different.",
     },
   },
   6: {
@@ -140,7 +140,7 @@ export const rhL3U2Creative: Record<number, Creative> = {
         "Add one sentence with the more ..., the more ... (or the fewer / the less).",
       ],
       frames: ["The river is so ___ that ___.", "It is too ___ for ___ to ___.", "The more ___, the ___."],
-      success: ["Every marked mistake corrected.", "Two new sentences with this lesson's grammar.", "Still 50-70 words."],
+      success: ["Every marked mistake corrected.", "Two new sentences with this lesson's grammar.", "Now 60-80 words."],
       challenge: "Write a second paragraph that argues the opposite side, as a person who thinks the change was good.",
     },
   },

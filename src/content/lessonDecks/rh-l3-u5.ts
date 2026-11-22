@@ -10,6 +10,7 @@
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
 import { rhL3U5Assessments } from "./rh-l3-u5/assessments";
 import { rhL3U5Creative } from "./rh-l3-u5/homework";
+import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, wordAudio } from "./rh-l3/media";
 
 const base = { curriculum: "reach-higher" as const, level: 3, unit: 5, minutes: 90 };
 const BQ = "What causes matter to change?";
@@ -23,16 +24,16 @@ const lessons: Deck[] = [
     covers: { unitFrom: 5, lesson: "Unit Launch" },
     title: "Unit Launch: what changed, and why?",
     inquiryPhases: ["Engage", "Focus"],
-    book: [{ book: "SB", pages: "2-5", note: "Unit opener (Big Question) and the Part 1 Language Focus: describe actions." }],
+    book: [{ book: "SB", pages: "2-5", note: "Unit opener and Share What You Know (2-3), the Part 1 Language Focus: describe actions (4), and the science key words (5)." }],
     slides: [
       { kind: "title", title: "Unit 5: Mysteries of Matter", subtitle: "Lesson 1 · Unit Launch", bigQuestion: BQ },
       {
         kind: "objectives",
         items: [
           "I can explain what a change of matter is, with examples and non-examples.",
+          "I can describe actions with When ..., I ... and use the key words solid, liquid, melt and freeze.",
           "I can choose between -ed and -ing adjectives (amazed / amazing).",
           "I can put two or three adjectives in the right order.",
-          "I can describe actions and changes clearly to a partner.",
         ],
       },
       {
@@ -82,11 +83,27 @@ const lessons: Deck[] = [
       {
         kind: "book",
         title: "Unit opener and Language Focus",
-        ref: { book: "SB", pages: "2-5", note: "Opener photo; the Language Focus on describing actions." },
+        ref: { book: "SB", pages: "2-4", note: "Opener photo and Share What You Know (2-3); the Language Focus dialogue on describing actions (4)." },
         steps: [
-          "Opener: one minute of silent looking. What is happening to the matter in the photo? Say: I notice ... / I wonder ...",
-          "Do the Language Focus with a partner, then describe one action from the mystery tray in two sentences.",
+          "Opener (2-3): one minute of silent looking at the glass-maker at work. What is happening to the matter? (Glass is made by heating sand until it melts.) Say: I notice ... / I wonder ...",
+          "Share What You Know (3): put one ice cube in a bowl now; check it at the end of the lesson and draw what you see.",
+          "Language Focus (4): listen to Amita and David's dialogue, say it with the audio, then use the frames When it is ___, I ___ to tell a partner what you do in hot, cold and rainy weather.",
+          "Describe one action from the mystery tray in two sentences with When ...: When the butter gets hot, it melts.",
         ],
+        media: [talkAudio(5, 1, 4, "When It Is Hot!")],
+      },
+      {
+        kind: "vocab",
+        title: "Part 1 science words: forms of water",
+        book: { book: "SB", pages: "5", note: "Science key words." },
+        words: [
+          { word: "solid / liquid", meaning: "matter that keeps its own shape / matter that flows and takes the shape of its container", example: "Ice is a solid; water is a liquid." },
+          { word: "melt / freeze", meaning: "change from a solid to a liquid / change from a liquid to a solid", example: "The ice lolly melted before {s1} could finish it." },
+          { word: "temperature", meaning: "how hot or cold something is, measured in degrees", example: "Water freezes when the temperature falls to 0 °C." },
+          { word: "thermometer", meaning: "the tool that measures temperature", example: "The thermometer showed 38 degrees in Hà Nội today." },
+          { word: "form", meaning: "one of the ways something can be (ice and steam are forms of water); also to make or become", example: "Drops of water form on a cold glass." },
+        ],
+        media: [keyWordAudio(5, 1)],
       },
       {
         kind: "activity",
@@ -94,7 +111,7 @@ const lessons: Deck[] = [
         tag: "Grammar",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "36-37", note: "Part 1 grammar: adjectives (previewed here, practised in Lesson 4)." },
+        book: { book: "SB", pages: "37", note: "The book's Part 1 grammar (adjectives and articles) comes in Lesson 4; -ed / -ing and adjective order go beyond it." },
         steps: [
           "Look at the adjectives in bold. Which describe how a PERSON feels? Which describe the THING that causes the feeling?",
           "State the rule: -ed = ___, -ing = ___.",
@@ -188,10 +205,11 @@ const lessons: Deck[] = [
         frames: ["I am a ___ ___ substance.", "When the temperature ___, I ___.", "Children are always excited when ___. What am I?"],
         challenge: "Write a second riddle about a change that CANNOT go back (burnt toast, a cooked egg). Explain in one sentence why it cannot.",
       },
-      { kind: "reflect", prompts: ["What is a change of matter, in your own words?", "-ed or -ing: which one describes a feeling?", "Which cause on our 'Causes?' poster do you think is the most common?"] },
+      { kind: "reflect", prompts: ["What is a change of matter, in your own words?", "-ed or -ing: which one describes a feeling?", "Look at the ice cube from the start of the lesson: what changed it, and how long did it take?"] },
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheet 5.1: start the Unit 5 concept map with your first answers to the Big Question.", book: { book: "WB", pages: "5.1", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: -ed / -ing adjectives and adjective order; 4 Unit 4 rewrites (modals, second conditional)." },
           { label: "Words of the week (F): weather", detail: "Learn 8 words (foggy, humid, freezing, boiling, drizzle, storm, frost, heatwave). Write 4 sentences about Hanoi weather with -ed / -ing adjectives." },
           { label: "Function of the week (B): reacting to news", detail: "Practise: Really? / That's amazing! / How surprising! / What a pity! / Oh no! / Lucky you!" },
@@ -208,7 +226,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 5, lesson: "Part 1 Language" },
     title: "Part 1 Language: so cold that it froze",
     inquiryPhases: ["Focus", "Investigate"],
-    book: [{ book: "SB", pages: "6-19", note: "Key words (6-7), thinking map and academic words (8-9), phonics: endings -ed and -ing (10-11), and the first part of the play \"Melt the Snow!\" (12-19)." }],
+    book: [{ book: "SB", pages: "6-19", note: "Thinking map: character-plot chart (6), academic words (7), reading strategy: make connections (8-9), phonics: endings -ed and -ing (10-11), and the play \"Melt the Snow!\" to page 19 (12-19)." }],
     slides: [
       { kind: "title", title: "Unit 5: Mysteries of Matter", subtitle: "Lesson 2 · Part 1 Language", bigQuestion: BQ },
       {
@@ -216,8 +234,8 @@ const lessons: Deck[] = [
         items: [
           "I can use so ... that and such ... that to show a result.",
           "I can compare how things happen with comparative adverbs (faster, more slowly).",
-          "I can use the Part 1 words about solids, liquids and temperature.",
-          "I can spell and say words ending in -ed and -ing.",
+          "I can use the academic words alter, occur, state, substance and trap.",
+          "I can spell and say words ending in -ed and -ing, and make a connection to my own life while I read.",
         ],
       },
       {
@@ -237,48 +255,62 @@ const lessons: Deck[] = [
       },
       {
         kind: "vocab",
-        title: "Part 1 words: solids, liquids and temperature",
-        book: { book: "SB", pages: "6-7" },
+        title: "Part 1 academic words",
+        book: { book: "SB", pages: "7", note: "Academic key words." },
         words: [
-          { word: "solid / liquid", meaning: "matter with its own shape / matter that flows and takes the shape of its container", example: "Ice is a solid; water is a liquid." },
-          { word: "melt / freeze", meaning: "change from solid to liquid / change from liquid to solid", example: "The ice lolly melted before {s1} could finish it." },
-          { word: "temperature / thermometer", meaning: "how hot or cold something is / the tool that measures it", example: "The thermometer showed a temperature of 38 degrees in Hanoi." },
-          { word: "substance", meaning: "a kind of matter: water, salt, wax, sugar ...", example: "Sugar is a sweet white substance." },
-          { word: "form", meaning: "to make or become; also a shape or type", example: "Drops of water form on a cold glass." },
-          { word: "alter", meaning: "to change something a little or completely", example: "Heat alters the colour of bread." },
-          { word: "occur", meaning: "to happen", example: "Frost can occur in Sa Pa in winter." },
-          { word: "trap", meaning: "to keep something somewhere so it cannot escape", example: "A lid traps the heat inside the pot." },
+          { word: "alter", meaning: "to change something, a little or a lot", example: "Heat alters the colour of bread from white to brown." },
+          { word: "occur", meaning: "to happen", example: "Frost can occur in Sa Pa on very cold nights." },
+          { word: "state", meaning: "the way a person or thing is at one time (solid, liquid and gas are the states of water)", example: "Water in its solid state is ice; in its gas state it is steam." },
+          { word: "substance", meaning: "the material something is made of: water, salt, wax, sugar ...", example: "Sugar is a sweet white substance." },
+          { word: "trap", meaning: "to catch something and not let it go", example: "A lid traps the heat inside the pot." },
         ],
+        media: [wordAudio(5, 1, ["alter", "occur", "state", "substance", "trap"], "Academic words")],
       },
       {
         kind: "activity",
-        title: "Thinking map and ending spot",
+        title: "Character-plot chart and connections",
+        tag: "Reading",
+        mode: "pairs",
+        minutes: 8,
+        book: { book: "SB", pages: "6-9", note: "Thinking map: character-plot chart (6); reading strategy: make connections (8-9)." },
+        steps: [
+          "Thinking map (6): read Amita and David's snowman skit. What do their words show about each character, and about what is happening?",
+          "Start a character-plot chart: Character / What the character says / What this shows about the character / What this shows about the plot.",
+          "Make connections (8-9): read the short story about the picnic and the sample connection, then make your own with the three frames.",
+        ],
+        prompts: ["This is about ___.", "I think of ___.", "Now I understand ___."],
+      },
+      {
+        kind: "activity",
+        title: "Phonics: endings -ed and -ing",
         tag: "Phonics",
         mode: "pairs",
-        minutes: 10,
-        book: { book: "SB", pages: "8-11" },
+        minutes: 7,
+        book: { book: "SB", pages: "10-11", note: "Phonics focus and the decodable text \"Skating\"." },
         steps: [
-          "Use the book's thinking map for one change: a solid → what caused it → a liquid (and back again).",
-          "Phonics (10-11): add -ed and -ing to melt, freeze, trap, form, occur, alter. When do we double the last letter? When do we drop e?",
+          "Do the book's Listen and Learn, then read \"Skating\" with a partner and list its -ed and -ing words without the endings.",
+          "Add -ing to melt, trap, form, occur, alter and freeze; add -ed to all but freeze (its past is froze). When do we double the last letter? When do we drop e?",
           "Say the -ed words aloud: melted (/ɪd/), formed (/d/), trapped (/t/). Sort five more into the three sounds.",
         ],
-        prompts: ["First the ___ was solid. Then ___ caused it to ___.", "trap → trapped, trapping: we double the p because ___.", "freeze → freezing: we drop the e because ___."],
+        prompts: ["trap → trapped, trapping: we double the p because ___.", "freeze → freezing: we drop the e because ___.", "alter → altered: we don't double the r because ___."],
+        media: [phonicsAudio(5, 1, "Phonics passage: \"Skating\"")],
       },
       {
         kind: "activity",
-        title: "Read: \"Melt the Snow!\" (first part)",
+        title: "Read: \"Melt the Snow!\" (to page 19)",
         tag: "Reading",
         mode: "groups",
         minutes: 17,
         book: { book: "SB", pages: "12-19" },
         steps: [
-          "Before reading: a play has characters, a setting and stage directions. Find each on the first page.",
-          "Read the first part aloud in roles. Directors (one per group) read the stage directions.",
-          "Make connections: what does the problem remind you of from your own life, another story, or the mystery tray?",
-          "Predict: how will the characters change the matter? What will cause the change?",
+          "Before reading (12-13): a play is acted out. Find the cast of characters, the dialogue and the stage directions (in brackets).",
+          "Read to page 19 aloud in roles. Directors (one per group) read the stage directions.",
+          "Make connections: Little Ant asks to go out and play. When have you asked a parent to let you do something? How does that help you understand Little Ant and her mother?",
+          "Add two rows to the character-plot chart. Predict: Little Ant is stuck in the snow. Who will be strong enough to free her, and what must happen to the snow?",
         ],
-        prompts: ["This reminds me of ___ because ___.", "I predict they will ___ because ___.", "The stage direction tells us ___."],
-        teacherNote: "Strategy: make connections (text-to-self, text-to-text, text-to-world). Model one of each before the groups start.",
+        prompts: ["This reminds me of ___ because ___.", "I predict ___ will help, because ___.", "The stage direction tells us ___."],
+        teacherNote: "Strategy: make connections. Part 1 practises text-to-self connections (8-9); Part 2 adds text-to-text and text-to-world (42-43). Model one connection before the groups start.",
+        media: [readingAudio(5, 1, 12, 19, "Melt the Snow!")],
       },
       {
         kind: "activity",
@@ -297,7 +329,7 @@ const lessons: Deck[] = [
           "3. The sun shone **so** brightly **that** the snow melted.",
           "4. Ice melts **faster** in the sun than in the shade.",
           "5. Honey flows **more slowly** than water.",
-          "6. {s4} finished the experiment **better** than last time.",
+          "6. {s4} did the experiment **better** than last time.",
         ],
       },
       {
@@ -388,7 +420,8 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
-          { label: "Book", detail: "Read the first part of the play again and write two connections (to yourself, to the world).", book: { book: "SB", pages: "12-19" } },
+          { label: "Book", detail: "Read the play to page 19 again and write two text-to-self connections.", book: { book: "SB", pages: "12-19" } },
+          { label: "Practice Book", detail: "Sheets 5.2 (character-plot chart) and 5.7 (phonics: endings -ed and -ing).", book: { book: "WB", pages: "5.2, 5.7", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: so / such ... that rewrites and comparative adverbs." },
           { label: "Words of the week (F)", detail: "Use 4 weather words from last week in so ... that sentences about Hanoi." },
         ],
@@ -425,7 +458,7 @@ const lessons: Deck[] = [
         items: [
           { q: "It was ___ cold weather that the pipes froze.", options: ["so", "such", "such a", "so a"], answer: "B. such" },
           { q: "The water was ___ hot that I couldn't touch it.", options: ["such", "so", "such a", "very"], answer: "B. so" },
-          { q: "Butter melts ___ than ice in a warm room.", options: ["more quick", "quicklier", "more quickly", "most quickly"], answer: "C. more quickly" },
+          { q: "Ice melts ___ in a warm room than in a cold one.", options: ["more quick", "quicklier", "more quickly", "most quickly"], answer: "C. more quickly" },
           { q: "Which -ed ending sounds like /ɪd/?", options: ["trapped", "formed", "melted", "frozen"], answer: "C. melted" },
           { q: "A thermometer is a tool ___ measures temperature.", options: ["who", "which", "where", "whose"], answer: "B. which" },
         ],
@@ -438,11 +471,12 @@ const lessons: Deck[] = [
         minutes: 16,
         book: { book: "SB", pages: "20-27" },
         steps: [
-          "Finish the play in roles. Directors read the stage directions; everyone else listens for every change of matter.",
-          "Organize: a cause → change → result chart. Each row is one change in the play.",
-          "Was your prediction from Lesson 2 right? What evidence shows it?",
+          "Finish the play in roles. Directors read the stage directions; everyone else listens for who asks whom for help, and why each one cannot help alone.",
+          "Organize: a cause → effect chain for the end of the play, from Mouse to Snow. Each link is one character's action (Mouse gnaws Wall → ...). Which link finally changes the matter?",
+          "Was your prediction from Lesson 2 right? Who turned out to be the strongest, and are you surprised?",
         ],
-        prompts: ["___ caused the snow to ___.", "My prediction was right / wrong because on page ___ ___.", "The result was that ___."],
+        prompts: ["___ caused ___ to ___.", "My prediction was right / wrong because on page ___ ___.", "In the end, the sun melted the snow, so ___."],
+        media: [readingAudio(5, 1, 20, 27, "Melt the Snow!")],
       },
       {
         kind: "activity",
@@ -451,8 +485,12 @@ const lessons: Deck[] = [
         mode: "pairs",
         minutes: 8,
         book: { book: "SB", pages: "28-29" },
-        steps: ["Answer the book's questions with page evidence.", "Talk about it: which connection helped you understand the play best, and why?"],
-        prompts: ["On page ___ it shows ___.", "My connection to ___ helped me understand ___."],
+        steps: [
+          "Talk About It (28): answer the three questions with page evidence (dialogue and stage directions; Little Ant and Mommy Ant at the start; why Mouse helps).",
+          "Finish your character-plot chart (29) and explain one row to a partner.",
+          "Talk Together (29): what caused the snow to melt? Draw how Little Ant got free and label it with key words.",
+        ],
+        prompts: ["On page ___ it shows ___.", "This dialogue shows that ___.", "The snow melted because ___."],
       },
       {
         kind: "activity",
@@ -490,14 +528,14 @@ const lessons: Deck[] = [
           "State verbs (know, like, want, belong) still stay simple: I knew the answer (NOT I was knowing).",
         ],
         examples: [
-          { text: "The snow was falling softly when the characters made their plan." },
+          { text: "Little Ant was playing outside when the snow started to fall." },
           { text: "While {s8} was stirring the sugar, {s9} was heating the water." },
           { text: "What were you doing when the storm started?" },
           { text: "When the water boiled, Mum added the noodles." },
         ],
         pitfalls: [
           { wrong: "I was watch TV when you called.", right: "I was watching TV when you called.", why: "was / were + -ing" },
-          { wrong: "While I walked home, it was raining.", right: "While I was walking home, it was raining.", why: "while + long action: past continuous" },
+          { wrong: "I was knowing the answer.", right: "I knew the answer.", why: "state verb: past simple" },
           { wrong: "They was playing outside.", right: "They were playing outside.", why: "they + were" },
         ],
       },
@@ -538,7 +576,7 @@ const lessons: Deck[] = [
         mode: "solo",
         minutes: 16,
         steps: [
-          "Write a diary entry as one character from the play, on the evening after the snow melted.",
+          "Write a diary entry as Little Ant (or Mommy Ant), on the evening after the snow melted.",
           "Write 10-12 sentences: what you were doing when the problem started, what happened while you were working on it, how the matter changed and what caused it.",
           "Use at least three past continuous verbs, one when and one while.",
         ],
@@ -552,7 +590,7 @@ const lessons: Deck[] = [
         steps: ["Start with the date and how you feel (-ed adjectives).", "Tell the events in order, with background actions.", "End with what you learned about what causes matter to change."],
         criteria: ["Three correct past continuous verbs and one when / one while sentence.", "The cause of each change is clear.", "At least three Part 1 words."],
         frames: ["Dear Diary, today I was so ___ because ___.", "We were ___ when ___.", "While the snow was ___, I ___.", "Now I know that ___ causes ___."],
-        challenge: "Write a second diary entry by a character who wanted the snow to STAY. How does the same event look to them?",
+        challenge: "Write the same afternoon as Wall or Cloud: what were you doing while Little Ant was asking for help, and how did it feel when Mouse changed everything?",
       },
       { kind: "reflect", prompts: ["What caused the main change in the play?", "when or while: which goes with the long action?", "Add one new cause to our 'Causes?' poster."] },
       {
@@ -560,6 +598,7 @@ const lessons: Deck[] = [
         items: [
           { label: "Rewrite track (A)", detail: "10 items: past simple vs past continuous with when / while." },
           { label: "Listening (E)", detail: "Listen to the play's audio and note every stage direction that shows a change of matter." },
+          { label: "Practice Book", detail: "Sheets 5.4 (key points of \"Melt the Snow!\"), 5.6 (reread and retell: character-plot chart) and 5.8 (fluency: read with expression).", book: { book: "WB", pages: "5.4, 5.6, 5.8", note: "Practice Book sheets" } },
           { label: "Function of the week (B)", detail: "Write a 6-line dialogue reacting to surprising news, using last week's phrases." },
         ],
       },
@@ -574,7 +613,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 5, lesson: "Part 1 Review" },
     title: "Part 1 Review: it was found in the ice (checkpoint)",
     inquiryPhases: ["Organize", "Generalize", "Reflect"],
-    book: [{ book: "SB", pages: "30-37", note: "Word work (30), the e-mail and web news article \"Mammoth Found\" (31-35), and grammar: adjectives (36-37)." }],
+    book: [{ book: "SB", pages: "30-37", note: "Word work: antonyms (30), the e-mail and web-based news article \"Saved in Ice: Frozen Baby Mammoth Found\" (31-35), compare media (36) and grammar: adjectives and articles (37)." }],
     slides: [
       { kind: "title", title: "Unit 5: Mysteries of Matter", subtitle: "Lesson 4 · Part 1 Review", bigQuestion: BQ },
       {
@@ -582,6 +621,7 @@ const lessons: Deck[] = [
         items: [
           "I can use the past passive (was found, were discovered) to report a discovery.",
           "I can compare an e-mail and a news article about the same event.",
+          "I can use adjectives that compare (-er / -est, more / most) and the articles a, an and the.",
           "I can state what I understand about what causes matter to change.",
         ],
       },
@@ -598,31 +638,41 @@ const lessons: Deck[] = [
         ],
       },
       {
-        kind: "activity",
-        title: "Read: \"Mammoth Found\" and compare",
-        tag: "Reading",
-        mode: "pairs",
-        minutes: 15,
-        book: { book: "SB", pages: "30-35" },
+        kind: "book",
+        title: "Word work: antonyms",
+        ref: { book: "SB", pages: "30", note: "Word work: antonyms (freeze / melt, trap / free)." },
         steps: [
-          "Word work (30), then read the e-mail and the web news article about an animal found frozen in the ground.",
-          "Compare the two texts in a chart: who wrote it, for whom, how it sounds (friendly or formal), which facts each one gives.",
-          "Big Question link: what kept the animal's body from changing for so long? What would make it change now?",
+          "Read the two pairs of antonyms and do Try It Together with a partner.",
+          "Quick fire: the teacher says a word, you say its antonym (solid, liquid, freeze, trap, hot, give).",
         ],
-        prompts: ["The e-mail sounds ___, but the article sounds ___.", "Both texts say ___.", "The cold stopped the body from ___."],
       },
       {
         kind: "activity",
-        title: "Book grammar: adjectives that compare",
+        title: "Read: \"Saved in Ice\" and compare",
+        tag: "Reading",
+        mode: "pairs",
+        minutes: 15,
+        book: { book: "SB", pages: "31-35", note: "\"Saved in Ice: Frozen Baby Mammoth Found\": Rudy's e-mail and the web-based news article it links to." },
+        steps: [
+          "Read Rudy's e-mail to Marisol, then the news article it links to: a hunter in the far north of Russia finds a baby mammoth frozen in ice for about 40,000 years.",
+          "Compare media (36): fill the chart for the e-mail and the article (electronic form? formal or informal language? personal or factual information?).",
+          "Talk Together (36): why was the mammoth trapped? What kept her body from changing for so long, and what would make it change now?",
+        ],
+        prompts: ["The e-mail sounds ___, but the article sounds ___.", "Both texts are ___.", "The cold stopped the body from ___."],
+        media: [readingAudio(5, 1, 31, 35, "Saved in Ice: Frozen Baby Mammoth Found")],
+      },
+      {
+        kind: "activity",
+        title: "Book grammar: adjectives and articles",
         tag: "Grammar",
         mode: "pairs",
         minutes: 5,
-        book: { book: "SB", pages: "36-37", note: "Part 1 grammar: adjectives (the eVisual 'Adjectives that Compare')." },
+        book: { book: "SB", pages: "37", note: "Part 1 grammar: adjectives and articles (eVisual 'Adjectives that Compare')." },
         steps: [
-          "Do the book's adjective practice with a partner.",
-          "Compare three things from the article with -er / -est and more / most: older, the coldest, more surprising.",
+          "Read the Grammar Rules box, then find the articles and the adjectives in the book's sentences about the play.",
+          "Compare three things from the unit with -er / -est and more / most (the coldest place, a smaller animal, the most surprising fact). Write two weather sentences with an adjective and an article.",
         ],
-        prompts: ["The ___ is older than ___.", "The most surprising fact is ___."],
+        prompts: ["The mammoth was smaller than ___.", "The most surprising fact is ___.", "a / an / the: I chose ___ because ___."],
       },
       {
         kind: "activity",
@@ -636,8 +686,8 @@ const lessons: Deck[] = [
           "When is the person left out? Why might a news writer choose B?",
         ],
         prompts: [
-          "A. A herder found the mammoth. · B. The mammoth **was found** (by a herder).",
-          "A. Scientists studied its teeth. · B. Its teeth **were studied**.",
+          "A. A hunter found the baby mammoth. · B. The baby mammoth **was found** (by a hunter).",
+          "A. Scientists studied the mammoth's body. · B. The mammoth's body **was studied**.",
           "A. People built the Temple of Literature in 1070. · B. The Temple of Literature **was built** in 1070.",
           "A. UNESCO named Hạ Long Bay a World Heritage Site in 1994. · B. Hạ Long Bay **was named** a World Heritage Site in 1994.",
         ],
@@ -659,8 +709,8 @@ const lessons: Deck[] = [
           "In rewrites, the object of the active sentence becomes the subject: Scientists tested the ice. → The ice was tested (by scientists).",
         ],
         examples: [
-          { text: "The baby animal was frozen in the ground for thousands of years." },
-          { text: "Its skin and hair were kept almost perfect by the cold." },
+          { text: "The baby mammoth was kept in ice for about 40,000 years." },
+          { text: "She was named Lyuba after the hunter's wife." },
           { text: "Our class photos were taken by {s2}." },
           { text: "Was the first bánh chưng made by a prince? That's what the legend says." },
         ],
@@ -691,10 +741,10 @@ const lessons: Deck[] = [
         mode: "groups",
         minutes: 15,
         steps: [
-          "Look at our evidence: the mystery tray, the CHANGE OF MATTER Frayer, the melting race, the play, the frozen animal. In threes, finish: 'Matter changes when ...'.",
+          "Look at our evidence: the mystery tray, the CHANGE OF MATTER Frayer, the melting race, the play, the frozen mammoth. In threes, finish: 'Matter changes when ...'.",
           "Each child writes an ending on a strip. Choose the one that is true in MOST cases.",
           "Improve it with How? and Why?: add a cause (heat, cold, mixing ...) and a result.",
-          "Share. Can another group find a case where it is not true (the frozen animal did NOT change)? Add a qualifier (often, usually, can) or a second part if needed.",
+          "Share. Can another group find a case where it is not true (the frozen mammoth did NOT change)? Add a qualifier (often, usually, can) or a second part if needed.",
         ],
         frames: ["Matter changes when ___.", "For example, ___ was changed by ___.", "However, if ___, matter can stay the same for a long time."],
         prompts: ["Is that true for the ice AND the rice?", "Can every change go back?", "Should we say 'always' or 'usually'?"],
@@ -707,7 +757,7 @@ const lessons: Deck[] = [
         mode: "solo",
         minutes: 15,
         steps: [
-          "Imagine the frozen animal is coming to a museum in Hà Nội. Write the label next to it.",
+          "Imagine the baby mammoth is coming to a museum in Hà Nội. Write the label next to it.",
           "Say what it is, when and where it was found, how it was kept, what was learned from it. Use at least four past passives.",
           "Finish with one sentence that uses our class generalization.",
         ],
@@ -728,6 +778,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Rewrite track (A)", detail: "Correct your checkpoint mistakes in your error log, with the rule and a new example. Then 6 active → past passive rewrites." },
+          { label: "Practice Book", detail: "Sheets 5.3 (adjectives), 5.5 (adjectives that compare), 5.9 (fact cards for \"Saved in Ice\"), 5.10 (comparison chart) and 5.11 (adjectives and articles).", book: { book: "WB", pages: "5.3, 5.5, 5.9-5.11", note: "Practice Book sheets" } },
           { label: "Words of the week (F): in the kitchen", detail: "Learn 8 words (boil, fry, steam, stir, pour, grill, raw, burnt). Write 4 past passive sentences about a meal (The rice was steamed ...)." },
         ],
       },
@@ -742,7 +793,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 5, lesson: "Part 2 Language" },
     title: "Part 2 Language: impossible places",
     inquiryPhases: ["Engage", "Focus"],
-    book: [{ book: "SB", pages: "38-45", note: "Part 2 Language Focus: describe places (38-39), key words (40-41), thinking map and academic words (42-43), phonics: prefixes in- and im- (44-45)." }],
+    book: [{ book: "SB", pages: "38-45", note: "Part 2 Language Focus: describe places (38), science key words (39), thinking map: cause-and-effect chart (40), academic words (41), reading strategy: make connections (42-43), phonics: prefixes in- and im- (44-45)." }],
     slides: [
       { kind: "title", title: "Unit 5: Mysteries of Matter", subtitle: "Lesson 5 · Part 2 Language", bigQuestion: BQ },
       {
@@ -761,7 +812,7 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Whiteboards. Show, then one reason.",
         items: [
-          { q: "The frozen animal ___ in 2007.", options: ["found", "was found", "is finding", "were found"], answer: "B. was found" },
+          { q: "The baby mammoth ___ in 2007.", options: ["found", "was found", "is finding", "were found"], answer: "B. was found" },
           { q: "I ___ my homework when the lights went out.", options: ["did", "was doing", "am doing", "were doing"], answer: "B. was doing" },
           { q: "Coffee ___ in the Central Highlands. (fact today)", options: ["grows", "is grown", "was grow", "grown"], answer: "B. is grown" },
           { q: "It was ___ a windy day that our kite flew away.", options: ["so", "such", "too", "very"], answer: "B. such" },
@@ -774,41 +825,57 @@ const lessons: Deck[] = [
         tag: "Speaking",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "38-39" },
+        book: { book: "SB", pages: "38", note: "Language Focus: describe places (Marita's chant)." },
         steps: [
-          "Do the book's describe-places talk with a partner.",
+          "Listen to Marita's chant about a beach, chant along the second time, then describe a place you know with the frames Here is ___. / The ___ is ___. / It feels ___.",
           "Then: show your partner a photo of a wet place in Vietnam (Tràm Chim, the Mekong Delta, a rice field after rain, Vân Long). Describe it for 45 seconds: what the ground and water are like, what lives there.",
           "Evaluate it: would it be a good place to build a house? to grow rice? to visit? Give one reason each.",
         ],
-        prompts: ["The ground there is soft and ___.", "It is a good place for ___ because ___.", "It would be a bad place for ___ because ___."],
+        prompts: ["Here is ___. The ground is soft and ___. It feels ___.", "It is a good place for ___ because ___.", "It would be a bad place for ___ because ___."],
+        media: [talkAudio(5, 2, 38, "At the Beach")],
       },
       {
         kind: "vocab",
         title: "Part 2 words: ground, water and mixtures",
-        book: { book: "SB", pages: "40-41" },
+        book: { book: "SB", pages: "39-41", note: "Science key words (39: how a wetland forms) and academic words (41); the thinking map on 40 is between them." },
         words: [
-          { word: "ground / surface", meaning: "the earth we stand on / the top or outside layer of something", example: "After the rain, the surface of the ground was shiny." },
-          { word: "sand / water", meaning: "tiny grains of rock found on beaches / the liquid in rivers and the sea", example: "{s4} built a castle from wet sand." },
+          { word: "ground / surface", meaning: "the earth we stand on / the top or outside part of something", example: "After the rain, the surface of the ground was shiny." },
+          { word: "sand / water", meaning: "tiny grains of rock found on beaches and in deserts / the clear liquid in rivers, lakes and the sea", example: "{s4} built a castle from wet sand." },
           { word: "mixture / combine", meaning: "two or more substances put together / to put things together", example: "When you combine sand and water, you get a mixture." },
-          { word: "composition", meaning: "what something is made of, and how much of each part", example: "The composition of mud is mostly soil and water." },
-          { word: "firm", meaning: "hard and not easy to move or press", example: "Dry sand is firm enough to stand on." },
+          { word: "composition", meaning: "what something is made of, and how much of each part", example: "The composition of this soil is half sand and half clay." },
+          { word: "firm", meaning: "hard and not easy to move or press", example: "The ground was firm enough to hold the heavy truck." },
           { word: "area", meaning: "a part of a place", example: "This area of the park floods every summer." },
-          { word: "wetland", meaning: "land that is covered with water for much of the year", example: "Tràm Chim is a wetland where cranes live." },
+          { word: "wetland", meaning: "land that is wet, or under shallow water, for most of the year: marshes and swamps are wetlands", example: "Tràm Chim is a wetland where cranes come to feed." },
         ],
+        media: [keyWordAudio(5, 2)],
       },
       {
         kind: "activity",
-        title: "Thinking map and prefix spot",
+        title: "Cause and effect, and connections",
+        tag: "Reading",
+        mode: "pairs",
+        minutes: 7,
+        book: { book: "SB", pages: "40-43", note: "Thinking map: cause-and-effect chart (40); reading strategy: make connections to other texts and to the world (42-43)." },
+        steps: [
+          "Thinking map (40): for each event ask 'What happened?' (the effect) and 'Why did it happen?' (the cause). Make a two-row chart about the sand on a beach.",
+          "Make connections (42-43): read Marita's e-mail about her boat ride on a marsh. What does it remind you of that you have READ (Little Ant in the snow? the mammoth?) or KNOW about the world (the Mekong Delta)?",
+        ],
+        prompts: ["___ is the cause. ___ is the effect.", "The topic is ___.", "This makes me think of ___.", "Now I understand ___."],
+      },
+      {
+        kind: "activity",
+        title: "Phonics: prefixes in- and im-",
         tag: "Phonics",
         mode: "pairs",
-        minutes: 10,
-        book: { book: "SB", pages: "42-45" },
+        minutes: 7,
+        book: { book: "SB", pages: "44-45", note: "Phonics focus and the decodable text \"Wetlands\"." },
         steps: [
-          "Fill the thinking map for a mixture: substance 1 + substance 2 → the mixture → how it is different (wet sand: firm or soft?).",
-          "Phonics (44-45): read the in- / im- words aloud. Which letters come after im-? (m, p, b: impossible, immature, imbalance.)",
-          "Each pair adds two more words to each list and says what the prefix does to the meaning.",
+          "Do the book's Listen and Learn, then read \"Wetlands\" with a partner and point to every word with in- or im-.",
+          "What do in- and im- mean? (not / the opposite of). Which letters come after im-? (m, p, b: impossible, immature, imbalance.)",
+          "Each pair adds two more words to each list and says each one in a sentence.",
         ],
-        prompts: ["When you combine ___ and ___, you get ___.", "im- comes before ___, so we say impossible, not inpossible.", "in- / im- means ___."],
+        prompts: ["in- / im- means ___.", "im- comes before ___, so we say impossible, not inpossible.", "It is impossible to ___ in a wetland because ___."],
+        media: [phonicsAudio(5, 2, "Phonics passage: \"Wetlands\"")],
       },
       {
         kind: "activity",
@@ -843,9 +910,9 @@ const lessons: Deck[] = [
           { label: "spend", pattern: "someone + spend / spent + time + verb-ing: We spent an hour cleaning up." },
         ],
         explanation: [
-          "There is no rule that tells you un- or in- for every word; learn them in families. But im- always comes before m, p and b.",
+          "There is no rule that tells you un- or in- for every word; learn them in families. But when a word takes in-, it becomes im- before m, p and b (impossible, immature), while un- stays un- (unpopular, unbelievable).",
           "Word formation items in the exam often need TWO changes: a prefix AND a suffix: possible → impossibly, happy → unhappiness, agree → disagreement.",
-          "It takes ... to and spend ... -ing are one of the most common rewrites in the Hanoi papers. Keep the tense: It took → spent; It takes → spend / spends.",
+          "It takes ... to and spend ... -ing is a very common rewrite in Vietnamese English tests. Keep the tense: It took → spent; It takes → spend / spends.",
         ],
         examples: [
           { text: "It is impossible to stand on a mixture of sand and too much water." },
@@ -930,6 +997,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Rewrite track (A)", detail: "10 items: prefix word formation and It takes ... to / spend ... -ing rewrites." },
+          { label: "Practice Book", detail: "Sheets 5.12 (cause-and-effect chart) and 5.17 (phonics: prefixes in- and im-).", book: { book: "WB", pages: "5.12, 5.17", note: "Practice Book sheets" } },
           { label: "Words of the week (F): body and health", detail: "Learn 8 words (fever, cough, sore throat, stomachache, medicine, rest, healthy, exercise). Write 4 sentences with It takes ... to get better / spend time -ing." },
           { label: "Function of the week (B): asking for and giving directions", detail: "Practise: Excuse me, how do I get to ...? / Go straight on. / Turn left at ... / It's next to ... / How long does it take?" },
         ],
@@ -979,12 +1047,14 @@ const lessons: Deck[] = [
         minutes: 20,
         book: { book: "SB", pages: "46-57" },
         steps: [
-          "Preview: the title, photos, headings and diagrams. How can something we stand on turn to liquid?",
+          "Preview (46-47): the title, photos, headings and the diagram with its labels. How can something we stand on turn to liquid?",
           "Read the article. Mark each CAUSE in one colour and each EFFECT in another.",
-          "Organize: a cause → effect chain for the mixture in the article (what is combined, what happens to the surface, what happens to a person or animal on it).",
-          "Make connections: where have you seen ground change like this (a beach, a rice field, a muddy road after the rainy season)?",
+          "Organize: a cause → effect chain for how quicksand forms (use the diagram on page 53): firm, packed ground → underground water pushes between the grains → what happens to the surface?",
+          "Fiction or fact (56-57): which belief about quicksand surprised you most? Is quicksand as dangerous as films show?",
+          "Make connections: where have you seen ground change like this (a beach where the waves come in, a rice field, a muddy road after the rainy season)?",
         ],
-        prompts: ["When ___ is combined with ___, the ground ___.", "The cause is ___, and the effect is ___.", "This connects to ___ because ___."],
+        prompts: ["When ___ is combined with ___, the ground ___.", "The cause is ___, and the effect is ___.", "In films ___, but in fact ___."],
+        media: [readingAudio(5, 2, 46, 57, "Quicksand: When Earth Turns to Liquid")],
       },
       {
         kind: "activity",
@@ -993,8 +1063,12 @@ const lessons: Deck[] = [
         mode: "pairs",
         minutes: 7,
         book: { book: "SB", pages: "58-59" },
-        steps: ["Answer the book's questions with evidence.", "Test our class sentence from Lesson 4 on the article: does it still work? Does it need a word about mixing?"],
-        prompts: ["Our sentence works / needs changing because ___."],
+        steps: [
+          "Talk About It (58): one fact you learned, what a place with quicksand looks like, and how quicksand forms, in your own words.",
+          "Cause-and-effect chart (59): summarise the article for a partner with What happened? and Why did it happen?",
+          "Test our class sentence from Lesson 4 on the article: does it still work? Does it need a word about mixing?",
+        ],
+        prompts: ["I learned ___.", "Quicksand forms when ___.", "Our sentence works / needs changing because ___."],
       },
       {
         kind: "activity",
@@ -1101,6 +1175,7 @@ const lessons: Deck[] = [
         items: [
           { label: "Rewrite track (A)", detail: "10 items: zero vs first conditional, unless, when / as soon as + present." },
           { label: "Listening (E)", detail: "Listen to the article's audio and write down three causes and their effects." },
+          { label: "Practice Book", detail: "Sheets 5.14 (key points of \"Quicksand: When Earth Turns to Liquid\"), 5.16 (reread and retell: cause-and-effect chart) and 5.18 (fluency: intonation).", book: { book: "WB", pages: "5.14, 5.16, 5.18", note: "Practice Book sheets" } },
           { label: "Words of the week (F)", detail: "Write 5 zero-conditional health facts with last week's words (If you have a fever, you ...)." },
         ],
       },
@@ -1115,7 +1190,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 5, lesson: "Writing Project" },
     title: "Writing Project: a literary response (and a scientist's questions)",
     inquiryPhases: ["Organize", "Transfer"],
-    book: [{ book: "SB", pages: "60-71", note: "Word work (60), the interview \"Meet Maycira Costa\" (61-65), grammar: possessive nouns and possessive adjectives (66-67), and the writing project: literary response (68-71)." }],
+    book: [{ book: "SB", pages: "60-71", note: "Word work: synonyms (60), the interview \"Meet Maycira Costa\" (61-65), compare text features (66), grammar: possessive nouns and possessive adjectives (67), and the writing project: literary response (68-71)." }],
     slides: [
       { kind: "title", title: "Unit 5: Mysteries of Matter", subtitle: "Lesson 7 · Writing Project", bigQuestion: BQ },
       {
@@ -1134,11 +1209,20 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Write ONE word in each gap.",
         items: [
-          { q: "If you heat water, it (1) ___. (a fact)", answer: "boils" },
-          { q: "As soon as the rain stops, we (2) ___ go outside.", answer: "will" },
+          { q: "If you heat ice, it (1) ___. (a fact)", answer: "melts" },
+          { q: "As soon as the rain stops, we (2) ___ go outside. (a plan for later today)", answer: "will (can is also correct)" },
           { q: "The old coins (3) ___ found in the garden last week.", answer: "were" },
           { q: "I was reading (4) ___ the storm started.", answer: "when" },
           { q: "It took us an hour (5) ___ clean the kitchen.", answer: "to" },
+        ],
+      },
+      {
+        kind: "book",
+        title: "Word work: synonyms",
+        ref: { book: "SB", pages: "60", note: "Word work: synonyms (mixture / blend)." },
+        steps: [
+          "Read the caption and say how mixture and blend are alike. Do Try It Together with a partner.",
+          "Quick fire: give a synonym for area, firm, combine and alter.",
         ],
       },
       {
@@ -1147,13 +1231,15 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "60-65" },
+        book: { book: "SB", pages: "61-65" },
         steps: [
-          "Word work (60), then read the interview with a scientist who studies water and wetlands. One partner reads the questions, the other the answers.",
-          "What does she study, and what tools does she use? Note two facts and one opinion.",
-          "Interviews are built from questions. Which question gets the most interesting answer? Why?",
+          "Read the interview with Dr. Maycira Costa, a scientist who studies wetlands in South America. One partner reads the questions (Q), the other the answers (A).",
+          "What does she study, how does she study such a huge area, and why does she think wetlands matter? Note two facts and one opinion.",
+          "Make a text-to-text connection: what does she say about quicksand, and which selection does it remind you of?",
+          "Compare text features (66): which features does the interview share with the science article (title, photos, captions), and which are its own (questions and answers)?",
         ],
-        prompts: ["She studies ___ because ___.", "The best question is ___ because ___.", "One fact is ___; one opinion is ___."],
+        prompts: ["She studies ___ by ___.", "This reminds me of \"___\" because ___.", "Both selections have ___, but only the interview has ___."],
+        media: [readingAudio(5, 2, 61, 65, "Meet Maycira Costa")],
       },
       {
         kind: "activity",
@@ -1161,10 +1247,10 @@ const lessons: Deck[] = [
         tag: "Grammar",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "66-67", note: "Part 2 grammar: possessive nouns and possessive adjectives." },
+        book: { book: "SB", pages: "67", note: "Part 2 grammar: possessive nouns and possessive adjectives." },
         steps: [
           "Look at the apostrophes in 1-3. Where is the apostrophe for ONE owner? For MORE than one? For children / people?",
-          "Look at 4. Why don't we say the water's surface ... the lake's surface? (Both are possible; of is common for things.)",
+          "Look at 4. For things (not people or animals) English often uses of: the surface of the water. (The lake's surface is possible too.)",
           "Look at 5-6. Which words come before a noun (my, her)? Which stand alone (mine, hers)? Is it its or it's?",
         ],
         prompts: [
@@ -1194,7 +1280,7 @@ const lessons: Deck[] = [
           "A possessive pronoun replaces the noun to avoid repeating it: Is this your pen or mine? (= my pen).",
         ],
         examples: [
-          { text: "The scientist's job is to measure the colour of the water." },
+          { text: "The scientist's satellite images show where the water is." },
           { text: "My grandparents' house is next to a lake in Hà Nam." },
           { text: "The children's experiment was more surprising than ours." },
           { text: "The wetland changes its colour in the dry season. It's beautiful." },
@@ -1241,7 +1327,7 @@ const lessons: Deck[] = [
           { q: "This isn't my notebook. Mine is blue. It must be your.", answer: "your → yours" },
           { q: "The childrens' toys are on the floor.", answer: "childrens' → children's" },
           { q: "My two sister's bedroom is very small.", answer: "sister's → sisters'" },
-          { q: "The leg's of the table is broken.", answer: "The leg's of the table → The leg of the table" },
+          { q: "All the teachers's cars are in the car park.", answer: "teachers's → teachers'" },
         ],
       },
       {
@@ -1263,11 +1349,11 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "68-69", note: "The model literary response and the checklist." },
+        book: { book: "SB", pages: "68-69", note: "Study the model (68); prewrite: choose a selection and organize ideas in a cause-and-effect chart (69)." },
         steps: [
-          "Read the book's model literary response. Find: the title of the text, the writer's opinion, the evidence, the connection, the conclusion.",
-          "Choose your text: \"Melt the Snow!\", \"Mammoth Found\", \"Quicksand: When Earth Turns to Liquid\" or \"Meet Maycira Costa\".",
-          "Plan: your opinion (what the text does well or what you learned); two pieces of evidence with page numbers; one connection to your life or Vietnam; a conclusion.",
+          "Read the book's model literary response (68). Find: the short summary and the writer's opinion at the beginning, the details from the selection that support it, and the ending.",
+          "Choose your selection with a partner (69): \"Melt the Snow!\", \"Saved in Ice: Frozen Baby Mammoth Found\", \"Quicksand: When Earth Turns to Liquid\" or \"Meet Maycira Costa\".",
+          "Organize (69): a cause-and-effect chart. Cause = a detail from the selection (with its page); effect = how you reacted (I laughed, I was surprised, I learned ...). Then add one connection to your life or Vietnam.",
         ],
         prompts: ["In \"___\", the writer ___.", "I think ___ because on page ___ ___.", "This reminds me of ___."],
       },
@@ -1291,12 +1377,12 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "solo",
         minutes: 22,
-        book: { book: "SB", pages: "70-71", note: "Draft, revise and edit with the editing marks." },
+        book: { book: "SB", pages: "69-71", note: "Draft (69), revise after Read, Retell, Respond (70), edit and proofread, then present (71)." },
         steps: [
           "Set your goal at the top (e.g. 'two possessives, one reported question, a connection to Vietnam').",
-          "Write 120-150 words: an introduction with the title and your opinion, a body paragraph with two pieces of evidence, a connection, a conclusion.",
-          "Edit with the editing marks: possessives and its / it's first, then conditionals and passives, then spelling.",
-          "Swap with a partner for two stars and a wish; make the change they wish for.",
+          "Draft 120-150 words from your chart: a beginning with a short summary and your opinion, details that support it, a connection, an ending.",
+          "Revise (70): read your draft to a partner, who retells it and suggests one change (a clearer opinion, a stronger detail). Make the change with the revising marks.",
+          "Edit and proofread (71): possessive nouns and adjectives first (apostrophes, its / it's), then -ed / -ing spelling, conditionals and passives.",
         ],
       },
       {
@@ -1318,7 +1404,8 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
-          { label: "Final copy", detail: "Write the final copy of your literary response and read it to your family. Report one question they asked you.", book: { book: "SB", pages: "70-71" } },
+          { label: "Final copy", detail: "Write the final copy of your literary response and read it to your family, using the presentation tips. Report one question they asked you.", book: { book: "SB", pages: "71" } },
+          { label: "Practice Book", detail: "Sheets 5.13 (possessive adjectives), 5.15 (possessive nouns), 5.19 (double-entry log), 5.20 (Venn diagram), 5.21 (possessive nouns and adjectives) and 5.22-5.25 (writing project: rubric, chart, revise, edit).", book: { book: "WB", pages: "5.13, 5.15, 5.19-5.25", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "8 items: possessives (its / it's, s' / 's, mine / yours) and 4 reported questions." },
           { label: "Function of the week (B): apologising and replying", detail: "Practise: I'm so sorry I ... / That's all right. / Never mind. / It doesn't matter. / Don't worry about it." },
         ],
@@ -1334,7 +1421,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 5, lesson: "Unit Wrap-Up" },
     title: "Unit Wrap-Up: have you ever seen it change? (mock test)",
     inquiryPhases: ["Generalize", "Transfer", "Reflect"],
-    book: [{ book: "SB", pages: "72-73", note: "Unit wrap-up: the Big Question and the unit review." }],
+    book: [{ book: "SB", pages: "72-73", note: "Unit wrap-up: the Big Question concept map and Write an Explanation (72), Share Your Ideas (73)." }],
     slides: [
       { kind: "title", title: "Unit 5: Mysteries of Matter", subtitle: "Lesson 8 · Unit Wrap-Up", bigQuestion: BQ },
       {
@@ -1374,7 +1461,7 @@ const lessons: Deck[] = [
         minutes: 10,
         steps: [
           "Before: name three changes of matter you have seen today. Tell your partner in 30 seconds.",
-          "Watch the Unit 5 video. Note every change of matter you see and what causes it.",
+          "Watch the Unit 5 video. Note the three states of matter (solid, liquid, gas) with an example of each, and every change you see and what causes it.",
           "Compare notes: which change was new to you? Which cause from our poster appeared most often?",
         ],
         prompts: ["In the video, ___ changed because ___.", "I have never seen ___ before.", "The most common cause was ___."],
@@ -1406,7 +1493,7 @@ const lessons: Deck[] = [
         pitfalls: [
           { wrong: "I have seen snow last year.", right: "I saw snow last year.", why: "a finished time: past simple" },
           { wrong: "Have you finished already your work?", right: "Have you already finished your work?", why: "already before the participle" },
-          { wrong: "She hasn't yet arrived.", right: "She hasn't arrived yet.", why: "yet at the end" },
+          { wrong: "I have ever seen snow.", right: "I have never seen snow. / Have you ever seen snow?", why: "ever is for questions; a 'no' sentence uses never" },
         ],
       },
       {
@@ -1440,10 +1527,25 @@ const lessons: Deck[] = [
         prompts: ["What is the cause: heat, wind, mixing, or all three?", "Is it a reversible change?", "Which other Vietnamese jobs depend on a change of matter?"],
         fluencyTip: "End your turn with a question to the next speaker: it keeps the discussion moving.",
       },
+      {
+        kind: "activity",
+        title: "Wrap-up: our Big Question concept map",
+        tag: "Review",
+        mode: "groups",
+        minutes: 8,
+        book: { book: "SB", pages: "72-73", note: "Talk Together and Write an Explanation (72); Share Your Ideas (73)." },
+        steps: [
+          "Talk Together (72): skim the unit's selections and finish the concept map (Practice Book 5.1) with every cause of change we found: heat, cold, water mixing with sand, time ...",
+          "Write an Explanation (72): choose one example from the map. In three sentences, define matter, say how it changed and what made it change.",
+          "Share Your Ideas (73): choose one option for homework (a blog, a weather broadcast, a dance of a state of matter, or a solid / liquid / gas list).",
+        ],
+        prompts: ["Matter is ___.", "___ changed from ___ to ___ because ___.", "I chose the ___ option because ___."],
+      },
       { kind: "reflect", prompts: ["Answer the Big Question in one sentence of your own.", "Which two grammar points will you practise from your mock?", "What is the most surprising change of matter you have ever seen?"] },
       {
         kind: "homework",
         items: [
+          { label: "Book", detail: "Do the Share Your Ideas option you chose and bring it to the next lesson.", book: { book: "SB", pages: "73" } },
           { label: "Error log", detail: "Copy every mock-test mistake into your error log with the rule and a new example." },
           { label: "Self-introduction (I)", detail: "Re-record your self-introduction; add two sentences about something you have never done but want to try, and something you have already learned in 3B." },
           { label: "Rewrite track (A)", detail: "8 items: present perfect with ever / never / already / yet / just vs past simple." },
@@ -1478,13 +1580,14 @@ export const rhL3U5: Unit = {
     "Writers support a response to a text with an opinion, evidence and connections.",
   ],
   grammarStrand: [
-    { point: "Adjectives: -ed vs -ing; adjective order", lesson: 1, source: "book" },
+    { point: "Adjectives: -ed vs -ing; adjective order (building on the book's adjectives)", lesson: 1, source: "added" },
     { point: "so / such ... that; comparative adverbs", lesson: 2, source: "added" },
     { point: "Past continuous with when / while", lesson: 3, source: "added" },
-    { point: "Past passive (was found, were discovered); adjectives that compare", lesson: 4, source: "added" },
+    { point: "Adjectives and articles; adjectives that compare (-er / -est, more / most)", lesson: 4, source: "book" },
+    { point: "Past passive (was found, were discovered)", lesson: 4, source: "added" },
     { point: "Prefixes in- / im- / un- / dis-; It takes ... to / spend time -ing", lesson: 5, source: "added" },
     { point: "Zero vs first conditional; when / as soon as + present", lesson: 6, source: "added" },
-    { point: "Possessive nouns, possessive adjectives and pronouns", lesson: 7, source: "book" },
+    { point: "Possessive nouns and possessive adjectives (book); possessive pronouns", lesson: 7, source: "book" },
     { point: "Reported questions", lesson: 7, source: "stretch" },
     { point: "Present perfect with ever / never / already / yet / just", lesson: 8, source: "added" },
   ],

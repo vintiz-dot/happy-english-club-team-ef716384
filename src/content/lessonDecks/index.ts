@@ -39,6 +39,7 @@ import { odL2U16 } from "./od2e-l2-u16";
 import { odL2U17 } from "./od2e-l2-u17";
 import { odL2U18 } from "./od2e-l2-u18";
 import { odL3U12 } from "./od2e-l3-u12";
+import { rhL3U1 } from "./rh-l3-u1";
 import { rhL3U2 } from "./rh-l3-u2";
 import { rhL3U3 } from "./rh-l3-u3";
 import { rhL3U4 } from "./rh-l3-u4";
@@ -99,6 +100,7 @@ export const UNITS: Unit[] = [
   odL3U16,
   odL3U17,
   odL3U18,
+  rhL3U1,
   rhL3U2,
   rhL3U3,
   rhL3U4,

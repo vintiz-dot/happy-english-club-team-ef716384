@@ -26,6 +26,8 @@ async function load(rel, name) {
 const N = await load("src/lib/lessonDecks/names.ts", "ld-names");
 const P = await load("src/lib/lessonDecks/pacing.ts", "ld-pacing");
 const C2 = await load("src/lib/curriculumLessons.ts", "ld-curriculum");
+// Reach Higher class audio: publisher file name -> the school's Drive file id.
+const RH_AUDIO_IDS = new Set(Object.values((await load("src/content/lessonDecks/rh-l3/audio.ts", "ld-rh-audio")).RH3_AUDIO));
 
 console.log("name slots");
 eq("slots found across texts", N.slotsIn(["{s1} likes {s3}", null, "no slot", "{s2}"]), 3);
@@ -163,6 +165,12 @@ for (const { f, u } of units) {
     const timed = d.slides.filter((s) => typeof s.minutes === "number").reduce((a, s) => a + s.minutes, 0);
     ok(`${d.id}: timed activities add up to the lesson (${timed} of ${d.minutes})`, timed <= d.minutes && timed >= d.minutes - 15);
     if (rule.citesBook) ok(`${d.id}: names the Student Book or Workbook pages it covers`, d.book.length > 0 && d.book.every((b) => b.pages));
+    // Class audio / video are links to the school's Drive, played in Drive's player:
+    // every link has a track, every track is a Drive id, audio ids come from the manifest.
+    for (const s of d.slides.filter((x) => x.media)) {
+      ok(`${d.id} / ${s.title ?? s.kind}: media links each have a track and a Drive id`, s.media.length > 0 && s.media.every((m) =>
+        m.label && m.tracks.length > 0 && m.tracks.every((t) => /^[A-Za-z0-9_-]{20,}$/.test(t.driveId) && (m.kind === "video" || RH_AUDIO_IDS.has(t.driveId)))));
+    }
     ok(`${d.id}: has a speaking activity`, d.slides.some((s) => s.kind === "speaking" || (s.kind === "activity" && s.tag === "Speaking")));
     ok(`${d.id}: supplementary links point only at the publisher's own resource pages`,
       (d.resources ?? []).every((r) => /^https:\/\/www\.twinkl\.com\/resource\/[a-z0-9-]+$/.test(r.url) && r.title && r.use));
@@ -194,8 +202,16 @@ for (const { f, u } of units) {
     }
   }
   if (u.curriculum === "reach-higher") {
-    eq(`${f}: a checkpoint quiz mid-unit and a mock test in the last lesson`, u.decks.map((d) => d.slides.filter((s) => s.kind === "check").length), [0, 0, 0, 1, 0, 0, 0, 1]);
-    eq(`${f}: one deck per Reach Higher block, in book order`, u.decks.map((d) => d.covers?.lesson), C2.REACH_HIGHER_BLOCKS);
+    if (u.decks.length === 1) {
+      // Unit 1 is a review unit: Jupiter had finished it before the decks, so it has
+      // one review lesson (the Wrap-Up block) and its end-of-unit test.
+      ok(`${f}: a one-lesson unit is Unit 1's review, on the Wrap-Up block`, u.unit === 1 && u.decks[0].covers?.lesson === "Unit Wrap-Up");
+    } else {
+      eq(`${f}: a checkpoint quiz mid-unit and a mock test in the last lesson`, u.decks.map((d) => d.slides.filter((s) => s.kind === "check").length), [0, 0, 0, 1, 0, 0, 0, 1]);
+      eq(`${f}: one deck per Reach Higher block, in book order`, u.decks.map((d) => d.covers?.lesson), C2.REACH_HIGHER_BLOCKS);
+    }
+    const tests = (u.assessments ?? []).filter((a) => a.kind === "summative");
+    ok(`${f}: one full end-of-unit test, after the unit's last lesson`, tests.length === 1 && tests[0].id === `rh-l3-u${u.unit}-test` && tests[0].afterLesson === u.decks.length);
     ok(`${f}: 5-9 teacher generalizations`, u.generalizations.length >= 5 && u.generalizations.length <= 9);
     ok(`${f}: the grammar strand points at real lessons`, (u.grammarStrand ?? []).length > 0 && u.grammarStrand.every((g) => g.lesson >= 1 && g.lesson <= u.decks.length));
   }

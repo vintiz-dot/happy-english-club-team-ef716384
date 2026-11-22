@@ -51,6 +51,12 @@ export type Tier = { level: TierLevel; task: string; frames?: string[] };
 /** One line of an original listening script, read aloud by the browser. */
 export type ScriptLine = { speaker: string; text: string };
 
+// Class audio or video the school keeps in its own Google Drive (Reach Higher's
+// tracks and unit videos). A slide LINKS to the Drive file and plays Drive's own
+// player; the app never copies the file. `tracks` play in order (a reading is one
+// track per Student Book page).
+export type MediaLink = { kind: "audio" | "video"; label: string; tracks: { label: string; driveId: string }[] };
+
 export type Thinking = "Create" | "Design" | "Evaluate" | "Argue" | "Compare and justify";
 
 export type CreativeTask = {
@@ -78,8 +84,9 @@ export type Slide =
       book?: BookRef;
       teacherNote?: string;
       tiers?: Tier[]; // Support / Core / Stretch versions of the task
+      media?: MediaLink[];
     }
-  | { kind: "vocab"; title?: string; words: { word: string; meaning: string; example: string }[]; book?: BookRef }
+  | { kind: "vocab"; title?: string; words: { word: string; meaning: string; example: string }[]; book?: BookRef; media?: MediaLink[] }
   | {
       kind: "grammar";
       title: string;
@@ -105,8 +112,9 @@ export type Slide =
       // An IELTS Speaking part: the cue card for Part 2, the timings, and whether
       // listeners score the speaker on the HEC peer rubric (ieltsRubric.ts).
       ielts?: { part: 1 | 2 | 3; cueCard?: { topic: string; points: string[] }; prepSeconds?: number; speakSeconds?: number; peerScore?: boolean };
+      media?: MediaLink[];
     }
-  | { kind: "book"; title?: string; ref: BookRef; steps?: string[] }
+  | { kind: "book"; title?: string; ref: BookRef; steps?: string[]; media?: MediaLink[] }
   | {
       kind: "homework";
       title?: string;

@@ -8,8 +8,21 @@
 // its lessons in the unit. The school's own writing throughout: the decks name the
 // selections and pages and never reproduce book text.
 //
+// Unit 8's pages, from the Teacher's Edition: opener 222-223; Part 1 Language Focus
+// (ask for and give advice) 224, math key words 225, thinking map (goal and outcome)
+// 226, academic words 227, reading strategy 228-229, phonics -ant / -ent 230-231,
+// "Running Shoes" 232-247, think and respond 248-249, word work 250, "Two Clever
+// Plans" 251-259 (the myth 252-255, the folk tale 256-259), compare settings 260,
+// grammar: past tense 261; Part 2 Language Focus (express intentions) 262, social
+// studies key words 263, thinking map (main idea and details) 264, academic words
+// 265, reading strategy 266-267, phonics: words with more than one syllable 268-269,
+// "One Man's Goal" 270-281, think and respond 282-283, word work 284, "Climbing
+// Toward Her Goal" 285-289, compare causes 290, grammar: future tense 291, writing
+// project (story) 292-295, wrap-up 296-297.
+//
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
+import { keyWordAudio, phonicsAudio, readingAudio, talkAudio } from "./rh-l3/media";
 import { rhL3U8Assessments } from "./rh-l3-u8/assessments";
 import { rhL3U8Creative } from "./rh-l3-u8/homework";
 
@@ -25,7 +38,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 8, lesson: "Unit Launch" },
     title: "Unit Launch: what gets you there?",
     inquiryPhases: ["Engage", "Focus"],
-    book: [{ book: "SB", pages: "222-225", note: "Unit opener (Big Question) and the Part 1 Language Focus: ask for and give advice." }],
+    book: [{ book: "SB", pages: "222-225", note: "Unit opener and Share What You Know (222-223), the Part 1 Language Focus: ask for and give advice (224), and the math key words (225)." }],
     slides: [
       { kind: "title", title: "Unit 8: Getting There", subtitle: "Lesson 1 · Unit Launch", bigQuestion: BQ },
       {
@@ -46,9 +59,9 @@ const lessons: Deck[] = [
         instructions: "Whiteboards. Answer, show, give a one-sentence reason.",
         items: [
           { q: "The volcano erupted very ___.", options: ["sudden", "suddenly", "suddenness", "more sudden"], answer: "B. suddenly" },
-          { q: "We ___ dinner when the ground started to shake.", options: ["had", "were having", "have", "are having"], answer: "B. were having" },
-          { q: "By the time the rescue boat arrived, the water ___.", options: ["has gone down", "had gone down", "goes down", "is going down"], answer: "B. had gone down" },
-          { q: "The old bridge ___ by the flood in 2008.", options: ["destroyed", "was destroyed", "is destroying", "has destroy"], answer: "B. was destroyed" },
+          { q: "We ___ dinner when the ground started to shake.", options: ["have", "are having", "were having", "has"], answer: "C. were having" },
+          { q: "By the time the rescue boat arrived, the water ___.", options: ["had gone down", "has gone down", "goes down", "is going down"], answer: "A. had gone down" },
+          { q: "The old bridge ___ by the flood in 2008.", options: ["destroyed", "is destroying", "has destroy", "was destroyed"], answer: "D. was destroyed" },
           { q: "The match was cancelled ___ the heavy rain.", options: ["because", "because of", "so", "although"], answer: "B. because of" },
         ],
       },
@@ -86,13 +99,29 @@ const lessons: Deck[] = [
         title: "Unit opener and Language Focus",
         tag: "Speaking",
         mode: "pairs",
-        minutes: 8,
-        book: { book: "SB", pages: "222-225", note: "Opener photo; the Language Focus on asking for and giving advice." },
+        minutes: 10,
+        book: { book: "SB", pages: "222-225", note: "Opener photo and Share What You Know (222-223); Language Focus dialogue (224); math key words and Talk Together (225)." },
         steps: [
-          "Opener (222-223): one minute of silent looking. What goal might the people in the photo have? What tools can you see? Say: I notice ... / I wonder ...",
-          "Do the Language Focus (224-225) with a partner, then ask your partner for advice about one goal from the four corners.",
+          "Opener (222-223): one minute of silent looking at the photo of a boy ice climbing in Rjukan, Norway. What is his goal? Which tools help him (ropes, an ice axe, spikes on his boots called crampons)? Say: I notice ... / I wonder ...",
+          "Language Focus (224): listen to the dialogue in which José asks Marta which swim race to enter, and she advises him. What advice does she give, and why? Then practise the book's frames (Do you know ...? / Should I ...? / You should / should not ...).",
+          "Key words (225): a 5K race is five kilometers. With a partner, do Talk Together: you want to train for a race; ask for and give advice about the tools you could use.",
         ],
-        prompts: ["What should I do to ___?", "You should ___.", "Thanks, that's good advice."],
+        prompts: ["Do you know ___?", "Should I ___?", "You should / should not ___ because ___.", "Thanks, that's good advice."],
+        teacherNote: "Marta's advice: he has never swum the long race, so he should not try it yet and should start with the shorter one. The book's Share What You Know (a treasure map for a partner) can be the homework or a starter for Lesson 2.",
+        media: [talkAudio(8, 1, 224, "Dialogue: José and Marta (ask for and give advice)")],
+      },
+      {
+        kind: "vocab",
+        title: "Part 1 math words: measuring",
+        book: { book: "SB", pages: "225", note: "Math key words." },
+        words: [
+          { word: "distance", meaning: "the amount of space between one place and another", example: "The distance round Hoàn Kiếm Lake is under 2 kilometers." },
+          { word: "measurement", meaning: "a number that tells the size, length or amount of something", example: "The nurse wrote down my height measurement." },
+          { word: "unit", meaning: "an amount we use to measure, like a meter, a kilogram or a minute", example: "A kilometer is a unit of distance." },
+          { word: "meter", meaning: "a unit of length; 100 centimeters", example: "Our classroom is about 8 meters long." },
+          { word: "kilometer", meaning: "a unit of length; 1,000 meters", example: "{s1} lives two kilometers from school." },
+          { word: "feet (one foot)", meaning: "a unit of length used in the USA; one foot is about 30 centimeters, so a meter is about 3 feet", example: "The door is about seven feet tall." },
+        ],
       },
       {
         kind: "activity",
@@ -152,7 +181,7 @@ const lessons: Deck[] = [
         instructions: "Choose the best reply (1-3) or the best word (4-5).",
         items: [
           { q: "1. 'I've got a sore throat.' - '___'", options: ["You'd better drink something warm.", "You'd better to drink something cold.", "Yes, I have.", "That's a good idea."], answer: "A. You'd better drink something warm." },
-          { q: "2. 'What should I do to get fitter?'", options: ["You should do exercise every day.", "Yes, you should.", "I'm fit, thanks.", "Never mind."], answer: "A. You should do exercise every day." },
+          { q: "2. 'What should I do to get fitter?' - '___'", options: ["Yes, you should.", "You should exercise every day.", "I'm fit, thanks.", "Never mind."], answer: "B. You should exercise every day." },
           { q: "3. 'If I were you, I'd join the running club.' - '___'", options: ["You're welcome.", "Thanks, I'll think about it.", "No, you aren't.", "Me neither."], answer: "B. Thanks, I'll think about it." },
           { q: "4. You ___ to wear a helmet when you ride a bike.", options: ["should", "ought", "had better", "must"], answer: "B. ought" },
           { q: "5. If I ___ you, I wouldn't go out in this storm.", options: ["am", "was being", "were", "will be"], answer: "C. were" },
@@ -199,6 +228,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheet 8.1: start the Unit 8 concept map (the toolbox) with the tools you already know.", book: { book: "WB", pages: "8.1", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 advice rewrites (should / ought to / had better / If I were you) and 4 Unit 7 items (past passive, past perfect)." },
           { label: "Words of the week (F): body and health", detail: "Learn 8 words (muscle, heart, lungs, stretch, injury, fit, energy, rest). Write 4 pieces of advice for a runner with should / had better." },
           { label: "Function of the week (B): asking for and giving advice", detail: "Practise: What should I do? / Do you think I should ...? / If I were you, I'd ... / That's a good idea, thanks. / I'll try that." },
@@ -215,7 +245,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 8, lesson: "Part 1 Language" },
     title: "Part 1 Language: what we have achieved",
     inquiryPhases: ["Focus", "Investigate"],
-    book: [{ book: "SB", pages: "226-239", note: "Key words (226-227), thinking map and academic words (228-229), phonics: suffixes -ant and -ent (230-231), and the first part of \"Running Shoes\" (232-239)." }],
+    book: [{ book: "SB", pages: "226-239", note: "Thinking map: goal and outcome (226), academic words (227), reading strategy: choose reading strategies (228-229), phonics: suffixes -ant and -ent (230-231), and the first part of the realistic fiction \"Running Shoes\" by Frederick Lipp (232-239)." }],
     slides: [
       { kind: "title", title: "Unit 8: Getting There", subtitle: "Lesson 2 · Part 1 Language", bigQuestion: BQ },
       {
@@ -243,32 +273,44 @@ const lessons: Deck[] = [
       },
       {
         kind: "vocab",
-        title: "Part 1 words: goals and measuring",
-        book: { book: "SB", pages: "226-227" },
+        title: "Part 1 words: goals and strategies",
+        book: { book: "SB", pages: "227", note: "Academic words." },
         words: [
           { word: "goal", meaning: "something you want to do and work towards", example: "{s1}'s goal is to swim 200 meters without stopping." },
-          { word: "achieve", meaning: "reach a goal by working hard", example: "My cousin achieved her dream of running a half marathon." },
-          { word: "distance", meaning: "how far it is from one place to another", example: "The distance round Hoàn Kiếm Lake is under 2 kilometers." },
-          { word: "direction", meaning: "the way you go or face (north, left, towards the river)", example: "We walked in the wrong direction for ten minutes!" },
-          { word: "estimate", meaning: "make a careful guess about a number or size", example: "I estimate that the classroom is 8 meters long." },
-          { word: "measurement", meaning: "a number that tells the size, length or amount of something", example: "The nurse wrote down my height measurement." },
-          { word: "meter / kilometer", meaning: "a unit of length / 1,000 meters", example: "Fansipan is more than 3,000 meters high." },
-          { word: "feet (foot)", meaning: "a unit of length used in the USA; one foot is about 30 centimeters", example: "The door is about seven feet tall." },
+          { word: "achieve", meaning: "get something you have worked hard for", example: "My cousin achieved her dream of running a half marathon." },
+          { word: "strategy", meaning: "a plan for success", example: "Our team's strategy is to pass the ball quickly." },
+          { word: "direction", meaning: "the way you move or face (north, left, towards the river)", example: "We walked in the wrong direction for ten minutes!" },
+          { word: "estimate", meaning: "make a careful guess about a number or size", example: "I estimate that there are 200 sweets in the jar." },
         ],
+        media: [keyWordAudio(8, 1)],
       },
       {
         kind: "activity",
-        title: "Thinking map and suffix spot",
+        title: "Thinking map and reading strategies",
         tag: "Vocabulary",
         mode: "pairs",
-        minutes: 10,
-        book: { book: "SB", pages: "228-231" },
+        minutes: 7,
+        book: { book: "SB", pages: "226-229", note: "Thinking map: goal and outcome (226); choose reading strategies (228-229)." },
         steps: [
-          "Use the book's thinking map (228-229) for a goal you have: the goal, the steps, the tools, the outcome.",
-          "Phonics (230-231): read the -ant and -ent words aloud (important, elephant, assistant, giant, different, student, patient, excellent). Do the endings sound the same?",
-          "Spelling trick: write each word, then say a related word (importance, difference, patience) to help you remember the a or the e.",
+          "Thinking map (226): the book's story map puts the goal in a square, the steps in circles and the outcome in a triangle. Tell your partner about a goal you wanted to achieve; your partner draws your story map.",
+          "Reading strategy (228-229): good readers choose a strategy for each text, and switch if it isn't working. Read the letter on page 229 and tell your partner which strategy helped (plan and monitor, ask questions, make inferences, determine importance, make connections, visualize, synthesize).",
         ],
-        prompts: ["My goal is ___. The first step is ___.", "important ends in -ant because importance has an a."],
+        prompts: ["My goal was ___. First, I ___. Then I ___. The outcome was ___.", "I used ___ because I wanted to know ___. It helped me ___."],
+      },
+      {
+        kind: "activity",
+        title: "Phonics: suffixes -ant and -ent",
+        tag: "Phonics",
+        mode: "pairs",
+        minutes: 6,
+        book: { book: "SB", pages: "230-231", note: "Phonics Focus and the decodable text \"The Mountain\"." },
+        steps: [
+          "Listen and sort (230): distant, servant, pleasant, immigrant / different, student, president, accident. Both endings sound the same (a weak 'unt'), so you have to learn the spelling.",
+          "Read \"The Mountain\" (231) with your partner. List its -ant and -ent words and sort them.",
+          "Spelling trick: say a related word to remember the a or the e (importance → important, difference → different, confidence → confident).",
+        ],
+        prompts: ["distant ends in -ant.", "different ends in -ent because difference has an e."],
+        media: [phonicsAudio(8, 1)],
       },
       {
         kind: "activity",
@@ -276,13 +318,16 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "pairs",
         minutes: 16,
-        book: { book: "SB", pages: "232-239" },
+        book: { book: "SB", pages: "232-239", note: "Realistic fiction; a circular story (it ends the way it began)." },
         steps: [
-          "Before reading: look at the title and pictures. Where is the story set? Why might a pair of shoes matter so much?",
-          "Read the first part. Note the girl's goal, the tool she is given, and what stands in her way (think about distance).",
-          "Choose a reading strategy and say which one you used: predicting, asking questions, picturing the scene.",
+          "Before reading (232-233): the genre is realistic fiction, and this story is circular. Read the box about a character's motive: the reason a character does something. Look at the pictures: where might the story be set?",
+          "Read pages 234-239. Who is the number man, and why does he come to Sophy's village every year? What does he measure, and why?",
+          "What is Sophy's secret wish? Why are running shoes the tool she needs (how far away is the school)? Why does her mother say yes?",
+          "Say which reading strategy you used on the hardest page: predicting, asking questions, visualizing.",
         ],
-        prompts: ["Her goal is ___.", "The problem is that ___.", "I used the strategy ___ because ___."],
+        prompts: ["The number man comes because ___.", "Sophy's secret wish is ___.", "She needs running shoes because ___.", "I used the strategy ___ because ___."],
+        teacherNote: "The book's Before You Continue (239): Sophy wants shoes so that she can run the long way to school (eight kilometers over bad roads); her father, who has died, used to teach her words, which tells us he thought learning mattered.",
+        media: [readingAudio(8, 1, 232, 239, "Running Shoes")],
       },
       {
         kind: "activity",
@@ -385,11 +430,12 @@ const lessons: Deck[] = [
         frames: ["___ has achieved something amazing: ___.", "In ___, ___ started ___.", "It took ___ to ___.", "The most important tool was ___ because ___."],
         challenge: "Interview the person at home and add one quotation; then decide whether talent, practice, tools or people mattered most, and argue for it in two sentences.",
       },
-      { kind: "reflect", prompts: ["What does the girl in the story want, and what is in her way?", "How do you choose between has done and did?", "Add one idea from the story to the TOOL Frayer."] },
+      { kind: "reflect", prompts: ["What does Sophy want, and what is in her way?", "How do you choose between has done and did?", "Add one idea from the story to the TOOL Frayer: is a pair of shoes enough on its own?"] },
       {
         kind: "homework",
         items: [
           { label: "Book", detail: "Reread pages 232-239 and write three questions you want the rest of the story to answer.", book: { book: "SB", pages: "232-239" } },
+          { label: "Practice Book", detail: "Sheets 8.2 (story map: goal, events, outcome) and 8.7 (suffixes -ant and -ent).", book: { book: "WB", pages: "8.2, 8.7", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: present perfect vs past simple with ever, already, yet, ago, last." },
           { label: "Words of the week (F)", detail: "Write 5 sentences about what your body can do now that it couldn't do two years ago (I've learned to ...)." },
         ],
@@ -405,7 +451,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 8, lesson: "Part 1 Reading" },
     title: "Part 1 Reading: how far, how long?",
     inquiryPhases: ["Investigate", "Organize"],
-    book: [{ book: "SB", pages: "240-249", note: "The rest of \"Running Shoes\" (240-246) and think and respond (247-249)." }],
+    book: [{ book: "SB", pages: "240-249", note: "The rest of \"Running Shoes\" (240-246), Meet the Author (247) and think and respond (248-249)." }],
     slides: [
       { kind: "title", title: "Unit 8: Getting There", subtitle: "Lesson 3 · Part 1 Reading", bigQuestion: BQ },
       {
@@ -439,11 +485,13 @@ const lessons: Deck[] = [
         minutes: 16,
         book: { book: "SB", pages: "240-246" },
         steps: [
-          "Finish the story. Find every number, distance or time in it and note what it measures.",
-          "Organize: a goal - tool - obstacle - result chart for the main character.",
-          "Are the shoes the only tool she uses? Find evidence of at least two other tools (a plan, a skill, a person, a habit).",
+          "Finish the story. Find every number, distance or time in it (eight kilometers, one year later ...) and note what it measures.",
+          "Organize: a goal - tool - obstacle - result chart for Sophy. What happens on her first day at the one-room school, and how does she answer the boys who laugh at her?",
+          "Are the shoes the only tool she uses? Find evidence of at least two other tools (her courage, her early start, the number man's help, her mother's yes, what her father taught her).",
+          "The story is circular: what comes back at the end (the dust, the animals, the red jeep)? What new goal does Sophy tell the number man?",
         ],
-        prompts: ["The distance she has to ___ is ___.", "Besides the shoes, she uses ___.", "In the end, she ___ because ___."],
+        prompts: ["The distance she runs is ___.", "Besides the shoes, she uses ___.", "The boys change when ___.", "At the end, her new goal is ___."],
+        media: [readingAudio(8, 1, 240, 246, "Running Shoes")],
       },
       {
         kind: "activity",
@@ -451,9 +499,14 @@ const lessons: Deck[] = [
         tag: "Review",
         mode: "pairs",
         minutes: 8,
-        book: { book: "SB", pages: "247-249" },
-        steps: ["Answer the book's questions with page evidence.", "Talk about it: would the story work if she had been given a bike instead? What would change?"],
-        prompts: ["On page ___ it says ___.", "If she had a bike, she would ___, but ___."],
+        book: { book: "SB", pages: "247-249", note: "Meet the Author (247), Talk About It and Write About It (248), story map and summary (249)." },
+        steps: [
+          "Meet the Author (247): Sophy is made up, but the author wrote her story to show how hard it is for many girls in Cambodia to go to school. Find Cambodia on a map: who are its neighbours?",
+          "Talk About It (248): why is the story realistic fiction? How do the boys treat Sophy, and what makes them change? Role-play the advice Sophy's teacher might give her on her first day.",
+          "Story map (249): goal, events, outcome. Summarize the story for a partner with First ... Then ... In the end ...",
+          "Talk about it: would the story work if she had been given a bike instead? What would change?",
+        ],
+        prompts: ["I know it is realistic fiction because ___.", "Sophy: What should I ___? Teacher: You should / should not ___.", "If she had a bike, she would ___, but ___."],
       },
       {
         kind: "activity",
@@ -557,10 +610,12 @@ const lessons: Deck[] = [
         frames: ["The route starts at ___ and is ___ kilometers long.", "From ___, turn left and run about ___ meters.", "It takes most runners about ___ to reach ___.", "You'd better ___ at ___."],
         challenge: "Design a second route for younger children that is half as long, and explain what else you changed to make it safe and fun for them.",
       },
-      { kind: "reflect", prompts: ["Which tools helped the girl reach her goal? Were they all things?", "How far or How long: which one asks about time?", "What tool helped you estimate today?"] },
+      { kind: "reflect", prompts: ["Which tools helped Sophy reach her goal? Were they all things?", "How far or How long: which one asks about time?", "What tool helped you estimate today?"] },
       {
         kind: "homework",
         items: [
+          { label: "Write About It (248)", detail: "Be Sophy: write a short journal entry to your father about how the running shoes helped you reach your goal of going to school. Use three Part 1 words.", book: { book: "SB", pages: "248" } },
+          { label: "Practice Book", detail: "Sheets 8.4 (key points of \"Running Shoes\"), 8.6 (retell with the story map) and 8.8 (read aloud with good intonation).", book: { book: "WB", pages: "8.4, 8.6, 8.8", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: How far / How long / It takes ... to / twice as ... as." },
           { label: "Listening (E)", detail: "Listen to the story's audio and write down every number, distance and time you hear." },
           { label: "Function of the week (B): asking for and giving directions", detail: "Practise: Excuse me, how do I get to ...? / Go straight on. / Turn left at ... / It's on your right. / It's about five minutes' walk." },
@@ -577,7 +632,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 8, lesson: "Part 1 Review" },
     title: "Part 1 Review: to, in order to, so that (checkpoint)",
     inquiryPhases: ["Organize", "Generalize", "Reflect"],
-    book: [{ book: "SB", pages: "250-261", note: "Word work (250-251), the myth \"Three Golden Apples\" (252-255), the folk tale \"Turtle and His Four Cousins\" (256-259), and grammar: verb tenses, present and past (260-261)." }],
+    book: [{ book: "SB", pages: "250-261", note: "Word work: word categories (250); \"Two Clever Plans\" (251): the Greek myth \"Three Golden Apples\" (252-255) and the Cuban folk tale \"Turtle and His Four Cousins\" (256-259); respond and extend: compare settings (260); grammar: past tense, regular and irregular verbs (261)." }],
     slides: [
       { kind: "title", title: "Unit 8: Getting There", subtitle: "Lesson 4 · Part 1 Review", bigQuestion: BQ },
       {
@@ -595,10 +650,23 @@ const lessons: Deck[] = [
         mode: "solo",
         minutes: 15,
         steps: [
-          "15 minutes, on your own, on the printed quiz (advice, present perfect and past simple, How far / How long, -ant and -ent, stress).",
+          "15 minutes, on your own, on the printed quiz (advice, present perfect and past simple, regular and irregular past verbs, How far / How long, -ant and -ent spelling, a dialogue reply).",
           "Hand in at the bell. The teacher marks it before Lesson 5.",
           "Teacher: record each child's score for the checkpoint ladder.",
         ],
+      },
+      {
+        kind: "activity",
+        title: "Word work: word categories",
+        tag: "Vocabulary",
+        mode: "pairs",
+        minutes: 4,
+        book: { book: "SB", pages: "250", note: "Word Work: word categories." },
+        steps: [
+          "A word category is a group of words about one topic. Which topic links meter, kilometer, feet and distance?",
+          "Do Try It Together (250) with your partner, then build a web for the topic JOURNEY with as many words as you can in two minutes.",
+        ],
+        prompts: ["___, ___ and ___ all belong to the category ___.", "___ doesn't belong because ___."],
       },
       {
         kind: "activity",
@@ -606,26 +674,29 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "pairs",
         minutes: 16,
-        book: { book: "SB", pages: "250-259" },
+        book: { book: "SB", pages: "251-259", note: "\"Two Clever Plans\": the introduction (251), \"Three Golden Apples\" (252-255), \"Turtle and His Four Cousins\" (256-259)." },
         steps: [
-          "Word work (250-251), then read \"Three Golden Apples\" (252-255) and \"Turtle and His Four Cousins\" (256-259) in pairs, one each, and retell yours to your partner.",
-          "Cross-comparison chart for both tales: the goal, who wants it, the tools or tricks used, who helps, the result.",
-          "Is a trick a fair tool? Decide for each story and give one reason.",
+          "Introduction (251): a myth is a very old story, often with gods and goddesses; a folk tale has been told again and again, often with animals. Both stories are about a clever character with a plan.",
+          "In pairs, read one story each and retell it. \"Three Golden Apples\": Princess Atalanta of ancient Greece, the fastest runner in the land, will only marry a man who beats her in a race; Melanion asks the goddess Aphrodite for help. \"Turtle and His Four Cousins\": Deer makes fun of Turtle's short legs, so the two agree to race from the beach to the fourth hill.",
+          "Cross-comparison chart for both tales: the goal, who wants it, the tool or trick (three golden apples; four cousins waiting on the hills), who helps, the result.",
+          "Atalanta cries that the race was unfair. Is a trick a fair tool? Decide for each story and give one reason.",
         ],
-        prompts: ["In the myth, ___ uses ___ in order to ___.", "In the folk tale, ___ so that ___.", "I think the trick is fair / unfair because ___."],
+        prompts: ["In the myth, Melanion throws ___ in order to ___.", "In the folk tale, Turtle puts his cousins ___ so that ___.", "I think the trick is fair / unfair because ___."],
+        media: [readingAudio(8, 1, 252, 255, "Three Golden Apples"), readingAudio(8, 1, 256, 259, "Turtle and His Four Cousins")],
       },
       {
         kind: "activity",
-        title: "Book grammar: present and past verbs",
+        title: "Compare settings and book grammar: past tense",
         tag: "Review",
         mode: "pairs",
         minutes: 6,
-        book: { book: "SB", pages: "260-261", note: "Grammar: verb tenses, present and past." },
+        book: { book: "SB", pages: "260-261", note: "Respond and Extend: compare settings (260); Grammar: past tense, regular and irregular verbs (261)." },
         steps: [
-          "Do the book's grammar practice with your partner.",
-          "Retell one event from each tale twice: first as a storyteller (past), then as a sports commentator (present: Now Turtle is ...!).",
+          "Compare settings (260): where and when does each story happen? Fill the comparison chart, then say which tools helped Melanion and Turtle.",
+          "Grammar (261): regular past verbs add -ed (some change first: drop → dropped, study → studied); irregular verbs have their own forms (come → came, go → went, eat → ate). Do the book's Read and Write tasks.",
+          "Retell one event from each tale twice: first as a storyteller (past), then as a sports commentator (present: Now Deer is running to the second hill!).",
         ],
-        prompts: ["Long ago, ___ wanted ___.", "Look! ___ is ___ right now!"],
+        prompts: ["\"Three Golden Apples\" happens in ___, long ago.", "Melanion threw ___. Turtle waited ___.", "Look! ___ is ___ right now!"],
       },
       {
         kind: "activity",
@@ -666,7 +737,7 @@ const lessons: Deck[] = [
           { text: "We bought a map to plan our climb up Fansipan." },
           { text: "{s6} goes to bed early in order to be fresh for the test." },
           { text: "The teacher spoke slowly so that everyone could follow." },
-          { text: "When the others arrived, Turtle had already hidden his cousins along the road." },
+          { text: "By the time Deer reached the fourth hill, Turtle had already got there and was waiting." },
         ],
         pitfalls: [
           { wrong: "I went to the shop for buy some bread.", right: "I went to the shop to buy some bread.", why: "purpose with a verb: to + verb" },
@@ -733,6 +804,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Rewrite track (A)", detail: "Correct your checkpoint mistakes in your error log, with the rule and a new example." },
+          { label: "Practice Book", detail: "Sheets 8.3 (regular past tense verbs), 8.5 (irregular past tense verbs), 8.9 (prediction chart for the two stories), 8.10 (comparison chart) and 8.11 (present and past tense verbs).", book: { book: "WB", pages: "8.3, 8.5, 8.9-8.11", note: "Practice Book sheets" } },
           { label: "Words of the week (F): transport and travel", detail: "Learn 8 words (ferry, cable car, sleeper bus, platform, timetable, passenger, delay, return ticket). Write 4 sentences: How long does it take to get to ... by ...?" },
         ],
       },
@@ -747,7 +819,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 8, lesson: "Part 2 Language" },
     title: "Part 2 Language: will, going to, I'm meeting",
     inquiryPhases: ["Engage", "Focus"],
-    book: [{ book: "SB", pages: "262-269", note: "Part 2 Language Focus: express intentions (262-263), key words (264-265), thinking map and academic words (266-267), phonics: two-syllable words and stress (268-269)." }],
+    book: [{ book: "SB", pages: "262-269", note: "Part 2 Language Focus: express intentions (262), social studies key words (263), thinking map: main idea and details (264), academic words (265), reading strategy: use reading strategies (266-267), phonics: words with more than one syllable (268-269)." }],
     slides: [
       { kind: "title", title: "Unit 8: Getting There", subtitle: "Lesson 5 · Part 2 Language", bigQuestion: BQ },
       {
@@ -779,19 +851,21 @@ const lessons: Deck[] = [
         tag: "Speaking",
         mode: "pairs",
         minutes: 13,
-        book: { book: "SB", pages: "262-263" },
+        book: { book: "SB", pages: "262-263", note: "Language Focus: express intentions (262); Talk Together with the key words (263)." },
         steps: [
-          "Do the book's Language Focus on expressing intentions with your partner.",
-          "Then: tell your partner three intentions for the next school holiday, and one for 2028. Your partner asks 'How are you going to do that?' every time.",
+          "Language Focus (262): listen to Emma's song about getting ready for a trip to New York City, then sing along. Which frames does she use to say what she intends to do (I want to ... / I will ... / I plan to ... / I am going to ...)?",
+          "Talk Together (263): pretend you are planning a journey. Tell your partner your intentions with the frames, then say how you will reach your goal. Then add three intentions for the next school holiday and one for 2028. Your partner asks 'How are you going to do that?' every time.",
           "Which intentions had a plan behind them? Which were only wishes? Sort them.",
         ],
-        prompts: ["I'm going to ___.", "I intend to ___. / I plan to ___.", "How are you going to ___? - First, I'll ___."],
-        teacherNote: "Engage. The sort (intention with a plan / wish without one) links the future to the unit's idea: a plan is a tool, and a wish alone is not.",
+        prompts: ["I want to ___.", "I will ___. / I plan to ___.", "I'm going to ___.", "How are you going to ___? - First, I'll ___."],
+        teacherNote: "Engage. The song is sung, never printed: do not copy its words onto the board. The sort (intention with a plan / wish without one) links the future to the unit's idea: a plan is a tool, and a wish alone is not.",
+        media: [talkAudio(8, 2, 262, "Song: Getting Ready (express intentions)")],
       },
       {
         kind: "vocab",
         title: "Part 2 words: journeys and challenges",
-        book: { book: "SB", pages: "264-265" },
+        book: { book: "SB", pages: "263, 265", note: "Social studies key words (263) and academic words (265)." },
+        media: [keyWordAudio(8, 2)],
         words: [
           { word: "journey / destination", meaning: "travelling from one place to another / the place you are going to", example: "The journey to our destination, Hà Giang, took eight hours." },
           { word: "challenge", meaning: "something difficult that tests you", example: "Climbing Fansipan on foot is a real challenge." },
@@ -805,17 +879,31 @@ const lessons: Deck[] = [
       },
       {
         kind: "activity",
-        title: "Thinking map and stress spot",
+        title: "Thinking map and reading strategies (Part 2)",
+        tag: "Vocabulary",
+        mode: "pairs",
+        minutes: 5,
+        book: { book: "SB", pages: "264-267", note: "Thinking map: main idea and details (264); use reading strategies before, during and after reading (266-267)." },
+        steps: [
+          "Thinking map (264): a main idea diagram has the main idea on the left and its details on the right. Make one with your partner for the main idea 'There are many interesting places to visit in Vietnam'.",
+          "Reading strategy (266-267): read Emma's diary of her New York trip. Say one strategy you used before, one during and one after reading.",
+        ],
+        prompts: ["The main idea is ___. One detail is ___.", "Before I read, I ___. As I read, I ___. Now that I'm done, I ___."],
+      },
+      {
+        kind: "activity",
+        title: "Phonics: syllables, then stress",
         tag: "Pronunciation",
         mode: "pairs",
-        minutes: 10,
-        book: { book: "SB", pages: "266-269" },
+        minutes: 6,
+        book: { book: "SB", pages: "268-269", note: "Phonics Focus: words with more than one syllable, and the decodable text \"Explore the Unknown\"." },
         steps: [
-          "Fill the book's thinking map (266-267) for a journey you would like to make: destination, how you will get there, what you will need.",
-          "Phonics (268-269): clap the two-syllable words (journey, prepare, explore, challenge, travel, discuss, mountain, achieve). Sort them: stress on the FIRST or the SECOND syllable.",
-          "Find the pattern: many two-syllable nouns are stressed first, many verbs second. Test it with record (noun) and record (verb).",
+          "Book (268): every syllable has one vowel sound. Clap and count: rab-bit (2), dec-o-ra-tion (4). Split a word with two consonants in the middle between them: hel-met.",
+          "Read \"Explore the Unknown\" (269) with your partner. List five long words from it and count their syllables.",
+          "Exam stretch: clap journey, prepare, explore, challenge, travel, discuss, mountain, achieve. Is the stress on the FIRST or the SECOND syllable? Many two-syllable nouns are stressed first, many verbs second: test it with RE-cord (noun) and re-CORD (verb).",
         ],
-        prompts: ["JOUR-ney has the stress on the first syllable.", "pre-PARE has the stress on the second syllable."],
+        prompts: ["con-ti-nent has three syllables.", "JOUR-ney has the stress on the first syllable.", "pre-PARE has the stress on the second syllable."],
+        media: [phonicsAudio(8, 2)],
       },
       {
         kind: "activity",
@@ -823,7 +911,7 @@ const lessons: Deck[] = [
         tag: "Grammar",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "290-291", note: "Part 2 grammar: future tense, will and going to." },
+        teacherNote: "This lesson's future forms carry the Language Focus (I will / I am going to). The book's own grammar lesson on will and going to comes on page 291, in Lesson 7.",
         steps: [
           "Sort the sentences: a PREDICTION, a PLAN or INTENTION, a FIXED ARRANGEMENT (time and place agreed), a DECISION made just now, a PROMISE or OFFER.",
           "Which form goes with each group?",
@@ -878,7 +966,7 @@ const lessons: Deck[] = [
           { q: "'The phone's ringing.' - 'OK, I ___ it.'", options: ["answer", "will answer", "am going to answer", "answered"], answer: "B. will answer" },
           { q: "We ___ our grandparents in Huế this weekend. We've bought the train tickets.", options: ["visit", "are visiting", "will visit", "visited"], answer: "B. are visiting" },
           { q: "As soon as she ___ the top, she will send us a photo.", options: ["reaches", "will reach", "reached", "is going to reach"], answer: "A. reaches" },
-          { q: "Be careful! You ___ fall off that wall!", options: ["will", "are going to", "go to", "would"], answer: "B. are going to" },
+          { q: "Look at those black clouds! It ___ rain.", options: ["going to", "is going to", "will to", "is going"], answer: "B. is going to" },
           { q: "Which word has the stress on the FIRST syllable?", options: ["prepare", "explore", "journey", "achieve"], answer: "C. journey" },
         ],
       },
@@ -923,6 +1011,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheets 8.12 (main idea diagram) and 8.17 (words with more than one syllable).", book: { book: "WB", pages: "8.12, 8.17", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: will / going to / present continuous and time clauses with when / as soon as / before." },
           { label: "Words of the week (F): school subjects and study", detail: "Learn 8 words (timetable, revise, subject, mark, notes, deadline, mock test, progress). Write 4 sentences about your study plan with going to." },
           { label: "Function of the week (B): making arrangements", detail: "Practise: Are you free on ...? / What are you doing on ...? / I'm afraid I can't, I'm ...ing. / How about ...? / See you then!" },
@@ -939,7 +1028,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 8, lesson: "Part 2 Reading" },
     title: "Part 2 Reading: I wish, if, unless",
     inquiryPhases: ["Investigate", "Organize", "Generalize"],
-    book: [{ book: "SB", pages: "270-283", note: "The human interest feature \"One Man's Goal\" (270-282) and think and respond (283)." }],
+    book: [{ book: "SB", pages: "270-283", note: "The human interest feature \"One Man's Goal\" by Catherine Clarke Fox (270-281) and think and respond (282-283)." }],
     slides: [
       { kind: "title", title: "Unit 8: Getting There", subtitle: "Lesson 6 · Part 2 Reading", bigQuestion: BQ },
       {
@@ -961,7 +1050,7 @@ const lessons: Deck[] = [
           { q: "When I will get home, I'll call you.", answer: "will get → get" },
           { q: "I'm going to visiting my grandma on Sunday.", answer: "visiting → visit" },
           { q: "Look at that dark sky! It will rain.", answer: "will rain → is going to rain" },
-          { q: "As soon as {s1} arrives, we start the meeting.", answer: "start → will start" },
+          { q: "That bag looks heavy. Don't worry, I carry it for you.", answer: "I carry → I'll carry (I will carry)" },
           { q: "Before you will leave, close the window.", answer: "will leave → leave" },
         ],
       },
@@ -971,14 +1060,16 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "pairs",
         minutes: 18,
-        book: { book: "SB", pages: "270-282" },
+        book: { book: "SB", pages: "270-281", note: "A human interest feature tells about a person's interesting experiences; read the map, its legend and compass rose (271, 275, 277)." },
         steps: [
-          "Preview: the title, photos, captions and map. What kind of goal could need a map of the globe?",
-          "Read the feature. Highlight the goal in one colour, the obstacles in another, the tools in a third (body, mind, plan, equipment, people).",
-          "Organize: a journey line from the start to the destination, with the hardest moment marked.",
-          "Choose a reading strategy for the hardest page and say why it helped.",
+          "Preview (270-271): a human interest feature tells about one person's adventures. Look at the map, its legend and the compass rose. What do the four symbols (climb, walk, bike, row) tell you about the journey?",
+          "Read the feature. Erden Eruç set out to travel around the world on his own power, with no motors: he biked from Seattle to Mount McKinley in Alaska and back, walked to base camp, climbed the peak, then left California in July 2007 to row alone across the Pacific towards Australia. Highlight the goal in one colour, the obstacles in another, the tools in a third.",
+          "Obstacles: rowing at least 10 hours a day, tropical rain, winds and waves pushing him west. Where did he land in the end, and when? Tools: what was in his little cabin and boat (solar panels, a satellite phone, a palm computer, a stove, machines that take the salt out of sea water)? How did the sea birds help?",
+          "Organize: a journey line from the start to the landing, with the hardest moment marked. Then say which reading strategy you used on the hardest page.",
         ],
         prompts: ["His goal was ___.", "The hardest moment was when ___.", "The tool that helped him most was ___, because ___."],
+        teacherNote: "From the feature: he reached Papua New Guinea in February 2009, because the winds would not let him row south to Australia; frigatebirds and noddy terns told him land was near. He also planned to climb the highest peak on six continents, in memory of a fellow climber, and he visits schools to tell children to keep going towards their goals.",
+        media: [readingAudio(8, 2, 270, 281, "One Man's Goal")],
       },
       {
         kind: "activity",
@@ -986,9 +1077,13 @@ const lessons: Deck[] = [
         tag: "Review",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "283" },
-        steps: ["Answer the book's questions with evidence.", "Talk about it: what kind of tool is endurance? Can you train it like a muscle?"],
-        prompts: ["Endurance is a tool because ___.", "You can train it by ___."],
+        book: { book: "SB", pages: "282-283", note: "Talk About It and Write About It (282); main idea diagram and summary (283)." },
+        steps: [
+          "Talk About It (282): which part did you enjoy most? Be Erden: express your intentions about rowing the Pacific (I want to ... / I am going to ...). How does the map legend help?",
+          "Main idea diagram (283): use the section headings as main ideas and summarize one section for your partner.",
+          "Talk about it: what kind of tool is endurance? Can you train it like a muscle?",
+        ],
+        prompts: ["I want to ___. I am going to ___.", "The main idea is ___. A detail that supports it is ___.", "Endurance is a tool because ___. You can train it by ___."],
       },
       {
         kind: "activity",
@@ -1055,13 +1150,13 @@ const lessons: Deck[] = [
       },
       {
         kind: "speaking",
-        title: "Hot seat: the man with the goal",
+        title: "Hot seat: Erden Eruç",
         mode: "groups",
         minutes: 13,
         steps: [
-          "One child sits in the hot seat as the man from the feature, at the hardest moment of his journey.",
+          "One child sits in the hot seat as Erden Eruç, alone in his rowing boat at the hardest moment of the Pacific crossing.",
           "The group asks questions about his goal, his tools and his feelings. He answers in role with wish, if and unless.",
-          "Change the person in the hot seat every three minutes. The last one is the man at the end of the journey.",
+          "Change the person in the hot seat every three minutes. The last one is Erden as he lands in Papua New Guinea.",
         ],
         frames: ["What do you wish right now? - I wish I ___.", "What would you do if ___? - If ___, I would ___.", "Unless I ___, I won't ___.", "The tool I need most is ___."],
         prompts: ["Why didn't you give up?", "Who helped you?", "What would you tell a child in Hanoi with a big goal?"],
@@ -1090,10 +1185,12 @@ const lessons: Deck[] = [
         frames: ["In my opinion, the most important tool is ___.", "For example, in the article ___.", "If he didn't have ___, he would ___.", "Unless you have ___, you won't ___."],
         challenge: "Write the strongest argument for a different tool, then answer it in two sentences so that your opinion still stands.",
       },
-      { kind: "reflect", prompts: ["What surprised you most about the man's journey?", "I wish I have or I wish I had: which is right, and why?", "Can a feeling be a tool? Add it to the Frayer if you think so."] },
+      { kind: "reflect", prompts: ["What surprised you most about Erden Eruç's journey?", "I wish I have or I wish I had: which is right, and why?", "Can a feeling be a tool? Add it to the Frayer if you think so."] },
       {
         kind: "homework",
         items: [
+          { label: "Write About It (282)", detail: "Write a short letter to Erden Eruç: what you think about his adventure, and a place you would like to explore one day. Use three Part 2 words.", book: { book: "SB", pages: "282" } },
+          { label: "Practice Book", detail: "Sheets 8.14 (key points of \"One Man's Goal\"), 8.16 (retell with a main idea diagram) and 8.18 (read aloud with good phrasing).", book: { book: "WB", pages: "8.14, 8.16, 8.18", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: wish + past simple / could, second conditional, unless." },
           { label: "Listening (E)", detail: "Listen to the feature's audio and write down every place and every number you hear." },
           { label: "Words of the week (F): feelings", detail: "Learn 8 words (proud, nervous, determined, disappointed, confident, relieved, frustrated, grateful). Write a sentence for each about reaching a goal." },
@@ -1110,7 +1207,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 8, lesson: "Writing Project" },
     title: "Writing Project: a story about getting there",
     inquiryPhases: ["Organize", "Transfer"],
-    book: [{ book: "SB", pages: "284-295", note: "Word work and the profile \"Climbing Toward Her Goal\" (284-289), grammar: future tense, will and going to (290-291), and the writing project: a story (292-295)." }],
+    book: [{ book: "SB", pages: "284-295", note: "Word work: homographs (284), the profile \"Climbing Toward Her Goal\" by Guadalupe López (285-289), respond and extend: compare causes (290), grammar: future tense with will and am / is / are going to (291), and the writing project: a story (292-295)." }],
     slides: [
       { kind: "title", title: "Unit 8: Getting There", subtitle: "Lesson 7 · Writing Project", bigQuestion: BQ },
       {
@@ -1143,25 +1240,30 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "284-289" },
+        book: { book: "SB", pages: "285-289", note: "A profile is nonfiction: the important facts about one part of a person's life." },
         steps: [
-          "Word work (284), then read the profile. Note the climber's goal, her tools and one obstacle.",
+          "Word work first (284): homographs are words spelled the same with different meanings, like train (practise for a race / a railway train). Do Try It Together with wind.",
+          "Read the profile. Constanza Ceruti, from Argentina, is a high-altitude archaeologist: she climbs high mountains to study places where people prayed long ago. What did she and her team find on Llullaillaco in 1999, and how old was it?",
+          "Note her goal (as a child: to live and work near the mountains), the obstacles on the climb (blowing snow, strong winds, little oxygen) and her tools (careful planning; the maths she worked hard to learn: how many feet, how long, when to start).",
           "A profile tells facts; a story makes us feel. Find one moment from the profile that you could turn into a story scene.",
         ],
-        prompts: ["Her goal is ___.", "A scene I could tell as a story is when ___."],
+        prompts: ["Her goal was ___.", "On the climb, she had to face ___.", "Maths helps her because ___.", "A scene I could tell as a story is when ___."],
+        teacherNote: "From the profile: she has climbed more than 100 mountains over 16,500 feet; on Llullaillaco the team found three Inca mummies (two girls and a boy) buried about 500 years ago, with statues, cloth and pottery. Handle the mummies matter-of-factly: they are why the find is famous, not a horror story.",
+        media: [readingAudio(8, 2, 285, 289, "Climbing Toward Her Goal")],
       },
       {
         kind: "activity",
-        title: "Book grammar: will and going to",
+        title: "Compare causes and book grammar: will and going to",
         tag: "Review",
         mode: "pairs",
         minutes: 6,
-        book: { book: "SB", pages: "290-291", note: "Grammar: future tense." },
+        book: { book: "SB", pages: "290-291", note: "Respond and Extend: compare causes (290); Grammar: future tense (291)." },
         steps: [
-          "Do the book's grammar practice with your partner.",
-          "Say two things the climber is going to do next and one prediction with will.",
+          "Compare causes (290): both Erden Eruç and Constanza Ceruti like physical challenges. What else makes each of them do it (his own power to get places; her love of ancient peoples)? Fill the Venn diagram.",
+          "Grammar (291): the future with will + verb, or am / is / are going to + verb. Do the book's Read and Write tasks with your partner.",
+          "Say two things Ceruti is going to do on her next climb and one prediction with will.",
         ],
-        prompts: ["She's going to ___.", "I think she'll ___."],
+        prompts: ["Both of them ___. Only Erden ___. Only Constanza ___.", "She's going to ___.", "I think she'll ___."],
       },
       {
         kind: "activity",
@@ -1233,11 +1335,11 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "292-293", note: "The model story and the checklist." },
+        book: { book: "SB", pages: "292-293", note: "Write a story about someone who accomplishes an important goal: the student model (292) and Prewrite (293)." },
         steps: [
-          "Read the book's model story and checklist. Find the character, the goal, the problem, the turning point and the ending.",
+          "Study the model (292): a short student story about a boy who is scared of the high diving board. Find how the beginning shows the main character, the setting and the problem, and how the ending solves it. Find two lines that show the writer's own voice (the trait for this project).",
           "Choose your story: a girl in Hà Giang running to school; a boy training for a children's race in Hanoi; a family climbing Fansipan; a child preparing for the grade-6 test; your own idea.",
-          "Plan on a story mountain: the goal, two tools, one obstacle, the turning point, the result. Plan two lines of dialogue.",
+          "Prewrite (293): plan on the book's story map (the goal in the box, the events in the circles), then add two tools, one obstacle, the turning point and two lines of dialogue.",
         ],
         prompts: ["My character wants to ___.", "The obstacle is ___.", "The turning point comes when ___."],
       },
@@ -1247,7 +1349,7 @@ const lessons: Deck[] = [
         mode: "pairs",
         minutes: 10,
         steps: [
-          "Tell your story to your partner in 90 seconds, using your story mountain.",
+          "Tell your story to your partner in 90 seconds, using your story map.",
           "Your partner asks two questions where the story was unclear. Add the answers to your plan.",
           "Swap, then tell it again in 60 seconds to a new partner, with your best line of dialogue.",
         ],
@@ -1261,12 +1363,12 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "solo",
         minutes: 22,
-        book: { book: "SB", pages: "294-295", note: "Draft, revise and edit with the editing marks." },
+        book: { book: "SB", pages: "293-295", note: "Draft (293), revise (294), edit and proofread, present (295)." },
         steps: [
           "Set your goal at the top (e.g. 'three lines of dialogue, one -ing opening, two -ant / -ent words').",
-          "Write 150-180 words with a beginning, a middle and an end.",
-          "Edit with the editing marks: speech punctuation first, then tenses (past for the story, past perfect for earlier events), then spelling.",
-          "Swap with a partner for two stars and a wish; make the change they wish for.",
+          "Draft (293): write 150-180 words with a beginning, a middle and an end, in words that sound like you.",
+          "Revise (294): read it to a partner, who retells it and suggests one change (Is the setting clear? Does it sound like you?). Make the change with the revising marks.",
+          "Edit and proofread (295): speech punctuation first, then past tense verbs (regular -ed spellings and irregular forms), then spelling.",
         ],
       },
       {
@@ -1280,6 +1382,7 @@ const lessons: Deck[] = [
           "Direct speech punctuated correctly, with a new line for each speaker.",
           "Past tenses used correctly; at least one purpose clause and one -ant / -ent word.",
           "The tools and the turning point are clear to the reader.",
+          "Voice: the story sounds like you, with words chosen for classmates to enjoy.",
         ],
         frames: ["___ had always wanted to ___.", "\"I'll never ___,\" ___ said.", "Gripping ___, she / he ___.", "At last, ___. ___ had learned that ___."],
         challenge: "Open your story with an -ing clause and end it with a line of dialogue that shows, without saying it, what the character learned.",
@@ -1288,7 +1391,8 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
-          { label: "Final copy", detail: "Write the final copy of your story and read it aloud to your family. Ask them which line they remember.", book: { book: "SB", pages: "294-295" } },
+          { label: "Final copy", detail: "Present (295): write the final copy of your story and read it aloud to your family, with gestures. Ask them which line they remember. The class will collect the stories in one book about goals.", book: { book: "SB", pages: "295" } },
+          { label: "Practice Book", detail: "Sheets 8.13, 8.15 and 8.21 (future tense with will and going to), 8.19 (word detective), 8.20 (Venn diagram) and 8.22-8.25 (the writing project: rubric, story map, revising, editing).", book: { book: "WB", pages: "8.13, 8.15, 8.19-8.25", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "8 items: speech punctuation, -ant / -ent word formation, purpose clauses." },
           { label: "Function of the week (B): encouraging and congratulating", detail: "Practise: Keep going! / You can do it! / Well done! / Congratulations! / Thanks, I couldn't have done it without you." },
         ],
@@ -1304,7 +1408,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 8, lesson: "Unit Wrap-Up" },
     title: "Unit Wrap-Up: Level 3 review (end-of-3B mock)",
     inquiryPhases: ["Generalize", "Transfer", "Reflect"],
-    book: [{ book: "SB", pages: "296-297", note: "Unit wrap-up: the Big Question and the unit review." }],
+    book: [{ book: "SB", pages: "296-297", note: "Unit Wrap-Up: complete the unit concept map for the Big Question (296) and Share Your Ideas (297)." }],
     slides: [
       { kind: "title", title: "Unit 8: Getting There", subtitle: "Lesson 8 · Unit Wrap-Up", bigQuestion: BQ },
       {
@@ -1344,12 +1448,26 @@ const lessons: Deck[] = [
         mode: "pairs",
         minutes: 10,
         steps: [
-          "Before: tell your partner about a time you nearly gave up, in 30 seconds.",
-          "Watch the Unit 8 video. Note each person's goal, the tools they use and one number.",
-          "Give one person in the video a piece of advice for their next goal (If I were you, I'd ...).",
+          "Before: tell your partner about a goal you have achieved and one you would still like to achieve, in 30 seconds.",
+          "Watch the Unit 8 video. It gives the steps for reaching a big goal, like the top of a mountain. Write the steps in the order you hear them, with one Unit 8 word for each (strategy, prepare, endurance ...).",
+          "After: use the steps to give your partner advice about their goal (First, you should ... / If I were you, I'd ...).",
         ],
-        prompts: ["Her / His goal is ___.", "The tools are ___.", "If I were her / him, I'd ___ next."],
-        teacherNote: "Play the Reach Higher 3B video for Unit 8, Never Give Up on Your Goals! (file 'Video Level 3B - Reach Higher 1e_4' in the school's copy; not hosted in the app).",
+        prompts: ["The first step is ___. Then ___.", "You should ___ so that ___.", "If I were you, I'd ___."],
+        teacherNote: "Play the Reach Higher 3B video for Unit 8, Never Give Up on Your Goals! (file 'Video Level 3B - Reach Higher 1e_4' in the school's copy; not hosted in the app). The steps, in order: share the goal with a friend; make a strategy together; look at the ways to prepare; decide how to build up endurance; stick to the plan.",
+      },
+      {
+        kind: "activity",
+        title: "Unit wrap-up: fill the toolbox",
+        tag: "Speaking",
+        mode: "groups",
+        minutes: 6,
+        book: { book: "SB", pages: "296-297", note: "Unit Wrap-Up: complete the concept map; Share Your Ideas." },
+        steps: [
+          "Concept map (296): finish your toolbox for the Big Question. Add at least one tool from each selection (running shoes, three golden apples, four cousins, a rowing boat with solar panels, maths and planning) and one from the video.",
+          "Share Your Ideas (297): in threes, do the Talk Show. One host asks two guests: What is one of your goals? What tools will you use to achieve it?",
+        ],
+        prompts: ["One tool in our toolbox is ___, because ___.", "My goal is ___. To achieve it, I'm going to use ___."],
+        teacherNote: "The book's Write a Story (296) asks for the same kind of story as the Lesson 7 project: children can add their toolbox tool to that story instead. The other Share Your Ideas choices (plan a camping trip, a guessing game, a map with distances) make good extra homework.",
       },
       {
         kind: "activity",
@@ -1480,11 +1598,12 @@ export const rhL3U8: Unit = {
     { point: "Advice: should, ought to, had better, If I were you", lesson: 1, source: "added" },
     { point: "Present perfect vs past simple for achievements; ever / already / yet", lesson: 2, source: "added" },
     { point: "Measurement: How far / How long does it take / It takes ... to / twice as far as", lesson: 3, source: "added" },
-    { point: "Verb tenses: present and past", lesson: 4, source: "book" },
+    { point: "Verb tenses: present and past; regular and irregular past-tense verbs (SB 261)", lesson: 4, source: "book" },
     { point: "Purpose clauses: to / in order to / so that; past perfect recycle", lesson: 4, source: "added" },
-    { point: "Future: will, going to, present continuous for arrangements", lesson: 5, source: "book" },
+    { point: "Future: will, going to, present continuous for arrangements (with the Language Focus: express intentions)", lesson: 5, source: "added" },
     { point: "Future time clauses: when / as soon as / before + present", lesson: 5, source: "added" },
     { point: "wish + past simple / could; second conditional recycle; unless", lesson: 6, source: "stretch" },
+    { point: "Future tense: will and am / is / are going to (SB 291)", lesson: 7, source: "book" },
     { point: "Direct speech punctuation; suffixes -ant / -ent and their nouns", lesson: 7, source: "added" },
     { point: "-ing participle clauses as story openers", lesson: 7, source: "stretch" },
     { point: "End-of-level review: all tenses in context", lesson: 8, source: "added" },

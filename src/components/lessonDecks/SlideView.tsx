@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import { ExamSlide } from "./ExamSlide";
+import { MediaBar } from "./MediaBar";
 import type { Assessment, BookRef, CreativeTask, Deck, Mode, ScriptLine, Slide, Tier, TierLevel, Unit } from "@/lib/lessonDecks/types";
 import type { FlipTarget } from "@/lib/lessonDecks/bookPages";
 import { RUBRIC, PEER_STEPS } from "@/lib/lessonDecks/ieltsRubric";
@@ -320,6 +321,7 @@ function SlideBody({ slide }: { slide: Slide }) {
         <div className="space-y-6">
           <H>{slide.title}</H>
           <Meta tag={slide.tag} mode={slide.mode} minutes={slide.minutes} book={slide.book} />
+          <MediaBar media={slide.media} />
           <List items={slide.steps} ordered />
           {slide.prompts?.length ? (
             <div className="rounded-2xl border-2 border-dashed border-hec-line p-5">
@@ -343,6 +345,7 @@ function SlideBody({ slide }: { slide: Slide }) {
         <div className="space-y-6">
           <H Icon={Sparkles}>{slide.title ?? "Key words"}</H>
           {slide.book && <Meta book={slide.book} />}
+          <MediaBar media={slide.media} />
           <div className="grid gap-4 md:grid-cols-2">
             {slide.words.map((w, i) => (
               <div key={i} className="rounded-2xl border border-hec-line bg-hec-surface p-4">
@@ -411,6 +414,7 @@ function SlideBody({ slide }: { slide: Slide }) {
               <ul className="list-disc pl-7 text-xl">{slide.ielts.cueCard.points.map((p, i) => <li key={i}>{p}</li>)}</ul>
             </div>
           )}
+          <MediaBar media={slide.media} />
           {slide.steps?.length ? <List items={slide.steps} ordered /> : null}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-5">
@@ -434,6 +438,7 @@ function SlideBody({ slide }: { slide: Slide }) {
           <H Icon={BookOpen}>{slide.title ?? "Open your book"}</H>
           <Meta book={slide.ref} />
           {slide.ref.note && <p className="text-xl text-hec-ink">{slide.ref.note}</p>}
+          <MediaBar media={slide.media} />
           {slide.steps?.length ? <List items={slide.steps} ordered /> : null}
         </div>
       );

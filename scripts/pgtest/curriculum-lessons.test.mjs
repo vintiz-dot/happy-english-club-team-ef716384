@@ -21,7 +21,7 @@ const MIGS = process.argv.slice(2);
 const find = (s) => MIGS.find((f) => f.includes(s));
 const CHAIN = ["20260717090000", "20261111110000", "class_recorder", "lesson_monitor_pilot", "lesson_monitor_cover_earlier",
   "20261121130000_lesson_reports", "20261121150000_curriculum_lessons", "20261121151000_od2e_level3_lessons",
-  "20261122100000_od2e_level1_lessons", "20261122101000_od2e_level2_lessons", "20261122130000_reach_higher_3a_lessons", "20261122140000_reach_higher_3b_lessons"].map(find);
+  "20261122100000_od2e_level1_lessons", "20261122101000_od2e_level2_lessons", "20261122130000_reach_higher_3a_lessons", "20261122160000_reach_higher_3b_lessons"].map(find);
 if (CHAIN.some((f) => !f)) { console.log("usage: curriculum-lessons.test.mjs <its 12 migrations>"); console.log("0 passed, 1 failed"); process.exit(1); }
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
