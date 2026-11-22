@@ -37,6 +37,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { safeParseJson, chunkOnLines } from "../_lib/text.ts";
 import { callerHoldsClass, keysMatch, requireRole, type CallerIdentity } from "../_lib/auth.ts";
 import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
+import { sonnetJsonFromChat, SonnetUnavailable } from "../_lib/claude-sonnet-chat.ts";
 import { speakerKey, suggestSpeaker, type SpeakerSuggestion } from "../_lib/speaker-suggestion.ts";
 
 // Each run is up to ~30 OpenAI calls (diarization chunks, report, per-student,
@@ -245,6 +246,16 @@ async function openaiJson(
   label: string,
   timeoutMs: number,
 ): Promise<any> {
+  // Owner's ruling, 22 Nov 2026: the text analysis runs through Claude Sonnet first and falls back to
+  // OpenAI on any failure (no key, error, timeout, refusal, cut-off, reply not JSON). Sonnet gets 60 % of the
+  // call's budget so a slow answer still leaves the OpenAI fallback time inside the same wall-clock cap.
+  const started = Date.now();
+  try {
+    return await sonnetJsonFromChat(body, label, Math.round(timeoutMs * 0.6));
+  } catch (e) {
+    if (!(e instanceof SonnetUnavailable)) console.warn(`analyze-transcript ${label}: Claude failed, using OpenAI (${(e as Error).message.slice(0, 120)})`);
+  }
+  timeoutMs = Math.max(15_000, timeoutMs - (Date.now() - started));
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {

@@ -58,3 +58,9 @@ Cheapest set-up: laptop for all lesson audio (USD 0); the only vendor spend left
 ## 6. What the owner must do
 
 Nothing to paste: no migration, no edge-function change. A site push (Cloudflare) is all that ships it, after the other session's recorder changes land.
+
+## 7. Added 22 Nov 2026 (owner): hand-over, class report cue, Sonnet
+
+- **Hand-over as soon as done:** `nightly.py --watch` stays running on the laptop. Every 5 minutes (`--poll-minutes`) it takes the next finished recording, transcribes it locally and saves the report to the app at once (no 07:00 cut-off, no per-night cap). Same consent, kill-switch and deletion rules as the nightly run; audio is deleted after each lesson. It must be left signed in, on the `hec-pilot` account.
+- **Class report cued for the teacher:** the laptop no longer asks for the draft (it signs in as an admin, who cannot read the transcript, so the draft had none). The app builds it as the lesson's teacher: the next time they open Record & transcripts, `useLessonReportCue` finds their monitor reports with no draft and calls `lesson-report-draft` once per lesson, and the page shows "Class reports for you" (building / ready to review / failed). Limit: the draft starts when the teacher opens the app, not the moment the laptop finishes. Starting it with no teacher present would need a server job that reads the transcript with a service key, which breaks "only the teacher can read it"; that is the owner's call.
+- **Text analysis through Claude Sonnet, OpenAI as fallback:** `analyze-transcript` tries `claude-sonnet-5-5` (override: `ANALYSIS_CLAUDE_MODEL`) for every call, with 60 % of the call's time budget, and falls back to the old OpenAI model on any failure. Needs `ANTHROPIC_API_KEY` (already set for the video and report functions). Test: `analysis-claude-fallback.test.mjs`. Redeploy `analyze-transcript` (it imports the new `_lib/claude-sonnet-chat.ts`).

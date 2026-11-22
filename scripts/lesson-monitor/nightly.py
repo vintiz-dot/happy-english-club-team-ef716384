@@ -294,7 +294,9 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
         api.rpc("lesson_monitor_save_report", {"p_recording": rid, "p_job_version": pc.JOB_VERSION, "p_body": body,
                                                "p_audio_seconds": audio_s, "p_processing_seconds": proc_s})
         pc.log(f"{rid} report saved for the lesson's teacher")
-        request_lesson_report(api, row)
+        # The class report is NOT requested from here: this laptop is signed in as an admin, who cannot read the
+        # transcript, so a draft built here would have none. The app builds it as the lesson's teacher the next time
+        # they open it (src/hooks/useLessonReportCue.ts) and cues them.
         return "saved"
     except ApiError as e:
         if e.status in (0, 401):
@@ -303,22 +305,6 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             return "draft"
         pc.log(f"{rid} refused by the database: {e.message}; nothing kept")
         return "refused"
-
-
-def request_lesson_report(api, row: dict) -> None:
-    """Best effort: ask lesson-report-draft to draft this lesson's report for its teacher, as the same
-    signed-in person. Logs a status code only, never content; a refusal (already approved, built today,
-    not this person's lesson) or an outage changes nothing here."""
-    call = getattr(api, "function", None)
-    sid = row.get("session_id")
-    if call is None or not sid:
-        return
-    rid = row.get("recording_id", "")
-    try:
-        call("lesson-report-draft", {"session_id": sid})
-        pc.log(f"{rid} lesson report draft requested")
-    except Exception as e:  # noqa: BLE001 - never let the report request fail the night's run
-        pc.log(f"{rid} lesson report draft not requested (HTTP {getattr(e, 'status', 0)})")
 
 
 def upload_drafts(api) -> dict:
@@ -350,6 +336,10 @@ def main(argv=None) -> int:
     ap.add_argument("--no-upload", action="store_true", help="keep reports on this laptop only (pilot\\drafts)")
     ap.add_argument("--upload-drafts", action="store_true", help="save the local drafts and stop")
     ap.add_argument("--token", action="store_true", help="paste an access token instead of signing in")
+    ap.add_argument("--watch", action="store_true",
+                    help="keep running: every few minutes take the next finished recording, transcribe it and save its "
+                         "report at once (no 07:00 cut-off, no cap per night). Stops on the kill switch or Ctrl+C")
+    ap.add_argument("--poll-minutes", type=int, default=5, help="with --watch: how often to look for new recordings")
     a = ap.parse_args(argv)
 
     pc.check_root()
@@ -384,10 +374,38 @@ def main(argv=None) -> int:
         pc.log(f"drafts: {upload_drafts(api)}")
         return 0
 
+    import progress
+    import transcribe
+    model = None
+    while True:
+        model = _run_batch(api, a, step0, model, progress, transcribe)
+        if not a.watch or a.list or pc.stopped():
+            return 0
+        try:
+            time.sleep(max(1, a.poll_minutes) * 60)
+        except KeyboardInterrupt:
+            pc.log("watch: stopped by the person at the keyboard")
+            return 0
+        if pc.stopped():
+            return 0
+        api.rpc("lesson_monitor_expire")  # also keeps the sign-in warm; the session renews itself
+
+
+_SEEN: set[str] = set()  # --watch only: recordings this run has already taken up
+
+
+def _run_batch(api, a, step0, model, progress, transcribe):
+    """One look at what is waiting and the work it allows. Returns the loaded model (loaded once, kept)."""
     pending = api.rpc("lesson_monitor_pending", {"p_limit": 50}) or []
     now = datetime.now().astimezone()
-    until = plan.next_until(now, a.until)
-    tonight = plan.choose_tonight(pending, now, a.max_lessons, until)
+    until = plan.next_until(now, a.until) if not a.watch else now + timedelta(days=3650)
+    tonight = plan.choose_tonight(pending, now, a.max_lessons if not a.watch else 1000, until)
+    if a.watch:
+        # --watch looks every few minutes: a lesson already handled (or refused) in this run is not tried or logged again.
+        tonight.refuse = [(r, why) for r, why in tonight.refuse if r["recording_id"] not in _SEEN]
+        tonight.process = [r for r in tonight.process if r["recording_id"] not in _SEEN]
+        _SEEN.update(r["recording_id"] for r, _ in tonight.refuse)
+        _SEEN.update(r["recording_id"] for r in tonight.process)
     if a.no_upload:
         local = {f.stem for f in pc.drafts_dir().glob("*.json")} if pc.drafts_dir().exists() else set()
         tonight.process = [r for r in tonight.process if r["recording_id"] not in local]
@@ -400,16 +418,14 @@ def main(argv=None) -> int:
             print(f"  tonight: {r['recording_id']} lesson {r['session_date']}")
         for r, why in tonight.refuse:
             print(f"  refused: {r['recording_id']} lesson {r['session_date']} ({why})")
-        return 0
+        return model
     for r, why in tonight.refuse:
         api.rpc("lesson_monitor_record_run", {"p_recording": r["recording_id"], "p_outcome": "refused", "p_reason": why})
         pc.log(f"{r['recording_id']} refused: {why}")
     if not tonight.process:
-        return 0
-
-    import progress
-    import transcribe
-    model = transcribe.load_model()
+        return model
+    if model is None:
+        model = transcribe.load_model()
 
     def length(r):
         try:
@@ -423,14 +439,14 @@ def main(argv=None) -> int:
         if pc.stopped():
             pc.log("kill switch on: stopping before the next lesson")
             break
-        if plan.lessons_that_fit(datetime.now().astimezone(), until) < 1:
+        if not a.watch and plan.lessons_that_fit(datetime.now().astimezone(), until) < 1:
             pc.log(f"stopping: another lesson would not finish before {a.until}")
             break
         outcomes.append(process_one(api, r, model, step0, a.no_upload, prog))
         prog.finish(r["recording_id"], outcomes[-1])
     prog.end()
     pc.log(f"done: {', '.join(outcomes) or 'nothing processed'}")
-    return 0
+    return model
 
 
 if __name__ == "__main__":

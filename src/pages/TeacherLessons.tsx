@@ -5,6 +5,7 @@ import Layout from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { RecorderView } from "@/pages/TeacherRecorder";
 import TeacherTranscripts from "@/pages/TeacherTranscripts";
+import { LessonReportCue } from "@/components/lessons/LessonReportCue";
 import { RecordedInClass } from "@/components/lessons/RecordedInClass";
 
 type Tab = "record" | "transcripts";
@@ -36,6 +37,7 @@ export default function TeacherLessons() {
   return (
     <Layout title="Record & transcripts">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+        <LessonReportCue />
         <div role="tablist" aria-label="Lesson" className="flex gap-2 border-b">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button key={id} role="tab" type="button" aria-selected={tab === id} onClick={() => pick(id)}

@@ -40,8 +40,9 @@ export function RecordedInClass({ userId, onAddTranscript }: { userId: string; o
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2"><Mic className="h-4 w-4" aria-hidden /> Recorded in class</CardTitle>
         <p className="text-sm text-muted-foreground">
-          The audio of these recordings is transcribed on the school laptop and never leaves it. When the laptop has made the draft
-          transcript, add it here: upload or paste the text, check it, then analyse it.
+          The audio of these recordings is transcribed on the school laptop and never leaves it. When the laptop finishes a lesson,
+          its transcript is handed over automatically (open it under Lesson reports) and your class report is drafted from it: you
+          will see it at the top of this page. If a lesson is not covered by the laptop, add a draft transcript yourself.
         </p>
       </CardHeader>
       <CardContent>
