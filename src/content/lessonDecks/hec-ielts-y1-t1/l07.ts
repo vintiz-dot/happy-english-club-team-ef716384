@@ -55,6 +55,25 @@ export const l07: Deck = {
       teacherNote: "Mix pairs from the mock trios. Listen for 'because ... so' in one sentence and write two anonymous examples for the grammar slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: the mock week's logs and people phrases",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "The teacher picks two students. Each speaks for 60 seconds about a log entry: the story, the person in it, the timestamp.",
+        "One timestamp is played for 10 seconds and paused. The student says what came next, then the class checks by playing on.",
+        "Phrase quiz, 2 minutes: back-of-card sentences about people you know; the class says the phrase (look up to, take after, have a lot in common ...).",
+        "One voice note is played. Its speaker answers one 'why?' question from the class.",
+      ],
+      tiers: [
+        { level: "Support", task: "You may read your log for the timestamp and one phrase, then speak." },
+        { level: "Core", task: "No log; give the moment and one phrase you learnt from it." },
+        { level: "Stretch", task: "After telling the moment, argue with your speaker's view of people for 20 seconds." },
+      ],
+      teacherNote: "Record today's two names and the date. Each student needs two checks by the Term 1 mock; check the list before choosing.",
+    },
+    {
       kind: "vocab",
       title: "Words for technology and its effects",
       words: [
@@ -273,7 +292,7 @@ export const l07: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a useful app, and the other side",
-      prompt: "Record your Part 2 talk again: 'Describe an app or a website that you find useful.' Take 1 minute to prepare, talk for 2 minutes, then answer one Part 3 question in the same take: 'Do you think young people rely on technology too much? Why or why not?'",
+      prompt: "Wednesday, a single take with no cuts. Say the date and this week's code word (you hear it in class, nowhere else). Then record your Part 2 talk again: 'Describe an app or a website that you find useful.' Take 1 minute to prepare and talk for 2 minutes, then answer one Part 3 question in the same take: 'Do you think young people rely on technology too much? Why or why not?' Finish with the surprise question in Wednesday morning's class group message.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The app is called ...", "I use it to ..., so ...", "I think young people ... because ..."], tips: ["Keep your four keywords next to the camera.", "Answer the Part 3 question in at least three sentences."] },
@@ -283,15 +302,17 @@ export const l07: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English science or technology story at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one result the story mentions.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about technology or the internet. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary with one 'which means'.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a teen news podcast about technology, at normal speed, no transcript first. Log: the speaker's main claim, 3 phrases, one result they did not mention.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening. Speak WITH the speaker, copying every weak 'to', 'for', 'of' and 'and'. Repeat 3 times, then record the third try.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's people phrases (take after, look up to ...) in the pile. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Is Tet better spent at home or travelling?' Write one PREP point for EACH side with a real example from a Tet you remember, and one 'That's true, but ...' sentence.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English science or technology story at the slow level, transcript on the second listen. Log: date, title, one timestamp and the exact words there, one new phrase, one result the story mentions. Then a 20-second voice note, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your timestamp and asks which result came next; a random voice note is played." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a '6 Minute English' episode about technology or the internet, without and then with the transcript. Log: date, title, two timestamps (for example 02:40) with the exact words, three phrases. Then a 30-second voice note in one take using 'which means' once.", minutes: 60, tier: "Core", check: "Sunday: your timestamp is played; you say what came next and give one result of it with 'which means'." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or teen news podcast about technology, normal speed, no transcript first. Log: two timestamps with the exact words, the main claim, one result the speaker did not mention. Then a 45-second voice note about that missing result.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds, live, on the result your speaker left out, and one question from the class." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of your listening. Speak WITH the speaker, copying every weak 'to', 'for', 'of', 'and', 3 times. Record Saturday's third try as audio and keep it.", minutes: 25, check: "The Saturday audio is played with the original; the teacher listens for full-strength 'to' and 'for' and writes one on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The app talk plus the Part 3 question on the previous slide: one take, no cuts, date and code word first, Wednesday's surprise question last.", minutes: 15, check: "Scored on the HEC rubric. Without the code word and the surprise question it does not count; on Sunday you may be asked the Part 3 question again live." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 technology phrases on cards, the back a sentence about YOUR screen week; keep last week's people phrases in the pile. Back first, phrase aloud, then turn; missed cards come back tomorrow.", minutes: 25, check: "Next week's Homework check is a 2-minute spoken quiz from your back-of-card sentences (glued to, a waste of time, as a result ...)." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Is Tet better spent at home or travelling?': a PREP point for each side as keywords, a real Tet you remember, one 'That's true, but ...' idea. Never more than 6 words a card. Friday, 10 minutes: speak from them, 45 seconds a side, timed. AI rule: one AI argument is allowed, for the side you are against; the question you asked and one reason the answer is weak go on a card. Nothing else from an AI.", minutes: 20, check: "In the debate the teacher asks you one follow-up you cannot have prepared; if an AI gave you an argument, you tell the class why it is weak." },
       ],
     },
   ],

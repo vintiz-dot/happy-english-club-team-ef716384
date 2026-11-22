@@ -55,6 +55,25 @@ export const l04: Deck = {
       teacherNote: "Note stress errors on food words (vegeTAble, resTAUrant) for the pronunciation slide, without names.",
     },
     {
+      kind: "activity",
+      title: "Homework check: logs and study chunks",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "The teacher calls two names. Each student has one minute to talk about a log entry: the episode, the timestamp, what was said there.",
+        "The teacher plays a 10-second clip from one of those timestamps, then asks the student what the speaker said next.",
+        "Phrase quiz, 2 minutes, all spoken: sentences from the backs of last week's cards ('I've got so much homework I'm starting to ...'); the class answers with the chunk (fall behind, catch up on ...).",
+        "The teacher plays one voice note from the week. One classmate asks its speaker a follow-up question.",
+      ],
+      tiers: [
+        { level: "Support", task: "Hold your log and read the timestamp line, then tell us one more thing about the episode." },
+        { level: "Core", task: "Speak without your log for the whole minute." },
+        { level: "Stretch", task: "Explain what your speaker was trying to persuade you of, and why they did or didn't manage it." },
+      ],
+      teacherNote: "Write down who was checked, the date and one word on how it went. Aim for two checks per student per term; anyone who cannot talk about their own log gets a private word after class.",
+    },
+    {
       kind: "vocab",
       title: "Food collocations",
       words: [
@@ -268,7 +287,7 @@ export const l04: Deck = {
     {
       kind: "vlog",
       title: "Video homework: Part 1 about food",
-      prompt: "Record yourself answering these Part 1 questions in one take. 1) What is your favourite dish, and what does it taste like? 2) Do you prefer home-cooked meals or eating out? Why? 3) Is there any food you didn't like as a child but enjoy now? 4) Do you think you have a balanced diet? 5) Would you like to be able to cook better?",
+      prompt: "Recorded on Wednesday in one take: no cuts, no restarts. Say the date and this week's code word first (given out in class only), then answer these Part 1 questions, and end with Wednesday morning's surprise question from the class group. 1) What is your favourite dish, and what does it taste like? 2) Do you prefer home-cooked meals or eating out? Why? 3) Is there any food you didn't like as a child but enjoy now? 4) Do you think you have a balanced diet? 5) Would you like to be able to cook better?",
       length: "2-3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["My favourite dish is ... It tastes ...", "I prefer ... to ... because ...", "I'd rather ..."], tips: ["Give every answer a reason.", "Say VEGetable and deLICious with the right stress."] },
@@ -278,15 +297,17 @@ export const l04: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: a VOA Learning English programme at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about it. Copy one sentence that says what someone prefers.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode (find one about food or health if you can), once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video about food science, or a news podcast for young people, at normal speed with no transcript first. Log: the main point, 3 phrases, and the strongest piece of evidence the speaker gives.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: choose 30 seconds from your listening with long words in it. Mark the stress first, then speak WITH the speaker, making the stressed syllable big and the others small. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 1 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 food collocations to your cards; keep last week's study chunks in the pack too. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Are video games good for teenagers?' Write one reason and one example for EACH side; one example should be a game you or a friend really plays.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: a VOA Learning English programme at the slow level, transcript on the second listen. Log: date, title, one timestamp and the exact 5-8 words said at it, one new phrase, and one sentence where someone says what they prefer. Then a 20-second voice note, no script.", minutes: 40, tier: "Support", check: "Sunday: your timestamp is played and you say what came next; voice notes are picked at random to be played." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a '6 Minute English' episode (about food or health if you can find one), once without the transcript, once with. Log: date, title, two timestamps with the exact words, three phrases. Then a 30-second voice note straight after: what the speakers prefer and what you prefer.", minutes: 60, tier: "Core", check: "Sunday: the teacher picks two logs, plays a timestamp and asks what was said after it and why." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video about food science or a news podcast for young people, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, the strongest evidence the speaker gives. Then a 45-second voice note attacking that evidence.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds, live, on why your speaker's best evidence is weaker than it sounds; the class may ask one question." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of your listening with long words in it. Mark the stress, then speak WITH the speaker, big stressed syllables and small others, 3 times. Record the Saturday try and keep it.", minutes: 25, check: "The Saturday audio is played beside the original; the teacher listens to the stress in three long words and notes one on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The Part 1 food recording on the previous slide: one take, no cuts, starting with the date and code word and ending with the surprise question.", minutes: 15, check: "Scored on the HEC rubric. No code word or no surprise answer: it does not count, however fluent it is." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 food collocations on cards, back side a sentence about what YOU ate this week; last week's study chunks stay in the pack. Test from the back, say it before you turn; misses come back tomorrow.", minutes: 25, check: "In next week's Homework check the teacher reads your own back-of-card sentences and you must say the collocation." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Are video games good for teenagers?': both sides, with a game you or a friend really plays. No sentences, 6 words a card. Friday, 10 minutes: speak from them, 45 seconds a side, with a timer. AI rule: ask an AI for at most ONE argument for the side you oppose, write down the exact question and one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "In class: speak from your cards and answer the teacher's follow-up; if you took an AI argument, explain its weakness to the class." },
       ],
     },
   ],

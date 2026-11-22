@@ -56,6 +56,25 @@ export const l11: Deck = {
       teacherNote: "Mix pairs so the stronger speakers don't sit together. Listen for 'more bigger' and 'the most big' for the grammar slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: story logs and story phrases",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two named students each have 60 seconds on one log entry: the story, its turning point, the timestamp.",
+        "The teacher plays that timestamp and pauses. Question: what happened next in the story?",
+        "Two-minute spoken quiz from back-of-card sentences: the class gives the phrase (it's set in, I couldn't put it down, based on a true story ...).",
+        "One voice note is played; its speaker answers one question from the class.",
+      ],
+      tiers: [
+        { level: "Support", task: "You may read the timestamp line, then tell the turning point in one sentence." },
+        { level: "Core", task: "Tell the story moment from memory, using two past tenses." },
+        { level: "Stretch", task: "Tell the moment and argue that the story should have ended differently." },
+      ],
+      teacherNote: "Note today's two names and the date. Next lesson is the mock: list anyone still short of two checks and take them first next week.",
+    },
+    {
       kind: "vocab",
       title: "Words for animals and the natural world",
       words: [
@@ -299,7 +318,7 @@ export const l11: Deck = {
     {
       kind: "vlog",
       title: "Video homework: Part 2 and Part 3 about nature",
-      prompt: "Record in one take. Part 2: take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a place in nature that you have visited. You should say: where it is, when you went there, what you did there, and explain how you felt about it. Then Part 3: 1) Why do people in cities want to spend time in nature? 2) Is it more important to protect animals or to build new homes for people? 3) Will children in the future spend more or less time outdoors?",
+      prompt: "Wednesday, one take, nothing cut. Say the date and this week's code word (given only at the end of class). Part 2: take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a place in nature that you have visited. You should say: where it is, when you went there, what you did there, and explain how you felt about it. Then Part 3: 1) Why do people in cities want to spend time in nature? 2) Is it more important to protect animals or to build new homes for people? 3) Will children in the future spend more or less time outdoors? End with the surprise question the teacher posts in the class group on Wednesday morning.",
       length: "4-5 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The place I visited is ...", "I went there with ...", "I think people ... because ..."], tips: ["Follow the four points in Part 2.", "Answer every Part 3 question with view + reason + example."] },
@@ -309,15 +328,17 @@ export const l11: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story at the slow level about animals or the environment, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about it.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about nature, animals or the outdoors. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary, and one comparison you heard.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed lesson about animal behaviour or a news podcast for young people about wildlife, at normal speed, no transcript first. Log: the main point, 3 phrases, one question you would ask a Part 3 examiner.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening. Speak WITH the speaker, copying the long /iː/ and short /ɪ/ vowels and where they pause. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 and Part 3 recording on the previous slide. One take, sent by Thursday. It is your practice run for next week's mock.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 nature words to your cards. Mix in Term 1's cards from every earlier week (Lessons 1-10). Test yourself from the BACK; keep the cards you miss for tomorrow. Bring your whole pack to the mock lesson.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should homework be banned at weekends?' Write one PREP point for EACH side, with a real example from your own weekends, and one 'That's true, but ...' against each.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story about animals or the environment at the slow level, transcript on the second listen. Log: date, title, one timestamp with the exact words there, one new phrase. Then a 20-second voice note about the animal or place, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your timestamp and asks what came next; one voice note is opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a '6 Minute English' episode about nature, animals or the outdoors, once without and once with the transcript. Log: date, title, two timestamps (for example 04:25) with exact words, three phrases, one comparison you heard. Then a 30-second voice note in one take: do you agree with the comparison?", minutes: 60, tier: "Core", check: "Sunday: one of your timestamps is played and you say what came next and what was compared." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed lesson about animal behaviour or a teen news podcast about wildlife, normal speed, no transcript first. Log: two timestamps with exact words, the main point, one question you'd ask a Part 3 examiner. Then a 45-second voice note answering it as in Part 3.", minutes: 90, tier: "Stretch", check: "Sunday: you ask the class your Part 3 question and answer it yourself, live, for 60 seconds." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of your listening. Speak WITH the speaker, copying long /iː/ and short /ɪ/ and where they pause, 3 times. Save Saturday's best try as audio.", minutes: 25, check: "The Saturday audio is played beside the original; the teacher checks three /iː/ - /ɪ/ words and writes one on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The nature Part 2 and Part 3 on the previous slide: one take, no cuts, date and code word first, surprise question last. It is your practice run for next week's mock.", minutes: 15, check: "Scored on the HEC rubric. No code word or no surprise answer, no score; one Part 3 question is asked again live at the mock." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 nature words on cards (the back: a sentence about a place YOU have been), mixed with Term 1's cards from every earlier week. Test from the back; misses come back tomorrow. Bring the whole pack to the mock.", minutes: 25, check: "At the mock lesson's Homework check the teacher reads back-of-card sentences from your pack and you say the word." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Should homework be banned at weekends?': a PREP point for each side in keywords, an example from your own weekends, a 'That's true, but ...' idea against each. 6 words a card, no sentences. Friday, 10 minutes: speak from the cards, 45 seconds a side, timed. AI rule: you may take ONE argument from an AI, for the side you disagree with; log the question you asked and one reason its answer is weak. Nothing else from an AI.", minutes: 20, check: "In the light debate you speak from your cards only and take one follow-up; an AI argument is explained aloud, weakness included." },
       ],
     },
   ],

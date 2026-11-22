@@ -53,6 +53,25 @@ export const l12: Deck = {
       teacherNote: "Keep it light and fast; nerves drop when the voice is warm. No correction in this round.",
     },
     {
+      kind: "activity",
+      title: "Homework check: nature logs and the Term 1 pack",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students are called for 60 seconds each on one log entry. Short and calm: the mock comes next.",
+        "The teacher plays one of their timestamps, pauses and asks what came next.",
+        "Two-minute spoken quiz from back-of-card sentences across the whole Term 1 pack (nature words and earlier weeks). The class answers together, then one named student alone.",
+        "One voice note from the week is played; the class names the episode it was about.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read the timestamp line from your log, then add one sentence of your own." },
+        { level: "Core", task: "Talk from memory for the full minute." },
+        { level: "Stretch", task: "Tell the moment, then argue with your speaker for 20 seconds." },
+      ],
+      teacherNote: "Last check of the term: complete the list so every student has two dated checks. Anyone still missing one is checked in Lesson 13 and noted on their report.",
+    },
+    {
       kind: "vocab",
       title: "Term 1 chunks to recycle",
       words: [
@@ -265,7 +284,7 @@ export const l12: Deck = {
     {
       kind: "vlog",
       title: "Video homework: the diagnostic Part 2 again",
-      prompt: "Re-record the Lesson 1 diagnostic Part 2 in one take. Take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a place where you like to spend time. You should say: where it is, how often you go there, what you do there, and explain why you like spending time there. Then watch your Lesson 1 recording and say, at the end of the video, two things that have changed.",
+      prompt: "Wednesday, one take, no cuts. Start with the date and this week's code word (said only in class). Then re-record the Lesson 1 diagnostic Part 2: take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a place where you like to spend time. You should say: where it is, how often you go there, what you do there, and explain why you like spending time there. Then answer the surprise question posted in the class group on Wednesday morning. Before recording, watch your Lesson 1 recording; at the end of the video, say two things that have changed.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The place I want to talk about is ...", "I go there about ...", "In Lesson 1 I ..., but now I ..."], tips: ["Try to speak for longer than in Lesson 1.", "Use answer + reason + example for each bullet."] },
@@ -275,15 +294,17 @@ export const l12: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about it. Go back over your Term 1 log and star your three favourite episodes.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about travel or places. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a news podcast for young people about travel or tourism, at normal speed, no transcript first. Log: the main point, 3 phrases, and one argument you could use in next week's debate.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: pick 30 seconds of your listening. Speak WITH the speaker, copying the stress and the final sounds you checked in today's self-check. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "Re-record the Lesson 1 diagnostic Part 2 (the previous slide), watch your Lesson 1 recording and say what changed. One take, sent by Thursday. The teacher scores both with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: go through your whole Term 1 pack. Sort it into 'know it', 'nearly' and 'lost'. Test the 'nearly' and 'lost' piles from the BACK every day; move a card up when you get it right twice.", minutes: 25 },
-        { label: "Debate prep", detail: "Term 2 starts with: 'Should tourists pay more than local people to visit famous places?' Write one PREP point for EACH side, with a real example of a famous place, and one 'That's true, but ...' against each.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story at the slow level, transcript on the second listen. Log: date, title, one timestamp with the exact words there, one new phrase. Then a 20-second voice note, no script. On Saturday, star your three favourite episodes of the term in your log.", minutes: 40, tier: "Support", check: "Lesson 13: the teacher plays one of your starred episodes at your timestamp and asks what came next." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a '6 Minute English' episode about travel or places, without then with the transcript. Log: date, title, two timestamps (for example 02:50) with exact words, three phrases. Then a 30-second voice note in one take: would you like to go there, and why?", minutes: 60, tier: "Core", check: "Lesson 13: two logs are picked; at one timestamp you say what came next and what the speakers thought of the place." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or teen news podcast about travel or tourism, normal speed, no transcript first. Log: two timestamps with exact words, the main point, one argument for next lesson's debate. Then a 45-second voice note making that argument.", minutes: 90, tier: "Stretch", check: "Lesson 13: you make your argument live for 60 seconds and say which timestamp it came from." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of your listening. Speak WITH the speaker, copying the stress and the final sounds from today's self-check, 3 times. Record Saturday's try and keep it.", minutes: 25, check: "The Saturday audio is played next to your Lesson 1 diagnostic; the teacher notes the final sound that has improved most and one still to work on." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "Re-record the Lesson 1 Part 2 (previous slide): one take, no cuts, date and code word first, then the surprise question, then two things that have changed since Lesson 1.", minutes: 15, check: "Both recordings are scored on the HEC rubric side by side. Without the code word or the surprise question it does not count." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: your whole Term 1 pack, sorted into 'know it', 'nearly' and 'lost'. Test the 'nearly' and 'lost' piles from the back each day; a card moves up after two right answers.", minutes: 25, check: "Lesson 13's Homework check quizzes you aloud from your own 'lost' pile: the teacher reads the back, you say the phrase." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Term 2 starts with 'Should tourists pay more than local people to visit famous places?'. Wednesday, 10 minutes: five keyword cards, a PREP point for each side in keywords, a real famous place, a 'That's true, but ...' idea against each. 6 words a card, no sentences. Friday, 10 minutes: speak from the cards, 45 seconds a side, timed. AI rule: ONE argument for the side you disagree with may come from an AI; write the question you asked and one reason its answer is weak on a card. Nothing else from an AI.", minutes: 20, check: "In Lesson 13 you argue from your cards only and answer one follow-up; anyone who used the AI argument explains to the class why it is weak." },
       ],
     },
   ],

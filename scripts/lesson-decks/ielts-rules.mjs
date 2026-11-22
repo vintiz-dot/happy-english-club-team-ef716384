@@ -24,6 +24,19 @@ const SLIDE_KEYS = {
 const tiersOk = (t) => Array.isArray(t) && t.length === 3 && t.every((x, i) => x.level === TIER_ORDER[i] && typeof x.task === "string" && x.task.length > 10);
 const itemsOk = (items) => items.every((i) => i.q && i.answer && (!i.options || i.options.includes(i.answer)));
 
+export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/** Minutes on each day for one tier: an item's weekly minutes shared evenly over its days. */
+export function dayMinutes(hw, tier) {
+  const out = Object.fromEntries(DAYS.map((d) => [d, 0]));
+  for (const h of hw.items.filter((x) => !x.tier || x.tier === tier)) {
+    const days = Array.isArray(h.days) && h.days.length ? h.days : [];
+    for (const d of days) if (d in out) out[d] += (h.minutes ?? 0) / days.length;
+  }
+  for (const d of DAYS) out[d] = Math.round(out[d]);
+  return out;
+}
+
 /** Week totals of a homework slide per tier (untiered items count for everyone). */
 export function homeworkMinutes(hw) {
   const out = {};
@@ -91,6 +104,32 @@ export function deckProblems(d, lesson) {
     need(m.Support <= m.Core && m.Stretch >= m.Core && m.Stretch <= 240, `Support <= Core <= Stretch <= 240 min (got ${m.Support}/${m.Core}/${m.Stretch})`);
     const labels = hw.items.map((h) => `${h.label} ${h.detail}`).join(" | ");
     for (const [re, what] of [[/listening/i, "daily listening"], [/log/i, "a listening log"], [/shadow/i, "shadowing"], [/record|video/i, "a recorded speaking task"], [/vocab|retriev/i, "vocabulary retrieval"], [/debate/i, "debate prep"]]) need(re.test(labels), `homework includes ${what}`);
+    // Day by day, and built so handing it to an AI gains nothing (owner, 22 Nov 2026):
+    // evidence in the student's own voice, at a set moment, checked live in class.
+    need(hw.items.every((h) => Array.isArray(h.days) && h.days.length > 0 && h.days.every((d) => DAYS.includes(d))), "every homework item names the days it is done (Mon-Sun)");
+    need(hw.items.every((h) => typeof h.check === "string" && h.check.length >= 20), "every homework item says how the teacher checks it (`check`)");
+    for (const lv of TIER_ORDER) {
+      const perDay = dayMinutes(hw, lv);
+      const worst = Math.max(...Object.values(perDay));
+      const cap = lv === "Stretch" ? 40 : 30; // Stretch is the optional extra for students who can do more
+      need(worst <= cap, `${lv} homework is at most ${cap} minutes on any day (got ${worst}: ${JSON.stringify(perDay)})`);
+      if (lv === "Core") need(Object.values(perDay).filter((m) => m > 0).length >= 5, "Core homework is spread over at least 5 days");
+    }
+    const all = hw.items.map((h) => `${h.label} ${h.detail} ${h.check ?? ""}`).join(" | ");
+    for (const [re, what] of [
+      [/timestamp|at minute|\b\d{1,2}:\d{2}\b/i, "a listening log tied to a moment in the recording (a timestamp and what was said there)"],
+      [/voice note|voice memo|record(ed|ing)? (a |your )?voice|audio/i, "a short voice note in the student's own voice"],
+      [/one take|single take|no cuts|no editing/i, "a recording made in one take"],
+      [/code word|today's word|word from (the )?class/i, "a code word only given out in class, said in the recording"],
+      [/keyword|key word/i, "debate prep as keyword cards, not written paragraphs"],
+      [/\bAI\b/, "an open rule on AI (when it may be used and how it is logged)"],
+    ]) need(re.test(all), `anti-AI homework: ${what}`);
+  }
+  // From the second lesson on, the class checks last week's homework live, so an
+  // outsourced week shows: two students talk about their log, the class is quizzed.
+  if (lesson && lesson.n > 1) {
+    const chk = s.find((x) => x.kind === "activity" && /^Homework check/i.test(x.title ?? ""));
+    need(!!chk && chk.minutes >= 3 && chk.minutes <= 8, "a 3-8 minute in-class \"Homework check\" activity (live questions on the log, a retrieval quiz)");
   }
   // Shapes.
   for (const [j, x] of s.entries()) {
@@ -99,7 +138,7 @@ export function deckProblems(d, lesson) {
     need(extra.length === 0, `slide ${j + 1} (${x.kind}): only fields its kind has (${extra.join(", ")})`);
     if (x.kind === "vocab") need(x.words.every((w) => w.word && w.meaning && w.example && Object.keys(w).length === 3), `slide ${j + 1}: vocab words have word, meaning, example`);
     if (x.kind === "grammar") need(!!x.hook && x.form.length > 0 && x.examples.length >= 3 && (x.pitfalls ?? []).length > 0, `slide ${j + 1}: grammar has hook, form, 3+ examples, pitfalls`);
-    if (x.kind === "homework") need(x.items.every((h) => h.label && h.detail && Object.keys(h).every((k) => ["label", "detail", "minutes", "tier"].includes(k))), `slide ${j + 1}: homework items are label, detail, minutes, tier`);
+    if (x.kind === "homework") need(x.items.every((h) => h.label && h.detail && Object.keys(h).every((k) => ["label", "detail", "minutes", "tier", "days", "check"].includes(k))), `slide ${j + 1}: homework items are label, detail, minutes, tier, days, check`);
   }
   const titles = s.map((x) => x.title).filter(Boolean);
   need(new Set(titles).size === titles.length, "slide titles are unique");

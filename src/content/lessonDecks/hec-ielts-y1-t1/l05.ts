@@ -56,6 +56,25 @@ export const l05: Deck = {
       teacherNote: "Listen for 'I play since ...' and added vowels in 'sport' / 'played'. Note anonymous examples for the next slides.",
     },
     {
+      kind: "activity",
+      title: "Homework check: what came next, and food collocations",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students, chosen by the teacher, each give 60 seconds on one listening from their log.",
+        "The teacher plays one of their timestamps, cuts it after a sentence, and asks: what did they say next? What was the speaker's point?",
+        "Spoken quiz, 2 minutes: the teacher reads back-of-card sentences about your meals; you answer with the collocation (a sweet tooth, grab a snack, a home-cooked meal ...).",
+        "One voice note is played to the class. Its speaker answers one question from a classmate.",
+      ],
+      tiers: [
+        { level: "Support", task: "You may read your log line, then answer the 'what next?' question in one sentence." },
+        { level: "Core", task: "No log: retell the moment and answer the 'what next?' question in two or three sentences." },
+        { level: "Stretch", task: "Retell it and argue against your speaker for 20 seconds before the class asks." },
+      ],
+      teacherNote: "Mark the two names and today's date on the check list. By the end of term each student is checked twice; pick from those not yet checked.",
+    },
+    {
       kind: "vocab",
       title: "Chunks for hobbies",
       words: [
@@ -273,7 +292,7 @@ export const l05: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a new Part 2 cue card",
-      prompt: "Take 1 minute to make keyword notes, then record yourself speaking for 2 minutes in one take. Cue card: Describe a sport, game or activity you would like to try in the future. You should say: what it is; where you could do it; what you would need to learn or buy; and explain why you would like to try it.",
+      prompt: "On Wednesday, in one take with no cuts: say the date and this week's code word (only said aloud in class). Take 1 minute for keyword notes, then speak for 2 minutes. Cue card: Describe a sport, game or activity you would like to try in the future. You should say: what it is; where you could do it; what you would need to learn or buy; and explain why you would like to try it. Without stopping the video, answer the surprise question posted in the class group that morning.",
       length: "1 minute of notes, then 2 minutes of talk",
       tiers: [
         { level: "Support", who: "If two minutes feels long", frames: ["I'd like to try ... because ...", "I could do it at ...", "I would need ..."], tips: ["Aim for at least 1 minute 30.", "Use the four bullets as your plan."] },
@@ -283,15 +302,17 @@ export const l05: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: a BBC Learning English '6 Minute English' episode about hobbies, sport or music, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about it.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: alternate VOA Learning English and a teen news podcast. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary, and one signpost you heard ('next', 'what about').", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed talk about the brain, games or music, at normal speed with no transcript first. Log: the main point, 3 phrases, and how the speaker signposts their sections.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: choose 30 seconds of your listening with clusters (sports, played, months). Speak WITH the speaker, adding no extra vowels. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 recording on the previous slide: 1 minute of notes, 2 minutes of talk, one take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 hobby chunks to your cards; keep last week's food collocations in the pack. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Is it better to have one close friend or many friends?' Write one reason and one example for EACH side, and a word to describe each kind of friendship.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: a '6 Minute English' episode about hobbies, sport or music, transcript on the second listen. Log: date, title, one timestamp (for example 01:50) with the exact words there, one new phrase. Then a 20-second voice note, your own words, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your episode at your timestamp and you say what came next; one voice note is opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: alternate VOA Learning English and a teen news podcast, once without the transcript, once with. Log: date, title, two timestamps with the exact words, three phrases, one signpost you heard ('next', 'what about'). Then a 30-second voice note in one take: what the speaker is into, and are you?", minutes: 60, tier: "Core", check: "Sunday: two logs are chosen; at one of your timestamps the teacher asks what came next and which signpost introduced it." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed talk about the brain, games or music at normal speed, no transcript first. Log: two timestamps with exact words, the main point, how the speaker signposts the sections. Then a 45-second voice note disagreeing with one claim.", minutes: 90, tier: "Stretch", check: "Sunday: you name your speaker's signposts from memory and argue for 60 seconds with one of their claims." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds with clusters (sports, played, months) from that day's listening. Speak WITH the speaker, adding no extra vowels, 3 times. Keep Saturday's best try as audio.", minutes: 25, check: "Saturday's audio is played against the original; the teacher listens for an extra vowel inside a cluster and writes the word on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The Part 2 cue card on the previous slide: date and code word, 1 minute of notes, 2 minutes of talk, the surprise question, all in one take.", minutes: 15, check: "Scored with the HEC rubric; no code word or no surprise answer means it is not counted. Your keyword notes may be asked for in class." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 hobby chunks on cards with a sentence about YOUR spare time on the back; last week's food collocations stay in. Test from the back: phrase first, then turn. Misses come back tomorrow.", minutes: 25, check: "Next week's check is a spoken quiz from the backs of your own cards: the teacher reads a sentence, you supply the chunk." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Is it better to have one close friend or many friends?': reasons for each side and a word for each kind of friendship. 6 words a card, no sentences. Friday, 10 minutes: talk from the cards, 45 seconds a side, timed. AI rule: ONE argument for the side you are against may come from an AI; the question you asked and one reason the answer is weak go on the back of a card. Nothing else from an AI.", minutes: 20, check: "In the debate you use only your cards and answer one follow-up; an AI argument is explained aloud, weakness and all." },
       ],
     },
   ],

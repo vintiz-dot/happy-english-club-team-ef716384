@@ -55,6 +55,25 @@ export const l02: Deck = {
       teacherNote: "Note dropped final sounds and missing 'there's' while you walk round. Write three anonymous examples for the pronunciation and grammar slides.",
     },
     {
+      kind: "activity",
+      title: "Homework check: logs and Lesson 1's phrases",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "The teacher names two students (no volunteers). Each talks for 60 seconds about one episode in their log: what it was about and one moment they remember.",
+        "The teacher plays one timestamp from one of those logs for 10 seconds, pauses, and asks: what did the speaker say next?",
+        "Spoken phrase quiz, 2 minutes: the teacher reads sentences from the backs of your cards (Lesson 1: especially, to be honest, it depends ...). The class says the phrase; one named student uses it in a new sentence.",
+        "One voice note from the week is played to the class, chosen by the teacher. The class asks its speaker one question.",
+      ],
+      tiers: [
+        { level: "Support", task: "You may read from your log while you talk, and point to the timestamp you chose." },
+        { level: "Core", task: "Talk from memory; look at the log only to find the timestamp." },
+        { level: "Stretch", task: "Say what your speaker claimed, then argue with them for 20 seconds." },
+      ],
+      teacherNote: "Tick on the class list who was checked today and how it went. Over the term every student should be checked twice; start with the ones who were quiet in Lesson 1.",
+    },
+    {
       kind: "vocab",
       title: "Collocations for places",
       words: [
@@ -268,7 +287,7 @@ export const l02: Deck = {
     {
       kind: "vlog",
       title: "Video homework: Part 1 about where you live",
-      prompt: "Record yourself answering these Part 1 questions as if the examiner asked them, in one take. 1) Tell me about the area where you live. 2) What do you like about your home? 3) Is your neighbourhood a good place for young people? Why or why not? 4) How has your area changed since you were a child? 5) Would you prefer to live in the city centre or in a quieter area?",
+      prompt: "Wednesday, one take, no cuts, in the app's video homework. Open with the date and this week's code word (the teacher says it at the end of class; it is written nowhere). Then answer these Part 1 questions as if the examiner asked them, and finish with the surprise question the teacher posts in the class group on Wednesday morning. 1) Tell me about the area where you live. 2) What do you like about your home? 3) Is your neighbourhood a good place for young people? Why or why not? 4) How has your area changed since you were a child? 5) Would you prefer to live in the city centre or in a quieter area?",
       length: "2-3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I live in ..., which is ...", "There's ... near my house.", "I like it because ..."], tips: ["Give every answer a reason.", "Use two collocations from the lesson."] },
@@ -278,15 +297,17 @@ export const l02: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about it. Write down every number you hear in one episode.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about places, cities or homes. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a news podcast for young people about cities or housing, at normal speed, no transcript first. Log: the main point, 3 phrases, one question you'd ask the speaker.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of the Lakeview Homes call (the teacher plays it in class; use your own listening at home). Speak WITH the speaker, copying the numbers and letters exactly. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 1 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 collocations to your cards (phrase on one side, your own sentence on the back) and keep last week's 6. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should students choose their own school subjects?' Write one reason and one example for EACH side, and one subject you would drop if you could.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story at the slow level, transcript on the second listen. Log: date, title, ONE timestamp (for example 02:15) and the exact 5-8 words said there, one new phrase, and every number you heard. Then a 20-second voice note about the story in your own words, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your story at your timestamp and asks which number or name came next; voice notes are opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a '6 Minute English' episode about places, cities or homes, once without the transcript and once with. Log: date, title, TWO timestamps with the exact words at each, three phrases. Then a 30-second voice note, one take, no script: how the place in the episode compares with your own area.", minutes: 60, tier: "Core", check: "Sunday: two logs are picked; the teacher plays one of your timestamps and you say what came next and what the speakers thought of the place." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or a news podcast for young people about cities or housing, normal speed, no transcript first. Log: two timestamps with the exact words, the speaker's main point, one question you'd ask them. Then a 45-second voice note answering your own question and saying where you disagree.", minutes: 90, tier: "Stretch", check: "Sunday: you put your question about the episode to the class and defend your own answer to it for 60 seconds." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of the Lakeview Homes call (played in class) or of your own listening. Speak WITH the speaker, copying the numbers and spelled letters exactly, 3 times. On Saturday record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played beside the original; the teacher checks every letter and number is clear and writes one sound to fix on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The Part 1 recording on the previous slide: one take, no cuts, in the app. Date and code word first, then the five questions, then Wednesday's surprise question.", minutes: 15, check: "Scored on the HEC rubric. Without the code word or the surprise question it does not count, and on Sunday the teacher may ask you one of the questions again, live." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 place collocations on cards (phrase on the front, a sentence about YOUR street on the back), plus last week's 6. Test from the back: say the phrase before you turn over. Cards you miss come back tomorrow.", minutes: 25, check: "Next week's Homework check is a spoken quiz from your own back-of-card sentences: the teacher reads one, you say the phrase." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Should students choose their own school subjects?': a reason and an example for each side, and one subject you would drop. At most 6 words a card, no sentences. Friday, 10 minutes: speak from the cards for 45 seconds a side with a timer. AI rule: you may ask an AI for ONE argument for the side you are against. Write the question you asked on the back of a card and one reason its answer is weak. Nothing else from an AI.", minutes: 20, check: "In class you speak from your cards only and answer one follow-up; if you used the AI argument, you tell the class what is weak about it." },
       ],
     },
   ],

@@ -57,6 +57,25 @@ export const l08: Deck = {
       teacherNote: "Some students may not celebrate Tet in the usual way; let them tell any family celebration. Note good past continuous examples (no names) for the grammar slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: tech logs and results phrases",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students are called. Each gets 60 seconds on one log entry: what the story was about and the result it mentioned.",
+        "The teacher plays one of their timestamps and stops it. Question: what came next, and what did it lead to?",
+        "Spoken quiz, 2 minutes: the teacher reads back-of-card sentences about your screen week; the class answers with the phrase (keep in touch with, be glued to, save time ...).",
+        "One voice note is played. One classmate asks its speaker a follow-up.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read your timestamp line from the log, then add one result in your own words." },
+        { level: "Core", task: "Speak from memory and link two ideas with 'which means' or 'as a result'." },
+        { level: "Stretch", task: "Say what the speaker claimed and give a result they did not think of." },
+      ],
+      teacherNote: "Note who was checked today, with the date. Before the Term 1 mock everyone should have been checked twice; choose the gaps first.",
+    },
+    {
       kind: "vocab",
       title: "Words for festivals and weather",
       words: [
@@ -277,7 +296,7 @@ export const l08: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a festival, then a bigger question",
-      prompt: "Record your Part 2 talk again: 'Describe a festival or celebration that you enjoy.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Are traditional festivals as important to young people today as they were to their grandparents?'",
+      prompt: "Wednesday, one take from start to finish. First the date and this week's code word (only said in class). Then your Part 2 talk again: 'Describe a festival or celebration that you enjoy.' Take 1 minute to prepare, talk for 2 minutes, and in the same take answer one Part 3 question: 'Are traditional festivals as important to young people today as they were to their grandparents?' Last, answer the surprise question the teacher posts in the class group that morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The festival is ...", "Last year, while we were ..., ...", "I think young people ... because ..."], tips: ["Keep your four keywords next to the camera.", "Check five -ed endings when you watch it back."] },
@@ -287,15 +306,17 @@ export const l08: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about a festival, a holiday or the weather, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, three -ed verbs you heard.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about celebrations, seasons or climate. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a teen news podcast about traditions or the weather, at normal speed, no transcript first. Log: the main point, 3 phrases, one question you'd ask the speaker.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening with past-tense verbs in it. Speak WITH the speaker, copying every -ed ending exactly. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's technology phrases (which means, as a result ...) in the pile. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should children be paid for doing housework?' Write one PREP point for EACH side with a real example from your home, and one 'That's true, but ...' sentence.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story about a festival, a holiday or the weather at the slow level, transcript on the second listen. Log: date, title, one timestamp with the exact words there, one new phrase, three -ed verbs you heard. Then a 20-second voice note, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your timestamp and asks for the next -ed verb you heard; voice notes are chosen at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a '6 Minute English' episode about celebrations, seasons or climate, without then with the transcript. Log: date, title, two timestamps (for example 05:20) with exact words, three phrases. Then a 30-second voice note: a celebration from the episode compared with Tet.", minutes: 60, tier: "Core", check: "Sunday: one of your timestamps is played and you tell the class what came next, in the past tense." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or teen news podcast about traditions or the weather, normal speed, no transcript first. Log: two timestamps with exact words, the main point, one question you'd ask the speaker. Then a 45-second voice note answering it and disagreeing.", minutes: 90, tier: "Stretch", check: "Sunday: you ask the class your question about the episode and argue your own answer for 60 seconds." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of your listening with past-tense verbs. Speak WITH the speaker, copying every -ed ending exactly, 3 times. Keep Saturday's recording.", minutes: 25, check: "Your Saturday audio is played beside the original; the teacher checks /t/ /d/ /ɪd/ on three verbs and writes one on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The festival talk plus the Part 3 question on the previous slide: one take, no cuts, starting with the date and code word, ending with the surprise question.", minutes: 15, check: "Scored on the HEC rubric; a take without the code word or the surprise question is not counted. One Part 3 follow-up may be asked live on Sunday." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 festival and weather phrases on cards (the back: a sentence about YOUR last Tet), with last week's technology phrases kept in. Say the phrase from the back before turning over; misses return tomorrow.", minutes: 25, check: "Next week's Homework check quizzes you aloud from the backs of your own cards: take place, look forward to, get together ..." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Should children be paid for doing housework?': a PREP point for each side as keywords, a real example from your home, one 'That's true, but ...' idea. 6 words a card at most, no sentences. Friday, 10 minutes: speak from the cards, 45 seconds a side, timed. AI rule: ONE argument for the other side may come from an AI. Write down what you asked it and one reason its answer is weak. Nothing else from an AI.", minutes: 20, check: "In the debate you speak from your cards only and answer one follow-up; any AI argument has to be explained, with its weakness, out loud." },
       ],
     },
   ],

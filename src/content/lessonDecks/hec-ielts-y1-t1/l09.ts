@@ -67,6 +67,25 @@ export const l09: Deck = {
       teacherNote: "Money can be sensitive: students talk about habits, never amounts their family has. Listen for comparatives to use on the grammar slide (no names).",
     },
     {
+      kind: "activity",
+      title: "Homework check: Tet logs and festival phrases",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "The teacher names two students; each has 60 seconds on one log entry, told in the past tense.",
+        "The teacher plays one of their timestamps for 10 seconds, pauses, and asks what was said next.",
+        "Two-minute spoken quiz: back-of-card sentences about your last Tet; the class answers with the phrase (in the run-up to, a family tradition, get together ...).",
+        "One voice note from the week is played; its speaker answers one question from the class.",
+      ],
+      tiers: [
+        { level: "Support", task: "You may read the timestamp line and the words you wrote, then say one sentence more." },
+        { level: "Core", task: "Talk without the log, using three past-tense verbs." },
+        { level: "Stretch", task: "Retell the moment and challenge the speaker's view for 20 seconds." },
+      ],
+      teacherNote: "Mark the two names and the date. Three lessons to the Term 1 mock: anyone with fewer than two checks goes first.",
+    },
+    {
       kind: "vocab",
       title: "Words for shopping and money",
       words: [
@@ -286,7 +305,7 @@ export const l09: Deck = {
     {
       kind: "vlog",
       title: "Video homework: something you bought, and shopping today",
-      prompt: "Record your Part 2 talk again: 'Describe something you bought that you were happy with.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Is online shopping better than going to shops? Why?'",
+      prompt: "Wednesday, one take, no edits or restarts. Say the date and this week's code word (given in class only), then your Part 2 talk again: 'Describe something you bought that you were happy with.' Take 1 minute to prepare, talk for 2 minutes, and in the same take answer one Part 3 question: 'Is online shopping better than going to shops? Why?' Close with the surprise question posted in the class group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["It was a ...", "I bought it at ...", "I think online shopping is ... because ..."], tips: ["Keep your four keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },
@@ -296,15 +315,17 @@ export const l09: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about money, shops or business, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one comparison you heard.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about money or shopping. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a teen news podcast about money, spending or advertising, at normal speed, no transcript first. Log: the main point, 3 phrases, one thing you'd argue against.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening. Mark every consonant-to-vowel link, then speak WITH the speaker, copying the links. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's festival phrases (take place, look forward to ...) in the pile. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Is reading books more useful than watching videos?' Write one PREP point for EACH side with a real example (a book, a channel, something you learnt), and one 'That's true, but ...' sentence.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story about money, shops or business at the slow level, transcript on the second listen. Log: date, title, one timestamp with the exact words there, one new phrase, one comparison you heard. Then a 20-second voice note, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your timestamp and asks what was compared next; one voice note is played at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a '6 Minute English' episode about money or shopping, without and then with the transcript. Log: date, title, two timestamps (for example 01:35) with exact words, three phrases. Then a 30-second voice note in one take: would you spend money the way the speakers do?", minutes: 60, tier: "Core", check: "Sunday: two logs are chosen; at your timestamp you say what came next and whether you agree." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or teen news podcast about money, spending or advertising, normal speed, no transcript first. Log: two timestamps with exact words, the main point, one thing you'd argue against. Then a 45-second voice note making that argument.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds live against your speaker's point, and one question from the class." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of your listening. Mark every consonant-to-vowel link, then speak WITH the speaker copying the links, 3 times. Record Saturday's try and keep it.", minutes: 25, check: "Saturday's audio is played beside the original; the teacher listens for three links and writes one to practise on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The 'something you bought' talk plus Part 3 on the previous slide: one take, no cuts, date and code word first, surprise question last.", minutes: 15, check: "Scored on the HEC rubric. No code word or no surprise answer, no score; the Part 3 question may come back live on Sunday." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 money phrases on cards with a sentence about YOUR spending on the back; keep last week's festival phrases in the pile. From the back, phrase first; missed cards come back tomorrow.", minutes: 25, check: "Next week's Homework check reads your own back-of-card sentences and you say the phrase (a bargain, save up for, can't afford ...)." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Is reading books more useful than watching videos?': a PREP point for each side in keywords, a real book or channel, one 'That's true, but ...' idea. 6 words a card, no full sentences. Friday, 10 minutes: speak from the cards, 45 seconds a side, timed. AI rule: you may ask an AI for ONE argument on the side you disagree with; put your question and one weakness of its answer on a card. Nothing else from an AI.", minutes: 20, check: "In class you argue from your cards and answer the teacher's follow-up; if you used an AI argument, you explain to everyone why it is weak." },
       ],
     },
   ],

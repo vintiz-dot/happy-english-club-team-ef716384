@@ -55,6 +55,25 @@ export const l10: Deck = {
       teacherNote: "Notice past-tense errors (especially 'go' for 'went') in round 1 and write three anonymous examples on the board for the grammar slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: money logs and shopping phrases",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students, picked by the teacher, each talk for 60 seconds about one log entry and the comparison they heard.",
+        "The teacher plays one timestamp, stops it after a sentence and asks: what came next?",
+        "Spoken quiz, 2 minutes: the teacher reads back-of-card sentences about your spending; the class says the phrase (good value for money, on sale, spend money on ...).",
+        "One voice note is played. A classmate asks its speaker one question.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read from your log, then compare two things from the episode in one sentence." },
+        { level: "Core", task: "No log: tell the moment and one comparison from memory." },
+        { level: "Stretch", task: "Tell the moment and argue with the speaker for 20 seconds, using a comparison." },
+      ],
+      teacherNote: "Write the date and today's two names. Check the list: two lessons before the mock, every student should be on their second check.",
+    },
+    {
       kind: "vocab",
       title: "Words for talking about stories",
       words: [
@@ -276,7 +295,7 @@ export const l10: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a story someone told you",
-      prompt: "Record a Part 2 answer in one take. Take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a story that someone told you and you remember. You should say: who told you the story, when they told it, what happened in the story, and explain why you remember it. Then answer one follow-up: Do you think children today hear fewer stories from their grandparents?",
+      prompt: "Wednesday, recorded in one take with no cuts. Begin with the date and this week's code word (heard only in class). Take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a story that someone told you and you remember. You should say: who told you the story, when they told it, what happened in the story, and explain why you remember it. Then answer one follow-up: Do you think children today hear fewer stories from their grandparents? Last of all, without stopping, the surprise question posted in the class group on Wednesday morning.",
       length: "2-3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The story was told to me by ...", "It's about ...", "At first ..., then ...", "I remember it because ..."], tips: ["Follow the four points in order.", "Use past simple for every event; add one 'was ...ing'."] },
@@ -286,15 +305,17 @@ export const l10: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story or a short '6 Minute English' episode about books, films or storytelling, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about it.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode or a TED-Ed animated story. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary, and one place where the speaker changed their mind or corrected something.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed lesson about a famous story or myth, or a news podcast for young people, at normal speed, no transcript first. Log: the main point, 3 phrases, and every past perfect you hear in one episode.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of a storyteller from your listening. Speak WITH them, copying the 'th' sounds and how they slow down at the turning point. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 story on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 story phrases to your cards and mix them with the cards from Lessons 7-9 (reasons and results, events, places and directions). Test yourself from the BACK. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Are pets good for children?' Write one PREP point for EACH side (point, reason, real example, point) and one 'That's true, but ...' sentence against each.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story or a short '6 Minute English' episode about books, films or storytelling, transcript on the second listen. Log: date, title, one timestamp with the exact words there, one new phrase. Then a 20-second voice note retelling it, no script.", minutes: 40, tier: "Support", check: "Sunday: your timestamp is played and you say what happened next in the story; voice notes are opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a '6 Minute English' episode or a TED-Ed animated story, without and then with the transcript. Log: date, title, two timestamps (for example 03:55) with exact words, three phrases, one place a speaker changed their mind. Then a 30-second voice note: the turning point and what you thought of it.", minutes: 60, tier: "Core", check: "Sunday: the teacher plays one of your timestamps and asks what came next and why it was a turning point." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed lesson on a famous story or myth, or a news podcast for young people, normal speed, no transcript first. Log: two timestamps with exact words, the main point, every past perfect in one episode. Then a 45-second voice note arguing with the storyteller's reading.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds live on why the story could be told another way; the class may ask one question." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of a storyteller from your listening. Speak WITH them, copying the 'th' sounds and how they slow down at the turning point, 3 times. Keep Saturday's recording.", minutes: 25, check: "The Saturday audio is played beside the original; the teacher checks /θ/ and /ð/ and the slow-down, and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The story on the previous slide plus its follow-up: one take, no cuts, the date and code word first and the surprise question last.", minutes: 15, check: "Scored on the HEC rubric. A take without the code word or the surprise question does not count; on Sunday you may be asked to retell the turning point live." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 story phrases on cards with a sentence about a story YOU know on the back, mixed with the cards from Lessons 7-9. Test from the back, phrase before you turn; misses come back tomorrow.", minutes: 25, check: "Next week's Homework check reads back-of-card sentences from your own pack and you say the phrase (the plot, a turning point ...)." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Are pets good for children?': a PREP point (point, reason, real example) for each side in keywords, and a 'That's true, but ...' idea against each. 6 words a card at most. Friday, 10 minutes: speak from the cards, 45 seconds a side, timed. AI rule: ONE AI argument, for the side you oppose, is allowed; your question and one reason the answer is weak go on a card. Nothing else from an AI.", minutes: 20, check: "In class you speak from the cards only and answer one follow-up; if an AI supplied an argument, you explain its weakness to the class." },
       ],
     },
   ],

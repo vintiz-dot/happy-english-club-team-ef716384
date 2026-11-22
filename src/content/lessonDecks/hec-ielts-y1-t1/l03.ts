@@ -55,6 +55,25 @@ export const l03: Deck = {
       teacherNote: "Listen for 'I usually am', 'he play' and 'I use to'. Write three anonymous examples for the grammar and pronunciation slides.",
     },
     {
+      kind: "activity",
+      title: "Homework check: timestamps and place collocations",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students are picked from the class list. Each has 60 seconds on one log entry: the episode, the timestamp they chose and why that moment mattered.",
+        "The teacher plays that timestamp aloud and stops after one sentence. Question for the speaker: what came straight after?",
+        "Two-minute phrase quiz: the teacher reads back-of-card sentences about your streets ('There's ... right outside my flat'); the class calls out the collocation (a bustling street, within walking distance ...).",
+        "One voice note is played. The class guesses which episode it was about, and its speaker answers one question.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read your log entry aloud first, then add one sentence of your own without looking." },
+        { level: "Core", task: "No log in your hand: tell the episode and the moment from memory." },
+        { level: "Stretch", task: "Tell the episode, then disagree with one thing the speaker said and give a reason." },
+      ],
+      teacherNote: "Keep the class list open and mark today's two names and dates. Everyone gets checked twice a term; do not pick last week's two again until the rest have had a turn.",
+    },
+    {
       kind: "vocab",
       title: "Chunks for study and free time",
       words: [
@@ -267,7 +286,7 @@ export const l03: Deck = {
     {
       kind: "vlog",
       title: "Video homework: Part 1 about study and free time",
-      prompt: "Record yourself answering these Part 1 questions in one take. 1) What do you study at school, and which subject do you like most? 2) Is there a subject you would like to stop studying? Why? 3) How do you usually spend your weekends? 4) Have your free-time activities changed in the last few years? 5) Do you prefer spending free time alone or with other people?",
+      prompt: "One take, no cuts, on Wednesday in the app. First sentence: the date and this week's code word, which you only hear at the end of today's class. Then the Part 1 questions below, as in the test. Last: the surprise question that appears in the class group on Wednesday morning. 1) What do you study at school, and which subject do you like most? 2) Is there a subject you would like to stop studying? Why? 3) How do you usually spend your weekends? 4) Have your free-time activities changed in the last few years? 5) Do you prefer spending free time alone or with other people?",
       length: "2-3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I usually ... because ...", "I used to ..., but now ...", "My favourite subject is ..."], tips: ["Give every answer a reason.", "Say every -s ending: likes, plays, watches."] },
@@ -277,15 +296,17 @@ export const l03: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: a BBC Learning English '6 Minute English' episode, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about it. Circle every 'usually' or 'tend to' in the transcript.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: alternate VOA Learning English and a TED-Ed video about school or learning. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a news podcast for young people at normal speed, no transcript first. Log: the main point, 3 phrases, and one place where a speaker corrected or changed what they said.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: choose 30 seconds from your listening with several -s endings. Speak WITH the speaker, keeping every /s/, /z/ and /ɪz/. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 1 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 chunks to your cards and keep last week's place collocations in the pack. Test yourself from the BACK (your own sentence): say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should every child learn to cook?' Write one reason and one example for EACH side; one example should be about a real person you know.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: a '6 Minute English' episode, transcript on the second listen. Log: date, title, one timestamp (for example 04:10) and the exact words there, one new phrase, and every 'usually' or 'tend to' you caught. Then a 20-second voice note: what the episode was about, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your episode at your timestamp and asks you to say the next few words; a random voice note is played." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: alternate VOA Learning English and a TED-Ed video about school or learning, once without and once with the transcript. Log: date, title, two timestamps with the exact words, three phrases. Then a 30-second voice note in one take: one habit the speaker describes and whether you share it.", minutes: 60, tier: "Core", check: "Sunday: the teacher plays one of your two timestamps and asks what came next and whether you agree with it." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a news podcast for young people at normal speed, no transcript first. Log: two timestamps with the exact words, the main point, and one moment where a speaker corrected or changed what they said. Then a 45-second voice note arguing with the speaker.", minutes: 90, tier: "Stretch", check: "Sunday: you play the class the moment a speaker corrected themselves and explain, live, why a careless listener would miss it." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds from that day's listening with plenty of -s endings. Speak WITH the speaker, keeping every /s/, /z/ and /ɪz/, 3 times. Save Saturday's best try as audio.", minutes: 25, check: "Saturday's audio is played next to the original; the teacher counts the -s endings you kept and writes your weakest one on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The Part 1 recording on the previous slide: one take, no cuts. Say the date and the code word, answer the five questions, then the Wednesday surprise question.", minutes: 15, check: "Teacher-scored on the HEC rubric; a take without the code word and the surprise question is not counted, and one question may be asked again in class." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 study and free-time chunks on cards, each with a sentence about YOUR week on the back, plus last week's place collocations. Say the phrase from the back before turning over; missed cards return tomorrow.", minutes: 25, check: "Next Sunday the teacher reads sentences from the backs of your cards and you say the chunk aloud, in front of the class." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Should every child learn to cook?': reasons and examples on both sides, one about a real person you know. Keywords only, 6 words a card at most. Friday, 10 minutes: talk from the cards, 45 seconds per side, timed. AI rule: ONE argument from an AI is allowed, only for the side you disagree with; note the question you typed and one weakness of the answer on a card. Nothing else may come from an AI.", minutes: 20, check: "Next lesson you argue from the cards alone and take one follow-up question; an AI argument must be explained, and its weakness named, aloud." },
       ],
     },
   ],

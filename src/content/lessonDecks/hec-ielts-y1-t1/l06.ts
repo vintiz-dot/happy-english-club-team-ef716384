@@ -56,6 +56,25 @@ export const l06: Deck = {
       teacherNote: "Keep the rounds tight; the mock needs the time. Note any good description you hear to praise (no names) after the mock.",
     },
     {
+      kind: "activity",
+      title: "Homework check: logs and hobby chunks before the mock",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two named students each talk for 60 seconds about one log entry. Keep it quick: the mock follows.",
+        "The teacher plays one timestamp from one of those logs and asks what was said right after it.",
+        "Two-minute spoken quiz from back-of-card sentences on Lesson 5's hobby chunks (be into, take up, get hooked on ...). The class answers together; one named student answers alone.",
+        "One voice note is played. No questions today: the class just says which episode it was about.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read your log line about the timestamp, then say one sentence without it." },
+        { level: "Core", task: "Talk from memory for the full minute." },
+        { level: "Stretch", task: "Tell the moment, then give the speaker's view and your argument against it." },
+      ],
+      teacherNote: "This is the mini-mock lesson, so keep to 5 minutes. Note who was checked; anyone not yet checked this term goes first next lesson so everyone reaches two checks.",
+    },
+    {
       kind: "vocab",
       title: "Words for describing people",
       words: [
@@ -287,7 +306,7 @@ export const l06: Deck = {
     {
       kind: "vlog",
       title: "Video homework: the mock Part 2, one week later",
-      prompt: "Record the same Part 2 talk as in today's mock: 'Describe a friend or family member you enjoy spending time with.' Give yourself exactly 1 minute to prepare, then talk for 2 minutes in one take. Before you record, read your Scorer's card and fix the ONE thing it asked you to change. The teacher scores this recording on the full rubric.",
+      prompt: "Wednesday, one take, no cuts. Start with the date and this week's code word, given only in class. Then record the same Part 2 talk as in today's mock: 'Describe a friend or family member you enjoy spending time with.' Before you record, read your Scorer's card and fix the ONE thing it asked you to change; give yourself exactly 1 minute to prepare, then talk for 2 minutes. End with the surprise question posted in the class group on Wednesday morning. The teacher scores this recording on the full rubric.",
       length: "2 minutes (plus 1 minute of preparation, not recorded)",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The person I want to talk about is ...", "We usually ... together.", "One time, we ...", "I enjoy spending time with him/her because ..."], tips: ["Keep your four keywords on paper next to the camera.", "If you stop, look at the next bullet and keep going."] },
@@ -297,15 +316,17 @@ export const l06: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: evidence in the student's own voice, at a set moment,
+      // checked live in class (see the Homework check at the start of the next lesson).
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, and one sentence describing a person in the story.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about people, friendship or families. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a teen news podcast about relationships or psychology, at normal speed, no transcript first. Log: the main point, 3 phrases, one thing you'd disagree with.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening where someone describes a person. Speak WITH the speaker, tapping the stressed words as they do. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 recording on the previous slide, fixing your Scorer's one point. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's hobby and sport phrases in the pile. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should phones be allowed in the classroom?' Write one reason and one real example for EACH side, and one rule about phones you think is fair.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English story at the slow level, transcript on the second listen. Log: date, title, one timestamp with the exact words there, one new phrase, and one sentence describing a person in the story. Then a 20-second voice note describing that person, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your timestamp and asks what came next; one voice note about a person is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a '6 Minute English' episode about people, friendship or families, once without and once with the transcript. Log: date, title, two timestamps (for example 03:05) with the exact words, three phrases. Then a 30-second voice note: what the episode says about friendship, and what you think.", minutes: 60, tier: "Core", check: "Sunday: one timestamp from your log is played and you say what followed and who said it." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or a teen news podcast on relationships or psychology, normal speed, no transcript first. Log: two timestamps with exact words, the main point, one thing you'd disagree with. Then a 45-second voice note making that disagreement.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds live against the speaker's main point, then one question from the class." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of your listening where someone describes a person. Speak WITH them, tapping the stressed words as they do, 3 times. Record Saturday's attempt and keep it.", minutes: 25, check: "The Saturday audio is played beside the original; the teacher checks you stressed the content words and notes one sentence to redo." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The mock Part 2 again (previous slide), with your Scorer's one point fixed: one take, no cuts, date and code word first, surprise question last.", minutes: 15, check: "Scored on the full rubric against your mock score. Missing code word or surprise question: not counted. The teacher checks the Scorer's point was really fixed." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: today's 6 people phrases on cards, the back a sentence about someone YOU know (no surnames). Last week's hobby phrases stay in the pile. From the back, say the phrase before turning; misses tomorrow again.", minutes: 25, check: "Next week's Homework check reads your back-of-card sentences aloud and you say the phrase (get on with, take after ...)." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Wednesday, 10 minutes: five keyword cards for 'Should phones be allowed in the classroom?': a reason and a real example for each side, and one phone rule you think is fair. Keywords only, 6 words a card. Friday, 10 minutes: say it from the cards, 45 seconds a side, with a timer. AI rule: you may ask an AI for ONE argument on the side you disagree with; log your question and one weakness of its answer on a card. Nothing else from an AI.", minutes: 20, check: "In class you speak from the cards alone and the teacher asks one follow-up; any AI argument is explained, with its weakness, to the class." },
       ],
     },
   ],
