@@ -290,6 +290,66 @@ In dark the surface gets lighter as it rises (`paper` < `surface` < `raised`); t
 - May not: bounce or overshoot, spin, shake, parallax, anything looping (the loading indicator is the only loop), anything that changes layout (width, height, margin), more than one thing at a time on a screen. A reward moment (level up) may play once, under 1.2 s, and must be skippable by doing nothing.
 - **Reduced motion: nothing runs longer than 0.01 s.** Inside the scope, under `prefers-reduced-motion: reduce`, the CSS sets every animation and transition to 0.01 ms, one iteration, no delay, and the three duration tokens to 0.01 ms. That covers CSS. It does **not** cover framer-motion, which animates from JavaScript: a screen in the system either uses CSS transitions only, or sits under `<MotionConfig reducedMotion="user">` (A4.3 adds it at the root) and checks `useReducedMotion()` for anything `MotionConfig` does not stop (layout animations, `animate` loops).
 
+## 9b. Signature tier
+
+Section 9 stays as written and is the floor. The Signature tier is a second tier on top of it, from `docs/EXPERIENCE_DESIGN_BRIEF.md` Part B, for the screens the brief names. A screen the brief does not name keeps section 9. The kit lives in `src/components/fx/`; durations and springs are defined only in `src/components/fx/motion.ts`.
+
+### Materials
+
+Everything moves as one of four materials. If an effect cannot be described as one of these, it does not belong.
+
+| Material | Token family | How it moves |
+|---|---|---|
+| Paper | `hec-paper`, `hec-surface`, `hec-raised`, `hec-honey` | Lifts, settles, slides over other paper. Has weight: starts fast, lands slowly. Never stretches, never wobbles (staff, parents, teens). |
+| Ink | `hec-ink`, `hec-line` | Is drawn. Ticks, rings, underlines and chart lines draw themselves along their path. Text never flies; it fades. |
+| Brass | `hec-brass`, `hec-brass-fill` | Is light. A sheen that travels along an edge, a ring that closes, a dot that breathes. The only thing allowed to glow, and only as a 1 px to 2 px edge, never a halo. |
+| Leaf | `hec-leaf` | Grows. Progress fills, sprouts, climbs. Used for growth only (principle 3). |
+
+Forbidden materials: glass, blur behind content, gradients as decoration, neon, aurora, coloured shadows, 3D tilt on cards, particles on staff and parent screens. `node scripts/design-rollout-inventory.mjs` counts the legacy utilities (`glass*`, `backdrop-blur*`, `animate-float*`, `hover:scale-*`); that count must not rise.
+
+### Tokens
+
+Declared once under the same three selectors as the section 9 tokens, and zeroed by the same reduced-motion block.
+
+| Token | Value | Class | Use |
+|---|---|---|---|
+| `--hec-dur-4` | 700 ms | `duration-hec-4` | a signature moment (the Seal, a Carry between pages) |
+| `--hec-dur-5` | 1200 ms | `duration-hec-5` | the ceiling for a reward moment |
+| `--hec-ease-draw` | `cubic-bezier(0.65, 0, 0.35, 1)` | `ease-hec-draw` | ink drawing along a path |
+| `--hec-stagger` | 40 ms | - | gap between siblings entering; a group never takes more than 320 ms in all |
+
+Springs for framer-motion are exported from `src/components/fx/motion.ts` and never written inline:
+
+| Name | Config | Use |
+|---|---|---|
+| `soft` | `{ type: "spring", stiffness: 170, damping: 26 }` | paper settling, layout moves |
+| `snappy` | `{ type: "spring", stiffness: 420, damping: 34 }` | press, toggle, tab marker |
+| `reward` | `{ type: "spring", stiffness: 300, damping: 18 }` | visible overshoot. Reward moments only, and the two youngest student bands |
+
+Under reduced motion the rule of section 9 holds: nothing runs longer than 0.01 s.
+
+### Motion level: Full / Calm / Off
+
+- One attribute on `<html>`: `data-hec-motion="full" | "calm" | "off"`. CSS effects are written against it; framer-motion effects read it through one hook, `useMotionLevel()`.
+- Default: `off` when the device asks for reduced motion; `calm` when the device is weak (`navigator.hardwareConcurrency <= 4`, or `navigator.deviceMemory <= 4`, or `navigator.connection?.saveData`); otherwise `full`.
+- The person changes it in the account menu (`theme/UserMenu.tsx`), beside System / Light / Dark. It is stored per signed-in user in localStorage, the way the theme is. The device's reduced-motion request cannot be overridden upward.
+- `calm` keeps: press states, the Carry cross-fade, ink draws, the Seal. It drops: ambient effects, pointer-following light, loops, staggers, reward overshoot.
+- `off` keeps state changes instant and readable. No information may exist only in an animation.
+
+### Performance budget
+
+- Animate `transform`, `opacity` and `clip-path` only. A `box-shadow` change is done by fading a pseudo-element. Never animate `width`, `height`, `margin`, `top`, `left`, `filter: blur`.
+- At most two looping animations on a screen, each paused when its element is off screen (`IntersectionObserver`) or the tab is hidden (`visibilitychange`).
+- Pointer-following effects write CSS variables on the element (as `SpotlightCard` does); they never set React state on `mousemove`.
+- `will-change` is set when an animation starts and removed when it ends.
+- Lists longer than 30 rows get no per-row entrance and no layout animation.
+- The motion kit adds no more than 12 kB gzipped to the main bundle. Reward moments are lazy-loaded.
+- Target device: a mid-range Android phone from 2020 inside the Zalo in-app browser. If an effect drops frames there, it ships in `calm` form for everyone.
+
+### Tide
+
+`--hec-tide` (0 to 1) is set on `<html>` from the Hanoi clock: 0 at 07:00, 1 at 19:00. It may do exactly two things: shift `hec-paper`'s warmth by at most 2 % in lightness and 4 degrees in hue, and choose the greeting line. In dark mode it does nothing. `node scripts/design-tokens-check.mjs` checks the contrast pairs of section 3 on `paper` at both extremes. Tide is built and not yet switched on anywhere.
+
 ## 10. Focus
 
 One ring, everywhere, on every focusable thing:
