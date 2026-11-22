@@ -45,7 +45,8 @@ export function AnimatedNumber({
     const start = performance.now();
     let raf = 0;
     const tick = (now: number) => {
-      const p = Math.min((now - start) / duration, 1);
+      // clamped at 0 too: the first frame's timestamp can come before `start`, which drew a negative figure for one frame
+      const p = Math.min(Math.max((now - start) / duration, 0), 1);
       const eased = 1 - Math.pow(1 - p, 4);
       const current = from + (to - from) * eased;
       shown.current = current;

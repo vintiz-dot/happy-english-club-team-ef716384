@@ -3,7 +3,8 @@ import { DurationVarianceNotice } from "@/components/shared/DurationVarianceNoti
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { flushSync } from "react-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,8 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAvatarUrl } from "@/lib/avatars";
 import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShared";
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
-import { motion } from "framer-motion";
-import { Progress } from "@/components/ui/progress";
+import { AnimatePresence, motion } from "framer-motion";
 import { teacherPayrollView } from "@/lib/teacherPayrollView";
 import { VideoReviewQueue } from "@/components/video-homework/VideoReviewQueue";
 import {
@@ -45,6 +45,15 @@ import {
   useFinancialPrivacy,
 } from "@/components/teacher/FinancialPrivacy";
 import { formatVND } from "@/lib/money";
+import { Arrive, ArriveItem, useFirstArrival } from "@/components/fx/Arrive";
+import { BrassEdge } from "@/components/fx/BrassEdge";
+import { carry, useCarryNavigate } from "@/components/fx/Carry";
+import { LiveDot } from "@/components/fx/LiveDot";
+import { NowLine } from "@/components/fx/NowLine";
+import { pressable } from "@/components/fx/PaperPress";
+import { Seal } from "@/components/fx/Seal";
+import { Tick } from "@/components/fx/Tick";
+import { dur, ease, snappy, useMotionLevel } from "@/components/fx/motion";
 
 export default function TeacherDashboard() {
   return (
@@ -54,6 +63,19 @@ export default function TeacherDashboard() {
   );
 }
 
+// "Pending Grading" as it stood on the last visit, for the "All graded" Seal. A number only, never a name.
+const pendingSeenKey = (userId: string | undefined) => `hec-pending-grading-seen:${userId ?? "signed-out"}`;
+
+// Chevron slides 2 px right under the pointer: full motion only (it is a pointer effect).
+const CHEVRON = "h-5 w-5 shrink-0 text-hec-ink-faint transition-[color,transform] duration-hec-1 ease-hec group-hover:translate-x-0.5 group-hover:text-hec-ink [[data-hec-motion=calm]_&]:group-hover:translate-x-0 [[data-hec-motion=off]_&]:group-hover:translate-x-0";
+
+// A quiet line for the end of the teaching day, by the Hanoi hour.
+function endOfDayLine(hour: number): string {
+  if (hour < 12) return "No more classes today. The rest of your morning is yours.";
+  if (hour < 17) return "No more classes today. Enjoy your afternoon.";
+  return "No more classes today. Have a good evening.";
+}
+
 function TeacherDashboardInner() {
   const { hidden: financialsHidden } = useFinancialPrivacy();
   const queryClient = useQueryClient();
@@ -61,6 +83,31 @@ function TeacherDashboardInner() {
   const currentMonth = dayjs().format("YYYY-MM");
   const [showEditProfile, setShowEditProfile] = useState(false);
   const { user } = useAuth();
+  const motionLevel = useMotionLevel();
+  // One answer for the whole page: is this the first time today this person opens the dashboard?
+  const firstArrival = useFirstArrival("teacher-dashboard", user?.id);
+  // Carry: the class name travels to the next page. Only the pressed element holds the view-transition
+  // name (two elements with one name would cancel the transition), so it is set just before navigating.
+  const carryNavigate = useCarryNavigate();
+  const [carrying, setCarrying] = useState<string | null>(null);
+  const carryTo = (key: string, to: string) => {
+    flushSync(() => setCarrying(key));
+    carryNavigate(to);
+  };
+  const carryLink = (key: string, to: string) => (e: MouseEvent) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    carryTo(key, to);
+  };
+  // A calm clock: once a minute, no ticking seconds. It drives the countdown and the agenda's finished rows.
+  const [now, setNow] = useState(() => dayjs());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(dayjs()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const [tab, setTab] = useState("schedule");
+  const [sealed, setSealed] = useState(false);
+  const pendingBefore = useRef<number | null>(null);
 
   // Single auth + teacher lookup, shared by all queries
   const { data: teacherProfile } = useQuery({
@@ -202,6 +249,28 @@ function TeacherDashboardInner() {
     },
   });
 
+  // "Pending Grading" went from above 0 to 0, while on screen or since the last visit: one Seal.
+  useEffect(() => {
+    if (pendingGrading === undefined) return;
+    let before = pendingBefore.current;
+    if (before === null) {
+      try {
+        const saved = window.localStorage.getItem(pendingSeenKey(user?.id));
+        before = saved === null ? null : Number(saved);
+      } catch {
+        before = null;
+      }
+    }
+    if (pendingGrading > 0) setSealed(false);
+    else if (before !== null && before > 0) setSealed(true);
+    pendingBefore.current = pendingGrading;
+    try {
+      window.localStorage.setItem(pendingSeenKey(user?.id), String(pendingGrading));
+    } catch {
+      /* storage blocked: the Seal then plays only for a change seen on screen */
+    }
+  }, [pendingGrading, user?.id]);
+
   // This month's figures are calculate-payroll's, for the signed-in person
   // only (the function scopes a teacher or a TA by the JWT and ignores the
   // teacherId sent). Picked by id through teacherPayrollView, never [0]. When
@@ -248,9 +317,8 @@ function TeacherDashboardInner() {
   }, [teacherId, currentMonth]);
 
   const getTimeStatus = (startTime: string, endTime: string) => {
-    const now = dayjs();
-    const start = dayjs(`${dayjs().format("YYYY-MM-DD")} ${startTime}`);
-    const end = dayjs(`${dayjs().format("YYYY-MM-DD")} ${endTime}`);
+    const start = dayjs(`${now.format("YYYY-MM-DD")} ${startTime}`);
+    const end = dayjs(`${now.format("YYYY-MM-DD")} ${endTime}`);
     
     if (now.isBefore(start)) return "upcoming";
     if (now.isAfter(end)) return "completed";
@@ -268,25 +336,24 @@ function TeacherDashboardInner() {
     focusSession ? null : (todaySessions || []).find((s: any) => s.status === "Canceled") || null;
   const classNameOf = (s: any) =>
     (Array.isArray(s.classes) ? s.classes[0]?.name : s.classes?.name) || "Class";
+  const classIdOf = (s: any) => (Array.isArray(s.classes) ? s.classes[0]?.id : s.classes?.id);
+  const carryStyle = (key: string, classId: string | undefined) =>
+    carrying === key && classId ? { viewTransitionName: carry(`class-${classId}`) } : undefined;
 
   const projectedCount = (payrollView?.heldSessions ?? 0) + (payrollView?.scheduledSessions ?? 0);
   const progressPercent = projectedCount
     ? Math.round((payrollView?.heldSessions ?? 0) / projectedCount * 100)
     : 0;
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.08, delayChildren: 0.1 }
-    }
-  };
-
-  // DS s.9: one slow fade with at most an 8 px rise
-  const itemVariants = {
-    hidden: { opacity: 0, y: 8 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] as const } }
-  };
+  // Tab content: out in 140 ms, in over 240 ms (brief C2); instant at motion level "off".
+  const tabFade =
+    motionLevel === "off"
+      ? { initial: false as const, animate: { opacity: 1 }, exit: { opacity: 1, transition: { duration: 0 } } }
+      : {
+          initial: { opacity: 0 },
+          animate: { opacity: 1, transition: { duration: dur.reveal, ease } },
+          exit: { opacity: 0, transition: { duration: dur.press, ease } },
+        };
 
   // Ivory class strings for this page (DS s.15)
   const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
@@ -326,35 +393,39 @@ function TeacherDashboardInner() {
   return (
     <Layout title="Dashboard">
       {/* Ambient depth is provided globally by Layout's AmbientBackground */}
-      <motion.div
-        className="space-y-8 relative"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
+      <Arrive scope="teacher-dashboard" userId={user?.id} className="space-y-8 relative">
         {/* Today's class: one clear next step */}
         {todaySessions && (
-          <motion.div variants={itemVariants}>
-            <Card>
+          <ArriveItem index={0}>
+            <Card className="relative overflow-hidden">
               <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 {focusSession || cancelledToday ? (
                   (() => {
                     const s = focusSession || cancelledToday;
                     const live = focusSession && getTimeStatus(s.start_time, s.end_time) === "ongoing";
+                    // Within the hour: a calm countdown in words, refreshed each minute.
+                    const minsToStart = focusSession && !live
+                      ? Math.ceil(dayjs(`${now.format("YYYY-MM-DD")} ${s.start_time}`).diff(now, "second") / 60)
+                      : null;
+                    const countdown =
+                      minsToStart !== null && minsToStart >= 1 && minsToStart <= 60
+                        ? `starts in ${minsToStart} minute${minsToStart === 1 ? "" : "s"}`
+                        : null;
                     return (
                       <>
                         <div className="min-w-0 space-y-1">
                           <p className="text-hec-small font-medium text-hec-ink-soft">Today's class</p>
-                          <h2 className="font-display text-hec-h2 font-medium text-hec-ink break-words">{classNameOf(s)}</h2>
+                          <h2 style={carryStyle("today", classIdOf(s))} className="font-display text-hec-h2 font-medium text-hec-ink break-words">{classNameOf(s)}</h2>
                           <p className="text-hec-body tabular-nums text-hec-ink-soft">
                             {dayjs(s.date).format("ddd D MMM")} · {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
                           </p>
                           <div className="flex flex-wrap items-center gap-2 pt-1">
                             {live ? (
-                              <Badge variant="brass">In Progress</Badge>
+                              <Badge variant="brass"><LiveDot />In Progress</Badge>
                             ) : (
                               <Badge variant="secondary">{focusSession ? "Scheduled" : "Cancelled"}</Badge>
                             )}
+                            {countdown && <span className="text-hec-small text-hec-ink-soft">{countdown}</span>}
                           </div>
                           {!focusSession && (
                             <p className="text-hec-small text-hec-ink-soft">
@@ -364,19 +435,20 @@ function TeacherDashboardInner() {
                         </div>
                         {focusSession && (
                           <Button
-                            className="w-full shrink-0 sm:w-auto"
-                            onClick={() => navigate(`/teacher/attendance?session=${s.id}`)}
+                            className={`w-full shrink-0 sm:w-auto ${pressable}`}
+                            onClick={() => carryTo("today", `/teacher/attendance?session=${s.id}`)}
                           >
                             <CheckCircle2 className="h-4 w-4" />
                             Mark attendance
                           </Button>
                         )}
+                        {live && <NowLine start={s.start_time} end={s.end_time} />}
                       </>
                     );
                   })()
                 ) : (
                   <p className="text-hec-body text-hec-ink-soft">
-                    No more classes today.{" "}
+                    {endOfDayLine(now.tz().hour())}{" "}
                     <Link
                       to="/schedule"
                       className="inline-flex min-h-hec-target items-center font-medium text-hec-ink underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
@@ -387,12 +459,12 @@ function TeacherDashboardInner() {
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </ArriveItem>
         )}
 
         {/* Hero Profile Section */}
         {teacherProfile && (
-          <motion.div variants={itemVariants}>
+          <ArriveItem index={1}>
             <Card className="relative overflow-hidden">
               <CardContent className="relative p-4 sm:p-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -466,24 +538,24 @@ function TeacherDashboardInner() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </ArriveItem>
         )}
 
         {/* Video homework waiting for review (renders nothing when empty) */}
-        <motion.div variants={itemVariants}>
+        <ArriveItem index={2}>
           <VideoReviewQueue />
           <div className="mt-2 flex justify-end">
             <Button asChild variant="ghost" size="sm"><Link to="/teacher/videos">Video homework progress →</Link></Button>
           </div>
-        </motion.div>
+        </ArriveItem>
 
         {/* Privacy switch: covers every money figure on this page */}
-        <motion.div variants={itemVariants} className="-mb-4 flex justify-end">
+        <ArriveItem index={3} className="-mb-4 flex justify-end">
           <FinancialPrivacyToggle />
-        </motion.div>
+        </ArriveItem>
 
         {/* Stats Grid */}
-        <motion.div variants={itemVariants} className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+        <ArriveItem index={4} className="grid gap-4 grid-cols-2 lg:grid-cols-5">
           {/* Today's Sessions */}
           <Card className="relative overflow-hidden">
             <CardContent className="p-4 relative">
@@ -494,7 +566,7 @@ function TeacherDashboardInner() {
                 <Badge variant="secondary">Today</Badge>
               </div>
               <div className="space-y-1">
-                <p className={STAT_VALUE}>{todaySessions?.length || 0}</p>
+                <p className={STAT_VALUE}>{todaySessions ? <Tick value={todaySessions.length} fromZero={firstArrival} /> : 0}</p>
                 <p className="text-hec-small text-hec-ink-soft">Sessions</p>
               </div>
             </CardContent>
@@ -509,7 +581,7 @@ function TeacherDashboardInner() {
                 </div>
               </div>
               <div className="space-y-1">
-                <p className={STAT_VALUE}>{activeClasses?.length || 0}</p>
+                <p className={STAT_VALUE}>{activeClasses ? <Tick value={activeClasses.length} fromZero={firstArrival} /> : 0}</p>
                 <p className="text-hec-small text-hec-ink-soft">Active Classes</p>
               </div>
             </CardContent>
@@ -525,9 +597,10 @@ function TeacherDashboardInner() {
                 {(pendingGrading || 0) > 0 && (
                   <span className="inline-flex h-2.5 w-2.5 rounded-full bg-hec-warn" aria-hidden />
                 )}
+                <Seal show={sealed} label="All graded" size={28} visibleLabel />
               </div>
               <div className="space-y-1">
-                <p className={STAT_VALUE}>{pendingGrading || 0}</p>
+                <p className={STAT_VALUE}>{pendingGrading !== undefined ? <Tick value={pendingGrading} fromZero={firstArrival} /> : 0}</p>
                 <p className="text-hec-small text-hec-ink-soft">Pending Grading</p>
               </div>
             </CardContent>
@@ -567,15 +640,30 @@ function TeacherDashboardInner() {
                   />
                 )}
                 <p className="text-hec-small text-hec-ink-soft mb-2">Projected (VND)</p>
-                <Progress value={progressPercent} className="h-2" aria-label="Sessions held of those projected this month" />
+                {/* Leaf fill: grows once on the day's first arrival (420 ms), otherwise simply there. */}
+                <div
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progressPercent}
+                  aria-label="Sessions held of those projected this month"
+                  className="h-2 w-full overflow-hidden rounded-full bg-hec-sunken"
+                >
+                  <motion.div
+                    className="h-full w-full origin-left rounded-full bg-hec-leaf"
+                    initial={firstArrival && motionLevel !== "off" ? { scaleX: 0 } : false}
+                    animate={{ scaleX: progressPercent / 100 }}
+                    transition={firstArrival && motionLevel !== "off" ? { duration: dur.page, ease } : { duration: 0 }}
+                  ></motion.div>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </ArriveItem>
 
         {/* My Classes Grid */}
         {activeClasses && activeClasses.length > 0 && (
-          <motion.div variants={itemVariants}>
+          <ArriveItem index={5}>
             <div className="flex items-center justify-between mb-4">
               <h3 className={SECTION_TITLE}>
                 <GraduationCap className="h-5 w-5 shrink-0 text-hec-ink-soft" />
@@ -590,30 +678,32 @@ function TeacherDashboardInner() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Link to={`/teacher/classes/${classData.id}`} className={LINK_CARD}>
+                  <Link to={`/teacher/classes/${classData.id}`} onClick={carryLink(`class:${classData.id}`, `/teacher/classes/${classData.id}`)} className={LINK_CARD}>
+                    <BrassEdge>
                     <Card className={`${CARD_HOVER} cursor-pointer`}>
                       <CardContent className="p-4 relative flex items-center gap-4">
                         <div className={ICON_TILE}>
                           <BookOpen className="h-5 w-5 text-hec-ink-soft" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{classData.name}</h4>
+                          <h4 style={carryStyle(`class:${classData.id}`, classData.id)} className="whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{classData.name}</h4>
                           <p className="text-hec-small text-hec-ink-soft">Calendar · Roster · Leaderboard</p>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-hec-ink-faint group-hover:text-hec-ink transition-colors duration-hec-1 shrink-0" />
+                        <ChevronRight className={CHEVRON} />
                       </CardContent>
                     </Card>
+                    </BrassEdge>
                   </Link>
                 </motion.div>
               ))}
             </div>
-          </motion.div>
+          </ArriveItem>
         )}
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Today's Agenda */}
-          <motion.div variants={itemVariants} className="lg:col-span-2">
+          <ArriveItem index={6} className="lg:col-span-2">
             <Card className="h-full">
               <CardHeader className="pb-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -640,13 +730,10 @@ function TeacherDashboardInner() {
                       const timeStatus = getTimeStatus(session.start_time, session.end_time);
                       const classId = Array.isArray(session.classes) ? session.classes[0]?.id : session.classes?.id;
                       return (
-                         <motion.div
+                         <div
                           key={session.id}
-                          initial={{ opacity: 0, x: -8 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
                           onClick={() => classId && navigate(`/teacher/classes/${classId}`)}
-                          className={`group relative flex flex-wrap items-center gap-3 p-4 rounded-hec-md border transition-colors duration-hec-1 ease-hec cursor-pointer ${
+                          className={`group relative flex flex-wrap items-center gap-3 p-4 rounded-hec-md border transition-colors duration-hec-2 ease-hec cursor-pointer ${
                             timeStatus === "ongoing"
                               ? "border-hec-brass bg-hec-sunken"
                               : timeStatus === "completed"
@@ -656,7 +743,7 @@ function TeacherDashboardInner() {
                         >
                           {/* Timeline indicator */}
                           <div className="flex flex-col items-center gap-1 self-stretch">
-                            <div className={`w-3 h-3 rounded-full ${
+                            <div className={`w-3 h-3 rounded-full transition-colors duration-hec-2 ease-hec ${
                               timeStatus === "ongoing" ? "bg-hec-brass" :
                               timeStatus === "completed" ? "bg-hec-ink-faint" : "bg-hec-line-strong"
                             }`} />
@@ -706,7 +793,7 @@ function TeacherDashboardInner() {
                           </Badge>
 
                           <ChevronRight className="h-5 w-5 shrink-0 text-hec-ink-faint group-hover:text-hec-ink transition-colors duration-hec-1" />
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
@@ -724,10 +811,10 @@ function TeacherDashboardInner() {
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </ArriveItem>
 
           {/* Quick Actions */}
-          <motion.div variants={itemVariants} className="space-y-4">
+          <ArriveItem index={7} className="space-y-4">
             <h3 className={SECTION_TITLE}>
               <Sparkles className="h-5 w-5 shrink-0 text-hec-ink-soft" />
               Quick Actions
@@ -735,11 +822,7 @@ function TeacherDashboardInner() {
             <div className="grid gap-3">
               {quickActions.map((action, index) => (
                 <Link key={action.to} to={action.to} className={LINK_CARD}>
-                  <motion.div
-                    initial={{ opacity: 0, x: 8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
+                  <BrassEdge>
                     <Card className={`${CARD_HOVER} cursor-pointer`}>
                       <CardContent className="p-4 relative flex items-center gap-4">
                         <div className={ICON_TILE}>
@@ -749,31 +832,46 @@ function TeacherDashboardInner() {
                           <h4 className="text-hec-body font-semibold text-hec-ink">{action.title}</h4>
                           <p className="text-hec-small text-hec-ink-soft">{action.description}</p>
                         </div>
-                        <ChevronRight className="h-5 w-5 shrink-0 text-hec-ink-faint group-hover:text-hec-ink transition-colors duration-hec-1" />
+                        <ChevronRight className={CHEVRON} />
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </BrassEdge>
                 </Link>
               ))}
             </div>
-          </motion.div>
+          </ArriveItem>
         </div>
 
         {/* Schedule & Leaderboards Tabs */}
-        <motion.div variants={itemVariants}>
-          <Tabs defaultValue="schedule" className="w-full">
+        <ArriveItem index={8}>
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList className="w-full max-w-md mx-auto grid grid-cols-2">
-              <TabsTrigger value="schedule" className="gap-2">
-                <Calendar className="h-4 w-4" />
-                Schedule
-              </TabsTrigger>
-              <TabsTrigger value="leaderboards" className="gap-2">
-                <Trophy className="h-4 w-4" />
-                Leaderboards
-              </TabsTrigger>
+              {/* One marker glides between the tabs (snappy); the trigger's own raised fill steps aside for it. */}
+              {[
+                { value: "schedule", label: "Schedule", Icon: Calendar },
+                { value: "leaderboards", label: "Leaderboards", Icon: Trophy },
+              ].map(({ value, label, Icon }) => (
+                <TabsTrigger key={value} value={value} className="relative gap-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+                  {tab === value && (
+                    <motion.span
+                      layoutId="dashboard-tab-marker"
+                      aria-hidden
+                      transition={motionLevel === "off" ? { duration: 0 } : snappy}
+                      className="absolute inset-0 rounded-hec-sm bg-hec-raised shadow-hec-1"
+                    />
+                  )}
+                  <span className="relative inline-flex items-center gap-2">
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </span>
+                </TabsTrigger>
+              ))}
             </TabsList>
 
-            <TabsContent value="schedule" className="mt-6">
+            <AnimatePresence mode="wait" initial={false}>
+            {tab === "schedule" ? (
+            <TabsContent key="schedule" value="schedule" forceMount asChild className="mt-6">
+              <motion.div {...tabFade}>
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -786,9 +884,11 @@ function TeacherDashboardInner() {
                   <TeacherScheduleCalendar />
                 </CardContent>
               </Card>
+              </motion.div>
             </TabsContent>
-
-            <TabsContent value="leaderboards" className="mt-6 space-y-6">
+            ) : (
+            <TabsContent key="leaderboards" value="leaderboards" forceMount asChild className="mt-6 space-y-6">
+              <motion.div {...tabFade}>
               {activeClasses && activeClasses.length > 0 ? (
                 activeClasses.map((classData: any) => (
                   <Card key={classData.id} className="overflow-hidden">
@@ -822,10 +922,13 @@ function TeacherDashboardInner() {
                   </CardContent>
                 </Card>
               )}
+              </motion.div>
             </TabsContent>
+            )}
+            </AnimatePresence>
           </Tabs>
-        </motion.div>
-      </motion.div>
+        </ArriveItem>
+      </Arrive>
 
       {/* Edit Profile Dialog */}
       {teacherProfile && (
