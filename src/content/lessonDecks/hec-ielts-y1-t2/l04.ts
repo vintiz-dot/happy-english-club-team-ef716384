@@ -58,6 +58,25 @@ export const l04: Deck = {
       teacherNote: "Note the times students say; '7.15' read as 'seven fifteen' and 'quarter past seven' are both fine. Listen for 'on the morning' and other time-preposition slips for the grammar slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: traffic logs and transport phrases",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students picked from the record sheet talk for 60 seconds each about one episode in their log: the problem, its cause, and the solution the speaker liked.",
+        "The teacher plays a timestamp from that log and stops: 'What came next?'",
+        "2-minute spoken phrase quiz: back-of-card sentences about the way to school (get stuck in traffic, the rush hour ...) read with the phrase missing; the class says it.",
+        "One voice note is played; the class listens for a /w/ or /j/ link and says where it was.",
+      ],
+      tiers: [
+        { level: "Support", task: "You may read the timestamp and the words from your log, then say the problem in one sentence." },
+        { level: "Core", task: "No log: say what came next after the timestamp and give one solution of your own." },
+        { level: "Stretch", task: "No log: argue against the solution your speaker liked, and answer one question from the class." },
+      ],
+      teacherNote: "Write who was checked and which item on the record sheet; next week start from the unticked names. By the end of term every student has been checked twice.",
+    },
+    {
       kind: "vocab",
       title: "Words for routines and time",
       words: [
@@ -284,7 +303,7 @@ export const l04: Deck = {
     {
       kind: "vlog",
       title: "Video homework: running late, and school times",
-      prompt: "Record your Part 2 talk again: 'Describe a time when you were late for something important.' Take 1 minute to prepare, talk for the full 2 minutes, then in the same take answer one Part 3 question: 'Do young people today have too little free time? Why?'",
+      prompt: "Wednesday is recording day: one take in the app, no cuts. Begin with the date and the code word you heard at the end of class (it is not written anywhere). Then the Part 2 talk: 'Describe a time when you were late for something important.' Prepare for 1 minute and speak for the full 2 minutes, then answer the Part 3 question 'Do young people today have too little free time? Why?' in the same take, and close with the surprise question that appears in the class group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I was late for ...", "When I arrived, ...", "I think young people have ... free time because ..."], tips: ["Keep your three boxes with times next to the camera.", "Give the Part 3 answer at least three sentences."] },
@@ -294,15 +313,18 @@ export const l04: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: what counts is said in the student's own voice, at a set
+      // moment, and checked live on Sunday. A chatbot can write a log; it cannot
+      // tell the teacher what the speaker said at a timestamp or answer a follow-up.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about daily life, sleep or school, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, every time or number you heard.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about time, sleep or habits. Once without the transcript, once with. Log: title, 3 phrases, the numbers in the episode and what they referred to.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a teen news podcast about sleep, school hours or time management, at normal speed, no transcript first. Log: the main point, 3 phrases, the strongest point against the speaker's view.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening with numbers or times in it. Mark the stress on every number (-TEEN or -ty), then speak WITH the speaker. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep this term's pile going (picturesque, set a good example, get stuck in traffic, the rush hour) plus last term's 'I tend to' and 'catch up on'. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Is it better to give experiences than things as gifts?' Write one PREP point for EACH side with a real example (a present you gave or got), one 'That's true, but ...' sentence, and the best reason against the side you'd prefer.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English (slow) story about daily life, sleep or school, transcript on the second listen. Log: date, title, ONE timestamp and the exact 5-8 words said there, and every time or number you heard. Then a 20-second voice note about the story, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your story at your timestamp and asks which number or time came next; one voice note is opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about time, sleep or habits, first without the transcript, then with it. Log: date, title, TWO timestamps with the exact words, three phrases, the numbers in the episode and what they referred to. Then a 30-second voice note, one take: would the advice work in your week?", minutes: 60, tier: "Core", check: "Sunday: the teacher plays one of your timestamps and asks what came next and what one number referred to; one voice note per student is played." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or teen news podcast about sleep, school hours or time management, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, the strongest point against the speaker's view. Then a 45-second voice note making that point.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds live making the case against your speaker, then one question from the class." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of that day's listening with numbers or times in it. Mark the stress on every number (-TEEN or -ty), then speak WITH the speaker 3 times. On Saturday record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played beside the clip; the teacher checks 13/30, 15/50 stress and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The late-for-something talk and Part 3 answer on the previous slide: one take, no cuts, in the app, opening with the date and code word and finishing with the surprise question.", minutes: 15, check: "The teacher scores it on the HEC rubric; it counts only with the code word at the start and the surprise question at the end." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: add today's 6 phrases to your cards and keep this term's pile going (picturesque, set a good example, get stuck in traffic, the rush hour) plus last term's 'I tend to' and 'catch up on'. Back of each card: a sentence about YOUR real day, with a time in it. Say the phrase from the back before you turn over; missed cards come back tomorrow.", minutes: 25, check: "Sunday: a 2-minute spoken quiz from your own back-of-card sentences; you hear the gap and say the phrase." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Next week: 'Is it better to give experiences than things as gifts?' Wednesday, 10 minutes: five keyword cards, no full sentences, 6 words at most: a PREP point per side, a real example (a present you gave or got), a 'That's true, but ...' reply and the best reason against the side you prefer. Friday, 10 minutes: speak each side for 45 seconds from the cards, timed. AI rule: you may ask an AI for ONE argument for the side you disagree with; write the question you asked on a card and one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "You debate from the cards only and answer the teacher's follow-up; if you used an AI argument, tell the class why it is weak." },
       ],
     },
   ],

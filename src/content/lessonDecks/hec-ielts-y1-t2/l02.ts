@@ -66,6 +66,25 @@ export const l02: Deck = {
       teacherNote: "Steer away from people students can't speak about comfortably; a coach, a neighbour or an older cousin works well. Note the personality words you hear for the vocab slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: places in the log, phrases on the cards",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students, chosen by the teacher from the record sheet, each get 60 seconds to tell the class about one listening from their log: who spoke, about which place, and one exact phrase.",
+        "The teacher plays one of their timestamps and pauses: 'What did the speaker say next?' The answer comes from memory, not the log.",
+        "2-minute phrase quiz, out loud: back-of-card sentences from last week (picturesque, off the beaten track, packed with ...) read with a gap; the class calls the phrase.",
+        "One voice note is played. The class guesses which place it describes.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read your timestamp and the words you wrote from the log, then add one sentence of your own about the place." },
+        { level: "Core", task: "Talk from memory; answer 'what came next' and say whether you would visit the place, with one reason." },
+        { level: "Stretch", task: "No notes. Say where your speaker was wrong or one-sided about the place, and defend your view when the class asks." },
+      ],
+      teacherNote: "Note on the record sheet who was checked today and which homework part. Pick unticked students first; across the term each student should be checked twice. If a log looks perfect but the student cannot say what came next, ask one more question before moving on.",
+    },
+    {
       kind: "vocab",
       title: "Words for character and achievement",
       words: [
@@ -287,7 +306,7 @@ export const l02: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a person you admire, and role models",
-      prompt: "Record your Part 2 talk again: 'Describe a person you know personally who you admire.' Take 1 minute to prepare, talk for the full 2 minutes, then in the same take answer one Part 3 question: 'Are family members better role models than famous people? Why?'",
+      prompt: "Record on Wednesday in the app: one take, nothing cut. Say the date and the code word from the end of today's class first (it is in no file or message). Then the Part 2 talk again: 'Describe a person you know personally who you admire.' Take 1 minute to prepare and talk for the full 2 minutes. Without stopping, answer the Part 3 question 'Are family members better role models than famous people? Why?' and end with the surprise question posted in the class group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["This person is my ..., who ...", "One day, they ...", "I think family members are ... because ..."], tips: ["Keep your three bullet keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },
@@ -297,15 +316,18 @@ export const l02: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: what counts is said in the student's own voice, at a set
+      // moment, and checked live on Sunday. A chatbot can write a log; it cannot
+      // tell the teacher what the speaker said at a timestamp or answer a follow-up.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about a person who made a difference, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about what the person did.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about people, heroes or success. Once without the transcript, once with. Log: title, 3 phrases, one opinion word you heard and whose view it was.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: an interview or a TED-Ed video about someone's life or achievement, at normal speed, no transcript first. Log: the main point, 3 phrases, one view you'd argue against.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening. Underline every /ʃ/ and /tʃ/ sound, then speak WITH the speaker, keeping the two sounds apart. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's place phrases (picturesque, off the beaten track, packed with) and last term's people words (look up to, take after, reliable) in the pile. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should the city ban motorbikes from the Old Quarter?' Write one PREP point for EACH side with a real example (a street you know, a trip you made), and one 'That's true, but ...' sentence with a counter-example.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English (slow) story about a person who made a difference, transcript on the second listen. Log: date, title, ONE timestamp and the exact 5-8 words said there, one new phrase. Then a 20-second voice note, no script: what did the person do?", minutes: 40, tier: "Support", check: "Sunday: the teacher starts your story at your timestamp and asks who is speaking and what they just said; one voice note is played at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about people, heroes or success, once without the transcript and once with. Log: date, title, TWO timestamps with the exact words there, three phrases, and one opinion word you heard and whose view it was. Then a 30-second voice note in one take: do you admire the person they talked about?", minutes: 60, tier: "Core", check: "Sunday: the teacher plays one of your timestamps and asks what came next and whose opinion it was; one voice note per student is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: an interview or a TED-Ed video about someone's life or achievement, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, one view you'd argue against. Then a 45-second voice note arguing with it.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds live against your speaker's view, then the class asks you one question about the person." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of that day's listening. Underline every /ʃ/ and /tʃ/, then speak WITH the speaker 3 times, keeping the two sounds apart. On Saturday record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played next to the original; the teacher listens for /ʃ/ vs /tʃ/ (share / chair) and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The Part 2 + Part 3 recording on the previous slide: one take, no cuts, in the app, starting with the date and the code word and ending with Wednesday's surprise question.", minutes: 15, check: "Scored on the HEC rubric; a recording missing the code word or the surprise question is not accepted." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: add today's 6 phrases to your cards and keep last week's place phrases (picturesque, off the beaten track, packed with) and last term's people words (look up to, take after, reliable) in the pile. Back of each card: a sentence about someone you actually know. Say the phrase from the back first; missed cards return tomorrow.", minutes: 25, check: "Sunday's quiz: the teacher reads your back-of-card sentence aloud with a gap and you supply the phrase, out loud, in 3 seconds." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Next week: 'Should the city ban motorbikes from the Old Quarter?' Wednesday, 10 minutes: five keyword cards, no sentences, at most 6 words each: one PREP point per side, a real example (a street you know, a trip you made) and a 'That's true, but ...' counter-example. Friday, 10 minutes: 45 seconds per side out loud from the cards, timed. AI rule: ONE argument from an AI for the side you disagree with is allowed; log the question you typed on a card and one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "In the debate the teacher asks you one follow-up about a card; if you used the AI argument, you explain its weakness to the class." },
       ],
     },
   ],

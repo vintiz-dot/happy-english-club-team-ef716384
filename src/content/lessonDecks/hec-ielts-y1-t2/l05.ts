@@ -61,6 +61,25 @@ export const l05: Deck = {
       teacherNote: "Some families celebrate little or have had a loss: students may choose a friend's or a TV family's celebration. Note feeling words you hear (no names) for the grammar slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: times, numbers and routines",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "The teacher names two students from the record sheet. Each talks for 60 seconds about one episode in their log, including one number and what it referred to.",
+        "The teacher plays the episode at one of their timestamps, stops, and asks: 'What came next?'",
+        "2-minute spoken quiz: routine and time phrases (I tend to, catch up on, the rush hour ...) from the backs of the cards, read with a gap; the class answers aloud.",
+        "One voice note is played. The class writes the numbers they hear and checks -teen / -ty stress.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read your timestamp and the exact words from your log, then say one number from the episode." },
+        { level: "Core", task: "No log: say what came next after the timestamp and whether the speaker's advice fits your week." },
+        { level: "Stretch", task: "No log: argue with your speaker's view on time or sleep, and answer one challenge from the class." },
+      ],
+      teacherNote: "Keep the record sheet up to date: name, date, item checked. Start each check from the unticked names so that every student is checked at least twice a term.",
+    },
+    {
       kind: "vocab",
       title: "Words for gifts and feelings",
       words: [
@@ -283,7 +302,7 @@ export const l05: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a gift, and gifts today",
-      prompt: "Record your Part 2 talk again: 'Describe a gift you gave to someone or received from someone.' Take 1 minute to prepare (setting, turning point, feelings), talk for 2 minutes, then in the same take answer one Part 3 question: 'Do people spend too much money on presents nowadays?'",
+      prompt: "Record on Wednesday in the app, in one take with no cuts. Start with the date and this week's code word (given out loud at the end of class and nowhere else). Then the Part 2 talk: 'Describe a gift you gave to someone or received from someone.' Take 1 minute to prepare (setting, turning point, feelings) and talk for 2 minutes. Keep going into the Part 3 question 'Do people spend too much money on presents nowadays?', then finish with the surprise question in the class group on Wednesday morning.",
       length: "3 minutes (plus 1 minute of preparation, not recorded)",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The gift was ...", "It was for ...'s birthday.", "When I opened it, I felt ...", "I think people spend ... because ..."], tips: ["Keep three keywords (setting, turning point, feelings) next to the camera.", "Give the Part 3 answer at least three sentences."] },
@@ -293,15 +312,18 @@ export const l05: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: what counts is said in the student's own voice, at a set
+      // moment, and checked live on Sunday. A chatbot can write a log; it cannot
+      // tell the teacher what the speaker said at a timestamp or answer a follow-up.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about festivals, families or customs, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one feeling word you heard.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about celebrations, gifts or emotions. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a teen news podcast about happiness, spending or traditions, at normal speed, no transcript first. Log: the main point, 3 phrases, one thing you'd argue against.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening with some questions in it. Mark each sentence end with an up or down arrow, then speak WITH the speaker, copying the melody. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep two older piles in the deck: last week's time phrases and last term's shopping phrases (good value for money, a bargain, can't afford). Test yourself from the BACK: say the phrase in a sentence before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Is it better to grow up in a big or small family?' Write one PREP point for EACH side with a real example (your family, a friend's, a TV family), and one 'That's true, but ...' sentence.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English (slow) story about festivals, families or customs, transcript on the second listen. Log: date, title, ONE timestamp with the exact 5-8 words said there, one feeling word you heard. Then a 20-second voice note about the celebration in your own words, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your story at the timestamp and asks how the speaker felt there; a voice note is opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about celebrations, gifts or emotions, once without the transcript, once with. Log: date, title, TWO timestamps and the exact words at each, three phrases. Then a 30-second voice note, one take, no script: the best gift idea in the episode and why.", minutes: 60, tier: "Core", check: "Sunday: the teacher plays a timestamp from your log and asks what came next; one voice note per student is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or teen news podcast about happiness, spending or traditions, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, one thing you'd argue against. Then a 45-second voice note arguing it.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds live arguing with your speaker about gifts or spending, then one question from the class." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of that day's listening with some questions in it. Mark each sentence end with an up or down arrow, then speak WITH the speaker 3 times, copying the melody. Saturday: record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played beside the original; the teacher checks that statements fall and yes/no questions rise, and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The gift talk and Part 3 answer on the previous slide: one take, no cuts, in the app; date and code word at the start, Wednesday's surprise question at the end.", minutes: 15, check: "Scored on the HEC rubric; a recording without the code word or the surprise question does not count." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: add today's 6 phrases to your cards and keep two older piles in the deck: last week's time phrases and last term's shopping phrases (good value for money, a bargain, can't afford). Back of each card: a sentence about a real present or party in YOUR family. Say the phrase in a sentence before you turn over; missed cards come back tomorrow.", minutes: 25, check: "Sunday's quiz: the teacher reads your back-of-card sentence with the phrase taken out, and you say it aloud." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Next week: 'Is it better to grow up in a big or small family?' Wednesday, 10 minutes: five keyword cards, at most 6 words each, no full sentences: one PREP point per side, a real example (your family, a friend's, a TV family) and a 'That's true, but ...' reply. Friday, 10 minutes: speak 45 seconds for each side from the cards with a timer. AI rule: you may get ONE argument from an AI for the side you disagree with; log your question on the back of a card with one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "In the debate you use your cards only and answer one follow-up; an AI argument, if used, is explained to the class as weak." },
       ],
     },
   ],

@@ -60,6 +60,25 @@ export const l07: Deck = {
       teacherNote: "Keep the rounds tight: the mock needs the time. Note one good description you hear (no names) to praise after the mock.",
     },
     {
+      kind: "activity",
+      title: "Homework check: memories in the log, before the mock",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Before the mock: two students from the record sheet each talk for 60 seconds about one episode in their log and the memory it brought back.",
+        "The teacher plays one timestamp from that log, stops it, and asks: 'What came next?'",
+        "2-minute spoken phrase quiz: memory phrases (bring back memories, look back on, used to ...) from the backs of the cards with a gap; the class answers aloud.",
+        "One voice note is played; the class points out one place where the speaker paused at a thought group.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read the timestamp and words from your log, then one 'used to' sentence about the episode." },
+        { level: "Core", task: "From memory: what came after the timestamp, and one memory of your own it reminded you of." },
+        { level: "Stretch", task: "No log: argue with your speaker's claim about childhood and answer one question from the class." },
+      ],
+      teacherNote: "Keep this to 5 minutes; the mock needs the time. Tick today's two students on the record sheet and pick unticked names next week, so each student is checked twice this term.",
+    },
+    {
       kind: "vocab",
       title: "Recycled words for people and places",
       words: [
@@ -295,7 +314,7 @@ export const l07: Deck = {
     {
       kind: "vlog",
       title: "Video homework: the mock Part 2 and Part 3, one week later",
-      prompt: "Record the mock again: 'Describe a person who showed you around a place you had never visited before.' Take exactly 1 minute to prepare, talk for 2 minutes, then in the same take answer the Part 3 question: 'Why do some people enjoy showing visitors around their hometown?' Before you record, read your Scorer's card and fix the ONE thing it asked you to change. The teacher scores this recording on the full rubric.",
+      prompt: "Record the mock again on Wednesday, one take, no cuts, in the app. Open with the date and this week's code word (said in class today, written nowhere). Then: 'Describe a person who showed you around a place you had never visited before.' Take exactly 1 minute to prepare, talk for 2 minutes, then in the same take answer the Part 3 question 'Why do some people enjoy showing visitors around their hometown?' and the surprise question the teacher posts in the class group on Wednesday morning. Before you record, read your Scorer's card and fix the ONE thing it asked you to change. The teacher scores this recording on the full rubric.",
       length: "3 minutes (plus 1 minute of preparation, not recorded)",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The person was my ..., who ...", "We went to ...", "He / She showed me ...", "I think people enjoy it because ..."], tips: ["Keep your four keywords on paper next to the camera.", "If you stop, look at the next bullet and keep going."] },
@@ -305,15 +324,18 @@ export const l07: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: what counts is said in the student's own voice, at a set
+      // moment, and checked live on Sunday. A chatbot can write a log; it cannot
+      // tell the teacher what the speaker said at a timestamp or answer a follow-up.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about travel or a place, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one sentence about a person or place in it with who, which or where.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about travel, cities or people. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a travel or culture podcast or TED-Ed video at normal speed, no transcript first. Log: the main point, 3 phrases, and one moment you had to listen twice and why.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening with past tenses in it. Underline every -ed ending, then speak WITH the speaker, keeping each ending. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The mock Part 2 + Part 3 recording on the previous slide, fixing your Scorer's one point. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: put today's 6 recycled words with last week's memory phrases (bring back memories, look back on) and the gift and feeling words from two weeks ago. Test yourself from the BACK: say the phrase in a sentence before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should every street food stall have a licence?' Write one PREP point for EACH side with a real example (a stall you know, a news story), and one 'That's true, but ...' sentence.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English (slow) story about travel or a place, transcript on the second listen. Log: date, title, ONE timestamp and the exact 5-8 words said there, one sentence about a person or place in it with who, which or where. Then a 20-second voice note, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your story from the timestamp and asks who or what was being described; one voice note is opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about travel, cities or people, once without the transcript, once with. Log: date, title, TWO timestamps with the exact words, three phrases. Then a 30-second voice note in one take, no script: describe the person or place with who, which or where.", minutes: 60, tier: "Core", check: "Sunday: the teacher plays one timestamp from your log and asks what came next; one voice note per student is played to the class." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a travel or culture podcast or TED-Ed video at normal speed, no transcript first. Log: two timestamps with the exact words, the main point, and one moment you had to listen twice and why. Then a 45-second voice note arguing with one claim.", minutes: 90, tier: "Stretch", check: "Sunday: replay your listen-twice moment for the class and explain it, then argue for 60 seconds with the speaker's claim." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of that day's listening with past tenses in it. Underline every -ed ending, then speak WITH the speaker 3 times, keeping each ending. Saturday: record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played beside the original; the teacher listens for /t/, /d/ and /ɪd/ endings and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The mock Part 2 + Part 3 recording on the previous slide, fixing your Scorer's one point: one take, no cuts, in the app, date and code word first, the surprise question last.", minutes: 15, check: "The teacher scores it on the full rubric against your mock card; without the code word or the surprise question it does not count." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: put today's 6 recycled words with last week's memory phrases (bring back memories, look back on) and the gift and feeling words from two weeks ago. Back of each card: a sentence about a real person or place YOU know. Say the phrase in a sentence before you turn over; missed cards come back tomorrow.", minutes: 25, check: "Sunday's Homework check: the teacher reads your back-of-card sentence with the phrase left out and you say it." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Next week: 'Should every street food stall have a licence?' Wednesday, 10 minutes: five keyword cards, no full sentences, 6 words at most: one PREP point for each side, a real example (a stall you know, a news story) and a 'That's true, but ...' reply. Friday, 10 minutes: speak each side for 45 seconds from the cards with a timer. AI rule: you may ask an AI for ONE argument for the side you disagree with; record the question on the back of a card and one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "In the debate you speak from the cards only and answer one follow-up; if you used the AI argument, explain to the class why it is weak." },
       ],
     },
   ],

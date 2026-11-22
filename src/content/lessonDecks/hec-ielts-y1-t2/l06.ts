@@ -57,6 +57,25 @@ export const l06: Deck = {
       teacherNote: "Childhood can be a hard topic for some students: anyone can talk about a place from a film or a cousin's childhood instead. Note 'used to' slips (no names) for the grammar slide.",
     },
     {
+      kind: "activity",
+      title: "Homework check: celebration logs and feeling words",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "Two students from the record sheet talk for 60 seconds each about one episode in their log: the celebration, one feeling word, and what the speaker thought.",
+        "The teacher plays one of their timestamps and stops: 'What came next?'",
+        "2-minute spoken phrase quiz: gift and feeling phrases (thrilled, touched, it's the thought that counts ...) from the backs of the cards with a gap; the class says them.",
+        "One voice note is played; the class says whether each question in it went up or down.",
+      ],
+      tiers: [
+        { level: "Support", task: "Read from your log: the timestamp, the exact words, and one feeling word from the episode." },
+        { level: "Core", task: "Talk without the log; say what came next and one phrase the speaker used for a feeling." },
+        { level: "Stretch", task: "No log: disagree with your speaker about gifts or spending, and defend it when the class asks." },
+      ],
+      teacherNote: "Mark today's two students and the item checked on the record sheet. Unticked names go first next week; each student is checked twice a term.",
+    },
+    {
       kind: "vocab",
       title: "Words for memories",
       words: [
@@ -285,7 +304,7 @@ export const l06: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a childhood memory, and childhood today",
-      prompt: "Record your Part 2 talk again: 'Describe a happy memory from your childhood.' Take 1 minute to prepare (the habit, the day, the feelings), talk for 2 minutes, then in the same take answer one Part 3 question: 'Do children today have more or less freedom than children in the past? Why?'",
+      prompt: "Wednesday, one take, no cuts, recorded in the app. Say the date and the code word from the end of class first (it is not in any file or chat). Then the Part 2 talk: 'Describe a happy memory from your childhood.' Prepare for 1 minute (the habit, the day, the feelings) and talk for 2 minutes. In the same take answer the Part 3 question 'Do children today have more or less freedom than children in the past? Why?', and finish with the surprise question posted in the class group on Wednesday morning.",
       length: "3 minutes (plus 1 minute of preparation, not recorded)",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["When I was ..., I used to ...", "One day, ...", "I remember feeling ...", "I think children today have ... freedom because ..."], tips: ["Keep three keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },
@@ -295,15 +314,18 @@ export const l06: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: what counts is said in the student's own voice, at a set
+      // moment, and checked live on Sunday. A chatbot can write a log; it cannot
+      // tell the teacher what the speaker said at a timestamp or answer a follow-up.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about history, families or the past, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one 'used to' sentence about the story.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about childhood, memory or growing up. Once without the transcript, once with. Log: title, 3 phrases, a 2-sentence summary.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a teen news podcast about memory or how childhood has changed, at normal speed, no transcript first. Log: the main point, 3 phrases, one thing you'd question.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening. Print or copy the transcript, mark the thought groups with slashes, then speak WITH the speaker, pausing where they pause. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep last week's feeling words (thrilled, touched, it's the thought that counts) and last term's describing-people phrases (take after, look up to) in the pile. Test yourself from the BACK: say the phrase in a sentence before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Is online learning as good as learning in a classroom?' Write one PREP point for EACH side with a real example (an online class you took, a lesson you remember), and one 'Even if that's true, ...' sentence.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English (slow) story about history, families or the past, transcript on the second listen. Log: date, title, ONE timestamp and the exact 5-8 words said there, one 'used to' sentence about the story. Then a 20-second voice note in your own words, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your story at the timestamp and asks what the speaker said just before; voice notes are opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about childhood, memory or growing up, once without the transcript, once with. Log: date, title, TWO timestamps with the exact words, three phrases. Then a 30-second voice note, one take, no script: a memory of your own that the episode brought back.", minutes: 60, tier: "Core", check: "Sunday: the teacher plays one of your timestamps and asks what came next; then you tell your own memory for 30 seconds without notes." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or teen news podcast about memory or how childhood has changed, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, one thing you'd question. Then a 45-second voice note questioning it.", minutes: 90, tier: "Stretch", check: "Sunday: 60 seconds live questioning your speaker's claim about childhood, then one question from the class." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of that day's listening. Copy the transcript, mark the thought groups with slashes, then speak WITH the speaker 3 times, pausing where they pause. On Saturday record your best try as audio and keep it.", minutes: 25, check: "Your Saturday audio is played beside the original; the teacher listens for pauses at the thought groups and writes one target on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The childhood-memory talk and Part 3 answer on the previous slide: one take, no cuts, in the app, opening with the date and code word and closing with the surprise question.", minutes: 15, check: "The teacher scores it on the HEC rubric; it is accepted only with the code word and the surprise question." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: add today's 6 phrases to your cards and keep last week's feeling words (thrilled, touched, it's the thought that counts) and last term's describing-people phrases (take after, look up to) in the pile. Back of each card: a sentence about a real memory of YOURS. Say the phrase in a sentence before you turn over; missed cards come back tomorrow.", minutes: 25, check: "Sunday: 2-minute spoken quiz from your back-of-card sentences, read with the phrase missing." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Next week: 'Is online learning as good as learning in a classroom?' Wednesday, 10 minutes: five keyword cards (6 words each at most, no sentences): a PREP point per side, a real example (an online class you took, a lesson you remember) and an 'Even if that's true, ...' reply. Friday, 10 minutes: 45 seconds for each side out loud from the cards, timed. AI rule: ONE argument from an AI for the side you disagree with is allowed; write the question you asked on a card and one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "In the debate you speak from your cards only and answer the teacher's follow-up; if you used the AI argument, you say why it is weak." },
       ],
     },
   ],

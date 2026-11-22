@@ -58,6 +58,25 @@ export const l03: Deck = {
       teacherNote: "Note the problem words students reach for (jam, crowded, dangerous); they feed the grammar slide. Listen for comparatives from last term.",
     },
     {
+      kind: "activity",
+      title: "Homework check: who heard what, and when",
+      tag: "Review",
+      mode: "whole",
+      minutes: 5,
+      steps: [
+        "The teacher calls two names from the record sheet. Each student has 60 seconds on one episode from the log: the speaker, the topic, one person they admired.",
+        "The teacher plays one of the student's timestamps, stops, and asks: 'What came next?'",
+        "2-minute spoken quiz from the backs of the cards: character and achievement phrases (determined, set a good example ...) read with a gap; the class says them.",
+        "One voice note is played. The class says which /ʃ/ or /tʃ/ word they heard most clearly.",
+      ],
+      tiers: [
+        { level: "Support", task: "Use your log as notes; give the timestamp, the words, and one sentence about the person." },
+        { level: "Core", task: "Talk without the log and say what came after the timestamp in your own words." },
+        { level: "Stretch", task: "No log. Tell the class one thing your speaker got wrong about their hero, and answer one challenge." },
+      ],
+      teacherNote: "Record who was checked and how it went (one word is enough). Choose unticked students first so the whole class is checked twice by the end of term.",
+    },
+    {
       kind: "vocab",
       title: "Words for traffic and transport",
       words: [
@@ -279,7 +298,7 @@ export const l03: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a long journey, and traffic in cities",
-      prompt: "Record your Part 2 talk again: 'Describe a journey that took much longer than you expected.' Take 1 minute to prepare, talk for the full 2 minutes, then in the same take answer one Part 3 question: 'What could be done to reduce traffic in big cities like Hanoi?'",
+      prompt: "On Wednesday, in one take with no cuts, record in the app. First the date and this week's code word (said at the end of class, never written down). Then the Part 2 talk: 'Describe a journey that took much longer than you expected.' Prepare for 1 minute, talk for the full 2, then carry straight on to the Part 3 question 'What could be done to reduce traffic in big cities like Hanoi?' Last, answer the surprise question the teacher puts in the class group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["We were going to ...", "Then ...", "I think the city should ..."], tips: ["Keep your three-box plan next to the camera.", "Give the Part 3 answer a problem and one solution."] },
@@ -289,15 +308,18 @@ export const l03: Deck = {
     },
     {
       kind: "homework",
-      title: "This week (about 2.5 hours, 20 minutes a day)",
+      title: "This week, day by day (about 20 minutes a day)",
+      // Anti-AI by design: what counts is said in the student's own voice, at a set
+      // moment, and checked live on Sunday. A chatbot can write a log; it cannot
+      // tell the teacher what the speaker said at a timestamp or answer a follow-up.
       items: [
-        { label: "Daily listening + log", detail: "6 days: one VOA Learning English story about cities, transport or the environment, at the slow level, with the transcript on the second listen. Log: date, title, 3 new phrases, one problem and its cause.", minutes: 40, tier: "Support" },
-        { label: "Daily listening + log", detail: "6 days, 10 minutes: a BBC Learning English '6 Minute English' episode about travel, cars or cities. Once without the transcript, once with. Log: title, 3 phrases, one sentence the speaker said in different words from the transcript.", minutes: 60, tier: "Core" },
-        { label: "Daily listening + log", detail: "6 days, 15 minutes: a TED-Ed video or a news report about traffic, public transport or city design, at normal speed, no transcript first. Log: the main point, 3 phrases, one solution you'd argue against and why.", minutes: 90, tier: "Stretch" },
-        { label: "Shadowing", detail: "5 days, 5 minutes: take 30 seconds of your listening. Mark every vowel-to-vowel link with a small w or y, then speak WITH the speaker, sliding through them. Repeat 3 times.", minutes: 25 },
-        { label: "Recorded speaking (video homework)", detail: "The Part 2 + Part 3 recording on the previous slide. One take, sent by Thursday. The teacher scores it with the rubric.", minutes: 15 },
-        { label: "Vocabulary retrieval", detail: "5 days, 5 minutes: add today's 6 phrases to your cards and keep the last two weeks in the pile (packed with, off the beaten track, determined, set a good example) plus last term's 'heavy traffic' and 'within walking distance'. Test yourself from the BACK: say the phrase before you turn over. Keep the cards you miss for tomorrow.", minutes: 25 },
-        { label: "Debate prep", detail: "Next week: 'Should schools start at 9 a.m. instead of 7 a.m.?' Write one PREP point for EACH side with a real example (your own morning, a family member's work), and one 'That's true, but that would lead to ...' sentence.", minutes: 20 },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "8 minutes: one VOA Learning English (slow) story about cities, transport or the environment, transcript on the second listen. Log: date, title, ONE timestamp with the exact 5-8 words said there, one problem and its cause. Then a 20-second voice note in your own words, no script.", minutes: 40, tier: "Support", check: "Sunday: the teacher plays your story from your timestamp and asks what problem the speaker had just named; voice notes are opened at random." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "12 minutes: a BBC Learning English '6 Minute English' episode about travel, cars or cities, once without and once with the transcript. Log: date, title, TWO timestamps with the exact words, three phrases, and one sentence the speaker said in different words from the transcript. Then a 30-second voice note, one take, no script: the problem and your solution.", minutes: 60, tier: "Core", check: "Sunday: the teacher plays one timestamp from your log and asks what came next; you then give your solution in 30 seconds, no notes." },
+        { label: "Daily listening + log", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "18 minutes: a TED-Ed video or news report about traffic, public transport or city design, normal speed, no transcript first. Log: two timestamps with the exact words, the main point, one solution you'd argue against. Then a 45-second voice note saying why it would fail in Hanoi.", minutes: 90, tier: "Stretch", check: "Sunday: argue live for 60 seconds against your speaker's solution; the class may ask one question about the report." },
+        { label: "Shadowing", days: ["Mon", "Tue", "Thu", "Fri", "Sat"], detail: "5 minutes: 30 seconds of that day's listening. Mark every vowel-to-vowel link with a small w or y, then speak WITH the speaker 3 times, sliding through the links. Saturday: record your best try as audio and keep it.", minutes: 25, check: "The teacher plays your Saturday audio beside the original and listens for the /w/ and /j/ links (go_w_out, I_y_am); one target goes on your card." },
+        { label: "Recorded speaking (video homework)", days: ["Wed"], detail: "The journey talk and Part 3 answer on the previous slide, in one take with no cuts in the app: date and code word to open, the surprise question to close.", minutes: 15, check: "Scored on the HEC rubric; no code word or no surprise question means it is not counted." },
+        { label: "Vocabulary retrieval", days: ["Mon", "Tue", "Wed", "Thu", "Sat"], detail: "5 minutes: add today's 6 phrases to your cards and keep the last two weeks in the pile (packed with, off the beaten track, determined, set a good example) plus last term's 'heavy traffic' and 'within walking distance'. Each back: a sentence about YOUR way to school. Say the phrase from the back before turning; missed cards come back tomorrow.", minutes: 25, check: "Sunday's spoken quiz uses your own back-of-card sentences: the teacher reads one with a gap and you say the phrase." },
+        { label: "Debate prep", days: ["Wed", "Fri"], detail: "Next week: 'Should schools start at 9 a.m. instead of 7 a.m.?' Wednesday, 10 minutes: five keyword cards (6 words at most, no sentences): a PREP point for each side, a real example (your own morning, a family member's work) and a 'That's true, but that would lead to ...' reply. Friday, 10 minutes: speak 45 seconds per side from the cards with a timer. AI rule: you may ask an AI for ONE argument for the side you are against; copy your question onto a card and add one reason the answer is weak. Nothing else from an AI.", minutes: 20, check: "In the debate you speak only from the five cards and answer the teacher's follow-up; an AI argument you used must be explained to the class as weak." },
       ],
     },
   ],
