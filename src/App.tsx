@@ -66,6 +66,7 @@ const TeacherLessonReports = lazy(() => import("./pages/TeacherLessonReports"));
 const TeacherLessonReportReview = lazy(() => import("./pages/TeacherLessonReportReview"));
 const TeacherClassReports = lazy(() => import("./pages/TeacherClassReports"));
 const TeacherLessons = lazy(() => import("./pages/TeacherLessons"));
+const TeacherPhoneMic = lazy(() => import("./pages/TeacherPhoneMic"));
 const LessonSpeakers = lazy(() => import("./pages/LessonSpeakers"));
 const TeacherSmartUpload = lazy(() => import("./pages/TeacherSmartUpload"));
 const StudentMyWork = lazy(() => import("./pages/StudentMyWork"));
@@ -166,6 +167,7 @@ function AppContent() {
                   <Route path="/teacher/speakers" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />
                   <Route path="/teacher/speakers/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />
                   <Route path="/teacher/recorder"element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLessons /></ProtectedRoute>} />
+                  <Route path="/teacher/recorder/phone" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherPhoneMic /></ProtectedRoute>} />
                   {/* Student works gallery: admin sees all; a teacher only their own window (database functions decide). */}
                   <Route path="/admin/student-work" element={<ProtectedRoute allowedRole="admin"><AdminStudentWork /></ProtectedRoute>} />
                   <Route path="/teacher/my-student-works" element={<ProtectedRoute allowedRole="teacher"><TeacherStudentWorks /></ProtectedRoute>} />

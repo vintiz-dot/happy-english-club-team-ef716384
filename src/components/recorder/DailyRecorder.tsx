@@ -467,7 +467,11 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
           {capturing ? (
             <>
               <section aria-label="Levels" className="rounded-xl border border-border p-4 space-y-4">
-                <LevelMeter label={trackName("teacher")} clipping={clipping.teacher} level={unplugged.has("teacher") || lost.has("teacher") ? null : levels?.teacher ?? null} />
+                {profile?.teacherOnPhone ? (
+                  <p className="text-base">Your microphone is your phone: on the phone, open <b>/teacher/recorder/phone</b> and press Join. This laptop records the room only.</p>
+                ) : (
+                  <LevelMeter label={trackName("teacher")} clipping={clipping.teacher} level={unplugged.has("teacher") || lost.has("teacher") ? null : levels?.teacher ?? null} />
+                )}
                 <LevelMeter label={trackName("room")} clipping={clipping.room} level={unplugged.has("room") || lost.has("room") ? null : levels?.room ?? null} />
               </section>
 

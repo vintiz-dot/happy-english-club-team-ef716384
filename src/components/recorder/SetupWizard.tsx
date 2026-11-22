@@ -18,7 +18,7 @@ import {
   batteryLine, browserCheck, describeInputs, errorView, pairProblems, suggestRoles, swapWarning, trackName, uploadSpeedLine,
   type StatusLine,
 } from "@/lib/recorderUi";
-import type { DeviceProfile, InputDevice, Level, SwapMeasurement, TrackRole } from "@/lib/recorder";
+import { PHONE_TEACHER, type DeviceProfile, type InputDevice, type Level, type SwapMeasurement, type TrackRole } from "@/lib/recorder";
 import { useRecorderDeps } from "./RecorderDeps";
 import type { Probe, ProbeResult } from "./engine";
 import { HelpPanels } from "./HelpPanels";
@@ -40,6 +40,8 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
   const [busy, setBusy] = useState(false);
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
+  // 22 Nov 2026: the teacher's voice is recorded on the phone page; this laptop records the room only.
+  const [phoneTeacher, setPhoneTeacher] = useState(false);
   const [battery, setBattery] = useState<StatusLine | null>(null);
   const probe = useRef<Probe | null>(null);
   const [probeErr, setProbeErr] = useState<ReturnType<typeof errOf> | null>(null);
@@ -121,7 +123,7 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
   };
 
   const rows = useMemo(() => describeInputs(inputs ?? []), [inputs]);
-  const problems = inputs ? pairProblems(inputs, teacherId, roomId) : [];
+  const problems = inputs && !phoneTeacher ? pairProblems(inputs, teacherId, roomId) : [];
   const warning = swapWarning(swap);
   const connection = (navigator as any)?.connection as { downlink?: number } | undefined;
 
@@ -153,7 +155,30 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
     } finally { setBusy(false); }
   };
 
-  const canNext = step === 0 ? false : step === 1 ? problems.length === 0 : step === 2 ? !!levels && !probeErr : step === 3 ? !!result : true;
+  const savePhone = async () => {
+    const r = rows.find((x) => x.device.deviceId === roomId)?.device;
+    if (!r) return;
+    setBusy(true); setSaveErr(null);
+    const profile: DeviceProfile = {
+      version: 1, installId: engine.getInstallId(), userId, teacherOnPhone: true,
+      teacher: { deviceId: PHONE_TEACHER.deviceId, groupId: PHONE_TEACHER.groupId, label: PHONE_TEACHER.label },
+      room: { deviceId: r.deviceId, groupId: r.groupId, label: r.label },
+      checks: { teacher_on_phone: true, browser: browser.name, test_recorded: false },
+      verifiedAt: new Date().toISOString(),
+    };
+    engine.saveProfile(profile);
+    try {
+      const id = await engine.saveProfileToServer(client, profile);
+      const withId = { ...profile, serverId: id };
+      engine.saveProfile(withId);
+      await closeProbe();
+      onDone(withId);
+    } catch {
+      setSaveErr("Saved on this laptop, but the school server did not answer. The recorder will still work; try saving again when the internet is back.");
+    } finally { setBusy(false); }
+  };
+
+  const canNext = step === 0 ? false : step === 1 ? problems.length === 0 && !phoneTeacher : step === 2 ? !!levels && !probeErr : step === 3 ? !!result : true;
 
   return (
     <section aria-labelledby="wiz-h" className="space-y-5">
@@ -186,7 +211,14 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
       {step === 1 && (
         <div className="space-y-5">
           <p className="text-base">The list shows every microphone this laptop can hear. We guessed from the names; check them.</p>
-          {(["teacher", "room"] as TrackRole[]).map((role) => (
+          <Label htmlFor="phone-teacher" className="flex items-start gap-3 rounded-xl border border-border p-3 min-h-12 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+            <input id="phone-teacher" type="checkbox" className="mt-1 h-5 w-5" checked={phoneTeacher} onChange={(e) => setPhoneTeacher(e.target.checked)} />
+            <span className="space-y-1">
+              <span className="block text-base font-medium">My microphone is my phone</span>
+              <span className="block text-sm text-muted-foreground">This laptop records only the room microphone. During the lesson, open Class recorder, Phone microphone (/teacher/recorder/phone) on your phone, signed in as you, and press Join.</span>
+            </span>
+          </Label>
+          {(phoneTeacher ? ["room"] : ["teacher", "room"] as TrackRole[]).map((role) => (
             <fieldset key={role} className="space-y-2">
               <legend className="font-semibold text-lg mb-1">{role === "teacher" ? "Which is your microphone (the lapel)?" : "Which is the room microphone (the S500)?"}</legend>
               <RadioGroup value={(role === "teacher" ? teacherId : roomId) ?? ""} onValueChange={(v) => (role === "teacher" ? setTeacherId(v) : setRoomId(v))} className="space-y-2">
@@ -210,13 +242,22 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
               </RadioGroup>
             </fieldset>
           ))}
-          {rows.length < 2 ? (
+          {rows.length < (phoneTeacher ? 1 : 2) ? (
             <Notice tone="warn" title="Fewer than two microphones found">Plug in both by USB, wait five seconds, then press Look again.</Notice>
           ) : null}
           {problems.length ? (
             <div className="space-y-1" role="status">{problems.map((p) => <Status key={p} line={{ tone: "warn", text: p }} />)}</div>
           ) : null}
           <Button variant="outline" className="min-h-11" onClick={() => void refresh()}><RefreshCw className="h-4 w-4 mr-2" aria-hidden /> Look again</Button>
+          {phoneTeacher ? (
+            <div className="space-y-2">
+              <Button size="lg" className="min-h-12 w-full sm:w-auto text-base" disabled={busy || !roomId || !rows.some((x) => x.device.deviceId === roomId)} onClick={() => void savePhone()}>
+                {busy ? <Loader2 className="h-5 w-5 mr-2 motion-safe:animate-spin" aria-hidden /> : null}
+                Save: room microphone here, my voice on my phone
+              </Button>
+              {saveErr ? <Notice tone="warn" title="Not saved on the server">{saveErr}</Notice> : null}
+            </div>
+          ) : null}
           <HelpPanels only={["s500"]} />
         </div>
       )}

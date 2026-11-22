@@ -289,6 +289,18 @@ export function createFakeServer(opts = {}) {
         s.tracks.set(k, { ...t, ...q.patch });
         return ok(null);
       }
+      // 22 Nov 2026 (phone microphone): reading a track's row and its chunks, as the RLS read policies allow.
+      case "select:class_recording_tracks": {
+        const r = s.recordings.get(filt.recording_id);
+        if (!r || !(service || ownsOpen(r, uid) || canListen(r, uid))) return ok(q.single ? null : []);
+        const t = s.tracks.get(`${filt.recording_id}|${filt.track}`);
+        return ok(q.single ? (t ? { ...t } : null) : (t ? [{ ...t }] : []));
+      }
+      case "select:class_recording_chunks": {
+        const r = s.recordings.get(filt.recording_id);
+        if (!r || !(service || ownsOpen(r, uid) || canListen(r, uid))) return ok([]);
+        return ok(s.chunkRows(filt.recording_id).filter((c) => !filt.track || c.track === filt.track).map((c) => ({ ...c })));
+      }
       case "rpc:recorder_register_chunk": return registerChunk(uid, q.args);
       case "rpc:recorder_confirm_chunk": return confirmChunk(uid, q.args);
       case "insert:class_recording_markers": {

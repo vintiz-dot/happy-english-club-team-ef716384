@@ -86,6 +86,7 @@ export * from "./health";
 export * from "./manifest";
 export * from "./backoff";
 export { encodeFlac, encodeWav } from "./flac";
+export * from "./phoneTrack";
 export { encodePcmChunk } from "./encoders";
 export { Chunker } from "./chunker";
 export { MemoryStore, openIdbStore, type RecorderStore } from "./store";

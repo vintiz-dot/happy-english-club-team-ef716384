@@ -97,6 +97,12 @@ export interface DeviceProfile {
   version: 1;
   installId: string;
   userId: string;
+  /**
+   * 22 Nov 2026: the teacher's voice is recorded on their phone (the phone
+   * page joins this laptop's recording as its teacher track); this laptop
+   * records the room microphone only. `teacher` then holds PHONE_TEACHER.
+   */
+  teacherOnPhone?: boolean;
   teacher: SavedDevice;
   room: SavedDevice;
   /** Results of the wizard's checks (tap test, clap test, correlation). */
@@ -112,8 +118,17 @@ export type ProfileResolution =
   | { status: "ambiguous"; roles: TrackRole[] }
   | { status: "same_device" };
 
+/** The teacher "device" when the teacher's voice is recorded on the phone: no microphone on this laptop. */
+export const PHONE_TEACHER: InputDevice = { deviceId: "phone", groupId: "phone", label: "Teacher's phone" };
+
 export function resolveProfile(profile: DeviceProfile | null, devices: InputDevice[]): ProfileResolution {
   if (!profile) return { status: "missing", roles: ["teacher", "room"] };
+  if (profile.teacherOnPhone) {
+    const r = resolveDevice(profile.room, devices);
+    if (r.status === "missing") return { status: "missing", roles: ["room"] };
+    if (r.status === "ambiguous") return { status: "ambiguous", roles: ["room"] };
+    return { status: "ok", teacher: PHONE_TEACHER, room: (r as any).device as InputDevice, how: { teacher: "phone", room: (r as any).how } };
+  }
   const t = resolveDevice(profile.teacher, devices);
   const r = resolveDevice(profile.room, devices);
   const missing: TrackRole[] = [];

@@ -211,6 +211,8 @@ export class Recorder {
    * kept from them until capture: the worklet forwards no audio before then.
    */
   private early: { recId: string; tracks: Record<TrackRole, TrackOpen> } | null = null;
+  /** Phone mode: when "waiting for the phone" was last said (perf ms). */
+  private lastPhoneWaitSaid = -1e15;
   private earlyP: Promise<void> | null = null;
   private lastEarlyTry = -1e15;
   /** beginCapture is running (it may be opening the microphones itself): no early open meanwhile. */
@@ -317,14 +319,19 @@ export class Recorder {
       row = await this.o.backend.getRecording(local.id).catch(() => null);
       if (row && row.status !== "armed") row = null;
     }
+    const phone = this.o.profile?.teacherOnPhone === true;
+    if (phone && this.o.format === "opus-webm")
+      throw new RecorderError("internal", "The phone microphone works with the FLAC or WAV recorder only: not armed");
     if (!row) {
       row = await this.o.backend.arm({
         session_id: entry.sessionId, format: this.o.format, chunk_ms: this.o.chunkMs, purpose: opts.purpose ?? "lesson",
         device_profile_id: this.o.profile?.serverId ?? null,
-        client_info: { app_version: this.o.appVersion, user_agent: this.o.userAgent, install_id: this.o.installId, format: this.o.format },
+        // teacher_on_phone: the phone page reads it before it joins (it never joins a two-microphone laptop).
+        client_info: { app_version: this.o.appVersion, user_agent: this.o.userAgent, install_id: this.o.installId, format: this.o.format, teacher_on_phone: phone },
       });
     }
     const rec = local && local.id === row.id ? local : this.newLocal(row);
+    if (rec.teacherOnPhone === undefined) rec.teacherOnPhone = phone;
     rec.serverStatus = row.status;
     await this.saveRec(rec);
     const planned = plan(entry, this.o.window);
@@ -1074,7 +1081,9 @@ export class Recorder {
     }
     const rec = a.rec;
     rec.tracks = [];
-    for (const t of ["teacher", "room"] as TrackRole[]) {
+    // Phone mode: this laptop describes, keeps and sends the room track only;
+    // the phone page describes and sends the teacher track itself.
+    for (const t of (rec.teacherOnPhone ? ["room"] : ["teacher", "room"]) as TrackRole[]) {
       const o = opened[t];
       const info: TrackInfo = {
         track: t, deviceId: o.deviceId, deviceLabel: o.label, deviceHash: await sha256Hex(o.deviceId), groupHash: await sha256Hex(o.groupId || ""),
@@ -1280,7 +1289,7 @@ export class Recorder {
     await this.o.backend.abandon(rec.id, "the server would not take the audio captured before its start").catch(() => null);
     fresh.serverStatus = "abandoned";
     await this.saveRec(fresh);
-    const kept = Math.round((await this.o.store.listChunks(rec.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
+    const kept = Math.round((await this.o.store.listChunks(rec.id)).filter((c) => c.track === "room").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
     this.events.emit("error", new RecorderError("start_failed", `This recording CANNOT be sent to the school server: the server refused it (${why}). Recording has stopped; use the backup recorder for this lesson. The ${kept} s recorded are kept on this laptop for ${Math.round(this.o.abandonedKeepMs / 86_400_000)} days and listed there.`, { detail: { keptMs: kept * 1000 } }));
     if (a?.rec.id === rec.id) { a.rec.phase = "abandoned"; this.setState("error"); }
   }
@@ -1316,7 +1325,7 @@ export class Recorder {
     await this.o.backend.abandon(rec.id, "the window closed before the server saw the start").catch(() => null);
     rec.serverStatus = "abandoned";
     await this.saveRec(rec);
-    const kept = Math.round((await this.o.store.listChunks(rec.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
+    const kept = Math.round((await this.o.store.listChunks(rec.id)).filter((c) => c.track === "room").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
     this.events.emit("error", new RecorderError("start_failed", `The school server never started this recording (${why}). The ${kept} s recorded are kept on this laptop but cannot be sent; they stay until someone discards them.`, { detail: { keptMs: kept * 1000 } }));
     if (this.active?.rec.id === rec.id) this.setState("error");
   }
@@ -1338,7 +1347,7 @@ export class Recorder {
     if (err.refusal === "window_closed") await this.o.backend.abandon(a.rec.id, "the window closed before capture started").catch(() => null);
     a.rec.phase = "abandoned"; a.rec.serverStatus = "abandoned";
     await this.saveRec(a.rec);
-    const captured = Math.round((await this.o.store.listChunks(a.rec.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
+    const captured = Math.round((await this.o.store.listChunks(a.rec.id)).filter((c) => c.track === "room").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
     if (err.refusal && DELETE_ON_NO.includes(err.refusal)) {
       // R3-M2 / owner ruling: the school has said this lesson must NOT be
       // recorded (switched off, consent missing, cancelled, not this teacher's
@@ -1358,7 +1367,7 @@ export class Recorder {
     const n = b.teacher.length;
     const perf = this.o.perfNow();
     const tMs = a?.chunker ? frameToMs(a.chunker.position, this.o.source.sampleRate) : 0;
-    const events = this.health.push(b.teacher, b.room, tMs);
+    const events = this.health.push(b.teacher, b.room, tMs).filter((e) => !(a?.rec.teacherOnPhone && ((e as { track?: string }).track === "teacher" || e.kind === "roles_maybe_swapped")));
     for (const e of events) {
       this.events.emit("health", e);
       // Ruling (a), client side: a silent / dead microphone is said at once.
@@ -1396,6 +1405,7 @@ export class Recorder {
   private onSegment(s: RawSegment) {
     const a = this.active;
     if (!a) return;
+    if (a.rec.teacherOnPhone && s.track === "teacher") return; // the phone sends that track
     const id = a.rec.id;
     this.chain(() => this.o.store.putSegment({ recordingId: id, track: s.track, seq: s.seq, index: s.index, startFrame: s.startFrame, samples: s.samples }));
   }
@@ -1403,6 +1413,7 @@ export class Recorder {
   private onRawChunk(c: RawChunk) {
     const a = this.active;
     if (!a || a.rec.format === "opus-webm") return;
+    if (a.rec.teacherOnPhone && c.track === "teacher") return; // the phone sends that track
     const rec = a.rec;
     // M6: encoded in the worker; the job is posted now, so the order holds.
     // N-M6: whatever the encoder, an answer that does not come in time is not
@@ -1837,6 +1848,21 @@ export class Recorder {
       }
       // R3-M1: the silence filled into stalls that sits inside chunks which count is stated exactly, and the server subtracts it.
       await this.o.backend.setTrackCounts(rec.id, t.track, { ...trackCounts(counted), padded_ms: paddedInside(rec, counted) });
+    }
+    // Phone mode: the teacher track is the phone's. The server completes a
+    // recording only when every track's count is stated and every chunk is
+    // confirmed, so wait (finalize is tried again) until the phone has
+    // finished sending. A phone that never joined left no track: nothing to wait for.
+    if (rec.teacherOnPhone && this.o.backend.trackState) {
+      const phone = await this.o.backend.trackState(rec.id, "teacher").catch(() => null);
+      if (!phone || (phone.exists && (phone.chunkCount === null || phone.unconfirmed > 0))) {
+        const p = this.o.perfNow();
+        if (p - this.lastPhoneWaitSaid > 60000) {
+          this.lastPhoneWaitSaid = p;
+          this.events.emit("error", new RecorderError("server_unavailable", "Waiting for the phone to finish sending the teacher's microphone. Keep the phone page open until it says Done; this laptop finishes by itself after that.", { retryable: true }));
+        }
+        return;
+      }
     }
     let saved = await this.o.store.getManifest(rec.id);
     if (!saved) {

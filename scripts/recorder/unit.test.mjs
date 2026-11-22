@@ -2041,5 +2041,117 @@ console.log("=== 20 Nov 2026: what is unfinished on this laptop, from the pieces
   await r.dispose();
 }
 
+
+console.log("=== 22 Nov 2026: the teacher's phone as the teacher microphone ===");
+{
+  clock = Date.parse("2026-11-12T09:55:00.000Z");
+  const w = world();
+  // The laptop: room microphone only.
+  class RoomOnlySource extends FakeSource {
+    async openTracks(ids) {
+      this.opens = (this.opens ?? 0) + 1; this.open = true;
+      const d = this.devices.find((x) => x.deviceId === ids.room);
+      const room = { role: "room", deviceId: d.deviceId, label: d.label, groupId: d.groupId, requested: R.buildConstraints(d.deviceId, {}), notHonoured: [],
+        applied: { deviceId: d.deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1, sampleRate: 48000 } };
+      eq("phone mode: the laptop is asked for no teacher microphone", ids.teacher, R.PHONE_TEACHER.deviceId);
+      return { teacher: { role: "teacher", deviceId: ids.teacher, label: "Teacher's phone", groupId: "phone", requested: {}, applied: {}, notHonoured: [] }, room };
+    }
+  }
+  const phoneProfile = { ...profile, teacherOnPhone: true, teacher: { deviceId: R.PHONE_TEACHER.deviceId, groupId: R.PHONE_TEACHER.groupId, label: R.PHONE_TEACHER.label } };
+  eq("phone profile resolves with the room microphone alone", R.resolveProfile(phoneProfile, [new FakeSource().devices[1]]).status, "ok");
+  eq("phone profile: a missing room microphone is named", R.resolveProfile(phoneProfile, []), { status: "missing", roles: ["room"] });
+  const store = new R.MemoryStore(), src = new RoomOnlySource();
+  const { r, errors } = recorder(w, store, src, { profile: phoneProfile });
+  await r.prepare();
+  const row = await r.arm(E(w));
+  eq("the row says teacher_on_phone, for the phone to read", w.server.recordings.get(row.id).client_info.teacher_on_phone, true);
+  r.tick(); await r.settle();
+  eq("laptop records", r.state, "recording");
+
+  // The phone, signed in as the same teacher, joins.
+  const live = { ...w.server.recordings.get(row.id) };
+  ok("the phone may join a phone-mode recording", R.phoneMayJoin(live, null).ok);
+  ok("never a laptop recording the teacher microphone itself", !R.phoneMayJoin({ ...live, client_info: { teacher_on_phone: false } }, null).ok);
+  ok("never a recording that is not running", !R.phoneMayJoin({ ...live, status: "uploading" }, null).ok);
+  const phoneBackend = R.supabaseBackend(w.client(TEACHER));
+  const statuses = [];
+  const phone = new R.PhoneTeacherTrack({ backend: phoneBackend, recording: live, sampleRate: 48000, deviceLabel: "iPhone Microphone", perfNow: now, retryMs: 0, sleep: async () => {}, onStatus: (s) => statuses.push(s.phase) });
+  await phone.measureClock();
+  const voice = (sec) => Float32Array.from({ length: Math.round(sec * 48000) }, (_, k) => 0.25 * Math.sin(k / 7) + (rnd() - 0.5) * 0.05);
+
+  await src.play(4, r);
+  eq("before the laptop's first room chunk the timeline is not fixed", await phone.tryOrigin(), false);
+  phone.push(voice(4), now());
+  await phone.pump();
+  eq("and the phone registers nothing (the laptop's pre-start must come first)", w.server.chunkRows(row.id).filter((c) => c.track === "teacher").length, 0);
+  ok("and makes no teacher track row yet", !w.server.tracks.has(`${row.id}|teacher`));
+
+  await src.play(31, r);
+  ok("the laptop's first registration is a room chunk", w.server.registrations.find((x) => x.recording === row.id)?.track === "room");
+  eq("the timeline is fixed once a room chunk is in", await phone.tryOrigin(), true);
+  phone.push(voice(31), now());
+  await phone.pump();
+  const tch = () => w.server.chunkRows(row.id).filter((c) => c.track === "teacher").sort((a, b) => a.seq - b.seq);
+  ok("the phone's chunks are registered and confirmed", tch().length >= 3 && tch().every((c) => c.confirmed_at), `${tch().length}`);
+  ok("seq 0..n-1, contiguous, no overlap, none before t = 0", tch().every((c, i) => c.seq === i && c.t_start_ms >= 0 && (i === 0 || c.t_start_ms >= tch()[i - 1].t_end_ms)));
+  ok("each at most one chunk long", tch().every((c) => c.t_end_ms - c.t_start_ms <= 10000));
+  const roomRows = w.server.chunkRows(row.id).filter((c) => c.track === "room").sort((a, b) => a.seq - b.seq);
+  ok("the phone's first chunk starts within a second of the room's", Math.abs(tch()[0].t_start_ms - roomRows[0].t_start_ms) < 1000, `${tch()[0].t_start_ms}`);
+  eq("the laptop keeps no teacher audio of its own", (await store.listChunks(row.id)).filter((c) => c.track === "teacher").length, 0);
+  const tr = w.server.tracks.get(`${row.id}|teacher`);
+  eq("the phone described the teacher track (FLAC, 48 kHz, from the phone)", [tr.codec, tr.sample_rate, tr.applied_settings.source], ["flac", 48000, "phone"]);
+
+  // A gap: the phone slept 20 s. The next chunk starts at the clock, never earlier.
+  clock += 20000;
+  await src.play(6, r);
+  phone.push(voice(6), now());
+  await phone.pump();
+
+  // The laptop stops; it waits for the phone.
+  await r.stop(); r.tick(); await r.settle();
+  eq("the laptop does not complete while the phone's track is open", w.server.recordings.get(row.id).status, "uploading");
+  ok("and says it is waiting for the phone", errors.some((e) => /Waiting for the phone/.test(e.message)));
+  // Audio the phone captured after Stop is trimmed off.
+  phone.push(voice(3), now() + 3000);
+  await phone.finish(w.server.recordings.get(row.id).ended_at);
+  const fin = tch();
+  const recRow = w.server.recordings.get(row.id);
+  const origin = Date.parse(recRow.started_at) - (recRow.pre_start_ms ?? 0);
+  ok("nothing after the laptop's Stop", fin.every((c) => c.t_end_ms <= Date.parse(recRow.ended_at) - origin + 15000));
+  ok("after a gap (the phone slept 20 s) a chunk starts where the clock says, after the one before", fin.some((c, i) => i > 0 && c.t_start_ms > fin[i - 1].t_end_ms + 15000), fin.map((c) => `${c.t_start_ms}-${c.t_end_ms}`).join(" "));
+  eq("the phone stated its track's counts", w.server.tracks.get(`${row.id}|teacher`).chunk_count, fin.length);
+  eq("the phone says done", statuses.at(-1), "done");
+  clock += 6000; // the laptop tries its uploads again every 5 s
+  r.tick(); await r.settle();
+  eq("then the laptop completes the recording", w.server.recordings.get(row.id).status, "complete");
+  const { samples } = await decodeTrack(w.server, row.id, "teacher");
+  ok("the teacher track decodes (FLAC) to about 41 s of the phone's audio", Math.abs(samples.length / 48000 - 41) < 2, `${(samples.length / 48000).toFixed(1)} s`);
+  await r.dispose();
+}
+
+{
+  // A laptop in phone mode whose phone never joined still completes, with the room alone.
+  clock = Date.parse("2026-11-12T09:55:00.000Z");
+  const w = world();
+  class RoomOnly extends FakeSource {
+    async openTracks(ids) {
+      this.open = true; const d = this.devices[1];
+      return { teacher: { role: "teacher", deviceId: ids.teacher, label: "Teacher's phone", groupId: "phone", requested: {}, applied: {}, notHonoured: [] },
+        room: { role: "room", deviceId: d.deviceId, label: d.label, groupId: d.groupId, requested: {}, applied: { echoCancellation: false }, notHonoured: [] } };
+    }
+  }
+  const src = new RoomOnly();
+  const phoneProfile = { ...profile, teacherOnPhone: true, teacher: { deviceId: "phone", groupId: "phone", label: "Teacher's phone" } };
+  const { r } = recorder(w, new R.MemoryStore(), src, { profile: phoneProfile });
+  await r.prepare();
+  const row = await r.arm(E(w));
+  r.tick(); await r.settle();
+  await src.play(25, r);
+  await r.stop(); r.tick(); await r.settle();
+  eq("phone mode, phone never joined: completes with the room track", w.server.recordings.get(row.id).status, "complete");
+  eq("and only a room track exists", [...w.server.tracks.values()].filter((t) => t.recording_id === row.id).map((t) => t.track), ["room"]);
+  await r.dispose();
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

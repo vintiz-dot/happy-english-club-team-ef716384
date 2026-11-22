@@ -193,6 +193,8 @@ export interface LocalRecording {
   anchors: Anchor[];
   discontinuities: Discontinuity[];
   deviceProfileId?: string | null;
+  /** 22 Nov 2026: the teacher track comes from the teacher's phone; this laptop records only the room. */
+  teacherOnPhone?: boolean;
   installId: string;
   appVersion: string;
   userAgent: string;

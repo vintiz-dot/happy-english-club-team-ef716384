@@ -62,3 +62,15 @@ Start the backup (the quick recorder the school already uses) as well as this on
 - If a lesson is moved to another time after the bar says **Armed**, press **Stop**, then **Ready for today** again.
 - Check the laptop's date and time are right before pressing Ready.
 - Unsent audio that the server has given up is deleted from the laptop by itself 14 days later. This happens when the recorder is opened on that laptop (or the app is opened with Ready pressed); a laptop nobody opens keeps it longer.
+
+## Teacher microphone on the phone (22 Nov 2026)
+
+For a lesson without the lapel: the laptop records the Anker S500 only, and the teacher's phone records the teacher's voice into the same recording.
+
+1. Laptop, once: Class recorder, Microphones, tick **My microphone is my phone**, choose the S500, **Save**.
+2. Each lesson: start the recording on the laptop as usual. On the phone, signed in as the same teacher, open `/teacher/recorder/phone` and press **Join as my microphone**. Keep that page open and the screen on (the browser stops the microphone when the page is hidden or the phone locks). Plug the phone in for long lessons.
+3. The phone sends nothing until the laptop has sent its first piece of room audio (the laptop states the recording's start first). It stops by itself when the laptop is stopped, sends the rest, and says **Done**. The laptop completes the recording only after that, and says it is waiting for the phone until then. A phone that never joined: the recording completes with the room track alone.
+
+Rules: `src/lib/recorder/phoneTrack.ts`; the laptop side is `teacherOnPhone` in `devices.ts` / `controller.ts`. No database change: a recording's tracks and chunks were already the recording teacher's, from any device (20261112100000). Tested in `scripts/recorder/unit.test.mjs` ("the teacher's phone as the teacher microphone").
+
+Known limit: a phone that dies between registering a chunk and confirming it leaves that chunk unconfirmed, and the laptop cannot complete until the phone page is opened again and joins (a rejoin carries on from the server's last chunk only while the recording is still running).

@@ -73,6 +73,18 @@ export interface RecorderBackend {
   setPreStart?(id: string, preStartMs: number): Promise<void>;
   /** C2 revision (m2): a reopened microphone's read-back settings onto its track row. Optional. */
   updateTrack?(id: string, track: TrackRole, patch: { applied_settings: Record<string, unknown> }): Promise<void>;
+  /**
+   * 22 Nov 2026 (teacher mic on the phone): what the server holds for one
+   * track - whether its row exists, its stated chunk count, and how many
+   * chunks are registered / still unconfirmed. Optional.
+   */
+  trackState?(id: string, track: TrackRole): Promise<TrackState>;
+}
+
+export interface TrackState {
+  exists: boolean; chunkCount: number | null; registered: number; unconfirmed: number;
+  /** Over the registered chunks: their bytes, their audio, where the last one ends. */
+  totalBytes: number; totalMs: number; lastEndMs: number;
 }
 
 // ---------------------------------------------------------------- supabase-js
@@ -175,6 +187,18 @@ export function supabaseBackend(client: SupabaseLike): RecorderBackend {
     },
     async setPreStart(id, preStartMs) {
       await unwrap(rec().update({ pre_start_ms: preStartMs }).eq("id", id).select("id").single(), "pre-start");
+    },
+    async trackState(id, track) {
+      const row = await unwrap(client.from("class_recording_tracks").select("chunk_count").eq("recording_id", id).eq("track", track).maybeSingle(), "track state");
+      const chunks = await unwrap(client.from("class_recording_chunks").select("confirmed_at,byte_size,t_start_ms,t_end_ms").eq("recording_id", id).eq("track", track), "track chunks");
+      const list = (chunks as any[]) ?? [];
+      return {
+        exists: !!row, chunkCount: (row as any)?.chunk_count ?? null,
+        registered: list.length, unconfirmed: list.filter((c) => !c.confirmed_at).length,
+        totalBytes: list.reduce((n, c) => n + Number(c.byte_size ?? 0), 0),
+        totalMs: list.reduce((n, c) => n + Number(c.t_end_ms ?? 0) - Number(c.t_start_ms ?? 0), 0),
+        lastEndMs: list.reduce((m, c) => Math.max(m, Number(c.t_end_ms ?? 0)), 0),
+      };
     },
     async updateTrack(id, track, patch) {
       await unwrap(client.from("class_recording_tracks").update(patch).eq("recording_id", id).eq("track", track), "track settings");

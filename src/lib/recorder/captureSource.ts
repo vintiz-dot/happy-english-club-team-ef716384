@@ -5,7 +5,7 @@
 import type { TrackRole } from "./types";
 import { AudioGraph, type PcmBatch } from "./audioGraph";
 import { openBoth, openInput, type OpenedTrack } from "./capture";
-import { listInputs, type InputDevice } from "./devices";
+import { listInputs, PHONE_TEACHER, type InputDevice } from "./devices";
 import { OpusPair, type OpusBlob } from "./opusPipeline";
 
 export interface TrackOpen {
@@ -73,7 +73,11 @@ export class BrowserCaptureSource implements CaptureSource {
     try { navigator.mediaDevices?.addEventListener?.("devicechange", () => this.onDeviceChange?.()); } catch { /* no mediaDevices */ }
   }
 
+  /** The teacher's voice is on the phone: nothing is opened for that role here. */
+  private phoneTeacher = false;
+
   trackLive(role: TrackRole): boolean {
+    if (role === "teacher" && this.phoneTeacher) return true;
     const o = this.opened[role];
     return !!o && o.track.readyState === "live";
   }
@@ -109,7 +113,8 @@ export class BrowserCaptureSource implements CaptureSource {
   }
 
   async openTracks(ids: { teacher: string; room: string }) {
-    const both = await openBoth(ids);
+    this.phoneTeacher = ids.teacher === PHONE_TEACHER.deviceId;
+    const both = this.phoneTeacher ? { room: await openInput("room", ids.room), teacher: null } : await openBoth(ids);
     if (this.g.state !== "running") await this.g.resume();
     if (this.g.state !== "running") {
       // Measured (C2 evidence, "arm without a click"): with no user gesture a
@@ -124,7 +129,14 @@ export class BrowserCaptureSource implements CaptureSource {
       void old.close();
       this.rebuiltContext = true;
     }
-    return { teacher: this.attach(both.teacher), room: this.attach(both.room) };
+    const room = this.attach(both.room);
+    // Phone mode: the worklet's teacher input stays unconnected (zeros); the
+    // controller keeps no teacher audio from this laptop.
+    const teacher: TrackOpen = both.teacher ? this.attach(both.teacher) : {
+      role: "teacher", deviceId: PHONE_TEACHER.deviceId, label: PHONE_TEACHER.label, groupId: PHONE_TEACHER.groupId,
+      requested: {}, applied: {}, notHonoured: [],
+    };
+    return { teacher, room };
   }
   /** True when the context had to be re-made after the mics opened (no gesture). */
   rebuiltContext = false;
