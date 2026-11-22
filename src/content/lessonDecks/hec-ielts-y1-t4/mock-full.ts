@@ -1,0 +1,216 @@
+// Sun Class, Year 1 Term 4: the Year 1 full mock in Lesson 13 (programme lesson 50).
+// The class's first FULL Listening test: Parts 1-4, 40 questions, scored out of 40 and
+// converted to an approximate band with the class table; and a full Speaking test
+// (Parts 1-3), teacher-scored for 2-3 students and peer-scored in trios on HEC's own
+// rubric (ieltsRubric.ts). Every script and question is HEC's own.
+import type { Assessment } from "@/lib/lessonDecks/types";
+import { RUBRIC, type Criterion } from "@/lib/lessonDecks/ieltsRubric";
+
+/** One criterion's HEC wording as [8+, 7, 6, 5]. */
+const bands = (c: Criterion): [string, string, string, string] => {
+  const row = RUBRIC.find((r) => r.criterion === c)!;
+  const at = (b: "5" | "6" | "7" | "8+") => row.bands.find((x) => x.band === b)!.sounds;
+  return [at("8+"), at("7"), at("6"), at("5")];
+};
+
+const PARK = [
+  "beside the main entrance",
+  "opposite the main entrance, across the lawn",
+  "next to the car park",
+  "at the far end of the river path",
+  "between the skate park and the café",
+  "behind the changing rooms",
+  "on the island in the lake",
+];
+
+const PURPOSES = [
+  "growing vegetables for the canteen",
+  "keeping the sports hall cooler",
+  "keeping bees for honey",
+  "selling vegetables to parents",
+  "giving students a quiet place to read",
+];
+
+const WHO = ["Lan", "Omar", "both Lan and Omar"];
+
+export const fullMock: Assessment = {
+  id: "hec-ielts-y1-t4-full-mock",
+  title: "Year 1 full mock: Listening Parts 1-4 (40 questions) and Speaking Parts 1-3",
+  kind: "formative",
+  afterLesson: 13,
+  minutes: 40,
+  covers: [
+    "Listening Part 1: form completion (a spelled surname, an age, a time, a price with a correction, a phone number, a date)",
+    "Listening Part 2: multiple choice (one answer) and map labelling in a talk about a new youth park",
+    "Listening Part 3: multiple choice, a 'choose TWO' pair and matching opinions in a discussion between two students and a tutor",
+    "Listening Part 4: note completion (ONE or TWO WORDS) in a lecture on bamboo as a building material",
+    "Speaking Parts 1-3, teacher-scored for 2-3 students and peer-scored in trios on the HEC rubric",
+  ],
+  sections: [
+    {
+      title: "Listening Part 1: signing up as a summer volunteer",
+      skill: "Listening",
+      instructions: "You will hear a student phoning a volunteer programme at a city lake. You have 30 seconds to look at questions 1-10. Complete the form. Write ONE WORD AND/OR A NUMBER for each answer. You will hear the recording ONCE.",
+      script: [
+        { speaker: "Officer", text: "Good afternoon, Green Lake Volunteers, Mai speaking." },
+        { speaker: "Student", text: "Hi. I'm calling about the summer volunteer programme. Is it still possible to sign up?" },
+        { speaker: "Officer", text: "Yes, we still have a few places. Can I take your name first?" },
+        { speaker: "Student", text: "It's Kevin Haddad. That's H-A-D-D-A-D." },
+        { speaker: "Officer", text: "Thanks, Kevin. And how old are you?" },
+        { speaker: "Student", text: "Fourteen. I'll be fifteen in August." },
+        { speaker: "Officer", text: "That's fine; the minimum age is thirteen. We've got three projects: tree planting, cleaning the lake, and helping in the children's reading corner." },
+        { speaker: "Student", text: "I was going to say tree planting, but my friend says it's mostly digging in the heat. So the lake, please." },
+        { speaker: "Officer", text: "The lake project meets on Saturday mornings. It used to start at seven, but this year it's six thirty, before it gets too hot. It finishes at ten." },
+        { speaker: "Student", text: "Six thirty. OK. And where do we meet?" },
+        { speaker: "Officer", text: "At the north gate, next to the boat hire. Not the main gate; that's on the other side of the lake." },
+        { speaker: "Student", text: "Do I need to bring anything?" },
+        { speaker: "Officer", text: "Gloves and a hat. Everyone gets a free T-shirt, and there's a water station, so you don't need a bottle, but sun cream is a good idea." },
+        { speaker: "Student", text: "Is there any cost?" },
+        { speaker: "Officer", text: "It's free, but there's a deposit for the T-shirt and the equipment: fifty thousand dong. Oh, sorry, it went up this year: it's a hundred thousand. You get it back at the end." },
+        { speaker: "Student", text: "That's fine. You'll want a phone number, I suppose? My mum's is 0912 448 307." },
+        { speaker: "Officer", text: "Got it. And how did you hear about us?" },
+        { speaker: "Student", text: "Mostly from a poster at school. I think I heard something on the radio too, but it was the poster, really." },
+        { speaker: "Officer", text: "Great. The first session is on the fifth of July. See you there, Kevin." },
+      ],
+      items: [
+        { q: "1. Name: Kevin ________", answer: "Haddad" },
+        { q: "2. Age: ________", answer: "14" },
+        { q: "3. Project: cleaning the ________", answer: "lake" },
+        { q: "4. Start time: ________ a.m.", answer: "6.30" },
+        { q: "5. Meeting point: the ________ gate", answer: "north" },
+        { q: "6. Bring: gloves and a ________", answer: "hat" },
+        { q: "7. Deposit: ________ dong", answer: "100,000" },
+        { q: "8. Parent's phone: ________", answer: "0912 448 307" },
+        { q: "9. Heard about the programme from: a ________", answer: "poster" },
+        { q: "10. First session: ________ July", answer: "5" },
+      ],
+      marksEach: 1,
+    },
+    {
+      title: "Listening Part 2: the new Riverside Youth Park",
+      skill: "Listening",
+      instructions: "You will hear the manager of a new park talking to visitors. You are standing at the main entrance. You have 30 seconds to look at questions 11-20. Questions 11-15: choose the correct answer. Questions 16-20: where is each place on the map? Choose the correct position from the list; there are two positions you do not need. You will hear the recording ONCE.",
+      script: [
+        { speaker: "Manager", text: "Good morning, and welcome to the opening week of Riverside Youth Park. I'm Duc, the park manager, and I'll explain how things work before you go and explore." },
+        { speaker: "Manager", text: "The park was paid for partly by the city and partly by a local bank. But the idea itself came from a group of school students, who wrote to the council three years ago with a plan." },
+        { speaker: "Manager", text: "Opening hours. In summer we're open from six in the morning until ten at night. We did plan to stay open until midnight, but the neighbours were worried about noise, so it's ten." },
+        { speaker: "Manager", text: "Most things here are free. The only things you pay for are bike hire and the climbing wall, and the climbing wall is half price for anyone under sixteen." },
+        { speaker: "Manager", text: "On safety: helmets are compulsory on the skate park and on the bikes. We'd hoped to lend helmets free of charge, but too many went missing in the trial week, so please bring your own or rent one at the bike hire." },
+        { speaker: "Manager", text: "And if you'd like to help us, we're looking for young volunteers to run the Saturday junior football sessions. You don't need to be an expert; enthusiasm matters more." },
+        { speaker: "Manager", text: "Now, the map. We're at the main entrance, at the bottom of your map. The café is right here, beside the main entrance, so it's easy to find on your way home." },
+        { speaker: "Manager", text: "Straight across the big lawn, opposite the main entrance, you'll see the climbing wall. You can't miss it: it's fifteen metres high." },
+        { speaker: "Manager", text: "The bike hire is next to the car park, on the left, so cyclists don't have to wheel their bikes through the crowds." },
+        { speaker: "Manager", text: "If you follow the river path all the way, at the far end you'll find the outdoor gym. Some people expect it to be near the skate park, but it's quieter down there." },
+        { speaker: "Manager", text: "The first-aid point is between the skate park and the café, close to where most accidents happen." },
+        { speaker: "Manager", text: "The changing rooms are in the middle of the park; behind them there's only the storage shed. And there is an island in the lake, but that's for the birds, so no visitors, please." },
+        { speaker: "Manager", text: "Have a great day, and remember: this park belongs to you, so look after it." },
+      ],
+      items: [
+        { q: "11. The idea for the park came from", options: ["the city council", "a local bank", "a group of school students"], answer: "a group of school students" },
+        { q: "12. In summer the park closes at", options: ["nine p.m.", "ten p.m.", "midnight"], answer: "ten p.m." },
+        { q: "13. Which activity is half price for under-sixteens?", options: ["bike hire", "the climbing wall", "the outdoor gym"], answer: "the climbing wall" },
+        { q: "14. Visitors who need a helmet should", options: ["borrow one free at the gate", "bring their own or rent one", "buy one at the café"], answer: "bring their own or rent one" },
+        { q: "15. Volunteers are needed to", options: ["clean the river path", "run junior football sessions", "work in the café"], answer: "run junior football sessions" },
+        { q: "16. Café", options: PARK, answer: "beside the main entrance" },
+        { q: "17. Climbing wall", options: PARK, answer: "opposite the main entrance, across the lawn" },
+        { q: "18. Bike hire", options: PARK, answer: "next to the car park" },
+        { q: "19. Outdoor gym", options: PARK, answer: "at the far end of the river path" },
+        { q: "20. First-aid point", options: PARK, answer: "between the skate park and the café" },
+      ],
+      marksEach: 1,
+    },
+    {
+      title: "Listening Part 3: a rooftop garden project",
+      skill: "Listening",
+      instructions: "You will hear two students, Lan and Omar, talking to their tutor about a presentation on a rooftop garden. You have 30 seconds to look at questions 21-30. Questions 21 and 24-25: choose the correct answer. Questions 22-23: choose TWO answers (in either order). Questions 26-30: who holds each opinion? Choose Lan, Omar, or both Lan and Omar. You will hear the recording ONCE.",
+      script: [
+        { speaker: "Tutor", text: "So, Lan and Omar, your presentation on rooftop gardens is next Friday. How's the research going?" },
+        { speaker: "Omar", text: "Quite well. We started by looking at farms in big cities around the world, but there was far too much, so we've focused on one building: our own school." },
+        { speaker: "Lan", text: "The roof of the sports hall is flat and about four hundred square metres. We measured it ourselves." },
+        { speaker: "Tutor", text: "And what would the garden be for?" },
+        { speaker: "Lan", text: "Two main things. First, growing vegetables for the canteen. And second, it would keep the hall cooler; the roof gets terribly hot in May." },
+        { speaker: "Omar", text: "We also thought about bees, for honey, but the head said no, because some students have allergies. And selling vegetables to parents was another idea, but there won't be enough." },
+        { speaker: "Tutor", text: "What's the biggest problem?" },
+        { speaker: "Omar", text: "Weight, definitely. Wet soil is very heavy, and we don't know if the roof can take it." },
+        { speaker: "Lan", text: "For me, it's water. Someone has to water it every day in the summer holidays, when nobody's here." },
+        { speaker: "Tutor", text: "Both serious. Have you asked anyone about the roof?" },
+        { speaker: "Lan", text: "We thought of asking the head, but she's not an engineer. So we emailed a parent of a Year 9 student who is. She's coming to look at it on Tuesday." },
+        { speaker: "Tutor", text: "Good. And the water problem?" },
+        { speaker: "Omar", text: "We could collect rainwater from the roof in tanks. Lan wanted an automatic watering system, but it costs too much." },
+        { speaker: "Lan", text: "I still think it would pay for itself in a few years." },
+        { speaker: "Omar", text: "Maybe, but we need something we can afford now." },
+        { speaker: "Tutor", text: "How will you present the findings?" },
+        { speaker: "Lan", text: "We'd planned a slideshow, but everyone does that. So we're going to build a small model of the garden and bring it in." },
+        { speaker: "Omar", text: "Exactly. The judges must be bored of slideshows by now." },
+        { speaker: "Tutor", text: "Excellent. One thing I'd add: a short survey. If the canteen uses the vegetables, you need to know whether students will actually eat them." },
+        { speaker: "Omar", text: "Good point. Most kids here aren't keen on vegetables. I think we'll need to make a game of it to get them interested." },
+      ],
+      items: [
+        { q: "21. The students have decided to focus on", options: ["city farms around the world", "the roof of their own school", "gardens in their neighbourhood"], answer: "the roof of their own school" },
+        { q: "22. One purpose of the garden (one of TWO)", options: PURPOSES, answer: "growing vegetables for the canteen" },
+        { q: "23. One purpose of the garden (the other one)", options: PURPOSES, answer: "keeping the sports hall cooler" },
+        { q: "24. Who will check whether the roof is strong enough?", options: ["the head teacher", "a parent who is an engineer", "a company that builds gardens"], answer: "a parent who is an engineer" },
+        { q: "25. How will they present their findings?", options: ["a slideshow", "a model of the garden", "a short film"], answer: "a model of the garden" },
+        { q: "26. The weight of the soil is the biggest problem.", options: WHO, answer: "Omar" },
+        { q: "27. Watering in the holidays is the biggest problem.", options: WHO, answer: "Lan" },
+        { q: "28. An automatic watering system would pay for itself.", options: WHO, answer: "Lan" },
+        { q: "29. A slideshow would be too ordinary.", options: WHO, answer: "both Lan and Omar" },
+        { q: "30. A game will be needed to get students to eat the vegetables.", options: WHO, answer: "Omar" },
+      ],
+      marksEach: 1,
+    },
+    {
+      title: "Listening Part 4: bamboo, an old material for new cities",
+      skill: "Listening",
+      instructions: "You will hear part of a lecture about bamboo as a building material. You have 45 seconds to look at questions 31-40. Complete the notes. Write ONE or TWO WORDS for each answer. You will hear the recording ONCE.",
+      script: [
+        { speaker: "Lecturer", text: "Good morning. Today's lecture is about a material that is very old and, at the same time, very modern: bamboo. I'll cover three things: its biology, its use in building, and the problems that still need solving." },
+        { speaker: "Lecturer", text: "First, biology. Bamboo looks like a tree, but it isn't one; it's actually a type of grass. That's why it grows so fast: some species can grow almost a metre in a single day." },
+        { speaker: "Lecturer", text: "A bamboo plant can be harvested after about four years, whereas a hardwood tree may need fifty years or more." },
+        { speaker: "Lecturer", text: "And because the roots stay in the ground when the stems are cut, the plant simply grows again. Those roots also protect hillsides from erosion during heavy rain." },
+        { speaker: "Lecturer", text: "Moving on to building. It was once thought that bamboo was only suitable for simple, temporary shelters. But engineers now know that, for its weight, it is stronger than steel when it is pulled." },
+        { speaker: "Lecturer", text: "In earthquake zones, this matters a great deal. A bamboo house bends instead of breaking, and because it is light, it does far less damage if it does fall." },
+        { speaker: "Lecturer", text: "Today, bamboo is being used for bridges, schools and even airport roofs. In these projects the stems are usually cut into thin strips and glued together into boards." },
+        { speaker: "Lecturer", text: "Now, the problems. The first is insects. Untreated bamboo contains a lot of sugar, and beetles love it. Traditionally, stems were soaked in water for weeks to wash the sugar out; today a salt solution is more common." },
+        { speaker: "Lecturer", text: "The second problem is water itself. Bamboo that stays wet will rot, so architects say a bamboo building needs good boots and a good hat: in other words, a stone base and a wide roof." },
+        { speaker: "Lecturer", text: "The third problem isn't technical at all; it's about image. In many countries bamboo is still seen as a material for poor people, and families who can afford concrete usually choose it." },
+        { speaker: "Lecturer", text: "Finally, most countries have no official building standards for bamboo, which means that insurance companies are often unwilling to cover bamboo buildings." },
+        { speaker: "Lecturer", text: "Things are changing, though. In one region, architects built a whole school from bamboo, and within five years three nearby villages had copied the design." },
+        { speaker: "Lecturer", text: "So, to sum up: bamboo grows quickly, it is strong and flexible, and it stores carbon. If we can protect it from insects and water, and change the way people see it, it could be one of the key building materials of this century." },
+        { speaker: "Lecturer", text: "Next time, we'll compare it with another fast-growing material: hemp." },
+      ],
+      items: [
+        { q: "31. Biology: bamboo is a type of ________", answer: "grass" },
+        { q: "32. Some species grow almost a ________ in one day", answer: "metre" },
+        { q: "33. Can be harvested after about ________ years", answer: "four" },
+        { q: "34. Roots protect hillsides from ________", answer: "erosion" },
+        { q: "35. Building: for its weight, stronger than ________ when pulled", answer: "steel" },
+        { q: "36. In earthquakes, a bamboo house bends instead of ________", answer: "breaking" },
+        { q: "37. Problem 1: insects are attracted by the ________ in untreated bamboo", answer: "sugar" },
+        { q: "38. Problem 2: a building needs a stone ________ and a wide roof", answer: "base" },
+        { q: "39. Problem 3: often seen as a material for ________ people", answer: "poor" },
+        { q: "40. Problem 4: no building standards, so ________ companies are unwilling", answer: "insurance" },
+      ],
+      marksEach: 1,
+    },
+  ],
+  speaking: {
+    task: "Full Speaking test in trios (speaker, examiner, scorer), about 12 minutes each: Part 1 (four questions, about 4 minutes), Part 2 (1 minute to prepare, up to 2 minutes to speak), Part 3 (three questions linked to Part 2, about 4-5 minutes, answered at length). The scorer gives one band per criterion on the HEC rubric and averages them; the teacher examines and fully scores 2-3 students, choosing anyone not yet teacher-scored this year, so every student has a teacher score by the end of Year 1. Scores are estimates, not official bands.",
+    prompts: [
+      "Part 1: What kind of music do you enjoy, and when do you listen to it?",
+      "Part 1: Do you prefer to study alone or with friends?",
+      "Part 1: How do you usually spend the school holidays?",
+      "Part 1: Is there a food you didn't like as a child but enjoy now?",
+      "Part 2: Describe a piece of technology that has made your life easier. You should say: what it is, when you started using it, how you use it, and explain how your life would be different without it.",
+      "Part 3: Do you think people rely too much on technology today?",
+      "Part 3: How might technology change the way people work in the next twenty years?",
+      "Part 3: Should governments or technology companies decide how our personal data is used?",
+    ],
+    rubric: [
+      { criterion: "Fluency & Coherence", bands: bands("Fluency & Coherence") },
+      { criterion: "Lexical Resource", bands: bands("Lexical Resource") },
+      { criterion: "Grammar Range & Accuracy", bands: bands("Grammar Range & Accuracy") },
+      { criterion: "Pronunciation", bands: bands("Pronunciation") },
+    ],
+  },
+};
