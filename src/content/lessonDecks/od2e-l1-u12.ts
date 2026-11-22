@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U12Creative } from "./od2e-l1-u12/homework";
+import { odL1U12Worksheets } from "./od2e-l1-u12/assessments";
 
 export const odL1U12: Unit = {
   curriculum: "oxford-discover-2e",
@@ -236,12 +238,12 @@ export const odL1U12: Unit = {
             "Who helps you? Tell your partner one helper.",
           ],
         },
+        odL1U12Creative["od2e-l1-u12-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: A new helper job. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Get Ready pages in your Workbook.", book: { book: "WB", pages: "100-101" } },
-            { label: "Draw and write", detail: "Invent a new helper job for a robot or an animal. Draw it. Write: 'This is a ___. It helps ___.'" },
-            { label: "Challenge", detail: "Choose the most useful helper for our school. Write: 'I think the ___ is useful because ___.'" },
           ],
         },
       ],
@@ -444,11 +446,12 @@ export const odL1U12: Unit = {
             "Was your guess about the text right? Thumb up or down.",
           ],
         },
+        odL1U12Creative["od2e-l1-u12-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: One need and one want. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Read page in your Workbook.", book: { book: "WB", pages: "102" } },
-            { label: "Draw and write", detail: "Draw one thing you need and one thing you want. Write: 'I need ___. I want ___.' Choose one and tell a partner why." },
             { label: "Challenge", detail: "Draw four pictures: a farm, a truck, a store and a home. Write one sentence for each picture." },
           ],
         },
@@ -669,12 +672,12 @@ export const odL1U12: Unit = {
             "What was your favorite game today?",
           ],
         },
+        odL1U12Creative["od2e-l1-u12-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: A child in my story. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Understand and Grammar pages in your Workbook.", book: { book: "WB", pages: "103-105" } },
-            { label: "Draw and write", detail: "Invent a boy or a girl for a story. Draw them with a thing they have and a thing they want. Write: 'She / He has ___. She / He wants ___.'" },
-            { label: "Challenge", detail: "Write four sentences about your story child. Add one question and one answer: 'Does she / he have ___? Yes, she / he does.' Say whether the thing is a need or a want, and why." },
           ],
         },
       ],
@@ -958,12 +961,12 @@ export const odL1U12: Unit = {
             "What did you say to your partner about your picnic?",
           ],
         },
+        odL1U12Creative["od2e-l1-u12-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: A picnic for a friend. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Communicate pages in your Workbook.", book: { book: "WB", pages: "106-107" } },
-            { label: "Draw and write", detail: "Invent a picnic for a toy or an animal friend. Draw it. Write: 'We need ___. We want ___.' Choose the best picnic food for your friend and say why." },
-            { label: "Challenge", detail: "Write four sentences about your picnic. Circle the naming words. Underline the action words." },
           ],
         },
       ],
@@ -1184,15 +1187,16 @@ export const odL1U12: Unit = {
             "What was the best part of making your chart?",
           ],
         },
+        odL1U12Creative["od2e-l1-u12-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: A needs and wants chart. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Wrap Up pages in your Workbook.", book: { book: "WB", pages: "108-109" } },
-            { label: "Draw and write", detail: "Invent a person for a story. Make a small Needs and Wants chart for them with two needs and two wants. Choose one thing and write why they need or want it." },
-            { label: "Challenge", detail: "Write three sentences about your story person: one need, one want and one helper. Say whether a want could ever be a need, and why." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL1U12Worksheets,
 };

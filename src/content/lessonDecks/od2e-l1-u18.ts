@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U18Creative } from "./od2e-l1-u18/homework";
+import { odL1U18Worksheets } from "./od2e-l1-u18/assessments";
 
 export const odL1U18: Unit = {
   curriculum: "oxford-discover-2e",
@@ -238,12 +240,12 @@ export const odL1U18: Unit = {
             "Thumbs up, sideways or down: How sure are you about the eight words?",
           ],
         },
+        odL1U18Creative["od2e-l1-u18-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 18 Get Ready. Say each word aloud as you write it.", book: { book: "WB", pages: "154-155" } },
-            { label: "Draw and write", detail: "Draw yourself doing one of the eight words. Write: I ___. Then choose: Which word is the most fun? Write one more sentence to say why." },
-            { label: "Challenge", detail: "Write three sentences with chase, catch and stop. Read them to someone at home." },
           ],
         },
         {
@@ -472,12 +474,12 @@ export const odL1U18: Unit = {
             "Show me with your thumb: How was the play?",
           ],
         },
+        odL1U18Creative["od2e-l1-u18-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 18 Read. Look back at the play to help you.", book: { book: "WB", pages: "156" } },
-            { label: "Draw and write", detail: "Draw a new ending for the gingerbread man. Write: At the end, the gingerbread man ___. Then choose: Is your ending happy or funny? Say why." },
-            { label: "Challenge", detail: "Write four sentences about the play with First, Next, Then and At the end. Read them to someone at home." },
           ],
         },
         {
@@ -730,12 +732,12 @@ export const odL1U18: Unit = {
             "Thumbs up, sideways or down: How sure are you about should and shouldn't?",
           ],
         },
+        odL1U18Creative["od2e-l1-u18-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 18 Understand. Say each sentence aloud first.", book: { book: "WB", pages: "157-159" } },
-            { label: "Draw and write", detail: "Draw the gingerbread man in a new place. Write: He should ___. He shouldn't ___. Then choose: Would you help him? Say why." },
-            { label: "Challenge", detail: "Write four pieces of advice for a friend who goes to the park: two with should and two with shouldn't." },
           ],
         },
         {
@@ -999,12 +1001,12 @@ export const odL1U18: Unit = {
             "Show me with your thumb: How did you do today?",
           ],
         },
+        odL1U18Creative["od2e-l1-u18-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 18 Communicate. Say each sentence aloud first.", book: { book: "WB", pages: "160-161" } },
-            { label: "Draw and write", detail: "Draw a plant or a pet. Write: I should ___. Then choose: What is the most important thing a living thing needs? Write one sentence to say why." },
-            { label: "Challenge", detail: "Write a short note of advice to a friend about taking care of a pet. Use should and shouldn't, a capital letter and a period." },
           ],
         },
         {
@@ -1285,12 +1287,12 @@ export const odL1U18: Unit = {
             "Show me with your thumb: How did you do in Unit 18?",
           ],
         },
+        odL1U18Creative["od2e-l1-u18-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Units 17 and 18 Wrap Up pages, including the Big Question chart.", book: { book: "WB", pages: "162-163" } },
-            { label: "Draw and write", detail: "Draw a living thing you take care of or would like to. Write: I should ___. Then choose: What does it need most? Write one sentence to say why." },
-            { label: "Challenge", detail: "Make a second Venn diagram with two new things. Write two sentences about how they are different and one about how they are the same." },
           ],
         },
         {
@@ -1304,4 +1306,5 @@ export const odL1U18: Unit = {
       ],
     },
   ],
+  worksheets: odL1U18Worksheets,
 };

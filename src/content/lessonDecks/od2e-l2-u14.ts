@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U14Creative } from "./od2e-l2-u14/homework";
+import { odL2U14Worksheets } from "./od2e-l2-u14/assessments";
 
 export const odL2U14: Unit = {
   curriculum: "oxford-discover-2e",
@@ -259,12 +261,12 @@ export const odL2U14: Unit = {
             "Which music makes you feel calm? Tell your neighbor.",
           ],
         },
+        odL2U14Creative["od2e-l2-u14-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, My musician and a friend, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 14 Get Ready.", book: { book: "WB", pages: "118-119" } },
-            { label: "Draw and write", detail: "Draw a musician with an instrument. Write two sentences: what the musician plays and how the music makes you feel." },
-            { label: "Challenge", detail: "Invent a second character for your picture. Write which one is the main character and which one is secondary, and say why." },
           ],
         },
       ],
@@ -459,12 +461,12 @@ export const odL2U14: Unit = {
             "What did you learn about how music makes people feel?",
           ],
         },
+        odL2U14Creative["od2e-l2-u14-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, How can we help Olga?, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 14 Read.", book: { book: "WB", pages: "120" } },
-            { label: "Draw and write", detail: "Draw Olga at the concert. Write two sentences: what she plays and how she feels." },
-            { label: "Challenge", detail: "Imagine you are Mr. Perez. Write three sentences to tell Olga something kind before the concert." },
           ],
         },
       ],
@@ -706,12 +708,12 @@ export const odL2U14: Unit = {
             "Who is the main character in Olga's story? Say how you know.",
           ],
         },
+        odL2U14Creative["od2e-l2-u14-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, My yesterday map, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Unit 14 Understand pages.", book: { book: "WB", pages: "121-123" } },
-            { label: "Draw and write", detail: "Draw your yesterday. Write three sentences with three different time words, for example: Yesterday morning, I ... Last night, I ..." },
-            { label: "Challenge", detail: "Write four sentences about a friend or a family member's day with 'yesterday morning', 'yesterday afternoon', 'last night' and 'this morning'. Add one 'but' sentence." },
           ],
         },
       ],
@@ -1023,12 +1025,12 @@ export const odL2U14: Unit = {
             "What does your favorite music make you feel? Show with your face.",
           ],
         },
+        odL2U14Creative["od2e-l2-u14-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, A popstar's day and my day, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 14 Communicate.", book: { book: "WB", pages: "124-125" } },
-            { label: "Draw and write", detail: "Imagine you are a popstar for one day. Draw your day. Write three sentences about it using the phrases and a feeling word." },
-            { label: "Challenge", detail: "Write six sentences about two kinds of music, using and for what is the same and but for what is different." },
           ],
         },
       ],
@@ -1251,15 +1253,16 @@ export const odL2U14: Unit = {
             "What was the most fun part of making the mobile? Tell your neighbor.",
           ],
         },
+        odL2U14Creative["od2e-l2-u14-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, The best picture for our mobile, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Review pages for Units 13 and 14.", book: { book: "WB", pages: "126-127" } },
-            { label: "Draw and write", detail: "Draw a new picture for your mobile. Write two sentences: what it is and how the music makes you feel. Use and or but." },
-            { label: "Challenge", detail: "Interview someone at home about the music they like. Write three of their feelings and one thing that is the same and one thing that is different from you." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U14Worksheets,
 };

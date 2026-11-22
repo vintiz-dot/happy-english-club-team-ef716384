@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U4Creative } from "./od2e-l1-u04/homework";
+import { odL1U4Worksheets } from "./od2e-l1-u04/assessments";
 
 export const odL1U4: Unit = {
   curriculum: "oxford-discover-2e",
@@ -225,12 +227,12 @@ export const odL1U4: Unit = {
             "Show thumbs: up, middle or down. How sure are you of the new words?",
           ],
         },
+        odL1U4Creative["od2e-l1-u04-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 4 Get Ready.", book: { book: "WB", pages: "28-29" } },
-            { label: "Draw and write", detail: "Draw a new ocean animal that nobody has seen. Give it colors. Write: \"It's a ___ ___ in the ocean.\" Why did you choose those colors? Tell someone at home." },
-            { label: "Challenge", detail: "Write three sentences about your new animal. Start each one with a capital letter and end with a period." },
           ],
         },
         {
@@ -431,12 +433,12 @@ export const odL1U4: Unit = {
             "Make a quiet thumbs-up when you are sure.",
           ],
         },
+        odL1U4Creative["od2e-l1-u04-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 4 Read.", book: { book: "WB", pages: "30" } },
-            { label: "Mix and write", detail: "Mix two colors with crayons or paint. Draw your new color and write: \"___ and ___ make ___.\" Choose two colors nobody mixed in class." },
-            { label: "Challenge", detail: "Find three things at home with a secondary color. Draw them and say which two colors you think were mixed to make them." },
           ],
         },
         {
@@ -672,12 +674,12 @@ export const odL1U4: Unit = {
             "Whisper your own place word: in, on, under or next to.",
           ],
         },
+        odL1U4Creative["od2e-l1-u04-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 4 Understand, including the grammar pages.", book: { book: "WB", pages: "31-33" } },
-            { label: "Draw and write", detail: "Draw your room or a beach. Hide a small animal in it. Write: \"The ___ is ___ the ___.\" Why is it a good hiding place?" },
-            { label: "Challenge", detail: "Write four sentences about your picture, one with in, one with on, one with under and one with next to." },
           ],
         },
         {
@@ -907,12 +909,12 @@ export const odL1U4: Unit = {
             "Whisper the color. Sit down quietly.",
           ],
         },
+        odL1U4Creative["od2e-l1-u04-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 4 Communicate.", book: { book: "WB", pages: "34-35" } },
-            { label: "Draw and write", detail: "Invent a superhero. Draw its clothes and color them. Write: \"The superhero has a ___ ___.\" Why did you choose those colors?" },
-            { label: "Challenge", detail: "Write three sentences about your superhero. Use \"I have\", \"There's\" and \"It's\". Check each sentence for a capital letter and a period." },
           ],
         },
         {
@@ -1111,12 +1113,12 @@ export const odL1U4: Unit = {
             "Open your eyes and show a thumbs-up if you can say where to see it.",
           ],
         },
+        odL1U4Creative["od2e-l1-u04-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 4 Wrap Up.", book: { book: "WB", pages: "36-37" } },
-            { label: "Draw and write", detail: "Choose your favorite color mix. Draw it and write: \"___ and ___ make ___. I like ___.\" Why did you choose it? Tell someone at home." },
-            { label: "Challenge", detail: "Find three things in the same color. Draw them and write three sentences. Start with a capital letter and end with a period." },
           ],
         },
         {
@@ -1130,4 +1132,5 @@ export const odL1U4: Unit = {
       ],
     },
   ],
+  worksheets: odL1U4Worksheets,
 };

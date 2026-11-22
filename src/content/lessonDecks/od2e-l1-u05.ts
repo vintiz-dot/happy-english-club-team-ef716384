@@ -10,6 +10,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U5Creative } from "./od2e-l1-u05/homework";
+import { odL1U5Worksheets } from "./od2e-l1-u05/assessments";
 
 export const odL1U5: Unit = {
   curriculum: "oxford-discover-2e",
@@ -234,12 +236,12 @@ export const odL1U5: Unit = {
           ],
           teacherNote: "Note who shows a thumb down and give those children a card to take home.",
         },
+        odL1U5Creative["od2e-l1-u05-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Unit 5 Big Question and Get Ready pages.", book: { book: "WB", pages: "38-39" } },
-            { label: "Draw and write", detail: "Invent a new animal and draw its home. Write: \"This is a ___. It lives in a ___.\" Tell someone at home why that home is good for it." },
-            { label: "Challenge", detail: "Find a home that an animal has near your house or school (a nest, a hole, a web). Draw it, label it, and write two words about it." },
           ],
         },
         {
@@ -429,12 +431,12 @@ export const odL1U5: Unit = {
             "Hold up thumbs: up if you liked the text, down if you want to hear it again.",
           ],
         },
+        odL1U5Creative["od2e-l1-u05-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Unit 5 Read page.", book: { book: "WB", pages: "40" } },
-            { label: "Draw and write", detail: "Draw two homes that are different (for example a nest and a hive). Write \"This is a ___.\" under each. Say which one you would like to visit and why." },
-            { label: "Challenge", detail: "Write one more sentence about your animal: where it lives and one thing about its home (high, safe or dry). Read it to someone at home." },
           ],
         },
         {
@@ -677,12 +679,12 @@ export const odL1U5: Unit = {
           prompts: ["Where's the ___?", "It's in / on / under the ___.", "{s6}, read your card."],
           teacherNote: "Writing is copying and filling one word. Put the frame on the board. The cards go on the wall as an \"Ask me\" display for the unit.",
         },
+        odL1U5Creative["od2e-l1-u05-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Unit 5 Understand and Grammar pages.", book: { book: "WB", pages: "41-43" } },
-            { label: "Hide and write", detail: "Hide a toy at home. Draw where it is and write: \"Where's the ___? It's under the ___.\" Ask someone at home to find it." },
-            { label: "Challenge", detail: "Write three questions about things in your room: one with Where's and two with Where are. Write the answers too. Which one was the hardest?" },
           ],
         },
         {
@@ -979,12 +981,12 @@ export const odL1U5: Unit = {
             },
           ],
         },
+        odL1U5Creative["od2e-l1-u05-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Unit 5 Communicate pages, including the writing page.", book: { book: "WB", pages: "44-45" } },
-            { label: "Draw and write", detail: "Choose an animal home you would like to live in for one day. Draw it. Write: \"I would like to live in a ___ because ___.\" Say it to someone at home." },
-            { label: "Challenge", detail: "Write two sentences with the plural: \"Two ___ live in the ___.\" Use mice, foxes, or fish. Add a \"Watch out!\" warning for one of them." },
           ],
         },
         {
@@ -998,4 +1000,5 @@ export const odL1U5: Unit = {
       ],
     },
   ],
+  worksheets: odL1U5Worksheets,
 };

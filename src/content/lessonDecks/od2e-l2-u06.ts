@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U06Creative } from "./od2e-l2-u06/homework";
+import { odL2U06Worksheets } from "./od2e-l2-u06/assessments";
 
 export const odL2U6: Unit = {
   curriculum: "oxford-discover-2e",
@@ -22,6 +24,7 @@ export const odL2U6: Unit = {
     "When something is finished, we add -ed to a regular verb, and in a question did does the work, so the verb stays plain (Did they travel?).",
     "Good speakers ask a question that gets more than 'yes' or 'no', and good writers say what it was like then and what it is like now.",
   ],
+  worksheets: odL2U06Worksheets,
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -260,12 +263,13 @@ export const odL2U6: Unit = {
             "Show me with your hands how sure you are about the word crowded.",
           ],
         },
+        odL2U06Creative["od2e-l2-u06-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 6 Get Ready.", book: { book: "WB", pages: "46-47" } },
-            { label: "Draw and write", detail: "Draw three pictures of a trip you would like to take. Put numbers 1, 2 and 3 under them. Write a short sentence for each. Say why you chose that trip." },
-            { label: "Challenge", detail: "Write your own three-sentence story with First, Next and Last. Cut the sentences up and ask someone at home to put them in order." },
+            { label: "At home", detail: "Write your own three-sentence story with First, Next and Last. Cut the sentences up and ask someone at home to put them in order." },
           ],
         },
       ],
@@ -459,12 +463,13 @@ export const odL2U6: Unit = {
             "I used to think ___. Now I think ___.",
           ],
         },
+        odL2U06Creative["od2e-l2-u06-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Read page of Unit 6.", book: { book: "WB", pages: "48" } },
-            { label: "Draw and write", detail: "Draw a postcard from Carlo on the ship. Write three sentences: what he sees, what it is like, how he feels. Choose one thing you would say to cheer him up." },
-            { label: "Challenge", detail: "Ask an older person at home: How did you travel when you were young? Write one sentence with their answer and draw a picture. Next to it, write how you travel now." },
+            { label: "At home", detail: "Ask an older person at home: How did you travel when you were young? Write one sentence with their answer and draw a picture. Next to it, write how you travel now." },
           ],
         },
       ],
@@ -719,12 +724,13 @@ export const odL2U6: Unit = {
             "Finish: After did the verb stays ___.",
           ],
         },
+        odL2U06Creative["od2e-l2-u06-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Unit 6 Understand pages and the grammar pages.", book: { book: "WB", pages: "49-51" } },
-            { label: "Draw and write", detail: "Draw what you did yesterday: three pictures. Write: 'I ___ed ...' under each. Then choose the best part of your day and say why." },
-            { label: "Challenge", detail: "Make a 'Did you ...?' quiz with five questions for someone at home. Write their answers in full sentences: 'My aunt walked to the market.'" },
+            { label: "At home", detail: "Make a 'Did you ...?' quiz with five questions for someone at home. Write their answers in full sentences: 'My aunt walked to the market.'" },
           ],
         },
       ],
@@ -1004,12 +1010,13 @@ export const odL2U6: Unit = {
             "Show me with your hands how sure you are about adding -ed.",
           ],
         },
+        odL2U06Creative["od2e-l2-u06-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 6 Communicate, including the writing task on page 53.", book: { book: "WB", pages: "52-53" } },
-            { label: "Draw and write", detail: "Imagine you have a time machine. Draw the room you visit a hundred years ago. Write three sentences with -ed verbs: what you visited, what you saw and what you did. Say which thing you like best." },
-            { label: "Challenge", detail: "Choose an adult to interview next lesson. Write three questions: one about travel, one about how people sent news, one with how or why. Practice them aloud." },
+            { label: "At home", detail: "Choose an adult to interview next lesson. Write three questions: one about travel, one about how people sent news, one with how or why. Practice them aloud." },
           ],
         },
       ],
@@ -1226,12 +1233,13 @@ export const odL2U6: Unit = {
             "What do you still want to know about long ago?",
           ],
         },
+        odL2U06Creative["od2e-l2-u06-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Review pages for Units 5 and 6.", book: { book: "WB", pages: "54-55", note: "Review" } },
-            { label: "Draw and write", detail: "Invent a machine that will make life easier a hundred years from now. Draw it. Write three sentences: what it is called, what it does, and how it is different from today. Say why people will like it." },
-            { label: "Challenge", detail: "Interview a second adult with the same three questions. Write both answers side by side and say one thing that is the same and one thing that is different." },
+            { label: "At home", detail: "Interview a second adult with the same three questions. Write both answers side by side and say one thing that is the same and one thing that is different." },
           ],
         },
       ],

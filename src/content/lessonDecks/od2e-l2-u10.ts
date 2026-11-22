@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U10Creative } from "./od2e-l2-u10/homework";
+import { odL2U10Worksheets } from "./od2e-l2-u10/assessments";
 
 export const odL2U10: Unit = {
   curriculum: "oxford-discover-2e",
@@ -233,12 +235,12 @@ export const odL2U10: Unit = {
             "One question I have about the poems is ...",
           ],
         },
+        odL2U10Creative["od2e-l2-u10-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"My kind or rude monster\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 10 Get Ready.", book: { book: "WB", pages: "82-83" } },
-            { label: "Draw and write", detail: "Invent a kind or a rude monster. Draw it. Write two sentences with new words. For example: My monster grabs. It is rude. Then say what the monster should do instead, and why." },
-            { label: "Challenge", detail: "Make a 'Good manners' mind map in your notebook with six actions. Add one more rude action that is not in the book, and say what a polite person does instead." },
           ],
         },
       ],
@@ -410,12 +412,12 @@ export const odL2U10: Unit = {
             "Think of one polite thing you can do tomorrow. Show me with your hands how sure you are.",
           ],
         },
+        odL2U10Creative["od2e-l2-u10-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"A fifth animal for the poem book\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 10 Read.", book: { book: "WB", pages: "84" } },
-            { label: "Draw and write", detail: "Make up a fifth animal for the book. Draw it. Write four short lines about what it does at a friend's house. Say if it is polite or rude and what the theme is." },
-            { label: "Challenge", detail: "Choose one rude animal behavior and write what the animal should say or do instead. Act it out at home with a family member and tell us what they thought." },
           ],
         },
       ],
@@ -632,12 +634,12 @@ export const odL2U10: Unit = {
             "Show me with your hands how well you can ask nicely.",
           ],
         },
+        odL2U10Creative["od2e-l2-u10-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"The polite robot\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 10 Understand and the grammar pages.", book: { book: "WB", pages: "85-87" } },
-            { label: "Draw and write", detail: "Invent a polite robot that always asks first. Draw it. Write two things the robot asks, with Can I or May I. Say who the robot asks and why." },
-            { label: "Challenge", detail: "Write a short dialogue between a child and a grown-up with three questions using Can I and May I, with different answers (yes, no, and a reason). Act it out at home." },
           ],
         },
       ],
@@ -903,12 +905,12 @@ export const odL2U10: Unit = {
             "One thing I want to check next time I write is ...",
           ],
         },
+        odL2U10Creative["od2e-l2-u10-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"My thoughtful gadget\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 10 Communicate, including the writing task on WB page 89.", book: { book: "WB", pages: "88-89" } },
-            { label: "Draw and write", detail: "Draw a thoughtful gadget (a robot, a phone or a backpack) that helps people get along. Write three sentences about it. Say what it does and why people like it." },
-            { label: "Challenge", detail: "Make a little book with four 'Please and Thank You' tips for using other people's things. Use may and can, and check your verbs." },
           ],
         },
       ],
@@ -1126,15 +1128,16 @@ export const odL2U10: Unit = {
             "Show me with your hands how sure you are that you can ask nicely and share.",
           ],
         },
+        odL2U10Creative["od2e-l2-u10-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"A new rule to help people get along\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Review pages and the Big Question Chart.", book: { book: "WB", pages: "90-91" } },
-            { label: "Draw and write", detail: "Invent a new rule for a place you love (the park, the zoo, the pool). Draw it and write why it helps people get along. Tell a family member about it." },
-            { label: "Challenge", detail: "Write a short play with two characters, one rude and one thoughtful, in a place of your choice. Include at least three polite words and how the rude one changes." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U10Worksheets,
 };

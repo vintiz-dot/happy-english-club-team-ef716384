@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U01Creative } from "./od2e-l2-u01/homework";
+import { odL2U01Worksheets } from "./od2e-l2-u01/assessments";
 
 export const odL2U1: Unit = {
   curriculum: "oxford-discover-2e",
@@ -23,6 +25,7 @@ export const odL2U1: Unit = {
     "We use they, it and them instead of saying the animal's name again: they does the action, them receives it.",
     "Speakers and writers say one clear fact about an animal, add what its body part does, and say it kindly and confidently to a partner.",
   ],
+  worksheets: odL2U01Worksheets,
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -245,12 +248,12 @@ export const odL2U1: Unit = {
             "What is one question you still have about animals?",
           ],
         },
+        odL2U01Creative["od2e-l2-u01-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Complete the Big Question and Get Ready pages.", book: { book: "WB", pages: "2-3" } },
-            { label: "Draw and write", detail: "Draw an animal that does NOT exist. Give it two body parts from today. Write: \"It has ___ and ___. It lives in ___.\" Say one reason you chose them." },
-            { label: "Challenge", detail: "Find an animal at home or on the street that is not like any other you know. Write three sentences: how is it the same as another animal, and how is it different?" },
           ],
         },
       ],
@@ -452,12 +455,12 @@ export const odL2U1: Unit = {
             "I used to think ___ about animals. Now I think ___.",
           ],
         },
+        odL2U01Creative["od2e-l2-u01-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Complete the Read page.", book: { book: "WB", pages: "4" } },
-            { label: "Draw and write", detail: "Choose an animal group. Draw an animal from it and write three sentences: what covers it, how it moves, and one thing its body part helps it do. Then add: \"I chose it because ___.\"" },
-            { label: "Challenge", detail: "Find an animal that seems to be in two groups (a penguin has wings but cannot fly; a whale lives in water but has no gills). Write two sentences: which group is it in, and what is your proof?" },
           ],
         },
       ],
@@ -697,12 +700,13 @@ export const odL2U1: Unit = {
             "Which game helped you most? Why?",
           ],
         },
+        odL2U01Creative["od2e-l2-u01-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Complete the Understand and Grammar pages (including the pronoun practice).", book: { book: "WB", pages: "5-7" } },
-            { label: "Draw and write", detail: "Draw two animals from different groups. Write four sentences: two with They, and two with Them (for example, \"Wings help them fly\"). Then say: which animal would you like to be, and why?" },
-            { label: "Challenge", detail: "Write a mini-quiz: three riddles about animals using \"They ___\" and \"___ help them ___.\" Test your family." },
+            { label: "At home", detail: "Write a mini-quiz: three riddles about animals using \"They ___\" and \"___ help them ___.\" Test your family." },
           ],
         },
       ],
@@ -960,12 +964,12 @@ export const odL2U1: Unit = {
             "Show me with your hands how confident you are to talk about animals. What helped you?",
           ],
         },
+        odL2U01Creative["od2e-l2-u01-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Complete the Communicate pages, including the writing task.", book: { book: "WB", pages: "8-9" } },
-            { label: "Draw and write", detail: "Invent an animal that lives in a place nobody has been (the moon, under the sea, inside a volcano). Draw it. Write three sentences about its body parts and why it needs each one." },
-            { label: "Challenge", detail: "Find two animals that belong to different groups but are alike in one way. Write: \"___ and ___ are both ___. But ___ has ___, and ___ has ___.\" Which group is each one in?" },
           ],
         },
       ],

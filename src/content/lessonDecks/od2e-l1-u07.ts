@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U7Creative } from "./od2e-l1-u07/homework";
+import { odL1U7Worksheets } from "./od2e-l1-u07/assessments";
 
 export const odL1U7: Unit = {
   curriculum: "oxford-discover-2e",
@@ -291,11 +293,12 @@ export const odL1U7: Unit = {
             "What is your favorite season? Say it to your friend.",
           ],
         },
+        odL1U7Creative["od2e-l1-u07-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My new season. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 7 Get Ready. Say each word out loud as you write.", book: { book: "WB", pages: "56-57" } },
-            { label: "Draw and write", detail: "Invent a new fifth season! Draw it. Give it a name. Write 'It's ___ and ___.' (for example: hot and snowy). Be ready to show your friends." },
             { label: "Challenge", detail: "Find five things at home that are hot, warm, cool or cold. Do not touch hot things: look, and ask a grown-up. Tell your family one of them in English." },
           ],
         },
@@ -505,12 +508,12 @@ export const odL1U7: Unit = {
             "Did the caption help you? Give me a thumbs up, middle or down.",
           ],
         },
+        odL1U7Creative["od2e-l1-u07-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My tree in four seasons. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 7 Read. Read the words out loud to a grown-up.", book: { book: "WB", pages: "58" } },
-            { label: "Draw and write", detail: "Draw one tree in four seasons (four squares). Write one caption under each. Then choose: which tree do you like best? Say why." },
-            { label: "Challenge", detail: "Write two sentences about one season. Use 'and': 'It's hot and sunny.' Read them to someone at home." },
           ],
         },
       ],
@@ -763,11 +766,12 @@ export const odL1U7: Unit = {
             "Which season do you think is good for animals? Say 'I think ___.'",
           ],
         },
+        odL1U7Creative["od2e-l1-u07-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: A place with its own weather. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 7 Understand. Read each sentence aloud before you write.", book: { book: "WB", pages: "59-61" } },
-            { label: "Draw and write", detail: "Invent a new place (a planet or an island) where it never snows or where it always rains. Draw it. Write two sentences: 'It doesn't ___ there.' 'It ___s all year.'" },
             { label: "Challenge", detail: "Ask a grown-up: 'Does it get hot in the summer? Does it snow in Hanoi?' Write the answers in a sentence and tell your class." },
           ],
         },
@@ -1080,15 +1084,17 @@ export const odL1U7: Unit = {
             "I used to think seasons are the same. Now I think ___. Say it to a friend.",
           ],
         },
+        odL1U7Creative["od2e-l1-u07-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: The best weather for my game. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 7 Communicate, including the writing on WB 63. Read your writing aloud to a grown-up.", book: { book: "WB", pages: "62-63" } },
-            { label: "Draw and write", detail: "Make an invitation card. Draw the weather you like best and a game to play in it. Write 'Do you want to play ___ with me?' Then say why this is the best weather." },
             { label: "Challenge", detail: "Make three new compound words with pictures (like sun + flower). Then invent one silly word and draw it. Teach it to your class." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL1U7Worksheets,
 };

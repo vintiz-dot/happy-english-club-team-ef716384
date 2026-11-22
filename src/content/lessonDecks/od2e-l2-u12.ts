@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U12Creative } from "./od2e-l2-u12/homework";
+import { odL2U12Worksheets } from "./od2e-l2-u12/assessments";
 
 export const odL2U12: Unit = {
   curriculum: "oxford-discover-2e",
@@ -250,12 +252,12 @@ export const odL2U12: Unit = {
             "One thing in my home I can reuse is ...",
           ],
         },
+        odL2U12Creative["od2e-l2-u12-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"A setting for my story\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 12 Get Ready.", book: { book: "WB", pages: "100-101" } },
-            { label: "Draw and write", detail: "Draw a setting for a story: choose one place. Write three describing words on it. Then write: A problem in my story is ... and say why this problem fits your place." },
-            { label: "Challenge", detail: "Think of three different places. For each one write a sentence that says where the story is. Which place would make the best story? Say why." },
           ],
         },
       ],
@@ -459,12 +461,12 @@ export const odL2U12: Unit = {
             "One thing I want to do with my trash is ...",
           ],
         },
+        odL2U12Creative["od2e-l2-u12-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"Dear Diary, I am a bottle\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 12 Read.", book: { book: "WB", pages: "102" } },
-            { label: "Draw and write", detail: "Write a short diary entry as a thing you use every day (your pencil, your bag, a bottle). Start with the date and Dear Diary. Say where you are and how you feel. Then say what you wish will happen next, and why." },
-            { label: "Challenge", detail: "Write a second diary entry for a different day in a different place. Show the change of setting and the change of feeling." },
           ],
         },
       ],
@@ -724,12 +726,12 @@ export const odL2U12: Unit = {
             "One thing I can do to keep our classroom clean is ...",
           ],
         },
+        odL2U12Creative["od2e-l2-u12-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"Where is it in my park?\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 12 Understand and the grammar pages.", book: { book: "WB", pages: "103-105" } },
-            { label: "Draw and write", detail: "Draw a park with a lake, a bench and a trash can. Write four sentences about where things are, for example: The bench is next to the tree. Then invent one more thing for your park and decide where it goes. Say why." },
-            { label: "Challenge", detail: "Write three questions about your park picture (Where's ...? Is there ...?) and the answers. Include one No answer. Swap with a friend tomorrow and check the pictures match." },
           ],
         },
       ],
@@ -1003,12 +1005,12 @@ export const odL2U12: Unit = {
             "What did you enjoy about writing as a recycled thing?",
           ],
         },
+        odL2U12Creative["od2e-l2-u12-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"Usually, now and last week\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 12 Communicate, including your writing on WB 107.", book: { book: "WB", pages: "106-107" } },
-            { label: "Draw and write", detail: "Draw something that was recycled and what it is now. Write three sentences: one with 'usually', one with 'now' and one with 'last week'. For example: I usually put paper in the blue bin. I'm putting paper in it now. Last week I went to the recycling plant. Then say which one you like best." },
-            { label: "Challenge", detail: "Invent a new thing you could make from an old carton. Draw it and write what it was, what it is now and why it is useful. Tell it to someone at home." },
           ],
         },
       ],
@@ -1229,15 +1231,16 @@ export const odL2U12: Unit = {
             "What can we do together at school to take care of the Earth?",
           ],
         },
+        odL2U12Creative["od2e-l2-u12-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"Why my resource is important\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Units 11 and 12 Review.", book: { book: "WB", pages: "108-109" } },
-            { label: "Draw and write", detail: "Finish your natural resource collage if you need to. Then write three sentences: why the resource is important, one thing we make or do with it, and one way to take care of it. Choose the most important one and say why." },
-            { label: "Challenge", detail: "Invent a new thing made from recycled materials. Draw it and label the parts. Write what it was, what it is now and why people will love it. Share it with someone at home or in class." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U12Worksheets,
 };

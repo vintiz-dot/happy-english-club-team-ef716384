@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U16Creative } from "./od2e-l1-u16/homework";
+import { odL1U16Worksheets } from "./od2e-l1-u16/assessments";
 
 export const odL1U16: Unit = {
   curriculum: "oxford-discover-2e",
@@ -261,12 +263,12 @@ export const odL1U16: Unit = {
             "Show thumbs: up, middle or down. How sure are you of the new words?",
           ],
         },
+        odL1U16Creative["od2e-l1-u16-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Get Ready.", book: { book: "WB", pages: "136-137" } },
-            { label: "Draw and write", detail: "Draw a problem and its solution. Write: \"The problem is ___. The solution is ___.\" Why is it a good solution? Tell someone at home." },
-            { label: "Challenge", detail: "Draw a new instrument made from things at home. Write three sentences about it. Start each with a capital letter and end with a period." },
           ],
         },
         {
@@ -480,12 +482,12 @@ export const odL1U16: Unit = {
             "Open your eyes. Show a thumb: up, middle or down for how well you understand the story.",
           ],
         },
+        odL1U16Creative["od2e-l1-u16-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Read.", book: { book: "WB", pages: "138" } },
-            { label: "Draw and write", detail: "Draw an instrument you can make from things at home. Write: \"I can make a ___ from ___.\" Why do you want to make it? Tell someone at home." },
-            { label: "Challenge", detail: "Think of a second solution to the children's problem in the story. Draw it and write two sentences." },
           ],
         },
         {
@@ -744,12 +746,12 @@ export const odL1U16: Unit = {
             "Show a thumb: up if you can ask \"Is she singing?\" without looking.",
           ],
         },
+        odL1U16Creative["od2e-l1-u16-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Understand, including the grammar pages.", book: { book: "WB", pages: "139-141" } },
-            { label: "Draw and write", detail: "Draw a friend or a toy doing an action. Write: \"Is ___ dancing? Yes, ___ is.\" Why did you choose this action? Tell someone at home." },
-            { label: "Challenge", detail: "Write four questions and four answers about the pictures: two with Is, two with Are." },
           ],
         },
         {
@@ -1084,12 +1086,12 @@ export const odL1U16: Unit = {
             "Show a thumb: up if you can say \"I'm\" and \"It's\" quickly.",
           ],
         },
+        odL1U16Creative["od2e-l1-u16-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Communicate, including your writing.", book: { book: "WB", pages: "142-143" } },
-            { label: "Draw and write", detail: "Draw a show you would like to see. Write: \"I'm watching a ___. It's ___.\" Why would you like it? Tell someone at home." },
-            { label: "Challenge", detail: "Write three sentences about your show, with two contractions. Underline the contractions." },
           ],
         },
         {
@@ -1323,12 +1325,12 @@ export const odL1U16: Unit = {
             "Open your eyes. Give your group a quiet clap, with fingers only.",
           ],
         },
+        odL1U16Creative["od2e-l1-u16-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Units 15 and 16 Wrap Up.", book: { book: "WB", pages: "144-145" } },
-            { label: "Draw and write", detail: "Invent your own instrument from things at home. Draw it and write: \"It's a ___. It sounds ___.\" Why did you choose those things? Tell someone at home." },
-            { label: "Challenge", detail: "Write three sentences about how you make your instrument and how it sounds. Use at least one contraction and underline it." },
           ],
         },
         {
@@ -1342,4 +1344,5 @@ export const odL1U16: Unit = {
       ],
     },
   ],
+  worksheets: odL1U16Worksheets,
 };

@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U2Creative } from "./od2e-l1-u02/homework";
+import { odL1U2Worksheets } from "./od2e-l1-u02/assessments";
 
 export const odL1U2: Unit = {
   curriculum: "oxford-discover-2e",
@@ -222,12 +224,12 @@ export const odL1U2: Unit = {
             "A friend is lonely. What can you say to the friend?",
           ],
         },
+        odL1U2Creative["od2e-l1-u02-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Get Ready pages in your Workbook.", book: { book: "WB", pages: "10-11" } },
-            { label: "Draw and write", detail: "Invent an animal friend for a lonely puppet. Draw them playing together. Write: 'This is a ___.' and 'They play.'" },
-            { label: "Challenge", detail: "Add two more words to your picture, for example 'eat' and 'sleep'. Write one sentence for each." },
           ],
         },
       ],
@@ -426,12 +428,12 @@ export const odL1U2: Unit = {
             "What did you do with a friend this week? Tell your partner.",
           ],
         },
+        odL1U2Creative["od2e-l1-u02-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Read page in your Workbook.", book: { book: "WB", pages: "12" } },
-            { label: "Draw and write", detail: "Choose your own story animal. Draw it with a friend. Write: 'This is a ___. This is a ___. They are friends.'" },
-            { label: "Challenge", detail: "Draw a new page for the story. Write one sentence for it: 'Elliot and Tuti ___.'" },
           ],
         },
       ],
@@ -639,12 +641,12 @@ export const odL1U2: Unit = {
             "What was your favorite game today?",
           ],
         },
+        odL1U2Creative["od2e-l1-u02-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Understand and Grammar pages in your Workbook.", book: { book: "WB", pages: "13-15" } },
-            { label: "Draw and write", detail: "Draw the part of the story you like best. Write: 'My favorite part is ___.' Use the word 'this' or 'these' for one thing in the picture." },
-            { label: "Challenge", detail: "Draw a picture of the story with two animals close and two far away. Write one sentence for each: 'These are ___.' 'Those are ___.'" },
           ],
         },
       ],
@@ -869,12 +871,12 @@ export const odL1U2: Unit = {
             "Who did you tell about your friend today?",
           ],
         },
+        odL1U2Creative["od2e-l1-u02-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Communicate pages in your Workbook.", book: { book: "WB", pages: "16-17" } },
-            { label: "Draw and write", detail: "Invent a new pet for a friend. Draw it. Write: 'This is ___. It is a ___. It ___.' Give the pet a name with a capital letter." },
-            { label: "Challenge", detail: "Write four sentences about your friend and their pet. Choose the best pet for this friend, and say why: 'I think a ___ because ___.'" },
           ],
         },
       ],
@@ -1105,15 +1107,16 @@ export const odL1U2: Unit = {
             "What was the best part of making your collage?",
           ],
         },
+        odL1U2Creative["od2e-l1-u02-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Wrap Up pages in your Workbook.", book: { book: "WB", pages: "18-19" } },
-            { label: "Draw and write", detail: "Imagine a new friend for Elliot or for a pet you like. Draw them. Write: 'This is ___. He / She is a ___. We ___.'" },
-            { label: "Challenge", detail: "Choose one person on your collage. Write three sentences about them. Say why they are special: 'I like ___ because ___.'" },
           ],
         },
       ],
     },
   ],
+  worksheets: odL1U2Worksheets,
 };

@@ -10,6 +10,8 @@
 // carries his / her: the roster does not say who is a boy or a girl, so the his / her
 // examples use invented characters (Boy Bear, Girl Bear, the mice, Grandma).
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U14Creative } from "./od2e-l1-u14/homework";
+import { odL1U14Worksheets } from "./od2e-l1-u14/assessments";
 
 export const odL1U14: Unit = {
   curriculum: "oxford-discover-2e",
@@ -252,12 +254,12 @@ export const odL1U14: Unit = {
             "Tell your partner one thing that is new and one thing that is old.",
           ],
         },
+        odL1U14Creative["od2e-l1-u14-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Get Ready pages in your Workbook.", book: { book: "WB", pages: "118-119" } },
-            { label: "Draw and write", detail: "Invent a place for a town: a new place, an old place, a city place or a country place. Draw it. Write: 'This is a ___. It is ___.' Say why people like it." },
-            { label: "Challenge", detail: "Choose the city or the country. Write: 'I like the ___ because ___.' Draw one thing you see there." },
           ],
         },
       ],
@@ -463,12 +465,12 @@ export const odL1U14: Unit = {
             "Which mouse are you today? Tell your partner.",
           ],
         },
+        odL1U14Creative["od2e-l1-u14-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Read page in your Workbook.", book: { book: "WB", pages: "120" } },
-            { label: "Draw and write", detail: "Invent a third mouse: a town mouse. Draw its home. Write: 'The town mouse lives in a ___. It is ___.'" },
-            { label: "Challenge", detail: "Imagine City Mouse and Country Mouse live together. Draw their home. Write: 'It is in the ___. It has a ___ and a ___.'" },
           ],
         },
       ],
@@ -739,12 +741,12 @@ export const odL1U14: Unit = {
             "What is your favorite part of the mouse story? Tell a friend.",
           ],
         },
+        odL1U14Creative["od2e-l1-u14-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Understand and Grammar pages in your Workbook.", book: { book: "WB", pages: "121-123" } },
-            { label: "Draw and write", detail: "Invent a pet mouse with a home. Draw its home. Write: 'His / Her home is in the ___. His / Her house is ___.'" },
-            { label: "Challenge", detail: "Choose two homes in a picture: one in the city and one in the country. Write four sentences with his or her. Say which home you like and why." },
           ],
         },
       ],
@@ -983,12 +985,12 @@ export const odL1U14: Unit = {
             "Tell your partner one place in your neighborhood.",
           ],
         },
+        odL1U14Creative["od2e-l1-u14-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Communicate pages in your Workbook.", book: { book: "WB", pages: "124-125" } },
-            { label: "Draw and write", detail: "Invent a new place for a neighborhood: a robot bakery, a space park, a giant library. Draw it. Write: 'There is a ___. It is ___.' Say why people want to go there." },
-            { label: "Challenge", detail: "Choose one place you would like in your neighborhood. Write three sentences with 'There is' and one with 'I like'. Say why." },
           ],
         },
       ],
@@ -1237,15 +1239,16 @@ export const odL1U14: Unit = {
             "Which place do you like best, the city or the country? Say 'I like the ___.'",
           ],
         },
+        odL1U14Creative["od2e-l1-u14-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Wrap Up pages in your Workbook.", book: { book: "WB", pages: "126-127" } },
-            { label: "Draw and write", detail: "Invent a place that is half city and half country. Draw it. Write: 'There is a ___. There is a ___. It is ___.'" },
-            { label: "Challenge", detail: "Choose one place in your neighborhood you want to tell a visitor about. Write three sentences about it. Say why a visitor will like it." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL1U14Worksheets,
 };

@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U9Creative } from "./od2e-l1-u09/homework";
+import { odL1U9Worksheets } from "./od2e-l1-u09/assessments";
 
 export const odL1U9: Unit = {
   curriculum: "oxford-discover-2e",
@@ -230,12 +232,12 @@ export const odL1U9: Unit = {
           ],
           teacherNote: "Slow and quiet. The aim is to calm the class before they go home.",
         },
+        odL1U9Creative["od2e-l1-u09-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: Things I count at home. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Big Question and Get Ready pages.", book: { book: "WB", pages: "74-75" } },
-            { label: "Draw and write", detail: "Draw things you can count at home. Write the number by each one. Pick your favorite thing to count and say why to someone at home." },
-            { label: "Challenge", detail: "Make a little problem with a picture, such as 3 + 2 = ? Ask someone at home to find the answer." },
           ],
         },
         {
@@ -437,12 +439,12 @@ export const odL1U9: Unit = {
           ],
           teacherNote: "Quiet and slow, to end the lesson.",
         },
+        odL1U9Creative["od2e-l1-u09-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My adding picture. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Read page.", book: { book: "WB", pages: "76" } },
-            { label: "Draw and write", detail: "Find two small groups at home (toys, fruit, shoes). Draw them and write a problem, like 3 + 2 = 5. Choose your favorite problem and say why." },
-            { label: "Challenge", detail: "Make a problem with three groups of things. Write it with plus signs and an equals sign. Ask someone at home to find the answer." },
           ],
         },
         {
@@ -695,12 +697,12 @@ export const odL1U9: Unit = {
           ],
           teacherNote: "A slow, quiet end, with a count that practices have again.",
         },
+        odL1U9Creative["od2e-l1-u09-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My magic thing. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Understand and Grammar pages.", book: { book: "WB", pages: "77-79" } },
-            { label: "Draw and write", detail: "Invent a magic thing. Draw it and write 'I have a magic ___.' Say what it can do." },
-            { label: "Challenge", detail: "Write two 'I have' sentences and two 'I don't have' sentences about things in your room. Use a number in one sentence." },
           ],
         },
         {
@@ -965,12 +967,12 @@ export const odL1U9: Unit = {
             },
           ],
         },
+        odL1U9Creative["od2e-l1-u09-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My packed backpack. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Communicate pages.", book: { book: "WB", pages: "80-81" } },
-            { label: "Draw and write", detail: "Draw a backpack. Pack three school things in it and say how many of each. Choose your favorite and say why: 'I like my ___ because ___.'" },
-            { label: "Challenge", detail: "Write an addition problem with number words, such as eleven plus five. Draw the answer and write the number word." },
           ],
         },
         {
@@ -980,4 +982,5 @@ export const odL1U9: Unit = {
       ],
     },
   ],
+  worksheets: odL1U9Worksheets,
 };

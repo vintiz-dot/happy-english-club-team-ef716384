@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U16Creative } from "./od2e-l2-u16/homework";
+import { odL2U16Worksheets } from "./od2e-l2-u16/assessments";
 
 export const odL2U16: Unit = {
   curriculum: "oxford-discover-2e",
@@ -240,12 +242,12 @@ export const odL2U16: Unit = {
             "One question I have about the goats is ...",
           ],
         },
+        odL2U16Creative["od2e-l2-u16-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, My goat on the mountain, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Get Ready.", book: { book: "WB", pages: "136-137" } },
-            { label: "Draw and write", detail: "Invent a goat on a mountain. Draw it. Write two sentences with new words, for example: My goat has big horns. It is on the east mountain. Then say what your goat wants and why." },
-            { label: "Challenge", detail: "Draw a compass with east, west, north and south. Find three things in your home or street that are in the east, and three that are in the west. Write a sentence about each one." },
           ],
         },
       ],
@@ -429,12 +431,12 @@ export const odL2U16: Unit = {
             "Which part of the fable would you act out? Show me with your hands how sure you are that you can retell it.",
           ],
         },
+        odL2U16Creative["od2e-l2-u16-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, Words for the two goats, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Read.", book: { book: "WB", pages: "138" } },
-            { label: "Draw and write", detail: "Draw a new ending for the fable. Write three sentences: What do the goats do on the bridge? Who says sorry? How do they feel now?" },
-            { label: "Challenge", detail: "Find two things at home that you can push and two things that you can pull. Say or write what happens if two people push the same thing from opposite sides. Tell a family member." },
           ],
         },
       ],
@@ -674,12 +676,12 @@ export const odL2U16: Unit = {
             "Show me with your hands how well you can say the biggest, the happiest and the best.",
           ],
         },
+        odL2U16Creative["od2e-l2-u16-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, The record-breaking animal, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Understand and the grammar pages.", book: { book: "WB", pages: "139-141" } },
-            { label: "Draw and write", detail: "Invent the happiest, the funniest and the biggest animal you can imagine. Draw it and write three sentences with -est words. Say why it is the best animal in your story." },
-            { label: "Challenge", detail: "Make a Superlative Quiz with five questions about animals or your home, for example: Which animal is the tallest? Ask someone at home and write their answers." },
           ],
         },
       ],
@@ -960,12 +962,12 @@ export const odL2U16: Unit = {
             "One thing I want to check next time I write an -er or -est word is ...",
           ],
         },
+        odL2U16Creative["od2e-l2-u16-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, The best sport for sports day, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Communicate, including the writing task on WB page 143.", book: { book: "WB", pages: "142-143" } },
-            { label: "Draw and write", detail: "Invent a new sport with a new ball and a funny name. Draw it. Write three sentences: how do you move, is it fast or slow, and what is the best part?" },
-            { label: "Challenge", detail: "Make a Sports Facts card with five sentences using fast, faster, fastest, heavy, heavier, heaviest about sports balls or players. Check the spelling and tell someone at home." },
           ],
         },
       ],
@@ -1211,15 +1213,16 @@ export const odL2U16: Unit = {
             "Show me with your hands how sure you are that you can talk about push and pull.",
           ],
         },
+        odL2U16Creative["od2e-l2-u16-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, My push and pull machine, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Review pages and the Big Question Chart.", book: { book: "WB", pages: "144-145" } },
-            { label: "Draw and write", detail: "Invent a machine that does the hardest push or pull job for you. Draw it. Write three sentences about it. Say what it pushes or pulls, and why it is the best." },
-            { label: "Challenge", detail: "Write a short play with two stubborn characters who both push the same way and a clever friend who helps. Say how they stop being stubborn. Act it out at home." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U16Worksheets,
 };

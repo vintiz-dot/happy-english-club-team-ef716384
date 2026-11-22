@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U04Creative } from "./od2e-l2-u04/homework";
+import { odL2U04Worksheets } from "./od2e-l2-u04/assessments";
 
 export const odL2U4: Unit = {
   curriculum: "oxford-discover-2e",
@@ -23,6 +25,7 @@ export const odL2U4: Unit = {
     "We use was for I, he, she, it and one thing, and were for you, we, they and more than one thing, when we talk about yesterday.",
     "Speakers and writers say what a food is, what is in it and what it is like, in order, and say it kindly and confidently to a partner.",
   ],
+  worksheets: odL2U04Worksheets,
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -248,12 +251,12 @@ export const odL2U4: Unit = {
             "Teacher asks one question in a whisper: \"Which word was hardest to say?\" Children whisper it back.",
           ],
         },
+        odL2U04Creative["od2e-l2-u04-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Workbook Unit 4, pages 28-29. Say each answer aloud before you write.", book: { book: "WB", pages: "28-29" } },
-            { label: "Draw and write", detail: "Invent a mixture. Draw it. Write two sentences: \"It has ___ and ___.\" and \"I think it is ___ because ___.\"" },
-            { label: "Challenge", detail: "Write three cause and effect pairs from your day with the word because, and add one that is a surprise." },
           ],
         },
         {
@@ -453,12 +456,12 @@ export const odL2U4: Unit = {
             "If you hear a thing you also noticed, give a thumbs up.",
           ],
         },
+        odL2U04Creative["od2e-l2-u04-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Workbook Unit 4, page 30. Find the line in the play for each answer.", book: { book: "WB", pages: "30" } },
-            { label: "Draw and write", detail: "Draw the children making ice cream. Label four things. Write two sentences: \"First, they ___.\" \"Then they ___.\"" },
-            { label: "Challenge", detail: "Pretend you are Mr. Jenkins. Write a new problem for the class, like a hot day, and say how you would fix it. Use because." },
           ],
         },
         {
@@ -700,12 +703,13 @@ export const odL2U4: Unit = {
           prompts: ["What is in your mixture?", "It has ___ and ___ in it.", "Was there ___ in it?"],
           teacherNote: "Walk round and listen for was and were as well as the food words. Write two good sentences on the board at the end.",
         },
+        odL2U04Creative["od2e-l2-u04-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Workbook Unit 4, pages 31-33. Read each sentence aloud with the right was or were.", book: { book: "WB", pages: "31-33" } },
-            { label: "Draw and write", detail: "Draw a party yesterday. Write three sentences with was or were. Say one thing that was fun and one thing that changed." },
-            { label: "Challenge", detail: "Write a short question game: five questions about your picture, with the answer to each. Use Was, Were and Where." },
+            { label: "At home", detail: "Write a short question game: five questions about your picture, with the answer to each. Use Was, Were and Where." },
           ],
         },
         {
@@ -992,12 +996,12 @@ export const odL2U4: Unit = {
           ],
           frames: ["My favorite mixture is ___.", "It has ___, ___ and ___ in it.", "I like it because ___."],
         },
+        odL2U04Creative["od2e-l2-u04-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Workbook Unit 4, pages 34-35. Say each answer aloud before you write it.", book: { book: "WB", pages: "34-35" } },
-            { label: "Draw and write", detail: "Invent a new mixture, like a drink or a snack. Name it, draw it, and write three sentences: what is in it, what it is like, and who would like it." },
-            { label: "Challenge", detail: "Write four sentences with wasn't, weren't, isn't and aren't about your favorite mixture. Underline each contraction and circle the apostrophe." },
           ],
         },
         {
@@ -1255,12 +1259,12 @@ export const odL2U4: Unit = {
             },
           ],
         },
+        odL2U04Creative["od2e-l2-u04-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Workbook Review, pages 36-37. Fill in the Big Question Chart in your Workbook.", book: { book: "WB", pages: "36-37" } },
-            { label: "Draw and write", detail: "Invent a new food mixture and add it as a fourth page in your Mixture Book. Draw it, label it and write three sentences." },
-            { label: "Challenge", detail: "Choose one change you saw in Units 3 and 4: melting, freezing, heating or mixing. Write five sentences about its cause and its effect." },
           ],
         },
         {

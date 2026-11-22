@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U11Creative } from "./od2e-l1-u11/homework";
+import { odL1U11Worksheets } from "./od2e-l1-u11/assessments";
 
 export const odL1U11: Unit = {
   curriculum: "oxford-discover-2e",
@@ -267,11 +269,12 @@ export const odL1U11: Unit = {
           ],
           teacherNote: "Slow and quiet. This calms the class before they go home.",
         },
+        odL1U11Creative["od2e-l1-u11-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My market. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Big Question and Get Ready pages.", book: { book: "WB", pages: "92-93" } },
-            { label: "Draw and write", detail: "Draw your own market. Write three things you sell. Imagine and say it: which thing do you sell the most of, and why?" },
             { label: "Challenge", detail: "Draw two things we need and two things we want. Write 'We need ___.' and 'I want ___.' Can you find a thing that is both?" },
           ],
         },
@@ -499,11 +502,12 @@ export const odL1U11: Unit = {
           ],
           teacherNote: "Slow and quiet. This is a calm ending after the loud role-play.",
         },
+        odL1U11Creative["od2e-l1-u11-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: A new ending for the story. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Read page.", book: { book: "WB", pages: "94" } },
-            { label: "Draw and write", detail: "Draw your favorite part of the story and write one sentence: 'The farmer ___.' Then imagine a new ending. What could the farmer do? Tell someone at home." },
             { label: "Challenge", detail: "Write three sentences about your morning with 'first', 'next' and 'last'. Draw a picture for each one." },
           ],
         },
@@ -750,12 +754,12 @@ export const odL1U11: Unit = {
           ],
           teacherNote: "Slow and quiet. Use the whisper time to listen for has, wants and needs in the children's own speech.",
         },
+        odL1U11Creative["od2e-l1-u11-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My make-believe friend. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Understand pages, including the grammar practice.", book: { book: "WB", pages: "95-97" } },
-            { label: "Draw and write", detail: "Draw a make-believe friend. Write three sentences: 'She has ___.' 'She wants ___.' 'She needs ___.' (or he). Choose what your friend needs most and say why." },
-            { label: "Challenge", detail: "Write four sentences about two different people, using has, wants, needs and doesn't have. Draw the people." },
           ],
         },
         {
@@ -1047,12 +1051,12 @@ export const odL1U11: Unit = {
             },
           ],
         },
+        odL1U11Creative["od2e-l1-u11-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My swap shop. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Communicate pages.", book: { book: "WB", pages: "98-99" } },
-            { label: "Draw and write", detail: "Invent a swap shop. Draw three things and write 'I have ___.' for each. Choose one thing you would swap and say what you want instead, and why." },
-            { label: "Challenge", detail: "Write two sentences about a friend: 'He has ___. He wants ___.' or 'She has ___. She wants ___.' Circle the action words in red." },
           ],
         },
         {
@@ -1062,4 +1066,5 @@ export const odL1U11: Unit = {
       ],
     },
   ],
+  worksheets: odL1U11Worksheets,
 };

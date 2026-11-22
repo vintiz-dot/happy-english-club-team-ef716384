@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U7Creative } from "./od2e-l2-u07/homework";
+import { odL2U7Worksheets } from "./od2e-l2-u07/assessments";
 
 export const odL2U7: Unit = {
   curriculum: "oxford-discover-2e",
@@ -277,12 +279,12 @@ export const odL2U7: Unit = {
             "Finish: \"The first time I read it, ___. The second time, ___.\"",
           ],
         },
+        odL2U7Creative["od2e-l2-u07-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"My take-away plate\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Big Question page and Get Ready.", book: { book: "WB", pages: "56-57" } },
-            { label: "Draw and write", detail: "Draw a plate with some things you like (your choice, up to ten). Cross out some. Write: \"There were ___. I took away ___. There are ___ left.\" Say why you chose those things." },
-            { label: "Challenge", detail: "Write three subtraction problems of your own: one with a single-digit number and two with double-digit numbers. Write them in a row or in a column and say why." },
           ],
         },
       ],
@@ -498,12 +500,12 @@ export const odL2U7: Unit = {
             "Finish: \"I used to think ___. Now I think ___.\"",
           ],
         },
+        odL2U7Creative["od2e-l2-u07-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"A word problem for a friend\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Read page.", book: { book: "WB", pages: "58" } },
-            { label: "Invent a word problem", detail: "Draw something you would share with a friend (fruit, toys, stickers). Write your own subtraction word problem and the answer. Choose numbers that make it easy or hard: say why you chose them." },
-            { label: "Challenge", detail: "Write your problem again as a plus problem (the answer plus the number you took away). What do you notice? Write one sentence." },
           ],
         },
       ],
@@ -761,12 +763,12 @@ export const odL2U7: Unit = {
             "Which part of the lesson was your favorite? Why?",
           ],
         },
+        odL2U7Creative["od2e-l2-u07-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"A real yesterday and a magic yesterday\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Understand and Grammar pages.", book: { book: "WB", pages: "59-61" } },
-            { label: "Yesterday story", detail: "Draw three things you did yesterday. Write two sentences with yes (ate, saw, bought or gave) and one with didn't. Then imagine a magic yesterday: draw one thing you did NOT do, and say why." },
-            { label: "Challenge", detail: "Write five sentences about yesterday with go / went, have / had or take / took. Use didn't in two of them. Ask someone at home to listen." },
           ],
         },
       ],
@@ -1077,15 +1079,17 @@ export const odL2U7: Unit = {
             "Finish: \"I used to think ___. Now I think ___.\"",
           ],
         },
+        odL2U7Creative["od2e-l2-u07-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"The hungry dragon\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Communicate pages.", book: { book: "WB", pages: "62-63" } },
-            { label: "Write and draw", detail: "Imagine you are a hungry dragon who ate some treasure. Write three sentences: how many pieces there were, how many it ate, how many are left. Choose a feeling word and say why the dragon felt that way." },
             { label: "Challenge", detail: "Record the vlog at home. Tell one subtraction story from your day, with one yesterday word and one feeling word. Count the syllables in your favorite word and clap them." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U7Worksheets,
 };

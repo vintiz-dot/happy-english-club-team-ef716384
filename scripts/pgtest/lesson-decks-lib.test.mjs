@@ -319,5 +319,35 @@ for (const n of [13, 14, 15, 16, 17, 18]) {
   ok(`Unit ${n}: no audio, image or book files referenced`, !/\.(mp3|wav|m4a|pdf|jpg|png)"/i.test(JSON.stringify(u)));
 }
 
+// Parts written beside a unit but not wired in yet (Reach Higher worksheets.ts
+// and football.ts, wired by the session that owns those units): they must still
+// fit the unit they belong to, so wiring them in cannot break it.
+console.log("unwired worksheet and football parts");
+for (const { f, u } of units) {
+  const dir = join(contentDir, f.replace(/\.ts$/, ""));
+  for (const part of ["worksheets.ts", "football.ts"]) {
+    const src = join(dir, part);
+    if (!existsSync(src)) continue;
+    const out = resolve(tmpdir(), `ld-part-${f}-${part}.${process.pid}.mjs`);
+    await build({ entryPoints: [src], bundle: true, format: "esm", outfile: out, logLevel: "silent" });
+    const val = Object.values(await import(pathToFileURL(out).href))[0];
+    const titles = (id) => u.decks.find((d) => d.id === id)?.slides.map((s) => s.title).filter(Boolean) ?? null;
+    if (part === "worksheets.ts") {
+      for (const w of val) {
+        ok(`${f} ${w.id}: follows a real slide`, !!titles(w.deckId)?.includes(w.slide), `${w.deckId} / ${w.slide}`);
+        eq(`${f} ${w.id}: Support, Core, Challenge in order`, w.tiers.map((t) => t.level), ["Support", "Core", "Challenge"]);
+        ok(`${f} ${w.id}: every item answered, every choice's answer an option`,
+          w.tiers.every((t) => t.items.length >= 5 && t.items.every((i) => i.q && i.answer && (!i.options || i.options.includes(i.answer)))));
+      }
+    } else {
+      const creativeDecks = u.decks.filter((d) => d.slides.some((s) => s.kind === "creative")).map((d) => d.id).sort();
+      eq(`${f} football: one edition for each deck with creative homework`, Object.keys(val).sort(), creativeDecks);
+      ok(`${f} football: complete tasks with a challenge, no names`, Object.values(val).every((v) => v.interest === "football" && v.label && v.task.title
+        && v.task.steps.length >= 3 && v.task.frames.length >= 3 && v.task.success.length >= 2 && v.task.challenge)
+        && !/\bWilliam\b|\bMr\.?\s*Potato\b/i.test(JSON.stringify(val)));
+    }
+  }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U02Creative } from "./od2e-l2-u02/homework";
+import { odL2U02Worksheets } from "./od2e-l2-u02/assessments";
 
 export const odL2U2: Unit = {
   curriculum: "oxford-discover-2e",
@@ -23,6 +25,7 @@ export const odL2U2: Unit = {
     "We use always, usually, sometimes, hardly ever and never to say how often something happens; they go before most verbs and after is, am and are.",
     "A speaker or writer uses it, they and we in place of nouns so that the talk sounds smooth, and describes an animal with its group, what it has, what it can do and what it is like.",
   ],
+  worksheets: odL2U02Worksheets,
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -229,12 +232,13 @@ export const odL2U2: Unit = {
             "One question I have about the story is ...",
           ],
         },
+        odL2U02Creative["od2e-l2-u02-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 2 Get Ready.", book: { book: "WB", pages: "10-11" } },
-            { label: "Draw and write", detail: "Draw an animal you invent. Give it a name. Write two sentences with a new word, for example: My animal creeps in the garden. It eats berries. Say why you chose those things." },
-            { label: "Challenge", detail: "Draw a two-circle Venn diagram for two animals you know. Write two ways they are the same and one way they are different on each side. Bring it to show the class." },
+            { label: "At home", detail: "Draw a two-circle Venn diagram for two animals you know. Write two ways they are the same and one way they are different on each side. Bring it to show the class." },
           ],
         },
       ],
@@ -418,12 +422,12 @@ export const odL2U2: Unit = {
             "Finish: I used to think cats and birds ___. Now I think ___.",
           ],
         },
+        odL2U02Creative["od2e-l2-u02-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 2 Read.", book: { book: "WB", pages: "12" } },
-            { label: "Draw and write", detail: "Draw a new adventure for Leo and Lily. Write two or three sentences. Use first, then, at the end. Choose a new place for them to go and say why you chose it." },
-            { label: "Challenge", detail: "Imagine that the fox and Leo become friends. Write a short ending (four sentences). What does the fox say? What does Leo do? Bring it to class and read it aloud." },
           ],
         },
       ],
@@ -649,12 +653,13 @@ export const odL2U2: Unit = {
             "Finish: I used to think words like always and never are ___. Now I think ___.",
           ],
         },
+        odL2U02Creative["od2e-l2-u02-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 2 Understand.", book: { book: "WB", pages: "13-15" } },
-            { label: "Draw and write", detail: "Invent a pet. Draw it. Write five sentences, one with each word: always, usually, sometimes, hardly ever, never. Which sentence is the most surprising? Underline it and say why." },
-            { label: "Challenge", detail: "Interview someone at home about their week. Write three sentences with but, for example: My aunt usually eats rice, but she sometimes eats noodles. Read them to the class." },
+            { label: "At home", detail: "Interview someone at home about their week. Write three sentences with but, for example: My aunt usually eats rice, but she sometimes eats noodles. Read them to the class." },
           ],
         },
       ],
@@ -927,12 +932,13 @@ export const odL2U2: Unit = {
             "Show me with your hands how sure you are about it, they and we.",
           ],
         },
+        odL2U02Creative["od2e-l2-u02-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 2 Communicate, and the writing task on page 17.", book: { book: "WB", pages: "16-17" } },
-            { label: "Draw and write", detail: "Invent an animal that is strong AND gentle, or fierce AND calm. Draw it. Write three sentences about it with it or they. Say why you chose those two words." },
-            { label: "Challenge", detail: "Write a riddle with three clues about an animal. Use it or they and one frequency word (always, usually, sometimes, hardly ever, never). Read it to someone at home and see if they guess." },
+            { label: "At home", detail: "Write a riddle with three clues about an animal. Use it or they and one frequency word (always, usually, sometimes, hardly ever, never). Read it to someone at home and see if they guess." },
           ],
         },
       ],
@@ -1122,12 +1128,12 @@ export const odL2U2: Unit = {
             "What question do you still have about animals?",
           ],
         },
+        odL2U02Creative["od2e-l2-u02-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Review pages for Units 1 and 2.", book: { book: "WB", pages: "18-19", note: "Review" } },
-            { label: "Draw and write", detail: "Imagine you meet a new animal that is different from all the others. Draw it. Write three sentences: its group, what it can do, and what it is like. Choose why it is different." },
-            { label: "Challenge", detail: "Make a third picture card for an animal from a group you did not draw yet. Write three facts about its group on the back. Use a frequency word in one fact." },
           ],
         },
       ],

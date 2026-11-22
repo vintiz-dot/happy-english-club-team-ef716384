@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U17Creative } from "./od2e-l2-u17/homework";
+import { odL2U17Worksheets } from "./od2e-l2-u17/assessments";
 
 export const odL2U17: Unit = {
   curriculum: "oxford-discover-2e",
@@ -234,12 +236,12 @@ export const odL2U17: Unit = {
             "What do you want to find out about shapes and art? Say 'I want to know ___.'",
           ],
         },
+        odL2U17Creative["od2e-l2-u17-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, A nature picture made of shapes, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 17 pages 146-147.", book: { book: "WB", pages: "146-147" } },
-            { label: "Draw and write", detail: "Draw a nature picture with at least three shapes in it. Under it write: 'I see ___, ___, and ___.' Choose your favorite shape and say why you chose it." },
-            { label: "Challenge", detail: "Imagine a sculpture park. Draw one sculpture and write two sentences about it: what it is made of and what shapes it has." },
           ],
         },
       ],
@@ -410,12 +412,13 @@ export const odL2U17: Unit = {
             "I used to think ___ about shapes. Now I think ___.",
           ],
         },
+        odL2U17Creative["od2e-l2-u17-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, Which shape for my sculpture?, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 17 page 148.", book: { book: "WB", pages: "148" } },
             { label: "Shape hunt at home", detail: "Find five things that have a shape from our list. Draw them and write the shape under each one. Choose the most surprising one and say why." },
-            { label: "Challenge", detail: "Invent a new shape and give it a name. Draw it. Write two sentences: how is it the same as another shape, and how is it different?" },
           ],
         },
       ],
@@ -633,12 +636,12 @@ export const odL2U17: Unit = {
             "I used to think ___. Now I think ___.",
           ],
         },
+        odL2U17Creative["od2e-l2-u17-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, My collage plan, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 17 pages 149-151, including the grammar pages.", book: { book: "WB", pages: "149-151" } },
-            { label: "Make a collage and say it", detail: "Make a small collage at home from paper. Draw or write: 'There are a lot of ___. There is a lot of ___. There aren't any ___.' Choose one thing that is NOT in it and say why you left it out." },
-            { label: "Challenge", detail: "Invent a magic collage from another planet. Write five sentences about it with a lot of, any, are and is. Say which one was hardest to write and why." },
           ],
         },
       ],
@@ -907,15 +910,16 @@ export const odL2U17: Unit = {
             "I used to think ___ about making art. Now I think ___.",
           ],
         },
+        odL2U17Creative["od2e-l2-u17-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, The best art for a present, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 17 pages 152-153.", book: { book: "WB", pages: "152-153" } },
-            { label: "Make and say", detail: "Make one small piece of art at home: a drawing, an origami, or a mosaic with paper bits. Write two sentences about it with a comma list: 'It has ___, ___, and ___.' Say why you chose that kind of art." },
-            { label: "Challenge", detail: "Choose two kinds of art from the unit. Write three sentences: how are they the same, how are they different, and which one would you like to make for a friend as a present and why?" },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U17Worksheets,
 };

@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U3Creative } from "./od2e-l1-u03/homework";
+import { odL1U3Worksheets } from "./od2e-l1-u03/assessments";
 
 export const odL1U3: Unit = {
   curriculum: "oxford-discover-2e",
@@ -269,12 +271,12 @@ export const odL1U3: Unit = {
           ],
           teacherNote: "Keep your voice very quiet so the room settles. Praise the whole group, not just the children who remember all eight.",
         },
+        odL1U3Creative["od2e-l1-u03-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Big Question and Get Ready pages in your Workbook.", book: { book: "WB", pages: "20-21" } },
-            { label: "Color hunt at home", detail: "Find five things at home. Draw them and color them. Write the color word under each one. Choose your favorite and show it to a friend next lesson." },
-            { label: "Challenge", detail: "Make a 'rainbow list' of ten things with a color word each. Write three sentences: 'I see a ___ ___.'" },
           ],
         },
         {
@@ -491,12 +493,12 @@ export const odL1U3: Unit = {
             "Smile at a friend. Tell them your favorite part in a whisper.",
           ],
         },
+        odL1U3Creative["od2e-l1-u03-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Read page in your Workbook.", book: { book: "WB", pages: "22" } },
-            { label: "Draw and say", detail: "Draw a tree with three animals. Choose real or silly colors. Label each one: 'a ___ ___'. Tell someone at home why you chose these colors." },
-            { label: "Challenge", detail: "Write two lines of your own that end with a rhyming word, like cat and hat. Say them to someone at home." },
           ],
         },
         {
@@ -748,12 +750,12 @@ export const odL1U3: Unit = {
           prompts: ["There is a ___ ___.", "There are two ___ ___s."],
           teacherNote: "Children who find writing hard can trace the teacher's words and just choose the color and animal. Walk around and point to the -s on the plural sentence.",
         },
+        odL1U3Creative["od2e-l1-u03-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Understand pages in your Workbook, including the grammar pages.", book: { book: "WB", pages: "23-25" } },
-            { label: "My crazy room", detail: "Draw your bedroom or a room you invent. Put one silly thing and two silly things in it. Write one sentence with There is and one with There are." },
-            { label: "Challenge", detail: "Write four sentences about your room: two with There is and two with There are. Choose the color you like best and say why." },
           ],
         },
         {
@@ -1026,12 +1028,12 @@ export const odL1U3: Unit = {
             },
           ],
         },
+        odL1U3Creative["od2e-l1-u03-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Communicate pages in your Workbook, including your poem.", book: { book: "WB", pages: "26-27" } },
-            { label: "Invent a firework", detail: "Draw a new firework. Choose its colors and give it a name. Write one sentence about it. Say why it is special to someone at home." },
-            { label: "Challenge", detail: "Write a four-line poem about a color. Make two pairs of lines end with the same sound. Read it to your family." },
           ],
         },
         {
@@ -1045,4 +1047,5 @@ export const odL1U3: Unit = {
       ],
     },
   ],
+  worksheets: odL1U3Worksheets,
 };

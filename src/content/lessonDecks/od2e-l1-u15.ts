@@ -10,6 +10,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U15Creative } from "./od2e-l1-u15/homework";
+import { odL1U15Worksheets } from "./od2e-l1-u15/assessments";
 
 export const odL1U15: Unit = {
   curriculum: "oxford-discover-2e",
@@ -270,12 +272,12 @@ export const odL1U15: Unit = {
           ],
           teacherNote: "Slow and quiet. This calms the class before they go home.",
         },
+        odL1U15Creative["od2e-l1-u15-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Big Question and Get Ready pages.", book: { book: "WB", pages: "128-129" } },
-            { label: "Draw and write", detail: "Draw a music box with three instruments. Write the three words. Imagine it: which instrument do you want to play, and why?" },
-            { label: "Challenge", detail: "Find three sounds at home that are like a drum, a shaker or a triangle. Draw them and write 'It's like a ___.'" },
           ],
         },
         {
@@ -496,12 +498,12 @@ export const odL1U15: Unit = {
           ],
           teacherNote: "Slow and quiet. Use this time to listen for instrument words in the children's own speech.",
         },
+        odL1U15Creative["od2e-l1-u15-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Read page.", book: { book: "WB", pages: "130" } },
-            { label: "Draw and write", detail: "Draw an instrument you invent from a box, a bottle or a pot. Write its name and 'You shake it.' or 'You strike it.' Choose how you play it and say why." },
-            { label: "Challenge", detail: "Write a big idea and three details about your favorite instrument. Draw a hand: write the big idea on the palm and a detail on each finger." },
           ],
         },
         {
@@ -753,12 +755,12 @@ export const odL1U15: Unit = {
           ],
           teacherNote: "Slow and quiet. Use this time to hear 'I'm ___ing' in the children's own whispers.",
         },
+        odL1U15Creative["od2e-l1-u15-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Understand pages, including the grammar practice.", book: { book: "WB", pages: "131-133" } },
-            { label: "Draw and write", detail: "Draw a make-believe band. Write three sentences: 'I'm playing the ___.' 'My friend is playing the ___.' 'We're making music.' Choose the instrument you want and say why." },
-            { label: "Challenge", detail: "Write four sentences about four people in a band: 'He's / She's playing the ___.' Add one with 'not': 'I'm not playing the ___.'" },
           ],
         },
         {
@@ -1058,12 +1060,12 @@ export const odL1U15: Unit = {
             },
           ],
         },
+        odL1U15Creative["od2e-l1-u15-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Communicate pages.", book: { book: "WB", pages: "134-135" } },
-            { label: "Draw and write", detail: "Invent a band. Draw four instruments. Write 'It's loud.' or 'It's soft.' under each. Choose the one you like best and say why." },
-            { label: "Challenge", detail: "Write three sentences about an instrument: a big idea and two details. Put five words from this unit in alphabetical order." },
           ],
         },
         {
@@ -1073,4 +1075,5 @@ export const odL1U15: Unit = {
       ],
     },
   ],
+  worksheets: odL1U15Worksheets,
 };

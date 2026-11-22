@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U17Creative } from "./od2e-l1-u17/homework";
+import { odL1U17Worksheets } from "./od2e-l1-u17/assessments";
 
 export const odL1U17: Unit = {
   curriculum: "oxford-discover-2e",
@@ -289,12 +291,12 @@ export const odL1U17: Unit = {
             "Tell your partner one thing that is different between a cat and a toy cat.",
           ],
         },
+        odL1U17Creative["od2e-l1-u17-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Workbook pages for this lesson.", book: { book: "WB", pages: "146-147" } },
-            { label: "Draw and write", detail: "Find one living thing and one nonliving thing at home or on the way to school. Draw both. Write 'living' or 'nonliving' under each. Choose one thing you are not sure about, and tell us why it is a puzzle." },
-            { label: "Challenge", detail: "Draw a thing and hide it. Write three clues: 'It moves.' 'It grows.' 'It breathes.' (yes or no). Can your family guess it?" },
           ],
         },
       ],
@@ -514,12 +516,12 @@ export const odL1U17: Unit = {
             "What is one thing you will take care of this week?",
           ],
         },
+        odL1U17Creative["od2e-l1-u17-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Workbook page for this lesson.", book: { book: "WB", pages: "148" } },
-            { label: "Draw and write", detail: "Imagine a toy that comes alive at night. Draw it. Write one sentence: 'My ___ is alive!' Tell someone at home three things it does." },
-            { label: "Challenge", detail: "Find a living thing and a nonliving thing that look alike (a real flower and a paper flower). Draw both. Write two sentences to say how they are different." },
           ],
         },
       ],
@@ -782,12 +784,12 @@ export const odL1U17: Unit = {
             "What was your favorite game today?",
           ],
         },
+        odL1U17Creative["od2e-l1-u17-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Workbook pages for this lesson, including the grammar pages.", book: { book: "WB", pages: "149-151" } },
-            { label: "Draw and write", detail: "Invent a funny animal that can do three strange things. Draw it. Write: 'My animal can ___.' Then draw a nonliving thing that can't do one thing, and write why." },
-            { label: "Challenge", detail: "Write three questions with 'Can you ...?' and ask someone at home. Write what they say: 'She can ___.' 'He can't ___.'" },
           ],
         },
       ],
@@ -1103,15 +1105,16 @@ export const odL1U17: Unit = {
             "Show me with your hands how sure you are now: what are living things?",
           ],
         },
+        odL1U17Creative["od2e-l1-u17-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Workbook pages for this lesson, and the writing on page 153.", book: { book: "WB", pages: "152-153" } },
-            { label: "Draw and write", detail: "Invent a robot pet. Draw it. Write: 'My robot pet is ___. It can ___. It can't ___.' Choose: would you like a robot pet or a real pet? Say why." },
-            { label: "Challenge", detail: "Write three sentences about things in your room with two describing words each, for example 'My bag is new and red.' Find a living thing in your room and tell someone about it." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL1U17Worksheets,
 };

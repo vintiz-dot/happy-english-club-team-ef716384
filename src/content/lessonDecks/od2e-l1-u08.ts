@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U8Creative } from "./od2e-l1-u08/homework";
+import { odL1U8Worksheets } from "./od2e-l1-u08/assessments";
 
 export const odL1U8: Unit = {
   curriculum: "oxford-discover-2e",
@@ -234,12 +236,12 @@ export const odL1U8: Unit = {
             "What can you do in the summer? Tell your partner.",
           ],
         },
+        odL1U8Creative["od2e-l1-u08-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My own tree. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Get Ready pages in your Workbook.", book: { book: "WB", pages: "64-65" } },
-            { label: "Draw and write", detail: "Draw your own tree. Draw something to build or make at your tree. Write: 'I build a ___.' or 'I make a ___.' and tell a grown-up why you chose it." },
-            { label: "Challenge", detail: "Add two things that fall from your tree. Write 'The ___ fall.' for each one." },
           ],
         },
       ],
@@ -424,12 +426,12 @@ export const odL1U8: Unit = {
             "Were the captions helpful? Show me a thumb up, sideways or down.",
           ],
         },
+        odL1U8Creative["od2e-l1-u08-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My tree in a season I choose. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Read page in your Workbook.", book: { book: "WB", pages: "66" } },
-            { label: "Draw and write", detail: "Imagine your own tree. Draw it in a season you choose. Write one caption for it: 'My tree in the ___.' Why did you choose that season?" },
-            { label: "Challenge", detail: "Draw your tree in two seasons. Write one caption for each. Say how the tree is different." },
           ],
         },
       ],
@@ -663,11 +665,12 @@ export const odL1U8: Unit = {
             "What is one thing you do at a tree and one thing you don't do?",
           ],
         },
+        odL1U8Creative["od2e-l1-u08-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: What I do and what I don't do. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Understand pages in your Workbook.", book: { book: "WB", pages: "67-69" } },
-            { label: "Draw and write", detail: "Imagine your own tree. Draw yourself at it. Write two sentences: 'I ___.' and 'I don't ___.' Tell a grown-up why you chose them." },
             { label: "Challenge", detail: "Ask a grown-up two questions: 'Do you ___?' Write their 'Yes, I do.' or 'No, I don't.' answers." },
           ],
         },
@@ -902,12 +905,12 @@ export const odL1U8: Unit = {
             "Where do the commas go in a list? Show me with a jump.",
           ],
         },
+        odL1U8Creative["od2e-l1-u08-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: A new thing to do in my season. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Communicate pages in your Workbook.", book: { book: "WB", pages: "70-71" } },
-            { label: "Draw and write", detail: "Invent a new thing to do in your favorite season. Draw it and write a sentence with a list: 'I ___, ___, and ___.' Tell a grown-up why it is fun." },
-            { label: "Challenge", detail: "Write about a season you don't like. Say two things you do, and one thing you don't do." },
           ],
         },
       ],
@@ -1108,15 +1111,16 @@ export const odL1U8: Unit = {
             "How are the seasons different? Tell your partner.",
           ],
         },
+        odL1U8Creative["od2e-l1-u08-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: A season in a make-believe land. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Wrap Up pages in your Workbook.", book: { book: "WB", pages: "72-73" } },
-            { label: "Draw and write", detail: "Imagine a new season for a made-up land. Draw it and write what people do there. Say why you made it that way." },
-            { label: "Challenge", detail: "Add a fifth page to your journal. Pick the season you like best and write two sentences with a list. Say why it is your favorite." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL1U8Worksheets,
 };

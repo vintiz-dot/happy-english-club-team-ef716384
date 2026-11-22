@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U1Creative } from "./od2e-l1-u01/homework";
+import { odL1U1Worksheets } from "./od2e-l1-u01/assessments";
 
 export const odL1U1: Unit = {
   curriculum: "oxford-discover-2e",
@@ -267,19 +269,12 @@ export const odL1U1: Unit = {
             "Whisper: grandmother, grandfather, family, friend. Open your eyes and smile at a friend.",
           ],
         },
+        odL1U1Creative["od2e-l1-u01-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 1 Big Question and Get Ready in your Workbook.", book: { book: "WB", pages: "2-3" } },
-            {
-              label: "Draw and say",
-              detail:
-                "Draw a funny made-up family: a family of monsters, robots or animals. Write a word under each one: mother, father, brother, sister. Say to someone at home: 'This is my monster family.' Why is this family special?",
-            },
-            {
-              label: "Challenge",
-              detail: "Write two sentences with a friend in them: 'My friend is ___. My family is ___.' Then teach someone at home three of our new English words.",
-            },
           ],
         },
         {
@@ -488,19 +483,12 @@ export const odL1U1: Unit = {
             "Hug yourself and say: I love my family. Sit down quietly.",
           ],
         },
+        odL1U1Creative["od2e-l1-u01-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 1 Read in your Workbook.", book: { book: "WB", pages: "4" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Draw two families: a big one and a small one. They can be real or made up. Write one sentence under each: 'This family is big.' 'This family is small.' Which family would you like to visit? Say: 'I want to visit this family because ___.'",
-            },
-            {
-              label: "Challenge",
-              detail: "Write three sentences about a friend: 'My friend is ___. We ___ together. He / She is ___.' Read them to someone at home.",
-            },
           ],
         },
         {
@@ -720,19 +708,12 @@ export const odL1U1: Unit = {
             "Wave goodbye to a friend and say: Bye, {s4}! See you soon!",
           ],
         },
+        odL1U1Creative["od2e-l1-u01-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 1 Understand and Grammar in your Workbook.", book: { book: "WB", pages: "5-7" } },
-            {
-              label: "Meet my character",
-              detail:
-                "Draw a made-up character: a robot, an animal or a superhero. Write: 'This is ___. He's / She's ___ years old. His / Her family is big / small.' Would your character like to have a big family or a small family? Say why.",
-            },
-            {
-              label: "Challenge",
-              detail: "Write sentences with is and are: 'My family is ___. My friends are ___.' Add two more with your own ideas.",
-            },
           ],
         },
         {
@@ -992,19 +973,12 @@ export const odL1U1: Unit = {
             },
           ],
         },
+        odL1U1Creative["od2e-l1-u01-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 1 Communicate in your Workbook, including writing about your family.", book: { book: "WB", pages: "8-9" } },
-            {
-              label: "Draw and invent",
-              detail:
-                "Draw an animal family or a space family. Label each one with a family word: mother, father, son, daughter, uncle, aunt, cousin. Choose one and say why you like them: 'I like ___ because ___.'",
-            },
-            {
-              label: "Challenge",
-              detail: "Write about a friend: 'My friend is ___. He / She is ___ years old. We ___ together.' Draw an opposite pair for your friend: big and small, old and young.",
-            },
             { label: "Video (optional)", detail: "Make the 'Meet my family' video, 30-60 seconds, with a grown-up's help. Bring it to class." },
           ],
         },
@@ -1019,4 +993,5 @@ export const odL1U1: Unit = {
       ],
     },
   ],
+  worksheets: odL1U1Worksheets,
 };

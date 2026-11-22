@@ -10,6 +10,8 @@
 // not cheerful (nervous, unhappy, crying) are always given to invented characters, never to
 // a named child.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U13Creative } from "./od2e-l2-u13/homework";
+import { odL2U13Worksheets } from "./od2e-l2-u13/assessments";
 
 export const odL2U13: Unit = {
   curriculum: "oxford-discover-2e",
@@ -259,16 +261,12 @@ export const odL2U13: Unit = {
             "What is one thing you want to know about music? Put it on the Big Question Chart.",
           ],
         },
+        odL2U13Creative["od2e-l2-u13-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, A picture of my song, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Big Question and Get Ready pages.", book: { book: "WB", pages: "110-111" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Draw a picture of how your favorite song looks. Is it fast or slow, high or low? Write one sentence under it: 'My favorite song is ___. It makes me feel ___.' Then say why. If the song were an animal, which animal would it be?",
-            },
-            { label: "Challenge", detail: "Find three sounds at home: one high, one low, one that is loud. Write a sentence for each one. Make a tiny orchestra with the sounds and show someone at home." },
           ],
         },
       ],
@@ -466,16 +464,12 @@ export const odL2U13: Unit = {
             "What question do you still have about music and feelings? Put it on the chart.",
           ],
         },
+        odL2U13Creative["od2e-l2-u13-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, Music for school mornings, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Read page.", book: { book: "WB", pages: "112" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Listen to a piece of music at home with someone who lives with you. Draw what you imagine. Write a sentence: 'This music makes me imagine ___.' Ask the other person what they imagine. Is it the same or different? Say why you think so.",
-            },
-            { label: "Challenge", detail: "Write a two-sentence summary of the text 'How Music Makes Us Feel' in your own words. Read it to someone and ask: Is this the most important part?" },
           ],
         },
       ],
@@ -722,16 +716,12 @@ export const odL2U13: Unit = {
             "How do you feel when you listen to music at night? Show me with your face.",
           ],
         },
+        odL2U13Creative["od2e-l2-u13-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, A music day for a new friend, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Understand pages, including the grammar practice.", book: { book: "WB", pages: "113-115" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Make a music day chart for a character you invent. Draw three boxes: morning, afternoon, evening. Write what the character does and what music they listen to in each. Say how the music makes the character feel and why you chose it.",
-            },
-            { label: "Challenge", detail: "Write five sentences about YOUR Saturday. Use in the morning, in the afternoon, in the evening, at night and on Saturday. Read them to someone at home." },
           ],
         },
       ],
@@ -1004,19 +994,16 @@ export const odL2U13: Unit = {
             "Which part of this unit did you like best: the reading, the song, the listening or the writing? Why?",
           ],
         },
+        odL2U13Creative["od2e-l2-u13-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, The best music for a feeling, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Communicate pages, including the writing task.", book: { book: "WB", pages: "116-117" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Invent a new piece of music for a feeling. Choose one: proud, excited or sleepy. Draw how it looks and write three sentences about how it sounds (fast or slow, high or low). Say why it matches the feeling. Would it work for a different feeling too? Say why or why not.",
-            },
-            { label: "Challenge", detail: "Write a short conversation between two friends who like different music. Use I love, I can't stand and a reason with because. Act it out with someone at home." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U13Worksheets,
 };

@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U03Creative } from "./od2e-l2-u03/homework";
+import { odL2U03Worksheets } from "./od2e-l2-u03/assessments";
 
 export const odL2U3: Unit = {
   curriculum: "oxford-discover-2e",
@@ -22,6 +24,7 @@ export const odL2U3: Unit = {
     "We use was and were to talk about how something was before, and is and are for now: the verb changes to show the time.",
     "Speakers and writers are clearer when they say what something was then, what it is now, and what made it change.",
   ],
+  worksheets: odL2U03Worksheets,
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -241,16 +244,12 @@ export const odL2U3: Unit = {
             "One thing I want to find out about how things change is ...",
           ],
         },
+        odL2U03Creative["od2e-l2-u03-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 3 Big Question and Get Ready.", book: { book: "WB", pages: "20-21" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Find one solid, one liquid and one gas at home. Draw them and write: 'This is a ___. It is a ___.' Then choose ONE and imagine it changes. What would you like it to turn into? Write why. (Never touch hot water or a hot kettle: ask a grown-up.)",
-            },
-            { label: "Challenge", detail: "Think of something that is a solid in the freezer but a liquid on the table. Write two sentences: one for the cause and one for the effect." },
           ],
         },
       ],
@@ -452,16 +451,13 @@ export const odL2U3: Unit = {
             "I used to think that ... Now I think that ...",
           ],
         },
+        odL2U03Creative["od2e-l2-u03-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 3 Read.", book: { book: "WB", pages: "22" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Imagine a country where it is always very cold. What happens to water there? Draw it and write two sentences with 'When it is ___, the ___ ___.' Now invent a new place where it is always hot. What changes there?",
-            },
-            { label: "Challenge", detail: "Write a riddle about a solid, a liquid or a gas without saying its name. Ask someone at home to guess, then write the answer on the back." },
+            { label: "At home", detail: "Write a riddle about a solid, a liquid or a gas without saying its name. Ask someone at home to guess, then write the answer on the back." },
           ],
         },
       ],
@@ -674,16 +670,12 @@ export const odL2U3: Unit = {
             "A question I have about how things change is ...",
           ],
         },
+        odL2U03Creative["od2e-l2-u03-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 3 Understand, including the Grammar pages.", book: { book: "WB", pages: "23-25" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Find something that changed today at home, on the way to school or in the kitchen. Draw 'Then' and 'Now'. Write two sentences with was or were. Then choose: Was the change good or not so good? Write why.",
-            },
-            { label: "Challenge", detail: "Make a three-picture flow chart of something that changes more than once. Write a sentence under each picture. Use was, were and now." },
           ],
         },
       ],
@@ -939,16 +931,12 @@ export const odL2U3: Unit = {
             "Which kind of change was your favorite: freezing, melting or something else?",
           ],
         },
+        odL2U03Creative["od2e-l2-u03-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 3 Communicate, including the writing task.", book: { book: "WB", pages: "26-27" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Invent a new ice pop. What flavors does it have? Draw it and label it. Write three sentences: what it is, what makes it melt, and what it becomes. Which would you rather have, an ice pop or popcorn? Say why.",
-            },
-            { label: "Challenge", detail: "Write four sentences about a thing that changes. Use when, because, was and now. Read it to someone at home." },
           ],
         },
       ],

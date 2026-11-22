@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U11Creative } from "./od2e-l2-u11/homework";
+import { odL2U11Worksheets } from "./od2e-l2-u11/assessments";
 
 export const odL2U11: Unit = {
   curriculum: "oxford-discover-2e",
@@ -261,12 +263,12 @@ export const odL2U11: Unit = {
             "Finish: \"I used to think ___. Now I think ___.\"",
           ],
         },
+        odL2U11Creative["od2e-l2-u11-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"Before and after: a clean place\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Big Question page and the Get Ready pages.", book: { book: "WB", pages: "92-93" } },
-            { label: "Draw and write", detail: "Draw one place with a little trash in it, and the same place after someone cleans it. Write: \"Before, this place was ___. Now it is ___.\" Imagine you are a magic cleaner: choose one thing to change first and say why." },
-            { label: "Challenge", detail: "Write five of today's words and say for each one: can people make it? Write three sentences: \"People can't make ___ because ___.\" Ask someone at home to guess your reason." },
           ],
         },
       ],
@@ -473,12 +475,12 @@ export const odL2U11: Unit = {
             "Finish: \"I used to think ___. Now I think ___.\"",
           ],
         },
+        odL2U11Creative["od2e-l2-u11-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"My new thing from an old thing\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Read page.", book: { book: "WB", pages: "94" } },
-            { label: "Make or draw an invention", detail: "With a grown-up's OK, make something new from something old at home, or draw your invention. Write: \"Before, it was a ___. Now it is a ___.\" Say why it is a good idea." },
-            { label: "Challenge", detail: "Write a short text with a main idea and two details about one way to take care of the Earth. Use one color for the main idea and another color for the details." },
           ],
         },
       ],
@@ -723,12 +725,12 @@ export const odL2U11: Unit = {
             "Which part of the lesson was your favorite? Why?",
           ],
         },
+        odL2U11Creative["od2e-l2-u11-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"My dream park\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Understand and Grammar pages.", book: { book: "WB", pages: "95-97" } },
-            { label: "My dream park", detail: "Draw your dream park with six things in it. Write four sentences with above, behind, in front of and across from. Imagine one thing that must NOT be in your park and say why." },
-            { label: "Challenge", detail: "Write six sentences about your bedroom with place words. Add two questions starting \"Where is ___?\". Ask someone at home to answer." },
           ],
         },
       ],
@@ -1065,15 +1067,16 @@ export const odL2U11: Unit = {
             "Finish: \"I used to think ___. Now I think ___.\"",
           ],
         },
+        odL2U11Creative["od2e-l2-u11-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"Earth helper poster: the most important rule\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Communicate pages.", book: { book: "WB", pages: "98-99" } },
-            { label: "Earth helper poster", detail: "Choose one natural resource. Draw it and write: \"We need ___ because ___. Please ___.\" Decide which rule matters most for this resource and say why you chose it." },
-            { label: "Challenge", detail: "Write a four-line dialogue: one child gives a polite reminder, another says sorry and asks where something is, and the first answers with a place word. Underline one verb, one noun, one adjective and one pronoun." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U11Worksheets,
 };

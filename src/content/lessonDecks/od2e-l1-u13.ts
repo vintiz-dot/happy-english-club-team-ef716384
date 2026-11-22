@@ -11,6 +11,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U13Creative } from "./od2e-l1-u13/homework";
+import { odL1U13Worksheets } from "./od2e-l1-u13/assessments";
 
 export const odL1U13: Unit = {
   curriculum: "oxford-discover-2e",
@@ -253,12 +255,12 @@ export const odL1U13: Unit = {
           ],
           teacherNote: "Slow and quiet, to calm the class before they go home.",
         },
+        odL1U13Creative["od2e-l1-u13-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Big Question and Get Ready pages.", book: { book: "WB", pages: "110-111" } },
-            { label: "Draw and write", detail: "Draw a place you like (your home, a park, a farm, a shop). Write 'I like ___.' Choose one thing in your picture and say why you like it to someone at home." },
-            { label: "Challenge", detail: "Draw your home or your street. Add three labels in English, like 'door' or 'tree'. Show a grown-up what each label says." },
           ],
         },
         {
@@ -468,12 +470,12 @@ export const odL1U13: Unit = {
           ],
           teacherNote: "Quiet and slow, to end the lesson.",
         },
+        odL1U13Creative["od2e-l1-u13-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Read page.", book: { book: "WB", pages: "112" } },
-            { label: "Draw and write", detail: "Invent an address for a pretend friend or a toy. Draw their house. Write the house number, street name and town name. Say why you chose that place." },
-            { label: "Challenge", detail: "Write a short pretend letter to your toy friend. Write the address on an envelope and say it to a grown-up." },
           ],
         },
         {
@@ -719,12 +721,12 @@ export const odL1U13: Unit = {
           ],
           teacherNote: "A slow, quiet end, with 's one more time.",
         },
+        odL1U13Creative["od2e-l1-u13-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Understand and Grammar pages.", book: { book: "WB", pages: "113-115" } },
-            { label: "Draw and write", detail: "Invent a magic house for an imaginary friend. Draw it and write 'This is ___'s magic house.' Say what is in the house." },
-            { label: "Challenge", detail: "Write three sentences with 's about things at home or at school: for example my friend's pencil, the teacher's book, the cat's bed. Say them to a grown-up." },
           ],
         },
         {
@@ -994,12 +996,12 @@ export const odL1U13: Unit = {
           ],
           teacherNote: "A slow, quiet end to the unit. Keep the Big Question Chart on the wall.",
         },
+        odL1U13Creative["od2e-l1-u13-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Communicate pages.", book: { book: "WB", pages: "116-117" } },
-            { label: "Draw and write", detail: "Draw a place you would like to visit: a city, a town or the country. Write 'It's ___.' with a word from today. Choose one thing you would like to do there and say why." },
-            { label: "Challenge", detail: "Write three sentences about a pretend place you invent. Say if it is noisy or quiet, and why you would like to live there." },
           ],
         },
         {
@@ -1009,4 +1011,5 @@ export const odL1U13: Unit = {
       ],
     },
   ],
+  worksheets: odL1U13Worksheets,
 };

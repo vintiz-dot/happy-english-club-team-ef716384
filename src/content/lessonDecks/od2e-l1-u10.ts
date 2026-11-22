@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U10Creative } from "./od2e-l1-u10/homework";
+import { odL1U10Worksheets } from "./od2e-l1-u10/assessments";
 
 export const odL1U10: Unit = {
   curriculum: "oxford-discover-2e",
@@ -235,12 +237,12 @@ export const odL1U10: Unit = {
             "What do you like to eat? Tell your partner.",
           ],
         },
+        odL1U10Creative["od2e-l1-u10-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My soup pot. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Get Ready pages in your Workbook.", book: { book: "WB", pages: "82-83" } },
-            { label: "Draw and write", detail: "Draw your own soup pot. Put three food things in it. Write: 'I put ___ in my soup.' Then say to a grown-up why you chose them." },
-            { label: "Challenge", detail: "Add one thing we don't eat next to your pot. Write: 'We don't eat ___.'" },
           ],
         },
       ],
@@ -427,11 +429,12 @@ export const odL1U10: Unit = {
             "Show me with your hand how sure you are about the three parts of a story. High is very sure.",
           ],
         },
+        odL1U10Creative["od2e-l1-u10-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: Add to the pot. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Read page in your Workbook.", book: { book: "WB", pages: "84" } },
-            { label: "Draw and write", detail: "Draw your own pot. Choose one food you want to add, and one more. Write: 'I add ___.' Say to a grown-up why you chose that food." },
             { label: "Challenge", detail: "Tell a grown-up the story in three parts: beginning, middle, end. Ask: 'What do you think the story says to us?'" },
           ],
         },
@@ -679,11 +682,12 @@ export const odL1U10: Unit = {
             "What was your favorite game today?",
           ],
         },
+        odL1U10Creative["od2e-l1-u10-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My basket. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the grammar pages in your Workbook.", book: { book: "WB", pages: "85-87" } },
-            { label: "Draw and write", detail: "Draw a basket. Put three things in it. Write: 'I have ___.' Then ask a grown-up: 'Do you have ___?'" },
             { label: "Challenge", detail: "Write a mini song: 'Do you have ___? Yes, I do. I have ___.' Sing it to a grown-up." },
           ],
         },
@@ -925,12 +929,12 @@ export const odL1U10: Unit = {
             "Show me with your hand how sure you are about the exclamation point. High is very sure.",
           ],
         },
+        odL1U10Creative["od2e-l1-u10-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: My new soup. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Communicate pages in your Workbook.", book: { book: "WB", pages: "88-89" } },
-            { label: "Draw and write", detail: "Invent a new soup: a monster soup, a rainbow soup, or your own idea. Draw it. Write: 'My soup has ___ and ___.' Say why you chose them." },
-            { label: "Challenge", detail: "Write two adding sentences about your soup, such as 'Two plus three equals five.' Add an exclamation point to show how it tastes!" },
           ],
         },
       ],
@@ -1147,15 +1151,17 @@ export const odL1U10: Unit = {
             "Which part of our soup unit do you like best?",
           ],
         },
+        odL1U10Creative["od2e-l1-u10-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one: A soup bar graph. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Wrap Up pages in your Workbook, with the Big Question chart.", book: { book: "WB", pages: "90-91" } },
-            { label: "Draw and write", detail: "Ask three grown-ups at home a question, such as 'What soup do you like?' Draw a mini bar graph with their answers. Write one sentence: '___ people like ___.' Say what you think about the answers." },
             { label: "Challenge", detail: "Add your answers to a friend's bar graph. Write one number sentence: '___ plus ___ equals ___.' Say what is the most popular answer, and why you think so." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL1U10Worksheets,
 };

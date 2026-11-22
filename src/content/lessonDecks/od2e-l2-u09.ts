@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U9Creative } from "./od2e-l2-u09/homework";
+import { odL2U9Worksheets } from "./od2e-l2-u09/assessments";
 
 export const odL2U9: Unit = {
   curriculum: "oxford-discover-2e",
@@ -248,16 +250,12 @@ export const odL2U9: Unit = {
             "What is one thing you want to know about rules? Put it on the Big Question Chart.",
           ],
         },
+        odL2U9Creative["od2e-l2-u09-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"A sign for a good rule\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Big Question and Get Ready pages.", book: { book: "WB", pages: "74-75" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Draw a sign for a rule at home or at school. Write one sentence under it: 'We ___.' or 'We can't ___.' Then write why the rule is a good idea. Is there a rule you would like to change? Say why.",
-            },
-            { label: "Challenge", detail: "Find one more person who helps keep people safe where you live. Draw them. Write three sentences: Who they are, where they work and how they help." },
           ],
         },
       ],
@@ -456,16 +454,12 @@ export const odL2U9: Unit = {
             "Show me how sure you are that you can find evidence in a text.",
           ],
         },
+        odL2U9Creative["od2e-l2-u09-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"A safety poster for a fun place\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Read page.", book: { book: "WB", pages: "76" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Make a safety poster for a fun place you know (the park, the pool, the zoo, a playground). Draw it. Write two rules and why they help. What would happen if there were no rules there? Say it to someone at home.",
-            },
-            { label: "Challenge", detail: "Invent a new fun place (a robot park, a space pool). Write three rules for it, and say why each one is a good idea." },
           ],
         },
       ],
@@ -703,16 +697,12 @@ export const odL2U9: Unit = {
             "Think of a time when you shared something. Who did it belong to?",
           ],
         },
+        odL2U9Creative["od2e-l2-u09-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"A Lost and Found poster\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Understand pages, including the grammar practice.", book: { book: "WB", pages: "77-79" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Make a Lost and Found poster for a made-up classroom. Draw four things in the box. Write four sentences: 'Whose ___ is this? It's ___.' Which thing is the most special, and why?",
-            },
-            { label: "Challenge", detail: "Write a four-line chant about 'Whose is this?' with mine, yours, ours and theirs. Say it with actions to your family." },
           ],
         },
       ],
@@ -973,19 +963,16 @@ export const odL2U9: Unit = {
             "Which part of this unit did you like best: reading, the song, the listening or the writing? Why?",
           ],
         },
+        odL2U9Creative["od2e-l2-u09-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"Rules for a new place\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Communicate pages, including the writing task.", book: { book: "WB", pages: "80-81" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Invent a new place (a robot kitchen, a cloud school). Draw it and write three rules for it. Say why each one is a good idea. Would your rules work in a different place? Say why or why not.",
-            },
-            { label: "Challenge", detail: "Write a short conversation between two people in a home or school place: one says sorry, the other answers. Use two phrasal verbs (like clean up and put away). Act it out with someone at home." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U9Worksheets,
 };

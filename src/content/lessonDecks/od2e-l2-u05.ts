@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U05Creative } from "./od2e-l2-u05/homework";
+import { odL2U05Worksheets } from "./od2e-l2-u05/assessments";
 
 export const odL2U5: Unit = {
   curriculum: "oxford-discover-2e",
@@ -22,6 +24,7 @@ export const odL2U5: Unit = {
     "To talk about a finished time in the past we add -ed to most verbs (listened, traveled); after didn't the verb stays plain (didn't watch).",
     "Speakers keep a conversation going by asking politely when they did not hear, and writers who compare long ago with now say clearly what changed.",
   ],
+  worksheets: odL2U05Worksheets,
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -247,16 +250,13 @@ export const odL2U5: Unit = {
             "One question I have about life long ago is ...",
           ],
         },
+        odL2U05Creative["od2e-l2-u05-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 5 Get Ready.", book: { book: "WB", pages: "38-39" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Imagine you could ask a person from long ago ONE question about life then. Draw them and write your question. Why did you choose that question? Say it to someone at home.",
-            },
-            { label: "Challenge", detail: "Ask an older person at home how they sent a message to a friend when they were young. Write what they said in two sentences and bring it to class." },
+            { label: "At home", detail: "Ask an older person at home how they sent a message to a friend when they were young. Write what they said in two sentences and bring it to class." },
           ],
         },
       ],
@@ -463,16 +463,12 @@ export const odL2U5: Unit = {
             "Which part of life changed the most: communication, news or travel? Show me with your fingers: 1, 2 or 3.",
           ],
         },
+        odL2U05Creative["od2e-l2-u05-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 5 Read.", book: { book: "WB", pages: "40" } },
-            {
-              label: "Imagine and write",
-              detail:
-                "Imagine your letter took two months to arrive. Write three sentences to a friend: what would you tell them? Would you change your mind about what to say? Draw the envelope.",
-            },
-            { label: "Challenge", detail: "Choose a way to travel from the text. Write four sentences that say what it was like long ago and what it is like now. Which one do you like? Say why." },
           ],
         },
       ],
@@ -718,16 +714,12 @@ export const odL2U5: Unit = {
             "What is the main idea of the text, in your own words?",
           ],
         },
+        odL2U05Creative["od2e-l2-u05-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 5 Understand, including the grammar pages.", book: { book: "WB", pages: "41-43" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Invent a character from long ago (a sailor, a letter carrier, a radio listener). Draw them. Write three sentences: two with -ed (what they did) and one with didn't. Which job would you choose, and why?",
-            },
-            { label: "Challenge", detail: "Write six sentences about a day long ago: three with -ed and three with didn't. Read them to someone at home and ask: Is it true? What did they do?" },
           ],
         },
       ],
@@ -1004,16 +996,13 @@ export const odL2U5: Unit = {
             "Which part of this unit did you like best: reading, the song, the listening or the writing? Why?",
           ],
         },
+        odL2U05Creative["od2e-l2-u05-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 5 Communicate, including the writing task.", book: { book: "WB", pages: "44-45" } },
-            {
-              label: "Draw and write",
-              detail:
-                "Invent a new way to travel or to send a message for the future. Draw it and label it. Write three sentences: what it is, what people did long ago, and why yours is better. Which do you like more, an old way or a new way? Say why.",
-            },
-            { label: "Challenge", detail: "Interview an adult at home: What did they do long ago that we don't do now? Write four sentences with -ed and didn't. Read them to the class." },
+            { label: "At home", detail: "Interview an adult at home: What did they do long ago that we don't do now? Write four sentences with -ed and didn't. Read them to the class." },
           ],
         },
       ],

@@ -9,6 +9,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U18Creative } from "./od2e-l2-u18/homework";
+import { odL2U18Worksheets } from "./od2e-l2-u18/assessments";
 
 export const odL2U18: Unit = {
   curriculum: "oxford-discover-2e",
@@ -263,12 +265,12 @@ export const odL2U18: Unit = {
             "One thing that I like, like Finn, is ...",
           ],
         },
+        odL2U18Creative["od2e-l2-u18-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, My paper animal, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 18 Get Ready. Say each word aloud as you write it.", book: { book: "WB", pages: "154-155" } },
-            { label: "Draw and write", detail: "Draw something you like to make out of paper. Write three sentences: I like ___. I am good at ___. I can make ___. Then say which sentence you like best and why." },
-            { label: "Challenge", detail: "Invent a paper animal that does not exist! Draw it, name it and write two sentences about it. Use at least two of the new words: shiny, golden, fold, crumple, edge." },
           ],
         },
       ],
@@ -494,12 +496,12 @@ export const odL2U18: Unit = {
             "Which part of the story did you like? Say one reason.",
           ],
         },
+        odL2U18Creative["od2e-l2-u18-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, A new panel for the story, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 18 Read. Look back at the story to help you.", book: { book: "WB", pages: "156" } },
-            { label: "Draw and write", detail: "Imagine you have a magic piece of paper. What will you fold? Draw it and write three sentences: What you make, what it does, and where it lives. Say which part you like best and why." },
-            { label: "Challenge", detail: "Write a short new panel for the story: Maki makes one more animal. Which one, and why? Draw it and write three or four sentences. Read it aloud to someone at home." },
           ],
         },
       ],
@@ -752,12 +754,12 @@ export const odL2U18: Unit = {
             "Show me with your hands how sure you are about How many and How much.",
           ],
         },
+        odL2U18Creative["od2e-l2-u18-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, Is the art room ready?, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 18 Understand. Say each sentence aloud first.", book: { book: "WB", pages: "157-159" } },
-            { label: "Draw and write", detail: "Draw your desk or a corner of your bedroom. Write four sentences about it with some, any, a few, a lot of: There is a lot of ___. There are a few ___. I don't have any ___. Which thing do you have the most of? Say why." },
-            { label: "Challenge", detail: "Draw a picture of a busy art room. Write three How many and three How much questions about it, then write the answers. Swap with a friend or someone at home to answer them." },
           ],
         },
       ],
@@ -1042,12 +1044,12 @@ export const odL2U18: Unit = {
             "I used to think all tools do the same job. Now I think ...",
           ],
         },
+        odL2U18Creative["od2e-l2-u18-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, My art project and its tools, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 18 Communicate, including your writing on WB 161. Say each sentence aloud first.", book: { book: "WB", pages: "160-161" } },
-            { label: "Draw and write", detail: "Draw an art project and the tools you need. Write four sentences about it with a list and commas. Which tool do you like the most? Say why in one more sentence." },
-            { label: "Challenge", detail: "Invent a new art tool for a child who wants to make the best art. Draw it, name it and write three sentences: what it looks like, what it does and what you could make with it." },
           ],
         },
       ],
@@ -1292,15 +1294,16 @@ export const odL2U18: Unit = {
             "What can we do together to make art for our classroom?",
           ],
         },
+        odL2U18Creative["od2e-l2-u18-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, My favourite art report, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do the Units 17 and 18 Review. Look back at the story to help you.", book: { book: "WB", pages: "162-163" } },
-            { label: "Draw and write", detail: "Finish your art report if you need to. Then write three sentences about your favorite thing to make: What it is, what you use, and why you like it. Choose the best part and say why." },
-            { label: "Challenge", detail: "Invent a new kind of art. Give it a name, draw an example and write what tools it needs, with commas in the list. Show someone at home and ask: Would you like to make this?" },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U18Worksheets,
 };

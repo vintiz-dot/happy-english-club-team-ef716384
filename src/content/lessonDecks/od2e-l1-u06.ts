@@ -7,6 +7,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL1U6Creative } from "./od2e-l1-u06/homework";
+import { odL1U6Worksheets } from "./od2e-l1-u06/assessments";
 
 export const odL1U6: Unit = {
   curriculum: "oxford-discover-2e",
@@ -229,12 +231,12 @@ export const odL1U6: Unit = {
             "Thumbs up, sideways or down: How sure are you about the eight words?",
           ],
         },
+        odL1U6Creative["od2e-l1-u06-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 6 Get Ready. Say each word aloud as you write it.", book: { book: "WB", pages: "46-47" } },
-            { label: "Draw and write", detail: "Draw a reserve. Put in one animal and one keeper. Write: This is a ___. It lives in a ___. Then choose: Which animal would you look after? Write one more sentence to say why." },
-            { label: "Challenge", detail: "Write three sentences with take care of, teach and put out. Read them to someone at home." },
           ],
         },
         {
@@ -414,12 +416,12 @@ export const odL1U6: Unit = {
             "Show me how sure you are about the story: one finger, two fingers or three.",
           ],
         },
+        odL1U6Creative["od2e-l1-u06-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 6 Read.", book: { book: "WB", pages: "48" } },
-            { label: "Draw and write", detail: "Draw Anak and Dian. Write one sentence about each: Anak is ___. Dian is ___. Then think of a new surprise for the story and draw it." },
-            { label: "Challenge", detail: "Tell someone at home the story with your pictures in the right order. Use First, Then and At the end." },
           ],
         },
         {
@@ -658,12 +660,12 @@ export const odL1U6: Unit = {
             "Then ask: Who's this? The class says a name.",
           ],
         },
+        odL1U6Creative["od2e-l1-u06-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 6 Understand, including the grammar pages. Say each question and answer aloud.", book: { book: "WB", pages: "49-51" } },
-            { label: "Draw and write", detail: "Draw four things in your room or garden. Write: What's this? It's a ___. Then draw a friend or toy and write: Who's this? It's ___. Invent a funny name for a toy." },
-            { label: "Challenge", detail: "Write a mini conversation of four lines using What's that? and Who's that? Act it out with someone at home." },
           ],
         },
         {
@@ -891,12 +893,12 @@ export const odL1U6: Unit = {
             "Say your favorite time of day, softly.",
           ],
         },
+        odL1U6Creative["od2e-l1-u06-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Unit 6 Communicate, including the writing on page 53.", book: { book: "WB", pages: "52-53" } },
-            { label: "Draw and write", detail: "Draw an animal in its home at night. Write one sentence about where it sleeps. Then imagine: What does it do in the morning? Draw it and write a question for a friend." },
-            { label: "Challenge", detail: "Write clues for a mystery animal: three sentences and a question. Ask someone at home to guess." },
           ],
         },
         {
@@ -1149,12 +1151,12 @@ export const odL1U6: Unit = {
             "Show me with your thumb: How did you do today?",
           ],
         },
+        odL1U6Creative["od2e-l1-u06-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Do Units 5 and 6 Wrap Up, including the Big Question chart.", book: { book: "WB", pages: "54-55" } },
-            { label: "Draw and write", detail: "Draw a new home for an animal you invent. Name it. Write: This is a ___. It lives in ___. Say why it is a good home." },
-            { label: "Challenge", detail: "Tell someone at home about your booklet. Ask them to guess the animal from three clues, then swap." },
           ],
         },
         {
@@ -1168,4 +1170,5 @@ export const odL1U6: Unit = {
       ],
     },
   ],
+  worksheets: odL1U6Worksheets,
 };

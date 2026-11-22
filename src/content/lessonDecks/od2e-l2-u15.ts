@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U15Creative } from "./od2e-l2-u15/homework";
+import { odL2U15Worksheets } from "./od2e-l2-u15/assessments";
 
 export const odL2U15: Unit = {
   curriculum: "oxford-discover-2e",
@@ -293,12 +295,12 @@ export const odL2U15: Unit = {
             "Finish: \"I used to think ___. Now I think ___.\"",
           ],
         },
+        odL2U15Creative["od2e-l2-u15-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, My helper robot, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Big Question page and the Get Ready pages.", book: { book: "WB", pages: "128-129" } },
-            { label: "Draw and write", detail: "Draw one thing you push and one thing you pull at home or at school. Write: \"I push ___. I pull ___.\" Now imagine you are a robot: choose one thing the robot should push for you and say why." },
-            { label: "Challenge", detail: "Write five of today's words. Write three sentences with because, for example about something light that is easy to move. Say them to someone at home." },
           ],
         },
       ],
@@ -510,12 +512,12 @@ export const odL2U15: Unit = {
             "Finish: \"I used to think ___. Now I think ___.\"",
           ],
         },
+        odL2U15Creative["od2e-l2-u15-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, Small force or big force?, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Read page.", book: { book: "WB", pages: "130" } },
-            { label: "Draw and write", detail: "At home, push or pull three things with a small force and a big force (a light door, a chair, a toy). Draw one. Write: \"I pushed ___ with a small force. It ___. I pushed it with a big force. It ___.\" Then imagine a super force: what would you move?" },
-            { label: "Challenge", detail: "Find two more cause and effect pairs about forces at home. Write them as: \"Cause: ___. Effect: ___.\" Which force did you use, a push or a pull?" },
           ],
         },
       ],
@@ -812,12 +814,12 @@ export const odL2U15: Unit = {
             "Finish: \"I used to think ___. Now I think ___.\"",
           ],
         },
+        odL2U15Creative["od2e-l2-u15-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, Which one wins the race?, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Understand and Grammar pages.", book: { book: "WB", pages: "131-133" } },
-            { label: "Draw and write", detail: "Draw three animals or vehicles. Write three sentences that compare them: \"A ___ is ___er than a ___.\" Imagine a new animal with a super speed: say what it is faster than." },
-            { label: "Challenge", detail: "Write a short question game for a friend: three questions that begin \"Which is ___er, a ___ or a ___?\" Write the answers too, and ask someone at home." },
           ],
         },
       ],
@@ -1114,15 +1116,16 @@ export const odL2U15: Unit = {
             "Finish: \"I used to think ___. Now I think ___.\"",
           ],
         },
+        odL2U15Creative["od2e-l2-u15-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, A helping machine, is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Communicate pages.", book: { book: "WB", pages: "134-135" } },
-            { label: "Draw and write", detail: "Draw a machine that pushes or pulls something heavy for you. Label the parts. Write: \"My machine pushes / pulls ___. It is ___er than ___.\" Imagine who you would offer to help with it, and say why." },
-            { label: "Challenge", detail: "Write five pairs of antonyms from this unit and add two new pairs. Then write a short helping dialogue with four lines: one person has a heavy thing and the other offers to help." },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U15Worksheets,
 };

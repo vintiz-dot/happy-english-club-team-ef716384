@@ -9,6 +9,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL2U8Creative } from "./od2e-l2-u08/homework";
+import { odL2U8Worksheets } from "./od2e-l2-u08/assessments";
 
 export const odL2U8: Unit = {
   curriculum: "oxford-discover-2e",
@@ -286,11 +288,12 @@ export const odL2U8: Unit = {
             "Show me with your hands how sure you are about the word greedy.",
           ],
         },
+        odL2U8Creative["od2e-l2-u08-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"My three-part town story\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 8 Get Ready.", book: { book: "WB", pages: "64-65" } },
-            { label: "Draw and write", detail: "Draw a three-part story about an animal in a town: a beginning, a middle and an end. Write one short sentence under each picture. Say which part you like best and why." },
             { label: "Challenge", detail: "Write a story with exactly six sentences about a baker or a cook. Cut the sentences up and ask someone at home to put them in order. Does the end happen because of the middle?" },
           ],
         },
@@ -489,12 +492,12 @@ export const odL2U8: Unit = {
             "Show me with your hands how sure you are about the three parts of the story.",
           ],
         },
+        odL2U8Creative["od2e-l2-u08-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"Bandar goes to a new shop\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 8 Read.", book: { book: "WB", pages: "66" } },
-            { label: "Draw and write", detail: "Imagine Bandar goes to a different shop. Draw the shop and what he sees. Write three sentences: where he goes, what he wants, and what he does at the end. Choose: should he let go? Why?" },
-            { label: "Challenge", detail: "Write a different ending for the story. What does Bandar do? What does the candy maker say? Read your ending to someone at home and ask: 'Do you like my ending?'" },
           ],
         },
       ],
@@ -768,11 +771,12 @@ export const odL2U8: Unit = {
             "Show me with your hands how sure you are about Did you ...?",
           ],
         },
+        odL2U8Creative["od2e-l2-u08-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"Three things at the weekend\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Unit 8 Understand pages and the grammar pages.", book: { book: "WB", pages: "67-69" } },
-            { label: "Draw and write", detail: "Draw three things you did at the weekend. Write: 'I ___ (yesterday word) ...' under each. Choose your best part and say why." },
             { label: "Challenge", detail: "Make a take-away story about a market or a shop with two numbers. Write the problem in words and in numbers, then give it to someone at home to solve." },
           ],
         },
@@ -1044,12 +1048,12 @@ export const odL2U8: Unit = {
             "Show me with your hands how sure you are about listening for numbers.",
           ],
         },
+        odL2U8Creative["od2e-l2-u08-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"My funny subtraction poem\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 8 Communicate, including the writing task on page 71.", book: { book: "WB", pages: "70-71" } },
-            { label: "Draw and write", detail: "Make a funny subtraction poem with animals, numbers and a place. Draw the animals. Write the poem and the answer. Say which part is the funniest." },
-            { label: "Challenge", detail: "Write six sentences with a contraction in each: didn't, doesn't, don't, can't, shouldn't. Underline the contractions and say what two words each one is." },
           ],
         },
       ],
@@ -1305,15 +1309,16 @@ export const odL2U8: Unit = {
             "Show me with your hands how sure you are about the yesterday words.",
           ],
         },
+        odL2U8Creative["od2e-l2-u08-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task, \"The best game square\", is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Review pages for Units 7 and 8 and the Big Question Chart.", book: { book: "WB", pages: "72-73" } },
-            { label: "Draw and write", detail: "Draw your favorite square from the board game. Write the problem in words and in numbers. Write who would be happy to solve it and why." },
-            { label: "Challenge", detail: "Make a new game square for a class picnic or a market. Write three take-away problems with different numbers and ask someone at home to solve them. Which problem was the hardest? Why?" },
           ],
         },
       ],
     },
   ],
+  worksheets: odL2U8Worksheets,
 };
