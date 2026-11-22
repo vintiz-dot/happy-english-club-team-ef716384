@@ -13,6 +13,8 @@ import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
 import { PageLoading } from "@/components/ui/loading";
+import { FamilyGreeting } from "@/components/family/FamilyGreeting";
+import { NeedsYouCard } from "@/components/family/NeedsYouCard";
 
 const Index = () => {
   const { user, role, loading } = useAuth();
@@ -44,6 +46,13 @@ const Index = () => {
   return (
     <Layout>
       <div className="space-y-8 lg:space-y-12">
+        {/* The parent's hub: the greeting and "Does anything need you?" above what was here (brief H1). The teacher hub is unchanged. */}
+        {role === "family" && studentId && (
+          <div className="space-y-4">
+            <FamilyGreeting />
+            <NeedsYouCard />
+          </div>
+        )}
         <PageHero
           eyebrow={role === "teacher" ? "Teacher hub" : "Family hub"}
           title={role === "teacher" ? "Welcome back, teacher" : "Hello, family"}
