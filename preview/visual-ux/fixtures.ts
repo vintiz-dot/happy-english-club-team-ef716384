@@ -18,6 +18,8 @@ const dobOf = (value: string | null, fallback: string | null) =>
   value === null ? fallback : value === "none" ? null : /^\d{4}$/.test(value) ? `${value}-05-04` : fallback;
 const BORN = dobOf(params.get("born"), "2017-05-04");
 const SECOND = params.get("second");
+// &kids=1 keeps one child on the family home (the default is two)
+const ONE_KID = params.get("kids") === "1";
 // &economy=1 turns the class economy on for the made-up class, so the wallet shows
 const ECONOMY = params.get("economy") === "1";
 export const SECOND_ID = "stu-second-child";
@@ -130,10 +132,10 @@ export function buildDb() {
   if (SCREEN === "family") {
     const kid1 = { id: "kid-khoi", full_name: "Lê Minh Khôi", avatar_url: null, is_active: true };
     const kid2 = { id: "kid-chau", full_name: "Lê Bảo Châu", avatar_url: null, is_active: true };
-    tables.students = [kid1, kid2];
+    tables.students = ONE_KID ? [kid1] : [kid1, kid2];
     tables.enrollments = [{ student_id: kid1.id, class_id: "cls-f1", end_date: null }];
     tables.lesson_overviews = [
-      { class_id: "cls-f1", lesson_date: day(-1), title: "Animals on the farm", summary: "We learned farm animal names and the sentence pattern 'It has got ...'. Khôi spoke clearly and helped a partner with spelling. Next lesson we will start a short farm story.", homework: "Draw your favourite farm animal and write two sentences: 'It is a ... It has got ...'." },
+      { class_id: "cls-f1", lesson_date: day(0), title: "Animals on the farm", summary: "We learned farm animal names and the sentence pattern 'It has got ...'. Khôi spoke clearly and helped a partner with spelling. Next lesson we will start a short farm story.", homework: "Draw your favourite farm animal and write two sentences: 'It is a ... It has got ...'." },
       { class_id: "cls-f1", lesson_date: day(-8), title: "Fruit and colours", summary: "Reviewed fruit words and colours.", homework: null },
     ];
     tables.attendance = [
