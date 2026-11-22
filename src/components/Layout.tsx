@@ -19,13 +19,14 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { AssistantLauncher } from "@/components/chat/AssistantLauncher";
 import { AmbientBackground } from "@/components/fx/AmbientBackground";
 import { AiActionBanner } from "@/components/admin/AiActionBanner";
-import { motion, MotionConfig } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { useIvory } from "@/hooks/useIvory";
 import { UserMenu } from "@/components/theme/UserMenu";
 import { guardedSignOut } from "@/components/recorder/signOutGuard";
 import { useMyPilotClasses } from "@/hooks/useLessonMonitor";
 import { navProgress } from "@/lib/navProgress";
-import { useSyncMotionLevel } from "@/components/fx/motion";
+import { dur, ease, snappy, useMotionLevel, useSyncMotionLevel } from "@/components/fx/motion";
+import { carriedRecently } from "@/components/fx/Carry";
 
 interface LayoutProps {
   children: ReactNode;
@@ -34,6 +35,15 @@ interface LayoutProps {
 }
 
 const SIDEBAR_KEY = "sidebar-collapsed";
+
+// A nav item is current when its path is the page, or (with a ?tab=) the page and query.
+const navPathActive = (itemPath: string, pathname: string, search: string) =>
+  itemPath.includes("?") ? pathname + search === itemPath : pathname === itemPath && !search;
+
+// Every page renders its own <Layout>, so the sidebar is built again on each navigation.
+// The shared active marker starts where it was on the previous page and glides to the
+// current item, which is what makes it one element moving instead of two appearing.
+let lastMarker: { pathname: string; search: string } | null = null;
 
 const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   const { user, role, signOut: rawSignOut } = useAuth();
@@ -54,6 +64,14 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const ivory = useIvory();
+  const motionLevel = useMotionLevel();
+  // Where the shared active marker sits: the previous page's item first, then this page's (see lastMarker).
+  const [marker, setMarker] = useState(() => lastMarker ?? { pathname: location.pathname, search: location.search });
+  useEffect(() => {
+    const here = { pathname: location.pathname, search: location.search };
+    lastMarker = here;
+    setMarker((m) => (m.pathname === here.pathname && m.search === here.search ? m : here));
+  }, [location.pathname, location.search]);
 
   // Persist sidebar state
   useEffect(() => {
@@ -251,7 +269,9 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                 : location.pathname === item.path && !location.search;
               
               const buttonContent = ivory ? (
-                // Ivory nav item (DESIGN_SYSTEM s.15): 44 px, sunken wash when current, a brass mark at the left edge.
+                // Ivory nav item (DESIGN_SYSTEM s.15): 44 px, sunken wash and a brass mark at the left edge
+                // when current. The wash and the mark are ONE shared element (layoutId) that glides between
+                // items (Signature tier, brief C1); hovered items take the sunken wash in 140 ms. No icon motion.
                 <button
                   type="button"
                   aria-current={isActive ? "page" : undefined}
@@ -260,13 +280,22 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                     "relative flex min-h-hec-target w-full items-center gap-3 rounded-hec-md px-3 text-left text-hec-small transition-colors duration-hec-1 ease-hec",
                     IV_FOCUS,
                     !sidebarOpen && "justify-center px-0",
-                    isActive ? "bg-hec-sunken font-medium text-hec-ink" : "text-hec-ink-soft hover:bg-hec-sunken hover:text-hec-ink",
+                    isActive ? "font-medium text-hec-ink" : "text-hec-ink-soft hover:bg-hec-sunken hover:text-hec-ink",
                   )}
                   onClick={() => { if (item.path !== location.pathname) navProgress.start(); navigate(item.path); }}
                 >
-                  {isActive && <span aria-hidden className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-hec-brass" />}
-                  <item.icon className="h-5 w-5 shrink-0" aria-hidden />
-                  {sidebarOpen && <span className="min-w-0">{item.label}</span>}
+                  {navPathActive(item.path, marker.pathname, marker.search) && (
+                    <motion.span
+                      layoutId="hec-nav-marker"
+                      aria-hidden
+                      transition={motionLevel === "off" ? { duration: 0 } : snappy}
+                      className="absolute inset-0 rounded-hec-md bg-hec-sunken"
+                    >
+                      <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-hec-brass" />
+                    </motion.span>
+                  )}
+                  <item.icon className="relative h-5 w-5 shrink-0" aria-hidden />
+                  {sidebarOpen && <span className="relative min-w-0">{item.label}</span>}
                 </button>
               ) : (
                 <button
@@ -395,8 +424,15 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           </div>
 
           {/* Mobile Menu */}
+          {/* The menu opens as paper sliding down (240 ms) and closes in 140 ms; the old look keeps its plain toggle. */}
+          <AnimatePresence initial={false}>
           {mobileMenuOpen && (
-            <nav className={ivory ? "max-h-[calc(100dvh-4rem)] space-y-1 overflow-y-auto border-t border-hec-line bg-hec-surface p-2" : "border-t bg-card p-2 space-y-1"}>
+            <motion.nav
+              initial={ivory && motionLevel !== "off" ? { opacity: 0, y: -8 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              exit={ivory && motionLevel !== "off" ? { opacity: 0, y: -8, transition: { duration: dur.press, ease } } : { opacity: 1, transition: { duration: 0 } }}
+              transition={{ duration: dur.reveal, ease }}
+              className={ivory ? "max-h-[calc(100dvh-4rem)] space-y-1 overflow-y-auto border-t border-hec-line bg-hec-surface p-2" : "border-t bg-card p-2 space-y-1"}>
               {navItems.map((item) => {
                 const isActive = item.path.includes('?') 
                   ? location.pathname + location.search === item.path
@@ -433,8 +469,9 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                 <LogOut className="h-4 w-4 group-hover:text-royalGreen dark:group-hover:text-royalGreen-light transition-colors" />
                 <span>Sign Out</span>
               </Button>
-            </nav>
+            </motion.nav>
           )}
+          </AnimatePresence>
         </header>
 
         {/* Desktop Header — breadcrumbs + ⌘K palette + user controls */}
@@ -451,11 +488,18 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
         />
 
         {/* Main Content */}
-        <main className={ivory ? "flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8" : "flex-1 p-4 md:p-6 lg:p-8 overflow-auto"}>
+        {/* A page change fades <main> in over 240 ms; the sidebar and the header never animate. When a
+            Carry (view transition) is taking the person to this page, the browser already cross-fades. */}
+        <motion.main
+          initial={ivory && motionLevel !== "off" && !carriedRecently() ? { opacity: 0 } : false}
+          animate={{ opacity: 1 }}
+          transition={{ duration: dur.reveal, ease }}
+          className={ivory ? "flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8" : "flex-1 p-4 md:p-6 lg:p-8 overflow-auto"}
+        >
           {/* What the assistant set up, until the admin says it looks right or undoes it */}
           <AiActionBanner />
           {children}
-        </main>
+        </motion.main>
       </div>
 
       {/* Floating Classroom Tools — teachers and admins only.

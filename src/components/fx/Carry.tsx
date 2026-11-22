@@ -28,7 +28,14 @@ interface ViewTransitionLike {
 }
 type StartViewTransition = (update: () => void | Promise<void>) => ViewTransitionLike;
 
-const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+let lastCarryAt = 0;
+/**
+ * True for a moment after a Carry began, so a page that would fade itself in
+ * (the shell's <main>) leaves the cross-fade to the browser instead of doubling it.
+ */
+export const carriedRecently = () => Date.now() - lastCarryAt < 1500;
+
+const nextFrame =() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 /** navigate(), carried when the browser can. Same arguments as useNavigate()'s function. */
 export function useCarryNavigate() {
@@ -42,6 +49,7 @@ export function useCarryNavigate() {
         go();
         return;
       }
+      lastCarryAt = Date.now();
       const vt = start.call(document, async () => {
         flushSync(go);
         // a route may render a frame later (lazy page); let it land before the new snapshot
