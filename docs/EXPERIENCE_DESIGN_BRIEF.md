@@ -482,7 +482,8 @@ Order of the page, top to bottom:
 
 1. Greeting by time of day, and "Your family at Happy English Club" (keep the existing heading).
 2. "Does anything need you?" One card.
-   - If something does (a payable amount from `calculate-tuition`'s `carry.payable`, a form, an unread message from the school): it is stated in one sentence with one button. No red unless it is the existing overdue state, no countdown, no exclamation mark.
+   - If something does (a form, an unread message from the school, or a payable amount the page ALREADY holds): it is stated in one sentence with one button. No red unless it is the existing overdue state, no countdown, no exclamation mark.
+   - The home never calls `calculate-tuition` or `calculate-tuition-bulk` to fill this card: those functions save the bill on every call. Where the page has no payable figure of its own, the card mentions no amount and no status, and a plain link "This month's tuition" sits below it (corrected 22 Nov 2026).
    - If nothing does: "Everything is in order." with a small ink tick. This is the parent's reward; give it room.
 3. One card per child (keep the existing card's data: name, avatar, points with the points-history button, daily class reports, latest lesson note). Add "This week" in three plain facts the page can already read: lessons attended out of held, homework handed in out of set, and the teacher's latest approved note with the teacher's name. A fact the page cannot read truthfully is left out, never estimated.
 4. The assistant (`AssistantChat`) keeps its place and its rules.
@@ -651,7 +652,7 @@ Each phase is one or more commits that leave the app working, and ends with the 
 | 5. Admin, the rest | D4 to D7 | AI action confirm shows one Seal for the whole plan |
 | 6. Student shell and home | F2, F3, G1 to G5 for the home page and navigation, I2, I7 | four screenshots of the same made-up child's data at four birth years, plus missing date of birth; the profile switch changes band |
 | 7. Student pages | G6 | each page in each band; all old URLs still open |
-| 8. Parent | H1 to H4 | the "needs you" card shows the function's `carry.payable`, never a figure added up in the browser |
+| 8. Parent | H1 to H3 (H4, the tuition page, is a later phase of its own) | the home makes no call to a tuition function; any amount on the "needs you" card is one the page already held |
 | 9. Moments and copy | I3, J1 to J3 | each moment plays once and is skippable; the Vietnamese draft list is handed to the owner |
 | 10. Audit | performance (B4), accessibility, a pass on a real mid-range Android phone inside Zalo | bundle growth reported; the inventory's legacy count has not risen |
 
