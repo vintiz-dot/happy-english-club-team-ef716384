@@ -14,6 +14,7 @@ import { NextThing } from "@/components/student/home/NextThing";
 import { StarJar } from "@/components/student/home/StarJar";
 import { WeekStrip } from "@/components/student/home/WeekStrip";
 import { ClassBlocks } from "@/components/student/home/ClassBlocks";
+import { ClassWallets } from "@/components/student/home/ClassWallets";
 import { CARD, FOCUS } from "@/components/student/nova/ivory";
 import { useSpeech } from "@/components/lessonDecks/speech";
 import { useCopy } from "@/lib/copy/useCopy";
@@ -64,6 +65,7 @@ export function EarlyHome({ data }: { data: HomeData }) {
       <StarJar progress={data.progress} totalXp={data.totalXp} level={data.level} />
       <WeekStrip week={data.weekActivity} big />
       <ClassBlocks band="early" enrolledClasses={data.enrolledClasses} studentId={data.studentId} />
+      <ClassWallets studentId={data.studentId} enrolledClasses={data.enrolledClasses} classPoints={data.classPoints} />
     </div>
   );
 }

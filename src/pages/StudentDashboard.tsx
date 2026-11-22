@@ -473,11 +473,7 @@ export default function StudentDashboard() {
 
           {/* For grown-ups: tuition, the wallet and every other destination (the three younger bands keep money here) */}
           <TabsContent value="grownups" className="mt-6">
-            <GrownUps
-              studentId={studentId}
-              enrolledClasses={(enrolledClasses as any[]) ?? []}
-              classPoints={(classId) => Number(pointsSummary?.classes?.find((c) => c.class_id === classId)?.all_time ?? 0)}
-            />
+            <GrownUps studentId={studentId} />
           </TabsContent>
 
           {/* My Classes / Schedule Tab */}

@@ -18,6 +18,8 @@ const dobOf = (value: string | null, fallback: string | null) =>
   value === null ? fallback : value === "none" ? null : /^\d{4}$/.test(value) ? `${value}-05-04` : fallback;
 const BORN = dobOf(params.get("born"), "2017-05-04");
 const SECOND = params.get("second");
+// &economy=1 turns the class economy on for the made-up class, so the wallet shows
+const ECONOMY = params.get("economy") === "1";
 export const SECOND_ID = "stu-second-child";
 
 export const getScreen = (): Screen => SCREEN;
@@ -102,7 +104,7 @@ export function buildDb() {
       avatar_url: null, is_active: true, status_message: null, family: { name: "Nguyễn family" }, updated_at: new Date().toISOString(),
       linked_user_id: SECOND ? ME.userId : undefined,
     }];
-    tables.enrollments = [{ id: "enr-1", student_id: STUDENT_ID, class_id: cls.id, end_date: null, classes: { ...cls, economy_mode: false, points_to_cash_rate: 0 } }];
+    tables.enrollments = [{ id: "enr-1", student_id: STUDENT_ID, class_id: cls.id, end_date: null, classes: { ...cls, economy_mode: ECONOMY, points_to_cash_rate: ECONOMY ? 50 : 0 } }];
     if (SECOND) {
       tables.students.push({
         id: SECOND_ID, full_name: "Trần Gia Bảo", email: null, phone: null, date_of_birth: dobOf(SECOND, "2012-03-02"),

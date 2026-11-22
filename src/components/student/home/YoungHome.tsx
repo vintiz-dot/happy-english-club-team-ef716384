@@ -13,6 +13,7 @@ import { NextThing } from "@/components/student/home/NextThing";
 import { WeekPath } from "@/components/student/home/WeekPath";
 import { WeekStrip } from "@/components/student/home/WeekStrip";
 import { ClassBlocks } from "@/components/student/home/ClassBlocks";
+import { ClassWallets } from "@/components/student/home/ClassWallets";
 import { InkRing } from "@/components/fx/InkRing";
 import { CARD } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
@@ -68,6 +69,7 @@ export function YoungHome({ data }: { data: HomeData }) {
 
       <WeekStrip week={data.weekActivity} best={data.longestStreak} />
       <ClassBlocks band="young" enrolledClasses={data.enrolledClasses} studentId={data.studentId} />
+      <ClassWallets studentId={data.studentId} enrolledClasses={data.enrolledClasses} classPoints={data.classPoints} />
     </div>
   );
 }

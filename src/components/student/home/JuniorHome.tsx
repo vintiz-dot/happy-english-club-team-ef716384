@@ -15,6 +15,7 @@ import { LevelProgressRing } from "@/components/student/LevelProgressRing";
 import { HomeworkCard } from "@/components/student/homework/HomeworkCard";
 import { NextThing } from "@/components/student/home/NextThing";
 import { ClassBlocks } from "@/components/student/home/ClassBlocks";
+import { ClassWallets } from "@/components/student/home/ClassWallets";
 import { CARD, CARD_TITLE } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
 import type { HomeData } from "./types";
@@ -93,6 +94,7 @@ export function JuniorHome({ data }: { data: HomeData }) {
       </section>
 
       <ClassBlocks band="junior" enrolledClasses={data.enrolledClasses} studentId={data.studentId} />
+      <ClassWallets studentId={data.studentId} enrolledClasses={data.enrolledClasses} classPoints={data.classPoints} />
     </div>
   );
 }

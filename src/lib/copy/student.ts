@@ -54,8 +54,7 @@ export const studentCopy = {
 
   // ---- Grown-ups (money and the rest, behind one door for the younger bands)
   "grownups.title": { en: "For grown-ups", vi: "Dành cho người lớn", draft: true },
-  "grownups.help": { en: "Tuition, the wallet, reports and the rest of the app are here.", vi: "Học phí, ví, báo cáo và các mục khác của ứng dụng ở đây.", draft: true },
-  "grownups.wallet": { en: "Wallet", vi: "Ví", draft: true },
+  "grownups.help": { en: "Tuition, reports and the rest of the app are here.", vi: "Học phí, báo cáo và các mục khác của ứng dụng ở đây.", draft: true },
   "grownups.everything": { en: "Everything else", vi: "Các mục khác", draft: true },
 
   // ---- Home (brief G2-G5)
