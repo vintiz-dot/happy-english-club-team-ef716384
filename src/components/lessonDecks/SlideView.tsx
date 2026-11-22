@@ -1,5 +1,21 @@
-import type { BookRef, Mode, Slide } from "@/lib/lessonDecks/types";
-import { BookOpen, Clock, Users, User, UsersRound, Presentation, Mic, PenLine, Video, Lightbulb, AlertTriangle, CheckCircle2, Home, Target, Sparkles } from "lucide-react";
+import { createContext, useContext } from "react";
+import type { Assessment, BookRef, CreativeTask, Deck, Mode, Slide, Unit } from "@/lib/lessonDecks/types";
+import type { FlipTarget } from "@/lib/lessonDecks/bookPages";
+import { BookOpen, Clock, Users, User, UsersRound, Presentation, Mic, PenLine, Video, Lightbulb, AlertTriangle, CheckCircle2, Home, Target, Sparkles, Volume2, Headphones, ExternalLink, FileText, ClipboardCheck, Trophy, Rocket } from "lucide-react";
+
+/**
+ * What a slide may use besides its own content. The player fills all of it; a
+ * printed deck gets only `unit` and `deck` (no buttons on paper).
+ */
+export type SlideCtx = {
+  unit?: Unit;
+  deck?: Deck;
+  speak?: (text: string) => void;
+  bookTarget?: (ref: BookRef) => FlipTarget;
+  openBook?: (ref: BookRef) => void;
+  openWorksheet?: (id: string) => void;
+};
+export const SlideContext = createContext<SlideCtx>({});
 
 const MODE: Record<Mode, { label: string; Icon: typeof Users }> = {
   whole: { label: "Whole class", Icon: Presentation },
@@ -18,13 +34,44 @@ function Chip({ children, tone = "ink" }: { children: React.ReactNode; tone?: "i
   return <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${cls}`}>{children}</span>;
 }
 
-function BookChip({ b }: { b: BookRef }) {
+/** A small speaker button; nothing at all when speech is not available (print). */
+function Say({ text, label = "Listen" }: { text: string; label?: string }) {
+  const { speak } = useContext(SlideContext);
+  if (!speak) return null;
   return (
-    <Chip tone="accent">
-      <BookOpen className="h-4 w-4" />
-      {b.book === "SB" ? "Student Book" : "Workbook"} p. {b.pages}
-      {b.activities?.length ? ` · Activity ${b.activities.join(", ")}` : ""}
-    </Chip>
+    <button type="button" onClick={() => speak(text)} title={`${label}: ${text}`} aria-label={`${label}: ${text}`}
+      className="ml-2 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 align-middle text-sky-800 hover:bg-sky-200 dark:bg-sky-900/50 dark:text-sky-100 print:hidden">
+      <Volume2 className="h-4 w-4" />
+    </button>
+  );
+}
+
+function BookChip({ b }: { b: BookRef }) {
+  const { bookTarget, openBook } = useContext(SlideContext);
+  const t = bookTarget?.(b);
+  return (
+    <>
+      <Chip tone="accent">
+        <BookOpen className="h-4 w-4" />
+        {b.book === "SB" ? "Student Book" : "Workbook"} p. {b.pages}
+        {b.activities?.length ? ` · Activity ${b.activities.join(", ")}` : ""}
+      </Chip>
+      {b.track && (
+        <Chip><Headphones className="h-4 w-4" />Track {b.track} <span className="font-normal text-hec-ink-soft">(play from your own copy)</span></Chip>
+      )}
+      {t && openBook && (
+        t.ok ? (
+          <button type="button" onClick={() => openBook(b)} title={t.note ?? `Opens the class flipbook at ${t.label}`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-1 text-sm font-semibold text-white hover:bg-amber-600 print:hidden">
+            <ExternalLink className="h-4 w-4" />Show {t.label}
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-hec-line px-3 py-1 text-sm text-hec-ink-soft print:hidden" title={"reason" in t ? t.reason : ""}>
+            <BookOpen className="h-4 w-4" />{"reason" in t ? t.reason : ""}
+          </span>
+        )
+      )}
+    </>
   );
 }
 
@@ -48,17 +95,104 @@ function H({ children, Icon }: { children: React.ReactNode; Icon?: typeof Users 
   );
 }
 
-const List = ({ items, ordered }: { items: string[]; ordered?: boolean }) => {
+const List = ({ items, ordered, say }: { items: string[]; ordered?: boolean; say?: boolean }) => {
   const Tag = ordered ? "ol" : "ul";
   return (
     <Tag className={`space-y-3 text-xl md:text-2xl text-hec-ink ${ordered ? "list-decimal" : "list-disc"} pl-8`}>
-      {items.map((s, i) => <li key={i} className="leading-snug">{s}</li>)}
+      {items.map((s, i) => <li key={i} className="leading-snug">{s}{say && <Say text={s} />}</li>)}
     </Tag>
   );
 };
 
+/** The supplementary materials tied to this slide: Twinkl links and the school's own worksheets. */
+function Extras({ slide }: { slide: Slide }) {
+  const { deck, unit, openWorksheet } = useContext(SlideContext);
+  const title = "title" in slide ? slide.title : undefined;
+  if (!title || !deck) return null;
+  const links = (deck.resources ?? []).filter((r) => r.slide === title);
+  const sheets = (unit?.worksheets ?? []).filter((w) => w.deckId === deck.id && w.slide === title);
+  if (!links.length && !sheets.length) return null;
+  return (
+    <div className="rounded-2xl border border-hec-line bg-hec-surface p-4">
+      <p className="mb-2 text-sm uppercase tracking-widest text-hec-ink-soft">Materials for this activity</p>
+      <ul className="space-y-1 text-base text-hec-ink">
+        {sheets.map((w) => (
+          <li key={w.id} className="flex flex-wrap items-center gap-2">
+            <FileText className="h-4 w-4 text-emerald-700" />
+            {openWorksheet ? (
+              <button type="button" onClick={() => openWorksheet(w.id)} className="font-medium underline underline-offset-2 hover:no-underline">Worksheet: {w.title}</button>
+            ) : <span className="font-medium">Worksheet: {w.title}</span>}
+            <span className="text-hec-ink-soft">· Support / Core / Challenge, with answer key</span>
+          </li>
+        ))}
+        {links.map((r) => (
+          <li key={r.url} className="flex flex-wrap items-center gap-2">
+            <ExternalLink className="h-4 w-4 text-hec-ink-soft" />
+            <a href={r.url} target="_blank" rel="noopener noreferrer" className="font-medium underline underline-offset-2 hover:no-underline">{r.source}: {r.title}</a>
+            <span className="text-hec-ink-soft">· {r.use}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function TaskCard({ task, tone, label }: { task: CreativeTask; tone: "core" | "variant"; label: string }) {
+  return (
+    <div className={`rounded-2xl p-5 space-y-3 ${tone === "core" ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-rose-50 dark:bg-rose-950/40"}`}>
+      <p className="text-sm uppercase tracking-widest text-hec-ink-soft">{label}</p>
+      <p className="text-2xl font-semibold text-hec-ink">{task.title}<Say text={`${task.title}. ${task.task}`} /></p>
+      <p className="text-lg text-hec-ink">{task.task}</p>
+      <ol className="list-decimal pl-6 space-y-1 text-lg text-hec-ink">{task.steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+      <div>
+        <p className="text-sm font-semibold text-hec-ink">Sentence starters</p>
+        <ul className="list-disc pl-6 text-lg text-hec-ink">{task.frames.map((f, i) => <li key={i}>{f}<Say text={f} /></li>)}</ul>
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-hec-ink">Check your writing</p>
+        <ul className="space-y-0.5 text-base text-hec-ink">{task.success.map((f, i) => <li key={i}>✓ {f}</li>)}</ul>
+      </div>
+      <p className="rounded-xl bg-amber-100 p-3 text-base text-amber-950 dark:bg-amber-900/40 dark:text-amber-50">
+        <Rocket className="mr-1 inline h-4 w-4" /><strong>Challenge:</strong> {task.challenge}
+      </p>
+    </div>
+  );
+}
+
+function CheckItems({ a }: { a: Assessment }) {
+  return (
+    <div className="space-y-4">
+      {a.sections.map((sec, si) => (
+        <div key={si} className="rounded-2xl border border-hec-line bg-hec-surface p-4">
+          <p className="text-lg font-semibold text-hec-ink">{sec.title}</p>
+          <p className="mb-2 text-base text-hec-ink-soft">{sec.instructions}</p>
+          <ol className="list-decimal pl-6 space-y-1 text-xl text-hec-ink">
+            {sec.items.map((it, i) => (
+              <li key={i}>{it.q}{it.options?.length ? <span className="text-hec-ink-soft"> ({it.options.join(" / ")})</span> : null}</li>
+            ))}
+          </ol>
+          <details className="mt-2 text-base text-hec-ink-soft print:hidden">
+            <summary className="cursor-pointer">Answers (teacher)</summary>
+            <ol className="list-decimal pl-6">{sec.items.map((it, i) => <li key={i}>{it.answer}</li>)}</ol>
+          </details>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** One slide, names already filled in. Big type: it is read from the back of the room. */
 export function SlideView({ slide }: { slide: Slide }) {
+  return (
+    <div className="space-y-6">
+      <SlideBody slide={slide} />
+      <Extras slide={slide} />
+    </div>
+  );
+}
+
+function SlideBody({ slide }: { slide: Slide }) {
+  const { unit } = useContext(SlideContext);
   switch (slide.kind) {
     case "title":
       return (
@@ -68,7 +202,7 @@ export function SlideView({ slide }: { slide: Slide }) {
           {slide.bigQuestion && (
             <div className="mt-4 rounded-2xl bg-amber-100 dark:bg-amber-900/40 px-8 py-5">
               <p className="text-sm uppercase tracking-widest text-amber-800 dark:text-amber-200">Big Question</p>
-              <p className="text-2xl md:text-4xl font-medium text-amber-950 dark:text-amber-50">{slide.bigQuestion}</p>
+              <p className="text-2xl md:text-4xl font-medium text-amber-950 dark:text-amber-50">{slide.bigQuestion}<Say text={slide.bigQuestion} /></p>
             </div>
           )}
         </div>
@@ -89,7 +223,7 @@ export function SlideView({ slide }: { slide: Slide }) {
           {slide.prompts?.length ? (
             <div className="rounded-2xl border-2 border-dashed border-hec-line p-5">
               <p className="mb-2 text-sm uppercase tracking-widest text-hec-ink-soft">Ask / say</p>
-              <List items={slide.prompts} />
+              <List items={slide.prompts} say />
             </div>
           ) : null}
           {slide.teacherNote && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
@@ -103,9 +237,9 @@ export function SlideView({ slide }: { slide: Slide }) {
           <div className="grid gap-4 md:grid-cols-2">
             {slide.words.map((w, i) => (
               <div key={i} className="rounded-2xl border border-hec-line bg-hec-surface p-4">
-                <p className="text-2xl md:text-3xl font-semibold text-hec-ink">{w.word}</p>
+                <p className="text-2xl md:text-3xl font-semibold text-hec-ink">{w.word}<Say text={w.word} label="Say the word" /></p>
                 <p className="text-lg text-hec-ink-soft">{w.meaning}</p>
-                <p className="mt-1 text-lg text-hec-ink">“{w.example}”</p>
+                <p className="mt-1 text-lg text-hec-ink">“{w.example}”<Say text={w.example} /></p>
               </div>
             ))}
           </div>
@@ -132,7 +266,7 @@ export function SlideView({ slide }: { slide: Slide }) {
             {slide.examples.map((e, i) => (
               <p key={i} className="text-xl md:text-2xl text-hec-ink">
                 <CheckCircle2 className="mr-2 inline h-6 w-6 text-emerald-600" />
-                {e.text}
+                {e.text}<Say text={e.text} />
                 {e.note && <span className="ml-2 text-base text-hec-ink-soft">— {e.note}</span>}
               </p>
             ))}
@@ -142,7 +276,7 @@ export function SlideView({ slide }: { slide: Slide }) {
               <p className="flex items-center gap-2 text-sm uppercase tracking-widest text-rose-800 dark:text-rose-200"><AlertTriangle className="h-4 w-4" />Watch out</p>
               {slide.pitfalls.map((p, i) => (
                 <p key={i} className="text-lg text-hec-ink">
-                  <s className="text-rose-700 dark:text-rose-300">{p.wrong}</s> → <strong>{p.right}</strong>
+                  <s className="text-rose-700 dark:text-rose-300">{p.wrong}</s> → <strong>{p.right}</strong><Say text={p.right} />
                   <span className="text-hec-ink-soft"> ({p.why})</span>
                 </p>
               ))}
@@ -154,16 +288,16 @@ export function SlideView({ slide }: { slide: Slide }) {
       return (
         <div className="space-y-6">
           <H Icon={Mic}>{slide.title}</H>
-          <Meta tag="Speaking" mode={slide.mode} minutes={slide.minutes} />
+          <Meta tag="Speaking" mode={slide.mode} minutes={slide.minutes} book={slide.book} />
           {slide.steps?.length ? <List items={slide.steps} ordered /> : null}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-5">
               <p className="mb-2 text-sm uppercase tracking-widest text-emerald-800 dark:text-emerald-200">Say it like this</p>
-              <List items={slide.frames} />
+              <List items={slide.frames} say />
             </div>
             <div className="rounded-2xl bg-sky-50 dark:bg-sky-950/40 p-5">
               <p className="mb-2 text-sm uppercase tracking-widest text-sky-800 dark:text-sky-200">Ask your partner</p>
-              <List items={slide.prompts} />
+              <List items={slide.prompts} say />
             </div>
           </div>
           {slide.fluencyTip && <p className="text-xl text-hec-ink"><strong>Fluency tip:</strong> {slide.fluencyTip}</p>}
@@ -187,7 +321,7 @@ export function SlideView({ slide }: { slide: Slide }) {
               <div key={i} className="rounded-2xl border border-hec-line bg-hec-surface p-4">
                 <p className="text-2xl font-semibold text-hec-ink">{h.label}</p>
                 <p className="text-lg text-hec-ink">{h.detail}</p>
-                {h.book && <div className="mt-2"><BookChip b={h.book} /></div>}
+                {h.book && <div className="mt-2 flex flex-wrap gap-2"><BookChip b={h.book} /></div>}
               </div>
             ))}
           </div>
@@ -208,10 +342,16 @@ export function SlideView({ slide }: { slide: Slide }) {
             {slide.frames?.length ? (
               <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-4">
                 <p className="mb-2 text-sm uppercase tracking-widest text-emerald-800 dark:text-emerald-200">Sentence frames</p>
-                <List items={slide.frames} />
+                <List items={slide.frames} say />
               </div>
             ) : null}
           </div>
+          {slide.model && (
+            <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-5 dark:border-sky-800 dark:bg-sky-950/40">
+              <p className="mb-2 flex items-center text-sm uppercase tracking-widest text-sky-800 dark:text-sky-200">{slide.model.title}<Say text={slide.model.text} label="Listen to the model" /></p>
+              <p className="text-xl leading-relaxed text-hec-ink">{slide.model.text}</p>
+            </div>
+          )}
         </div>
       );
     case "vlog":
@@ -225,7 +365,7 @@ export function SlideView({ slide }: { slide: Slide }) {
               <div key={t.level} className={`rounded-2xl p-4 ${t.level === "Support" ? "bg-sky-50 dark:bg-sky-950/40" : t.level === "Core" ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-amber-50 dark:bg-amber-950/40"}`}>
                 <p className="text-xl font-semibold text-hec-ink">{t.level}</p>
                 <p className="mb-2 text-sm text-hec-ink-soft">{t.who}</p>
-                <ul className="list-disc pl-5 space-y-1 text-lg text-hec-ink">{t.frames.map((f, i) => <li key={i}>{f}</li>)}</ul>
+                <ul className="list-disc pl-5 space-y-1 text-lg text-hec-ink">{t.frames.map((f, i) => <li key={i}>{f}<Say text={f} /></li>)}</ul>
                 {t.tips.length > 0 && <ul className="mt-2 space-y-1 text-base text-hec-ink-soft">{t.tips.map((f, i) => <li key={i}>✓ {f}</li>)}</ul>}
               </div>
             ))}
@@ -239,5 +379,112 @@ export function SlideView({ slide }: { slide: Slide }) {
           <List items={slide.prompts} />
         </div>
       );
+    case "creative":
+      return (
+        <div className="space-y-6">
+          <H Icon={PenLine}>Creative writing homework</H>
+          <div className="flex flex-wrap gap-2">
+            <Chip tone="accent">Thinking: {slide.thinking}</Chip>
+            {slide.uses.grammar.map((g) => <Chip key={g}>{g}</Chip>)}
+          </div>
+          <p className="text-lg text-hec-ink"><strong>Use these words:</strong> {slide.uses.words.join(", ")}</p>
+          <div className={`grid gap-4 ${slide.variants?.length ? "md:grid-cols-2" : ""}`}>
+            <TaskCard task={slide.base} tone="core" label="Class version" />
+            {(slide.variants ?? []).map((v) => <TaskCard key={v.interest} task={v.task} tone="variant" label={v.label} />)}
+          </div>
+        </div>
+      );
+    case "check": {
+      const a = unit?.assessments?.find((x) => x.id === slide.assessment);
+      return (
+        <div className="space-y-6">
+          <H Icon={ClipboardCheck}>{slide.title}</H>
+          <Meta tag="Checkpoint" mode={slide.mode} minutes={slide.minutes} />
+          <List items={slide.steps} ordered />
+          {a ? <CheckItems a={a} /> : <p className="text-hec-ink-soft">The check's questions are printed from the Lesson Decks page.</p>}
+        </div>
+      );
+    }
   }
+}
+
+/** Printable worksheet: the rule, three levels and the answer key on its own page. */
+export function WorksheetView({ ws, answers }: { ws: NonNullable<Unit["worksheets"]>[number]; answers: boolean }) {
+  return (
+    <div className="space-y-5 text-hec-ink">
+      <div className="flex items-baseline justify-between gap-4 border-b border-hec-line pb-2">
+        <h2 className="font-display text-3xl font-semibold">{ws.title}{answers ? " · Answer key" : ""}</h2>
+        {!answers && <p className="text-base">Name: ______________________ Date: __________</p>}
+      </div>
+      {!answers && <p className="rounded-xl bg-amber-50 p-3 text-lg">{ws.intro}</p>}
+      {ws.tiers.map((t) => (
+        <section key={t.level} className="space-y-2 break-inside-avoid">
+          <h3 className="text-xl font-semibold">{t.level === "Support" ? "★" : t.level === "Core" ? "★★" : "★★★"} {t.level}</h3>
+          {!answers && <p className="text-base">{t.instructions}</p>}
+          {!answers && t.example && <p className="text-base italic text-hec-ink-soft">Example: {t.example}</p>}
+          <ol className="list-decimal space-y-2 pl-7 text-lg">
+            {t.items.map((it, i) => (
+              <li key={i}>
+                {answers ? <><span className="text-hec-ink-soft">{it.q}</span> <strong>→ {it.answer}</strong></> : (
+                  <>
+                    {it.q}
+                    {it.options?.length ? <span className="ml-2">{it.options.map((o) => `☐ ${o}`).join("   ")}</span> : <div className="mt-1 border-b border-dotted border-gray-400 h-6" />}
+                  </>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+/** Printable assessment (check or test) with its speaking rubric; answers on separate pages. */
+export function AssessmentView({ a, answers }: { a: Assessment; answers: boolean }) {
+  const total = a.sections.reduce((n, s) => n + s.items.length * s.marksEach, 0);
+  return (
+    <div className="space-y-5 text-hec-ink">
+      <div className="flex items-baseline justify-between gap-4 border-b border-hec-line pb-2">
+        <h2 className="font-display text-3xl font-semibold flex items-center gap-2"><Trophy className="h-7 w-7" />{a.title}{answers ? " · Answer key" : ""}</h2>
+        {!answers && <p className="text-base">Name: ______________________ Score: ____ / {total}</p>}
+      </div>
+      {a.sections.map((s, si) => (
+        <section key={si} className="space-y-2 break-inside-avoid">
+          <h3 className="text-xl font-semibold">{si + 1}. {s.title} <span className="text-base font-normal text-hec-ink-soft">({s.items.length * s.marksEach} marks)</span></h3>
+          {!answers && <p className="text-base">{s.instructions}</p>}
+          {!answers && s.passage && <p className="rounded-xl border border-hec-line p-3 text-lg leading-relaxed">{s.passage}</p>}
+          <ol className="list-decimal space-y-2 pl-7 text-lg">
+            {s.items.map((it, i) => (
+              <li key={i}>
+                {answers ? <><span className="text-hec-ink-soft">{it.q}</span> <strong>→ {it.answer}</strong></> : (
+                  <>
+                    {it.q}
+                    {it.options?.length ? <span className="ml-2">{it.options.map((o) => `☐ ${o}`).join("   ")}</span> : (
+                      <div className={`mt-1 border-b border-dotted border-gray-400 ${s.marksEach > 1 ? "h-40" : "h-6"}`} />
+                    )}
+                  </>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+      {a.speaking && (
+        <section className="space-y-2 break-inside-avoid">
+          <h3 className="text-xl font-semibold">Speaking (teacher marks, 1-4 per row)</h3>
+          <p className="text-lg">{a.speaking.task}</p>
+          <ul className="list-disc pl-7 text-base">{a.speaking.prompts.map((p, i) => <li key={i}>{p}</li>)}</ul>
+          <table className="w-full border-collapse text-sm">
+            <thead><tr><th className="border p-1 text-left">Criterion</th>{[4, 3, 2, 1].map((n) => <th key={n} className="border p-1">{n}</th>)}</tr></thead>
+            <tbody>
+              {a.speaking.rubric.map((r) => (
+                <tr key={r.criterion}><td className="border p-1 font-semibold">{r.criterion}</td>{r.bands.map((b, i) => <td key={i} className="border p-1 align-top">{b}</td>)}</tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+    </div>
+  );
 }

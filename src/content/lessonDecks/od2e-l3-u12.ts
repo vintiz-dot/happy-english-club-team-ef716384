@@ -7,6 +7,9 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL3U12Creative } from "./od2e-l3-u12/homework";
+import { odL3U12Assessments, odL3U12Worksheets } from "./od2e-l3-u12/assessments";
+import { odL3U12FirstEdition } from "./od2e-l3-u12/firstEdition";
 
 export const odL3U12: Unit = {
   curriculum: "oxford-discover-2e",
@@ -32,9 +35,9 @@ export const odL3U12: Unit = {
       lesson: 1,
       covers: { unitFrom: 12, lesson: "Get Ready" },
       resources: [
-        { title: "Musical Instrument Flashcards", url: "https://www.twinkl.com/resource/t-t-544-musical-instrument-flashcards", source: "Twinkl", use: "Vocabulary drill and the mime-and-guess game" },
-        { title: "Musical Instrument Families Posters", url: "https://www.twinkl.com/resource/musical-instrument-families-posters-us-mu-2", source: "Twinkl", use: "Display while sorting blow / hit / pluck / bow (SB 116 B)" },
-        { title: "Instrument Families Sorting Cards", url: "https://www.twinkl.com/resource/cfe-mu-1-orchestra-instrument-families-sorting-cards", source: "Twinkl", use: "Group, Describe, Name sort for faster groups" },
+        { title: "Musical Instrument Flashcards", url: "https://www.twinkl.com/resource/t-t-544-musical-instrument-flashcards", source: "Twinkl", use: "Vocabulary drill and the mime-and-guess game", slide: "Our 10 instrument words" },
+        { title: "Musical Instrument Families Posters", url: "https://www.twinkl.com/resource/musical-instrument-families-posters-us-mu-2", source: "Twinkl", use: "Display while sorting blow / hit / pluck / bow (SB 116 B)", slide: "Blow, hit, pluck or bow? (SB 116 B)" },
+        { title: "Instrument Families Sorting Cards", url: "https://www.twinkl.com/resource/cfe-mu-1-orchestra-instrument-families-sorting-cards", source: "Twinkl", use: "Group, Describe, Name sort for faster groups", slide: "Blow, hit, pluck or bow? (SB 116 B)" },
       ],
       title: "Get Ready: Instruments of the world",
       minutes: 90,
@@ -87,7 +90,7 @@ export const odL3U12: Unit = {
         {
           kind: "vocab",
           title: "Our 10 instrument words",
-          book: { book: "SB", pages: "116", activities: ["A"] },
+          book: { book: "SB", pages: "116", activities: ["A"], track: "2.23" },
           words: [
             { word: "zummara", meaning: "a double pipe from Egypt that you blow", example: "{s1} blew the zummara and it buzzed." },
             { word: "flute", meaning: "a long, thin woodwind you blow across", example: "The flute sounds soft and high." },
@@ -107,7 +110,7 @@ export const odL3U12: Unit = {
           tag: "Vocabulary",
           mode: "whole",
           minutes: 10,
-          book: { book: "SB", pages: "116", activities: ["A"] },
+          book: { book: "SB", pages: "116", activities: ["A"], track: "2.23" },
           steps: [
             "Listen and point to each picture.",
             "Listen again and repeat. Clap the syllables: DJEM-be, did-ge-ri-DOO, PAN-pipes.",
@@ -132,11 +135,12 @@ export const odL3U12: Unit = {
         },
         {
           kind: "speaking",
-          title: "Which two might sound the same? (SB 117 C)",
+          title: "Which two might sound the same? (SB 116 C)",
+          book: { book: "SB", pages: "116", activities: ["C"] },
           mode: "pairs",
           minutes: 10,
           steps: [
-            "Look at the pictures on SB 117. Choose two pairs of instruments that might sound alike.",
+            "Look at the pictures on SB 116. Choose two pairs of instruments that might sound alike.",
             "Tell your partner your two pairs and your reason. Your partner must ask one question.",
             "Write your sentences in the book.",
           ],
@@ -200,9 +204,11 @@ export const odL3U12: Unit = {
           kind: "reflect",
           prompts: ["Which instrument word was hardest to say? Say it again now.", "Finish: Today I learned that instruments make sound by ...", "One question I have about instruments is ..."],
         },
+        odL3U12Creative["od2e-l3-u12-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 12 Get Ready.", book: { book: "WB", pages: "105-106" } },
             { label: "Talk at home", detail: "Ask someone at home about an instrument they know or played. Be ready to tell the class in two sentences." },
           ],
@@ -219,10 +225,10 @@ export const odL3U12: Unit = {
       lesson: 2,
       covers: { unitFrom: 12, lesson: "Read" },
       resources: [
-        { title: "String Musical Instruments from Around the World PowerPoint", url: "https://www.twinkl.com/resource/string-musical-instruments-from-around-the-world-photo-powerpoint-t-mu-1694094542", source: "Twinkl", use: "Background photos for the Strings expert group" },
-        { title: "Wind Musical Instruments from Around the World PowerPoint", url: "https://www.twinkl.com/resource/wind-musical-instruments-from-around-the-world-photo-powerpoint-t-mu-1693993896", source: "Twinkl", use: "Background photos for the Woodwinds and Brass groups" },
-        { title: "Percussion Musical Instruments Around the World PowerPoint", url: "https://www.twinkl.com/resource/percussion-musical-instruments-from-around-the-world-photo-powerpoint-t-mu-1693989793", source: "Twinkl", use: "Background photos for the Percussion group" },
-        { title: "Exploring Musical Instruments Around the World Poster", url: "https://www.twinkl.com/resource/ks1-exploring-musical-instruments-around-the-world-information-poster-t-mu-1650035618", source: "Twinkl", use: "Extra case studies for the class comparison chart" },
+        { title: "String Musical Instruments from Around the World PowerPoint", url: "https://www.twinkl.com/resource/string-musical-instruments-from-around-the-world-photo-powerpoint-t-mu-1694094542", source: "Twinkl", use: "Background photos for the Strings expert group", slide: "Expert groups" },
+        { title: "Wind Musical Instruments from Around the World PowerPoint", url: "https://www.twinkl.com/resource/wind-musical-instruments-from-around-the-world-photo-powerpoint-t-mu-1693993896", source: "Twinkl", use: "Background photos for the Woodwinds and Brass groups", slide: "Expert groups" },
+        { title: "Percussion Musical Instruments Around the World PowerPoint", url: "https://www.twinkl.com/resource/percussion-musical-instruments-from-around-the-world-photo-powerpoint-t-mu-1693989793", source: "Twinkl", use: "Background photos for the Percussion group", slide: "Expert groups" },
+        { title: "Exploring Musical Instruments Around the World Poster", url: "https://www.twinkl.com/resource/ks1-exploring-musical-instruments-around-the-world-information-poster-t-mu-1650035618", source: "Twinkl", use: "Extra case studies for the class comparison chart", slide: "Class comparison chart" },
       ],
       title: "Read: Instruments around the world",
       minutes: 90,
@@ -267,7 +273,7 @@ export const odL3U12: Unit = {
           tag: "Reading",
           mode: "whole",
           minutes: 12,
-          book: { book: "SB", pages: "118-119" },
+          book: { book: "SB", pages: "118-119", track: "2.24" },
           steps: [
             "Listen and follow with your finger.",
             "Stop after each section. Show with your hand: thumbs up if you understood, sideways if partly.",
@@ -338,9 +344,11 @@ export const odL3U12: Unit = {
           kind: "reflect",
           prompts: ["Which prediction was right?", "Finish: People in different countries make instruments from ...", "Which instrument would you like to hear in real life? Why?"],
         },
+        odL3U12Creative["od2e-l3-u12-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 12 Read.", book: { book: "WB", pages: "107" } },
             { label: "Read aloud", detail: "Read one section of SB 118-119 aloud to someone at home, with expression, two times." },
           ],
@@ -357,8 +365,8 @@ export const odL3U12: Unit = {
       lesson: 3,
       covers: { unitFrom: 12, lesson: "Understand" },
       resources: [
-        { title: "Comparative Adjectives Matching Cards for ELL", url: "https://www.twinkl.com/resource/comparative-adjectives-matching-cards-for-ell-us-e-1785960996", source: "Twinkl", use: "Warm-up revision of -er / than before as ... as" },
-        { title: "ESL Comparative and Superlative Adjectives Worksheet", url: "https://www.twinkl.com/resource/esl-comparative-superlative-worksheet-t2-e-210", source: "Twinkl", use: "Extra practice or early finishers: rewrite three answers with not as ... as" },
+        { title: "Comparative Adjectives Matching Cards for ELL", url: "https://www.twinkl.com/resource/comparative-adjectives-matching-cards-for-ell-us-e-1785960996", source: "Twinkl", use: "Warm-up revision of -er / than before as ... as", slide: "Object face-off" },
+        { title: "ESL Comparative and Superlative Adjectives Worksheet", url: "https://www.twinkl.com/resource/esl-comparative-superlative-worksheet-t2-e-210", source: "Twinkl", use: "Extra practice or early finishers: rewrite three answers with not as ... as", slide: "Is as or is not as? (SB 121 F-G)" },
       ],
       title: "Understand: as loud as, not as big as",
       minutes: 90,
@@ -401,6 +409,7 @@ export const odL3U12: Unit = {
         {
           kind: "speaking",
           title: "Which would you try? (SB 120 B)",
+          book: { book: "SB", pages: "120", activities: ["B"] },
           mode: "pairs",
           minutes: 8,
           frames: ["I'd like to try the ___ because ...", "I wouldn't like to try the ___ because ...", "It looks easier / harder than ..."],
@@ -422,7 +431,7 @@ export const odL3U12: Unit = {
           tag: "Listening",
           mode: "whole",
           minutes: 6,
-          book: { book: "SB", pages: "121", activities: ["D"] },
+          book: { book: "SB", pages: "121", activities: ["D"], track: "2.25" },
           steps: ["Listen to the song once with eyes closed.", "Listen again and sing along.", "What two things does the song compare? Put up your hand when you hear a comparison."],
         },
         {
@@ -536,9 +545,11 @@ export const odL3U12: Unit = {
           kind: "reflect",
           prompts: ["Say one as ... as sentence about you and a friend (be kind!).", "What mistake will you watch out for?", "How did sorting the cards help you find the rule?"],
         },
+        odL3U12Creative["od2e-l3-u12-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 12 Understand and the grammar pages.", book: { book: "WB", pages: "108-110" } },
             { label: "Compare at home", detail: "Find two things at home that make a sound (a spoon and a pot, a door and a bell). Write two as ... as and two not as ... as sentences." },
           ],
@@ -555,11 +566,11 @@ export const odL3U12: Unit = {
       lesson: 4,
       covers: { unitFrom: 12, lesson: "Communicate" },
       resources: [
-        { title: "Its or It's Missing Word Sentences Worksheet", url: "https://www.twinkl.com/resource/its-or-its-missing-word-sentences-worksheet-t-e-1700816375", source: "Twinkl", use: "Practice after the its / it's grammar slide" },
-        { title: "It's or Its Poster", url: "https://www.twinkl.com/resource/its-or-its-poster-t-e-1702449959", source: "Twinkl", use: "Display during the Workbook writing" },
-        { title: "Words Ending in DGE Spelling Activity", url: "https://www.twinkl.com/resource/t-l-4303-words-ending-in-dge-spelling-activity", source: "Twinkl", use: "After SB 123 D, or as homework" },
-        { title: "dge Word Search", url: "https://www.twinkl.com/resource/dge-word-search-t-e-2551576", source: "Twinkl", use: "Early finishers" },
-        { title: "Oral Language Describe It! Game", url: "https://www.twinkl.com/resource/oral-language-describe-it-game-roi-l-53896", source: "Twinkl", use: "Extra rounds of describe-and-guess (SB 123 C)" },
+        { title: "Its or It's Missing Word Sentences Worksheet", url: "https://www.twinkl.com/resource/its-or-its-missing-word-sentences-worksheet-t-e-1700816375", source: "Twinkl", use: "Practice after the its / it's grammar slide", slide: "its or it's? (SB 123 E)" },
+        { title: "It's or Its Poster", url: "https://www.twinkl.com/resource/its-or-its-poster-t-e-1702449959", source: "Twinkl", use: "Display during the Workbook writing", slide: "Writing practice (Workbook)" },
+        { title: "Words Ending in DGE Spelling Activity", url: "https://www.twinkl.com/resource/t-l-4303-words-ending-in-dge-spelling-activity", source: "Twinkl", use: "After SB 123 D, or as homework", slide: "Words with -dge (SB 123 D)" },
+        { title: "dge Word Search", url: "https://www.twinkl.com/resource/dge-word-search-t-e-2551576", source: "Twinkl", use: "Early finishers", slide: "Words with -dge (SB 123 D)" },
+        { title: "Oral Language Describe It! Game", url: "https://www.twinkl.com/resource/oral-language-describe-it-game-roi-l-53896", source: "Twinkl", use: "Extra rounds of describe-and-guess (SB 122 C)", slide: "Describe it, guess it (SB 122 C)" },
       ],
       title: "Communicate: describe it, guess it",
       minutes: 90,
@@ -588,12 +599,24 @@ export const odL3U12: Unit = {
           steps: ["Say it slowly, then faster: 'Madge's badge fell off the bridge by the hedge.'", "Who can say it three times without a mistake?"],
         },
         {
+          kind: "check",
+          title: "Quick check: words and as ... as",
+          assessment: "od2e-l3-u12-check",
+          mode: "solo",
+          minutes: 8,
+          steps: [
+            "Mini-whiteboards out. One question at a time; everyone shows their answer together.",
+            "No talking until the boards go up. Wipe and get ready for the next one.",
+            "Teacher: note who misses the second as or puts -er between the two as. Give them the Support worksheet next.",
+          ],
+        },
+        {
           kind: "activity",
           title: "Homemade instruments (SB 122 A)",
           tag: "Listening",
           mode: "solo",
           minutes: 8,
-          book: { book: "SB", pages: "122", activities: ["A"] },
+          book: { book: "SB", pages: "122", activities: ["A"], track: "2.26" },
           steps: ["Look at the pictures. Guess what each homemade instrument is made of.", "Listen and match each word to the picture.", "Check with a partner."],
         },
         {
@@ -602,12 +625,13 @@ export const odL3U12: Unit = {
           tag: "Listening",
           mode: "solo",
           minutes: 8,
-          book: { book: "SB", pages: "122", activities: ["B"] },
+          book: { book: "SB", pages: "122", activities: ["B"], track: "2.27" },
           steps: ["Read the sentences first and guess the missing words.", "Listen and fill them in.", "Which adjectives did the speakers use to describe the sounds?"],
         },
         {
           kind: "speaking",
-          title: "Describe it, guess it (SB 123 C)",
+          title: "Describe it, guess it (SB 122 C)",
+          book: { book: "SB", pages: "122", activities: ["C"], track: "2.28" },
           mode: "pairs",
           minutes: 12,
           steps: [
@@ -625,7 +649,7 @@ export const odL3U12: Unit = {
           tag: "Phonics",
           mode: "pairs",
           minutes: 8,
-          book: { book: "SB", pages: "123", activities: ["D"] },
+          book: { book: "SB", pages: "123", activities: ["D"], track: "2.29" },
           steps: ["Read the -dge words in the Learn box. What sound does -dge make?", "With your partner, write a silly sentence using three -dge words.", "Read it to the class. They clap each time they hear /dʒ/."],
           prompts: ["didgeridoo, badge, bridge, edge, hedge, dodgeball"],
         },
@@ -707,6 +731,10 @@ export const odL3U12: Unit = {
             "I look at my audience and speak loudly and clearly.",
           ],
           frames: ["This is my ___. I made it from ___.", "You play it by ___. When you ___, it vibrates and makes a ___ sound.", "It's as ___ as a ___, but it isn't as ___ as a ___."],
+          model: {
+            title: "A model Expo talk",
+            text: "Hello! This is my shoebox guitar. I made it from an old shoebox, four rubber bands and two pencils. You play it by plucking the rubber bands. When you pluck a band, it vibrates and makes a soft, twangy sound. The tight band has a high pitch, and the loose band has a low pitch. It's as long as my arm, but it isn't as loud as a real guitar. Its best part is the round hole in the middle. Would you like to try it?",
+          },
         },
         {
           kind: "activity",
@@ -725,9 +753,11 @@ export const odL3U12: Unit = {
           kind: "reflect",
           prompts: ["What describing word did you use best today?", "When do we write it's? When do we write its?", "What will you use to build your instrument?"],
         },
+        odL3U12Creative["od2e-l3-u12-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 12 Communicate.", book: { book: "WB", pages: "111-112" } },
             { label: "Expo", detail: "Bring the materials for your instrument next lesson and practise your 1-minute talk twice." },
           ],
@@ -744,9 +774,9 @@ export const odL3U12: Unit = {
       lesson: 5,
       covers: { unitFrom: 11, lesson: "Wrap Up" },
       resources: [
-        { title: "Musical Instrument Writing Frames", url: "https://www.twinkl.com/resource/esl-musical-instrument-writing-frames-t-t-20458", source: "Twinkl", use: "Support-level frames for the writing project" },
-        { title: "Make Your Own Musical Instruments Craft Instructions", url: "https://www.twinkl.com/resource/make-your-own-musical-instruments-craft-instructions-t-par-675", source: "Twinkl", use: "Send home before the build (SB 125 C)" },
-        { title: "Design a Musical Instrument Worksheet", url: "https://www.twinkl.com/resource/design-a-musical-instrument-worksheet-au-sc-1779363176", source: "Twinkl", use: "Planning sheet for the Instrument Expo" },
+        { title: "Musical Instrument Writing Frames", url: "https://www.twinkl.com/resource/esl-musical-instrument-writing-frames-t-t-20458", source: "Twinkl", use: "Support-level frames for the writing project", slide: "Writing project: My instrument paragraph" },
+        { title: "Make Your Own Musical Instruments Craft Instructions", url: "https://www.twinkl.com/resource/make-your-own-musical-instruments-craft-instructions-t-par-675", source: "Twinkl", use: "Send home before the build (SB 125 C)", slide: "Build it (SB 125 C)" },
+        { title: "Design a Musical Instrument Worksheet", url: "https://www.twinkl.com/resource/design-a-musical-instrument-worksheet-au-sc-1779363176", source: "Twinkl", use: "Planning sheet for the Instrument Expo", slide: "Build it (SB 125 C)" },
       ],
       title: "Wrap Up: write it, build it, present it",
       minutes: 90,
@@ -791,6 +821,7 @@ export const odL3U12: Unit = {
         {
           kind: "speaking",
           title: "Talk about the model (SB 124 B)",
+          book: { book: "SB", pages: "124", activities: ["B"] },
           mode: "pairs",
           minutes: 6,
           frames: ["The paragraph is about ___.", "The writer says it looks ___.", "One fact I learned is ..."],
@@ -816,6 +847,10 @@ export const odL3U12: Unit = {
             "I use its / it's correctly and finish with an ending sentence.",
           ],
           frames: ["The ___ is a ___ instrument from ___.", "It's made of ___ and it looks like ___.", "When you play it, it sounds ___.", "It's as ___ as ___.", "I like it because ..."],
+          model: {
+            title: "A model paragraph",
+            text: "The erhu is a traditional string instrument from China. It's made of wood, and its long, thin neck has two strings. A small round box at the bottom is covered with snakeskin. You play it with a bow, which you move between the two strings. When the strings vibrate, the erhu sounds sweet and a little sad, like someone singing. It isn't as big as a cello, but its voice is as beautiful as a violin's. I like it because one small instrument can tell a whole story.",
+          },
         },
         {
           kind: "activity",
@@ -842,7 +877,7 @@ export const odL3U12: Unit = {
         },
         {
           kind: "speaking",
-          title: "The Instrument Expo",
+          title: "The Instrument Expo: present and visit",
           mode: "whole",
           minutes: 15,
           steps: [
@@ -916,9 +951,11 @@ export const odL3U12: Unit = {
             "Finish: People make music by ...",
           ],
         },
+        odL3U12Creative["od2e-l3-u12-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Wrap Up pages and your Big Question Chart.", book: { book: "WB", pages: "113-115" } },
             { label: "Vlog", detail: "Record and upload your 'My Instrument Show' vlog (60-90 seconds). Choose Support, Core or Stretch." },
             { label: "Writing", detail: "Finish and neaten your instrument paragraph if you did not finish in class." },
@@ -927,4 +964,7 @@ export const odL3U12: Unit = {
       ],
     },
   ],
+  worksheets: odL3U12Worksheets,
+  assessments: odL3U12Assessments,
+  firstEdition: odL3U12FirstEdition,
 };

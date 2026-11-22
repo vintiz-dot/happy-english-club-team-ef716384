@@ -56,6 +56,8 @@ import {
   Layers,
 } from "lucide-react";
 import { LessonDecksPanel } from "@/components/lessonDecks/LessonDecksPanel";
+import { useClassDeckState } from "@/components/lessonDecks/useClassDeckState";
+import { flipbookUrl, pageInUrl } from "@/lib/lessonDecks/bookPages";
 
 interface Flipbook {
   id: string;
@@ -63,6 +65,8 @@ interface Flipbook {
   url: string;
   teacher_id: string;
   class_id: string | null;
+  edition?: string | null; // "1e" | "2e" (20261122090000)
+  page_offset?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -98,7 +102,14 @@ export default function TeacherBooks() {
   const [formTitle, setFormTitle] = useState("");
   const [formUrl, setFormUrl] = useState("");
   const [formClassId, setFormClassId] = useState<string>("none");
+  const [formEdition, setFormEdition] = useState<string>("none");
+  const [formOffset, setFormOffset] = useState<number>(0);
   const [formWarning, setFormWarning] = useState<string | null>(null);
+  // The page the class's book is open at. Page turns inside the flipbook happen
+  // in another site's frame the app cannot read, so the page box (and the decks'
+  // "Show page" buttons) are what move it and what is remembered per class.
+  const [pageInput, setPageInput] = useState<string>("");
+  const [shownPage, setShownPage] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // URL Helper to convert edit/view links to embed format
@@ -198,7 +209,8 @@ export default function TeacherBooks() {
           const { data: booksData, error: booksError } = await supabase
             .from("teacher_flipbooks")
             .select("*")
-            .eq("teacher_id", teacherData.id)
+            // Their own books, and any class's book they may read (RLS: staff of that class).
+            .or(`teacher_id.eq.${teacherData.id},class_id.not.is.null`)
             .order("created_at", { ascending: false });
 
           if (booksError) throw booksError;
@@ -286,11 +298,15 @@ export default function TeacherBooks() {
       setFormTitle(book.title);
       setFormUrl(book.url);
       setFormClassId(book.class_id || "none");
+      setFormEdition(book.edition || "none");
+      setFormOffset(book.page_offset ?? 0);
     } else {
       setEditingBook(null);
       setFormTitle("");
       setFormUrl("");
       setFormClassId("none");
+      setFormEdition("none");
+      setFormOffset(0);
     }
     setFormWarning(null);
     setIsDialogOpen(true);
@@ -323,6 +339,11 @@ export default function TeacherBooks() {
     const finalUrlResult = cleanAndSuggestUrl(formUrl);
     const finalUrl = finalUrlResult.url;
     const finalClassId = formClassId === "none" ? null : formClassId;
+    // Sent only when set, so saving a plain link keeps working before migration 20261122090000.
+    const bookFields: { edition?: string | null; page_offset?: number } =
+      formEdition !== "none" || formOffset !== 0 || editingBook?.edition
+        ? { edition: formEdition === "none" ? null : formEdition, page_offset: formOffset }
+        : {};
 
     try {
       if (editingBook) {
@@ -333,8 +354,9 @@ export default function TeacherBooks() {
             title: formTitle,
             url: finalUrl,
             class_id: finalClassId,
+            ...bookFields,
             updated_at: new Date().toISOString(),
-          })
+          } as any)
           .eq("id", editingBook.id);
 
         if (error) throw error;
@@ -342,7 +364,7 @@ export default function TeacherBooks() {
         setFlipbooks(prev =>
           prev.map(b =>
             b.id === editingBook.id
-              ? { ...b, title: formTitle, url: finalUrl, class_id: finalClassId }
+              ? { ...b, title: formTitle, url: finalUrl, class_id: finalClassId, ...bookFields }
               : b
           )
         );
@@ -360,7 +382,8 @@ export default function TeacherBooks() {
             url: finalUrl,
             teacher_id: teacherId,
             class_id: finalClassId,
-          })
+            ...bookFields,
+          } as any)
           .select()
           .single();
 
@@ -418,6 +441,24 @@ export default function TeacherBooks() {
 
   // Retrieve current active book
   const activeBook = flipbooks.find(b => b.id === selectedBookId);
+
+  // A class's book reopens where that class left off (class_deck_state).
+  const place = useClassDeckState(activeBook?.class_id ?? null);
+  useEffect(() => {
+    const saved = place.state?.flipbook_page ?? null;
+    const sameBook = !place.state?.flipbook_id || place.state.flipbook_id === activeBook?.id;
+    const start = sameBook && saved ? saved : activeBook ? pageInUrl(activeBook.url) : null;
+    setShownPage(start);
+    setPageInput(start ? String(start) : "");
+  }, [activeBook?.id, place.state?.flipbook_page, place.state?.flipbook_id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const goToPage = (raw: string) => {
+    const n = Math.round(Number(raw));
+    if (!activeBook || !Number.isFinite(n) || n < 1) return;
+    setShownPage(n);
+    if (activeBook.class_id) void place.save({ flipbook_page: n, flipbook_id: activeBook.id }, true);
+  };
+  const bookSrc = activeBook ? flipbookUrl(activeBook.url, shownPage) : "";
 
   // Return loading screen
   if (loading && !hasLoadedRef.current) {
@@ -519,7 +560,21 @@ export default function TeacherBooks() {
             </div>
 
             {activeBook && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <form
+                  className="flex items-center gap-1"
+                  onSubmit={(e) => { e.preventDefault(); goToPage(pageInput); }}
+                  title={activeBook.class_id ? "Opens this page and remembers it for the class" : "Opens this page"}
+                >
+                  <Label htmlFor="book-page" className="text-hec-small text-hec-ink-soft">Page</Label>
+                  <Input id="book-page" type="number" min={1} className="h-9 w-20" value={pageInput} onChange={(e) => setPageInput(e.target.value)} />
+                  <Button type="submit" variant="outline" size="sm">Go</Button>
+                </form>
+                {activeBook.class_id && place.state?.flipbook_page && (
+                  <span className="text-xs text-hec-ink-soft">
+                    {classes.find((c) => c.id === activeBook.class_id)?.name ?? "Class"} left off at p. {place.state.flipbook_page}
+                  </span>
+                )}
                 <Button
                   onClick={triggerPresentMode}
                   className="flex-1 gap-2 md:flex-none"
@@ -557,7 +612,7 @@ export default function TeacherBooks() {
               >
                 {/* Embedded Iframe */}
                 <iframe
-                  src={activeBook.url}
+                  src={bookSrc}
                   title={activeBook.title}
                   className="w-full flex-1 border-0 bg-white"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -588,7 +643,10 @@ export default function TeacherBooks() {
 
         {/* Tab 2: Settings (CRUD) */}
         <TabsContent value="decks" className="flex-1 min-h-0">
-          <LessonDecksPanel classes={classes} />
+          <LessonDecksPanel
+            classes={classes}
+            flipbooks={flipbooks.map((b) => ({ id: b.id, title: b.title, url: b.url, class_id: b.class_id, edition: b.edition ?? null, page_offset: b.page_offset ?? 0 }))}
+          />
         </TabsContent>
 
         <TabsContent value="manage">
@@ -746,6 +804,27 @@ export default function TeacherBooks() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="book-edition" className="text-hec-small font-medium text-hec-ink">Which edition is it?</Label>
+                  <Select value={formEdition} onValueChange={setFormEdition}>
+                    <SelectTrigger id="book-edition"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not a course book</SelectItem>
+                      <SelectItem value="2e">Oxford Discover 2nd edition</SelectItem>
+                      <SelectItem value="1e">Oxford Discover 1st edition</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="book-offset" className="text-hec-small font-medium text-hec-ink">Page offset</Label>
+                  <Input id="book-offset" type="number" value={formOffset} onChange={(e) => setFormOffset(Number(e.target.value) || 0)} />
+                </div>
+                <p className="col-span-2 text-xs text-hec-ink-soft">
+                  Lesson decks open this book at the right page. The offset is the flipbook's page number (#p=) minus the printed page number: 0 when they match. A 1st-edition book is opened through the unit's 1st-edition page map.
+                </p>
               </div>
             </div>
 

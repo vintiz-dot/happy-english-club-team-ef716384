@@ -16,6 +16,7 @@ import { assertClassNameAvailable } from "@/components/admin/class/ClassAdminAct
 import { useQueryClient } from "@tanstack/react-query";
 import { describePattern, parseWeeklySlots } from "@/lib/classSchedule";
 import ClassFeeHistory from "@/components/admin/class/ClassFeeHistory";
+import { BOOKS, bookLabel, classBook } from "@/lib/lessonDecks/views";
 
 const ClassSettings = ({ classId }: { classId: string }) => {
   const queryClient = useQueryClient();
@@ -25,6 +26,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
   const [defaultEndTime, setDefaultEndTime] = useState("");
   const [defaultSessionLength, setDefaultSessionLength] = useState(90);
   const [curriculum, setCurriculum] = useState("");
+  const [otherBook, setOtherBook] = useState(false);
   const [ageRange, setAgeRange] = useState("");
   const [description, setDescription] = useState("");
   const [maxStudents, setMaxStudents] = useState<number | "">("");
@@ -295,12 +297,26 @@ const ClassSettings = ({ classId }: { classId: string }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Curriculum</Label>
-                  <Input
-                    value={curriculum}
-                    onChange={(e) => setCurriculum(e.target.value)}
-                    placeholder="e.g. Oxford Discover 2"
-                  />
+                  <Label>Course book</Label>
+                  {/* A book chosen here sets the class's lesson decks and its flipbook pages
+                      (Flipbooks > Lesson Decks); older free text is kept until replaced. */}
+                  <Select
+                    value={classBook(curriculum) ? curriculum : curriculum || otherBook ? "__other" : "__none"}
+                    onValueChange={(v) => { setOtherBook(v === "__other"); setCurriculum(v === "__none" ? "" : v === "__other" ? (classBook(curriculum) ? "" : curriculum) : v); }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Choose the book" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none">No course book</SelectItem>
+                      {BOOKS.flatMap((b) => b.levels.map((level) => {
+                        const label = bookLabel({ curriculum: b.curriculum, level });
+                        return <SelectItem key={label} value={label}>{label}</SelectItem>;
+                      }))}
+                      <SelectItem value="__other">Other (type it below)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {!classBook(curriculum) && (curriculum !== "" || otherBook) && (
+                    <Input value={curriculum} onChange={(e) => setCurriculum(e.target.value)} placeholder="e.g. Family and Friends 3" />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Age Range</Label>

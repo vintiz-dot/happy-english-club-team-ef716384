@@ -76,9 +76,41 @@ eq("between lessons, the nearest start", C.pickSession(day, "12:00")?.id, "am");
 eq("a cancelled lesson is never picked, even while 'on'", C.pickSession(day, "14:30")?.id, "pm");
 eq("no lessons today, nothing", C.pickSession([day[2]], "14:30"), null);
 
+console.log("flipbook pages");
+const B = await load("src/lib/lessonDecks/bookPages.ts", "ld-book");
+const map1e = { unit: 12, pages: { "SB 116": { page: 116 }, "SB 121 F": { page: 99, activity: "C", note: "moved" }, "SB 122": { page: null, note: "Not in 1e." } } };
+const fb2 = { url: "https://online.example/b/#p=88", edition: "2e", page_offset: 2 };
+const fb1 = { url: "https://online.example/b/", edition: "1e", page_offset: 0 };
+eq("2nd edition: printed page plus the offset", B.flipTarget({ book: "SB", pages: "116-117", activities: ["A"] }, fb2, null), { ok: true, index: 118, printed: 116, label: "p. 116" });
+eq("1st edition: an activity's own entry wins over the page", B.flipTarget({ book: "SB", pages: "121", activities: ["F", "G"] }, fb1, map1e), { ok: true, index: 99, printed: 99, label: "1st ed. p. 99 C", note: "moved" });
+eq("1st edition: the page entry when the activity has none", B.flipTarget({ book: "SB", pages: "116", activities: ["B"] }, fb1, map1e).index, 116);
+eq("1st edition with no equivalent says so", B.flipTarget({ book: "SB", pages: "122" }, fb1, map1e), { ok: false, label: "SB 122", reason: "Not in 1e." });
+ok("a page the map does not know is not guessed", !B.flipTarget({ book: "SB", pages: "130" }, fb1, map1e).ok);
+ok("a 1st-edition book without a map is not guessed", !B.flipTarget({ book: "SB", pages: "116" }, fb1, null).ok);
+ok("the Workbook is never opened in the Student Book flipbook", !B.flipTarget({ book: "WB", pages: "105" }, fb2, null).ok);
+ok("no flipbook, no page", !B.flipTarget({ book: "SB", pages: "116" }, null, null).ok);
+eq("url: replaces the page", B.flipbookUrl("https://online.example/b/#p=88", 116), "https://online.example/b/#p=116");
+eq("url: adds a page", B.flipbookUrl("https://online.example/b/", 5), "https://online.example/b/#p=5");
+eq("url: no page keeps the book's own start", B.flipbookUrl("https://online.example/b/#p=88", null), "https://online.example/b/");
+eq("page read from a url", [B.pageInUrl("https://x/#p=88"), B.pageInUrl("https://x/")], [88, null]);
+
+console.log("views: grammar only, unit plan, homework versions, class book");
+const V = await load("src/lib/lessonDecks/views.ts", "ld-views");
+const creative = { kind: "creative", thinking: "Create", uses: { words: [], grammar: [] }, base: { title: "base" }, variants: [{ interest: "football", label: "Football edition", task: { title: "fb" } }] };
+const KID = "11111111-1111-4111-8111-111111111111", OTHERKID = "22222222-2222-4222-8222-222222222222";
+eq("a chosen child gets the interest edition", V.homeworkFor(creative, KID, { football: [KID] }).task.title, "fb");
+eq("everyone else gets the class version", V.homeworkFor(creative, OTHERKID, { football: [KID] }), { task: { title: "base" }, label: null, interest: null });
+eq("no groups yet: the class version", V.homeworkFor(creative, KID, null).task.title, "base");
+eq("interest groups are cleaned: bad keys, names and repeats dropped",
+  V.cleanInterests({ football: [KID, KID, "William"], "Bad Key": [KID], art: "x", empty: [] }), { football: [KID] });
+eq("a non-object reads as no groups", [V.cleanInterests(null), V.cleanInterests([KID])], [{}, {}]);
+eq("class book label", V.bookLabel({ curriculum: "oxford-discover-2e", level: 3 }), "Oxford Discover 2nd edition, Level 3");
+eq("class book read back", V.classBook("Oxford Discover 2nd edition, Level 3"), { curriculum: "oxford-discover-2e", level: 3 });
+eq("older free text is not a book choice", [V.classBook("Oxford Discover 2"), V.classBook(null), V.classBook("Oxford Discover 2nd edition, Level 9")], [null, null, null]);
+
 console.log("decks in src/content/lessonDecks");
 const contentDir = resolve(repo, "src/content/lessonDecks");
-const files = existsSync(contentDir) ? readdirSync(contentDir, { recursive: true }).filter((f) => /\.ts$/.test(f) && !/index\.ts$/.test(f)) : [];
+const files = existsSync(contentDir) ? readdirSync(contentDir).filter((f) => /\.ts$/.test(f) && !/index\.ts$/.test(f)) : [];
 const units = [];
 for (const f of files) {
   const out = resolve(tmpdir(), `ld-unit-${files.indexOf(f)}.${process.pid}.mjs`);
@@ -104,6 +136,79 @@ for (const { f, u } of units) {
     ok(`${d.id}: says which book lesson it covers`, !!d.covers && Number.isInteger(d.covers.unitFrom) &&
       ["Big Question", "Get Ready", "Read", "Understand", "Communicate", "Wrap Up"].includes(d.covers.lesson));
   }
+}
+
+console.log("homework, materials, checks and the 1st edition");
+for (const { f, u } of units) {
+  const texts = JSON.stringify(u);
+  ok(`${f}: never carries a child's name (personalised homework is keyed by interest)`, !/William|Potato/i.test(texts));
+  const titlesOf = (d) => d.slides.map((s) => s.title).filter(Boolean);
+  for (const d of u.decks) {
+    const titles = titlesOf(d);
+    ok(`${d.id}: slide titles are unique (materials point at them)`, new Set(titles).size === titles.length);
+    const lost = (d.resources ?? []).filter((r) => r.slide !== undefined && !titles.includes(r.slide));
+    ok(`${d.id}: a supplementary link that names a slide names one of this deck`, lost.length === 0, lost.map((r) => r.slide).join(", "));
+    const cr = d.slides.filter((s) => s.kind === "creative");
+    // Creative homework is opt-in per unit: once a unit has any, every deck has one.
+    if (u.decks.some((x) => x.slides.some((s) => s.kind === "creative"))) ok(`${d.id}: one creative homework, just before the homework slide`, cr.length === 1 && d.slides.indexOf(cr[0]) === d.slides.findIndex((s) => s.kind === "homework") - 1);
+    for (const c of cr) {
+      const tasks = [c.base, ...(c.variants ?? []).map((v) => v.task)];
+      ok(`${d.id}: homework tasks are complete, each with a challenge`, tasks.every((t) => t.title && t.task && t.steps.length >= 3 && t.frames.length >= 3 && t.success.length >= 2 && t.challenge));
+      ok(`${d.id}: homework names its words and grammar`, c.uses.words.length >= 3 && c.uses.grammar.length >= 1);
+      ok(`${d.id}: variants are keyed by a short interest`, (c.variants ?? []).every((v) => /^[a-z][a-z0-9-]{0,30}$/.test(v.interest) && v.label));
+    }
+    for (const s of d.slides.filter((s) => s.kind === "check")) {
+      ok(`${d.id}: its check "${s.assessment}" exists and is formative`, (u.assessments ?? []).some((a) => a.id === s.assessment && a.kind === "formative"));
+    }
+    if (u.firstEdition) {
+      const refs = [...d.slides.flatMap((s) => [s.book, s.ref]).filter(Boolean), ...d.book].filter((b) => b.book === "SB");
+      const miss = refs.filter((b) => {
+        const p = Number(String(b.pages).split(/[-,\s]/)[0]);
+        return !(b.activities?.[0] && u.firstEdition.pages[`SB ${p} ${b.activities[0]}`]) && !u.firstEdition.pages[`SB ${p}`];
+      });
+      ok(`${d.id}: every Student Book page it shows has a 1st-edition entry`, miss.length === 0, miss.map((b) => b.pages).join(", "));
+    }
+  }
+  for (const w of u.worksheets ?? []) {
+    const d = u.decks.find((x) => x.id === w.deckId);
+    ok(`${w.id}: follows a real slide`, !!d && titlesOf(d).includes(w.slide));
+    eq(`${w.id}: Support, Core, Challenge in order`, w.tiers.map((t) => t.level), ["Support", "Core", "Challenge"]);
+    ok(`${w.id}: every item has an answer`, w.tiers.every((t) => t.items.length >= 5 && t.items.every((i) => i.q && i.answer)));
+    ok(`${w.id}: a choice's answer is one of its options`, w.tiers.every((t) => t.items.every((i) => !i.options || i.options.includes(i.answer))));
+  }
+  for (const a of u.assessments ?? []) {
+    ok(`${a.id}: given after a real lesson`, u.decks.some((d) => d.lesson === a.afterLesson));
+    ok(`${a.id}: every item has an answer, every choice's answer is an option`,
+      a.sections.every((s) => s.items.length && s.items.every((i) => i.q && i.answer && (!i.options || i.options.includes(i.answer)))));
+    if (a.kind === "formative") ok(`${a.id}: a formative check is run from a deck's check slide`, u.decks.some((d) => d.slides.some((s) => s.kind === "check" && s.assessment === a.id)));
+    if (a.kind === "summative") {
+      ok(`${a.id}: the end-of-unit test covers words, both grammar points, reading and writing`,
+        ["Vocabulary", "Grammar", "Reading", "Writing"].every((k) => a.sections.some((s) => s.skill === k)) && a.sections.filter((s) => s.skill === "Grammar").length >= 2);
+      ok(`${a.id}: has a speaking rubric with 4 bands per criterion`, !!a.speaking && a.speaking.rubric.length >= 3 && a.speaking.rubric.every((r) => r.bands.length === 4));
+      ok(`${a.id}: fits a class`, a.minutes > 0 && a.minutes <= 90);
+    }
+  }
+  const plan = V.unitPlan(u);
+  ok(`${f}: the plan puts each test right after its lesson`, (u.assessments ?? []).filter((a) => a.kind === "summative").every((a) => {
+    const i = plan.findIndex((p) => p.kind === "test" && p.assessment.id === a.id);
+    return i > 0 && plan[i - 1].kind === "deck" && plan[i - 1].deck.lesson === a.afterLesson;
+  }));
+  for (const d of u.decks) {
+    const g = V.grammarDeck(d);
+    if (!g) continue;
+    ok(`${d.id}: its grammar-only view opens with a title and keeps the grammar slide`, g.slides[0].kind === "title" && g.slides.some((s) => s.kind === "grammar") && g.id === `${d.id}-grammar`);
+    ok(`${d.id}: the grammar-only view leaves out homework and reading`, !g.slides.some((s) => s.kind === "homework" || s.kind === "creative" || (s.kind === "activity" && s.tag === "Reading")));
+  }
+}
+const u12 = units.find((x) => x.u.unit === 12 && x.u.level === 3)?.u;
+if (u12) {
+  eq("Unit 12: grammar on its own for Lessons 3 and 4", u12.decks.filter((d) => V.grammarDeck(d)).map((d) => d.lesson), [3, 4]);
+  eq("Unit 12: a quick check mid-unit (in Lesson 4) and the test after Wrap Up",
+    [V.checksIn(u12.decks[3]), V.unitPlan(u12).map((p) => (p.kind === "test" ? "test" : p.deck.lesson))], [["od2e-l3-u12-check"], [1, 2, 3, 4, 5, "test"]]);
+  ok("Unit 12: every homework has a football edition", u12.decks.every((d) => d.slides.some((s) => s.kind === "creative" && s.variants?.some((v) => v.interest === "football"))));
+  eq("Unit 12: the book's audio is a track number, never a file", [...new Set(JSON.stringify(u12).match(/"track":"[^"]+"/g))].sort(),
+    ['"track":"2.23"', '"track":"2.24"', '"track":"2.25"', '"track":"2.26"', '"track":"2.27"', '"track":"2.28"', '"track":"2.29"']);
+  ok("Unit 12: no audio, image or book files referenced", !/\.(mp3|wav|m4a|pdf|jpg|png)"/i.test(JSON.stringify(u12)));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
