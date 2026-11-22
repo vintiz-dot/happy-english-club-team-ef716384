@@ -58,6 +58,30 @@ export function useSpeech() {
     synth.speak(u);
   }, [supported, prefs, voices]);
 
+  // A listening script: one utterance per line, queued, so the browser reads the
+  // whole recording once (as the test plays it). Each speaker keeps one voice; when
+  // the device has fewer voices than speakers, pitch tells them apart.
+  const speakScript = useCallback((lines: { speaker: string; text: string }[], opts?: { slow?: boolean }) => {
+    if (!supported || !lines.length) return;
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const english = voices.filter((v) => v.lang.toLowerCase().startsWith("en"));
+    const accentFirst = [...english.filter((v) => v.lang.replace("_", "-") === prefs.accent), ...english.filter((v) => v.lang.replace("_", "-") !== prefs.accent)];
+    const speakers = [...new Set(lines.map((l) => l.speaker))];
+    const PITCH = [1, 0.8, 1.25, 0.95];
+    const slow = opts?.slow ?? prefs.slow;
+    for (const line of lines) {
+      const i = speakers.indexOf(line.speaker);
+      const u = new SpeechSynthesisUtterance(speakable(line.text));
+      u.lang = prefs.accent;
+      const voice = accentFirst.length ? accentFirst[i % accentFirst.length] : undefined;
+      if (voice) { u.voice = voice; u.lang = voice.lang; }
+      u.pitch = accentFirst.length > i ? 1 : PITCH[i % PITCH.length];
+      u.rate = slow ? 0.75 : 0.95;
+      synth.speak(u);
+    }
+  }, [supported, prefs, voices]);
+
   const hasAccent = (a: Accent) => voices.some((v) => v.lang === a || v.lang.replace("_", "-") === a);
-  return { supported, prefs, update, speak, hasAccent, stop: () => supported && window.speechSynthesis.cancel() };
+  return { supported, prefs, update, speak, speakScript, hasAccent, stop: () => supported && window.speechSynthesis.cancel() };
 }

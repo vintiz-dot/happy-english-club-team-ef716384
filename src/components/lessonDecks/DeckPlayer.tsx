@@ -4,6 +4,7 @@ import type { Assessment, BookRef, Deck, Slide, Unit, Worksheet } from "@/lib/le
 import { castSlide } from "@/lib/lessonDecks/names";
 import { flipTarget, flipbookUrl, type FlipbookLite } from "@/lib/lessonDecks/bookPages";
 import { homeworkFor } from "@/lib/lessonDecks/views";
+import { LISTENING_BANDS, RUBRIC } from "@/lib/lessonDecks/ieltsRubric";
 import { SlideView, SlideContext, WorksheetView, AssessmentView, type SlideCtx } from "./SlideView";
 import { useSpeech } from "./speech";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,52 @@ export function printAssessment(a: Assessment) {
     </div>,
   );
   return printPages(a.title, body, false);
+}
+
+/**
+ * Sun Class progress tracker for one term: a row per child (names from the live
+ * roster, only on paper; nothing is saved) and, for each of the term's mocks, the
+ * four criterion bands, the Speaking band, the Listening raw score and band; then
+ * the term's honest targets, and the HEC rubric and conversion table to score with.
+ */
+export function printIeltsTracker(unit: Unit, names: string[], term: { expected: string; stretch: string } | undefined) {
+  const mocks = unit.assessments ?? [];
+  const rows = names.length ? names : Array.from({ length: 8 }, () => "");
+  const cell = "border border-gray-400 p-1 h-9";
+  const body = renderToStaticMarkup(
+    <div>
+      <section className="deck-page bg-white p-6 text-gray-900">
+        <h2 className="text-2xl font-semibold">Progress tracker · {unit.title}</h2>
+        <p className="text-sm">
+          Write each mock's criterion bands (FC, LR, GRA, P, whole numbers), the Speaking band (their mean: .25 and .75 round up) and the Listening score.
+          Term target: most students {term?.expected ?? "-"}, stretch {term?.stretch ?? "-"}. Targets, not promises: these are class estimates, not official IELTS bands.
+        </p>
+        <table className="mt-2 w-full border-collapse text-xs">
+          <thead>
+            <tr>
+              <th className={cell} rowSpan={2}>Student</th>
+              {mocks.map((a) => <th key={a.id} className={cell} colSpan={7}>{a.title}</th>)}
+              <th className={cell} rowSpan={2}>Next target (one criterion, one habit)</th>
+            </tr>
+            <tr>{mocks.flatMap((a) => ["FC", "LR", "GRA", "P", "Spk", "L raw", "L band"].map((h) => <th key={a.id + h} className={cell}>{h}</th>))}</tr>
+          </thead>
+          <tbody>
+            {rows.map((n, i) => <tr key={i}><td className={`${cell} whitespace-nowrap font-medium`}>{n}</td>{mocks.flatMap((a) => Array.from({ length: 7 }, (_, j) => <td key={a.id + j} className={cell} />))}<td className={cell} /></tr>)}
+          </tbody>
+        </table>
+      </section>
+      <section className="deck-page bg-white p-6 text-gray-900">
+        <h2 className="text-xl font-semibold">Scoring guide (HEC wording, based on the public IELTS band descriptors)</h2>
+        <table className="mt-2 w-full border-collapse text-xs">
+          <thead><tr><th className={cell}>Criterion</th>{RUBRIC[0].bands.map((b) => <th key={b.band} className={cell}>Band {b.band}</th>)}</tr></thead>
+          <tbody>{RUBRIC.map((r) => <tr key={r.criterion}><td className={`${cell} font-semibold`}>{r.criterion}</td>{r.bands.map((b) => <td key={b.band} className={`${cell} align-top`}>{b.sounds}</td>)}</tr>)}</tbody>
+        </table>
+        <h3 className="mt-4 text-lg font-semibold">Listening: raw score out of 40 → approximate band</h3>
+        <p className="text-sm">{LISTENING_BANDS.filter((b) => b.band >= 4).map((b) => `${b.min}+ → ${b.band}`).join(" · ")}. A 20-question mock: double the score first.</p>
+      </section>
+    </div>,
+  );
+  return printPages(`Tracker · ${unit.title}`, body, true);
 }
 
 /**
@@ -159,6 +206,7 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
     unit,
     deck,
     speak: speech.supported ? speech.speak : undefined,
+    speakScript: speech.supported ? speech.speakScript : undefined,
     bookTarget: (ref: BookRef) => flipTarget(ref, flipbook ?? null, unit?.firstEdition),
     openBook: (ref: BookRef) => {
       const t = flipTarget(ref, flipbook ?? null, unit?.firstEdition);
@@ -170,7 +218,7 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
       const ws = unit?.worksheets?.find((w) => w.id === id);
       if (ws) (onWorksheet ?? printWorksheet)(ws);
     },
-  }), [unit, deck, speech.supported, speech.speak, flipbook, onBookPage, onWorksheet]);
+  }), [unit, deck, speech.supported, speech.speak, speech.speakScript, flipbook, onBookPage, onWorksheet]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

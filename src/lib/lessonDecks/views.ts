@@ -9,7 +9,7 @@
 // - homeworkFor: which version of a creative homework a child gets.
 // - classBook / bookLabel: the course book a class uses, kept in classes.curriculum
 //   as a readable label (families may see it) that the app can still parse.
-import type { Assessment, CreativeTask, Deck, Slide, Unit } from "./types";
+import type { Assessment, CreativeTask, Curriculum, Deck, Slide, Unit } from "./types";
 
 type Creative = Extract<Slide, { kind: "creative" }>;
 
@@ -87,25 +87,32 @@ export function cleanInterests(raw: unknown): Record<string, string[]> {
 
 // ---------------------------------------------------------------- class books
 
-export type BookChoice = { curriculum: "oxford-discover-2e" | "reach-higher"; level: number };
+export type BookChoice = { curriculum: Curriculum; level: number };
 
-export const BOOKS: { curriculum: BookChoice["curriculum"]; name: string; levels: number[] }[] = [
-  { curriculum: "oxford-discover-2e", name: "Oxford Discover 2nd edition", levels: [1, 2, 3, 4, 5, 6] },
+// Names and level words match CURRICULA in curricula.ts (kept here as data so this
+// file still imports nothing at run time).
+export const BOOKS: { curriculum: Curriculum; name: string; levelWord: "Level" | "Year"; levels: number[] }[] = [
+  { curriculum: "oxford-discover-2e", name: "Oxford Discover 2nd edition", levelWord: "Level", levels: [1, 2, 3, 4, 5, 6] },
   // One Reach Higher level is two books (3A: Units 1-4, 3B: Units 5-8); a class picks the level.
-  { curriculum: "reach-higher", name: "Reach Higher", levels: [1, 2, 3, 4, 5, 6] },
+  { curriculum: "reach-higher", name: "Reach Higher", levelWord: "Level", levels: [1, 2, 3, 4, 5, 6] },
+  { curriculum: "hec-ielts-sl", name: "HEC IELTS Speaking & Listening", levelWord: "Year", levels: [1, 2] },
 ];
 
-/** The label stored in classes.curriculum: "Oxford Discover 2nd edition, Level 3". */
+/** The label stored in classes.curriculum: "Oxford Discover 2nd edition, Level 3", "HEC IELTS Speaking & Listening, Year 1". */
 export function bookLabel(b: BookChoice): string {
-  const name = BOOKS.find((x) => x.curriculum === b.curriculum)?.name ?? b.curriculum;
-  return `${name}, Level ${b.level}`;
+  const book = BOOKS.find((x) => x.curriculum === b.curriculum);
+  return `${book?.name ?? b.curriculum}, ${book?.levelWord ?? "Level"} ${b.level}`;
 }
 
 /** Read classes.curriculum back. Older free text ("Oxford Discover 2", "OD3") reads as null. */
 export function classBook(curriculum: string | null | undefined): BookChoice | null {
-  const m = /^\s*(.+?),\s*Level\s*(\d)\s*$/i.exec(curriculum ?? "");
-  if (!m) return null;
-  const book = BOOKS.find((b) => b.name.toLowerCase() === m[1].trim().toLowerCase());
-  const level = Number(m[2]);
-  return book && book.levels.includes(level) ? { curriculum: book.curriculum, level } : null;
+  const text = (curriculum ?? "").trim().toLowerCase();
+  for (const b of BOOKS) {
+    const prefix = `${b.name}, ${b.levelWord}`.toLowerCase();
+    if (!text.startsWith(prefix)) continue;
+    const m = /^\s*(\d)\s*$/.exec(text.slice(prefix.length));
+    const level = m ? Number(m[1]) : NaN;
+    return b.levels.includes(level) ? { curriculum: b.curriculum, level } : null;
+  }
+  return null;
 }

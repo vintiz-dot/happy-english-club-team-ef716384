@@ -7,7 +7,8 @@ import { paceLessons, type WeeklySlot } from "@/lib/lessonDecks/pacing";
 import { checksIn, classBook, grammarDeck, unitInterests, unitPlan, type PlanItem } from "@/lib/lessonDecks/views";
 import { useClassRoster } from "./useClassRoster";
 import { useClassDeckState } from "./useClassDeckState";
-import { DeckPlayer, printAssessment, printDeck, printHomeworkSheets, printWorksheet, type ClassFlipbook } from "./DeckPlayer";
+import { DeckPlayer, printAssessment, printDeck, printHomeworkSheets, printIeltsTracker, printWorksheet, type ClassFlipbook } from "./DeckPlayer";
+import { TERMS } from "@/content/lessonDecks/hec-ielts/programme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -196,6 +197,12 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="font-display text-hec-h3 text-hec-ink flex items-center gap-2"><CalendarDays className="h-5 w-5" />Pacing guide · {unit.title}</h3>
             <p className="text-hec-small text-hec-ink-soft">Big Question: {unit.bigQuestion}</p>
+            {unit.curriculum === "hec-ielts-sl" && (
+              <Button size="sm" variant="outline" title="A row per student for this term's mocks; names are printed, never saved"
+                onClick={() => printIeltsTracker(unit, names, TERMS.find((t) => t.year === unit.level && t.term === unit.unit))}>
+                <Printer className="h-4 w-4" />Progress tracker
+              </Button>
+            )}
           </div>
           <Table>
             <TableHeader>
@@ -239,7 +246,7 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                       {d.title}
                       {checks.map((a) => <Badge key={a!.id} variant="secondary" className="ml-2 gap-1"><ClipboardCheck className="h-3 w-3" />{a!.title} ({a!.minutes} min)</Badge>)}
                     </TableCell>
-                    <TableCell className="text-hec-small">{d.book.map((b) => `${b.book} ${b.pages}`).join(" · ")}</TableCell>
+                    <TableCell className="text-hec-small">{d.book.length ? d.book.map((b) => `${b.book} ${b.pages}`).join(" · ") : d.slides.flatMap((s) => (s.kind === "listening" ? [`Listening Part ${s.section}`] : s.kind === "speaking" && s.ielts ? [`Speaking Part ${s.ielts.part}`] : [])).join(" · ")}</TableCell>
                     <TableCell className="text-hec-small">{d.inquiryPhases.join(", ")}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex flex-wrap justify-end gap-1">

@@ -110,6 +110,33 @@ eq("class book read back", V.classBook("Oxford Discover 2nd edition, Level 3"), 
 eq("Reach Higher is a book choice too", [V.bookLabel({ curriculum: "reach-higher", level: 3 }), V.classBook("Reach Higher, Level 3")],
   ["Reach Higher, Level 3", { curriculum: "reach-higher", level: 3 }]);
 eq("older free text is not a book choice", [V.classBook("Oxford Discover 2"), V.classBook(null), V.classBook("Oxford Discover 2nd edition, Level 9")], [null, null, null]);
+eq("the IELTS course is a class book by year", V.bookLabel({ curriculum: "hec-ielts-sl", level: 1 }), "HEC IELTS Speaking & Listening, Year 1");
+eq("and reads back", [V.classBook("HEC IELTS Speaking & Listening, Year 2"), V.classBook("HEC IELTS Speaking & Listening, Year 3"), V.classBook("HEC IELTS Speaking & Listening, Level 1")],
+  [{ curriculum: "hec-ielts-sl", level: 2 }, null, null]);
+
+console.log("courses, the Sun Class pacing guide and the IELTS arithmetic");
+const CU = await load("src/lib/lessonDecks/curricula.ts", "ld-curricula");
+const IR = await import(pathToFileURL(resolve(repo, "scripts/lesson-decks/ielts-rules.mjs")).href);
+eq("per-course lesson length", [CU.ruleFor("oxford-discover-2e").maxMinutes, CU.ruleFor("hec-ielts-sl").maxMinutes, CU.ruleFor("nope")], [90, 120, null]);
+eq("every book in the class picker is a course with rules", V.BOOKS.map((b) => !!CU.ruleFor(b.curriculum) && CU.ruleFor(b.curriculum).name === b.name && CU.ruleFor(b.curriculum).levelWord === b.levelWord), V.BOOKS.map(() => true));
+eq("unit menu labels", [CU.unitLabel({ curriculum: "oxford-discover-2e", level: 3, unit: 12, title: "T" }), CU.unitLabel({ curriculum: "hec-ielts-sl", level: 1, unit: 1, title: "T" })],
+  ["Oxford Discover 3 · Unit 12: T", "HEC IELTS Speaking & Listening Year 1 · Term 1: T"]);
+const PG = await load("src/content/lessonDecks/hec-ielts/programme.ts", "ld-programme");
+eq("100 lessons numbered 1..100", [PG.LESSONS.length, PG.LESSONS.every((l, i) => l.n === i + 1)], [100, true]);
+ok("8 terms that tile the lessons with no gap", PG.TERMS.length === 8 && PG.TERMS.every((t, i) => t.from === (i ? PG.TERMS[i - 1].to + 1 : 1) && PG.LESSONS.filter((l) => l.term === t.term).length === t.to - t.from + 1) && PG.TERMS[7].to === 100);
+ok("every lesson has its focus filled in", PG.LESSONS.every((l) => l.theme && l.speaking && l.language && l.pron && l.listening.types.length && l.listening.strategy));
+const ltypes = new Set(PG.LESSONS.flatMap((l) => l.listening.types));
+ok("all twelve listening question types are taught", ltypes.size === 12, [...ltypes].join(", "));
+ok("all four listening parts are taught every year", [1, 2].every((y) => [1, 2, 3, 4].every((s) => PG.LESSONS.some((l) => l.year === y && l.listening.section === s))));
+const mocks = PG.LESSONS.filter((l) => l.mock).map((l) => l.n);
+ok("a mock at least every 7 lessons after the diagnostic", mocks[0] === 1 && mocks.every((n, i) => i === 0 || n - mocks[i - 1] <= 7) && 100 - mocks[mocks.length - 1] <= 3, mocks.join(","));
+ok("the debate strand only moves forward", PG.LESSONS.every((l, i) => i === 0 || l.debate >= PG.LESSONS[i - 1].debate));
+ok("each motion bank has 12 motions; formal motions start 'This House'", Object.entries(PG.MOTIONS).every(([st, ms]) => ms.length === 12 && (st < "3" || ms.every((m) => /^This House /.test(m)))));
+ok("targets are targets: the honest note says no band is guaranteed", PG.HONEST_NOTE.some((t) => /guarantee/i.test(t)) && PG.TERMS.every((t) => t.expected && t.stretch));
+const R = await load("src/lib/lessonDecks/ieltsRubric.ts", "ld-rubric");
+eq("speaking band: mean of four, .25 and .75 round up", [R.speakingBand(6, 6, 6, 7), R.speakingBand(6, 6, 7, 7), R.speakingBand(6, 7, 7, 7), R.speakingBand(5, 5, 5, 5), R.speakingBand(5.5, 6, 6, 6)], [6.5, 6.5, 7, 5, null]);
+eq("listening band from a raw score", [R.listeningBand(40), R.listeningBand(30), R.listeningBand(29), R.listeningBand(16), R.listeningBand(10, 20), R.listeningBand(41)], [9, 7, 6.5, 5, 5.5, null]);
+ok("the rubric covers four criteria at four bands", R.RUBRIC.length === 4 && R.RUBRIC.every((r) => r.bands.length === 4));
 
 console.log("decks in src/content/lessonDecks");
 const contentDir = resolve(repo, "src/content/lessonDecks");
@@ -127,17 +154,27 @@ for (const { f, u } of units) {
   const texts = JSON.stringify(u);
   ok(`${f}: no stray slot beyond {s9} or malformed token`, !/\{s(?:0|[1-9]\d)\}|\{s\}/.test(texts));
   ok(`${f}: lessons numbered 1..n in order`, u.decks.every((d, i) => d.lesson === i + 1));
+  const rule = CU.ruleFor(u.curriculum);
+  ok(`${f}: a known course (curricula.ts)`, !!rule && u.decks.every((d) => d.curriculum === u.curriculum), u.curriculum);
+  if (!rule) continue;
   for (const d of u.decks) {
     ok(`${d.id}: unique id`, !allIds.has(d.id)); allIds.add(d.id);
-    ok(`${d.id}: fits a 90-minute class`, d.minutes > 0 && d.minutes <= 90);
+    ok(`${d.id}: fits a ${rule.maxMinutes}-minute class`, d.minutes > 0 && d.minutes <= rule.maxMinutes);
     const timed = d.slides.filter((s) => typeof s.minutes === "number").reduce((a, s) => a + s.minutes, 0);
     ok(`${d.id}: timed activities add up to the lesson (${timed} of ${d.minutes})`, timed <= d.minutes && timed >= d.minutes - 15);
-    ok(`${d.id}: names the Student Book or Workbook pages it covers`, d.book.length > 0 && d.book.every((b) => b.pages));
+    if (rule.citesBook) ok(`${d.id}: names the Student Book or Workbook pages it covers`, d.book.length > 0 && d.book.every((b) => b.pages));
     ok(`${d.id}: has a speaking activity`, d.slides.some((s) => s.kind === "speaking" || (s.kind === "activity" && s.tag === "Speaking")));
     ok(`${d.id}: supplementary links point only at the publisher's own resource pages`,
       (d.resources ?? []).every((r) => /^https:\/\/www\.twinkl\.com\/resource\/[a-z0-9-]+$/.test(r.url) && r.title && r.use));
     const LESSONS = d.curriculum === "reach-higher" ? C2.REACH_HIGHER_BLOCKS : ["Big Question", "Get Ready", "Read", "Understand", "Communicate", "Wrap Up"];
-    ok(`${d.id}: says which book lesson it covers`, !!d.covers && Number.isInteger(d.covers.unitFrom) && LESSONS.includes(d.covers.lesson));
+    if (rule.coversBookLesson) ok(`${d.id}: says which book lesson it covers`, !!d.covers && Number.isInteger(d.covers.unitFrom) && LESSONS.includes(d.covers.lesson));
+    if (u.curriculum === "hec-ielts-sl") {
+      const term = PG.TERMS.find((t) => t.year === d.level && t.term === d.unit);
+      const row = term && PG.LESSONS.find((l) => l.n === term.from + d.lesson - 1);
+      ok(`${d.id}: has its row in the Sun Class pacing guide`, !!row);
+      const probs = IR.deckProblems(d, row);
+      ok(`${d.id}: keeps the Sun Class lesson rules (scripts/lesson-decks/ielts-rules.mjs)`, probs.length === 0, probs.join("; "));
+    }
     ok(`${d.id}: same course book as its unit`, d.curriculum === u.curriculum && d.level === u.level && d.unit === u.unit);
     // Exam practice: every item has an answer, multiple choice has 2-4 options and the
     // answer names one of them, and the minutes count like any timed slide.
@@ -161,6 +198,15 @@ for (const { f, u } of units) {
     eq(`${f}: one deck per Reach Higher block, in book order`, u.decks.map((d) => d.covers?.lesson), C2.REACH_HIGHER_BLOCKS);
     ok(`${f}: 5-9 teacher generalizations`, u.generalizations.length >= 5 && u.generalizations.length <= 9);
     ok(`${f}: the grammar strand points at real lessons`, (u.grammarStrand ?? []).length > 0 && u.grammarStrand.every((g) => g.lesson >= 1 && g.lesson <= u.decks.length));
+  }
+  if (u.curriculum === "hec-ielts-sl") {
+    const term = PG.TERMS.find((t) => t.year === u.level && t.term === u.unit);
+    ok(`${f}: holds the whole term (${term ? term.to - term.from + 1 : "?"} lessons)`, !!term && u.decks.length === term.to - term.from + 1);
+    for (const a of u.assessments ?? []) {
+      const probs = IR.assessmentProblems(a);
+      ok(`${a.id}: a Sun Class mock with listening scripts and the four criteria`, probs.length === 0, probs.join("; "));
+    }
+    ok(`${f}: every check slide names one of the term's assessments`, u.decks.every((d) => d.slides.filter((s) => s.kind === "check").every((s) => (u.assessments ?? []).some((a) => a.id === s.assessment))));
   }
 }
 

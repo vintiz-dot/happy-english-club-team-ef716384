@@ -1,6 +1,7 @@
 // Every unit with lesson decks. Add a unit file next to this one and list it here;
 // scripts/pgtest/lesson-decks-lib.test.mjs checks each one.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { unitLabel as courseUnitLabel } from "@/lib/lessonDecks/curricula";
 import { odL1U1 } from "./od2e-l1-u01";
 import { odL1U2 } from "./od2e-l1-u02";
 import { odL1U3 } from "./od2e-l1-u03";
@@ -46,6 +47,7 @@ import { odL3U15 } from "./od2e-l3-u15";
 import { odL3U16 } from "./od2e-l3-u16";
 import { odL3U17 } from "./od2e-l3-u17";
 import { odL3U18 } from "./od2e-l3-u18";
+import { hecIeltsY1T1 } from "./hec-ielts-y1-t1";
 
 export const UNITS: Unit[] = [
   odL1U1,
@@ -93,14 +95,15 @@ export const UNITS: Unit[] = [
   odL3U18,
   rhL3U2,
   rhL3U3,
+  hecIeltsY1T1,
 ];
 
 // Oxford Discover keys stay as they were ("L3 U12"); Reach Higher's are prefixed so
 // the two books' unit numbers never collide.
 export const unitKey = (u: Pick<Unit, "level" | "unit"> & { curriculum?: Unit["curriculum"] }) =>
-  `${u.curriculum === "reach-higher" ? "RH " : ""}L${u.level} U${u.unit}`;
+  `${u.curriculum === "reach-higher" ? "RH " : u.curriculum === "hec-ielts-sl" ? "IELTS " : ""}L${u.level} U${u.unit}`;
 
 export const unitLabel = (u: Pick<Unit, "curriculum" | "level" | "unit" | "title" | "book">) =>
   u.curriculum === "reach-higher"
     ? `Reach Higher ${u.book ?? u.level} · Unit ${u.unit}: ${u.title}`
-    : `Oxford Discover ${u.level} · Unit ${u.unit}: ${u.title}`;
+    : courseUnitLabel(u);

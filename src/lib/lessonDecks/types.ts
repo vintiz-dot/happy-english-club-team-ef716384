@@ -20,7 +20,6 @@ export type Mode = "whole" | "pairs" | "groups" | "solo";
 
 // Course books with decks. Reach Higher (National Geographic Learning) is used by
 // Jupiter; its decks cite pages and selections only, like Oxford Discover's.
-export type Curriculum = "oxford-discover-2e" | "reach-higher";
 
 // The course book lesson a deck teaches, by name (public.curriculum_lessons.lesson).
 // Oxford Discover: one per book lesson. Reach Higher: the unit split into its
@@ -37,6 +36,20 @@ export type ExamFormat =
   | "multiple choice" | "rewrite" | "error" | "cloze" | "word form" | "dialogue"
   | "sounds" | "cues" | "question" | "reading" | "paragraph";
 export type ExamItem = { q: string; options?: string[]; answer: string; why?: string };
+// Courses the decks are written for. Rules that differ per course (lesson length,
+// whether a deck cites course-book pages) live in CURRICULA in ./curricula.ts.
+//   oxford-discover-2e: the school's Oxford Discover classes, 90-minute lessons.
+//   reach-higher: Jupiter's Reach Higher decks (see above).
+//   hec-ielts-sl: HEC's own IELTS Speaking + Listening course (Sun Class), 120-minute
+//     lessons; `level` is the year (1-2) and `unit` the term (1-8).
+export type Curriculum = "oxford-discover-2e" | "reach-higher" | "hec-ielts-sl";
+
+/** The three levels every differentiated task offers. */
+export type TierLevel = "Support" | "Core" | "Stretch";
+export type Tier = { level: TierLevel; task: string; frames?: string[] };
+
+/** One line of an original listening script, read aloud by the browser. */
+export type ScriptLine = { speaker: string; text: string };
 
 export type Thinking = "Create" | "Design" | "Evaluate" | "Argue" | "Compare and justify";
 
@@ -55,7 +68,7 @@ export type Slide =
   | {
       kind: "activity";
       title: string;
-      tag?: "Warm-up" | "Vocabulary" | "Reading" | "Listening" | "Grammar" | "Speaking" | "Writing" | "Game" | "Phonics" | "Review" | "Cool-down";
+      tag?: "Warm-up" | "Vocabulary" | "Reading" | "Listening" | "Grammar" | "Speaking" | "Writing" | "Game" | "Phonics" | "Review" | "Cool-down" | "Pronunciation" | "Debate";
       mode: Mode;
       minutes: number;
       steps: string[];
@@ -64,6 +77,7 @@ export type Slide =
       fluencyTip?: string;
       book?: BookRef;
       teacherNote?: string;
+      tiers?: Tier[]; // Support / Core / Stretch versions of the task
     }
   | { kind: "vocab"; title?: string; words: { word: string; meaning: string; example: string }[]; book?: BookRef }
   | {
@@ -87,9 +101,19 @@ export type Slide =
       steps?: string[];
       book?: BookRef; // the Student Book activity this talk is built on
       teacherNote?: string;
+      tiers?: Tier[];
+      // An IELTS Speaking part: the cue card for Part 2, the timings, and whether
+      // listeners score the speaker on the HEC peer rubric (ieltsRubric.ts).
+      ielts?: { part: 1 | 2 | 3; cueCard?: { topic: string; points: string[] }; prepSeconds?: number; speakSeconds?: number; peerScore?: boolean };
     }
   | { kind: "book"; title?: string; ref: BookRef; steps?: string[] }
-  | { kind: "homework"; title?: string; items: { label: string; detail: string; book?: BookRef }[] }
+  | {
+      kind: "homework";
+      title?: string;
+      // `minutes` is the time a WEEK the item takes; `tier` says who it is for
+      // (left out: everyone). The slide adds up each tier's week.
+      items: { label: string; detail: string; book?: BookRef; minutes?: number; tier?: TierLevel }[];
+    }
   | {
       kind: "project";
       project: "writing" | "speaking";
@@ -112,6 +136,37 @@ export type Slide =
       tiers: { level: "Support" | "Core" | "Stretch"; who: string; frames: string[]; tips: string[] }[];
     }
   | { kind: "reflect"; title?: string; prompts: string[] }
+  | {
+      // A listening block: an ORIGINAL script the browser reads aloud (a voice per
+      // speaker), the strategy taught before it, questions in the test's formats,
+      // and a decoding focus on connected speech. Script and answers stay folded
+      // until the teacher opens them.
+      kind: "listening";
+      title: string;
+      section: 1 | 2 | 3 | 4; // the IELTS Listening part the recording is modelled on
+      mode: Mode;
+      minutes: number;
+      context: string; // what students are told before it starts, as in the test
+      strategy: { name: string; steps: string[] };
+      script: ScriptLine[];
+      questions: { type: string; instructions: string; items: Item[] };
+      decoding?: { phrase: string; sounds: string }[]; // what a chunk sounds like at speed
+      tiers: Tier[];
+    }
+  | {
+      // A debate or structured discussion. `speeches` is the running order.
+      kind: "debate";
+      title: string;
+      mode: Mode;
+      minutes: number;
+      stage: string; // where the debate strand is (hec-ielts/programme.ts DebateStage)
+      motion: string;
+      speeches: { role: string; seconds: number; job: string }[];
+      steps: string[];
+      frames: string[];
+      tiers: Tier[];
+      judging?: string[]; // what the judges listen for
+    }
   | {
       // Creative homework: a higher-order task (create, evaluate, design, argue)
       // using the lesson's words and grammar. `variants` are the same task built
@@ -162,9 +217,10 @@ export type Worksheet = {
 
 export type AssessmentSection = {
   title: string;
-  skill: "Vocabulary" | "Grammar" | "Reading" | "Writing" | "Speaking";
+  skill: "Vocabulary" | "Grammar" | "Reading" | "Writing" | "Speaking" | "Listening";
   instructions: string;
   passage?: string; // an original text (never the book's)
+  script?: ScriptLine[]; // a listening section's original script: read aloud, printed only with the answers
   items: Item[];
   marksEach: number;
 };
@@ -205,7 +261,7 @@ export type Deck = {
   unit: number;
   lesson: number; // 1-based order within the unit
   title: string;
-  minutes: number; // planned length (a class is 90)
+  minutes: number; // planned length (Oxford Discover 90, IELTS 120: curricula.ts)
   inquiryPhases: ("Engage" | "Focus" | "Investigate" | "Organize" | "Generalize" | "Transfer" | "Reflect")[];
   book: BookRef[]; // every SB / WB page this lesson covers
   // The course book lesson this deck teaches (a row of public.curriculum_lessons).

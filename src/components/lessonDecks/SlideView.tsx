@@ -1,8 +1,9 @@
 import { createContext, useContext } from "react";
 import { ExamSlide } from "./ExamSlide";
-import type { Assessment, BookRef, CreativeTask, Deck, Mode, Slide, Unit } from "@/lib/lessonDecks/types";
+import type { Assessment, BookRef, CreativeTask, Deck, Mode, ScriptLine, Slide, Tier, TierLevel, Unit } from "@/lib/lessonDecks/types";
 import type { FlipTarget } from "@/lib/lessonDecks/bookPages";
-import { BookOpen, Clock, Users, User, UsersRound, Presentation, Mic, PenLine, Video, Lightbulb, AlertTriangle, CheckCircle2, Home, Target, Sparkles, Volume2, Headphones, ExternalLink, FileText, ClipboardCheck, Trophy, Rocket } from "lucide-react";
+import { RUBRIC, PEER_STEPS } from "@/lib/lessonDecks/ieltsRubric";
+import { BookOpen, Clock, Users, User, UsersRound, Presentation, Mic, PenLine, Video, Lightbulb, AlertTriangle, CheckCircle2, Home, Target, Sparkles, Volume2, Headphones, ExternalLink, FileText, ClipboardCheck, Trophy, Rocket, Scale, Play, Turtle } from "lucide-react";
 
 /**
  * What a slide may use besides its own content. The player fills all of it; a
@@ -12,6 +13,7 @@ export type SlideCtx = {
   unit?: Unit;
   deck?: Deck;
   speak?: (text: string) => void;
+  speakScript?: (lines: ScriptLine[], opts?: { slow?: boolean }) => void;
   bookTarget?: (ref: BookRef) => FlipTarget;
   openBook?: (ref: BookRef) => void;
   openWorksheet?: (id: string) => void;
@@ -160,6 +162,77 @@ function TaskCard({ task, tone, label }: { task: CreativeTask; tone: "core" | "v
   );
 }
 
+const TIER_TONE: Record<TierLevel, string> = {
+  Support: "bg-sky-50 dark:bg-sky-950/40",
+  Core: "bg-emerald-50 dark:bg-emerald-950/40",
+  Stretch: "bg-amber-50 dark:bg-amber-950/40",
+};
+
+/** Support / Core / Stretch side by side. */
+function Tiers({ tiers }: { tiers?: Tier[] }) {
+  if (!tiers?.length) return null;
+  return (
+    <div className="grid gap-3 md:grid-cols-3">
+      {tiers.map((t) => (
+        <div key={t.level} className={`rounded-2xl p-4 ${TIER_TONE[t.level]}`}>
+          <p className="text-lg font-semibold text-hec-ink">{t.level === "Support" ? "★" : t.level === "Core" ? "★★" : "★★★"} {t.level}</p>
+          <p className="text-base text-hec-ink">{t.task}</p>
+          {t.frames?.length ? <ul className="mt-2 list-disc space-y-0.5 pl-5 text-base text-hec-ink">{t.frames.map((f, i) => <li key={i}>{f}<Say text={f} /></li>)}</ul> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Play buttons for an original listening script: normal speed and slower (Support). */
+function PlayScript({ lines }: { lines: ScriptLine[] }) {
+  const { speakScript } = useContext(SlideContext);
+  if (!speakScript) return null;
+  return (
+    <div className="flex flex-wrap gap-2 print:hidden">
+      <button type="button" onClick={() => speakScript(lines, { slow: false })} className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-lg font-semibold text-white hover:bg-sky-700">
+        <Play className="h-5 w-5" />Play the recording
+      </button>
+      <button type="button" onClick={() => speakScript(lines, { slow: true })} className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-2 text-lg font-medium text-sky-900 hover:bg-sky-200 dark:bg-sky-900/50 dark:text-sky-100">
+        <Turtle className="h-5 w-5" />Slower (Support)
+      </button>
+    </div>
+  );
+}
+
+function Script({ lines, label = "Script (teacher)" }: { lines: ScriptLine[]; label?: string }) {
+  return (
+    <details className="rounded-xl border border-hec-line p-3 text-base text-hec-ink">
+      <summary className="cursor-pointer text-hec-ink-soft">{label}</summary>
+      <div className="mt-2 space-y-1">{lines.map((l, i) => <p key={i}><strong>{l.speaker}:</strong> {l.text}</p>)}</div>
+    </details>
+  );
+}
+
+/** The HEC peer rubric (a paraphrase of the public descriptors' shape, not the official text). */
+function PeerRubric() {
+  return (
+    <details className="rounded-2xl border border-hec-line bg-hec-surface p-4">
+      <summary className="cursor-pointer text-lg font-semibold text-hec-ink">Peer scoring: what each band sounds like</summary>
+      <ol className="mt-2 list-decimal space-y-0.5 pl-6 text-base text-hec-ink">{PEER_STEPS.map((s, i) => <li key={i}>{s}</li>)}</ol>
+      <table className="mt-3 w-full border-collapse text-sm text-hec-ink">
+        <thead><tr><th className="border border-hec-line p-1 text-left">Criterion</th>{RUBRIC[0].bands.map((b) => <th key={b.band} className="border border-hec-line p-1">Band {b.band}</th>)}</tr></thead>
+        <tbody>
+          {RUBRIC.map((r) => (
+            <tr key={r.criterion}>
+              <td className="border border-hec-line p-1 align-top"><strong>{r.criterion}</strong><br /><span className="text-hec-ink-soft">{r.listenFor}</span></td>
+              {r.bands.map((b) => <td key={b.band} className="border border-hec-line p-1 align-top">{b.sounds}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="mt-2 text-xs text-hec-ink-soft">HEC's own wording, based on the public IELTS Speaking band descriptors. A class estimate, not an official band.</p>
+    </details>
+  );
+}
+
+const mmss = (s: number) => (s >= 60 ? `${Math.floor(s / 60)} min${s % 60 ? ` ${s % 60} s` : ""}` : `${s} s`);
+
 function CheckItems({ a }: { a: Assessment }) {
   return (
     <div className="space-y-4">
@@ -167,6 +240,7 @@ function CheckItems({ a }: { a: Assessment }) {
         <div key={si} className="rounded-2xl border border-hec-line bg-hec-surface p-4">
           <p className="text-lg font-semibold text-hec-ink">{sec.title}</p>
           <p className="mb-2 text-base text-hec-ink-soft">{sec.instructions}</p>
+          {sec.script?.length ? <div className="mb-2 space-y-2"><PlayScript lines={sec.script} /><Script lines={sec.script} /></div> : null}
           <ol className="list-decimal pl-6 space-y-1 text-xl text-hec-ink">
             {sec.items.map((it, i) => (
               <li key={i}>{it.q}{it.options?.length ? <span className="text-hec-ink-soft"> ({it.options.join(" / ")})</span> : null}</li>
@@ -234,6 +308,7 @@ function SlideBody({ slide }: { slide: Slide }) {
             </div>
           ) : null}
           {slide.fluencyTip && <p className="text-xl text-hec-ink"><strong>Fluency tip:</strong> {slide.fluencyTip}</p>}
+          <Tiers tiers={slide.tiers} />
           {slide.teacherNote && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
         </div>
       );
@@ -296,7 +371,20 @@ function SlideBody({ slide }: { slide: Slide }) {
       return (
         <div className="space-y-6">
           <H Icon={Mic}>{slide.title}</H>
-          <Meta tag="Speaking" mode={slide.mode} minutes={slide.minutes} book={slide.book} />
+          <Meta tag={slide.ielts ? `IELTS Speaking Part ${slide.ielts.part}` : "Speaking"} mode={slide.mode} minutes={slide.minutes} book={slide.book} />
+          {slide.ielts && (slide.ielts.prepSeconds || slide.ielts.speakSeconds) ? (
+            <div className="flex flex-wrap gap-2">
+              {slide.ielts.prepSeconds ? <Chip tone="accent"><Clock className="h-4 w-4" />Prepare {mmss(slide.ielts.prepSeconds)}</Chip> : null}
+              {slide.ielts.speakSeconds ? <Chip tone="accent"><Mic className="h-4 w-4" />Speak {mmss(slide.ielts.speakSeconds)}</Chip> : null}
+            </div>
+          ) : null}
+          {slide.ielts?.cueCard && (
+            <div className="rounded-2xl border-4 border-double border-hec-line bg-white p-5 text-gray-900 dark:bg-hec-surface dark:text-hec-ink">
+              <p className="text-2xl font-semibold">{slide.ielts.cueCard.topic}<Say text={slide.ielts.cueCard.topic} /></p>
+              <p className="mt-2 text-lg">You should say:</p>
+              <ul className="list-disc pl-7 text-xl">{slide.ielts.cueCard.points.map((p, i) => <li key={i}>{p}</li>)}</ul>
+            </div>
+          )}
           {slide.steps?.length ? <List items={slide.steps} ordered /> : null}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-5">
@@ -309,6 +397,8 @@ function SlideBody({ slide }: { slide: Slide }) {
             </div>
           </div>
           {slide.fluencyTip && <p className="text-xl text-hec-ink"><strong>Fluency tip:</strong> {slide.fluencyTip}</p>}
+          <Tiers tiers={slide.tiers} />
+          {slide.ielts?.peerScore && <PeerRubric />}
           {slide.teacherNote && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
         </div>
       );
@@ -328,12 +418,81 @@ function SlideBody({ slide }: { slide: Slide }) {
           <div className="space-y-4">
             {slide.items.map((h, i) => (
               <div key={i} className="rounded-2xl border border-hec-line bg-hec-surface p-4">
-                <p className="text-2xl font-semibold text-hec-ink">{h.label}</p>
+                <p className="flex flex-wrap items-center gap-2 text-2xl font-semibold text-hec-ink">
+                  {h.label}
+                  {h.tier && <Chip>{h.tier}</Chip>}
+                  {h.minutes ? <Chip><Clock className="h-4 w-4" />{h.minutes} min a week</Chip> : null}
+                </p>
                 <p className="text-lg text-hec-ink">{h.detail}</p>
                 {h.book && <div className="mt-2 flex flex-wrap gap-2"><BookChip b={h.book} /></div>}
               </div>
             ))}
           </div>
+          {slide.items.some((h) => h.minutes) && (
+            <p className="text-lg text-hec-ink-soft">
+              Time this week:{" "}
+              {(["Support", "Core", "Stretch"] as const).map((lv) => `${lv} ${slide.items.filter((h) => !h.tier || h.tier === lv).reduce((a, h) => a + (h.minutes ?? 0), 0)} min`).join(" · ")}
+            </p>
+          )}
+        </div>
+      );
+    case "listening":
+      return (
+        <div className="space-y-5">
+          <H Icon={Headphones}>{slide.title}</H>
+          <Meta tag={`Listening Part ${slide.section}`} mode={slide.mode} minutes={slide.minutes} />
+          <p className="text-xl text-hec-ink">{slide.context}</p>
+          <div className="rounded-2xl bg-violet-50 p-4 dark:bg-violet-950/40">
+            <p className="mb-1 text-sm uppercase tracking-widest text-violet-800 dark:text-violet-200">Strategy: {slide.strategy.name}</p>
+            <List items={slide.strategy.steps} ordered />
+          </div>
+          <PlayScript lines={slide.script} />
+          <div className="rounded-2xl border border-hec-line bg-hec-surface p-4">
+            <p className="text-lg font-semibold text-hec-ink">{slide.questions.type}</p>
+            <p className="mb-2 text-base text-hec-ink-soft">{slide.questions.instructions}</p>
+            <ol className="list-decimal space-y-1 pl-6 text-xl text-hec-ink">
+              {slide.questions.items.map((it, i) => <li key={i}>{it.q}{it.options?.length ? <span className="text-hec-ink-soft"> ({it.options.join(" / ")})</span> : null}</li>)}
+            </ol>
+            <details className="mt-2 text-base text-hec-ink-soft print:hidden">
+              <summary className="cursor-pointer">Answers (teacher)</summary>
+              <ol className="list-decimal pl-6">{slide.questions.items.map((it, i) => <li key={i}>{it.answer}</li>)}</ol>
+            </details>
+          </div>
+          {slide.decoding?.length ? (
+            <div className="rounded-2xl bg-rose-50 p-4 dark:bg-rose-950/40">
+              <p className="mb-1 text-sm uppercase tracking-widest text-rose-800 dark:text-rose-200">Decoding: how it sounds at speed</p>
+              <ul className="space-y-1 text-lg text-hec-ink">{slide.decoding.map((d, i) => <li key={i}><strong>{d.phrase}</strong><Say text={d.phrase} /> → {d.sounds}</li>)}</ul>
+            </div>
+          ) : null}
+          <Tiers tiers={slide.tiers} />
+          <Script lines={slide.script} />
+        </div>
+      );
+    case "debate":
+      return (
+        <div className="space-y-5">
+          <H Icon={Scale}>{slide.title}</H>
+          <Meta tag="Debate" mode={slide.mode} minutes={slide.minutes} />
+          <Chip tone="accent">Stage {slide.stage}</Chip>
+          <p className="rounded-2xl bg-amber-100 px-6 py-4 text-3xl font-medium text-amber-950 dark:bg-amber-900/40 dark:text-amber-50">{slide.motion}<Say text={slide.motion} /></p>
+          <List items={slide.steps} ordered />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-hec-line bg-hec-surface p-4">
+              <p className="mb-2 text-sm uppercase tracking-widest text-hec-ink-soft">Running order</p>
+              <ol className="list-decimal space-y-1 pl-6 text-lg text-hec-ink">{slide.speeches.map((s, i) => <li key={i}><strong>{s.role}</strong> ({mmss(s.seconds)}): {s.job}</li>)}</ol>
+            </div>
+            <div className="rounded-2xl bg-emerald-50 p-4 dark:bg-emerald-950/40">
+              <p className="mb-2 text-sm uppercase tracking-widest text-emerald-800 dark:text-emerald-200">Say it like this</p>
+              <List items={slide.frames} say />
+            </div>
+          </div>
+          <Tiers tiers={slide.tiers} />
+          {slide.judging?.length ? (
+            <div className="rounded-2xl border-2 border-dashed border-hec-line p-4">
+              <p className="mb-1 text-sm uppercase tracking-widest text-hec-ink-soft">Judges listen for</p>
+              <List items={slide.judging} />
+            </div>
+          ) : null}
         </div>
       );
     case "project":
@@ -472,6 +631,12 @@ export function AssessmentView({ a, answers }: { a: Assessment; answers: boolean
           <h3 className="text-xl font-semibold">{si + 1}. {s.title} <span className="text-base font-normal text-hec-ink-soft">({s.items.length * s.marksEach} marks)</span></h3>
           {!answers && <p className="text-base">{s.instructions}</p>}
           {!answers && s.passage && <p className="rounded-xl border border-hec-line p-3 text-lg leading-relaxed">{s.passage}</p>}
+          {answers && s.script?.length ? (
+            <div className="space-y-0.5 rounded-xl border border-hec-line p-3 text-sm">
+              <p className="font-semibold">Recording script</p>
+              {s.script.map((l, i) => <p key={i}><strong>{l.speaker}:</strong> {l.text}</p>)}
+            </div>
+          ) : null}
           <ol className="list-decimal space-y-2 pl-7 text-lg">
             {s.items.map((it, i) => (
               <li key={i}>
