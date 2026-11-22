@@ -294,9 +294,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
         api.rpc("lesson_monitor_save_report", {"p_recording": rid, "p_job_version": pc.JOB_VERSION, "p_body": body,
                                                "p_audio_seconds": audio_s, "p_processing_seconds": proc_s})
         pc.log(f"{rid} report saved for the lesson's teacher")
-        # The class report is NOT requested from here: this laptop is signed in as an admin, who cannot read the
-        # transcript, so a draft built here would have none. The app builds it as the lesson's teacher the next time
-        # they open it (src/hooks/useLessonReportCue.ts) and cues them.
+        request_lesson_report(api, row)
         return "saved"
     except ApiError as e:
         if e.status in (0, 401):
@@ -305,6 +303,24 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             return "draft"
         pc.log(f"{rid} refused by the database: {e.message}; nothing kept")
         return "refused"
+
+
+def request_lesson_report(api, row: dict) -> None:
+    """Right after the transcript is saved, ask lesson-report-draft for this lesson's class report. The laptop is
+    signed in as an admin, who cannot read the transcript through RLS, so the request says from_monitor: the
+    function then reads this lesson's own monitor transcript itself (owner's ruling, 22 Nov 2026: no teacher needs
+    to be present). Best effort: logs a status code only, never content; a refusal (already approved, a draft is
+    being built, 6 builds today) or an outage changes nothing here, and the teacher's page builds it if missing."""
+    call = getattr(api, "function", None)
+    sid = row.get("session_id")
+    if call is None or not sid:
+        return
+    rid = row.get("recording_id", "")
+    try:
+        call("lesson-report-draft", {"session_id": sid, "from_monitor": True})
+        pc.log(f"{rid} lesson report draft requested")
+    except Exception as e:  # noqa: BLE001 - never let the report request fail the run
+        pc.log(f"{rid} lesson report draft not requested (HTTP {getattr(e, 'status', 0)})")
 
 
 def upload_drafts(api) -> dict:

@@ -37,5 +37,12 @@ ok("no key: SonnetUnavailable (quiet fallback)", unavailable);
 const fn = rd("supabase/functions/analyze-transcript/index.ts");
 ok("analyze-transcript tries Sonnet inside openaiJson, before the OpenAI fetch", fn.indexOf("sonnetJsonFromChat(body") > 0 && fn.indexOf("sonnetJsonFromChat(body") < fn.indexOf("api.openai.com/v1/chat/completions"));
 
+// Instant class report (owner, 22 Nov 2026): the laptop asks for the draft with from_monitor right after saving a
+// transcript, and only an admin caller of a lesson that HAS a monitor report gets the service-key read.
+const ld = rd("supabase/functions/lesson-report-draft/index.ts"), ny = rd("scripts/lesson-monitor/nightly.py");
+ok("laptop requests the draft with from_monitor after saving", /"from_monitor": True/.test(ny) && /lesson_monitor_save_report[\s\S]*request_lesson_report\(api, row\)/.test(ny));
+ok("service-key transcript read needs admin-only + from_monitor + no transcript via RLS", /!monitorBody && isAdminOnly && fromMonitor/.test(ld));
+ok("service-key read is one lesson's report only", /from\("lesson_monitor_reports"\)\.select\("body"\)\.eq\("session_id", sid\)/.test(ld));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

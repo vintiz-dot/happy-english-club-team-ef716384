@@ -94,7 +94,7 @@ async function readWorkFile(asCaller: SupabaseClient, token: string, path: strin
 
 const hanoiDate = (iso: string) => new Date(new Date(iso).getTime() + 7 * 3600_000).toISOString().slice(0, 10);
 
-async function build(asCaller: SupabaseClient, token: string, session: any, isAdminOnly: boolean) {
+async function build(asCaller: SupabaseClient, token: string, session: any, isAdminOnly: boolean, fromMonitor = false) {
   const sid = session.id as string, cls = session.class_id as string, date = session.date as string;
   const win = lessonWindow(date, String(session.start_time), String(session.end_time));
   const since = new Date(new Date(`${date}T00:00:00+07:00`).getTime() - 30 * 86400_000).toISOString();
@@ -160,7 +160,17 @@ async function build(asCaller: SupabaseClient, token: string, session: any, isAd
 
   // The transcript: only the lesson's own teacher can read it (RLS). Anyone
   // else builds without it, and the draft says why.
-  const monitorBody = monitor.error ? null : monitor.data?.[0]?.body ?? null;
+  let monitorBody = monitor.error ? null : monitor.data?.[0]?.body ?? null;
+  // Owner's ruling, 22 Nov 2026: the class report is drafted the moment the school laptop hands a transcript over,
+  // with no teacher present. The laptop signs in as an admin, who cannot read the transcript through RLS, so for
+  // this one call (an admin, asking for a lesson that HAS a monitor report) the transcript is read with the
+  // service key, for this lesson only. Nothing else about the caller's reach changes.
+  if (!monitorBody && isAdminOnly && fromMonitor) {
+    const svc = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+    const { data: viaService } = await svc.from("lesson_monitor_reports").select("body").eq("session_id", sid)
+      .order("made_at", { ascending: false }).limit(1);
+    monitorBody = viaService?.[0]?.body ?? null;
+  }
   const lines = monitorBody ? readTranscript(monitorBody) : null;
   const transcript = lines && lines.length ? lines : null;
   const transcriptNote = transcript ? null
@@ -224,7 +234,7 @@ Deno.serve(async (req) => {
   if (spender instanceof Response) return spender;
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
-  let input: { session_id?: string; redo?: boolean };
+  let input: { session_id?: string; redo?: boolean; from_monitor?: boolean };
   try { input = await req.json(); } catch { return json({ error: "Body must be JSON" }, 400); }
   const sessionId = String(input?.session_id ?? "");
   if (!UUID_RE.test(sessionId)) return json({ error: "session_id is required" }, 400);
@@ -255,7 +265,7 @@ Deno.serve(async (req) => {
 
   const job = (async () => {
     try {
-      const out = await build(asCaller, token, session, isAdminOnly);
+      const out = await build(asCaller, token, session, isAdminOnly, input?.from_monitor === true);
       const { data: saved, error } = await asCaller.rpc("lesson_report_finish", {
         p_session: sessionId, p_run: run, p_body: out.body, p_model: out.model, p_usage: out.usage, p_error: null,
       });
