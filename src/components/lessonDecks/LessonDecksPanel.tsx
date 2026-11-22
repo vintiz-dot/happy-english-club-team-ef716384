@@ -231,7 +231,8 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                       <TableCell className="text-hec-small">{a.covers.slice(0, 3).join(" · ")}…</TableCell>
                       <TableCell className="text-hec-small">Assess</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
-                        <Button size="sm" variant="outline" onClick={() => printAssessment(a)}><Printer className="h-4 w-4" />Test + key + rubric</Button>
+                        <Button size="sm" variant="outline" onClick={() => printAssessment(a, "teacher")} title="The paper, then the answer key, scripts and marking rubric"><Printer className="h-4 w-4" />Teacher copy</Button>
+                        <Button size="sm" variant="outline" className="ml-1" onClick={() => printAssessment(a, "student")} title="The paper only: no answers"><Printer className="h-4 w-4" />Student copy</Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -254,21 +255,34 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                       <div className="flex flex-wrap justify-end gap-1">
                         <Button size="sm" onClick={() => present(d, unit)}><Play className="h-4 w-4" />Present</Button>
                         {g && <Button size="sm" variant="outline" onClick={() => present(g, unit)} title="The grammar of this lesson on its own"><Lightbulb className="h-4 w-4" />Grammar only</Button>}
-                        <Button size="sm" variant="outline" onClick={() => printDeck(d, names, unit)} title="Print or save the deck as PDF"><Printer className="h-4 w-4" /></Button>
+                        <Button size="sm" variant="outline" onClick={() => printDeck(d, names, unit, "teacher")} title="Teacher copy: answers, scripts and teacher notes printed open"><Printer className="h-4 w-4" />Teacher</Button>
+                        <Button size="sm" variant="outline" onClick={() => printDeck(d, names, unit, "student")} title="Student copy: no answers, scripts or teacher notes"><Printer className="h-4 w-4" />Student</Button>
                         {hw && (
                           <Button size="sm" variant="outline" title="One sheet per child present today, each with their own version"
                             onClick={() => {
                               if (!presentKids) { toast.error(NO_ATTENDANCE); return; }
-                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {});
+                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {}, "student");
                             }}>
                             <PenLine className="h-4 w-4" />Homework sheets
+                          </Button>
+                        )}
+                        {hw && (
+                          <Button size="sm" variant="outline" title="Who gets which version, and one copy of each version"
+                            onClick={() => {
+                              if (!presentKids) { toast.error(NO_ATTENDANCE); return; }
+                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {}, "teacher");
+                            }}>
+                            <PenLine className="h-4 w-4" />Homework (teacher)
                           </Button>
                         )}
                         {hw && classId && <SetHomework classId={classId} title={hw.title} body={hw.body} due={paced[k + 1]?.date ?? null}
                           present={presentKids} enrolled={roster.data?.enrolled.length ?? 0} />}
                       </div>
                       {checks.map((a) => (
-                        <Button key={a!.id} size="sm" variant="ghost" className="mt-1" onClick={() => printAssessment(a!)}><ClipboardCheck className="h-4 w-4" />Print quick check</Button>
+                        <span key={a!.id} className="mt-1 inline-flex flex-wrap justify-end gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => printAssessment(a!, "teacher")}><ClipboardCheck className="h-4 w-4" />Check: teacher copy</Button>
+                          <Button size="sm" variant="ghost" onClick={() => printAssessment(a!, "student")}><ClipboardCheck className="h-4 w-4" />Check: student copy</Button>
+                        </span>
                       ))}
                     </TableCell>
                   </TableRow>
@@ -289,14 +303,16 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
       {unit && (unit.worksheets?.length ?? 0) > 0 && (
         <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1">
           <h3 className="mb-1 font-display text-hec-h3 text-hec-ink flex items-center gap-2"><FileText className="h-5 w-5" />Grammar worksheets (ours, printable)</h3>
-          <p className="mb-3 text-hec-small text-hec-ink-soft">Support ★, Core ★★ and Challenge ★★★ on one sheet, answer key on the last page.</p>
+          <p className="mb-3 text-hec-small text-hec-ink-soft">Support ★, Core ★★ and Challenge ★★★ on one sheet. The teacher copy adds the answer key; the student copy has none.</p>
           <ul className="space-y-2">
             {unit.worksheets!.map((w) => {
               const d = unit.decks.find((x) => x.id === w.deckId);
               const at = d ? d.slides.findIndex((s) => slideTitle(s) === w.slide) : -1;
               return (
                 <li key={w.id} className="flex flex-wrap items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={() => printWorksheet(w)}><Printer className="h-4 w-4" />{w.title}</Button>
+                  <span className="font-medium text-hec-ink">{w.title}</span>
+                  <Button size="sm" variant="outline" onClick={() => printWorksheet(w, "teacher")} title="Pupil pages, then the answer key"><Printer className="h-4 w-4" />Teacher copy</Button>
+                  <Button size="sm" variant="outline" onClick={() => printWorksheet(w, "student")} title="Pupil pages only: no answer key"><Printer className="h-4 w-4" />Student copy</Button>
                   <span className="text-hec-small text-hec-ink-soft">Used in Lesson {d?.lesson}, slide {at + 1}: {w.slide}</span>
                 </li>
               );

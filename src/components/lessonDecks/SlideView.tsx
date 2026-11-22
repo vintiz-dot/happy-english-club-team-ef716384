@@ -3,6 +3,7 @@ import { ExamSlide } from "./ExamSlide";
 import type { Assessment, BookRef, CreativeTask, Deck, Mode, ScriptLine, Slide, Tier, TierLevel, Unit } from "@/lib/lessonDecks/types";
 import type { FlipTarget } from "@/lib/lessonDecks/bookPages";
 import { RUBRIC, PEER_STEPS } from "@/lib/lessonDecks/ieltsRubric";
+import type { Audience } from "@/lib/lessonDecks/audience";
 import { BookOpen, Clock, Users, User, UsersRound, Presentation, Mic, PenLine, Video, Lightbulb, AlertTriangle, CheckCircle2, Home, Target, Sparkles, Volume2, Headphones, ExternalLink, FileText, ClipboardCheck, Trophy, Rocket, Scale, Play, Turtle } from "lucide-react";
 
 /**
@@ -16,9 +17,27 @@ export type SlideCtx = {
   speakScript?: (lines: ScriptLine[], opts?: { slow?: boolean }) => void;
   bookTarget?: (ref: BookRef) => FlipTarget;
   openBook?: (ref: BookRef) => void;
-  openWorksheet?: (id: string) => void;
+  openWorksheet?: (id: string, audience: Audience) => void;
+  // Set only on paper (audience.ts). "teacher": answers, scripts and notes printed
+  // open; "student": none of them (the data is stripped first as well). Unset on
+  // screen, where answers stay folded until the teacher opens them.
+  audience?: Audience;
 };
 export const SlideContext = createContext<SlideCtx>({});
+
+/** Answers for the teacher: folded on screen, open on the teacher's copy, absent on the student's. */
+function TeacherAnswers({ items, label = "Answers (teacher)" }: { items: { answer: string; why?: string }[]; label?: string }) {
+  const { audience } = useContext(SlideContext);
+  if (audience === "student" || !items.some((i) => i.answer)) return null;
+  const list = <ol className="list-decimal pl-6">{items.map((it, i) => <li key={i}>{it.answer}{it.why ? <span className="text-hec-ink-soft"> ({it.why})</span> : null}</li>)}</ol>;
+  if (audience === "teacher") return <div className="mt-2 rounded-xl border border-dashed border-hec-line p-2 text-base text-hec-ink"><p className="font-semibold">{label}</p>{list}</div>;
+  return (
+    <details className="mt-2 text-base text-hec-ink-soft print:hidden">
+      <summary className="cursor-pointer">{label}</summary>
+      {list}
+    </details>
+  );
+}
 
 const MODE: Record<Mode, { label: string; Icon: typeof Users }> = {
   whole: { label: "Whole class", Icon: Presentation },
@@ -109,9 +128,9 @@ const List = ({ items, ordered, say }: { items: string[]; ordered?: boolean; say
 
 /** The supplementary materials tied to this slide: Twinkl links and the school's own worksheets. */
 function Extras({ slide }: { slide: Slide }) {
-  const { deck, unit, openWorksheet } = useContext(SlideContext);
+  const { deck, unit, openWorksheet, audience } = useContext(SlideContext);
   const title = "title" in slide ? slide.title : undefined;
-  if (!title || !deck) return null;
+  if (!title || !deck || audience === "student") return null;
   const links = (deck.resources ?? []).filter((r) => r.slide === title);
   const sheets = (unit?.worksheets ?? []).filter((w) => w.deckId === deck.id && w.slide === title);
   if (!links.length && !sheets.length) return null;
@@ -122,10 +141,14 @@ function Extras({ slide }: { slide: Slide }) {
         {sheets.map((w) => (
           <li key={w.id} className="flex flex-wrap items-center gap-2">
             <FileText className="h-4 w-4 text-emerald-700" />
-            {openWorksheet ? (
-              <button type="button" onClick={() => openWorksheet(w.id)} className="font-medium underline underline-offset-2 hover:no-underline">Worksheet: {w.title}</button>
-            ) : <span className="font-medium">Worksheet: {w.title}</span>}
-            <span className="text-hec-ink-soft">· Support / Core / Challenge, with answer key</span>
+            <span className="font-medium">Worksheet: {w.title}</span>
+            {openWorksheet && (
+              <>
+                <button type="button" onClick={() => openWorksheet(w.id, "teacher")} className="underline underline-offset-2 hover:no-underline">Teacher copy (with key)</button>
+                <button type="button" onClick={() => openWorksheet(w.id, "student")} className="underline underline-offset-2 hover:no-underline">Student copy</button>
+              </>
+            )}
+            <span className="text-hec-ink-soft">· Support / Core / Challenge</span>
           </li>
         ))}
         {links.map((r) => (
@@ -200,19 +223,25 @@ function PlayScript({ lines }: { lines: ScriptLine[] }) {
   );
 }
 
+/** A listening script: folded on screen, open on the teacher's copy, never on the student's. */
 function Script({ lines, label = "Script (teacher)" }: { lines: ScriptLine[]; label?: string }) {
+  const { audience } = useContext(SlideContext);
+  if (audience === "student" || !lines.length) return null;
+  const body = <div className="mt-2 space-y-1">{lines.map((l, i) => <p key={i}><strong>{l.speaker}:</strong> {l.text}</p>)}</div>;
+  if (audience === "teacher") return <div className="rounded-xl border border-dashed border-hec-line p-3 text-base text-hec-ink"><p className="font-semibold">{label}</p>{body}</div>;
   return (
     <details className="rounded-xl border border-hec-line p-3 text-base text-hec-ink">
       <summary className="cursor-pointer text-hec-ink-soft">{label}</summary>
-      <div className="mt-2 space-y-1">{lines.map((l, i) => <p key={i}><strong>{l.speaker}:</strong> {l.text}</p>)}</div>
+      {body}
     </details>
   );
 }
 
-/** The HEC peer rubric (a paraphrase of the public descriptors' shape, not the official text). */
+/** The HEC peer rubric (a paraphrase of the public descriptors' shape, not the official text). Students use it, so both copies print it open. */
 function PeerRubric() {
+  const { audience } = useContext(SlideContext);
   return (
-    <details className="rounded-2xl border border-hec-line bg-hec-surface p-4">
+    <details open={!!audience} className="rounded-2xl border border-hec-line bg-hec-surface p-4">
       <summary className="cursor-pointer text-lg font-semibold text-hec-ink">Peer scoring: what each band sounds like</summary>
       <ol className="mt-2 list-decimal space-y-0.5 pl-6 text-base text-hec-ink">{PEER_STEPS.map((s, i) => <li key={i}>{s}</li>)}</ol>
       <table className="mt-3 w-full border-collapse text-sm text-hec-ink">
@@ -246,10 +275,7 @@ function CheckItems({ a }: { a: Assessment }) {
               <li key={i}>{it.q}{it.options?.length ? <span className="text-hec-ink-soft"> ({it.options.join(" / ")})</span> : null}</li>
             ))}
           </ol>
-          <details className="mt-2 text-base text-hec-ink-soft print:hidden">
-            <summary className="cursor-pointer">Answers (teacher)</summary>
-            <ol className="list-decimal pl-6">{sec.items.map((it, i) => <li key={i}>{it.answer}</li>)}</ol>
-          </details>
+          <TeacherAnswers items={sec.items} />
         </div>
       ))}
     </div>
@@ -267,7 +293,7 @@ export function SlideView({ slide }: { slide: Slide }) {
 }
 
 function SlideBody({ slide }: { slide: Slide }) {
-  const { unit } = useContext(SlideContext);
+  const { unit, audience } = useContext(SlideContext);
   switch (slide.kind) {
     case "title":
       return (
@@ -309,7 +335,7 @@ function SlideBody({ slide }: { slide: Slide }) {
           ) : null}
           {slide.fluencyTip && <p className="text-xl text-hec-ink"><strong>Fluency tip:</strong> {slide.fluencyTip}</p>}
           <Tiers tiers={slide.tiers} />
-          {slide.teacherNote && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
+          {slide.teacherNote && audience !== "student" && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
         </div>
       );
     case "vocab":
@@ -399,7 +425,7 @@ function SlideBody({ slide }: { slide: Slide }) {
           {slide.fluencyTip && <p className="text-xl text-hec-ink"><strong>Fluency tip:</strong> {slide.fluencyTip}</p>}
           <Tiers tiers={slide.tiers} />
           {slide.ielts?.peerScore && <PeerRubric />}
-          {slide.teacherNote && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
+          {slide.teacherNote && audience !== "student" && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
         </div>
       );
     case "book":
@@ -453,10 +479,7 @@ function SlideBody({ slide }: { slide: Slide }) {
             <ol className="list-decimal space-y-1 pl-6 text-xl text-hec-ink">
               {slide.questions.items.map((it, i) => <li key={i}>{it.q}{it.options?.length ? <span className="text-hec-ink-soft"> ({it.options.join(" / ")})</span> : null}</li>)}
             </ol>
-            <details className="mt-2 text-base text-hec-ink-soft print:hidden">
-              <summary className="cursor-pointer">Answers (teacher)</summary>
-              <ol className="list-decimal pl-6">{slide.questions.items.map((it, i) => <li key={i}>{it.answer}</li>)}</ol>
-            </details>
+            <TeacherAnswers items={slide.questions.items} />
           </div>
           {slide.decoding?.length ? (
             <div className="rounded-2xl bg-rose-50 p-4 dark:bg-rose-950/40">
@@ -548,7 +571,7 @@ function SlideBody({ slide }: { slide: Slide }) {
         </div>
       );
     case "exam":
-      return <ExamSlide slide={slide} />;
+      return <ExamSlide slide={slide} audience={audience} />;
     case "reflect":
       return (
         <div className="space-y-8">
@@ -655,17 +678,17 @@ export function AssessmentView({ a, answers }: { a: Assessment; answers: boolean
       ))}
       {a.speaking && (
         <section className="space-y-2 break-inside-avoid">
-          <h3 className="text-xl font-semibold">Speaking (teacher marks, 1-4 per row)</h3>
+          <h3 className="text-xl font-semibold">{answers ? "Speaking (teacher marks, 1-4 per row)" : "Speaking"}</h3>
           <p className="text-lg">{a.speaking.task}</p>
           <ul className="list-disc pl-7 text-base">{a.speaking.prompts.map((p, i) => <li key={i}>{p}</li>)}</ul>
-          <table className="w-full border-collapse text-sm">
+          {answers && a.speaking.rubric.length > 0 && <table className="w-full border-collapse text-sm">
             <thead><tr><th className="border p-1 text-left">Criterion</th>{[4, 3, 2, 1].map((n) => <th key={n} className="border p-1">{n}</th>)}</tr></thead>
             <tbody>
               {a.speaking.rubric.map((r) => (
                 <tr key={r.criterion}><td className="border p-1 font-semibold">{r.criterion}</td>{r.bands.map((b, i) => <td key={i} className="border p-1 align-top">{b}</td>)}</tr>
               ))}
             </tbody>
-          </table>
+          </table>}
         </section>
       )}
     </div>

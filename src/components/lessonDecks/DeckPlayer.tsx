@@ -4,6 +4,7 @@ import type { Assessment, BookRef, Deck, Slide, Unit, Worksheet } from "@/lib/le
 import { castSlide } from "@/lib/lessonDecks/names";
 import { flipTarget, flipbookUrl, type FlipbookLite } from "@/lib/lessonDecks/bookPages";
 import { homeworkFor } from "@/lib/lessonDecks/views";
+import { studentAssessment, studentDeck, studentUnit, studentWorksheet, type Audience } from "@/lib/lessonDecks/audience";
 import { LISTENING_BANDS, RUBRIC } from "@/lib/lessonDecks/ieltsRubric";
 import { SlideView, SlideContext, WorksheetView, AssessmentView, type SlideCtx } from "./SlideView";
 import { useSpeech } from "./speech";
@@ -35,43 +36,55 @@ function printPages(title: string, markup: string, landscape: boolean) {
   return true;
 }
 
-/** Print / save as PDF: every slide on its own landscape page, names filled in as shown. */
-export function printDeck(deck: Deck, roster: string[], unit?: Unit) {
-  const slides = deck.slides.map((s, i) => castSlide(s, roster, `${deck.id}:${i}`).slide);
-  const body = renderToStaticMarkup(
-    <SlideContext.Provider value={{ unit, deck }}>
+// Every export comes as a teacher copy and a student copy (audience.ts). The
+// *Markup functions build the pages (the suite renders them to check that a
+// student copy holds no answer); the print* functions open them for printing.
+export const COPY: Record<Audience, string> = { teacher: "Teacher copy", student: "Student copy" };
+
+/**
+ * Every slide on its own landscape page, names filled in as shown. The teacher's
+ * copy prints answers, scripts and teacher notes open; the student's copy is made
+ * from a deck and unit with all of them taken out.
+ */
+export function deckMarkup(deck: Deck, roster: string[], unit: Unit | undefined, audience: Audience) {
+  const d = audience === "student" ? studentDeck(deck) : deck;
+  const u = unit && audience === "student" ? studentUnit(unit) : unit;
+  const slides = d.slides.map((s, i) => castSlide(s, roster, `${deck.id}:${i}`).slide);
+  return renderToStaticMarkup(
+    <SlideContext.Provider value={{ unit: u, deck: d, audience }}>
       {slides.map((s, i) => (
         <section key={i} className="deck-page bg-white p-10">
           <SlideView slide={s} />
-          <p className="mt-6 text-right text-sm text-gray-500">{deck.title} · {i + 1}/{slides.length}</p>
+          <p className="mt-6 text-right text-sm text-gray-500">{deck.title} · {COPY[audience]} · {i + 1}/{slides.length}</p>
         </section>
       ))}
     </SlideContext.Provider>,
   );
-  return printPages(deck.title, body, true);
 }
+export const printDeck = (deck: Deck, roster: string[], unit: Unit | undefined, audience: Audience) =>
+  printPages(`${deck.title} · ${COPY[audience]}`, deckMarkup(deck, roster, unit, audience), true);
 
-/** A worksheet: the pupil pages, then the answer key on its own page. */
-export function printWorksheet(ws: Worksheet) {
-  const body = renderToStaticMarkup(
+/** A worksheet. Teacher: the pupil pages, then the answer key. Student: the pupil pages only. */
+export function worksheetMarkup(ws: Worksheet, audience: Audience) {
+  return renderToStaticMarkup(
     <div>
-      <section className="deck-page bg-white p-8"><WorksheetView ws={ws} answers={false} /></section>
-      <section className="deck-page bg-white p-8"><WorksheetView ws={ws} answers /></section>
+      <section className="deck-page bg-white p-8"><WorksheetView ws={audience === "student" ? studentWorksheet(ws) : ws} answers={false} /></section>
+      {audience === "teacher" && <section className="deck-page bg-white p-8"><WorksheetView ws={ws} answers /></section>}
     </div>,
   );
-  return printPages(ws.title, body, false);
 }
+export const printWorksheet = (ws: Worksheet, audience: Audience) => printPages(`${ws.title} · ${COPY[audience]}`, worksheetMarkup(ws, audience), false);
 
-/** A check or test: the paper, then the answer key and rubric. */
-export function printAssessment(a: Assessment) {
-  const body = renderToStaticMarkup(
+/** A check or test. Teacher: the paper, then the key, recording scripts and marking rubric. Student: the paper only. */
+export function assessmentMarkup(a: Assessment, audience: Audience) {
+  return renderToStaticMarkup(
     <div>
-      <section className="deck-page bg-white p-8"><AssessmentView a={a} answers={false} /></section>
-      <section className="deck-page bg-white p-8"><AssessmentView a={a} answers /></section>
+      <section className="deck-page bg-white p-8"><AssessmentView a={audience === "student" ? studentAssessment(a) : a} answers={false} /></section>
+      {audience === "teacher" && <section className="deck-page bg-white p-8"><AssessmentView a={a} answers /></section>}
     </div>,
   );
-  return printPages(a.title, body, false);
 }
+export const printAssessment = (a: Assessment, audience: Audience) => printPages(`${a.title} · ${COPY[audience]}`, assessmentMarkup(a, audience), false);
 
 /**
  * Sun Class progress tracker for one term: a row per child (names from the live
@@ -120,15 +133,43 @@ export function printIeltsTracker(unit: Unit, names: string[], term: { expected:
 }
 
 /**
- * One homework sheet per child, each with their own version (the football
- * edition for the children chosen for it). Names come from the live roster and
- * go only onto the paper; nothing is saved.
+ * Creative homework. Student copy: one sheet per child, each with their own
+ * version (the football edition for the children chosen for it). Teacher copy: who
+ * gets which version, then one copy of every version. Names come from the live
+ * roster and go only onto the paper; nothing is saved.
  */
-export function printHomeworkSheets(deck: Deck, students: { id: string; name: string }[], interests: Record<string, string[]>) {
+export function homeworkMarkup(deck: Deck, students: { id: string; name: string }[], interests: Record<string, string[]>, audience: Audience) {
   const slide = deck.slides.find((s): s is Extract<Slide, { kind: "creative" }> => s.kind === "creative");
-  if (!slide) return false;
+  if (!slide) return null;
+  if (audience === "teacher") {
+    const versions = [{ label: "Class version", task: slide.base }, ...(slide.variants ?? []).map((v) => ({ label: v.label, task: v.task }))];
+    return renderToStaticMarkup(
+      <div>
+        <section className="deck-page bg-white p-8 text-gray-900 space-y-3">
+          <h2 className="text-2xl font-semibold">{deck.title} · Creative homework · {COPY.teacher}</h2>
+          <p className="text-base">Thinking: {slide.thinking} · Words: {slide.uses.words.join(", ")} · Grammar: {slide.uses.grammar.join(", ")}</p>
+          <table className="w-full border-collapse text-base">
+            <thead><tr><th className="border p-1 text-left">Student</th><th className="border p-1 text-left">Version</th></tr></thead>
+            <tbody>{students.map((st) => <tr key={st.id}><td className="border p-1">{st.name}</td><td className="border p-1">{homeworkFor(slide, st.id, interests).label ?? "Class version"}</td></tr>)}</tbody>
+          </table>
+        </section>
+        {versions.map((v) => (
+          <section key={v.label} className="deck-page bg-white p-8 text-gray-900 space-y-2">
+            <p className="text-sm uppercase tracking-widest text-gray-500">{v.label}</p>
+            <h3 className="text-2xl font-semibold">{v.task.title}</h3>
+            <p className="text-lg">{v.task.task}</p>
+            <ol className="list-decimal pl-6 text-lg">{v.task.steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+            <ul className="list-disc pl-6 text-lg">{v.task.frames.map((f, i) => <li key={i}>{f}</li>)}</ul>
+            <p className="font-semibold">A good piece has</p>
+            <ul className="text-base">{v.task.success.map((f, i) => <li key={i}>✓ {f}</li>)}</ul>
+            <p className="rounded border p-2 text-base"><strong>Challenge:</strong> {v.task.challenge}</p>
+          </section>
+        ))}
+      </div>,
+    );
+  }
   const rows = students.length ? students : [{ id: "", name: "" }];
-  const body = renderToStaticMarkup(
+  return renderToStaticMarkup(
     <div>
       {rows.map((st) => {
         const { task, label } = homeworkFor(slide, st.id, interests);
@@ -154,7 +195,10 @@ export function printHomeworkSheets(deck: Deck, students: { id: string; name: st
       })}
     </div>,
   );
-  return printPages(`${deck.title} homework`, body, false);
+}
+export function printHomeworkSheets(deck: Deck, students: { id: string; name: string }[], interests: Record<string, string[]>, audience: Audience) {
+  const body = homeworkMarkup(deck, students, interests, audience);
+  return body ? printPages(`${deck.title} homework · ${COPY[audience]}`, body, false) : false;
 }
 
 function useCountdown() {
@@ -184,7 +228,7 @@ type PlayerProps = {
   onSlide?: (index: number) => void; // remembered per class, so the class resumes here
   flipbook?: ClassFlipbook | null;
   onBookPage?: (index: number) => void;
-  onWorksheet?: (ws: Worksheet) => void;
+  onWorksheet?: (ws: Worksheet, audience: Audience) => void;
 };
 
 export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 0, onSlide, flipbook, onBookPage, onWorksheet }: PlayerProps) {
@@ -214,9 +258,11 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
       setBook({ url: flipbookUrl(flipbook.url, t.index), label: t.label, note: t.note });
       onBookPage?.(t.index);
     },
-    openWorksheet: (id: string) => {
+    openWorksheet: (id: string, audience: Audience) => {
       const ws = unit?.worksheets?.find((w) => w.id === id);
-      if (ws) (onWorksheet ?? printWorksheet)(ws);
+      if (!ws) return;
+      if (onWorksheet) onWorksheet(ws, audience);
+      else printWorksheet(ws, audience);
     },
   }), [unit, deck, speech.supported, speech.speak, speech.speakScript, flipbook, onBookPage, onWorksheet]);
 
@@ -263,7 +309,8 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
             )
           )}
           <Button variant="outline" size="sm" onClick={reshuffle} title="New names (N)"><Shuffle className="h-4 w-4" />New names</Button>
-          <Button variant="outline" size="sm" onClick={() => printDeck(deck, roster, unit)} title="Print or save as PDF"><Printer className="h-4 w-4" /></Button>
+          <Button variant="outline" size="sm" onClick={() => printDeck(deck, roster, unit, "teacher")} title="Teacher copy: with answers, scripts and teacher notes"><Printer className="h-4 w-4" />Teacher</Button>
+          <Button variant="outline" size="sm" onClick={() => printDeck(deck, roster, unit, "student")} title="Student copy: no answers, scripts or teacher notes"><Printer className="h-4 w-4" />Student</Button>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close (Esc)"><X className="h-5 w-5" /></Button>
         </div>
       </div>

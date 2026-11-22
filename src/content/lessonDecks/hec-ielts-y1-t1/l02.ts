@@ -123,7 +123,7 @@ export const l02: Deck = {
         "Double letters: say 'double L', not 'L, L' (Phillips = P-H-I-double L-I-P-S). Zero in phone numbers is usually 'oh'; two the same is 'double four'.",
         "In pairs, A spells a real or made-up name and says a 10-digit phone number in groups of 3-3-4; B writes it and reads it back. Swap.",
       ],
-      prompts: ["Pryce", "Gillespie", "Jarvis", "Whitmore", "Ravensworth", "098 446 1720", "0912 005 338"],
+      prompts: ["Pryce", "Gillespie", "Jarvis", "Whitmore", "Ravensworth", "097 552 3816", "0912 005 338"],
       tiers: [
         { level: "Support", task: "Spell your own full name and say your class number, slowly and in small groups of letters. Check every vowel against the card." },
         { level: "Core", task: "Spell three names from the list and read two phone numbers with 'oh' and 'double', at normal speed, with no mistakes on E / I or G / J." },

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { Audience } from "@/lib/lessonDecks/audience";
 import type { ExamFormat, Slide } from "@/lib/lessonDecks/types";
 import { Clock, Eye, EyeOff, GraduationCap } from "lucide-react";
 
@@ -20,10 +21,12 @@ const FORMAT: Record<ExamFormat, string> = {
 
 /**
  * An entrance-exam practice set. Answers stay hidden until the teacher shows
- * them, so the children answer first and give their reason aloud.
+ * them, so the children answer first and give their reason aloud. On paper the
+ * teacher's copy prints them and the student's copy has none (audience.ts).
  */
-export function ExamSlide({ slide }: { slide: ExamSlideT }) {
-  const [shown, setShown] = useState(false);
+export function ExamSlide({ slide, audience }: { slide: ExamSlideT; audience?: Audience }) {
+  const [toggled, setShown] = useState(false);
+  const shown = audience === "teacher" || (audience !== "student" && toggled);
   // A new slide (or new names) starts hidden again.
   useEffect(() => setShown(false), [slide]);
   return (
@@ -36,14 +39,14 @@ export function ExamSlide({ slide }: { slide: ExamSlideT }) {
         <span className="rounded-full border border-hec-line bg-hec-paper px-3 py-1 text-hec-ink">{FORMAT[slide.format]}</span>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-hec-line bg-hec-paper px-3 py-1 text-hec-ink"><Clock className="h-4 w-4" />{slide.minutes} min</span>
         {slide.school && <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">{slide.school} format</span>}
-        <button
+        {!audience && <button
           type="button"
           onClick={() => setShown((s) => !s)}
           className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-hec-line px-3 py-1 text-hec-ink hover:bg-hec-paper focus-visible:outline focus-visible:outline-2"
         >
           {shown ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           {shown ? "Hide answers" : "Show answers"}
-        </button>
+        </button>}
       </div>
       <p className="text-xl md:text-2xl text-hec-ink">{slide.instructions}</p>
       <ol className="space-y-4 list-decimal pl-8 text-xl md:text-2xl text-hec-ink">
@@ -55,7 +58,7 @@ export function ExamSlide({ slide }: { slide: ExamSlideT }) {
                 {it.options.map((o, j) => <span key={j}><strong>{String.fromCharCode(65 + j)}.</strong> {o}</span>)}
               </p>
             ) : null}
-            {shown && (
+            {shown && it.answer && (
               <p className="mt-1 text-lg md:text-xl text-emerald-700 dark:text-emerald-300">
                 → {it.answer}{it.why ? <span className="text-hec-ink-soft"> ({it.why})</span> : null}
               </p>
