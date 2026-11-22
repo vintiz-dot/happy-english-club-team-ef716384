@@ -143,8 +143,8 @@ export const odL1U12Worksheets: Worksheet[] = [
             answer: "e.g. She wants a kite."
           },
           {
-            q: "Fix it: What does he wants?",
-            answer: "What does he want?"
+            q: "Fix it: What does he likes?",
+            answer: "What does he like?"
           },
           {
             q: "Write a question and an answer about a story child.",
