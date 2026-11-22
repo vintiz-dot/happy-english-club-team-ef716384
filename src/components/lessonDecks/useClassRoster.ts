@@ -6,7 +6,7 @@ const uniq = (xs: Student[]) => [...new Map(xs.filter((x) => x.name).map((x) => 
 
 /**
  * The children in the room, for a deck's name slots and per-child homework:
- * today's "Present" marks when attendance has been taken, otherwise everyone
+ * today's Present and Late marks when attendance has been taken, otherwise everyone
  * enrolled now. Read through the teacher's own session, so RLS decides what they
  * see (the same reads the Team Maker makes). Names stay in memory, never saved;
  * only student ids are kept (for the class's homework interest groups).
@@ -41,7 +41,7 @@ export function useClassRoster(classId: string | null) {
           .from("attendance")
           .select("student_id, students!inner(id, full_name)")
           .in("session_id", ids)
-          .eq("status", "Present");
+          .in("status", ["Present", "Late"]);
         const students = uniq((present ?? []).map((r) => one(r.students)).filter(Boolean).map((s) => ({ id: s!.id, name: s!.full_name })));
         if (students.length > 0) return { names: students.map((s) => s.name), students, enrolled, from: "present" };
       }

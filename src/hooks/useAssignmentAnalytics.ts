@@ -7,6 +7,8 @@ export interface AssignmentRecord {
   title: string;
   due_date: string | null;
   class_id: string;
+  /** The children it was set for (homeworks.student_ids); null = the whole class. */
+  forIds?: string[] | null;
   className: string;
   teacherId: string | null;
   submissions: {
@@ -82,7 +84,7 @@ export function useAssignmentAnalytics() {
       const [homeworksRes, enrollmentsRes, teachersRes, studentsRes, pointTxRes] = await Promise.all([
         supabase
           .from("homeworks")
-          .select(`id, title, due_date, class_id, classes!inner(name, default_teacher_id), homework_submissions(id, status, student_id, submitted_at, graded_at, grade)`)
+          .select(`*, classes!inner(name, default_teacher_id), homework_submissions(id, status, student_id, submitted_at, graded_at, grade)`)
           .order("due_date", { ascending: false }),
         supabase
           .from("enrollments")
@@ -139,6 +141,7 @@ export function useAssignmentAnalytics() {
         title: hw.title,
         due_date: hw.due_date,
         class_id: hw.class_id,
+        forIds: Array.isArray(hw.student_ids) ? hw.student_ids : null,
         className: hw.classes?.name || "Unknown",
         teacherId: hw.classes?.default_teacher_id || null,
         submissions: (hw.homework_submissions || []).map((s: any) => ({
@@ -158,7 +161,7 @@ export function useAssignmentAnalytics() {
       let turnaroundDays: number[] = [];
 
       for (const a of assignments) {
-        const enrolled = enrolledPerClass.get(a.class_id)?.size || 0;
+        const enrolled = a.forIds ? a.forIds.length : enrolledPerClass.get(a.class_id)?.size || 0;
         totalExpected += enrolled;
         const submitted = a.submissions.filter((s) => s.status === "submitted" || s.status === "graded");
         totalSubmitted += submitted.length;
@@ -203,7 +206,7 @@ export function useAssignmentAnalytics() {
         }
         const cs = classMap.get(a.class_id)!;
         cs.assignmentCount++;
-        const enrolled = enrolledPerClass.get(a.class_id)?.size || 0;
+        const enrolled = a.forIds ? a.forIds.length : enrolledPerClass.get(a.class_id)?.size || 0;
         cs.expectedSubmissions += enrolled;
         const subs = a.submissions.filter((s) => s.status === "submitted" || s.status === "graded");
         cs.actualSubmissions += subs.length;

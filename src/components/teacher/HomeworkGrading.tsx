@@ -53,7 +53,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
   });
 
   const { data: enrolledStudents } = useQuery({
-    queryKey: ["homework-enrolled-students", homework?.classes?.id],
+    queryKey: ["homework-enrolled-students", homework?.classes?.id, homeworkId, (homework as any)?.student_ids ?? null],
     queryFn: async () => {
       if (!homework?.classes?.id) return [];
 
@@ -64,10 +64,14 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
         .is("end_date", null);
 
       if (error) throw error;
+      // A homework set for named children (homeworks.student_ids, e.g. those
+      // present in the lesson) lists only them; NULL or absent column = the class.
+      const forIds: string[] | null = Array.isArray((homework as any)?.student_ids) ? (homework as any).student_ids : null;
       // Deduplicate by student_id
       const seen = new Set<string>();
       return (data || []).reduce((acc: any[], e) => {
         const s = e.students;
+        if (s && forIds && !forIds.includes((s as any).id)) return acc;
         if (s && !seen.has((s as any).id)) {
           seen.add((s as any).id);
           acc.push(s);

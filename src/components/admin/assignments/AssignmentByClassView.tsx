@@ -87,7 +87,7 @@ export function AssignmentByClassView({ byClass, enrolledPerClass }: Props) {
                               <TableRow key={a.id}>
                                 <TableCell className="whitespace-normal break-words font-medium">{a.title}</TableCell>
                                 <TableCell className="whitespace-nowrap tabular-nums">{a.due_date || "—"}</TableCell>
-                                <TableCell className="whitespace-nowrap text-right tabular-nums">{subs}/{enrolled}</TableCell>
+                                <TableCell className="whitespace-nowrap text-right tabular-nums">{subs}/{a.forIds ? a.forIds.length : enrolled}</TableCell>
                                 <TableCell className="whitespace-nowrap text-right tabular-nums">{graded}</TableCell>
                               </TableRow>
                             );

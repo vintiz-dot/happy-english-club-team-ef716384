@@ -99,6 +99,8 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
   const unit = UNITS.find((u) => unitKey(u) === unitId) ?? null;
   const roster = useClassRoster(classId);
   const names = roster.data?.names ?? [];
+  // Homework is for the children who were in the lesson: today's Present and Late marks.
+  const presentKids = roster.data?.from === "present" ? roster.data.students : null;
   const place = useClassDeckState(classId);
   const flipbook = flipbooks.find((b) => b.class_id === classId) ?? null;
   const className = classes.find((c) => c.id === classId)?.name ?? "class";
@@ -254,12 +256,16 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                         {g && <Button size="sm" variant="outline" onClick={() => present(g, unit)} title="The grammar of this lesson on its own"><Lightbulb className="h-4 w-4" />Grammar only</Button>}
                         <Button size="sm" variant="outline" onClick={() => printDeck(d, names, unit)} title="Print or save the deck as PDF"><Printer className="h-4 w-4" /></Button>
                         {hw && (
-                          <Button size="sm" variant="outline" title="One sheet per child, each with their own version"
-                            onClick={() => printHomeworkSheets(d, roster.data?.students ?? [], place.state?.interests ?? {})}>
+                          <Button size="sm" variant="outline" title="One sheet per child present today, each with their own version"
+                            onClick={() => {
+                              if (!presentKids) { toast.error(NO_ATTENDANCE); return; }
+                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {});
+                            }}>
                             <PenLine className="h-4 w-4" />Homework sheets
                           </Button>
                         )}
-                        {hw && classId && <SetHomework classId={classId} title={hw.title} body={hw.body} due={paced[k + 1]?.date ?? null} />}
+                        {hw && classId && <SetHomework classId={classId} title={hw.title} body={hw.body} due={paced[k + 1]?.date ?? null}
+                          present={presentKids} enrolled={roster.data?.enrolled.length ?? 0} />}
                       </div>
                       {checks.map((a) => (
                         <Button key={a!.id} size="sm" variant="ghost" className="mt-1" onClick={() => printAssessment(a!)}><ClipboardCheck className="h-4 w-4" />Print quick check</Button>
@@ -385,19 +391,33 @@ function InterestGroups({ unit, students, interests, onSave }: {
   );
 }
 
-/** Post the lesson's creative homework to the app's homework list for the class (one class-wide homework). */
-function SetHomework({ classId, title, body, due }: { classId: string; title: string; body: string; due: string | null }) {
+const NO_ATTENDANCE = "Take today's attendance first: homework goes only to the children marked Present or Late.";
+
+/**
+ * Post the lesson's creative homework to the app for the children present today
+ * (`homeworks.student_ids`, 20261122150000): an absent child neither sees it nor
+ * is told about it. Refuses until attendance is taken, and never falls back to
+ * the whole class when the column is not there yet.
+ */
+function SetHomework({ classId, title, body, due, present, enrolled }: {
+  classId: string; title: string; body: string; due: string | null; present: { id: string }[] | null; enrolled: number;
+}) {
   const [busy, setBusy] = useState(false);
   return (
-    <Button size="sm" variant="outline" disabled={busy} title="Adds it to the class's homework in the app, due the next class"
+    <Button size="sm" variant="outline" disabled={busy} title="Adds it in the app for the children present today, due the next class"
       onClick={async () => {
-        if (!confirm(`Post "${title}" as homework for the whole class${due ? `, due ${due}` : ""}? The football edition is listed as an option, with no names.`)) return;
+        if (!present || present.length === 0) { toast.error(NO_ATTENDANCE); return; }
+        const away = Math.max(enrolled - present.length, 0);
+        if (!confirm(`Post "${title}" for the ${present.length} children present today${away ? ` (${away} absent get nothing)` : ""}${due ? `, due ${due}` : ""}? The football edition is listed as an option, with no names.`)) return;
         setBusy(true);
         const { data: auth } = await supabase.auth.getUser();
-        const { error } = await supabase.from("homeworks").insert({ class_id: classId, title, body, due_date: due, created_by: auth.user?.id ?? null });
+        const { error } = await supabase.from("homeworks")
+          .insert({ class_id: classId, title, body, due_date: due, created_by: auth.user?.id ?? null, student_ids: present.map((s) => s.id) } as any);
         setBusy(false);
-        if (error) toast.error("Could not post the homework", { description: error.message });
-        else toast.success("Homework posted", { description: `${title}${due ? ` · due ${due}` : ""}` });
+        if (error && (error.code === "PGRST204" || error.code === "42703" || /student_ids/.test(error.message)))
+          toast.error("Not posted: homework for present children needs migration 20261122150000_homework_for_present.sql", { description: "Print the homework sheets for now." });
+        else if (error) toast.error("Could not post the homework", { description: error.message });
+        else toast.success("Homework posted", { description: `${title} · ${present.length} children${due ? ` · due ${due}` : ""}` });
       }}>
       <Send className="h-4 w-4" />Set in app
     </Button>
