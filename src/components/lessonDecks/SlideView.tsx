@@ -308,6 +308,7 @@ function SlideBody({ slide }: { slide: Slide }) {
             </div>
           </div>
           {slide.fluencyTip && <p className="text-xl text-hec-ink"><strong>Fluency tip:</strong> {slide.fluencyTip}</p>}
+          {slide.teacherNote && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
         </div>
       );
     case "book":

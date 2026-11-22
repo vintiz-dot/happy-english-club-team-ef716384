@@ -65,7 +65,8 @@ export type Slide =
       prompts: string[]; // what partners ask each other
       fluencyTip?: string;
       steps?: string[];
-      book?: BookRef;
+      book?: BookRef; // the Student Book activity this talk is built on
+      teacherNote?: string;
     }
   | { kind: "book"; title?: string; ref: BookRef; steps?: string[] }
   | { kind: "homework"; title?: string; items: { label: string; detail: string; book?: BookRef }[] }
