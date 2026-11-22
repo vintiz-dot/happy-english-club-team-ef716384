@@ -32,6 +32,9 @@ export const odL2U11: Unit = {
       unit: 11,
       lesson: 1,
       covers: { unitFrom: 11, lesson: "Get Ready" },
+      resources: [
+        { title: "Earth's Natural Resources Match and Draw", url: "https://www.twinkl.com/resource/earths-natural-resources-match-and-draw-t-sc-1732017212", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 9 Earth words\"", slide: "Our 9 Earth words" },
+      ],
       title: "Big Question and Get Ready: Land and resources",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus"],
@@ -277,6 +280,9 @@ export const odL2U11: Unit = {
       unit: 11,
       lesson: 2,
       covers: { unitFrom: 11, lesson: "Read" },
+      resources: [
+        { title: "Natural Resources PowerPoint", url: "https://www.twinkl.com/resource/natural-resources-powerpoint-t-g-1667310659", source: "Twinkl", use: "Supports \"Picture walk and predict (SB 110-111)\"", slide: "Picture walk and predict (SB 110-111)" },
+      ],
       title: "Read: Natural Resources",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize"],
@@ -486,6 +492,9 @@ export const odL2U11: Unit = {
       unit: 11,
       lesson: 3,
       covers: { unitFrom: 11, lesson: "Understand" },
+      resources: [
+        { title: "ESL Prepositions of Place [Kids, A1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-place-t-eal-1643881128", source: "Twinkl", use: "Extra practice after the grammar slide \"Where is it? Place words\"", slide: "Where is it? Place words" },
+      ],
       title: "Understand: Where is it?",
       minutes: 90,
       inquiryPhases: ["Focus", "Generalize", "Transfer"],
@@ -733,6 +742,10 @@ export const odL2U11: Unit = {
       unit: 11,
       lesson: 4,
       covers: { unitFrom: 11, lesson: "Communicate" },
+      resources: [
+        { title: "Camping Scavenger Hunt", url: "https://www.twinkl.com/resource/us-t-2549265-camping-scavenger-hunt-activity-sheet", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 6 outdoor words\"", slide: "Our 6 outdoor words" },
+        { title: "ESL Prepositions of Place [Kids, A1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-place-t-eal-1643881128", source: "Twinkl", use: "Extra practice after the grammar slide \"Four kinds of words\"", slide: "Four kinds of words" },
+      ],
       title: "Communicate: Outdoors and the Earth",
       minutes: 90,
       inquiryPhases: ["Generalize", "Transfer", "Reflect"],

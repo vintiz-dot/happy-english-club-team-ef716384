@@ -271,6 +271,9 @@ export const odL1U14: Unit = {
       unit: 14,
       lesson: 2,
       covers: { unitFrom: 14, lesson: "Read" },
+      resources: [
+        { title: "City or Country Sorting Worksheet for K-2nd Grade", url: "https://www.twinkl.com/resource/city-or-country-sorting-activity-us-ss-1690402927", source: "Twinkl", use: "Supports \"Picture walk (SB 138-139)\"", slide: "Picture walk (SB 138-139)" },
+      ],
       title: "Read: City Mouse and Country Mouse",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],

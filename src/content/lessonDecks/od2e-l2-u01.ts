@@ -32,6 +32,9 @@ export const odL2U1: Unit = {
       unit: 1,
       lesson: 1,
       covers: { unitFrom: 1, lesson: "Get Ready" },
+      resources: [
+        { title: "Animal Coverings Picture Sort | Scales, Feathers, Skin, Fur", url: "https://www.twinkl.com/resource/animal-coverings-picture-sort-scales-feather-skin-fur-us-s-1771877430", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 9 animal words\"", slide: "Our 9 animal words" },
+      ],
       title: "Big Question and Get Ready: Animal body coverings",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus"],
@@ -468,6 +471,9 @@ export const odL2U1: Unit = {
       unit: 1,
       lesson: 3,
       covers: { unitFrom: 1, lesson: "Understand" },
+      resources: [
+        { title: "ESL Subject Pronouns Quiz PowerPoint", url: "https://www.twinkl.com/resource/esl-subject-pronouns-quiz-powerpoint-t-l-10129", source: "Twinkl", use: "Extra practice after the grammar slide \"They, it and them\"", slide: "They, it and them" },
+      ],
       title: "Understand: They, them and animal groups",
       minutes: 90,
       inquiryPhases: ["Investigate", "Generalize", "Transfer"],
@@ -710,6 +716,9 @@ export const odL2U1: Unit = {
       unit: 1,
       lesson: 4,
       covers: { unitFrom: 1, lesson: "Communicate" },
+      resources: [
+        { title: "Amazing Animal Research Worksheet", url: "https://www.twinkl.com/resource/t2-t-251-amazing-animal-research-activity-sheet", source: "Twinkl", use: "Supports \"Write: shared sentence, then your own (SB 15 Write, WB 9)\"", slide: "Write: shared sentence, then your own (SB 15 Write, WB 9)" },
+      ],
       title: "Communicate: Body parts, kind words and my favorite animal group",
       minutes: 90,
       inquiryPhases: ["Focus", "Generalize", "Transfer", "Reflect"],

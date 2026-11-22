@@ -34,6 +34,9 @@ export const odL2U13: Unit = {
       unit: 13,
       lesson: 1,
       covers: { unitFrom: 13, lesson: "Get Ready" },
+      resources: [
+        { title: "First and Second Class High and Low Sounds Activity Pack", url: "https://www.twinkl.com/resource/first-and-second-class-high-and-low-sounds-activity-pack-roi-t-20162764", source: "Twinkl", use: "Picture cards and practice for the words on \"Nine new words\"", slide: "Nine new words" },
+      ],
       title: "Big Question and Get Ready: Music and feelings",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Reflect"],
@@ -279,6 +282,9 @@ export const odL2U13: Unit = {
       unit: 13,
       lesson: 2,
       covers: { unitFrom: 13, lesson: "Read" },
+      resources: [
+        { title: "KS1 Musical Feelings and Emotions Worksheet", url: "https://www.twinkl.com/resource/musical-feelings-and-emotions-worksheet-t-mu-1644310217", source: "Twinkl", use: "Supports \"Read and listen: the big picture (SB 130-131)\"", slide: "Read and listen: the big picture (SB 130-131)" },
+      ],
       title: "Read: How Music Makes Us Feel",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize", "Generalize"],

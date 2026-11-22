@@ -34,6 +34,9 @@ export const odL1U15: Unit = {
       unit: 15,
       lesson: 1,
       covers: { unitFrom: 15, lesson: "Get Ready" },
+      resources: [
+        { title: "Musical Instrument Flashcards (Matching Pack)", url: "https://www.twinkl.com/resource/t-t-544-musical-instrument-flashcards-matching-pack", source: "Twinkl", use: "Picture cards and practice for the words on \"Our percussion words\"", slide: "Our percussion words" },
+      ],
       title: "Big Question and Get Ready: Percussion words",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Investigate"],
@@ -290,6 +293,9 @@ export const odL1U15: Unit = {
       unit: 15,
       lesson: 2,
       covers: { unitFrom: 15, lesson: "Read" },
+      resources: [
+        { title: "Sorting Instruments By How They Are Played Worksheet", url: "https://www.twinkl.com/resource/cfe-sc-19-sorting-instruments-by-how-they-are-played-activity-sheet", source: "Twinkl", use: "Supports \"Listen and read along (SB 150-151, Track 3•04)\"", slide: "Listen and read along (SB 150-151, Track 3•04)" },
+      ],
       title: "Read: Percussion instruments",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -513,6 +519,9 @@ export const odL1U15: Unit = {
       unit: 15,
       lesson: 3,
       covers: { unitFrom: 15, lesson: "Understand" },
+      resources: [
+        { title: "ESL Present Continuous Picture Description Activity [Kids, A1-A2]", url: "https://www.twinkl.com/resource/esl-present-continuous-picture-description-activity-t-eal-1649848449", source: "Twinkl", use: "Extra practice after the grammar slide \"I'm playing, you're playing, he's playing\"", slide: "I'm playing, you're playing, he's playing" },
+      ],
       title: "Understand: What are you playing?",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -767,6 +776,9 @@ export const odL1U15: Unit = {
       unit: 15,
       lesson: 4,
       covers: { unitFrom: 15, lesson: "Communicate" },
+      resources: [
+        { title: "Let's Spot the Opposites! Posters", url: "https://www.twinkl.com/resource/lets-spot-the-opposites-posters-t-e-1632138452", source: "Twinkl", use: "Picture cards and practice for the words on \"Sound words\"", slide: "Sound words" },
+      ],
       title: "Communicate: Sounds, helping and my instrument",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Investigate", "Reflect"],

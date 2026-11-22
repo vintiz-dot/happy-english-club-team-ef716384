@@ -31,6 +31,9 @@ export const odL2U3: Unit = {
       unit: 3,
       lesson: 1,
       covers: { unitFrom: 3, lesson: "Get Ready" },
+      resources: [
+        { title: "Solid, Liquid, or Gas? Sorting Worksheet", url: "https://www.twinkl.com/resource/us-t-2548903-solids-liquids-gases-sorting-activity", source: "Twinkl", use: "Picture cards and practice for the words on \"Nine new words\"", slide: "Nine new words" },
+      ],
       title: "Big Question and Get Ready: Solid, liquid, gas",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus"],
@@ -261,6 +264,9 @@ export const odL2U3: Unit = {
       unit: 3,
       lesson: 2,
       covers: { unitFrom: 3, lesson: "Read" },
+      resources: [
+        { title: "Solid Liquid or Gas Worksheet", url: "https://www.twinkl.com/resource/t2-s-186-solid-liquid-or-gas-worksheet", source: "Twinkl", use: "Supports \"Look and predict (SB 30-31)\"", slide: "Look and predict (SB 30-31)" },
+      ],
       title: "Read: What is our world made of?",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize", "Generalize"],

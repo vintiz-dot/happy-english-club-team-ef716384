@@ -265,6 +265,9 @@ export const odL1U18: Unit = {
       unit: 18,
       lesson: 2,
       covers: { unitFrom: 18, lesson: "Read" },
+      resources: [
+        { title: "Fairytale Word Cards", url: "https://www.twinkl.com/resource/t-tp-953-fairytale-word-cards", source: "Twinkl", use: "Picture cards and practice for the words on \"Story words\"", slide: "Story words" },
+      ],
       title: "Read: The Gingerbread Man (a play)",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -496,6 +499,9 @@ export const odL1U18: Unit = {
       unit: 18,
       lesson: 3,
       covers: { unitFrom: 18, lesson: "Understand" },
+      resources: [
+        { title: "ESL Should and Shouldn't Games and Activities [Kids, A1 - A2]", url: "https://www.twinkl.com/resource/esl-should-and-shouldnt-games-and-activities-kids-a1-a2-t-1676268889", source: "Twinkl", use: "Extra practice after the grammar slide \"should and shouldn't\"", slide: "should and shouldn't" },
+      ],
       title: "Understand: should and shouldn't",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],

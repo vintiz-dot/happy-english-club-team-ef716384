@@ -252,6 +252,9 @@ export const odL2U10: Unit = {
       unit: 10,
       lesson: 2,
       covers: { unitFrom: 10, lesson: "Read" },
+      resources: [
+        { title: "ESL Complete the Dialogue: Please and Thank you Writing Activity [Kids, A1]", url: "https://www.twinkl.com/resource/esl-complete-the-dialogue-please-and-thank-you-writing-activity-kids-a1-t-e-1758118175", source: "Twinkl", use: "Supports \"Picture walk: what do you notice? (SB 98-99)\"", slide: "Picture walk: what do you notice? (SB 98-99)" },
+      ],
       title: "Read: The Please and Thank You Book of Poems",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize", "Generalize"],
@@ -648,6 +651,9 @@ export const odL2U10: Unit = {
       unit: 10,
       lesson: 4,
       covers: { unitFrom: 10, lesson: "Communicate" },
+      resources: [
+        { title: "Parts of a Computer Labelling Activity", url: "https://www.twinkl.com/resource/ks1-parts-of-a-computer-labelling-activity-t-i-1645096309", source: "Twinkl", use: "Picture cards and practice for the words on \"Our six technology words\"", slide: "Our six technology words" },
+      ],
       title: "Communicate: Technology words, being polite, and writing about a thoughtful person",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Generalize"],
@@ -916,6 +922,9 @@ export const odL2U10: Unit = {
       unit: 10,
       lesson: 5,
       covers: { unitFrom: 9, lesson: "Wrap Up" },
+      resources: [
+        { title: "Good Manners Sorting and Discussion Cards", url: "https://www.twinkl.com/resource/t-p-024-new-good-manners-sorting-and-discussion-cards", source: "Twinkl", use: "Supports \"Listen and read: Layla's day (SB 104 A, Track 2•24)\"", slide: "Listen and read: Layla's day (SB 104 A, Track 2•24)" },
+      ],
       title: "Wrap Up: Layla's day, the Rules Poster and the Big Question",
       minutes: 90,
       inquiryPhases: ["Investigate", "Generalize", "Transfer", "Reflect"],

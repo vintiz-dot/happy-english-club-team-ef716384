@@ -507,6 +507,9 @@ export const odL1U16: Unit = {
       unit: 16,
       lesson: 3,
       covers: { unitFrom: 16, lesson: "Understand" },
+      resources: [
+        { title: "Present Continuous Verb Tense Worksheet for ELL", url: "https://www.twinkl.com/resource/present-continuous-verb-tense-worksheet-for-ell-us-e-1791488002", source: "Twinkl", use: "Extra practice after the grammar slide \"Is she dancing? Are they singing?\"", slide: "Is she dancing? Are they singing?" },
+      ],
       title: "Understand: Are you singing?",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -768,6 +771,9 @@ export const odL1U16: Unit = {
       unit: 16,
       lesson: 4,
       covers: { unitFrom: 16, lesson: "Communicate" },
+      resources: [
+        { title: "Present Continuous Verb Tense Worksheet for ELL", url: "https://www.twinkl.com/resource/present-continuous-verb-tense-worksheet-for-ell-us-e-1791488002", source: "Twinkl", use: "Extra practice after the grammar slide \"Squash two words: contractions\"", slide: "Squash two words: contractions" },
+      ],
       title: "Communicate: Shows and performances",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -1105,6 +1111,9 @@ export const odL1U16: Unit = {
       unit: 16,
       lesson: 5,
       covers: { unitFrom: 15, lesson: "Wrap Up" },
+      resources: [
+        { title: "Let's Make Music Photo Display Poster", url: "https://www.twinkl.com/resource/lets-make-music-photo-display-poster-t-mu-1730714812", source: "Twinkl", use: "Supports \"Look and read: the music comic (SB 164 A)\"", slide: "Look and read: the music comic (SB 164 A)" },
+      ],
       title: "Wrap Up: Units 15 and 16",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],

@@ -252,6 +252,9 @@ export const odL1U4: Unit = {
       unit: 4,
       lesson: 2,
       covers: { unitFrom: 4, lesson: "Read" },
+      resources: [
+        { title: "Color Mixing Pack", url: "https://www.twinkl.com/resource/us-t-m-127-color-mixing-display-pack", source: "Twinkl", use: "Picture cards and practice for the words on \"Words for reading\"", slide: "Words for reading" },
+      ],
       title: "Read: Let's make colors!",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -455,6 +458,9 @@ export const odL1U4: Unit = {
       unit: 4,
       lesson: 3,
       covers: { unitFrom: 4, lesson: "Understand" },
+      resources: [
+        { title: "ESL In On Under: TPR Board Game [Kids, A1]", url: "https://www.twinkl.com/resource/in-on-under-tpr-board-game-t-eal-113", source: "Twinkl", use: "Extra practice after the grammar slide \"In, on, under, next to\"", slide: "In, on, under, next to" },
+      ],
       title: "Understand: In, on, under, next to",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],

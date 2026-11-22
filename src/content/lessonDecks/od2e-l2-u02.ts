@@ -248,6 +248,9 @@ export const odL2U2: Unit = {
       unit: 2,
       lesson: 2,
       covers: { unitFrom: 2, lesson: "Read" },
+      resources: [
+        { title: "Animals in Their Habitats Worksheet", url: "https://www.twinkl.com/resource/au-t-3772-animals-in-their-habitats-worksheet", source: "Twinkl", use: "Supports \"Predict: what do the pictures say?\"", slide: "Predict: what do the pictures say?" },
+      ],
       title: "Read: Leo and Lily's adventure",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize"],
@@ -434,6 +437,9 @@ export const odL2U2: Unit = {
       unit: 2,
       lesson: 3,
       covers: { unitFrom: 2, lesson: "Understand" },
+      resources: [
+        { title: "ESL Adverbs of Frequency Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-adverbs-of-frequency-lesson-kids-a1-t-1749205669", source: "Twinkl", use: "Extra practice after the grammar slide \"Adverbs of frequency: how often?\"", slide: "Adverbs of frequency: how often?" },
+      ],
       title: "Understand: How often? always, usually, sometimes, hardly ever, never",
       minutes: 90,
       inquiryPhases: ["Organize", "Generalize", "Transfer"],
@@ -662,6 +668,9 @@ export const odL2U2: Unit = {
       unit: 2,
       lesson: 4,
       covers: { unitFrom: 2, lesson: "Communicate" },
+      resources: [
+        { title: "ESL Adverbs of Frequency Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-adverbs-of-frequency-lesson-kids-a1-t-1749205669", source: "Twinkl", use: "Extra practice after the grammar slide \"Pronouns: it, they, we\"", slide: "Pronouns: it, they, we" },
+      ],
       title: "Communicate: Describing animals",
       minutes: 90,
       inquiryPhases: ["Focus", "Generalize", "Transfer"],

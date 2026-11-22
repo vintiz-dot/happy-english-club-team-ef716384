@@ -253,6 +253,9 @@ export const odL1U8: Unit = {
       unit: 8,
       lesson: 2,
       covers: { unitFrom: 8, lesson: "Read" },
+      resources: [
+        { title: "Seasons Cut and Stick Activity Sheet", url: "https://www.twinkl.com/resource/seasons-cut-and-stick-activity-sheet-t-tp-3015", source: "Twinkl", use: "Supports \"Picture walk (SB 78-79)\"", slide: "Picture walk (SB 78-79)" },
+      ],
       title: "Read: The Seasons of Arnold's Apple Tree",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -918,6 +921,9 @@ export const odL1U8: Unit = {
       unit: 8,
       lesson: 5,
       covers: { unitFrom: 7, lesson: "Wrap Up" },
+      resources: [
+        { title: "The Four Seasons Circle Poster and Sorting Activity", url: "https://www.twinkl.com/resource/the-four-seasons-circle-poster-and-activity-sheets-t-sc-1742287854", source: "Twinkl", use: "Supports \"Listen and read (SB 84 A)\"", slide: "Listen and read (SB 84 A)" },
+      ],
       title: "Wrap Up: A Seasons Journal (Units 7 and 8)",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],

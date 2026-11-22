@@ -460,6 +460,9 @@ export const odL1U9: Unit = {
       unit: 9,
       lesson: 3,
       covers: { unitFrom: 9, lesson: "Understand" },
+      resources: [
+        { title: "Pets Photo Flash Cards", url: "https://www.twinkl.com/resource/pets-photo-flash-cards-us-e-1698201339", source: "Twinkl", use: "Picture cards and practice for the words on \"Things we have (SB 93 E)\"", slide: "Things we have (SB 93 E)" },
+      ],
       title: "Understand: I have, I don't have",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],

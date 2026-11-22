@@ -32,6 +32,9 @@ export const odL2U15: Unit = {
       unit: 15,
       lesson: 1,
       covers: { unitFrom: 15, lesson: "Get Ready" },
+      resources: [
+        { title: "Push or Pull Toy Sort Worksheet", url: "https://www.twinkl.com/resource/au-sc-243-push-or-pull-toy-sort-activity-sheet", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 9 force words\"", slide: "Our 9 force words" },
+      ],
       title: "Big Question and Get Ready: Push, pull and move",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus"],
@@ -309,6 +312,9 @@ export const odL2U15: Unit = {
       unit: 15,
       lesson: 2,
       covers: { unitFrom: 15, lesson: "Read" },
+      resources: [
+        { title: "Second Grade Force and Motion Worksheet", url: "https://www.twinkl.com/resource/second-grade-force-and-motion-worksheet-us-s-1760724331", source: "Twinkl", use: "Supports \"Picture walk and predict (SB 150-151)\"", slide: "Picture walk and predict (SB 150-151)" },
+      ],
       title: "Read: Forces and Movement",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize"],
@@ -523,6 +529,10 @@ export const odL2U15: Unit = {
       unit: 15,
       lesson: 3,
       covers: { unitFrom: 15, lesson: "Understand" },
+      resources: [
+        { title: "Workstation Bigger and Smaller Sorting Activity", url: "https://www.twinkl.com/resource/bigger-and-smaller-sorting-activity-t-n-10088", source: "Twinkl", use: "Picture cards and practice for the words on \"Our comparing words\"", slide: "Our comparing words" },
+        { title: "ESL Comparative and Superlative Adjectives PPT Quiz [Kids, A1]", url: "https://www.twinkl.com/resource/esl-comparative-and-superlative-adjectives-ppt-quiz-kids-a1-t-1767697640", source: "Twinkl", use: "Extra practice after the grammar slide \"Comparative adjectives: -er and -ier\"", slide: "Comparative adjectives: -er and -ier" },
+      ],
       title: "Understand: Comparing things",
       minutes: 90,
       inquiryPhases: ["Organize", "Generalize"],

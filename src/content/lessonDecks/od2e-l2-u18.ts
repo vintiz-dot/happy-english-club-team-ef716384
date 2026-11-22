@@ -33,6 +33,9 @@ export const odL2U18: Unit = {
       unit: 18,
       lesson: 1,
       covers: { unitFrom: 18, lesson: "Get Ready" },
+      resources: [
+        { title: "Dull or Shiny Sorting Activity", url: "https://www.twinkl.com/resource/dull-or-shiny-sorting-activity-t-sc-1727696192", source: "Twinkl", use: "Picture cards and practice for the words on \"Our nine words\"", slide: "Our nine words" },
+      ],
       title: "Get Ready: Shiny, fold, crumple! Words for making art, and text-to-self",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus"],
@@ -510,6 +513,9 @@ export const odL2U18: Unit = {
       unit: 18,
       lesson: 3,
       covers: { unitFrom: 18, lesson: "Understand" },
+      resources: [
+        { title: "ESL Quantifiers: Much or Many Worksheet", url: "https://www.twinkl.com/resource/esl-quantifiers-much-or-many-worksheet-t-eal-1655131349", source: "Twinkl", use: "Extra practice after the grammar slide \"How many? How much? Some, any, a few, a lot of\"", slide: "How many? How much? Some, any, a few, a lot of" },
+      ],
       title: "Understand: How many? How much? Some, any, a few, a lot of",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Generalize", "Transfer"],
@@ -765,6 +771,10 @@ export const odL2U18: Unit = {
       unit: 18,
       lesson: 4,
       covers: { unitFrom: 18, lesson: "Communicate" },
+      resources: [
+        { title: "ESL What Should You Bring to School? Colouring Sheet [Kindergarten, A1]", url: "https://www.twinkl.com/resource/esl-what-should-you-bring-to-school-colouring-sheet-kindergarten-a1-t-1746001355", source: "Twinkl", use: "Picture cards and practice for the words on \"Our six art tools\"", slide: "Our six art tools" },
+        { title: "ESL Quantifiers: Much or Many Worksheet", url: "https://www.twinkl.com/resource/esl-quantifiers-much-or-many-worksheet-t-eal-1655131349", source: "Twinkl", use: "Extra practice after the grammar slide \"Commas in lists\"", slide: "Commas in lists" },
+      ],
       title: "Communicate: Art tools, describing art, and commas in lists",
       minutes: 90,
       inquiryPhases: ["Focus", "Organize", "Generalize", "Transfer"],

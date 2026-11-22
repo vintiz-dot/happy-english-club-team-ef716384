@@ -429,6 +429,9 @@ export const odL2U17: Unit = {
       unit: 17,
       lesson: 3,
       covers: { unitFrom: 17, lesson: "Understand" },
+      resources: [
+        { title: "ESL Quantifiers: Much or Many Worksheet", url: "https://www.twinkl.com/resource/esl-quantifiers-much-or-many-worksheet-t-eal-1655131349", source: "Twinkl", use: "Extra practice after the grammar slide \"A lot of / any\"", slide: "A lot of / any" },
+      ],
       title: "Understand: A lot of / any",
       minutes: 90,
       inquiryPhases: ["Focus", "Generalize", "Transfer"],
@@ -649,6 +652,9 @@ export const odL2U17: Unit = {
       unit: 17,
       lesson: 4,
       covers: { unitFrom: 17, lesson: "Communicate" },
+      resources: [
+        { title: "Origami Bear Craft Activity", url: "https://www.twinkl.com/resource/origami-bear-craft-activity-t-tp-1655826723", source: "Twinkl", use: "Picture cards and practice for the words on \"Six kinds of art\"", slide: "Six kinds of art" },
+      ],
       title: "Communicate: Kinds of art and kind words",
       minutes: 90,
       inquiryPhases: ["Focus", "Transfer", "Reflect"],

@@ -32,6 +32,9 @@ export const odL2U7: Unit = {
       unit: 7,
       lesson: 1,
       covers: { unitFrom: 7, lesson: "Get Ready" },
+      resources: [
+        { title: "Subtraction from 20 Peg Cards", url: "https://www.twinkl.com/resource/t-n-5801-subtraction-from-20-peg-cards", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 9 math words\"", slide: "Our 9 math words" },
+      ],
       title: "Big Question and Get Ready: Math words",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus"],
@@ -293,6 +296,9 @@ export const odL2U7: Unit = {
       unit: 7,
       lesson: 2,
       covers: { unitFrom: 7, lesson: "Read" },
+      resources: [
+        { title: "Zoo-Themed Subtraction within 10 Worksheet", url: "https://www.twinkl.com/resource/t-n-6166-zoo-themed-subtraction-within-10-activity-sheet", source: "Twinkl", use: "Supports \"Picture walk and predict (SB 70-71)\"", slide: "Picture walk and predict (SB 70-71)" },
+      ],
       title: "Read: Subtraction",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize"],
@@ -511,6 +517,9 @@ export const odL2U7: Unit = {
       unit: 7,
       lesson: 3,
       covers: { unitFrom: 7, lesson: "Understand" },
+      resources: [
+        { title: "Past Tense Pairs Matching Cards Game for K-2nd Grade", url: "https://www.twinkl.com/resource/past-tense-pairs-matching-game-us-e-1760565439", source: "Twinkl", use: "Extra practice after the grammar slide \"Yesterday words: yes and no\"", slide: "Yesterday words: yes and no" },
+      ],
       title: "Understand: What did they do yesterday?",
       minutes: 90,
       inquiryPhases: ["Focus", "Generalize", "Transfer"],
@@ -771,6 +780,9 @@ export const odL2U7: Unit = {
       unit: 7,
       lesson: 4,
       covers: { unitFrom: 7, lesson: "Communicate" },
+      resources: [
+        { title: "Clean or Dirty Sorting Activity", url: "https://www.twinkl.com/resource/clean-or-dirty-sorting-activity-t-tp-1712823299", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 6 words\"", slide: "Our 6 words" },
+      ],
       title: "Communicate: How do you feel?",
       minutes: 90,
       inquiryPhases: ["Engage", "Generalize", "Transfer", "Reflect"],

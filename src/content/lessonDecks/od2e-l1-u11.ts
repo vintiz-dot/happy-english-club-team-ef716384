@@ -32,6 +32,9 @@ export const odL1U11: Unit = {
       unit: 11,
       lesson: 1,
       covers: { unitFrom: 11, lesson: "Get Ready" },
+      resources: [
+        { title: "On the Farm Word Cards", url: "https://www.twinkl.com/resource/esl-on-the-farm-word-cards-t-t-820", source: "Twinkl", use: "Picture cards and practice for the words on \"Our farm and market words\"", slide: "Our farm and market words" },
+      ],
       title: "Big Question and Get Ready: Farm and market words",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Investigate"],

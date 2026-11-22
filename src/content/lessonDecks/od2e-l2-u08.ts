@@ -508,6 +508,10 @@ export const odL2U8: Unit = {
       unit: 8,
       lesson: 3,
       covers: { unitFrom: 8, lesson: "Understand" },
+      resources: [
+        { title: "Second Grade Go, Going, and Went: Past and Present Tense Worksheet", url: "https://www.twinkl.com/resource/second-grade-go-going-and-went-past-and-present-tense-activity-us-e-1706134999", source: "Twinkl", use: "Picture cards and practice for the words on \"Yesterday words\"", slide: "Yesterday words" },
+        { title: "Past Tense Pairs Matching Cards Game for K-2nd Grade", url: "https://www.twinkl.com/resource/past-tense-pairs-matching-game-us-e-1760565439", source: "Twinkl", use: "Extra practice after the grammar slide \"Simple past: Did he go? He went.\"", slide: "Simple past: Did he go? He went." },
+      ],
       title: "Understand: What did Bandar do?",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Generalize"],

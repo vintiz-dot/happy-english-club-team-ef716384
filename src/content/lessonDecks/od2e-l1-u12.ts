@@ -32,6 +32,9 @@ export const odL1U12: Unit = {
       unit: 12,
       lesson: 1,
       covers: { unitFrom: 12, lesson: "Get Ready" },
+      resources: [
+        { title: "Community Helpers Flash Cards for K-2nd Grade", url: "https://www.twinkl.com/resource/community-helpers-flash-cards-us-ss-1765300587", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 8 new words\"", slide: "Our 8 new words" },
+      ],
       title: "Get Ready: Jobs and things we need",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus"],
@@ -685,6 +688,9 @@ export const odL1U12: Unit = {
       unit: 12,
       lesson: 4,
       covers: { unitFrom: 12, lesson: "Communicate" },
+      resources: [
+        { title: "Fruit Photo Flashcards", url: "https://www.twinkl.com/resource/t-t-29360-fruit-photo-flashcards", source: "Twinkl", use: "Picture cards and practice for the words on \"Six food words\"", slide: "Six food words" },
+      ],
       title: "Communicate: Picnic food, wants and needs",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Reflect"],
@@ -971,6 +977,9 @@ export const odL1U12: Unit = {
       unit: 12,
       lesson: 5,
       covers: { unitFrom: 11, lesson: "Wrap Up" },
+      resources: [
+        { title: "Needs and Wants Sorting Activity", url: "https://www.twinkl.com/resource/needs-and-wants-sorting-activity-t-lf-1668082784", source: "Twinkl", use: "Supports \"Listen and read the comic (SB 124 A)\"", slide: "Listen and read the comic (SB 124 A)" },
+      ],
       title: "Wrap Up: A Needs and Wants Survey",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],

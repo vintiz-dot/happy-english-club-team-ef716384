@@ -261,6 +261,9 @@ export const odL1U5: Unit = {
       unit: 5,
       lesson: 2,
       covers: { unitFrom: 5, lesson: "Read" },
+      resources: [
+        { title: "Matching Animals to Their Homes Activity Sheet", url: "https://www.twinkl.com/resource/matching-animals-to-their-homes-activity-sheet-t-sc-1679388051", source: "Twinkl", use: "Supports \"Picture walk: guess first (SB 50-51)\"", slide: "Picture walk: guess first (SB 50-51)" },
+      ],
       title: "Read: Animal Homes",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -453,6 +456,9 @@ export const odL1U5: Unit = {
       unit: 5,
       lesson: 3,
       covers: { unitFrom: 5, lesson: "Understand" },
+      resources: [
+        { title: "ESL 'To Be' Question Cards [Kids, A1]", url: "https://www.twinkl.com/resource/esl-to-be-question-cards-kids-a1-t-e-1726577507", source: "Twinkl", use: "Extra practice after the grammar slide \"Where is ... ? Where are ... ?\"", slide: "Where is ... ? Where are ... ?" },
+      ],
       title: "Understand: Where is it? Where are they?",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -698,6 +704,9 @@ export const odL1U5: Unit = {
       unit: 5,
       lesson: 4,
       covers: { unitFrom: 5, lesson: "Communicate" },
+      resources: [
+        { title: "ESL 'To Be' Question Cards [Kids, A1]", url: "https://www.twinkl.com/resource/esl-to-be-question-cards-kids-a1-t-e-1726577507", source: "Twinkl", use: "Extra practice after the grammar slide \"More than one: -s, -es, and special words\"", slide: "More than one: -s, -es, and special words" },
+      ],
       title: "Communicate: Listen, warn, write",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Reflect"],

@@ -32,6 +32,9 @@ export const odL1U1: Unit = {
       unit: 1,
       lesson: 1,
       covers: { unitFrom: 1, lesson: "Get Ready" },
+      resources: [
+        { title: "Family Photo Flash Cards", url: "https://www.twinkl.com/resource/family-photo-flash-cards-us-ss-1686690368", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 8 family words (SB 8 A)\"", slide: "Our 8 family words (SB 8 A)" },
+      ],
       title: "Big Question and Get Ready: My family and friends",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Reflect"],
@@ -519,6 +522,9 @@ export const odL1U1: Unit = {
       unit: 1,
       lesson: 3,
       covers: { unitFrom: 1, lesson: "Understand" },
+      resources: [
+        { title: "ESL The Verb 'To Be' Grammar Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-the-verb-to-be-grammar-lesson-kids-a1-t-e-1726494515", source: "Twinkl", use: "Extra practice after the grammar slide \"Be: I'm, he's, she's, is, are (SB 13 D)\"", slide: "Be: I'm, he's, she's, is, are (SB 13 D)" },
+      ],
       title: "Understand: I'm, he's, she's, is and are",
       minutes: 90,
       inquiryPhases: ["Investigate", "Reflect"],
@@ -748,6 +754,9 @@ export const odL1U1: Unit = {
       unit: 1,
       lesson: 4,
       covers: { unitFrom: 1, lesson: "Communicate" },
+      resources: [
+        { title: "My Family - Family Members Flashcards", url: "https://www.twinkl.com/resource/my-family-family-members-flashcards-eg-e-1785444885", source: "Twinkl", use: "Picture cards and practice for the words on \"Six new family words (SB 14 A)\"", slide: "Six new family words (SB 14 A)" },
+      ],
       title: "Communicate: More family words and my family",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Reflect"],

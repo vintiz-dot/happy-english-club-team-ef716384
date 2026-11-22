@@ -310,6 +310,9 @@ export const odL1U7: Unit = {
       unit: 7,
       lesson: 2,
       covers: { unitFrom: 7, lesson: "Read" },
+      resources: [
+        { title: "Seasons and Weather Flash Cards", url: "https://www.twinkl.com/resource/seasons-and-weather-flash-cards-us-s-1670443312", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 9 reading words\"", slide: "Our 9 reading words" },
+      ],
       title: "Read: The Four Seasons",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -779,6 +782,9 @@ export const odL1U7: Unit = {
       unit: 7,
       lesson: 4,
       covers: { unitFrom: 7, lesson: "Communicate" },
+      resources: [
+        { title: "Weather Photo Flashcards", url: "https://www.twinkl.com/resource/weather-photo-flashcards-t-tp-1721389898", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 6 weather words\"", slide: "Our 6 weather words" },
+      ],
       title: "Communicate: Weather words, invitations and my favorite season",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Reflect"],

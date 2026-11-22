@@ -31,6 +31,9 @@ export const odL1U17: Unit = {
       unit: 17,
       lesson: 1,
       covers: { unitFrom: 17, lesson: "Get Ready" },
+      resources: [
+        { title: "Living and Nonliving Things Interactive Sorting Game", url: "https://www.twinkl.com/resource/living-and-nonliving-interactive-sorting-game-us-tg-1653587506", source: "Twinkl", use: "Picture cards and practice for the words on \"Our eight words\"", slide: "Our eight words" },
+      ],
       title: "Big Question and Get Ready: Living or nonliving?",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Investigate"],
@@ -305,6 +308,9 @@ export const odL1U17: Unit = {
       unit: 17,
       lesson: 2,
       covers: { unitFrom: 17, lesson: "Read" },
+      resources: [
+        { title: "Find and Colour the Living and Non-Living Things Worksheet", url: "https://www.twinkl.com/resource/find-and-colour-the-living-and-non-living-things-worksheet-roi-sc-213", source: "Twinkl", use: "Supports \"Picture walk: what can we see?\"", slide: "Picture walk: what can we see?" },
+      ],
       title: "Read: Living and Nonliving Things",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -527,6 +533,9 @@ export const odL1U17: Unit = {
       unit: 17,
       lesson: 3,
       covers: { unitFrom: 17, lesson: "Understand" },
+      resources: [
+        { title: "ESL 'Can' and 'Can't' for Ability Activity Sheet [Kids, A1-A2]", url: "https://www.twinkl.com/resource/esl-can-and-cant-for-ability-activity-sheet-kids-a1-a2-t-1732600463", source: "Twinkl", use: "Extra practice after the grammar slide \"Can and can't\"", slide: "Can and can't" },
+      ],
       title: "Understand: What can it do?",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],

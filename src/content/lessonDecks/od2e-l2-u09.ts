@@ -31,6 +31,9 @@ export const odL2U9: Unit = {
       unit: 9,
       lesson: 1,
       covers: { unitFrom: 9, lesson: "Get Ready" },
+      resources: [
+        { title: "Traffic Light Movement Activity Cards", url: "https://www.twinkl.com/resource/t-t-20899-traffic-light-movement-activity-cards", source: "Twinkl", use: "Picture cards and practice for the words on \"Nine new words\"", slide: "Nine new words" },
+      ],
       title: "Big Question and Get Ready: Rules and people",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Reflect"],
@@ -268,6 +271,9 @@ export const odL2U9: Unit = {
       unit: 9,
       lesson: 2,
       covers: { unitFrom: 9, lesson: "Read" },
+      resources: [
+        { title: "Following Classroom Rules Worksheets for K-2nd Grade", url: "https://www.twinkl.com/resource/following-classroom-rules-worksheets-for-k-2nd-grade-us-cm-1787935848", source: "Twinkl", use: "Supports \"Read and listen: the big picture (SB 90-91)\"", slide: "Read and listen: the big picture (SB 90-91)" },
+      ],
       title: "Read: Following Rules",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize", "Generalize"],
@@ -473,6 +479,9 @@ export const odL2U9: Unit = {
       unit: 9,
       lesson: 3,
       covers: { unitFrom: 9, lesson: "Understand" },
+      resources: [
+        { title: "ESL Possessive Pronouns Worksheet [Kids, A1]", url: "https://www.twinkl.com/resource/esl-possessive-pronouns-worksheet-kids-a1-t-e-1716990949", source: "Twinkl", use: "Extra practice after the grammar slide \"Mine, yours, hers, his, ours, theirs\"", slide: "Mine, yours, hers, his, ours, theirs" },
+      ],
       title: "Understand: Whose is it? Mine, yours, hers, his",
       minutes: 90,
       inquiryPhases: ["Investigate", "Generalize", "Transfer"],
@@ -717,6 +726,9 @@ export const odL2U9: Unit = {
       unit: 9,
       lesson: 4,
       covers: { unitFrom: 9, lesson: "Communicate" },
+      resources: [
+        { title: "Rooms of a House Labeling Worksheet for K-2nd Grade", url: "https://www.twinkl.com/resource/label-the-rooms-of-a-house-activity-for-k-2nd-grade-us-cm-1689122384", source: "Twinkl", use: "Picture cards and practice for the words on \"Six place words\"", slide: "Six place words" },
+      ],
       title: "Communicate: Places, sorry and my house rules",
       minutes: 90,
       inquiryPhases: ["Organize", "Generalize", "Transfer", "Reflect"],

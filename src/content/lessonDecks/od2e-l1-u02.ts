@@ -32,6 +32,9 @@ export const odL1U2: Unit = {
       unit: 2,
       lesson: 1,
       covers: { unitFrom: 2, lesson: "Get Ready" },
+      resources: [
+        { title: "Safari Animals Flash Cards", url: "https://www.twinkl.com/resource/safari-animals-flash-cards-for-prek-k-us-s-1764804392", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 8 new words\"", slide: "Our 8 new words" },
+      ],
       title: "Get Ready: Animals, feelings and things we do",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus"],
@@ -238,6 +241,9 @@ export const odL1U2: Unit = {
       unit: 2,
       lesson: 2,
       covers: { unitFrom: 2, lesson: "Read" },
+      resources: [
+        { title: "Animal Vocabulary Flash Cards for Sorting", url: "https://www.twinkl.com/resource/esl-animal-flash-cards-sorting-t-t-3688", source: "Twinkl", use: "Picture cards and practice for the words on \"Four more story words\"", slide: "Four more story words" },
+      ],
       title: "Read: Elliot's New Friend",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -439,6 +445,9 @@ export const odL1U2: Unit = {
       unit: 2,
       lesson: 3,
       covers: { unitFrom: 2, lesson: "Understand" },
+      resources: [
+        { title: "ESL Demonstrative Pronouns Worksheet [Kids, A1]", url: "https://www.twinkl.com/resource/esl-demonstrative-pronouns-worksheet-t-eal-1642667050", source: "Twinkl", use: "Extra practice after the grammar slide \"This, that, these, those\"", slide: "This, that, these, those" },
+      ],
       title: "Understand: This, that, these and those",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -649,6 +658,9 @@ export const odL1U2: Unit = {
       unit: 2,
       lesson: 4,
       covers: { unitFrom: 2, lesson: "Communicate" },
+      resources: [
+        { title: "Pets Photo Flash Cards", url: "https://www.twinkl.com/resource/pets-photo-flash-cards-us-e-1698201339", source: "Twinkl", use: "Picture cards and practice for the words on \"Six pet words\"", slide: "Six pet words" },
+      ],
       title: "Communicate: Pets and describing a friend",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Reflect"],

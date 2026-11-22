@@ -278,6 +278,9 @@ export const odL2U14: Unit = {
       unit: 14,
       lesson: 2,
       covers: { unitFrom: 14, lesson: "Read" },
+      resources: [
+        { title: "KS1 Musical Feelings and Emotions Worksheet", url: "https://www.twinkl.com/resource/musical-feelings-and-emotions-worksheet-t-mu-1644310217", source: "Twinkl", use: "Supports \"Picture walk: what do you see?\"", slide: "Picture walk: what do you see?" },
+      ],
       title: "Read: Olga's Flute",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize"],
@@ -475,6 +478,9 @@ export const odL2U14: Unit = {
       unit: 14,
       lesson: 3,
       covers: { unitFrom: 14, lesson: "Understand" },
+      resources: [
+        { title: "ESL Adverbs of Time and Frequency Game [Kids, A2]", url: "https://www.twinkl.com/resource/esl-adverbs-of-time-and-frequency-game-kids-a2-t-1768303395", source: "Twinkl", use: "Extra practice after the grammar slide \"Time words: when did it happen?\"", slide: "Time words: when did it happen?" },
+      ],
       title: "Understand: Time words, yesterday and today",
       minutes: 90,
       inquiryPhases: ["Organize", "Generalize"],
@@ -719,6 +725,9 @@ export const odL2U14: Unit = {
       unit: 14,
       lesson: 4,
       covers: { unitFrom: 14, lesson: "Communicate" },
+      resources: [
+        { title: "ESL Adverbs of Time and Frequency Game [Kids, A2]", url: "https://www.twinkl.com/resource/esl-adverbs-of-time-and-frequency-game-kids-a2-t-1768303395", source: "Twinkl", use: "Extra practice after the grammar slide \"And and but: put two ideas together\"", slide: "And and but: put two ideas together" },
+      ],
       title: "Communicate: A popstar's day, and and but",
       minutes: 90,
       inquiryPhases: ["Focus", "Generalize", "Transfer"],

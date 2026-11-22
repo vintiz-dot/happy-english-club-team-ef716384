@@ -31,6 +31,9 @@ export const odL1U6: Unit = {
       unit: 6,
       lesson: 1,
       covers: { unitFrom: 6, lesson: "Get Ready" },
+      resources: [
+        { title: "Jungle and Rainforest Word Cards", url: "https://www.twinkl.com/resource/us-t-t-1117-jungle-and-rainforest-word-cards", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 8 reserve words\"", slide: "Our 8 reserve words" },
+      ],
       title: "Get Ready: Animal reserve words",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Reflect"],
@@ -438,6 +441,9 @@ export const odL1U6: Unit = {
       unit: 6,
       lesson: 3,
       covers: { unitFrom: 6, lesson: "Understand" },
+      resources: [
+        { title: "ESL 'To Be' Question Cards [Kids, A1]", url: "https://www.twinkl.com/resource/esl-to-be-question-cards-kids-a1-t-e-1726577507", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: What's this? Who's that?\"", slide: "Grammar: What's this? Who's that?" },
+      ],
       title: "Understand: What's this? Who's that?",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],

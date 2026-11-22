@@ -31,6 +31,9 @@ export const odL2U5: Unit = {
       unit: 5,
       lesson: 1,
       covers: { unitFrom: 5, lesson: "Get Ready" },
+      resources: [
+        { title: "Trade, Travel and Communication KS1 Activity Sheet", url: "https://www.twinkl.com/resource/trade-travel-and-communication-ks1-activity-sheet-ar-me-1746462574", source: "Twinkl", use: "Picture cards and practice for the words on \"Nine new words\"", slide: "Nine new words" },
+      ],
       title: "Big Question and Get Ready: Travel, communication and news",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Reflect"],
@@ -267,6 +270,9 @@ export const odL2U5: Unit = {
       unit: 5,
       lesson: 2,
       covers: { unitFrom: 5, lesson: "Read" },
+      resources: [
+        { title: "Daily Life Then and Now Worksheet", url: "https://www.twinkl.com/resource/au-h-147-daily-life-then-and-now-activity-sheet-english-australian", source: "Twinkl", use: "Supports \"Picture walk: before we read\"", slide: "Picture walk: before we read" },
+      ],
       title: "Read: Then and Now",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize", "Generalize", "Transfer"],
@@ -480,6 +486,9 @@ export const odL2U5: Unit = {
       unit: 5,
       lesson: 3,
       covers: { unitFrom: 5, lesson: "Understand" },
+      resources: [
+        { title: "Past Tense Pairs Matching Cards Game for K-2nd Grade", url: "https://www.twinkl.com/resource/past-tense-pairs-matching-game-us-e-1760565439", source: "Twinkl", use: "Extra practice after the grammar slide \"Simple past with regular verbs: what happened\"", slide: "Simple past with regular verbs: what happened" },
+      ],
       title: "Understand: What happened? Simple past with -ed",
       minutes: 90,
       inquiryPhases: ["Investigate", "Generalize", "Transfer"],

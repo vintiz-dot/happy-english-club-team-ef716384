@@ -254,6 +254,9 @@ export const odL1U10: Unit = {
       unit: 10,
       lesson: 2,
       covers: { unitFrom: 10, lesson: "Read" },
+      resources: [
+        { title: "Carrot Club Addition to 10 Worksheet", url: "https://www.twinkl.com/resource/t-or-175-carrot-club-addition-to-10-activity-sheet", source: "Twinkl", use: "Supports \"Picture walk (SB 98-99)\"", slide: "Picture walk (SB 98-99)" },
+      ],
       title: "Read: Stone Soup",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -695,6 +698,9 @@ export const odL1U10: Unit = {
       unit: 10,
       lesson: 4,
       covers: { unitFrom: 10, lesson: "Communicate" },
+      resources: [
+        { title: "Carrot Club Addition to 10 Worksheet", url: "https://www.twinkl.com/resource/t-or-175-carrot-club-addition-to-10-activity-sheet", source: "Twinkl", use: "Supports \"Say it with feeling! (SB 103 F)\"", slide: "Say it with feeling! (SB 103 F)" },
+      ],
       title: "Communicate: Fruit, adding and exclamations",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Investigate"],
@@ -938,6 +944,9 @@ export const odL1U10: Unit = {
       unit: 10,
       lesson: 5,
       covers: { unitFrom: 9, lesson: "Wrap Up" },
+      resources: [
+        { title: "Fruit Themed Addition Sheet", url: "https://www.twinkl.com/resource/au-t-1043-australia---fruit-themed-addition-sheet", source: "Twinkl", use: "Supports \"Listen and read along (SB 104 A)\"", slide: "Listen and read along (SB 104 A)" },
+      ],
       title: "Wrap Up: Units 9 and 10, bar graphs and numbers",
       minutes: 90,
       inquiryPhases: ["Investigate", "Reflect"],

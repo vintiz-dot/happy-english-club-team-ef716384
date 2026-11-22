@@ -478,6 +478,9 @@ export const odL2U6: Unit = {
       unit: 6,
       lesson: 3,
       covers: { unitFrom: 6, lesson: "Understand" },
+      resources: [
+        { title: "Past Tense Pairs Matching Cards Game for K-2nd Grade", url: "https://www.twinkl.com/resource/past-tense-pairs-matching-game-us-e-1760565439", source: "Twinkl", use: "Extra practice after the grammar slide \"Simple past: Did you travel by ship?\"", slide: "Simple past: Did you travel by ship?" },
+      ],
       title: "Understand: Did you travel by ship?",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Generalize"],
@@ -735,6 +738,9 @@ export const odL2U6: Unit = {
       unit: 6,
       lesson: 4,
       covers: { unitFrom: 6, lesson: "Communicate" },
+      resources: [
+        { title: "Past Tense Pairs Matching Cards Game for K-2nd Grade", url: "https://www.twinkl.com/resource/past-tense-pairs-matching-game-us-e-1760565439", source: "Twinkl", use: "Extra practice after the grammar slide \"Adding -ed to verbs\"", slide: "Adding -ed to verbs" },
+      ],
       title: "Communicate: Things in a home, then and now",
       minutes: 90,
       inquiryPhases: ["Focus", "Organize", "Transfer"],

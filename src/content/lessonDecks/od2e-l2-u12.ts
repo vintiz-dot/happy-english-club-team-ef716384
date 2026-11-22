@@ -478,6 +478,9 @@ export const odL2U12: Unit = {
       unit: 12,
       lesson: 3,
       covers: { unitFrom: 12, lesson: "Understand" },
+      resources: [
+        { title: "ESL Prepositions of Place [Kids, A1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-place-t-eal-1643881128", source: "Twinkl", use: "Extra practice after the grammar slide \"Where is it? Place words\"", slide: "Where is it? Place words" },
+      ],
       title: "Understand: Where is it? Prepositions of place",
       minutes: 90,
       inquiryPhases: ["Investigate", "Generalize", "Transfer"],
@@ -740,6 +743,9 @@ export const odL2U12: Unit = {
       unit: 12,
       lesson: 4,
       covers: { unitFrom: 12, lesson: "Communicate" },
+      resources: [
+        { title: "ESL Prepositions of Place [Kids, A1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-place-t-eal-1643881128", source: "Twinkl", use: "Extra practice after the grammar slide \"Verbs show time: go, going, went\"", slide: "Verbs show time: go, going, went" },
+      ],
       title: "Communicate: Times, last week and writing about something recycled",
       minutes: 90,
       inquiryPhases: ["Investigate", "Organize", "Generalize", "Transfer"],
@@ -1016,6 +1022,9 @@ export const odL2U12: Unit = {
       unit: 12,
       lesson: 5,
       covers: { unitFrom: 11, lesson: "Wrap Up" },
+      resources: [
+        { title: "Reduce, Reuse, Recycle Sorting Activity", url: "https://www.twinkl.com/resource/reduce-reuse-recycle-sorting-activity-ca-sc-1691720796", source: "Twinkl", use: "Supports \"Listen and read: Gus and Dot (SB 124 A, Track 2•39)\"", slide: "Listen and read: Gus and Dot (SB 124 A, Track 2•39)" },
+      ],
       title: "Wrap Up: Gus and Dot, natural resource collages and the Big Question",
       minutes: 90,
       inquiryPhases: ["Investigate", "Generalize", "Transfer", "Reflect"],

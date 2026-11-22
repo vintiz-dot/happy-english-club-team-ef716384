@@ -32,6 +32,9 @@ export const odL2U16: Unit = {
       unit: 16,
       lesson: 1,
       covers: { unitFrom: 16, lesson: "Get Ready" },
+      resources: [
+        { title: "Happy, Sad, and Angry Sorting Activity for PreK-K", url: "https://www.twinkl.com/resource/happy-sad-and-angry-sorting-activity-us-cm-1699826294", source: "Twinkl", use: "Picture cards and practice for the words on \"Our nine words: places, feelings and animals\"", slide: "Our nine words: places, feelings and animals" },
+      ],
       title: "Get Ready: Goats, mountains and being stubborn, and what is a theme?",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus"],
@@ -445,6 +448,9 @@ export const odL2U16: Unit = {
       unit: 16,
       lesson: 3,
       covers: { unitFrom: 16, lesson: "Understand" },
+      resources: [
+        { title: "ELL Curriculum: Level 5, Lesson 8 Superlative Adjectives Worksheet", url: "https://www.twinkl.com/resource/ell-curriculum-level-5-lesson-8-superlative-adjectives-worksheet-us-e-1786472778", source: "Twinkl", use: "Extra practice after the grammar slide \"The -est words: the biggest, the happiest, the best (SB 161 E)\"", slide: "The -est words: the biggest, the happiest, the best (SB 161 E)" },
+      ],
       title: "Understand: The biggest, the funniest, the best",
       minutes: 90,
       inquiryPhases: ["Investigate", "Generalize", "Transfer"],
@@ -687,6 +693,10 @@ export const odL2U16: Unit = {
       unit: 16,
       lesson: 4,
       covers: { unitFrom: 16, lesson: "Communicate" },
+      resources: [
+        { title: "Sports I Spy Activity", url: "https://www.twinkl.com/resource/sports-i-spy-us-n-436", source: "Twinkl", use: "Picture cards and practice for the words on \"Our six sports words\"", slide: "Our six sports words" },
+        { title: "ELL Curriculum: Level 5, Lesson 8 Superlative Adjectives Worksheet", url: "https://www.twinkl.com/resource/ell-curriculum-level-5-lesson-8-superlative-adjectives-worksheet-us-e-1786472778", source: "Twinkl", use: "Extra practice after the grammar slide \"Spelling the endings: -er, -est, -ier, -iest (SB 163 F)\"", slide: "Spelling the endings: -er, -est, -ier, -iest (SB 163 F)" },
+      ],
       title: "Communicate: Sports words, guessing games, and writing about speed and movement",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Generalize", "Transfer"],

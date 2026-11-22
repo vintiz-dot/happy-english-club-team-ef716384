@@ -31,6 +31,9 @@ export const odL1U3: Unit = {
       unit: 3,
       lesson: 1,
       covers: { unitFrom: 3, lesson: "Get Ready" },
+      resources: [
+        { title: "Originals First Words Flashcards: Colours", url: "https://www.twinkl.com/resource/originals-first-words-flashcards-colours-t-e-1688563182", source: "Twinkl", use: "Picture cards and practice for the words on \"Our 8 color words\"", slide: "Our 8 color words" },
+      ],
       title: "Big Question and Get Ready: Eight colors",
       minutes: 90,
       inquiryPhases: ["Engage", "Focus", "Investigate"],
@@ -515,6 +518,9 @@ export const odL1U3: Unit = {
       unit: 3,
       lesson: 3,
       covers: { unitFrom: 3, lesson: "Understand" },
+      resources: [
+        { title: "ESL 'There Is' or 'There Are' Matching Game [Kids, A1]", url: "https://www.twinkl.com/resource/esl-there-is-or-there-are-matching-game-t-eal-1656599290", source: "Twinkl", use: "Extra practice after the grammar slide \"There is / There are\"", slide: "There is / There are" },
+      ],
       title: "Understand: There is, there are",
       minutes: 90,
       inquiryPhases: ["Engage", "Investigate", "Reflect"],
@@ -769,6 +775,9 @@ export const odL1U3: Unit = {
       unit: 3,
       lesson: 4,
       covers: { unitFrom: 3, lesson: "Communicate" },
+      resources: [
+        { title: "Light and Dark Flashcards", url: "https://www.twinkl.com/resource/t-t-14043-light-and-dark-flashcards", source: "Twinkl", use: "Picture cards and practice for the words on \"Six new words\"", slide: "Six new words" },
+      ],
       title: "Communicate: Fireworks, friends and a color poem",
       minutes: 90,
       inquiryPhases: ["Focus", "Investigate", "Reflect"],
