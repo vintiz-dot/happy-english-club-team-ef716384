@@ -6,6 +6,8 @@ import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
 import { paceLessons, type WeeklySlot } from "@/lib/lessonDecks/pacing";
 import { checksIn, classBook, grammarDeck, unitInterests, unitPlan, type PlanItem } from "@/lib/lessonDecks/views";
 import { useClassRoster } from "./useClassRoster";
+import { WeekHomeworkButtons } from "./WeekHomework";
+import { isWeekHomework, tierGroups } from "@/lib/lessonDecks/weekHomework";
 import { useClassDeckState } from "./useClassDeckState";
 import { DeckPlayer, printAssessment, printDeck, printHomeworkSheets, printIeltsTracker, printWorksheet, type ClassFlipbook } from "./DeckPlayer";
 import { TERMS } from "@/content/lessonDecks/hec-ielts/programme";
@@ -277,6 +279,8 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                         )}
                         {hw && classId && <SetHomework classId={classId} title={hw.title} body={hw.body} due={paced[k + 1]?.date ?? null}
                           present={presentKids} enrolled={roster.data?.enrolled.length ?? 0} />}
+                        {!hw && isWeekHomework(d) && <WeekHomeworkButtons deck={d} classId={classId} present={presentKids}
+                          enrolled={roster.data?.enrolled.length ?? 0} interests={place.state?.interests ?? {}} due={paced[k + 1]?.date ?? null} />}
                       </div>
                       {checks.map((a) => (
                         <span key={a!.id} className="mt-1 inline-flex flex-wrap justify-end gap-1">
@@ -377,7 +381,8 @@ function InterestGroups({ unit, students, interests, onSave }: {
   unit: Unit; students: { id: string; name: string }[]; interests: Record<string, string[]>;
   onSave: (next: Record<string, string[]>) => Promise<void>;
 }) {
-  const kinds = unitInterests(unit);
+  const kinds = [...unitInterests(unit), ...tierGroups(unit)];
+  const tiered = tierGroups(unit).length > 0;
   const [draft, setDraft] = useState(interests);
   useEffect(() => setDraft(interests), [JSON.stringify(interests)]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!kinds.length) return null;
@@ -387,7 +392,9 @@ function InterestGroups({ unit, students, interests, onSave }: {
     <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1">
       <h3 className="mb-1 font-display text-hec-h3 text-hec-ink flex items-center gap-2"><Heart className="h-5 w-5" />Personalised homework</h3>
       <p className="mb-3 text-hec-small text-hec-ink-soft">
-        Tick the children who get an interest edition. Everyone else gets the class version. "Homework sheets" prints each child's own version; the projected slide shows both versions without names.
+        {tiered
+          ? "Tick the children on the Support or Stretch homework; everyone else does Core. \"Homework sheets\" prints each child present their own week, and \"Set in app\" posts each tier its own week."
+          : "Tick the children who get an interest edition. Everyone else gets the class version. \"Homework sheets\" prints each child's own version; the projected slide shows both versions without names."}
       </p>
       {kinds.map((k) => (
         <div key={k.interest} className="mb-3">
