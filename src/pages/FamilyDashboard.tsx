@@ -28,6 +28,7 @@ import { NeedsYouCard } from "@/components/family/NeedsYouCard";
 import { FamilyGreeting } from "@/components/family/FamilyGreeting";
 import { FamilyBi } from "@/components/family/FamilyBi";
 import { ThisWeek } from "@/components/family/ThisWeek";
+import { ChildMore } from "@/components/family/ChildMore";
 import { carry, useCarryNavigate } from "@/components/fx/Carry";
 import { Button } from "@/components/ui/button";
 import {
@@ -465,30 +466,14 @@ export default function FamilyDashboard() {
                         <p className="text-hec-small text-hec-ink">{kid.journey}</p>
                       </div>
                     )}
-                    {kid.lessons.filter((l) => l !== latest).length > 0 && (
-                      <div className="space-y-2">
-                        <p className="flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
-                          <BookOpen className="h-4 w-4 shrink-0" />Earlier lessons
-                        </p>
-                        {kid.lessons.filter((l) => l !== latest).map((l, k) => (
-                          <div key={k} className="rounded-hec-md border border-hec-line px-4 py-3">
-                            <p className="text-hec-small font-semibold text-hec-ink">
-                              {l.title || "Lesson"}{" "}
-                              <span className="whitespace-nowrap font-normal tabular-nums text-hec-ink-soft">· {lessonDay(l.lesson_date)}</span>
-                            </p>
-                            {l.summary && (
-                              <p className="mt-1 line-clamp-2 text-hec-caption text-hec-ink-soft">{l.summary}</p>
-                            )}
-                            {l.homework && (
-                              <p className="mt-2 flex items-start gap-2 text-hec-caption text-hec-ink">
-                                <NotebookPen className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" />
-                                <span className="min-w-0"><span className="font-semibold">Homework:</span> {l.homework}</span>
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {/* H3: what there is to say about this child beyond the latest lesson, in one expandable part of the card. */}
+                    <ChildMore
+                      name={kid.full_name}
+                      level={kid.cefr}
+                      earlier={kid.lessons
+                        .filter((l) => l !== latest)
+                        .map((l, k) => ({ key: `${kid.id}-${k}`, title: l.title || "Lesson", day: lessonDay(l.lesson_date), summary: l.summary, homework: l.homework }))}
+                    />
                   </CardContent>
                 </Card>
               </motion.div>
