@@ -15,8 +15,7 @@ import { LessonOverviewsCard } from "@/components/student/LessonOverviewsCard";
 import { StudentWallet } from "@/components/student/StudentWallet";
 import { NextThing } from "@/components/student/home/NextThing";
 import { WeekStrip } from "@/components/student/home/WeekStrip";
-import { Classmates } from "@/components/student/home/Classmates";
-import { useClassmates } from "@/components/student/home/useClassmates";
+import { StudentClassLeaderboard } from "@/components/student/StudentClassLeaderboard";
 import { CARD, CARD_TITLE, FOCUS } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
 import { dayjs } from "@/lib/date";
@@ -30,10 +29,7 @@ function greetingKey(hour: number) {
 export function TeenHome({ data }: { data: HomeData }) {
   const { en } = useCopy();
   const [view, setView] = useState<"mine" | "class">("mine");
-  const classId = data.enrolledClasses[0]?.classes?.id as string | undefined;
-  const classmates = useClassmates(classId, data.studentId);
   const upcoming = data.sessions.slice(0, 3);
-  const economy = data.enrolledClasses.filter((e: any) => e.classes?.id && e.classes.economy_mode);
   return (
     <div className="space-y-6">
       <header className="flex items-center gap-4">
@@ -114,18 +110,27 @@ export function TeenHome({ data }: { data: HomeData }) {
         </div>
       ) : (
         <div className="space-y-6">
-          {economy.map((e: any) => (
-            <StudentWallet
-              key={e.id}
-              studentId={data.studentId}
-              classId={e.classes.id}
-              className={e.classes.name}
-              totalPoints={data.classPoints(e.classes.id)}
-              economyMode={e.classes.economy_mode}
-              pointsToCashRate={e.classes.points_to_cash_rate || 50}
-            />
-          ))}
-          <Classmates band="teen" data={classmates} />
+          {/* The class boards exactly as before: one per enrolled class, this month by default, with their own
+              period picker and category tabs; the wallet of an economy class stays above its board. */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {data.enrolledClasses
+              .filter((e: any) => e.classes?.id)
+              .map((e: any) => (
+                <div key={e.id} className="space-y-4">
+                  {e.classes.economy_mode && (
+                    <StudentWallet
+                      studentId={data.studentId}
+                      classId={e.classes.id}
+                      className={e.classes.name}
+                      totalPoints={data.classPoints(e.classes.id)}
+                      economyMode={e.classes.economy_mode}
+                      pointsToCashRate={e.classes.points_to_cash_rate || 50}
+                    />
+                  )}
+                  <StudentClassLeaderboard classId={e.classes.id} className={e.classes.name} currentStudentId={data.studentId} />
+                </div>
+              ))}
+          </div>
         </div>
       )}
     </div>
