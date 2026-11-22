@@ -42,7 +42,14 @@ for (const page of text.split("\f")) {
   for (const bq of flat.matchAll(/Units (\d+) and (\d+) ((?:How|What|Why|Where|Who|When|Which|Do|Does|Is|Are|Can|Should)\b[^?.]{3,90}\?)/g)) {
     if (!bigQuestion.has(`${bq[1]}-${bq[2]}`)) bigQuestion.set(`${bq[1]}-${bq[2]}`, bq[3].trim());
   }
-  const h = flat.match(/(?:^|\s)Units? (\d+)(?: and (\d+))? (Get Ready|Read|Understand|Communicate|Big Question|Wrap Up)\s*page\s*(\d+)/);
+  let h = flat.match(/(?:^|\s)Units? (\d+)(?: and (\d+))? (Get Ready|Read|Understand|Communicate|Big Question|Wrap Up)\s*page\s*(\d+)/);
+  if (!h) {
+    // A heading that lost its unit number (Level 1, Unit 16 Get Ready): the page footer
+    // still names it, as "Unit 16 . Get Ready".
+    const bare = flat.match(/(?:^|\s)(Get Ready|Read|Understand|Communicate)\s+page\s*(\d+)/);
+    const foot = bare && flat.match(new RegExp(`Unit (\\d+) \\S? ?${bare[1]}\\b`));
+    if (foot) h = [null, foot[1], undefined, bare[1], bare[2]];
+  }
   if (!h || !/Objectives:/.test(flat)) continue;
   const start = flat.indexOf("Objectives:");
   // The summary box ends where the activities start: "Materials:" is its last label.

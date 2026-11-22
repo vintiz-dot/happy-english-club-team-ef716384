@@ -20,8 +20,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const MIGS = process.argv.slice(2);
 const find = (s) => MIGS.find((f) => f.includes(s));
 const CHAIN = ["20260717090000", "20261111110000", "class_recorder", "lesson_monitor_pilot", "lesson_monitor_cover_earlier",
-  "20261121130000_lesson_reports", "20261121150000_curriculum_lessons", "20261121151000_od2e_level3_lessons"].map(find);
-if (CHAIN.some((f) => !f)) { console.log("usage: curriculum-lessons.test.mjs <its 8 migrations>"); console.log("0 passed, 1 failed"); process.exit(1); }
+  "20261121130000_lesson_reports", "20261121150000_curriculum_lessons", "20261121151000_od2e_level3_lessons",
+  "20261122090000_od2e_level1_lessons", "20261122091000_od2e_level2_lessons"].map(find);
+if (CHAIN.some((f) => !f)) { console.log("usage: curriculum-lessons.test.mjs <its 10 migrations>"); console.log("0 passed, 1 failed"); process.exit(1); }
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
 const eq = (n, got, want) => ok(n, JSON.stringify(got) === JSON.stringify(want),
@@ -61,6 +62,18 @@ eq("Unit 12 Understand: the grammar point",
 eq("pages run in book order through Units 11 and 12",
   (await q(`SELECT sb_page FROM public.curriculum_lessons WHERE level = 3 AND unit_from IN (11, 12) ORDER BY sb_page`)).map((r) => r.sb_page),
   [106, 108, 110, 112, 114, 116, 118, 120, 122, 124]);
+
+console.log("the Level 1 and Level 2 seeds");
+for (const lv of [1, 2]) {
+  eq(`Level ${lv}: 90 lessons`, Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE level = $1`, [lv])).n), 90);
+  eq(`Level ${lv}: nine Big Questions, one per unit pair`,
+    Number((await one(`SELECT count(DISTINCT big_question) n FROM public.curriculum_lessons WHERE level = $1`, [lv])).n), 9);
+}
+eq("Level 1 Unit 16 Get Ready (its heading lost the unit number; the footer names it)",
+  (await one(`SELECT sb_page FROM public.curriculum_lessons WHERE level = 1 AND unit_from = 16 AND lesson = 'Get Ready'`))?.sb_page, 156);
+eq("Level 1 Unit 1 Get Ready: page and Big Question",
+  [(await one(`SELECT sb_page, big_question FROM public.curriculum_lessons WHERE level = 1 AND unit_from = 1 AND lesson = 'Get Ready'`))].map((r) => [r.sb_page, r.big_question])[0],
+  [8, "Who are your family and friends?"]);
 
 const U = (n) => `${String(n).repeat(8)}-0000-4000-8000-000000000000`;
 const ADMIN = U(1), VICTOR = U(2), OTHER = U(3), TAU = U(4), PARENT = U(5), CHILD = U(6);
