@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
+import { dur, ease, useMotionLevel } from "@/components/fx/motion";
 
 // Display-only preference: whether money figures are shown on this device.
 // Nothing is fetched or calculated differently; the figures are simply covered.
@@ -43,6 +44,7 @@ export const useFinancialPrivacy = () => useContext(Ctx);
 /** Wraps a money figure; shows a soft masked placeholder while privacy is on. */
 export function PrivateValue({ children, mask = "••••" }: { children: ReactNode; mask?: string }) {
   const { hidden } = useFinancialPrivacy();
+  const level = useMotionLevel();
   return (
     <span className="relative inline-flex items-baseline">
       <AnimatePresence mode="wait" initial={false}>
@@ -52,7 +54,7 @@ export function PrivateValue({ children, mask = "••••" }: { children: Re
             initial={{ opacity: 0, filter: "blur(6px)" }}
             animate={{ opacity: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, filter: "blur(6px)" }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: level === "off" ? 0 : dur.press, ease }}
             className="select-none tracking-[0.18em] text-hec-ink-faint"
           >
             <span aria-hidden="true">{mask}</span>
@@ -64,7 +66,7 @@ export function PrivateValue({ children, mask = "••••" }: { children: Re
             initial={{ opacity: 0, filter: "blur(6px)" }}
             animate={{ opacity: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, filter: "blur(6px)" }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: level === "off" ? 0 : dur.press, ease }}
           >
             {children}
           </motion.span>
