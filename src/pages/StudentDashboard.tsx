@@ -62,22 +62,19 @@ const itemVariants = {
 };
 
 /**
- * Grades 1-3 get the design system's young scale (bigger type, 56 px targets,
- * the warm honey surface). Read from date_of_birth, which this screen already
- * loads: a Vietnamese child starts Grade 1 in the September of the year they
- * turn 6, so in school year Y (Sept Y - Aug Y+1) the grade is Y - birth year - 5.
- * Younger children count as young too. No date of birth: the standard scale.
+ * Grade 3 and below (the early and young bands) get the design system's young
+ * scale: bigger type, 56 px targets, the warm honey surface. The band comes from
+ * the age engine (src/lib/ageBand.ts), read from date_of_birth, which this
+ * screen already loads. No date of birth: the standard scale.
  */
-function isYoungLearner(dateOfBirth?: string | null): boolean {
-  const born = Number((dateOfBirth || "").slice(0, 4));
-  if (!born) return false;
-  const now = dayjs();
-  const schoolYear = now.month() >= 8 ? now.year() : now.year() - 1;
-  return schoolYear - born - 5 <= 3;
+function youngScaleFor(dateOfBirth?: string | null): boolean {
+  const now = dayjs().tz(); // the date in Hanoi
+  return ageProfile(dateOfBirth, { year: now.year(), month: now.month() + 1 }).youngScale;
 }
 
 import { getLevelTitle } from "@/lib/levelUtils";
 import { useStudentPointsSummary } from "@/hooks/useClassBoard";
+import { ageProfile } from "@/lib/ageBand";
 import { useAuth } from "@/hooks/useAuth";
 
 // Launcher tiles for the quick-action dock (presentational config).
@@ -388,7 +385,7 @@ export default function StudentDashboard() {
       {/* "Ivory" design system scope (docs/DESIGN_SYSTEM.md): only this screen carries it at the checkpoint. */}
       <div
         data-hec-theme="ivory"
-        data-hec-scale={isYoungLearner(studentProfile.date_of_birth) ? "young" : undefined}
+        data-hec-scale={youngScaleFor(studentProfile.date_of_birth) ? "young" : undefined}
         className="relative"
       >
       {/* Celebration Overlay */}

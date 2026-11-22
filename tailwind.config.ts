@@ -360,5 +360,12 @@ export default {
     plugin(({ addVariant }) => {
       addVariant("young", ['&[data-hec-scale="young"]', '[data-hec-scale="young"] &']);
     }),
+    // Age bands (src/lib/ageBand.ts): data-hec-band on the element or an ancestor.
+    // `young:` above is the SCALE (early and young together) and keeps that meaning.
+    plugin(({ addVariant }) => {
+      for (const band of ["early", "junior", "teen"]) {
+        addVariant(band, [`&[data-hec-band="${band}"]`, `[data-hec-band="${band}"] &`]);
+      }
+    }),
   ],
 } satisfies Config;
