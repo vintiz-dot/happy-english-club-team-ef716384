@@ -204,7 +204,7 @@ export const rhL3U7Assessments: Assessment[] = [
         items: [
           { q: "11. The scientist walked ___ towards the edge of the crater.", options: ["careful", "carefully", "care", "more careful"], answer: "carefully" },
           { q: "12. The second wave reached the beach ___ than the first one.", options: ["fast", "faster", "fastest", "more fast"], answer: "faster" },
-          { q: "13. Of the three teams, ours worked ___.", options: ["hardest", "the hardest", "more hard", "the most hard"], answer: "the hardest" },
+          { q: "13. Of the three teams, ours worked ___.", options: ["hardly", "the hardest", "more hard", "the most hard"], answer: "the hardest" },
           { q: "14. My sister reads English ___ than I do.", options: ["more fluently", "fluentlier", "most fluently", "more fluent"], answer: "more fluently" },
           { q: "15. Find the adverb and say whether it tells how, where or when: 'The fishing boats will come back soon.'", answer: "soon: when" },
           { q: "16. We ran ___ the hill to get away from the water.", options: ["up", "on", "at", "of"], answer: "up" },

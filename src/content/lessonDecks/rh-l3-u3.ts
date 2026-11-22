@@ -91,7 +91,7 @@ const lessons: Deck[] = [
         steps: [
           "Opener (150-151): one minute of silent looking at the paddy-field photo. Say: I notice ... / I wonder ...",
           "Share What You Know (151): draw the most amazing plant you know. The class guesses whose plant is whose from one amazing fact.",
-          "Language Focus (152): listen to Marco's song, then sing along. Use the book's frames to give information about your plant: name the topic, tell a detail, tell more details.",
+          "Language Focus (152): listen to Marco's song, then sing along. Use the book's frames to give information about your plant: say which plant it is, give one fact about it, then add more facts.",
           "Key words (153): talk through the pea plant's life cycle with the six words.",
         ],
         media: [talkAudio(3, 1, 152, "Marco's song: My Big, Strong Plant")],
@@ -253,10 +253,10 @@ const lessons: Deck[] = [
           { word: "soil", meaning: "the top layer of earth where plants grow", example: "Good soil is dark and full of tiny living things." },
           { word: "blossom", meaning: "a flower, especially on a tree or bush, before the fruit", example: "Peach blossoms open just before Tết." },
           { word: "cycle", meaning: "events that happen again and again in the same order", example: "seed → sprout → plant → flower → fruit → seed: a life cycle." },
-          { word: "characteristic", meaning: "how something looks or what it does that helps you know it", example: "Long, thin leaves are a characteristic of rice." },
+          { word: "characteristic", meaning: "a feature of a thing that helps you recognise it", example: "Long, thin leaves are a characteristic of rice." },
           { word: "conditions", meaning: "the weather, light, water and soil around something", example: "Warm, wet conditions are good for growing rice." },
-          { word: "depend (on)", meaning: "need something or someone to live or to work", example: "Young plants depend on water and light." },
-          { word: "growth", meaning: "how much bigger something gets (noun of grow)", example: "We measured the plant's growth every week." },
+          { word: "depend (on)", meaning: "not be able to live, grow or do well without something or someone", example: "Young plants depend on water and light." },
+          { word: "growth", meaning: "getting bigger; the amount a living thing has grown (noun of grow)", example: "We measured the plant's growth every week." },
           { word: "produce", meaning: "make or grow something", example: "One mango tree can produce hundreds of mangoes." },
         ],
         media: [keyWordAudio(3, 1, "Part 1 key words")],
@@ -570,7 +570,7 @@ const lessons: Deck[] = [
         items: [
           { label: "Practice Book", detail: "Sheets 3.7 (sequence chain for \"Hoa's Little Garden\") and 3.9 (read the passage aloud with expression).", book: { book: "WB", pages: "3.7, 3.9", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items on in / on / at / for / during / until / by." },
-          { label: "Listening (E)", detail: "Listen to the story's audio again and write down every time expression you hear (after weeks, a few weeks later ...)." },
+          { label: "Listening (E)", detail: "Listen to the story's audio again and write down every time expression you hear (the phrases that say how many days, weeks or months have passed)." },
           { label: "Function of the week (B)", detail: "Write 4 polite requests for help and the replies; act two of them out at home." },
         ],
       },
@@ -630,6 +630,7 @@ const lessons: Deck[] = [
           "Which picture in your head is the strongest? Which single word makes it? Read the fact boxes (179, 181): one fact that surprised you.",
           "Compare (182): with your partner, fill a Venn diagram: \"Hoa's Little Garden\" and the haiku. What is the same? What is different?",
         ],
+        teacherNote: "The class audio has tracks for pages 178-181 only (Apples, Rice and the two fact boxes). There is no separate track for page 177, so read \"Pineapples\" aloud yourself if the first track does not include it.",
         prompts: ["The strongest image is ___ because the word ___ makes me see / taste / hear ___.", "A story and a haiku both ___, but a haiku ___."],
         media: [readingAudio(3, 1, 177, 181, "Gifts from the Earth (haiku)")],
       },
@@ -770,7 +771,7 @@ const lessons: Deck[] = [
         items: [
           { q: "In autumn the ___ fall from the trees.", options: ["leafs", "leaves", "leafes", "leave"], answer: "B. leaves" },
           { q: "Two ___ were playing in the garden.", options: ["childs", "childrens", "children", "child"], answer: "C. children" },
-          { q: "We usually visit our grandparents ___ Tết.", options: ["in", "on", "at", "for"], answer: "C. at" },
+          { q: "We usually visit our grandparents ___ Tết.", options: ["in", "on", "at", "to"], answer: "C. at" },
           { q: "It's ___ honour to meet you.", options: ["a", "an", "the", "-"], answer: "B. an" },
           { q: "Choose the word whose ending sounds different.", options: ["bushes", "boxes", "plants", "roses"], answer: "C. plants /s/" },
         ],
@@ -783,8 +784,8 @@ const lessons: Deck[] = [
         minutes: 12,
         book: { book: "SB", pages: "184-185" },
         steps: [
-          "Listen to Lily and Nico's dialogue about desert plants (184), then read it together. Use the book's frames to define and explain: name the word, tell what it means, give an example.",
-          "Then: two photos side by side, a desert and a rainforest (185). List everything that is different. Which place has more KINDS of living things? Why?",
+          "Listen to Lily and Nico's dialogue about desert plants (184), then read it together. Use the book's frames to define and explain: say the word, explain its meaning, then add an example.",
+          "Then: the pictures on page 185 show plants in a city, a rainforest and a desert. Compare the desert and the rainforest: list everything that is different. Which place has more KINDS of living things? Why?",
           "The word for 'many different kinds' is diversity. Where in Vietnam is there great diversity?",
         ],
         prompts: ["Desert means a place where ___. For example, ___.", "There is more diversity in ___ because ___."],
@@ -795,7 +796,7 @@ const lessons: Deck[] = [
         title: "Part 2 words: habitats and diversity",
         book: { book: "SB", pages: "185-187", note: "Science key words (185) and academic words (187)." },
         words: [
-          { word: "city", meaning: "a big, busy place with many people, buildings and streets", example: "Hanoi is a city full of trees." },
+          { word: "city", meaning: "a very large town where a lot of people live and work", example: "Hanoi is a city full of trees." },
           { word: "desert", meaning: "a place that gets very little rain", example: "It hardly ever rains in the Sahara Desert." },
           { word: "rainforest", meaning: "a thick forest where it rains very often", example: "It rains almost every day in the rainforest." },
           { word: "vine / weed", meaning: "a plant that climbs or hangs / a plant growing where people don't want it", example: "{s1} pulled the weeds; the vine climbed up the fence." },
@@ -976,7 +977,7 @@ const lessons: Deck[] = [
         minutes: 18,
         book: { book: "SB", pages: "192-205" },
         steps: [
-          "Preview (192-193): the genre (a science article gives facts about nature) and its text features: headings, photos, captions, the map. Where is the reserve? What animal is it named after?",
+          "Preview (192-193): the genre (a science article: nonfiction, true information about the natural world) and its text features: headings, photos, captions, the map. Where is the reserve? What animal is it named after?",
           "Read section by section with the audio. After each heading, write its main idea in no more than 10 words, and one detail that supports it.",
           "Organize: a chart with three columns: What lives there (plants, animals, the Mbuti people) / What threatened it and threatens it now / What people like the botanist Corneille Ewango do to protect it.",
           "Inference: why did Ewango stay when others ran away? What does that tell you about him? Justify your answer to another pair.",
@@ -1188,7 +1189,7 @@ const lessons: Deck[] = [
       {
         kind: "grammar",
         title: "Count and noncount nouns",
-        hook: "Count nouns have a plural; noncount nouns have one form for one and more than one.",
+        hook: "Count nouns have a singular and a plural. Noncount nouns never change: no a / an, no -s.",
         form: [
           { label: "Count", pattern: "a / an + singular, -s / -es plural: a tree → trees, a lunch → lunches" },
           { label: "Special plurals", pattern: "tooth → teeth · child → children · foot → feet · mouse → mice · person → people" },
@@ -1202,7 +1203,7 @@ const lessons: Deck[] = [
           "Names of particular people and places (proper nouns) start with a capital letter: Hoa, Mrs. Nguyen, the Okapi Reserve, Congo.",
         ],
         examples: [
-          { text: "The roots and branches are so thick that very little sunlight gets in." },
+          { text: "There isn't much sunlight under the tall trees, so only a few small plants grow there." },
           { text: "{s2}'s little brother has lost two teeth this month." },
           { text: "We need some soil, two pots and a few seeds." },
           { text: "How much water does a cactus need? Not much." },
@@ -1231,7 +1232,7 @@ const lessons: Deck[] = [
         ],
         examples: [
           { text: "The workers walk quietly so they don't scare the okapis." },
-          { text: "{s1} is a careful gardener; she never waters the cactus too much." },
+          { text: "{s1} is a careful gardener who never waters the cactus too much." },
           { text: "The protection of forests is important for everyone." },
           { text: "The air smells fresh after the rain." },
         ],
@@ -1264,7 +1265,7 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "214-215", note: "Write Like a Scientist: the prompt, the student model and its checklist (214); prewrite (215)." },
+        book: { book: "SB", pages: "214-215", note: "Write Like a Scientist: the prompt and the student model with its callouts (214); prewrite (215)." },
         steps: [
           "Read the book's prompt and model article (214): an article that explains what you think is so amazing about plants. Find the topic sentence, the facts and details, and the concluding sentence.",
           "Choose your topic (215): an amazing plant, or the amazing plants of a place (a desert, a rainforest, a reserve). Gather facts.",

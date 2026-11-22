@@ -14,7 +14,7 @@ export const rhL3U3Assessments: Assessment[] = [
     kind: "formative",
     afterLesson: 4,
     minutes: 15,
-    covers: ["prepositions of place and time", "articles", "Unit 2 review", "plural sounds"],
+    covers: ["prepositions of place and time", "articles", "Unit 2 review", "-ed sounds"],
     sections: [
       {
         title: "Part A. Choose A, B, C or D",
@@ -26,7 +26,7 @@ export const rhL3U3Assessments: Assessment[] = [
           { q: "My birthday is ___ 12 May.", options: ["in", "at", "on", "by"], answer: "on" },
           { q: "She wants to be ___ artist.", options: ["a", "an", "the", "-"], answer: "an" },
           { q: "We have lived here ___ 2020.", options: ["for", "since", "in", "from"], answer: "since" },
-          { q: "Which word's ending sounds different?", options: ["roots", "seeds", "plants", "lakes"], answer: "seeds" },
+          { q: "Which word's -ed ending sounds different?", options: ["helped", "watched", "played", "washed"], answer: "played" },
         ],
       },
       {
@@ -99,7 +99,7 @@ export const rhL3U3Assessments: Assessment[] = [
         skill: "Reading",
         instructions: "Read the text. Write T (true) or F (false), then answer question 4.",
         passage:
-          "Mangrove trees grow in salty water along the coast of Cà Mau. Their roots stand above the mud like long legs, and small fish hide among them. Mangroves are sometimes called 'the walls of the sea' because they protect villages from big waves. In the past, many mangrove forests were cut down to make shrimp farms. Now new mangroves are planted every year by local people and students, and the forests are slowly growing again.",
+          "Mangrove trees grow in salty water along the coast of Cà Mau. Their roots stand above the mud like long legs, and small fish hide among them. Mangrove forests are like a green wall along the sea because they protect villages from big waves. In the past, many mangrove forests were cut down to make shrimp farms. Now new mangroves are planted every year by local people and students, and the forests are slowly growing again.",
         marksEach: 1,
         items: [
           { q: "1. Mangrove trees grow in fresh water in the mountains.", answer: "F" },
@@ -174,7 +174,7 @@ export const rhL3U3Assessments: Assessment[] = [
           { q: "3. My little sister has six new ___.", options: ["tooths", "teeth", "teeths", "toothes"], answer: "teeth" },
           { q: "4. Plants need water and ___ to grow.", options: ["sunlight", "sunlights", "a sunlight", "the sunlights"], answer: "sunlight" },
           { q: "5. How ___ rice do we need for the party?", options: ["many", "few", "much", "a few"], answer: "much" },
-          { q: "6. {s1} has ___ orange tree and a lemon tree on her balcony.", options: ["a", "an", "the", "-"], answer: "an" },
+          { q: "6. {s1} has ___ orange tree and a lemon tree on the balcony.", options: ["a", "an", "the", "-"], answer: "an" },
           { q: "7. I planted a seed last week. Today ___ seed has a little sprout.", options: ["a", "an", "the", "-"], answer: "the" },
           {
             q: "8. Which sentence uses capital letters correctly?",

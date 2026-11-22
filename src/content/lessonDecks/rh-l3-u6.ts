@@ -60,7 +60,7 @@ const lessons: Deck[] = [
         mode: "groups",
         minutes: 12,
         steps: [
-          "The teacher shows six objects or photos one at a time: a red lì xì envelope, a bamboo water puppet, a conical hat (nón lá), a smartphone, a pair of chopsticks, a birthday cake with candles.",
+          "The teacher shows six objects or photos one at a time: a red lì xì envelope, a wooden water puppet, a conical hat (nón lá), a smartphone, a pair of chopsticks, a birthday cake with candles.",
           "For each one, groups decide in 30 seconds: OLD or NEW? Do people still use it? Who taught them how?",
           "Rank the six from 'most traditional' to 'least traditional'. Every group explains its top and bottom choice.",
           "Is the birthday cake a tradition? It came from far away, but families repeat it every year. Vote, then argue.",
@@ -89,7 +89,7 @@ const lessons: Deck[] = [
         steps: [
           "Opener (74-75): one minute of silent looking at the folk dancers. Who are these children? What are they keeping alive? Say: I notice ... / I wonder ...",
           "Share What You Know (75): tell a partner one tradition in your home, and one song, story or recipe an older relative taught you.",
-          "Language Focus (76): listen to the dialogue between Jesse and Inez about a yearly celebration, then use the How do ...? / Why do ...? / It's ... frames to ask and answer about one card from the sort.",
+          "Language Focus (76): read the dialogue between Jesse and Inez about a yearly celebration aloud (the teacher and a volunteer take the two parts; the class audio has no recording for this page), then use the How do ...? / Why do ...? / It's ... frames to ask and answer about one card from the sort.",
           "Key Words (77): look at the three photos. How does the music vary from region to region?",
         ],
       },
@@ -108,7 +108,7 @@ const lessons: Deck[] = [
         prompts: [
           "**She** taught **me** how to wrap bánh chưng.",
           "Grandpa showed **us** the old photos, and **we** laughed.",
-          "{s1} made the lantern **herself**.",
+          "{s1}, did you make the lantern **yourself**?",
           "**They** gave **him** a lì xì envelope.",
           "We enjoyed **ourselves** at the festival.",
           "Can you help **them**? **They** can't do it by **themselves**.",
@@ -153,7 +153,7 @@ const lessons: Deck[] = [
         instructions: "Choose the correct word.",
         items: [
           { q: "My uncle plays the đàn bầu. I often listen to ___.", options: ["he", "him", "his", "himself"], answer: "B. him" },
-          { q: "Lan and ___ are in the same quan họ club.", options: ["me", "I", "my", "myself"], answer: "B. I" },
+          { q: "{s4} and ___ are in the same quan họ club.", options: ["me", "I", "my", "myself"], answer: "B. I" },
           { q: "Be careful with the knife! Don't cut ___.", options: ["you", "your", "yourself", "yours"], answer: "C. yourself" },
           { q: "The children decorated the classroom by ___.", options: ["themselves", "theirselves", "them", "their"], answer: "A. themselves" },
           { q: "Grandma made áo dài for my sister and ___.", options: ["I", "me", "mine", "myself"], answer: "B. me" },
@@ -252,7 +252,7 @@ const lessons: Deck[] = [
         words: [
           { word: "music / perform", meaning: "sounds arranged to be beautiful / sing, play or act for an audience", example: "Water puppeteers perform with live music." },
           { word: "style", meaning: "a special way of doing something", example: "Quan họ is a style of singing in pairs." },
-          { word: "express / feelings", meaning: "show what you think or feel / what you feel inside (happy, sad, proud)", example: "Ca trù singers express deep feelings with very few notes." },
+          { word: "express / feelings", meaning: "show what you think or feel / what you feel inside (happy, sad, proud)", example: "Ca trù singers express deep feelings with their voices." },
           { word: "heritage", meaning: "the traditions, buildings and art a group passes down", example: "Huế's old citadel is part of Vietnam's heritage." },
           { word: "popular", meaning: "liked by many people", example: "K-pop is popular with my classmates." },
           { word: "region", meaning: "a large area of a country or the world", example: "Each region of Vietnam has its own way of making bánh." },
@@ -308,7 +308,7 @@ const lessons: Deck[] = [
         prompts: [
           "Quan họ comes from Bắc Ninh, **doesn't it?**",
           "You aren't tired, **are you?**",
-          "{s4} can play the flute, **can't she?**",
+          "{s4} and {s5} can play the flute, **can't they?**",
           "Can you tell me **where the water puppet theatre is**?",
           "Do you know **what time the show starts**?",
           "Could you tell me **if the tickets are expensive**?",
@@ -333,7 +333,7 @@ const lessons: Deck[] = [
         ],
         examples: [
           { text: "Water puppetry is very old, isn't it?" },
-          { text: "{s5} hasn't seen ca trù before, has she?" },
+          { text: "{s5}, you haven't seen ca trù before, have you?" },
           { text: "Excuse me, can you tell me where I can buy a nón lá?" },
           { text: "Do you know whether the festival starts on Saturday?" },
         ],
@@ -458,7 +458,7 @@ const lessons: Deck[] = [
           "Generations (96-97): at the end, years have passed. Who loves the music now? Read Meet the Author: what did the music make the writer want to learn?",
         ],
         prompts: ["Shakira's music is a blend of ___, ___ and ___ cultures.", "In my picture I see ___.", "Now the music inspires ___, so it passes from one generation to the next."],
-        teacherNote: "On the pages: the girl hears the fusion of three regions; at the end, twenty years later, the music inspires her daughters too; Shakira's music is a blend of American, Colombian and Lebanese cultures (96, Before You Continue 2). Meet the Author: Eloise Vivanco, from the United Kingdom, learned Spanish because of the music and now lives in Mexico. As in Lesson 2, the song's words stay in the book: charts and talk are about cultures, sounds and feelings, never retold lines.",
+        teacherNote: "On the pages: the girl hears the sounds of three parts of the world mixed in one music; at the end, many years have passed and the music inspires her daughters too; Shakira's music is a blend of American, Colombian and Lebanese cultures (96, Before You Continue 2). Meet the Author: Eloise Vivanco, from the United Kingdom, learned Spanish because of the music and now lives in Mexico. As in Lesson 2, the song's words stay in the book: charts and talk are about cultures, sounds and feelings, never retold lines.",
       },
       {
         kind: "activity",
@@ -486,8 +486,8 @@ const lessons: Deck[] = [
           "Write your rule: when do we say 'performed', 'have performed' and 'used to perform'?",
         ],
         prompts: [
-          "People **used to** sing quan họ on boats on the river.",
-          "UNESCO **listed** quan họ as world heritage **in 2009**.",
+          "My great-grandparents **used to** sing quan họ after work in the fields.",
+          "UNESCO **added** quan họ to its list of cultural heritage **in 2009**.",
           "Families **have made** bánh chưng **for** hundreds of years.",
           "My grandma **has sung** in the village club **since** 1990.",
           "My dad **didn't use to** like ca trù, but now he does.",
@@ -510,7 +510,7 @@ const lessons: Deck[] = [
           "If the sentence has a finished time (in 2009, last Tết, ago), use the past simple, never the present perfect.",
         ],
         examples: [
-          { text: "Long ago, puppeteers used to perform in village ponds." },
+          { text: "Long ago, puppeteers used to perform only in village ponds." },
           { text: "Water puppetry has travelled all over the world since then." },
           { text: "{s7}'s family moved to Hanoi in 2018, but they have kept their village's Tết customs." },
           { text: "Did people use to wear áo dài every day? Yes, many did." },
@@ -634,7 +634,7 @@ const lessons: Deck[] = [
           "What is the same about how both musicians kept a tradition alive? What is different?",
         ],
         prompts: ["In both selections, ___.", "The song shows ___, while the biography shows ___.", "His music reached other people because ___."],
-        teacherNote: "Timeline from the pages: born blind on a farm in Texas around 1893; played on street corners in small towns as a boy; travelled the southern states as a teenager and played in big cities such as Dallas; went to Chicago in 1925 to record; made more than 100 recordings before he died in 1929. The blues grew from songs sung by enslaved people, later mixed with church hymns and newer music (103). He was one of the first African American blues singers with a big audience, and B.B. King, Bob Dylan and The White Stripes have recorded his songs (104-105).",
+        teacherNote: "Timeline from the pages: born blind on a farm in Texas around 1893; played on street corners in small towns as a boy; travelled the southern states as a teenager and played in big cities such as Dallas; went to Chicago in 1925 to record; made more than 100 recordings before he died in 1929. The blues grew from songs sung by enslaved people, later mixed with church hymns and newer music (103). He was one of the first African American blues singers with a big audience, and B.B. King, Bob Dylan and The White Stripes have recorded his songs (104-105). Handle two points with care: 'Blind' is part of the name he performed under, and the biography's point is that being blind did not stop him; and the origin of the blues is told simply and respectfully (people who were made to work without freedom sang to express their feelings), with no further detail unless a child asks.",
       },
       {
         kind: "book",
@@ -706,8 +706,8 @@ const lessons: Deck[] = [
           { q: "Someone recorded the singer's first song in a studio in Hanoi. → The singer's first song ...", answer: "The singer's first song was recorded in a studio in Hanoi." },
           { q: "Her uncle taught her the đàn bầu. → She ...", answer: "She was taught the đàn bầu by her uncle." },
           { q: "People built this pagoda 500 years ago. → This pagoda ...", answer: "This pagoda was built 500 years ago." },
-          { q: "My grandmother is 80. She still sings quan họ. → My grandmother, who ...", answer: "My grandmother, who is 80, still sings quan họ." },
-          { q: "Hội An is in central Vietnam. It is famous for lanterns. → Hội An, which ...", answer: "Hội An, which is in central Vietnam, is famous for lanterns." },
+          { q: "My grandmother is 80. She still sings quan họ. → My grandmother, who ...", answer: "My grandmother, who is 80, still sings quan họ. (Also accept: My grandmother, who still sings quan họ, is 80.)" },
+          { q: "Hội An is in central Vietnam. It is famous for lanterns. → Hội An, which ...", answer: "Hội An, which is in central Vietnam, is famous for lanterns. (Also accept: Hội An, which is famous for lanterns, is in central Vietnam.)" },
         ],
       },
       {
@@ -854,7 +854,7 @@ const lessons: Deck[] = [
         ],
         prompts: [
           "**First**, wash the dong leaves and dry them.",
-          "**Next**, put sticky rice and green beans in the middle.",
+          "**Next**, put sticky rice and mung beans in the middle.",
           "**Then** fold the leaves into a square. **Don't** tie it too loosely!",
           "**After that**, boil it for about ten hours.",
           "**Make sure** you add more water. **Never** leave the fire alone.",
@@ -1015,7 +1015,7 @@ const lessons: Deck[] = [
         book: { book: "SB", pages: "126-129", note: "The legend, retold by Susan Blackaby." },
         media: [readingAudio(6, 2, 126, 129, "The Legend of Raven and Fog Woman")],
         steps: [
-          "Set a purpose (126): this legend reminds people to value the gifts of others. Read it in threes: a narrator, Raven and Fog Woman.",
+          "Set a purpose (126): read to find out what this legend teaches about how to treat a person who gives you something. Read it in threes: a narrator, Raven and Fog Woman.",
           "Character traits: what kind of character is Fog Woman? What kind is Raven? Find one action that shows each trait.",
           "What does the legend explain about the world? Connect: look at the photo of Shotridge's pole on page 126. How does a carving tell this story?",
         ],
@@ -1032,7 +1032,7 @@ const lessons: Deck[] = [
         steps: [
           "Talk about it (130): pretend to make a totem pole. One partner gives the instructions (First, Then, Next, Finally); the other follows and mimes.",
           "How does the pole on page 126 represent the story of Raven and Fog Woman?",
-          "Talk together (131): how do artists and storytellers preserve traditions?",
+          "Talk together (131): how do artists and storytellers preserve traditions? Then finish in your own words: 'A community keeps its stories alive by ...', and compare it with our class sentence from Lesson 4.",
         ],
         prompts: ["First, the carver ___. Then ___.", "The totem pole shows ___.", "Artists and storytellers preserve traditions by ___."],
       },
@@ -1264,10 +1264,10 @@ const lessons: Deck[] = [
         instructions: "Report each question or command. Begin with the words given. (Stretch items.)",
         items: [
           { q: "\"Where do you live?\" the reporter asked me. → The reporter asked me ...", answer: "The reporter asked me where I lived." },
-          { q: "\"Are you tired?\" Mum asked {s6}. → Mum asked {s6} ...", answer: "Mum asked {s6} if / whether she was tired." },
+          { q: "\"Are you tired?\" Mum asked us. → Mum asked us ...", answer: "Mum asked us if / whether we were tired." },
           { q: "\"Close the door, please,\" the teacher said to me. → The teacher asked me ...", answer: "The teacher asked me to close the door." },
           { q: "\"Don't be late!\" my father said to us. → My father told us ...", answer: "My father told us not to be late." },
-          { q: "\"What did you see at the festival?\" she asked him. → She asked him ...", answer: "She asked him what he had seen at the festival." },
+          { q: "\"What did you see at the festival?\" she asked him. → She asked him ...", answer: "She asked him what he had seen at the festival. (Also accept: what he saw.)" },
         ],
       },
       {
@@ -1280,7 +1280,7 @@ const lessons: Deck[] = [
         steps: [
           "Compare themes (140): make a quick theme web for each tale. What does the storyteller want us to learn from Raven and Fog Woman? From The Rainbow Bridge?",
           "Grammar (141): do the possessive pronoun practice quickly (it was taught in Lesson 6).",
-          "Read Kia's model interview with her aunt, who makes Hmong story cloths (142). Find the introduction, the questions in a natural order, and the answers in the person's own words.",
+          "Read Kia's model interview with her aunt, who makes Hmong story cloths (142). Find the introduction, the questions in a natural order, and the answers in the person's own words. The book's writing trait here is organisation: a clear structure, and each question leading to the next.",
           "Prewrite (143): choose your interviewee (the person from your Lesson 2 question plan, or a classmate playing a craftsperson), put the tradition in the middle of a details web and choose your six best questions.",
         ],
         prompts: ["The theme of ___ is ___.", "My interviewee is ___, who ___.", "My first question will be ___.", "I want the reader to learn ___."],
@@ -1445,7 +1445,7 @@ const lessons: Deck[] = [
           { text: "Visiting grandparents at Tết keeps families close." },
           { text: "It's important to ask older people about the past before it is too late." },
           { text: "It's worth watching a water puppet show at least once." },
-          { text: "{s7} thinks recording her grandmother's stories is the best way to preserve them." },
+          { text: "{s7} says that recording Grandma's stories is the best way to preserve them." },
         ],
         pitfalls: [
           { wrong: "Make bánh chưng takes ten hours.", right: "Making bánh chưng takes ten hours.", why: "an action as subject: -ing" },

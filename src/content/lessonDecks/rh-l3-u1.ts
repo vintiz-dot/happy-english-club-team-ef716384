@@ -87,7 +87,7 @@ const lessons: Deck[] = [
         ],
         frames: ["First, ___.", "Next, ___.", "Then, ___.", "Finally, ___.", "In the beginning ___. In the middle ___. At the end ___."],
         teacherNote:
-          "Organize. 'Those Shoes' (realistic fiction by Maribeth Boelts, SB 12-27) is told by Jeremy. The order to listen for: Jeremy wants the black high-tops the other children have, but Grandma says he needs boots; his shoe falls apart and Mr. Alfrey at school gives him a pair, and the children laugh; the high-tops cost too much in the shops; he finds a pair in a thrift shop that is too small and buys them with his own money; Grandma buys him boots; he sees that Antonio needs shoes, leaves the high-tops at Antonio's door and runs away; at the end he wears his new boots to race with Antonio. Joseph Lekuton (biography, SB 61-65): his Maasai family in Kenya could send one child to school; his brother did not like school, so Joseph volunteered to go; he became a teacher and helps more Maasai children go to school.",
+          "Organize. 'Those Shoes' (realistic fiction by Maribeth Boelts, SB 12-27) is told by Jeremy. The order to listen for: Jeremy wants the black high-tops the other children have, but Grandma says he needs boots; his shoe falls apart and Mr. Alfrey at school gives him a pair, and the children laugh; the high-tops cost too much in the shops; he finds a pair in a thrift shop that is too small and buys them with his own money; Grandma buys him boots; he sees that Antonio needs shoes, leaves the high-tops for Antonio and runs away; at the end he wears his new boots to race with Antonio. Joseph Lekuton (biography, SB 61-65): his Maasai family in Kenya could send one child to school; his brother did not like school, so Joseph volunteered to go; he became a teacher and helps more Maasai children go to school.",
         media: [talkAudio(1, 1, 4, "A Friend Helps Out (dialogue, SB 4)")],
       },
       {
@@ -97,14 +97,14 @@ const lessons: Deck[] = [
         media: [keyWordAudio(1, 1, "Part 1 key words")],
         words: [
           { word: "action", meaning: "something that you do", example: "Small actions, like holding a door open, show that you care." },
-          { word: "difference", meaning: "a change; make a difference = change something for the better", example: "Our clean-up made a big difference to the school yard." },
+          { word: "difference", meaning: "the way two things are not the same; make a difference = change something for the better", example: "Our clean-up made a big difference to the school yard." },
           { word: "gift", meaning: "something you give to someone", example: "{s1} made a card as a gift for the teacher." },
           { word: "problem", meaning: "something that is wrong and has to be put right", example: "My bike has a flat tire. That is a problem!" },
           { word: "receive", meaning: "to get something that someone gives or sends you", example: "Did you receive my message?" },
           { word: "solution", meaning: "the answer to a problem", example: "The solution was to share one umbrella." },
           { word: "kindness", meaning: "caring, friendly behavior towards other people", example: "{s2} showed kindness to the new student." },
           { word: "need", meaning: "to have to have something, because you cannot do without it", example: "Plants need water and light." },
-          { word: "understand", meaning: "to know what something means or why it happens", example: "Now I understand the math problem." },
+          { word: "understand", meaning: "to know what something means or why it happens", example: "I understand a story better when I read it twice." },
           { word: "value", meaning: "to think that something is important to you", example: "I value my friends more than my toys." },
           { word: "want", meaning: "to wish for something (you may not need it)", example: "I want a kite, but I don't need one." },
         ],
@@ -136,10 +136,10 @@ const lessons: Deck[] = [
         steps: [
           "Team quiz (4 minutes): Team A says a key word, Team B defines it in a complete sentence and gives an example. Swap. A wrong or incomplete sentence gives the point back.",
           "Need or want? (3 minutes): sort the cards: clean water, a new phone game, a warm coat in winter, sweets, medicine when you are ill, a second football. Explain one card with 'We need ___ because ___.'",
-          "Word builders (3 minutes): make the noun: kind → kindness, solve → solution, act → action, differ → difference, improve → improvement. Then use two in one sentence.",
+          "Word builders (3 minutes): make the noun: kind → kindness, solve → solution, act → action, different → difference, improve → improvement. And one adjective: help → helpful. Then use two in one sentence.",
         ],
         prompts: ["A volunteer is a person who ___.", "We need ___ because ___.", "We want ___, but we don't need it.", "Her kindness made a difference because ___."],
-        teacherNote: "Retrieval of all 21 words before the test (Part A tests them in context; Part E tests word formation). 'Need or want' is the idea at the heart of 'Those Shoes': Jeremy wants the high-tops but needs boots.",
+        teacherNote: "Retrieval of all 21 words before the test (Part A tests ten of them in context; Part E tests word formation). 'Need or want' is the idea at the heart of 'Those Shoes': Jeremy wants the high-tops but needs boots.",
       },
       {
         kind: "activity",
@@ -220,14 +220,14 @@ const lessons: Deck[] = [
       {
         kind: "grammar",
         title: "Subjects and verbs that agree",
-        hook: "One person or thing: the verb takes -s. More than one: no -s. And be has its own forms.",
+        hook: "He, she, it, or one person or thing: the verb takes -s. I, you, we, they, or more than one: no -s. And be has its own forms.",
         book: { book: "SB", pages: "67", note: "Grammar and Spelling: subjects and predicates (Part 2)." },
         form: [
           { label: "he / she / it / one", pattern: "Henry writes books. · A volunteer helps. · The girl takes my hand." },
-          { label: "I / you / we / they / more than one", pattern: "We help. · The boys run to class. · Volunteers clean the beach." },
+          { label: "I / you / we / they / more than one", pattern: "We help. · My cousins play chess. · Volunteers clean the beach." },
           { label: "be", pattern: "I am · he / she / it is · we / you / they are" },
           { label: "Spelling of -s", pattern: "help → helps · watch → watches · carry → carries · have → has · do → does · go → goes" },
-          { label: "Stretch", pattern: "My friends and I walk. · Everyone helps. · There is one bag. / There are two bags." },
+          { label: "Stretch", pattern: "My friends and I walk. · Everyone helps. · Each child helps. · There is one bag. / There are two bags." },
         ],
         explanation: [
           "When a sentence tells what happens now or every day, the simple subject and the verb must match.",
@@ -252,7 +252,7 @@ const lessons: Deck[] = [
         format: "error",
         mode: "solo",
         minutes: 8,
-        instructions: "Each sentence has ONE mistake. Underline it and write the correction.",
+        instructions: "Each one has ONE mistake. Underline it and write the correction. In the last one, something is missing: add it.",
         items: [
           { q: "My brother and I walks to school every day.", answer: "walks → walk", why: "two people (my brother and I)" },
           { q: "Grandma look at the price of the shoes and sits down.", answer: "look → looks", why: "one person, and the second verb (sits) already agrees" },

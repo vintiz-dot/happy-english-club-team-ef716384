@@ -8,7 +8,7 @@
 //
 // Part 2 reads a story about the 2004 Indian Ocean tsunami, a real disaster. The
 // decks keep to warning signs, the science, courage and how communities help each
-// other; nothing graphic. Lessons 6 and 7 carry a sensitivity note for the teacher.
+// other; nothing graphic. Lessons 5, 6 and 7 carry a sensitivity note for the teacher.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
@@ -51,10 +51,10 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Whiteboards. Answer, show, give a one-sentence reason.",
         items: [
-          { q: "The frozen mammoth ___ by two hunters.", options: ["found", "was found", "is finding", "has found"], answer: "B. was found" },
-          { q: "Have you ___ climbed a mountain?", options: ["ever", "yet", "already", "since"], answer: "A. ever" },
+          { q: "The frozen baby mammoth ___ by a hunter in 2007.", options: ["found", "was found", "is finding", "has found"], answer: "B. was found" },
+          { q: "Have you ___ climbed a mountain?", options: ["ever", "ago", "last", "since"], answer: "A. ever" },
           { q: "This map is mine and that one is ___.", options: ["your", "yours", "you", "yourself"], answer: "B. yours" },
-          { q: "{s1} comes from Huế, ___?", options: ["does she", "doesn't she", "isn't she", "didn't she"], answer: "B. doesn't she" },
+          { q: "Your grandmother comes from Huế, ___?", options: ["does she", "doesn't she", "isn't she", "didn't she"], answer: "B. doesn't she" },
           { q: "___ water puppets is my favourite part of Tết.", options: ["Watch", "Watching", "Watched", "To watching"], answer: "B. Watching" },
         ],
       },
@@ -157,7 +157,7 @@ const lessons: Deck[] = [
           { text: "The volcano rumbled loudly, and the birds flew quickly away." },
           { text: "{s3} is always careful near the sea." },
           { text: "Typhoons often hit central Vietnam in October." },
-          { text: "Luckily, the fishermen had come home extremely early." },
+          { text: "Luckily, the fishermen came home extremely early that day." },
         ],
         pitfalls: [
           { wrong: "The lava moved slow.", right: "The lava moved slowly.", why: "describes the verb: adverb" },
@@ -505,7 +505,7 @@ const lessons: Deck[] = [
           "By the time the boats arrived, the island had already risen above the sea.",
           "The birds had flown away before the volcano erupted.",
           "After the lava had cooled, the first seeds started to grow.",
-          "{s6} had never seen a volcano before her trip to Indonesia.",
+          "{s6} had never seen a volcano before last year's trip to Indonesia.",
           "When we reached the beach, the wave had gone back.",
           "When we reached the beach, the wave went back.",
         ],
@@ -694,7 +694,7 @@ const lessons: Deck[] = [
         examples: [
           { text: "The second eruption ended more suddenly than the first." },
           { text: "Scientists made a prediction last week. Soon afterwards, the volcano erupted." },
-          { text: "{s8} has already finished her poster, but she hasn't printed it yet." },
+          { text: "{s8} has already finished the poster but hasn't printed it yet." },
           { text: "Of all the islands, this one is changing the most quickly." },
         ],
         pitfalls: [
@@ -853,6 +853,7 @@ const lessons: Deck[] = [
           "Phonics (188-189): clap the -le / -el / -al words (little, simple, tunnel, travel, signal, total). Three spellings, one weak ending sound: make a spelling sort. Then read \"Early Warning Systems\" with a partner and find more.",
         ],
         prompts: ["The earthquake causes ___, so people should ___.", "I read that ___. From my own life I know ___. So most ___.", "SIG-nal, TUN-nel, LIT-tle: the last syllable sounds like ___."],
+        teacherNote: `${SENSITIVITY} This is the first lesson that names the tsunami: the fact sheet (187) and the phonics passage (189) both say that tsunamis have cost lives. Let the page say it once, add no numbers or pictures of your own, and turn the talk to what an early warning makes possible.`,
         media: [phonicsAudio(7, 2, "Phonics passage: \"Early Warning Systems\"")],
       },
       {
@@ -1013,14 +1014,14 @@ const lessons: Deck[] = [
         minutes: 18,
         book: { book: "SB", pages: "190-203" },
         steps: [
-          "Before reading (190-191): historical fiction is a made-up story based on real events from the past; dialogue is what characters say, inside quotation marks. What warning signs can tell people that danger is coming from the sea? (strong shaking, a loud roar, the sea pulling back, animals acting strangely.) List them on the board.",
+          "Before reading (190-191): historical fiction is an invented story set inside something that really happened; dialogue is the characters' own words, shown with quotation marks. What warning signs can tell people that danger is coming from the sea? (strong shaking, a loud roar, the sea pulling back, animals acting strangely.) List them on the board.",
           "Read the story in parts; the teacher reads the most tense pages aloud. Mark every sign that something is wrong (what Selvakumar feels and hears, the roaring sound, what Papa sees) and what each character does next.",
           "Organize: a three-column chart: SIGN → ACTION → RESULT.",
           "Form generalizations: Selvakumar noticed before his family did. What can you say about most dogs' senses? What do most people feel when they cannot find someone they love?",
           "What does the title mean? What did Selvakumar know better than Dinakaran?",
         ],
         prompts: ["The first sign was ___.", "As soon as ___ noticed ___, ___.", "I read that ___. I know that ___. So most ___.", "I think the title means ___, because ___."],
-        teacherNote: `${SENSITIVITY} The story (for the teacher): a December morning in south India. Selvakumar, the family's dog, feels the rumbling and whines and barks, but the family is busy. A strange roar begins; Papa climbs onto a nearby roof to look. Mama grabs the two little boys and tells Dinakaran (7) to run up the hill, but in the noise he hears only "Run!" and runs back to the house by the shore. Papa shouts the warning from the roof. Selvakumar pulls Dinakaran out of the house by his shirt and leads him up the hill, then higher still. The family find each other on the hill, Papa joins them later, and they rest together in a shelter with the other survivors.`,
+        teacherNote: `${SENSITIVITY} The story (for the teacher): a December morning in south India. Selvakumar, the family's dog, feels the rumbling and whines and barks, but the family is busy. A strange roar begins; Papa climbs onto a nearby roof to look. Mama grabs the two little boys and tells Dinakaran (7) to run up the hill, but in the noise he hears only "Run!" and runs back to the house by the shore. Papa shouts the warning from the roof. Selvakumar pulls Dinakaran out of the house by his shirt and leads him up the hill, then higher still. The family find each other on the hill, Papa joins them later, and they rest together in a shelter with the other survivors. Know these pages before you teach: 199 shows the village under water with the houses flattened, and on 202 the people in the shelter hear that many lives were lost and two adults say they have lost everything. Read those two pages yourself, calmly and once; do not ask children to picture or act them. Go straight on to the last lines (what Selvakumar notices: his family is together and safe) and finish on the SIGN → ACTION → RESULT chart.`,
         media: [readingAudio(7, 2, 190, 203, "\"Selvakumar Knew Better\" (pp. 190-203)")],
       },
       {
@@ -1077,7 +1078,7 @@ const lessons: Deck[] = [
         examples: [
           { text: "The teacher told the children to walk, not run, to the stairs." },
           { text: "The fisher asked his son to bring the boat in before dark." },
-          { text: "As soon as {s6} felt the shaking, she got under the table." },
+          { text: "{s6} got under the table as soon as the shaking started." },
           { text: "The police told families to stay on high ground until the water went down." },
         ],
         pitfalls: [
@@ -1125,7 +1126,7 @@ const lessons: Deck[] = [
         minutes: 15,
         steps: [
           "Imagine you are Dinakaran, a few days later. Write a thank-you letter to Selvakumar, the family's dog, who sensed the danger first.",
-          "Say what Selvakumar noticed, what Mama and Papa told you to do, the mistake you made, and what Selvakumar did as soon as he saw it.",
+          "Say what Selvakumar noticed, what Mama and Papa told you to do, where you ran at first and why, and what Selvakumar did as soon as he saw it.",
           "Use three reported commands or requests, one as soon as and one until.",
         ],
       },
@@ -1145,7 +1146,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Rewrite track (A)", detail: "10 items: reported commands and requests, as soon as / until." },
-          { label: "Listening (E)", detail: "Listen to the story's class audio (the school's copy) and write the warning signs in the order they appear." },
+          { label: "Listening (E)", detail: "Listen to pages 192-195 of the story's class audio (the school's copy) and write the warning signs in the order they appear.", book: { book: "SB", pages: "192-195" } },
           { label: "Practice Book", detail: "Sheets 7.16 and 7.18: finish the cause-and-effect chart of the story, and practise reading with expression. (Sheet 7.14, the key points of the story, for anyone who wants extra help.)", book: { book: "WB", pages: "7.16, 7.18", note: "Practice Book sheets" } },
           { label: "Words of the week (F): animals and their senses", detail: "Learn 8 words (whiskers, hearing, smell, flock, herd, instinct, alert, burrow). Write 4 sentences about how an animal senses something people cannot." },
         ],
@@ -1236,7 +1237,7 @@ const lessons: Deck[] = [
           { label: "How (details)", pattern: "with great power, by boat, without warning, in silence" },
         ],
         explanation: [
-          "The book (SB 213): a prepositional phrase starts with a preposition and ends with a noun or pronoun; it can show where, direction, time, or add details.",
+          "The book's rule (SB 213): a prepositional phrase is a preposition together with the noun or pronoun after it; it shows where, which direction or when, or adds a detail.",
           "Prepositional phrases make writing exact: not just 'The wave came' but 'Without warning, the wave came across the bay in the early morning.'",
           "A phrase can start the sentence for variety: Under the sea, the plates were moving.",
           "Usual order at the end: place before time: The wave reached the coast in the morning.",
@@ -1293,7 +1294,7 @@ const lessons: Deck[] = [
           { q: "The earthquake happened ___ the morning of 26 December 2004.", options: ["in", "on", "at", "by"], answer: "B. on" },
           { q: "A tsunami can travel ___ a whole ocean.", options: ["across", "between", "among", "into"], answer: "A. across" },
           { q: "Many lives ___ by the early warning.", options: ["saved", "were saved", "was saved", "are save"], answer: "B. were saved" },
-          { q: "Today, tsunami warnings ___ to warning centres by satellite.", options: ["are sent", "send", "were sending", "is sent"], answer: "A. are sent" },
+          { q: "Today, measurements from the buoys ___ to warning centres by satellite.", options: ["are sent", "send", "were sending", "is sent"], answer: "A. are sent" },
           { q: "The fishers waited ___ two hours before going back to sea.", options: ["during", "for", "since", "in"], answer: "B. for" },
           { q: "Hạ Long Bay ___ a World Heritage Site in 1994.", options: ["is named", "was named", "named", "has named"], answer: "B. was named" },
         ],
@@ -1361,7 +1362,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Final copy", detail: "Write the final copy of your research report and present it to your family in two minutes. Note one question they asked.", book: { book: "SB", pages: "218-219" } },
-          { label: "Practice Book", detail: "Sheets 7.13, 7.15 and 7.21: prepositions and prepositional phrases; 7.22: score your own report on organization. (7.23-7.25 support the planning, revising and editing steps.)", book: { book: "WB", pages: "7.13, 7.15, 7.21, 7.22", note: "Practice Book sheets" } },
+          { label: "Practice Book", detail: "Sheets 7.13, 7.15 and 7.21: prepositions and prepositional phrases; 7.20: finish the Venn diagram of the story and the article; 7.22: score your own report on organization. (7.23-7.25 support the planning, revising and editing steps.)", book: { book: "WB", pages: "7.13, 7.15, 7.20, 7.21, 7.22", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: prepositions of place and time, present and past passive." },
           { label: "Words of the week (F): technology for safety", detail: "Learn 8 words (satellite, sensor, siren, app, alarm, radio, loudspeaker, forecast). Write 4 passive sentences: 'Warnings are sent by ___.'" },
           { label: "Function of the week (B): checking you understand", detail: "Practise: Sorry, what do you mean by ...? / In other words, ... / Could you say that again, please? / So you mean ... Use two of them when your family asks about your report." },
@@ -1508,7 +1509,7 @@ const lessons: Deck[] = [
         ref: { book: "SB", pages: "220-221", note: "Unit Wrap-Up: concept map, fact sheet and four ways to share ideas." },
         steps: [
           "Concept map (220, Practice Book 7.1): skim the four selections and add the last forces to your map (volcano, earthquake, tsunami ...). Which ones are fast and which are slow?",
-          "Share Your Ideas (221): choose one way to answer the Big Question at home or next lesson: a storyboard of how an island forms, a news report from the scene, a dance of a force of nature, or an e-mail to a friend.",
+          "Share Your Ideas (221): choose one way to answer the Big Question at home or next lesson: a storyboard of how an island forms, a news report from the scene, a dance of a force of nature, or an e-mail to a friend. The news report and the e-mail pretend a disaster has just happened, so nobody has to choose them: the storyboard and the dance count just as much.",
         ],
       },
       { kind: "reflect", prompts: ["Answer the Big Question in one sentence of your own.", "Which two grammar points will you practise from your mock?", "Look back at the fast-slow line from Lesson 1: would you move any card now? Why?"] },

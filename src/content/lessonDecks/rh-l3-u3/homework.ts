@@ -43,7 +43,7 @@ export const rhL3U3Creative: Record<number, Creative> = {
   3: {
     kind: "creative",
     thinking: "Compare and justify",
-    uses: { words: ["condition", "depend", "growth", "produce"], grammar: ["in / on / at", "for / during / until / by"] },
+    uses: { words: ["conditions", "depend", "growth", "produce"], grammar: ["in / on / at", "for / during / until / by"] },
     base: {
       title: "Plant Calendar for a Busy Family",
       task: "Make a one-year calendar that tells a family exactly when to plant, water and harvest three plants on their balcony.",
@@ -60,7 +60,7 @@ export const rhL3U3Creative: Record<number, Creative> = {
   4: {
     kind: "creative",
     thinking: "Argue",
-    uses: { words: ["environment", "growth", "protect"], grammar: ["plural nouns", "linking words"] },
+    uses: { words: ["soil", "blossom", "growth"], grammar: ["plural nouns", "linking words"] },
     base: {
       title: "Exam-topic paragraph: a green place I love",
       task: "Write 60-80 words about a park, garden or green place you love. Say where it is, what grows there, and why it matters to you.",
