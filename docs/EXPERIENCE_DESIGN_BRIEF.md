@@ -484,7 +484,7 @@ Order of the page, top to bottom:
 2. "Does anything need you?" One card.
    - If something does (a form, an unread message from the school, or a payable amount the page ALREADY holds): it is stated in one sentence with one button. No red unless it is the existing overdue state, no countdown, no exclamation mark.
    - The home never calls `calculate-tuition` or `calculate-tuition-bulk` to fill this card: those functions save the bill on every call. Where the page has no payable figure of its own, the card mentions no amount and no status, and a plain link "This month's tuition" sits below it (corrected 22 Nov 2026).
-   - If nothing does: "Everything is in order." with a small ink tick. This is the parent's reward; give it room.
+   - If nothing does: the card may say so ONLY about what the page has actually read. "Everything is in order." needs a truthful answer about tuition as well, and the home has none (see the next line), so until a read-only tuition answer exists the card says at most "No new messages from the school." with a small ink tick, and says nothing when even that is not known (corrected 23 Nov 2026: the first build told every parent everything was in order).
 3. One card per child (keep the existing card's data: name, avatar, points with the points-history button, daily class reports, latest lesson note). Add "This week" in three plain facts the page can already read: lessons attended out of held, homework handed in out of set, and the teacher's latest approved note with the teacher's name. A fact the page cannot read truthfully is left out, never estimated.
 4. The assistant (`AssistantChat`) keeps its place and its rules.
 5. Schedule for the week.
