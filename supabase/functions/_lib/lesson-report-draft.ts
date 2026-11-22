@@ -78,7 +78,10 @@ export function plannedLessons(rows: unknown) {
       const to = Number.isInteger(r.unit_to) ? (r.unit_to as number) : from;
       const focus = Object.fromEntries(Object.entries(obj(r.focus)).map(([k, v]) => [k, str(v, 240)]).filter(([, v]) => v));
       return {
-        book: str(r.curriculum) === "oxford-discover-2e" ? `Oxford Discover (2nd edition) Level ${r.level}` : `${str(r.curriculum, 60)} Level ${r.level}`,
+        book: str(r.curriculum) === "oxford-discover-2e" ? `Oxford Discover (2nd edition) Level ${r.level}`
+          // Reach Higher splits a level into two books: Units 1-4 are "A", 5-8 "B".
+          : str(r.curriculum) === "reach-higher" ? `Reach Higher ${r.level}${from <= 4 ? "A" : "B"}`
+          : `${str(r.curriculum, 60)} Level ${r.level}`,
         unit: to > from ? `Units ${from} and ${to}` : `Unit ${from}`,
         lesson: str(r.lesson, 40),
         student_book_page: Number.isInteger(r.sb_page) ? r.sb_page : null,

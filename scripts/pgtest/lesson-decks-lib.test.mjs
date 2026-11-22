@@ -25,6 +25,7 @@ async function load(rel, name) {
 }
 const N = await load("src/lib/lessonDecks/names.ts", "ld-names");
 const P = await load("src/lib/lessonDecks/pacing.ts", "ld-pacing");
+const C2 = await load("src/lib/curriculumLessons.ts", "ld-curriculum");
 
 console.log("name slots");
 eq("slots found across texts", N.slotsIn(["{s1} likes {s3}", null, "no slot", "{s2}"]), 3);
@@ -106,6 +107,8 @@ eq("interest groups are cleaned: bad keys, names and repeats dropped",
 eq("a non-object reads as no groups", [V.cleanInterests(null), V.cleanInterests([KID])], [{}, {}]);
 eq("class book label", V.bookLabel({ curriculum: "oxford-discover-2e", level: 3 }), "Oxford Discover 2nd edition, Level 3");
 eq("class book read back", V.classBook("Oxford Discover 2nd edition, Level 3"), { curriculum: "oxford-discover-2e", level: 3 });
+eq("Reach Higher is a book choice too", [V.bookLabel({ curriculum: "reach-higher", level: 3 }), V.classBook("Reach Higher, Level 3")],
+  ["Reach Higher, Level 3", { curriculum: "reach-higher", level: 3 }]);
 eq("older free text is not a book choice", [V.classBook("Oxford Discover 2"), V.classBook(null), V.classBook("Oxford Discover 2nd edition, Level 9")], [null, null, null]);
 
 console.log("decks in src/content/lessonDecks");
@@ -133,8 +136,31 @@ for (const { f, u } of units) {
     ok(`${d.id}: has a speaking activity`, d.slides.some((s) => s.kind === "speaking" || (s.kind === "activity" && s.tag === "Speaking")));
     ok(`${d.id}: supplementary links point only at the publisher's own resource pages`,
       (d.resources ?? []).every((r) => /^https:\/\/www\.twinkl\.com\/resource\/[a-z0-9-]+$/.test(r.url) && r.title && r.use));
-    ok(`${d.id}: says which book lesson it covers`, !!d.covers && Number.isInteger(d.covers.unitFrom) &&
-      ["Big Question", "Get Ready", "Read", "Understand", "Communicate", "Wrap Up"].includes(d.covers.lesson));
+    const LESSONS = d.curriculum === "reach-higher" ? C2.REACH_HIGHER_BLOCKS : ["Big Question", "Get Ready", "Read", "Understand", "Communicate", "Wrap Up"];
+    ok(`${d.id}: says which book lesson it covers`, !!d.covers && Number.isInteger(d.covers.unitFrom) && LESSONS.includes(d.covers.lesson));
+    ok(`${d.id}: same course book as its unit`, d.curriculum === u.curriculum && d.level === u.level && d.unit === u.unit);
+    // Exam practice: every item has an answer, multiple choice has 2-4 options and the
+    // answer names one of them, and the minutes count like any timed slide.
+    for (const s of d.slides.filter((x) => x.kind === "exam")) {
+      ok(`${d.id} / ${s.title}: every exam item has a question and an answer`, s.items.length > 0 && s.items.every((it) => it.q && it.answer));
+      ok(`${d.id} / ${s.title}: options are 2-4 and the answer points at one`,
+        s.items.every((it) => !it.options || (it.options.length >= 2 && it.options.length <= 4 &&
+          (/^[A-D]\b/.test(it.answer) ? "ABCD".indexOf(it.answer[0]) < it.options.length : it.options.some((o) => it.answer.includes(o))))));
+    }
+    // Jupiter's lessons (Reach Higher) carry the whole plan: a grammar point taught,
+    // exam practice, speaking and a higher-order writing task with a challenge.
+    if (d.curriculum === "reach-higher") {
+      ok(`${d.id}: teaches a grammar point`, d.slides.some((s) => s.kind === "grammar"));
+      ok(`${d.id}: has exam-format practice`, d.slides.some((s) => s.kind === "exam" || s.kind === "check"));
+      ok(`${d.id}: has a creative writing task with a challenge, in class or as homework`, d.slides.some((s) => (s.kind === "project" && s.project === "writing" && !!s.challenge) || s.kind === "creative"));
+      ok(`${d.id}: ends with a reflection`, d.slides.some((s) => s.kind === "reflect"));
+    }
+  }
+  if (u.curriculum === "reach-higher") {
+    eq(`${f}: a checkpoint quiz mid-unit and a mock test in the last lesson`, u.decks.map((d) => d.slides.filter((s) => s.kind === "check").length), [0, 0, 0, 1, 0, 0, 0, 1]);
+    eq(`${f}: one deck per Reach Higher block, in book order`, u.decks.map((d) => d.covers?.lesson), C2.REACH_HIGHER_BLOCKS);
+    ok(`${f}: 5-9 teacher generalizations`, u.generalizations.length >= 5 && u.generalizations.length <= 9);
+    ok(`${f}: the grammar strand points at real lessons`, (u.grammarStrand ?? []).length > 0 && u.grammarStrand.every((g) => g.lesson >= 1 && g.lesson <= u.decks.length));
   }
 }
 
@@ -225,6 +251,14 @@ if (u12) {
     ['"track":"2.23"', '"track":"2.24"', '"track":"2.25"', '"track":"2.26"', '"track":"2.27"', '"track":"2.28"', '"track":"2.29"']);
   ok("Unit 12: no audio, image or book files referenced", !/\.(mp3|wav|m4a|pdf|jpg|png)"/i.test(JSON.stringify(u12)));
 }
+console.log("Reach Higher lessons in book order; a class's course book from its curriculum text");
+eq("blocks rank in order within a unit and after the unit before",
+  C2.sortLessons([{ level: 3, unit_from: 3, unit_to: 3, lesson: "Unit Launch" }, { level: 3, unit_from: 2, unit_to: 2, lesson: "Unit Wrap-Up" },
+    { level: 3, unit_from: 2, unit_to: 2, lesson: "Part 1 Reading" }, { level: 3, unit_from: 2, unit_to: 2, lesson: "Unit Launch" }]).map((l) => `${l.unit_from} ${l.lesson}`),
+  ["2 Unit Launch", "2 Part 1 Reading", "2 Unit Wrap-Up", "3 Unit Launch"]);
+eq("curriculum text names the book", ["Reach Higher 3A", "RH3B", "Oxford Discover 3", null].map(C2.curriculumFromText),
+  ["reach-higher", "reach-higher", "oxford-discover-2e", "oxford-discover-2e"]);
+eq("level from a Reach Higher label", ["Reach Higher 3A", "Reach Higher Level 3", "RH 4B"].map(C2.levelFromCurriculum), [3, 3, 4]);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

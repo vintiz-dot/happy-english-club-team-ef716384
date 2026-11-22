@@ -21,8 +21,8 @@ const MIGS = process.argv.slice(2);
 const find = (s) => MIGS.find((f) => f.includes(s));
 const CHAIN = ["20260717090000", "20261111110000", "class_recorder", "lesson_monitor_pilot", "lesson_monitor_cover_earlier",
   "20261121130000_lesson_reports", "20261121150000_curriculum_lessons", "20261121151000_od2e_level3_lessons",
-  "20261122100000_od2e_level1_lessons", "20261122101000_od2e_level2_lessons"].map(find);
-if (CHAIN.some((f) => !f)) { console.log("usage: curriculum-lessons.test.mjs <its 10 migrations>"); console.log("0 passed, 1 failed"); process.exit(1); }
+  "20261122100000_od2e_level1_lessons", "20261122101000_od2e_level2_lessons", "20261122130000_reach_higher_3a_lessons"].map(find);
+if (CHAIN.some((f) => !f)) { console.log("usage: curriculum-lessons.test.mjs <its 11 migrations>"); console.log("0 passed, 1 failed"); process.exit(1); }
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
 const eq = (n, got, want) => ok(n, JSON.stringify(got) === JSON.stringify(want),
@@ -48,26 +48,35 @@ ok("applies on top of the lesson reports contract", true);
 }
 
 console.log("the Level 3 seed");
-eq("90 lessons: 18 units x 4, and a Big Question and Wrap Up per pair", Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE level = 3`)).n), 90);
+eq("90 lessons: 18 units x 4, and a Big Question and Wrap Up per pair", Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE level = 3 AND curriculum = 'oxford-discover-2e'`)).n), 90);
 eq("every lesson has an objective and a Student Book page",
   Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE cardinality(objectives) = 0 OR sb_page IS NULL`)).n), 0);
 eq("every lesson knows its Big Question",
   Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE big_question IS NULL`)).n), 0);
-const u12 = await one(`SELECT * FROM public.curriculum_lessons WHERE level = 3 AND unit_from = 12 AND lesson = 'Get Ready'`);
+const u12 = await one(`SELECT * FROM public.curriculum_lessons WHERE curriculum = 'oxford-discover-2e' AND level = 3 AND unit_from = 12 AND lesson = 'Get Ready'`);
 eq("Unit 12 Get Ready: page, words and strategy", [u12.sb_page, u12.vocabulary.slice(0, 3), u12.reading_strategy, u12.big_question],
   [116, ["zummara", "flute", "djembe"], "Compare and contrast", "How do people make music?"]);
 eq("Unit 12 Understand: the grammar point",
   (await one(`SELECT grammar FROM public.curriculum_lessons WHERE level = 3 AND unit_from = 12 AND lesson = 'Understand'`)).grammar,
   "Comparative adjectives with as");
 eq("pages run in book order through Units 11 and 12",
-  (await q(`SELECT sb_page FROM public.curriculum_lessons WHERE level = 3 AND unit_from IN (11, 12) ORDER BY sb_page`)).map((r) => r.sb_page),
+  (await q(`SELECT sb_page FROM public.curriculum_lessons WHERE level = 3 AND curriculum = 'oxford-discover-2e' AND unit_from IN (11, 12) ORDER BY sb_page`)).map((r) => r.sb_page),
   [106, 108, 110, 112, 114, 116, 118, 120, 122, 124]);
+
+console.log("the Reach Higher 3A seed");
+eq("32 blocks: 4 units x 8", Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE curriculum = 'reach-higher'`)).n), 32);
+const RH_ORDER = ["Unit Launch", "Part 1 Language", "Part 1 Reading", "Part 1 Review", "Part 2 Language", "Part 2 Reading", "Writing Project", "Unit Wrap-Up"];
+const rh = (await q(`SELECT unit_from, lesson, sb_page FROM public.curriculum_lessons WHERE curriculum = 'reach-higher'`))
+  .sort((x, y) => x.unit_from - y.unit_from || RH_ORDER.indexOf(x.lesson) - RH_ORDER.indexOf(y.lesson));
+eq("every unit has the eight blocks", rh.map((x) => x.lesson).join(), [1, 2, 3, 4].flatMap(() => RH_ORDER).join());
+ok("pages rise through the book block by block", rh.every((x, i) => i === 0 || x.sb_page > rh[i - 1].sb_page), rh.map((x) => x.sb_page).join(","));
+eq("Unit 2 blocks start on the Teacher's Edition pages", rh.filter((x) => x.unit_from === 2).map((x) => x.sb_page), [74, 78, 92, 100, 110, 126, 142, 148]);
 
 console.log("the Level 1 and Level 2 seeds");
 for (const lv of [1, 2]) {
-  eq(`Level ${lv}: 90 lessons`, Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE level = $1`, [lv])).n), 90);
+  eq(`Level ${lv}: 90 lessons`, Number((await one(`SELECT count(*) n FROM public.curriculum_lessons WHERE level = $1 AND curriculum = 'oxford-discover-2e'`, [lv])).n), 90);
   eq(`Level ${lv}: nine Big Questions, one per unit pair`,
-    Number((await one(`SELECT count(DISTINCT big_question) n FROM public.curriculum_lessons WHERE level = $1`, [lv])).n), 9);
+    Number((await one(`SELECT count(DISTINCT big_question) n FROM public.curriculum_lessons WHERE level = $1 AND curriculum = 'oxford-discover-2e'`, [lv])).n), 9);
 }
 eq("Level 1 Unit 16 Get Ready (its heading lost the unit number; the footer names it)",
   (await one(`SELECT sb_page FROM public.curriculum_lessons WHERE level = 1 AND unit_from = 16 AND lesson = 'Get Ready'`))?.sb_page, 156);
@@ -103,8 +112,8 @@ const count = async (uid, s, p) => Number((await rowsAs(uid, s, p))[0].n);
 
 console.log("who reads and writes the book's lessons");
 for (const [who, uid] of [["a teacher", VICTOR], ["a TA (no teacher role)", TAU], ["an admin", ADMIN]]) {
-  // three levels of 90 lessons
-  eq(`${who} reads them`, await count(uid, `SELECT count(*) n FROM public.curriculum_lessons`), 270);
+  // three Oxford Discover levels of 90 lessons and Reach Higher 3A's 32 blocks
+  eq(`${who} reads them`, await count(uid, `SELECT count(*) n FROM public.curriculum_lessons`), 302);
 }
 for (const [who, uid] of [["a parent", PARENT], ["a child", CHILD], ["a signed-out visitor", null]]) {
   eq(`${who} reads none`, await count(uid, `SELECT count(*) n FROM public.curriculum_lessons`), 0);
@@ -157,8 +166,12 @@ eq("the draft gets the book, unit, page and objectives",
   [1, "Oxford Discover (2nd edition) Level 3", "Unit 12", "Get Ready", 116, 2]);
 eq("with the words and reading strategy", [planned[0].vocabulary.length, planned[0].reading_strategy], [10, "Compare and contrast"]);
 eq("no plan, no planned_lessons", D.plannedLessons([]), null);
+const rhBlock = await one(`SELECT * FROM public.curriculum_lessons WHERE curriculum = 'reach-higher' AND unit_from = 2 AND lesson = 'Part 2 Reading'`);
+eq("a Reach Higher block is named by its book (3A) and keeps its grammar-free objectives",
+  [D.plannedLessons([rhBlock])[0].book, D.plannedLessons([rhBlock])[0].student_book_page, D.plannedLessons([rhBlock])[0].reading_strategy],
+  ["Reach Higher 3A", 126, "Cause and effect"]);
 ok("the instructions say a plan is intent, not proof", /planned_lessons/.test(D.DRAFT_SYSTEM) && /never what happened/.test(D.DRAFT_SYSTEM));
-const all = await q(`SELECT id, level, unit_from, unit_to, lesson, sb_page FROM public.curriculum_lessons WHERE level = 3`);
+const all = await q(`SELECT id, level, unit_from, unit_to, lesson, sb_page FROM public.curriculum_lessons WHERE level = 3 AND curriculum = 'oxford-discover-2e'`);
 const sorted = C.sortLessons(all);
 eq("book order is page order", sorted.map((r) => r.sb_page), [...all].map((r) => r.sb_page).sort((a, b) => a - b));
 const wrap1112 = all.find((r) => r.unit_from === 11 && r.lesson === "Wrap Up");

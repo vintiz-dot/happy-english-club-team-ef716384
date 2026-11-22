@@ -24,8 +24,15 @@ export type CurriculumLesson = {
 
 const IN_UNIT = ["Get Ready", "Read", "Understand", "Communicate"];
 
+// Reach Higher has no unit pairs: each unit is taught in eight blocks (Jupiter's
+// 90-minute lessons), so a unit's rows are these names in this order.
+export const REACH_HIGHER_BLOCKS = ["Unit Launch", "Part 1 Language", "Part 1 Reading", "Part 1 Review",
+  "Part 2 Language", "Part 2 Reading", "Writing Project", "Unit Wrap-Up"];
+
 /** A number that puts lessons in book order within a level. */
 export function lessonRank(l: Pick<CurriculumLesson, "unit_from" | "unit_to" | "lesson">): number {
+  const rh = REACH_HIGHER_BLOCKS.indexOf(l.lesson);
+  if (rh >= 0) return l.unit_from * 10 + 1 + rh;
   if (l.lesson === "Big Question") return l.unit_from * 10;
   if (l.lesson === "Wrap Up") return l.unit_to * 10 + 9;
   const i = IN_UNIT.indexOf(l.lesson);
@@ -51,9 +58,14 @@ export function nextLesson<T extends Pick<CurriculumLesson, "id" | "level" | "un
   return next && next.level === sorted[i].level ? next : null;
 }
 
-/** The level a class is on, when its curriculum says so ("Oxford Discover 3", "OD3", "Level 3"). */
+/** The level a class is on, when its curriculum says so ("Oxford Discover 3", "OD3", "Level 3", "Reach Higher 3A"). */
 export function levelFromCurriculum(text: string | null | undefined): number | null {
   if (!text) return null;
-  const m = text.match(/(?:discover|od|level)\s*(\d{1,2})\b/i);
+  const m = text.match(/(?:discover|od|level|higher|rh)\s*(\d{1,2})[ab]?\b/i);
   return m ? Number(m[1]) : null;
+}
+
+/** Which course book a class's curriculum text names; Oxford Discover when it says nothing else. */
+export function curriculumFromText(text: string | null | undefined): "oxford-discover-2e" | "reach-higher" {
+  return text && /reach\s*higher|\brh\s*\d/i.test(text) ? "reach-higher" : "oxford-discover-2e";
 }

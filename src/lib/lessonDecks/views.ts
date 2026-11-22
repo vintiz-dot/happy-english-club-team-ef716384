@@ -87,10 +87,12 @@ export function cleanInterests(raw: unknown): Record<string, string[]> {
 
 // ---------------------------------------------------------------- class books
 
-export type BookChoice = { curriculum: "oxford-discover-2e"; level: number };
+export type BookChoice = { curriculum: "oxford-discover-2e" | "reach-higher"; level: number };
 
 export const BOOKS: { curriculum: BookChoice["curriculum"]; name: string; levels: number[] }[] = [
   { curriculum: "oxford-discover-2e", name: "Oxford Discover 2nd edition", levels: [1, 2, 3, 4, 5, 6] },
+  // One Reach Higher level is two books (3A: Units 1-4, 3B: Units 5-8); a class picks the level.
+  { curriculum: "reach-higher", name: "Reach Higher", levels: [1, 2, 3, 4, 5, 6] },
 ];
 
 /** The label stored in classes.curriculum: "Oxford Discover 2nd edition, Level 3". */
@@ -101,8 +103,9 @@ export function bookLabel(b: BookChoice): string {
 
 /** Read classes.curriculum back. Older free text ("Oxford Discover 2", "OD3") reads as null. */
 export function classBook(curriculum: string | null | undefined): BookChoice | null {
-  const m = /^\s*Oxford Discover 2nd edition,\s*Level\s*(\d)\s*$/i.exec(curriculum ?? "");
+  const m = /^\s*(.+?),\s*Level\s*(\d)\s*$/i.exec(curriculum ?? "");
   if (!m) return null;
-  const level = Number(m[1]);
-  return BOOKS[0].levels.includes(level) ? { curriculum: "oxford-discover-2e", level } : null;
+  const book = BOOKS.find((b) => b.name.toLowerCase() === m[1].trim().toLowerCase());
+  const level = Number(m[2]);
+  return book && book.levels.includes(level) ? { curriculum: book.curriculum, level } : null;
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UNITS, unitKey } from "@/content/lessonDecks";
+import { UNITS, unitKey, unitLabel } from "@/content/lessonDecks";
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
 import { paceLessons, type WeeklySlot } from "@/lib/lessonDecks/pacing";
 import { checksIn, classBook, grammarDeck, unitInterests, unitPlan, type PlanItem } from "@/lib/lessonDecks/views";
@@ -21,6 +21,7 @@ import { pickSession } from "@/lib/lessonDecks/covered";
 
 type ClassLite = { id: string; name: string };
 type FlipbookRow = ClassFlipbook & { class_id: string | null };
+
 
 const todayHanoi = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
 const nowHanoi = () => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit" });
@@ -166,7 +167,7 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
           <Select value={unitId} onValueChange={setUnitId}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {UNITS.map((u) => <SelectItem key={unitKey(u)} value={unitKey(u)}>Oxford Discover {u.level} · Unit {u.unit}: {u.title}</SelectItem>)}
+              {UNITS.map((u) => <SelectItem key={unitKey(u)} value={unitKey(u)}>{unitLabel(u)}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

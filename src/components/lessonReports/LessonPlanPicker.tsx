@@ -5,11 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BookOpen, Loader2, Plus, X } from "lucide-react";
-import { type CurriculumLesson, lessonLabel, levelFromCurriculum, nextLesson, sortLessons } from "@/lib/curriculumLessons";
+import { type CurriculumLesson, curriculumFromText, lessonLabel, levelFromCurriculum, nextLesson, sortLessons } from "@/lib/curriculumLessons";
 
 // The tables are new (20261121150000) and not in the generated types yet.
 const db = supabase as any;
-const CURRICULUM = "oxford-discover-2e";
 
 /**
  * "What did this lesson cover?" The teacher picks the course book lesson(s);
@@ -20,11 +19,23 @@ export default function LessonPlanPicker({ sessionId, classId, date, canEdit }: 
   const qc = useQueryClient();
   const planKey = ["session-lesson-plan", sessionId];
 
+  // The class's course book, from its curriculum text ("Reach Higher 3A"; otherwise Oxford Discover).
+  const book = useQuery({
+    queryKey: ["lesson-plan-book", classId],
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { data } = await db.from("classes").select("curriculum").eq("id", classId).maybeSingle();
+      return curriculumFromText(data?.curriculum);
+    },
+  });
+  const curriculum = book.data;
+
   const lessons = useQuery({
-    queryKey: ["curriculum-lessons", CURRICULUM],
+    queryKey: ["curriculum-lessons", curriculum],
+    enabled: !!curriculum,
     staleTime: 10 * 60_000,
     queryFn: async (): Promise<CurriculumLesson[]> => {
-      const { data, error } = await db.from("curriculum_lessons").select("*").eq("curriculum", CURRICULUM);
+      const { data, error } = await db.from("curriculum_lessons").select("*").eq("curriculum", curriculum);
       if (error) throw error;
       return sortLessons(data ?? []);
     },
@@ -89,7 +100,7 @@ export default function LessonPlanPicker({ sessionId, classId, date, canEdit }: 
   if (lessons.error || plan.error) {
     return <p className="text-sm text-muted-foreground">Course book lessons are not switched on yet. Ask the school's admin to apply the latest database update.</p>;
   }
-  if (lessons.isLoading || plan.isLoading) return <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Loading…</p>;
+  if (book.isLoading || lessons.isLoading || plan.isLoading) return <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Loading…</p>;
   if (!all.length) return <p className="text-sm text-muted-foreground">No course book lessons have been added yet.</p>;
 
   const chosen = plan.data ?? [];
@@ -97,7 +108,7 @@ export default function LessonPlanPicker({ sessionId, classId, date, canEdit }: 
     <div className="space-y-3">
       {chosen.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Not set. Choose the Oxford Discover lesson you taught, and the report starts from its objectives.
+          Not set. Choose the {curriculum === "reach-higher" ? "Reach Higher" : "Oxford Discover"} lesson you taught, and the report starts from its objectives.
         </p>
       ) : (
         <ul className="space-y-2">

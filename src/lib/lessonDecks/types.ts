@@ -18,6 +18,26 @@ export type BookRef = {
 
 export type Mode = "whole" | "pairs" | "groups" | "solo";
 
+// Course books with decks. Reach Higher (National Geographic Learning) is used by
+// Jupiter; its decks cite pages and selections only, like Oxford Discover's.
+export type Curriculum = "oxford-discover-2e" | "reach-higher";
+
+// The course book lesson a deck teaches, by name (public.curriculum_lessons.lesson).
+// Oxford Discover: one per book lesson. Reach Higher: the unit split into its
+// eight teaching blocks (src/lib/curriculumLessons.ts puts them in order).
+export type OdLesson = "Big Question" | "Get Ready" | "Read" | "Understand" | "Communicate" | "Wrap Up";
+export type RhLesson =
+  | "Unit Launch" | "Part 1 Language" | "Part 1 Reading" | "Part 1 Review"
+  | "Part 2 Language" | "Part 2 Reading" | "Writing Project" | "Unit Wrap-Up";
+
+// Entrance-exam practice (Hanoi grade-6 selective schools) in the formats the
+// papers use. The items are the school's own, written in that format; no
+// past-paper question is ever copied.
+export type ExamFormat =
+  | "multiple choice" | "rewrite" | "error" | "cloze" | "word form" | "dialogue"
+  | "sounds" | "cues" | "question" | "reading" | "paragraph";
+export type ExamItem = { q: string; options?: string[]; answer: string; why?: string };
+
 export type Thinking = "Create" | "Design" | "Evaluate" | "Argue" | "Compare and justify";
 
 export type CreativeTask = {
@@ -79,6 +99,10 @@ export type Slide =
       criteria: string[];
       frames?: string[];
       model?: { title: string; text: string }; // an original model text to listen to
+      // Higher-order writing in class: the kind of thinking it asks for, and the
+      // stretch for the children who finish strong.
+      thinking?: Thinking;
+      challenge?: string;
     }
   | {
       kind: "vlog";
@@ -108,6 +132,18 @@ export type Slide =
       mode: Mode;
       minutes: number;
       steps: string[];
+    }
+  | {
+      // A short timed set in entrance-exam format, answers hidden until shown.
+      // Checkpoints use `check` and the unit's `assessments` instead.
+      kind: "exam";
+      title: string;
+      format: ExamFormat;
+      mode: Mode;
+      minutes: number;
+      instructions: string;
+      items: ExamItem[];
+      school?: string; // the school whose paper it imitates ("Cầu Giấy")
     };
 
 /** A question with its answer (for worksheets and assessments). */
@@ -164,7 +200,7 @@ export type FirstEditionMap = {
 
 export type Deck = {
   id: string; // "od2e-l3-u12-l1"
-  curriculum: "oxford-discover-2e";
+  curriculum: Curriculum;
   level: number;
   unit: number;
   lesson: number; // 1-based order within the unit
@@ -175,7 +211,7 @@ export type Deck = {
   // The course book lesson this deck teaches (a row of public.curriculum_lessons).
   // Presenting the deck to a class marks it as covered in today's lesson, so the
   // lesson report starts from the book's objectives.
-  covers?: { unitFrom: number; lesson: "Big Question" | "Get Ready" | "Read" | "Understand" | "Communicate" | "Wrap Up" };
+  covers?: { unitFrom: number; lesson: OdLesson | RhLesson };
   // Supplementary worksheets, as LINKS to the publisher's own page: a teacher opens
   // them with the school's account. Files are never copied into the app (Twinkl's
   // licence is for the subscriber's own classroom use, not re-hosting).
@@ -186,7 +222,7 @@ export type Deck = {
 };
 
 export type Unit = {
-  curriculum: "oxford-discover-2e";
+  curriculum: Curriculum;
   level: number;
   unit: number;
   title: string;
@@ -196,4 +232,9 @@ export type Unit = {
   worksheets?: Worksheet[];
   assessments?: Assessment[];
   firstEdition?: FirstEditionMap;
+  // Reach Higher splits a level into two books ("3A", "3B"); shown with the unit.
+  book?: string;
+  // The grammar strand a unit carries for the class's entrance exam (Jupiter): the
+  // book's own points and the ones added, in teaching order. Shown to the teacher.
+  grammarStrand?: { point: string; lesson: number; source: "book" | "added" | "stretch" }[];
 };

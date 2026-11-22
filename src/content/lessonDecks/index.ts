@@ -38,6 +38,8 @@ import { odL2U16 } from "./od2e-l2-u16";
 import { odL2U17 } from "./od2e-l2-u17";
 import { odL2U18 } from "./od2e-l2-u18";
 import { odL3U12 } from "./od2e-l3-u12";
+import { rhL3U2 } from "./rh-l3-u2";
+import { rhL3U3 } from "./rh-l3-u3";
 import { odL3U13 } from "./od2e-l3-u13";
 import { odL3U14 } from "./od2e-l3-u14";
 import { odL3U15 } from "./od2e-l3-u15";
@@ -89,6 +91,16 @@ export const UNITS: Unit[] = [
   odL3U16,
   odL3U17,
   odL3U18,
+  rhL3U2,
+  rhL3U3,
 ];
 
-export const unitKey = (u: Pick<Unit, "level" | "unit">) => `L${u.level} U${u.unit}`;
+// Oxford Discover keys stay as they were ("L3 U12"); Reach Higher's are prefixed so
+// the two books' unit numbers never collide.
+export const unitKey = (u: Pick<Unit, "level" | "unit"> & { curriculum?: Unit["curriculum"] }) =>
+  `${u.curriculum === "reach-higher" ? "RH " : ""}L${u.level} U${u.unit}`;
+
+export const unitLabel = (u: Pick<Unit, "curriculum" | "level" | "unit" | "title" | "book">) =>
+  u.curriculum === "reach-higher"
+    ? `Reach Higher ${u.book ?? u.level} · Unit ${u.unit}: ${u.title}`
+    : `Oxford Discover ${u.level} · Unit ${u.unit}: ${u.title}`;

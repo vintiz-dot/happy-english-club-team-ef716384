@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import { ExamSlide } from "./ExamSlide";
 import type { Assessment, BookRef, CreativeTask, Deck, Mode, Slide, Unit } from "@/lib/lessonDecks/types";
 import type { FlipTarget } from "@/lib/lessonDecks/bookPages";
 import { BookOpen, Clock, Users, User, UsersRound, Presentation, Mic, PenLine, Video, Lightbulb, AlertTriangle, CheckCircle2, Home, Target, Sparkles, Volume2, Headphones, ExternalLink, FileText, ClipboardCheck, Trophy, Rocket } from "lucide-react";
@@ -360,6 +361,13 @@ function SlideBody({ slide }: { slide: Slide }) {
               <p className="text-xl leading-relaxed text-hec-ink">{slide.model.text}</p>
             </div>
           )}
+          {slide.thinking && <p className="text-lg text-hec-ink-soft"><strong>Thinking:</strong> {slide.thinking}</p>}
+          {slide.challenge && (
+            <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 p-4">
+              <p className="mb-1 text-sm uppercase tracking-widest text-amber-800 dark:text-amber-200">Challenge</p>
+              <p className="text-xl text-hec-ink">{slide.challenge}</p>
+            </div>
+          )}
         </div>
       );
     case "vlog":
@@ -380,6 +388,8 @@ function SlideBody({ slide }: { slide: Slide }) {
           </div>
         </div>
       );
+    case "exam":
+      return <ExamSlide slide={slide} />;
     case "reflect":
       return (
         <div className="space-y-8">
