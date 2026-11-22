@@ -1,0 +1,335 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Lesson Material</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/block-head.css">
+<link rel="stylesheet" href="/components/css/bullets.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/copy-mark.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/name-line.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/phrases.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/pull-quote.css">
+<link rel="stylesheet" href="/components/css/question-list.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/teacher-panel.css">
+<link rel="stylesheet" href="/components/css/tiers.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<link rel="stylesheet" href="/components/css/title-block.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "Term 1 check: Listening and Speaking · Student copy";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--lesson-material variant--student">
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+    <div class="copy-mark">Student copy</div>
+
+    <div class="hdr__title">Assessment</div>
+  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+<section class="tblock" aria-label="Term 1 check: Listening and Speaking">
+<p class="tblock__course">HEC IELTS Speaking &amp; Listening · Year 1 · Term 1</p>  <h1 class="doc-title tblock__title">Term 1 check: Listening and Speaking</h1>
+<p class="tblock__details">Lesson 12 · 60 minutes <span class="ornament" aria-hidden="true">·</span> Sun Class</p></section>
+
+
+  <div class="nline">
+  <div class="nline__field nline__field--name"><span class="nline__label">Name</span><span class="nline__value"></span></div>
+  <div class="nline__field nline__field--date"><span class="nline__label">Date</span><span class="nline__value"></span></div>
+  <div class="nline__score"><span class="nline__label">Score</span><span class="nline__blank"></span><span class="nline__of">/ 30</span></div>
+</div>
+
+
+
+<section class="blk" aria-label="Booking a museum workshop">
+  <div class="bhead">
+  <div class="bhead__n">01</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Listening · Part 1</div>    <h2 class="bhead__title">Booking a museum workshop</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">6 marks</li><li class="bhead__chip">Heard twice</li></ul></div>
+
+  <div class="blk__body">
+
+<section class="qset">
+<p class="qset__title">Questions 1–6</p><p class="qset__instr">Complete the booking form. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.</p>  <ol class="qlist qlist--line">
+    <li class="q">
+      <span class="q__n">1</span>
+      <div class="q__body">
+        <p class="q__text">Workshop name: Making ______</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">2</span>
+      <div class="q__body">
+        <p class="q__text">Day: ______</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">3</span>
+      <div class="q__body">
+        <p class="q__text">Start time: ______</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">4</span>
+      <div class="q__body">
+        <p class="q__text">Number of children: ______</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">5</span>
+      <div class="q__body">
+        <p class="q__text">Parent&#39;s surname: ______</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">6</span>
+      <div class="q__body">
+        <p class="q__text">Total price: ______ VND</p>
+      </div>
+    </li>
+  </ol>
+</section>
+  </div>
+</section>
+<section class="blk" aria-label="A talk about the new library">
+  <div class="bhead">
+  <div class="bhead__n">02</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Listening · Part 2</div>    <h2 class="bhead__title">A talk about the new library</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">4 marks</li><li class="bhead__chip">Heard twice</li></ul></div>
+
+  <div class="blk__body">
+
+<section class="qset">
+<p class="qset__title">Questions 7–10</p><p class="qset__instr">Tick the correct answer.</p>  <ol class="qlist qlist--none" start="7">
+    <li class="q">
+      <span class="q__n">7</span>
+      <div class="q__body">
+        <p class="q__text">The library will open</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>in January</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>in March</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>in June</span></li>        </ul>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">8</span>
+      <div class="q__body">
+        <p class="q__text">Children under ten must</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>come with an adult</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>bring a library card</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>book a room</span></li>        </ul>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">9</span>
+      <div class="q__body">
+        <p class="q__text">The quiet room is on the</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>ground floor</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>first floor</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>top floor</span></li>        </ul>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">10</span>
+      <div class="q__body">
+        <p class="q__text">Each visitor can borrow up to</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>four books</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>six books</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>eight books</span></li>        </ul>
+      </div>
+    </li>
+  </ol>
+</section>
+  </div>
+</section>
+<section class="blk" aria-label="Interview: home and free time">
+  <div class="bhead">
+  <div class="bhead__n">03</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Speaking · Part 1</div>    <h2 class="bhead__title">Interview: home and free time</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">8 marks</li><li class="bhead__chip">4 min</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>The examiner asks four questions. Answer each with a reason and a detail.</p></div>
+
+<section class="qset">
+  <ol class="qlist qlist--none">
+    <li class="q">
+      <span class="q__n">1</span>
+      <div class="q__body">
+        <p class="q__text">Can you tell me about the place where you live?</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">2</span>
+      <div class="q__body">
+        <p class="q__text">What do you usually do after school?</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">3</span>
+      <div class="q__body">
+        <p class="q__text">Is there a hobby you would like to start? Why?</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">4</span>
+      <div class="q__body">
+        <p class="q__text">Do you prefer spending free time alone or with friends?</p>
+      </div>
+    </li>
+  </ol>
+</section>
+  </div>
+</section>
+<section class="blk page-break" aria-label="Cue card: a person who helped you">
+  <div class="bhead">
+  <div class="bhead__n">04</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Speaking · Part 2</div>    <h2 class="bhead__title">Cue card: a person who helped you</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">12 marks</li><li class="bhead__chip">1 min prep · 1 min talk</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>You have one minute to make notes, then talk for one minute.</p></div>
+<div class="ilist ilist--bullets">
+<p class="ilist__title">Describe a person who helped you learn something. You should say:</p>  <ul class="bullets">
+<li class="bullets__item">who the person is</li><li class="bullets__item">what they helped you learn</li><li class="bullets__item">how they helped you</li><li class="bullets__item">and explain why you remember it.</li></ul>
+
+</div>
+<div class="lines" role="presentation">
+<div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div></div>
+  </div>
+</section>
+
+<div class="closing">
+  
+  <p class="encourage">Mistakes are how good English is made.</p>
+
+<div class="colophon">Happy English Club · HEC IELTS Speaking &amp; Listening · Year 1 · Term 1 · Student copy</div>
+</div>
+</body>
+</html>

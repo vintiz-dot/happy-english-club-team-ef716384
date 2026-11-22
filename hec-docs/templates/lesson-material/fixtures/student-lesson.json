@@ -1,0 +1,337 @@
+{
+  "$comment": "The same made-up lesson as teacher-lesson.json, as a student receives it: no answers, no teacher entries.",
+  "generatedAt": "2026-11-22T10:00:00+07:00",
+  "data": {
+    "variant": "student",
+    "kind": "lesson",
+    "title": "Getting to know you; how IELTS works",
+    "course": "HEC IELTS Speaking & Listening · Year 1 · Term 1",
+    "subtitle": "Lesson 1 · 120 minutes",
+    "className": "Sun Class",
+    "bigQuestion": "What makes a good first conversation with someone new?",
+    "objectives": [
+      "Introduce yourself and others with three linked details, not single words.",
+      "Know the shape of the IELTS Speaking and Listening papers and what examiners listen for.",
+      "Hear and mark word stress on two- and three-syllable words.",
+      "Answer Part 1 questions with a reason or an example, and score a partner fairly."
+    ],
+    "blocks": [
+      {
+        "eyebrow": "Warm-up",
+        "heading": "Find someone who…",
+        "chips": [
+          "10 min",
+          "Whole class"
+        ],
+        "paragraphs": [
+          "Students stand and mingle. Each has a card of eight prompts and must find a different classmate for each one, then ask one follow-up question before writing a name."
+        ],
+        "lists": [
+          {
+            "title": "How it runs",
+            "style": "steps",
+            "items": [
+              "Model one exchange with a confident student, including the follow-up question.",
+              "Give four minutes of mingling; play quiet music and stop it at the end.",
+              "Students sit with the classmate they found most surprising and report one fact each."
+            ]
+          },
+          {
+            "title": "Follow-up questions to model",
+            "style": "frames",
+            "items": [
+              "Oh really? How did you get into that?",
+              "What do you enjoy most about it?",
+              "How long have you been doing it?"
+            ]
+          }
+        ]
+      },
+      {
+        "eyebrow": "Language",
+        "heading": "Talking about yourself in three steps",
+        "chips": [
+          "15 min",
+          "Pairs"
+        ],
+        "paragraphs": [
+          "A strong Part 1 answer has three moves: a direct answer, a reason, and a detail or example. Build the pattern on the board, then let pairs practise with the prompts below."
+        ],
+        "table": {
+          "head": [
+            "Move",
+            "Useful language",
+            "Example"
+          ],
+          "rows": [
+            [
+              "Answer",
+              "Yes, I do / Not really / Mostly…",
+              "Yes, I really enjoy it."
+            ],
+            [
+              "Reason",
+              "mainly because… / the thing is…",
+              "mainly because it helps me relax after school."
+            ],
+            [
+              "Detail",
+              "for example… / last weekend I…",
+              "Last Sunday I played for two hours with my cousins."
+            ]
+          ]
+        },
+        "tiers": [
+          {
+            "level": "Support",
+            "task": "Answer three questions with an answer and a reason, using the frames.",
+            "frames": [
+              "Yes, I do, mainly because…",
+              "Not really. The thing is…"
+            ]
+          },
+          {
+            "level": "Core",
+            "task": "Answer four questions with all three moves. Your partner ticks each move they hear."
+          },
+          {
+            "level": "Stretch",
+            "task": "Answer, then add a contrast: what was different when you were younger?",
+            "frames": [
+              "When I was younger, I used to…, but now…"
+            ]
+          }
+        ]
+      },
+      {
+        "eyebrow": "Pronunciation",
+        "heading": "Word stress: where the beat falls",
+        "chips": [
+          "10 min",
+          "Whole class"
+        ],
+        "lists": [
+          {
+            "style": "steps",
+            "items": [
+              "Clap the beat of three names in the room; the loud clap is the stressed syllable.",
+              "Students sort the words into four stress patterns (Oo, oO, Ooo, oOo): hobby, describe, family, important, weekend, holiday, relax, computer.",
+              "Pairs say the words in a sentence of their own; the partner taps the stress."
+            ]
+          }
+        ]
+      },
+      {
+        "eyebrow": "IELTS Speaking · Part 1",
+        "heading": "Interview practice with peer scoring",
+        "chips": [
+          "20 min",
+          "Pairs",
+          "Peer scoring"
+        ],
+        "paragraphs": [
+          "One student is the examiner and reads four questions; the other answers. After four minutes they swap. The examiner scores with the checklist and gives one specific piece of praise and one target."
+        ],
+        "lists": [
+          {
+            "title": "Examiner's checklist",
+            "style": "checks",
+            "items": [
+              "Answered the question that was asked",
+              "Gave a reason with every answer",
+              "Added a detail or example at least twice",
+              "Spoke for about 15 to 20 seconds each time"
+            ]
+          }
+        ],
+        "tiers": [
+          {
+            "level": "Support",
+            "task": "Use the question card with picture prompts; answer with two moves."
+          },
+          {
+            "level": "Core",
+            "task": "Answer the four topic questions with three moves, without notes."
+          },
+          {
+            "level": "Stretch",
+            "task": "Ask your partner one follow-up question of your own after each answer."
+          }
+        ]
+      },
+      {
+        "eyebrow": "Listening · Part 1",
+        "heading": "Joining a weekend club",
+        "chips": [
+          "20 min",
+          "Individual"
+        ],
+        "paragraphs": [
+          "Students hear a short conversation at a sports centre twice. First listening: answer the questions. Second listening: check, then compare with a partner."
+        ],
+        "questions": {
+          "title": "Questions 1–5",
+          "instructions": "Write NO MORE THAN TWO WORDS AND/OR A NUMBER, or tick the right box.",
+          "space": "line",
+          "items": [
+            {
+              "q": "The caller's first name is"
+            },
+            {
+              "q": "Which activity does she want to join?",
+              "options": [
+                "Swimming",
+                "Badminton",
+                "Climbing"
+              ]
+            },
+            {
+              "q": "Sessions start at"
+            },
+            {
+              "q": "What should she bring to the first session?"
+            },
+            {
+              "q": "The monthly fee is",
+              "options": [
+                "150,000 VND",
+                "200,000 VND",
+                "250,000 VND"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "eyebrow": "Debate",
+        "heading": "This house believes first impressions are usually right",
+        "chips": [
+          "25 min",
+          "Teams"
+        ],
+        "paragraphs": [
+          "Two teams of four. Each speaker has one minute. Proposition opens, opposition replies, then two minutes of open floor and a one-minute summary from each side."
+        ],
+        "lists": [
+          {
+            "title": "Running order",
+            "style": "steps",
+            "items": [
+              "Five minutes of preparation: each team lists three arguments and one example for each.",
+              "Speeches alternate: proposition 1, opposition 1, proposition 2, opposition 2.",
+              "Open floor: any speaker may stand to challenge a point.",
+              "Summaries, then the class votes by moving to one side of the room."
+            ]
+          },
+          {
+            "title": "Language for debating",
+            "style": "frames",
+            "items": [
+              "I'd like to challenge that point.",
+              "That may be true, but…",
+              "Let me give you an example.",
+              "To sum up our case…"
+            ]
+          }
+        ],
+        "tiers": [
+          {
+            "level": "Support",
+            "task": "Give one argument with one example, reading from your notes."
+          },
+          {
+            "level": "Core",
+            "task": "Give two arguments and answer one challenge from the other team."
+          },
+          {
+            "level": "Stretch",
+            "task": "Summarise both sides fairly before explaining why yours is stronger."
+          }
+        ]
+      },
+      {
+        "eyebrow": "Reflection",
+        "heading": "What I can do now",
+        "chips": [
+          "5 min",
+          "Individual"
+        ],
+        "lists": [
+          {
+            "style": "checks",
+            "items": [
+              "I can introduce myself with three linked details.",
+              "I know the four parts of the IELTS Listening test.",
+              "I can hear the stressed syllable in a new word."
+            ]
+          }
+        ],
+        "writingLines": 3
+      },
+      {
+        "eyebrow": "Homework",
+        "heading": "This week at home",
+        "chips": [
+          "Core · about 2.5 h"
+        ],
+        "paragraphs": [
+          "Short and often is better than long and rare. Each day has one task; tick the box when it is done and bring the sheet next lesson."
+        ],
+        "table": {
+          "head": [
+            "Day",
+            "Task",
+            "Minutes"
+          ],
+          "rows": [
+            [
+              "Monday",
+              "Record a one-minute self-introduction using the three moves.",
+              "20"
+            ],
+            [
+              "Tuesday",
+              "Listen to the club script again; shadow the caller's lines.",
+              "20"
+            ],
+            [
+              "Wednesday",
+              "Learn ten words from the topic list; mark the stress.",
+              "25"
+            ],
+            [
+              "Thursday",
+              "Write five Part 1 answers (answer, reason, detail).",
+              "30"
+            ],
+            [
+              "Friday",
+              "Prepare one argument for and one against next week's motion.",
+              "25"
+            ],
+            [
+              "Weekend",
+              "Talk with a family member for ten minutes in English; note two new words.",
+              "30"
+            ]
+          ]
+        },
+        "tiers": [
+          {
+            "level": "Support",
+            "task": "Do Monday, Wednesday and Thursday; use the frames sheet."
+          },
+          {
+            "level": "Core",
+            "task": "Do every day's task."
+          },
+          {
+            "level": "Stretch",
+            "task": "Also record your Thursday answers and listen for word stress."
+          }
+        ]
+      }
+    ],
+    "nameLine": true
+  }
+}

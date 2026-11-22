@@ -1,0 +1,5 @@
+{# copy-mark: a small stamp naming which copy this is ("Teacher copy").
+   solid sets it in ink with a gold inset ring; otherwise outlined. #}
+{% macro copy_mark(label, solid=false) %}
+<div class="copy-mark{% if solid %} copy-mark--solid{% endif %}">{{ label }}</div>
+{% endmacro %}

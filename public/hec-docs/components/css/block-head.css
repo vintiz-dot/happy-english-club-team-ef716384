@@ -1,0 +1,52 @@
+/* block-head (ui/block-head.njk): numbered head of a content block.
+   .blk is the block it heads; its body is indented to the heading's edge. */
+.blk { margin: var(--space-4) 0 0; }
+.bhead {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding-bottom: var(--space-1);
+  margin-bottom: var(--space-2);
+  border-bottom: var(--border-hairline) solid var(--color-gold);
+  break-inside: avoid;
+  break-after: avoid;
+}
+.bhead__n {
+  flex: none;
+  width: 12mm;
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--size-3xl);
+  line-height: 0.85;
+  color: var(--color-gold-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.bhead__main { flex: 1 1 auto; min-width: 0; }
+.bhead__eyebrow { margin-bottom: 2pt; }
+.bhead__title {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--size-xl);
+  line-height: var(--leading-tight);
+  color: var(--color-ink);
+}
+.bhead__chips { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-0-5); max-width: 62mm; margin: 0 0 2pt; padding: 0; list-style: none; }
+.bhead__chip {
+  padding: 0.5pt 7pt 1.5pt;
+  border: var(--border-hairline) solid var(--color-gold);
+  border-radius: 99pt;
+  font-size: var(--size-sm);
+  font-weight: var(--font-weight-medium);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+.blk__body { padding-left: calc(12mm + var(--space-2)); break-before: avoid; }
+.blk__body > * + * { margin-top: var(--space-2); }
+.blk__prose p { line-height: var(--leading-loose); }
+.blk__table { margin-bottom: 0; }
+.blk__note { margin: 0; font-size: var(--size-xs); letter-spacing: 0.04em; color: var(--color-muted); font-style: italic; }
+.blk__body .lines { margin: var(--space-1) 0 0; }
+.blk__body .check { margin-bottom: 0; }

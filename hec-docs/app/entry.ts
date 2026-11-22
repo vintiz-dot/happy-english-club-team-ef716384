@@ -183,7 +183,7 @@ export async function prepare(type: string, data: Record<string, unknown>, opts:
     version: manifest.version,
     variant,
     html,
-    filename: FILENAME_STRATEGIES[manifest.filename](data),
+    filename: FILENAME_STRATEGIES[manifest.filename](data, variant),
     output: manifest.output as "pdf" | "png",
     raster: manifest.raster,
     meta: {

@@ -1,0 +1,43 @@
+{
+  "type": "lesson-material",
+  "version": "1.0.0",
+  "title": "Lesson Material",
+  "description": "Lesson decks, worksheets, checks/tests and homework sheets from the app's Lesson Decks, as a teacher copy (answers, scripts and notes in tinted panels) or a student copy (name line, answer space, no answers).",
+  "output": "pdf",
+  "documentTitle": "{{ data.title }} · {{ 'Student copy' if variant == 'student' else 'Teacher copy' }}",
+  "lang": "en",
+  "variantField": "variant",
+  "defaultVariant": "teacher",
+  "variants": {
+    "teacher": {
+      "description": "Teacher's book: objectives and Big Question on page 1, answers under each question, scripts and notes in \"For the teacher\" panels."
+    },
+    "student": {
+      "description": "Pupil's handout: Name / Date line, answer lines and boxes, tick boxes, ruled writing space and a score box. Never prints answers or teacher panels."
+    }
+  },
+  "filename": "lesson-material",
+  "keyField": "title",
+  "brandStrings": [
+    "Teacher copy",
+    "Student copy",
+    "For the teacher",
+    "Lesson plan",
+    "Lesson handout",
+    "Worksheet",
+    "Assessment",
+    "Homework",
+    "Big Question",
+    "Objectives",
+    "Name",
+    "Date",
+    "Score",
+    "Marked out of",
+    "Answer",
+    "Writing space",
+    "lines",
+    "★",
+    "★★",
+    "★★★"
+  ]
+}

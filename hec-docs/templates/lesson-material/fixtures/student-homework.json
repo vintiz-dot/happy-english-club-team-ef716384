@@ -1,0 +1,65 @@
+{
+  "$comment": "Made-up Sun Class homework sheet made for one child (placeholder name). Original content.",
+  "generatedAt": "2026-11-22T10:00:00+07:00",
+  "data": {
+    "variant": "student",
+    "kind": "homework",
+    "title": "Week 1 homework: introductions",
+    "course": "HEC IELTS Speaking & Listening · Year 1 · Term 1",
+    "subtitle": "After Lesson 1 · Core about 2.5 hours",
+    "className": "Sun Class",
+    "studentName": "Student A",
+    "blocks": [
+      {
+        "eyebrow": "This week",
+        "heading": "One task a day",
+        "chips": ["Core · about 2.5 h"],
+        "paragraphs": [
+          "Your interest this week is football, so two tasks use it. Tick each day when it is done."
+        ],
+        "table": {
+          "head": ["Day", "Task", "Minutes", "Done"],
+          "rows": [
+            ["Monday", "Record a one-minute self-introduction using answer, reason, detail.", "20", ""],
+            ["Tuesday", "Shadow the club script: say the caller's lines with the recording.", "20", ""],
+            ["Wednesday", "Learn ten football words; mark the stressed syllable in each.", "25", ""],
+            ["Thursday", "Write five Part 1 answers about your free time.", "30", ""],
+            ["Friday", "Prepare one argument for and one against: \"Every child should play a team sport.\"", "25", ""],
+            ["Weekend", "Talk with your family in English for ten minutes about a match you watched.", "30", ""]
+          ]
+        }
+      },
+      {
+        "eyebrow": "Thursday",
+        "heading": "Five Part 1 answers",
+        "tiers": [
+          { "level": "Support", "task": "Answer three questions with an answer and a reason.", "frames": ["Yes, I do, mainly because…", "Not really. The thing is…"] },
+          { "level": "Core", "task": "Answer all five with answer, reason and detail." },
+          { "level": "Stretch", "task": "Add a contrast to two answers: then and now.", "frames": ["When I was younger, I used to…"] }
+        ],
+        "lists": [
+          { "title": "Questions", "style": "steps", "items": [
+            "Do you like sport? Why?",
+            "Who do you usually play with?",
+            "What did you do last weekend?",
+            "Is there a sport you would like to try?",
+            "Do you prefer watching or playing?"
+          ] }
+        ],
+        "writingLines": 10
+      },
+      {
+        "eyebrow": "Friday",
+        "heading": "For and against",
+        "questions": {
+          "instructions": "Every child should play a team sport.",
+          "space": "box",
+          "items": [
+            { "q": "One argument FOR, with an example." },
+            { "q": "One argument AGAINST, with an example." }
+          ]
+        }
+      }
+    ]
+  }
+}

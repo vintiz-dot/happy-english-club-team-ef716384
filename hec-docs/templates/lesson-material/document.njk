@@ -1,0 +1,89 @@
+{#
+  Lesson material: a lesson deck, worksheet, check/test or homework sheet from
+  the app's Lesson Decks, as a teacher copy or a student copy.
+  The student copy never prints `answer` or `teacher`, even when the data
+  carries them (the app strips them too). Fixed labels are registered in
+  template.json brandStrings.
+#}
+{% extends "layouts/page.njk" %}
+{% import "ui.njk" as ui %}
+{% import "ui/copy-mark.njk" as cm %}
+{% import "ui/title-block.njk" as tb %}
+{% import "ui/name-line.njk" as nl %}
+{% import "ui/pull-quote.njk" as pq %}
+{% import "ui/block-head.njk" as bh %}
+{% import "ui/item-list.njk" as il %}
+{% import "ui/question-list.njk" as ql %}
+{% import "ui/tiers.njk" as tr %}
+{% import "ui/teacher-panel.njk" as tp %}
+{% set teacher = variant != "student" %}
+{% set copyLabel = "Teacher copy" if teacher else "Student copy" %}
+{% set KIND = { "lesson": ("Lesson plan" if teacher else "Lesson handout"), "worksheet": "Worksheet", "assessment": "Assessment", "homework": "Homework" } %}
+{% set runningTitle = data.title ~ " · " ~ copyLabel %}
+{% block body %}
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="{{ assetBase }}/tenant/{{ tenant.logo.file }}" alt="{{ tenant.logo.alt }}">
+    <div class="hdr__brand">
+      <div class="hdr__name">{{ tenant.name }}</div>
+      {% if tenant.subtitle %}<div class="hdr__sub" lang="vi">{{ tenant.subtitle }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="hdr__doc">
+    {{ cm.copy_mark(copyLabel, solid=teacher) }}
+    <div class="hdr__title">{{ KIND[data.kind] }}</div>
+  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+{{ tb.title_block(data.title, data.course, [data.subtitle, data.className, ("Marked out of " ~ data.scoreOutOf) if (teacher and data.scoreOutOf) else ""]) }}
+
+{% if not teacher and (data.nameLine or data.studentName or data.scoreOutOf) %}
+  {{ nl.name_line(data.studentName or "", showFields=(data.nameLine or data.studentName), scoreOutOf=data.scoreOutOf or 0) }}
+{% endif %}
+
+{% set objectives = data.objectives or [] %}
+{% if data.bigQuestion or objectives | length %}
+<div class="{{ 'split lead-pair' if (data.bigQuestion and objectives | length) else 'lead-pair' }}">
+  {% if data.bigQuestion %}{{ pq.pull_quote("Big Question", data.bigQuestion) }}{% endif %}
+  {% if objectives | length %}
+  <section class="aims" aria-label="Objectives">
+    <div class="eyebrow">Objectives</div>
+    {{ il.bullets(objectives) }}
+  </section>
+  {% endif %}
+</div>
+{% endif %}
+
+{% for b in data.blocks %}
+<section class="blk{% if b.breakBefore %} page-break{% endif %}" aria-label="{{ b.heading }}">
+  {{ bh.block_head(loop.index | pad(2), b.heading, b.eyebrow or "", b.chips or []) }}
+  <div class="blk__body">
+    {% if b.paragraphs and b.paragraphs | length %}
+    <div class="prose blk__prose">{% for p in b.paragraphs %}<p>{{ p }}</p>{% endfor %}</div>
+    {% endif %}
+    {% for l in (b.lists or []) %}{{ il.item_list(l) }}{% endfor %}
+    {% if b.table %}
+    <table class="t blk__table">
+      <thead><tr>{% for h in b.table.head %}<th scope="col">{{ h }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for row in b.table.rows %}<tr>{% for c in row %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    </table>
+    {% endif %}
+    {% if b.tiers and b.tiers | length %}{{ tr.tiers(b.tiers) }}{% endif %}
+    {% if b.questions %}{{ ql.question_list(b.questions, teacher=teacher) }}{% endif %}
+    {% if b.writingLines %}
+      {% if teacher %}<p class="blk__note">Writing space · {{ b.writingLines }} lines</p>
+      {% else %}{{ ui.answer_lines(b.writingLines) }}{% endif %}
+    {% endif %}
+    {% if teacher %}{% for n in (b.teacher or []) %}{{ tp.teacher_panel("For the teacher", n) }}{% endfor %}{% endif %}
+  </div>
+</section>
+{% endfor %}
+
+<div class="closing">
+  {# Both copies: besides its warmth, the line uses the display italic, which
+     Chromium must have loaded for the footer tagline to print at all. #}
+  {{ ui.encourage(brand) }}
+  {% call ui.colophon() %}{{ tenant.name }} · {{ data.course }} · {{ copyLabel }}{% endcall %}
+</div>
+{% endblock %}

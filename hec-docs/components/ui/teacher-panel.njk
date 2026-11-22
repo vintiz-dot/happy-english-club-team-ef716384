@@ -1,0 +1,19 @@
+{# teacher-panel: a tinted "For the teacher" panel (answer keys, scripts,
+   notes, rubric rows). In a script (a title naming one, or every line written
+   "Speaker: text") the speaker is set in a narrow column; elsewhere a line
+   prints as written, so "Note: …" or "Oo: hobby" stay plain. #}
+{% macro teacher_panel(label, note) %}
+{% set SPEAKER = r/^([A-Z][A-Za-z .'-]{0,22}): (.+)$/ %}
+{% set ALL_SPEECH = r/^[A-Z][A-Za-z .'-]{0,22}: [^\n]+(\n[A-Z][A-Za-z .'-]{0,22}: [^\n]+)+$/ %}
+{% set isScript = ("script" in (note.title | lower)) or ALL_SPEECH.test(note.lines | join("\n")) %}
+<aside class="tpanel{% if isScript %} tpanel--script{% endif %}">
+  <div class="tpanel__head"><span class="tpanel__label">{{ label }}</span><span class="tpanel__title">{{ note.title }}</span></div>
+  <ul class="tpanel__lines">
+    {% for line in note.lines %}
+    {% set m = line.match(SPEAKER) if isScript else null %}
+    {% if m %}<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">{{ m[1] }}:</span><span class="tpanel__said">{{ m[2] }}</span></li>
+    {% else %}<li class="tpanel__line">{{ line }}</li>{% endif %}
+    {% endfor %}
+  </ul>
+</aside>
+{% endmacro %}

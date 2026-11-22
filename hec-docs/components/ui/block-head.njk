@@ -1,0 +1,12 @@
+{# block-head: the head of a numbered content block: a gold figure, an
+   eyebrow, the heading and small-caps chips (timings, groupings). #}
+{% macro block_head(n, heading, eyebrow="", chips=[]) %}
+<div class="bhead">
+  <div class="bhead__n">{{ n }}</div>
+  <div class="bhead__main">
+    {% if eyebrow %}<div class="eyebrow bhead__eyebrow">{{ eyebrow }}</div>{% endif %}
+    <h2 class="bhead__title">{{ heading }}</h2>
+  </div>
+  {% if chips | length %}<ul class="bhead__chips">{% for c in chips %}<li class="bhead__chip">{{ c }}</li>{% endfor %}</ul>{% endif %}
+</div>
+{% endmacro %}

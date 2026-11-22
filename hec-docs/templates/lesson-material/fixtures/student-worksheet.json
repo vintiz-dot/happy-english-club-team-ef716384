@@ -1,0 +1,73 @@
+{
+  "$comment": "Made-up Oxford Discover-style unit worksheet as a student copy. Items written by the school for the fixture; no book text.",
+  "generatedAt": "2026-11-22T10:00:00+07:00",
+  "data": {
+    "variant": "student",
+    "kind": "worksheet",
+    "title": "Why do we need energy?",
+    "course": "Oxford Discover 3 · Unit 12",
+    "subtitle": "Vocabulary and grammar practice",
+    "className": "Discover 3B",
+    "bigQuestion": "Why do we need energy?",
+    "nameLine": true,
+    "blocks": [
+      {
+        "eyebrow": "Vocabulary",
+        "heading": "Match and complete",
+        "chips": ["Pairs"],
+        "paragraphs": [
+          "Use a word from the box to finish each sentence. Each word is used once."
+        ],
+        "lists": [
+          { "style": "frames", "items": ["solar panel", "battery", "wind turbine", "fuel", "electricity"] }
+        ],
+        "questions": {
+          "space": "line",
+          "items": [
+            { "q": "A ______ turns sunlight into power for a house." },
+            { "q": "My torch stopped working because the ______ was flat." },
+            { "q": "Cars burn ______ to make them move." },
+            { "q": "On the hill there is a tall ______ that spins in the wind." },
+            { "q": "We use ______ to light our classroom." }
+          ]
+        }
+      },
+      {
+        "eyebrow": "Grammar",
+        "heading": "If it rains, we will…",
+        "chips": ["Individual"],
+        "questions": {
+          "title": "Choose the best ending",
+          "instructions": "Tick one box for each sentence.",
+          "space": "line",
+          "items": [
+            { "q": "If we turn off the lights,", "options": ["we will save energy.", "we saved energy.", "we save energy yesterday."] },
+            { "q": "If the wind is strong tomorrow,", "options": ["the turbine turned fast.", "the turbine will turn fast.", "the turbine turning fast."] },
+            { "q": "If you leave the charger on,", "options": ["it will waste electricity.", "it wasted electricity.", "it is wasting yesterday."] }
+          ]
+        }
+      },
+      {
+        "eyebrow": "Think and write",
+        "heading": "Energy at home",
+        "chips": ["Individual"],
+        "tiers": [
+          { "level": "Support", "task": "Write three sentences about how your family uses energy.", "frames": ["We use energy to…", "In the morning, we…"] },
+          { "level": "Core", "task": "Write a paragraph with three ways to save energy at home and why each one helps." },
+          { "level": "Stretch", "task": "Compare two kinds of energy. Which is better for your city, and why?", "frames": ["On the other hand,…"] }
+        ],
+        "writingLines": 8
+      },
+      {
+        "eyebrow": "Draw and label",
+        "heading": "My energy plan",
+        "questions": {
+          "space": "box",
+          "items": [
+            { "q": "Draw your home and label two places where you could save energy." }
+          ]
+        }
+      }
+    ]
+  }
+}

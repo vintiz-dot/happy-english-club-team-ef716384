@@ -1,0 +1,372 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Lesson Material</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/block-head.css">
+<link rel="stylesheet" href="/components/css/bullets.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/copy-mark.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/name-line.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/phrases.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/pull-quote.css">
+<link rel="stylesheet" href="/components/css/question-list.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/teacher-panel.css">
+<link rel="stylesheet" href="/components/css/tiers.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<link rel="stylesheet" href="/components/css/title-block.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "Term 1 check: Listening and Speaking · Teacher copy";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--lesson-material variant--teacher">
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+    <div class="copy-mark copy-mark--solid">Teacher copy</div>
+
+    <div class="hdr__title">Assessment</div>
+  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+<section class="tblock" aria-label="Term 1 check: Listening and Speaking">
+<p class="tblock__course">HEC IELTS Speaking &amp; Listening · Year 1 · Term 1</p>  <h1 class="doc-title tblock__title">Term 1 check: Listening and Speaking</h1>
+<p class="tblock__details">Lesson 12 · 60 minutes <span class="ornament" aria-hidden="true">·</span> Sun Class <span class="ornament" aria-hidden="true">·</span> Marked out of 30</p></section>
+
+
+
+<div class="lead-pair">
+  <section class="aims" aria-label="Objectives">
+    <div class="eyebrow">Objectives</div>
+    <ul class="bullets">
+<li class="bullets__item">Listening: follow a conversation and a short talk, and note exact details.</li><li class="bullets__item">Speaking: answer Part 1 questions with reasons and talk for one minute on a cue card.</li></ul>
+
+  </section>
+</div>
+
+<section class="blk" aria-label="Booking a museum workshop">
+  <div class="bhead">
+  <div class="bhead__n">01</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Listening · Part 1</div>    <h2 class="bhead__title">Booking a museum workshop</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">6 marks</li><li class="bhead__chip">Heard twice</li></ul></div>
+
+  <div class="blk__body">
+
+<section class="qset">
+<p class="qset__title">Questions 1–6</p><p class="qset__instr">Complete the booking form. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.</p>  <ol class="qlist qlist--line">
+    <li class="q">
+      <span class="q__n">1</span>
+      <div class="q__body">
+        <p class="q__text">Workshop name: Making ______</p>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">paper lanterns</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">2</span>
+      <div class="q__body">
+        <p class="q__text">Day: ______</p>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">Saturday</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">3</span>
+      <div class="q__body">
+        <p class="q__text">Start time: ______</p>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">2.15 / quarter past two</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">4</span>
+      <div class="q__body">
+        <p class="q__text">Number of children: ______</p>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">3</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">5</span>
+      <div class="q__body">
+        <p class="q__text">Parent&#39;s surname: ______</p>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">Lam (L-A-M)</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">6</span>
+      <div class="q__body">
+        <p class="q__text">Total price: ______ VND</p>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">360,000</span></p>      </div>
+    </li>
+  </ol>
+</section>
+<aside class="tpanel tpanel--script">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Script</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Assistant:</span><span class="tpanel__said">City Museum bookings, good afternoon.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Parent:</span><span class="tpanel__said">Hello, I&#39;d like to book the workshop where children make paper lanterns.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Assistant:</span><span class="tpanel__said">Of course. We run it on Saturdays and Sundays, but Sunday is full this month.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Parent:</span><span class="tpanel__said">Saturday is fine. What time does it start?</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Assistant:</span><span class="tpanel__said">Quarter past two, and it finishes at four.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Parent:</span><span class="tpanel__said">There will be three children. The surname is Lam, L-A-M.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Assistant:</span><span class="tpanel__said">That&#39;s a hundred and twenty thousand each, so three hundred and sixty thousand in total.</span></li>
+  </ul>
+</aside>
+<aside class="tpanel">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Marking</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line">One mark each. Accept 2:15 and 14:15. Spelling must be correct for question 5.</li>  </ul>
+</aside>
+  </div>
+</section>
+<section class="blk" aria-label="A talk about the new library">
+  <div class="bhead">
+  <div class="bhead__n">02</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Listening · Part 2</div>    <h2 class="bhead__title">A talk about the new library</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">4 marks</li><li class="bhead__chip">Heard twice</li></ul></div>
+
+  <div class="blk__body">
+
+<section class="qset">
+<p class="qset__title">Questions 7–10</p><p class="qset__instr">Tick the correct answer.</p>  <ol class="qlist qlist--none" start="7">
+    <li class="q">
+      <span class="q__n">7</span>
+      <div class="q__body">
+        <p class="q__text">The library will open</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>in January</span></li><li class="q__opt is-key"><span class="q__box" aria-hidden="true"></span><span>in March</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>in June</span></li>        </ul>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">in March</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">8</span>
+      <div class="q__body">
+        <p class="q__text">Children under ten must</p>
+        <ul class="q__opts">
+<li class="q__opt is-key"><span class="q__box" aria-hidden="true"></span><span>come with an adult</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>bring a library card</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>book a room</span></li>        </ul>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">come with an adult</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">9</span>
+      <div class="q__body">
+        <p class="q__text">The quiet room is on the</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>ground floor</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>first floor</span></li><li class="q__opt is-key"><span class="q__box" aria-hidden="true"></span><span>top floor</span></li>        </ul>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">top floor</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">10</span>
+      <div class="q__body">
+        <p class="q__text">Each visitor can borrow up to</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>four books</span></li><li class="q__opt is-key"><span class="q__box" aria-hidden="true"></span><span>six books</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>eight books</span></li>        </ul>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">six books</span></p>      </div>
+    </li>
+  </ol>
+</section>
+<aside class="tpanel tpanel--script">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Script</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Speaker:</span><span class="tpanel__said">Good evening. Our new library was meant to open in January, but the builders needed more time, so the doors will open in March.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Speaker:</span><span class="tpanel__said">Anyone may visit, though children under ten need to come with an adult. You don&#39;t need a card to read here, only to borrow.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Speaker:</span><span class="tpanel__said">The ground floor is for families. If you want to study, the quiet room is right at the top, with a view of the river.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Speaker:</span><span class="tpanel__said">You can take home six books at a time, for three weeks.</span></li>
+  </ul>
+</aside>
+  </div>
+</section>
+<section class="blk" aria-label="Interview: home and free time">
+  <div class="bhead">
+  <div class="bhead__n">03</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Speaking · Part 1</div>    <h2 class="bhead__title">Interview: home and free time</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">8 marks</li><li class="bhead__chip">4 min</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>The examiner asks four questions. Answer each with a reason and a detail.</p></div>
+
+<section class="qset">
+  <ol class="qlist qlist--none">
+    <li class="q">
+      <span class="q__n">1</span>
+      <div class="q__body">
+        <p class="q__text">Can you tell me about the place where you live?</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">2</span>
+      <div class="q__body">
+        <p class="q__text">What do you usually do after school?</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">3</span>
+      <div class="q__body">
+        <p class="q__text">Is there a hobby you would like to start? Why?</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">4</span>
+      <div class="q__body">
+        <p class="q__text">Do you prefer spending free time alone or with friends?</p>
+      </div>
+    </li>
+  </ol>
+</section>
+<aside class="tpanel">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Marking (2 marks per answer)</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line">2 · A direct answer, a reason and a detail; easy to follow.</li><li class="tpanel__line">1 · An answer and a reason, or needs one prompt.</li><li class="tpanel__line">0 · One word, or does not answer the question.</li><li class="tpanel__line">Record the score; do not tell the student a band.</li>  </ul>
+</aside>
+  </div>
+</section>
+<section class="blk page-break" aria-label="Cue card: a person who helped you">
+  <div class="bhead">
+  <div class="bhead__n">04</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Speaking · Part 2</div>    <h2 class="bhead__title">Cue card: a person who helped you</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">12 marks</li><li class="bhead__chip">1 min prep · 1 min talk</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>You have one minute to make notes, then talk for one minute.</p></div>
+<div class="ilist ilist--bullets">
+<p class="ilist__title">Describe a person who helped you learn something. You should say:</p>  <ul class="bullets">
+<li class="bullets__item">who the person is</li><li class="bullets__item">what they helped you learn</li><li class="bullets__item">how they helped you</li><li class="bullets__item">and explain why you remember it.</li></ul>
+
+</div>
+<p class="blk__note">Writing space · 5 lines</p>
+<aside class="tpanel">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Marking (12 marks)</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line">Content (4) · covers all four points with details.</li><li class="tpanel__line">Organisation (3) · a clear start, middle and end.</li><li class="tpanel__line">Language (3) · past tenses mostly correct; some linking words.</li><li class="tpanel__line">Fluency (2) · keeps going for the full minute.</li>  </ul>
+</aside>
+  </div>
+</section>
+
+<div class="closing">
+  
+  <p class="encourage">Mistakes are how good English is made.</p>
+
+<div class="colophon">Happy English Club · HEC IELTS Speaking &amp; Listening · Year 1 · Term 1 · Teacher copy</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,450 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Lesson Material</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/block-head.css">
+<link rel="stylesheet" href="/components/css/bullets.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/copy-mark.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/name-line.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/phrases.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/pull-quote.css">
+<link rel="stylesheet" href="/components/css/question-list.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/teacher-panel.css">
+<link rel="stylesheet" href="/components/css/tiers.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<link rel="stylesheet" href="/components/css/title-block.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "Getting to know you; how IELTS works · Teacher copy";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--lesson-material variant--teacher">
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+    <div class="copy-mark copy-mark--solid">Teacher copy</div>
+
+    <div class="hdr__title">Lesson plan</div>
+  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+<section class="tblock" aria-label="Getting to know you; how IELTS works">
+<p class="tblock__course">HEC IELTS Speaking &amp; Listening · Year 1 · Term 1</p>  <h1 class="doc-title tblock__title">Getting to know you; how IELTS works</h1>
+<p class="tblock__details">Lesson 1 · 120 minutes <span class="ornament" aria-hidden="true">·</span> Sun Class</p></section>
+
+
+
+<div class="split lead-pair">
+<div class="pquote">
+  <div class="eyebrow">Big Question</div>
+  <blockquote class="pquote__text">What makes a good first conversation with someone new?</blockquote>
+</div>
+  <section class="aims" aria-label="Objectives">
+    <div class="eyebrow">Objectives</div>
+    <ul class="bullets">
+<li class="bullets__item">Introduce yourself and others with three linked details, not single words.</li><li class="bullets__item">Know the shape of the IELTS Speaking and Listening papers and what examiners listen for.</li><li class="bullets__item">Hear and mark word stress on two- and three-syllable words.</li><li class="bullets__item">Answer Part 1 questions with a reason or an example, and score a partner fairly.</li></ul>
+
+  </section>
+</div>
+
+<section class="blk" aria-label="Find someone who…">
+  <div class="bhead">
+  <div class="bhead__n">01</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Warm-up</div>    <h2 class="bhead__title">Find someone who…</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">10 min</li><li class="bhead__chip">Whole class</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>Students stand and mingle. Each has a card of eight prompts and must find a different classmate for each one, then ask one follow-up question before writing a name.</p></div>
+<div class="ilist ilist--steps">
+<p class="ilist__title">How it runs</p>  <ol class="steps">
+<li class="steps__item"><span class="steps__n">1.</span><span>Model one exchange with a confident student, including the follow-up question.</span></li><li class="steps__item"><span class="steps__n">2.</span><span>Give four minutes of mingling; play quiet music and stop it at the end.</span></li><li class="steps__item"><span class="steps__n">3.</span><span>Students sit with the classmate they found most surprising and report one fact each.</span></li>  </ol>
+</div>
+<div class="ilist ilist--frames">
+<p class="ilist__title">Follow-up questions to model</p>  <ul class="phrases">
+<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>Oh really? How did you get into that?<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>What do you enjoy most about it?<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>How long have you been doing it?<span class="phrase__q" aria-hidden="true">”</span></li></ul>
+
+</div>
+<aside class="tpanel">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Watch for</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line">Single-word answers (&quot;Yes.&quot; &quot;Football.&quot;). Prompt with &quot;Tell me more&quot; rather than correcting.</li><li class="tpanel__line">Students who stay with a friend: give them a card with one prompt that only a new partner can answer.</li>  </ul>
+</aside>
+  </div>
+</section>
+<section class="blk" aria-label="Talking about yourself in three steps">
+  <div class="bhead">
+  <div class="bhead__n">02</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Language</div>    <h2 class="bhead__title">Talking about yourself in three steps</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">15 min</li><li class="bhead__chip">Pairs</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>A strong Part 1 answer has three moves: a direct answer, a reason, and a detail or example. Build the pattern on the board, then let pairs practise with the prompts below.</p></div>
+    <table class="t blk__table">
+      <thead><tr><th scope="col">Move</th><th scope="col">Useful language</th><th scope="col">Example</th></tr></thead>
+      <tbody><tr><td>Answer</td><td>Yes, I do / Not really / Mostly…</td><td>Yes, I really enjoy it.</td></tr><tr><td>Reason</td><td>mainly because… / the thing is…</td><td>mainly because it helps me relax after school.</td></tr><tr><td>Detail</td><td>for example… / last weekend I…</td><td>Last Sunday I played for two hours with my cousins.</td></tr></tbody>
+    </table>
+<div class="tiers tiers--3">
+  <div class="tier tier--support">
+    <div class="tier__head"><span class="tier__stars">★</span> <span class="tier__level">Support</span></div>
+    <p class="tier__task">Answer three questions with an answer and a reason, using the frames.</p>
+<ul class="phrases phrases--stacked">
+<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>Yes, I do, mainly because…<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>Not really. The thing is…<span class="phrase__q" aria-hidden="true">”</span></li></ul>
+  </div>
+  <div class="tier tier--core">
+    <div class="tier__head"><span class="tier__stars">★★</span> <span class="tier__level">Core</span></div>
+    <p class="tier__task">Answer four questions with all three moves. Your partner ticks each move they hear.</p>
+  </div>
+  <div class="tier tier--stretch">
+    <div class="tier__head"><span class="tier__stars">★★★</span> <span class="tier__level">Stretch</span></div>
+    <p class="tier__task">Answer, then add a contrast: what was different when you were younger?</p>
+<ul class="phrases phrases--stacked">
+<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>When I was younger, I used to…, but now…<span class="phrase__q" aria-hidden="true">”</span></li></ul>
+  </div>
+</div>
+  </div>
+</section>
+<section class="blk" aria-label="Word stress: where the beat falls">
+  <div class="bhead">
+  <div class="bhead__n">03</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Pronunciation</div>    <h2 class="bhead__title">Word stress: where the beat falls</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">10 min</li><li class="bhead__chip">Whole class</li></ul></div>
+
+  <div class="blk__body">
+<div class="ilist ilist--steps">
+  <ol class="steps">
+<li class="steps__item"><span class="steps__n">1.</span><span>Clap the beat of three names in the room; the loud clap is the stressed syllable.</span></li><li class="steps__item"><span class="steps__n">2.</span><span>Students sort the words into four stress patterns (Oo, oO, Ooo, oOo): hobby, describe, family, important, weekend, holiday, relax, computer.</span></li><li class="steps__item"><span class="steps__n">3.</span><span>Pairs say the words in a sentence of their own; the partner taps the stress.</span></li>  </ol>
+</div>
+<aside class="tpanel">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Answer key</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line">Oo: hobby, weekend (accept oO for weekend: both are heard).</li><li class="tpanel__line">oO: describe, relax.</li><li class="tpanel__line">Ooo: family, holiday.</li><li class="tpanel__line">oOo: important, computer.</li>  </ul>
+</aside>
+  </div>
+</section>
+<section class="blk" aria-label="Interview practice with peer scoring">
+  <div class="bhead">
+  <div class="bhead__n">04</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">IELTS Speaking · Part 1</div>    <h2 class="bhead__title">Interview practice with peer scoring</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">20 min</li><li class="bhead__chip">Pairs</li><li class="bhead__chip">Peer scoring</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>One student is the examiner and reads four questions; the other answers. After four minutes they swap. The examiner scores with the checklist and gives one specific piece of praise and one target.</p></div>
+<div class="ilist ilist--checks">
+<p class="ilist__title">Examiner&#39;s checklist</p>  <ul class="check">
+<li class="check__item"><span class="check__box" aria-hidden="true"></span>Answered the question that was asked</li><li class="check__item"><span class="check__box" aria-hidden="true"></span>Gave a reason with every answer</li><li class="check__item"><span class="check__box" aria-hidden="true"></span>Added a detail or example at least twice</li><li class="check__item"><span class="check__box" aria-hidden="true"></span>Spoke for about 15 to 20 seconds each time</li></ul>
+
+</div>
+<div class="tiers tiers--3">
+  <div class="tier tier--support">
+    <div class="tier__head"><span class="tier__stars">★</span> <span class="tier__level">Support</span></div>
+    <p class="tier__task">Use the question card with picture prompts; answer with two moves.</p>
+  </div>
+  <div class="tier tier--core">
+    <div class="tier__head"><span class="tier__stars">★★</span> <span class="tier__level">Core</span></div>
+    <p class="tier__task">Answer the four topic questions with three moves, without notes.</p>
+  </div>
+  <div class="tier tier--stretch">
+    <div class="tier__head"><span class="tier__stars">★★★</span> <span class="tier__level">Stretch</span></div>
+    <p class="tier__task">Ask your partner one follow-up question of your own after each answer.</p>
+  </div>
+</div>
+<aside class="tpanel">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Scoring rubric (our paraphrase)</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line">3 · Answers flow: reason and example every time, few pauses.</li><li class="tpanel__line">2 · Mostly extended; one or two short answers.</li><li class="tpanel__line">1 · Short answers; needs prompting to add reasons.</li><li class="tpanel__line">Targets are targets: never tell a student what band they are.</li>  </ul>
+</aside>
+  </div>
+</section>
+<section class="blk" aria-label="Joining a weekend club">
+  <div class="bhead">
+  <div class="bhead__n">05</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Listening · Part 1</div>    <h2 class="bhead__title">Joining a weekend club</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">20 min</li><li class="bhead__chip">Individual</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>Students hear a short conversation at a sports centre twice. First listening: answer the questions. Second listening: check, then compare with a partner.</p></div>
+
+<section class="qset">
+<p class="qset__title">Questions 1–5</p><p class="qset__instr">Write NO MORE THAN TWO WORDS AND/OR A NUMBER, or tick the right box.</p>  <ol class="qlist qlist--line">
+    <li class="q">
+      <span class="q__n">1</span>
+      <div class="q__body">
+        <p class="q__text">The caller&#39;s first name is</p>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">Minh</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">2</span>
+      <div class="q__body">
+        <p class="q__text">Which activity does she want to join?</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>Swimming</span></li><li class="q__opt is-key"><span class="q__box" aria-hidden="true"></span><span>Badminton</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>Climbing</span></li>        </ul>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">Badminton</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">3</span>
+      <div class="q__body">
+        <p class="q__text">Sessions start at</p>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">8.30 / half past eight</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">4</span>
+      <div class="q__body">
+        <p class="q__text">What should she bring to the first session?</p>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">a water bottle</span></p>      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">5</span>
+      <div class="q__body">
+        <p class="q__text">The monthly fee is</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>150,000 VND</span></li><li class="q__opt is-key"><span class="q__box" aria-hidden="true"></span><span>200,000 VND</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>250,000 VND</span></li>        </ul>
+<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">200,000 VND</span></p>      </div>
+    </li>
+  </ol>
+</section>
+<aside class="tpanel tpanel--script">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Listening script (read aloud or play by browser speech)</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Receptionist:</span><span class="tpanel__said">Good morning, Riverside Sports Centre. How can I help?</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Caller:</span><span class="tpanel__said">Hi, I&#39;d like to join one of your weekend clubs. My name&#39;s Minh, M-I-N-H.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Receptionist:</span><span class="tpanel__said">Lovely. We have swimming, badminton and climbing. Which one interests you?</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Caller:</span><span class="tpanel__said">I thought about climbing, but I think badminton suits me better.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Receptionist:</span><span class="tpanel__said">Good choice. Sessions are on Saturdays and start at half past eight.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Caller:</span><span class="tpanel__said">Do I need my own racket?</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Receptionist:</span><span class="tpanel__said">No, we lend those. Just bring a water bottle; the hall gets warm.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Caller:</span><span class="tpanel__said">And how much is it?</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Receptionist:</span><span class="tpanel__said">It&#39;s two hundred thousand a month, or one fifty for students under twelve.</span></li>
+<li class="tpanel__line tpanel__line--speech"><span class="tpanel__who">Note:</span><span class="tpanel__said">question 5 is a distractor trap; the caller is fourteen.</span></li>
+  </ul>
+</aside>
+  </div>
+</section>
+<section class="blk" aria-label="This house believes first impressions are usually right">
+  <div class="bhead">
+  <div class="bhead__n">06</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Debate</div>    <h2 class="bhead__title">This house believes first impressions are usually right</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">25 min</li><li class="bhead__chip">Teams</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>Two teams of four. Each speaker has one minute. Proposition opens, opposition replies, then two minutes of open floor and a one-minute summary from each side.</p></div>
+<div class="ilist ilist--steps">
+<p class="ilist__title">Running order</p>  <ol class="steps">
+<li class="steps__item"><span class="steps__n">1.</span><span>Five minutes of preparation: each team lists three arguments and one example for each.</span></li><li class="steps__item"><span class="steps__n">2.</span><span>Speeches alternate: proposition 1, opposition 1, proposition 2, opposition 2.</span></li><li class="steps__item"><span class="steps__n">3.</span><span>Open floor: any speaker may stand to challenge a point.</span></li><li class="steps__item"><span class="steps__n">4.</span><span>Summaries, then the class votes by moving to one side of the room.</span></li>  </ol>
+</div>
+<div class="ilist ilist--frames">
+<p class="ilist__title">Language for debating</p>  <ul class="phrases">
+<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>I&#39;d like to challenge that point.<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>That may be true, but…<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>Let me give you an example.<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>To sum up our case…<span class="phrase__q" aria-hidden="true">”</span></li></ul>
+
+</div>
+<div class="tiers tiers--3">
+  <div class="tier tier--support">
+    <div class="tier__head"><span class="tier__stars">★</span> <span class="tier__level">Support</span></div>
+    <p class="tier__task">Give one argument with one example, reading from your notes.</p>
+  </div>
+  <div class="tier tier--core">
+    <div class="tier__head"><span class="tier__stars">★★</span> <span class="tier__level">Core</span></div>
+    <p class="tier__task">Give two arguments and answer one challenge from the other team.</p>
+  </div>
+  <div class="tier tier--stretch">
+    <div class="tier__head"><span class="tier__stars">★★★</span> <span class="tier__level">Stretch</span></div>
+    <p class="tier__task">Summarise both sides fairly before explaining why yours is stronger.</p>
+  </div>
+</div>
+<aside class="tpanel">
+  <div class="tpanel__head"><span class="tpanel__label">For the teacher</span><span class="tpanel__title">Managing the room</span></div>
+  <ul class="tpanel__lines">
+<li class="tpanel__line">Keep a visible timer; stop speakers kindly at one minute.</li><li class="tpanel__line">Praise good listening: a challenge that quotes the other team earns a point.</li>  </ul>
+</aside>
+  </div>
+</section>
+<section class="blk" aria-label="What I can do now">
+  <div class="bhead">
+  <div class="bhead__n">07</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Reflection</div>    <h2 class="bhead__title">What I can do now</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">5 min</li><li class="bhead__chip">Individual</li></ul></div>
+
+  <div class="blk__body">
+<div class="ilist ilist--checks">
+  <ul class="check">
+<li class="check__item"><span class="check__box" aria-hidden="true"></span>I can introduce myself with three linked details.</li><li class="check__item"><span class="check__box" aria-hidden="true"></span>I know the four parts of the IELTS Listening test.</li><li class="check__item"><span class="check__box" aria-hidden="true"></span>I can hear the stressed syllable in a new word.</li></ul>
+
+</div>
+<p class="blk__note">Writing space · 3 lines</p>
+  </div>
+</section>
+<section class="blk" aria-label="This week at home">
+  <div class="bhead">
+  <div class="bhead__n">08</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Homework</div>    <h2 class="bhead__title">This week at home</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">Core · about 2.5 h</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>Short and often is better than long and rare. Each day has one task; tick the box when it is done and bring the sheet next lesson.</p></div>
+    <table class="t blk__table">
+      <thead><tr><th scope="col">Day</th><th scope="col">Task</th><th scope="col">Minutes</th></tr></thead>
+      <tbody><tr><td>Monday</td><td>Record a one-minute self-introduction using the three moves.</td><td>20</td></tr><tr><td>Tuesday</td><td>Listen to the club script again; shadow the caller&#39;s lines.</td><td>20</td></tr><tr><td>Wednesday</td><td>Learn ten words from the topic list; mark the stress.</td><td>25</td></tr><tr><td>Thursday</td><td>Write five Part 1 answers (answer, reason, detail).</td><td>30</td></tr><tr><td>Friday</td><td>Prepare one argument for and one against next week&#39;s motion.</td><td>25</td></tr><tr><td>Weekend</td><td>Talk with a family member for ten minutes in English; note two new words.</td><td>30</td></tr></tbody>
+    </table>
+<div class="tiers tiers--3">
+  <div class="tier tier--support">
+    <div class="tier__head"><span class="tier__stars">★</span> <span class="tier__level">Support</span></div>
+    <p class="tier__task">Do Monday, Wednesday and Thursday; use the frames sheet.</p>
+  </div>
+  <div class="tier tier--core">
+    <div class="tier__head"><span class="tier__stars">★★</span> <span class="tier__level">Core</span></div>
+    <p class="tier__task">Do every day&#39;s task.</p>
+  </div>
+  <div class="tier tier--stretch">
+    <div class="tier__head"><span class="tier__stars">★★★</span> <span class="tier__level">Stretch</span></div>
+    <p class="tier__task">Also record your Thursday answers and listen for word stress.</p>
+  </div>
+</div>
+  </div>
+</section>
+
+<div class="closing">
+  
+  <p class="encourage">Proud of the effort you bring to every class.</p>
+
+<div class="colophon">Happy English Club · HEC IELTS Speaking &amp; Listening · Year 1 · Term 1 · Teacher copy</div>
+</div>
+</body>
+</html>

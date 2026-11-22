@@ -1,0 +1,44 @@
+/* question-list (ui/question-list.njk): numbered questions, tick-box options,
+   and either the answer (teacher copy) or space to write it. */
+.qset__title { margin: 0 0 2pt; font-size: var(--size-sm); font-weight: var(--font-weight-semibold); letter-spacing: 0.02em; color: var(--color-ink); break-after: avoid; }
+.qset__instr { margin: 0 0 var(--space-1); font-size: var(--size-sm); font-style: italic; color: var(--color-ink-soft); break-after: avoid; }
+.qlist { list-style: none; margin: 0; padding: 0; }
+.q { display: flex; gap: var(--space-1); padding: 5pt 0; break-inside: avoid; }
+.q + .q { border-top: var(--border-hairline) dotted var(--color-rule); }
+.q__n {
+  flex: none;
+  min-width: 1.6em;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gold-ink);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.q__body { flex: 1 1 auto; min-width: 0; }
+.q__text { margin: 0; line-height: var(--leading-body); }
+.q__opts { display: flex; flex-wrap: wrap; gap: 3pt var(--space-3); margin: 4pt 0 0; padding: 0; list-style: none; }
+.q__opt { display: flex; align-items: baseline; gap: 5pt; font-size: var(--size-base); color: var(--color-ink-soft); }
+.q__box {
+  flex: none;
+  width: 3.2mm;
+  height: 3.2mm;
+  border: var(--border-rule) solid var(--color-ink-soft);
+  border-radius: 1pt;
+  transform: translateY(0.5mm);
+}
+.q__opt.is-key { color: var(--color-ink); font-weight: var(--font-weight-semibold); }
+.q__opt.is-key .q__box { background: var(--color-ink); border-color: var(--color-ink); box-shadow: inset 0 0 0 0.8pt var(--color-paper); }
+.q__line { height: 8.5mm; border-bottom: var(--border-hairline) solid var(--color-ink-soft); }
+.q__space { height: 26mm; margin-top: 4pt; border: var(--border-hairline) solid var(--color-rule); border-radius: var(--border-radius); }
+.qlist--box .q + .q { border-top: none; }
+.q__ans { display: flex; align-items: baseline; gap: 6pt; margin: 3pt 0 0; font-size: var(--size-base); }
+.q__ans-label {
+  flex: none;
+  padding: 0 5pt 0.5pt;
+  border-radius: 2pt;
+  background: var(--color-surface-strong);
+  font-size: var(--size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-gold-ink);
+}
+.q__ans-text { font-weight: var(--font-weight-semibold); color: var(--color-ink); }

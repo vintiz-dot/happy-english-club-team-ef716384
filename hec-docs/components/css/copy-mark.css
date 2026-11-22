@@ -1,0 +1,20 @@
+/* copy-mark (ui/copy-mark.njk): a small stamp naming the copy. Solid = ink
+   with a gold inset ring (teacher); outlined otherwise (student). */
+.copy-mark {
+  display: inline-block;
+  margin-bottom: var(--space-1);
+  padding: 2.5pt 9pt 2.5pt 10pt;
+  border: var(--border-rule) solid var(--color-ink);
+  border-radius: 99pt;
+  font-size: var(--size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  color: var(--color-ink);
+}
+.copy-mark--solid {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  box-shadow: inset 0 0 0 1.5pt var(--color-ink), inset 0 0 0 2pt var(--color-gold);
+}

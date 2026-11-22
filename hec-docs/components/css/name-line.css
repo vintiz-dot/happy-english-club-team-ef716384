@@ -1,0 +1,53 @@
+/* name-line (ui/name-line.njk): Name / Date write-in fields and a score box. */
+.nline {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  break-inside: avoid;
+}
+.nline__field { display: flex; align-items: flex-end; gap: var(--space-1); min-width: 0; }
+.nline__field .nline__label { padding-bottom: 2pt; }
+.nline__field--name { flex: 1 1 auto; }
+.nline__field--date { flex: 0 0 48mm; }
+.nline__label {
+  flex: none;
+  font-size: var(--size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.nline__value {
+  flex: 1 1 auto;
+  min-height: 7mm;
+  padding: 0 var(--space-0-5) 1pt;
+  border-bottom: var(--border-rule) solid var(--color-ink-soft);
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--size-lg);
+  line-height: 1.2;
+  color: var(--color-ink);
+  display: flex;
+  align-items: flex-end;
+}
+.nline__score {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-rule) solid var(--color-ink);
+  border-radius: var(--border-radius);
+  box-shadow: inset 0 0 0 2pt var(--color-paper), inset 0 0 0 2.5pt var(--color-gold);
+}
+.nline__blank { display: inline-block; width: 13mm; height: 6mm; border-bottom: var(--border-rule) solid var(--color-ink-soft); }
+.nline__of {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--size-xl);
+  line-height: 1;
+  color: var(--color-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}

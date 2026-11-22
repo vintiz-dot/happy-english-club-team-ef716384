@@ -1,0 +1,28 @@
+/* phrases (ui/item-list.njk): sentence starters set as quoted phrases.
+   Flowing pills by default; stacked inside narrow columns. */
+.phrases { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.phrase {
+  padding: 2pt 10pt 3pt;
+  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-rule);
+  border-radius: 99pt;
+  font-family: var(--font-family-display);
+  font-style: italic;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--size-md);
+  line-height: var(--leading-tight);
+  color: var(--color-ink);
+  break-inside: avoid;
+}
+.phrase__q { color: var(--color-gold-ink); font-weight: var(--font-weight-bold); }
+.phrases--stacked { display: block; }
+.phrases--stacked .phrase {
+  display: block;
+  padding: 2pt 0 2pt var(--space-1);
+  background: transparent;
+  border: none;
+  border-left: var(--border-rule) solid var(--color-gold);
+  border-radius: 0;
+  font-size: var(--size-base);
+}
+.phrases--stacked .phrase + .phrase { margin-top: 3pt; }

@@ -5,6 +5,16 @@ All notable changes to HEC Docs: the engine, and each template with its own semv
 - **Minor:** new variant or optional field.
 - **Patch:** visual change with the same data.
 
+## 2026-11-22: lesson-material 1.0.0 (new type)
+
+- **New document type `lesson-material`** for the app's Lesson Decks: lesson decks, worksheets, checks/tests and homework sheets, in two variants:
+  - `teacher` (default): a solid "Teacher copy" mark, objectives and the Big Question on page 1, each answer printed under its question (the matching option ticked), and scripts, answer keys, notes and rubric rows in tinted "For the teacher" panels.
+  - `student`: an outlined "Student copy" mark, Name / Date line (with the child's name for a sheet made for one child), a score box for tests, answer lines or boxes, tick-box options and ruled writing space. `answer` and `teacher` are never printed, even when the data carries them.
+- Data contract `https://hec-docs.invalid/schemas/lesson-material/1.0.0`: `kind`, `title`, `course`, optional `subtitle`, `className`, `bigQuestion`, `objectives`, `nameLine`, `studentName`, `scoreOutOf`, and `blocks[]` (heading, eyebrow, chips, paragraphs, lists of steps/bullets/frames/checks, questions, Support/Core/Stretch tiers, table, teacher notes, writingLines, breakBefore). Plain text only.
+- Filenames: `<title> - Teacher copy.pdf`, `<title> - Student copy.pdf`, or `<child> - <title> - Student copy.pdf`. Filename strategies now also receive the resolved variant (other strategies ignore it, so their names are unchanged).
+- New components, token-only: `copy-mark`, `title-block`, `name-line`, `pull-quote`, `block-head`, `item-list` (with `bullets.css`, `phrases.css`), `question-list`, `tiers`, `teacher-panel`. Every document now links these stylesheets, so every HTML snapshot gained the link tags; nothing else in the other documents changed.
+- Six fixtures: teacher/student lesson (a 120-minute Sun Class lesson), teacher/student test, a student worksheet and a student homework sheet.
+
 ## 2026-11-16: homework attachments
 
 - **A homework download now includes its attached PDFs.** The engine's `appendPdfs` adds them after the instructions, in upload order, for both the new and the fallback generator. A file that cannot be read (encrypted, damaged) is skipped with a warning; the instructions still download.

@@ -1,0 +1,12 @@
+/* title-block (ui/title-block.njk): course line, title, quiet details. */
+.tblock { margin: 0 0 var(--space-3); break-inside: avoid; break-after: avoid; }
+.tblock__course {
+  margin: 0 0 var(--space-0-5);
+  font-size: var(--size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.03em;
+  color: var(--color-gold-ink);
+}
+.tblock__title { margin-bottom: var(--space-1); max-width: 165mm; }
+.tblock__details { margin: 0; font-size: var(--size-base); color: var(--color-ink-soft); font-variant-numeric: tabular-nums lining-nums; }
+.tblock__details .ornament { padding: 0 2pt; }

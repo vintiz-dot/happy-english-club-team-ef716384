@@ -1,0 +1,15 @@
+{# tiers: one task at up to three levels, side by side in aligned columns,
+   each marked by stars and its level name (never by colour alone). #}
+{% import "ui/item-list.njk" as il %}
+{% macro tiers(list) %}
+{% set STARS = { "Support": "★", "Core": "★★", "Stretch": "★★★" } %}
+<div class="tiers tiers--{{ list | length }}">
+  {% for t in list %}
+  <div class="tier tier--{{ t.level | lower }}">
+    <div class="tier__head"><span class="tier__stars">{{ STARS[t.level] }}</span> <span class="tier__level">{{ t.level }}</span></div>
+    <p class="tier__task">{{ t.task }}</p>
+    {% if t.frames and t.frames | length %}{{ il.phrases(t.frames, stacked=true) }}{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endmacro %}

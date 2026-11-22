@@ -1,0 +1,326 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Lesson Material</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/block-head.css">
+<link rel="stylesheet" href="/components/css/bullets.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/copy-mark.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/name-line.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/phrases.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/pull-quote.css">
+<link rel="stylesheet" href="/components/css/question-list.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/teacher-panel.css">
+<link rel="stylesheet" href="/components/css/tiers.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<link rel="stylesheet" href="/components/css/title-block.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "Why do we need energy? · Student copy";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--lesson-material variant--student">
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+    <div class="copy-mark">Student copy</div>
+
+    <div class="hdr__title">Worksheet</div>
+  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+<section class="tblock" aria-label="Why do we need energy?">
+<p class="tblock__course">Oxford Discover 3 · Unit 12</p>  <h1 class="doc-title tblock__title">Why do we need energy?</h1>
+<p class="tblock__details">Vocabulary and grammar practice <span class="ornament" aria-hidden="true">·</span> Discover 3B</p></section>
+
+
+  <div class="nline">
+  <div class="nline__field nline__field--name"><span class="nline__label">Name</span><span class="nline__value"></span></div>
+  <div class="nline__field nline__field--date"><span class="nline__label">Date</span><span class="nline__value"></span></div>
+</div>
+
+
+<div class="lead-pair">
+<div class="pquote">
+  <div class="eyebrow">Big Question</div>
+  <blockquote class="pquote__text">Why do we need energy?</blockquote>
+</div>
+</div>
+
+<section class="blk" aria-label="Match and complete">
+  <div class="bhead">
+  <div class="bhead__n">01</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Vocabulary</div>    <h2 class="bhead__title">Match and complete</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">Pairs</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>Use a word from the box to finish each sentence. Each word is used once.</p></div>
+<div class="ilist ilist--frames">
+  <ul class="phrases">
+<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>solar panel<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>battery<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>wind turbine<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>fuel<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>electricity<span class="phrase__q" aria-hidden="true">”</span></li></ul>
+
+</div>
+
+<section class="qset">
+  <ol class="qlist qlist--line">
+    <li class="q">
+      <span class="q__n">1</span>
+      <div class="q__body">
+        <p class="q__text">A ______ turns sunlight into power for a house.</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">2</span>
+      <div class="q__body">
+        <p class="q__text">My torch stopped working because the ______ was flat.</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">3</span>
+      <div class="q__body">
+        <p class="q__text">Cars burn ______ to make them move.</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">4</span>
+      <div class="q__body">
+        <p class="q__text">On the hill there is a tall ______ that spins in the wind.</p>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">5</span>
+      <div class="q__body">
+        <p class="q__text">We use ______ to light our classroom.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+  </div>
+</section>
+<section class="blk" aria-label="If it rains, we will…">
+  <div class="bhead">
+  <div class="bhead__n">02</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Grammar</div>    <h2 class="bhead__title">If it rains, we will…</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">Individual</li></ul></div>
+
+  <div class="blk__body">
+
+<section class="qset">
+<p class="qset__title">Choose the best ending</p><p class="qset__instr">Tick one box for each sentence.</p>  <ol class="qlist qlist--line">
+    <li class="q">
+      <span class="q__n">1</span>
+      <div class="q__body">
+        <p class="q__text">If we turn off the lights,</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>we will save energy.</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>we saved energy.</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>we save energy yesterday.</span></li>        </ul>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">2</span>
+      <div class="q__body">
+        <p class="q__text">If the wind is strong tomorrow,</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>the turbine turned fast.</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>the turbine will turn fast.</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>the turbine turning fast.</span></li>        </ul>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">3</span>
+      <div class="q__body">
+        <p class="q__text">If you leave the charger on,</p>
+        <ul class="q__opts">
+<li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>it will waste electricity.</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>it wasted electricity.</span></li><li class="q__opt"><span class="q__box" aria-hidden="true"></span><span>it is wasting yesterday.</span></li>        </ul>
+      </div>
+    </li>
+  </ol>
+</section>
+  </div>
+</section>
+<section class="blk" aria-label="Energy at home">
+  <div class="bhead">
+  <div class="bhead__n">03</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Think and write</div>    <h2 class="bhead__title">Energy at home</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">Individual</li></ul></div>
+
+  <div class="blk__body">
+<div class="tiers tiers--3">
+  <div class="tier tier--support">
+    <div class="tier__head"><span class="tier__stars">★</span> <span class="tier__level">Support</span></div>
+    <p class="tier__task">Write three sentences about how your family uses energy.</p>
+<ul class="phrases phrases--stacked">
+<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>We use energy to…<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>In the morning, we…<span class="phrase__q" aria-hidden="true">”</span></li></ul>
+  </div>
+  <div class="tier tier--core">
+    <div class="tier__head"><span class="tier__stars">★★</span> <span class="tier__level">Core</span></div>
+    <p class="tier__task">Write a paragraph with three ways to save energy at home and why each one helps.</p>
+  </div>
+  <div class="tier tier--stretch">
+    <div class="tier__head"><span class="tier__stars">★★★</span> <span class="tier__level">Stretch</span></div>
+    <p class="tier__task">Compare two kinds of energy. Which is better for your city, and why?</p>
+<ul class="phrases phrases--stacked">
+<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>On the other hand,…<span class="phrase__q" aria-hidden="true">”</span></li></ul>
+  </div>
+</div>
+<div class="lines" role="presentation">
+<div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div></div>
+  </div>
+</section>
+<section class="blk" aria-label="My energy plan">
+  <div class="bhead">
+  <div class="bhead__n">04</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Draw and label</div>    <h2 class="bhead__title">My energy plan</h2>
+  </div>
+</div>
+
+  <div class="blk__body">
+
+<section class="qset">
+  <ol class="qlist qlist--box">
+    <li class="q">
+      <span class="q__n">1</span>
+      <div class="q__body">
+        <p class="q__text">Draw your home and label two places where you could save energy.</p>
+          <div class="q__space" role="presentation"></div>
+      </div>
+    </li>
+  </ol>
+</section>
+  </div>
+</section>
+
+<div class="closing">
+  
+  <p class="encourage">Curiosity is the best study habit.</p>
+
+<div class="colophon">Happy English Club · Oxford Discover 3 · Unit 12 · Student copy</div>
+</div>
+</body>
+</html>

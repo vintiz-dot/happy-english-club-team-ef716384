@@ -1,0 +1,34 @@
+{# item-list: a titled list in one of four styles.
+   steps   numbered instructions (steps.css)
+   bullets short points with a gold marker (bullets.css)
+   frames  sentence starters as quoted phrases (phrases.css)
+   checks  tick boxes (the shared checklist) #}
+{% import "ui.njk" as ui %}
+{% macro phrases(items, stacked=false) %}
+<ul class="phrases{% if stacked %} phrases--stacked{% endif %}">
+  {% for f in items %}<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>{{ f }}<span class="phrase__q" aria-hidden="true">”</span></li>{% endfor %}
+</ul>
+{% endmacro %}
+
+{% macro bullets(items) %}
+<ul class="bullets">
+  {% for it in items %}<li class="bullets__item">{{ it }}</li>{% endfor %}
+</ul>
+{% endmacro %}
+
+{% macro item_list(l) %}
+<div class="ilist ilist--{{ l.style }}">
+  {% if l.title %}<p class="ilist__title">{{ l.title }}</p>{% endif %}
+  {% if l.style == "steps" %}
+  <ol class="steps">
+    {% for it in l.items %}<li class="steps__item"><span class="steps__n">{{ loop.index }}.</span><span>{{ it }}</span></li>{% endfor %}
+  </ol>
+  {% elif l.style == "frames" %}
+  {{ phrases(l.items) }}
+  {% elif l.style == "checks" %}
+  {{ ui.checklist(l.items) }}
+  {% else %}
+  {{ bullets(l.items) }}
+  {% endif %}
+</div>
+{% endmacro %}

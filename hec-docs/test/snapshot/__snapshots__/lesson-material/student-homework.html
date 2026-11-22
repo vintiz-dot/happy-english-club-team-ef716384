@@ -1,0 +1,255 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Lesson Material</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/block-head.css">
+<link rel="stylesheet" href="/components/css/bullets.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/copy-mark.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/name-line.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/phrases.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/pull-quote.css">
+<link rel="stylesheet" href="/components/css/question-list.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/teacher-panel.css">
+<link rel="stylesheet" href="/components/css/tiers.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<link rel="stylesheet" href="/components/css/title-block.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "Week 1 homework: introductions · Student copy";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--lesson-material variant--student">
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+    <div class="copy-mark">Student copy</div>
+
+    <div class="hdr__title">Homework</div>
+  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+<section class="tblock" aria-label="Week 1 homework: introductions">
+<p class="tblock__course">HEC IELTS Speaking &amp; Listening · Year 1 · Term 1</p>  <h1 class="doc-title tblock__title">Week 1 homework: introductions</h1>
+<p class="tblock__details">After Lesson 1 · Core about 2.5 hours <span class="ornament" aria-hidden="true">·</span> Sun Class</p></section>
+
+
+  <div class="nline">
+  <div class="nline__field nline__field--name"><span class="nline__label">Name</span><span class="nline__value">Student A</span></div>
+  <div class="nline__field nline__field--date"><span class="nline__label">Date</span><span class="nline__value"></span></div>
+</div>
+
+
+
+<section class="blk" aria-label="One task a day">
+  <div class="bhead">
+  <div class="bhead__n">01</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">This week</div>    <h2 class="bhead__title">One task a day</h2>
+  </div>
+<ul class="bhead__chips"><li class="bhead__chip">Core · about 2.5 h</li></ul></div>
+
+  <div class="blk__body">
+    <div class="prose blk__prose"><p>Your interest this week is football, so two tasks use it. Tick each day when it is done.</p></div>
+    <table class="t blk__table">
+      <thead><tr><th scope="col">Day</th><th scope="col">Task</th><th scope="col">Minutes</th><th scope="col">Done</th></tr></thead>
+      <tbody><tr><td>Monday</td><td>Record a one-minute self-introduction using answer, reason, detail.</td><td>20</td><td></td></tr><tr><td>Tuesday</td><td>Shadow the club script: say the caller&#39;s lines with the recording.</td><td>20</td><td></td></tr><tr><td>Wednesday</td><td>Learn ten football words; mark the stressed syllable in each.</td><td>25</td><td></td></tr><tr><td>Thursday</td><td>Write five Part 1 answers about your free time.</td><td>30</td><td></td></tr><tr><td>Friday</td><td>Prepare one argument for and one against: &quot;Every child should play a team sport.&quot;</td><td>25</td><td></td></tr><tr><td>Weekend</td><td>Talk with your family in English for ten minutes about a match you watched.</td><td>30</td><td></td></tr></tbody>
+    </table>
+  </div>
+</section>
+<section class="blk" aria-label="Five Part 1 answers">
+  <div class="bhead">
+  <div class="bhead__n">02</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Thursday</div>    <h2 class="bhead__title">Five Part 1 answers</h2>
+  </div>
+</div>
+
+  <div class="blk__body">
+<div class="ilist ilist--steps">
+<p class="ilist__title">Questions</p>  <ol class="steps">
+<li class="steps__item"><span class="steps__n">1.</span><span>Do you like sport? Why?</span></li><li class="steps__item"><span class="steps__n">2.</span><span>Who do you usually play with?</span></li><li class="steps__item"><span class="steps__n">3.</span><span>What did you do last weekend?</span></li><li class="steps__item"><span class="steps__n">4.</span><span>Is there a sport you would like to try?</span></li><li class="steps__item"><span class="steps__n">5.</span><span>Do you prefer watching or playing?</span></li>  </ol>
+</div>
+<div class="tiers tiers--3">
+  <div class="tier tier--support">
+    <div class="tier__head"><span class="tier__stars">★</span> <span class="tier__level">Support</span></div>
+    <p class="tier__task">Answer three questions with an answer and a reason.</p>
+<ul class="phrases phrases--stacked">
+<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>Yes, I do, mainly because…<span class="phrase__q" aria-hidden="true">”</span></li><li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>Not really. The thing is…<span class="phrase__q" aria-hidden="true">”</span></li></ul>
+  </div>
+  <div class="tier tier--core">
+    <div class="tier__head"><span class="tier__stars">★★</span> <span class="tier__level">Core</span></div>
+    <p class="tier__task">Answer all five with answer, reason and detail.</p>
+  </div>
+  <div class="tier tier--stretch">
+    <div class="tier__head"><span class="tier__stars">★★★</span> <span class="tier__level">Stretch</span></div>
+    <p class="tier__task">Add a contrast to two answers: then and now.</p>
+<ul class="phrases phrases--stacked">
+<li class="phrase"><span class="phrase__q" aria-hidden="true">“</span>When I was younger, I used to…<span class="phrase__q" aria-hidden="true">”</span></li></ul>
+  </div>
+</div>
+<div class="lines" role="presentation">
+<div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div><div class="lines__line"></div></div>
+  </div>
+</section>
+<section class="blk" aria-label="For and against">
+  <div class="bhead">
+  <div class="bhead__n">03</div>
+  <div class="bhead__main">
+<div class="eyebrow bhead__eyebrow">Friday</div>    <h2 class="bhead__title">For and against</h2>
+  </div>
+</div>
+
+  <div class="blk__body">
+
+<section class="qset">
+<p class="qset__instr">Every child should play a team sport.</p>  <ol class="qlist qlist--box">
+    <li class="q">
+      <span class="q__n">1</span>
+      <div class="q__body">
+        <p class="q__text">One argument FOR, with an example.</p>
+          <div class="q__space" role="presentation"></div>
+      </div>
+    </li>
+    <li class="q">
+      <span class="q__n">2</span>
+      <div class="q__body">
+        <p class="q__text">One argument AGAINST, with an example.</p>
+          <div class="q__space" role="presentation"></div>
+      </div>
+    </li>
+  </ol>
+</section>
+  </div>
+</section>
+
+<div class="closing">
+  
+  <p class="encourage">Small steps every week add up to big progress.</p>
+
+<div class="colophon">Happy English Club · HEC IELTS Speaking &amp; Listening · Year 1 · Term 1 · Student copy</div>
+</div>
+</body>
+</html>

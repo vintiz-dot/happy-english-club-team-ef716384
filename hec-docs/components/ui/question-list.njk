@@ -1,0 +1,37 @@
+{# question-list: numbered questions with tick-box options.
+   teacher=true prints each answer under its question (and ticks the option
+   that matches it); otherwise answers are never printed and each question gets
+   the space asked for: a ruled line, a box, or none. A question with tick
+   boxes, or with its own gap ("___"), needs no extra line. #}
+{% macro question_list(qs, teacher=false) %}
+{# A set titled "Questions 7–10" numbers from 7, as the paper does. #}
+{% set FIRST = r/^Questions? ([0-9]+)/ %}
+{% set fm = qs.title.match(FIRST) if qs.title else null %}
+{% set start = (fm[1] | int) if fm else 1 %}
+<section class="qset">
+  {% if qs.title %}<p class="qset__title">{{ qs.title }}</p>{% endif %}
+  {% if qs.instructions %}<p class="qset__instr">{{ qs.instructions }}</p>{% endif %}
+  <ol class="qlist qlist--{{ qs.space }}"{% if start != 1 %} start="{{ start }}"{% endif %}>
+    {% for item in qs.items %}
+    <li class="q">
+      <span class="q__n">{{ loop.index0 + start }}</span>
+      <div class="q__body">
+        <p class="q__text">{{ item.q }}</p>
+        {% if item.options and item.options | length %}
+        <ul class="q__opts">
+          {% for o in item.options %}<li class="q__opt{% if teacher and item.answer and o == item.answer %} is-key{% endif %}"><span class="q__box" aria-hidden="true"></span><span>{{ o }}</span></li>{% endfor %}
+        </ul>
+        {% endif %}
+        {% if teacher %}
+          {% if item.answer %}<p class="q__ans"><span class="q__ans-label">Answer</span><span class="q__ans-text">{{ item.answer }}</span></p>{% endif %}
+        {% elif qs.space == "box" %}
+          <div class="q__space" role="presentation"></div>
+        {% elif qs.space == "line" and not (item.options and item.options | length) and not ("___" in item.q) %}
+          <div class="q__line" role="presentation"></div>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endmacro %}

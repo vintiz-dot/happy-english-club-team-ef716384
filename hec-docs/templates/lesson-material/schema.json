@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hec-docs.invalid/schemas/lesson-material/1.0.0",
+  "title": "Lesson material document input",
+  "description": "A lesson deck, worksheet, check/test or homework sheet from the app's Lesson Decks, printed as a teacher copy or a student copy. Every string is plain text (autoescaped). The student variant never prints `answer` or `teacher`, even when present.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "title", "course", "blocks"],
+  "$defs": {
+    "text": { "type": "string", "maxLength": 4000 },
+    "short": { "type": "string", "minLength": 1, "maxLength": 300 },
+    "list": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["style", "items"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 300 },
+        "style": { "enum": ["steps", "bullets", "frames", "checks"] },
+        "items": { "type": "array", "maxItems": 60, "items": { "$ref": "#/$defs/text" } }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["q"],
+      "properties": {
+        "q": { "$ref": "#/$defs/text" },
+        "options": { "type": "array", "maxItems": 12, "items": { "type": "string", "maxLength": 600 } },
+        "answer": { "type": "string", "maxLength": 2000, "description": "Teacher copy only." }
+      }
+    },
+    "questions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["space", "items"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 300 },
+        "instructions": { "$ref": "#/$defs/text" },
+        "space": { "enum": ["line", "box", "none"] },
+        "items": { "type": "array", "maxItems": 80, "items": { "$ref": "#/$defs/question" } }
+      }
+    },
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "task"],
+      "properties": {
+        "level": { "enum": ["Support", "Core", "Stretch"] },
+        "task": { "$ref": "#/$defs/text" },
+        "frames": { "type": "array", "maxItems": 20, "items": { "type": "string", "maxLength": 600 } }
+      }
+    },
+    "table": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["head", "rows"],
+      "properties": {
+        "head": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "type": "string", "maxLength": 200 } },
+        "rows": { "type": "array", "maxItems": 60, "items": { "type": "array", "maxItems": 8, "items": { "type": "string", "maxLength": 1000 } } }
+      }
+    },
+    "teacherNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "lines"],
+      "properties": {
+        "title": { "$ref": "#/$defs/short" },
+        "lines": { "type": "array", "maxItems": 120, "items": { "$ref": "#/$defs/text" }, "description": "Answer-key notes, script lines (\"Speaker: text\"), teacher notes, rubric rows." }
+      }
+    },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heading"],
+      "properties": {
+        "heading": { "$ref": "#/$defs/short" },
+        "eyebrow": { "type": "string", "maxLength": 120 },
+        "chips": { "type": "array", "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 60 } },
+        "paragraphs": { "type": "array", "maxItems": 40, "items": { "$ref": "#/$defs/text" } },
+        "lists": { "type": "array", "maxItems": 12, "items": { "$ref": "#/$defs/list" } },
+        "questions": { "$ref": "#/$defs/questions" },
+        "tiers": { "type": "array", "maxItems": 3, "items": { "$ref": "#/$defs/tier" } },
+        "table": { "$ref": "#/$defs/table" },
+        "teacher": { "type": "array", "maxItems": 12, "items": { "$ref": "#/$defs/teacherNote" }, "description": "Teacher copy only." },
+        "writingLines": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "breakBefore": { "type": "boolean" }
+      }
+    }
+  },
+  "properties": {
+    "variant": { "enum": ["teacher", "student"] },
+    "kind": { "enum": ["lesson", "worksheet", "assessment", "homework"] },
+    "title": { "$ref": "#/$defs/short" },
+    "course": { "$ref": "#/$defs/short" },
+    "subtitle": { "type": "string", "maxLength": 300 },
+    "className": { "type": "string", "maxLength": 200 },
+    "bigQuestion": { "type": "string", "maxLength": 600 },
+    "objectives": { "type": "array", "maxItems": 12, "items": { "type": "string", "maxLength": 600 } },
+    "nameLine": { "type": "boolean", "description": "Student copy: print Name / Date." },
+    "studentName": { "type": "string", "maxLength": 200, "description": "A sheet made for one child; printed on the Name line of the student copy." },
+    "scoreOutOf": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "blocks": { "type": "array", "minItems": 1, "maxItems": 60, "items": { "$ref": "#/$defs/block" } }
+  }
+}

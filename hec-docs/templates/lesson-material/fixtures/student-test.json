@@ -1,0 +1,149 @@
+{
+  "$comment": "The same made-up check as teacher-test.json, as a student receives it: no answers, no teacher entries.",
+  "generatedAt": "2026-11-22T10:00:00+07:00",
+  "data": {
+    "variant": "student",
+    "kind": "assessment",
+    "title": "Term 1 check: Listening and Speaking",
+    "course": "HEC IELTS Speaking & Listening · Year 1 · Term 1",
+    "subtitle": "Lesson 12 · 60 minutes",
+    "className": "Sun Class",
+    "scoreOutOf": 30,
+    "blocks": [
+      {
+        "eyebrow": "Listening · Part 1",
+        "heading": "Booking a museum workshop",
+        "chips": [
+          "6 marks",
+          "Heard twice"
+        ],
+        "questions": {
+          "title": "Questions 1–6",
+          "instructions": "Complete the booking form. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+          "space": "line",
+          "items": [
+            {
+              "q": "Workshop name: Making ______"
+            },
+            {
+              "q": "Day: ______"
+            },
+            {
+              "q": "Start time: ______"
+            },
+            {
+              "q": "Number of children: ______"
+            },
+            {
+              "q": "Parent's surname: ______"
+            },
+            {
+              "q": "Total price: ______ VND"
+            }
+          ]
+        }
+      },
+      {
+        "eyebrow": "Listening · Part 2",
+        "heading": "A talk about the new library",
+        "chips": [
+          "4 marks",
+          "Heard twice"
+        ],
+        "questions": {
+          "title": "Questions 7–10",
+          "instructions": "Tick the correct answer.",
+          "space": "none",
+          "items": [
+            {
+              "q": "The library will open",
+              "options": [
+                "in January",
+                "in March",
+                "in June"
+              ]
+            },
+            {
+              "q": "Children under ten must",
+              "options": [
+                "come with an adult",
+                "bring a library card",
+                "book a room"
+              ]
+            },
+            {
+              "q": "The quiet room is on the",
+              "options": [
+                "ground floor",
+                "first floor",
+                "top floor"
+              ]
+            },
+            {
+              "q": "Each visitor can borrow up to",
+              "options": [
+                "four books",
+                "six books",
+                "eight books"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "eyebrow": "Speaking · Part 1",
+        "heading": "Interview: home and free time",
+        "chips": [
+          "8 marks",
+          "4 min"
+        ],
+        "paragraphs": [
+          "The examiner asks four questions. Answer each with a reason and a detail."
+        ],
+        "questions": {
+          "space": "none",
+          "items": [
+            {
+              "q": "Can you tell me about the place where you live?"
+            },
+            {
+              "q": "What do you usually do after school?"
+            },
+            {
+              "q": "Is there a hobby you would like to start? Why?"
+            },
+            {
+              "q": "Do you prefer spending free time alone or with friends?"
+            }
+          ]
+        }
+      },
+      {
+        "eyebrow": "Speaking · Part 2",
+        "heading": "Cue card: a person who helped you",
+        "chips": [
+          "12 marks",
+          "1 min prep · 1 min talk"
+        ],
+        "breakBefore": true,
+        "paragraphs": [
+          "You have one minute to make notes, then talk for one minute."
+        ],
+        "lists": [
+          {
+            "title": "Describe a person who helped you learn something. You should say:",
+            "style": "bullets",
+            "items": [
+              "who the person is",
+              "what they helped you learn",
+              "how they helped you",
+              "and explain why you remember it."
+            ]
+          }
+        ],
+        "writingLines": 5
+      }
+    ],
+    "nameLine": true
+  }
+}

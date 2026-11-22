@@ -1,0 +1,8 @@
+{# pull-quote: one guiding sentence set large in display italic, with a label.
+   A div, not <figure>: a tagged PDF treats a figure as an image needing alt text. #}
+{% macro pull_quote(label, text) %}
+<div class="pquote">
+  <div class="eyebrow">{{ label }}</div>
+  <blockquote class="pquote__text">{{ text }}</blockquote>
+</div>
+{% endmacro %}

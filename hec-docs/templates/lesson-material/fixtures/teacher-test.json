@@ -1,0 +1,215 @@
+{
+  "$comment": "Made-up Sun Class end-of-term check (listening + speaking) as a teacher copy. Original items written for the fixture; no real children.",
+  "generatedAt": "2026-11-22T10:00:00+07:00",
+  "data": {
+    "variant": "teacher",
+    "kind": "assessment",
+    "title": "Term 1 check: Listening and Speaking",
+    "course": "HEC IELTS Speaking & Listening · Year 1 · Term 1",
+    "subtitle": "Lesson 12 · 60 minutes",
+    "className": "Sun Class",
+    "scoreOutOf": 30,
+    "objectives": [
+      "Listening: follow a conversation and a short talk, and note exact details.",
+      "Speaking: answer Part 1 questions with reasons and talk for one minute on a cue card."
+    ],
+    "blocks": [
+      {
+        "eyebrow": "Listening · Part 1",
+        "heading": "Booking a museum workshop",
+        "chips": [
+          "6 marks",
+          "Heard twice"
+        ],
+        "questions": {
+          "title": "Questions 1–6",
+          "instructions": "Complete the booking form. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+          "space": "line",
+          "items": [
+            {
+              "q": "Workshop name: Making ______",
+              "answer": "paper lanterns"
+            },
+            {
+              "q": "Day: ______",
+              "answer": "Saturday"
+            },
+            {
+              "q": "Start time: ______",
+              "answer": "2.15 / quarter past two"
+            },
+            {
+              "q": "Number of children: ______",
+              "answer": "3"
+            },
+            {
+              "q": "Parent's surname: ______",
+              "answer": "Lam (L-A-M)"
+            },
+            {
+              "q": "Total price: ______ VND",
+              "answer": "360,000"
+            }
+          ]
+        },
+        "teacher": [
+          {
+            "title": "Script",
+            "lines": [
+              "Assistant: City Museum bookings, good afternoon.",
+              "Parent: Hello, I'd like to book the workshop where children make paper lanterns.",
+              "Assistant: Of course. We run it on Saturdays and Sundays, but Sunday is full this month.",
+              "Parent: Saturday is fine. What time does it start?",
+              "Assistant: Quarter past two, and it finishes at four.",
+              "Parent: There will be three children. The surname is Lam, L-A-M.",
+              "Assistant: That's a hundred and twenty thousand each, so three hundred and sixty thousand in total."
+            ]
+          },
+          {
+            "title": "Marking",
+            "lines": [
+              "One mark each. Accept 2:15 and 14:15. Spelling must be correct for question 5."
+            ]
+          }
+        ]
+      },
+      {
+        "eyebrow": "Listening · Part 2",
+        "heading": "A talk about the new library",
+        "chips": [
+          "4 marks",
+          "Heard twice"
+        ],
+        "questions": {
+          "title": "Questions 7–10",
+          "instructions": "Tick the correct answer.",
+          "space": "none",
+          "items": [
+            {
+              "q": "The library will open",
+              "options": [
+                "in January",
+                "in March",
+                "in June"
+              ],
+              "answer": "in March"
+            },
+            {
+              "q": "Children under ten must",
+              "options": [
+                "come with an adult",
+                "bring a library card",
+                "book a room"
+              ],
+              "answer": "come with an adult"
+            },
+            {
+              "q": "The quiet room is on the",
+              "options": [
+                "ground floor",
+                "first floor",
+                "top floor"
+              ],
+              "answer": "top floor"
+            },
+            {
+              "q": "Each visitor can borrow up to",
+              "options": [
+                "four books",
+                "six books",
+                "eight books"
+              ],
+              "answer": "six books"
+            }
+          ]
+        },
+        "teacher": [
+          {
+            "title": "Script",
+            "lines": [
+              "Speaker: Good evening. Our new library was meant to open in January, but the builders needed more time, so the doors will open in March.",
+              "Speaker: Anyone may visit, though children under ten need to come with an adult. You don't need a card to read here, only to borrow.",
+              "Speaker: The ground floor is for families. If you want to study, the quiet room is right at the top, with a view of the river.",
+              "Speaker: You can take home six books at a time, for three weeks."
+            ]
+          }
+        ]
+      },
+      {
+        "eyebrow": "Speaking · Part 1",
+        "heading": "Interview: home and free time",
+        "chips": [
+          "8 marks",
+          "4 min"
+        ],
+        "paragraphs": [
+          "The examiner asks four questions. Answer each with a reason and a detail."
+        ],
+        "questions": {
+          "space": "none",
+          "items": [
+            {
+              "q": "Can you tell me about the place where you live?"
+            },
+            {
+              "q": "What do you usually do after school?"
+            },
+            {
+              "q": "Is there a hobby you would like to start? Why?"
+            },
+            {
+              "q": "Do you prefer spending free time alone or with friends?"
+            }
+          ]
+        },
+        "teacher": [
+          {
+            "title": "Marking (2 marks per answer)",
+            "lines": [
+              "2 · A direct answer, a reason and a detail; easy to follow.",
+              "1 · An answer and a reason, or needs one prompt.",
+              "0 · One word, or does not answer the question.",
+              "Record the score; do not tell the student a band."
+            ]
+          }
+        ]
+      },
+      {
+        "eyebrow": "Speaking · Part 2",
+        "heading": "Cue card: a person who helped you",
+        "chips": [
+          "12 marks",
+          "1 min prep · 1 min talk"
+        ],
+        "breakBefore": true,
+        "paragraphs": [
+          "You have one minute to make notes, then talk for one minute."
+        ],
+        "lists": [
+          {
+            "title": "Describe a person who helped you learn something. You should say:",
+            "style": "bullets",
+            "items": [
+              "who the person is",
+              "what they helped you learn",
+              "how they helped you",
+              "and explain why you remember it."
+            ]
+          }
+        ],
+        "writingLines": 5,
+        "teacher": [
+          {
+            "title": "Marking (12 marks)",
+            "lines": [
+              "Content (4) · covers all four points with details.",
+              "Organisation (3) · a clear start, middle and end.",
+              "Language (3) · past tenses mostly correct; some linking words.",
+              "Fluency (2) · keeps going for the full minute."
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

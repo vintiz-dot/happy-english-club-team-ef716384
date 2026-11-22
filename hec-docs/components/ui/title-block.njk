@@ -1,0 +1,10 @@
+{# title-block: course line, document title, and a quiet line of details
+   (parts joined by a gold dot; empty parts are left out). #}
+{% macro title_block(title, course="", details=[]) %}
+{% set parts = details | select %}
+<section class="tblock" aria-label="{{ title }}">
+  {% if course %}<p class="tblock__course">{{ course }}</p>{% endif %}
+  <h1 class="doc-title tblock__title">{{ title }}</h1>
+  {% if parts | length %}<p class="tblock__details">{% for p in parts %}{{ p }}{% if not loop.last %} <span class="ornament" aria-hidden="true">·</span> {% endif %}{% endfor %}</p>{% endif %}
+</section>
+{% endmacro %}

@@ -121,7 +121,7 @@ export async function render(req: RenderRequest): Promise<RenderResult> {
     templateVersion: manifest.version,
     variant,
     tenant: tenant.id,
-    filename: filenameFor(manifest.filename, req.data),
+    filename: filenameFor(manifest.filename, req.data, variant),
     contentType: manifest.output === "png" ? "image/png" : "application/pdf",
     body,
     pages,

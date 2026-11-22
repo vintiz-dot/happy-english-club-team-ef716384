@@ -1,0 +1,23 @@
+/* bullets (ui/item-list.njk): short points with a small gold marker.
+   .ilist is a titled list of any style. */
+.bullets { list-style: none; margin: 0; padding: 0; }
+.bullets__item { position: relative; padding: 2pt 0 2pt 12pt; line-height: var(--leading-body); break-inside: avoid; }
+.bullets__item::before {
+  content: "";
+  position: absolute;
+  left: 1pt;
+  top: calc(2pt + 0.75em - 2pt);
+  width: 4pt;
+  height: 4pt;
+  transform: rotate(45deg);
+  background: var(--color-gold);
+}
+.ilist__title {
+  margin: 0 0 var(--space-0-5);
+  font-size: var(--size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+  color: var(--color-ink);
+  break-after: avoid;
+}
+.ilist .steps__item { font-size: var(--size-base); padding: 2pt 0; }

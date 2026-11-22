@@ -1,0 +1,13 @@
+{# name-line: Name / Date write-in fields for a pupil's copy, with an optional
+   prefilled name and a score box ("Score ____ / 30"). #}
+{% macro name_line(name="", showFields=true, scoreOutOf=0) %}
+<div class="nline">
+  {% if showFields %}
+  <div class="nline__field nline__field--name"><span class="nline__label">Name</span><span class="nline__value">{{ name }}</span></div>
+  <div class="nline__field nline__field--date"><span class="nline__label">Date</span><span class="nline__value"></span></div>
+  {% endif %}
+  {% if scoreOutOf %}
+  <div class="nline__score"><span class="nline__label">Score</span><span class="nline__blank"></span><span class="nline__of">/ {{ scoreOutOf }}</span></div>
+  {% endif %}
+</div>
+{% endmacro %}

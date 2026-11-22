@@ -1,0 +1,38 @@
+/* teacher-panel (ui/teacher-panel.njk): tinted "For the teacher" panel.
+   Script lines ("Speaker: text") set the speaker in a narrow column. */
+.tpanel {
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-gold);
+  border-left: var(--border-strong) solid var(--color-gold);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  font-size: var(--size-sm);
+  line-height: var(--leading-body);
+  color: var(--color-ink);
+  break-inside: avoid;
+}
+.tpanel__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
+  padding-bottom: 4pt;
+  border-bottom: var(--border-hairline) solid var(--color-gold);
+  break-after: avoid;
+  break-inside: avoid;
+}
+.tpanel__label {
+  flex: none;
+  font-size: var(--size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-gold-ink);
+}
+.tpanel__title { font-family: var(--font-family-display); font-weight: var(--font-weight-bold); font-size: var(--size-md); line-height: var(--leading-tight); color: var(--color-ink); }
+.tpanel__lines { list-style: none; margin: 0; padding: 0; }
+.tpanel__line { padding: 1.5pt 0; break-inside: avoid; }
+.tpanel__line--speech { display: grid; grid-template-columns: 22mm 1fr; gap: var(--space-1); }
+.tpanel__who { font-weight: var(--font-weight-semibold); color: var(--color-ink-soft); font-variant-caps: all-small-caps; letter-spacing: 0.05em; }
+.tpanel__said { color: var(--color-ink); }
+.tpanel + .tpanel { margin-top: var(--space-1); }

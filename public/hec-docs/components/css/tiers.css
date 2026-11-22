@@ -1,0 +1,27 @@
+/* tiers (ui/tiers.njk): one task at Support / Core / Stretch in aligned
+   columns. Stars and the level name carry the meaning, not colour. */
+.tiers { display: grid; gap: var(--space-2); align-items: stretch; break-inside: avoid; }
+.tiers--1 { grid-template-columns: 1fr; }
+.tiers--2 { grid-template-columns: 1fr 1fr; }
+.tiers--3 { grid-template-columns: 1fr 1fr 1fr; }
+.tier {
+  min-width: 0;
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  border: var(--border-hairline) solid var(--color-gold);
+  border-top: var(--border-strong) solid var(--color-ink);
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  break-inside: avoid;
+}
+.tier--core { background: color-mix(in srgb, var(--color-surface) 55%, transparent); }
+.tier--stretch { background: var(--color-surface); }
+.tier__head { display: flex; align-items: baseline; gap: 5pt; margin-bottom: var(--space-1); padding-bottom: 4pt; border-bottom: var(--border-hairline) solid var(--color-rule); }
+.tier__stars { color: var(--color-gold-ink); font-size: var(--size-sm); letter-spacing: 0.08em; }
+.tier__level {
+  font-size: var(--size-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  font-variant-caps: all-small-caps;
+  color: var(--color-ink);
+}
+.tier__task { margin: 0 0 var(--space-1); font-size: var(--size-base); line-height: var(--leading-body); color: var(--color-ink); }
+.tier__task:last-child { margin-bottom: 0; }
