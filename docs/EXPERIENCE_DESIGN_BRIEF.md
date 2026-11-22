@@ -319,7 +319,7 @@ These are the rules of this brief. They sit beside the design system, not above 
 6. Predictable rewards, surprising presentation. What a child earns follows rules they can explain. Only the way it is celebrated varies.
 7. A child is never shown as last, behind, or failing in front of others.
 8. The teacher is present. Praise carries a real teacher's name and real approved words, or it is not shown.
-9. Money belongs to grown-ups. Tuition and the wallet's money figures are reachable but are not part of a young child's home.
+9. Tuition belongs to grown-ups: reachable, but not part of a young child's home. The class wallet (`StudentWallet`, the class economy a teacher switches on) is the child's own game and stays on the child's home in every band (owner, 22 Nov 2026).
 10. Nothing is truncated. Vietnamese names wrap; line heights from design system section 4 hold.
 11. Phone first, 375 px, one thumb, Zalo's browser, a slow connection.
 12. Every figure comes from where it comes today (A3.3). Every privacy rule holds (A3.4).
@@ -407,7 +407,8 @@ Shared by all four bands:
 | Progress shown as | stars filling a jar | stickers on a weekly path, level title | XP ring, level, badges, streak | CEFR level, skills, trend lines |
 | Classmates shown as | "our class" total only | podium of three, and me | my neighbours (rank one above, one below), podium | full table, default view is my own trend |
 | Reward moment | big, up to 1.2 s, sound | up to 1.2 s | under 1 s | a Seal, 700 ms |
-| Money | behind Grown-ups | behind Grown-ups | behind Grown-ups | in the menu as today |
+| Tuition | behind Grown-ups | behind Grown-ups | behind Grown-ups | in the menu as today |
+| Class wallet (classes with the economy on) | on the home | on the home | on the home | on the home |
 
 ### G2. `early` (pre-school and Grade 1)
 
@@ -466,7 +467,8 @@ A teenager will leave an interface that talks down to them. This band is the adu
 | `/student/language-support` (Picture Reader) | keep the ARASAAC attribution line exactly as it is |
 | `/student/journal`, `/student/resources` | token alignment and band type scale |
 | `/student/dashboard?tab=achievements`, `?tab=reports`, `?tab=schedule` | become pages under "Me" for `early`, `young`, `junior`; stay tabs for `teen`. The URLs keep working |
-| `/tuition`, wallet | no banding. Adult presentation always. Reached through Grown-ups in the three younger bands |
+| `/tuition` | no banding. Adult presentation always. Reached through Grown-ups in the three younger bands |
+| Class wallet | the existing `StudentWallet`, unchanged, on the home for each class with the economy on |
 
 ---
 
@@ -682,7 +684,7 @@ Defaults are stated so work is never blocked; each default is the cautious choic
 | 3 | Parents' default language: Vietnamese first or English first? | English with Vietnamese beneath |
 | 4 | The mascot is drawn: Pip (`docs/MASCOT.md`), on the reception TV since 22 Nov 2026. Still open: the name, and whether to have the soft toy, stickers and postcards made | "Pip"; app and TV only |
 | 5 | Should a child's chosen "Look" follow them across devices? Needs one nullable column on `students` and a migration you would paste | per device only |
-| 6 | Is tuition allowed to move behind "Grown-ups" for children under Grade 7 (E9)? It stays one tap away | yes |
+| 6 | Is tuition allowed to move behind "Grown-ups" for children under Grade 7 (E9)? It stays one tap away. Answered in part on 22 Nov 2026: the class wallet is NOT money in this sense and stays on the child's home | yes, for tuition only |
 | 7 | Is there, or will there be, a referral scheme? I1 row 16 offers sharing with no reward | no reward |
 | 8 | Children with no date of birth get the `junior` look. Will the office fill in the missing dates (D6 adds the filter)? | `junior` |
 | 9 | Who checks the Vietnamese (J2)? | drafts are listed and flagged, not shipped as final |
