@@ -35,7 +35,24 @@ let lastCarryAt = 0;
  */
 export const carriedRecently = () => Date.now() - lastCarryAt < 1500;
 
-const nextFrame =() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+/**
+ * React Router 7's BrowserRouter applies a navigation inside a React transition, which flushSync does not flush,
+ * so the DOM can still be the old page when the update callback returns. Wait (bounded) for the page's first
+ * change. Not requestAnimationFrame: rendering is suspended during the callback, so a frame never comes and the
+ * transition times out after 4 s.
+ */
+const MAX_WAIT_MS = 300;
+const pageChanged = () =>
+  new Promise<void>((resolve) => {
+    const done = () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
+      window.setTimeout(resolve, 0);
+    };
+    const observer = new MutationObserver(done);
+    observer.observe(document.body, { childList: true, subtree: true });
+    const timer = window.setTimeout(done, MAX_WAIT_MS);
+  });
 
 /** navigate(), carried when the browser can. Same arguments as useNavigate()'s function. */
 export function useCarryNavigate() {
@@ -51,10 +68,9 @@ export function useCarryNavigate() {
       }
       lastCarryAt = Date.now();
       const vt = start.call(document, async () => {
+        const changed = pageChanged();
         flushSync(go);
-        // a route may render a frame later (lazy page); let it land before the new snapshot
-        await nextFrame();
-        await nextFrame();
+        await changed;
       });
       // Everything that is not carried cross-fades in 240 ms (the browser default is 250 ms).
       vt.ready
