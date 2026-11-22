@@ -1,8 +1,9 @@
 // Reach Higher 3A, Unit 4 (Let's Work Together): Jupiter's two checkpoints in the
-// format of the Hanoi selective schools' grade-6 English test. The mid-unit quiz
-// runs in Lesson 4, the mock (Nguyễn Tất Thành format: about 30 minutes, a short
-// paragraph at the end) in Lesson 8. Every item and the reading passage are the
-// school's own; nothing from the Student Book or a past paper.
+// format of the Hanoi selective schools' grade-6 English test, and the full
+// end-of-unit test. The mid-unit quiz runs in Lesson 4, the mock (about 30 minutes,
+// a short paragraph at the end) in Lesson 8, and the unit test on the class date
+// after Lesson 8. Every item and every reading passage are the school's own;
+// nothing from the Student Book, the publisher's unit test or a past paper.
 import type { Assessment } from "@/lib/lessonDecks/types";
 
 export const rhL3U4Assessments: Assessment[] = [
@@ -40,7 +41,7 @@ export const rhL3U4Assessments: Assessment[] = [
       },
       {
         title: "Part C. Find and correct the mistake",
-        skill: "Vocabulary",
+        skill: "Grammar",
         instructions: "Each sentence has one mistake. Write the wrong word and the correction.",
         marksEach: 1,
         items: [
@@ -52,7 +53,7 @@ export const rhL3U4Assessments: Assessment[] = [
   },
   {
     id: "rh-l3-u4-mock",
-    title: "End-of-unit mock test (Nguyễn Tất Thành format)",
+    title: "Unit mock test (selective-school format)",
     kind: "formative",
     afterLesson: 8,
     minutes: 30,
@@ -127,5 +128,154 @@ export const rhL3U4Assessments: Assessment[] = [
         ],
       },
     ],
+  },
+  {
+    id: "rh-l3-u4-test",
+    title: "Unit 4 test: Let's Work Together",
+    kind: "summative",
+    afterLesson: 8,
+    minutes: 70,
+    covers: [
+      "Unit 4 key words (Parts 1 and 2)",
+      "present-tense action verbs and subject-verb agreement",
+      "forms of be and have",
+      "helping verbs: can, could, should, may, must, have to; mustn't vs don't have to",
+      "verb patterns, suggestions, second conditional (exam strand)",
+      "error correction, sentence rewrites, word formation",
+      "reading an original text",
+      "a 70-100 word opinion paragraph on the Big Question",
+      "speaking: a 2-minute talk on the Big Question",
+    ],
+    sections: [
+      {
+        title: "Part A. Vocabulary",
+        skill: "Vocabulary",
+        instructions: "Choose the word that best completes each sentence.",
+        marksEach: 1,
+        items: [
+          { q: "1. The fruit ___ shouted, 'Fresh mangoes, only 20,000 đồng a kilo!'", options: ["seller", "buyer", "purpose", "reward"], answer: "seller" },
+          { q: "2. We saw an ___ for the new phone on a big screen in the street.", options: ["advertisement", "harvest", "alternative", "reward"], answer: "advertisement" },
+          { q: "3. Moving the piano upstairs needed the ___ of six people.", options: ["cooperation", "purpose", "method", "market"], answer: "cooperation" },
+          { q: "4. Don't hurry. We have ___ of time before the bus comes.", options: ["plenty", "reward", "future", "field"], answer: "plenty" },
+          { q: "5. The ___ of the meeting is to choose a class captain.", options: ["purpose", "buyer", "crop", "plow"], answer: "purpose" },
+          { q: "6. {s1} got a ___ for finding the lost dog: a big box of cakes!", options: ["reward", "market", "method", "conservation"], answer: "reward" },
+          { q: "7. In autumn the farmers ___ the golden rice.", options: ["harvest", "pay", "sustain", "accomplish"], answer: "harvest" },
+          { q: "8. Before planting, the farmer had to ___ the field with a buffalo.", options: ["plow", "harvest", "pay", "sell"], answer: "plow" },
+          { q: "9. The bus is late again. Riding a bike is a good ___.", options: ["alternative", "agriculture", "seller", "reward"], answer: "alternative" },
+          { q: "10. Turning off the tap while you brush your teeth helps water ___.", options: ["conservation", "cooperation", "advertisement", "method"], answer: "conservation" },
+        ],
+      },
+      {
+        title: "Part B. Grammar A: the unit's grammar",
+        skill: "Grammar",
+        instructions: "Circle the best answer.",
+        marksEach: 1,
+        items: [
+          { q: "1. My grandmother ___ tea every morning.", options: ["drinks", "drink", "is drink", "drinking"], answer: "drinks" },
+          { q: "2. Look! The children ___ the classroom together.", options: ["are cleaning", "cleans", "is cleaning", "clean"], answer: "are cleaning" },
+          { q: "3. Everyone in the team ___ a different job.", options: ["has", "have", "are having", "having"], answer: "has" },
+          { q: "4. Both of my sisters ___ good at maths.", options: ["are", "is", "am", "has"], answer: "are" },
+          { q: "5. My uncle ___ a small farm near Hà Nội.", options: ["has", "have", "is", "are"], answer: "has" },
+          { q: "6. You ___ bring lunch tomorrow. The school will give us food.", options: ["don't have to", "mustn't", "doesn't have to", "has to"], answer: "don't have to" },
+          { q: "7. You ___ swim in this river. It is too dangerous.", options: ["mustn't", "don't have to", "could", "may"], answer: "mustn't" },
+          { q: "8. My little brother ___ ride a bike when he was four.", options: ["could", "can", "must", "should"], answer: "could" },
+          { q: "9. It's cold outside. You ___ wear a coat.", options: ["should", "mustn't", "don't have to", "are"], answer: "should" },
+        ],
+      },
+      {
+        title: "Part C. Grammar B: correct, rewrite, form",
+        skill: "Grammar",
+        instructions: "1-3: each sentence has one mistake; write the wrong word and the correction. 4-6: rewrite the sentence so that it means the same, starting with the words given. 7-9: write the correct form of the word in brackets.",
+        marksEach: 1,
+        items: [
+          { q: "1. Nobody in my class want to give up.", answer: "want → wants" },
+          { q: "2. We enjoyed to work in teams.", answer: "to work → working" },
+          { q: "3. If I am you, I would ask the teacher for help.", answer: "am → were" },
+          { q: "4. It isn't necessary to bring an umbrella. → You don't ...", answer: "You don't have to bring an umbrella." },
+          { q: "5. How about planting a tree for Tết? → Why don't ...?", answer: "Why don't we plant a tree for Tết?" },
+          { q: "6. I don't have a ladder, so I can't help you. → If I ...", answer: "If I had a ladder, I could / would help you." },
+          { q: "7. Our team won because of good ___. (cooperate)", answer: "cooperation" },
+          { q: "8. There were a lot of ___ at the night market. (sell)", answer: "sellers" },
+          { q: "9. Thank you! You were very ___ today. (help)", answer: "helpful" },
+        ],
+      },
+      {
+        title: "Part D. Reading",
+        skill: "Reading",
+        instructions: "Read the text. Questions 1-2: choose the best answer. Questions 3-4: write True or False. Questions 5-6: answer in a few words.",
+        passage:
+          "Every October, Lan's family goes back to Grandpa's village in Thái Bình to help with the rice harvest. This year Grandpa was ill, so he could not work in the fields. \"The rain is coming in a week,\" he said. \"How can we finish in time?\"\n\nLan had an idea. She made a poster and put it up at the village shop: \"Harvest Day on Saturday! Free lunch for every helper!\" On Saturday morning, twenty neighbours arrived. The adults cut the rice, the teenagers carried it to the road, and the younger children brought water and counted the bags. Lan's mother and aunts cooked lunch for everyone.\n\nBy four o'clock, the whole field was finished. \"Alone, I would need ten days,\" Grandpa laughed. \"Together, you did it in one!\" Next month, Lan's family is going to help the neighbours with their harvest too.",
+        marksEach: 2,
+        items: [
+          { q: "1. Why couldn't Grandpa work in the fields this year?", options: ["He was ill.", "It was raining.", "He was in Hà Nội.", "He was cooking lunch."], answer: "He was ill." },
+          { q: "2. What did Lan do to get help?", options: ["She made a poster for the village shop.", "She paid the neighbours.", "She cut the rice alone.", "She phoned her teacher."], answer: "She made a poster for the village shop." },
+          { q: "3. Twenty neighbours came to help on Saturday.", options: ["True", "False"], answer: "True" },
+          { q: "4. The younger children cut the rice.", options: ["True", "False"], answer: "False" },
+          { q: "5. How long did the work take with everyone's help?", answer: "One day (they finished by four o'clock)." },
+          { q: "6. How is Lan's family going to thank the neighbours?", answer: "They are going to help the neighbours with their harvest next month." },
+        ],
+      },
+      {
+        title: "Part E. Writing",
+        skill: "Writing",
+        instructions: "Write 70-100 words: What's the best way to get things done? Give your opinion, two reasons, one example from your own life or from a story in this unit, and a conclusion.",
+        marksEach: 10,
+        items: [
+          {
+            q: "Your paragraph (70-100 words).",
+            answer:
+              "Mark on four parts, 2.5 each: (1) content: a clear opinion, two reasons and an example, on the question; (2) organisation: opening opinion, linkers (firstly, also, for example, in conclusion), a conclusion; (3) grammar: present tenses and agreement, helping verbs, one conditional, few errors; (4) vocabulary: at least three unit key words used correctly, spelling.",
+          },
+        ],
+      },
+    ],
+    speaking: {
+      task: "Talk for 2 minutes: What's the best way to get things done? Give your opinion with reasons and examples (from your family, school, or a story in this unit). Then answer the teacher's follow-up questions.",
+      prompts: [
+        "Tell me about a time you worked in a team. What was the goal, and who did what?",
+        "When is it better to work alone? Give an example.",
+        "In \"I've Got This\", why did Manuel change his mind? What would you have done?",
+        "If you were a farmer, would you change to a new method? Why or why not?",
+        "How do people in your neighbourhood work together at Tết?",
+      ],
+      rubric: [
+        {
+          criterion: "Fluency",
+          bands: [
+            "Speaks for the full 2 minutes with few pauses; ideas follow on naturally.",
+            "Speaks for most of the time; some pauses to find words, but keeps going.",
+            "Speaks for about a minute; frequent pauses and restarts.",
+            "Gives short answers only; needs many prompts.",
+          ],
+        },
+        {
+          criterion: "Grammar range and accuracy",
+          bands: [
+            "Uses present tenses, helping verbs and a conditional correctly; agreement nearly always right.",
+            "Uses present tenses and helping verbs with some errors that do not block meaning.",
+            "Mostly simple sentences; agreement and verb-form errors are frequent.",
+            "Single words or fragments; errors often block meaning.",
+          ],
+        },
+        {
+          criterion: "Vocabulary",
+          bands: [
+            "Uses four or more unit key words naturally and precisely (cooperation, accomplish, method ...).",
+            "Uses two or three unit key words correctly; some repetition.",
+            "Uses one key word or very general words (good, help, do).",
+            "Vocabulary too limited to express the ideas.",
+          ],
+        },
+        {
+          criterion: "Pronunciation and interaction",
+          bands: [
+            "Clear sounds and word stress; answers follow-up questions fully and asks or adds ideas.",
+            "Mostly clear; answers follow-up questions with some detail.",
+            "Sometimes hard to understand; answers follow-ups briefly.",
+            "Often hard to understand; does not respond to follow-up questions.",
+          ],
+        },
+      ],
+    },
   },
 ];

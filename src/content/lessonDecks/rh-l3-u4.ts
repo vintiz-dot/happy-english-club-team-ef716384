@@ -10,9 +10,12 @@
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
 import { rhL3U4Assessments } from "./rh-l3-u4/assessments";
 import { rhL3U4Creative } from "./rh-l3-u4/homework";
+import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, unitVideo, wordAudio } from "./rh-l3/media";
 
 const base = { curriculum: "reach-higher" as const, level: 3, unit: 4, minutes: 90 };
 const BQ = "What's the best way to get things done?";
+// The Unit 4 video ("Clean Up the Coasts") from the school's Drive.
+const video = unitVideo(4);
 
 const lessons: Deck[] = [
   // ------------------------------------------------------------------ Lesson 1
@@ -23,7 +26,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 4, lesson: "Unit Launch" },
     title: "Unit Launch: alone or together?",
     inquiryPhases: ["Engage", "Focus"],
-    book: [{ book: "SB", pages: "220-223", note: "Unit opener (Big Question) and the Part 1 Language Focus: express needs, wants and feelings." }],
+    book: [{ book: "SB", pages: "220-222", note: "Unit opener and Share What You Know (220-221) and the Part 1 Language Focus: express needs, wants and feelings (222)." }],
     slides: [
       { kind: "title", title: "Unit 4: Let's Work Together", subtitle: "Lesson 1 · Unit Launch", bigQuestion: BQ },
       {
@@ -43,7 +46,7 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Whiteboards. Answer, show, give a one-sentence reason.",
         items: [
-          { q: "Rice ___ in the Mekong Delta.", options: ["grows", "is grown", "is grow", "growing"], answer: "B. is grown" },
+          { q: "Rice ___ by farmers in the Mekong Delta.", options: ["grows", "is grown", "is grow", "growing"], answer: "B. is grown" },
           { q: "A volunteer is a person ___ works without pay.", options: ["which", "who", "where", "whose"], answer: "B. who" },
           { q: "We'll finish the poster ___ Friday.", options: ["until", "by", "during", "in"], answer: "B. by" },
           { q: "{s1} speaks English very ___.", options: ["good", "well", "goodly", "best"], answer: "B. well" },
@@ -82,11 +85,13 @@ const lessons: Deck[] = [
       {
         kind: "book",
         title: "Unit opener and Language Focus",
-        ref: { book: "SB", pages: "220-223", note: "Opener photo; the Language Focus on expressing needs, wants and feelings." },
+        ref: { book: "SB", pages: "220-222", note: "Opener photo (a pit crew at a race), Share What You Know (221), and the Language Focus song (222)." },
         steps: [
-          "Opener: one minute of silent looking. What are the people doing together? Say: I notice ... / I wonder ...",
-          "Do the Language Focus with a partner, then say one need, one want and one feeling about the paper tower.",
+          "Opener (220-221): one minute of silent looking at the pit crew working on a race car. What does each person do? Why must they work together so fast? Say: I notice ... / I wonder ...",
+          "Share What You Know (221): sketch someone doing a job, then mime it; classmates join the mime one by one until someone guesses the job.",
+          "Language Focus (222): listen to Noah's song \"Everyone Helps\" and sing along the second time. Then use the book's frames I need ... / I want ... / I feel ... to say one need, one want and one feeling about the paper tower.",
         ],
+        media: [talkAudio(4, 1, 222, "Song: Everyone Helps (p. 222)")],
       },
       {
         kind: "activity",
@@ -103,7 +108,7 @@ const lessons: Deck[] = [
           "I **want** to win. · We **decided** to build it higher.",
           "{s2} **enjoys** working in a team. · Stop talking!",
           "Would you **like** to join us? · I **hope** to finish by six.",
-          "She **finished** cutting the paper. · Don't **mind** helping.",
+          "She **finished** cutting the paper. · I don't **mind** helping.",
           "**Let** me help. · The teacher **made** us start again.",
         ],
       },
@@ -140,7 +145,6 @@ const lessons: Deck[] = [
         format: "multiple choice",
         mode: "solo",
         minutes: 8,
-        school: "Lương Thế Vinh",
         instructions: "Choose the correct form.",
         items: [
           { q: "My brother is very good at ___ models.", options: ["make", "to make", "making", "made"], answer: "C. making" },
@@ -190,6 +194,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheet 4.1: start your unit concept map for the Big Question; add to it as the unit goes on.", book: { book: "WB", pages: "4.1", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 verb-pattern items and 4 Unit 3 rewrites (passive, relative clauses)." },
           { label: "Words of the week (F): hobbies and free time", detail: "Learn 8 words (collect, chess, board game, hiking, origami, gardening, skateboard, karaoke). Write 4 sentences with enjoy / want to / good at." },
           { label: "Function of the week (B): suggestions", detail: "Practise: Let's ... / How about ...ing? / Why don't we ...? / Shall we ...? / Good idea! / I'd rather ..." },
@@ -206,7 +211,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 4, lesson: "Part 1 Language" },
     title: "Part 1 Language: what people do and are doing",
     inquiryPhases: ["Focus", "Investigate"],
-    book: [{ book: "SB", pages: "224-237", note: "Key words (224-225), thinking map and academic words (226-227), phonics: syllable division (228-229), and the first part of \"I've Got This\" (230-237)." }],
+    book: [{ book: "SB", pages: "223-237", note: "Key words (223), thinking map: theme chart (224), more key words (225), reading strategy: determine importance (226-227), phonics: syllable division (228-229), and the first part of \"I've Got This\" by Susan Henderson (230-237)." }],
     slides: [
       { kind: "title", title: "Unit 4: Let's Work Together", subtitle: "Lesson 2 · Part 1 Language", bigQuestion: BQ },
       {
@@ -214,7 +219,8 @@ const lessons: Deck[] = [
         items: [
           "I can choose between the present simple and the present continuous.",
           "I can use market and money words in sentences.",
-          "I can find the most important ideas in a story.",
+          "I can find the most important ideas in a story and the clues to its theme.",
+          "I can divide two-syllable words (ro/bot, con/stant).",
         ],
       },
       {
@@ -235,7 +241,8 @@ const lessons: Deck[] = [
       {
         kind: "vocab",
         title: "Part 1 words: markets and teamwork",
-        book: { book: "SB", pages: "224-225" },
+        book: { book: "SB", pages: "223-225", note: "Key words on 223 (the market picture) and 225 (academic words)." },
+        media: [keyWordAudio(4, 1)],
         words: [
           { word: "market / buyer / seller", meaning: "a place to buy and sell / a person who buys / a person who sells", example: "At Đồng Xuân market, sellers call out to buyers." },
           { word: "pay / money", meaning: "give money for something / coins and notes", example: "{s1} paid 20,000 đồng for a mango." },
@@ -244,21 +251,36 @@ const lessons: Deck[] = [
           { word: "plenty", meaning: "a lot; more than enough", example: "There is plenty of rice for everyone." },
           { word: "purpose", meaning: "the reason for doing something", example: "The purpose of the fair is to raise money for books." },
           { word: "cooperation", meaning: "working together for a shared goal", example: "Rowing needs cooperation." },
-          { word: "accomplish", meaning: "finish something difficult successfully", example: "Together we accomplished the whole mural in a day." },
+          { word: "accomplish", meaning: "finish something you set out to do", example: "Together we accomplished the whole mural in a day." },
         ],
       },
       {
         kind: "activity",
-        title: "Thinking map and syllable spot",
+        title: "Theme chart and determine importance",
         tag: "Vocabulary",
         mode: "pairs",
-        minutes: 10,
-        book: { book: "SB", pages: "226-229" },
+        minutes: 7,
+        book: { book: "SB", pages: "224-227", note: "Thinking map: theme chart (224); reading strategy: determine importance (226-227)." },
         steps: [
-          "Use the book's thinking map to show the steps of a team job (planning a class party): goal → jobs → who → result.",
-          "Phonics (228-229): clap and divide the two-syllable words. Which syllable is stressed? Mark it.",
+          "Theme chart (224): tell your partner a short story about a party or a fun day. Your partner makes a theme chart: clues from the title, the characters, the setting and the events, then a theme sentence.",
+          "Determine importance (226-227): read the personal narrative \"Balloons for Food\" together. Which detail matters most to YOU? Use the book's frames.",
         ],
-        prompts: ["First we ___, then ___.", "MAR-ket, ad-VER-tise-ment: the stress is on ___."],
+        prompts: ["The clue from the title is ___. So the theme is ___.", "This part is about ___. I want to know more about ___.", "When I read ___, I learn ___."],
+      },
+      {
+        kind: "activity",
+        title: "Phonics: syllable division",
+        tag: "Vocabulary",
+        mode: "pairs",
+        minutes: 6,
+        book: { book: "SB", pages: "228-229", note: "Phonics: syllable division (VCV, VCCCV) and the decodable story." },
+        steps: [
+          "Clap the syllables: every syllable has one vowel sound (mud = 1, mu-sic = 2).",
+          "Divide: one consonant between vowels (VCV: ro/bot, mu/sic); three consonants (VCCCV: con/stant, hun/dred): keep the blend together.",
+          "Listen to the decodable story on 229, then read it with a partner and divide three long words you find.",
+        ],
+        prompts: ["___ has ___ vowel sounds, so it has ___ syllables.", "I divide it ___ because the blend ___ stays together."],
+        media: [phonicsAudio(4, 1)],
       },
       {
         kind: "activity",
@@ -266,13 +288,14 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "pairs",
         minutes: 15,
-        book: { book: "SB", pages: "230-237" },
+        book: { book: "SB", pages: "230-237", note: "Realistic fiction with a third-person narrator (230); the story starts on 232." },
         steps: [
-          "Before reading: look at the title and pictures. What does 'I've got this' mean? Who do you think says it, and why?",
-          "Read the first part. Note what each sibling wants and what the main character wants.",
+          "Before reading (230-231): the genre is realistic fiction and the narrator is third person (he, she, they). Look at the title and pictures. What does 'I've got this' mean? Who do you think says it, and why?",
+          "Read to page 237: Manuel wants to bake his dad a birthday cake on his own. Note what Maria, Luis and Rosie want and what Manuel wants.",
           "Determine importance: which three events matter most for the story? Which details could you leave out?",
         ],
-        prompts: ["The most important event is ___ because ___.", "He wants to ___, but his siblings want to ___."],
+        prompts: ["The most important event is ___ because ___.", "Manuel wants to ___, but his brother and sisters want to ___."],
+        media: [readingAudio(4, 1, 230, 237, "I've Got This (pp. 230-237)")],
       },
       {
         kind: "activity",
@@ -280,7 +303,6 @@ const lessons: Deck[] = [
         tag: "Grammar",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "252-253", note: "Part 1 grammar: present tense verbs." },
         steps: [
           "Sort the sentences: USUALLY / ALWAYS true or happening NOW / AROUND NOW?",
           "Find the time words in each group (usually, every day, now, at the moment, this week).",
@@ -312,7 +334,7 @@ const lessons: Deck[] = [
           "In the exam, read the time word first: it usually tells you the tense.",
         ],
         examples: [
-          { text: "Ba's father runs a small shop. Today his daughters are helping him." },
+          { text: "Manuel's dad works every day. Today Manuel is baking him a birthday cake." },
           { text: "{s1} usually walks to school, but this week she is going by bus." },
           { text: "I need help! Are you listening?" },
           { text: "We are having a class party on Friday." },
@@ -375,11 +397,12 @@ const lessons: Deck[] = [
         frames: ["Every morning, ___.", "But today, ___ because ___.", "Right now, ___ while ___."],
         challenge: "Add a short interview with one family member who disagrees about how the business should be run.",
       },
-      { kind: "reflect", prompts: ["What does the main character want, and why won't he cooperate yet?", "Which time words help you choose the tense?", "Add one idea to the COOPERATION Frayer from the story."] },
+      { kind: "reflect", prompts: ["What does Manuel want, and why won't he accept help yet?", "Which time words help you choose the tense?", "Add one idea to the COOPERATION Frayer from the story."] },
       {
         kind: "homework",
         items: [
-          { label: "Book", detail: "Read on in the story and write the three most important events so far.", book: { book: "SB", pages: "230-237" } },
+          { label: "Book", detail: "Reread pages 230-237 and write the three most important events so far.", book: { book: "SB", pages: "230-237" } },
+          { label: "Practice Book", detail: "Sheets 4.2 (theme chart for your partner's story), 4.4 (key points of \"I've Got This\") and 4.7 (syllable division).", book: { book: "WB", pages: "4.2, 4.4, 4.7", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: present simple vs present continuous, state verbs." },
           { label: "Words of the week (F)", detail: "Write 5 sentences about what your family members usually do and what they are doing now." },
         ],
@@ -395,7 +418,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 4, lesson: "Part 1 Reading" },
     title: "Part 1 Reading: let's sort it out",
     inquiryPhases: ["Investigate", "Organize"],
-    book: [{ book: "SB", pages: "238-248", note: "The rest of \"I've Got This\" (238-245) and think and respond (246-248)." }],
+    book: [{ book: "SB", pages: "238-247", note: "The rest of \"I've Got This\" (238-245, with Meet the Author on 245) and think and respond: talk about it, write about it, theme chart (246-247)." }],
     slides: [
       { kind: "title", title: "Unit 4: Let's Work Together", subtitle: "Lesson 3 · Part 1 Reading", bigQuestion: BQ },
       {
@@ -429,11 +452,12 @@ const lessons: Deck[] = [
         minutes: 16,
         book: { book: "SB", pages: "238-245" },
         steps: [
-          "Finish the story. Mark the moment the main character changes his mind. What makes him change?",
-          "Organize: a before / turning point / after chart for the character (what he does, says, feels).",
-          "Which is more important in the end: the surprise or how they made it? Find evidence.",
+          "Finish the story. Mark the moment Manuel changes his mind and asks Maria and Luis for help. What makes him change?",
+          "Organize: a before / turning point / after chart for Manuel (what he does, says, feels).",
+          "Which is more important in the end: the surprise for Dad or how they made it? Find evidence.",
         ],
-        prompts: ["At first he ___, but after ___ he ___.", "The turning point is when ___.", "I think the author wants us to learn ___."],
+        prompts: ["At first Manuel ___, but after ___ he ___.", "The turning point is when ___.", "I think the author wants us to learn ___."],
+        media: [readingAudio(4, 1, 238, 245, "I've Got This (pp. 238-245)")],
       },
       {
         kind: "activity",
@@ -441,9 +465,13 @@ const lessons: Deck[] = [
         tag: "Review",
         mode: "pairs",
         minutes: 8,
-        book: { book: "SB", pages: "246-248" },
-        steps: ["Answer the book's questions with page evidence.", "Talk about it: when do you prefer to say 'I've got this' and work alone? When is a team better?"],
-        prompts: ["On page ___ it shows ___.", "I prefer to work alone when ___, but a team is better when ___."],
+        book: { book: "SB", pages: "246-247" },
+        steps: [
+          "Talk About It and Write About It (246): answer the book's questions with page evidence; write two sentences on how Manuel felt at the beginning and two on how he felt at the end.",
+          "Theme chart (247): clues from the title, characters, setting and events, then paraphrase the theme in one sentence of your own.",
+          "Talk: when do you prefer to say 'I've got this' and work alone? When is a team better?",
+        ],
+        prompts: ["On page ___ it shows ___.", "The theme is ___.", "I prefer to work alone when ___, but a team is better when ___."],
       },
       {
         kind: "activity",
@@ -470,7 +498,7 @@ const lessons: Deck[] = [
         ],
         explanation: [
           "Exam dialogue items test the reply: match the function (suggestion → agree / refuse; thanks → you're welcome; apology → that's all right).",
-          "Some phrasal verbs separate: set the table up, turn the offer down. With a pronoun they must separate: turn it down, NOT turn down it.",
+          "Some phrasal verbs separate: set the stall up, turn the offer down. With a pronoun they must separate: turn it down, NOT turn down it.",
         ],
         examples: [
           { text: "Why don't we set up a lemonade stall? — Sure, why not?" },
@@ -520,8 +548,8 @@ const lessons: Deck[] = [
         mode: "solo",
         minutes: 16,
         steps: [
-          "Retell the story as one of the siblings who wanted to work together.",
-          "Write 10-12 sentences: what you suggested, how your brother reacted, what changed his mind, how the surprise went.",
+          "Retell the story as Maria or Luis, who wanted to help from the start.",
+          "Write 10-12 sentences: what you offered, how your brother reacted, what changed his mind, how the surprise went.",
           "Include at least two suggestions in speech marks and two phrasal verbs.",
         ],
       },
@@ -529,17 +557,18 @@ const lessons: Deck[] = [
         kind: "project",
         project: "writing",
         title: "The same story, another voice",
-        goal: "Retell the story from the point of view of a sibling, showing how the team finally worked together.",
+        goal: "Retell the story from the point of view of Maria or Luis, showing how the team finally worked together.",
         thinking: "Create",
         steps: ["Start with what you wanted to do.", "Show the conflict with real dialogue.", "End with what you learned about working together."],
         criteria: ["Dialogue punctuated correctly, with two suggestions.", "Two correct phrasal verbs.", "The reader understands the character's change."],
         frames: ["\"Why don't we ___?\" I asked.", "He shook his head. \"I've got this,\" he said.", "In the end, we worked it out together."],
         challenge: "Write the last paragraph twice: once where the team fails and once where it succeeds. Which ending is better for the reader, and why?",
       },
-      { kind: "reflect", prompts: ["What made the character change?", "Which suggestion frame needs -ing?", "Is 'I've got this' ever the best way to get things done?"] },
+      { kind: "reflect", prompts: ["What made Manuel change?", "Which suggestion frame needs -ing?", "Is 'I've got this' ever the best way to get things done?"] },
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheets 4.6 (theme chart for \"I've Got This\") and 4.8 (read the passage aloud with good intonation; record it if you can).", book: { book: "WB", pages: "4.6, 4.8", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "8 dialogue-reply items and 6 phrasal-verb gaps." },
           { label: "Listening (E)", detail: "Listen to the story's audio and write down every suggestion the characters make." },
           { label: "Function of the week (B)", detail: "Plan a family weekend with suggestions; write the dialogue (6 lines)." },
@@ -556,14 +585,15 @@ const lessons: Deck[] = [
     covers: { unitFrom: 4, lesson: "Part 1 Review" },
     title: "Part 1 Review: everyone, each, both (checkpoint)",
     inquiryPhases: ["Organize", "Generalize", "Reflect"],
-    book: [{ book: "SB", pages: "249-253", note: "The story \"Ba's Business\" (249-251) and respond and extend with grammar: present tense verbs (252-253)." }],
+    book: [{ book: "SB", pages: "248-253", note: "Word work: prefixes super-, pre-, re- (248), the story \"Ba's Business\" by Grace Lin (249-251), and respond and extend: compare characters (252) and grammar: present-tense action verbs (253)." }],
     slides: [
       { kind: "title", title: "Unit 4: Let's Work Together", subtitle: "Lesson 4 · Part 1 Review", bigQuestion: BQ },
       {
         kind: "objectives",
         items: [
-          "I can make verbs agree with tricky subjects: everyone, each, both, neither, a team.",
-          "I can compare how two families work together in two stories.",
+          "I can make present-tense verbs agree with their subjects, even tricky ones: everyone, each, both, neither, a team.",
+          "I can compare how Manuel and Ba change in two stories.",
+          "I can work out words with the prefixes super-, pre- and re-.",
           "I can state what I understand about the best way to get things done.",
         ],
       },
@@ -581,17 +611,32 @@ const lessons: Deck[] = [
       },
       {
         kind: "activity",
+        title: "Word work: super-, pre-, re-",
+        tag: "Vocabulary",
+        mode: "pairs",
+        minutes: 5,
+        book: { book: "SB", pages: "248", note: "Word work: prefixes." },
+        steps: [
+          "A prefix comes at the start of a word and changes its meaning: super- (bigger than), pre- (before), re- (again or back).",
+          "Work out: supermarket, preheat, prepay, replay, rebuild, reread. Say each meaning in a sentence.",
+          "Do the book's Try It Together questions with your partner.",
+        ],
+        prompts: ["re- means ___, so rebuild means ___.", "A supermarket is ___."],
+      },
+      {
+        kind: "activity",
         title: "Read: \"Ba's Business\" and compare",
         tag: "Reading",
         mode: "pairs",
         minutes: 15,
-        book: { book: "SB", pages: "249-251" },
+        book: { book: "SB", pages: "249-251", note: "Realistic fiction; the comparison chart that follows is on 252." },
         steps: [
-          "Read the story about two sisters who help their father's business.",
-          "Cross-comparison chart for both Part 1 stories: the goal, who helps, the problem, how they solve it, what each child gives.",
+          "Read the story: Ba sells sweet egg tarts (daan taht) at a street fair, but nobody stops at his booth. What do his daughters Hannah and Rose do?",
+          "Comparison chart (252): how are Manuel and Ba at the beginning and at the end of their stories? Why does each one change?",
           "What is the same about how the two families get things done? What is different?",
         ],
-        prompts: ["In both stories, ___.", "In \"I've Got This\" ___, while in \"Ba's Business\" ___."],
+        prompts: ["At the beginning, ___ is ___. At the end, he is ___.", "He changes because ___.", "In \"I've Got This\" ___, while in \"Ba's Business\" ___."],
+        media: [readingAudio(4, 1, 249, 251, "Ba's Business (pp. 249-251)")],
       },
       {
         kind: "activity",
@@ -599,19 +644,19 @@ const lessons: Deck[] = [
         tag: "Grammar",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "252-253" },
+        book: { book: "SB", pages: "253", note: "Grammar: present-tense action verbs." },
         steps: [
+          "Start with the book's rules (253): which subjects take -s? Which never do?",
           "Circle the subject and the verb in each sentence. Is the subject singular or plural, even if it doesn't look like it?",
-          "Sort into SINGULAR (-s) and PLURAL (no -s).",
-          "Write your rule for everyone, each, both and neither ... nor.",
+          "Sort into SINGULAR (-s) and PLURAL (no -s). Write your rule for everyone, each, both and neither ... nor.",
         ],
         prompts: [
           "Everyone helps with the cooking.",
           "Each sister has a job.",
-          "Both sisters work at the stall.",
+          "Both sisters work at the booth.",
           "My family lives in Hà Đông.",
-          "Neither the father nor the girl wants to stop.",
-          "The children and their dad sell flowers.",
+          "Neither the father nor the girls want to stop.",
+          "The girls and their dad sell egg tarts.",
         ],
       },
       {
@@ -619,6 +664,7 @@ const lessons: Deck[] = [
         title: "Subject-verb agreement with tricky subjects",
         hook: "Find the real subject, then decide: one (verb + s) or more than one.",
         form: [
+          { label: "The book's rule", pattern: "he / she / it (one other person or thing) + verb-s: Rosie helps. · I / you / we / they + verb: We help. · be: I am, he / she / it is, you / we / they are" },
           { label: "Singular", pattern: "everyone, everybody, someone, nobody, each, every + noun, a team / family (usually) + verb-s" },
           { label: "Plural", pattern: "both, A and B, the children, people, many + noun + verb (no -s)" },
           { label: "neither ... nor / either ... or", pattern: "the verb agrees with the nearer subject: Neither the boys nor the girl wants ..." },
@@ -692,12 +738,13 @@ const lessons: Deck[] = [
         steps: ["State the team's shared goal.", "Write six rules with reasons.", "Add what happens if someone breaks a rule."],
         criteria: ["Six rules with correct subject-verb agreement.", "Each rule has a reason linked with because or so.", "The rules reflect our class generalization."],
         frames: ["Everyone listens when ___.", "Each member has ___, so ___.", "Nobody ___ because ___."],
-        challenge: "Test your contract on one of the stories: which rule would have helped the main character, and how?",
+        challenge: "Test your contract on one of the stories: which rule would have helped Manuel, and how?",
       },
       { kind: "reflect", prompts: ["What is our class sentence about getting things done?", "Which checkpoint question was hardest? What will you do about it?", "everyone: singular or plural? How will you remember?"] },
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheets 4.3 and 4.5 (present-tense verbs; am, is, are), 4.9 (double-entry log for \"Ba's Business\"), 4.10 (comparison chart) and 4.11 (present-tense action verbs).", book: { book: "WB", pages: "4.3, 4.5, 4.9-4.11", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "Correct your checkpoint mistakes in your error log, with the rule and a new example." },
           { label: "Words of the week (F): money and shopping", detail: "Learn 8 words (price, change, receipt, discount, cheap, expensive, afford, cash). Write a short shopping dialogue." },
         ],
@@ -713,14 +760,15 @@ const lessons: Deck[] = [
     covers: { unitFrom: 4, lesson: "Part 2 Language" },
     title: "Part 2 Language: must, should, have to",
     inquiryPhases: ["Engage", "Focus"],
-    book: [{ book: "SB", pages: "254-261", note: "Part 2 Language Focus: persuade (254-255), key words (256-257), thinking map and academic words (258-259), phonics: al, aw, au (260-261)." }],
+    book: [{ book: "SB", pages: "254-261", note: "Part 2 Language Focus: persuade (254), key words (255), thinking map: opinion chart (256), more key words (257), reading strategy: summarize (258-259), phonics: al, aw, au (260-261)." }],
     slides: [
       { kind: "title", title: "Unit 4: Let's Work Together", subtitle: "Lesson 5 · Part 2 Language", bigQuestion: BQ },
       {
         kind: "objectives",
         items: [
           "I can use can, could, should, may, must, have to, mustn't and don't have to.",
-          "I can persuade with a reason and an example.",
+          "I can persuade with must, should and could, a reason and an example.",
+          "I can show an opinion and its evidence in a chart, and summarize a text.",
           "I can talk about how farmers grow food for the future.",
         ],
       },
@@ -745,24 +793,26 @@ const lessons: Deck[] = [
         tag: "Speaking",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "254-255" },
+        book: { book: "SB", pages: "254" },
         steps: [
-          "Do the book's persuade talk with your partner.",
+          "Listen to Clara's chant \"A Healthy Idea\" (254) and chant along the second time. Find the book's three persuading frames: You / we must ..., should ..., could ....",
           "Then: 60 seconds to persuade your partner to try a new food, a new sport, or to lend you something. Your partner is hard to persuade.",
           "What worked best: a reason, an example, a feeling, or a promise?",
         ],
-        prompts: ["You should try ___ because ___.", "For example, ___.", "If you ___, I promise ___."],
+        prompts: ["We must ___.", "You should try ___ because ___. For example, ___.", "You could ___. If you ___, I promise ___."],
+        media: [talkAudio(4, 2, 254, "Chant: A Healthy Idea (p. 254)")],
       },
       {
         kind: "vocab",
         title: "Part 2 words: farming and the future",
-        book: { book: "SB", pages: "256-257" },
+        book: { book: "SB", pages: "255-257", note: "Key words on 255 (farm work) and 257 (academic words)." },
+        media: [keyWordAudio(4, 2), wordAudio(4, 2, ["alternative", "conservation", "future", "method", "sustain"], "Academic words")],
         words: [
           { word: "agriculture / farmer", meaning: "growing crops and keeping animals / a person who does it", example: "Agriculture is important in the Mekong Delta." },
           { word: "crop / field", meaning: "a plant grown for food / an area of land for crops", example: "Rice is the main crop in these fields." },
           { word: "harvest", meaning: "collect the crop when it is ready; also the noun", example: "Families help each other at harvest time." },
           { word: "plow", meaning: "turn over the soil before planting (UK: plough)", example: "Long ago, buffaloes helped farmers plow the fields." },
-          { word: "method", meaning: "a way of doing something", example: "Planting fish and rice together is a smart method." },
+          { word: "method", meaning: "a way of doing something", example: "Raising fish in the rice fields is a clever method." },
           { word: "conservation", meaning: "protecting nature and not wasting things", example: "Water conservation matters in the dry season." },
           { word: "alternative", meaning: "another choice", example: "Ducks are an alternative to chemical sprays." },
           { word: "sustain / future", meaning: "keep something going / the time to come", example: "Good soil can sustain crops far into the future." },
@@ -770,16 +820,31 @@ const lessons: Deck[] = [
       },
       {
         kind: "activity",
-        title: "Thinking map and sound spot",
+        title: "Opinion chart and summarize",
         tag: "Vocabulary",
         mode: "pairs",
-        minutes: 10,
-        book: { book: "SB", pages: "258-261" },
+        minutes: 7,
+        book: { book: "SB", pages: "256-259", note: "Thinking map: opinion chart (256); reading strategy: summarize (258-259)." },
         steps: [
-          "Fill the thinking map: a farming problem → two methods → which one sustains the land longer?",
-          "Phonics (260-261): read the al / aw / au words aloud (chalk, small, draw, hawk, launch, caused). Do they share a sound?",
+          "Opinion chart (256): tell your partner an opinion about farming or food with three reasons. Your partner writes the opinion in the top box and each piece of evidence in a box below.",
+          "Summarize (258-259): read the persuasive speech \"Window Dressing\". What does the writer want you to do? Summarize one paragraph in your own words with the book's frames.",
         ],
-        prompts: ["One method is ___. An alternative is ___.", "The ___ method is better for the future because ___."],
+        prompts: ["Opinion: I think ___. Evidence: ___.", "This part is about ___. I should remember ___."],
+      },
+      {
+        kind: "activity",
+        title: "Phonics: al, aw, au",
+        tag: "Vocabulary",
+        mode: "pairs",
+        minutes: 6,
+        book: { book: "SB", pages: "260-261", note: "Phonics: vowel sounds and spellings al, aw, au, and the decodable text." },
+        steps: [
+          "Read the al / aw / au words aloud (chalk, small, draw, hawk, launch, caused). Do they share a vowel sound?",
+          "Sort more words by spelling: talk, yawn, haul, fall, crawl, August.",
+          "Listen to the decodable text on 261, then read it with a partner and list every al / aw / au word.",
+        ],
+        prompts: ["___ and ___ have the same vowel sound, but different spellings.", "The spelling in ___ is ___."],
+        media: [phonicsAudio(4, 2)],
       },
       {
         kind: "activity",
@@ -787,7 +852,7 @@ const lessons: Deck[] = [
         tag: "Grammar",
         mode: "pairs",
         minutes: 7,
-        book: { book: "SB", pages: "282-283", note: "Part 2 grammar: helping verbs." },
+        book: { book: "SB", pages: "283", note: "Part 2 grammar: the Teacher's Edition teaches helping verbs (can, could, should, may, must, has to, have to) with this page; its Grammar Rules box (forms of be and have) is in Lesson 7." },
         steps: [
           "Sort the farm-safety signs: RULE (no choice) / ADVICE / ABILITY / PERMISSION / POSSIBILITY.",
           "What is the difference between 'You mustn't enter' and 'You don't have to enter'?",
@@ -838,7 +903,7 @@ const lessons: Deck[] = [
         instructions: "Rewrite each sentence so that it means the same, using the word in brackets.",
         items: [
           { q: "It isn't necessary for you to bring food. (have)", answer: "You don't have to bring food." },
-          { q: "Smoking is not allowed here. (mustn't)", answer: "You mustn't smoke here." },
+          { q: "Running is not allowed by the pool. (mustn't)", answer: "You mustn't run by the pool." },
           { q: "I advise you to see a doctor. (should)", answer: "You should see a doctor." },
           { q: "Perhaps it will snow in Sa Pa tonight. (might)", answer: "It might snow in Sa Pa tonight." },
           { q: "{s2} was able to read when she was four. (could)", answer: "{s2} could read when she was four." },
@@ -885,6 +950,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheets 4.12 (opinion chart), 4.13 and 4.15 (helping verbs), 4.16 (key word bingo card) and 4.18 (al, aw, au).", book: { book: "WB", pages: "4.12-4.13, 4.15-4.16, 4.18", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 modal rewrites, including mustn't vs don't have to." },
           { label: "Words of the week (F): jobs and workplaces", detail: "Learn 8 words (engineer, pilot, vet, mechanic, factory, office, hospital, farm). Write what each person has to do." },
           { label: "Function of the week (B): persuading", detail: "Write a 6-line dialogue persuading a family member to try something new." },
@@ -901,7 +967,7 @@ const lessons: Deck[] = [
     covers: { unitFrom: 4, lesson: "Part 2 Reading" },
     title: "Part 2 Reading: if I were a farmer",
     inquiryPhases: ["Investigate", "Organize", "Generalize"],
-    book: [{ book: "SB", pages: "262-275", note: "The persuasive article \"A Better Way\" (262-273) and think and respond (274-275)." }],
+    book: [{ book: "SB", pages: "262-275", note: "The persuasive article \"A Better Way\" by Juan Quintana (262-273) and think and respond: talk about it, write about it, opinion chart (274-275)." }],
     slides: [
       { kind: "title", title: "Unit 4: Let's Work Together", subtitle: "Lesson 6 · Part 2 Reading", bigQuestion: BQ },
       {
@@ -935,12 +1001,13 @@ const lessons: Deck[] = [
         minutes: 18,
         book: { book: "SB", pages: "262-273" },
         steps: [
-          "Preview: the title, photos and headings. What is the 'better way' going to be better than?",
-          "Read the article about two explorers who teach farmers. Highlight the writer's opinion in one colour, reasons in another, evidence (facts, numbers, examples) in a third.",
-          "Organize: an opinion - reasons - evidence chart.",
+          "Preview: the title, photos and section headings (a persuasive article is divided into sections). What is the 'better way' going to be better than?",
+          "Read about Paola Segura and Cid Simões from Brazil, who teach farmers sustainable agriculture instead of slash-and-burn. Summarize each section in one sentence.",
+          "Highlight the writer's opinion in one colour, reasons in another, evidence (facts, examples, the 5 × 5 System) in a third, then organize them in an opinion - reasons - evidence chart.",
           "Which reason is the strongest? Which has the weakest evidence?",
         ],
         prompts: ["The writer thinks ___.", "One reason is ___, and the evidence is ___.", "The strongest reason is ___ because ___."],
+        media: [readingAudio(4, 2, 262, 273, "A Better Way (pp. 262-273)")],
       },
       {
         kind: "activity",
@@ -949,8 +1016,12 @@ const lessons: Deck[] = [
         mode: "pairs",
         minutes: 7,
         book: { book: "SB", pages: "274-275" },
-        steps: ["Answer the book's questions with evidence.", "Did the article persuade you? Rate it 1-5 and give one reason."],
-        prompts: ["I give it ___ because ___."],
+        steps: [
+          "Talk About It and Write About It (274): answer the book's questions with evidence from the article.",
+          "Opinion chart (275): add the evidence from pages 270-273, then explain the author's opinion to your partner.",
+          "Did the article persuade you? Rate it 1-5 and give one reason.",
+        ],
+        prompts: ["The author thinks ___. One piece of evidence is ___.", "I give it ___ because ___."],
       },
       {
         kind: "activity",
@@ -1053,6 +1124,7 @@ const lessons: Deck[] = [
       {
         kind: "homework",
         items: [
+          { label: "Practice Book", detail: "Sheets 4.14 (key points of \"A Better Way\"), 4.17 (opinion chart for the article) and 4.19 (read the passage aloud with good phrasing).", book: { book: "WB", pages: "4.14, 4.17, 4.19", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: first vs second conditional, If I were you." },
           { label: "Listening (E)", detail: "Listen to the article's audio and write down the writer's three reasons." },
           { label: "Words of the week (F)", detail: "Write 5 'If I were ...' sentences about jobs from last week's words." },
@@ -1069,14 +1141,15 @@ const lessons: Deck[] = [
     covers: { unitFrom: 4, lesson: "Writing Project" },
     title: "Writing Project: a persuasive essay (and a lazy grasshopper)",
     inquiryPhases: ["Organize", "Transfer"],
-    book: [{ book: "SB", pages: "276-287", note: "Word work and the fable \"The Ant and the Grasshopper\" (276-281), respond and extend with grammar (282-283), and the writing project: a persuasive essay (284-287)." }],
+    book: [{ book: "SB", pages: "276-287", note: "Word work: classify words (276), the Aesop fable \"The Ant and the Grasshopper\" retold by Shirleyann Costigan (277-281), respond and extend: compare authors' purposes (282) and grammar: forms of be and have (283), and the writing project: a persuasive essay (284-287)." }],
     slides: [
       { kind: "title", title: "Unit 4: Let's Work Together", subtitle: "Lesson 7 · Writing Project", bigQuestion: BQ },
       {
         kind: "objectives",
         items: [
           "I can talk about past regrets with should have and If ... had ..., would have (stretch).",
-          "I can find the moral of a fable and argue about it.",
+          "I can find the moral of a fable, compare authors' purposes and argue about it.",
+          "I can use am / is / are and have / has with the right subject.",
           "I can write a persuasive essay with an opinion, reasons, evidence and a conclusion.",
         ],
       },
@@ -1101,13 +1174,28 @@ const lessons: Deck[] = [
         tag: "Reading",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "276-281" },
+        book: { book: "SB", pages: "277-281", note: "Word work on 276 first: classify farm words in a word web." },
         steps: [
-          "Word work (276), then read the fable aloud in parts: narrator, Ant, Grasshopper.",
-          "What is the moral? Say it in your own words in one sentence.",
+          "Word work (276): classify words in a word web (farm: farmer, field, crop, plow, harvest). Then read the fable aloud in parts: narrator, Ant, Grasshopper.",
+          "In summer the ant gathers food for winter while the grasshopper plays his fiddle. What happens when winter comes? What is the moral? Say it in your own words in one sentence.",
           "Is the Ant kind or unkind at the end? Is the moral fair? Prepare one reason each way.",
         ],
         prompts: ["The moral is that ___.", "The Ant is right because ___, but ___."],
+        media: [readingAudio(4, 2, 277, 281, "The Ant and the Grasshopper (pp. 277-281)")],
+      },
+      {
+        kind: "activity",
+        title: "Respond and extend: purposes, be and have",
+        tag: "Grammar",
+        mode: "pairs",
+        minutes: 7,
+        book: { book: "SB", pages: "282-283", note: "Compare authors' purposes (282); grammar: forms of be and have (283)." },
+        steps: [
+          "Comparison chart (282): the topic and the author's purpose for \"A Better Way\" and for the fable (inform, entertain, persuade, teach a lesson). Which purpose do both authors share?",
+          "Grammar (283): be and have change with the subject. Fill the chart: I am / have; you, we, they are / have; he, she, it is / has.",
+          "Write two sentences about pictures in \"A Better Way\" with is / are and has / have. Your partner checks the subject.",
+        ],
+        prompts: ["The author's purpose is ___ because ___.", "Both authors want to ___.", "The farmer has ___. The orchids are ___."],
       },
       {
         kind: "grammar",
@@ -1151,11 +1239,11 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "pairs",
         minutes: 12,
-        book: { book: "SB", pages: "282-285", note: "Respond and extend, grammar, the model essay and the checklist." },
+        book: { book: "SB", pages: "284-285", note: "The prompt, the model essay and its checklist (284); prewrite: choose a topic, gather evidence, get organized with an opinion chart (285)." },
         steps: [
-          "Read the book's model persuasive essay and checklist. Find the opinion, the reasons, the evidence, the conclusion.",
-          "Choose your topic: 'Students should do one team project every month' / 'It is better to work alone than in a group' / your own.",
-          "Plan: opinion; three reasons, each with evidence or an example; a conclusion that calls the reader to act.",
+          "Read the book's prompt (an essay about the best way to do something at school or in your neighbourhood), the model essay and the checklist. Find the opinion in the first paragraph, the evidence, and the opinion restated at the end.",
+          "Choose your topic: 'Our class should run a recycling team' / 'Every street should have a monthly clean-up day' / 'Group projects are the best way to learn' / your own.",
+          "Plan in an opinion chart: opinion; three reasons, each with evidence or an example; a conclusion that calls the reader to act.",
         ],
         prompts: ["In my opinion, ___.", "Firstly, ___. For example, ___.", "In conclusion, ___."],
       },
@@ -1179,11 +1267,11 @@ const lessons: Deck[] = [
         tag: "Writing",
         mode: "solo",
         minutes: 25,
-        book: { book: "SB", pages: "286-287", note: "Draft, revise and edit with the editing marks." },
+        book: { book: "SB", pages: "285-287", note: "Draft (285), revise, edit and proofread (286), present and share (287)." },
         steps: [
           "Set your goal at the top (e.g. 'one second conditional, one modal of advice, a counter-argument').",
           "Write 120-150 words: an introduction with your opinion, two or three body paragraphs, a conclusion.",
-          "Edit with the editing marks: agreement first (everyone has ...), then modals and conditionals, then spelling.",
+          "Revise with the revising marks, then edit: agreement first (everyone has ..., forms of be and have), then modals and conditionals, then spelling (drop the final e before -ing: make → making).",
           "Swap with a partner for two stars and a wish; make the change they wish for.",
         ],
       },
@@ -1207,6 +1295,7 @@ const lessons: Deck[] = [
         kind: "homework",
         items: [
           { label: "Final copy", detail: "Write the final copy of your persuasive essay and read it aloud to your family. Note one thing they disagreed with.", book: { book: "SB", pages: "286-287" } },
+          { label: "Practice Book", detail: "Sheets 4.20 (new words from the fable), 4.21 (compare purposes), 4.22 (be and have), and the writing project sheets 4.23-4.26 (score your essay for ideas, opinion chart, revising, editing).", book: { book: "WB", pages: "4.20-4.26", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "8 items: linkers (firstly, moreover, however, in conclusion) and should have." },
           { label: "Function of the week (B)", detail: "Agreeing and disagreeing strongly and politely: write 6 replies to the motion 'Homework should be banned'." },
         ],
@@ -1222,20 +1311,20 @@ const lessons: Deck[] = [
     covers: { unitFrom: 4, lesson: "Unit Wrap-Up" },
     title: "Unit Wrap-Up: what they said (mock test)",
     inquiryPhases: ["Generalize", "Transfer", "Reflect"],
-    book: [{ book: "SB", pages: "288-289", note: "Unit wrap-up: the Big Question and the unit review." }],
+    book: [{ book: "SB", pages: "288-289", note: "Unit wrap-up: complete the concept map and write a description (288); share your ideas: write a skit, be a reporter, do a chore together, write a letter (289)." }],
     slides: [
       { kind: "title", title: "Unit 4: Let's Work Together", subtitle: "Lesson 8 · Unit Wrap-Up", bigQuestion: BQ },
       {
         kind: "objectives",
         items: [
-          "I can show what I learned in a 30-minute mock test in the Nguyễn Tất Thành format.",
+          "I can show what I learned in a 30-minute mock test in the selective schools' format.",
           "I can report what people said (reported statements).",
           "I can test our big idea on a new case and answer the Big Question.",
         ],
       },
       {
         kind: "check",
-        title: "End-of-unit mock test (Nguyễn Tất Thành format)",
+        title: "Unit mock test (selective-school format)",
         assessment: "rh-l3-u4-mock",
         mode: "solo",
         minutes: 30,
@@ -1262,11 +1351,12 @@ const lessons: Deck[] = [
         minutes: 10,
         steps: [
           "Before: has your family ever volunteered? Tell your partner in 30 seconds.",
-          "Watch the Unit 4 video. Note who works together, what they do, and what they achieve (numbers!).",
+          "Watch the Unit 4 video. Note who works together, what they do, when they do it, and what they achieve (numbers!).",
           "Report two things a volunteer said or might have said, starting 'She said that ...'.",
         ],
         prompts: ["The volunteers ___.", "She said that ___.", "This shows that people get things done when ___."],
-        teacherNote: "Play the Reach Higher 3A video for Unit 4, Clean Up the Coasts (file 'Video Level 3A - Reach Higher 1e_4' in the school's copy; not hosted in the app).",
+        teacherNote: "The link plays the Reach Higher 3A video for Unit 4, Clean Up the Coasts, from the school's Drive (file 'Video Level 3A - Reach Higher 1e_4'; not hosted in the app). Listen for: the yearly clean-up on the first day of autumn, the Ocean Conservancy's clean-ups since 1986, rubbish carried downstream by rivers, and about a thousand kilograms collected in ninety minutes.",
+        ...(video ? { media: [video] } : {}),
       },
       {
         kind: "grammar",
@@ -1303,7 +1393,7 @@ const lessons: Deck[] = [
         items: [
           { q: "\"I like working in a team,\" said Nam.", answer: "Nam said (that) he liked working in a team." },
           { q: "\"We will finish tomorrow,\" the girls said.", answer: "The girls said (that) they would finish the next day." },
-          { q: "\"I can't come,\" {s3} told me.", answer: "{s3} told me (that) she couldn't come." },
+          { q: "\"I can't come,\" {s3} told me.", answer: "{s3} told me (that) he / she couldn't come." },
         ],
       },
       {
@@ -1320,6 +1410,16 @@ const lessons: Deck[] = [
         frames: ["Our idea fits because ___.", "We need to change it, because ___.", "If we did the tower again, we would ___.", "I used to think ___, but now I think ___."],
         prompts: ["Is working together always the best way?", "What did each person give?", "When is working alone better?"],
         fluencyTip: "End your turn with a question to the next speaker: it keeps the discussion moving.",
+      },
+      {
+        kind: "book",
+        title: "Unit wrap-up: concept map and share your ideas",
+        ref: { book: "SB", pages: "288-289", note: "Talk Together and the concept map, Write a Description (288); Share Your Ideas (289)." },
+        steps: [
+          "Concept map (288): add your last answers to the Big Question from every selection and our discussions.",
+          "Write a description (288): choose one way from the map and describe people using it to get something done.",
+          "Share your ideas (289): choose one option to finish at home or next lesson: a skit, a reporter interview, a classroom chore done together, or a letter to a city leader about recycling.",
+        ],
       },
       { kind: "reflect", prompts: ["Answer the Big Question in one sentence of your own.", "Which two grammar points will you practise from your mock?", "Look back at Units 2-4: which big idea surprised you most?"] },
       {
@@ -1359,11 +1459,12 @@ export const rhL3U4: Unit = {
   ],
   grammarStrand: [
     { point: "Verb patterns: to + verb, verb-ing, bare verb (let / make)", lesson: 1, source: "added" },
-    { point: "Present simple vs present continuous; state verbs", lesson: 2, source: "book" },
+    { point: "Present simple vs present continuous; state verbs", lesson: 2, source: "added" },
     { point: "Suggestions (Let's / How about -ing / Why don't we); teamwork phrasal verbs", lesson: 3, source: "added" },
-    { point: "Subject-verb agreement with tricky subjects", lesson: 4, source: "book" },
-    { point: "Helping verbs: can, could, should, may, might, must, have to; mustn't vs don't have to", lesson: 5, source: "book" },
+    { point: "Present-tense action verbs: subject-verb agreement, with tricky subjects (everyone, each, both, neither ... nor)", lesson: 4, source: "book" },
+    { point: "Helping verbs: can, could, should, may, must, has to, have to (+ might; mustn't vs don't have to)", lesson: 5, source: "book" },
     { point: "Second conditional; If I were you", lesson: 6, source: "stretch" },
+    { point: "Forms of be and have; subject-verb agreement", lesson: 7, source: "book" },
     { point: "should have; third conditional; wish + past perfect", lesson: 7, source: "stretch" },
     { point: "Reported statements; say vs tell", lesson: 8, source: "stretch" },
   ],
