@@ -64,10 +64,10 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Answer on your mini whiteboard. When the teacher says 'Show!', hold it up, then give your reason in one sentence.",
         items: [
-          { q: "{s1} ___ Grandma with the cooking every evening.", options: ["help", "helps", "helping", "to help"], answer: "B. helps", why: "she / he / it + verb-s in the present simple" },
+          { q: "{s1} ___ Grandma with the cooking every evening.", options: ["help", "helping", "helps", "to help"], answer: "C. helps", why: "she / he / it + verb-s in the present simple" },
           { q: "Choose the complete sentence.", options: ["Cleaning the park on Sunday.", "The volunteers cleaned the park.", "Because the park was dirty.", "Lots of plastic bags."], answer: "B", why: "it has a subject and a verb and makes sense alone" },
-          { q: "Sharing your lunch with a friend is an act of ___.", options: ["kind", "kindly", "kindness", "unkind"], answer: "C. kindness", why: "after 'an act of' we need a noun: kind → kindness" },
-          { q: "The broken swing was a problem, but {s2} found a ___.", options: ["solve", "solution", "solving", "solved"], answer: "B. solution", why: "a + noun: solve → solution" },
+          { q: "Sharing your lunch with a friend is an act of ___.", options: ["kindness", "kind", "kindly", "unkind"], answer: "A. kindness", why: "after 'an act of' we need a noun: kind → kindness" },
+          { q: "The broken swing was a problem, but {s2} found a ___.", options: ["solve", "solving", "solved", "solution"], answer: "D. solution", why: "a + noun: solve → solution" },
           { q: "Which word is a compound word (two words joined into one)?", options: ["kindness", "sailboat", "solution", "volunteer"], answer: "B. sailboat", why: "sail + boat; the others are one word with an ending or several syllables" },
         ],
       },
@@ -292,10 +292,10 @@ const lessons: Deck[] = [
         instructions: "Whiteboards. Answer, show, give a reason.",
         items: [
           { q: "___ does a koala sleep every day? About 20 hours.", options: ["How often", "How long", "How much", "How far"], answer: "B. How long" },
-          { q: "In the dry season, the ___ of water in the countryside goes down.", options: ["supply", "behavior", "scarce", "react"], answer: "A. supply", why: "the + noun + of: the supply of water" },
-          { q: "Where ___ {s1} put the seeds yesterday?", options: ["does", "do", "did", "is"], answer: "C. did" },
-          { q: "Choose the best reply. 'Would you like some water?'", options: ["Yes, I would like.", "Yes, please.", "No, I don't.", "You're welcome."], answer: "B. Yes, please.", why: "function of the week: offers" },
-          { q: "When the weather gets cold, the number of butterflies ___: there are fewer of them.", options: ["increases", "decreases", "supplies", "behaves"], answer: "B. decreases", why: "decrease = become less (Lesson 1 science words)" },
+          { q: "In the dry season, the ___ of water in the countryside goes down.", options: ["behavior", "scarce", "react", "supply"], answer: "D. supply", why: "the + noun + of: the supply of water" },
+          { q: "Where ___ {s1} put the seeds yesterday?", options: ["did", "does", "do", "is"], answer: "A. did" },
+          { q: "Choose the best reply. 'Would you like some water?'", options: ["Yes, I would like.", "No, I don't.", "Yes, please.", "You're welcome."], answer: "C. Yes, please.", why: "function of the week: offers" },
+          { q: "When the weather gets cold, the number of butterflies ___: there are fewer of them.", options: ["increases", "supplies", "behaves", "decreases"], answer: "D. decreases", why: "decrease = become less (Lesson 1 science words)" },
         ],
       },
       {
@@ -613,10 +613,10 @@ const lessons: Deck[] = [
         instructions: "Choose the best answer. Then explain one answer to your partner.",
         items: [
           { q: "There isn't ___ water left in the bottle.", options: ["many", "much", "a few", "fewer"], answer: "B. much" },
-          { q: "{s3} has ___ good friends at school, so break time is never lonely.", options: ["a few", "a little", "much", "less"], answer: "A. a few" },
-          { q: "We should use ___ plastic bags to protect the sea.", options: ["less", "fewer", "much", "little"], answer: "B. fewer" },
-          { q: "How ___ eggs does a sea turtle lay?", options: ["much", "many", "lot", "more"], answer: "B. many" },
-          { q: "There is ___ sugar in this cake. It isn't sweet at all.", options: ["a little", "little", "a few", "few"], answer: "B. little", why: "almost none (negative)" },
+          { q: "{s3} has ___ good friends at school, so break time is never lonely.", options: ["a little", "much", "a few", "less"], answer: "C. a few" },
+          { q: "We should use ___ plastic bags to protect the sea.", options: ["fewer", "less", "much", "little"], answer: "A. fewer" },
+          { q: "How ___ eggs does a sea turtle lay?", options: ["much", "lot", "many", "more"], answer: "C. many" },
+          { q: "There is ___ sugar in this cake. It isn't sweet at all.", options: ["little", "a little", "a few", "few"], answer: "A. little", why: "almost none (negative)" },
         ],
       },
       {
@@ -875,11 +875,11 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Whiteboards. Show, then one reason.",
         items: [
-          { q: "If it ___ tomorrow, we will have the picnic inside.", options: ["will rain", "rains", "rained", "raining"], answer: "B. rains" },
+          { q: "If it ___ tomorrow, we will have the picnic inside.", options: ["will rain", "rained", "raining", "rains"], answer: "D. rains" },
           { q: "The fish will die ___ we clean the river.", options: ["if", "unless", "so", "because"], answer: "B. unless" },
           { q: "There is ___ food in the forest in winter.", options: ["fewer", "less", "many", "a few"], answer: "B. less" },
-          { q: "A bird uses its ___ to pick up seeds.", options: ["fin", "beak", "fur", "tail"], answer: "B. beak" },
-          { q: "'Thank you for helping me!' — '___'", options: ["Yes, please.", "No problem.", "I'm sorry.", "Here you are."], answer: "B. No problem." },
+          { q: "A bird uses its ___ to pick up seeds.", options: ["fin", "fur", "tail", "beak"], answer: "D. beak" },
+          { q: "'Thank you for helping me!' — '___'", options: ["No problem.", "Yes, please.", "I'm sorry.", "Here you are."], answer: "A. No problem." },
         ],
       },
       {

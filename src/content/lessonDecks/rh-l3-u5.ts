@@ -46,8 +46,8 @@ const lessons: Deck[] = [
         instructions: "Whiteboards. Answer, show, give a one-sentence reason.",
         items: [
           { q: "We enjoy ___ experiments in science class.", options: ["do", "to do", "doing", "did"], answer: "C. doing" },
-          { q: "Look! The ice cream ___ in the sun.", options: ["melts", "is melting", "melt", "melted"], answer: "B. is melting" },
-          { q: "You ___ bring a coat. It's warm inside.", options: ["mustn't", "don't have to", "can't", "shouldn't to"], answer: "B. don't have to" },
+          { q: "Look! The ice cream ___ in the sun.", options: ["is melting", "melts", "melt", "melted"], answer: "A. is melting" },
+          { q: "You ___ bring a coat. It's warm inside.", options: ["mustn't", "can't", "shouldn't to", "don't have to"], answer: "D. don't have to" },
           { q: "If I ___ a scientist, I would study volcanoes.", options: ["am", "were", "will be", "be"], answer: "B. were" },
           { q: "Everyone in the group ___ a thermometer.", options: ["have", "has", "are having", "having"], answer: "B. has" },
         ],
@@ -163,10 +163,10 @@ const lessons: Deck[] = [
         school: "Cầu Giấy",
         instructions: "Choose the correct answer A, B, C or D.",
         items: [
-          { q: "The science show was really ___. Everyone clapped.", options: ["excited", "exciting", "excite", "excitement"], answer: "B. exciting" },
+          { q: "The science show was really ___. Everyone clapped.", options: ["excited", "excite", "excitement", "exciting"], answer: "D. exciting" },
           { q: "{s3} felt ___ after the long walk up the hill.", options: ["tired", "tiring", "tire", "tiredly"], answer: "A. tired" },
           { q: "My uncle gave me ___ for my birthday.", options: ["a wooden lovely small box", "a small lovely wooden box", "a lovely small wooden box", "a wooden small lovely box"], answer: "C. a lovely small wooden box" },
-          { q: "We were very ___ when the water changed colour.", options: ["surprise", "surprising", "surprised", "surprises"], answer: "C. surprised" },
+          { q: "We were very ___ when the water changed colour.", options: ["surprise", "surprising", "surprises", "surprised"], answer: "D. surprised" },
           { q: "Choose the correct phrase.", options: ["an old big house", "a big old house", "a house big old", "an big old house"], answer: "B. a big old house" },
         ],
       },
@@ -458,11 +458,11 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Whiteboards. Show, then one reason.",
         items: [
-          { q: "It was ___ cold weather that the pipes froze.", options: ["so", "such", "such a", "so a"], answer: "B. such" },
-          { q: "The water was ___ hot that I couldn't touch it.", options: ["such", "so", "such a", "very"], answer: "B. so" },
+          { q: "It was ___ cold weather that the pipes froze.", options: ["so", "such a", "such", "so a"], answer: "C. such" },
+          { q: "The water was ___ hot that I couldn't touch it.", options: ["so", "such", "such a", "very"], answer: "A. so" },
           { q: "Ice melts ___ in a warm room than in a cold one.", options: ["more quick", "quicklier", "more quickly", "most quickly"], answer: "C. more quickly" },
-          { q: "Which -ed ending sounds like /ɪd/?", options: ["trapped", "formed", "melted", "frozen"], answer: "C. melted" },
-          { q: "A thermometer is a tool ___ measures temperature.", options: ["who", "which", "where", "whose"], answer: "B. which" },
+          { q: "Which -ed ending sounds like /ɪd/?", options: ["melted", "trapped", "formed", "frozen"], answer: "A. melted" },
+          { q: "A thermometer is a tool ___ measures temperature.", options: ["who", "where", "whose", "which"], answer: "D. which" },
         ],
       },
       {
@@ -816,9 +816,9 @@ const lessons: Deck[] = [
         items: [
           { q: "The baby mammoth ___ in 2007.", options: ["found", "was found", "is finding", "were found"], answer: "B. was found" },
           { q: "I ___ my homework when the lights went out.", options: ["did", "was doing", "am doing", "were doing"], answer: "B. was doing" },
-          { q: "Coffee ___ by farmers in the Central Highlands. (fact today)", options: ["grows", "is grown", "was grow", "grown"], answer: "B. is grown" },
-          { q: "It was ___ a windy day that our kite flew away.", options: ["so", "such", "too", "very"], answer: "B. such" },
-          { q: "Odd one out (-ed sound): melted, wanted, needed, trapped", options: ["melted", "wanted", "needed", "trapped"], answer: "D. trapped" },
+          { q: "Coffee ___ by farmers in the Central Highlands. (fact today)", options: ["grows", "was grow", "grown", "is grown"], answer: "D. is grown" },
+          { q: "It was ___ a windy day that our kite flew away.", options: ["such", "so", "too", "very"], answer: "A. such" },
+          { q: "Odd one out (-ed sound): melted, wanted, needed, trapped", options: ["melted", "wanted", "trapped", "needed"], answer: "C. trapped" },
         ],
       },
       {
@@ -919,7 +919,7 @@ const lessons: Deck[] = [
         examples: [
           { text: "It is impossible to stand on a mixture of sand and too much water." },
           { text: "The bird was almost invisible in the tall wetland grass." },
-          { text: "It took {s5} three days to finish her clay model." },
+          { text: "It took {s5} three days to finish the clay model." },
           { text: "My grandparents spend every morning working in their rice field." },
         ],
         pitfalls: [
@@ -1110,7 +1110,7 @@ const lessons: Deck[] = [
           { text: "If you mix sand with enough water, it stops being firm." },
           { text: "If we leave the ice in the sun, it will melt before lunch." },
           { text: "As soon as the rainy season starts, the fields will fill with water." },
-          { text: "Unless {s8} wears boots, her feet will get wet in the wetland." },
+          { text: "{s8}, unless you wear boots, your feet will get wet in the wetland." },
         ],
         pitfalls: [
           { wrong: "Unless you don't stir it, the mixture won't be smooth.", right: "Unless you stir it, the mixture won't be smooth.", why: "unless already means 'if ... not': no second not" },
@@ -1488,7 +1488,7 @@ const lessons: Deck[] = [
         ],
         examples: [
           { text: "Have you ever made ice cream at home?" },
-          { text: "{s5} has already finished her mock test." },
+          { text: "{s5} has already finished the mock test." },
           { text: "The rice hasn't cooked yet; wait five more minutes." },
           { text: "I have just seen the funniest video about melting chocolate." },
         ],
@@ -1507,11 +1507,11 @@ const lessons: Deck[] = [
         school: "Cầu Giấy",
         instructions: "Choose the correct answer A, B, C or D.",
         items: [
-          { q: "Have you ___ been to Hạ Long Bay?", options: ["ever", "yet", "already", "since"], answer: "A. ever" },
-          { q: "The bus hasn't come ___.", options: ["already", "just", "yet", "ever"], answer: "C. yet" },
-          { q: "I ___ my homework yesterday evening.", options: ["have done", "did", "have already done", "do"], answer: "B. did" },
-          { q: "'Is the water hot?' - 'Yes, it has ___ boiled.'", options: ["yet", "ever", "just", "never"], answer: "C. just" },
-          { q: "{s6} has ___ eaten durian. She wants to try it.", options: ["never", "ever", "yet", "already"], answer: "A. never" },
+          { q: "Have you ___ been to Hạ Long Bay?", options: ["yet", "already", "since", "ever"], answer: "D. ever" },
+          { q: "The bus hasn't come ___.", options: ["already", "yet", "just", "ever"], answer: "B. yet" },
+          { q: "I ___ my homework yesterday evening.", options: ["have done", "have already done", "did", "do"], answer: "C. did" },
+          { q: "'Is the water hot?' - 'Yes, it has ___ boiled.'", options: ["just", "yet", "ever", "never"], answer: "A. just" },
+          { q: "{s6} has ___ eaten durian and wants to try it.", options: ["ever", "yet", "never", "already"], answer: "C. never" },
         ],
       },
       {

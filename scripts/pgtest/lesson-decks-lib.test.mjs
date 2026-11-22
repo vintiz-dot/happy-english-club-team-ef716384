@@ -214,6 +214,20 @@ for (const { f, u } of units) {
     ok(`${f}: one full end-of-unit test, after the unit's last lesson`, tests.length === 1 && tests[0].id === `rh-l3-u${u.unit}-test` && tests[0].afterLesson === u.decks.length);
     ok(`${f}: 5-9 teacher generalizations`, u.generalizations.length >= 5 && u.generalizations.length <= 9);
     ok(`${f}: the grammar strand points at real lessons`, (u.grammarStrand ?? []).length > 0 && u.grammarStrand.every((g) => g.lesson >= 1 && g.lesson <= u.decks.length));
+    // A printed test lists options in file order, so the right answers must not sit in
+    // one place: a unit test once had every answer on A. No letter holds more than half
+    // of a set, and no more than four in a row.
+    const where = (it) => /^[A-D]\.\s/.test(it.answer) ? "ABCD".indexOf(it.answer[0]) : it.options.findIndex((o) => o === it.answer);
+    const sets = [
+      u.decks.flatMap((d) => d.slides.filter((s) => s.kind === "exam").flatMap((s) => s.items)),
+      ...(u.assessments ?? []).map((a) => a.sections.flatMap((s) => s.items)),
+    ].map((items) => items.filter((it) => it.options?.length >= 3).map(where).filter((i) => i >= 0));
+    ok(`${f}: right answers are spread over A-D`, sets.every((pos) => {
+      const most = Math.max(0, ...[0, 1, 2, 3].map((p) => pos.filter((x) => x === p).length));
+      let run = 0, longest = 0;
+      pos.forEach((p, i) => { run = i && p === pos[i - 1] ? run + 1 : 1; longest = Math.max(longest, run); });
+      return longest <= 4 && (pos.length < 8 || most <= pos.length / 2);
+    }));
   }
   if (u.curriculum === "hec-ielts-sl") {
     const term = PG.TERMS.find((t) => t.year === u.level && t.term === u.unit);

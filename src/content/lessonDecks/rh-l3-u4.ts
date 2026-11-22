@@ -46,9 +46,9 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Whiteboards. Answer, show, give a one-sentence reason.",
         items: [
-          { q: "Rice ___ by farmers in the Mekong Delta.", options: ["grows", "is grown", "is grow", "growing"], answer: "B. is grown" },
-          { q: "A volunteer is a person ___ works without pay.", options: ["which", "who", "where", "whose"], answer: "B. who" },
-          { q: "We'll finish the poster ___ Friday.", options: ["until", "by", "during", "in"], answer: "B. by" },
+          { q: "Rice ___ by farmers in the Mekong Delta.", options: ["grows", "is grow", "is grown", "growing"], answer: "C. is grown" },
+          { q: "A volunteer is a person ___ works without pay.", options: ["who", "which", "where", "whose"], answer: "A. who" },
+          { q: "We'll finish the poster ___ Friday.", options: ["until", "during", "in", "by"], answer: "D. by" },
           { q: "{s1} speaks English very ___.", options: ["good", "well", "goodly", "best"], answer: "B. well" },
           { q: "Look at the sky! It ___ rain.", options: ["will", "is going to", "goes", "is raining to"], answer: "B. is going to" },
         ],
@@ -147,11 +147,11 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Choose the correct form.",
         items: [
-          { q: "My brother is very good at ___ models.", options: ["make", "to make", "making", "made"], answer: "C. making" },
-          { q: "Would you like ___ our team?", options: ["join", "to join", "joining", "joined"], answer: "B. to join" },
+          { q: "My brother is very good at ___ models.", options: ["make", "to make", "made", "making"], answer: "D. making" },
+          { q: "Would you like ___ our team?", options: ["to join", "join", "joining", "joined"], answer: "A. to join" },
           { q: "They finished ___ the classroom at five.", options: ["clean", "to clean", "cleaning", "cleaned"], answer: "C. cleaning" },
-          { q: "The coach made us ___ again.", options: ["run", "to run", "running", "ran"], answer: "A. run" },
-          { q: "{s4} decided ___ the money to charity.", options: ["give", "giving", "to give", "gives"], answer: "C. to give" },
+          { q: "The coach made us ___ again.", options: ["to run", "running", "ran", "run"], answer: "D. run" },
+          { q: "{s4} decided ___ the money to charity.", options: ["give", "to give", "giving", "gives"], answer: "B. to give" },
         ],
       },
       {
@@ -314,7 +314,7 @@ const lessons: Deck[] = [
           "My brother usually does the dishes.",
           "This week we are practising for the concert.",
           "I know the answer. (NOT I am knowing)",
-          "{s5} is helping her dad at the moment.",
+          "{s5} is helping Dad at the moment.",
         ],
       },
       {
@@ -335,7 +335,7 @@ const lessons: Deck[] = [
         ],
         examples: [
           { text: "Manuel's dad works every day. Today Manuel is baking him a birthday cake." },
-          { text: "{s1} usually walks to school, but this week she is going by bus." },
+          { text: "{s1} and I usually walk to school, but this week we are going by bus." },
           { text: "I need help! Are you listening?" },
           { text: "We are having a class party on Friday." },
         ],
@@ -437,11 +437,11 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Whiteboards. Show, then one reason.",
         items: [
-          { q: "Be quiet! The baby ___.", options: ["sleeps", "is sleeping", "sleep", "sleeping"], answer: "B. is sleeping" },
-          { q: "My uncle ___ in a bank.", options: ["work", "works", "is work", "working"], answer: "B. works" },
-          { q: "I ___ what you mean.", options: ["understand", "am understanding", "understands", "understanding"], answer: "A. understand" },
+          { q: "Be quiet! The baby ___.", options: ["sleeps", "sleep", "is sleeping", "sleeping"], answer: "C. is sleeping" },
+          { q: "My uncle ___ in a bank.", options: ["works", "work", "is work", "working"], answer: "A. works" },
+          { q: "I ___ what you mean.", options: ["am understanding", "understands", "understand", "understanding"], answer: "C. understand" },
           { q: "'Let's make a card for Dad.' - '___'", options: ["Good idea!", "Yes, I do.", "You're welcome.", "No, thanks, I'm full."], answer: "A. Good idea!" },
-          { q: "Which word has the stress on the second syllable?", options: ["market", "money", "reward", "seller"], answer: "C. reward" },
+          { q: "Which word has the stress on the second syllable?", options: ["market", "money", "seller", "reward"], answer: "D. reward" },
         ],
       },
       {
@@ -502,7 +502,7 @@ const lessons: Deck[] = [
         ],
         examples: [
           { text: "Why don't we set up a lemonade stall? — Sure, why not?" },
-          { text: "How about asking {s3} to help? She's good at drawing." },
+          { text: "How about asking {s3} to help? {s3} is good at drawing." },
           { text: "Don't give up! We'll work it out together." },
           { text: "We put the meeting off until Friday." },
         ],
@@ -521,10 +521,10 @@ const lessons: Deck[] = [
         instructions: "Choose the best reply (1-3) or the best phrasal verb (4-5).",
         items: [
           { q: "1. 'Shall we start the project now?'", options: ["Yes, we shall not.", "Sure, let's do it.", "No, I don't.", "You're welcome."], answer: "B. Sure, let's do it." },
-          { q: "2. 'How about watching a film tonight?'", options: ["I'd rather play chess.", "Yes, I watch.", "That's all right.", "Here you are."], answer: "A. I'd rather play chess." },
-          { q: "3. 'Thanks for helping me with the poster.'", options: ["Good idea!", "No problem.", "I'm sorry.", "Me too."], answer: "B. No problem." },
+          { q: "2. 'How about watching a film tonight?'", options: ["Yes, I watch.", "I'd rather play chess.", "That's all right.", "Here you are."], answer: "B. I'd rather play chess." },
+          { q: "3. 'Thanks for helping me with the poster.'", options: ["Good idea!", "I'm sorry.", "Me too.", "No problem."], answer: "D. No problem." },
           { q: "4. The puzzle was hard, but we didn't ___.", options: ["give up", "set up", "look after", "find out"], answer: "A. give up" },
-          { q: "5. Can you ___ my cat while I'm away?", options: ["look after", "turn down", "put off", "work out"], answer: "A. look after" },
+          { q: "5. Can you ___ my cat while I'm away?", options: ["turn down", "put off", "look after", "work out"], answer: "C. look after" },
         ],
       },
       {
@@ -780,11 +780,11 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Whiteboards. Show, then one reason.",
         items: [
-          { q: "Everybody ___ the new teacher.", options: ["like", "likes", "are liking", "liking"], answer: "B. likes" },
+          { q: "Everybody ___ the new teacher.", options: ["like", "are liking", "liking", "likes"], answer: "D. likes" },
           { q: "Neither my sister nor I ___ coffee.", options: ["drinks", "drink", "drinking", "is drinking"], answer: "B. drink" },
-          { q: "Thanks for ___ me with the poster.", options: ["help", "helping", "to help", "helped"], answer: "B. helping" },
-          { q: "The price of these shoes ___ very high.", options: ["are", "is", "were", "be"], answer: "B. is" },
-          { q: "'Why don't we take a break?' - '___'", options: ["Yes, we don't.", "That sounds great.", "You're welcome.", "No, I can't."], answer: "B. That sounds great." },
+          { q: "Thanks for ___ me with the poster.", options: ["help", "to help", "helping", "helped"], answer: "C. helping" },
+          { q: "The price of these shoes ___ very high.", options: ["is", "are", "were", "be"], answer: "A. is" },
+          { q: "'Why don't we take a break?' - '___'", options: ["Yes, we don't.", "You're welcome.", "That sounds great.", "No, I can't."], answer: "C. That sounds great." },
         ],
       },
       {
@@ -906,7 +906,7 @@ const lessons: Deck[] = [
           { q: "Running is not allowed by the pool. (mustn't)", answer: "You mustn't run by the pool." },
           { q: "I advise you to see a doctor. (should)", answer: "You should see a doctor." },
           { q: "Perhaps it will snow in Sa Pa tonight. (might)", answer: "It might snow in Sa Pa tonight." },
-          { q: "{s2} was able to read when she was four. (could)", answer: "{s2} could read when she was four." },
+          { q: "{s2} was able to read at the age of four. (could)", answer: "{s2} could read at the age of four." },
         ],
       },
       {
@@ -986,10 +986,10 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Whiteboards. Show, then one reason.",
         items: [
-          { q: "You ___ wear a uniform on Saturdays. It's optional.", options: ["mustn't", "don't have to", "can't", "shouldn't"], answer: "B. don't have to" },
-          { q: "You ___ cross the road when the light is red.", options: ["mustn't", "don't have to", "needn't", "could"], answer: "A. mustn't" },
+          { q: "You ___ wear a uniform on Saturdays. It's optional.", options: ["don't have to", "mustn't", "can't", "shouldn't"], answer: "A. don't have to" },
+          { q: "You ___ cross the road when the light is red.", options: ["don't have to", "needn't", "could", "mustn't"], answer: "D. mustn't" },
           { q: "My sister ___ to study hard for her exam.", options: ["must", "has", "have", "should"], answer: "B. has" },
-          { q: "It's cloudy. It ___ rain this afternoon.", options: ["might", "must to", "has", "can to"], answer: "A. might" },
+          { q: "It's cloudy. It ___ rain this afternoon.", options: ["must to", "might", "has", "can to"], answer: "B. might" },
           { q: "Odd one out (sound): draw, hawk, small, cake", options: ["draw", "hawk", "small", "cake"], answer: "D. cake" },
         ],
       },
@@ -1059,7 +1059,7 @@ const lessons: Deck[] = [
         examples: [
           { text: "If I were a farmer, I would keep ducks in my rice fields." },
           { text: "If everyone helped, the job would take one hour." },
-          { text: "{s3} would travel to the Amazon if she had the chance." },
+          { text: "{s3}, would you travel to the Amazon if you had the chance?" },
           { text: "If I were you, I wouldn't give up." },
         ],
         pitfalls: [
@@ -1214,7 +1214,7 @@ const lessons: Deck[] = [
         examples: [
           { text: "The grasshopper should have stored food in the summer." },
           { text: "If he had listened to the ant, he would have had food in winter." },
-          { text: "{s1} wishes she had started her project earlier." },
+          { text: "\"I wish I had started my project earlier,\" says {s1}." },
         ],
         pitfalls: [
           { wrong: "He should worked harder.", right: "He should have worked harder.", why: "should have + past participle" },
@@ -1377,7 +1377,7 @@ const lessons: Deck[] = [
         examples: [
           { text: "\"I don't need any help,\" Manuel said. → Manuel said that he didn't need any help." },
           { text: "\"We will clean the beach,\" the volunteers said. → They said they would clean the beach." },
-          { text: "{s2} told me that she could carry the bags." },
+          { text: "{s2} told me that the bags were not heavy." },
         ],
         pitfalls: [
           { wrong: "She said me she was busy.", right: "She told me she was busy.", why: "say + no person; tell + person" },
