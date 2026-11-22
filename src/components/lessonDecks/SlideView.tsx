@@ -448,8 +448,13 @@ function SlideBody({ slide }: { slide: Slide }) {
                   {h.label}
                   {h.tier && <Chip>{h.tier}</Chip>}
                   {h.minutes ? <Chip><Clock className="h-4 w-4" />{h.minutes} min a week</Chip> : null}
+                  {/* days / check: optional fields (lead adds them to types.ts); read loosely until then */}
+                  {(h as { days?: string[] }).days?.length ? <Chip tone="accent">{(h as { days?: string[] }).days!.join(" · ")}</Chip> : null}
                 </p>
                 <p className="text-lg text-hec-ink">{h.detail}</p>
+                {(h as { check?: string }).check && (
+                  <p className="mt-1 text-base text-hec-ink-soft"><strong>How it's checked:</strong> {(h as { check?: string }).check}</p>
+                )}
                 {h.book && <div className="mt-2 flex flex-wrap gap-2"><BookChip b={h.book} /></div>}
               </div>
             ))}
