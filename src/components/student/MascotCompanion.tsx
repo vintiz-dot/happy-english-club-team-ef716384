@@ -1,120 +1,132 @@
-import { useState, useEffect } from "react";
+/**
+ * Pip, the HEC mascot, as a child meets him on the student home (docs/MASCOT.md, brief I2).
+ *
+ * - The picture is a finished pose file in public/mascot/ shown as an <img> (never redrawn or recoloured here):
+ *   hello pip.svg, encouraging (homework waiting), celebrating (all done), excited, happy; under 64 px the badge.
+ * - Size follows the child's band: early 144, young 112, junior 72, teen 40 (and only if chosen). Width and
+ *   height are set, so nothing shifts while it loads.
+ * - Motion is on the wrapper only: a 6 px breathing rise over 3.4 s at motion level "full" (one of the page's
+ *   two loops, paused off screen), and a `reward` spring hop when the mood changes. Nothing at "calm" or "off".
+ * - His lines come from pools by what is true today, picked by the day and the child. He is always pleased to
+ *   see the child, praises what was done, and never says he missed them, that a streak is in danger, or asks them
+ *   to come back (brief I2, I4).
+ * - Pip is never drawn on a tuition, payment or destructive screen: this component is for the student home.
+ */
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { givenName } from "@/lib/givenName";
+import { motion, useAnimationControls } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { reward, useLoopSlot, useMotionLevel } from "@/components/fx/motion";
+import { useAgeBand } from "@/hooks/useAgeBand";
+import { useCopy } from "@/lib/copy/useCopy";
+import { pipPools, type StudentCopyKey } from "@/lib/copy/student";
+import { dayjs } from "@/lib/date";
+
+type Mood = "hello" | "happy" | "encouraging" | "excited" | "celebrating" | "loving";
 
 interface MascotCompanionProps {
+  /** kept for older callers; Pip's lines do not use the name (the page greets the child by it) */
   studentName?: string;
   streak?: number;
-  /** null: not known yet (loading or a failed read) - the mascot then says nothing about homework. */
-  pendingHomework?: number | null;
+  /** kept for older callers; Pip no longer wears the level */
   level?: number;
-  /**
-   * Where the message is drawn. The hero passes a row in the normal flow
-   * under the child's name; the message is rendered there (a portal into
-   * that row), so it can never sit on top of the name.
-   */
+  /** null: not known yet (loading or a failed read) - Pip then says nothing about homework. */
+  pendingHomework?: number | null;
+  /** px; by default from the child's band */
+  size?: number;
+  /** Draw his line in this element (a row in the flow) instead of beside him. */
   messageSlot?: HTMLElement | null;
+  /** Draw no line at all, only the picture. */
+  silent?: boolean;
+  className?: string;
 }
 
-const expressions = {
-  happy: "😊",
-  excited: "🤩",
-  encouraging: "💪",
-  celebrating: "🎉",
-  thinking: "🤔",
-  sleeping: "😴",
-  loving: "🥰",
-  cool: "😎",
-};
+const SIZE_OF = { early: 144, young: 112, junior: 72, teen: 40 } as const;
 
-const mascotMessages = [
-  { condition: "high_streak", message: "Amazing streak! Keep it up! 🔥", expression: "excited" },
-  { condition: "no_homework", message: "All homework done! You rock! ⭐", expression: "celebrating" },
-  { condition: "has_homework", message: "You've got this! Let's finish that homework!", expression: "encouraging" },
-  { condition: "morning", message: "Good morning! Ready for adventure?", expression: "happy" },
-  { condition: "evening", message: "Great work today! Rest well! 🌙", expression: "loving" },
-  { condition: "default", message: "Let's learn something awesome!", expression: "happy" },
-];
+/** A small stable number from a string, so "the line of the day" does not change on every render. */
+function seedOf(text: string): number {
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) >>> 0;
+  return h;
+}
 
-export function MascotCompanion({ studentName, streak = 0, pendingHomework = 0, level = 1, messageSlot }: MascotCompanionProps) {
-  const [showBubble, setShowBubble] = useState(true);
-  const [currentMessage, setCurrentMessage] = useState(mascotMessages[5]);
-  const [isWaving, setIsWaving] = useState(false);
+const poseUrl = (mood: Mood, size: number) =>
+  size < 64 ? "/mascot/pip-badge.svg" : mood === "hello" ? "/mascot/pip.svg" : `/mascot/pip-${mood}.svg`;
 
-  useEffect(() => {
-    const hour = new Date().getHours();
+export function MascotCompanion({ streak = 0, pendingHomework = 0, size, messageSlot, silent = false, className }: MascotCompanionProps) {
+  const { band, studentId, showPip } = useAgeBand();
+  const { en, vi, beneath } = useCopy();
+  const level = useMotionLevel();
+  const [bump, setBump] = useState(0);
 
-    if (streak >= 7) {
-      setCurrentMessage(mascotMessages[0]);
+  // What is true today decides the pool; the day and the child pick the line.
+  const choice = useMemo(() => {
+    const day = dayjs().tz().format("YYYY-MM-DD");
+    let pool: readonly StudentCopyKey[];
+    let mood: Mood;
+    if (pendingHomework === null) {
+      pool = pipPools.hello;
+      mood = "hello";
     } else if (pendingHomework === 0) {
-      setCurrentMessage(mascotMessages[1]);
-    } else if (pendingHomework > 0) {
-      setCurrentMessage(mascotMessages[2]);
-    } else if (hour < 12) {
-      setCurrentMessage(mascotMessages[3]);
-    } else if (hour >= 18) {
-      setCurrentMessage(mascotMessages[4]);
+      pool = pipPools.done;
+      mood = "celebrating";
     } else {
-      setCurrentMessage(mascotMessages[5]);
+      pool = pipPools.homework;
+      mood = "encouraging";
     }
+    // Junior: a run of days is something he can be glad about. Never framed as something to lose.
+    if (band === "junior" && streak >= 7 && pendingHomework !== 0) {
+      pool = [...pool, ...pipPools.days];
+    }
+    const index = (seedOf(`${day}:${studentId ?? ""}`) + bump) % pool.length;
+    const key = pool[index];
+    return { key, mood: key === "pip.days.1" ? ("excited" as Mood) : mood };
+  }, [pendingHomework, streak, band, studentId, bump]);
 
-    // Wave animation on mount
-    setIsWaving(true);
-    const waveTimer = setTimeout(() => setIsWaving(false), 2000);
+  const px = size ?? SIZE_OF[band];
 
-    // Hide bubble after 8 seconds
-    const bubbleTimer = setTimeout(() => setShowBubble(false), 8000);
+  // A hop when the mood changes (not on first paint): the reward spring, on the wrapper.
+  const hop = useAnimationControls();
+  const lastMood = useRef<Mood | null>(null);
+  useEffect(() => {
+    const before = lastMood.current;
+    lastMood.current = choice.mood;
+    if (before !== null && before !== choice.mood && level === "full") {
+      hop.start({ y: -14, transition: reward }).then(() => hop.start({ y: 0, transition: reward }));
+    }
+  }, [choice.mood, level, hop]);
 
-    return () => {
-      clearTimeout(waveTimer);
-      clearTimeout(bubbleTimer);
-    };
-  }, [streak, pendingHomework]);
+  // The breathing rise: a loop, so it asks for a slot (full only, on screen, tab visible, at most two on a page).
+  const frame = useRef<HTMLDivElement>(null);
+  const breathing = useLoopSlot(frame);
 
-  const handleMascotClick = () => {
-    setShowBubble(true);
-    setIsWaving(true);
+  if (!showPip) return null;
 
-    // Cycle through random messages
-    const randomIndex = Math.floor(Math.random() * mascotMessages.length);
-    setCurrentMessage(mascotMessages[randomIndex]);
-
-    setTimeout(() => setIsWaving(false), 1500);
-    setTimeout(() => setShowBubble(false), 6000);
-  };
-
-  // Ivory (A4.2): the message is a calm line in the flow and stays; an in-flow
-  // element that disappeared would move the page under the child's finger.
-  // showBubble / isWaving keep their timers but no longer move or hide anything.
-  void showBubble; void isWaving;
-  // Vietnamese names are family name first: greet the child by the given name ("Anh"), not "Nguyễn".
-  const called = givenName(studentName);
-  const message = `${called ? `Hey ${called}! ` : ''}${currentMessage.message}`;
+  const line = (
+    <p role="status" className="rounded-hec-md border border-hec-line bg-hec-paper px-4 py-3 text-hec-body text-hec-ink">
+      {en(choice.key, { n: streak })}
+      {beneath && (
+        <span lang="vi" className="mt-1 block text-hec-small text-hec-ink-soft">
+          {vi(choice.key, { n: streak })}
+        </span>
+      )}
+    </p>
+  );
 
   return (
-    <div className="relative">
-      {/* Mascot: a quiet ink disc. Tapping it picks another message. */}
-      <div
-        className="relative flex h-14 w-14 cursor-pointer select-none items-center justify-center rounded-full bg-hec-action text-3xl shadow-hec-1 [[data-hec-scale=young]_&]:h-16 [[data-hec-scale=young]_&]:w-16"
-        onClick={handleMascotClick}
-      >
-        <span aria-hidden>{expressions[currentMessage.expression as keyof typeof expressions] || "😊"}</span>
-        {/* Level on the mascot */}
-        <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border border-hec-line bg-hec-surface px-1 text-hec-caption font-semibold tabular-nums text-hec-ink">
-          {level}
-        </span>
-      </div>
-
-      {messageSlot &&
-        createPortal(
-          <p
-            role="status"
-            className="rounded-hec-md border border-hec-line bg-hec-paper px-4 py-3 text-hec-body text-hec-ink"
-          >
-            {message}
-          </p>,
-          messageSlot,
-        )}
+    <div className={cn("flex min-w-0 flex-col items-center gap-3", className)}>
+      <motion.div ref={frame} animate={breathing ? { y: [0, -6, 0] } : { y: 0 }} transition={breathing ? { duration: 3.4, repeat: Infinity, ease: "easeInOut" } : { duration: 0 }}>
+        <motion.button
+          type="button"
+          animate={hop}
+          onClick={() => setBump((n) => n + 1)}
+          aria-label={en(choice.key, { n: streak })}
+          className="block rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+        >
+          <img src={poseUrl(choice.mood, px)} width={px} height={px} alt="" draggable={false} className="block select-none" />
+        </motion.button>
+      </motion.div>
+      {!silent && (messageSlot ? createPortal(line, messageSlot) : line)}
     </div>
   );
 }

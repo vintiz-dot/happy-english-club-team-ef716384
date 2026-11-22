@@ -9,6 +9,8 @@
  * happened and what to do; never blame ("This is the next thing", not "This is late").
  * `{name}` style placeholders are filled by `fill()`.
  */
+export type StudentCopyKey = keyof typeof studentCopy;
+
 export interface CopyEntry {
   en: string;
   vi: string;
@@ -27,9 +29,28 @@ export const studentCopy = {
 
   // ---- Moving up (F3)
   "moving.line": { en: "A new school year. Your space has grown with you.", vi: "Năm học mới. Không gian của con đã lớn lên cùng con.", draft: true },
+
+  // ---- Pip's lines (brief I2): pleased to see the child, praises what was done, never sad, never "come back".
+  "pip.hello.1": { en: "Nice to see you.", vi: "Rất vui được gặp con.", draft: true },
+  "pip.hello.2": { en: "Let's say one new thing in English today.", vi: "Hôm nay mình cùng nói một điều mới bằng tiếng Anh nhé.", draft: true },
+  "pip.hello.3": { en: "Welcome back.", vi: "Chào mừng con trở lại.", draft: true },
+  "pip.homework.1": { en: "Your homework is ready when you are.", vi: "Bài tập đã sẵn sàng khi con muốn làm.", draft: true },
+  "pip.homework.2": { en: "There is something new to try.", vi: "Có một điều mới để thử.", draft: true },
+  "pip.homework.3": { en: "One step at a time. Start with the next thing.", vi: "Từng bước một. Con bắt đầu với việc tiếp theo nhé.", draft: true },
+  "pip.done.1": { en: "You finished your homework.", vi: "Con đã làm xong bài tập.", draft: true },
+  "pip.done.2": { en: "All your homework is done.", vi: "Bài tập của con đã xong hết.", draft: true },
+  "pip.done.3": { en: "That is a lot of work finished.", vi: "Con đã hoàn thành rất nhiều việc.", draft: true },
+  "pip.days.1": { en: "You have been here {n} days in a row.", vi: "Con đã học {n} ngày liên tiếp.", draft: true },
 } as const satisfies Record<string, CopyEntry>;
 
-export type StudentCopyKey = keyof typeof studentCopy;
+/** Pip's pools by what is true today. A line is picked by the day and the child, so it changes tomorrow, not on every render. */
+export const pipPools = {
+  hello: ["pip.hello.1", "pip.hello.2", "pip.hello.3"],
+  homework: ["pip.homework.1", "pip.homework.2", "pip.homework.3"],
+  done: ["pip.done.1", "pip.done.2", "pip.done.3"],
+  days: ["pip.days.1"],
+} as const satisfies Record<string, readonly StudentCopyKey[]>;
+
 
 /** Fills {name} style placeholders. */
 export function fill(text: string, vars?: Record<string, string | number>): string {
