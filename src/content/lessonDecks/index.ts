@@ -56,6 +56,7 @@ import { odL3U18 } from "./od2e-l3-u18";
 import { hecIeltsY1T1 } from "./hec-ielts-y1-t1";
 import { hecIeltsY1T2 } from "./hec-ielts-y1-t2";
 import { hecIeltsY1T3 } from "./hec-ielts-y1-t3";
+import { hecIeltsY1T4 } from "./hec-ielts-y1-t4";
 
 export const UNITS: Unit[] = [
   odL1U1,
@@ -112,6 +113,7 @@ export const UNITS: Unit[] = [
   hecIeltsY1T1,
   hecIeltsY1T2,
   hecIeltsY1T3,
+  hecIeltsY1T4,
 ];
 
 // Oxford Discover keys stay as they were ("L3 U12"); Reach Higher's are prefixed so
