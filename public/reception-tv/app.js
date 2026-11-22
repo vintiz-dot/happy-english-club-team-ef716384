@@ -224,6 +224,9 @@
     var ofKind = function (k) { return filter(items, function (i) { return i.kind === k; }); };
 
     if (on("welcome")) list.push({ t: ["Welcome", "Chào mừng ba mẹ và các con"], html: welcome(f), secs: 1.2 });
+    // Pip, the mascot: today's phrase for a child to say out loud. A function,
+    // so the phrase is the day's when the scene comes round.
+    if (on("welcome") && on("mascot")) list.push({ t: ["Say it with Pip", "Nói cùng Pip"], html: sayWithPip });
     if (on("parents")) list.push({ t: ["Why families choose HEC", "Vì sao ba mẹ chọn HEC"], html: whyHec(f), secs: 1.5 });
     if (on("leaderboard") && ranked(f.leaderboard).length) list.push({ t: ["Leaderboard · " + monthName(f.month), "Bảng xếp hạng · " + monthVi(f.month)], html: leaderboard(f), secs: 1.4 });
     // Every student and their points, EVERYONE_PER_PAGE to a page (owner,
@@ -337,9 +340,40 @@
           stat((s.review_score || "5.0") + "★", (s.review_count || 47) + " parent reviews", (s.review_count || 47) + " đánh giá của phụ huynh") +
         "</div>" +
       "</div>" +
-      '<div class="col center"><img class="logo-big rise d2" src="assets/logo-gold.png" alt=""></div>' +
+      '<div class="col center pipcol"><div class="rise d2">' + pip("") + "</div>" +
+        '<div class="piphello rise d3">Xin chào! Hello!</div><div class="pipname rise d4">Pip · linh vật của HEC</div></div>' +
     "</div>";
   }
+  // ------------------------------------------------------------ Pip, the mascot
+  // assets/pip.svg is made by scripts/mascot/build-pip.mjs (SVG 1.1 + SMIL,
+  // which this TV's Chromium 38 plays; a browser that does not shows him still).
+  // He stands in a cream moon so the dark crest reads on the navy stage.
+  function pip(cls) { return '<div class="pipmoon' + (cls ? " " + cls : "") + '"><img class="pip" src="assets/pip.svg" alt=""></div>'; }
+  // One phrase a day, Sunday first. Ours, short enough for a six-year-old.
+  var PIP_PHRASES = [
+    ["I did my best today.", "Hôm nay con đã cố gắng hết sức."],
+    ["How was your weekend?", "Cuối tuần của bạn thế nào?"],
+    ["Nice to see you!", "Rất vui được gặp bạn!"],
+    ["What are you reading?", "Bạn đang đọc gì thế?"],
+    ["Can you help me, please?", "Bạn giúp mình với được không?"],
+    ["Have a great weekend!", "Cuối tuần vui vẻ nhé!"],
+    ["I love learning English.", "Con thích học tiếng Anh."]
+  ];
+  function sayWithPip() {
+    var p = PIP_PHRASES[new Date().getDay()];
+    return '<div class="row center" style="height:100%">' +
+      '<div class="col center pipcol rise">' + pip("lg") + "</div>" +
+      '<div class="grow" style="padding-left:70px">' +
+        '<div class="eyebrow rise d1">Today’s phrase<span class="en-s">Câu nói hôm nay</span></div>' +
+        '<div class="h-lg rise d2" style="margin-top:22px">“<span class="gold">' + esc(p[0]) + "</span>”</div>" +
+        '<div class="lead rise d3" style="margin-top:18px">' + esc(p[1]) + "</div>" +
+        '<div class="lead rise d4" style="margin-top:44px">Say it to Pip, then say it to your teacher.' +
+          '<span class="vi-strong">Con nói với Pip, rồi nói với thầy cô nhé.</span></div>' +
+        '<div class="pipwho rise d5">Pip là chú chim chào mào của HEC. Tên của Pip bắt đầu bằng “chào”!' +
+          '<span class="en-s">Pip is HEC’s chào mào: the bird whose name begins with hello.</span></div>' +
+      "</div></div>";
+  }
+
   function stat(n, en, vi) { return '<div class="stat"><div class="n">' + esc(typeof n === "number" ? fmt(n) : n) + '</div><div class="l">' + esc(vi) + '<span class="en-s">' + esc(en) + "</span></div></div>"; }
 
   // ------------------------------------------------------------ for parents

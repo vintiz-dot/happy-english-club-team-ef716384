@@ -303,3 +303,20 @@ body { font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif; color: #f7f
 .findme { text-align: center; font-size: 30px; font-weight: 600; color: #e2c078; margin: -18px 0 16px; }
 .everyone .ev-line { padding: 6px 0; }
 .seats .st .hot { color: #ffd27a; }
+
+/* ------------------------------------------------------------ Pip, the mascot
+   A cream moon with a brass rim; Pip is larger than the moon so his crest
+   breaks its edge. */
+.pipcol { width: 700px; }
+.pipmoon { position: relative; width: 500px; height: 500px; border-radius: 50%; border: 4px solid #e2c078;
+  background: #f7f1e3;
+  background-image: -webkit-radial-gradient(35% 28%, circle cover, #fffdf6 0%, #f1e6cc 100%);
+  background-image: radial-gradient(circle at 35% 28%, #fffdf6 0%, #f1e6cc 100%);
+  box-shadow: 0 0 0 16px rgba(226,192,120,0.10), 0 30px 80px rgba(0,0,0,0.35); }
+.pipmoon .pip { position: absolute; left: -44px; top: -64px; width: 580px; height: 580px; }
+.pipmoon.lg { width: 600px; height: 600px; }
+.pipmoon.lg .pip { left: -52px; top: -76px; width: 696px; height: 696px; }
+.piphello { font-family: "Playfair Display", Georgia, serif; font-size: 46px; font-weight: 700; color: #e2c078; margin-top: 34px; text-align: center; }
+.pipname { font-size: 19px; letter-spacing: 3px; text-transform: uppercase; color: #aebbd6; margin-top: 8px; text-align: center; }
+.pipwho { font-size: 24px; line-height: 1.45; color: #dfe6f5; margin-top: 40px; padding-top: 24px; border-top: 1px solid rgba(226,192,120,0.25); }
+.pip-badge { width: 60px; height: 60px; margin-right: 16px; }

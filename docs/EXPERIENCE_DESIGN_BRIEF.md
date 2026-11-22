@@ -53,6 +53,7 @@ The measure of success is not time spent in the app. It is: homework handed in, 
   - `src/lib/soundManager.ts` (Web Audio tones: click, success, checkin, levelUp, questComplete; on/off and volume in localStorage)
   - `src/components/lessonDecks/speech.ts` (browser speech)
   - `src/components/NavProgress.tsx`, `CommandPalette.tsx`, `theme/UserMenu.tsx` (the appearance menu: System / Light / Dark)
+  - The mascot, Pip: finished pose files in `public/mascot/`, guide in `docs/MASCOT.md` (see I2)
 - A child's age: `students.date_of_birth` (nullable). `src/hooks/useShellQueries.ts` already loads `id, full_name, date_of_birth` for the shell. `src/pages/StudentDashboard.tsx` has `isYoungLearner()` which turns the birth year into a Vietnamese school grade and sets `data-hec-scale="young"` for Grade 3 and below. That function is the seed of Part F.
 - Shared logins: one family account is often used by the parent and by each child. `ProfilePicker` / `ProfileSwitcher` choose the child; the choice is `selected_student_id` in localStorage via `src/contexts/StudentProfileContext.tsx`.
 - Student data you may present (never recompute): points and levels (`student_points`, `point_transactions`, `src/lib/levelUtils.ts`, the leaderboard engine through `useClassBoard`), streaks (`student_login_streaks` with `current_streak`, `longest_streak`, `streak_freeze_count`; `student_attendance_streaks`), badges (`AchievementBadges`), quests (`custom_quests`, `DailyChallengesCard`), the wallet (`economy_transactions`, `StudentWallet`).
@@ -540,7 +541,10 @@ The reason is commercial as much as ethical: these are children, their parents a
 - It never expresses sadness, disappointment, loneliness or worry. It never says it missed the child, never says a streak is in danger, never asks the child to come back.
 - It praises what was done ("You finished your reading") rather than what the child is ("You are so smart").
 - Its lines come from a pool chosen by context (B8), a different line each day, written in the voice of J1.
-- A drawn character would be the single most valuable brand asset in this brief. Today it is an emoji on an ink disc. See Part L.
+- The character is Pip, a chao mao (red-whiskered bulbul). `docs/MASCOT.md` is the guide; read it before touching the mascot. The drawings are finished files in `public/mascot/` (`pip.svg` hello, `pip-happy.svg`, `pip-encouraging.svg`, `pip-excited.svg`, `pip-celebrating.svg`, `pip-loving.svg`, `pip-badge.svg`), made by `scripts/mascot/build-pip.mjs`. Do not redraw, recolour or edit them; if a pose is missing, say so and stop.
+- Wiring (Phase 6): `MascotCompanion.tsx` shows the pose for its current expression as `<img src="/mascot/pip-<mood>.svg" alt="">` in place of the emoji on the ink disc (`happy`, `excited`, `celebrating`, `encouraging`, `loving` map one to one; the greeting uses `pip.svg`). `width` and `height` are set so nothing shifts while it loads. Motion is on the wrapper only: a 6 px breathing rise over 3.4 s at motion level `full`, a `reward` spring hop when the expression changes, nothing under `calm` and `off`. The pose files themselves are static.
+- Sizes: `early` 144 px, `young` 112 px, `junior` 72 px, `teen` (only if switched on) the 40 px badge. Below 64 px always use `pip-badge.svg`.
+- Pip never appears on tuition, payment or destructive screens.
 
 ### I3. Moments (lazy-loaded, in `src/components/fx/moments/`)
 
@@ -550,6 +554,7 @@ The reason is commercial as much as ethical: these are children, their parents a
 | Level reached | student | level from the leaderboard engine rises | band's reward moment; `teen`: Seal and a serif line |
 | Approved feedback arrives | student, parent | a teacher approves | the teacher's photo, name and words open as a letter of paper |
 | Moving up | student | F3 | page turn |
+| Birthday | student | today's day and month in Hanoi equal the child's own `date_of_birth` (the row the shell already loads; shown only on that child's own profile) | `pip-loving.svg`, "Happy birthday" and the first name, on the home screen that day only. Never shown to classmates, never used on the parent's money screens |
 | Anniversary | family | whole years since the earliest enrolment the page can already read | one serif line and a Seal on the family home, that week only |
 | Monthly recap | parent | first visit in a new month | a short page per child: lessons attended, work handed in, the level, one approved note. Approved facts only; if there is too little to say, it is not shown |
 | A class's full week | teacher, class | C9 | Seal |
@@ -675,7 +680,7 @@ Defaults are stated so work is never blocked; each default is the cautious choic
 | 1 | Signature tier, or louder? This brief assumes the Signature tier (B1) | Signature tier |
 | 2 | Sound for children: on or off by default? On is more delightful at home and a nuisance in a waiting room | off, with a visible speaker button |
 | 3 | Parents' default language: Vietnamese first or English first? | English with Vietnamese beneath |
-| 4 | A drawn HEC mascot (I2). It needs an illustrator; it would also serve the reception TV and printed reports | keep the emoji on an ink disc |
+| 4 | The mascot is drawn: Pip (`docs/MASCOT.md`), on the reception TV since 22 Nov 2026. Still open: the name, and whether to have the soft toy, stickers and postcards made | "Pip"; app and TV only |
 | 5 | Should a child's chosen "Look" follow them across devices? Needs one nullable column on `students` and a migration you would paste | per device only |
 | 6 | Is tuition allowed to move behind "Grown-ups" for children under Grade 7 (E9)? It stays one tap away | yes |
 | 7 | Is there, or will there be, a referral scheme? I1 row 16 offers sharing with no reward | no reward |
