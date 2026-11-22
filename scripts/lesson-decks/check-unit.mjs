@@ -88,6 +88,8 @@ unit.decks.forEach((d, i) => {
   ok(`${tag}: ends with reflect or homework near the end`, d.slides.slice(-3).some((s) => s.kind === "reflect" || s.kind === "homework"));
   ok(`${tag}: inquiry phases set`, Array.isArray(d.inquiryPhases) && d.inquiryPhases.length > 0);
   for (const r of d.resources ?? []) ok(`${tag}: resource link ${r.url}`, /^https:\/\/www\.twinkl\.com\/resource\/[a-z0-9-]+$/.test(r.url) && !!r.title && !!r.use);
+  const titles = d.slides.map((s) => s.title).filter(Boolean);
+  ok(`${tag}: slide titles are unique within the deck`, new Set(titles).size === titles.length, titles.filter((t, k) => titles.indexOf(t) !== k).join(" | "));
   const deckKeys = ["id", "curriculum", "level", "unit", "lesson", "title", "minutes", "inquiryPhases", "book", "covers", "resources", "slides"];
   ok(`${tag}: only known deck fields`, Object.keys(d).every((k) => deckKeys.includes(k)), Object.keys(d).filter((k) => !deckKeys.includes(k)).join(", "));
   d.slides.forEach((s, j) => {

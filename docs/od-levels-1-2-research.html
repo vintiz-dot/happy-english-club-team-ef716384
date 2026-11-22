@@ -1,0 +1,235 @@
+<title>Play, Talk, Think: Levels 1-2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a single reading column with a sticky contents rail on wide screens; strength badges carry the evidence grade. */
+:root {
+  --bg: #f7f8f4; --surface: #ffffff; --ink: #1d2a24; --soft: #55645c; --line: #d9e0d8;
+  --accent: #1f7a5a; --accent-ink: #ffffff;
+  --strong: #1f7a5a; --moderate: #a86b00; --weak: #9b3b3b;
+  --strong-bg: #e3f2ea; --moderate-bg: #fbefd6; --weak-bg: #f7e3e3;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121916; --surface: #18211d; --ink: #e5ece7; --soft: #a3b2a9; --line: #2c3a33;
+  --accent: #5cc79c; --accent-ink: #0d1a14; --strong: #6fd3a6; --moderate: #e8b04f; --weak: #ec8b8b;
+  --strong-bg: #173327; --moderate-bg: #33280f; --weak-bg: #3a1c1c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121916; --surface: #18211d; --ink: #e5ece7; --soft: #a3b2a9; --line: #2c3a33;
+  --accent: #5cc79c; --accent-ink: #0d1a14; --strong: #6fd3a6; --moderate: #e8b04f; --weak: #ec8b8b;
+  --strong-bg: #173327; --moderate-bg: #33280f; --weak-bg: #3a1c1c; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 17px/1.6 var(--body); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }
+nav { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; font-size: 14px; display: grid; gap: 6px; }
+nav a { color: var(--soft); text-decoration: none; } nav a:hover, nav a:focus-visible { color: var(--accent); }
+nav strong { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); margin-bottom: 4px; }
+main { min-width: 0; max-width: 70ch; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 2.4rem; margin: 0 0 12px; }
+h2 { font-size: 1.6rem; margin: 56px 0 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 28px 0 6px; font-family: var(--body); font-weight: 700; }
+p, li { color: var(--ink); } .lede { font-size: 1.15rem; color: var(--soft); }
+.meta { font-family: var(--mono); font-size: 12px; color: var(--soft); letter-spacing: .04em; }
+.grade { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; vertical-align: 2px; margin-left: 6px; }
+.g-strong { color: var(--strong); background: var(--strong-bg); } .g-moderate { color: var(--moderate); background: var(--moderate-bg); } .g-weak { color: var(--weak); background: var(--weak-bg); }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+.box h3 { margin-top: 0; }
+.do { border-left: 4px solid var(--accent); }
+.tablewrap { overflow-x: auto; margin: 16px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--soft); }
+.refs { font-size: 14px; } .refs li { margin-bottom: 6px; word-break: break-word; }
+.refs a, main a { color: var(--accent); }
+code { font-family: var(--mono); font-size: .9em; }
+@media (max-width: 820px) { .wrap { grid-template-columns: 1fr; gap: 16px; } nav { position: static; } h1 { font-size: 1.9rem; } }
+</style>
+
+<div class="wrap">
+<nav aria-label="Contents">
+  <strong>Contents</strong>
+  <a href="#summary">The short answer</a>
+  <a href="#lesson">A 90-minute lesson</a>
+  <a href="#a">A. Fluent users, then ELA</a>
+  <a href="#b">B. Play (Level 1)</a>
+  <a href="#c">C. Play + inquiry (Level 2)</a>
+  <a href="#decks">How the decks use this</a>
+  <a href="#targets">Targets by level</a>
+  <a href="#limits">Limits of this report</a>
+  <a href="#refs">References</a>
+</nav>
+
+<main>
+<p class="meta">Happy English Club · Oxford Discover 2nd edition, Levels 1 and 2 · 22 Nov 2026</p>
+<h1>Play, Talk, Think</h1>
+<p class="lede">What the research says about turning Vietnamese 6-8-year-olds into confident English speakers and then writers, and how the new Level 1 and Level 2 lesson decks put it into practice.</p>
+
+<h2 id="summary">The short answer</h2>
+<p>Very little research studies exactly our children: 6-8-year-olds learning English as a foreign language for three hours a week. Most of the strong evidence comes from children learning in their first language, or from adults. So the recommendations below combine the few strong findings with sensible design that is consistent with them, and say which is which.</p>
+<div class="box do">
+<h3>Six things the evidence supports best</h3>
+<ol>
+  <li><strong>Spaced retrieval.</strong> Bring words back at the start of every lesson, and again days and weeks later. Of everything here, this has the strongest evidence. <span class="grade g-strong">Strong</span></li>
+  <li><strong>Talk with feedback.</strong> Pair work with a real reason to speak, and quick corrections that push the child to fix the mistake themselves (a prompt) rather than the teacher just repeating it correctly (a recast). Younger learners benefit more from feedback. <span class="grade g-strong">Moderate-strong</span></li>
+  <li><strong>Guided, never unguided.</strong> Play and inquiry work when the adult holds a clear goal and steers. Leaving children to discover on their own does worse than teaching. <span class="grade g-strong">Strong-moderate</span></li>
+  <li><strong>Words with actions.</strong> Acting out a word's meaning helps young children learn and remember concrete vocabulary. <span class="grade g-moderate">Moderate</span></li>
+  <li><strong>Chunks and repeated tasks.</strong> Teach useful phrases as wholes. Repeat a speaking task with new partners to build fluency, with one feedback moment in between so mistakes don't set. <span class="grade g-moderate">Moderate</span></li>
+  <li><strong>Systematic phonics with known words.</strong> Short, explicit letter-sound work, using words the children already understand. <span class="grade g-strong">Strong in L1</span></li>
+</ol>
+</div>
+<p>Songs, puppets, role play, Frayer boxes, sentence frames, translanguaging and the concept-based inquiry model as a package all have <em>weak</em> direct evidence. None shows harm. They are good ways to deliver the six points above, so the decks use them that way, never as the objective itself.</p>
+
+<h2 id="lesson">What this means for a 90-minute lesson, twice a week</h2>
+<p>A lesson is a run of short blocks (5-15 minutes) that switch between moving, talking, sitting and making. Each block has one language goal. A suggested shape (the timings are our design, not taken from a study):</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Minutes</th><th>Level 1 (play-based)</th><th>Level 2 (play + inquiry)</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>0-10</td><td>Original chant with actions; last lesson's words</td><td>Engage: a game, mystery bag or "What do you notice?"</td><td>Retrieval; joy</td></tr>
+<tr><td>10-25</td><td>TPR, then a vocabulary game</td><td>Focus: words and one frame (short), then Is / Is Not or a sort</td><td>Enactment; comparison with non-examples</td></tr>
+<tr><td>25-45</td><td>Story or role play; the book page</td><td>Investigate: the reading, with "show me where it says…"</td><td>Dialogic reading (PEER)</td></tr>
+<tr><td>45-50</td><td>Movement break</td><td>Movement break</td><td>On-task behaviour</td></tr>
+<tr><td>50-70</td><td>Speaking game in pairs with a frame, repeated with new partners</td><td>Organize on a chart; Generalize with "I think ___ because ___"</td><td>Interaction; task repetition; explaining why</td></tr>
+<tr><td>70-85</td><td>Say it, then trace, copy, label or write with a frame</td><td>Transfer to a new example; say it, then write it</td><td>Oral rehearsal before writing</td></tr>
+<tr><td>85-90</td><td>Calm close; thumbs reflection</td><td>Reflect: "I used to think… now I think…"</td><td>Self-assessment</td></tr>
+</tbody></table></div>
+<p>With only two lessons a week, a 5-minute home word review is probably worth more than one more activity type in class.</p>
+
+<h2 id="a">A. From fluent English users to English language arts</h2>
+
+<h3>Input, interaction and output <span class="grade g-moderate">Moderate</span></h3>
+<p>Krashen's comprehensible input is now read as "necessary but not enough": children also need to speak and get feedback. Mackey &amp; Goo's meta-analysis found clear gains from conversational interaction, smaller in classrooms than in labs. Lyster &amp; Saito (15 classroom studies) found prompts tended to beat recasts, and younger learners gained more from feedback. Swain's output hypothesis is plausible, and direct tests are mixed.</p>
+<p><strong>In class:</strong> stay mostly in English with pictures, gestures and routines; end every input block with children saying something; ask for a full sentence and "why?"; correct with a quick, kind prompt ("He ___?").</p>
+
+<h3>Task-based teaching <span class="grade g-moderate">Moderate</span></h3>
+<p>Bryfonski &amp; McKay's meta-analysis reported a large effect (d = 0.93). A 2025 reanalysis puts it nearer g = 0.61, and few of the studies involve young children. Shintani's work with 6-year-old beginners used listen-and-do tasks before speaking tasks.</p>
+<p><strong>In class:</strong> brief teaching of the target language, then a task with a real outcome (find the difference, sort, guess who, class survey). With beginners, start with listen-and-do.</p>
+
+<h3>Oracy and dialogic talk <span class="grade g-weak">Weak for EFL</span></h3>
+<p>Mercer's "exploratory talk" (giving reasons, building on each other) improved children's reasoning in first-language studies. Voice 21's framework has four strands: physical, linguistic, cognitive, and social-emotional. The EEF's trial of dialogic teaching was rated low-to-moderate in security, and teachers found it hard to put in place.</p>
+<p><strong>In class:</strong> teach the talk moves as chunks ("I think… because…", "I agree with ___ because…", "Can you say more?") and expect heavy scaffolding at these levels.</p>
+
+<h3>Chunks, fluency, then accuracy and complexity <span class="grade g-moderate">Moderate</span></h3>
+<p>Formulaic sequences are a base for later grammar. The 4/3/2 technique (the same talk to three listeners, faster each time) builds fluency but not accuracy. Tran &amp; Saito found that adding delayed feedback improved both. "Fluency, then accuracy, then complexity" is a useful teaching rule of thumb, not a proven sequence.</p>
+<p><strong>In class:</strong> "speed-date" rounds with the same picture or story, and one teacher feedback moment between the first and last round.</p>
+
+<h3>Vocabulary depth <span class="grade g-moderate">Moderate</span></h3>
+<p>Beck, McKeown &amp; Kucan's robust vocabulary instruction (many meetings with a word, in varied contexts) comes from first-language classrooms. For our learners, everyday words are themselves new, so they are the target at Levels 1-2. A few "school" words (compare, because, same, different) start in Level 2 and grow toward ELA.</p>
+
+<h3>Phonics and early literacy <span class="grade g-strong">Strong in L1</span></h3>
+<p>The National Reading Panel found systematic phonics helped beginning readers (about d = 0.41, more when started early); later reanalyses give smaller effects. The EEF's Key Stage 1 guidance puts speaking and listening first, alongside phonics and comprehension. Vietnamese uses the Latin alphabet, so letter shapes carry over. English final consonants, clusters and vowel contrasts need explicit practice.</p>
+
+<h3>Shared reading, oral rehearsal, sentence-level writing <span class="grade g-moderate">Moderate / weak</span></h3>
+<p>Dialogic reading (PEER: prompt, evaluate, expand, repeat) helps oral language and narrative (a 2026 meta-analysis found g = 0.62 for narrative skills). Sentence combining has a 0.50 effect in only five studies with older students. The Writing Revolution's evidence comes mostly from the programme itself.</p>
+<p><strong>In class:</strong> say the sentence to a partner, say it to the teacher, then write it. In Level 1, writing means tracing, copying, labelling and frames. In Level 2, children join sentences with <em>and / but / because</em>, first aloud, then on paper.</p>
+
+<h3>Retrieval, spacing and feedback <span class="grade g-strong">Strong</span></h3>
+<p>Cepeda et al. (317 experiments) and Dunlosky et al. rate spaced practice and practice testing as the most useful study techniques. Hattie &amp; Timperley show that feedback matters a great deal, and that its form decides whether it helps. "Here is what to do next" beats "good job".</p>
+
+<h3>Vietnamese as a resource <span class="grade g-weak">Weak as a method</span></h3>
+<p>Translanguaging is supported mainly by qualitative work. Cummins' interdependence idea (skills in the first language support the second) is better grounded. <strong>In class:</strong> short, planned Vietnamese moments (check a word, rehearse an idea, compare a pattern), with English as the working language. Each grammar slide in the decks has one "Vietnamese tip".</p>
+
+<h3>BICS and CALP: the bridge to ELA <span class="grade g-moderate">Moderate as an idea</span></h3>
+<p>Cummins separates everyday conversational English from academic English (describe, compare, explain why, sequence). Children who stop at chat struggle when they reach ELA. So from Level 2 the decks add "school talk" with graphic organisers: sort, compare, give a reason.</p>
+
+<h2 id="b">B. Play-based learning (Level 1's core)</h2>
+<h3>Guided play, not free play <span class="grade g-moderate">Moderate</span></h3>
+<p>In guided play, children have choice and the adult sets the goal and scaffolds (Weisberg, Hirsh-Pasek &amp; Golinkoff). Skene et al.'s 2022 meta-analysis (17 studies, ages 1-8) found guided play beat direct instruction on early maths (g = 0.24) and shapes (g = 0.63), with no difference on literacy or vocabulary. Most studies were at high risk of bias, and none involved English as a foreign language. The fair claim is "at least as effective as teaching, and more enjoyable", not "proven better".</p>
+<p><strong>Test for any activity:</strong> who is deciding? If the teacher gives every answer, it is no longer guided play.</p>
+<h3>The five characteristics <span class="grade g-weak">Weak-moderate, as a checklist</span></h3>
+<p>Zosh et al. (LEGO Foundation): joyful, meaningful, actively engaging, iterative, socially interactive. They are useful for auditing an activity: aim for three or more in each activity and all five across a lesson.</p>
+<h3>Movement and TPR <span class="grade g-moderate">Moderate for concrete words</span></h3>
+<p>Children who acted out new words in exercise remembered them best, six weeks later too (Mavilidi et al., preschoolers). The TPR meta-analysis effect is large but very imprecise. Active lessons raise enjoyment and on-task behaviour (Watson 2017; Bedard 2019). Tie the action to the meaning, then move from doing to saying within the same lesson.</p>
+<h3>Songs, games, role play, stories, puppets <span class="grade g-weak">Weak</span></h3>
+<p>Hamilton et al.'s 2024 review of 60 song studies found mostly positive results, but none strong enough to show the songs caused them, and no harm. Digital games show moderate effects for language. Role play and drama have weak causal evidence (Lillard 2013; Mages 2008). Use them as vehicles with a required phrase: "you must say ___ to get a card". Avoid elimination games, where the weakest children stop speaking.</p>
+<h3>Assessing play <span class="grade g-weak">Weak (no method compared)</span></h3>
+<p>Write each objective as an observable "I can…". Carry a short checklist with 3-4 target behaviours, mark 4-6 children a lesson so everyone is seen once a week, and note one quote in the child's own words. A 2-minute "show me" at the end of a play block turns play into evidence.</p>
+
+<h2 id="c">C. Play blended with concept-based inquiry (Level 2's core)</h2>
+<h3>Guidance is what makes inquiry work <span class="grade g-strong">Strong-moderate</span></h3>
+<p>Alfieri et al. (164 studies): unassisted discovery did worse than explicit teaching (d = -0.38), while discovery with feedback, worked examples and prompts to explain did better (d = +0.30). Lazonder &amp; Harmsen (72 studies): guidance helps at every age, and younger learners need more specific guidance. Klahr &amp; Nigam warn against leaving 8-year-olds alone with materials.</p>
+<h3>Comparison, sorting and non-examples <span class="grade g-moderate">Moderate</span></h3>
+<p>Comparing examples helps children learn relational structure (Christie &amp; Gentner). Concept attainment ("Is / Is Not", Bruner) and grouping-and-naming (Taba) are its classroom forms. Near-miss non-examples carry the most information. Frayer boxes and Hawkins' "messing about" have weak direct evidence in EFL but fit this pattern.</p>
+<h3>The inquiry phases <span class="grade g-weak">Weak as a package</span></h3>
+<p>Marschall &amp; French's phases (Engage, Focus, Investigate, Organize, Generalize, Transfer, Reflect) build on Erickson and Lanning's structure: facts lead to concepts, and concepts lead to generalizations (sentences linking two or more concepts). No controlled study shows the package improves transfer for primary children. Its parts (guidance, comparison, explaining why, testing a new case) are better supported. So the decks treat it as a well-designed lesson shape, not as proven.</p>
+<h3>Generalizing with frames, at age 7-8</h3>
+<ul>
+  <li>One concept and one generalization per lesson, never more.</li>
+  <li>Teach the words and the frame first, in under 10 minutes; then investigate.</li>
+  <li>The frame stays the same for weeks and fades: "All ___ have ___." "Some ___, but not all." "___ because ___." "I think ___ because ___."</li>
+  <li>The teacher plans the generalization and never hands it over. Children say their own, and "Not always!" is welcome.</li>
+  <li>Transfer is its own step, with new examples the children have not seen.</li>
+  <li>Questions: factual for quick checks, one conceptual question per lesson, and one playful debatable question per unit ("Which is the best ___? Why?").</li>
+  <li>Keep the thinking bigger than the language. Children may notice and guess in Vietnamese; the final frame is in English.</li>
+</ul>
+
+<h2 id="decks">How the Level 1 and Level 2 decks put this in place</h2>
+<div class="box">
+<h3>Every deck, both levels</h3>
+<ul>
+  <li>Opens with an original chant or game that brings back the last lesson's words (retrieval).</li>
+  <li>Two or more pair or group talk episodes, with frames on the board and a fluency tip.</li>
+  <li>The exact Student Book pages, activity letters and track numbers (play the tracks from your own copy), and the exact Workbook pages as homework.</li>
+  <li>A creative homework with a higher-order twist (invent, imagine, choose and say why) and a Challenge for high achievers.</li>
+  <li>A grammar slide for young children, after they have used the pattern in a game: a hook, the pattern, what it means, when to use it, a Vietnamese tip, and common mistakes.</li>
+  <li>A vlog prompt once per unit at Support, Core and Stretch.</li>
+  <li>Writing in the order: say it, then write it.</li>
+</ul>
+</div>
+<div class="box"><h3>Level 1 (age 6-7, Pre A1 to A1)</h3><p>Each lesson is a sequence of guided-play episodes: chant, TPR, vocabulary game, story or role play, the book page, a movement break, a speaking game, then a calm close. Every episode has one language goal. Grammar appears as a pattern in play, and writing starts with tracing, copying, labelling and frames.</p></div>
+<div class="box"><h3>Level 2 (age 7-8, A1 to A1+)</h3><p>Play continues, and the inquiry phases are added at a child's level. Engage with a game or mystery bag; Focus with Is / Is Not and picture sorts; Investigate through the reading; Organize on a class chart; Generalize with frames; Transfer to a new case; Reflect with "I used to think… now I think…". Each unit lists the teacher's planned generalizations. They are never shown to children as answers.</p></div>
+
+<h2 id="targets">Targets by level</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Level</th><th>Age</th><th>CEFR</th><th>Cambridge exam to aim for</th><th>Exit can-do (examples)</th></tr></thead>
+<tbody>
+<tr><td>Oxford Discover 1</td><td>6-7</td><td>Pre A1 → A1</td><td>Pre A1 Starters</td><td>Name and describe people, animals, colors and places in short sentences; ask and answer simple questions; copy and write a labelled sentence.</td></tr>
+<tr><td>Oxford Discover 2</td><td>7-8</td><td>A1 → A1+</td><td>A1 Movers</td><td>Talk for a minute about a picture with <em>because</em>; compare two things; write 3-5 linked sentences with <em>and / but / because</em>.</td></tr>
+<tr><td>Oxford Discover 3+</td><td>8-9</td><td>A1+ → A2</td><td>A2 Flyers</td><td>Concept-based Level 3 decks, then ELA-style reading and writing.</td></tr>
+</tbody></table></div>
+<p>From the Cambridge handbook: Starters targets Pre A1, Movers Pre A1 to A1, and Flyers A1 to A2. The Council of Europe publishes collected can-do descriptors for ages 7-10 that can be turned into the "I can…" lines on the objective slides.</p>
+
+<h2 id="limits">Limits of this report</h2>
+<ul>
+  <li>Almost none of the evidence is about 6-8-year-olds learning English in Vietnam. Most is about preschool or first-language children, or adults.</li>
+  <li>Several play sources are linked to the LEGO Foundation, which funded the Skene review team.</li>
+  <li>The research agents opened some sources in full. Others they confirmed only from abstracts or search summaries, and EEF pages were blocked. Check a source before quoting it to parents.</li>
+  <li>If you want real proof for HEC, add one transfer item at the end of each unit and compare classes over a term.</li>
+</ul>
+
+<h2 id="refs">Key references</h2>
+<ol class="refs">
+<li>Skene, K. et al. (2022). Can guidance during play enhance children's learning and development in educational contexts? <em>Child Development</em> 93(4). <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9545698">pmc.ncbi.nlm.nih.gov/articles/PMC9545698</a></li>
+<li>Zosh, J. M. et al. (2018). Accessing the inaccessible: Redefining play as a spectrum. <em>Frontiers in Psychology</em> 9. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6084083">pmc.ncbi.nlm.nih.gov/articles/PMC6084083</a></li>
+<li>Zosh, J. M. et al. (2017). <em>Learning through play: a review of the evidence</em>. LEGO Foundation.</li>
+<li>Weisberg, D. S., Hirsh-Pasek, K. &amp; Golinkoff, R. M. (2013). Guided play. <em>Mind, Brain, and Education</em> 7(2).</li>
+<li>Alfieri, L. et al. (2011). Does discovery-based instruction enhance learning? <em>J. Educational Psychology</em> 103(1). <a href="https://doi.org/10.1037/a0021017">doi.org/10.1037/a0021017</a></li>
+<li>Lazonder, A. W. &amp; Harmsen, R. (2016). Meta-analysis of inquiry-based learning: effects of guidance. <em>Review of Educational Research</em> 86(3). <a href="https://doi.org/10.3102/0034654315627366">doi.org/10.3102/0034654315627366</a></li>
+<li>Kirschner, P., Sweller, J. &amp; Clark, R. (2006). Why minimal guidance during instruction does not work. <em>Educational Psychologist</em> 41(2). <a href="https://doi.org/10.1207/s15326985ep4102_1">doi.org/10.1207/s15326985ep4102_1</a></li>
+<li>Christie, S. &amp; Gentner, D. (2010). Where hypotheses come from. <em>J. Cognition and Development</em> 11(3).</li>
+<li>Marschall, C. &amp; French, R. (2018). <em>Concept-Based Inquiry in Action</em>. Corwin.</li>
+<li>Erickson, H. L., Lanning, L. A. &amp; French, R. (2017). <em>Concept-Based Curriculum and Instruction for the Thinking Classroom</em>. Corwin.</li>
+<li>Lyster, R. &amp; Saito, K. (2010). Oral feedback in classroom SLA: a meta-analysis. <em>SSLA</em> 32(2).</li>
+<li>Mackey, A. &amp; Goo, J. (2007). Interaction research in SLA: a meta-analysis. In Mackey (ed.), <em>Conversational Interaction in SLA</em>. OUP.</li>
+<li>Bryfonski, L. &amp; McKay, T. H. (2019). TBLT implementation and evaluation: a meta-analysis. <em>Language Teaching Research</em> 23(5). <a href="https://doi.org/10.1177/1362168817744389">doi.org/10.1177/1362168817744389</a></li>
+<li>Tran, R. &amp; Saito, K. (2021). 4/3/2 with and without feedback (OASIS summary). <a href="https://discovery.ucl.ac.uk/10156231/1/OASIS_Summary_Tran_and_Saito_2021.pdf">discovery.ucl.ac.uk</a></li>
+<li>Mercer, N., Wegerif, R. &amp; Dawes, L. (1999). Children's talk and the development of reasoning in the classroom. <em>BERJ</em> 25(1).</li>
+<li>Voice 21. The Oracy Framework. <a href="https://membership-hub.voice21.org/the-oracy-framework">voice21.org</a></li>
+<li>Beck, I., McKeown, M. &amp; Kucan, L. (2013). <em>Bringing Words to Life</em> (2nd ed.). Guilford.</li>
+<li>National Reading Panel (2000). Phonics chapter. <a href="https://www.nichd.nih.gov/sites/default/files/publications/pubs/nrp/Documents/ch2-II.pdf">nichd.nih.gov</a></li>
+<li>Education Endowment Foundation. <em>Improving Literacy in Key Stage 1</em>. <a href="https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/literacy-ks-1">educationendowmentfoundation.org.uk</a></li>
+<li>Graham, S. &amp; Perin, D. (2007). <em>Writing Next</em>. Carnegie Corporation. <a href="https://www.carnegie.org/publications/writing-next/">carnegie.org</a></li>
+<li>Cepeda, N. J. et al. (2006). Distributed practice in verbal recall tasks. <em>Psychological Bulletin</em> 132(3). <a href="https://pubmed.ncbi.nlm.nih.gov/16719566/">pubmed</a></li>
+<li>Dunlosky, J. et al. (2013). Improving students' learning with effective learning techniques. <em>Psychological Science in the Public Interest</em> 14(1).</li>
+<li>Hattie, J. &amp; Timperley, H. (2007). The power of feedback. <em>Review of Educational Research</em> 77(1). <a href="https://doi.org/10.3102/003465430298487">doi.org/10.3102/003465430298487</a></li>
+<li>Cummins, J. (1979). Linguistic interdependence and the educational development of bilingual children. <em>Review of Educational Research</em> 49(2).</li>
+<li>García, O. &amp; Li Wei (2014). <em>Translanguaging: Language, Bilingualism and Education</em>. Palgrave.</li>
+<li>Hamilton, C. et al. (2024). Songs for teaching second or foreign languages: a systematic review. <em>System</em> 124. <a href="https://ora.ox.ac.uk/objects/uuid:76786352-3b9c-4c89-a967-a454fd9635d9">ora.ox.ac.uk</a></li>
+<li>Watson, A. et al. (2017). Classroom-based physical activity: systematic review and meta-analysis. <em>IJBNPA</em> 14. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5574081">pmc</a>; Bedard, C. et al. (2019). <em>PLoS One</em> 14(6). <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6592532">pmc</a></li>
+<li>Mavilidi, M.-F. et al. (2015). Integrated physical exercises and foreign language vocabulary in preschoolers. <em>Educational Psychology Review</em>. <a href="https://link.springer.com/article/10.1007/s10648-015-9316-4">springer</a></li>
+<li>Lillard, A. S. et al. (2013). The impact of pretend play on children's development. <em>Psychological Bulletin</em> 139(1).</li>
+<li>Cambridge English (2024). <em>Pre A1 Starters, A1 Movers and A2 Flyers handbook</em>. <a href="https://www.cambridgeenglish.org/es/Images/young-learners-handbook-2024.pdf">cambridgeenglish.org</a></li>
+<li>Council of Europe (2020). <em>CEFR Companion Volume</em>; Goodier &amp; Szabo (2018), young learner descriptors, ages 7-10. <a href="https://rm.coe.int/16808b1688">rm.coe.int</a></li>
+</ol>
+<p class="meta">Prepared for Happy English Club. The full working notes for strands A, B and C, with every source and how it was checked, are kept with the build.</p>
+</main>
+</div>
