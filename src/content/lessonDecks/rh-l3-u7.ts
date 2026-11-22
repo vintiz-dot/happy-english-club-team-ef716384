@@ -16,7 +16,10 @@ import { rhL3U7Assessments } from "./rh-l3-u7/assessments";
 import { rhL3U7Football } from "./rh-l3-u7/football";
 import { rhL3U7Worksheets } from "./rh-l3-u7/worksheets";
 import { rhL3U7Creative } from "./rh-l3-u7/homework";
-import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, wordAudio } from "./rh-l3/media";
+import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, unitVideo, wordAudio } from "./rh-l3/media";
+
+// The Unit 7 video from the school's Drive (3B videos uploaded 22 Nov 2026).
+const VIDEO = unitVideo(7);
 
 const base = { curriculum: "reach-higher" as const, level: 3, unit: 7, minutes: 90 };
 const BQ = "What forces can change Earth?";
@@ -1425,7 +1428,8 @@ const lessons: Deck[] = [
           "Report one fact with the passive ('New land is created when ...') and one cause and effect.",
         ],
         prompts: ["The video shows that ___.", "___ is created when ___.", "The eruption led to ___."],
-        teacherNote: "Play the Reach Higher 3B video for Unit 7, Amazing Volcanoes (file 'Video Level 3B - Reach Higher 1e_3' in the school's copy; not hosted in the app).",
+        teacherNote: "The player below shows the Reach Higher 3B video for Unit 7, Amazing Volcanoes (file 'Video Level 3B - Reach Higher 1e_3' in the school's copy), played from the school's Drive; it is not hosted in the app.",
+        ...(VIDEO ? { media: [VIDEO] } : {}),
       },
       {
         kind: "activity",

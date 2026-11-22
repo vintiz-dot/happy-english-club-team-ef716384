@@ -225,6 +225,8 @@ for (const { f, u } of units) {
     if (u.decks.length > 1) {
       // The worksheets and football editions are wired in, not just sitting beside the unit.
       ok(`${f}: printable grammar worksheets attached`, (u.worksheets ?? []).length >= 3);
+      // Every unit of 3A and 3B has its publisher video in the school's Drive; one slide plays it.
+      eq(`${f}: one slide plays the unit video`, u.decks.flatMap((d) => d.slides).filter((s) => (s.media ?? []).some((m) => m.kind === "video")).length, 1);
       ok(`${f}: every creative homework has its football edition`, u.decks.flatMap((d) => d.slides.filter((s) => s.kind === "creative"))
         .every((s) => (s.variants ?? []).some((v) => v.interest === "football" && v.task?.title)));
     }

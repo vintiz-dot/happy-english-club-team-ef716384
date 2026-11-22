@@ -22,7 +22,10 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
-import { keyWordAudio, phonicsAudio, readingAudio, talkAudio } from "./rh-l3/media";
+import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, unitVideo } from "./rh-l3/media";
+
+// The Unit 8 video from the school's Drive (3B videos uploaded 22 Nov 2026).
+const VIDEO = unitVideo(8);
 import { rhL3U8Assessments } from "./rh-l3-u8/assessments";
 import { rhL3U8Football } from "./rh-l3-u8/football";
 import { rhL3U8Worksheets } from "./rh-l3-u8/worksheets";
@@ -1456,7 +1459,8 @@ const lessons: Deck[] = [
           "After: use the steps to give your partner advice about their goal (First, you should ... / If I were you, I'd ...).",
         ],
         prompts: ["The first step is ___. Then ___.", "You should ___ so that ___.", "If I were you, I'd ___."],
-        teacherNote: "Play the Reach Higher 3B video for Unit 8, Never Give Up on Your Goals! (file 'Video Level 3B - Reach Higher 1e_4' in the school's copy; not hosted in the app). The steps, in order: tell a friend about the goal; work out a strategy with them; look at different ways to prepare; plan how to build endurance; keep to the plan.",
+        teacherNote: "The player below shows the Reach Higher 3B video for Unit 8, Never Give Up on Your Goals! (file 'Video Level 3B - Reach Higher 1e_4' in the school's copy), played from the school's Drive; it is not hosted in the app. The steps, in order: tell a friend about the goal; work out a strategy with them; look at different ways to prepare; plan how to build endurance; keep to the plan.",
+        ...(VIDEO ? { media: [VIDEO] } : {}),
       },
       {
         kind: "activity",

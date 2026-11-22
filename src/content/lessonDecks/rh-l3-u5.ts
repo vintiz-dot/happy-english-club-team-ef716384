@@ -12,7 +12,10 @@ import { rhL3U5Assessments } from "./rh-l3-u5/assessments";
 import { rhL3U5Football } from "./rh-l3-u5/football";
 import { rhL3U5Worksheets } from "./rh-l3-u5/worksheets";
 import { rhL3U5Creative } from "./rh-l3-u5/homework";
-import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, wordAudio } from "./rh-l3/media";
+import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, unitVideo, wordAudio } from "./rh-l3/media";
+
+// The Unit 5 video from the school's Drive (3B videos uploaded 22 Nov 2026).
+const VIDEO = unitVideo(5);
 
 const base = { curriculum: "reach-higher" as const, level: 3, unit: 5, minutes: 90 };
 const BQ = "What causes matter to change?";
@@ -1469,7 +1472,8 @@ const lessons: Deck[] = [
           "Compare notes: which change was new to you? Which cause from our poster appeared most often?",
         ],
         prompts: ["In the video, ___ changed because ___.", "I have never seen ___ before.", "The most common cause was ___."],
-        teacherNote: "Play the Reach Higher 3B video for Unit 5, Matter Is Everywhere! (file 'Video Level 3B - Reach Higher 1e' in the school's copy; not hosted in the app).",
+        teacherNote: "The player below shows the Reach Higher 3B video for Unit 5, Matter Is Everywhere! (file 'Video Level 3B - Reach Higher 1e' in the school's copy), played from the school's Drive; it is not hosted in the app.",
+        ...(VIDEO ? { media: [VIDEO] } : {}),
       },
       {
         kind: "grammar",

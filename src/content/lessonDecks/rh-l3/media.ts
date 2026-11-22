@@ -47,17 +47,17 @@ export function wordAudio(unit: number, part: Part, words: string[], label = "Sa
   return { kind: "audio", label, tracks: tracksOf(words.map((w) => [w, `${prefix(unit, part)}AV_${w}`])) };
 }
 
-// The unit videos, one file per unit in the school's Drive. 3B's are added when
-// the unpacked 3B video files are in the Drive (only the .rar is there now).
+// The unit videos, one file per unit in the school's Drive: 3A's from the shared
+// course folder, 3B's from the owner's 3B video folder (uploaded 22 Nov 2026).
 const VIDEOS: Record<number, { title: string; driveId?: string }> = {
   1: { title: "Saving Stranded Whales", driveId: "1SU7Qtc8F7S1hb9cfZHGqw4wgjBXBkNCi" },
   2: { title: "The Great Barrier Reef", driveId: "1_H0vBv9AGzl0rlAtG0ZskXXnbtUwmoDg" },
   3: { title: "Rainforests Around the World", driveId: "1WBiPXBjY5nhSPzVPsR4BkNJbrAzqnJ8x" },
   4: { title: "Clean Up the Coasts", driveId: "1UXg8TN7ptcyUpPpVPAtBjM3sfXiPHABR" },
-  5: { title: "Matter Is Everywhere!" },
-  6: { title: "Traditions of Japan" },
-  7: { title: "Amazing Volcanoes" },
-  8: { title: "Never Give Up on Your Goals!" },
+  5: { title: "Matter Is Everywhere!", driveId: "1WoAkAtMUaOwfCdinmnhcYlFZX9LP0iCv" },
+  6: { title: "Traditions of Japan", driveId: "1oNHsjLU7AvUGpLn5Y2ITaTrCAlCnQPra" },
+  7: { title: "Amazing Volcanoes", driveId: "1ciMYPMIKMFbDEqBcL3usq6fDF-OqwTKf" },
+  8: { title: "Never Give Up on Your Goals!", driveId: "1_K-5Bsaua3NB86qsfadW56z9hmbvtjsI" },
 };
 
 /** The unit video, or null while its file is not in the Drive yet. */

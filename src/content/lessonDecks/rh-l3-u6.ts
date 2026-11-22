@@ -13,7 +13,10 @@ import { rhL3U6Assessments } from "./rh-l3-u6/assessments";
 import { rhL3U6Football } from "./rh-l3-u6/football";
 import { rhL3U6Worksheets } from "./rh-l3-u6/worksheets";
 import { rhL3U6Creative } from "./rh-l3-u6/homework";
-import { keyWordAudio, phonicsAudio, readingAudio, talkAudio } from "./rh-l3/media";
+import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, unitVideo } from "./rh-l3/media";
+
+// The Unit 6 video from the school's Drive (3B videos uploaded 22 Nov 2026).
+const VIDEO = unitVideo(6);
 
 const base = { curriculum: "reach-higher" as const, level: 3, unit: 6, minutes: 90 };
 const BQ = "How can we preserve our traditions?";
@@ -1395,7 +1398,8 @@ const lessons: Deck[] = [
           "Compare: which Japanese tradition is most like one of ours? Add it to the unit concept map.",
         ],
         prompts: ["In Japan, people ___.", "This is like ___ in Vietnam because ___.", "It is passed on by ___."],
-        teacherNote: "Play the Reach Higher 3B video for Unit 6, Traditions of Japan (file 'Video Level 3B - Reach Higher 1e_2' in the school's copy; not hosted in the app).",
+        teacherNote: "The player below shows the Reach Higher 3B video for Unit 6, Traditions of Japan (file 'Video Level 3B - Reach Higher 1e_2' in the school's copy), played from the school's Drive; it is not hosted in the app.",
+        ...(VIDEO ? { media: [VIDEO] } : {}),
       },
       {
         kind: "book",
