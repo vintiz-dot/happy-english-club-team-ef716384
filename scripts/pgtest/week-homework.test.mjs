@@ -66,6 +66,37 @@ console.log("the printed week (HEC Docs lesson-material, student copy)");
   eq("no name given: a name line instead", [W.weekMaterial(d, "Core", undefined, "x").nameLine, W.weekMaterial(d, "Core", undefined, "x").studentName], [true, undefined]);
 }
 
+console.log("the plain-print fallback (WeekHomework.tsx), with the homework guide");
+{
+  // The component's HEC Docs and Supabase clients are stubbed; the markup needs neither.
+  const { statSync } = await import("node:fs");
+  const STUBS = {
+    "@/lib/hecDocs": "export const tryMakeDocument = async () => null; export const downloadBlob = () => {};",
+    "@/integrations/supabase/client": "export const supabase = {};",
+  };
+  const alias = { name: "alias", setup(b) {
+    b.onResolve({ filter: /^@\/(lib\/hecDocs|integrations\/supabase\/client)$/ }, (a) => ({ path: a.path, namespace: "stub" }));
+    b.onLoad({ filter: /.*/, namespace: "stub" }, (a) => ({ contents: STUBS[a.path], loader: "js" }));
+    b.onResolve({ filter: /^@\// }, (a) => {
+      const base = resolve(repo, "src", a.path.slice(2));
+      for (const ext of ["", ".ts", ".tsx", "/index.ts", "/index.tsx"]) { try { if (statSync(base + ext).isFile()) return { path: base + ext }; } catch {} }
+      return { path: base };
+    });
+  } };
+  const out = resolve(repo, "node_modules", ".cache", "lesson-decks", `week-homework.${process.pid}.mjs`);
+  await build({ entryPoints: [resolve(repo, "src/components/lessonDecks/WeekHomework.tsx")], bundle: true, format: "esm", platform: "node", outfile: out,
+    logLevel: "silent", plugins: [alias], jsx: "automatic", packages: "external" });
+  const C = await import(pathToFileURL(out).href);
+  const G = await tsOut("src/content/lessonDecks/hec-ielts/homeworkGuide.ts", "wh-guide");
+  const d = ielts[0].u.decks.find((x) => W.isWeekHomework(x));
+  const html = C.weekSheetsMarkup(d, [{ id: "aaaaaaaa-0000-4000-8000-000000000000", name: "Kid <A>" }, { id: "bbbbbbbb-0000-4000-8000-000000000000", name: "Kid B" }],
+    { "tier-stretch": ["bbbbbbbb-0000-4000-8000-000000000000"] });
+  ok("a page per child, the name escaped", html.includes("Kid &lt;A&gt;") && !html.includes("Kid <A>") && html.includes("Kid B"));
+  ok("each child's sheet carries the homework guide", G.HOMEWORK_GUIDE.every((g) => html.split(g.task.replace(/&/g, "&amp;")).length - 1 >= 2));
+  const od = units.find((x) => x.f === "od2e-l3-u12.ts")?.u.decks[0];
+  ok("other courses' sheets carry no IELTS guide", !!od && !C.weekSheetsMarkup(od, [{ id: "a", name: "x" }], {}).includes(G.HOMEWORK_GUIDE[0].task));
+}
+
 console.log("a child's tier");
 const A = "aaaaaaaa-0000-4000-8000-000000000000", B = "bbbbbbbb-0000-4000-8000-000000000000", C = "cccccccc-0000-4000-8000-000000000000";
 const groups = { "tier-support": [A], "tier-stretch": [B, A] };

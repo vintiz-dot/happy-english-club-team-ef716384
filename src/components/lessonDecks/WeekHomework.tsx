@@ -4,6 +4,7 @@ import type { Deck } from "@/lib/lessonDecks/types";
 import { TIERS, byTier, weekMaterial, weekPlan, weekText } from "@/lib/lessonDecks/weekHomework";
 import { ruleFor } from "@/lib/lessonDecks/curricula";
 import { downloadBlob, tryMakeDocument } from "@/lib/hecDocs";
+import { guideBlocks, type DocBlock } from "@/lib/lessonDecks/docBlocks";
 import type { TierLevel } from "@/lib/lessonDecks/types";
 import { Button } from "@/components/ui/button";
 import { PenLine, Send } from "lucide-react";
@@ -31,8 +32,22 @@ export function weekSheetsMarkup(deck: Deck, kids: Kid[], interests: Record<stri
       <table style="border-collapse:collapse;width:100%"><tr>${p.days.map((d) => `<th style="border:1px solid #999;padding:4px">${d.day}</th>`).join("")}</tr><tr>${cells}</tr></table>
       ${p.items.map((i) => `<h3 style="margin:10px 0 2px">${esc(i.label)}${i.days?.length ? ` <small>(${i.days.join(", ")})</small>` : ""}</h3>
         <p style="margin:0">${esc(i.detail)}</p>${i.check ? `<p style="margin:2px 0 0"><b>How your teacher checks it:</b> ${esc(i.check)}</p>` : ""}`).join("")}
-    </section>`;
+    </section>${guideMarkup(deck)}`;
   })).join("");
+}
+
+/** The IELTS course's step-by-step homework guide (homeworkGuide.ts), for the sheet a child takes home. */
+const guideFor = (deck: Deck): DocBlock[] => (deck.curriculum === "hec-ielts-sl" ? guideBlocks() : []);
+
+function guideMarkup(deck: Deck): string {
+  const blocks = guideFor(deck);
+  if (!blocks.length) return "";
+  return `<section class="deck-page" style="font-family:sans-serif;font-size:12px">${blocks.map((b) => `
+    <h3 style="margin:10px 0 2px">${esc(b.heading)}</h3>
+    ${(b.paragraphs ?? []).map((p) => `<p style="margin:2px 0">${esc(p)}</p>`).join("")}
+    ${(b.lists ?? []).map((l) => `${l.title ? `<p style="margin:4px 0 0"><b>${esc(l.title)}</b></p>` : ""}<ul style="margin:2px 0 0 16px;padding:0">${l.items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`).join("")}
+    ${b.table ? `<table style="border-collapse:collapse;margin-top:4px"><tr>${b.table.head.map((h) => `<th style="border:1px solid #999;padding:3px">${esc(h)}</th>`).join("")}</tr>${b.table.rows.map((r) => `<tr>${r.map((c) => `<td style="border:1px solid #999;padding:3px">${esc(c)}</td>`).join("")}</tr>`).join("")}</table>` : ""}`).join("")}
+  </section>`;
 }
 
 /** HEC Docs first (one student copy per child, in turn); the plain print if the printer cannot be reached. */
@@ -41,7 +56,9 @@ async function printWeekSheets(deck: Deck, kids: Kid[], interests: Record<string
   const course = ruleFor(deck.curriculum)?.name ?? "Lesson materials";
   const run = TIERS.flatMap((t) => groups[t].map((k) => ({ k, t })));
   for (const { k, t } of run) {
-    const doc = await tryMakeDocument("lesson-material", weekMaterial(deck, t, k.name, course) as unknown as Record<string, unknown>,
+    const m = weekMaterial(deck, t, k.name, course);
+    m.blocks = [...m.blocks, ...guideFor(deck)];
+    const doc = await tryMakeDocument("lesson-material", m as unknown as Record<string, unknown>,
       { variant: "student", bulk: run.length > 1 });
     if (!doc) { plainPrint(deck, kids, interests); return; }
     downloadBlob(doc.blob, doc.filename);
