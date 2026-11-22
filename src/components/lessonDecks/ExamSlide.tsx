@@ -27,8 +27,10 @@ const FORMAT: Record<ExamFormat, string> = {
 export function ExamSlide({ slide, audience }: { slide: ExamSlideT; audience?: Audience }) {
   const [toggled, setShown] = useState(false);
   const shown = audience === "teacher" || (audience !== "student" && toggled);
-  // A new slide (or new names) starts hidden again.
-  useEffect(() => setShown(false), [slide]);
+  // A new slide (or new names) starts hidden again. Compared by content: the player
+  // rebuilds its slide objects on other changes too, and those must not hide answers.
+  const sig = JSON.stringify([slide.title, slide.items]);
+  useEffect(() => setShown(false), [sig]);
   return (
     <div className="space-y-6">
       <h2 className="font-display text-3xl md:text-5xl font-semibold text-hec-ink leading-tight flex items-start gap-3">
@@ -42,7 +44,8 @@ export function ExamSlide({ slide, audience }: { slide: ExamSlideT; audience?: A
         {!audience && <button
           type="button"
           onClick={() => setShown((s) => !s)}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-hec-line px-3 py-1 text-hec-ink hover:bg-hec-paper focus-visible:outline focus-visible:outline-2"
+          aria-pressed={shown}
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-hec-line px-3 py-1 text-hec-ink hover:bg-hec-paper focus-visible:outline focus-visible:outline-2 print:hidden"
         >
           {shown ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           {shown ? "Hide answers" : "Show answers"}
