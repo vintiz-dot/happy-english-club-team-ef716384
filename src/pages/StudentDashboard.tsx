@@ -46,6 +46,10 @@ import { BUTTON, BUTTON_QUIET, CARD, CARD_TITLE, LABEL, reducedMotion } from "@/
 import { cn } from "@/lib/utils";
 import { LookChoice } from "@/components/student/band/LookChoice";
 import { GrownUps } from "@/components/student/home/GrownUps";
+import { EarlyHome } from "@/components/student/home/EarlyHome";
+import type { HomeData } from "@/components/student/home/types";
+import { useAgeBand } from "@/hooks/useAgeBand";
+import { givenName } from "@/lib/givenName";
 import { useMovingUp } from "@/components/student/band/useMovingUp";
 
 // The "new school year" moment loads only on the day it plays.
@@ -67,20 +71,8 @@ const itemVariants = {
   visible: {}
 };
 
-/**
- * Grade 3 and below (the early and young bands) get the design system's young
- * scale: bigger type, 56 px targets, the warm honey surface. The band comes from
- * the age engine (src/lib/ageBand.ts), read from date_of_birth, which this
- * screen already loads. No date of birth: the standard scale.
- */
-function youngScaleFor(dateOfBirth?: string | null): boolean {
-  const now = dayjs().tz(); // the date in Hanoi
-  return ageProfile(dateOfBirth, { year: now.year(), month: now.month() + 1 }).youngScale;
-}
-
 import { getLevelTitle } from "@/lib/levelUtils";
 import { useStudentPointsSummary } from "@/hooks/useClassBoard";
-import { ageProfile } from "@/lib/ageBand";
 import { useAuth } from "@/hooks/useAuth";
 
 // Launcher tiles for the quick-action dock (presentational config).
@@ -119,6 +111,7 @@ export default function StudentDashboard() {
   const greeting = useMemo(() => getGreeting(), []);
   const reduceMotion = reducedMotion(useReducedMotion());
   const movingUp = useMovingUp();
+  const { band } = useAgeBand();
 
   // Sync tab with URL
   useEffect(() => {
@@ -387,12 +380,58 @@ export default function StudentDashboard() {
     );
   }
 
+  const home: HomeData = {
+    studentId,
+    fullName: studentProfile.full_name,
+    firstName: givenName(studentProfile.full_name),
+    avatarUrl: studentProfile.avatar_url,
+    statusMessage: (studentProfile as any).status_message,
+    level: levelInfo.level,
+    levelTitle: getLevelTitle(levelInfo.level),
+    currentXp: levelInfo.currentXp,
+    nextLevelXp: levelInfo.nextLevelXp,
+    progress: levelInfo.progress,
+    totalXp: totalPoints || 0,
+    streak: streakData.currentStreak,
+    longestStreak: streakData.longestStreak,
+    weekActivity: streakData.weekActivity,
+    homework: {
+      loading: homeworkLoading,
+      error: homeworkError,
+      fetching: homeworkFetching,
+      ready: homeworkReady,
+      todo: homeworkTodo,
+      next: nextHomework,
+      pending: pendingHomework,
+      groups: homeworkGroups,
+      all: homeworkList ?? [],
+    },
+    sessions: upcomingSessions ?? [],
+    enrolledClasses: (enrolledClasses as any[]) ?? [],
+    isMonitor,
+    challenges: dynamicChallenges,
+    achievement: {
+      homeworkCompleted: achievementData?.homeworkCompleted || 0,
+      perfectWeeks: achievementData?.perfectWeeks || 0,
+      classesAttended: achievementData?.classesAttended || 0,
+    },
+    featuredBadgeId,
+    onFeatureBadge: (id) => {
+      setFeaturedBadgeId(id);
+      if (id) localStorage.setItem("featured_badge_id", id);
+      else localStorage.removeItem("featured_badge_id");
+    },
+    onOpenHomework: (hw) => setOpenHomework(hw),
+    onRetryHomework: () => refetchHomework(),
+    onEditProfile: () => setShowEditProfile(true),
+    classPoints: (classId) => Number(pointsSummary?.classes?.find((c) => c.class_id === classId)?.all_time ?? 0),
+  };
+
   return (
     <Layout title="Dashboard">
       {/* "Ivory" design system scope (docs/DESIGN_SYSTEM.md): only this screen carries it at the checkpoint. */}
       <div
         data-hec-theme="ivory"
-        data-hec-scale={youngScaleFor(studentProfile.date_of_birth) ? "young" : undefined}
         className="relative"
       >
       {movingUp.due && (
@@ -422,6 +461,10 @@ export default function StudentDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="mt-2 space-y-8 sm:mt-6 lg:space-y-12">
+        {band === "early" ? (
+          <EarlyHome data={home} />
+        ) : (
+          <>
         {/* Hero */}
         <HeroCommandDeck
           firstName={studentProfile.full_name.split(' ')[0]}
@@ -736,6 +779,8 @@ export default function StudentDashboard() {
         <motion.div variants={itemVariants}>
           <QuickActionDock actions={QUICK_ACTIONS} />
         </motion.div>
+                    </>
+        )}
           </TabsContent>
 
           {/* Achievements Tab */}
