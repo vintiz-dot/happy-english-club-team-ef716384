@@ -14,15 +14,12 @@ import { DailyChallengesCard } from "@/components/student/DailyChallengesCard";
 import { LevelProgressRing } from "@/components/student/LevelProgressRing";
 import { HomeworkCard } from "@/components/student/homework/HomeworkCard";
 import { NextThing } from "@/components/student/home/NextThing";
-import { Classmates } from "@/components/student/home/Classmates";
-import { useClassmates } from "@/components/student/home/useClassmates";
+import { ClassBlocks } from "@/components/student/home/ClassBlocks";
 import { CARD, CARD_TITLE } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
 import type { HomeData } from "./types";
 
 export function JuniorHome({ data }: { data: HomeData }) {
-  const classId = data.enrolledClasses[0]?.classes?.id as string | undefined;
-  const classmates = useClassmates(classId, data.studentId);
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
   const toNext = Math.max(0, Math.round(data.nextLevelXp - data.currentXp));
   // The goal is in sight when the next level is within a fifth: the card's edge goes faintly brass.
@@ -95,7 +92,7 @@ export function JuniorHome({ data }: { data: HomeData }) {
         )}
       </section>
 
-      <Classmates band="junior" data={classmates} />
+      <ClassBlocks band="junior" enrolledClasses={data.enrolledClasses} studentId={data.studentId} />
     </div>
   );
 }

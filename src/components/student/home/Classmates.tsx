@@ -52,7 +52,7 @@ function Podium({ top }: { top: Classmate[] }) {
   );
 }
 
-export function Classmates({ band, data }: { band: AgeBand; data: ClassData }) {
+export function Classmates({ band, data, heading }: { band: AgeBand; data: ClassData; heading?: string }) {
   // If the board has not loaded or could not be read, nothing is guessed: the block is left out.
   if (data.loading || !data.ready || data.ranked.length === 0) return null;
   const { ranked, self } = data;
@@ -60,6 +60,7 @@ export function Classmates({ band, data }: { band: AgeBand; data: ClassData }) {
   if (band === "early") {
     return (
       <section className={cn(CARD, "text-center")}>
+        {heading && <p className="mb-1 text-hec-small text-hec-ink-soft">{heading}</p>}
         <p className="font-display text-hec-h2 font-bold tabular-nums text-hec-ink">
           <Bi k="class.stars" vars={{ n: data.classTotal }} />
         </p>
@@ -71,7 +72,7 @@ export function Classmates({ band, data }: { band: AgeBand; data: ClassData }) {
     return (
       <section aria-labelledby="class-title" className={cn(CARD, "space-y-4")}>
         <h2 id="class-title" className={CARD_TITLE}>
-          <Bi k="class.title" />
+          {heading ?? <Bi k="class.title" />}
         </h2>
         <Podium top={data.podium} />
         {self && (
@@ -92,7 +93,7 @@ export function Classmates({ band, data }: { band: AgeBand; data: ClassData }) {
     return (
       <section aria-labelledby="class-title" className={cn(CARD, "space-y-4")}>
         <h2 id="class-title" className={CARD_TITLE}>
-          <Bi k="class.title" />
+          {heading ?? <Bi k="class.title" />}
         </h2>
         <Podium top={data.podium} />
         {self && (

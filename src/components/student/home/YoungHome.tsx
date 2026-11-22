@@ -12,16 +12,13 @@ import { AchievementBadges } from "@/components/student/AchievementBadges";
 import { NextThing } from "@/components/student/home/NextThing";
 import { WeekPath } from "@/components/student/home/WeekPath";
 import { WeekStrip } from "@/components/student/home/WeekStrip";
-import { Classmates } from "@/components/student/home/Classmates";
-import { useClassmates } from "@/components/student/home/useClassmates";
+import { ClassBlocks } from "@/components/student/home/ClassBlocks";
 import { InkRing } from "@/components/fx/InkRing";
 import { CARD } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
 import type { HomeData } from "./types";
 
 export function YoungHome({ data }: { data: HomeData }) {
-  const classId = data.enrolledClasses[0]?.classes?.id as string | undefined;
-  const classmates = useClassmates(classId, data.studentId);
   // Pip's line lands in a row under the two columns, so it can never squeeze the card beside him.
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
   return (
@@ -70,7 +67,7 @@ export function YoungHome({ data }: { data: HomeData }) {
       </section>
 
       <WeekStrip week={data.weekActivity} best={data.longestStreak} />
-      <Classmates band="young" data={classmates} />
+      <ClassBlocks band="young" enrolledClasses={data.enrolledClasses} studentId={data.studentId} />
     </div>
   );
 }

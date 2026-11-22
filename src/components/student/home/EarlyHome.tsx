@@ -13,8 +13,7 @@ import { MascotCompanion } from "@/components/student/MascotCompanion";
 import { NextThing } from "@/components/student/home/NextThing";
 import { StarJar } from "@/components/student/home/StarJar";
 import { WeekStrip } from "@/components/student/home/WeekStrip";
-import { Classmates } from "@/components/student/home/Classmates";
-import { useClassmates } from "@/components/student/home/useClassmates";
+import { ClassBlocks } from "@/components/student/home/ClassBlocks";
 import { CARD, FOCUS } from "@/components/student/nova/ivory";
 import { useSpeech } from "@/components/lessonDecks/speech";
 import { useCopy } from "@/lib/copy/useCopy";
@@ -46,8 +45,6 @@ function VideoDoor() {
 }
 
 export function EarlyHome({ data }: { data: HomeData }) {
-  const classId = data.enrolledClasses[0]?.classes?.id as string | undefined;
-  const classmates = useClassmates(classId, data.studentId);
   // Nothing left to do today: Pip waves goodbye instead of cheering on the next thing.
   const finished = data.homework.ready && !data.homework.next && !data.sessions.some((x) => x.status === "Scheduled" && dayjs(x.date).isSame(dayjs(), "day"));
   const hasVideoHomework = data.homework.all.some((h) => h.submission_type === "video");
@@ -66,7 +63,7 @@ export function EarlyHome({ data }: { data: HomeData }) {
 
       <StarJar progress={data.progress} totalXp={data.totalXp} level={data.level} />
       <WeekStrip week={data.weekActivity} big />
-      <Classmates band="early" data={classmates} />
+      <ClassBlocks band="early" enrolledClasses={data.enrolledClasses} studentId={data.studentId} />
     </div>
   );
 }
