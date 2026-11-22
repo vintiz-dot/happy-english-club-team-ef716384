@@ -12,6 +12,7 @@
  * migration 20260730130000).
  */
 import { useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PointsHistoryDialog } from "@/components/student/PointsHistoryDialog";
@@ -23,6 +24,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion, useReducedMotion } from "framer-motion";
+import { NeedsYouCard } from "@/components/family/NeedsYouCard";
+import { FamilyGreeting } from "@/components/family/FamilyGreeting";
+import { FamilyBi } from "@/components/family/FamilyBi";
+import { ThisWeek } from "@/components/family/ThisWeek";
+import { carry, useCarryNavigate } from "@/components/fx/Carry";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles, GraduationCap, Star, CalendarCheck, BookOpen, NotebookPen,
@@ -290,6 +296,9 @@ export default function FamilyDashboard() {
   const { data: children = [], isLoading, isError, refetch, isFetching } = useChildren(user?.id);
   const [historyFor, setHistoryFor] = useState<{ id: string; name: string } | null>(null);
   const reduceMotion = useReducedMotion();
+  // Carry: a press on a child's link to another page carries the child's name (only the pressed one holds the name).
+  const carryNavigate = useCarryNavigate();
+  const [carrying, setCarrying] = useState<string | null>(null);
 
   return (
     <Layout title="Family Dashboard">
@@ -308,12 +317,17 @@ export default function FamilyDashboard() {
             <Users className="h-5 w-5 text-hec-ink-soft" />
           </div>
           <div className="min-w-0 flex-1 space-y-2">
-            <h1 className="text-balance font-display text-hec-display font-medium text-hec-ink">Your family at Happy English Club</h1>
+            <FamilyGreeting />
+            <h1 className="text-balance font-display text-hec-display font-medium text-hec-ink">
+              <FamilyBi k="home.heading" viClassName="text-hec-body" />
+            </h1>
             <p className="text-hec-small text-hec-ink-soft">
               Progress, lessons and homework for your children — and an assistant for any question.
             </p>
           </div>
         </div>
+
+        {!isLoading && !isError && children.length > 0 && <NeedsYouCard />}
 
         <div className="grid items-start gap-6 lg:grid-cols-5">
           {/* Children column */}
@@ -346,16 +360,16 @@ export default function FamilyDashboard() {
                 ))}
               </nav>
             )}
-            {children.map((kid, i) => {
+            {children.map((kid) => {
               const latest = latestLessonOf(kid.lessons);
               return (
               <motion.div
                 key={kid.id}
                 id={`child-${kid.id}`}
                 className="scroll-mt-24"
-                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={reduceMotion ? { duration: 0 } : { delay: i * 0.06 }}
+                transition={reduceMotion ? { duration: 0 } : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
               >
                 <Card className="overflow-hidden">
                   <CardHeader className="pb-4 sm:pb-4">
@@ -369,7 +383,12 @@ export default function FamilyDashboard() {
                         </Avatar>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <CardTitle className="whitespace-normal break-words hyphens-none text-balance">{kid.full_name}</CardTitle>
+                        <CardTitle
+                          className="whitespace-normal break-words hyphens-none text-balance"
+                          style={carrying === kid.id ? { viewTransitionName: carry(`child-${kid.id}`) } : undefined}
+                        >
+                          {kid.full_name}
+                        </CardTitle>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           {kid.cefr && (
                             <Badge variant="brass" className="gap-1">
@@ -398,14 +417,20 @@ export default function FamilyDashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    <ThisWeek latestLessonDate={latest?.lesson_date ?? null} formatDay={lessonDay} />
                     <Link
                       to={`/student/lesson-reports?student=${kid.id}`}
+                      onClick={(e) => {
+                        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                        e.preventDefault();
+                        flushSync(() => setCarrying(kid.id));
+                        carryNavigate(`/student/lesson-reports?student=${kid.id}`);
+                      }}
                       className="flex min-h-hec-target items-center gap-3 rounded-hec-md border border-hec-brass/40 px-4 py-3 hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                     >
                       <ClipboardList className="h-4 w-4 shrink-0 text-hec-brass" />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-hec-small font-semibold text-hec-ink">Daily class reports</span>
-                        <span lang="vi" className="block text-hec-caption text-hec-ink-soft">Báo cáo buổi học của con</span>
+                        <FamilyBi k="child.reports" className="block text-hec-small font-semibold text-hec-ink" viClassName="text-hec-caption" />
                       </span>
                       <ChevronRight className="h-4 w-4 shrink-0 text-hec-ink-faint" />
                     </Link>
