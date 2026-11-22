@@ -14,6 +14,7 @@ import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, wordAudio } from "
 
 const base = { curriculum: "reach-higher" as const, level: 3, unit: 5, minutes: 90 };
 const BQ = "What causes matter to change?";
+const scienceWords = keyWordAudio(5, 1, "Science key words");
 
 const lessons: Deck[] = [
   // ------------------------------------------------------------------ Lesson 1
@@ -99,11 +100,12 @@ const lessons: Deck[] = [
         words: [
           { word: "solid / liquid", meaning: "matter that keeps its own shape / matter that flows and takes the shape of its container", example: "Ice is a solid; water is a liquid." },
           { word: "melt / freeze", meaning: "change from a solid to a liquid / change from a liquid to a solid", example: "The ice lolly melted before {s1} could finish it." },
-          { word: "temperature", meaning: "how hot or cold something is, measured in degrees", example: "Water freezes when the temperature falls to 0 °C." },
+          { word: "temperature", meaning: "a measure, in degrees, of how hot or cold something is", example: "Water freezes when the temperature falls to 0 °C." },
           { word: "thermometer", meaning: "the tool that measures temperature", example: "The thermometer showed 38 degrees in Hà Nội today." },
           { word: "form", meaning: "one of the ways something can be (ice and steam are forms of water); also to make or become", example: "Drops of water form on a cold glass." },
         ],
-        media: [keyWordAudio(5, 1)],
+        // Only the science words are on page 5; the academic-words track belongs to Lesson 2 (page 7).
+        media: [{ ...scienceWords, tracks: scienceWords.tracks.filter((t) => t.label === "content words") }],
       },
       {
         kind: "activity",
@@ -260,9 +262,9 @@ const lessons: Deck[] = [
         words: [
           { word: "alter", meaning: "to change something, a little or a lot", example: "Heat alters the colour of bread from white to brown." },
           { word: "occur", meaning: "to happen", example: "Frost can occur in Sa Pa on very cold nights." },
-          { word: "state", meaning: "the way a person or thing is at one time (solid, liquid and gas are the states of water)", example: "Water in its solid state is ice; in its gas state it is steam." },
-          { word: "substance", meaning: "the material something is made of: water, salt, wax, sugar ...", example: "Sugar is a sweet white substance." },
-          { word: "trap", meaning: "to catch something and not let it go", example: "A lid traps the heat inside the pot." },
+          { word: "state", meaning: "the condition something is in at one moment (solid, liquid and gas are the three states of water)", example: "Water in its solid state is ice; in its gas state it is steam." },
+          { word: "substance", meaning: "any kind of matter you can see or touch: water, salt, wax, sugar ...", example: "Sugar is a sweet white substance." },
+          { word: "trap", meaning: "to hold something in a place so that it cannot get out", example: "A lid traps the heat inside the pot." },
         ],
         media: [wordAudio(5, 1, ["alter", "occur", "state", "substance", "trap"], "Academic words")],
       },
@@ -403,7 +405,7 @@ const lessons: Deck[] = [
           "Write a short science report: what we tested, what happened, which melted fastest and most slowly, and why you think so.",
           "Use at least three comparative adverbs and one so ... that or such ... that.",
         ],
-        teacherNote: "Set the four ice cubes going at the start of the lesson so the class has real times by now.",
+        teacherNote: "Set the four ice cubes going at the start of the lesson, and use small cubes: a big cube in a towel will not finish in an hour. If a cube has not fully melted by now, the class compares how much of each is left and reports that instead of a time.",
       },
       {
         kind: "project",
@@ -423,7 +425,7 @@ const lessons: Deck[] = [
           { label: "Book", detail: "Read the play to page 19 again and write two text-to-self connections.", book: { book: "SB", pages: "12-19" } },
           { label: "Practice Book", detail: "Sheets 5.2 (character-plot chart) and 5.7 (phonics: endings -ed and -ing).", book: { book: "WB", pages: "5.2, 5.7", note: "Practice Book sheets" } },
           { label: "Rewrite track (A)", detail: "10 items: so / such ... that rewrites and comparative adverbs." },
-          { label: "Words of the week (F)", detail: "Use 4 weather words from last week in so ... that sentences about Hanoi." },
+          { label: "Words of the week (F)", detail: "Use 4 of the weather words from Lesson 1 in so ... that sentences about Hanoi." },
         ],
       },
     ],
@@ -814,7 +816,7 @@ const lessons: Deck[] = [
         items: [
           { q: "The baby mammoth ___ in 2007.", options: ["found", "was found", "is finding", "were found"], answer: "B. was found" },
           { q: "I ___ my homework when the lights went out.", options: ["did", "was doing", "am doing", "were doing"], answer: "B. was doing" },
-          { q: "Coffee ___ in the Central Highlands. (fact today)", options: ["grows", "is grown", "was grow", "grown"], answer: "B. is grown" },
+          { q: "Coffee ___ by farmers in the Central Highlands. (fact today)", options: ["grows", "is grown", "was grow", "grown"], answer: "B. is grown" },
           { q: "It was ___ a windy day that our kite flew away.", options: ["so", "such", "too", "very"], answer: "B. such" },
           { q: "Odd one out (-ed sound): melted, wanted, needed, trapped", options: ["melted", "wanted", "needed", "trapped"], answer: "D. trapped" },
         ],
@@ -844,7 +846,7 @@ const lessons: Deck[] = [
           { word: "mixture / combine", meaning: "two or more substances put together / to put things together", example: "When you combine sand and water, you get a mixture." },
           { word: "composition", meaning: "what something is made of, and how much of each part", example: "The composition of this soil is half sand and half clay." },
           { word: "firm", meaning: "hard and not easy to move or press", example: "The ground was firm enough to hold the heavy truck." },
-          { word: "area", meaning: "a part of a place", example: "This area of the park floods every summer." },
+          { word: "area", meaning: "one piece of a bigger place", example: "This area of the park floods every summer." },
           { word: "wetland", meaning: "land that is wet, or under shallow water, for most of the year: marshes and swamps are wetlands", example: "Tràm Chim is a wetland where cranes come to feed." },
         ],
         media: [keyWordAudio(5, 2)],
@@ -937,7 +939,7 @@ const lessons: Deck[] = [
         items: [
           { q: "It is (possible) ___ to see the stars on a cloudy night.", answer: "impossible" },
           { q: "My little brother is very (patient) ___. He can't wait for anything.", answer: "impatient" },
-          { q: "The magician made the coin (appear) ___.", answer: "disappear" },
+          { q: "The coin was on the table, and then it (appear) ___. Nobody could find it.", answer: "disappeared" },
           { q: "It is (safe) ___ to walk on the ice when it is thin.", answer: "unsafe" },
           { q: "Your answer is (correct) ___. Please try again.", answer: "incorrect" },
         ],
@@ -950,8 +952,8 @@ const lessons: Deck[] = [
         minutes: 6,
         instructions: "Rewrite each sentence so that it means the same.",
         items: [
-          { q: "It took us two hours to cook bánh chưng. → We spent ...", answer: "We spent two hours cooking bánh chưng." },
-          { q: "{s6} spends thirty minutes reading every night. → It takes ...", answer: "It takes {s6} thirty minutes to read every night." },
+          { q: "It took us two hours to wrap the bánh chưng. → We spent ...", answer: "We spent two hours wrapping the bánh chưng." },
+          { q: "{s6} spends thirty minutes walking to school every day. → It takes ...", answer: "It takes {s6} thirty minutes to walk to school every day." },
           { q: "I spent the whole morning cleaning my room. → It took ...", answer: "It took me the whole morning to clean my room." },
         ],
       },
@@ -1097,7 +1099,7 @@ const lessons: Deck[] = [
           { label: "Zero conditional (facts)", pattern: "If / When + present simple, present simple: If you heat ice, it melts." },
           { label: "First conditional (a real chance)", pattern: "If + present simple, will / won't + verb: If it rains, the path will flood." },
           { label: "Future time clauses", pattern: "when / as soon as / before / after / until + PRESENT, will + verb" },
-          { label: "unless", pattern: "= if ... not: Unless you stir it, the sugar won't dissolve." },
+          { label: "unless", pattern: "= if ... not: Unless you put it in the freezer, the water won't turn to ice." },
         ],
         explanation: [
           "Zero conditional = a rule of nature or a habit. You can swap if for when and the meaning does not change: When you heat ice, it melts.",
@@ -1111,7 +1113,7 @@ const lessons: Deck[] = [
           { text: "Unless {s8} wears boots, her feet will get wet in the wetland." },
         ],
         pitfalls: [
-          { wrong: "If you heat ice, it will melt. (a fact)", right: "If you heat ice, it melts.", why: "science facts: zero conditional" },
+          { wrong: "Unless you don't stir it, the mixture won't be smooth.", right: "Unless you stir it, the mixture won't be smooth.", why: "unless already means 'if ... not': no second not" },
           { wrong: "When the water will boil, add the rice.", right: "When the water boils, add the rice.", why: "no will after when" },
           { wrong: "If it will rain, we will stay home.", right: "If it rains, we will stay home.", why: "no will after if" },
         ],
@@ -1128,7 +1130,7 @@ const lessons: Deck[] = [
           { q: "If / you / heat / chocolate / it / melt.", answer: "If you heat chocolate, it melts." },
           { q: "If / it / be / cold / tomorrow / we / wear / our coats.", answer: "If it is cold tomorrow, we will wear our coats." },
           { q: "As soon as / the ice / melt / we / measure / the water.", answer: "As soon as the ice melts, we will measure the water." },
-          { q: "When / water / reach / 100 degrees / it / boil.", answer: "When water reaches 100 degrees, it boils." },
+          { q: "When / water / reach / 100 °C / it / boil.", answer: "When water reaches 100 °C, it boils." },
           { q: "Unless / you / stir / the mixture / it / not / become / smooth.", answer: "Unless you stir the mixture, it won't become smooth." },
         ],
       },
@@ -1176,7 +1178,7 @@ const lessons: Deck[] = [
           { label: "Rewrite track (A)", detail: "10 items: zero vs first conditional, unless, when / as soon as + present." },
           { label: "Listening (E)", detail: "Listen to the article's audio and write down three causes and their effects." },
           { label: "Practice Book", detail: "Sheets 5.14 (key points of \"Quicksand: When Earth Turns to Liquid\"), 5.16 (reread and retell: cause-and-effect chart) and 5.18 (fluency: intonation).", book: { book: "WB", pages: "5.14, 5.16, 5.18", note: "Practice Book sheets" } },
-          { label: "Words of the week (F)", detail: "Write 5 zero-conditional health facts with last week's words (If you have a fever, you ...)." },
+          { label: "Words of the week (F)", detail: "Write 5 zero-conditional health facts with the body and health words from Lesson 5 (If you have a fever, you ...)." },
         ],
       },
     ],
@@ -1519,7 +1521,7 @@ const lessons: Deck[] = [
         minutes: 16,
         steps: [
           "Read our class sentence from Lesson 4 again (and the change we made in Lesson 6).",
-          "New case: salt farmers in Bạc Liêu let sea water into shallow fields. For days the sun and wind work on it; the water disappears and white salt is left behind. The farmers rake it into piles. In the rainy season they stop.",
+          "A case we have not discussed yet (you met it in the mock's reading text): salt farmers in Bạc Liêu let sea water into shallow fields. For days the sun and wind work on it; the water disappears and white salt is left behind. The farmers rake it into piles. In the rainy season they stop.",
           "Does our sentence explain this case? What causes the change? Can it go back (add water to salt)? Why do the farmers stop in the rainy season? Change one word in our sentence if needed.",
           "Then find out: Have you ever seen a change like this? Ask three people with Have you ever ...? and report back.",
         ],

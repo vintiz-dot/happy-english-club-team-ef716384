@@ -64,7 +64,7 @@ const lessons: Deck[] = [
         minutes: 8,
         instructions: "Answer on your mini whiteboard. When the teacher says 'Show!', hold it up, then give your reason in one sentence.",
         items: [
-          { q: "{s1} ___ her little brother with his homework every evening.", options: ["help", "helps", "helping", "to help"], answer: "B. helps", why: "she / he / it + verb-s in the present simple" },
+          { q: "{s1} ___ Grandma with the cooking every evening.", options: ["help", "helps", "helping", "to help"], answer: "B. helps", why: "she / he / it + verb-s in the present simple" },
           { q: "Choose the complete sentence.", options: ["Cleaning the park on Sunday.", "The volunteers cleaned the park.", "Because the park was dirty.", "Lots of plastic bags."], answer: "B", why: "it has a subject and a verb and makes sense alone" },
           { q: "Sharing your lunch with a friend is an act of ___.", options: ["kind", "kindly", "kindness", "unkind"], answer: "C. kindness", why: "after 'an act of' we need a noun: kind → kindness" },
           { q: "The broken swing was a problem, but {s2} found a ___.", options: ["solve", "solution", "solving", "solved"], answer: "B. solution", why: "a + noun: solve → solution" },
@@ -148,7 +148,7 @@ const lessons: Deck[] = [
         ],
         prompts: [
           "Where do pandas live?",
-          "How often does {s4} feed her fish?",
+          "How often does {s4} feed the fish?",
           "How many eggs does a turtle lay?",
           "What did the villagers dig out?",
           "Why are the bees disappearing?",
@@ -193,7 +193,7 @@ const lessons: Deck[] = [
         instructions: "Write a question for the underlined words (shown in CAPITALS). Check your partner's: question word, helper, subject, verb.",
         items: [
           { q: "{s7}'s grandmother keeps ABOUT FIFTY chickens on her farm.", answer: "How many chickens does {s7}'s grandmother keep on her farm?" },
-          { q: "{s6} visits her grandparents in Ba Vì EVERY SUMMER.", answer: "How often does {s6} visit her grandparents in Ba Vì?" },
+          { q: "{s6} visits Ba Vì TWICE A MONTH.", answer: "How often does {s6} visit Ba Vì?" },
           { q: "The farmers planted trees BECAUSE THE HILL WAS EMPTY.", answer: "Why did the farmers plant trees?" },
           { q: "THE WIND carried the seeds across the river.", answer: "What carried the seeds across the river?", why: "What is the subject: no did" },
           { q: "The zoo is 3 KILOMETRES from our school.", answer: "How far is the zoo from our school?" },
@@ -295,7 +295,7 @@ const lessons: Deck[] = [
           { q: "In the dry season, the ___ of water in the countryside goes down.", options: ["supply", "behavior", "scarce", "react"], answer: "A. supply", why: "the + noun + of: the supply of water" },
           { q: "Where ___ {s1} put the seeds yesterday?", options: ["does", "do", "did", "is"], answer: "C. did" },
           { q: "Choose the best reply. 'Would you like some water?'", options: ["Yes, I would like.", "Yes, please.", "No, I don't.", "You're welcome."], answer: "B. Yes, please.", why: "function of the week: offers" },
-          { q: "Which word has three syllables?", options: ["garden", "volunteer", "happy", "trash"], answer: "B. volunteer", why: "vol-un-teer (Unit 1 syllables); gar-den and hap-py have two, trash has one" },
+          { q: "When the weather gets cold, the number of butterflies ___: there are fewer of them.", options: ["increases", "decreases", "supplies", "behaves"], answer: "B. decreases", why: "decrease = become less (Lesson 1 science words)" },
         ],
       },
       {
@@ -469,7 +469,7 @@ const lessons: Deck[] = [
         steps: ["Start with the people and their reason.", "Show the first effect.", "End the paragraph with a surprise that makes the reader want more."],
         criteria: [
           "All four kinds of sentence, correctly punctuated.",
-          "At least two because and two so, used the right way round.",
+          "At least two cause links with because or so, used the right way round.",
           "The surprise follows logically from the change.",
         ],
         frames: ["Everyone in the village agreed that the ___ had to go.", "So, early one morning, ...", "What a ___ it was!"],
@@ -555,7 +555,7 @@ const lessons: Deck[] = [
           "Which riddle links best to the story? Which key word fits it (react, interact, behavior)?",
         ],
         prompts: ["I think the answer is ___ because the clue says ___.", "This answer is funny because ___ sounds like ___.", "The word ___ has two meanings: ___ and ___."],
-        media: [readingAudio(2, 1, 103, 107, "Animals, More or Less (pages 103-107)")],
+        media: [readingAudio(2, 1, 103, 107, "Animals, More or Less (recorded pages 104-107)")],
       },
       {
         kind: "activity",
@@ -613,7 +613,7 @@ const lessons: Deck[] = [
         instructions: "Choose the best answer. Then explain one answer to your partner.",
         items: [
           { q: "There isn't ___ water left in the bottle.", options: ["many", "much", "a few", "fewer"], answer: "B. much" },
-          { q: "{s3} has ___ friends in her new school, so she isn't lonely.", options: ["a few", "a little", "much", "less"], answer: "A. a few" },
+          { q: "{s3} has ___ good friends at school, so break time is never lonely.", options: ["a few", "a little", "much", "less"], answer: "A. a few" },
           { q: "We should use ___ plastic bags to protect the sea.", options: ["less", "fewer", "much", "little"], answer: "B. fewer" },
           { q: "How ___ eggs does a sea turtle lay?", options: ["much", "many", "lot", "more"], answer: "B. many" },
           { q: "There is ___ sugar in this cake. It isn't sweet at all.", options: ["a little", "little", "a few", "few"], answer: "B. little", why: "almost none (negative)" },
@@ -748,7 +748,7 @@ const lessons: Deck[] = [
         prompts: [
           "If the villagers plant the bushes again, the butterflies will return.",
           "If there are no butterfly bushes, the butterflies won't come back.",
-          "The garden will grow weeds if nobody looks after it.",
+          "The garden will fill with weeds if nobody looks after it.",
           "If {s2} forgets to water the plants, they will die.",
         ],
       },
@@ -853,7 +853,7 @@ const lessons: Deck[] = [
     lesson: 5,
     covers: { unitFrom: 2, lesson: "Part 2 Language" },
     title: "Part 2 Language: when the wolves went away",
-    inquiryPhases: ["Engage", "Investigate"],
+    inquiryPhases: ["Focus", "Investigate", "Organize"],
     book: [{ book: "SB", pages: "110-125", note: "Part 2 Language Focus: give and carry out commands, with the song (110), science words (111), thinking map: cause and effect (112), academic words (113), reading strategy: ask questions (114-115), phonics oo (116-117), and the first part of the science article \"When the Wolves Returned\" (118-125)." }],
     slides: [
       { kind: "title", title: "Unit 2: Nature's Balance", subtitle: "Lesson 5 · Part 2 Language", bigQuestion: "What happens when nature loses its balance?" },
@@ -889,7 +889,7 @@ const lessons: Deck[] = [
         words: [
           { word: "ecosystem", meaning: "all the living things in a place and how they live together", example: "A rice field is an ecosystem with frogs, fish, insects and plants." },
           { word: "food chain", meaning: "the order in which living things eat each other", example: "grass → deer → wolf is a food chain." },
-          { word: "drought", meaning: "a long time with little or no rain", example: "During the drought, the river almost disappeared." },
+          { word: "drought", meaning: "many weeks or months when almost no rain falls", example: "During the drought, the river almost disappeared." },
           { word: "level", meaning: "how high something is, like water in a lake", example: "The water level in the lake fell by two metres." },
           { word: "river", meaning: "a long, wide line of water that flows across the land to the sea or a lake", example: "The Red River flows through Hanoi." },
           { word: "competition", meaning: "when animals or people try to get the same thing, like food or space", example: "There is competition for food when the forest is dry." },
@@ -911,7 +911,7 @@ const lessons: Deck[] = [
           "With your partner, give commands about the pictures on pages 110-111 and carry them out: 'Show me ...', 'Point to ...'.",
           "Then play Ranger Says: one child is a park ranger giving safety commands; the others act only if the command starts with 'Ranger says'.",
         ],
-        prompts: ["Point to the ___ and tell me what it eats.", "Keep away from ___!", "Be careful! Don't ___!", "Watch out for ___!"],
+        prompts: ["Show me the ___ and say what it eats.", "Stay on the path!", "Don't go near the ___!", "Look out! There's a ___!"],
         media: [talkAudio(2, 2, 110, "Language Focus song (page 110)")],
       },
       {
@@ -986,11 +986,11 @@ const lessons: Deck[] = [
         explanation: [
           "We use used to for past habits and states that have changed: I used to be afraid of the dark (but now I'm not).",
           "We cannot use used to for one event or a number of times: NOT 'I used to go to Đà Lạt three times'.",
-          "Exam tip: a sentence like 'Nam doesn't play football now. He played it a lot before.' can be rewritten as 'Nam used to play football.'",
+          "Exam tip: a sentence like '{s1} doesn't play football now but played it a lot before.' can be rewritten as '{s1} used to play football.'",
         ],
         examples: [
           { text: "Wolves used to hunt in the park, but people killed them all." },
-          { text: "{s2} used to live in Huế. Now she lives in Hanoi." },
+          { text: "{s2} used to live in Huế but lives in Hanoi now." },
           { text: "Did you use to have a pet when you were small?" },
           { text: "helped /t/ · played /d/ · wanted /ɪd/ · needed /ɪd/ · watched /t/" },
         ],
@@ -1183,11 +1183,13 @@ const lessons: Deck[] = [
           { label: "since", pattern: "since + a starting point (since 1995, since I was six)" },
           { label: "How long", pattern: "How long have/has + subject + past participle?" },
           { label: "vs past simple", pattern: "finished time (in 1995, yesterday, last year) → past simple" },
+          { label: "Compare (rewrites)", pattern: "A is longer than B. = B is not as long as A. · No river here is longer than A. = A is the longest river here." },
         ],
         explanation: [
           "Use the present perfect when the past joins the present: the result is here now, or the time has not finished.",
           "Use the past simple with a finished time: The wolves came back in 1995 (NOT have come back in 1995).",
           "Exam rewrite: 'I started learning English three years ago.' → 'I have learned English for three years.' / 'The last time I saw him was in May.' → 'I haven't seen him since May.'",
+          "To compare two ecosystems, say the same thing two ways: 'The park is bigger than the garden.' = 'The garden is not as big as the park.' If nothing is bigger, use the superlative: the biggest.",
         ],
         examples: [
           { text: "Since the wolves returned, the elk have kept on the move, so more young trees have grown." },
@@ -1336,7 +1338,7 @@ const lessons: Deck[] = [
           { label: "both ... and / either ... or", pattern: "Both the wolves and the beavers help the river." },
         ],
         explanation: [
-          "The book's three joining words: and joins ideas that are alike, but shows a difference, or gives a choice. We add so for a result. Use a comma before the joining word when it joins two complete sentences.",
+          "The book's three joining words: and adds an idea of the same kind, but turns to something different, or offers a choice. We add so for a result. Use a comma before the joining word when it joins two complete sentences.",
           "although joins inside one sentence; however starts a new sentence and takes a comma after it.",
           "Never use although and but together: NOT 'Although wolves are dangerous, but they help.'",
         ],
@@ -1365,7 +1367,7 @@ const lessons: Deck[] = [
           { q: "The trip was long. The children enjoyed it. (although)", answer: "Although the trip was long, the children enjoyed it." },
           { q: "It is hot. We will go to the forest. (but)", answer: "It is hot, but we will go to the forest." },
           { q: "Wolves eat elk. They eat deer. (both ... and)", answer: "Wolves eat both elk and deer." },
-          { q: "{s2} studied hard. She didn't pass the test. (However)", answer: "{s2} studied hard. However, she didn't pass the test." },
+          { q: "{s2} studied hard. The test was still too difficult. (However)", answer: "{s2} studied hard. However, the test was still too difficult." },
         ],
       },
       {

@@ -10,7 +10,7 @@ export const rhL3U4Creative: Record<number, Creative> = {
   1: {
     kind: "creative",
     thinking: "Design",
-    uses: { words: ["cooperation", "accomplish", "purpose"], grammar: ["verb patterns: to / -ing"] },
+    uses: { words: ["cooperation", "team", "goal"], grammar: ["verb patterns: to / -ing"] },
     base: {
       title: "Design a Family Challenge",
       task: "Design a 30-minute challenge your whole family can only complete by working together, and write the instructions.",
@@ -19,7 +19,7 @@ export const rhL3U4Creative: Record<number, Creative> = {
         "Write the goal and a job for each person, using at least five verb patterns.",
         "Do it at home if you can, and write two sentences about what happened.",
       ],
-      frames: ["The purpose of the challenge is to ___.", "Mum agrees to ___, and I enjoy ___.", "We decided to ___ because ___."],
+      frames: ["The goal of the challenge is to ___.", "Mum agrees to ___, and I enjoy ___.", "We decided to ___ because ___."],
       success: ["A clear shared goal and a job for everyone.", "Five correct verb patterns.", "A short report of what happened."],
       challenge: "Add one rule that makes the challenge harder, and explain how it forces the family to cooperate more.",
     },

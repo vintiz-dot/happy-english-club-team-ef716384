@@ -161,7 +161,7 @@ export const rhL3U4Assessments: Assessment[] = [
           { q: "6. {s1} got a ___ for finding the lost dog: a big box of cakes!", options: ["reward", "market", "method", "conservation"], answer: "reward" },
           { q: "7. In autumn the farmers ___ the golden rice.", options: ["harvest", "pay", "sustain", "accomplish"], answer: "harvest" },
           { q: "8. Before planting, the farmer had to ___ the field with a buffalo.", options: ["plow", "harvest", "pay", "sell"], answer: "plow" },
-          { q: "9. The bus is late again. Riding a bike is a good ___.", options: ["alternative", "agriculture", "seller", "reward"], answer: "alternative" },
+          { q: "9. There was no rice left, so we cooked noodles as an ___.", options: ["alternative", "agriculture", "seller", "reward"], answer: "alternative" },
           { q: "10. Turning off the tap while you brush your teeth helps water ___.", options: ["conservation", "cooperation", "advertisement", "method"], answer: "conservation" },
         ],
       },

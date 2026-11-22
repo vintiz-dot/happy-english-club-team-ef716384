@@ -174,7 +174,7 @@ eq("no plan, no planned_lessons", D.plannedLessons([]), null);
 const rhBlock = await one(`SELECT * FROM public.curriculum_lessons WHERE curriculum = 'reach-higher' AND unit_from = 2 AND lesson = 'Part 2 Reading'`);
 eq("a Reach Higher block is named by its book (3A) and keeps its grammar-free objectives",
   [D.plannedLessons([rhBlock])[0].book, D.plannedLessons([rhBlock])[0].student_book_page, D.plannedLessons([rhBlock])[0].reading_strategy],
-  ["Reach Higher 3A", 126, "Cause and effect"]);
+  ["Reach Higher 3A", 126, "Ask questions"]);
 ok("the instructions say a plan is intent, not proof", /planned_lessons/.test(D.DRAFT_SYSTEM) && /never what happened/.test(D.DRAFT_SYSTEM));
 const all = await q(`SELECT id, level, unit_from, unit_to, lesson, sb_page FROM public.curriculum_lessons WHERE level = 3 AND curriculum = 'oxford-discover-2e'`);
 const sorted = C.sortLessons(all);

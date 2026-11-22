@@ -104,7 +104,7 @@ export const rhL3U8Assessments: Assessment[] = [
         skill: "Reading",
         instructions: "Read the text. Write True or False for 1-2, then answer 3-5 in a few words.",
         passage:
-          "Last spring, Mai and her grandfather decided to climb Fansipan, the highest mountain in Vietnam. It is 3,143 meters high. Many visitors take the cable car, but Mai wanted to walk all the way. To prepare, they climbed the stairs of their apartment building every evening for two months. They also studied a map so that they would know the route. The climb took them two days. On the first night they slept at a camp at 2,200 meters. 'I wish I had brought warmer socks!' Mai laughed. When they reached the top, they were tired but very proud. Next year they are going to climb Pu Ta Leng, another high mountain in Lai Châu.",
+          "Last spring, Mai and her grandfather decided to climb Fansipan, the highest mountain in Vietnam. It is 3,143 meters high. Many visitors take the cable car, but Mai wanted to walk all the way. To prepare, they walked five kilometers round a lake near their home every weekend for two months. They also studied a map so that they would know the route. The climb took them two days. On the first night they slept at a camp at 2,200 meters. 'I wish I had brought warmer socks!' Mai laughed. When they reached the top, they were tired but very proud. Next year they are going to climb Pu Ta Leng, another high mountain in Lai Châu.",
         marksEach: 1,
         items: [
           { q: "1. Mai and her grandfather went up by cable car.", options: ["True", "False"], answer: "False" },
@@ -121,7 +121,7 @@ export const rhL3U8Assessments: Assessment[] = [
         marksEach: 1,
         items: [
           { q: "My advice is to see a doctor. → If I ...", answer: "If I were you, I would see a doctor." },
-          { q: "She started running three years ago. → She has ...", answer: "She has been running for three years. (She has run for three years.)" },
+          { q: "She started running three years ago. → She has ...", answer: "She has run for three years. / She has been running for three years. (Accept either.)" },
           { q: "The walk to school takes me 15 minutes. → It takes ...", answer: "It takes me 15 minutes to walk to school." },
           { q: "I'm sorry I can't speak French. → I wish ...", answer: "I wish I could speak French." },
         ],
@@ -166,7 +166,7 @@ export const rhL3U8Assessments: Assessment[] = [
           { q: "Asia and Africa are two of the seven ___.", options: ["locations", "globes", "distances", "continents"], answer: "continents" },
           { q: "Before the test, Lan made a ___: she studied one topic every evening for two weeks.", options: ["strategy", "measurement", "location", "meter"], answer: "strategy" },
           { q: "The ___ from my house to school is three kilometers.", options: ["direction", "distance", "continent", "endurance"], answer: "distance" },
-          { q: "Scientists hope to ___ new kinds of fish deep in the ocean.", options: ["estimate", "achieve", "discover", "measure"], answer: "discover" },
+          { q: "Maybe one day you will ___ a cave that nobody has ever seen before.", options: ["estimate", "achieve", "discover", "prepare"], answer: "discover" },
           { q: "Climbing a 3,000-meter mountain is a real ___ for a nine-year-old.", options: ["challenge", "location", "unit", "globe"], answer: "challenge" },
         ],
       },
@@ -195,15 +195,15 @@ export const rhL3U8Assessments: Assessment[] = [
         marksEach: 1,
         items: [
           { q: "My advice is to take a map. → You should ...", answer: "You should take a map." },
-          { q: "If you don't train, you won't finish the race. → Unless ...", answer: "Unless you train, you won't finish the race." },
+          { q: "If we don't leave now, we will miss the cable car. → Unless ...", answer: "Unless we leave now, we will miss the cable car." },
           { q: "I'm sorry I can't swim. → I wish ...", answer: "I wish I could swim." },
           { q: "She got up early because she wanted to catch the first bus. → She got up early so that ...", answer: "She got up early so that she could catch the first bus." },
           { q: "You had better to leave now, or you'll miss the train.", answer: "to leave → leave" },
           { q: "I have visited Hạ Long Bay last year.", answer: "have visited → visited" },
-          { q: "Constanza Ceruti showed great (patient) ___ on the long climb.", answer: "patience" },
+          { q: "Learning to swim well takes time and (patient) ___.", answer: "patience" },
           { q: "It is (importance) ___ to drink water on a long walk.", answer: "important" },
-          { q: "Her (confident) ___ grew after every race.", answer: "confidence" },
-          { q: "The coach's (assist) ___ timed every runner.", answer: "assistant" },
+          { q: "Minh felt (confidence) ___ at the start line because he had trained for months.", answer: "confident" },
+          { q: "My new school is very (differ) ___ from my old one.", answer: "different" },
         ],
       },
       {

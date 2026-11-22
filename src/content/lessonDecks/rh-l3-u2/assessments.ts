@@ -21,7 +21,7 @@ export const rhL3U2Assessments: Assessment[] = [
         marksEach: 1,
         items: [
           { q: "Which word has a different vowel sound?", options: ["flute", "tune", "rude", "sun"], answer: "sun" },
-          { q: "How ___ does it rain in Hanoi in July? Almost every day.", options: ["much", "often", "long", "many"], answer: "often" },
+          { q: "How ___ does it rain in Hanoi in July? Three or four times a week.", options: ["much", "often", "long", "many"], answer: "often" },
           { q: "There were ___ fish in the river after the factory opened.", options: ["less", "fewer", "little", "much"], answer: "fewer" },
           { q: "___ terrible storm it was!", options: ["How", "What", "What a", "So"], answer: "What a" },
           { q: "'I'm sorry I broke your pencil.' - '___'", options: ["You're welcome.", "That's all right.", "Yes, please.", "Me too."], answer: "That's all right." },
@@ -35,7 +35,7 @@ export const rhL3U2Assessments: Assessment[] = [
         items: [
           { q: "The river is very dirty. → What ...", answer: "What a dirty river (it is)!" },
           { q: "The farmers sprayed the fields, so the bees died. → The bees died ...", answer: "The bees died because the farmers sprayed the fields." },
-          { q: "My aunt feeds the birds EVERY MORNING. Write a question for the words in capitals.", answer: "How often does your aunt feed the birds?" },
+          { q: "My aunt feeds the birds TWICE A DAY. Write a question for the words in capitals.", answer: "How often does your aunt feed the birds?" },
         ],
       },
       {
@@ -79,7 +79,7 @@ export const rhL3U2Assessments: Assessment[] = [
           { q: "If we ___ the forest, many animals will lose their homes.", options: ["cut down", "will cut down", "cutting down", "cuts down"], answer: "cut down" },
           { q: "My cousin has lived in Hanoi ___ 2019.", options: ["for", "since", "in", "from"], answer: "since" },
           { q: "The Mekong is ___ river in Southeast Asia.", options: ["long", "longer", "the longest", "most long"], answer: "the longest" },
-          { q: "'Would you like to come to the zoo with us?' - '___'", options: ["Yes, I do.", "I'd love to!", "You're welcome.", "No, thanks, I'm fine."], answer: "I'd love to!" },
+          { q: "'Would you like to come to the zoo with us?' - '___'", options: ["Yes, I do.", "I'd love to!", "You're welcome.", "Here you are."], answer: "I'd love to!" },
         ],
       },
       {
@@ -97,13 +97,13 @@ export const rhL3U2Assessments: Assessment[] = [
         skill: "Reading",
         instructions: "Read the text. Write T (true) or F (false), then answer question 4.",
         passage:
-          "The Sarus crane is the tallest flying bird in the world. Many years ago, large groups of Sarus cranes used to visit the wetlands of southern Vietnam every dry season. When people drained some of the wetlands to grow more rice, the cranes lost the plants they eat, so fewer and fewer of them came back. Today, parks such as Tràm Chim try to keep water in the wetlands so that the plants can grow again. Scientists say that if the wetlands stay wet and clean, more cranes will come back.",
+          "The Sarus crane is the tallest flying bird in the world. Many years ago, large groups of Sarus cranes used to visit the wetlands of southern Vietnam every dry season. When people turned many of the wetlands into rice fields, the cranes lost the plants they eat, so fewer and fewer of them came back. Today, people at parks such as Tràm Chim are working to make the wetlands healthy so that the plants can grow again. Scientists say that if the wetlands become healthy again, more cranes will come back.",
         marksEach: 1,
         items: [
           { q: "1. Sarus cranes are the tallest flying birds in the world.", answer: "T" },
           { q: "2. There are more Sarus cranes in Vietnam now than in the past.", answer: "F" },
-          { q: "3. The cranes lost their food when the wetlands became dry.", answer: "T" },
-          { q: "4. What will happen if the wetlands stay wet and clean?", answer: "More cranes will come back." },
+          { q: "3. The cranes lost their food when wetlands were turned into rice fields.", answer: "T" },
+          { q: "4. What will happen if the wetlands become healthy again?", answer: "More cranes will come back." },
         ],
       },
       {
