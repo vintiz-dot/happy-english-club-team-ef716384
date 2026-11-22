@@ -141,7 +141,7 @@ for (const { f, u } of units) {
 console.log("homework, materials, checks and the 1st edition");
 for (const { f, u } of units) {
   const texts = JSON.stringify(u);
-  ok(`${f}: never carries a child's name (personalised homework is keyed by interest)`, !/William|Potato/i.test(texts));
+  ok(`${f}: never carries a child's name (personalised homework is keyed by interest)`, !/\bWilliam\b|\bMr\.?\s*Potato\b/i.test(texts)); // "sweet potato" is a Unit 16 word, not a child
   const titlesOf = (d) => d.slides.map((s) => s.title).filter(Boolean);
   for (const d of u.decks) {
     const titles = titlesOf(d);
