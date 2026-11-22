@@ -99,6 +99,8 @@ for (const { f, u } of units) {
     ok(`${d.id}: timed activities add up to the lesson (${timed} of ${d.minutes})`, timed <= d.minutes && timed >= d.minutes - 15);
     ok(`${d.id}: names the Student Book or Workbook pages it covers`, d.book.length > 0 && d.book.every((b) => b.pages));
     ok(`${d.id}: has a speaking activity`, d.slides.some((s) => s.kind === "speaking" || (s.kind === "activity" && s.tag === "Speaking")));
+    ok(`${d.id}: supplementary links point only at the publisher's own resource pages`,
+      (d.resources ?? []).every((r) => /^https:\/\/www\.twinkl\.com\/resource\/[a-z0-9-]+$/.test(r.url) && r.title && r.use));
     ok(`${d.id}: says which book lesson it covers`, !!d.covers && Number.isInteger(d.covers.unitFrom) &&
       ["Big Question", "Get Ready", "Read", "Understand", "Communicate", "Wrap Up"].includes(d.covers.lesson));
   }

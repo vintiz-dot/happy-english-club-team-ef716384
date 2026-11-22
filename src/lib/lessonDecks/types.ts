@@ -84,6 +84,10 @@ export type Deck = {
   // Presenting the deck to a class marks it as covered in today's lesson, so the
   // lesson report starts from the book's objectives.
   covers?: { unitFrom: number; lesson: "Big Question" | "Get Ready" | "Read" | "Understand" | "Communicate" | "Wrap Up" };
+  // Supplementary worksheets, as LINKS to the publisher's own page: a teacher opens
+  // them with the school's account. Files are never copied into the app (Twinkl's
+  // licence is for the subscriber's own classroom use, not re-hosting).
+  resources?: { title: string; url: string; source: "Twinkl"; use: string }[];
   slides: Slide[];
 };
 

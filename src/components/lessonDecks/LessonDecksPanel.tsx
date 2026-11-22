@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Play, Printer, Users, BookOpen, CalendarDays } from "lucide-react";
+import { Play, Printer, Users, BookOpen, CalendarDays, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { pickSession } from "@/lib/lessonDecks/covered";
 
@@ -160,6 +160,28 @@ export function LessonDecksPanel({ classes }: { classes: ClassLite[] }) {
               })}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {unit && unit.decks.some((d) => d.resources?.length) && (
+        <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1">
+          <h3 className="mb-1 font-display text-hec-h3 text-hec-ink flex items-center gap-2"><ExternalLink className="h-5 w-5" />Supplementary worksheets (Twinkl)</h3>
+          <p className="mb-3 text-hec-small text-hec-ink-soft">Links open on Twinkl; sign in there with the school's account to download.</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {unit.decks.filter((d) => d.resources?.length).map((d) => (
+              <div key={d.id}>
+                <p className="font-medium text-hec-ink">Lesson {d.lesson}: {d.title}</p>
+                <ul className="mt-1 space-y-1">
+                  {d.resources!.map((r) => (
+                    <li key={r.url} className="text-hec-small">
+                      <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-hec-ink underline underline-offset-2 hover:no-underline">{r.title}</a>
+                      <span className="text-hec-ink-soft"> · {r.use}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
