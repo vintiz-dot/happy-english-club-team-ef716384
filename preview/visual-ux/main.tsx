@@ -34,6 +34,7 @@ try {
   localStorage.setItem(themeKey(ME.userId), theme);
   localStorage.setItem("hec-theme-active", theme);
   if (ROLE_OF[screen] === "student") localStorage.setItem("selected_student_id", STUDENT_ID);
+  else if (screen === "family" && new URLSearchParams(window.location.search).get("notif") !== null) localStorage.setItem("selected_student_id", "kid-khoi"); // so the bell reads (&notif=)
   else localStorage.removeItem("selected_student_id");
 } catch { /* private mode */ }
 

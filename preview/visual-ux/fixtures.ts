@@ -20,6 +20,9 @@ const BORN = dobOf(params.get("born"), "2017-05-04");
 const SECOND = params.get("second");
 // &kids=1 keeps one child on the family home (the default is two)
 const ONE_KID = params.get("kids") === "1";
+// &notif=2 gives the family two unread messages from the school, &notif=0 none (the bell then has read an empty list);
+// without it the parent's bell has read nothing, as for a parent with no child selected
+export const NOTIF = params.get("notif");
 // &economy=1 turns the class economy on for the made-up class, so the wallet shows
 const ECONOMY = params.get("economy") === "1";
 export const SECOND_ID = "stu-second-child";
@@ -144,6 +147,12 @@ export function buildDb() {
     ];
     tables.student_points = [];
     tables.student_learning_profiles = [];
+    if (NOTIF !== null) {
+      tables.notifications = Array.from({ length: Number(NOTIF) || 0 }, (_, i) => ({
+        id: `notif-${i}`, user_id: ME.userId, type: "announcement", title: "A note from the school", message: "Made-up message", is_read: false,
+        created_at: new Date(Date.now() - i * 3_600_000).toISOString(), metadata: { student_id: "kid-khoi" },
+      }));
+    }
     tables.cefr_assessments = [{ student_id: kid1.id, level: "A1", assessed_at: day(-20), created_at: day(-20) }];
     points[kid1.id] = LEVEL(380);
     points[kid2.id] = LEVEL(95);
