@@ -94,7 +94,7 @@ export function CommandPalette() {
         { label: "Exam Reports", path: "/admin?tab=exam-reports", icon: FileBarChart2 },
         { label: "Journal", path: "/admin?tab=journal", icon: NotebookPen },
         { label: "Smart Upload (OCR)", path: "/teacher/smart-upload", icon: ScanText, keywords: "ocr scan photo vision bulk upload" },
-        { label: "Transcript Insights", path: "/teacher/transcripts", icon: AudioLines, keywords: "transcript lesson analysis engagement" },
+        { label: "Record & transcripts", path: "/teacher/recorder", icon: AudioLines, keywords: "record recording microphone lapel s500 audio lesson transcript analysis engagement" },
         { label: "Flipbooks", path: "/teacher/books", icon: BookOpen },
       { label: "Language Support", path: "/teacher/language-support", icon: Languages, keywords: "picture pictures sentence esl symbols arasaac widgit reader" },
       ];
@@ -109,10 +109,9 @@ export function CommandPalette() {
       { label: "Exam Reports", path: "/teacher/exam-reports", icon: FileBarChart2 },
       { label: "Vocabulary Audit", path: "/teacher/vocabulary-audit", icon: Sparkles },
       { label: "Smart Upload (OCR)", path: "/teacher/smart-upload", icon: ScanText, keywords: "ocr scan photo vision bulk upload" },
-      { label: "Transcript Insights", path: "/teacher/transcripts", icon: AudioLines, keywords: "transcript lesson analysis engagement" },
+      { label: "Record & transcripts", path: "/teacher/recorder", icon: AudioLines, keywords: "record recording microphone lapel s500 audio lesson transcript analysis engagement" },
       { label: "Flipbooks", path: "/teacher/books", icon: BookOpen },
       { label: "Language Support", path: "/teacher/language-support", icon: Languages, keywords: "picture pictures sentence esl symbols arasaac widgit reader" },
-      { label: "Class recorder", path: "/teacher/recorder", icon: AudioLines, keywords: "record recording microphone lapel s500 audio lesson" },
     ];
   }, [role]);
 

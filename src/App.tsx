@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { StudentProfileProvider } from "./contexts/StudentProfileContext";
 import { TimerProvider } from "./contexts/TimerContext";
 import { NoiseMeterProvider } from "./contexts/NoiseMeterContext";
@@ -65,10 +65,9 @@ const TeacherLanguageSupport = lazy(() => import("./pages/TeacherLanguageSupport
 const TeacherLessonReports = lazy(() => import("./pages/TeacherLessonReports"));
 const TeacherLessonReportReview = lazy(() => import("./pages/TeacherLessonReportReview"));
 const TeacherClassReports = lazy(() => import("./pages/TeacherClassReports"));
-const TeacherRecorder = lazy(() => import("./pages/TeacherRecorder"));
+const TeacherLessons = lazy(() => import("./pages/TeacherLessons"));
 const LessonSpeakers = lazy(() => import("./pages/LessonSpeakers"));
 const TeacherSmartUpload = lazy(() => import("./pages/TeacherSmartUpload"));
-const TeacherTranscripts = lazy(() => import("./pages/TeacherTranscripts"));
 const StudentMyWork = lazy(() => import("./pages/StudentMyWork"));
 const StudentClassGallery = lazy(() => import("./pages/StudentClassGallery"));
 const AdminStudentWork = lazy(() => import("./pages/AdminStudentWork"));
@@ -166,12 +165,12 @@ function AppContent() {
                   <Route path="/teacher/lesson-report/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLessonReportReview /></ProtectedRoute>} />
                   <Route path="/teacher/speakers" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />
                   <Route path="/teacher/speakers/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />
-                  <Route path="/teacher/recorder"element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherRecorder /></ProtectedRoute>} />
+                  <Route path="/teacher/recorder"element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLessons /></ProtectedRoute>} />
                   {/* Student works gallery: admin sees all; a teacher only their own window (database functions decide). */}
                   <Route path="/admin/student-work" element={<ProtectedRoute allowedRole="admin"><AdminStudentWork /></ProtectedRoute>} />
                   <Route path="/teacher/my-student-works" element={<ProtectedRoute allowedRole="teacher"><TeacherStudentWorks /></ProtectedRoute>} />
                   <Route path="/teacher/smart-upload" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherSmartUpload /></ProtectedRoute>} />
-                  <Route path="/teacher/transcripts" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherTranscripts /></ProtectedRoute>} />
+                  <Route path="/teacher/transcripts" element={<Navigate to="/teacher/recorder?tab=transcripts" replace />} />
 
                   {/* Student routes */}
                   <Route path="/student/dashboard" element={<StudentDashboard />} />

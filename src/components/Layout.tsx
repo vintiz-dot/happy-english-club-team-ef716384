@@ -117,10 +117,9 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: Tv, label: "Reception TV", path: "/admin?tab=reception" },
           { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
           { icon: Images, label: "Student Work", path: "/admin/student-work" },
-          { icon: AudioLines, label: "Transcripts", path: "/teacher/transcripts" },
+          { icon: Mic, label: "Record & transcripts", path: "/teacher/recorder" },
           { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
           { icon: Languages, label: "Language Support", path: "/teacher/language-support" },
-          { icon: Mic, label: "Class recorder", path: "/teacher/recorder" },
           { icon: ClipboardList, label: "Class reports", path: "/teacher/class-reports" },
         ];
       case "teacher":
@@ -136,11 +135,10 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: Sparkles, label: "Vocabulary Audit", path: "/teacher/vocabulary-audit" },
           { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
           { icon: Images, label: "My Student Works", path: "/teacher/my-student-works" },
-          { icon: AudioLines, label: "Transcripts", path: "/teacher/transcripts" },
+          { icon: Mic, label: "Record & transcripts", path: "/teacher/recorder" },
           { icon: FolderOpen, label: "Resources", path: "/teacher/resources" },
           { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
           { icon: Languages, label: "Language Support", path: "/teacher/language-support" },
-          { icon: Mic, label: "Class recorder", path: "/teacher/recorder" },
           { icon: ClipboardList, label: "Class reports", path: "/teacher/class-reports" },
           ...((pilotClasses.data ?? []).length ? [{ icon: FileAudio, label: "Lesson reports", path: "/teacher/lesson-reports" }] : []),
         ];

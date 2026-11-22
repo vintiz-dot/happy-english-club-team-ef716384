@@ -10,7 +10,7 @@
  * (TranscriptApprovalPanel -> approve_transcript_analysis), and then only
  * what the teacher chose (D-26, docs/evidence/FIX-analyze-transcript.md).
  */
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { shrinkPhoto } from "@/lib/shrinkPhoto";
@@ -103,7 +103,12 @@ const CEFR_COLORS: Record<string, string> = {
   B2: CEFR_LEVEL_BADGE,
 };
 
-export default function TeacherTranscripts() {
+/** On its own page the screen brings its Layout; inside the merged Record & transcripts page (embedded) the page owns it. */
+function Shell({ embedded, children }: { embedded?: boolean; children: ReactNode }) {
+  return embedded ? <>{children}</> : <Layout title="Transcript Insights">{children}</Layout>;
+}
+
+export default function TeacherTranscripts({ embedded = false }: { embedded?: boolean } = {}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [classId, setClassId] = useState("");
@@ -722,7 +727,7 @@ export default function TeacherTranscripts() {
   const unknownPct = totalTranscriptWords > 0 ? Math.round((unknownWords / totalTranscriptWords) * 100) : 0;
 
   return (
-    <Layout title="Transcript Insights">
+    <Shell embedded={embedded}>
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         <div className="flex items-center gap-3">
           <div className="h-11 w-11 shrink-0 rounded-hec-lg bg-hec-sunken flex items-center justify-center">
@@ -1734,6 +1739,6 @@ export default function TeacherTranscripts() {
           </div>
         </div>
       </div>
-    </Layout>
+    </Shell>
   );
 }
