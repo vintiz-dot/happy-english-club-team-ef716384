@@ -8,6 +8,9 @@
 //
 // {s1} .. {s6} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL3U18Creative } from "./od2e-l3-u18/homework";
+import { odL3U18Assessments, odL3U18Worksheets } from "./od2e-l3-u18/assessments";
+import { odL3U18FirstEdition } from "./od2e-l3-u18/firstEdition";
 
 export const odL3U18: Unit = {
   curriculum: "oxford-discover-2e",
@@ -83,7 +86,7 @@ export const odL3U18: Unit = {
         {
           kind: "vocab",
           title: "Our 10 sea words",
-          book: { book: "SB", pages: "176", activities: ["A"] },
+          book: { book: "SB", pages: "176", activities: ["A"], track: "3.10" },
           words: [
             { word: "goggles", meaning: "glasses that keep water out of your eyes", example: "{s1} wears goggles in the pool." },
             { word: "kelp", meaning: "a very tall brown sea plant that grows in thick underwater forests", example: "The kelp moves slowly in the water." },
@@ -103,7 +106,7 @@ export const odL3U18: Unit = {
           tag: "Vocabulary",
           mode: "whole",
           minutes: 7,
-          book: { book: "SB", pages: "176", activities: ["A"] },
+          book: { book: "SB", pages: "176", activities: ["A"], track: "3.10" },
           steps: [
             "Listen and point to each picture.",
             "Listen again and repeat the words. Clap the beats: PEN-guin, HUMP-back WHALE, LEAF-y SEA DRA-gon.",
@@ -268,9 +271,11 @@ export const odL3U18: Unit = {
             "Finish: People explore the ocean because ...",
           ],
         },
+        odL3U18Creative["od2e-l3-u18-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 18 Get Ready.", book: { book: "WB", pages: "162-163" } },
             { label: "Talk at home", detail: "Ask someone at home: What sea animal would you most like to see? Tell the class their answer in two sentences next lesson." },
           ],
@@ -310,7 +315,7 @@ export const odL3U18: Unit = {
           tag: "Warm-up",
           mode: "pairs",
           minutes: 7,
-          book: { book: "SB", pages: "178-179" },
+          book: { book: "SB", pages: "178-179", track: "3.11" },
           steps: [
             "Do not read yet! Look only at the title and the pictures.",
             "Point to the sea animals you know and say their names.",
@@ -339,7 +344,7 @@ export const odL3U18: Unit = {
           tag: "Reading",
           mode: "whole",
           minutes: 10,
-          book: { book: "SB", pages: "178-179" },
+          book: { book: "SB", pages: "178-179", track: "3.11" },
           steps: [
             "Listen to the text and follow with your finger.",
             "Stop at the end of each part. Show thumbs up (I understood), sideways (partly) or down (not yet).",
@@ -353,7 +358,7 @@ export const odL3U18: Unit = {
           tag: "Reading",
           mode: "pairs",
           minutes: 8,
-          book: { book: "SB", pages: "178-179" },
+          book: { book: "SB", pages: "178-179", track: "3.11" },
           steps: [
             "Read again with a partner. Every time something is confusing, put a ? sticky note on that line.",
             "Fix each one with a strategy: read on, guess from the sentence, look it up, ask your partner.",
@@ -367,7 +372,7 @@ export const odL3U18: Unit = {
           tag: "Reading",
           mode: "groups",
           minutes: 8,
-          book: { book: "SB", pages: "178-179" },
+          book: { book: "SB", pages: "178-179", track: "3.11" },
           steps: [
             "Mixed pairs: take turns reading a paragraph aloud. The stronger reader helps with hard words.",
             "Circles of four: each person reads one paragraph to the group.",
@@ -408,7 +413,7 @@ export const odL3U18: Unit = {
           tag: "Writing",
           mode: "groups",
           minutes: 15,
-          book: { book: "SB", pages: "178-179" },
+          book: { book: "SB", pages: "178-179", track: "3.11" },
           steps: [
             "Your group chooses one place: Australia, Antarctica, the Maldives, the Caribbean Islands, Hawaii or Indonesia.",
             "Find out what the place is like, what sea life lives there and one amazing fact. Take notes in your own words.",
@@ -454,9 +459,11 @@ export const odL3U18: Unit = {
             "What new thing in the sea would you like to find out about?",
           ],
         },
+        odL3U18Creative["od2e-l3-u18-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 18 Read.", book: { book: "WB", pages: "164" } },
             { label: "Read aloud", detail: "Read one part of SB 178-179 aloud to someone at home, with expression, two times. Tell them one thing you learned." },
           ],
@@ -550,7 +557,7 @@ export const odL3U18: Unit = {
           tag: "Listening",
           mode: "whole",
           minutes: 7,
-          book: { book: "SB", pages: "181", activities: ["D"] },
+          book: { book: "SB", pages: "181", activities: ["D"], track: "3.12" },
           steps: [
             "Listen to the song once with your eyes closed. What is the girl doing?",
             "Listen again and sing along. Half the class sings the want to lines, half sings the need to lines. Then swap!",
@@ -709,9 +716,11 @@ export const odL3U18: Unit = {
             "How did sorting the cards help you find the rule?",
           ],
         },
+        odL3U18Creative["od2e-l3-u18-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 18 Understand and the grammar pages.", book: { book: "WB", pages: "165-167" } },
             { label: "Talk at home", detail: "Tell someone at home three sentences: one thing you want to do this weekend, one thing you need to do, and one thing you have to do." },
           ],
@@ -774,12 +783,24 @@ export const odL3U18: Unit = {
           prompts: ["I think ... because ...", "{s1}, what do you think?", "Our group thinks that ..."],
         },
         {
+          kind: "check",
+          title: "Quick check: sea words and want to / need to / have to",
+          assessment: "od2e-l3-u18-check",
+          mode: "solo",
+          minutes: 8,
+          steps: [
+            "Mini-whiteboards out. One question at a time; everyone shows their answer together.",
+            "No talking until the boards go up. Wipe and get ready for the next one.",
+            "Teacher: note who adds -s after to (needs to goes) or forgets to. Give them the Support worksheet next.",
+          ],
+        },
+        {
           kind: "activity",
           title: "Listening for detail (SB 182 A)",
           tag: "Listening",
           mode: "solo",
           minutes: 8,
-          book: { book: "SB", pages: "182", activities: ["A"] },
+          book: { book: "SB", pages: "182", activities: ["A"], track: "3.13" },
           steps: [
             "Strategy: before you listen, read what you have to write. Decide what kind of word you need: a name? a place? a food? a time?",
             "Listen and write the important details. We will play the audio as many times as you need.",
@@ -794,7 +815,7 @@ export const odL3U18: Unit = {
           tag: "Listening",
           mode: "solo",
           minutes: 6,
-          book: { book: "SB", pages: "182", activities: ["B"] },
+          book: { book: "SB", pages: "182", activities: ["B"], track: "3.14" },
           steps: [
             "Listen again and tick the correct boxes.",
             "Check with a different partner than last time.",
@@ -806,7 +827,8 @@ export const odL3U18: Unit = {
           kind: "speaking",
           title: "Tell the story with pictures (SB 182 C)",
           mode: "pairs",
-          minutes: 12,
+          minutes: 10,
+          book: { book: "SB", pages: "182", activities: ["C"], track: "3.15" },
           steps: [
             "Look at the pictures and read along with the audio. How does the story go?",
             "Now make up your own story from the same pictures. You can say what the explorer does and what she says.",
@@ -827,7 +849,7 @@ export const odL3U18: Unit = {
           tag: "Vocabulary",
           mode: "pairs",
           minutes: 10,
-          book: { book: "SB", pages: "183", activities: ["D"] },
+          book: { book: "SB", pages: "183", activities: ["D"], track: "3.16" },
           steps: [
             "Look at the board: sea + weed = seaweed. What does each small word mean? What does the new word mean?",
             "Read the Learn box. Listen to the six words as you read them, and circle the two nouns inside each.",
@@ -917,7 +939,7 @@ export const odL3U18: Unit = {
           title: "Write: what explorers do (Workbook)",
           tag: "Writing",
           mode: "solo",
-          minutes: 15,
+          minutes: 12,
           book: { book: "WB", pages: "168-169" },
           steps: [
             "Pick an explorer (from Unit 17 or 18, or someone you know) and write a short paragraph on what explorers must do.",
@@ -978,9 +1000,11 @@ export const odL3U18: Unit = {
             "What does your group need to do before next lesson?",
           ],
         },
+        odL3U18Creative["od2e-l3-u18-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 18 Communicate.", book: { book: "WB", pages: "168-169" } },
             { label: "Project", detail: "Find two facts about your group's place and write them in your own words. Practise your part of the talk out loud two times." },
           ],
@@ -1096,6 +1120,10 @@ export const odL3U18: Unit = {
             "I needed to ___, so I ...",
             "Although it was ___, I ...",
           ],
+          model: {
+            title: "A model interview",
+            text: "Interviewer: Who are you?\nExplorer: I am a sea explorer from a small island.\nInterviewer: What did you want to find?\nExplorer: I wanted to find new animals under the water.\nInterviewer: Where did you go?\nExplorer: I went to a coral reef far away. Although the trip was long, I loved it.\nInterviewer: When did you go?\nExplorer: I went last summer.\nInterviewer: Why did you take a camera?\nExplorer: I needed to take photos because I wanted to show everyone what I found.",
+          },
         },
         {
           kind: "activity",
@@ -1238,9 +1266,11 @@ export const odL3U18: Unit = {
             "Finish: People explore because ...",
           ],
         },
+        odL3U18Creative["od2e-l3-u18-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Wrap Up pages, the interview and your Big Question Chart.", book: { book: "WB", pages: "170-172" } },
             { label: "Vlog", detail: "Record and upload your 'My Dream Exploration' vlog (60-90 seconds). Choose Support, Core or Stretch." },
             { label: "Talk at home", detail: "Tell someone at home what you learned about why people explore. Ask: Where would you like to explore?" },
@@ -1249,4 +1279,7 @@ export const odL3U18: Unit = {
       ],
     },
   ],
+  worksheets: odL3U18Worksheets,
+  assessments: odL3U18Assessments,
+  firstEdition: odL3U18FirstEdition,
 };

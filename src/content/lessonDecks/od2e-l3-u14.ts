@@ -8,6 +8,9 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL3U14Creative } from "./od2e-l3-u14/homework";
+import { odL3U14Assessments, odL3U14Worksheets } from "./od2e-l3-u14/assessments";
+import { odL3U14FirstEdition } from "./od2e-l3-u14/firstEdition";
 
 export const odL3U14: Unit = {
   curriculum: "oxford-discover-2e",
@@ -103,7 +106,7 @@ export const odL3U14: Unit = {
           tag: "Vocabulary",
           mode: "whole",
           minutes: 8,
-          book: { book: "SB", pages: "136", activities: ["A"] },
+          book: { book: "SB", pages: "136", activities: ["A"], track: "2.37" },
           steps: [
             "Listen and point to each picture as you hear its word.",
             "Listen again and repeat. Clap the syllables: GLASS-blow-er, EYE-glass-es, WORK-shop.",
@@ -205,7 +208,7 @@ export const odL3U14: Unit = {
           minutes: 8,
           steps: [
             "Answer the question in SB 137 F with your partner. Think about Leonardo da Vinci's time: no phones, no TV, no cars.",
-            "Imagine a day in Italy 700 years ago. What was the house like? How did people see at night? How did they get around?",
+            "Imagine a day in Italy about 500 years ago. What was the house like? How did people see at night? How did they get around?",
             "Tell another pair your best idea.",
           ],
           frames: ["Long ago, people didn't have ___, so they ...", "I think it was ___ because ...", "I wonder how they ___ without ___."],
@@ -216,9 +219,11 @@ export const odL3U14: Unit = {
           kind: "reflect",
           prompts: ["Which glass word was hardest to say? Say it again now.", "Finish: A summary is ...", "One question I have about glassmakers is ..."],
         },
+        odL3U14Creative["od2e-l3-u14-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 14 Get Ready.", book: { book: "WB", pages: "124-125" } },
             { label: "Talk at home", detail: "Look for three glass things at home. Tell someone what each one is for, and how people lived before it existed." },
           ],
@@ -279,7 +284,7 @@ export const odL3U14: Unit = {
           tag: "Reading",
           mode: "whole",
           minutes: 12,
-          book: { book: "SB", pages: "138-139" },
+          book: { book: "SB", pages: "138-139", track: "2.38" },
           steps: [
             "Listen to the story and follow with your finger.",
             "Then skim it for two minutes. Be ready to answer: what is Clara's father's job? What did he make? What went wrong?",
@@ -377,9 +382,11 @@ export const odL3U14: Unit = {
           kind: "reflect",
           prompts: ["How did eyeglasses help in the story? Say it in one sentence.", "Finish: Some inventions help people see better, for example ...", "Which part of the story would you change? Why?"],
         },
+        odL3U14Creative["od2e-l3-u14-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 14 Read.", book: { book: "WB", pages: "126" } },
             { label: "Tell the story", detail: "Tell someone at home the story of Clara in 4 sentences. Use first, then, after that and in the end." },
           ],
@@ -478,7 +485,7 @@ export const odL3U14: Unit = {
           tag: "Listening",
           mode: "groups",
           minutes: 10,
-          book: { book: "SB", pages: "141", activities: ["D", "E"] },
+          book: { book: "SB", pages: "141", activities: ["D", "E"], track: "2.39" },
           steps: [
             "Listen and read along. Notice how the speakers say early, earlier and the earliest.",
             "Three children stand in a line to show the story. The class says who arrived first, second and last.",
@@ -593,9 +600,11 @@ export const odL3U14: Unit = {
           kind: "reflect",
           prompts: ["Say one sentence about you and a friend with a comparative adverb (be kind!).", "Which mistake will you watch out for: more fast, or carefullier?", "How did sorting the cards help you find the rule?"],
         },
+        odL3U14Creative["od2e-l3-u14-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 14 Understand and the grammar pages.", book: { book: "WB", pages: "127-129" } },
             { label: "Compare at home", detail: "Choose one action (run, sing, cook, read). Write two sentences about people at home with a comparative and a superlative, and say them aloud." },
           ],
@@ -643,12 +652,24 @@ export const odL3U14: Unit = {
           fluencyTip: "Do not stop after one sentence. Give a reason, then an example.",
         },
         {
+          kind: "check",
+          title: "Quick check: glass words and adverbs",
+          assessment: "od2e-l3-u14-check",
+          mode: "solo",
+          minutes: 8,
+          steps: [
+            "Mini-whiteboards out. One question at a time; everyone shows their answer together.",
+            "No talking until the boards go up. Wipe and get ready for the next one.",
+            "Teacher: note who writes more fast or carefullier, or leaves out the or than. Give them the Support worksheet next.",
+          ],
+        },
+        {
           kind: "activity",
           title: "Who likes which invention? (SB 142 A)",
           tag: "Listening",
           mode: "solo",
           minutes: 8,
-          book: { book: "SB", pages: "142", activities: ["A"] },
+          book: { book: "SB", pages: "142", activities: ["A"], track: "2.40" },
           steps: [
             "Look at the pictures of inventions. Guess which one each speaker might like.",
             "Listen and match each name with an invention. Listen as many times as you need.",
@@ -661,7 +682,7 @@ export const odL3U14: Unit = {
           tag: "Listening",
           mode: "pairs",
           minutes: 8,
-          book: { book: "SB", pages: "142", activities: ["B"] },
+          book: { book: "SB", pages: "142", activities: ["B"], track: "2.41" },
           steps: [
             "Read the possible reasons first. Which words might be clues?",
             "Listen again and underline the correct reason for each speaker.",
@@ -674,6 +695,7 @@ export const odL3U14: Unit = {
           title: "When I was little, I used to ... (SB 143 C)",
           mode: "pairs",
           minutes: 12,
+          book: { book: "SB", pages: "143", activities: ["C"], track: "2.42" },
           steps: [
             "Listen to the conversation and repeat. Then act it out with a partner.",
             "Now make it about you: tell your partner what you did when you were little that you do not do now. Use used to or would.",
@@ -690,7 +712,7 @@ export const odL3U14: Unit = {
           tag: "Vocabulary",
           mode: "groups",
           minutes: 10,
-          book: { book: "SB", pages: "143", activities: ["D"] },
+          book: { book: "SB", pages: "143", activities: ["D"], track: "2.43" },
           steps: [
             "Read the Learn box. -ful means full of something. -less means without something.",
             "Listen and repeat the words: harmful, fearful, careful, fearless, harmless, careless.",
@@ -780,9 +802,11 @@ export const odL3U14: Unit = {
           kind: "reflect",
           prompts: ["What did you use to do that you don't do now?", "Which -ful or -less word will you use this week?", "Which invention would you choose for your commercial next lesson?"],
         },
+        odL3U14Creative["od2e-l3-u14-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 14 Communicate.", book: { book: "WB", pages: "130-131" } },
             { label: "Commercial prep", detail: "Choose one useful modern invention. Find one surprising fact about it and tell someone at home about it in two sentences, before next lesson." },
           ],
@@ -885,6 +909,10 @@ export const odL3U14: Unit = {
             "I finish with a conclusion.",
           ],
           frames: ["I believe the most useful invention today is ___.", "One reason is that it helps people ___.", "It works the fastest / the best because ...", "Other people think ___, but ...", "If we use it wisely, it can ..."],
+          model: {
+            title: "A model opinion essay",
+            text: "I believe the most useful invention today is the bicycle. One reason is that it moves people faster than walking. Another reason is that it keeps us healthy, because we ride it more often than we sit in a car. Before bicycles were invented, many people used to walk for hours. After that, they could reach school and the market easily. Some people say they are dangerous. A good solution is to wear a helmet and ride carefully. In conclusion, the bicycle is the most useful invention because it helps everybody.",
+          },
         },
         {
           kind: "activity",
@@ -1006,9 +1034,11 @@ export const odL3U14: Unit = {
             "Finish: Inventions change our lives by ...",
           ],
         },
+        odL3U14Creative["od2e-l3-u14-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Wrap Up pages and your Big Question Chart.", book: { book: "WB", pages: "132-134" } },
             { label: "Vlog", detail: "Record and upload your 'An invention in my life' vlog (60-90 seconds). Choose Support, Core or Stretch." },
             { label: "Writing", detail: "Finish and neaten your opinion essay if you did not finish in class." },
@@ -1017,4 +1047,7 @@ export const odL3U14: Unit = {
       ],
     },
   ],
+  worksheets: odL3U14Worksheets,
+  assessments: odL3U14Assessments,
+  firstEdition: odL3U14FirstEdition,
 };

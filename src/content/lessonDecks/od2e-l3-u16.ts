@@ -7,6 +7,9 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL3U16Creative } from "./od2e-l3-u16/homework";
+import { odL3U16Assessments, odL3U16Worksheets } from "./od2e-l3-u16/assessments";
+import { odL3U16FirstEdition } from "./od2e-l3-u16/firstEdition";
 
 export const odL3U16: Unit = {
   curriculum: "oxford-discover-2e",
@@ -102,7 +105,7 @@ export const odL3U16: Unit = {
           tag: "Vocabulary",
           mode: "whole",
           minutes: 10,
-          book: { book: "SB", pages: "156", activities: ["A"] },
+          book: { book: "SB", pages: "156", activities: ["A"], track: "2.51" },
           steps: [
             "Listen and point to each word. Then listen again and say each word.",
             "Look at garden and gardener. How are they alike? What does the ending -er tell us about a person?",
@@ -204,9 +207,11 @@ export const odL3U16: Unit = {
             "One question I have about gardens or about the story is ...",
           ],
         },
+        odL3U16Creative["od2e-l3-u16-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Get Ready.", book: { book: "WB", pages: "143-144" } },
             { label: "Talk at home", detail: "Ask someone at home: Have you ever grown a plant? What happened to it? Be ready to tell the class in two sentences." },
           ],
@@ -271,7 +276,7 @@ export const odL3U16: Unit = {
           tag: "Reading",
           mode: "whole",
           minutes: 12,
-          book: { book: "SB", pages: "158-159" },
+          book: { book: "SB", pages: "158-159", track: "2.52" },
           steps: [
             "Listen and follow with your finger.",
             "Stop at the end of the first part. Thumbs up if you understood, sideways if partly.",
@@ -361,9 +366,11 @@ export const odL3U16: Unit = {
             "What would you grow in our garden?",
           ],
         },
+        odL3U16Creative["od2e-l3-u16-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Read.", book: { book: "WB", pages: "145" } },
             { label: "Retell it", detail: "Tell the plot of the story to someone at home in three sentences: beginning, middle, end. Ask them: How did the ending make you feel?" },
           ],
@@ -470,7 +477,7 @@ export const odL3U16: Unit = {
           tag: "Listening",
           mode: "groups",
           minutes: 8,
-          book: { book: "SB", pages: "161", activities: ["D"] },
+          book: { book: "SB", pages: "161", activities: ["D"], track: "2.53" },
           steps: [
             "Listen and follow in your book. Listen for the words that tell how people feel. Which two feeling words do you hear?",
             "Listen again and read along.",
@@ -600,9 +607,11 @@ export const odL3U16: Unit = {
             "How did sorting the cards help you see the pattern?",
           ],
         },
+        odL3U16Creative["od2e-l3-u16-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Understand and the grammar pages.", book: { book: "WB", pages: "146-148" } },
             { label: "Ask at home", detail: "Ask two people at home: What are you curious about? What are you happy with? Write their answers in full sentences with about and with." },
           ],
@@ -651,12 +660,24 @@ export const odL3U16: Unit = {
           teacherNote: "Keep the chart; it supports the Big Question learning point that we use plants to make clothing, furniture and medicine.",
         },
         {
+          kind: "check",
+          title: "Quick check: garden words and curious about / happy with / surprised at",
+          assessment: "od2e-l3-u16-check",
+          mode: "solo",
+          minutes: 8,
+          steps: [
+            "Mini-whiteboards out. One question at a time; everyone shows their answer together.",
+            "No talking until the boards go up. Wipe and get ready for the next one.",
+            "Teacher: note who mixes up the small words (curious for, happy of, surprised on). Give them the Support worksheet next.",
+          ],
+        },
+        {
           kind: "activity",
           title: "Who is talking about what? (SB 162 A)",
           tag: "Listening",
           mode: "solo",
           minutes: 8,
-          book: { book: "SB", pages: "162", activities: ["A"] },
+          book: { book: "SB", pages: "162", activities: ["A"], track: "2.54" },
           steps: [
             "Look at the pictures first. What do you think each one is about?",
             "Listen once. Do not write yet. Just listen for the main idea (the gist): What is each speaker mostly talking about?",
@@ -671,7 +692,7 @@ export const odL3U16: Unit = {
           tag: "Listening",
           mode: "solo",
           minutes: 6,
-          book: { book: "SB", pages: "162", activities: ["B"] },
+          book: { book: "SB", pages: "162", activities: ["B"], track: "2.55" },
           steps: [
             "Read the questions first. What do you need to listen for?",
             "Listen again and circle the correct answers.",
@@ -683,6 +704,7 @@ export const odL3U16: Unit = {
           title: "Three important plants (SB 163 C)",
           mode: "pairs",
           minutes: 12,
+          book: { book: "SB", pages: "163", activities: ["C"], track: "2.56" },
           steps: [
             "Listen to the model conversation and repeat after the audio.",
             "Which three plants matter most to YOU? Jot down some notes.",
@@ -699,7 +721,7 @@ export const odL3U16: Unit = {
           tag: "Vocabulary",
           mode: "pairs",
           minutes: 10,
-          book: { book: "SB", pages: "163", activities: ["D"] },
+          book: { book: "SB", pages: "163", activities: ["D"], track: "2.57" },
           steps: [
             "Read the Learn box. Synonyms are two words that mean (nearly) the same thing.",
             "Look up the words in your dictionary. Draw arrows to connect the pairs that mean the same.",
@@ -802,9 +824,11 @@ export const odL3U16: Unit = {
             "Where is your favourite place to be near plants? Say it with a place phrase.",
           ],
         },
+        odL3U16Creative["od2e-l3-u16-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 16 Communicate.", book: { book: "WB", pages: "149-150" } },
             { label: "Plant plate", detail: "Next lesson you will draw your 'plant plate'. Think of four foods you eat every week and find out which plant each one comes from. Ask someone at home to help." },
           ],
@@ -913,6 +937,10 @@ export const odL3U16: Unit = {
             "I have an ending sentence.",
           ],
           frames: ["Here is how to ___.", "First, ...", "Second, ...", "Next, ...", "Finally, ...", "I'm happy with it because ..."],
+          model: {
+            title: "A model paragraph",
+            text: "Here is how to grow beans in a pot. First, fill a pot with soil and put it on a sunny window sill. Second, push three bean seeds into the soil with your finger. Next, give the seeds a little water every day. Then put a tall stick in the pot so the vines can climb. Finally, wait two weeks and look for tiny green leaves. I'm happy with my plants because the beans taste sweet, and I'm curious about how tall they will grow.",
+          },
         },
         {
           kind: "activity",
@@ -1056,9 +1084,11 @@ export const odL3U16: Unit = {
             "Finish: We need plants because ...",
           ],
         },
+        odL3U16Creative["od2e-l3-u16-l5"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Wrap Up pages and your Big Question Chart.", book: { book: "WB", pages: "151-153" } },
             { label: "Vlog", detail: "Record and upload your 'Why I Need Plants' vlog (60-90 seconds). Choose Support, Core or Stretch." },
             { label: "Writing", detail: "Finish and neaten your steps paragraph if you did not finish in class." },
@@ -1067,4 +1097,7 @@ export const odL3U16: Unit = {
       ],
     },
   ],
+  worksheets: odL3U16Worksheets,
+  assessments: odL3U16Assessments,
+  firstEdition: odL3U16FirstEdition,
 };

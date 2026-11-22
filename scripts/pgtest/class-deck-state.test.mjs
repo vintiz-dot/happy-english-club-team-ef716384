@@ -1,5 +1,5 @@
 // Where a class left off in its book and decks, and its homework interest
-// groups (20261122090000), on top of the flipbook table (20260521230000) and the
+// groups (20261122092000), on top of the flipbook table (20260521230000) and the
 // real is_teacher_of_class (20261111110000).
 //
 // What matters most: only an admin or staff of THAT class read or write a class's
@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const MIGS = process.argv.slice(2);
 const find = (s) => MIGS.find((f) => f.includes(s));
-const CHAIN = ["20260717090000", "20261111110000", "20260521230000_add_teacher_flipbooks", "20261122090000_class_deck_state"].map(find);
+const CHAIN = ["20260717090000", "20261111110000", "20260521230000_add_teacher_flipbooks", "20261122092000_class_deck_state"].map(find);
 if (CHAIN.some((f) => !f)) { console.log("usage: class-deck-state.test.mjs <its 4 migrations>"); console.log("0 passed, 1 failed"); process.exit(1); }
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };

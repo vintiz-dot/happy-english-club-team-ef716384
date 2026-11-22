@@ -8,6 +8,9 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL3U13Creative } from "./od2e-l3-u13/homework";
+import { odL3U13Assessments, odL3U13Worksheets } from "./od2e-l3-u13/assessments";
+import { odL3U13FirstEdition } from "./od2e-l3-u13/firstEdition";
 
 export const odL3U13: Unit = {
   curriculum: "oxford-discover-2e",
@@ -128,7 +131,7 @@ export const odL3U13: Unit = {
         {
           kind: "vocab",
           title: "Our 10 words about machines and inventions",
-          book: { book: "SB", pages: "128", activities: ["A"] },
+          book: { book: "SB", pages: "128", activities: ["A"], track: "2.30" },
           words: [
             { word: "lever", meaning: "a stick or board that turns on one point to lift something", example: "{s1} pushed the lever down and the box went up." },
             { word: "ramp", meaning: "a flat slope that helps you move up or down", example: "The ramp helps {s2} pull the trolley into the shop." },
@@ -148,7 +151,7 @@ export const odL3U13: Unit = {
           tag: "Vocabulary",
           mode: "whole",
           minutes: 8,
-          book: { book: "SB", pages: "128", activities: ["A"] },
+          book: { book: "SB", pages: "128", activities: ["A"], track: "2.30" },
           steps: [
             "Listen and point to each word and picture.",
             "Listen again and repeat. Clap the beats: LE-ver, light BULB, WHEEL and AX-le.",
@@ -261,9 +264,11 @@ export const odL3U13: Unit = {
           kind: "reflect",
           prompts: ["Which new word was hardest to say? Say it again now.", "Finish: Today I learned that inventions change our lives because ...", "One question I have about machines is ..."],
         },
+        odL3U13Creative["od2e-l3-u13-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Big Question page and Unit 13 Get Ready.", book: { book: "WB", pages: "116-117" } },
             { label: "Talk at home", detail: "Ask someone at home: 'Which invention could you not live without?' Be ready to tell the class their answer and a reason in two sentences." },
           ],
@@ -346,7 +351,7 @@ export const odL3U13: Unit = {
           tag: "Reading",
           mode: "whole",
           minutes: 10,
-          book: { book: "SB", pages: "130-131" },
+          book: { book: "SB", pages: "130-131", track: "2.31" },
           steps: [
             "Listen and follow with your finger.",
             "Skim for the big idea. Quick questions: Why were simple machines invented? How many are there? Name them.",
@@ -443,9 +448,11 @@ export const odL3U13: Unit = {
           kind: "reflect",
           prompts: ["Which of your predictions was right?", "Finish: Simple machines make our lives easier by ...", "Which simple machine did you use today without noticing it?"],
         },
+        odL3U13Creative["od2e-l3-u13-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 13 Read.", book: { book: "WB", pages: "118" } },
             { label: "Read aloud", detail: "Read one part of the article (SB 130-131) aloud to someone at home, with expression, two times. Then show them your diagram and explain it." },
           ],
@@ -542,7 +549,7 @@ export const odL3U13: Unit = {
           tag: "Listening",
           mode: "whole",
           minutes: 6,
-          book: { book: "SB", pages: "133", activities: ["D"] },
+          book: { book: "SB", pages: "133", activities: ["D"], track: "2.32" },
           steps: [
             "Listen to the song once with your eyes closed. What is happening?",
             "Listen again and sing along.",
@@ -693,9 +700,11 @@ export const odL3U13: Unit = {
           kind: "reflect",
           prompts: ["Say one too sentence and one either sentence about you and a friend (be kind!).", "What mistake will you watch out for?", "How did sorting the sentence cards help you find the rule?"],
         },
+        odL3U13Creative["od2e-l3-u13-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 13 Understand and the grammar pages.", book: { book: "WB", pages: "119-121" } },
             { label: "Agree at home", detail: "Say three true sentences about your day to someone at home (two positive, one negative). Ask them to agree with you, then write their answers." },
           ],
@@ -746,12 +755,24 @@ export const odL3U13: Unit = {
           fluencyTip: "Use first, then and finally to tell your story in the right order.",
         },
         {
+          kind: "check",
+          title: "Quick check: machine words, too and either",
+          assessment: "od2e-l3-u13-check",
+          mode: "solo",
+          minutes: 8,
+          steps: [
+            "Mini-whiteboards out. One question at a time; everyone shows their answer together.",
+            "No talking until the boards go up. Wipe and get ready for the next one.",
+            "Teacher: note who uses too after a negative sentence or a singular verb after and. Give them the Support worksheet next.",
+          ],
+        },
+        {
           kind: "activity",
           title: "Listen and number (SB 134 A)",
           tag: "Listening",
           mode: "solo",
           minutes: 7,
-          book: { book: "SB", pages: "134", activities: ["A"] },
+          book: { book: "SB", pages: "134", activities: ["A"], track: "2.33" },
           steps: [
             "Before you listen, look at the picture. Name the things you can see.",
             "Listen and write a number next to each thing in the order you hear it.",
@@ -766,7 +787,7 @@ export const odL3U13: Unit = {
           tag: "Listening",
           mode: "solo",
           minutes: 6,
-          book: { book: "SB", pages: "134", activities: ["B"] },
+          book: { book: "SB", pages: "134", activities: ["B"], track: "2.34" },
           steps: [
             "Listen again. Match each word you heard with a simple machine.",
             "Check with a partner. Which machine did you find hardest? Why?",
@@ -777,7 +798,7 @@ export const odL3U13: Unit = {
         {
           kind: "speaking",
           title: "How inventions make our lives better (SB 135 C)",
-          book: { book: "SB", pages: "135", activities: ["C"] },
+          book: { book: "SB", pages: "135", activities: ["C"], track: "2.35" },
           mode: "pairs",
           minutes: 10,
           steps: [
@@ -796,7 +817,7 @@ export const odL3U13: Unit = {
           tag: "Phonics",
           mode: "pairs",
           minutes: 7,
-          book: { book: "SB", pages: "135", activities: ["D"] },
+          book: { book: "SB", pages: "135", activities: ["D"], track: "2.36" },
           steps: [
             "Say 'Go! Go! Go!' with a strong g sound at the start. Point and say it fast.",
             "Study the Learn box and its sentences. Listen and follow the words, then repeat each one out loud: glasses, globe, glider, gum, gramophone, garbage bag.",
@@ -909,6 +930,10 @@ export const odL3U13: Unit = {
             "I finish with a sentence about why it matters.",
           ],
           frames: ["The ___ was an important invention.", "It helps us ___.", "The ___ and the ___ are ... / were ...", "I use it to ..., and my family does, too.", "I think it is important because ..."],
+          model: {
+            title: "A model paragraph",
+            text: "The bicycle was an important invention. It helps people travel without a car, and it is good for our health. A wheel and an axle are at the front and the back, so the bicycle rolls easily. The pedals and the chain are the parts that make the wheels turn. I ride my bicycle to school every day, and my cousin does, too. My brother doesn't ride a bicycle, and my sister doesn't, either. I think the bicycle is important because it is cheap, quick and fun.",
+          },
         },
         {
           kind: "project",
@@ -979,9 +1004,11 @@ export const odL3U13: Unit = {
             "Finish: Inventions change our lives because ...",
           ],
         },
+        odL3U13Creative["od2e-l3-u13-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 13 Communicate and your paragraph about an important invention.", book: { book: "WB", pages: "122-123" } },
             { label: "Vlog", detail: "Record and upload your 'An Invention I Use Every Day' vlog (60-90 seconds). Choose Support, Core or Stretch." },
             { label: "Pitch", detail: "Practise your part of the Invention Pitch aloud two times and bring three facts about your group's invention." },
@@ -990,4 +1017,7 @@ export const odL3U13: Unit = {
       ],
     },
   ],
+  worksheets: odL3U13Worksheets,
+  assessments: odL3U13Assessments,
+  firstEdition: odL3U13FirstEdition,
 };

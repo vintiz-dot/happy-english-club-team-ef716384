@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanInterests } from "@/lib/lessonDecks/views";
 
-// Where a class left off (class_deck_state, migration 20261122090000): the last
+// Where a class left off (class_deck_state, migration 20261122092000): the last
 // flipbook page shown, the last deck and slide, and the class's homework interest
 // groups (student ids only). Staff of the class read and write it; RLS decides.
 // Not in the generated types yet.

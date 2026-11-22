@@ -8,6 +8,9 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL3U17Creative } from "./od2e-l3-u17/homework";
+import { odL3U17Assessments, odL3U17Worksheets } from "./od2e-l3-u17/assessments";
+import { odL3U17FirstEdition } from "./od2e-l3-u17/firstEdition";
 
 export const odL3U17: Unit = {
   curriculum: "oxford-discover-2e",
@@ -140,7 +143,7 @@ export const odL3U17: Unit = {
         {
           kind: "vocab",
           title: "Weather and landform words",
-          book: { book: "SB", pages: "168", activities: ["A"] },
+          book: { book: "SB", pages: "168", activities: ["A"], track: "3.02" },
           words: [
             { word: "island", meaning: "land with water all around it", example: "{s1} wants to visit an island." },
             { word: "windy", meaning: "with a lot of wind", example: "It is too windy to fly a kite today." },
@@ -160,7 +163,7 @@ export const odL3U17: Unit = {
           tag: "Vocabulary",
           mode: "whole",
           minutes: 5,
-          book: { book: "SB", pages: "168", activities: ["A"] },
+          book: { book: "SB", pages: "168", activities: ["A"], track: "3.02" },
           steps: [
             "Listen and point to each picture.",
             "Listen again and repeat. Clap the syllables: WA-ter-fall, LIGHT-ning, IS-land.",
@@ -288,9 +291,11 @@ export const odL3U17: Unit = {
             "What does a map help an explorer do?",
           ],
         },
+        odL3U17Creative["od2e-l3-u17-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Big Question page and Unit 17 Get Ready.", book: { book: "WB", pages: "154-155" } },
             { label: "Talk at home", detail: "Ask someone at home about a long trip or a place they explored: how long it took and how they felt. Be ready to tell the class in two sentences." },
           ],
@@ -373,7 +378,7 @@ export const odL3U17: Unit = {
           tag: "Reading",
           mode: "whole",
           minutes: 10,
-          book: { book: "SB", pages: "170-171" },
+          book: { book: "SB", pages: "170-171", track: "3.03" },
           steps: [
             "Listen and read along with your finger. The white background tells what happens. The yellow boxes are Juan's journal.",
             "Stop after each page. Show with your hand: thumbs up if you understood, sideways if partly.",
@@ -387,7 +392,7 @@ export const odL3U17: Unit = {
           tag: "Reading",
           mode: "groups",
           minutes: 7,
-          book: { book: "SB", pages: "170-171" },
+          book: { book: "SB", pages: "170-171", track: "3.03" },
           steps: [
             "Half the class reads the white-background parts (what is happening). The other half reads Juan's journal entries.",
             "Listen once more so you can hear how the parts sound. Then read together in a chorus, trying to copy the expression.",
@@ -488,9 +493,11 @@ export const odL3U17: Unit = {
             "How did the map help you understand the story?",
           ],
         },
+        odL3U17Creative["od2e-l3-u17-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 17 Read.", book: { book: "WB", pages: "156" } },
             { label: "Read aloud", detail: "Read one of Juan's journal entries aloud to someone at home, with expression, two times. Tell them where Juan was on that date." },
           ],
@@ -586,7 +593,7 @@ export const odL3U17: Unit = {
           tag: "Listening",
           mode: "whole",
           minutes: 7,
-          book: { book: "SB", pages: "172", activities: ["C"] },
+          book: { book: "SB", pages: "172", activities: ["C"], track: "3.04" },
           steps: [
             "Listen and follow in your book. Listen again and read along.",
             "Answer: Where are the children? What are they doing? What does one of them want? How do you get there? What is an easier way?",
@@ -735,9 +742,11 @@ export const odL3U17: Unit = {
             "How did acting out the cards help you find the idea?",
           ],
         },
+        odL3U17Creative["od2e-l3-u17-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 17 Understand and the grammar pages.", book: { book: "WB", pages: "157-159" } },
             { label: "Directions at home", detail: "Draw a simple map of a route at home (bedroom to kitchen) or near home. Give directions to someone at home using three movement words and ask them to follow your voice." },
           ],
@@ -784,12 +793,24 @@ export const odL3U17: Unit = {
           prompts: ["It is the ... of ...", "Is it the ... of ...?", "{s1}, what date is your birthday?"],
         },
         {
+          kind: "check",
+          title: "Quick check: words and movement words",
+          assessment: "od2e-l3-u17-check",
+          mode: "solo",
+          minutes: 8,
+          steps: [
+            "Mini-whiteboards out. One question at a time; everyone shows their answer together.",
+            "No talking until the boards go up. Wipe and get ready for the next one.",
+            "Teacher: note who writes to before across or puts the place before the little word. Give them the Support worksheet next.",
+          ],
+        },
+        {
           kind: "activity",
           title: "Ordinal numbers (SB 174 A)",
           tag: "Phonics",
           mode: "whole",
           minutes: 5,
-          book: { book: "SB", pages: "174", activities: ["A"] },
+          book: { book: "SB", pages: "174", activities: ["A"], track: "3.05" },
           steps: [
             "Listen carefully to the ordinal numbers: first, second, third, fourth ...",
             "Focus on the ending sounds /th/ and /st/. Say each sound slowly, then say the whole number.",
@@ -803,7 +824,7 @@ export const odL3U17: Unit = {
           tag: "Listening",
           mode: "solo",
           minutes: 4,
-          book: { book: "SB", pages: "174", activities: ["B"] },
+          book: { book: "SB", pages: "174", activities: ["B"], track: "3.06" },
           steps: [
             "Listen, then write down each date you hear.",
             "Volunteers write each date on the board as the teacher says it.",
@@ -817,7 +838,7 @@ export const odL3U17: Unit = {
           tag: "Listening",
           mode: "solo",
           minutes: 8,
-          book: { book: "SB", pages: "174", activities: ["C"] },
+          book: { book: "SB", pages: "174", activities: ["C"], track: "3.07" },
           steps: [
             "Strategy: the MAIN IDEA is what the whole listening is about. Details are the small facts that support it.",
             "Listen once and decide: what is the main idea of this taped journal?",
@@ -831,6 +852,7 @@ export const odL3U17: Unit = {
           title: "Congratulations and compliments (SB 175 D)",
           mode: "pairs",
           minutes: 10,
+          book: { book: "SB", pages: "175", activities: ["D"], track: "3.08" },
           steps: [
             "Listen and repeat the ways to congratulate and to compliment someone.",
             "Two volunteers model a conversation using the speech bubbles in the book.",
@@ -844,7 +866,7 @@ export const odL3U17: Unit = {
         {
           kind: "vocab",
           title: "Phrasal verbs with look",
-          book: { book: "SB", pages: "175", activities: ["E"] },
+          book: { book: "SB", pages: "175", activities: ["E"], track: "3.09" },
           words: [
             { word: "look around", meaning: "to turn your head and see what is near you", example: "{s1} looked around the new classroom." },
             { word: "look through", meaning: "to go over a page fast to find one fact", example: "Look through the text to find the date." },
@@ -860,7 +882,7 @@ export const odL3U17: Unit = {
           tag: "Vocabulary",
           mode: "pairs",
           minutes: 12,
-          book: { book: "SB", pages: "175", activities: ["E"] },
+          book: { book: "SB", pages: "175", activities: ["E"], track: "3.09" },
           steps: [
             "Listen to the six phrasal verbs and point to each word as you read along.",
             "With a partner, write one sentence with each phrasal verb.",
@@ -986,6 +1008,10 @@ export const odL3U17: Unit = {
             "It was ___ and I felt ...",
             "People explore because ...",
           ],
+          model: {
+            title: "A model trip journal",
+            text: "The third of May. Before we left home, we packed a map and a torch. After we arrived at the coast, we walked along the river and through a green forest. It was windy and the clouds were dark, but there was no storm. The fourth of May. We sailed around a small island and saw a tall waterfall. I felt brave and very happy. People explore because they want to see new places and learn about the world.",
+          },
         },
         {
           kind: "project",
@@ -1066,9 +1092,11 @@ export const odL3U17: Unit = {
             "Finish: People explore to learn ...",
           ],
         },
+        odL3U17Creative["od2e-l3-u17-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 17 Communicate.", book: { book: "WB", pages: "160-161" } },
             { label: "Vlog", detail: "Record and upload your 'My Journey' vlog (60-90 seconds). Choose Support, Core or Stretch." },
             { label: "Talk at home", detail: "Congratulate or compliment someone at home on something they did well this week. Tell the class what they said." },
@@ -1077,4 +1105,7 @@ export const odL3U17: Unit = {
       ],
     },
   ],
+  worksheets: odL3U17Worksheets,
+  assessments: odL3U17Assessments,
+  firstEdition: odL3U17FirstEdition,
 };

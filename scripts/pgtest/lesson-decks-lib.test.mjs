@@ -259,6 +259,19 @@ eq("blocks rank in order within a unit and after the unit before",
 eq("curriculum text names the book", ["Reach Higher 3A", "RH3B", "Oxford Discover 3", null].map(C2.curriculumFromText),
   ["reach-higher", "reach-higher", "oxford-discover-2e", "oxford-discover-2e"]);
 eq("level from a Reach Higher label", ["Reach Higher 3A", "Reach Higher Level 3", "RH 4B"].map(C2.levelFromCurriculum), [3, 3, 4]);
+// Units 13-18 carry the same round-2 features as Unit 12.
+for (const n of [13, 14, 15, 16, 17, 18]) {
+  const u = units.find((x) => x.u.unit === n && x.u.level === 3)?.u;
+  ok(`Level 3 Unit ${n} is loaded`, !!u);
+  if (!u) continue;
+  const last = Math.max(...u.decks.map((d) => d.lesson));
+  ok(`Unit ${n}: every homework has a football edition`, u.decks.every((d) => d.slides.some((s) => s.kind === "creative" && s.variants?.some((v) => v.interest === "football"))));
+  eq(`Unit ${n}: a quick check in Lesson 4 and the test after the last lesson`,
+    [V.checksIn(u.decks.find((d) => d.lesson === 4)), V.unitPlan(u).at(-1).kind, V.unitPlan(u).at(-2).deck?.lesson], [[`od2e-l3-u${n}-check`], "test", last]);
+  ok(`Unit ${n}: a worksheet per grammar slide, a 1st-edition map and audio tracks`,
+    (u.worksheets ?? []).length >= u.decks.flatMap((d) => d.slides).filter((s) => s.kind === "grammar").length && !!u.firstEdition && /"track":"\d\.\d\d"/.test(JSON.stringify(u)));
+  ok(`Unit ${n}: no audio, image or book files referenced`, !/\.(mp3|wav|m4a|pdf|jpg|png)"/i.test(JSON.stringify(u)));
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

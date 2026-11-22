@@ -8,6 +8,9 @@
 //
 // {s1} .. {s6} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { odL3U15Creative } from "./od2e-l3-u15/homework";
+import { odL3U15Assessments, odL3U15Worksheets } from "./od2e-l3-u15/assessments";
+import { odL3U15FirstEdition } from "./od2e-l3-u15/firstEdition";
 
 export const odL3U15: Unit = {
   curriculum: "oxford-discover-2e",
@@ -113,7 +116,7 @@ export const odL3U15: Unit = {
         {
           kind: "vocab",
           title: "Our 10 plant words",
-          book: { book: "SB", pages: "148", activities: ["A"] },
+          book: { book: "SB", pages: "148", activities: ["A"], track: "2.44" },
           words: [
             { word: "soil", meaning: "the brown earth where plants grow", example: "{s1} put the seed in the soil." },
             { word: "seeds", meaning: "small things that grow into new plants", example: "A sunflower has hundreds of seeds." },
@@ -133,7 +136,7 @@ export const odL3U15: Unit = {
           tag: "Vocabulary",
           mode: "whole",
           minutes: 7,
-          book: { book: "SB", pages: "148", activities: ["A"] },
+          book: { book: "SB", pages: "148", activities: ["A"], track: "2.44" },
           steps: [
             "Listen to the words and point to each picture.",
             "Listen again and say each word. Say humans slowly: start with a breath, hhh, then the long u sound.",
@@ -272,9 +275,11 @@ export const odL3U15: Unit = {
           kind: "reflect",
           prompts: ["Which plant word was hardest to say? Say it again now.", "Finish: Today I learned that plants need ...", "One question I have about plants is ..."],
         },
+        odL3U15Creative["od2e-l3-u15-l1"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Do the creative task on the slide before this one, in your exercise book or on paper. Your teacher will tell you if you have the class version or the football edition." },
             { label: "Workbook", detail: "Finish Unit 15 Big Question and Get Ready.", book: { book: "WB", pages: "135-136" } },
             { label: "Talk at home", detail: "Show someone at home one plant. Name its parts in English and tell them one thing plants need." },
           ],
@@ -342,7 +347,7 @@ export const odL3U15: Unit = {
           tag: "Reading",
           mode: "whole",
           minutes: 10,
-          book: { book: "SB", pages: "150-151" },
+          book: { book: "SB", pages: "150-151", track: "2.45" },
           steps: [
             "Listen and follow with your finger.",
             "Stop after each section. Show with your hand: thumbs up if you understood, sideways if partly.",
@@ -451,9 +456,11 @@ export const odL3U15: Unit = {
           kind: "reflect",
           prompts: ["Which step in the life of the sunflower surprised you?", "Finish: Plants are important because ...", "What helped you understand cause and effect today?"],
         },
+        odL3U15Creative["od2e-l3-u15-l2"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Do the creative task on the slide before this one, in your exercise book or on paper. Your teacher will tell you if you have the class version or the football edition." },
             { label: "Workbook", detail: "Finish Unit 15 Read.", book: { book: "WB", pages: "137" } },
             { label: "Read aloud", detail: "Read one paragraph of SB 150-151 aloud to someone at home, with expression, two times. Tell them one cause and its effect." },
           ],
@@ -565,7 +572,7 @@ export const odL3U15: Unit = {
           tag: "Listening",
           mode: "whole",
           minutes: 6,
-          book: { book: "SB", pages: "153", activities: ["D"] },
+          book: { book: "SB", pages: "153", activities: ["D"], track: "2.46" },
           steps: [
             "Listen to the song with your eyes closed. What is in the shopping bag?",
             "Listen again and sing along. One half of the class sings the questions, the other half sings the answers. Then swap.",
@@ -690,9 +697,11 @@ export const odL3U15: Unit = {
           kind: "reflect",
           prompts: ["Say one measure-word sentence about food at your home.", "Which mistake will you watch for?", "How did sorting the cards help you find the rule?"],
         },
+        odL3U15Creative["od2e-l3-u15-l3"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Do the creative task on the slide before this one, in your exercise book or on paper. Your teacher will tell you if you have the class version or the football edition." },
             { label: "Workbook", detail: "Finish Unit 15 Understand and the grammar pages.", book: { book: "WB", pages: "138-140" } },
             { label: "Look in the kitchen", detail: "Find five foods at home. Write a phrase with a measure word for each, such as a bottle of oil. Say them to someone at home." },
           ],
@@ -736,12 +745,24 @@ export const odL3U15: Unit = {
           fluencyTip: "Say your idea, then give one reason.",
         },
         {
+          kind: "check",
+          title: "Quick check: plant words and measure words",
+          assessment: "od2e-l3-u15-check",
+          mode: "solo",
+          minutes: 8,
+          steps: [
+            "Mini-whiteboards out. One question at a time; everyone shows their answer together.",
+            "No talking until the boards go up. Wipe and get ready for the next one.",
+            "Teacher: note who leaves out of or counts the food (two rices). Give them the Support worksheet next.",
+          ],
+        },
+        {
           kind: "activity",
           title: "Put the steps in order (SB 154 A)",
           tag: "Listening",
           mode: "solo",
           minutes: 7,
-          book: { book: "SB", pages: "154", activities: ["A"] },
+          book: { book: "SB", pages: "154", activities: ["A"], track: "2.47" },
           steps: [
             "Listen for words that show order: first, second, third, finally. Listen a second time and take notes.",
             "Number the steps in the order they happen. Check with a partner.",
@@ -756,7 +777,7 @@ export const odL3U15: Unit = {
           tag: "Listening",
           mode: "solo",
           minutes: 6,
-          book: { book: "SB", pages: "154", activities: ["B"] },
+          book: { book: "SB", pages: "154", activities: ["B"], track: "2.48" },
           steps: ["Read the three questions first. Guess the answers.", "Listen and circle the correct answers.", "Check with a partner and say a full sentence for each answer."],
           prompts: ["The bee goes to the flower because ...", "The flower makes ___ so bees come."],
         },
@@ -765,6 +786,7 @@ export const odL3U15: Unit = {
           title: "May I borrow ...? (SB 155 C)",
           mode: "pairs",
           minutes: 12,
+          book: { book: "SB", pages: "155", activities: ["C"], track: "2.49" },
           steps: [
             "Listen and repeat the model conversation.",
             "Change the item: ask to borrow other things (a pencil, a book, a ruler, a seed).",
@@ -781,7 +803,7 @@ export const odL3U15: Unit = {
           tag: "Vocabulary",
           mode: "pairs",
           minutes: 7,
-          book: { book: "SB", pages: "155", activities: ["D"] },
+          book: { book: "SB", pages: "155", activities: ["D"], track: "2.50" },
           steps: [
             "Listen and read. Say the ending /th/ clearly: put your tongue between your teeth, like warm / warmth.",
             "Draw a line to join each adjective to its noun: strong, wide and long.",
@@ -881,6 +903,10 @@ export const odL3U15: Unit = {
             "I write a closing sentence.",
           ],
           frames: ["First, put ___ in the ___.", "Second, push a ___ into the ___.", "Third, give it a ___ of water.", "Finally, put it where it can get ___.", "I like this plant because ..."],
+          model: {
+            title: "How to grow a bean plant",
+            text: "First, fill a small pot with a bag of soil. Second, push two bean seeds into the soil. Third, give the seeds a little water every day, because they need water to sprout. Next, put the pot near a sunny window. After a week, a small stem and two green leaves come up. Finally, when the plant is tall, move it to a bigger pot. Bean plants are important because they give us food and oxygen. I love growing them!",
+          },
         },
         {
           kind: "project",
@@ -951,9 +977,11 @@ export const odL3U15: Unit = {
             "Finish: Today I learned that we need plants because ...",
           ],
         },
+        odL3U15Creative["od2e-l3-u15-l4"],
         {
           kind: "homework",
           items: [
+            { label: "Creative writing", detail: "Do the creative task on the slide before this one, in your exercise book or on paper. Your teacher will tell you if you have the class version or the football edition." },
             { label: "Workbook", detail: "Finish Unit 15 Communicate.", book: { book: "WB", pages: "141-142" } },
             { label: "Plant Fair", detail: "Make your plant poster and practise your 1-minute talk out loud two times. Bring your poster to the next lesson." },
             { label: "Vlog", detail: "Record and upload your 'My Plant Story' vlog (60-90 seconds). Choose Support, Core or Stretch." },
@@ -962,4 +990,7 @@ export const odL3U15: Unit = {
       ],
     },
   ],
+  worksheets: odL3U15Worksheets,
+  assessments: odL3U15Assessments,
+  firstEdition: odL3U15FirstEdition,
 };

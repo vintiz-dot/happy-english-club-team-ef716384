@@ -66,7 +66,7 @@ interface Flipbook {
   url: string;
   teacher_id: string;
   class_id: string | null;
-  edition?: string | null; // "1e" | "2e" (20261122090000)
+  edition?: string | null; // "1e" | "2e" (20261122092000)
   page_offset?: number | null;
   created_at: string;
   updated_at: string;
@@ -340,7 +340,7 @@ export default function TeacherBooks() {
     const finalUrlResult = cleanAndSuggestUrl(formUrl);
     const finalUrl = finalUrlResult.url;
     const finalClassId = formClassId === "none" ? null : formClassId;
-    // Sent only when set, so saving a plain link keeps working before migration 20261122090000.
+    // Sent only when set, so saving a plain link keeps working before migration 20261122092000.
     const bookFields: { edition?: string | null; page_offset?: number } =
       formEdition !== "none" || formOffset !== 0 || editingBook?.edition
         ? { edition: formEdition === "none" ? null : formEdition, page_offset: formOffset }

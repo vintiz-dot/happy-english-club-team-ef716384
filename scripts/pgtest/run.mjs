@@ -326,7 +326,7 @@ const SUITES = [
   // Lesson decks (Flipbooks): name slots, pacing guide, and the rules every deck keeps.
   { name: "lesson decks lib", file: "lesson-decks-lib.test.mjs", migrations: [] },
   // Where each class left off in its book and decks, and its homework interest groups (22 Nov 2026).
-  { name: "class deck state", file: "class-deck-state.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20260521230000_add_teacher_flipbooks.sql", "20261122090000_class_deck_state.sql"] },
+  { name: "class deck state", file: "class-deck-state.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20260521230000_add_teacher_flipbooks.sql", "20261122092000_class_deck_state.sql"] },
   // Stage A without a database: the AI reply checked against the records, and what approval sends.
   { name: "lesson report approval", file: "lesson-report-approval.test.mjs", migrations: [] },
   {
