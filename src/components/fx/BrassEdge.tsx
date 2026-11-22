@@ -70,9 +70,9 @@ export function BrassEdge({ className, children, ...rest }: HTMLAttributes<HTMLD
           style={{
             borderRadius: "inherit",
             padding: 1,
-            WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+            WebkitMask: "linear-gradient(black 0 0) content-box, linear-gradient(black 0 0)",
             WebkitMaskComposite: "xor",
-            mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+            mask: "linear-gradient(black 0 0) content-box, linear-gradient(black 0 0)",
             maskComposite: "exclude",
           }}
         >
