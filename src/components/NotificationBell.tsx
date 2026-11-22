@@ -28,6 +28,20 @@ export default function NotificationBell() {
     queryFn: async () => {
       if (!user) return [];
 
+      // Admins: their own notifications. The "Admins can manage all
+      // notifications" policy lets an admin read everyone's, so the filter on
+      // user_id is what keeps families' and teachers' notes out of this bell.
+      if (role === "admin") {
+        const { data, error } = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        return data || [];
+      }
+
       // For teachers, get notifications related to their classes
       if (role === "teacher") {
         const { data: teacher } = await supabase
@@ -77,7 +91,7 @@ export default function NotificationBell() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!studentId || role === "teacher",
+    enabled: !!studentId || role === "teacher" || role === "admin",
   });
 
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;
@@ -102,7 +116,10 @@ export default function NotificationBell() {
     const metadata = notification.metadata || {};
     
     // Handle different notification types
-    if (notification.type === 'economy_request' && metadata.class_id) {
+    if (notification.type === 'class_access_request' && metadata.class_id) {
+      // A teacher's "Contact Admin" (request_class_access): open the class.
+      navigate(`/admin/classes/${metadata.class_id}`);
+    } else if (notification.type === 'economy_request' && metadata.class_id) {
       navigate(`/classes/${metadata.class_id}`);
     } else if (notification.type === 'homework_assigned' || notification.type === 'homework_graded') {
       navigate("/student/assignments");

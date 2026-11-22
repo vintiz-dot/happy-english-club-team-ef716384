@@ -28,12 +28,10 @@ export function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
   useEffect(() => {
     if (loading) return;
 
-    // No user session - redirect to auth with intent to return
+    // No user session - to sign-in. No "return to this page": after a sign-out
+    // this page belongs to the previous person, and sign-in goes to the dashboard.
     if (!user) {
-      navigate("/auth", { 
-        replace: true, 
-        state: { redirectTo: location.pathname } 
-      });
+      navigate("/auth", { replace: true });
       return;
     }
 

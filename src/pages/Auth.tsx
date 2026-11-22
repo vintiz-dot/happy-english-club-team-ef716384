@@ -60,7 +60,11 @@ const Auth = () => {
   const { user } = useAuth();
   const nextParam = new URLSearchParams(location.search).get("next");
   const oauthNext = nextParam ? oauthReturnPath(nextParam) : null;
-  const afterAuth = () => oauthNext ?? (location.state as { redirectTo?: string } | null)?.redirectTo ?? "/dashboard";
+  // A sign-in always lands on the dashboard (owner, 22 Nov 2026). It used to
+  // return to the page that sent the browser here, which after a sign-out is
+  // the previous person's page. The one exception is an explicit OAuth
+  // `?next=` for the agent-integration consent screen.
+  const afterAuth = () => oauthNext ?? "/dashboard";
 
   useEffect(() => {
     if (user) {

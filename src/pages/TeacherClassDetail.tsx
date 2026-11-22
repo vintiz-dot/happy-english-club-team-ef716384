@@ -20,11 +20,33 @@ import { LiveEngagementHUD } from "@/components/teacher/LiveEngagementHUD";
 import { Settings } from "lucide-react";
 import { coverWindow, isRosteredFor } from "@/lib/teacherAccess";
 import { PageLoading } from "@/components/ui/loading";
+import { toast } from "sonner";
 
 export default function TeacherClassDetail() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [accessAsk, setAccessAsk] = useState<"idle" | "sending" | "sent">("idle");
+
+  // "Contact Admin": one notification in every admin's bell, worded by the
+  // server (request_class_access, 20261122140000).
+  const contactAdmin = async () => {
+    if (!id || accessAsk !== "idle") return;
+    setAccessAsk("sending");
+    const { data, error } = await (supabase.rpc as any)("request_class_access", { p_class_id: id });
+    if (error) {
+      setAccessAsk("idle");
+      const missing = error.code === "PGRST202" || error.code === "42883";
+      toast.error(missing
+        ? "Access requests are not switched on yet. Please ask the office directly."
+        : `Could not send the request: ${error.message}`);
+      return;
+    }
+    setAccessAsk("sent");
+    toast.success(data?.status === "already_sent"
+      ? "You already asked for this class today. An administrator will look at it."
+      : "Request sent. An administrator will check your access to this class.");
+  };
 
   // Real-time subscription for enrollment changes
   useEffect(() => {
@@ -174,9 +196,9 @@ export default function TeacherClassDetail() {
                   View My Classes
                 </Link>
               </Button>
-              <Button variant="outline">
+              <Button variant="outline" onClick={contactAdmin} disabled={accessAsk !== "idle"}>
                 <Mail className="h-4 w-4 mr-2" />
-                Contact Admin
+                {accessAsk === "sending" ? "Sending..." : accessAsk === "sent" ? "Request sent" : "Contact Admin"}
               </Button>
             </div>
           </CardContent>
