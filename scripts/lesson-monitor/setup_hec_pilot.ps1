@@ -99,8 +99,11 @@ try {
 Pop-Location
 
 Step "Locking C:\hec-pilot to $User, SYSTEM and Administrators"
-icacls $Root /inheritance:r /grant:r "${User}:(OI)(CI)F" "SYSTEM:(OI)(CI)F" "Administrators:(OI)(CI)F" /T /C | Out-Null
+# By SID, never by name: a name that does not resolve leaves nobody with access (it did, 23 Nov 2026).
+$uSid = (Get-LocalUser -Name $User).SID.Value
+icacls $Root /inheritance:r /grant:r "*${uSid}:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" /T /C | Out-Null
 if ($LASTEXITCODE) { throw "icacls failed" }
+icacls $Root
 
 Step "Scheduled task"
 & (Join-Path $PSScriptRoot "install_watch_task.ps1") -Root $Root -User $User
