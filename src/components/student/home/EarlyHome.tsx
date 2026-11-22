@@ -19,6 +19,7 @@ import { CARD, FOCUS } from "@/components/student/nova/ivory";
 import { useSpeech } from "@/components/lessonDecks/speech";
 import { useCopy } from "@/lib/copy/useCopy";
 import { cn } from "@/lib/utils";
+import { dayjs } from "@/lib/date";
 import type { HomeData } from "./types";
 
 function VideoDoor() {
@@ -47,11 +48,13 @@ function VideoDoor() {
 export function EarlyHome({ data }: { data: HomeData }) {
   const classId = data.enrolledClasses[0]?.classes?.id as string | undefined;
   const classmates = useClassmates(classId, data.studentId);
+  // Nothing left to do today: Pip waves goodbye instead of cheering on the next thing.
+  const finished = data.homework.ready && !data.homework.next && !data.sessions.some((x) => x.status === "Scheduled" && dayjs(x.date).isSame(dayjs(), "day"));
   const hasVideoHomework = data.homework.all.some((h) => h.submission_type === "video");
   return (
     <div className="space-y-6">
       <section className="flex flex-col items-center gap-3 text-center">
-        <MascotCompanion pendingHomework={data.homework.ready ? data.homework.todo : null} />
+        <MascotCompanion pendingHomework={data.homework.ready ? data.homework.todo : null} wave={finished} />
         <h1 className="font-display text-hec-display font-bold text-hec-ink">
           <Bi k="hello.name" vars={{ name: data.firstName }} />
         </h1>

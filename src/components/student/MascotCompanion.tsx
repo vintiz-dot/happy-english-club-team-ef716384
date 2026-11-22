@@ -36,6 +36,8 @@ interface MascotCompanionProps {
   size?: number;
   /** Draw his line in this element (a row in the flow) instead of beside him. */
   messageSlot?: HTMLElement | null;
+  /** Wave (the hello pose) whatever the day holds: the finish line of the youngest band. */
+  wave?: boolean;
   /** Draw no line at all, only the picture. */
   silent?: boolean;
   className?: string;
@@ -53,7 +55,7 @@ function seedOf(text: string): number {
 const poseUrl = (mood: Mood, size: number) =>
   size < 64 ? "/mascot/pip-badge.svg" : mood === "hello" ? "/mascot/pip.svg" : `/mascot/pip-${mood}.svg`;
 
-export function MascotCompanion({ streak = 0, pendingHomework = 0, size, messageSlot, silent = false, className }: MascotCompanionProps) {
+export function MascotCompanion({ streak = 0, pendingHomework = 0, size, messageSlot, silent = false, wave = false, className }: MascotCompanionProps) {
   const { band, studentId, showPip } = useAgeBand();
   const { en, vi, beneath } = useCopy();
   const level = useMotionLevel();
@@ -80,8 +82,8 @@ export function MascotCompanion({ streak = 0, pendingHomework = 0, size, message
     }
     const index = (seedOf(`${day}:${studentId ?? ""}`) + bump) % pool.length;
     const key = pool[index];
-    return { key, mood: key === "pip.days.1" ? ("excited" as Mood) : mood };
-  }, [pendingHomework, streak, band, studentId, bump]);
+    return { key, mood: wave ? ("hello" as Mood) : key === "pip.days.1" ? ("excited" as Mood) : mood };
+  }, [pendingHomework, streak, band, studentId, bump, wave]);
 
   const px = size ?? SIZE_OF[band];
 
