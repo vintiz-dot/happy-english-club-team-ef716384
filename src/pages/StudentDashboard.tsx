@@ -9,7 +9,7 @@ import { Calendar, FileText, DollarSign, Clock, Phone, Trophy, BookOpen, Edit, M
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { StudentClassLeaderboard } from "@/components/student/StudentClassLeaderboard";
-import { useState, useMemo, useEffect } from "react";
+import { Suspense, lazy, useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentProfileEdit } from "@/components/student/StudentProfileEdit";
@@ -44,6 +44,11 @@ import { QuickActionDock, type DockAction } from "@/components/student/nova/Quic
 import { SectionHeading } from "@/components/student/nova/SectionHeading";
 import { BUTTON, BUTTON_QUIET, CARD, CARD_TITLE, LABEL, reducedMotion } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
+import { LookChoice } from "@/components/student/band/LookChoice";
+import { useMovingUp } from "@/components/student/band/useMovingUp";
+
+// The "new school year" moment loads only on the day it plays.
+const MovingUpMoment = lazy(() => import("@/components/student/band/MovingUpMoment"));
 
 // Animation variants. "Ivory" design system: the page arrives once, as one
 // slow fade with an 8 px rise; the cards do not each fly in (DESIGN_SYSTEM section 9).
@@ -112,6 +117,7 @@ export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState(tabFromUrl || "dashboard");
   const greeting = useMemo(() => getGreeting(), []);
   const reduceMotion = reducedMotion(useReducedMotion());
+  const movingUp = useMovingUp();
 
   // Sync tab with URL
   useEffect(() => {
@@ -388,6 +394,11 @@ export default function StudentDashboard() {
         data-hec-scale={youngScaleFor(studentProfile.date_of_birth) ? "young" : undefined}
         className="relative"
       >
+      {movingUp.due && (
+        <Suspense fallback={null}>
+          <MovingUpMoment onDone={movingUp.done} />
+        </Suspense>
+      )}
       {/* Celebration Overlay */}
       <CelebrationOverlay
         show={showCelebration}
@@ -816,6 +827,7 @@ export default function StudentDashboard() {
           <div>
             <StudentProfileEdit studentId={studentId} />
           </div>
+          <LookChoice />
         </DialogContent>
       </Dialog>
       </div>
