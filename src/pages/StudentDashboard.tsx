@@ -3,52 +3,38 @@ import { supabase } from "@/integrations/supabase/client";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { dayjs } from "@/lib/date";
 import Layout from "@/components/Layout";
-import { CardDescription, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar, FileText, DollarSign, Clock, Phone, Trophy, BookOpen, Edit, Mail, Sparkles, Star, Zap, Rocket, Target, ChevronRight, HelpCircle, Wallet } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { StudentClassLeaderboard } from "@/components/student/StudentClassLeaderboard";
+import { Calendar, FileText, Edit, Sparkles } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Suspense, lazy, useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { StudentProfileEdit } from "@/components/student/StudentProfileEdit";
-import { useStudentMonthFinance, formatVND } from "@/hooks/useStudentMonthFinance";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useLoginChallenge } from "@/hooks/useLoginChallenge";
 
 // New kid-friendly components
-import { MascotCompanion } from "@/components/student/MascotCompanion";
-import { DailyStreakCard } from "@/components/student/DailyStreakCard";
-import { DailyChallengesCard } from "@/components/student/DailyChallengesCard";
-import { LevelProgressRing } from "@/components/student/LevelProgressRing";
-import { HomeworkCard } from "@/components/student/homework/HomeworkCard";
 import HomeworkDetailDialog from "@/components/student/HomeworkDetailDialog";
 import { CelebrationOverlay } from "@/components/student/CelebrationOverlay";
 import { HowToEarnXP } from "@/components/student/HowToEarnXP";
 import { AchievementBadges } from "@/components/student/AchievementBadges";
-import { WeeklyProgressCard } from "@/components/student/WeeklyProgressCard";
-import { LessonOverviewsCard } from "@/components/student/LessonOverviewsCard";
 import { StudentScheduleCalendar } from "@/components/student/StudentScheduleCalendar";
 import { ProfileShareCard } from "@/components/student/ProfileShareCard";
 import { InactiveStudentLanding } from "@/components/student/InactiveStudentLanding";
-import { StudentWallet } from "@/components/student/StudentWallet";
 import { DemoDashboard } from "@/components/student/DemoDashboard";
 import { MonitorStatusCard } from "@/components/student/MonitorStatusCard";
 import { useStudentMonitorClasses } from "@/hooks/useClassMonitor";
 import { StudentExamReportsTab } from "@/components/exam-reports/StudentExamReportsTab";
 import { fetchStudentHomework, groupHomework, nextAction, studentHomeworkKey, todoCount } from "@/lib/studentHomework";
-import { HeroCommandDeck } from "@/components/student/nova/HeroCommandDeck";
-import { NovaStatCard } from "@/components/student/nova/NovaStatCard";
-import { QuickActionDock, type DockAction } from "@/components/student/nova/QuickActionDock";
-import { SectionHeading } from "@/components/student/nova/SectionHeading";
-import { BUTTON, BUTTON_QUIET, CARD, CARD_TITLE, LABEL, reducedMotion } from "@/components/student/nova/ivory";
+import { BUTTON_QUIET, CARD, CARD_TITLE, reducedMotion } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
 import { LookChoice } from "@/components/student/band/LookChoice";
 import { GrownUps } from "@/components/student/home/GrownUps";
 import { EarlyHome } from "@/components/student/home/EarlyHome";
 import { YoungHome } from "@/components/student/home/YoungHome";
 import { JuniorHome } from "@/components/student/home/JuniorHome";
+import { MeLinks } from "@/components/student/home/MeLinks";
+import { TeenHome } from "@/components/student/home/TeenHome";
+import { Bi } from "@/components/student/band/Bi";
 import type { HomeData } from "@/components/student/home/types";
 import { useAgeBand } from "@/hooks/useAgeBand";
 import { givenName } from "@/lib/givenName";
@@ -77,25 +63,6 @@ import { getLevelTitle } from "@/lib/levelUtils";
 import { useStudentPointsSummary } from "@/hooks/useClassBoard";
 import { useAuth } from "@/hooks/useAuth";
 
-// Launcher tiles for the quick-action dock (presentational config).
-const QUICK_ACTIONS: DockAction[] = [
-  { to: "/student/dashboard?tab=schedule", emoji: "📅", title: "My Classes", desc: "Timetable", gradient: "from-blue-500 to-cyan-500" },
-  { to: "/student/assignments", emoji: "📚", title: "Quests", desc: "Homework", gradient: "from-violet-500 to-fuchsia-600" },
-  { to: "/student/lessons", emoji: "✨", title: "Lessons", desc: "What we did", gradient: "from-emerald-500 to-teal-600" },
-  { to: "/student/vocabulary", emoji: "🧠", title: "Vocabulary", desc: "Word bank", gradient: "from-pink-500 to-rose-600" },
-  { to: "/student/defend-level", emoji: "🛡️", title: "My Level", desc: "Defend it", gradient: "from-indigo-500 to-violet-600" },
-  { to: "/tuition", emoji: "💰", title: "Tuition", desc: "Payments", gradient: "from-amber-500 to-orange-600" },
-];
-
-// Time-based greeting with kid-friendly messages
-function getGreeting(): { text: string; emoji: string; subtext: string } {
-  const hour = new Date().getHours();
-  if (hour < 12) return { text: "Good Morning", emoji: "🌅", subtext: "A brand new day of adventure awaits!" };
-  if (hour < 17) return { text: "Good Afternoon", emoji: "☀️", subtext: "You're doing amazing today!" };
-  if (hour < 21) return { text: "Good Evening", emoji: "🌆", subtext: "Time for some evening learning!" };
-  return { text: "Good Night", emoji: "🌙", subtext: "Rest up for tomorrow's quests!" };
-}
-
 export default function StudentDashboard() {
   const { studentId, isHydrated } = useStudentProfile();
   const { user, role } = useAuth();
@@ -110,7 +77,6 @@ export default function StudentDashboard() {
   });
   const tabFromUrl = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "dashboard");
-  const greeting = useMemo(() => getGreeting(), []);
   const reduceMotion = reducedMotion(useReducedMotion());
   const movingUp = useMovingUp();
   const { band } = useAgeBand();
@@ -216,8 +182,6 @@ export default function StudentDashboard() {
   const nextHomework = useMemo(() => nextAction(homeworkGroups), [homeworkGroups]);
   /** Things to do now, in the same order as the homework page. */
   const pendingHomework = useMemo(() => [...homeworkGroups.late, ...homeworkGroups.next], [homeworkGroups]);
-
-  const { data: tuitionData } = useStudentMonthFinance(studentId, currentMonth);
 
   // Check enrollment status for inactive landing
   const { data: enrollmentStatus } = useQuery({
@@ -460,333 +424,24 @@ export default function StudentDashboard() {
         animate="visible"
       >
         {/* Tab Content */}
+        {/* Badges, reports and the schedule are pages under "Me" for the three younger bands (their URLs are unchanged). */}
+        {band !== "teen" && (activeTab === "achievements" || activeTab === "reports" || activeTab === "schedule") && <MeLinks active={activeTab} />}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="mt-2 space-y-8 sm:mt-6 lg:space-y-12">
-        {band === "early" ? (
-          <EarlyHome data={home} />
-        ) : band === "young" ? (
-          <YoungHome data={home} />
-        ) : band === "junior" ? (
-          <JuniorHome data={home} />
-        ) : (
-          <>
-        {/* Hero */}
-        <HeroCommandDeck
-          firstName={studentProfile.full_name.split(' ')[0]}
-          fullName={studentProfile.full_name}
-          avatarUrl={studentProfile.avatar_url}
-          statusMessage={(studentProfile as any).status_message}
-          greeting={greeting}
-          levelTitle={getLevelTitle(levelInfo.level)}
-          level={levelInfo.level}
-          currentXp={levelInfo.currentXp}
-          nextLevelXp={levelInfo.nextLevelXp}
-          progress={levelInfo.progress}
-          totalXp={totalPoints || 0}
-          streak={streakData.currentStreak}
-          pendingHomework={homeworkReady ? homeworkTodo : null}
-          classesThisWeek={upcomingSessions?.length || 0}
-          isMonitor={isMonitor}
-          onEditProfile={() => setShowEditProfile(true)}
-        />
-
-        {/* What do I need to do next? One answer, one button. */}
-        <motion.section
-          variants={itemVariants}
-          aria-labelledby="next-homework-title"
-          aria-busy={homeworkLoading}
-          className={cn(CARD, "min-h-[10rem] min-w-0")}
-        >
-          <p className={LABEL}>Homework</p>
-          <h2 id="next-homework-title" className={cn(CARD_TITLE, "mt-1")}>What do I need to do next?</h2>
-          {homeworkLoading ? (
-            <p className="mt-3 text-hec-body text-hec-ink-soft">Finding your homework…</p>
-          ) : homeworkError ? (
-            <div role="alert" className="mt-3 space-y-3">
-              <p className="text-hec-body text-hec-ink">We couldn't load your homework.</p>
-              <button
-                type="button"
-                onClick={() => refetchHomework()}
-                disabled={homeworkFetching}
-                className={cn(BUTTON, "bg-hec-action text-hec-on-action hover:bg-hec-action/90")}
-              >
-                {homeworkFetching ? "Trying…" : "Try again"}
-              </button>
-            </div>
-          ) : nextHomework ? (
-            <div className="mt-3 space-y-3">
-              <div className="min-w-0 space-y-1">
-                <p className="whitespace-normal break-words text-hec-h3 font-semibold text-hec-ink">{nextHomework.title || "Homework"}</p>
-                <p className="whitespace-normal break-words text-hec-small text-hec-ink-soft">{nextHomework.classes?.name || "Class"}</p>
-                <p className={cn("text-hec-small font-medium tabular-nums", homeworkGroups.late[0] === nextHomework ? "text-hec-danger" : "text-hec-ink")}>
-                  {nextHomework.due_date
-                    ? `${homeworkGroups.late[0] === nextHomework ? "Late · due" : "Due"} ${dayjs(nextHomework.due_date).format("ddd D MMM")}`
-                    : "No due date"}
-                </p>
-                <p className="text-hec-small tabular-nums text-hec-ink-soft">
-                  {homeworkTodo} {homeworkTodo === 1 ? "thing" : "things"} to do
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOpenHomework(nextHomework)}
-                className={cn(BUTTON, "bg-hec-action text-hec-on-action hover:bg-hec-action/90")}
-              >
-                Open homework
-              </button>
-            </div>
-          ) : homeworkGroups.oldMisses.length > 0 ? (
-            <div className="mt-3 space-y-1">
-              <p className="text-hec-body text-hec-ink">Nothing due now.</p>
-              <Link to="/student/assignments" className={cn(BUTTON_QUIET, "-ml-3 px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
-                See older homework <ChevronRight className="h-4 w-4" aria-hidden />
-              </Link>
-            </div>
-          ) : (
-            <div className="mt-3 space-y-1">
-              <p className="text-hec-body text-hec-ink">No homework due.</p>
-              <Link to="/student/dashboard?tab=schedule" className={cn(BUTTON_QUIET, "-ml-3 px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
-                See my lessons <ChevronRight className="h-4 w-4" aria-hidden />
-              </Link>
-            </div>
-          )}
-        </motion.section>
-
-        {/* Monitor Status Card */}
-        {isMonitor && (
-          <motion.div variants={itemVariants}>
-            <MonitorStatusCard classNames={monitorClasses!.map(c => c.className)} />
-          </motion.div>
-        )}
-
-        {/* Weekly Progress Summary */}
-        <motion.div variants={itemVariants}>
-          <WeeklyProgressCard studentId={studentId} currentStreak={streakData.currentStreak} />
-        </motion.div>
-
-        {/* Recent lessons — summary, materials, homework from class transcripts */}
-        <motion.div variants={itemVariants}>
-          <LessonOverviewsCard studentId={studentId} />
-        </motion.div>
-
-        {/* Stats Row - Streak & Challenges */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <motion.div variants={itemVariants}>
-            <DailyStreakCard
-              currentStreak={streakData.currentStreak}
-              longestStreak={streakData.longestStreak}
-              weekActivity={streakData.weekActivity}
-              streakFreezeAvailable={false}
-            />
-          </motion.div>
-
-          <motion.div variants={itemVariants}>
-            <DailyChallengesCard challenges={dynamicChallenges} />
-          </motion.div>
-        </div>
-
-        {/* Achievement Badges */}
-        <motion.div variants={itemVariants} className={CARD}>
-          <AchievementBadges
-            totalXp={totalPoints || 0}
-            homeworkCompleted={achievementData?.homeworkCompleted || 0}
-            perfectAttendanceWeeks={achievementData?.perfectWeeks || 0}
-            currentStreak={streakData.currentStreak}
-            longestStreak={streakData.longestStreak}
-            classesAttended={achievementData?.classesAttended || 0}
-            featuredBadgeId={featuredBadgeId ?? undefined}
-            onFeatureBadge={(id) => {
-              setFeaturedBadgeId(id);
-              if (id) localStorage.setItem("featured_badge_id", id);
-              else localStorage.removeItem("featured_badge_id");
-            }}
-          />
-        </motion.div>
-
-        {/* Quick Stats -- Nova tiles. On a phone the hero already shows classes and open quests, so only Balance is new. */}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-          <div className="hidden sm:block [&>*]:h-full">
-          <NovaStatCard
-            icon={Rocket}
-            label="Upcoming Adventures"
-            value={upcomingSessions?.length || 0}
-            caption="Classes this week"
-            gradient="from-blue-500 to-cyan-500"
-            delay={0.05}
-          />
-          </div>
-          <div className="hidden sm:block [&>*]:h-full">
-          <NovaStatCard
-            icon={Target}
-            label="Active Quests"
-            value={homeworkTodo}
-            caption="Homework to complete"
-            gradient="from-violet-500 to-fuchsia-600"
-            delay={0.12}
-          />
-          </div>
-          <NovaStatCard
-            icon={Wallet}
-            label="Balance"
-            value={
-              tuitionData?.carryOutDebt
-                ? formatVND(tuitionData.carryOutDebt)
-                : tuitionData?.carryOutCredit
-                  ? `-${formatVND(tuitionData.carryOutCredit)}`
-                  : formatVND(0)
-            }
-            caption={`${dayjs().format("MMMM")} - tap to view`}
-            gradient="from-amber-500 to-orange-600"
-            // Ink: red on an amount means overdue and needs the word (DESIGN_SYSTEM s.14);
-            // a balance owed this month is not that. The Tuition page carries the status word.
-            valueClassName="text-hec-ink"
-            onClick={() => navigate('/tuition')}
-            delay={0.19}
-          />
-        </div>
-
-        {/* Quest Board & Sessions */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          {/* Quest Board (Homework) */}
-          <motion.section
-            variants={itemVariants}
-            className={CARD}
-          >
-              <div className="mb-4 flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-3">
-                  <FileText className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
-                  <h2 className={CARD_TITLE}>My Homework</h2>
-                </div>
-                <Link to="/student/assignments" className={cn(BUTTON_QUIET, "shrink-0 px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
-                  See all <ChevronRight className="h-4 w-4" aria-hidden />
-                </Link>
-              </div>
-
-              {homeworkLoading ? (
-                <p className="rounded-hec-md bg-hec-sunken/60 px-6 py-8 text-center text-hec-small text-hec-ink-soft">Finding your homework…</p>
-              ) : homeworkError ? (
-                <p role="alert" className="rounded-hec-md bg-hec-sunken/60 px-6 py-8 text-center text-hec-small text-hec-ink-soft">We couldn't load your homework. Use "Try again" above.</p>
-              ) : pendingHomework.length > 0 ? (
-                <div className="space-y-3">
-                  {pendingHomework.slice(0, 5).map((hw: any, index: number) => (
-                    <HomeworkCard key={hw.id} homework={hw} index={index} compact onOpen={() => setOpenHomework(hw)} />
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-hec-md bg-hec-sunken/60 px-6 py-8 text-center">
-                  <span className="mb-3 block text-3xl" aria-hidden>🎉</span>
-                  <p className="mb-1 text-hec-h3 font-semibold text-hec-ink">All Quests Complete!</p>
-                  <p className="text-hec-small text-hec-ink-soft">You're all caught up. Great job!</p>
-                </div>
-              )}
-          </motion.section>
-
-          {/* Upcoming Sessions */}
-          <motion.section
-            variants={itemVariants}
-            className={CARD}
-          >
-              <div className="mb-4 flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-3">
-                  <Calendar className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
-                  <h2 className={CARD_TITLE}>Next classes</h2>
-                </div>
-                <Link to="/student/dashboard?tab=schedule" className={cn(BUTTON_QUIET, "shrink-0 px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
-                  Schedule <ChevronRight className="h-4 w-4" aria-hidden />
-                </Link>
-              </div>
-
-              {upcomingSessions && upcomingSessions.length > 0 ? (
-                <ul className="divide-y divide-hec-line">
-                  {upcomingSessions.map((session: any) => (
-                    <li
-                      key={session.id}
-                      className="flex min-h-hec-target items-center justify-between gap-3 py-3"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-hec-sunken" aria-hidden>
-                          <BookOpen className="h-5 w-5 text-hec-ink-soft" />
-                        </span>
-                        <div className="min-w-0 space-y-1">
-                          <p className="whitespace-normal break-words font-medium text-hec-ink">{session.classes?.name || "Class"}</p>
-                          <p className="flex items-center gap-2 text-hec-small tabular-nums text-hec-ink-soft">
-                            <Clock className="h-4 w-4 shrink-0" aria-hidden />
-                            {dayjs(session.date).format("MMM D")} • {session.start_time.slice(0, 5)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        {dayjs(session.date).isSame(dayjs(), 'day') && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-hec-leaf/30 bg-hec-leaf-tint px-3 py-1 text-hec-caption font-medium text-hec-leaf">Today!</span>
-                        )}
-                        <span className="whitespace-nowrap text-hec-caption tabular-nums text-hec-ink-soft">+15 XP</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="rounded-hec-md bg-hec-sunken/60 px-6 py-8 text-center">
-                  <span className="mb-3 block text-3xl" aria-hidden>📅</span>
-                  <p className="mb-1 text-hec-h3 font-semibold text-hec-ink">No upcoming sessions</p>
-                  <p className="text-hec-small text-hec-ink-soft">Enjoy your free time!</p>
-                </div>
-              )}
-          </motion.section>
-        </div>
-
-        {/* Class Rankings */}
-        {enrolledClasses && enrolledClasses.length > 0 && (
-          <motion.div variants={itemVariants} className="space-y-4">
-            <SectionHeading
-              icon={Trophy}
-              title="Class Champions"
-              subtitle="Climb the leaderboard and earn XP!"
-              gradient="from-amber-400 to-orange-600"
-            />
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {enrolledClasses.map((enrollment: any, index: number) => {
-                const classData = enrollment.classes;
-
-                if (!classData?.id) return null;
-
-                const classEconomy = (classData as any);
-
-                return (
-                  <div
-                    key={enrollment.id}
-                    className="space-y-4"
-                  >
-                    {classEconomy?.economy_mode && (
-                      <StudentWallet
-                        studentId={studentId}
-                        classId={classData.id}
-                        className={classData.name}
-                        // This class's points, not every class's (economy is per class).
-                        totalPoints={Number(pointsSummary?.classes?.find((c) => c.class_id === classData.id)?.all_time ?? 0)}
-                        economyMode={classEconomy.economy_mode}
-                        pointsToCashRate={classEconomy.points_to_cash_rate || 50}
-                      />
-                    )}
-                    <StudentClassLeaderboard
-                      classId={classData.id}
-                      className={classData.name}
-                      currentStudentId={studentId}
-                    />
-                  </div>
-                );
-              }).filter(Boolean)}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Quick action dock */}
-        <motion.div variants={itemVariants}>
-          <QuickActionDock actions={QUICK_ACTIONS} />
-        </motion.div>
-                    </>
-        )}
+          <TabsContent value="dashboard" className="mt-2 space-y-6 sm:mt-6">
+            {band === "early" ? (
+              <EarlyHome data={home} />
+            ) : band === "young" ? (
+              <YoungHome data={home} />
+            ) : band === "junior" ? (
+              <JuniorHome data={home} />
+            ) : (
+              <TeenHome data={home} />
+            )}
+            {isMonitor && <MonitorStatusCard classNames={monitorClasses!.map((c) => c.className)} />}
+            <button type="button" onClick={home.onEditProfile} className={cn(BUTTON_QUIET, "px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
+              <Bi k="profile.edit" />
+            </button>
           </TabsContent>
 
           {/* Achievements Tab */}

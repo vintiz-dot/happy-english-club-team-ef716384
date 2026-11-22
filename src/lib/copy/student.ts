@@ -103,6 +103,7 @@ export const studentCopy = {
   "quests.title": { en: "Quests", vi: "Nhiệm vụ", draft: true },
   "badges.title": { en: "Badges", vi: "Huy hiệu", draft: true },
   "me.title": { en: "Me", vi: "Của con", draft: true },
+  "profile.edit": { en: "Edit my profile", vi: "Sửa hồ sơ của con", draft: true },
   "teen.upNext": { en: "Up next", vi: "Sắp tới", draft: true },
   "teen.lessons": { en: "Recent lessons", vi: "Các buổi học gần đây", draft: true },
 
