@@ -7,6 +7,7 @@
 // reach that document whatever the template does. Imports nothing at run time.
 import type { Assessment, CreativeTask, Deck, Slide, Unit, Worksheet } from "./types";
 import type { Audience } from "./audience";
+import { GUIDE_INTRO, HOMEWORK_GUIDE } from "@/content/lessonDecks/hec-ielts/homeworkGuide";
 
 export type DocItem = { q: string; options?: string[]; answer?: string };
 export type DocBlock = {
@@ -138,6 +139,30 @@ export function slideBlock(s: Slide, teacher: boolean): DocBlock | null {
   }
 }
 
+/**
+ * Sun Class: the step-by-step homework guide (hec-ielts/homeworkGuide.ts) as
+ * blocks, printed in both copies after the week's homework: what, when, why,
+ * how, the links, how it is checked and how it is scored.
+ */
+export function guideBlocks(): DocBlock[] {
+  return [
+    {
+      heading: "How to do your homework, step by step", eyebrow: "Homework guide", breakBefore: true,
+      lists: [{ style: "bullets", items: GUIDE_INTRO }],
+      table: { head: ["Task", "Days", "Points"], rows: HOMEWORK_GUIDE.map((g) => [g.task, g.days, g.points.split(":")[0]]) },
+    },
+    ...HOMEWORK_GUIDE.map((g, n) => clean({
+      heading: g.task, eyebrow: `Homework guide · task ${n + 1} of ${HOMEWORK_GUIDE.length}`, chips: [g.time.split(",")[0]],
+      paragraphs: [`When: ${g.days}. How long: ${g.time}.`, `Why: ${g.why}`],
+      lists: nonEmpty([
+        list("steps", g.steps, "What to do"),
+        list("bullets", (g.links ?? []).map((l) => `${l.label} (${l.for}): ${l.url} · ${l.note}`), "Where to listen"),
+        list("bullets", [`How it is checked on Sunday: ${g.checked}`, `Points: ${g.points}`, g.vi], "Checked and scored"),
+      ]),
+    })),
+  ];
+}
+
 const courseOf = (u: Unit | undefined, label?: string) => label ?? (u ? `${u.curriculum} ${u.level}.${u.unit}` : "Lesson materials");
 
 /** A deck. Pass the student copy (studentDeck) for the student audience. */
@@ -154,7 +179,10 @@ export function deckMaterial(d: Deck, audience: Audience, courseLabel?: string, 
     bigQuestion: title?.bigQuestion,
     objectives: obj?.items,
     nameLine: !teacher,
-    blocks: d.slides.map((s) => slideBlock(s, teacher)).filter((b): b is DocBlock => !!b),
+    blocks: [
+      ...d.slides.map((s) => slideBlock(s, teacher)).filter((b): b is DocBlock => !!b),
+      ...(d.curriculum === "hec-ielts-sl" && d.slides.some((s) => s.kind === "homework") ? guideBlocks() : []),
+    ],
   });
 }
 

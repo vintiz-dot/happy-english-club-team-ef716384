@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import { ExamSlide } from "./ExamSlide";
+import { HomeworkGuide } from "./HomeworkGuide";
 import { MediaBar } from "./MediaBar";
 import type { Assessment, BookRef, CreativeTask, Deck, Mode, ScriptLine, Slide, Tier, TierLevel, Unit } from "@/lib/lessonDecks/types";
 import type { FlipTarget } from "@/lib/lessonDecks/bookPages";
@@ -294,7 +295,7 @@ export function SlideView({ slide }: { slide: Slide }) {
 }
 
 function SlideBody({ slide }: { slide: Slide }) {
-  const { unit, audience } = useContext(SlideContext);
+  const { unit, deck, audience } = useContext(SlideContext);
   switch (slide.kind) {
     case "title":
       return (
@@ -470,6 +471,7 @@ function SlideBody({ slide }: { slide: Slide }) {
               {(["Support", "Core", "Stretch"] as const).map((lv) => `${lv} ${slide.items.filter((h) => !h.tier || h.tier === lv).reduce((a, h) => a + (h.minutes ?? 0), 0)} min`).join(" · ")}
             </p>
           )}
+          {deck?.curriculum === "hec-ielts-sl" && <HomeworkGuide audience={audience} />}
         </div>
       );
     case "listening":
