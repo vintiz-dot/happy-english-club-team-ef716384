@@ -1,4 +1,4 @@
-import { LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react";
+import { Ban, LogOut, Monitor, Moon, Sparkles, Sun, UserRound, Wind } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeChoice } from "@/components/theme/IvoryScope";
 import type { ThemeChoice } from "@/lib/ivoryScope";
+import { setMotionLevel, useMotionLevel, useMotionLocked, type MotionLevel } from "@/components/fx/motion";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
@@ -20,6 +21,12 @@ const CHOICES: { value: ThemeChoice; label: string; icon: typeof Sun }[] = [
   { value: "system", label: "System", icon: Monitor },
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
+];
+
+const MOTION_CHOICES: { value: MotionLevel; label: string; icon: typeof Sun }[] = [
+  { value: "full", label: "Full", icon: Sparkles },
+  { value: "calm", label: "Calm", icon: Wind },
+  { value: "off", label: "Off", icon: Ban },
 ];
 
 /**
@@ -39,6 +46,9 @@ export function UserMenu({
   onSignOut: () => void;
 }) {
   const [choice, setChoice] = useThemeChoice();
+  // Motion level (DESIGN_SYSTEM s.9b): what is in force, and whether the device itself asked for none.
+  const motion = useMotionLevel();
+  const motionLocked = useMotionLocked();
   return (
     // modal={false}: the page behind stays in the accessibility tree (no aria-hidden over focusable content).
     <DropdownMenu modal={false}>
@@ -81,6 +91,26 @@ export function UserMenu({
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel id="hec-motion" className="px-3 pb-1 pt-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
+          Motion
+        </DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          aria-labelledby="hec-motion"
+          value={motion}
+          onValueChange={(v) => setMotionLevel(v as MotionLevel)}
+        >
+          {MOTION_CHOICES.map(({ value, label, icon: Icon }) => (
+            // A device that asks for reduced motion cannot be moved upward: only Off is offered then.
+            <DropdownMenuRadioItem key={value} value={value} disabled={motionLocked && value !== "off"} onSelect={(e) => e.preventDefault()}>
+              <Icon className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden="true" />
+              {label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        {motionLocked && (
+          <p className="px-3 pb-2 text-hec-caption text-hec-ink-soft">This device asks for reduced motion.</p>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onSignOut}>
           <LogOut className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden="true" />

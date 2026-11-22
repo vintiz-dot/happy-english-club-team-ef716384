@@ -25,6 +25,7 @@ import { UserMenu } from "@/components/theme/UserMenu";
 import { guardedSignOut } from "@/components/recorder/signOutGuard";
 import { useMyPilotClasses } from "@/hooks/useLessonMonitor";
 import { navProgress } from "@/lib/navProgress";
+import { useSyncMotionLevel } from "@/components/fx/motion";
 
 interface LayoutProps {
   children: ReactNode;
@@ -36,6 +37,8 @@ const SIDEBAR_KEY = "sidebar-collapsed";
 
 const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   const { user, role, signOut: rawSignOut } = useAuth();
+  // Motion level (Full / Calm / Off): load this person's own choice onto <html data-hec-motion>.
+  useSyncMotionLevel(user?.id);
   // Lesson monitor pilot (D-28): the menu entry only for a teacher of a pilot class.
   const pilotClasses = useMyPilotClasses(role === "teacher");
   // The class recorder may refuse (a lesson is being recorded) or tidy its local audio first.
