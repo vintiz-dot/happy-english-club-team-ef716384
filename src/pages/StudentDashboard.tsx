@@ -45,6 +45,7 @@ import { SectionHeading } from "@/components/student/nova/SectionHeading";
 import { BUTTON, BUTTON_QUIET, CARD, CARD_TITLE, LABEL, reducedMotion } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
 import { LookChoice } from "@/components/student/band/LookChoice";
+import { GrownUps } from "@/components/student/home/GrownUps";
 import { useMovingUp } from "@/components/student/band/useMovingUp";
 
 // The "new school year" moment loads only on the day it plays.
@@ -122,7 +123,7 @@ export default function StudentDashboard() {
   // Sync tab with URL
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab && (tab === "achievements" || tab === "schedule" || tab === "reports")) {
+    if (tab && (tab === "achievements" || tab === "schedule" || tab === "reports" || tab === "grownups")) {
       setActiveTab(tab);
     } else if (!tab) {
       setActiveTab("dashboard");
@@ -791,6 +792,15 @@ export default function StudentDashboard() {
               </div>
               <StudentExamReportsTab studentId={studentId} />
             </section>
+          </TabsContent>
+
+          {/* For grown-ups: tuition, the wallet and every other destination (the three younger bands keep money here) */}
+          <TabsContent value="grownups" className="mt-6">
+            <GrownUps
+              studentId={studentId}
+              enrolledClasses={(enrolledClasses as any[]) ?? []}
+              classPoints={(classId) => Number(pointsSummary?.classes?.find((c) => c.class_id === classId)?.all_time ?? 0)}
+            />
           </TabsContent>
 
           {/* My Classes / Schedule Tab */}

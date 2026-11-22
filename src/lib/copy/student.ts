@@ -30,6 +30,34 @@ export const studentCopy = {
   // ---- Moving up (F3)
   "moving.line": { en: "A new school year. Your space has grown with you.", vi: "Năm học mới. Không gian của con đã lớn lên cùng con.", draft: true },
 
+  // ---- Navigation (brief G1): one short word each; early and young see the Vietnamese beneath
+  "nav.home": { en: "Home", vi: "Trang chủ", draft: true },
+  "nav.homework": { en: "Homework", vi: "Bài tập", draft: true },
+  "nav.lessons": { en: "Lessons", vi: "Bài học", draft: true },
+  "nav.classReports": { en: "Class Reports", vi: "Báo cáo lớp", draft: true },
+  "nav.record": { en: "Record", vi: "Quay video", draft: true },
+  "nav.schedule": { en: "My Classes", vi: "Lớp của con", draft: true },
+  "nav.reports": { en: "Reports", vi: "Báo cáo", draft: true },
+  "nav.journal": { en: "Journal", vi: "Nhật ký", draft: true },
+  "nav.tuition": { en: "Tuition", vi: "Học phí", draft: true },
+  "nav.achievements": { en: "Achievements", vi: "Thành tích", draft: true },
+  "nav.resources": { en: "Resources", vi: "Tài liệu", draft: true },
+  "nav.vocabulary": { en: "Vocabulary", vi: "Từ vựng", draft: true },
+  "nav.myWork": { en: "My Work", vi: "Bài của con", draft: true },
+  "nav.classGallery": { en: "Class Gallery", vi: "Góc của lớp", draft: true },
+  "nav.videos": { en: "My Videos", vi: "Video của con", draft: true },
+  "nav.pictureReader": { en: "Picture Reader", vi: "Đọc qua hình", draft: true },
+  "nav.defend": { en: "Defend My Level", vi: "Bảo vệ cấp độ", draft: true },
+  "nav.me": { en: "Me", vi: "Của con", draft: true },
+  "nav.grownups": { en: "Grown-ups", vi: "Người lớn", draft: true },
+  "nav.more": { en: "More", vi: "Thêm", draft: true },
+
+  // ---- Grown-ups (money and the rest, behind one door for the younger bands)
+  "grownups.title": { en: "For grown-ups", vi: "Dành cho người lớn", draft: true },
+  "grownups.help": { en: "Tuition, the wallet, reports and the rest of the app are here.", vi: "Học phí, ví, báo cáo và các mục khác của ứng dụng ở đây.", draft: true },
+  "grownups.wallet": { en: "Wallet", vi: "Ví", draft: true },
+  "grownups.everything": { en: "Everything else", vi: "Các mục khác", draft: true },
+
   // ---- Pip's lines (brief I2): pleased to see the child, praises what was done, never sad, never "come back".
   "pip.hello.1": { en: "Nice to see you.", vi: "Rất vui được gặp con.", draft: true },
   "pip.hello.2": { en: "Let's say one new thing in English today.", vi: "Hôm nay mình cùng nói một điều mới bằng tiếng Anh nhé.", draft: true },
