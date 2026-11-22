@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 import { ClassroomToolsLauncher } from "@/components/classroom-tools/ClassroomToolsLauncher";
+import { SCHOOL_FLIPBOOKS } from "@/lib/lessonDecks/bookPages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -747,6 +748,33 @@ export default function TeacherBooks() {
             </DialogHeader>
 
             <div className="space-y-4 py-4">
+              {!editingBook && (
+                <div className="space-y-2">
+                  <p className="text-hec-small font-medium text-hec-ink">The school's course books</p>
+                  <div className="flex flex-wrap gap-2">
+                    {SCHOOL_FLIPBOOKS.map((b) => (
+                      <Button
+                        key={b.url}
+                        type="button"
+                        size="sm"
+                        variant={formUrl === b.url ? "default" : "outline"}
+                        onClick={() => {
+                          setFormTitle(b.title);
+                          setFormUrl(b.url);
+                          setFormEdition(b.edition);
+                          setFormOffset(b.page_offset);
+                          setFormWarning(null);
+                        }}
+                      >
+                        Oxford Discover {b.level}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-hec-ink-soft">
+                    Fills in the link, edition and page offset so lesson decks open the right page. Choose the class below, then save.
+                  </p>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="book-title" className="text-hec-small font-medium text-hec-ink">
                   Book Title

@@ -138,6 +138,21 @@ for (const { f, u } of units) {
   }
 }
 
+console.log("the school's flipbooks open each Level 1-2 deck's pages");
+for (const level of [1, 2]) {
+  const fb = B.SCHOOL_FLIPBOOKS.find((b) => b.level === level);
+  ok(`Level ${level}: a 2nd-edition flipbook with offset 0`, !!fb && fb.edition === "2e" && fb.page_offset === 0 && /^https:\/\/online\.flipbuilder\.com\/sdtta\/[a-z]+\/$/.test(fb.url));
+  const refs = units.filter(({ u }) => u.level === level).flatMap(({ u }) => u.decks.flatMap((d) => d.book.filter((b) => b.book === "SB").map((b) => ({ u, b }))));
+  const wrong = refs.filter(({ u, b }) => {
+    const t = B.flipTarget(b, fb, null);
+    const first = 6 + (u.unit - 1) * 10 - (u.unit % 2 === 0 ? 10 : 0);
+    return !t.ok || t.index !== t.printed || t.index < first || t.index > 15 + (u.unit - 1) * 10;
+  });
+  ok(`Level ${level}: all ${refs.length} Student Book references open at their printed page, inside their unit`, refs.length > 0 && wrong.length === 0,
+    wrong.slice(0, 3).map(({ u, b }) => `U${u.unit} SB ${b.pages}`).join(", "));
+}
+eq("Level 3's school flipbook is the 1st edition (opened through the unit maps)", B.SCHOOL_FLIPBOOKS.find((b) => b.level === 3)?.edition, "1e");
+
 console.log("homework, materials, checks and the 1st edition");
 for (const { f, u } of units) {
   const texts = JSON.stringify(u);

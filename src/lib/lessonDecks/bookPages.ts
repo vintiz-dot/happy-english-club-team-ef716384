@@ -15,6 +15,15 @@ export type FlipTarget =
   | { ok: true; index: number; printed: number; label: string; note?: string }
   | { ok: false; label: string; reason: string };
 
+/** The school's own course-book flipbooks, offered as one-click choices in Flipbooks > Settings.
+ *  Checked page by page: in each, #p=N shows printed page N (offset 0). Levels 1 and 2 are the
+ *  2nd edition the decks cite; Level 3 is a 1st-edition copy, opened through each unit's page map. */
+export const SCHOOL_FLIPBOOKS: { level: number; title: string; url: string; edition: "1e" | "2e"; page_offset: number }[] = [
+  { level: 1, title: "Oxford Discover 1 Student Book (2nd ed.)", url: "https://online.flipbuilder.com/sdtta/aaio/", edition: "2e", page_offset: 0 },
+  { level: 2, title: "Oxford Discover 2 Student Book (2nd ed.)", url: "https://online.flipbuilder.com/sdtta/essu/", edition: "2e", page_offset: 0 },
+  { level: 3, title: "Oxford Discover 3 Student Book (1st ed.)", url: "https://online.flipbuilder.com/sdtta/hhct/", edition: "1e", page_offset: 0 },
+];
+
 /** The first printed page of "116-117" (NaN when there is none). */
 export const firstPage = (pages: string) => Number(String(pages).split(/[-–,\s]/)[0]);
 
