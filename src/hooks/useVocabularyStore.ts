@@ -9,8 +9,8 @@
  *
  * Writes that originate from the Save flow (anti-cheat validated examples,
  * leaderboard award, etc.) go through the `save-word` edge function rather
- * than this hook. Mastery updates, edits, and deletes call the DB directly
- * via RLS-protected client queries.
+ * than this hook, and so do edited sentences. Mastery updates, picture and
+ * meaning edits, and deletes call the DB directly via RLS-protected queries.
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -140,8 +140,38 @@ export function useVocabularyStore(userId?: string) {
     id: string,
     patch: Partial<{ examples: string[]; imageUrl: string; meaning: string }>,
   ) => {
+    // New sentences go through save-word, which checks them the way a first
+    // save is checked (free checks + Claude). The table refuses a direct
+    // change of user_examples from the browser (20261122150000). Picture and
+    // meaning are the child's own notes and are written directly.
+    const before = words.find((w) => w.id === id);
+    const same = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+    if (patch.examples !== undefined && before
+        && same(patch.examples.map((e) => e.trim()).filter(Boolean), before.examples)) {
+      // Unchanged sentences: nothing to check, nothing to spend.
+      const { examples: _unchanged, ...rest } = patch;
+      patch = rest;
+    }
+    if (patch.examples !== undefined) {
+      const target = before;
+      if (!target) throw new Error("This word is not in your bank any more.");
+      const { data, error } = await supabase.functions.invoke("save-word", {
+        body: {
+          word: target.word,
+          root_word: target.rootWord,
+          payload: target.enrichment || {},
+          user_examples: patch.examples.map((e) => e.trim()).filter(Boolean),
+        },
+      });
+      if (error) throw new Error(error.message || "Could not save your sentences.");
+      if (data?.success === false) throw new Error(data.message || "Your sentences were not accepted.");
+      const accepted: string[] = Array.isArray(data?.rejected_examples) && data.rejected_examples.length > 0
+        ? patch.examples.map((e) => e.trim()).filter(Boolean)
+            .filter((_, i) => !data.rejected_examples.some((r: { idx: number }) => r.idx === i))
+        : patch.examples;
+      patch = { ...patch, examples: accepted };
+    }
     const dbPatch: Record<string, unknown> = {};
-    if (patch.examples !== undefined) dbPatch.user_examples = patch.examples;
     if (patch.imageUrl !== undefined) dbPatch.image_url = patch.imageUrl;
     if (patch.meaning !== undefined) dbPatch.definition_vi = patch.meaning;
 
@@ -153,6 +183,7 @@ export function useVocabularyStore(userId?: string) {
       meaning: patch.meaning ?? w.meaning,
     } : w)));
 
+    if (Object.keys(dbPatch).length === 0) return;
     const { error } = await (supabase as any)
       .from("student_vocabulary_entries")
       .update(dbPatch)
@@ -161,7 +192,7 @@ export function useVocabularyStore(userId?: string) {
       console.error("vocab update failed:", error.message);
       refresh();
     }
-  }, [refresh]);
+  }, [refresh, words]);
 
   const updateMastery = useCallback(async (id: string, correct: boolean) => {
     const target = words.find((w) => w.id === id);

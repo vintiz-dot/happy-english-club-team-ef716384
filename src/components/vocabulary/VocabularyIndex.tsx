@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 import {
   Pagination, PaginationContent, PaginationItem,
   PaginationLink, PaginationNext, PaginationPrevious,
@@ -355,8 +356,16 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
           word={editing}
           onClose={() => setEditing(null)}
           onSave={async (patch) => {
-            await onUpdate(editing.id, patch);
-            setEditing(null);
+            try {
+              await onUpdate(editing.id, patch);
+              setEditing(null);
+            } catch (e) {
+              toast({
+                title: "Not saved",
+                description: e instanceof Error ? e.message : "Please try again.",
+                variant: "destructive",
+              });
+            }
           }}
         />
       )}

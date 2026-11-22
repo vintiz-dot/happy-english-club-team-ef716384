@@ -183,10 +183,10 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
     (async () => {
       // Supabase generated types haven't been regenerated for this RPC yet —
       // route through `rpc<…>("…" as never, …)` to bypass the typed name.
-      const { data, error } = await supabase.rpc(
-        "count_vocab_saves_today" as never,
-        { p_user_id: user.id } as never,
-      );
+      // vocab_saves_today counts the caller's own claims on the Hanoi day
+      // (20261122150000). The old count_vocab_saves_today is not callable
+      // from the browser, which is why this counter used to read 0.
+      const { data, error } = await supabase.rpc("vocab_saves_today" as never);
       if (cancelled) return;
       if (!error && typeof data === "number") setSavesToday(data);
     })();
@@ -431,6 +431,14 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
             title: "🌙 Daily word cap reached",
             description: data.message ||
               `You've saved your ${data.daily_limit ?? 10} new words for today — come back tomorrow!`,
+            variant: "destructive",
+          });
+          return;
+        }
+        if (data.reason === "word_level") {
+          toast({
+            title: data.level_verdict === "too_easy" ? "That word is too easy for you" : "That word is too hard for now",
+            description: data.message,
             variant: "destructive",
           });
           return;
