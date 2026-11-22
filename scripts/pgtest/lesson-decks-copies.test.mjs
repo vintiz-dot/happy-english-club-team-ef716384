@@ -16,7 +16,15 @@ let pass = 0, fail = 0;
 const bad = [];
 const ok = (n, c, x = "") => { if (c) pass++; else { fail++; bad.push(`  FAIL  ${n}${x ? " :: " + x : ""}`); } };
 
+// DeckPlayer imports the HEC Docs client (and through it Supabase) for its print
+// buttons; the markup builders this test renders need neither, so they are stubbed.
+const STUBS = {
+  "@/lib/hecDocs": "export const tryMakeDocument = async () => null; export const downloadBlob = () => {};",
+  "@/integrations/supabase/client": "export const supabase = {};",
+};
 const alias = { name: "alias", setup(b) {
+  b.onResolve({ filter: /^@\/(lib\/hecDocs|integrations\/supabase\/client)$/ }, (a) => ({ path: a.path, namespace: "stub" }));
+  b.onLoad({ filter: /.*/, namespace: "stub" }, (a) => ({ contents: STUBS[a.path], loader: "js" }));
   b.onResolve({ filter: /^@\// }, (a) => {
     const base = resolve(repo, "src", a.path.slice(2));
     for (const ext of ["", ".ts", ".tsx", "/index.ts", "/index.tsx"]) {
@@ -118,6 +126,38 @@ for (const u of UNITS) {
     ok(`${w.id}: the teacher copy ends with the key`, te.includes("Answer key"));
   }
 }
+console.log("premium copies: every export is valid lesson-material data for HEC Docs");
+// The print buttons send these to the HEC Docs engine first (DeckPlayer.tsx premium()).
+// Data the template's schema refuses would silently fall back to the old print view,
+// so every deck, test, worksheet and homework sheet goes through the real engine here.
+const D = await load("src/lib/lessonDecks/docBlocks.ts");
+const E = await import(pathToFileURL(resolve(repo, "src/lib/hecDocs/engine.generated.js")).href);
+const docBad = [];
+let docs = 0;
+const viaEngine = async (label, data, variant) => {
+  try {
+    const out = await E.prepare("lesson-material", JSON.parse(JSON.stringify(data)), { variant, sanitiseRich: (x) => x });
+    docs++;
+    if (variant === "student" && /For the teacher|Recording script|Answer key/.test(out.html)) docBad.push(`${label}: student HTML carries a teacher panel`);
+  } catch (e) { docBad.push(`${label} [${variant}]: ${String(e.message || e).slice(0, 240)}`); }
+};
+for (const u of UNITS) {
+  for (const d of u.decks) {
+    await viaEngine(d.id, D.deckMaterial(d, "teacher", "Course", u), "teacher");
+    await viaEngine(d.id, D.deckMaterial(A.studentDeck(d), "student", "Course", u), "student");
+    const cr = d.slides.find((s) => s.kind === "creative");
+    if (cr) await viaEngine(`${d.id} homework`, D.homeworkMaterial(d, cr.base, "Class version", "Student A", "Course"), "student");
+  }
+  for (const a of u.assessments ?? []) {
+    await viaEngine(a.id, D.assessmentMaterial(a, "teacher", "Course"), "teacher");
+    await viaEngine(a.id, D.assessmentMaterial(A.studentAssessment(a), "student", "Course"), "student");
+  }
+  for (const w of u.worksheets ?? []) {
+    await viaEngine(w.id, D.worksheetMaterial(w, "teacher", "Course"), "teacher");
+    await viaEngine(w.id, D.worksheetMaterial(A.studentWorksheet(w), "student", "Course"), "student");
+  }
+}
+ok(`all ${docs + docBad.length} premium documents are accepted by the lesson-material schema, and no student copy has a teacher panel`, docBad.length === 0, docBad.slice(0, 4).join(" | ") + (docBad.length > 4 ? ` ... and ${docBad.length - 4} more` : ""));
 ok("every course was covered", ["oxford-discover-2e", "reach-higher", "hec-ielts-sl"].every((c) => UNITS.some((u) => u.curriculum === c)), `${decks} decks, ${tests} checks/tests, ${sheets} worksheets`);
 console.log(`  ${decks} decks, ${tests} checks and tests, ${sheets} worksheets rendered in both copies`);
 for (const b of bad.slice(0, 40)) console.log(b);

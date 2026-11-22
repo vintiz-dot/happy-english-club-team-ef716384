@@ -231,8 +231,8 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                       <TableCell className="text-hec-small">{a.covers.slice(0, 3).join(" · ")}…</TableCell>
                       <TableCell className="text-hec-small">Assess</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
-                        <Button size="sm" variant="outline" onClick={() => printAssessment(a, "teacher")} title="The paper, then the answer key, scripts and marking rubric"><Printer className="h-4 w-4" />Teacher copy</Button>
-                        <Button size="sm" variant="outline" className="ml-1" onClick={() => printAssessment(a, "student")} title="The paper only: no answers"><Printer className="h-4 w-4" />Student copy</Button>
+                        <Button size="sm" variant="outline" onClick={() => printAssessment(a, "teacher", unit)} title="The paper, then the answer key, scripts and marking rubric"><Printer className="h-4 w-4" />Teacher copy</Button>
+                        <Button size="sm" variant="outline" className="ml-1" onClick={() => printAssessment(a, "student", unit)} title="The paper only: no answers"><Printer className="h-4 w-4" />Student copy</Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -261,7 +261,7 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                           <Button size="sm" variant="outline" title="One sheet per child present today, each with their own version"
                             onClick={() => {
                               if (!presentKids) { toast.error(NO_ATTENDANCE); return; }
-                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {}, "student");
+                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {}, "student", unit);
                             }}>
                             <PenLine className="h-4 w-4" />Homework sheets
                           </Button>
@@ -270,7 +270,7 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                           <Button size="sm" variant="outline" title="Who gets which version, and one copy of each version"
                             onClick={() => {
                               if (!presentKids) { toast.error(NO_ATTENDANCE); return; }
-                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {}, "teacher");
+                              printHomeworkSheets(d, presentKids, place.state?.interests ?? {}, "teacher", unit);
                             }}>
                             <PenLine className="h-4 w-4" />Homework (teacher)
                           </Button>
@@ -280,8 +280,8 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                       </div>
                       {checks.map((a) => (
                         <span key={a!.id} className="mt-1 inline-flex flex-wrap justify-end gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => printAssessment(a!, "teacher")}><ClipboardCheck className="h-4 w-4" />Check: teacher copy</Button>
-                          <Button size="sm" variant="ghost" onClick={() => printAssessment(a!, "student")}><ClipboardCheck className="h-4 w-4" />Check: student copy</Button>
+                          <Button size="sm" variant="ghost" onClick={() => printAssessment(a!, "teacher", unit)}><ClipboardCheck className="h-4 w-4" />Check: teacher copy</Button>
+                          <Button size="sm" variant="ghost" onClick={() => printAssessment(a!, "student", unit)}><ClipboardCheck className="h-4 w-4" />Check: student copy</Button>
                         </span>
                       ))}
                     </TableCell>
@@ -311,8 +311,8 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
               return (
                 <li key={w.id} className="flex flex-wrap items-center gap-2">
                   <span className="font-medium text-hec-ink">{w.title}</span>
-                  <Button size="sm" variant="outline" onClick={() => printWorksheet(w, "teacher")} title="Pupil pages, then the answer key"><Printer className="h-4 w-4" />Teacher copy</Button>
-                  <Button size="sm" variant="outline" onClick={() => printWorksheet(w, "student")} title="Pupil pages only: no answer key"><Printer className="h-4 w-4" />Student copy</Button>
+                  <Button size="sm" variant="outline" onClick={() => printWorksheet(w, "teacher", unit)} title="Pupil pages, then the answer key"><Printer className="h-4 w-4" />Teacher copy</Button>
+                  <Button size="sm" variant="outline" onClick={() => printWorksheet(w, "student", unit)} title="Pupil pages only: no answer key"><Printer className="h-4 w-4" />Student copy</Button>
                   <span className="text-hec-small text-hec-ink-soft">Used in Lesson {d?.lesson}, slide {at + 1}: {w.slide}</span>
                 </li>
               );

@@ -96,7 +96,10 @@ export function slideBlock(s: Slide, teacher: boolean): DocBlock | null {
     case "homework":
       return clean({
         heading: s.title ?? "Homework", eyebrow: "Homework",
-        table: s.items.some((h) => h.minutes) ? { head: ["Task", "For", "Minutes a week", "What to do"], rows: s.items.map((h) => [h.label, h.tier ?? "Everyone", h.minutes ? String(h.minutes) : "", h.detail]) } : undefined,
+        table: s.items.some((h) => h.minutes) ? {
+          head: ["Task", "Days", "Min / week", "What to do, and how it is checked"],
+          rows: s.items.map((h) => [h.tier ? `${h.label} (${h.tier})` : h.label, (h.days ?? []).join(" "), h.minutes ? String(h.minutes) : "", h.check ? `${h.detail} Checked: ${h.check}` : h.detail]),
+        } : undefined,
         lists: s.items.some((h) => h.minutes) ? undefined : nonEmpty([list("bullets", s.items.map((h) => `${h.label}: ${h.detail}`))]),
       });
     case "project":

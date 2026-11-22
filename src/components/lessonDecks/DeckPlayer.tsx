@@ -5,6 +5,9 @@ import { castSlide } from "@/lib/lessonDecks/names";
 import { flipTarget, flipbookUrl, type FlipbookLite } from "@/lib/lessonDecks/bookPages";
 import { homeworkFor } from "@/lib/lessonDecks/views";
 import { studentAssessment, studentDeck, studentUnit, studentWorksheet, type Audience } from "@/lib/lessonDecks/audience";
+import { assessmentMaterial, deckMaterial, homeworkMaterial, worksheetMaterial, type LessonMaterial } from "@/lib/lessonDecks/docBlocks";
+import { unitLabel } from "@/lib/lessonDecks/curricula";
+import { downloadBlob, tryMakeDocument } from "@/lib/hecDocs";
 import { LISTENING_BANDS, RUBRIC } from "@/lib/lessonDecks/ieltsRubric";
 import { SlideView, SlideContext, WorksheetView, AssessmentView, type SlideCtx } from "./SlideView";
 import { useSpeech } from "./speech";
@@ -61,8 +64,28 @@ export function deckMarkup(deck: Deck, roster: string[], unit: Unit | undefined,
     </SlideContext.Provider>,
   );
 }
-export const printDeck = (deck: Deck, roster: string[], unit: Unit | undefined, audience: Audience) =>
-  printPages(`${deck.title} · ${COPY[audience]}`, deckMarkup(deck, roster, unit, audience), true);
+// ------------------------------------------------------------ premium PDFs
+// Every export first goes through HEC Docs (the `lesson-material` document, as the
+// tuition reports and invoices do): a downloaded, typeset PDF. If that path is
+// unavailable (offline, the printer's free allowance used up, unexpected data),
+// the old print view below opens instead, so no button ever stops working.
+
+/** "HEC IELTS Speaking & Listening Year 1 · Term 1" (the unit label without its title). */
+const courseOf = (unit?: Unit) => (unit ? unitLabel(unit).replace(/:\s[\s\S]*$/, "") : undefined);
+
+async function premium(material: LessonMaterial, audience: Audience, fallback: () => unknown, bulk = false): Promise<boolean> {
+  const doc = await tryMakeDocument("lesson-material", material as unknown as Record<string, unknown>, { variant: audience, bulk });
+  if (doc) { downloadBlob(doc.blob, doc.filename); return true; }
+  fallback();
+  return false;
+}
+
+export function printDeck(deck: Deck, roster: string[], unit: Unit | undefined, audience: Audience) {
+  const d = audience === "student" ? studentDeck(deck) : deck;
+  const cast = { ...d, slides: d.slides.map((s, i) => castSlide(s, roster, `${deck.id}:${i}`).slide) };
+  return premium(deckMaterial(cast, audience, courseOf(unit), unit), audience,
+    () => printPages(`${deck.title} · ${COPY[audience]}`, deckMarkup(deck, roster, unit, audience), true));
+}
 
 /** A worksheet. Teacher: the pupil pages, then the answer key. Student: the pupil pages only. */
 export function worksheetMarkup(ws: Worksheet, audience: Audience) {
@@ -73,7 +96,9 @@ export function worksheetMarkup(ws: Worksheet, audience: Audience) {
     </div>,
   );
 }
-export const printWorksheet = (ws: Worksheet, audience: Audience) => printPages(`${ws.title} · ${COPY[audience]}`, worksheetMarkup(ws, audience), false);
+export const printWorksheet = (ws: Worksheet, audience: Audience, unit?: Unit) =>
+  premium(worksheetMaterial(audience === "student" ? studentWorksheet(ws) : ws, audience, courseOf(unit)), audience,
+    () => printPages(`${ws.title} · ${COPY[audience]}`, worksheetMarkup(ws, audience), false));
 
 /** A check or test. Teacher: the paper, then the key, recording scripts and marking rubric. Student: the paper only. */
 export function assessmentMarkup(a: Assessment, audience: Audience) {
@@ -84,7 +109,9 @@ export function assessmentMarkup(a: Assessment, audience: Audience) {
     </div>,
   );
 }
-export const printAssessment = (a: Assessment, audience: Audience) => printPages(`${a.title} · ${COPY[audience]}`, assessmentMarkup(a, audience), false);
+export const printAssessment = (a: Assessment, audience: Audience, unit?: Unit) =>
+  premium(assessmentMaterial(audience === "student" ? studentAssessment(a) : a, audience, courseOf(unit)), audience,
+    () => printPages(`${a.title} · ${COPY[audience]}`, assessmentMarkup(a, audience), false));
 
 /**
  * Sun Class progress tracker for one term: a row per child (names from the live
@@ -196,9 +223,30 @@ export function homeworkMarkup(deck: Deck, students: { id: string; name: string 
     </div>,
   );
 }
-export function printHomeworkSheets(deck: Deck, students: { id: string; name: string }[], interests: Record<string, string[]>, audience: Audience) {
+export async function printHomeworkSheets(deck: Deck, students: { id: string; name: string }[], interests: Record<string, string[]>, audience: Audience, unit?: Unit) {
   const body = homeworkMarkup(deck, students, interests, audience);
-  return body ? printPages(`${deck.title} homework · ${COPY[audience]}`, body, false) : false;
+  if (!body) return false;
+  const fallback = () => printPages(`${deck.title} homework · ${COPY[audience]}`, body, false);
+  const slide = deck.slides.find((s): s is Extract<Slide, { kind: "creative" }> => s.kind === "creative")!;
+  if (audience === "teacher") {
+    // Who gets which version, then every version once.
+    const m = homeworkMaterial(deck, slide.base, "Teacher overview", undefined, courseOf(unit));
+    const versions = [{ label: "Class version", task: slide.base }, ...(slide.variants ?? []).map((v) => ({ label: v.label, task: v.task }))];
+    m.nameLine = false;
+    m.blocks = [
+      { heading: "Who gets which version", eyebrow: "Creative homework", table: { head: ["Student", "Version"], rows: students.map((st) => [st.name, homeworkFor(slide, st.id, interests).label ?? "Class version"]) } },
+      ...versions.map((v) => ({ ...homeworkMaterial(deck, v.task, v.label, undefined).blocks[0], eyebrow: v.label, writingLines: undefined })),
+    ];
+    return premium(m, "teacher", fallback);
+  }
+  // One sheet per child: a run of documents, one after another (the printer keeps its browser open).
+  const rows = students.length ? students : [{ id: "", name: "" }];
+  for (const st of rows) {
+    const { task, label } = homeworkFor(slide, st.id, interests);
+    const ok = await premium(homeworkMaterial(deck, task, label ?? "Class version", st.name || undefined, courseOf(unit)), "student", () => {}, rows.length > 1);
+    if (!ok) { fallback(); return false; }
+  }
+  return true;
 }
 
 function useCountdown() {
