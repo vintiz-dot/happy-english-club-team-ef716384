@@ -16,14 +16,15 @@ type Tab = "record" | "transcripts";
  *
  * Both panels stay mounted and one is hidden, so switching tabs can never
  * interrupt a recording or lose a transcript that is still being worked on.
- * Nothing here sends recorder audio anywhere: the recorder keeps its own bucket
- * and rules, and the transcripts side only ever sees a file a teacher uploads.
+ * Nothing here sends recorder audio anywhere: it is transcribed on the school laptop. The Transcripts tab takes the
+ * laptop's draft transcript as text (upload or paste); the online audio upload is not offered on this page.
  */
 export default function TeacherLessons() {
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const tab: Tab = params.get("tab") === "transcripts" ? "transcripts" : "record";
   const [recording, setRecording] = useState(false);
+  const [focusClass, setFocusClass] = useState<{ classId: string; n: number } | undefined>();
   if (!user) return null;
   const pick = (t: Tab) => setParams(t === "record" ? {} : { tab: t }, { replace: true });
 
@@ -46,8 +47,8 @@ export default function TeacherLessons() {
         </div>
         <div hidden={tab !== "record"}><RecorderView onActiveChange={setRecording} /></div>
         <div hidden={tab !== "transcripts"} className="space-y-6">
-          <RecordedInClass userId={user.id} />
-          <TeacherTranscripts embedded />
+          <RecordedInClass userId={user.id} onAddTranscript={(classId) => setFocusClass((f) => ({ classId, n: (f?.n ?? 0) + 1 }))} />
+          <TeacherTranscripts embedded focusClass={focusClass} />
         </div>
       </div>
     </Layout>

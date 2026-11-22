@@ -10,7 +10,7 @@
  * (TranscriptApprovalPanel -> approve_transcript_analysis), and then only
  * what the teacher chose (D-26, docs/evidence/FIX-analyze-transcript.md).
  */
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { shrinkPhoto } from "@/lib/shrinkPhoto";
@@ -108,10 +108,18 @@ function Shell({ embedded, children }: { embedded?: boolean; children: ReactNode
   return embedded ? <>{children}</> : <Layout title="Transcript Insights">{children}</Layout>;
 }
 
-export default function TeacherTranscripts({ embedded = false }: { embedded?: boolean } = {}) {
+export default function TeacherTranscripts({ embedded = false, focusClass }: { embedded?: boolean; focusClass?: { classId: string; n: number } } = {}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [classId, setClassId] = useState("");
+  const uploadPanelRef = useRef<HTMLDivElement>(null);
+  // "Add draft transcript" on a recorded lesson picks its class and brings the upload panel into view.
+  useEffect(() => {
+    if (!focusClass) return;
+    setClassId(focusClass.classId);
+    setSelectedId(null);
+    uploadPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focusClass]);
   const [title, setTitle] = useState("");
   const [rawText, setRawText] = useState("");
   const [lessonContext, setLessonContext] = useState("");
@@ -743,7 +751,7 @@ export default function TeacherTranscripts({ embedded = false }: { embedded?: bo
         </div>
 
         {/* Upload panel */}
-        <Card>
+        <Card ref={uploadPanelRef}>
           <CardContent className="pt-6 space-y-3">
             <div className="flex flex-col md:flex-row gap-3">
               <Select value={classId} onValueChange={(v) => { setClassId(v); setSelectedId(null); }}>
@@ -770,7 +778,7 @@ export default function TeacherTranscripts({ embedded = false }: { embedded?: bo
                 }}
               />
               <Button variant="outline" className="gap-2" onClick={() => fileRef.current?.click()}>
-                <UploadCloud className="h-4 w-4" />.vtt / .txt
+                <UploadCloud className="h-4 w-4" />{embedded ? "Upload draft transcript (.txt / .vtt / .srt)" : ".vtt / .txt"}
               </Button>
               <input
                 ref={audioFileRef}
@@ -783,7 +791,7 @@ export default function TeacherTranscripts({ embedded = false }: { embedded?: bo
                   e.target.value = "";
                 }}
               />
-              <Button
+              {!embedded && <Button
                 variant="outline"
                 className="gap-2"
                 disabled={!classId || audioUploadMutation.isPending}
@@ -796,7 +804,7 @@ export default function TeacherTranscripts({ embedded = false }: { embedded?: bo
                   <Mic className="h-4 w-4" />
                 )}
                 Upload recording
-              </Button>
+              </Button>}
             </div>
 
             {audioProgress && (
@@ -813,10 +821,18 @@ export default function TeacherTranscripts({ embedded = false }: { embedded?: bo
                 </span>
               </div>
             )}
-            <p className="text-hec-caption text-hec-ink-soft -mt-1">
-              Recordings up to 25MB (roughly 45–60 min at typical voice-memo quality). Longer lessons:
-              split into two recordings and upload each separately.
-            </p>
+            {embedded ? (
+              <p className="text-hec-caption text-hec-ink-soft -mt-1">
+                Lesson audio is transcribed on the school laptop and never leaves it. Upload or paste the draft transcript it
+                produces (read it through first and fix anything wrong). "Analyze transcript" then sends only that text, not the audio,
+                to the analysis service, and makes a draft that only the class's staff can see.
+              </p>
+            ) : (
+              <p className="text-hec-caption text-hec-ink-soft -mt-1">
+                Recordings up to 25MB (roughly 45–60 min at typical voice-memo quality). Longer lessons:
+                split into two recordings and upload each separately.
+              </p>
+            )}
 
             <Textarea
               placeholder={"Lesson plan / notes (optional but recommended)…\n\nTarget vocabulary, book & pages, the activities you ran. This is fed to the transcriber so names and terms come out right, and to the analyzer so it judges the lesson against what you planned."}

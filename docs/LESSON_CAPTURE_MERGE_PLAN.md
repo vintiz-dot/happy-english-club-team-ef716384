@@ -25,9 +25,11 @@ No backend path is removed. Nothing in the recorder's `src/lib/recorder/*` or it
 
 ## 3. How a finished recording becomes a transcript
 
-Default, no new vendor, nothing changes in where audio goes:
-- A `complete` recording appears under "Recorded in class" with date, class and the note **"Transcribed on the school laptop overnight (pilot). It is not in the app yet."** Nothing is sent anywhere by this screen.
-- If the teacher wants a transcript now, the manual upload below is the fallback: they upload the lesson's audio themselves. That is the teacher's own decision, with their own file, exactly as today.
+Owner ruling, 22 Nov 2026: **transcription of recorder audio stays on the school laptop**, and the teacher can upload the laptop's draft transcript.
+- A `complete` recording appears under "Recorded in class" with date and class and an **Add draft transcript** button. It picks the class and brings the upload panel into view.
+- The teacher uploads (`.txt` / `.vtt` / `.srt`) or pastes the laptop's text, reads and fixes it, then presses Analyze. That sends **only the text** to the analysis service (`analyze-transcript`, `gpt-4o-mini`), never the audio; the result is a staff-only draft until approved, as before.
+- The online audio upload (Whisper) is **not offered on the merged page**. Its backend (`transcribe-lesson-audio`) and the transcripts it already made are kept, including "Retry transcription" on old audio rows. Re-enabling the button is one prop.
+- The analysis step does send transcript text, which can contain spoken names, to OpenAI; names are pseudonyms in class (owner ruling 12 Nov). A laptop-only analysis would be a separate change.
 
 Not built, and needs an owner decision first (a vendor path for recorder audio): turning a recording into a `class_transcripts` input automatically. What it would take, so the owner can price it:
 - Stitching in an edge function is not possible: a 60-minute lesson is hundreds of MB of FLAC (edge limits: 2 s CPU, 256 MB), and Whisper takes 25 MB. It would have to be done in the teacher's browser (download the room chunks as the teacher, resample to 16 kHz mono, encode Opus about 7 MB/hour) and upload the result as an ordinary transcript audio file, or on the laptop job.
@@ -44,14 +46,14 @@ Not built, and needs an owner decision first (a vendor path for recorder audio):
 | Speaker labeller today: `gpt-4o` batches of 120 lines | cents per lesson | switching to `gpt-4o-mini` cuts that step by an order of magnitude; quality on name call-outs not tested |
 | Azure fast transcription (design doc) | about USD 1.50 | unconfirmed; only vendor teacher-checked |
 
-Cheapest set-up: laptop for recorder audio (USD 0), `whisper-1` for the manual upload (already live). A cheaper upload path is a possible follow-up: `gpt-4o-mini-transcribe` plus the `gpt-4o-mini` labeller, after one lesson is compared by a teacher. Not done here, because changing a live function's model changes accuracy and needs a deploy and a check.
+Cheapest set-up: laptop for all lesson audio (USD 0); the only vendor spend left on this page is the text analysis. A cheaper upload path is a possible follow-up: `gpt-4o-mini-transcribe` plus the `gpt-4o-mini` labeller, after one lesson is compared by a teacher. Not done here, because changing a live function's model changes accuracy and needs a deploy and a check.
 
 ## 5. Rules that must still hold (and how)
 
 - Recorder tables, bucket, policies, functions: untouched. The new card reads `class_recordings` through the teacher's own session, so the existing `class_recordings_read` policy (admin, standing teacher, that session's teacher) decides what is listed. No service role, no audio is downloaded, no signed URL is made.
 - Consent, window, evidence rules: enforced by the recorder's triggers and RPCs, which the page does not bypass or duplicate.
-- The recorder is never auto-uploaded to the transcript bucket. A recorder file reaches `class-recordings` only if a teacher picks and uploads it by hand.
-- Manual upload keeps every existing check: 24.5 MB cap, class-held, approval refusal, analysis drafts.
+- Recorder audio is never uploaded to the transcript bucket by this page: the audio-upload button is not shown on it.
+- Text upload keeps every existing check: class-held, approval refusal, analysis drafts.
 
 ## 6. What the owner must do
 

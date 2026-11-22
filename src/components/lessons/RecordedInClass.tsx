@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
@@ -14,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  */
 interface Row { id: string; class_id: string; session_date: string; completed_at: string | null; audio_deleted_at: string | null; className: string }
 
-export function RecordedInClass({ userId }: { userId: string }) {
+export function RecordedInClass({ userId, onAddTranscript }: { userId: string; onAddTranscript: (classId: string) => void }) {
   const q = useQuery<Row[]>({
     queryKey: ["recorded-in-class", userId],
     queryFn: async () => {
@@ -39,9 +40,8 @@ export function RecordedInClass({ userId }: { userId: string }) {
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2"><Mic className="h-4 w-4" aria-hidden /> Recorded in class</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Recordings from the Class recorder are transcribed on the school laptop overnight, not in this app, and are not sent to any
-          online service. The transcript is not shown here yet. To get one now, upload the lesson audio file below: that is your own
-          choice and sends that file for transcription.
+          The audio of these recordings is transcribed on the school laptop and never leaves it. When the laptop has made the draft
+          transcript, add it here: upload or paste the text, check it, then analyse it.
         </p>
       </CardHeader>
       <CardContent>
@@ -49,7 +49,10 @@ export function RecordedInClass({ userId }: { userId: string }) {
           {rows.map((r) => (
             <li key={r.id} className="py-2 flex flex-wrap items-center justify-between gap-2">
               <span className="font-medium">{r.className}</span>
-              <span className="text-muted-foreground">{r.session_date}{r.audio_deleted_at ? " · audio deleted" : ""}</span>
+              <span className="text-muted-foreground flex items-center gap-3">
+                {r.session_date}{r.audio_deleted_at ? " · audio deleted" : ""}
+                <Button size="sm" variant="outline" className="min-h-9" onClick={() => onAddTranscript(r.class_id)}>Add draft transcript</Button>
+              </span>
             </li>
           ))}
         </ul>
