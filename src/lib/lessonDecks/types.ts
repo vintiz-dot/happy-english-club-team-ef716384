@@ -111,8 +111,18 @@ export type Slide =
       kind: "homework";
       title?: string;
       // `minutes` is the time a WEEK the item takes; `tier` says who it is for
-      // (left out: everyone). The slide adds up each tier's week.
-      items: { label: string; detail: string; book?: BookRef; minutes?: number; tier?: TierLevel }[];
+      // (left out: everyone). The slide adds up each tier's week. `days` is which
+      // days of the week it is done; `check` is how the teacher verifies it in class
+      // (both optional, used by the IELTS course's day-by-day homework).
+      items: {
+        label: string;
+        detail: string;
+        book?: BookRef;
+        minutes?: number;
+        tier?: TierLevel;
+        days?: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[];
+        check?: string;
+      }[];
     }
   | {
       kind: "project";
