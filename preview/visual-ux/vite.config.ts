@@ -10,6 +10,8 @@ const root = path.resolve(here, "../..");
 
 export default defineConfig({
   root: here,
+  // The app's own static files (the mascot's pose files live in public/mascot).
+  publicDir: path.resolve(root, "public"),
   cacheDir: path.resolve(here, ".vite-cache"),
   plugins: [react()],
   css: { postcss: root },
