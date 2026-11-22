@@ -295,7 +295,7 @@ export const l10: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a story someone told you",
-      prompt: "Wednesday, recorded in one take with no cuts. Begin with the date and this week's code word (heard only in class). Take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a story that someone told you and you remember. You should say: who told you the story, when they told it, what happened in the story, and explain why you remember it. Then answer one follow-up: Do you think children today hear fewer stories from their grandparents? Last of all, without stopping, the surprise question posted in the class group on Wednesday morning.",
+      prompt: "Wednesday, recorded in one take with no cuts. Begin with the date and this week's code word (heard only in class). Take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a story that someone told you and you remember. You should say: who told you the story, when they told it, what happened in the story, and explain why you remember it. Then answer one follow-up: Do you think children today hear fewer stories from their grandparents? Last of all, without stopping, the surprise question posted in the class Zalo group on Wednesday morning.",
       length: "2-3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The story was told to me by ...", "It's about ...", "At first ..., then ...", "I remember it because ..."], tips: ["Follow the four points in order.", "Use past simple for every event; add one 'was ...ing'."] },

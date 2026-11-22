@@ -306,7 +306,7 @@ export const l04: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a Part 3 on the arts",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then record three Part 3 answers, about a minute each, each with a degree word and a concession: 1) 'Should art and music be compulsory subjects at school?' 2) 'Why do some parents see the arts as less important than other subjects?' 3) 'Should learning a musical instrument be compulsory?' In answer 1, hum or tap ten seconds of a song you like and say how it makes you feel. Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, in the same take.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then record three Part 3 answers, about a minute each, each with a degree word and a concession: 1) 'Should art and music be compulsory subjects at school?' 2) 'Why do some parents see the arts as less important than other subjects?' 3) 'Should learning a musical instrument be compulsory?' In answer 1, hum or tap ten seconds of a song you like and say how it makes you feel. Finally, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, in the same take.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I think the arts are very ... because ...", "Although ..., ...", "So I think ..."], tips: ["Write one keyword per question next to the camera.", "Four sentences for each answer is enough."] },

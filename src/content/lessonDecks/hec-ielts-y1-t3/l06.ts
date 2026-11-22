@@ -306,7 +306,7 @@ export const l06: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a Part 3 on advertising",
-      prompt: "Wednesday, one take with no cuts, in the app's video homework. Open with the date and this week's code word (said in class, written nowhere). Then three Part 3 answers, about a minute each, each one starting from a view reported with a passive: 1) 'Why are adverts aimed at children so effective?' 2) 'Are adverts on social media more persuasive than adverts on television?' 3) 'Should advertising to children be banned?' Close, in the same take, with the surprise question the teacher posts in the class group on Wednesday morning.",
+      prompt: "Wednesday, one take with no cuts, in the app's video homework. Open with the date and this week's code word (said in class, written nowhere). Then three Part 3 answers, about a minute each, each one starting from a view reported with a passive: 1) 'Why are adverts aimed at children so effective?' 2) 'Are adverts on social media more persuasive than adverts on television?' 3) 'Should advertising to children be banned?' Close, in the same take, with the surprise question the teacher posts in the class Zalo group on Wednesday morning.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["It is often said that ...", "I think ... because ...", "For example, ..."], tips: ["One keyword per question next to the camera.", "Four sentences for each answer is enough."] },

@@ -332,7 +332,7 @@ export const l04: Deck = {
     {
       kind: "vlog",
       title: "Video homework: space, step by step",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Begin with the date and the code word from the end of today's class (it is not written anywhere). Then answer three Part 3 questions for about a minute each: 1) 'Is it worth spending money on space exploration when there are problems on Earth?' 2) 'How has space research changed everyday life?' (explain one benefit as a process, step by step) 3) 'Will people live on another planet one day?' Finally, still in the same take, answer the surprise question the teacher posts in the class group on Wednesday morning.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Begin with the date and the code word from the end of today's class (it is not written anywhere). Then answer three Part 3 questions for about a minute each: 1) 'Is it worth spending money on space exploration when there are problems on Earth?' 2) 'How has space research changed everyday life?' (explain one benefit as a process, step by step) 3) 'Will people live on another planet one day?' Finally, still in the same take, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If a full minute feels long", frames: ["I think ... because ...", "First, ... Then, ...", "So ..."], tips: ["One keyword per question next to the camera.", "Three steps is enough for the process."] },

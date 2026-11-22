@@ -296,7 +296,7 @@ export const l08: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a festival, then a bigger question",
-      prompt: "Wednesday, one take from start to finish. First the date and this week's code word (only said in class). Then your Part 2 talk again: 'Describe a festival or celebration that you enjoy.' Take 1 minute to prepare, talk for 2 minutes, and in the same take answer one Part 3 question: 'Are traditional festivals as important to young people today as they were to their grandparents?' Last, answer the surprise question the teacher posts in the class group that morning.",
+      prompt: "Wednesday, one take from start to finish. First the date and this week's code word (only said in class). Then your Part 2 talk again: 'Describe a festival or celebration that you enjoy.' Take 1 minute to prepare, talk for 2 minutes, and in the same take answer one Part 3 question: 'Are traditional festivals as important to young people today as they were to their grandparents?' Last, answer the surprise question the teacher posts in the class Zalo group that morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The festival is ...", "Last year, while we were ..., ...", "I think young people ... because ..."], tips: ["Keep your four keywords next to the camera.", "Check five -ed endings when you watch it back."] },

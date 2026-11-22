@@ -307,7 +307,7 @@ export const l02: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a Part 3 on technology",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then record three Part 3 answers, about a minute each, each one a cause-and-effect chain: 1) 'How has technology changed the way teenagers spend their free time?' 2) 'Should parents limit their children's screen time?' 3) 'Does social media do more harm than good to teenagers?' Before you start, check your phone's screen time for yesterday and say the real figure in answer 1. Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, in the same take.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then record three Part 3 answers, about a minute each, each one a cause-and-effect chain: 1) 'How has technology changed the way teenagers spend their free time?' 2) 'Should parents limit their children's screen time?' 3) 'Does social media do more harm than good to teenagers?' Before you start, check your phone's screen time for yesterday and say the real figure in answer 1. Finally, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, in the same take.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I think ...", "This is because of ...", "As a result, ..."], tips: ["Write one keyword per question next to the camera.", "Four sentences for each answer is enough."] },

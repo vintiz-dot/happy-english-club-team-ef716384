@@ -298,7 +298,7 @@ export const l03: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a long journey, and traffic in cities",
-      prompt: "On Wednesday, in one take with no cuts, record in the app. First the date and this week's code word (said at the end of class, never written down). Then the Part 2 talk: 'Describe a journey that took much longer than you expected.' Prepare for 1 minute, talk for the full 2, then carry straight on to the Part 3 question 'What could be done to reduce traffic in big cities like Hanoi?' Last, answer the surprise question the teacher puts in the class group on Wednesday morning.",
+      prompt: "On Wednesday, in one take with no cuts, record in the app. First the date and this week's code word (said at the end of class, never written down). Then the Part 2 talk: 'Describe a journey that took much longer than you expected.' Prepare for 1 minute, talk for the full 2, then carry straight on to the Part 3 question 'What could be done to reduce traffic in big cities like Hanoi?' Last, answer the surprise question the teacher puts in the class Zalo group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["We were going to ...", "Then ...", "I think the city should ..."], tips: ["Keep your three-box plan next to the camera.", "Give the Part 3 answer a problem and one solution."] },

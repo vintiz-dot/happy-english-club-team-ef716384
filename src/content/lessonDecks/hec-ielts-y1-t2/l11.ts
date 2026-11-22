@@ -317,7 +317,7 @@ export const l11: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a time you helped, and volunteering",
-      prompt: "Record it on Wednesday in the app, in one take with no cuts. Begin with the date and this week's code word (the teacher gives it out at the end of class; it is not written in any file). Then give your Part 2 talk again: 'Describe a time when you helped someone.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Is it better to give money or time to help others?' Close with the surprise question posted in the class group on Wednesday morning.",
+      prompt: "Record it on Wednesday in the app, in one take with no cuts. Begin with the date and this week's code word (the teacher gives it out at the end of class; it is not written in any file). Then give your Part 2 talk again: 'Describe a time when you helped someone.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Is it better to give money or time to help others?' Close with the surprise question posted in the class Zalo group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I helped ...", "The problem was that ...", "I think time is better because ..."], tips: ["Keep your four keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },

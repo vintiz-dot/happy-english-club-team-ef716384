@@ -309,7 +309,7 @@ export const l10: Deck = {
     {
       kind: "vlog",
       title: "Video homework: what really motivates people",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word the teacher gives at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each a developed minute with ONE cleft for your key idea: 1) 'Is money the most important reason people work?' 2) 'Should parents reward children for good school results?' 3) 'Why do some people work hard without being paid?' Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, still in the same take.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word the teacher gives at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each a developed minute with ONE cleft for your key idea: 1) 'Is money the most important reason people work?' 2) 'Should parents reward children for good school results?' 3) 'Why do some people work hard without being paid?' Finally, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, still in the same take.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I think ...", "For example, ...", "What most people want is ..."], tips: ["Write one keyword per question next to the camera.", "One what-cleft in each answer is enough."] },

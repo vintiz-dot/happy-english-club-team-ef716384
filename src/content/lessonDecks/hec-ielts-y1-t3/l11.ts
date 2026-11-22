@@ -309,7 +309,7 @@ export const l11: Deck = {
     {
       kind: "vlog",
       title: "Video homework: three weighed answers",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each one weighing both sides and ending with 'on balance': 1) 'Should young people have more say in the decisions their city makes?' 2) 'Is it better for important decisions to be made by experts or by ordinary people?' 3) 'Should 16-year-olds be allowed to vote?' Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, in the same take. This is your practice run for next week's Speaking mock.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each one weighing both sides and ending with 'on balance': 1) 'Should young people have more say in the decisions their city makes?' 2) 'Is it better for important decisions to be made by experts or by ordinary people?' 3) 'Should 16-year-olds be allowed to vote?' Finally, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, in the same take. This is your practice run for next week's Speaking mock.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["On the one hand, ...", "On the other hand, ...", "On balance, I think ..."], tips: ["Write one keyword per question next to the camera.", "Four sentences for each answer is enough."] },

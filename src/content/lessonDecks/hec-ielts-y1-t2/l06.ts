@@ -304,7 +304,7 @@ export const l06: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a childhood memory, and childhood today",
-      prompt: "Wednesday, one take, no cuts, recorded in the app. Say the date and the code word from the end of class first (it is not in any file or chat). Then the Part 2 talk: 'Describe a happy memory from your childhood.' Prepare for 1 minute (the habit, the day, the feelings) and talk for 2 minutes. In the same take answer the Part 3 question 'Do children today have more or less freedom than children in the past? Why?', and finish with the surprise question posted in the class group on Wednesday morning.",
+      prompt: "Wednesday, one take, no cuts, recorded in the app. Say the date and the code word from the end of class first (it is not in any file or chat). Then the Part 2 talk: 'Describe a happy memory from your childhood.' Prepare for 1 minute (the habit, the day, the feelings) and talk for 2 minutes. In the same take answer the Part 3 question 'Do children today have more or less freedom than children in the past? Why?', and finish with the surprise question posted in the class Zalo group on Wednesday morning.",
       length: "3 minutes (plus 1 minute of preparation, not recorded)",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["When I was ..., I used to ...", "One day, ...", "I remember feeling ...", "I think children today have ... freedom because ..."], tips: ["Keep three keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },

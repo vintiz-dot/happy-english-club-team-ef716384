@@ -287,7 +287,7 @@ export const l04: Deck = {
     {
       kind: "vlog",
       title: "Video homework: Part 1 about food",
-      prompt: "Recorded on Wednesday in one take: no cuts, no restarts. Say the date and this week's code word first (given out in class only), then answer these Part 1 questions, and end with Wednesday morning's surprise question from the class group. 1) What is your favourite dish, and what does it taste like? 2) Do you prefer home-cooked meals or eating out? Why? 3) Is there any food you didn't like as a child but enjoy now? 4) Do you think you have a balanced diet? 5) Would you like to be able to cook better?",
+      prompt: "Recorded on Wednesday in one take: no cuts, no restarts. Say the date and this week's code word first (given out in class only), then answer these Part 1 questions, and end with Wednesday morning's surprise question from the class Zalo group. 1) What is your favourite dish, and what does it taste like? 2) Do you prefer home-cooked meals or eating out? Why? 3) Is there any food you didn't like as a child but enjoy now? 4) Do you think you have a balanced diet? 5) Would you like to be able to cook better?",
       length: "2-3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["My favourite dish is ... It tastes ...", "I prefer ... to ... because ...", "I'd rather ..."], tips: ["Give every answer a reason.", "Say VEGetable and deLICious with the right stress."] },

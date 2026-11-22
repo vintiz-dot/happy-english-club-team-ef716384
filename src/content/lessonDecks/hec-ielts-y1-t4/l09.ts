@@ -302,7 +302,7 @@ export const l09: Deck = {
     {
       kind: "vlog",
       title: "Video homework: three developed minutes about the future",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word the teacher gives at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each one a developed minute (point, reason, example, consequence, limit): 1) 'Which jobs do you think machines will never be able to do?' 2) 'How might artificial intelligence change the way students learn?' 3) 'Is it a problem that young people rely on technology so much?' Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, still in the same take.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word the teacher gives at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each one a developed minute (point, reason, example, consequence, limit): 1) 'Which jobs do you think machines will never be able to do?' 2) 'How might artificial intelligence change the way students learn?' 3) 'Is it a problem that young people rely on technology so much?' Finally, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, still in the same take.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I think ...", "For example, ...", "In the future, people will probably ..."], tips: ["Write one keyword per question next to the camera.", "Four sentences for each answer is enough."] },

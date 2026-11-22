@@ -307,7 +307,7 @@ export const l07: Deck = {
     {
       kind: "vlog",
       title: "Video homework: my city, then, now and in 2050",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word from the end of today's class (it is not written anywhere). Then answer three Part 3 questions, about a minute each, each one a developed minute with at least one trend in it: 1) 'What are the biggest problems facing cities in Vietnam today?' 2) 'Is it better for a city to build tall buildings or to spread out?' 3) 'How will cities change in the next thirty years?' Finally, in the same take, answer the surprise question the teacher posts in the class group on Wednesday morning.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word from the end of today's class (it is not written anywhere). Then answer three Part 3 questions, about a minute each, each one a developed minute with at least one trend in it: 1) 'What are the biggest problems facing cities in Vietnam today?' 2) 'Is it better for a city to build tall buildings or to spread out?' 3) 'How will cities change in the next thirty years?' Finally, in the same take, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I think ... because ...", "There are more ... than before.", "In the future, there will probably be ..."], tips: ["Write one keyword and one number per question by the camera.", "Four sentences per answer is enough."] },

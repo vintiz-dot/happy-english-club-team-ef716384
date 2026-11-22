@@ -306,7 +306,7 @@ export const l06: Deck = {
     {
       kind: "vlog",
       title: "Video homework: the mock Part 2, one week later",
-      prompt: "Wednesday, one take, no cuts. Start with the date and this week's code word, given only in class. Then record the same Part 2 talk as in today's mock: 'Describe a friend or family member you enjoy spending time with.' Before you record, read your Scorer's card and fix the ONE thing it asked you to change; give yourself exactly 1 minute to prepare, then talk for 2 minutes. End with the surprise question posted in the class group on Wednesday morning. The teacher scores this recording on the full rubric.",
+      prompt: "Wednesday, one take, no cuts. Start with the date and this week's code word, given only in class. Then record the same Part 2 talk as in today's mock: 'Describe a friend or family member you enjoy spending time with.' Before you record, read your Scorer's card and fix the ONE thing it asked you to change; give yourself exactly 1 minute to prepare, then talk for 2 minutes. End with the surprise question posted in the class Zalo group on Wednesday morning. The teacher scores this recording on the full rubric.",
       length: "2 minutes (plus 1 minute of preparation, not recorded)",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The person I want to talk about is ...", "We usually ... together.", "One time, we ...", "I enjoy spending time with him/her because ..."], tips: ["Keep your four keywords on paper next to the camera.", "If you stop, look at the next bullet and keep going."] },

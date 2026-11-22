@@ -326,7 +326,7 @@ export const l03: Deck = {
     {
       kind: "vlog",
       title: "Video homework: food, science and one definition",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Say the date and the code word you were given at the end of class (no file holds it). Then answer three Part 3 questions for about a minute each, starting each answer by defining one key term: 1) 'Should the government tell people what to eat?' 2) 'Why do many people eat more processed food than in the past?' 3) 'Why don't people always believe what scientists say about food?' Last, in the same take, answer the surprise question posted in the class group on Wednesday morning.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Say the date and the code word you were given at the end of class (no file holds it). Then answer three Part 3 questions for about a minute each, starting each answer by defining one key term: 1) 'Should the government tell people what to eat?' 2) 'Why do many people eat more processed food than in the past?' 3) 'Why don't people always believe what scientists say about food?' Last, in the same take, answer the surprise question posted in the class Zalo group on Wednesday morning.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If a full minute feels long", frames: ["By ..., I mean ...", "I think ...", "For example, ..."], tips: ["One keyword per question next to the camera.", "One 'that' or 'who' clause in each answer."] },

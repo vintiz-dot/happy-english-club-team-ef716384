@@ -325,7 +325,7 @@ export const l10: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a photo you like, and photos today",
-      prompt: "Wednesday, one take, no cuts, in the app. First say the date and this week's code word (written on the board at the end of class and nowhere else). Then give your Part 2 talk again: 'Describe a photo that you like.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Why do people take so many photos these days?' Last, answer the surprise question the teacher posts in the class group on Wednesday morning, without stopping the recording.",
+      prompt: "Wednesday, one take, no cuts, in the app. First say the date and this week's code word (written on the board at the end of class and nowhere else). Then give your Part 2 talk again: 'Describe a photo that you like.' Take 1 minute to prepare, talk for 2 minutes, then in the same take answer one Part 3 question: 'Why do people take so many photos these days?' Last, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, without stopping the recording.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["In the photo there's ...", "It was taken ... by ...", "I think people take so many photos because ..."], tips: ["Keep your four keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },

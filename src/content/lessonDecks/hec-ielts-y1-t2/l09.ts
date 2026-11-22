@@ -300,7 +300,7 @@ export const l09: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a piece of clothing, and fashion today",
-      prompt: "On Wednesday, in the app's video homework, record one take with no cuts. Say the date and the code word from the end of today's class (it is on the board, not in any file), then give your Part 2 talk again: 'Describe a piece of clothing you like wearing.' Take 1 minute to prepare (off camera), talk for 2 minutes, then in the same take answer one Part 3 question: 'Why do some young people care so much about fashion?' Finish with the surprise question posted in the class group on Wednesday morning.",
+      prompt: "On Wednesday, in the app's video homework, record one take with no cuts. Say the date and the code word from the end of today's class (it is on the board, not in any file), then give your Part 2 talk again: 'Describe a piece of clothing you like wearing.' Take 1 minute to prepare (off camera), talk for 2 minutes, then in the same take answer one Part 3 question: 'Why do some young people care so much about fashion?' Finish with the surprise question posted in the class Zalo group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["It's a ... ... ...", "I got it when ...", "I think young people care about fashion because ..."], tips: ["Keep your four keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },

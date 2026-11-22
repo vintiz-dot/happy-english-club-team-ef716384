@@ -318,7 +318,7 @@ export const l06: Deck = {
     {
       kind: "vlog",
       title: "Video homework: the mock Part 2 and Part 3, one week later",
-      prompt: "Record the mock again on Wednesday, one take, no cuts, in the app. Open with the date and this week's code word (said in class today, written nowhere). Then: 'Describe a piece of science or technology that makes your daily life easier.' Take exactly 1 minute to prepare, talk for 2 minutes, then in the same take answer two of the mock's Part 3 questions and the surprise question the teacher posts in the class group on Wednesday morning. Before you record, read your Scorer's card and fix the ONE thing it asked you to change. The teacher scores this recording on the full rubric.",
+      prompt: "Record the mock again on Wednesday, one take, no cuts, in the app. Open with the date and this week's code word (said in class today, written nowhere). Then: 'Describe a piece of science or technology that makes your daily life easier.' Take exactly 1 minute to prepare, talk for 2 minutes, then in the same take answer two of the mock's Part 3 questions and the surprise question the teacher posts in the class Zalo group on Wednesday morning. Before you record, read your Scorer's card and fix the ONE thing it asked you to change. The teacher scores this recording on the full rubric.",
       length: "4 minutes (plus 1 minute of preparation, not recorded)",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["It is a ...", "It works by ...", "I use it ...", "Without it, I would ..."], tips: ["Keep your four keywords on paper next to the camera.", "If you stop, look at the next bullet and keep going."] },

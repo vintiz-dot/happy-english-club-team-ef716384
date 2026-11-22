@@ -273,7 +273,7 @@ export const l01: Deck = {
     {
       kind: "vlog",
       title: "Video homework: the full diagnostic speaking test",
-      prompt: "Wednesday, one take, no cuts, in the app's video homework. Start by saying the date and this week's code word (the teacher writes it on the board at the end of class; it is in no file). Then answer the Part 3 questions below as if the examiner asked you, and finally the surprise question the teacher posts in the class group on Wednesday morning. Part 3: 1) Why do some people prefer to live in the countryside? 2) How have cities in Vietnam changed in the last 10 years? 3) Do you think young people spend enough time in nature? Why or why not?",
+      prompt: "Wednesday, one take, no cuts, in the app's video homework. Start by saying the date and this week's code word (the teacher writes it on the board at the end of class; it is in no file). Then answer the Part 3 questions below as if the examiner asked you, and finally the surprise question the teacher posts in the class Zalo group on Wednesday morning. Part 3: 1) Why do some people prefer to live in the countryside? 2) How have cities in Vietnam changed in the last 10 years? 3) Do you think young people spend enough time in nature? Why or why not?",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I think ... because ...", "For example, ...", "On the other hand, ..."], tips: ["Answer every question with at least 3 sentences.", "It's fine to pause; don't stop the video."] },

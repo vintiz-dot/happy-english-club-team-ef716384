@@ -286,7 +286,7 @@ export const l03: Deck = {
     {
       kind: "vlog",
       title: "Video homework: Part 1 about study and free time",
-      prompt: "One take, no cuts, on Wednesday in the app. First sentence: the date and this week's code word, which you only hear at the end of today's class. Then the Part 1 questions below, as in the test. Last: the surprise question that appears in the class group on Wednesday morning. 1) What do you study at school, and which subject do you like most? 2) Is there a subject you would like to stop studying? Why? 3) How do you usually spend your weekends? 4) Have your free-time activities changed in the last few years? 5) Do you prefer spending free time alone or with other people?",
+      prompt: "One take, no cuts, on Wednesday in the app. First sentence: the date and this week's code word, which you only hear at the end of today's class. Then the Part 1 questions below, as in the test. Last: the surprise question that appears in the class Zalo group on Wednesday morning. 1) What do you study at school, and which subject do you like most? 2) Is there a subject you would like to stop studying? Why? 3) How do you usually spend your weekends? 4) Have your free-time activities changed in the last few years? 5) Do you prefer spending free time alone or with other people?",
       length: "2-3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I usually ... because ...", "I used to ..., but now ...", "My favourite subject is ..."], tips: ["Give every answer a reason.", "Say every -s ending: likes, plays, watches."] },

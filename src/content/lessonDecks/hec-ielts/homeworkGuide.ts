@@ -86,7 +86,7 @@ export const HOMEWORK_GUIDE: GuideTask[] = [
     why: "This is real IELTS speaking practice. The teacher listens and gives you feedback on the four IELTS criteria. The code word and the surprise question show it is really you, speaking that day.",
     steps: [
       "Remember the CODE WORD. The teacher writes it on the board at the end of Sunday's class. Write it in your notebook.",
-      "On Wednesday morning, look in the class group for the SURPRISE QUESTION from the teacher.",
+      "On Wednesday morning, look in the class Zalo group for the SURPRISE QUESTION from the teacher.",
       "Read the questions on the 'Video homework' slide of this week's lesson. You may think for 1 minute. Do not write sentences.",
       "Open the video homework in the HEC app and press record.",
       "Say: today's date and the code word. Then answer the questions. Then answer the surprise question.",
@@ -95,7 +95,7 @@ export const HOMEWORK_GUIDE: GuideTask[] = [
     ],
     checked: "The teacher watches every video and scores it with the IELTS rubric: Fluency, Vocabulary, Grammar, Pronunciation. A video without the code word or without the surprise question does not count, even if it is very good.",
     points: "3 points: 1 point for sending it on time with the code word and the surprise question, 2 points for good effort on the task. You also get IELTS feedback, which is not part of the 10 points.",
-    vi: "Thứ Tư: quay video trong app, một lần, không cắt. Nói ngày, mật khẩu (code word) và trả lời câu hỏi bất ngờ.",
+    vi: "Thứ Tư: quay video trong app, một lần, không cắt. Nói ngày, mật khẩu (code word) và trả lời câu hỏi bất ngờ (cô/thầy gửi trong nhóm Zalo của lớp sáng thứ Tư).",
   },
   {
     task: "Vocabulary retrieval",

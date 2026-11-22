@@ -306,7 +306,7 @@ export const l02: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a person you admire, and role models",
-      prompt: "Record on Wednesday in the app: one take, nothing cut. Say the date and the code word from the end of today's class first (it is in no file or message). Then the Part 2 talk again: 'Describe a person you know personally who you admire.' Take 1 minute to prepare and talk for the full 2 minutes. Without stopping, answer the Part 3 question 'Are family members better role models than famous people? Why?' and end with the surprise question posted in the class group on Wednesday morning.",
+      prompt: "Record on Wednesday in the app: one take, nothing cut. Say the date and the code word from the end of today's class first (it is in no file or message). Then the Part 2 talk again: 'Describe a person you know personally who you admire.' Take 1 minute to prepare and talk for the full 2 minutes. Without stopping, answer the Part 3 question 'Are family members better role models than famous people? Why?' and end with the surprise question posted in the class Zalo group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["This person is my ..., who ...", "One day, they ...", "I think family members are ... because ..."], tips: ["Keep your three bullet keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },

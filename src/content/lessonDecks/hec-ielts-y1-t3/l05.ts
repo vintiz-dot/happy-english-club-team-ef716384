@@ -309,7 +309,7 @@ export const l05: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a Part 3 on families",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and this week's code word (given out at the end of class, written in no file). Then three Part 3 answers of about a minute each, every one using a generaliser and an exception: 1) 'How have the roles of mothers and fathers changed in the last fifty years?' 2) 'Do grandparents play a bigger or smaller part in family life now?' 3) 'Is it better to grow up in a big family?' End, in the same take, with the surprise question the teacher posts in the class group on Wednesday morning.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and this week's code word (given out at the end of class, written in no file). Then three Part 3 answers of about a minute each, every one using a generaliser and an exception: 1) 'How have the roles of mothers and fathers changed in the last fifty years?' 2) 'Do grandparents play a bigger or smaller part in family life now?' 3) 'Is it better to grow up in a big family?' End, in the same take, with the surprise question the teacher posts in the class Zalo group on Wednesday morning.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["Families tend to ... now.", "For example, in my family ...", "But not every family ..."], tips: ["Keep one keyword per question next to the camera.", "Four sentences for each answer is enough."] },

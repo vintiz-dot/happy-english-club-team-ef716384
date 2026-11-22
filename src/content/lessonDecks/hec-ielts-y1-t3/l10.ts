@@ -323,7 +323,7 @@ export const l10: Deck = {
     {
       kind: "vlog",
       title: "Video homework: three stances on fame",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each starting with a different stance phrase: 1) 'Why do so many young people want to be famous today?' 2) 'Should the media be allowed to report on a celebrity's private life?' 3) 'Do famous people have a duty to be good role models?' Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, in the same take.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each starting with a different stance phrase: 1) 'Why do so many young people want to be famous today?' 2) 'Should the media be allowed to report on a celebrity's private life?' 3) 'Do famous people have a duty to be good role models?' Finally, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, in the same take.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["In my opinion, ... because ...", "For example, ...", "So I think ..."], tips: ["Write one keyword per question next to the camera.", "Four sentences for each answer is enough."] },

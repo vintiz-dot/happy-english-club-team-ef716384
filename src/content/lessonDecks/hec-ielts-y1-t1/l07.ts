@@ -292,7 +292,7 @@ export const l07: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a useful app, and the other side",
-      prompt: "Wednesday, a single take with no cuts. Say the date and this week's code word (you hear it in class, nowhere else). Then record your Part 2 talk again: 'Describe an app or a website that you find useful.' Take 1 minute to prepare and talk for 2 minutes, then answer one Part 3 question in the same take: 'Do you think young people rely on technology too much? Why or why not?' Finish with the surprise question in Wednesday morning's class group message.",
+      prompt: "Wednesday, a single take with no cuts. Say the date and this week's code word (you hear it in class, nowhere else). Then record your Part 2 talk again: 'Describe an app or a website that you find useful.' Take 1 minute to prepare and talk for 2 minutes, then answer one Part 3 question in the same take: 'Do you think young people rely on technology too much? Why or why not?' Finish with the surprise question in Wednesday morning's class Zalo group message.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The app is called ...", "I use it to ..., so ...", "I think young people ... because ..."], tips: ["Keep your four keywords next to the camera.", "Answer the Part 3 question in at least three sentences."] },

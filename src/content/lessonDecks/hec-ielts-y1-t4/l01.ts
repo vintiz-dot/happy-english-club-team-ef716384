@@ -321,7 +321,7 @@ export const l01: Deck = {
     {
       kind: "vlog",
       title: "Video homework: three one-minute answers",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Say the date and the code word given at the end of today's class (it is not written anywhere). Then answer three Part 3 questions, aiming for a minute each and using the five moves: 1) 'Who should be responsible for protecting the environment?' 2) 'Is it worth spending money to save endangered species?' 3) 'How will renewable energy change daily life in the next twenty years?' Last, in the same take, answer the surprise question the teacher posts in the class group on Wednesday morning.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Say the date and the code word given at the end of today's class (it is not written anywhere). Then answer three Part 3 questions, aiming for a minute each and using the five moves: 1) 'Who should be responsible for protecting the environment?' 2) 'Is it worth spending money to save endangered species?' 3) 'How will renewable energy change daily life in the next twenty years?' Last, in the same take, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If a full minute feels long", frames: ["I think ...", "This is because ...", "For example, ...", "So ..."], tips: ["One keyword per question next to the camera.", "Claim, reason, example is enough; add 'So ...' if you can."] },

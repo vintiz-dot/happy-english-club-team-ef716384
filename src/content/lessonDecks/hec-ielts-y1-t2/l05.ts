@@ -302,7 +302,7 @@ export const l05: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a gift, and gifts today",
-      prompt: "Record on Wednesday in the app, in one take with no cuts. Start with the date and this week's code word (given out loud at the end of class and nowhere else). Then the Part 2 talk: 'Describe a gift you gave to someone or received from someone.' Take 1 minute to prepare (setting, turning point, feelings) and talk for 2 minutes. Keep going into the Part 3 question 'Do people spend too much money on presents nowadays?', then finish with the surprise question in the class group on Wednesday morning.",
+      prompt: "Record on Wednesday in the app, in one take with no cuts. Start with the date and this week's code word (given out loud at the end of class and nowhere else). Then the Part 2 talk: 'Describe a gift you gave to someone or received from someone.' Take 1 minute to prepare (setting, turning point, feelings) and talk for 2 minutes. Keep going into the Part 3 question 'Do people spend too much money on presents nowadays?', then finish with the surprise question in the class Zalo group on Wednesday morning.",
       length: "3 minutes (plus 1 minute of preparation, not recorded)",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The gift was ...", "It was for ...'s birthday.", "When I opened it, I felt ...", "I think people spend ... because ..."], tips: ["Keep three keywords (setting, turning point, feelings) next to the camera.", "Give the Part 3 answer at least three sentences."] },

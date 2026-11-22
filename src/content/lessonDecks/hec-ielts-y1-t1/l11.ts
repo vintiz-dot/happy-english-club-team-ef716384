@@ -318,7 +318,7 @@ export const l11: Deck = {
     {
       kind: "vlog",
       title: "Video homework: Part 2 and Part 3 about nature",
-      prompt: "Wednesday, one take, nothing cut. Say the date and this week's code word (given only at the end of class). Part 2: take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a place in nature that you have visited. You should say: where it is, when you went there, what you did there, and explain how you felt about it. Then Part 3: 1) Why do people in cities want to spend time in nature? 2) Is it more important to protect animals or to build new homes for people? 3) Will children in the future spend more or less time outdoors? End with the surprise question the teacher posts in the class group on Wednesday morning.",
+      prompt: "Wednesday, one take, nothing cut. Say the date and this week's code word (given only at the end of class). Part 2: take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a place in nature that you have visited. You should say: where it is, when you went there, what you did there, and explain how you felt about it. Then Part 3: 1) Why do people in cities want to spend time in nature? 2) Is it more important to protect animals or to build new homes for people? 3) Will children in the future spend more or less time outdoors? End with the surprise question the teacher posts in the class Zalo group on Wednesday morning.",
       length: "4-5 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The place I visited is ...", "I went there with ...", "I think people ... because ..."], tips: ["Follow the four points in Part 2.", "Answer every Part 3 question with view + reason + example."] },

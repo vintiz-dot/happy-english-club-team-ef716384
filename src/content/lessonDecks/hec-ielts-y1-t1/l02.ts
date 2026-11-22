@@ -287,7 +287,7 @@ export const l02: Deck = {
     {
       kind: "vlog",
       title: "Video homework: Part 1 about where you live",
-      prompt: "Wednesday, one take, no cuts, in the app's video homework. Open with the date and this week's code word (the teacher says it at the end of class; it is written nowhere). Then answer these Part 1 questions as if the examiner asked them, and finish with the surprise question the teacher posts in the class group on Wednesday morning. 1) Tell me about the area where you live. 2) What do you like about your home? 3) Is your neighbourhood a good place for young people? Why or why not? 4) How has your area changed since you were a child? 5) Would you prefer to live in the city centre or in a quieter area?",
+      prompt: "Wednesday, one take, no cuts, in the app's video homework. Open with the date and this week's code word (the teacher says it at the end of class; it is written nowhere). Then answer these Part 1 questions as if the examiner asked them, and finish with the surprise question the teacher posts in the class Zalo group on Wednesday morning. 1) Tell me about the area where you live. 2) What do you like about your home? 3) Is your neighbourhood a good place for young people? Why or why not? 4) How has your area changed since you were a child? 5) Would you prefer to live in the city centre or in a quieter area?",
       length: "2-3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I live in ..., which is ...", "There's ... near my house.", "I like it because ..."], tips: ["Give every answer a reason.", "Use two collocations from the lesson."] },

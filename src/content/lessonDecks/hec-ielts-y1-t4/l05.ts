@@ -306,7 +306,7 @@ export const l05: Deck = {
     {
       kind: "vlog",
       title: "Video homework: three developed minutes on animals",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Begin with the date and the code word given at the end of today's class (it is written nowhere). Then answer three Part 3 questions, about a minute each, each one with a claim, a reason, an example, a consequence and a concession: 1) 'Do zoos still have a place in the modern world?' 2) 'Is it acceptable to test new medicines on animals?' 3) 'Should it be illegal to keep wild animals as pets?' Use at least two hedges from today. Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, in the same take.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Begin with the date and the code word given at the end of today's class (it is written nowhere). Then answer three Part 3 questions, about a minute each, each one with a claim, a reason, an example, a consequence and a concession: 1) 'Do zoos still have a place in the modern world?' 2) 'Is it acceptable to test new medicines on animals?' 3) 'Should it be illegal to keep wild animals as pets?' Use at least two hedges from today. Finally, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, in the same take.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I think ... because ...", "For example, ...", "To some extent, ..."], tips: ["Write one keyword per question on a card by the camera.", "Four sentences per answer is enough."] },

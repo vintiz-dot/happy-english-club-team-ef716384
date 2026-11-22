@@ -304,7 +304,7 @@ export const l08: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a Part 3 on cities",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Begin with the date and this week's code word (given out in class, written nowhere). Then three Part 3 answers of about a minute each, each with a speculation phrase: 1) 'What are the main problems for young people who want to live in a big city?' 2) 'Is it better to live in the city centre or in the suburbs?' 3) 'How do you think cities will change in the next thirty years?' Finish, in the same take, with the surprise question the teacher posts in the class group on Wednesday morning.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Begin with the date and this week's code word (given out in class, written nowhere). Then three Part 3 answers of about a minute each, each with a speculation phrase: 1) 'What are the main problems for young people who want to live in a big city?' 2) 'Is it better to live in the city centre or in the suburbs?' 3) 'How do you think cities will change in the next thirty years?' Finish, in the same take, with the surprise question the teacher posts in the class Zalo group on Wednesday morning.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The main problem is ...", "In the future, ... will probably ...", "So I think ..."], tips: ["Keep one keyword per question next to the camera.", "Four sentences for each answer is enough."] },

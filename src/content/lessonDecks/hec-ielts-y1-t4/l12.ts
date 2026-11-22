@@ -307,7 +307,7 @@ export const l12: Deck = {
     {
       kind: "vlog",
       title: "Video homework: the mock rehearsal",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts: your rehearsal for next week's Year 1 mock. Start with the date and the code word the teacher gives at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each a developed minute with a contrast and a weighing: 1) 'Should experts or elected leaders make the big decisions about health?' 2) 'Why do some people not trust scientists?' 3) 'What qualities does a good leader need?' Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, still in the same take.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts: your rehearsal for next week's Year 1 mock. Start with the date and the code word the teacher gives at the end of today's class (it is in no file). Then answer three Part 3 questions, about a minute each, each a developed minute with a contrast and a weighing: 1) 'Should experts or elected leaders make the big decisions about health?' 2) 'Why do some people not trust scientists?' 3) 'What qualities does a good leader need?' Finally, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, still in the same take.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I think ...", "..., whereas ...", "On balance, ..."], tips: ["Write one keyword per question next to the camera.", "Five sentences for each answer is enough."] },

@@ -307,7 +307,7 @@ export const l01: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a place you visited, and travel today",
-      prompt: "Wednesday, one take, no cuts, in the app's video homework. Open with the date and this week's code word (the teacher says it at the end of class; it is written nowhere else). Then the Part 2 talk: 'Describe a place you visited for the first time and remember well.' Take 1 minute to prepare and talk for the full 2 minutes. In the same take answer the Part 3 question 'Why do some people prefer places off the beaten track to famous tourist spots?', and finish with the surprise question the teacher posts in the class group on Wednesday morning.",
+      prompt: "Wednesday, one take, no cuts, in the app's video homework. Open with the date and this week's code word (the teacher says it at the end of class; it is written nowhere else). Then the Part 2 talk: 'Describe a place you visited for the first time and remember well.' Take 1 minute to prepare and talk for the full 2 minutes. In the same take answer the Part 3 question 'Why do some people prefer places off the beaten track to famous tourist spots?', and finish with the surprise question the teacher posts in the class Zalo group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The place is ..., which is ...", "At first ..., but then ...", "Some people prefer ... because ..."], tips: ["Keep your three-box plan next to the camera.", "Give the Part 3 answer at least three sentences."] },

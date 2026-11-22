@@ -305,7 +305,7 @@ export const l09: Deck = {
     {
       kind: "vlog",
       title: "Video homework: something you bought, and shopping today",
-      prompt: "Wednesday, one take, no edits or restarts. Say the date and this week's code word (given in class only), then your Part 2 talk again: 'Describe something you bought that you were happy with.' Take 1 minute to prepare, talk for 2 minutes, and in the same take answer one Part 3 question: 'Is online shopping better than going to shops? Why?' Close with the surprise question posted in the class group on Wednesday morning.",
+      prompt: "Wednesday, one take, no edits or restarts. Say the date and this week's code word (given in class only), then your Part 2 talk again: 'Describe something you bought that you were happy with.' Take 1 minute to prepare, talk for 2 minutes, and in the same take answer one Part 3 question: 'Is online shopping better than going to shops? Why?' Close with the surprise question posted in the class Zalo group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["It was a ...", "I bought it at ...", "I think online shopping is ... because ..."], tips: ["Keep your four keywords next to the camera.", "Give the Part 3 answer at least three sentences."] },

@@ -332,7 +332,7 @@ export const l02: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a recycling talk and two solutions",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and today's code word (given out only at the end of class). Make notes for 1 minute off camera, then give the Part 2 talk 'Describe something you recycle or reuse' for up to 2 minutes. Then answer two Part 3 questions for about a minute each: 'What should be done about plastic waste in rivers and seas?' and 'Is it better to recycle things or to stop making them?' Finally, answer the surprise question posted in the class group on Wednesday morning, still in the same take.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and today's code word (given out only at the end of class). Make notes for 1 minute off camera, then give the Part 2 talk 'Describe something you recycle or reuse' for up to 2 minutes. Then answer two Part 3 questions for about a minute each: 'What should be done about plastic waste in rivers and seas?' and 'Is it better to recycle things or to stop making them?' Finally, answer the surprise question posted in the class Zalo group on Wednesday morning, still in the same take.",
       length: "4-5 minutes",
       tiers: [
         { level: "Support", who: "If two minutes feels long", frames: ["The thing I reuse is ...", "I think ... should be ...", "That way, ..."], tips: ["One keyword for each point on the card.", "Say each Part 3 answer as problem, solution, result."] },

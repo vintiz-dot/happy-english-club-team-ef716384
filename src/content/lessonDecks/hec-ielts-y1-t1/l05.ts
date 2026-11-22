@@ -292,7 +292,7 @@ export const l05: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a new Part 2 cue card",
-      prompt: "On Wednesday, in one take with no cuts: say the date and this week's code word (only said aloud in class). Take 1 minute for keyword notes, then speak for 2 minutes. Cue card: Describe a sport, game or activity you would like to try in the future. You should say: what it is; where you could do it; what you would need to learn or buy; and explain why you would like to try it. Without stopping the video, answer the surprise question posted in the class group that morning.",
+      prompt: "On Wednesday, in one take with no cuts: say the date and this week's code word (only said aloud in class). Take 1 minute for keyword notes, then speak for 2 minutes. Cue card: Describe a sport, game or activity you would like to try in the future. You should say: what it is; where you could do it; what you would need to learn or buy; and explain why you would like to try it. Without stopping the video, answer the surprise question posted in the class Zalo group that morning.",
       length: "1 minute of notes, then 2 minutes of talk",
       tiers: [
         { level: "Support", who: "If two minutes feels long", frames: ["I'd like to try ... because ...", "I could do it at ...", "I would need ..."], tips: ["Aim for at least 1 minute 30.", "Use the four bullets as your plan."] },

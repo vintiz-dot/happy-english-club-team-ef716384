@@ -301,7 +301,7 @@ export const l12: Deck = {
     {
       kind: "vlog",
       title: "Video homework: a Part 3 on rules",
-      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then record three Part 3 answers, about a minute each, starting each one with agree, partly agree or disagree: 1) 'Some people say schools today have too many rules. Do you agree?' 2) 'Should teenagers be allowed to decide their own bedtime?' 3) 'Should parents check their children's phones?' Finally, answer the surprise question the teacher posts in the class group on Wednesday morning, in the same take.",
+      prompt: "Wednesday, in the app's video homework, one take with no cuts. Start with the date and the code word given at the end of today's class (it is in no file). Then record three Part 3 answers, about a minute each, starting each one with agree, partly agree or disagree: 1) 'Some people say schools today have too many rules. Do you agree?' 2) 'Should teenagers be allowed to decide their own bedtime?' 3) 'Should parents check their children's phones?' Finally, answer the surprise question the teacher posts in the class Zalo group on Wednesday morning, in the same take.",
       length: "3-4 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I agree / disagree because ...", "For example, ...", "So I think ..."], tips: ["Write one keyword per question next to the camera.", "Four sentences for each answer is enough."] },

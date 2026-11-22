@@ -284,7 +284,7 @@ export const l12: Deck = {
     {
       kind: "vlog",
       title: "Video homework: the diagnostic Part 2 again",
-      prompt: "Wednesday, one take, no cuts. Start with the date and this week's code word (said only in class). Then re-record the Lesson 1 diagnostic Part 2: take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a place where you like to spend time. You should say: where it is, how often you go there, what you do there, and explain why you like spending time there. Then answer the surprise question posted in the class group on Wednesday morning. Before recording, watch your Lesson 1 recording; at the end of the video, say two things that have changed.",
+      prompt: "Wednesday, one take, no cuts. Start with the date and this week's code word (said only in class). Then re-record the Lesson 1 diagnostic Part 2: take 1 minute to make notes, then speak for up to 2 minutes. Cue card: Describe a place where you like to spend time. You should say: where it is, how often you go there, what you do there, and explain why you like spending time there. Then answer the surprise question posted in the class Zalo group on Wednesday morning. Before recording, watch your Lesson 1 recording; at the end of the video, say two things that have changed.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["The place I want to talk about is ...", "I go there about ...", "In Lesson 1 I ..., but now I ..."], tips: ["Try to speak for longer than in Lesson 1.", "Use answer + reason + example for each bullet."] },

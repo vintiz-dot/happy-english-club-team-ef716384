@@ -303,7 +303,7 @@ export const l04: Deck = {
     {
       kind: "vlog",
       title: "Video homework: running late, and school times",
-      prompt: "Wednesday is recording day: one take in the app, no cuts. Begin with the date and the code word you heard at the end of class (it is not written anywhere). Then the Part 2 talk: 'Describe a time when you were late for something important.' Prepare for 1 minute and speak for the full 2 minutes, then answer the Part 3 question 'Do young people today have too little free time? Why?' in the same take, and close with the surprise question that appears in the class group on Wednesday morning.",
+      prompt: "Wednesday is recording day: one take in the app, no cuts. Begin with the date and the code word you heard at the end of class (it is not written anywhere). Then the Part 2 talk: 'Describe a time when you were late for something important.' Prepare for 1 minute and speak for the full 2 minutes, then answer the Part 3 question 'Do young people today have too little free time? Why?' in the same take, and close with the surprise question that appears in the class Zalo group on Wednesday morning.",
       length: "3 minutes",
       tiers: [
         { level: "Support", who: "If long answers feel hard", frames: ["I was late for ...", "When I arrived, ...", "I think young people have ... free time because ..."], tips: ["Keep your three boxes with times next to the camera.", "Give the Part 3 answer at least three sentences."] },
