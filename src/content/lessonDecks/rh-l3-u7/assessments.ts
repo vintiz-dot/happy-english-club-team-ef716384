@@ -1,7 +1,8 @@
-// Reach Higher 3B, Unit 7 (Blast! Crash! Splash!): Jupiter's two checkpoints in the
+// Reach Higher 3B, Unit 7 (Blast! Crash! Splash!): Jupiter's checkpoints and unit test in the
 // format of the Hanoi selective schools' grade-6 English test. The mid-unit quiz
 // runs in Lesson 4, the mock (ULIS style: 30 multiple-choice items on paper, then a
-// 50-70 word paragraph, about 30 minutes) in Lesson 8. Every item and the reading
+// 50-70 word paragraph, about 30 minutes) in Lesson 8, and the full end-of-unit test
+// after Lesson 8 (rh-l3-u7-test). Every item and the reading
 // passage are the school's own; nothing from the Student Book or a past paper.
 import type { Assessment } from "@/lib/lessonDecks/types";
 
@@ -107,7 +108,7 @@ export const rhL3U7Assessments: Assessment[] = [
         skill: "Reading",
         instructions: "Read the text. Choose True or False, choose the best answer, or write a short answer.",
         passage:
-          "Lý Sơn is a small island about 30 kilometres off the coast of Quảng Ngãi province. Millions of years ago, volcanoes under the sea erupted again and again. The lava cooled and hardened, and slowly an island grew above the waves. Today visitors can still see the old craters and the black volcanic rock along the shore.\n\nLife on the island is not easy, because there is little fresh water. However, the farmers have found a clever method. They cover their fields with white sand carried from the beach, which keeps the soil wet. Thanks to this, Lý Sơn garlic is famous all over Vietnam. Every day, fast boats bring visitors who want to walk along the cliffs and explore the caves.",
+          "Lý Sơn is a small island about 30 kilometres off the coast of Quảng Ngãi province. Millions of years ago, volcanoes erupted there again and again. The lava cooled and hardened, and slowly an island grew above the waves. Today visitors can still see the old craters and the black volcanic rock along the shore.\n\nLife on the island is not easy, because there is little fresh water. However, the farmers have found a clever method. They cover their fields with white sand carried from the beach, which keeps the soil wet. Thanks to this, Lý Sơn garlic is famous all over Vietnam. Every day, fast boats bring visitors who want to walk along the cliffs and explore the caves.",
         marksEach: 1,
         items: [
           { q: "21. Lý Sơn was made by volcanoes.", options: ["True", "False"], answer: "True" },
@@ -158,5 +159,156 @@ export const rhL3U7Assessments: Assessment[] = [
         ],
       },
     ],
+  },
+
+  // ------------------------------------------------------------ unit test
+  {
+    id: "rh-l3-u7-test",
+    title: "Unit 7 test: Blast! Crash! Splash!",
+    kind: "summative",
+    afterLesson: 8,
+    minutes: 70,
+    covers: [
+      "Key words: volcano, erupt, magma, lava, flow, core, develop, earthquake, plate, sense, signal, warn, rescue",
+      "Adverbs: how, where, when; adverbs that compare (book)",
+      "Prepositional phrases: where, direction, time (book)",
+      "Exam strand: past perfect, reported commands, despite, the passive, cause and effect, word formation",
+      "Reading: an original article about a new volcanic island",
+      "Writing: a 70-100 word paragraph on the Big Question",
+      "Speaking: a 2-minute talk on the Big Question",
+    ],
+    sections: [
+      {
+        title: "Part A. Vocabulary (1-10)",
+        skill: "Vocabulary",
+        instructions: "Choose the best word for each gap.",
+        marksEach: 1,
+        items: [
+          { q: "1. When the pressure under the mountain gets too strong, the volcano will ___.", options: ["erupt", "rescue", "develop", "warn"], answer: "erupt" },
+          { q: "2. Melted rock deep under the ground is called ___.", options: ["magma", "shore", "plate", "signal"], answer: "magma" },
+          { q: "3. Red-hot ___ poured down the mountain and into the sea.", options: ["lava", "core", "power", "sense"], answer: "lava" },
+          { q: "4. The Earth's ___ is its very hot centre.", options: ["core", "ocean", "island", "wave"], answer: "core" },
+          { q: "5. Over hundreds of years, the bare black rock ___ into a green island.", options: ["developed", "warned", "erupted", "rescued"], answer: "developed" },
+          { q: "6. Some animals can ___ an earthquake before people feel it.", options: ["sense", "flow", "create", "erupt"], answer: "sense" },
+          { q: "7. A siren is a ___ that tells people to move to higher ground.", options: ["signal", "plate", "rock", "force"], answer: "signal" },
+          { q: "8. The radio ___ families on the coast that a typhoon was coming.", options: ["warned", "created", "flowed", "developed"], answer: "warned" },
+          { q: "9. A boat went out to ___ the fishers whose engine had stopped.", options: ["rescue", "erupt", "sense", "flow"], answer: "rescue" },
+          { q: "10. The ground shakes when two ___ of the Earth's outer layer suddenly move.", options: ["plates", "shores", "oceans", "islands"], answer: "plates" },
+        ],
+      },
+      {
+        title: "Part B. Grammar: adverbs and prepositional phrases (11-18)",
+        skill: "Grammar",
+        instructions: "Choose the best answer, or do what the question asks.",
+        marksEach: 1,
+        items: [
+          { q: "11. The scientist walked ___ towards the edge of the crater.", options: ["careful", "carefully", "care", "more careful"], answer: "carefully" },
+          { q: "12. The second wave reached the beach ___ than the first one.", options: ["fast", "faster", "fastest", "more fast"], answer: "faster" },
+          { q: "13. Of the three teams, ours worked ___.", options: ["hardest", "the hardest", "more hard", "the most hard"], answer: "the hardest" },
+          { q: "14. My sister reads English ___ than I do.", options: ["more fluently", "fluentlier", "most fluently", "more fluent"], answer: "more fluently" },
+          { q: "15. Find the adverb and say whether it tells how, where or when: 'The fishing boats will come back soon.'", answer: "soon: when" },
+          { q: "16. We ran ___ the hill to get away from the water.", options: ["up", "on", "at", "of"], answer: "up" },
+          { q: "17. Find the prepositional phrase and say whether it shows where, direction or time: 'After the storm, the villagers repaired the roofs.'", answer: "After the storm: time" },
+          { q: "18. Correct the mistake: 'The earthquake happened in Monday morning.'", answer: "in → on (on Monday morning)" },
+        ],
+      },
+      {
+        title: "Part C. Exam practice: rewrite, correct, word form (19-28)",
+        skill: "Grammar",
+        instructions: "19-23: rewrite each sentence so that it means the same, using the word in brackets. 24-25: find the mistake and correct it. 26-28: give the correct form of the word in brackets.",
+        marksEach: 1,
+        items: [
+          { q: "19. The ferry left. Then we arrived at the port. (By the time)", answer: "By the time we arrived at the port, the ferry had left." },
+          { q: "20. 'Don't go near the water,' the guard said to us. (told)", answer: "The guard told us not to go near the water." },
+          { q: "21. Although the wind was strong, the fishers went out to sea. (Despite)", answer: "Despite the strong wind, the fishers went out to sea." },
+          { q: "22. An earthquake under the sea caused the tsunami. (was caused)", answer: "The tsunami was caused by an earthquake under the sea." },
+          { q: "23. The school closed because the flood was serious. (because of)", answer: "The school closed because of the serious flood." },
+          { q: "24. You had better to stay inside until the storm is over.", answer: "had better to stay → had better stay" },
+          { q: "25. The rescue team was arrived at the village at midnight.", answer: "was arrived → arrived" },
+          { q: "26. There was a loud (explode) ___ and the windows shook.", answer: "explosion" },
+          { q: "27. Many people felt (nerve) ___ when the ground began to shake.", answer: "nervous" },
+          { q: "28. Scientists cannot always (prediction) ___ when a volcano will erupt.", answer: "predict" },
+        ],
+      },
+      {
+        title: "Part D. Reading (29-34)",
+        skill: "Reading",
+        instructions: "Read the text. Choose the best answer, choose True or False, or write a short answer.",
+        passage:
+          "In November 1963, some fishermen near the south coast of Iceland saw smoke rising from the sea. A volcano was erupting under the water. Day after day, ash and lava piled up, until a black island appeared above the waves. People named it Surtsey. The eruptions went on for about three and a half years, and by the time they stopped, the island was more than a kilometre wide.\n\nScientists quickly understood that Surtsey was a perfect natural laboratory. It was decided that only scientists could visit, so that they could watch how life arrives on new land. Seeds came first, carried by the wind and the waves, and the first plants grew within two years. Later, seabirds built their nests there. However, the sea and the wind have slowly worn away part of the rock, so the island is smaller today than it was in 1967.",
+        marksEach: 1,
+        items: [
+          { q: "29. What did the fishermen see first?", options: ["smoke rising from the sea", "a black island", "lava on a beach", "seabirds' nests"], answer: "smoke rising from the sea" },
+          { q: "30. The volcano that made Surtsey was under the sea.", options: ["True", "False"], answer: "True" },
+          { q: "31. Families can go to Surtsey for a holiday.", options: ["True", "False"], answer: "False" },
+          { q: "32. Why do scientists study Surtsey?", options: ["to see how life arrives on new land", "to find gold in the rock", "to build a new town", "to stop the next eruption"], answer: "to see how life arrives on new land" },
+          { q: "33. In the last sentence, 'worn away' means ___.", options: ["slowly broken off and carried away", "built up higher", "covered with plants", "made hotter"], answer: "slowly broken off and carried away" },
+          { q: "34. Name TWO forces that are changing Surtsey today.", answer: "the sea (the waves) and the wind" },
+        ],
+      },
+      {
+        title: "Part E. Writing",
+        skill: "Writing",
+        instructions:
+          "Write 70-100 words. Which force of nature do you think changes Earth the most? Explain how it changes the land or the sea, give an example of a place (in Vietnam or anywhere in the world), and say how people can stay safe from it. Use at least one cause-and-effect phrase (cause, lead to, result in, because of) and one adverb.",
+        marksEach: 10,
+        items: [
+          {
+            q: "Your paragraph (70-100 words).",
+            answer:
+              "Mark on four parts, 2.5 each: content (the force, how it changes Earth, an example place, how to stay safe); organisation (a topic sentence, ideas in order, linking words); grammar (cause-and-effect phrases, adverbs, past and present tenses or the passive used correctly); vocabulary and spelling (unit key words used correctly). e.g. In my opinion, water changes Earth the most. Rivers and the sea work slowly, but they never stop. Over millions of years, rain and sea water carved the limestone islands and caves of Hạ Long Bay. Water can also change a place very quickly: heavy rain often leads to floods and landslides in the mountains of northern Vietnam. To stay safe, families should listen carefully to warnings on the radio and move to higher ground as soon as they hear a signal.",
+          },
+        ],
+      },
+    ],
+    speaking: {
+      task:
+        "Talk for about two minutes on the Big Question: What forces can change Earth? Choose two forces from the unit (a volcano, an earthquake, a tsunami, or wind and water). For each one say how it changes the land or the sea, whether it works quickly or slowly, and one place where it has happened. End with your opinion: which force matters most for people in Vietnam, and why? Then answer the teacher's follow-up questions.",
+      prompts: [
+        "Can a force that destroys land also create new land? Give an example.",
+        "How did Selvakumar know about the danger before his family did?",
+        "How do scientists find out that a tsunami is coming?",
+        "What should a family on the coast do when they hear a typhoon warning?",
+        "Which selection in this unit taught you the most, and why?",
+      ],
+      rubric: [
+        {
+          criterion: "Fluency",
+          bands: [
+            "Talks for about two minutes with only short pauses to think; ideas follow in a clear order.",
+            "Keeps going for most of the time; some pauses or restarts but needs no help.",
+            "Many pauses; speaks in short pieces; needs a prompt once or twice to continue.",
+            "Very hesitant; single words or short phrases; needs help throughout.",
+          ],
+        },
+        {
+          criterion: "Grammar range and accuracy",
+          bands: [
+            "Uses adverbs (including one that compares), cause-and-effect phrases and past tenses or the passive, nearly always correctly.",
+            "Uses some of these structures correctly; a few slips that do not stop understanding.",
+            "Mostly simple present sentences; frequent errors in tenses or word order.",
+            "Very little control of grammar; errors often stop understanding.",
+          ],
+        },
+        {
+          criterion: "Vocabulary",
+          bands: [
+            "Uses many unit key words (erupt, magma, plate, tsunami, warn, signal ...) correctly and naturally.",
+            "Uses several key words correctly; one or two wrong or missing.",
+            "Uses only a few key words; often repeats the same simple words.",
+            "Very few key words; names things only or uses Vietnamese.",
+          ],
+        },
+        {
+          criterion: "Pronunciation and interaction",
+          bands: [
+            "Clear words and word stress (vol-CA-no, e-RUP-tion); answers follow-up questions fully and with reasons.",
+            "Mostly clear; a few words hard to catch; answers questions with a short reason.",
+            "Often hard to follow; answers questions in a few words without reasons.",
+            "Very hard to understand; does not answer the questions or answers off topic.",
+          ],
+        },
+      ],
+    },
   },
 ];
