@@ -2005,3 +2005,15 @@ html[data-hec-theme="ivory"][data-hec-tide]:not(.dark) {
   .hec-progress-nav { animation: none; transform: scaleX(1); opacity: 0.7; }
   .hec-progress-saving { animation: none; background: hsl(var(--hec-brass, var(--primary))); opacity: 0.5; }
 }
+/* Inside the Ivory scope (Signature tier, brief C1): a brass hairline. 2 px, solid, no gradient and no glow;
+   a save in flight crawls like a page change instead of sweeping a gradient. Outside the scope: unchanged.
+   The component, its timing and its screen-reader status are not touched. */
+[data-hec-theme="ivory"] .hec-progress { height: 2px; background: hsl(var(--hec-brass)); }
+[data-hec-theme="ivory"] .hec-progress-saving {
+  background: hsl(var(--hec-brass)); background-image: none;
+  animation: hec-progress-crawl 10s cubic-bezier(0.1, 0.6, 0.3, 1) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-hec-theme="ivory"] .hec-progress-nav { animation: none; transform: scaleX(1); opacity: 0.7; }
+  [data-hec-theme="ivory"] .hec-progress-saving { animation: none; transform: scaleX(1); opacity: 0.5; }
+}
