@@ -7,8 +7,13 @@ import { Users, Archive } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { describeRate } from "@/lib/payRate";
+import { flushSync } from "react-dom";
+import { carry, useCarryNavigate } from "@/components/fx/Carry";
 
 export function TeachersList() {
+  // Carry: the pressed row's name travels to the profile heading. Only that row holds the name.
+  const carryNavigate = useCarryNavigate();
+  const [carrying, setCarrying] = useState<string | null>(null);
   // Archiving used to be a one-way trip. This list filtered is_active and is
   // the only screen in the app that links to /teachers/:id, so the moment a
   // teacher was switched off they could not be opened again - not to correct
@@ -79,11 +84,20 @@ export function TeachersList() {
         ) : (
           <div className="space-y-3">
             {teachers?.map((teacher) => (
-              <Link key={teacher.id} to={`/teachers/${teacher.id}`}>
+              <Link
+                key={teacher.id}
+                to={`/teachers/${teacher.id}`}
+                onClick={(e) => {
+                  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  flushSync(() => setCarrying(teacher.id));
+                  carryNavigate(`/teachers/${teacher.id}`);
+                }}
+              >
                 <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium">{teacher.full_name}</p>
+                      <p style={carrying === teacher.id ? { viewTransitionName: carry(`teacher-${teacher.id}`) } : undefined} className="font-medium">{teacher.full_name}</p>
                       <Badge variant={teacher.is_active ? "default" : "secondary"}>
                         {teacher.is_active ? "Active" : "Archived"}
                       </Badge>

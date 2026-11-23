@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { flushSync } from "react-dom";
+import { carry, useCarryNavigate } from "@/components/fx/Carry";
 import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
 import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 import {
@@ -23,8 +25,10 @@ import {
 
 export function FamiliesList() {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  
+  // Carry: the pressed row's name travels to the family heading. Only that row holds the name.
+  const carryNavigate = useCarryNavigate();
+  const [carrying, setCarrying] = useState<string | null>(null);
+
   const { data: families, isLoading } = useQuery({
     queryKey: ["families-list"],
     queryFn: async () => {
@@ -89,7 +93,7 @@ export function FamiliesList() {
             <TableBody>
               {families.map((family) => (
                 <TableRow key={family.id}>
-                  <TableCell className="font-medium">{family.name}</TableCell>
+                  <TableCell className="font-medium whitespace-normal break-words"><span style={carrying === family.id ? { viewTransitionName: carry(`family-${family.id}`) } : undefined}>{family.name}</span></TableCell>
                   <TableCell>{family.email || "-"}</TableCell>
                   <TableCell>{family.phone || "-"}</TableCell>
                   <TableCell>
@@ -99,7 +103,10 @@ export function FamiliesList() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => navigate(`/families/${family.id}`)}>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        flushSync(() => setCarrying(family.id));
+                        carryNavigate(`/families/${family.id}`);
+                      }}>
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
