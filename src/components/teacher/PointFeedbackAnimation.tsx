@@ -155,10 +155,10 @@ export function PointFeedbackAnimation({ feedbacks, onComplete }: PointFeedbackA
             className="absolute -top-2 left-0 right-0 flex justify-center pointer-events-none z-50"
           >
             <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-lg shadow-lg ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-lg shadow-hec-2 ${
                 isPositive
-                  ? "bg-green-500/90 text-white"
-                  : "bg-red-500/90 text-white"
+                  ? "bg-hec-leaf text-hec-paper"
+                  : "bg-hec-danger-fill text-hec-on-danger"
               }`}
             >
               <Icon className="h-5 w-5" />

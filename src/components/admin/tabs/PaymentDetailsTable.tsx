@@ -50,7 +50,7 @@ export function PaymentDetailsTable({ selectedMonth }: PaymentDetailsTableProps)
                       alt={payment.students?.full_name}
                       className="object-cover"
                     />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-medium">
+                    <AvatarFallback className="bg-hec-sunken text-hec-ink text-xs font-medium">
                       {payment.students?.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

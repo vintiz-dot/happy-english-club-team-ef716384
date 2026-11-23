@@ -211,11 +211,11 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
 
   const attendanceColor = (status: string) => {
     const colors: Record<string, string> = {
-      Present: "bg-green-100 text-green-800 hover:bg-green-200",
-      Absent: "bg-red-100 text-red-800 hover:bg-red-200",
-      Excused: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+      Present: "border border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:bg-hec-leaf-tint",
+      Absent: "border border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:bg-hec-danger-tint",
+      Excused: "border border-hec-warn/30 bg-hec-warn-tint text-hec-warn hover:bg-hec-warn-tint",
     };
-    return colors[status] || "bg-gray-100";
+    return colors[status] || "bg-hec-sunken text-hec-ink-soft";
   };
 
   // Check if session can be edited based on time (using Bangkok timezone)
@@ -416,7 +416,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
         )}
         
         {isFutureSession && role === "admin" && (
-          <div className={ivory ? "my-4 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4 text-hec-small text-hec-ink" : "my-4 p-3 bg-orange-100 dark:bg-orange-900 rounded-lg text-sm"}>
+          <div className={ivory ? "my-4 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4 text-hec-small text-hec-ink" : "my-4 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4 text-hec-small text-hec-ink"}>
             ⚠️ This session hasn't started yet. Marking attendance will NOT set status to "Held" until 5 minutes after start time.
           </div>
         )}

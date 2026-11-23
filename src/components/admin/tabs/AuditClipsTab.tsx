@@ -357,7 +357,7 @@ export default function AuditClipsTab() {
     return (
       <Card><CardContent className="p-6 text-sm">
         This page needs the migration <code>20261111090000_audit_voice_clips.sql</code> pasted into the Supabase SQL editor.
-        <div className="mt-2 text-muted-foreground">{(error as any).message}</div>
+        <div className="mt-2 text-hec-ink-soft">{(error as any).message}</div>
       </CardContent></Card>
     );
   }
@@ -368,7 +368,7 @@ export default function AuditClipsTab() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold">Audit clips</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-hec-ink-soft">
           Private to admins. Stored in this school's own Supabase project under a code, never a name.
         </p>
       </div>
@@ -382,7 +382,7 @@ export default function AuditClipsTab() {
                 <Button size="sm" variant="outline" onClick={clearFinished}>Clear finished</Button>
               )}
             </div>
-            <div aria-live="polite" className="text-sm text-muted-foreground">
+            <div aria-live="polite" className="text-sm text-hec-ink-soft">
               {progress.done} of {progress.total} done
               {progress.active > 0 && ` · ${progress.active} in progress`}
               {progress.failed > 0 && ` · ${progress.failed} failed`}
@@ -392,11 +392,11 @@ export default function AuditClipsTab() {
           </CardHeader>
           <CardContent className="max-h-72 space-y-2 overflow-y-auto">
             {jobs.map((j) => (
-              <div key={j.id} className="rounded-md border p-2 text-sm">
+              <div key={j.id} className="rounded-hec-md border border-hec-line p-2 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">{j.code}</Badge>
                   <span className="min-w-0 flex-1 truncate">{j.studentName} · {j.fileName}</span>
-                  <span className="text-xs text-muted-foreground">{formatBytes(j.size)}</span>
+                  <span className="text-xs text-hec-ink-soft">{formatBytes(j.size)}</span>
                   <Badge variant={j.stage === "failed" ? "destructive" : j.stage === "done" ? "default" : "outline"}>
                     {STAGE_LABEL[j.stage]}{j.stage === "uploading" ? ` ${j.pct}%` : ""}
                   </Badge>
@@ -408,7 +408,7 @@ export default function AuditClipsTab() {
                   )}
                 </div>
                 {(j.stage === "uploading" || j.stage === "done") && <Progress className="mt-2 h-1.5" value={j.pct} aria-label={`${j.fileName} progress`} />}
-                {j.stage === "failed" && j.error && <p className="mt-1 text-xs text-destructive">{j.error}</p>}
+                {j.stage === "failed" && j.error && <p className="mt-1 text-xs text-hec-danger">{j.error}</p>}
               </div>
             ))}
           </CardContent>
@@ -438,11 +438,11 @@ export default function AuditClipsTab() {
                 <button
                   key={s.id}
                   onClick={() => { setSelected(s.id); setPlaying(null); }}
-                  className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-muted ${selected === s.id ? "bg-muted font-medium" : ""}`}
+                  className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-hec-md px-3 py-2 text-left text-sm hover:bg-hec-sunken ${selected === s.id ? "bg-hec-sunken font-medium" : ""}`}
                 >
                   <span className="min-w-0">
                     <span className="block truncate">{s.full_name}{!s.is_active && " (inactive)"}</span>
-                    <span className="block truncate text-xs font-normal text-muted-foreground">
+                    <span className="block truncate text-xs font-normal text-hec-ink-soft">
                       {s.classes.length ? s.classes.join(", ") : "No current class"}
                     </span>
                   </span>
@@ -455,7 +455,7 @@ export default function AuditClipsTab() {
 
         <div className="space-y-4">
           {!student && (
-            <Card><CardContent className="p-6 text-sm text-muted-foreground">Pick a student to add their videos.</CardContent></Card>
+            <Card><CardContent className="p-6 text-sm text-hec-ink-soft">Pick a student to add their videos.</CardContent></Card>
           )}
 
           {student && !subject && (
@@ -514,7 +514,7 @@ export default function AuditClipsTab() {
                       {busy === "link" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2 className="mr-2 h-4 w-4" />}
                       Link to {student.full_name}
                     </Button>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-hec-ink-soft">
                       A link keeps only the video address. It plays here but is not a file, so it can't be downloaded into the audit folder.
                     </p>
                   </div>
@@ -525,9 +525,9 @@ export default function AuditClipsTab() {
               <Card>
                 <CardHeader><CardTitle className="text-base">Clips ({clips.length})</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
-                  {!clips.length && <p className="text-sm text-muted-foreground">No clips yet.</p>}
+                  {!clips.length && <p className="text-sm text-hec-ink-soft">No clips yet.</p>}
                   {clips.map((c) => (
-                    <div key={c.id} className="rounded-md border p-3">
+                    <div key={c.id} className="rounded-hec-md border border-hec-line p-3">
                       <div className="flex flex-wrap items-center gap-2">
                         {c.source_kind === "youtube" ? <Youtube className="h-4 w-4 shrink-0" /> : <FileVideo className="h-4 w-4 shrink-0" />}
                         {c.source_kind === "youtube" ? (
@@ -538,7 +538,7 @@ export default function AuditClipsTab() {
                         ) : (
                           <>
                             <span className="font-mono text-sm">{exportName(subject.code, c.clip_no, extFor(c.mime_type, c.original_name))}</span>
-                            <span className="text-xs text-muted-foreground">{formatBytes(c.size_bytes)}</span>
+                            <span className="text-xs text-hec-ink-soft">{formatBytes(c.size_bytes)}</span>
                           </>
                         )}
                         {c.delete_after && (
@@ -558,14 +558,14 @@ export default function AuditClipsTab() {
                           <Button size="icon" variant="ghost" aria-label="Delete" disabled={busy === c.id} onClick={() => deleteClip(c)}><Trash2 className="h-4 w-4" /></Button>
                         </div>
                       </div>
-                      {c.source_note && <p className="mt-1 text-xs text-muted-foreground">{c.source_note}</p>}
+                      {c.source_note && <p className="mt-1 text-xs text-hec-ink-soft">{c.source_note}</p>}
                       {playing?.id === c.id && (c.source_kind === "youtube"
                         ? <iframe src={playing.url} title={`${subject.code} clip ${c.clip_no}`} className="mt-2 aspect-video w-full rounded"
                             allow="encrypted-media; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
                         : <video src={playing.url} controls className="mt-2 max-h-72 w-full rounded" />)}
                     </div>
                   ))}
-                  <Button variant="outline" size="sm" className="text-destructive" onClick={withdraw} disabled={busy === "withdraw"}>
+                  <Button variant="outline" size="sm" className="text-hec-danger" onClick={withdraw} disabled={busy === "withdraw"}>
                     Withdraw {subject.code} and delete every clip
                   </Button>
                 </CardContent>
@@ -590,7 +590,7 @@ export default function AuditClipsTab() {
                 <div aria-live="polite" className="space-y-1 text-sm">
                   <Progress value={saving.total ? Math.round((saving.done / saving.total) * 100) : 100} aria-label="Saving progress" />
                   <div>{saving.done} of {saving.total} saved{saving.current ? ` · ${saving.current}` : ""}</div>
-                  {saving.errors.map((e) => <div key={e} className="text-xs text-destructive">{e}</div>)}
+                  {saving.errors.map((e) => <div key={e} className="text-xs text-hec-danger">{e}</div>)}
                 </div>
               )}
             </CardContent>

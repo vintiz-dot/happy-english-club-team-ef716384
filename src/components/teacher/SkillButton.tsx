@@ -65,8 +65,8 @@ export function SkillButton({
     : cn(
     "flex flex-col items-center justify-center gap-1 p-3 rounded-xl min-w-[56px] min-h-[56px] transition-all active:scale-95 touch-manipulation select-none",
     variant === "positive"
-      ? "bg-green-500/20 hover:bg-green-500/30 text-green-600 dark:text-green-400"
-      : "bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400"
+      ? "border border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf"
+      : "border border-hec-danger/30 bg-hec-danger-tint text-hec-danger"
   );
 
   return (
@@ -90,7 +90,7 @@ export function SkillButton({
               size="sm"
               className={ivory
                 ? "min-h-hec-target min-w-hec-target p-0 text-hec-body font-semibold tabular-nums"
-                : "w-10 h-10 p-0 text-sm font-bold hover:bg-warmGray hover:text-royalGreen hover:border-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light dark:hover:border-royalGreen-light"}
+                : "min-h-hec-target min-w-hec-target p-0 text-hec-body font-semibold tabular-nums"}
               onClick={() => handlePointSelect(pts)}
             >
               +{pts}

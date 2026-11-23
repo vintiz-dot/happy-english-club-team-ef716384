@@ -318,9 +318,9 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
         </DialogHeader>
 
         {isPast && session.status === "Held" && (
-          <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-amber-800 dark:text-amber-300">
+          <div className="flex items-start gap-2 p-3 bg-hec-warn-tint border border-hec-warn/30 rounded-hec-md">
+            <AlertTriangle className="h-5 w-5 text-hec-warn mt-0.5 flex-shrink-0" />
+            <div className="text-hec-small text-hec-ink">
               <p className="font-semibold">Editing Past Held Session</p>
               <p className="mt-1">
                 This session is already held. Time changes will affect payroll and tuition calculations.

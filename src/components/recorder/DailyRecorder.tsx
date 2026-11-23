@@ -385,7 +385,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
       {lesson ? (
         <header className="space-y-1">
           <h2 className="text-2xl font-semibold break-words">{lessonHeadline(lesson, w)}</h2>
-          <p className="text-muted-foreground">
+          <p className="text-hec-ink-soft">
             Lesson {hhmm(lesson.startTime)} - {hhmm(lesson.endTime)}. Recording stops by itself at {addMinutes(lesson.endTime, w.grace)}.
           </p>
         </header>
@@ -407,7 +407,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
           {earlierBox}
           {stopAsked ? <Notice tone="info" title="The school stopped this recording" role="status">{stopAsked}</Notice> : null}
 
-          <section aria-label="Microphones" className="rounded-xl border border-border p-4 space-y-3">
+          <section aria-label="Microphones" className="rounded-hec-lg border border-hec-line p-4 space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
               {(["teacher", "room"] as TrackRole[]).map((role) => {
                 const d = micDetail(devices, role, profile);
@@ -426,7 +426,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
                 {busy ? <Loader2 className="h-5 w-5 mr-2 motion-safe:animate-spin" aria-hidden /> : <Mic className="h-5 w-5 mr-2" aria-hidden />}
                 {clicked ? "Allow sound" : "Ready for today"}
               </Button>
-              <p className="text-sm text-muted-foreground">{clicked
+              <p className="text-sm text-hec-ink-soft">{clicked
                 ? "The browser has not allowed sound yet: one more click lets it. Without it the next lesson is not recorded."
                 : "One click lets the browser use sound. Then recording starts by itself for each of today's lessons, on any page of this tab."}</p>
             </div>
@@ -466,7 +466,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
 
           {capturing ? (
             <>
-              <section aria-label="Levels" className="rounded-xl border border-border p-4 space-y-4">
+              <section aria-label="Levels" className="rounded-hec-lg border border-hec-line p-4 space-y-4">
                 {profile?.teacherOnPhone ? (
                   <p className="text-base">Your microphone is your phone: on the phone, open <b>/teacher/recorder/phone</b> and press Join. This laptop records the room only.</p>
                 ) : (
@@ -491,7 +491,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
                   <Button variant="outline" className="min-h-16 text-base whitespace-normal" onClick={() => void addMarker("activity", "Activity")}><Flag className="h-5 w-5 mr-2 shrink-0" aria-hidden /> Activity</Button>
                 </div>
                 {kids.data && kids.data.length ? (
-                  <details className="rounded-xl border border-border p-3">
+                  <details className="rounded-hec-lg border border-hec-line p-3">
                     <summary className="cursor-pointer min-h-11 flex items-center gap-2 font-medium"><Users className="h-5 w-5" aria-hidden /> Tap a child's name when they speak (optional)</summary>
                     <div className="flex flex-wrap gap-2 pt-3">
                       {kids.data.map((k) => (
@@ -503,12 +503,12 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
                   </details>
                 ) : null}
                 {marks.length ? (
-                  <ul className="text-sm text-muted-foreground space-y-1" aria-live="polite">
+                  <ul className="text-sm text-hec-ink-soft space-y-1" aria-live="polite">
                     {marks.map((m) => <li key={m.id} className="break-words">Marked: {m.text}{m.at ? ` at ${m.at}` : ""}</li>)}
                   </ul>
                 ) : null}
               </section>
-              <p className="text-sm text-muted-foreground">The {w.preRoll} minutes before the lesson and the {w.grace} minutes after it are recorded, but they do not count as lesson time.</p>
+              <p className="text-sm text-hec-ink-soft">The {w.preRoll} minutes before the lesson and the {w.grace} minutes after it are recorded, but they do not count as lesson time.</p>
             </>
           ) : null}
 
@@ -539,7 +539,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="min-h-11">Keep recording</AlertDialogCancel>
-            <AlertDialogAction className="min-h-11 bg-foreground text-background hover:bg-foreground/90" onClick={() => void stop()}>Stop recording</AlertDialogAction>
+            <AlertDialogAction className="min-h-11 bg-hec-action text-hec-on-action hover:bg-foreground/90" onClick={() => void stop()}>Stop recording</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -235,14 +235,14 @@ export function BulkSessionDelete() {
               <Label htmlFor="to-date">To date</Label>
               <Input id="to-date" type="date" className="min-h-11" value={toDate} onChange={(e) => { setToDate(e.target.value); reset(); }} aria-describedby="bulk-range-help" />
             </div>
-            <p id="bulk-range-help" className="text-xs text-muted-foreground sm:col-span-2">
+            <p id="bulk-range-help" className="text-xs text-hec-ink-soft sm:col-span-2">
               Both dates are required, at most 62 days apart. Lessons already cancelled are not listed.
             </p>
           </div>
         )}
 
         {error && (
-          <div role="alert" className="space-y-1 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
+          <div role="alert" className="space-y-1 rounded-hec-lg border border-hec-danger/30 bg-hec-danger-tint p-3 text-sm">
             <p className="flex items-center gap-2 font-semibold">
               <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
               {errorStep === "confirm" && UNKNOWN_OUTCOME_CODES.has(error.code) ? "Not confirmed" : "Nothing was changed by this step"}
@@ -252,7 +252,7 @@ export function BulkSessionDelete() {
                 ? `${OUTCOME_UNKNOWN_TEXT} For a batch: check these lessons again; any already cancelled are no longer listed.`
                 : errorText(error.code, error.message)}
             </p>
-            <p className="text-xs text-muted-foreground">Code: {error.code}</p>
+            <p className="text-xs text-hec-ink-soft">Code: {error.code}</p>
             {offer && <SendBatchForApproval offer={offer} />}
           </div>
         )}
@@ -280,13 +280,13 @@ export function BulkSessionDelete() {
                 Nothing recorded ({counts.plain})
               </h3>
               {counts.plain === 0 ? (
-                <p className="text-sm text-muted-foreground">No lessons in this group.</p>
+                <p className="text-sm text-hec-ink-soft">No lessons in this group.</p>
               ) : (
-                <ul className="max-h-56 space-y-1 overflow-y-auto rounded-xl border border-border p-2 text-sm">
+                <ul className="max-h-56 space-y-1 overflow-y-auto rounded-hec-lg border border-hec-line p-2 text-sm">
                   {preview.plain.map((r) => (
                     <li key={r.id} className="break-words px-1 py-1">
                       {longDate(r.date)}, {hm(r.start_time)}-{hm(r.end_time)} - {className(r.class_id)}
-                      {r.status ? <span className="text-muted-foreground"> ({r.status})</span> : null}
+                      {r.status ? <span className="text-hec-ink-soft"> ({r.status})</span> : null}
                     </li>
                   ))}
                 </ul>
@@ -299,7 +299,7 @@ export function BulkSessionDelete() {
                 <h3 id="bulk-ack-h" className="text-sm font-semibold">
                   Evidence they took place ({counts.needsAck}) - not included unless you tick them
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-hec-ink-soft">
                   Each lesson here needs its own tick and its own reason. Strong evidence also needs its date typed.
                 </p>
                 <ul className="space-y-3">
@@ -318,12 +318,12 @@ export function BulkSessionDelete() {
                 </h3>
                 <ul className="space-y-1 text-sm">
                   {preview.refused.map((r) => (
-                    <li key={r.id} className="break-words rounded-lg border border-border p-2">
+                    <li key={r.id} className="break-words rounded-hec-md border border-hec-line p-2">
                       {longDate(r.date)}, {hm(r.start_time)} - {className(r.class_id)}: {errorText(r.refuse_code)}
                     </li>
                   ))}
                   {preview.preview_failed.map((f) => (
-                    <li key={f.id} className="break-words rounded-lg border border-border p-2">
+                    <li key={f.id} className="break-words rounded-hec-md border border-hec-line p-2">
                       A lesson could not be checked: {errorText(f.code)} (code: {f.code})
                     </li>
                   ))}
@@ -347,7 +347,7 @@ export function BulkSessionDelete() {
               <Button
                 variant="outline"
                 size="lg"
-                className="min-h-12 w-full border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive sm:w-auto"
+                className="min-h-12 w-full border-hec-danger text-hec-ink hover:bg-hec-danger-tint hover:text-hec-ink [&_svg]:text-hec-danger sm:w-auto"
                 disabled={!canGo}
                 aria-describedby="bulk-go-help"
                 onClick={() => void handleConfirm()}
@@ -356,7 +356,7 @@ export function BulkSessionDelete() {
                 {busy === "confirm" ? "Working..." : goCount === 1 ? "Cancel 1 lesson" : `Cancel ${goCount} lessons`}
               </Button>
             </div>
-            <p id="bulk-go-help" className="text-xs text-muted-foreground">
+            <p id="bulk-go-help" className="text-xs text-hec-ink-soft">
               {goCount === 0
                 ? "No lesson is selected to cancel."
                 : !reasonOk
@@ -397,7 +397,7 @@ function AckRow({ row, ack, className, disabled, onChange }: { row: BulkRow; ack
   const min = Number((row.requires as any)?.reason_min ?? REASON_MIN);
   const strong = row.level === "STRONG";
   return (
-    <li className="space-y-3 rounded-xl border border-border p-3">
+    <li className="space-y-3 rounded-hec-lg border border-hec-line p-3">
       <div className="flex min-h-11 items-start gap-3">
         <Checkbox
           id={`inc-${row.id}`}
@@ -411,11 +411,11 @@ function AckRow({ row, ack, className, disabled, onChange }: { row: BulkRow; ack
             {longDate(row.date)}, {hm(row.start_time)}-{hm(row.end_time)} - {className}
           </span>{" "}
           <Badge variant="outline" className="ml-1 align-middle">{strong ? "Strong evidence" : "Some evidence"}</Badge>
-          <span className="block text-muted-foreground">Include this lesson in the cancellation</span>
+          <span className="block text-hec-ink-soft">Include this lesson in the cancellation</span>
         </Label>
       </div>
       {items.length > 0 && (
-        <ul className="list-disc space-y-1 pl-9 text-sm text-muted-foreground" aria-label="Evidence for this lesson">
+        <ul className="list-disc space-y-1 pl-9 text-sm text-hec-ink-soft" aria-label="Evidence for this lesson">
           {items.map((i, k) => (
             <li key={`${i.type}-${k}`} className="break-words">
               {describeEvidence(i)}
@@ -443,7 +443,7 @@ function AckRow({ row, ack, className, disabled, onChange }: { row: BulkRow; ack
           </ConfirmTick>
           {strong && <TypedDateField lessonDate={row.date} value={ack.typedDate} onChange={(v) => onChange({ typedDate: v })} disabled={disabled} />}
           {problem && (
-            <p role="status" className="text-xs text-muted-foreground">
+            <p role="status" className="text-xs text-hec-ink-soft">
               {problem}
             </p>
           )}
@@ -502,7 +502,7 @@ function BulkResultView({
         </span>
       </p>
       {result.stopped && (
-        <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
+        <div role="alert" className="rounded-hec-lg border border-hec-danger/30 bg-hec-danger-tint p-3 text-sm">
           <p className="font-semibold">The batch stopped part-way.</p>
           <p className="break-words">
             {errorText(result.stopped.code, result.stopped.message)} The lessons listed as cancelled below stay cancelled; the ones listed as not attempted were not changed.
@@ -510,7 +510,7 @@ function BulkResultView({
         </div>
       )}
       {(result.tuitionFailed.length > 0 || result.tuitionRetry.length > 0) && (
-        <div role="alert" className="space-y-2 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
+        <div role="alert" className="space-y-2 rounded-hec-lg border border-hec-danger/30 bg-hec-danger-tint p-3 text-sm">
           {allRetried ? (
             <p className="font-semibold">The retry recalculated the bills of every lesson listed below.</p>
           ) : (
@@ -528,7 +528,7 @@ function BulkResultView({
               {result.tuitionRetry.map((t) => {
                 const st = retry[t.id];
                 return (
-                  <li key={t.id} className="flex flex-col gap-2 rounded-lg border border-border bg-background p-2 sm:flex-row sm:items-center sm:justify-between">
+                  <li key={t.id} className="flex flex-col gap-2 rounded-hec-md border border-hec-line bg-hec-surface p-2 sm:flex-row sm:items-center sm:justify-between">
                     <span className="min-w-0 break-words">
                       {lesson(t.id)}
                       {st?.ok ? <span className="block text-xs font-medium">Bills refreshed.</span> : null}
@@ -537,7 +537,7 @@ function BulkResultView({
                     {!st?.ok && (
                       <Button
                         variant="outline"
-                        className="min-h-11 shrink-0 border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive"
+                        className="min-h-11 shrink-0 border-hec-danger text-hec-ink hover:bg-hec-danger-tint hover:text-hec-ink [&_svg]:text-hec-danger"
                         disabled={!!st?.busy}
                         onClick={() => retryOne(t.id, t.override_id)}
                       >
@@ -558,7 +558,7 @@ function BulkResultView({
       <ResultList id="bulk-res-refused" title={`Refused - not changed (${result.refused.length})`} items={result.refused.map((r) => ({ id: r.id, text: lesson(r.id), note: `${errorText(r.code)} (code: ${r.code ?? "unknown"})` }))} />
       <ResultList id="bulk-res-not" title={`Not attempted - not changed (${result.notAttempted.length})`} items={result.notAttempted.map((r) => ({ id: r.id, text: lesson(r.id), note: r.code ? `code: ${r.code}` : undefined }))} />
       {result.done.length > 0 && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-hec-ink-soft">
           {reviewCount > 0 ? `${reviewCount} ${reviewCount === 1 ? "is" : "are"} recorded for review. ` : ""}
           Every cancellation is recorded with your name and reason.
         </p>
@@ -594,7 +594,7 @@ function SendBatchForApproval({ offer }: { offer: ApprovalOffer }) {
     setState("error" in r ? { busy: false, error: approvalErrorText(r.error.code, r.error.detail) } : { busy: false, sent: true });
   };
   return (
-    <div role="status" className="space-y-2 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+    <div role="status" className="space-y-2 rounded-hec-lg border border-hec-line bg-hec-sunken p-3 text-sm">
       {state.sent ? (
         <p>Sent: {offer.count} {offer.count === 1 ? "lesson waits" : "lessons wait"}, unchanged, until another administrator approves them in Automation, Approvals.</p>
       ) : (
@@ -617,9 +617,9 @@ function ResultList({ id, title, items }: { id: string; title: string; items: Ar
       </h3>
       <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
         {items.map((it) => (
-          <li key={it.id} className="break-words rounded-lg border border-border p-2">
+          <li key={it.id} className="break-words rounded-hec-md border border-hec-line p-2">
             {it.text}
-            {it.note ? <span className="block text-xs text-muted-foreground">{it.note}</span> : null}
+            {it.note ? <span className="block text-xs text-hec-ink-soft">{it.note}</span> : null}
           </li>
         ))}
       </ul>

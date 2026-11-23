@@ -157,7 +157,7 @@ function ScreenStatus({ settings }: { settings: Settings | null }) {
   const live = minutes !== null && minutes <= 10;
   return (
     <Badge variant={live ? "default" : "secondary"} className="gap-1.5 py-1">
-      <span className={`h-2 w-2 rounded-full ${live ? "bg-green-400" : "bg-muted-foreground"}`} />
+      <span className={`h-2 w-2 rounded-full ${live ? "bg-hec-leaf" : "bg-hec-ink-faint"}`} />
       {seen ? (live ? "Screen on now" : `Screen last checked in ${minutes! < 120 ? `${minutes} min` : seen.toLocaleString()} ago`) : "Screen has not checked in yet"}
     </Badge>
   );
@@ -527,7 +527,7 @@ function VideoEditor({ f, set }: { f: Partial<Item>; set: (k: keyof Item, v: any
         </div>
       )}
 
-      {f.video_url && source !== "youtube" && <video src={f.video_url} controls muted className="w-full max-h-56 rounded bg-black" />}
+      {f.video_url && source !== "youtube" && <video src={f.video_url} controls muted className="w-full max-h-56 rounded-hec-md bg-hec-ink" />}
       {f.youtube_id && source === "youtube" && <img src={`https://i.ytimg.com/vi/${f.youtube_id}/hqdefault.jpg`} alt="" className="w-full max-h-56 rounded object-cover" />}
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -586,7 +586,7 @@ function FeedbackPanel({ feedback, onChange }: { feedback: Feedback[]; onChange:
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="font-medium">{f.name || "No name"}</span>
               <Badge variant="outline">{f.relation}</Badge>
-              {f.rating && <span className="flex items-center text-amber-500">{Array.from({ length: f.rating }, (_, i) => <Star key={i} className="h-3.5 w-3.5 fill-current" />)}</span>}
+              {f.rating && <span className="flex items-center text-hec-brass">{Array.from({ length: f.rating }, (_, i) => <Star key={i} className="h-3.5 w-3.5 fill-current" />)}</span>}
               {f.may_show ? <Badge variant="secondary">May be shown</Badge> : <Badge variant="outline">Private</Badge>}
               {f.approved_at && (f.may_show ? <Badge className="gap-1"><MonitorPlay className="h-3 w-3" /> On the screen</Badge> : <Badge variant="secondary">Read</Badge>)}
               <span className="ml-auto text-xs text-muted-foreground">{new Date(f.created_at).toLocaleString()}</span>
@@ -653,7 +653,7 @@ function TvPowerCard({ settings, onChange }: { settings: Settings; onChange: () 
           </CardDescription>
         </div>
         <Badge variant={helperLive ? "default" : "secondary"} className="gap-1.5 py-1">
-          <span className={`h-2 w-2 rounded-full ${helperLive ? "bg-green-400" : "bg-muted-foreground"}`} />
+          <span className={`h-2 w-2 rounded-full ${helperLive ? "bg-hec-leaf" : "bg-hec-ink-faint"}`} />
           {helperLive ? "Reception computer connected" : helperSeen ? `Reception computer last seen ${helperSeen.toLocaleString()}` : "Reception computer not connected"}
         </Badge>
       </CardHeader>
@@ -760,7 +760,7 @@ function ScreenPanel({ settings, onChange }: { settings: Settings; onChange: () 
           <Button variant="outline" asChild><a href={previewUrl} target="_blank" rel="noreferrer"><MonitorPlay className="h-4 w-4 mr-1" /> Open full screen</a></Button>
         </CardHeader>
         <CardContent>
-          <div className="relative w-full overflow-hidden rounded-lg border bg-black" style={{ aspectRatio: "16 / 9" }}>
+          <div className="relative w-full overflow-hidden rounded-hec-md border border-hec-line bg-hec-ink" style={{ aspectRatio: "16 / 9" }}>
             <iframe key={previewKey} title="Reception preview" src={previewUrl} className="absolute inset-0 h-full w-full" />
           </div>
         </CardContent>

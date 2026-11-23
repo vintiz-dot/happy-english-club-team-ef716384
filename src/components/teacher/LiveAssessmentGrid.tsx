@@ -270,7 +270,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
       {/* Bulk Selection Controls */}
       <div className={ivory
         ? "flex flex-wrap items-center gap-2 p-3 rounded-hec-lg border border-hec-line bg-hec-sunken"
-        : "flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-gradient-to-r from-muted/40 to-muted/20 border border-border/30 backdrop-blur-sm"}>
+        : "flex flex-wrap items-center gap-2 p-3 rounded-hec-lg border border-hec-line bg-hec-sunken"}>
         <Button
           variant={bulkMode ? "default" : "outline"}
           size="sm"
@@ -617,7 +617,7 @@ function SmartSkillPanel({
         >
           <div className={ivory
             ? "max-h-[min(280px,calc(100dvh-1.5rem))] overflow-y-auto overscroll-contain rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-3"
-            : "rounded-2xl border border-border/60 bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden"}>
+            : "rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-3 overflow-hidden"}>
             {/* Drag handle bar — drag from anywhere in the header */}
             <div
               className={ivory
@@ -671,9 +671,9 @@ function SmartSkillPanel({
                     : cn(
                     "text-xs",
                     activeStudent.todayPoints > 0
-                      ? "text-green-600"
+                      ? "text-hec-leaf"
                       : activeStudent.todayPoints < 0
-                      ? "text-red-600"
+                      ? "text-hec-danger"
                       : "text-muted-foreground"
                   )}
                 >

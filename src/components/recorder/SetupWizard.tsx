@@ -183,7 +183,7 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
   return (
     <section aria-labelledby="wiz-h" className="space-y-5">
       <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">Step {step + 1} of {STEPS.length}</p>
+        <p className="text-sm text-hec-ink-soft">Step {step + 1} of {STEPS.length}</p>
         <h2 id="wiz-h" ref={headingRef} tabIndex={-1} className="text-2xl font-semibold outline-none">{STEPS[step]}</h2>
         <Progress value={((step + 1) / STEPS.length) * 100} aria-label={`Setup step ${step + 1} of ${STEPS.length}`} className="h-2" />
       </div>
@@ -211,11 +211,11 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
       {step === 1 && (
         <div className="space-y-5">
           <p className="text-base">The list shows every microphone this laptop can hear. We guessed from the names; check them.</p>
-          <Label htmlFor="phone-teacher" className="flex items-start gap-3 rounded-xl border border-border p-3 min-h-12 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+          <Label htmlFor="phone-teacher" className="flex items-start gap-3 rounded-hec-lg border border-hec-line p-3 min-h-12 cursor-pointer has-[:checked]:border-hec-brass has-[:checked]:bg-hec-sunken">
             <input id="phone-teacher" type="checkbox" className="mt-1 h-5 w-5" checked={phoneTeacher} onChange={(e) => setPhoneTeacher(e.target.checked)} />
             <span className="space-y-1">
               <span className="block text-base font-medium">My microphone is my phone</span>
-              <span className="block text-sm text-muted-foreground">This laptop records only the room microphone. During the lesson, open Class recorder, Phone microphone (/teacher/recorder/phone) on your phone, signed in as you, and press Join.</span>
+              <span className="block text-sm text-hec-ink-soft">This laptop records only the room microphone. During the lesson, open Class recorder, Phone microphone (/teacher/recorder/phone) on your phone, signed in as you, and press Join.</span>
             </span>
           </Label>
           {(phoneTeacher ? ["room"] : ["teacher", "room"] as TrackRole[]).map((role) => (
@@ -225,14 +225,14 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
                 {rows.map((r) => {
                   const id = `${role}-${r.device.deviceId}`;
                   return (
-                    <Label key={id} htmlFor={id} className="flex items-start gap-3 rounded-xl border border-border p-3 min-h-12 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <Label key={id} htmlFor={id} className="flex items-start gap-3 rounded-hec-lg border border-hec-line p-3 min-h-12 cursor-pointer has-[:checked]:border-hec-brass has-[:checked]:bg-hec-sunken">
                       <RadioGroupItem id={id} value={r.device.deviceId} className="mt-1" />
                       <span className="space-y-1 min-w-0">
                         <span className="block text-base font-medium break-words">{r.device.label || "Unnamed microphone"}</span>
                         <span className="flex flex-wrap gap-1.5">
                           {r.s500 ? <Badge variant="secondary">Looks like the Anker S500</Badge> : null}
                           {r.hint === "teacher" ? <Badge variant="secondary">Looks like a lapel receiver</Badge> : null}
-                          {r.bluetooth ? <Badge variant="outline" className="border-destructive text-foreground">Bluetooth - use USB instead</Badge> : null}
+                          {r.bluetooth ? <Badge variant="outline" className="border-hec-danger text-hec-ink">Bluetooth - use USB instead</Badge> : null}
                           {r.builtIn ? <Badge variant="outline">The laptop's own microphone</Badge> : null}
                         </span>
                       </span>
@@ -269,7 +269,7 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
       {step === 2 && !probeErr && (
         <div className="space-y-5">
           <p className="text-base">Wear the lapel microphone and speak normally for a few seconds, as if you were teaching. <strong>My microphone</strong> should move more than <strong>Room microphone</strong>. Then clap near the S500: Room microphone should jump.</p>
-          <div className="space-y-4 rounded-xl border border-border p-4">
+          <div className="space-y-4 rounded-hec-lg border border-hec-line p-4">
             <LevelMeter label={trackName("teacher")} level={levels?.teacher ?? null} device={rows.find((r) => r.device.deviceId === teacherId)?.device.label} />
             <LevelMeter label={trackName("room")} level={levels?.room ?? null} device={rows.find((r) => r.device.deviceId === roomId)?.device.label} />
           </div>
@@ -295,7 +295,7 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
           {result ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {(["teacher", "room"] as TrackRole[]).map((role) => (
-                <div key={role} className="rounded-xl border border-border p-4 space-y-2">
+                <div key={role} className="rounded-hec-lg border border-hec-line p-4 space-y-2">
                   <p className="font-semibold">{trackName(role)}</p>
                   <audio controls src={result[role].url} className="w-full" aria-label={`Play the ${trackName(role)} test`} />
                   {result[role].peakDb < -50 ? <Status line={{ tone: "warn", text: "Very quiet - is it switched on?" }} /> : null}
@@ -313,7 +313,7 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
         <div className="space-y-4">
           <p className="text-base">Recordings are saved to the school's server in small pieces while you teach.</p>
           <Status line={uploadSpeedLine(null)} />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-hec-ink-soft">
             There is no test file to send: the server only accepts audio from a real lesson. During your first lesson the screen shows the measured speed.
             {connection?.downlink ? ` The browser's own guess for this connection is about ${connection.downlink} Mbit/s.` : ""}
           </p>
@@ -323,9 +323,9 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
 
       {step === 5 && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-border p-4 space-y-2">
-            <p><span className="text-muted-foreground">My microphone:</span> <span className="font-medium break-words">{rows.find((r) => r.device.deviceId === teacherId)?.device.label}</span></p>
-            <p><span className="text-muted-foreground">Room microphone:</span> <span className="font-medium break-words">{rows.find((r) => r.device.deviceId === roomId)?.device.label}</span></p>
+          <div className="rounded-hec-lg border border-hec-line p-4 space-y-2">
+            <p><span className="text-hec-ink-soft">My microphone:</span> <span className="font-medium break-words">{rows.find((r) => r.device.deviceId === teacherId)?.device.label}</span></p>
+            <p><span className="text-hec-ink-soft">Room microphone:</span> <span className="font-medium break-words">{rows.find((r) => r.device.deviceId === roomId)?.device.label}</span></p>
           </div>
           {battery?.tone === "warn" ? <Status line={battery} /> : null}
           {browser.message ? <Status line={{ tone: "warn", text: browser.message }} /> : null}
@@ -336,7 +336,7 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 pt-2 border-t border-border">
+      <div className="flex flex-wrap gap-3 pt-2 border-t border-hec-line">
         {step > 0 ? (
           <Button variant="outline" className="min-h-11" onClick={() => setStep((s) => s - 1)}><ArrowLeft className="h-4 w-4 mr-2" aria-hidden /> Back</Button>
         ) : onCancel ? (

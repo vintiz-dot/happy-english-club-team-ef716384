@@ -64,8 +64,7 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   { path: "/tuition", roles: ["student", "family"] },
 
   // R21, the staff flip: every admin and teacher route. The admin dashboard is
-  // listed per ?tab= so that a tab whose owner has not released it (audit
-  // clips) keeps today's look; "" and "overview" are the default view.
+  // listed per ?tab=; "" and "overview" are the default view.
   { path: "/admin", tab: "" },
   { path: "/admin", tab: "overview" },
   { path: "/admin", tab: "classes" },
@@ -114,8 +113,10 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   { path: "/schedule", roles: ["admin", "teacher", "family", "student"] },
   { path: "/tuition", roles: ["admin", "teacher"] },
   { path: "/dashboard", roles: ["admin", "teacher"] },
-  // Not listed on purpose: /teacher/recorder and /admin?tab=audit-clips, see
-  // OUTSIDE_ROUTES below.
+  // Released by the owner on 23 Nov 2026: the recorder, audit clips, /feedback.
+  { path: "/teacher/recorder" },
+  { path: "/admin", tab: "audit-clips" },
+  { path: "/feedback" },
 
   // parent + public (R23)
   { path: "/family/dashboard" },
@@ -129,19 +130,12 @@ export const IVORY_ROUTES: IvoryRoute[] = [
 ];
 
 /**
- * Screens that stay outside the system even with ROLLOUT_COMPLETE, because
- * their owners keep them as they are until they release them (DESIGN_SYSTEM
- * s.17): the recorder and the audit-clips tab. They keep today's look from
- * the header down, exactly as before the rollout. Releasing one = deleting its
- * line here.
+ * Screens kept outside the system even with ROLLOUT_COMPLETE (DESIGN_SYSTEM
+ * s.17). Empty: the owner released the recorder, the audit-clips tab and the
+ * public /feedback page on 23 Nov 2026. A screen put here keeps today's look
+ * from the header down; releasing it = deleting its line.
  */
-export const OUTSIDE_ROUTES: IvoryRoute[] = [
-  { path: "/teacher/recorder" },
-  { path: "/admin", tab: "audit-clips" },
-  // The public QR feedback page (Reception): its card is hard-coded white, so it
-  // keeps today's light look until it is restyled.
-  { path: "/feedback" },
-];
+export const OUTSIDE_ROUTES: IvoryRoute[] = [];
 
 const trimSlash = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);
 

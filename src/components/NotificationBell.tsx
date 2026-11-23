@@ -218,22 +218,16 @@ export default function NotificationBell() {
                               "group relative cursor-pointer rounded-hec-md border p-3 text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken",
                               notification.is_read ? "border-hec-line bg-hec-surface" : "border-hec-brass/40 bg-hec-raised shadow-hec-1",
                             )
-                          : `group relative p-3 rounded-xl cursor-pointer transition-all duration-200 ${
-                        notification.is_read
-                          ? "bg-muted/30 hover:bg-muted/50"
-                          : "bg-gradient-to-br from-primary/15 to-primary/5 hover:from-primary/20 hover:to-primary/10 shadow-sm"
+                            : `group relative p-3 rounded-hec-md border cursor-pointer transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken ${
+                        notification.is_read ? "border-hec-line bg-hec-surface" : "border-hec-brass/40 bg-hec-raised shadow-hec-1"
                       }`
                       }
                       onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="flex items-start gap-3">
-                        <div className={ivory ? "shrink-0 rounded-full bg-hec-sunken p-2 text-hec-ink-soft" : `rounded-full p-2 ${
-                          isHomework ? 'bg-blue-100 dark:bg-blue-900/30' :
-                          isJournal ? 'bg-blue-100 dark:bg-blue-900/30' :
-                          'bg-muted'
-                        }`}>
-                          {isHomework && <Bell className={ivory ? "h-4 w-4" : "h-4 w-4 text-blue-600 dark:text-blue-400"} />}
-                          {isJournal && <Bell className={ivory ? "h-4 w-4" : "h-4 w-4 text-blue-600 dark:text-blue-400"} />}
+                        <div className={ivory ? "shrink-0 rounded-full bg-hec-sunken p-2 text-hec-ink-soft" : "shrink-0 rounded-full bg-hec-sunken p-2 text-hec-ink-soft"}>
+                          {isHomework && <Bell className={"h-4 w-4"} />}
+                          {isJournal && <Bell className={"h-4 w-4"} />}
                           {!isHomework && !isJournal && <Bell className="h-4 w-4" />}
                         </div>
 

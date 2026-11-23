@@ -119,10 +119,10 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
     <Sheet open={!!ta} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-0">
         {/* Header */}
-        <div className="p-6 border-b bg-gradient-to-r from-card to-card/80">
+        <div className="p-6 border-b border-hec-line bg-hec-surface">
           <div className="flex items-start gap-4">
             <Avatar className="h-14 w-14 ring-2 ring-border">
-              <AvatarFallback className="text-lg bg-gradient-to-br from-primary/20 to-accent/20">
+              <AvatarFallback className="text-lg bg-hec-sunken text-hec-ink">
                 {ta.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>

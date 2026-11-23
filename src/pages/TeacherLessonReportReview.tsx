@@ -31,7 +31,7 @@ import {
  * src/lib/lessonReportApproval.ts, which keeps staff-only parts out of what
  * families read. A TA sees the draft and adds photos but cannot build or approve.
  */
-const card = "rounded-lg border bg-card p-4 space-y-3";
+const card = "rounded-hec-md border border-hec-line bg-hec-surface p-4 space-y-3";
 const MET: Met[] = ["yes", "partly", "no", "unknown"];
 
 function StaffOnly() {
@@ -58,7 +58,7 @@ function ListEditor<T extends Record<string, any>>({ items, fields, blank, onCha
   return (
     <div className="space-y-2">
       {items.map((it, i) => (
-        <div key={i} className="flex gap-2 rounded-md border p-2">
+        <div key={i} className="flex gap-2 rounded-hec-md border p-2">
           <div className="grid flex-1 gap-2 sm:grid-cols-2">
             {fields.map((f) => {
               const props = {
@@ -155,13 +155,13 @@ export default function TeacherLessonReportReview() {
   return (
     <Layout title="Lesson report">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4">
-        <Link to="/teacher/attendance" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline">
+        <Link to="/teacher/attendance" className="inline-flex items-center gap-1 text-sm text-hec-ink-soft hover:underline">
           <ArrowLeft className="h-4 w-4" /> Lessons
         </Link>
         <header className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1 basis-56">
             <h1 className="text-2xl font-semibold">Lesson report</h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-hec-ink-soft">
               {L ? `${L.class_name} · ${L.date} · ${String(L.start_time).slice(0, 5)}-${String(L.end_time).slice(0, 5)}` : lesson.isLoading ? "Loading…" : "Lesson not found"}
             </p>
           </div>
@@ -199,19 +199,19 @@ export default function TeacherLessonReportReview() {
         )}
 
         {draftRow.error ? (
-          <p className="rounded-md border border-destructive/30 p-3 text-sm text-destructive">Lesson reports are not switched on yet. Ask the school's admin to apply the latest database update.</p>
+          <p className="rounded-hec-md border border-hec-danger/30 p-3 text-sm text-hec-danger">Lesson reports are not switched on yet. Ask the school's admin to apply the latest database update.</p>
         ) : row?.status === "building" ? (
           <p className={card + " text-sm flex items-center gap-2"}><Loader2 className="h-4 w-4 animate-spin" /> The draft is being written from the lesson's transcript, photos, work and records…</p>
         ) : row?.status === "failed" && !draft ? (
-          <p className="rounded-md border border-destructive/30 p-3 text-sm text-destructive flex gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> The draft could not be built{row.error ? `: ${row.error}` : "."}</p>
+          <p className="rounded-hec-md border border-hec-danger/30 p-3 text-sm text-hec-danger flex gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> The draft could not be built{row.error ? `: ${row.error}` : "."}</p>
         ) : !row ? (
-          <p className={card + " text-sm text-muted-foreground"}>
+          <p className={card + " text-sm text-hec-ink-soft"}>
             {canEdit ? "No draft yet. Add photos of the board and materials, then press Build report." : "No draft yet. The class's teacher builds and approves the report."}
           </p>
         ) : null}
 
         {draft && row?.status === "failed" && (
-          <p className="rounded-md border border-destructive/30 p-3 text-sm text-destructive flex gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> The last rebuild failed{row.error ? `: ${row.error}` : ""}. This is the earlier draft.</p>
+          <p className="rounded-hec-md border border-hec-danger/30 p-3 text-sm text-hec-danger flex gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> The last rebuild failed{row.error ? `: ${row.error}` : ""}. This is the earlier draft.</p>
         )}
         {draft && (
           <fieldset disabled={!canEdit || approve.isPending} className="space-y-4">
@@ -228,7 +228,7 @@ export default function TeacherLessonReportReview() {
 
             <Section title="Objectives (2-4)">
               {draft.objectives.map((o, i) => (
-                <div key={i} className="rounded-md border p-2 space-y-2">
+                <div key={i} className="rounded-hec-md border p-2 space-y-2">
                   <div className="flex gap-2">
                     <div className="grid flex-1 gap-2 sm:grid-cols-2">
                       <Input value={o.text} placeholder="Objective" aria-label="Objective" onChange={(e) => edit((d) => { d.objectives[i].text = e.target.value; })} />
@@ -240,7 +240,7 @@ export default function TeacherLessonReportReview() {
                     </Select>
                     <Button type="button" variant="ghost" size="icon" aria-label="Remove objective" onClick={() => edit((d) => { d.objectives.splice(i, 1); })}><Trash2 className="h-4 w-4" /></Button>
                   </div>
-                  {o.evidence && <p className="text-xs text-muted-foreground"><Lock className="inline h-3 w-3 mr-1" />Evidence (staff only): {o.evidence}</p>}
+                  {o.evidence && <p className="text-xs text-hec-ink-soft"><Lock className="inline h-3 w-3 mr-1" />Evidence (staff only): {o.evidence}</p>}
                 </div>
               ))}
               {draft.objectives.length < 4 && (
@@ -272,9 +272,9 @@ export default function TeacherLessonReportReview() {
             </Section>
 
             <Section title="Gaps and misconceptions" staff>
-              {draft.gaps.length === 0 && <p className="text-sm text-muted-foreground">None found in the evidence.</p>}
+              {draft.gaps.length === 0 && <p className="text-sm text-hec-ink-soft">None found in the evidence.</p>}
               {draft.gaps.map((g, i) => (
-                <div key={i} className="rounded-md border p-2 space-y-2">
+                <div key={i} className="rounded-hec-md border p-2 space-y-2">
                   <div className="flex gap-2">
                     <Badge variant="secondary">{g.kind}</Badge>
                     <Badge variant="outline">{g.who === "class" ? "most of the class" : "some children"}</Badge>
@@ -283,7 +283,7 @@ export default function TeacherLessonReportReview() {
                   <Input value={g.issue} aria-label="Issue" onChange={(e) => edit((d) => { d.gaps[i].issue = e.target.value; })} />
                   <ul className="space-y-1 text-sm">
                     {g.evidence.map((e, j) => (
-                      <li key={j} className="rounded bg-muted px-2 py-1"><span className="font-mono text-xs mr-2">{e.t >= 0 ? mmss(e.t) : "work"}</span>“{e.quote}”</li>
+                      <li key={j} className="rounded bg-hec-sunken px-2 py-1"><span className="font-mono text-xs mr-2">{e.t >= 0 ? mmss(e.t) : "work"}</span>“{e.quote}”</li>
                     ))}
                   </ul>
                   <Textarea rows={2} value={g.suggestion} placeholder="Suggestion for next time" aria-label="Suggestion" onChange={(e) => edit((d) => { d.gaps[i].suggestion = e.target.value; })} />
@@ -296,11 +296,11 @@ export default function TeacherLessonReportReview() {
             </Section>
 
             <Section title="Each child">
-              <p className="text-xs text-muted-foreground">A family sees only their own child's card. Untick a child to leave them out.</p>
+              <p className="text-xs text-hec-ink-soft">A family sees only their own child's card. Untick a child to leave them out.</p>
               {draft.students.map((s, i) => {
                 const included = !review.excluded.includes(s.student_id);
                 return (
-                  <div key={s.student_id} className="rounded-md border p-3 space-y-2">
+                  <div key={s.student_id} className="rounded-hec-md border p-3 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <Checkbox checked={included} aria-label="Include this child"
                         onCheckedChange={(v) => setReview((r) => ({ ...r, excluded: v ? r.excluded.filter((x) => x !== s.student_id) : [...r.excluded, s.student_id] }))} />
@@ -321,11 +321,11 @@ export default function TeacherLessonReportReview() {
                           onChange={(e) => setReview((r) => ({ ...r, comments: { ...r.comments, [s.student_id]: e.target.value } }))} />
                         {s.name_moments.length > 0 && (
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">Name suggestions <StaffOnly /></div>
+                            <div className="flex items-center gap-2 text-xs text-hec-ink-soft">Name suggestions <StaffOnly /></div>
                             {s.name_moments.map((m, j) => (
-                              <div key={j} className={"flex flex-wrap items-center gap-2 rounded bg-muted px-2 py-1 text-sm" + (m.decision === "deleted" ? " opacity-50 line-through" : "")}>
+                              <div key={j} className={"flex flex-wrap items-center gap-2 rounded bg-hec-sunken px-2 py-1 text-sm" + (m.decision === "deleted" ? " opacity-50 line-through" : "")}>
                                 <span className="font-mono text-xs">{mmss(m.t)}</span>
-                                <span className="flex-1">“{m.quote}”{m.why ? <span className="text-muted-foreground"> - {m.why}</span> : null}</span>
+                                <span className="flex-1">“{m.quote}”{m.why ? <span className="text-hec-ink-soft"> - {m.why}</span> : null}</span>
                                 <Button type="button" size="sm" variant={m.decision === "accepted" ? "default" : "outline"}
                                   onClick={() => edit((d) => { d.students[i].name_moments[j].decision = "accepted"; })}><Check className="h-3.5 w-3.5 mr-1" />Accept</Button>
                                 <Button type="button" size="sm" variant={m.decision === "deleted" ? "destructive" : "outline"}
@@ -360,13 +360,13 @@ export default function TeacherLessonReportReview() {
             </Section>
 
             <Section title="Photos to share">
-              {draft.photos.length === 0 && <p className="text-sm text-muted-foreground">No photos were in this draft. Rebuild after adding photos to include them.</p>}
+              {draft.photos.length === 0 && <p className="text-sm text-hec-ink-soft">No photos were in this draft. Rebuild after adding photos to include them.</p>}
               <ul className="grid gap-2 sm:grid-cols-2">
                 {draft.photos.map((p, i) => (
-                  <li key={p.photo_id} className="flex gap-2 rounded-md border p-2">
+                  <li key={p.photo_id} className="flex gap-2 rounded-hec-md border p-2">
                     <Checkbox checked={p.share} aria-label="Share this photo" onCheckedChange={(v) => edit((d) => { d.photos[i].share = !!v; })} />
                     {photoUrl.get(p.photo_id) ? <img src={photoUrl.get(p.photo_id)!} alt="" className="h-16 w-16 rounded object-cover" />
-                      : <div className="h-16 w-16 rounded bg-muted text-xs flex items-center justify-center text-center">deleted</div>}
+                      : <div className="h-16 w-16 rounded bg-hec-sunken text-xs flex items-center justify-center text-center">deleted</div>}
                     <div className="flex-1 space-y-1">
                       <Input value={p.caption} placeholder="Caption" aria-label="Caption" onChange={(e) => edit((d) => { d.photos[i].caption = e.target.value; })} />
                       <Input value={p.caption_vi} placeholder="Chú thích" aria-label="Caption in Vietnamese" onChange={(e) => edit((d) => { d.photos[i].caption_vi = e.target.value; })} />
@@ -381,7 +381,7 @@ export default function TeacherLessonReportReview() {
             {canEdit && (
               <section className={card}>
                 {problems.length > 0 && (
-                  <ul className="text-sm text-destructive list-disc pl-5">{problems.map((p) => <li key={p}>{p}</li>)}</ul>
+                  <ul className="text-sm text-hec-danger list-disc pl-5">{problems.map((p) => <li key={p}>{p}</li>)}</ul>
                 )}
                 <Button className="w-full" onClick={() => onApprove()} disabled={approve.isPending || problems.length > 0 || !records.data}>
                   {approve.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
@@ -399,7 +399,7 @@ export default function TeacherLessonReportReview() {
 function Sources({ draft, model }: { draft: Draft; model: string | null }) {
   const s = draft.sources as Record<string, unknown>;
   return (
-    <section className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+    <section className="rounded-hec-md border bg-hec-sunken p-3 text-xs text-hec-ink-soft space-y-1">
       <div className="flex items-center gap-2"><StaffOnly /> Built from</div>
       <p>
         Transcript: {s.transcript ? `${s.transcript_lines ?? 0} lines` : "none"}
@@ -431,7 +431,7 @@ function QuizEditor({ draft, review, setReview, edit, objectives }: {
               onChange={(e) => setQ({ points: e.target.value === "" ? null : Math.max(0, Math.min(50, Number(e.target.value))) })} />
           </div>
           {draft.quiz.questions.map((x, i) => (
-            <div key={i} className="rounded-md border p-2 space-y-2">
+            <div key={i} className="rounded-hec-md border p-2 space-y-2">
               <div className="flex gap-2">
                 <span className="text-sm font-medium self-center">Q{i + 1}</span>
                 <Select value={x.kind} onValueChange={(v) => edit((d) => { d.quiz.questions[i].kind = v as QuizKind; })}>

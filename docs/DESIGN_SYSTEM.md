@@ -574,7 +574,7 @@ Star Board, High Scores and Night League (`src/components/leaderboard/`, read `s
 - `restPaging` / `useRestPaging` and everything else about how the boards load stay as they are.
 - The frame around a board (the app's nav, a dialog opened from it) does follow the system.
 
-Also outside the system, for the same reason (their own medium): PDF templates, printed reports (`#hec-print-report`), charts' series colours (a chart palette is a separate piece of work), and the recorder and audit-clips screens until their owners release them.
+Also outside the system, for the same reason (their own medium): PDF templates, printed reports (`#hec-print-report`), charts' series colours (a chart palette is a separate piece of work), (the recorder, audit-clips and /feedback were released by the owner on 23 Nov 2026 and follow the system).
 
 ## 18. Rollout mapping: hard-coded class to token
 

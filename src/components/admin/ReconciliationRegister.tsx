@@ -89,7 +89,7 @@ export function ReconciliationRegister() {
   if (error) {
     const msg = (error as any)?.message ?? String(error);
     return (
-      <Card><CardContent className="p-6 text-sm text-muted-foreground">
+      <Card><CardContent className="p-6 text-sm text-hec-ink-soft">
         {/schema cache|does not exist/.test(msg)
           ? "The reconciliation register is not installed yet (migration 20261121100000)."
           : `The register could not be read: ${msg}`}
@@ -148,13 +148,13 @@ export function ReconciliationRegister() {
             <FilterSelect label="Pattern" value={pattern} onChange={setPattern}
               options={(Object.keys(PATTERNS) as Pattern[]).map((p) => [p, `${p} · ${PATTERNS[p]}`])} />
             <FilterSelect label="Status" value={status} onChange={setStatus} options={[["open", "Open"], ["decided", "Decided"]]} />
-            <div className="text-sm text-muted-foreground ml-auto">
+            <div className="text-sm text-hec-ink-soft ml-auto">
               {view.items} shown · sheet − app <span className="tabular-nums">{signed(view.difference)}</span>
             </div>
           </div>
 
           {items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-hec-ink-soft">
               No items loaded. Run scripts/load-reconciliation-items.mjs with --emit-sql and paste its SQL into the Supabase SQL editor.
             </p>
           ) : (
@@ -178,19 +178,19 @@ export function ReconciliationRegister() {
                       <TableCell className="whitespace-nowrap">{i.month}</TableCell>
                       <TableCell>
                         <div className="font-medium">{who(i, data!.names)}</div>
-                        {i.evidence && <div className="text-xs text-muted-foreground max-w-md">{i.evidence}</div>}
+                        {i.evidence && <div className="text-xs text-hec-ink-soft max-w-md">{i.evidence}</div>}
                       </TableCell>
                       <TableCell><Badge variant="outline" title={PATTERNS[i.pattern]}>{i.pattern}</Badge></TableCell>
                       <TableCell className="text-right tabular-nums">{vnd(i.sheet_amount)}</TableCell>
                       <TableCell className="text-right tabular-nums">{vnd(i.app_recorded)}</TableCell>
                       <TableCell className="text-right tabular-nums">{vnd(i.app_billed)}</TableCell>
-                      <TableCell className={`text-right tabular-nums ${i.difference < 0 ? "text-destructive" : ""}`}>{signed(i.difference)}</TableCell>
+                      <TableCell className={`text-right tabular-nums ${i.difference < 0 ? "text-hec-danger" : ""}`}>{signed(i.difference)}</TableCell>
                       <TableCell>
                         {i.status === "decided" ? (
                           <div className="space-y-1">
                             <Badge variant="secondary" className="gap-1"><CheckCircle2 className="h-3 w-3" />{DECISIONS[i.decision!]?.label ?? i.decision}</Badge>
-                            {i.decision_note && <div className="text-xs text-muted-foreground max-w-xs">{i.decision_note}</div>}
-                            {i.payment_ids.length > 0 && <div className="text-xs text-muted-foreground">{i.payment_ids.length} payment row{i.payment_ids.length > 1 ? "s" : ""}</div>}
+                            {i.decision_note && <div className="text-xs text-hec-ink-soft max-w-xs">{i.decision_note}</div>}
+                            {i.payment_ids.length > 0 && <div className="text-xs text-hec-ink-soft">{i.payment_ids.length} payment row{i.payment_ids.length > 1 ? "s" : ""}</div>}
                           </div>
                         ) : (
                           <Button size="sm" variant="outline" onClick={() => setDeciding(i)}>Decide</Button>
@@ -212,11 +212,11 @@ export function ReconciliationRegister() {
 
 function Stat({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: "ok" | "warn" }) {
   return (
-    <div className="rounded-lg border bg-card p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
+    <div className="rounded-hec-md border border-hec-line bg-hec-surface p-3">
+      <div className="text-xs text-hec-ink-soft">{label}</div>
       <div className="text-lg font-semibold tabular-nums">{value}</div>
       {hint && (
-        <div className={`text-xs flex items-center gap-1 ${tone === "warn" ? "text-destructive" : "text-muted-foreground"}`}>
+        <div className={`text-xs flex items-center gap-1 ${tone === "warn" ? "text-hec-danger" : "text-hec-ink-soft"}`}>
           {tone === "ok" && <CheckCircle2 className="h-3 w-3" />}{tone === "warn" && <AlertTriangle className="h-3 w-3" />}{hint}
         </div>
       )}
@@ -315,7 +315,7 @@ function DecideDialog({ item, names, onClose }: { item: ReconciliationItem; name
                 {options.map((d) => <SelectItem key={d} value={d}>{DECISIONS[d].label}</SelectItem>)}
               </SelectContent>
             </Select>
-            {decision && <p className="text-xs text-muted-foreground">{DECISIONS[decision].help}</p>}
+            {decision && <p className="text-xs text-hec-ink-soft">{DECISIONS[decision].help}</p>}
           </div>
 
           {decision === "wrong_month" && (
@@ -342,13 +342,13 @@ function DecideDialog({ item, names, onClose }: { item: ReconciliationItem; name
               <div className="space-y-2">
                 <Label>{decision === "not_received" ? "Not received, per child" : "Amount moved, per child"}</Label>
                 {decision === "not_received" && (
-                  <p className="text-xs text-muted-foreground">The app holds {vnd(Math.max(item.app_recorded - item.sheet_amount, 0))} over the sheet for this family-month.</p>
+                  <p className="text-xs text-hec-ink-soft">The app holds {vnd(Math.max(item.app_recorded - item.sheet_amount, 0))} over the sheet for this family-month.</p>
                 )}
                 {item.student_ids.map((id) => (
                   <div key={id} className="flex items-center gap-3">
                     <div className="flex-1 text-sm">
                       {names.students[id] ?? "?"}
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-hec-ink-soft">
                         {months.map((m) => `${m}: ${holds[`${id}|${m}`] === undefined ? "no bill" : vnd(holds[`${id}|${m}`])}`).join(" · ")}
                       </div>
                     </div>
@@ -383,7 +383,7 @@ function DecideDialog({ item, names, onClose }: { item: ReconciliationItem; name
           </div>
 
           {legs.length > 0 && (
-            <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
+            <div className="rounded-hec-md border bg-hec-sunken p-3 text-sm space-y-1">
               <div className="font-medium">This will write</div>
               {legs.map((l, n) => (
                 <div key={n} className="tabular-nums">
@@ -392,7 +392,7 @@ function DecideDialog({ item, names, onClose }: { item: ReconciliationItem; name
               ))}
             </div>
           )}
-          {decision && problem && <p className="text-sm text-destructive">{problem}</p>}
+          {decision && problem && <p className="text-sm text-hec-danger">{problem}</p>}
         </div>
 
         <DialogFooter>
