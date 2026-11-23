@@ -324,19 +324,27 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
   return (
     <>
       {progress}
-      <div className="relative space-y-3 md:space-y-4">
-        <AnimatePresence mode="popLayout" initial={false}>
+      <div className="-mb-3 md:-mb-4">
+        <AnimatePresence initial={false}>
         {paged.slice.map((submission: any) => {
           const homework = submission.homeworks;
           // Only the card graded this session leaves with an exit; filter and page changes stay instant.
-          const leaving = submission.id === justGradedId && level !== "off";
+          // (a card being saved counts too: its exit must already be set on the render before the refetch removes it)
+          const leaving = (submission.id === justGradedId || (gradeMutation.isPending && gradeMutation.variables?.submissionId === submission.id)) && level !== "off";
           return (
             <motion.div
               key={submission.id}
-              // siblings rise (soft spring) only while a just-graded card is leaving, and only at full motion
-              layout={leaving || (justGradedId !== null && level === "full") ? "position" : false}
-              transition={{ layout: soft }}
-              exit={leaving ? (level === "full" ? { opacity: 0, x: -16, transition: { duration: 0.18 } } : { opacity: 0, transition: { duration: 0.18 } }) : undefined}
+              // The gap is the wrapper's own bottom padding so that, when the card leaves, its height can close
+              // (soft spring) and the cards below rise with it, without a layout animation fighting
+              // content-visibility on the cards. Full: 16 px left + fade in 180 ms; calm: fade only; off: none.
+              className="pb-3 md:pb-4"
+              exit={
+                !leaving
+                  ? undefined
+                  : level === "full"
+                    ? { opacity: 0, x: -16, height: 0, paddingBottom: 0, overflow: "hidden", transition: { opacity: { duration: 0.18 }, x: { duration: 0.18 }, height: soft, paddingBottom: soft } }
+                    : { opacity: 0, transition: { duration: 0.18 } }
+              }
             >
             <Card className="long-list-item min-w-0 overflow-hidden">
               <CardHeader className="min-w-0 p-4 pb-3 sm:p-6">
