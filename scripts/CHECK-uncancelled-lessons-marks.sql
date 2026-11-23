@@ -23,12 +23,11 @@
 -- cancel, are not counted; the TOTAL row says how many there are.
 -- by_a_person = marks with marked_by set (a teacher or admin made them).
 -- The last row ("TOTAL") adds everything up.
--- Expected on production: 28 Excused marks on un-cancelled lessons in total
--- (23 in September 2026 on 3 lessons, 5 in April 2026 on 1 Scheduled lesson).
+-- Expected on production (read 23 Nov 2026): 27 candidate marks across 26 children, all "decide".
 --
--- lessons_not_held in the TOTAL row counts lessons still Scheduled although their
--- date has passed: the migration reports those separately and restores nothing
--- there unless you choose the child and month.
+-- Lessons still Scheduled although their date has passed (lessons_not_held) are left
+-- out of the rows and the guesses, as the migration does: it reports them separately and
+-- restores nothing there unless you choose the child and month. The TOTAL text counts them.
 
 WITH today AS (
   SELECT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS d
@@ -64,7 +63,7 @@ cand_months AS (
          count(*) FILTER (WHERE m.marked_by IS NOT NULL) AS by_a_person,
          sum(m.fee) AS candidates_worth
     FROM marks m LEFT JOIN classes c ON c.id = m.class_id
-   WHERE m.kind = 'candidate'
+   WHERE m.kind = 'candidate' AND m.session_status = 'Held'   -- as the function does: lessons not Held are only counted in the TOTAL text
    GROUP BY m.student_id, m.month
 ),
 counted AS (
@@ -104,7 +103,8 @@ SELECT student, class_name, month, candidates, by_a_person, saved_base, recorded
            || count(*) FILTER (WHERE first_guess = 'no bill') || ' no bill; '
            || (SELECT count(*) FROM marks WHERE kind = 'remarked_since') || ' changed by a person after the cancel (left alone); '
            || (SELECT count(*) FROM marks WHERE kind = 'excused_before_cancel') || ' already Excused before the cancel (left alone); '
-           || (SELECT count(DISTINCT session_id) FROM marks WHERE kind = 'candidate' AND session_status <> 'Held') || ' lessons_not_held'
+           || (SELECT count(*) FROM marks WHERE kind = 'candidate' AND session_status <> 'Held') || ' more candidate marks on '
+           || (SELECT count(DISTINCT session_id) FROM marks WHERE kind = 'candidate' AND session_status <> 'Held') || ' lessons_not_held (not in the rows or the guesses above)'
       FROM result_rows
   ) u
  ORDER BY part, student, month;
