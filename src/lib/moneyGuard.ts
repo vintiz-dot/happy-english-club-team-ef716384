@@ -5,6 +5,7 @@
  * only words them. All the English for the money guard lives here.
  */
 import { checkReason, REASON_MIN } from "@/lib/sessionGuard";
+import { proofRefusalFromBody } from "@/lib/attendanceProof";
 
 export type MoneyEntity = "attendance";
 export type MoneyOp = "set_marks" | "repair";
@@ -217,6 +218,8 @@ export async function functionRefusalText(error: any, fallback: string): Promise
   } catch {
     body = null;
   }
+  const proofText = proofRefusalFromBody(body);
+  if (proofText) return proofText;
   if (body?.code === "attendance_requires_checked_path" || body?.code === "attendance_identity") {
     const text = moneyErrorText(body.code, body.kind ?? null);
     return body.kind === "retro_mark" || (!body.kind && body.preview)

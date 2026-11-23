@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { proofRefusalFromBody } from "@/lib/attendanceProof";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -115,6 +116,8 @@ export function AttendanceRepairTool() {
           );
           return;
         }
+        const proofText = proofRefusalFromBody(body);
+        if (proofText) throw new Error(proofText);
         throw new Error(moneyErrorText(body?.code, body?.kind, body?.error ?? body?.message ?? error.message));
       }
 

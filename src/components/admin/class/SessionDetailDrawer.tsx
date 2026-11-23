@@ -25,6 +25,9 @@ import { cn } from "@/lib/utils";
 import { functionRefusalText } from "@/lib/moneyGuard";
 import { heldRefusedText, payOpFromDbError, type PayOp } from "@/lib/lessonPayGuard";
 import { PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import { useAttendanceProof } from "@/hooks/useAttendanceProof";
+import { ProofLock } from "@/components/attendance/ProofLock";
+import { nextStatus } from "@/lib/attendanceProof";
 
 interface SessionDetailDrawerProps {
   session: any;
@@ -43,6 +46,7 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
   // D4 step 3A: a held lesson's teacher outside the free week -> the lesson-pay check.
   const [pay, setPay] = useState<{ op: PayOp; args: Record<string, unknown> } | null>(null);
   const queryClient = useQueryClient();
+  const proof = useAttendanceProof(session?.id);
   const { role } = useAuth();
 
   const { data: students } = useQuery({
@@ -160,6 +164,10 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to save attendance");
+      // Show the mark the register really holds, not the one that was refused.
+      setAttendance({});
+      queryClient.invalidateQueries({ queryKey: ["session-students", session?.id] });
+      queryClient.invalidateQueries({ queryKey: ["attendance-proof", session?.id] });
     },
   });
 
@@ -177,12 +185,10 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
   };
 
   const toggleAttendance = (studentId: string) => {
-    const statuses = ["Present", "Absent", "Excused"];
-    const currentIndex = statuses.indexOf(attendance[studentId] || "Present");
-    const nextIndex = (currentIndex + 1) % statuses.length;
+    const shown = attendance[studentId] || students?.find((s: any) => s.id === studentId)?.status || "Present";
     setAttendance((prev) => ({
       ...prev,
-      [studentId]: statuses[nextIndex],
+      [studentId]: nextStatus(shown, proof.locked(studentId)),
     }));
   };
 
@@ -329,6 +335,7 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
                       className="flex min-h-hec-target items-start justify-between gap-3 rounded-hec-md border border-hec-line px-4 py-2"
                     >
                       <span className="min-w-0 flex-1 self-center whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink">{student.full_name}</span>
+                      {proof.reason(student.id) && <ProofLock reason={proof.reason(student.id)!} />}
                       {/* Was a clickable badge (not reachable by keyboard); same handler. */}
                       <button
                         type="button"

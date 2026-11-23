@@ -27,6 +27,9 @@ import { heldRefusedText, participantsAfter, payOpFromDbError, type PayOp } from
 import { PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
 import { InkCheck } from "@/components/fx/InkCheck";
 import { showSeal } from "@/components/fx/showSeal";
+import { useAttendanceProof } from "@/hooks/useAttendanceProof";
+import { ProofLock } from "@/components/attendance/ProofLock";
+import { nextStatus, refusedBatchText, refusedStudentIds } from "@/lib/attendanceProof";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
@@ -55,12 +58,13 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
   // are refused by the database (HC020); the lesson-pay check opens instead.
   const [pay, setPay] = useState<{ op: PayOp; args: Record<string, unknown> } | null>(null);
   const queryClient = useQueryClient();
+  const proof = useAttendanceProof(session?.id);
   const { role } = useAuth();
   // Also opened from GlobalCalendar on "/" (teacher home) and from the
   // classroom tools, which are not on a listed route yet: old look there.
   const ivory = useIvory();
 
-  const { data: students } = useQuery({
+  const { data: students, refetch: refetchStudents } = useQuery({
     queryKey: ["session-students", session?.id],
     queryFn: async () => {
       if (!session?.class_id) return [];
@@ -127,6 +131,12 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
     }
   }, [students]);
 
+  // After a refused or partly kept save: show the marks the register really holds.
+  const showSavedMarks = async () => {
+    const r = await refetchStudents();
+    if (r.data) setAttendance(Object.fromEntries(r.data.map((st: any) => [st.id, st.status])));
+  };
+
   const saveAllMutation = useMutation({
     mutationFn: async (entries: Record<string, string>) => {
       if (session.status === 'Canceled') throw new Error('Cancelled lessons must remain Excused');
@@ -142,14 +152,21 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
       // D4 step 3A (review N-2): the marks are saved; a refused Held flip is said.
       const notHeld = heldRefusedText(data);
       if (notHeld) toast.warning(notHeld);
+      // Children kept because of proof in class: say so; the register reload below shows the saved mark.
+      const kept = refusedBatchText(data, (id) => students?.find((s: any) => s.id === id)?.full_name);
+      if (kept && refusedStudentIds(data).length) { toast.warning(kept); await showSavedMarks(); }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendance-proof", session?.id] });
       queryClient.invalidateQueries({ queryKey: ["session-students", session?.id] });
       queryClient.invalidateQueries({ queryKey: ["calendar-sessions"] });
       toast.success("Attendance saved");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to save attendance");
+      // Put every control back to the mark the register actually holds.
+      void showSavedMarks();
+      queryClient.invalidateQueries({ queryKey: ["attendance-proof", session?.id] });
     },
   });
 
@@ -196,12 +213,9 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
 
   const toggleAttendance = (studentId: string) => {
     if (session.status === 'Canceled') return;
-    const statuses = ["Present", "Absent", "Excused"];
-    const currentIndex = statuses.indexOf(attendance[studentId] || "Present");
-    const nextIndex = (currentIndex + 1) % statuses.length;
     setAttendance((prev) => ({
       ...prev,
-      [studentId]: statuses[nextIndex],
+      [studentId]: nextStatus(prev[studentId] || "Present", proof.locked(studentId)),
     }));
   };
 
@@ -442,6 +456,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
                   : "flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"}
               >
                 <span className={ivory ? "min-w-0 flex-1 self-center whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink" : "font-medium"}>{student.full_name}</span>
+                {proof.reason(student.id) && <ProofLock reason={proof.reason(student.id)!} />}
                 {ivory ? (
                   // Was a clickable badge (not reachable by keyboard); same handler.
                   <button

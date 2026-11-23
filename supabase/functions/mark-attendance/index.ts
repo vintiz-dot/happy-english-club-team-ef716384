@@ -160,6 +160,53 @@ Deno.serve(async (req) => {
     //   lesson's month is past or a person's Present / Late is being
     //   un-billed. A slip past this check is still recorded by the database
     //   (service_retro_mark).
+    // Proof a child was in the room (attendance_proof_for_session). A child with
+    // proof is not written Absent or Excused: the database trigger would only keep
+    // the old mark silently for the service key, so this check is what tells the
+    // teacher. Asked through the caller's own client (the RPC checks the caller).
+    // If the function is missing or fails, behave exactly as before.
+    const proofSentence = (name: string, summary: string) =>
+      `${name} was in this lesson: ${summary}. If that is a mistake, remove it first, then change the mark.`;
+    const refusedForProof: Array<{ student_id: string; summary: string }> = [];
+    if (entries.some((e) => e.status === 'Absent' || e.status === 'Excused')) {
+      try {
+        const asCaller = callerClient(createClient, Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', authHeader);
+        const { data: proofRows, error: proofError } = await asCaller.rpc('attendance_proof_for_session', { p_session_id: sessionId });
+        if (!proofError && Array.isArray(proofRows)) {
+          const proven = new Map<string, string>();
+          for (const r of proofRows as any[]) {
+            if (r?.strength === 'proof' && typeof r.student_id === 'string') proven.set(r.student_id, String(r.summary ?? ''));
+          }
+          for (const e of entries) {
+            if ((e.status === 'Absent' || e.status === 'Excused') && proven.has(e.studentId)) {
+              refusedForProof.push({ student_id: e.studentId, summary: proven.get(e.studentId) ?? '' });
+            }
+          }
+        }
+      } catch (proofErr) {
+        console.warn('attendance proof check skipped:', proofErr);
+      }
+    }
+    const refusedIds = new Set(refusedForProof.map((r) => r.student_id));
+    const proofRefusal = async (students: Array<{ student_id: string; summary: string }>) => {
+      let name = 'This child';
+      if (students.length === 1) {
+        const { data: st } = await supabase.from('students').select('full_name').eq('id', students[0].student_id).maybeSingle();
+        if (st?.full_name) name = st.full_name;
+      }
+      const message = students.length === 1
+        ? proofSentence(name, students[0].summary)
+        : 'These children were in this lesson, so their mark was not changed. If that is a mistake, remove the proof first, then change the mark.';
+      return new Response(JSON.stringify({ error: 'attendance_proof', message, students }), {
+        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    };
+    // Every child in the request refused: nothing to save.
+    if (refusedForProof.length > 0 && refusedForProof.length === entries.length) {
+      return await proofRefusal(refusedForProof);
+    }
+    if (refusedIds.size > 0) entries = entries.filter((e) => !refusedIds.has(e.studentId));
+
     const now = new Date().toISOString();
     const upsertRows = entries.map(e => ({
       session_id: sessionId,
@@ -208,6 +255,12 @@ Deno.serve(async (req) => {
       .upsert(upsertRows, { onConflict: 'session_id,student_id' });
 
     if (attendanceError) {
+      const raisedProof = /ATTENDANCE_PROOF:\s*(.+)/s.exec(String(attendanceError.message ?? ''));
+      if (raisedProof) {
+        return new Response(JSON.stringify({ error: 'attendance_proof', message: raisedProof[1].trim(), students: [] }), {
+          status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       if (attendanceError.code === '23514') {
         return new Response(JSON.stringify({ error: 'Attendance was not saved: cancelled lessons must remain Excused.' }), {
           status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -258,7 +311,7 @@ Deno.serve(async (req) => {
     console.log(`Attendance marked for ${entries.length} students`);
 
     return new Response(
-      JSON.stringify({ success: true, count: entries.length }),
+      JSON.stringify({ success: true, count: entries.length, ...(refusedForProof.length > 0 ? { refused: refusedForProof } : {}) }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
