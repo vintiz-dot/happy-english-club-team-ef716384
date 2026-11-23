@@ -136,12 +136,8 @@ const PINNED = {
   'supabase/functions/snapshot-monthly-finance/index.ts monthly_finance_snapshots insert': 1,
   'supabase/functions/snapshot-monthly-finance/index.ts monthly_finance_snapshots update': 1,
   'supabase/functions/watch-sibling-threshold/index.ts sibling_discount_state upsert': 1,
-  // Re-pinned 23 Nov 2026 against main as it is. This list was first written on a branch where
-  // D4 step 3B put enrolment writes through money_change_checked; on main these two still write
-  // directly, admin-only (create-family: admin check; update-enrollment-rate: authenticateUser +
-  // admin, audit row). Open gap D5 G-13 (D5-audit.md section 8): move them onto the checked path with 3B.
-  'supabase/functions/create-family/index.ts enrollments insert': 1,
-  'supabase/functions/update-enrollment-rate/index.ts enrollments update': 1,
+  // create-family and update-enrollment-rate no longer write enrolments: since 23 Nov 2026 they go
+  // through money_change_checked as the caller (D4 3B, gap G-13 closed; d4-functions-inputs.test.mjs).
   // Gone since the audit: family-payment / smart-family-payment write through record_family_payment
   // (20261121130000), modify-payment is a 410 stub, close-payroll-month closes through
   // close_payroll_month_apply (20261117153000).
@@ -323,7 +319,11 @@ console.log('\n5. invoices.status comes from the one rule');
 // ------------------------------------------------------- 6. browser pricing
 console.log('\n6. no NEW browser pricing');
 {
-  const PRICERS = ['sessionPayVnd', 'totalPayVnd', 'varianceCostVnd', 'rateOnDate', 'datedPayrollTotal', 'splitPayrollByClass', 'apportion'];
+  // splitPayrollByClass / apportion (src/lib/finance/classPayroll.ts) are not pricers: they group
+  // calculate-payroll's own per-session amounts by class and round them to whole dong that sum to
+  // the function's total - the mapping the payroll rule allows. classPayFrom, the same grouping, was
+  // never listed. Closed G-8 on 23 Nov 2026 (docs/evidence/D5-audit.md section 9).
+  const PRICERS = ['sessionPayVnd', 'totalPayVnd', 'varianceCostVnd', 'rateOnDate', 'datedPayrollTotal'];
   const importers = [];
   for (const [file, text] of src) {
     if (!file.startsWith('src/') || file.startsWith('src/lib/')) continue;
@@ -333,13 +333,10 @@ console.log('\n6. no NEW browser pricing');
       if (hit.length) importers.push(`${file}: ${hit.join(', ')}`);
     }
   }
-  // sessionPayVnd left OperationalReports before 23 Nov 2026; splitPayrollByClass is what is left of G-8.
-  const G8 = ['src/components/admin/reports/OperationalReports.tsx: splitPayrollByClass'];
   // Not payroll figures: the staff rate form shows what one lesson pays at the rate being typed, and which history row is in force.
   const FORM_PREVIEWS = ['src/components/admin/staff/PayRateFields.tsx: sessionPayVnd', 'src/components/admin/staff/PayRateHistory.tsx: rateOnDate'];
-  const added = importers.filter((x) => !G8.includes(x) && !FORM_PREVIEWS.includes(x));
-  ok('outside src/lib, only the files pinned as gap G-8 import a pricing function', added.length === 0, added);
-  ok('  G-8 still open as pinned (when browser-pricing lands, empty G8 here and close G-8 in the audit)', G8.every((x) => importers.includes(x)), importers);
+  const added = importers.filter((x) => !FORM_PREVIEWS.includes(x));
+  ok('outside src/lib, no screen imports a pricing function (G-8 closed)', added.length === 0, added);
   const noPrice = ['src/components/admin/tabs/PayrollTab.tsx', 'src/pages/TeacherPayroll.tsx', 'src/components/teacher/TeacherPayrollCalendar.tsx',
     'src/components/admin/teacher/TeacherProfilePayroll.tsx', 'src/components/admin/AdminTuitionList.tsx'];
   ok('the screens already moved to the functions import no pricing function (PayrollTab, teacher payroll x3, AdminTuitionList)',

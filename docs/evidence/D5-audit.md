@@ -338,3 +338,20 @@ Both invoice status runs are against `fixtures/tuition-figures.golden.json`, whi
 - `update-enrollment-rate` updates `rate_override_vnd` directly (`authenticateUser` + admin, and it writes an audit row).
 
 Neither goes through `money_change_checked`, so neither gets an approval or a closed-month check. Fix: move both onto the checked path with D4 step 3B. Pinned in `money-write-paths` section 1.
+
+## 9. G-8 and G-13 closed (23 Nov 2026)
+
+**G-13 closed.** The live database has had the 3B enrolment guard (`zz_enrollment_money_guard`, 20261114094000) since 16 Nov, and so have the screens (`FamilyForm`, `EnrollmentRateEditor` expect a 409 with a preview). The four functions of `ff4140be` never reached main, though. So `create-family` and `update-enrollment-rate` still wrote with the service key, and the guard refused any write into a billed month with a bare HC120: the admin saw an error where the reason dialog should have opened. Ported from `claude/d5-money-audit`:
+- `update-enrollment-rate` and `create-family` write as the caller through `money_change_checked`.
+- `manage-demo-student` reports `demo_reset_needs_owner`.
+- `admin-data-import` no longer imports enrolments, lessons, the register or discounts, drops the class fee, and takes the screen's dry-run flag from the body.
+
+Tested by `d4-functions-inputs.test.mjs` (62), now in `run.mjs`. `money-write-paths` section 1 no longer pins the two direct writers.
+
+**G-8 closed.** Every screen this audit named now reads the functions' figures:
+- FinanceSummary's Excused Loss is calculate-tuition-bulk's `excusedLessons`.
+- ClassCalendarEnhanced uses `classPayFrom`.
+- StudentTuitionTab's sibling line is `siblingDiscountFor` over calculate-tuition's discounts.
+- The finance hooks sum saved or returned figures.
+
+What section 6 still flagged was `splitPayrollByClass` in OperationalReports. It groups calculate-payroll's own per-session amounts by class and rounds them to whole dong that sum to the function's total, which is mapping and not pricing. It is no longer listed as a pricer, and the ratchet now allows no importer outside `src/lib` besides the two rate-form previews.
