@@ -15,6 +15,7 @@ import { TimerProvider } from "@/contexts/TimerContext";
 import { NoiseMeterProvider } from "@/contexts/NoiseMeterContext";
 import { StudentProfileProvider } from "@/contexts/StudentProfileContext";
 import { AuthProvider } from "@/hooks/useAuth";
+import { AgeBandRoot } from "@/hooks/useAgeBand";
 import { IvoryScope } from "@/components/theme/IvoryScope";
 import { themeKey } from "@/lib/ivoryScope";
 import "@/index.css";
@@ -78,6 +79,7 @@ createRoot(document.getElementById("root")!).render(
         <Toaster />
         <BrowserRouter>
           <AuthProvider>
+            <AgeBandRoot>
             <IvoryScope>
               <Suspense fallback={null}>
                 <Routes>
@@ -110,6 +112,7 @@ createRoot(document.getElementById("root")!).render(
                 </Routes>
               </Suspense>
             </IvoryScope>
+            </AgeBandRoot>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
