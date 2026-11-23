@@ -38,7 +38,7 @@
 //   - "Excused, Late, Absent and a Canceled lesson": the class line counts 2
 //     lessons, not 1 (the Late one was billed but not counted). Charge as before.
 // Every other case kept base, discount, total, payments and carry to the dong;
-// the responses gained fields (projected, actual, lessons, sibling_basis_vnd).
+// the responses gained fields (projected, actual, lessons, sincePaid, sibling_basis_vnd).
 // Regenerate it only from a function whose figures are known to be right:
 // a change in this file's golden is a change in what families are charged.
 // T1_HANDLER_SOURCE alone runs the whole suite against that other copy,

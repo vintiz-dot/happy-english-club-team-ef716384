@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { SincePaid } from '@/lib/sincePaidLine';
 import { supabase } from "@/integrations/supabase/client";
 import { siblingRetryDelayMs } from "@/lib/siblingRetry";
 import { payableFrom } from "@/lib/tuitionFigures";
@@ -112,6 +113,11 @@ export interface StudentMonthFinanceData {
   
   // Prior balance breakdown for detailed view
   priorBalanceBreakdown?: PriorBalanceBreakdown;
+
+  /** What this month's payment paid for (calculate-tuition's `sincePaid`); absent from an older deploy. */
+  sincePaid?: SincePaid | null;
+  /** A closed month answered as charged although today's pricing differs: the function's sentence. */
+  heldMessage?: string | null;
   
   // Student context
   studentId: string;
@@ -197,6 +203,10 @@ export function useStudentMonthFinance(
         
         // Prior balance breakdown
         priorBalanceBreakdown: data.priorBalanceBreakdown,
+
+        // The function's own answers; nothing is worked out here.
+        sincePaid: data.sincePaid ?? null,
+        heldMessage: data.held && !data.held.priced_as_charged && typeof data.held.message === 'string' ? data.held.message : null,
       };
 
       return normalized;

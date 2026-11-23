@@ -12,7 +12,7 @@ assert.ok(!/^\s*import\s/m.test(src), 'tuition-pricing.ts imports nothing');
 const { code } = await transform(src, { loader: 'ts', format: 'esm' });
 const dir = mkdtempSync(join(tmpdir(), 'tuition-pricing-'));
 writeFileSync(join(dir, 'pricing.mjs'), code);
-const { priceStudentMonth, chooseSiblingClass, weekdayOf } = await import(pathToFileURL(join(dir, 'pricing.mjs')).href);
+const { priceStudentMonth, chooseSiblingClass, weekdayOf, explainPayment } = await import(pathToFileURL(join(dir, 'pricing.mjs')).href);
 
 let passed = 0, failed = 0;
 function test(name, fn) {
@@ -215,6 +215,65 @@ test('sibling: equal cost is settled by the tie order, the same way every time',
   const first = chooseSiblingClass(kids, 5, (s) => (s === 's2' ? 0 : 1));
   assert.equal(first.studentId, 's2');
   assert.equal(chooseSiblingClass([...kids].reverse(), 5, (s) => (s === 's2' ? 0 : 1)).studentId, 's2');
+});
+
+// ---------------------------------------------------- what a payment paid for
+// The owner's complaint: "the records on the app do not match what parents paid".
+const explain = ({ enrollments, sess, marks = {}, fees = { A: 210000, B: 260000 }, monthDiscounts = [], sibling = null }, paid, carryIn = 0) =>
+  explainPayment({ enrollments, sessions: sess, markOf: (id) => marks[id], classFeeOn: (c) => fees[c] ?? 0, monthDiscounts, sibling }, paid, carryIn);
+const seven = DATES.slice(0, 7); // 3..24 Nov at 210,000 = 1,470,000
+
+test('paid: the November case - seven lessons paid, the lesson of the 24th cancelled afterwards', () => {
+  const e = explain({ enrollments: [enrol('A')], sess: sessions('A', { 6: 'Canceled' }, seven) }, 1470000);
+  assert.equal(e.kind, 'explained');
+  assert.deepEqual([e.paid, e.payable, e.difference], [1470000, 1260000, 210000]);
+  assert.deepEqual(e.lessons.map((l) => [l.date, l.state, l.price_vnd]), [['2026-11-24', 'cancelled', 210000]]);
+});
+
+test('paid: exactly what the month asks for', () => {
+  const e = explain({ enrollments: [enrol('A')], sess: sessions('A', {}, seven) }, 1470000);
+  assert.deepEqual([e.kind, e.difference, e.lessons.length], ['exact', 0, 0]);
+});
+
+test('paid: nothing recorded', () => {
+  assert.equal(explain({ enrollments: [enrol('A')], sess: sessions('A', {}, seven) }, 0).kind, 'none');
+});
+
+test('paid: two lessons gone, one of them excused; the latest lessons are named', () => {
+  const e = explain({ enrollments: [enrol('A')], sess: sessions('A', { 5: 'Canceled', 6: 'Canceled' }, seven), marks: { 'A-1': 'Excused' } }, 1470000 - 210000);
+  // Three lessons are not billed (1,470,000 - 630,000 = 840,000 asked); the family paid for six: two explain it.
+  assert.equal(e.kind, 'explained');
+  assert.equal(e.payable, 840000);
+  assert.deepEqual(e.lessons.map((l) => l.date), ['2026-11-19', '2026-11-24']);
+});
+
+test('paid: a discount is priced into the explanation (10% off: a lesson is worth 189,000)', () => {
+  const e = explain({ enrollments: [enrol('A')], sess: sessions('A', { 6: 'Canceled' }, seven), monthDiscounts: [{ name: 'Staff child', type: 'percent', value: 10 }] }, 1323000);
+  assert.deepEqual([e.kind, e.payable, e.difference], ['explained', 1134000, 189000]);
+});
+
+test('paid: more than asked and no lesson explains it', () => {
+  const e = explain({ enrollments: [enrol('A')], sess: sessions('A', { 6: 'Canceled' }, seven) }, 1500000);
+  assert.deepEqual([e.kind, e.difference, e.lessons.length], ['over', 240000, 0]);
+  const none = explain({ enrollments: [enrol('A')], sess: sessions('A', {}, seven) }, 1500000);
+  assert.deepEqual([none.kind, none.difference], ['over', 30000]);
+});
+
+test('paid: less than asked', () => {
+  const e = explain({ enrollments: [enrol('A')], sess: sessions('A', {}, seven) }, 1000000);
+  assert.deepEqual([e.kind, e.difference], ['under', -470000]);
+});
+
+test('paid: the October case - the month paid in full while credit was carried in', () => {
+  // 210,000 credit brought in: the app asks 1,260,000, the family paid the month's 1,470,000.
+  const e = explain({ enrollments: [enrol('A')], sess: sessions('A', {}, seven) }, 1470000, -210000);
+  assert.deepEqual([e.kind, e.carryCounted, e.payable, e.difference], ['exact', false, 1260000, 210000]);
+});
+
+test('paid: debt carried in is part of what was paid against', () => {
+  const e = explain({ enrollments: [enrol('A')], sess: sessions('A', { 6: 'Canceled' }, seven) }, 1470000 + 300000, 300000);
+  assert.deepEqual([e.kind, e.carryCounted, e.payable, e.difference], ['explained', true, 1560000, 210000]);
+  assert.equal(e.lessons.length, 1);
 });
 
 console.log(`${passed} passed, ${failed} failed`);

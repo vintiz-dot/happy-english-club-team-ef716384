@@ -113,6 +113,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 400000,
+     "difference": -400000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -284,6 +292,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 400000,
+     "difference": -400000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -467,6 +483,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 360000,
+     "difference": -360000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -646,6 +670,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 360000,
+     "difference": -360000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -814,6 +846,14 @@
       "state": "cancelled"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 200000,
+     "difference": -200000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -978,6 +1018,14 @@
       "state": "cancelled"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 200000,
+     "difference": -200000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -1153,6 +1201,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 320000,
+     "difference": -320000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -1324,6 +1380,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 320000,
+     "difference": -320000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -1512,6 +1576,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 297500,
+     "difference": -297500,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -1696,6 +1768,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 297500,
+     "difference": -297500,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -1921,6 +2001,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 660000,
+     "difference": -660000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -2166,6 +2254,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 660000,
+     "difference": -660000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -2371,6 +2467,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 400000,
+     "difference": -400000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -2548,6 +2652,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 400000,
+     "difference": -400000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -2723,6 +2835,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "under",
+     "paid": 150000,
+     "payable": 700000,
+     "difference": -550000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -2923,6 +3043,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "under",
+     "paid": 150000,
+     "payable": 700000,
+     "difference": -550000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -3167,6 +3295,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 150000,
+     "difference": -150000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -3353,6 +3489,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 150000,
+     "difference": -150000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -3565,6 +3709,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 900000,
+     "difference": -900000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -3734,6 +3886,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 900000,
+     "difference": -900000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -3829,6 +3989,14 @@
      "totalAmount": 0
     },
     "lessons": [],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 0,
+     "difference": 0,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": []
     },
@@ -3910,6 +4078,14 @@
      "totalAmount": 0
     },
     "lessons": [],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 0,
+     "difference": 0,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": []
     },
@@ -4022,6 +4198,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 90000,
+     "difference": -90000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -4156,6 +4340,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 90000,
+     "difference": -90000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -4328,6 +4520,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 270000,
+     "difference": -270000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -4496,6 +4696,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 270000,
+     "difference": -270000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -4634,6 +4842,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 90000,
+     "difference": -90000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -4768,6 +4984,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 90000,
+     "difference": -90000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -4940,6 +5164,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 280000,
+     "difference": -280000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -5108,6 +5340,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 280000,
+     "difference": -280000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -5246,6 +5486,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 80000,
+     "difference": -80000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -5380,6 +5628,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 80000,
+     "difference": -80000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -5559,6 +5815,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 260000,
+     "difference": -260000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -5734,6 +5998,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 260000,
+     "difference": -260000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -5864,6 +6136,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 100000,
+     "difference": -100000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {
@@ -5990,6 +6270,14 @@
       "state": "billed"
      }
     ],
+    "sincePaid": {
+     "kind": "none",
+     "paid": 0,
+     "payable": 100000,
+     "difference": -100000,
+     "carryCounted": true,
+     "lessons": []
+    },
     "breakdown": {
      "classes": [
       {

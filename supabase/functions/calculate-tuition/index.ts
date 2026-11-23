@@ -6,7 +6,7 @@ import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
 import { classFeeOn, readClassFeeHistory } from "../_lib/class-fee.ts";
-import { priceStudentMonth, type MonthDiscount } from "../_lib/tuition-pricing.ts";
+import { explainPayment, priceStudentMonth, type MonthDiscount, type PaymentExplained } from "../_lib/tuition-pricing.ts";
 import { refreshableMonths } from "../_lib/bill-refresh.ts";
 import { clockNow } from "../_lib/clock.ts";
 import {
@@ -309,14 +309,15 @@ Deno.serve(async (req) => {
     // a mark or no mark; the custom rate IS the price; the enrollment's terms,
     // then fixed amounts, then percentages on what is left, then the sibling
     // percentage on the winner class's share. Nothing is priced in this file.
-    const pricedMonth = priceStudentMonth({
+    const pricingInput = {
       enrollments,
       sessions: (sessions ?? []) as any[],
       markOf: (sessionId: string) => attendanceMap.get(sessionId),
       classFeeOn: feeOn,
       monthDiscounts,
       sibling: siblingAward,
-    });
+    };
+    const pricedMonth = priceStudentMonth(pricingInput);
     // projected: the whole month as the timetable stands - the bill.
     // actual: the lessons already held - shown to admins beside it.
     const projected = pricedMonth.projected;
@@ -536,6 +537,31 @@ Deno.serve(async (req) => {
     const closingBalance = totalAmount - carryInBalance - monthPayments;
     const carryOutCredit = closingBalance < 0 ? Math.abs(closingBalance) : 0;
     const carryOutDebt = closingBalance > 0 ? closingBalance : 0;
+
+    // What this month's payment paid for (the owner's complaint: the app stops
+    // matching what parents paid when a lesson is cancelled or excused after
+    // they pay). Priced by the module; a bill answered as saved (frozen, held,
+    // kept) is not today's pricing, so only the plain comparison is given.
+    const sincePaidRaw: PaymentExplained =
+      tuitionFrozen || asSaved || siblingUnresolved
+        ? {
+            kind: !(monthPayments > 0) ? "none" : monthPayments === payable ? "exact" : monthPayments > payable ? "over" : "under",
+            paid: monthPayments,
+            payable,
+            difference: monthPayments - payable,
+            carryCounted: true,
+            lessons: [],
+          }
+        : explainPayment(pricingInput, monthPayments, carryInDebt - carryInCredit);
+    const sincePaid = {
+      ...sincePaidRaw,
+      lessons: sincePaidRaw.lessons.map((l) => ({
+        date: l.date,
+        class_name: (classNameMap.get(l.class_id) as string | undefined) || "Unknown",
+        state: l.state,
+        price_vnd: l.price_vnd,
+      })),
+    };
 
     const balanceStatus = carryOutCredit > 0 ? "credit" : carryOutDebt > 0 ? "debt" : "settled";
     const balanceMessage =
@@ -794,6 +820,8 @@ Deno.serve(async (req) => {
         ? { actual: { lessons: actual.lessons, baseAmount: actual.baseAmount, totalDiscount: actual.totalDiscount, totalAmount: actual.totalAmount } }
         : {}),
       lessons: lessonList,
+      // exact | explained (by lessons cancelled or excused since) | over | under | none.
+      sincePaid,
       ...(heldBill ? { held: pastMonthHeld(month, savedFigures!, computed) } : {}),
       // A closed month answered exactly as it was charged (same total today).
       ...(keptBill ? { keptAsCharged: true } : {}),

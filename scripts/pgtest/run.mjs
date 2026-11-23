@@ -354,6 +354,8 @@ const SUITES = [
   { name: "register holes", file: "register-holes.test.mjs", migrations: [] },
   // Finance > Tuition lists the held bills of every closed month for an admin to approve one by one.
   { name: "closed month changes", file: "closed-month-changes.test.mjs", migrations: [] },
+  // "What changed since you paid": the sentence families and admins read (the pricing is in tuition pricing).
+  { name: "since paid line", file: "since-paid-line.test.mjs", migrations: [] },
   { name: "restore transfer marks", file: "restore-transfer-marks.test.mjs", migrations: [] },
   { name: "uncancel restores marks", file: "uncancel-restores-marks.test.mjs", migrations: [] },
   // Stage A without a database: the AI reply checked against the records, and what approval sends.

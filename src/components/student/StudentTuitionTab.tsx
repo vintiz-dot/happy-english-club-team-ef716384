@@ -17,6 +17,7 @@ import { PriorBalanceBreakdown } from "./PriorBalanceBreakdown";
 import { BillFreezePanel, useBillFreeze } from "./BillFreezePanel";
 import { Lock } from "lucide-react";
 import { siblingDiscountFor } from "@/lib/tuitionFigures";
+import { sincePaidLine } from "@/lib/sincePaidLine";
 
 // Ivory (A4.6) strings. This tab renders on the admin student page only, so it keeps
 // the old classes until the staff area flips (useIvory). Amounts: ink, sans, tabular,
@@ -219,6 +220,33 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
           />
         </div>
       </div>
+
+      {/* What this month's payment paid for, in one sentence (the function's own answer, worded by sincePaidLine). */}
+      {(() => {
+        const line = sincePaidLine(tuitionData.sincePaid);
+        if (!line && !tuitionData.heldMessage) return null;
+        return (
+          <div
+            role="note"
+            className={cn(
+              ivory ? "rounded-hec-md border border-hec-line bg-hec-surface p-4 text-hec-small" : "rounded-lg border p-4 text-sm",
+              line?.tone === "check" && (ivory ? "border-hec-warn/40" : "border-yellow-600"),
+            )}
+          >
+            {line && (
+              <>
+                <p>{line.en}</p>
+                <p className={cn(ivory ? "text-hec-ink-soft mt-1" : "text-muted-foreground mt-1")}>{line.vi}</p>
+              </>
+            )}
+            {tuitionData.heldMessage && (
+              <p className={cn(line && "mt-2", ivory ? "text-hec-ink-soft" : "text-muted-foreground")}>
+                This month is closed, so the bill stays as it was charged.
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Financial Summary Cards - Match Admin Finance column order */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">

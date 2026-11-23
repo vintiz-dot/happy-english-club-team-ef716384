@@ -313,6 +313,78 @@ export function priceStudentMonth(input: StudentMonthInput): StudentMonth {
   };
 }
 
+// ------------------------------------------------- what a payment paid for
+
+export interface PaymentExplained {
+  /**
+   *   none       nothing is recorded as paid on the month;
+   *   exact      what was paid is what the month asks for now;
+   *   explained  what was paid is the month WITH `lessons` still billed: they
+   *              were cancelled or excused after the family paid;
+   *   over       more was paid than is asked, and those lessons do not explain it;
+   *   under      less was paid than is asked.
+   */
+  kind: "none" | "exact" | "explained" | "over" | "under";
+  paid: number;
+  /** What the month asks for now: its charge plus the balance brought in. */
+  payable: number;
+  /** paid - payable: credit for the next month when positive, still owed when negative. */
+  difference: number;
+  /** The balance brought in was part of what the family paid against (false: they paid the month's own charge). */
+  carryCounted: boolean;
+  /** kind "explained": the lessons no longer billed that the payment covered. */
+  lessons: PricedLesson[];
+}
+
+/** k-element subsets of 0..n-1, later indexes first (the latest lessons are tried first). */
+function* subsets(n: number, k: number, from = n - 1): Generator<number[]> {
+  if (k === 0) { yield []; return; }
+  for (let i = from; i >= k - 1; i--) for (const rest of subsets(n, k - 1, i - 1)) yield [i, ...rest];
+}
+
+/**
+ * Parents pay what the bill said on the day; a lesson cancelled or excused
+ * afterwards lowers the bill and the app then shows more paid than asked. This
+ * says whether the lessons no longer billed account for the whole difference:
+ * the month is priced again with some of them billed (same rules, same
+ * discounts) until it comes to exactly what was paid.
+ *
+ * `carryIn` is the balance brought into the month: debt positive, credit
+ * negative. Both "the month's charge plus the balance" and "the month's charge
+ * alone" count as what a family may have paid against.
+ */
+export function explainPayment(input: StudentMonthInput, paid: number, carryIn: number): PaymentExplained {
+  const all = monthLessons(input.enrollments, input.sessions, input.markOf, input.classFeeOn);
+  const billed = all.filter((l) => l.state === "billed");
+  const charge = priceLessons(billed, input.monthDiscounts, input.sibling).totalAmount;
+  const carry = Math.round(num(carryIn));
+  const payable = charge + carry;
+  const amount = Math.round(num(paid));
+  const strip = (ls: LessonWithEnrollment[]): PricedLesson[] => ls.map(({ enrollment: _enrollment, ...lesson }) => lesson);
+  const answer = (kind: PaymentExplained["kind"], carryCounted: boolean, lessons: LessonWithEnrollment[] = []): PaymentExplained => ({
+    kind, paid: amount, payable, difference: amount - payable, carryCounted, lessons: strip(lessons),
+  });
+  if (!(amount > 0)) return answer("none", true);
+  if (amount === payable) return answer("exact", true);
+  if (carry !== 0 && amount === charge) return answer("exact", false);
+  if (amount < payable && amount < charge) return answer("under", true);
+
+  // Lessons that would have been billed: cancelled or excused, with a price.
+  const gone = all.filter((l) => (l.state === "cancelled" || l.state === "excused") && l.price_vnd > 0);
+  if (gone.length > 0 && gone.length <= 12) {
+    for (let k = 1; k <= gone.length; k++) {
+      for (const pick of subsets(gone.length, k)) {
+        const chosen = pick.map((i) => gone[i]);
+        const withThem = priceLessons([...billed, ...chosen], input.monthDiscounts, input.sibling).totalAmount;
+        const sorted = [...chosen].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+        if (withThem + carry === amount) return answer("explained", true, sorted);
+        if (carry !== 0 && withThem === amount) return answer("explained", false, sorted);
+      }
+    }
+  }
+  return answer(amount > payable ? "over" : "under", true);
+}
+
 // ------------------------------------------------------------- sibling winner
 
 export interface SiblingChild {
