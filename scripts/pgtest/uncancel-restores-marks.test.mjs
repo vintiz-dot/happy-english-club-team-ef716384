@@ -150,8 +150,9 @@ function kit(db) {
   const held = (lid) => db.query(`UPDATE public.sessions SET status = 'Held' WHERE id = $1`, [lid]);
   const marksOf = async (lid) => Object.fromEntries((await all(`SELECT student_id, status FROM public.attendance WHERE session_id = $1`, [lid])).map((r) => [r.student_id, r.status]));
   const rowsOf = async (lid) => await all(`SELECT student_id, status, marked_by, marked_at::text AS marked_at, notes FROM public.attendance WHERE session_id = $1 ORDER BY student_id`, [lid]);
+  const snapOf = async (lid, kid) => (await one(`SELECT sn.status FROM public.attendance_cancel_snapshots sn JOIN public.attendance a ON a.id = sn.attendance_id WHERE a.session_id = $1 AND a.student_id = $2`, [lid, kid]))?.status;
   const snaps = (lid) => count(`SELECT count(*) n FROM public.attendance_cancel_snapshots WHERE session_id = $1`, [lid]);
-  return { db, one, all, count, student, enrol, lesson, mark, cancel, uncancel, held, marksOf, rowsOf, snaps };
+  return { db, one, all, count, snapOf, student, enrol, lesson, mark, cancel, uncancel, held, marksOf, rowsOf, snaps };
 }
 
 // The scenario of C1 (and C8): five different marks on one lesson.
@@ -251,14 +252,21 @@ console.log('\nC3. cancel, un-cancel, change a mark, cancel, un-cancel: the chan
   ok('C3 first round: Present and Late', (await x.marksOf(lid))[kid] === 'Present' && (await x.marksOf(lid))[other] === 'Late');
   await db.query(`UPDATE public.attendance SET status = 'Absent', marked_by = $3 WHERE session_id = $1 AND student_id = $2`, [lid, kid, TEACHER]);
   await x.cancel(lid);
-  ok('C3 the second cancel wrote the newer truth (Absent)', (await x.one(`SELECT status FROM public.attendance_cancel_snapshots WHERE session_id = $1 AND student_id = $2`, [lid, kid])).status === 'Absent');
+  ok('C3 the second cancel wrote the newer truth (Absent)', (await x.snapOf(lid, kid)) === 'Absent');
   await x.uncancel(lid);
   ok('C3 the changed mark (Absent) is restored, the other is still Late', (await x.marksOf(lid))[kid] === 'Absent' && (await x.marksOf(lid))[other] === 'Late', await x.marksOf(lid));
-  // A leftover snapshot from a failed clean-up is overwritten by the next cancel, not duplicated.
-  await db.query(`INSERT INTO public.attendance_cancel_snapshots(session_id, student_id, status) VALUES ($1, $2, 'Present') ON CONFLICT DO NOTHING`, [lid, kid]);
+  // A leftover snapshot (kept by a failed restore) holds the truth: a cancel replaces it only for a mark that is not Excused now.
+  const rowId = (await x.one(`SELECT id FROM public.attendance WHERE session_id = $1 AND student_id = $2`, [lid, kid])).id;
+  await db.query(`INSERT INTO public.attendance_cancel_snapshots(attendance_id, session_id, status) VALUES ($1, $2, 'Present') ON CONFLICT DO NOTHING`, [rowId, lid]);
   await db.query(`UPDATE public.attendance SET status = 'Late' WHERE session_id = $1 AND student_id = $2`, [lid, kid]);
   await x.cancel(lid);
-  ok('C3 a leftover snapshot is overwritten by the next cancel (no key clash)', (await x.one(`SELECT status FROM public.attendance_cancel_snapshots WHERE session_id = $1 AND student_id = $2`, [lid, kid])).status === 'Late');
+  ok('C3 a leftover snapshot is replaced by the next cancel when the mark is not Excused (Late)', (await x.snapOf(lid, kid)) === 'Late');
+  await db.query(`UPDATE public.attendance_cancel_snapshots SET status = 'Present' WHERE attendance_id = $1`, [rowId]);
+  await x.uncancel(lid);   // the mark is Present again now
+  await db.query(`UPDATE public.attendance SET status = 'Excused' WHERE id = $1`, [rowId]);   // a kept note and an Excused mark (as after a failed restore)
+  await db.query(`INSERT INTO public.attendance_cancel_snapshots(attendance_id, session_id, status) VALUES ($1, $2, 'Present') ON CONFLICT DO NOTHING`, [rowId, lid]);
+  await x.cancel(lid);
+  ok('C3 an older snapshot is NOT replaced when the mark is Excused now (the all-Excused overwrite would destroy it)', (await x.snapOf(lid, kid)) === 'Present');
   await x.uncancel(lid);
 }
 
@@ -343,11 +351,11 @@ const snap0 = await snapshot();
   const total = rows[rows.length - 1];
   const by = (n) => rows.find((r) => r.student === n);
   ok('CHECK script: writes nothing', JSON.stringify(await snapshot()) === JSON.stringify(snap0));
-  ok('CHECK script: 8 child-months plus a TOTAL row', rows.length === 9 && /^TOTAL \(8 children, 8 child-months\)/.test(total.student), rows.map((r) => r.student));
-  ok('CHECK script: TOTAL counts 8 candidate marks, 7 made by a person', Number(total.candidates) === 8 && Number(total.by_a_person) === 7, total);
-  ok('CHECK script: TOTAL counts the re-marked, the excused-before and the not-held lesson', /1 changed by a person after the cancel/.test(total.first_guess) && /2 already Excused before the cancel/.test(total.first_guess) && /2 lessons_not_held/.test(total.first_guess), total.first_guess);
-  ok('CHECK script: first guesses (K1 and K8 likely restore, K2 K3... decide, K3 no bill)', by('Right Bill').first_guess === 'likely restore' && by('Person Made').first_guess === 'likely restore'
-    && by('Bill Missed Them').first_guess === 'decide' && by('No Bill').first_guess === 'no bill', rows.map((r) => [r.student, r.first_guess]));
+  ok('CHECK script: 5 child-months (lessons not Held left out) plus a TOTAL row', rows.length === 6 && /^TOTAL \(5 children, 5 child-months\)/.test(total.student), rows.map((r) => r.student));
+  ok('CHECK script: TOTAL counts 5 candidate marks, 5 made by a person', Number(total.candidates) === 5 && Number(total.by_a_person) === 5, total);
+  ok('CHECK script: TOTAL text counts the re-marked, the excused-before and the 3 marks on 2 lessons not Held', /1 changed by a person after the cancel/.test(total.first_guess) && /2 already Excused before the cancel/.test(total.first_guess) && /3 more candidate marks on 2 lessons_not_held/.test(total.first_guess), total.first_guess);
+  ok('CHECK script: first guesses (K1 and K8 likely restore, K2 decide, K3 no bill)', by('Right Bill').first_guess === 'likely restore' && by('Person Made').first_guess === 'likely restore'
+    && by('Bill Missed Them').first_guess === 'decide' && by('No Bill').first_guess === 'no bill' && !by('Scheduled Lesson'), rows.map((r) => [r.student, r.first_guess]));
   ok('CHECK script: saved bill, payment and frozen are shown', Number(by('Right Bill').saved_base) === 420000 && Number(by('Right Bill').recorded_payment) === 420000 && by('Forced').frozen === true);
   ok('CHECK script: calls no function of ours', !/public\.|_uncancelled|tuition_bill_expected|admin_restore/.test(q.split('\n').map((l) => l.replace(/--.*$/, '')).join(' ')));
 }
@@ -439,6 +447,22 @@ console.log('\nC5 (continued). a row re-marked AFTER an old un-cancel is not a c
   const r = await run(true);
   ok('C5 it is counted as remarked_since and not judged', !r.child_months.some((c) => c.student_id === kid) && r.remarked_since >= 2, r.remarked_since);
 }
+{
+  // M3: a row signed by nobody is not always an untouched placeholder (repair-attendance writes them too).
+  const lm = await x.lesson('2026-09-01', 'Held');
+  const m1 = await x.student('M3 changed before the cancel'), m2 = await x.student('M3 changed by the cancel'), m3 = await x.student('M3 person');
+  for (const k of [m1, m2, m3]) await x.enrol(k);
+  await hm(lm, m1, { by: null, created: '2026-09-01T00:00:00Z', updated: '2026-09-05T00:00:00Z' });   // an admin set it Excused before the cancel
+  await hm(lm, m2, { by: null, created: '2026-09-01T00:00:00Z', updated: CANCELLED_AT });
+  await hm(lm, m3, { by: TEACHER, created: '2026-09-01T00:00:00Z', updated: CANCELLED_AT });
+  await db.query(`UPDATE public.sessions SET status = 'Canceled', canceled_at = $2, canceled_by = $3 WHERE id = $1`, [lm, CANCELLED_AT, ADMIN]);
+  await db.query(`DELETE FROM public.attendance_cancel_snapshots WHERE session_id = $1`, [lm]);   // as if cancelled before the notes existed
+  await x.uncancel(lm);
+  const mm = await x.marksOf(lm);
+  ok('M3 no note: a row nobody signed that the cancel changed goes to Present', mm[m2] === 'Present', mm);
+  ok('M3 no note: a row nobody signed that was changed BEFORE the cancel stays Excused', mm[m1] === 'Excused', mm);
+  ok('M3 no note: a person-made row stays Excused (the admin function is for those)', mm[m3] === 'Excused', mm);
+}
 await db.exec(`ALTER TABLE public.attendance ENABLE TRIGGER update_attendance_updated_at`);
 
 console.log('\nC7. an un-cancel never fails because of the restore');
@@ -458,8 +482,28 @@ console.log('\nC7. an un-cancel never fails because of the restore');
   ok('C7 the lesson is Scheduled', (await x.one(`SELECT status::text s FROM public.sessions WHERE id = $1`, [lid])).s === 'Scheduled');
   ok('C7 the other child was restored (Present); the failing one stays Excused', (await x.marksOf(lid))[good] === 'Present' && (await x.marksOf(lid))[bad] === 'Excused', await x.marksOf(lid));
   ok('C7 a WARNING was raised naming the child', notices.some((m) => /Could not put back the mark of child/.test(m) && m.includes(bad)), notices);
-  ok('C7 the snapshot rows are kept so it can be looked at', (await x.snaps(lid)) === 2);
+  ok('C7 only the failing mark keeps its snapshot (the restored one is cleared)', (await x.snaps(lid)) === 1 && (await x.snapOf(lid, bad)) === 'Late', await x.snaps(lid));
+  // Cancel again while the note is kept: it holds the truth (Late) and the next un-cancel puts it back.
+  await x.cancel(lid);
+  ok('C7 a second cancel keeps the older note (Late), it does not turn it into Excused', (await x.snapOf(lid, bad)) === 'Late' && (await x.snapOf(lid, good)) === 'Present');
   await db.exec(`DROP TRIGGER aa_test_failing_mark ON public.attendance; DROP FUNCTION public.test_failing_mark();`);
+  await x.uncancel(lid);
+  ok('C7 once the fault is gone the un-cancel brings back Late and Present, and the notes go', (await x.marksOf(lid))[bad] === 'Late' && (await x.marksOf(lid))[good] === 'Present' && (await x.snaps(lid)) === 0, await x.marksOf(lid));
+
+  // A rule keeps a row without an error (0 rows changed): warned, its note kept, the others cleared.
+  const lidZ = await x.lesson('2026-09-12');
+  const zGood = await x.student('C7 z good'), zBad = await x.student('C7 z bad');
+  await x.enrol(zGood); await x.enrol(zBad);
+  await x.mark(lidZ, zGood, 'Present', TEACHER); await x.mark(lidZ, zBad, 'Absent', TEACHER);
+  await x.cancel(lidZ);
+  await db.exec(`CREATE FUNCTION public.test_skip_mark() RETURNS trigger LANGUAGE plpgsql AS $t$ BEGIN IF NEW.student_id = '${zBad}' AND NEW.status <> 'Excused' THEN RETURN NULL; END IF; RETURN NEW; END $t$;
+    CREATE TRIGGER aa_test_skip_mark BEFORE UPDATE ON public.attendance FOR EACH ROW EXECUTE FUNCTION public.test_skip_mark();`);
+  notices.length = 0;
+  const eZ = await tryIt(() => x.uncancel(lidZ, opts));
+  ok('C7 a row a rule silently kept: the un-cancel commits, a WARNING names the child, its note is kept, the others are cleared',
+    eZ === null && notices.some((m) => /kept the mark of child/.test(m) && m.includes(zBad)) && (await x.marksOf(lidZ))[zBad] === 'Excused' && (await x.marksOf(lidZ))[zGood] === 'Present'
+    && (await x.snaps(lidZ)) === 1 && (await x.snapOf(lidZ, zBad)) === 'Absent', [eZ, notices]);
+  await db.exec(`DROP TRIGGER aa_test_skip_mark ON public.attendance; DROP FUNCTION public.test_skip_mark();`);
 
   // The clean-up of the notes fails: the marks stay restored, a warning is raised.
   const lid2 = await x.lesson('2026-09-04');
@@ -510,6 +554,51 @@ console.log('\nNo loop and the same firing conditions');
   ok('an update of a Held lesson to Held does not fire either trigger', (await x.marksOf(lid))[kid] === 'Present');
 }
 await db.close();
+
+// ===================================================== merge with a cancelled lesson
+console.log('\nMerge. two records of one child on a currently cancelled lesson (20261121120000)');
+{
+  const mt = readFileSync(join(here, 'merge-students.test.mjs'), 'utf8');
+  const raw = mt.match(/const BASE = `([\s\S]*?)`;\s*const SEED/)?.[1];
+  const lane = mig('20261114090000_d4_floors.sql').match(/CREATE OR REPLACE FUNCTION public\._caller_lane\(\)[\s\S]*?\$fn\$;/)?.[0];
+  if (!raw || !lane) ok('Merge: the merge-students prelude could be read', false);
+  else {
+    const md = new PGlite();
+    await md.exec(new Function('ADMIN', 'TEACHER', 'LANE', 'return `' + raw + '`')(ADMIN, TEACHER, lane));
+    await md.exec(`
+      ALTER TABLE public.sessions ADD COLUMN canceled_at timestamptz;
+      ALTER TABLE public.enrollments ADD COLUMN allowed_days integer[];
+      ALTER TABLE public.attendance ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
+      CREATE FUNCTION public.tuition_bill_expected(p_month text) RETURNS TABLE (student_id uuid, billable_lessons integer, expected_base bigint)
+        LANGUAGE sql STABLE AS $f$ SELECT NULL::uuid, NULL::integer, NULL::bigint WHERE false $f$;
+      CREATE FUNCTION public.set_attendance_excused_on_cancel() RETURNS trigger LANGUAGE plpgsql AS $f$ BEGIN RETURN NULL; END $f$;
+      CREATE TRIGGER trg_cancel_session_excused AFTER UPDATE ON public.sessions FOR EACH ROW
+        WHEN (NEW.status = 'Canceled' AND OLD.status IS DISTINCT FROM 'Canceled') EXECUTE FUNCTION public.set_attendance_excused_on_cancel();`);
+    const inst = await tryIt(() => md.exec(mig('20261123120000_uncancel_restores_marks.sql')));
+    ok('Merge: our migration installs beside the merge prelude', inst === null, inst);
+    await md.exec(mig('20261121120000_admin_merge_students.sql'));
+    const KEEP = U(811), DROP = U(812), CL = U(813), S1 = U(821), S2 = U(822);
+    await md.exec(`INSERT INTO public.students(id, full_name) VALUES ('${KEEP}', 'Child'), ('${DROP}', 'Child');
+      INSERT INTO public.classes VALUES ('${CL}', 'A');
+      INSERT INTO public.sessions(id, class_id, date, status) VALUES ('${S1}', '${CL}', '2026-03-02', 'Held'), ('${S2}', '${CL}', '2026-03-09', 'Held');
+      INSERT INTO public.enrollments(student_id, class_id, start_date, end_date, created_at) VALUES ('${KEEP}', '${CL}', '2026-03-01', NULL, '2026-03-01'), ('${DROP}', '${CL}', '2026-03-01', '2026-03-31', '2026-03-01');`);
+    await md.exec(`UPDATE public.sessions SET status = 'Canceled', canceled_at = now() WHERE id IN ('${S1}', '${S2}')`);
+    const n = async (q) => Number((await md.query(q)).rows[0].n);
+    ok('Merge: 4 snapshots exist (both records on both cancelled lessons)', (await n(`SELECT count(*) n FROM public.attendance_cancel_snapshots`)) === 4);
+    ok('Merge: the snapshot table has no student_id column (the merge never sees it)', (await n(`SELECT count(*) n FROM information_schema.columns WHERE table_name = 'attendance_cancel_snapshots' AND column_name = 'student_id'`)) === 0);
+    const dryM = await tryIt(() => md.query(`SELECT public.admin_merge_students($1, $2, true)`, [KEEP, DROP]));
+    ok('Merge: the dry run succeeds', dryM === null, dryM);
+    const real = await tryIt(() => md.query(`SELECT public.admin_merge_students($1, $2, false)`, [KEEP, DROP]));
+    ok('Merge: the real merge succeeds', real === null, real);
+    ok('Merge: the dropped record is gone; its snapshots went with its marks; the kept record keeps 2', (await n(`SELECT count(*) n FROM public.attendance WHERE student_id = '${DROP}'`)) === 0
+      && (await n(`SELECT count(*) n FROM public.attendance_cancel_snapshots`)) === 2
+      && (await n(`SELECT count(*) n FROM public.attendance_cancel_snapshots sn JOIN public.attendance a ON a.id = sn.attendance_id WHERE a.student_id = '${KEEP}'`)) === 2);
+    await md.exec(`UPDATE public.sessions SET status = 'Scheduled' WHERE id IN ('${S1}', '${S2}')`);
+    ok('Merge: un-cancelling afterwards still puts the kept child marks back', (await n(`SELECT count(*) n FROM public.attendance WHERE student_id = '${KEEP}' AND status = 'Present'`)) === 2
+      && (await n(`SELECT count(*) n FROM public.attendance_cancel_snapshots`)) === 0);
+    await md.close();
+  }
+}
 
 // ===================================================== real RPCs on the real guard stack
 console.log('\nC1r. the real cancel_session_checked / uncancel_session_checked');
