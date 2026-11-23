@@ -419,9 +419,13 @@ Deno.serve(async (req) => {
             approved: mayForce,
           });
     const heldBill = pastMode === "held";
+    // Same total, split differently between base and discount: kept as saved, silently.
+    const keptBill = pastMode === "kept";
+    // Either way the saved bill is what is answered and what stays saved.
+    const asSaved = heldBill || keptBill;
     const approvedChange = pastMode === "approved";
     if (approvedChange && !(reason ?? "").trim()) throw new Error("Give a reason to change a closed month's bill.");
-    if (heldBill) {
+    if (asSaved) {
       baseAmount = savedFigures!.base;
       totalDiscount = savedFigures!.discount;
       totalAmount = savedFigures!.total;
@@ -582,14 +586,15 @@ Deno.serve(async (req) => {
 
     const storedFlags: any[] = Array.isArray(frozenInvoice?.review_flags) ? frozenInvoice.review_flags : [];
     const savedAt = new Date().toISOString();
-    if (heldBill) {
-      // The bill stands as it was: keep what it already says, add the difference.
+    if (asSaved) {
+      // The bill stands as it was: keep what it already says and, when the
+      // total differs (held), add the difference.
       for (const f of storedFlags) {
         if (f?.type !== PAST_MONTH_DIFFERS && f?.type !== REGISTER_MISSING_MARKS && f?.type !== "changed_after_confirmation") {
           reviewFlags.push(f);
         }
       }
-      reviewFlags.push(pastMonthDiffersFlag(savedFigures!, computed));
+      if (heldBill) reviewFlags.push(pastMonthDiffersFlag(savedFigures!, computed));
     } else {
       // Only flag if there's a difference between expected and final
       if (totalAmount !== expectedClassTuition) {
@@ -665,9 +670,9 @@ Deno.serve(async (req) => {
     const writeInvoice = !siblingPreview && !siblingUnresolved;
     let invoiceUpsertOk = true;
     let invoiceErrorMsg = "";
-    // A held bill is not repriced: only what changed in its labels, flags and
-    // balances is written, and nothing at all when nothing changed.
-    const patchOnly = heldBill;
+    // A held or kept bill is not repriced: only what changed in its labels, flags
+    // and balances is written, and nothing at all when nothing changed.
+    const patchOnly = asSaved;
     if (patchOnly && writeInvoice) {
       const stored: any = frozenInvoice;
       const patch: Record<string, unknown> = {};
@@ -731,7 +736,7 @@ Deno.serve(async (req) => {
     // A held bill is the saved bill: its lines are the saved breakdown, so they
     // add up to the figures answered (the register's own lines would not).
     const savedLines: any[] = Array.isArray(frozenInvoice?.class_breakdown) ? frozenInvoice.class_breakdown : [];
-    const heldLines = heldBill
+    const heldLines = asSaved
       ? savedLines.length > 0
         ? { classes: savedLines, count: savedLines.reduce((n, c) => n + Number(c?.sessions_count ?? 0), 0) }
         : {
@@ -748,7 +753,7 @@ Deno.serve(async (req) => {
           }
       : null;
     // And its discounts are the saved discount, not the ones priced today.
-    const answeredDiscounts = heldBill
+    const answeredDiscounts = asSaved
       ? totalDiscount > 0
         ? [{ name: "As charged", type: "amount", value: totalDiscount, amount: totalDiscount, isAsCharged: true }]
         : []
@@ -790,13 +795,15 @@ Deno.serve(async (req) => {
         : {}),
       lessons: lessonList,
       ...(heldBill ? { held: pastMonthHeld(month, savedFigures!, computed) } : {}),
+      // A closed month answered exactly as it was charged (same total today).
+      ...(keptBill ? { keptAsCharged: true } : {}),
       ...(registerHoles.length > 0 && !heldBill
         ? { missingMarks: { lessons: holeLessons, register_base: registerBase, saved_base: savedBase, forcedLower: false, billed: true } }
         : {}),
       ...(approvedChange && writeInvoice
         ? { approvedChange: { saved: savedFigures, next: computed, reason: (reason ?? "").trim() } }
         : {}),
-      ...(mayForce && pastMode === "normal" ? { forceIgnored: "Nothing was held for this month, so there was nothing to approve." } : {}),
+      ...(mayForce && (pastMode === "normal" || pastMode === "kept") ? { forceIgnored: "Nothing was held for this month, so there was nothing to approve." } : {}),
       breakdown: {
         classes: heldLines ? heldLines.classes : classBreakdown,
       },

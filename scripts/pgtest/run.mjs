@@ -352,6 +352,8 @@ const SUITES = [
   { name: "attendance proof", file: "attendance-proof.test.mjs", migrations: ["20261123100000_attendance_proof.sql"] },
   // An unmarked lesson is billed and flagged; a closed month's bill is held until an admin approves.
   { name: "register holes", file: "register-holes.test.mjs", migrations: [] },
+  // Finance > Tuition lists the held bills of every closed month for an admin to approve one by one.
+  { name: "closed month changes", file: "closed-month-changes.test.mjs", migrations: [] },
   { name: "restore transfer marks", file: "restore-transfer-marks.test.mjs", migrations: [] },
   { name: "uncancel restores marks", file: "uncancel-restores-marks.test.mjs", migrations: [] },
   // Stage A without a database: the AI reply checked against the records, and what approval sends.

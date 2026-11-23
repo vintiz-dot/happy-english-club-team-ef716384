@@ -97,7 +97,8 @@ export function SiblingDiscountCompute() {
         for (const result of qualifyingResults) {
           const familyData = familyMap.get(result.family_id);
           overrides[result.family_id] = {
-            percent: result.discount_percent || familyData?.sibling_percent_override || 5,
+            // ?? not ||: a family's 0 means "off" and must not read as the default 5.
+            percent: result.discount_percent ?? familyData?.sibling_percent_override ?? 5,
             disabled: (familyData?.sibling_percent_override === 0),
           };
         }

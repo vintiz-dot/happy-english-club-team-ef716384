@@ -423,17 +423,20 @@ Deno.serve(async (req) => {
         // and this reports what it keeps, with both sets of figures in `held`.
         const siblingUnresolved = family?.id ? siblingStateMap.get(family.id)?.status === "unresolved" : false;
         const savedFigures = frozenInv ? figuresOf(frozenInv) : null;
-        const heldBill =
-          !siblingUnresolved &&
-          decidePastMonth({
-            closed: monthClosed,
-            saved: savedFigures,
-            frozen: !!frozenInv?.tuition_frozen,
-            next: computed,
-            approved: false,
-          }) === "held";
-        const heldInfo = heldBill ? pastMonthHeld(month, savedFigures!, computed) : null;
-        if (heldBill) {
+        const pastMode = siblingUnresolved
+          ? "normal"
+          : decidePastMonth({
+              closed: monthClosed,
+              saved: savedFigures,
+              frozen: !!frozenInv?.tuition_frozen,
+              next: computed,
+              approved: false,
+            });
+        // held: the total differs; kept: the same total, split differently
+        // between base and discount. Either way the saved bill is answered.
+        const asSaved = pastMode === "held" || pastMode === "kept";
+        const heldInfo = pastMode === "held" ? pastMonthHeld(month, savedFigures!, computed) : null;
+        if (asSaved) {
           baseAmount = savedFigures!.base;
           totalDiscount = savedFigures!.discount;
           totalAmount = savedFigures!.total;
@@ -445,7 +448,7 @@ Deno.serve(async (req) => {
         // along the class breakdown it was saved with, not today's register.
         const savedLines: any[] = Array.isArray(frozenInv?.class_breakdown) ? frozenInv.class_breakdown : [];
         let classNet;
-        if (frozenInv?.tuition_frozen || heldBill) {
+        if (frozenInv?.tuition_frozen || asSaved) {
           const savedBases = new Map<string, number>();
           const savedClassDiscounts = new Map<string, number>();
           for (const c of savedLines) {
@@ -458,7 +461,7 @@ Deno.serve(async (req) => {
           // A bill saved with no breakdown (older bills) still has to be carried by
           // some class: split by the classes of the month's lessons, else the
           // child's first class - never [] against a charge.
-          if (heldBill && [...savedBases.values()].reduce((n, v) => n + v, 0) <= 0 && totalAmount > 0) {
+          if (asSaved && [...savedBases.values()].reduce((n, v) => n + v, 0) <= 0 && totalAmount > 0) {
             savedBases.clear();
             savedClassDiscounts.clear();
             for (const c of projected.classes) if (c.base_vnd > 0) savedBases.set(c.class_id, c.base_vnd);
@@ -520,7 +523,7 @@ Deno.serve(async (req) => {
             session_rate_vnd: prices.length === 1 ? prices[0] : feeOn(c.class_id, startDate),
           };
         });
-        const classBreakdown: any[] = !heldBill
+        const classBreakdown: any[] = !asSaved
           ? pricedLines
           : savedLines.length > 0
             ? savedLines.map((c: any) => ({
@@ -557,6 +560,7 @@ Deno.serve(async (req) => {
           projected: { lessons: projected.lessons, baseAmount: computed.base, totalDiscount: computed.discount, totalAmount: computed.total },
           actual: { lessons: actual.lessons, baseAmount: actual.baseAmount, totalDiscount: actual.totalDiscount, totalAmount: actual.totalAmount },
           ...(heldInfo ? { held: heldInfo } : {}),
+          ...(pastMode === "kept" ? { keptAsCharged: true } : {}),
           invoiceId: currentInvoice?.id || null,
           invoiceStatus: currentInvoice?.status || null,
           confirmationStatus: currentInvoice?.confirmation_status || null,

@@ -24,11 +24,18 @@ interface Figures {
 }
 
 interface HeldInfo {
+  /** past_month_changed: a closed month that now prices differently. */
+  reason?: string;
   message?: string;
   lessons: Array<{ date: string; class_name: string }>;
   register_base: number;
   saved_base: number;
-  /** True when the month was priced with the unmarked lessons counted, so the bill did not go down. */
+  /** The whole figures, when the function sends them (since 23 Nov 2026). */
+  register_total?: number;
+  saved_total?: number;
+  register_discount?: number;
+  saved_discount?: number;
+  /** Sent true only by the function before 23 Nov 2026: the bill WAS saved. */
   priced_as_charged?: boolean;
 }
 
@@ -90,15 +97,15 @@ export function ManualTuitionRecalc() {
     if (data) setStudents(data);
   };
 
-  // One call to calculate-tuition. Without `force` it never lowers a saved bill
-  // because lessons have no mark; it answers `held` instead.
+  // One call to calculate-tuition. Without `force` it never changes the saved
+  // bill of a closed month; it answers `held` instead, with both sets of figures.
   const recalc = async (force: boolean) => {
     if (!selectedStudent || !month) {
       toast.error("Please select student and month");
       return;
     }
     if (force && reason.trim().length < 3) {
-      toast.error("Write why the lower figure is right");
+      toast.error("Write why the bill should change");
       return;
     }
 
@@ -136,10 +143,11 @@ export function ManualTuitionRecalc() {
 
       setHeld(null);
       setResult(data);
-      // Only the server says whether the lower figure was really forced: if the
-      // holes were fixed meanwhile it saved the register's figure as usual.
-      const reallyForced = force && data?.missingMarks?.forcedLower === true;
-      toast.success(reallyForced ? "Lower figure saved" : "Tuition recalculated successfully");
+      // Only the server says whether a held bill was really changed: if nothing
+      // was held any more it saved (or kept) the figures as usual.
+      const approved = force && !!data?.approvedChange;
+      const reallyForced = approved || (force && data?.missingMarks?.forcedLower === true);
+      toast.success(reallyForced ? "New figure saved" : "Tuition recalculated successfully");
 
       // Log audit: the old figures, the new figures, why, and who.
       const { data: userData } = await supabase.auth.getUser();
@@ -154,7 +162,7 @@ export function ManualTuitionRecalc() {
         ? { base_amount: oldFigures.base_amount, total_discount: oldFigures.total_discount, total_amount: oldFigures.total_amount }
         : null;
       await supabase.from("audit_log").insert({
-        action: reallyForced ? "manual_tuition_recalc_forced_lower" : "manual_tuition_recalc",
+        action: approved ? "manual_tuition_recalc_approved_change" : reallyForced ? "manual_tuition_recalc_forced_lower" : "manual_tuition_recalc",
         entity: "invoice",
         entity_id: `${selectedStudent}-${month}`,
         actor_user_id: actor,
@@ -186,7 +194,7 @@ export function ManualTuitionRecalc() {
           Manual Tuition Recalculation
         </CardTitle>
         <CardDescription>
-          Recalculate tuition for a specific student and month. A saved bill is not made lower when lessons have no mark.
+          Recalculate tuition for a specific student and month. A closed month's saved bill is not changed unless you approve it with a reason.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -234,24 +242,36 @@ export function ManualTuitionRecalc() {
               <div className="space-y-3">
                 <p className="font-semibold">The bill was not changed</p>
                 <p className="text-sm">
-                  {held.message ||
-                    `${held.lessons.length} lessons have no mark. The bill stays as charged until the register is fixed.`}
+                  {held.message || "The bill stays as charged."}
                 </p>
-                <ul className="text-sm list-disc pl-5">
-                  {held.lessons.map((l, i) => (
-                    <li key={`${l.date}-${i}`}>
-                      {l.date} - {l.class_name}
-                    </li>
-                  ))}
-                </ul>
+                {held.lessons.length > 0 && (
+                  <ul className="text-sm list-disc pl-5">
+                    {held.lessons.map((l, i) => (
+                      <li key={`${l.date}-${i}`}>
+                        {l.date} - {l.class_name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Compare
+                  before={{
+                    base_amount: held.saved_base,
+                    total_discount: held.saved_discount ?? 0,
+                    total_amount: held.saved_total ?? held.saved_base,
+                  }}
+                  after={{
+                    base_amount: held.register_base,
+                    total_discount: held.register_discount ?? 0,
+                    total_amount: held.register_total ?? held.register_base,
+                  }}
+                />
                 <p className="text-sm">
-                  Saved bill: {formatVND(held.saved_base)}. The register would make it {formatVND(held.register_base)}.
-                </p>
-                <p className="text-sm">
-                  Mark those lessons in the register first. Only save the lower figure if the child really did not have these lessons.
+                  "Now" is what the register, the discounts and the pricing rules give today. Nothing was saved. Approve it
+                  only if that is what the family should be charged for this month; a payment already recorded stays, and
+                  any difference becomes credit or a balance owed.
                 </p>
                 <div className="space-y-2">
-                  <Label>Why is the lower figure right?</Label>
+                  <Label>Why should the bill change?</Label>
                   <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Write the reason" />
                 </div>
                 <Button
@@ -259,7 +279,7 @@ export function ManualTuitionRecalc() {
                   onClick={() => recalc(true)}
                   disabled={loading || reason.trim().length < 3}
                 >
-                  Save the lower figure anyway
+                  Approve the new figure
                 </Button>
               </div>
             </AlertDescription>
@@ -288,12 +308,24 @@ export function ManualTuitionRecalc() {
                   {result.carry?.carryOutCredit > 0 && (
                     <p className="text-success">Credit: {formatVND(result.carry.carryOutCredit)}</p>
                   )}
+                  {result.actual && result.projected && (
+                    <p>
+                      Whole month: {formatVND(Number(result.projected.totalAmount ?? 0))} for {result.projected.lessons} lessons.
+                      Held so far: {formatVND(Number(result.actual.totalAmount ?? 0))} for {result.actual.lessons} lessons.
+                    </p>
+                  )}
                   {result.held?.priced_as_charged && (
                     <p>{result.held.lessons?.length ?? 0} lessons have no mark in the register. They were charged as before.</p>
                   )}
                   {result.missingMarks?.lessons?.length > 0 && (
-                    <p>{result.missingMarks.lessons.length} lessons have no mark in the register. They are not charged.</p>
+                    <p>
+                      {result.missingMarks.lessons.length} lessons have no mark in the register.{" "}
+                      {result.missingMarks.billed
+                        ? "They are charged: a lesson is billed unless it was cancelled or the child was excused."
+                        : "They are not charged."}
+                    </p>
                   )}
+                  {result.forceIgnored && <p>{result.forceIgnored}</p>}
                 </div>
               </div>
             </AlertDescription>

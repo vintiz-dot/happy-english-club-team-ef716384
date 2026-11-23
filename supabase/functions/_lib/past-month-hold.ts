@@ -16,6 +16,11 @@
  * month with no saved bill, a frozen bill (it has its own lock) and an open
  * month are priced and saved as always.
  *
+ * When today's pricing gives the SAME total and only splits it differently
+ * between base and discount (a custom rate used to be the class fee less a
+ * "Rate Adjustment"; it is the price now), nothing is owed differently: the
+ * bill is KEPT exactly as it was saved, with no flag and nothing to approve.
+ *
  * calculate-tuition and calculate-tuition-bulk both use this.
  */
 
@@ -50,12 +55,14 @@ export function isClosedMonth(month: string, openMonths: string[]): boolean {
   return !!latest && month < latest;
 }
 
-export type PastMonthMode = "normal" | "held" | "approved";
+export type PastMonthMode = "normal" | "kept" | "held" | "approved";
 
 /**
  *   normal    nothing to protect: the month is open, there is no saved bill, the
  *             bill is frozen, or today's pricing gives the saved figures;
- *   held      a closed month whose pricing differs: the saved figures stand;
+ *   kept      a closed month with the same total, split differently between
+ *             base and discount: the saved figures stand, silently;
+ *   held      a closed month whose total differs: the saved figures stand, flagged;
  *   approved  the same, and an admin asked for the new figures: save them.
  */
 export function decidePastMonth(opts: {
@@ -66,6 +73,7 @@ export function decidePastMonth(opts: {
   approved: boolean; // an admin (never the service role) sent force
 }): PastMonthMode {
   if (!opts.closed || opts.saved === null || opts.frozen || sameFigures(opts.saved, opts.next)) return "normal";
+  if (opts.saved.total === opts.next.total) return "kept";
   return opts.approved ? "approved" : "held";
 }
 

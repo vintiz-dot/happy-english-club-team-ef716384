@@ -299,16 +299,18 @@ export function DiscountManager() {
         </TableHeader>
         <TableBody>
           {familyDiscounts.map((family: any) => {
-            const siblingPercent = family.sibling_percent_override || 5;
+            // 0 means the family's sibling discount is switched off; only "not set" is the default 5.
+            const siblingPercent = family.sibling_percent_override ?? 5;
+            const siblingOff = Number(siblingPercent) === 0;
             return (
               <TableRow key={family.id}>
                 <TableCell className="font-medium whitespace-normal break-words hyphens-none">{family.name}</TableCell>
                 <TableCell className="whitespace-normal break-words hyphens-none">
                   {family.students.map((s: any) => s.full_name).join(", ")}
                 </TableCell>
-                <TableCell className="whitespace-nowrap tabular-nums">{siblingPercent}%</TableCell>
+                <TableCell className="whitespace-nowrap tabular-nums">{siblingOff ? "Off (0%)" : `${siblingPercent}%`}</TableCell>
                 <TableCell>
-                  <Badge className={IVORY_STATUS.Active}>Active</Badge>
+                  {siblingOff ? <Badge variant="outline">Off</Badge> : <Badge className={IVORY_STATUS.Active}>Active</Badge>}
                 </TableCell>
               </TableRow>
             );

@@ -552,6 +552,30 @@ const C1 = await closedCase('Closed Month');
   ok('a closed month whose pricing equals the bill is not held; a force there is ignored and says so', rs.body.held === undefined && rs.body.totalAmount === 420000
     && typeof rs.body.forceIgnored === 'string' && !flagOf(await invoice(same), 'past_month_repriced'), rs.body.forceIgnored);
 
+  // A custom rate billed the old way: base at the class fee, the rate as a discount. Same total today.
+  const oldShape = async (name) => {
+    const k = await mkMonth(name, { 3: 'Present', 5: 'Present' }, 420000, { rate: 150000 });
+    await db.query(`UPDATE public.invoices SET discount_amount = 120000, total_amount = 300000, paid_amount = 300000, recorded_payment = 300000,
+      class_breakdown = $2::jsonb WHERE student_id = $1`, [k, JSON.stringify([{ class_id: classOf[k], class_name: 'Class A', amount_vnd: 420000, net_amount_vnd: 300000, sessions_count: 2, session_rate_vnd: 210000 }])]);
+    return k;
+  };
+  const kept = await oldShape('Closed Custom Rate Old Shape');
+  const keptBefore = await invoice(kept);
+  const rk = await at(CLOSED, () => calc(kept, PREV, 'admin'));
+  const keptAfter = await invoice(kept);
+  ok('a closed month with the same total, split differently (a custom rate billed the old way): kept exactly as saved', rk.status === 200 && rk.body.baseAmount === 420000 && rk.body.totalDiscount === 120000
+    && rk.body.totalAmount === 300000 && rk.body.keptAsCharged === true && rk.body.held === undefined && consistent(rk.body), rk.body);
+  ok('nothing was written and nothing is flagged', JSON.stringify(keptAfter) === JSON.stringify(keptBefore) && keptAfter.review_flags.length === 0 && keptAfter.confirmation_status === 'confirmed', keptAfter.review_flags);
+  ok('today\'s split is still sent as projected (base 300,000, no discount)', rk.body.projected?.baseAmount === 300000 && rk.body.projected.totalDiscount === 0 && rk.body.projected.totalAmount === 300000, rk.body.projected);
+  const bkept = (await at(CLOSED, () => bulk([kept], PREV))).get(kept);
+  ok('bulk answers it the same, with no held marker', bkept.baseAmount === 420000 && bkept.totalDiscount === 120000 && bkept.totalAmount === 300000 && bkept.keptAsCharged === true && bkept.held === undefined && netSum(bkept) === 300000, bkept);
+  const fk = await at(CLOSED, () => calc(kept, PREV, 'admin', { force: true, reason: 'tidy up' }));
+  ok('a force there changes nothing and says so', fk.body.keptAsCharged === true && typeof fk.body.forceIgnored === 'string' && JSON.stringify(await invoice(kept)) === JSON.stringify(keptBefore), fk.body.forceIgnored);
+  const reshaped = await oldShape('Open Custom Rate Old Shape');
+  const ro2 = await at(OPEN, () => calc(reshaped, PREV, 'admin'));
+  const rowR = await invoice(reshaped);
+  ok('the same bill in an OPEN month is saved in today\'s shape: base 300,000, no discount, total unchanged', ro2.body.keptAsCharged === undefined && rowR.base_amount === 300000 && rowR.discount_amount === 0 && rowR.total_amount === 300000, pick(rowR, FIG));
+
   const none = await mkMonth('Closed No Bill', { 3: 'Present', 5: 'Present' }, null);
   const rn = await at(CLOSED, () => calc(none, PREV, 'admin'));
   ok('a closed month with no saved bill gets its bill', rn.body.held === undefined && rn.body.invoiceSaved === true && (await invoice(none))?.total_amount === 420000, rn.body.held);
@@ -718,7 +742,9 @@ console.log('\nthe hold module');
   ok('decide: a closed month whose pricing differs is held; approved by an admin, it is saved', D({}) === 'held' && D({ approved: true }) === 'approved');
   ok('decide: open, no saved bill, frozen or equal figures are normal, approved or not',
     ['normal', 'normal', 'normal', 'normal'].join() === [D({ closed: false }), D({ saved: null }), D({ frozen: true, approved: true }), D({ next: fig(630, 0, 630), approved: true })].join());
-  ok('decide: a difference in the discount alone is a difference', D({ next: fig(630, 30, 600) }) === 'held');
+  ok('decide: a difference in the discount that changes the total is a difference', D({ next: fig(630, 30, 600) }) === 'held');
+  ok('decide: the same total split differently between base and discount is kept, silently, approved or not',
+    D({ saved: fig(840, 240, 600), next: fig(600, 0, 600) }) === 'kept' && D({ saved: fig(840, 240, 600), next: fig(600, 0, 600), approved: true }) === 'kept');
   ok('the sentence is the plain one', m.pastMonthSentence('2026-08', fig(1680000, 0, 1680000), fig(0, 0, 0))
     === "Held: August 2026 is closed. The bill stays at 1,680,000 ₫; today's pricing gives 0 ₫. An admin can approve the change with a reason.", m.pastMonthSentence('2026-08', fig(1680000, 0, 1680000), fig(0, 0, 0)));
   ok('the difference flag has no date or actor (an identical call rewrites nothing)', JSON.stringify(Object.keys(m.pastMonthDiffersFlag(fig(1, 0, 1), fig(2, 0, 2)).details))

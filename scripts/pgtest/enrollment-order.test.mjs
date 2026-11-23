@@ -143,16 +143,20 @@ async function scenario(label, first, second, expected, extra = {}) {
   }
 }
 
+// The custom rate IS the price (_lib/tuition-pricing.ts, the owner's rule of 23 Nov 2026): the
+// base is lessons x the custom rate, and a percentage comes off that. Before, the base was at
+// the class rate and the custom rate came off as a "Rate Adjustment" discount.
+//
 // (a) Identical terms - the pair found live (same override, days and discount).
-// 8 lessons: 800,000 at the class rate; override 80,000 saves 160,000; 5% of 800,000 = 40,000.
+// 8 lessons at the custom 80,000 = 640,000; 5% of 640,000 = 32,000.
 const same = { rate_override_vnd: 80000, allowed_days: [3, 5], discount_type: 'percent', discount_value: 5, discount_cadence: 'monthly' };
-await scenario('identical terms', same, same, { baseAmount: 800000, totalDiscount: 200000 });
+await scenario('identical terms', same, same, { baseAmount: 640000, totalDiscount: 32000 });
 
 // (b) Different rates. The row created first (80,000) prices the lessons of 5, 7, 12 and 14 Nov:
-// 4 x 20,000. The later row (60,000) prices only 19-28 Nov: 4 x 40,000. Total saving 240,000.
-// Had the later row taken the two shared lessons it would be 280,000.
+// 320,000. The later row (60,000) prices only 19-28 Nov: 240,000. Base 560,000.
+// Had the later row taken the two shared lessons it would be 520,000.
 await scenario('different rates', { rate_override_vnd: 80000 }, { rate_override_vnd: 60000 },
-  { baseAmount: 800000, totalDiscount: 240000 });
+  { baseAmount: 560000, totalDiscount: 0 });
 
 // (c) Different days and discount. First row: Wednesdays only, 10% -> 5 and 12 Nov, 200,000, 20,000 off.
 // Later row: Wed + Fri, 20% -> 19, 21, 26, 28 Nov, 400,000, 80,000 off. Friday 14 Nov is covered by
@@ -164,7 +168,7 @@ await scenario('different days and discount',
 
 // Created in the same millisecond: the microseconds Postgres keeps still say which was first.
 await scenario('created microseconds apart', { rate_override_vnd: 80000 }, { rate_override_vnd: 60000 },
-  { baseAmount: 800000, totalDiscount: 240000 },
+  { baseAmount: 560000, totalDiscount: 0 },
   { createdAt: ['2025-11-08T03:00:00.123456+00:00', '2025-11-08T03:00:00.123457+00:00'] });
 
 // Created at the very same instant (one transaction): the lower id wins, in both functions,
@@ -176,8 +180,8 @@ for (const seeding of SEEDINGS) {
   const bulk = await run('calculate-tuition-bulk');
   const single = await run('calculate-tuition');
   assert.deepEqual(bulk, single, `${how}: bulk and per-student agree`); passed++;
-  // LOW_ID on the 80,000 row -> 240,000 saved; on the 60,000 row -> 280,000.
-  assert.equal(bulk.totalDiscount, seeding.idsFollowCreation ? 240000 : 280000, `${how}: the lower id prices the shared lessons`); passed++;
+  // LOW_ID on the 80,000 row -> base 560,000; on the 60,000 row -> 520,000.
+  assert.equal(bulk.baseAmount, seeding.idsFollowCreation ? 560000 : 520000, `${how}: the lower id prices the shared lessons`); passed++;
 }
 
 // A row with no created_at (never the case in the table: NOT NULL) sorts after one that has it.
@@ -187,7 +191,7 @@ fixture.enrollments.find(e => e.rate_override_vnd === 60000).created_at = null;
   const bulk = await run('calculate-tuition-bulk');
   const single = await run('calculate-tuition');
   assert.deepEqual(bulk, single, 'missing created_at: bulk and per-student agree'); passed++;
-  assert.equal(bulk.totalDiscount, 240000, 'missing created_at: the dated row is first'); passed++;
+  assert.equal(bulk.baseAmount, 560000, 'missing created_at: the dated row is first'); passed++;
 }
 
 console.log(`${passed} passed, 0 failed`);
