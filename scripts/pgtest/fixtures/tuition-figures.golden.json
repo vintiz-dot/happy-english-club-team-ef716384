@@ -59,6 +59,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -67,7 +121,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       }
      ]
     },
@@ -83,8 +138,7 @@
      "base_amount": 400000,
      "discount_amount": 0,
      "total_amount": 400000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -113,7 +167,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     }
    ]
   },
@@ -175,6 +230,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -183,7 +292,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       }
      ]
     },
@@ -199,8 +309,7 @@
      "base_amount": 400000,
      "discount_amount": 0,
      "total_amount": 400000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -229,7 +338,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     }
    ]
   },
@@ -303,6 +413,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 40000,
+     "totalAmount": 360000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 40000,
+     "totalAmount": 360000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -311,7 +475,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 360000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 360000
       }
      ]
     },
@@ -327,8 +492,7 @@
      "base_amount": 400000,
      "discount_amount": 40000,
      "total_amount": 360000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -357,7 +521,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 360000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 360000
     }
    ]
   },
@@ -427,6 +592,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 40000,
+     "totalAmount": 360000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 40000,
+     "totalAmount": 360000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -435,7 +654,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 360000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 360000
       }
      ]
     },
@@ -451,8 +671,7 @@
      "base_amount": 400000,
      "discount_amount": 40000,
      "total_amount": 360000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -481,7 +700,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 360000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 360000
     }
    ]
   },
@@ -540,6 +760,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 2,
+     "baseAmount": 200000,
+     "totalDiscount": 0,
+     "totalAmount": 200000
+    },
+    "actual": {
+     "lessons": 2,
+     "baseAmount": 200000,
+     "totalDiscount": 0,
+     "totalAmount": 200000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Excused",
+      "held": true,
+      "state": "excused"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Late",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Absent",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": false,
+      "state": "cancelled"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -547,8 +821,9 @@
        "class_name": "Class A",
        "amount_vnd": 200000,
        "net_amount_vnd": 200000,
-       "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "sessions_count": 2,
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 200000
       }
      ]
     },
@@ -564,8 +839,7 @@
      "base_amount": 200000,
      "discount_amount": 0,
      "total_amount": 200000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -593,8 +867,9 @@
      "amount_vnd": 200000,
      "class_name": "Class A",
      "net_amount_vnd": 200000,
-     "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "sessions_count": 2,
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 200000
     }
    ]
   },
@@ -649,6 +924,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 2,
+     "baseAmount": 200000,
+     "totalDiscount": 0,
+     "totalAmount": 200000
+    },
+    "actual": {
+     "lessons": 2,
+     "baseAmount": 200000,
+     "totalDiscount": 0,
+     "totalAmount": 200000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Excused",
+      "held": true,
+      "state": "excused"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Late",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Absent",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": false,
+      "state": "cancelled"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -656,8 +985,9 @@
        "class_name": "Class A",
        "amount_vnd": 200000,
        "net_amount_vnd": 200000,
-       "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "sessions_count": 2,
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 200000
       }
      ]
     },
@@ -673,8 +1003,7 @@
      "base_amount": 200000,
      "discount_amount": 0,
      "total_amount": 200000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -702,8 +1031,9 @@
      "amount_vnd": 200000,
      "class_name": "Class A",
      "net_amount_vnd": 200000,
-     "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "sessions_count": 2,
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 200000
     }
    ]
   },
@@ -747,22 +1077,9 @@
       "class_name": "Class A"
      }
     ],
-    "baseAmount": 400000,
-    "discounts": [
-     {
-      "name": "Rate Adjustment",
-      "type": "amount",
-      "value": 80000,
-      "amount": 80000,
-      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
-      "appliedToClass": "Class A",
-      "isRateAdjustment": true,
-      "overrideRate": 80000,
-      "defaultRate": 0,
-      "savingsPerSession": -80000
-     }
-    ],
-    "totalDiscount": 80000,
+    "baseAmount": 320000,
+    "discounts": [],
+    "totalDiscount": 0,
     "totalAmount": 320000,
     "payments": {
      "priorPayments": 0,
@@ -782,15 +1099,70 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 320000,
+     "totalDiscount": 0,
+     "totalAmount": 320000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 320000,
+     "totalDiscount": 0,
+     "totalAmount": 320000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 80000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 80000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 80000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 80000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
        "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
        "class_name": "Class A",
-       "amount_vnd": 400000,
+       "amount_vnd": 320000,
        "net_amount_vnd": 320000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 80000,
+       "sibling_basis_vnd": 320000
       }
      ]
     },
@@ -803,11 +1175,10 @@
      }
     ],
     "invoice": {
-     "base_amount": 400000,
-     "discount_amount": 80000,
+     "base_amount": 320000,
+     "discount_amount": 0,
      "total_amount": 320000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -820,8 +1191,8 @@
    }
   },
   "stored1": {
-   "base_amount": 400000,
-   "discount_amount": 80000,
+   "base_amount": 320000,
+   "discount_amount": 0,
    "total_amount": 320000,
    "paid_amount": 0,
    "recorded_payment": 0,
@@ -832,11 +1203,12 @@
    "class_breakdown": [
     {
      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
-     "amount_vnd": 400000,
+     "amount_vnd": 320000,
      "class_name": "Class A",
      "net_amount_vnd": 320000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 80000,
+     "sibling_basis_vnd": 320000
     }
    ]
   },
@@ -876,22 +1248,9 @@
       "class_name": "Class A"
      }
     ],
-    "baseAmount": 400000,
-    "discounts": [
-     {
-      "name": "Rate Adjustment",
-      "type": "amount",
-      "value": 80000,
-      "amount": 80000,
-      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
-      "appliedToClass": "Class A",
-      "isRateAdjustment": true,
-      "overrideRate": 80000,
-      "defaultRate": 0,
-      "savingsPerSession": -80000
-     }
-    ],
-    "totalDiscount": 80000,
+    "baseAmount": 320000,
+    "discounts": [],
+    "totalDiscount": 0,
     "totalAmount": 320000,
     "payments": {
      "priorPayments": 0,
@@ -911,15 +1270,70 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 320000,
+     "totalDiscount": 0,
+     "totalAmount": 320000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 320000,
+     "totalDiscount": 0,
+     "totalAmount": 320000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 80000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 80000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 80000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 80000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
        "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
        "class_name": "Class A",
-       "amount_vnd": 400000,
+       "amount_vnd": 320000,
        "net_amount_vnd": 320000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 80000,
+       "sibling_basis_vnd": 320000
       }
      ]
     },
@@ -932,11 +1346,10 @@
      }
     ],
     "invoice": {
-     "base_amount": 400000,
-     "discount_amount": 80000,
+     "base_amount": 320000,
+     "discount_amount": 0,
      "total_amount": 320000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -949,8 +1362,8 @@
    }
   },
   "stored2": {
-   "base_amount": 400000,
-   "discount_amount": 80000,
+   "base_amount": 320000,
+   "discount_amount": 0,
    "total_amount": 320000,
    "paid_amount": 0,
    "recorded_payment": 0,
@@ -961,11 +1374,12 @@
    "class_breakdown": [
     {
      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
-     "amount_vnd": 400000,
+     "amount_vnd": 320000,
      "class_name": "Class A",
      "net_amount_vnd": 320000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 80000,
+     "sibling_basis_vnd": 320000
     }
    ]
   },
@@ -1012,20 +1426,20 @@
     "baseAmount": 400000,
     "discounts": [
      {
-      "name": "Staff child",
-      "type": "percent",
-      "value": 15,
-      "amount": 60000
-     },
-     {
       "name": "Referral Bonus",
       "type": "amount",
       "value": 50000,
       "amount": 50000
+     },
+     {
+      "name": "Staff child",
+      "type": "percent",
+      "value": 15,
+      "amount": 52500
      }
     ],
-    "totalDiscount": 110000,
-    "totalAmount": 290000,
+    "totalDiscount": 102500,
+    "totalAmount": 297500,
     "payments": {
      "priorPayments": 0,
      "monthPayments": 0,
@@ -1035,15 +1449,69 @@
      "carryInCredit": 0,
      "carryInDebt": 0,
      "carryOutCredit": 0,
-     "carryOutDebt": 290000,
+     "carryOutDebt": 297500,
      "settledInMonth": null,
      "status": "debt",
-     "message": "Bạn còn nợ 290.000 ₫ cần thanh toán."
+     "message": "Bạn còn nợ 297.500 ₫ cần thanh toán."
     },
     "siblingState": null,
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 102500,
+     "totalAmount": 297500
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 102500,
+     "totalAmount": 297500
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -1052,7 +1520,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 297500
       }
      ]
     },
@@ -1066,10 +1535,9 @@
     ],
     "invoice": {
      "base_amount": 400000,
-     "discount_amount": 110000,
-     "total_amount": 290000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "discount_amount": 102500,
+     "total_amount": 297500,
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -1083,14 +1551,14 @@
   },
   "stored1": {
    "base_amount": 400000,
-   "discount_amount": 110000,
-   "total_amount": 290000,
+   "discount_amount": 102500,
+   "total_amount": 297500,
    "paid_amount": 0,
    "recorded_payment": 0,
    "carry_in_credit": 0,
    "carry_in_debt": 0,
    "carry_out_credit": 0,
-   "carry_out_debt": 290000,
+   "carry_out_debt": 297500,
    "class_breakdown": [
     {
      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
@@ -1098,7 +1566,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 297500
     }
    ]
   },
@@ -1141,20 +1610,20 @@
     "baseAmount": 400000,
     "discounts": [
      {
-      "name": "Staff child",
-      "type": "percent",
-      "value": 15,
-      "amount": 60000
-     },
-     {
       "name": "Referral Bonus",
       "type": "amount",
       "value": 50000,
       "amount": 50000
+     },
+     {
+      "name": "Staff child",
+      "type": "percent",
+      "value": 15,
+      "amount": 52500
      }
     ],
-    "totalDiscount": 110000,
-    "totalAmount": 290000,
+    "totalDiscount": 102500,
+    "totalAmount": 297500,
     "payments": {
      "priorPayments": 0,
      "monthPayments": 0,
@@ -1164,15 +1633,69 @@
      "carryInCredit": 0,
      "carryInDebt": 0,
      "carryOutCredit": 0,
-     "carryOutDebt": 290000,
+     "carryOutDebt": 297500,
      "settledInMonth": null,
      "status": "debt",
-     "message": "Bạn còn nợ 290.000 ₫ cần thanh toán."
+     "message": "Bạn còn nợ 297.500 ₫ cần thanh toán."
     },
     "siblingState": null,
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 102500,
+     "totalAmount": 297500
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 102500,
+     "totalAmount": 297500
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -1181,7 +1704,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 297500
       }
      ]
     },
@@ -1195,10 +1719,9 @@
     ],
     "invoice": {
      "base_amount": 400000,
-     "discount_amount": 110000,
-     "total_amount": 290000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "discount_amount": 102500,
+     "total_amount": 297500,
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -1212,14 +1735,14 @@
   },
   "stored2": {
    "base_amount": 400000,
-   "discount_amount": 110000,
-   "total_amount": 290000,
+   "discount_amount": 102500,
+   "total_amount": 297500,
    "paid_amount": 0,
    "recorded_payment": 0,
    "carry_in_credit": 0,
    "carry_in_debt": 0,
    "carry_out_credit": 0,
-   "carry_out_debt": 290000,
+   "carry_out_debt": 297500,
    "class_breakdown": [
     {
      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
@@ -1227,7 +1750,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 297500
     }
    ]
   },
@@ -1250,11 +1774,25 @@
       "class_name": "Class A"
      },
      {
+      "date": "2026-10-08",
+      "rate": 150000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B"
+     },
+     {
       "date": "2026-10-14",
       "rate": 100000,
       "status": "Present",
       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
       "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-15",
+      "rate": 150000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B"
      },
      {
       "date": "2026-10-21",
@@ -1269,20 +1807,6 @@
       "status": "Present",
       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
       "class_name": "Class A"
-     },
-     {
-      "date": "2026-10-08",
-      "rate": 150000,
-      "status": "Present",
-      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
-      "class_name": "Class B"
-     },
-     {
-      "date": "2026-10-15",
-      "rate": 150000,
-      "status": "Present",
-      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
-      "class_name": "Class B"
      }
     ],
     "baseAmount": 700000,
@@ -1292,8 +1816,9 @@
       "type": "percent",
       "value": 10,
       "amount": 40000,
-      "isSiblingWinner": true,
-      "appliedToClass": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "appliedToClass": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "isSiblingWinner": true
      }
     ],
     "totalDiscount": 40000,
@@ -1322,6 +1847,80 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 6,
+     "baseAmount": 700000,
+     "totalDiscount": 40000,
+     "totalAmount": 660000
+    },
+    "actual": {
+     "lessons": 6,
+     "baseAmount": 700000,
+     "totalDiscount": 40000,
+     "totalAmount": 660000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "b0",
+      "date": "2026-10-08",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B",
+      "price_vnd": 150000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "b1",
+      "date": "2026-10-15",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B",
+      "price_vnd": 150000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -1330,7 +1929,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       },
       {
        "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
@@ -1338,7 +1938,8 @@
        "amount_vnd": 300000,
        "net_amount_vnd": 300000,
        "sessions_count": 2,
-       "session_rate_vnd": 150000
+       "session_rate_vnd": 150000,
+       "sibling_basis_vnd": 300000
       }
      ]
     },
@@ -1360,8 +1961,7 @@
      "base_amount": 700000,
      "discount_amount": 40000,
      "total_amount": 660000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -1390,7 +1990,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     },
     {
      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
@@ -1398,7 +1999,8 @@
      "class_name": "Class B",
      "net_amount_vnd": 300000,
      "sessions_count": 2,
-     "session_rate_vnd": 150000
+     "session_rate_vnd": 150000,
+     "sibling_basis_vnd": 300000
     }
    ]
   },
@@ -1417,11 +2019,25 @@
       "class_name": "Class A"
      },
      {
+      "date": "2026-10-08",
+      "rate": 150000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B"
+     },
+     {
       "date": "2026-10-14",
       "rate": 100000,
       "status": "Present",
       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
       "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-15",
+      "rate": 150000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B"
      },
      {
       "date": "2026-10-21",
@@ -1436,20 +2052,6 @@
       "status": "Present",
       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
       "class_name": "Class A"
-     },
-     {
-      "date": "2026-10-08",
-      "rate": 150000,
-      "status": "Present",
-      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
-      "class_name": "Class B"
-     },
-     {
-      "date": "2026-10-15",
-      "rate": 150000,
-      "status": "Present",
-      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
-      "class_name": "Class B"
      }
     ],
     "baseAmount": 700000,
@@ -1459,8 +2061,9 @@
       "type": "percent",
       "value": 10,
       "amount": 40000,
-      "isSiblingWinner": true,
-      "appliedToClass": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "appliedToClass": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "isSiblingWinner": true
      }
     ],
     "totalDiscount": 40000,
@@ -1489,6 +2092,80 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 6,
+     "baseAmount": 700000,
+     "totalDiscount": 40000,
+     "totalAmount": 660000
+    },
+    "actual": {
+     "lessons": 6,
+     "baseAmount": 700000,
+     "totalDiscount": 40000,
+     "totalAmount": 660000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "b0",
+      "date": "2026-10-08",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B",
+      "price_vnd": 150000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "b1",
+      "date": "2026-10-15",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B",
+      "price_vnd": 150000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -1497,7 +2174,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       },
       {
        "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
@@ -1505,7 +2183,8 @@
        "amount_vnd": 300000,
        "net_amount_vnd": 300000,
        "sessions_count": 2,
-       "session_rate_vnd": 150000
+       "session_rate_vnd": 150000,
+       "sibling_basis_vnd": 300000
       }
      ]
     },
@@ -1527,8 +2206,7 @@
      "base_amount": 700000,
      "discount_amount": 40000,
      "total_amount": 660000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -1557,7 +2235,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     },
     {
      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
@@ -1565,7 +2244,8 @@
      "class_name": "Class B",
      "net_amount_vnd": 300000,
      "sessions_count": 2,
-     "session_rate_vnd": 150000
+     "session_rate_vnd": 150000,
+     "sibling_basis_vnd": 300000
     }
    ]
   },
@@ -1637,6 +2317,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -1645,7 +2379,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       }
      ]
     },
@@ -1661,8 +2396,7 @@
      "base_amount": 400000,
      "discount_amount": 0,
      "total_amount": 400000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -1691,7 +2425,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     }
    ]
   },
@@ -1759,6 +2494,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -1767,7 +2556,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       }
      ]
     },
@@ -1783,8 +2573,7 @@
      "base_amount": 400000,
      "discount_amount": 0,
      "total_amount": 400000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -1813,7 +2602,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     }
    ]
   },
@@ -1879,6 +2669,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -1887,7 +2731,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       }
      ]
     },
@@ -1903,8 +2748,7 @@
      "base_amount": 400000,
      "discount_amount": 0,
      "total_amount": 400000,
-     "paid_amount": 650000,
-     "recorded_payment": 650000
+     "paid_amount": 650000
     },
     "priorBalanceBreakdown": {
      "months": [
@@ -1962,7 +2806,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     }
    ]
   },
@@ -2024,6 +2869,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -2032,7 +2931,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       }
      ]
     },
@@ -2048,8 +2948,7 @@
      "base_amount": 400000,
      "discount_amount": 0,
      "total_amount": 400000,
-     "paid_amount": 650000,
-     "recorded_payment": 650000
+     "paid_amount": 650000
     },
     "priorBalanceBreakdown": {
      "months": [
@@ -2107,7 +3006,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     }
    ]
   },
@@ -2213,6 +3113,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -2221,7 +3175,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       }
      ]
     },
@@ -2237,8 +3192,7 @@
      "base_amount": 400000,
      "discount_amount": 0,
      "total_amount": 400000,
-     "paid_amount": 650000,
-     "recorded_payment": 650000
+     "paid_amount": 650000
     },
     "priorBalanceBreakdown": {
      "months": [
@@ -2282,7 +3236,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     }
    ]
   },
@@ -2344,6 +3299,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 0,
+     "totalAmount": 400000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -2352,7 +3361,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 400000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 400000
       }
      ]
     },
@@ -2368,8 +3378,7 @@
      "base_amount": 400000,
      "discount_amount": 0,
      "total_amount": 400000,
-     "paid_amount": 650000,
-     "recorded_payment": 650000
+     "paid_amount": 650000
     },
     "priorBalanceBreakdown": {
      "months": [
@@ -2413,7 +3422,8 @@
      "class_name": "Class A",
      "net_amount_vnd": 400000,
      "sessions_count": 4,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 400000
     }
    ]
   },
@@ -2501,6 +3511,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": true,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 40000,
+     "totalAmount": 360000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 40000,
+     "totalAmount": 360000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -2509,7 +3573,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 360000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 360000
       }
      ]
     },
@@ -2525,8 +3590,7 @@
      "base_amount": 900000,
      "discount_amount": 90000,
      "total_amount": 900000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -2616,6 +3680,60 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": true,
+    "projected": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 40000,
+     "totalAmount": 360000
+    },
+    "actual": {
+     "lessons": 4,
+     "baseAmount": 400000,
+     "totalDiscount": 40000,
+     "totalAmount": 360000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s1",
+      "date": "2026-10-14",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-28",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -2624,7 +3742,8 @@
        "amount_vnd": 400000,
        "net_amount_vnd": 360000,
        "sessions_count": 4,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 360000
       }
      ]
     },
@@ -2640,8 +3759,7 @@
      "base_amount": 900000,
      "discount_amount": 90000,
      "total_amount": 900000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -2698,6 +3816,19 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 0,
+     "baseAmount": 0,
+     "totalDiscount": 0,
+     "totalAmount": 0
+    },
+    "actual": {
+     "lessons": 0,
+     "baseAmount": 0,
+     "totalDiscount": 0,
+     "totalAmount": 0
+    },
+    "lessons": [],
     "breakdown": {
      "classes": []
     },
@@ -2713,8 +3844,7 @@
      "base_amount": 0,
      "discount_amount": 0,
      "total_amount": 0,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -2767,6 +3897,19 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 0,
+     "baseAmount": 0,
+     "totalDiscount": 0,
+     "totalAmount": 0
+    },
+    "actual": {
+     "lessons": 0,
+     "baseAmount": 0,
+     "totalDiscount": 0,
+     "totalAmount": 0
+    },
+    "lessons": [],
     "breakdown": {
      "classes": []
     },
@@ -2782,8 +3925,7 @@
      "base_amount": 0,
      "discount_amount": 0,
      "total_amount": 0,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -2856,6 +3998,30 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 10000,
+     "totalAmount": 90000
+    },
+    "actual": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 10000,
+     "totalAmount": 90000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-09-02",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -2864,7 +4030,8 @@
        "amount_vnd": 100000,
        "net_amount_vnd": 90000,
        "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 90000
       }
      ]
     },
@@ -2886,8 +4053,7 @@
      "base_amount": 100000,
      "discount_amount": 10000,
      "total_amount": 90000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -2916,7 +4082,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 90000,
      "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 90000
     }
    ]
   },
@@ -2965,6 +4132,30 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 10000,
+     "totalAmount": 90000
+    },
+    "actual": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 10000,
+     "totalAmount": 90000
+    },
+    "lessons": [
+     {
+      "session_id": "s0",
+      "date": "2026-09-02",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -2973,7 +4164,8 @@
        "amount_vnd": 100000,
        "net_amount_vnd": 90000,
        "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 90000
       }
      ]
     },
@@ -2995,8 +4187,7 @@
      "base_amount": 100000,
      "discount_amount": 10000,
      "total_amount": 90000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -3025,7 +4216,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 90000,
      "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 90000
     }
    ]
   },
@@ -3092,6 +4284,50 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 30000,
+     "totalAmount": 270000
+    },
+    "actual": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 30000,
+     "totalAmount": 270000
+    },
+    "lessons": [
+     {
+      "session_id": "s1",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-09",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -3100,7 +4336,8 @@
        "amount_vnd": 300000,
        "net_amount_vnd": 270000,
        "sessions_count": 3,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 270000
       }
      ]
     },
@@ -3122,8 +4359,7 @@
      "base_amount": 300000,
      "discount_amount": 30000,
      "total_amount": 270000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -3152,7 +4388,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 270000,
      "sessions_count": 3,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 270000
     }
    ]
   },
@@ -3215,6 +4452,50 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 30000,
+     "totalAmount": 270000
+    },
+    "actual": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 30000,
+     "totalAmount": 270000
+    },
+    "lessons": [
+     {
+      "session_id": "s1",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-09",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -3223,7 +4504,8 @@
        "amount_vnd": 300000,
        "net_amount_vnd": 270000,
        "sessions_count": 3,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 270000
       }
      ]
     },
@@ -3245,8 +4527,7 @@
      "base_amount": 300000,
      "discount_amount": 30000,
      "total_amount": 270000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -3275,7 +4556,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 270000,
      "sessions_count": 3,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 270000
     }
    ]
   },
@@ -3328,6 +4610,30 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 10000,
+     "totalAmount": 90000
+    },
+    "actual": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 10000,
+     "totalAmount": 90000
+    },
+    "lessons": [
+     {
+      "session_id": "s5",
+      "date": "2026-11-04",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -3336,7 +4642,8 @@
        "amount_vnd": 100000,
        "net_amount_vnd": 90000,
        "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 90000
       }
      ]
     },
@@ -3358,8 +4665,7 @@
      "base_amount": 100000,
      "discount_amount": 10000,
      "total_amount": 90000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -3388,7 +4694,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 90000,
      "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 90000
     }
    ]
   },
@@ -3437,6 +4744,30 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 10000,
+     "totalAmount": 90000
+    },
+    "actual": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 10000,
+     "totalAmount": 90000
+    },
+    "lessons": [
+     {
+      "session_id": "s5",
+      "date": "2026-11-04",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -3445,7 +4776,8 @@
        "amount_vnd": 100000,
        "net_amount_vnd": 90000,
        "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 90000
       }
      ]
     },
@@ -3467,8 +4799,7 @@
      "base_amount": 100000,
      "discount_amount": 10000,
      "total_amount": 90000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -3497,7 +4828,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 90000,
      "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 90000
     }
    ]
   },
@@ -3564,6 +4896,50 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 20000,
+     "totalAmount": 280000
+    },
+    "actual": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 20000,
+     "totalAmount": 280000
+    },
+    "lessons": [
+     {
+      "session_id": "s1",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-09",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -3572,7 +4948,8 @@
        "amount_vnd": 300000,
        "net_amount_vnd": 280000,
        "sessions_count": 3,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 280000
       }
      ]
     },
@@ -3594,8 +4971,7 @@
      "base_amount": 300000,
      "discount_amount": 20000,
      "total_amount": 280000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -3624,7 +5000,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 280000,
      "sessions_count": 3,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 280000
     }
    ]
   },
@@ -3687,6 +5064,50 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 20000,
+     "totalAmount": 280000
+    },
+    "actual": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 20000,
+     "totalAmount": 280000
+    },
+    "lessons": [
+     {
+      "session_id": "s1",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-09",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -3695,7 +5116,8 @@
        "amount_vnd": 300000,
        "net_amount_vnd": 280000,
        "sessions_count": 3,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 280000
       }
      ]
     },
@@ -3717,8 +5139,7 @@
      "base_amount": 300000,
      "discount_amount": 20000,
      "total_amount": 280000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -3747,7 +5168,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 280000,
      "sessions_count": 3,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 280000
     }
    ]
   },
@@ -3800,6 +5222,30 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 20000,
+     "totalAmount": 80000
+    },
+    "actual": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 20000,
+     "totalAmount": 80000
+    },
+    "lessons": [
+     {
+      "session_id": "s5",
+      "date": "2026-11-04",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -3808,7 +5254,8 @@
        "amount_vnd": 100000,
        "net_amount_vnd": 80000,
        "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 80000
       }
      ]
     },
@@ -3830,8 +5277,7 @@
      "base_amount": 100000,
      "discount_amount": 20000,
      "total_amount": 80000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -3860,7 +5306,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 80000,
      "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 80000
     }
    ]
   },
@@ -3909,6 +5356,30 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 20000,
+     "totalAmount": 80000
+    },
+    "actual": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 20000,
+     "totalAmount": 80000
+    },
+    "lessons": [
+     {
+      "session_id": "s5",
+      "date": "2026-11-04",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -3917,7 +5388,8 @@
        "amount_vnd": 100000,
        "net_amount_vnd": 80000,
        "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 80000
       }
      ]
     },
@@ -3939,8 +5411,7 @@
      "base_amount": 100000,
      "discount_amount": 20000,
      "total_amount": 80000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -3969,7 +5440,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 80000,
      "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 80000
     }
    ]
   },
@@ -4043,6 +5515,50 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 40000,
+     "totalAmount": 260000
+    },
+    "actual": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 40000,
+     "totalAmount": 260000
+    },
+    "lessons": [
+     {
+      "session_id": "s1",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-09",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -4051,7 +5567,8 @@
        "amount_vnd": 300000,
        "net_amount_vnd": 260000,
        "sessions_count": 3,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 260000
       }
      ]
     },
@@ -4073,8 +5590,7 @@
      "base_amount": 300000,
      "discount_amount": 40000,
      "total_amount": 260000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -4103,7 +5619,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 260000,
      "sessions_count": 3,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 260000
     }
    ]
   },
@@ -4173,6 +5690,50 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 40000,
+     "totalAmount": 260000
+    },
+    "actual": {
+     "lessons": 3,
+     "baseAmount": 300000,
+     "totalDiscount": 40000,
+     "totalAmount": 260000
+    },
+    "lessons": [
+     {
+      "session_id": "s1",
+      "date": "2026-10-07",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s2",
+      "date": "2026-10-09",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     },
+     {
+      "session_id": "s3",
+      "date": "2026-10-21",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -4181,7 +5742,8 @@
        "amount_vnd": 300000,
        "net_amount_vnd": 260000,
        "sessions_count": 3,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 260000
       }
      ]
     },
@@ -4203,8 +5765,7 @@
      "base_amount": 300000,
      "discount_amount": 40000,
      "total_amount": 260000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -4233,7 +5794,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 260000,
      "sessions_count": 3,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 260000
     }
    ]
   },
@@ -4278,6 +5840,30 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 0,
+     "totalAmount": 100000
+    },
+    "actual": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 0,
+     "totalAmount": 100000
+    },
+    "lessons": [
+     {
+      "session_id": "s5",
+      "date": "2026-11-04",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -4286,7 +5872,8 @@
        "amount_vnd": 100000,
        "net_amount_vnd": 100000,
        "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 100000
       }
      ]
     },
@@ -4308,8 +5895,7 @@
      "base_amount": 100000,
      "discount_amount": 0,
      "total_amount": 100000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -4338,7 +5924,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 100000,
      "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 100000
     }
    ]
   },
@@ -4379,6 +5966,30 @@
     "siblingUnresolved": false,
     "invoiceSaved": true,
     "tuitionFrozen": false,
+    "projected": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 0,
+     "totalAmount": 100000
+    },
+    "actual": {
+     "lessons": 1,
+     "baseAmount": 100000,
+     "totalDiscount": 0,
+     "totalAmount": 100000
+    },
+    "lessons": [
+     {
+      "session_id": "s5",
+      "date": "2026-11-04",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "price_vnd": 100000,
+      "mark": "Present",
+      "held": true,
+      "state": "billed"
+     }
+    ],
     "breakdown": {
      "classes": [
       {
@@ -4387,7 +5998,8 @@
        "amount_vnd": 100000,
        "net_amount_vnd": 100000,
        "sessions_count": 1,
-       "session_rate_vnd": 100000
+       "session_rate_vnd": 100000,
+       "sibling_basis_vnd": 100000
       }
      ]
     },
@@ -4409,8 +6021,7 @@
      "base_amount": 100000,
      "discount_amount": 0,
      "total_amount": 100000,
-     "paid_amount": 0,
-     "recorded_payment": 0
+     "paid_amount": 0
     },
     "priorBalanceBreakdown": {
      "months": [],
@@ -4439,7 +6050,8 @@
      "class_name": "Test class",
      "net_amount_vnd": 100000,
      "sessions_count": 1,
-     "session_rate_vnd": 100000
+     "session_rate_vnd": 100000,
+     "sibling_basis_vnd": 100000
     }
    ]
   },

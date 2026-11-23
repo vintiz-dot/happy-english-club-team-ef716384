@@ -11,9 +11,12 @@
 //      calculate-tuition handler (bundled; auth, rate limit and sibling resolver
 //      stubbed) reads the SAME in-process Postgres as the SQL, through a
 //      stand-in for PostgREST, and for every child its baseAmount equals
-//      tuition_bill_expected: lesson status, attendance status, the enrollment
-//      window, the first-created enrollment of a class, allowed days, a zero
-//      override rate, the fee history over the class's mirror rate.
+//      tuition_bill_expected: lesson status, Excused and nothing else forgiven
+//      (a lesson with no mark is billed), the enrollment window, the
+//      first-created enrollment of a class, allowed days, a custom rate above
+//      and below the class fee, a zero rate, the fee history over the class's
+//      mirror rate. The SQL is the one of 20261123150000 (the owner's rules of
+//      23 Nov 2026), pasted over 20261123090000 as on production.
 //   2. tuition_bill_gaps lists a missing bill, a bill of 0 (Lạc's case: saved
 //      before the month's register existed), a bill the register has moved
 //      away from; it does not list a correct bill, a frozen one, a child whose
@@ -45,6 +48,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '..', '..');
 const read = (...p) => readFileSync(join(repo, ...p), 'utf8');
 const MIG = read('supabase', 'migrations', '20261123090000_tuition_bill_check.sql');
+// tuition_bill_expected under the rules calculate-tuition prices by now.
+const MIG_RULES = read('supabase', 'migrations', '20261123150000_tuition_bill_expected_new_rules.sql');
 
 let pass = 0, fail = 0;
 const ok = (name, value, extra) => {
@@ -109,6 +114,8 @@ await db.exec(`
 `);
 ok('installs', (await tryIt(() => db.exec(MIG))) === null);
 ok('installs twice', (await tryIt(() => db.exec(MIG))) === null);
+ok('the new lesson rule installs over it', (await tryIt(() => db.exec(MIG_RULES))) === null);
+ok('and installs twice', (await tryIt(() => db.exec(MIG_RULES))) === null);
 
 // --------------------------------------------------------------- fixtures
 // CA: mirror 210,000 but the fee history says 250,000 from the 1st (baseline 200,000).
@@ -132,7 +139,8 @@ const enrol = (k, cls, from, to = null, extra = {}) => db.query(
   `INSERT INTO public.enrollments(student_id, class_id, start_date, end_date, created_at, allowed_days, rate_override_vnd) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
   [K[k], cls, from, to, extra.created_at ?? '2026-01-01T00:00:00Z', extra.allowed_days ?? null, extra.rate_override_vnd ?? null]);
 
-// K1 Peter: CA all month; Present, Absent, Late billable; Excused not; a Present mark on a cancelled lesson not. No bill.
+// K1 Peter: CA all month; Present, Absent, Late billable, and so are the two held lessons nobody
+// marked (17th, 19th); Excused not; a Present mark on a cancelled lesson not. No bill.
 await enrol('K1', CA, '2026-01-01');
 await mark('K1', CA, 3, 'Present'); await mark('K1', CA, 5, 'Absent'); await mark('K1', CA, 10, 'Late');
 await mark('K1', CA, 12, 'Excused'); await mark('K1', CA, 24, 'Present'); await mark('K1', CA, 26, 'Present');
@@ -140,14 +148,16 @@ await mark('K1', CA, 12, 'Excused'); await mark('K1', CA, 24, 'Present'); await 
 await enrol('K2', CB, '2026-01-01');
 for (const d of [4, 6, 11, 13]) await mark('K2', CB, d, 'Present');
 await db.query(`INSERT INTO public.invoices(student_id, month, base_amount, total_amount, class_breakdown) VALUES ($1, $2, 0, 0, '[]')`, [K.K2, MONTH]);
-// K3: CB, bill saved by calculate-tuition below - must not be listed.
-await enrol('K3', CB, '2026-01-01');
+// K3: CB at a custom rate ABOVE the class fee (300,000 against 260,000): the custom rate is
+// the price. Bill saved by calculate-tuition below - must not be listed.
+await enrol('K3', CB, '2026-01-01', null, { rate_override_vnd: 300000 });
 for (const d of [4, 6]) await mark('K3', CB, d, 'Present');
 // K4: frozen bill with other figures - kept on purpose, not listed.
 await enrol('K4', CB, '2026-01-01');
 await mark('K4', CB, 4, 'Present');
 await db.query(`INSERT INTO public.invoices(student_id, month, base_amount, total_amount, tuition_frozen) VALUES ($1, $2, 999, 999, true)`, [K.K4, MONTH]);
-// K5: CA on one weekday only (that of the 3rd); marks on two weekdays - only one counts.
+// K5: CA on one weekday only (that of the 3rd): that weekday's four lessons, marked or not;
+// the marks on the other weekday do not count.
 await enrol('K5', CA, '2026-01-01', null, { allowed_days: [dow(3)] });
 for (const d of [3, 5, 10, 12]) await mark('K5', CA, d, 'Present');
 // K6: two overlapping enrollments of CA; the FIRST created has a zero rate, so nothing is billable.
@@ -156,23 +166,23 @@ await enrol('K6', CA, '2026-01-01', null, { created_at: '2026-02-01T00:00:00Z' }
 for (const d of [3, 5]) await mark('K6', CA, d, 'Present');
 // K7: every lesson excused, no bill: nothing owed, not listed.
 await enrol('K7', CB, '2026-01-01');
-for (const d of [4, 6]) await mark('K7', CB, d, 'Excused');
+for (const d of [4, 6, 11, 13, 18, 20]) await mark('K7', CB, d, 'Excused');
 // K8: bill priced for three lessons; one has since been excused.
 await enrol('K8', CB, '2026-01-01');
 await mark('K8', CB, 4, 'Present'); await mark('K8', CB, 6, 'Present'); await mark('K8', CB, 11, 'Excused');
-// The later lessons carry a mark too. A held lesson with NO mark is a hole in
-// the register, and calculate-tuition holds a saved bill rather than lower it
-// for one (register-holes.test.mjs); this child's bill moved by a decision.
-await mark('K8', CB, 13, 'Excused'); await mark('K8', CB, 18, 'Excused');
+// The later lessons are excused too (a lesson with NO mark would be billed):
+// this child's bill moved by a decision.
+await mark('K8', CB, 13, 'Excused'); await mark('K8', CB, 18, 'Excused'); await mark('K8', CB, 20, 'Excused');
 await db.query(`INSERT INTO public.invoices(student_id, month, base_amount, total_amount) VALUES ($1, $2, 780000, 780000)`, [K.K8, MONTH]);
-// K9: left CA on the 10th; later marks do not count. No bill.
-await enrol('K9', CA, '2026-01-01', day(10));
+// K9: left CA on the 10th, at a custom rate BELOW the class fee (200,000 against 250,000);
+// later marks do not count. No bill.
+await enrol('K9', CA, '2026-01-01', day(10), { rate_override_vnd: 200000 });
 for (const d of [3, 5, 10, 12, 17]) await mark('K9', CA, d, 'Present');
 // K10, K11: lessons, no bill (the refresh's stand-in answers for them are rigged below).
 await enrol('K10', CB, '2026-01-01'); await mark('K10', CB, 4, 'Present');
 await enrol('K11', CB, '2026-01-01'); await mark('K11', CB, 6, 'Present');
-// K12: only a Present mark on a cancelled lesson: nothing owed.
-await enrol('K12', CA, '2026-01-01'); await mark('K12', CA, 26, 'Present');
+// K12: enrolled for the day of the cancelled lesson only, with a Present mark on it: nothing owed.
+await enrol('K12', CA, day(26), day(26)); await mark('K12', CA, 26, 'Present');
 
 // ------------------------------------------------- PostgREST stand-in (SQL)
 // Reads and writes the same database as the SQL check. Rows come back as JSON
@@ -305,10 +315,12 @@ console.log('\n1. the check prices lessons as calculate-tuition does');
     ok(`${names[k]}: calculate-tuition ${priced} = check ${expected.get(K[k]) ?? 0}${r.body.tuitionFrozen ? ' (frozen: its lessons)' : ''}`,
       r.status === 200 && priced === (expected.get(K[k]) ?? 0) && lessons === priced, r.body);
   }
-  ok('Peter: Present + Absent + Late + a coming lesson marked Present, at the history fee (4 x 250,000); not Excused, not the cancelled lesson', expected.get(K.K1) === 1000000, expected.get(K.K1));
-  ok('one weekday only: 2 lessons', expected.get(K.K5) === 500000, expected.get(K.K5));
+  ok('Peter: Present + Absent + Late + a coming lesson + two held lessons with no mark, at the history fee (6 x 250,000); not Excused, not the cancelled lesson', expected.get(K.K1) === 1500000, expected.get(K.K1));
+  ok('Lạc: four marked lessons and two unmarked, all billed (6 x 260,000)', expected.get(K.K2) === 1560000, expected.get(K.K2));
+  ok('a custom rate above the class fee is the price (6 x 300,000)', expected.get(K.K3) === 1800000, expected.get(K.K3));
+  ok('one weekday only: its 4 lessons', expected.get(K.K5) === 1000000, expected.get(K.K5));
   ok('the first-created enrollment decides (zero rate): nothing', !expected.has(K.K6));
-  ok('left on the 10th: 3 lessons', expected.get(K.K9) === 750000, expected.get(K.K9));
+  ok('left on the 10th: 3 lessons at the custom rate below the fee (3 x 200,000)', expected.get(K.K9) === 600000, expected.get(K.K9));
   ok('all excused / cancelled only: nothing', !expected.has(K.K7) && !expected.has(K.K12));
   ok('preview saved no bill', invoiceWritesFor.size === 0, [...invoiceWritesFor]);
   // K3's bill, saved the real way.
@@ -322,8 +334,8 @@ const gapsNow = async () => (await rpc('tuition_bill_gaps', { p_month: MONTH }))
 {
   const g = await gapsNow();
   const by = new Map(g.map((r) => [r.student_id, r]));
-  ok('Peter: no bill', by.get(K.K1)?.problem === 'missing' && by.get(K.K1)?.expected_base === 1000000, by.get(K.K1));
-  ok('Lạc: a bill of 0', by.get(K.K2)?.problem === 'zero' && by.get(K.K2)?.saved_base === 0 && by.get(K.K2)?.expected_base === 1040000, by.get(K.K2));
+  ok('Peter: no bill', by.get(K.K1)?.problem === 'missing' && by.get(K.K1)?.expected_base === 1500000, by.get(K.K1));
+  ok('Lạc: a bill of 0', by.get(K.K2)?.problem === 'zero' && by.get(K.K2)?.saved_base === 0 && by.get(K.K2)?.expected_base === 1560000, by.get(K.K2));
   ok('the register moved away from the bill', by.get(K.K8)?.problem === 'differs' && by.get(K.K8)?.expected_base === 520000, by.get(K.K8));
   ok('weekday-only and mid-month leaver: no bill', by.get(K.K5)?.problem === 'missing' && by.get(K.K9)?.problem === 'missing');
   ok('a bill calculate-tuition just saved is not listed', !by.has(K.K3));
@@ -390,9 +402,9 @@ try {
   const g = await gapsNow();
   ok('the check now lists only those two', g.length === 2, g.map((r) => r.full_name));
   const lac = (await db.query(`SELECT base_amount, total_amount, jsonb_array_length(class_breakdown) AS n FROM public.invoices WHERE student_id = $1 AND month = $2`, [K.K2, MONTH])).rows[0];
-  ok('Lạc\'s bill now prices her four lessons', lac.base_amount === 1040000 && lac.n === 1, lac);
+  ok('Lạc\'s bill now prices her six lessons', lac.base_amount === 1560000 && lac.n === 1, lac);
   const peter = (await db.query(`SELECT base_amount FROM public.invoices WHERE student_id = $1 AND month = $2`, [K.K1, MONTH])).rows[0];
-  ok('Peter has a bill', peter?.base_amount === 1000000, peter);
+  ok('Peter has a bill', peter?.base_amount === 1500000, peter);
   const frozen = (await db.query(`SELECT base_amount FROM public.invoices WHERE student_id = $1 AND month = $2`, [K.K4, MONTH])).rows[0];
   ok('the frozen bill was not touched', frozen.base_amount === 999 && !calls.some((c) => c.studentId === K.K4));
   const logged = (await db.query(`SELECT started_by, found, recalculated, jsonb_array_length(failed) AS f, jsonb_array_length(still_open) AS o FROM public.tuition_bill_check_runs WHERE month = $1`, [MONTH])).rows;

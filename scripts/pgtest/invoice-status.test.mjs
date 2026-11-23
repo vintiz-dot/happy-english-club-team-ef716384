@@ -23,10 +23,22 @@
 // as in enrollment-discounts.test.mjs.
 //
 // THE FIGURES. fixtures/tuition-figures.golden.json holds, for every
-// fixture below, the whole response and the saved figure columns as the
-// function produced them BEFORE T1 (commit 736264c). The last section
-// compares today's function with it, byte for byte. It was written by
+// fixture below, the whole response and the saved figure columns. The last
+// section compares today's function with it, byte for byte. It was first
+// written from the function BEFORE T1 (commit 736264c), by
 //   T1_HANDLER_SOURCE=<a copy of the 736264c index.ts> T1_WRITE_GOLDEN=1 node ... (same arguments)
+// and written again on 23 Nov 2026, when both calculators moved to
+// _lib/tuition-pricing.ts (the owner's rules of that day). Compared with the
+// file before, case by case, exactly three things moved, each one a rule:
+//   - "rate override below the class rate": base 400,000 less an 80,000 "Rate
+//     Adjustment" became base 320,000, no discount (the custom rate IS the
+//     price). Charge 320,000, as before.
+//   - "special discount 15% + referral 50,000": 290,000 became 297,500 (the
+//     fixed 50,000 first, then 15% of the 350,000 left, not of the 400,000).
+//   - "Excused, Late, Absent and a Canceled lesson": the class line counts 2
+//     lessons, not 1 (the Late one was billed but not counted). Charge as before.
+// Every other case kept base, discount, total, payments and carry to the dong;
+// the responses gained fields (projected, actual, lessons, sibling_basis_vnd).
 // Regenerate it only from a function whose figures are known to be right:
 // a change in this file's golden is a change in what families are charged.
 // T1_HANDLER_SOURCE alone runs the whole suite against that other copy,
@@ -1211,10 +1223,11 @@ console.log('\nRound 2 - carry.payable and siblingUnresolved (T3)');
   // Every existing field of the bulk answer is where it was.
   // carry.payable and siblingUnresolved came with T1; excusedLessons / cancelledLessons
   // (e604b4bf: the Lost Tuition screens read them instead of pricing in the browser) after,
-  // then classNet (the Class Finance report's per-class charge; class-tuition.test.mjs).
-  ok('bulk: the existing fields are unchanged; carry.payable and siblingUnresolved were added, then excusedLessons, cancelledLessons and classNet',
+  // then classNet (the Class Finance report's per-class charge; class-tuition.test.mjs),
+  // then projected / actual (the whole month and the lessons already held; 23 Nov 2026).
+  ok('bulk: the existing fields are unchanged; carry.payable and siblingUnresolved were added, then excusedLessons, cancelledLessons, classNet, projected and actual',
      same(Object.keys(many.body.results[0]), ['studentId', 'baseAmount', 'totalDiscount', 'totalAmount', 'payments', 'carry',
-       'siblingUnresolved', 'breakdown', 'classNet', 'invoiceId', 'invoiceStatus', 'confirmationStatus', 'excusedLessons', 'cancelledLessons'])
+       'siblingUnresolved', 'breakdown', 'classNet', 'projected', 'actual', 'invoiceId', 'invoiceStatus', 'confirmationStatus', 'excusedLessons', 'cancelledLessons'])
        && same(Object.keys(many.body.results[0].carry), ['carryInCredit', 'carryInDebt', 'carryOutCredit', 'carryOutDebt', 'settledInMonth', 'payable']),
      Object.keys(many.body.results[0]));
 
@@ -1792,7 +1805,7 @@ console.log('\nscripts/CHECK-invoice-status-resets.sql finds bills the old behav
 }
 
 // ============================================ the figures have not moved
-console.log('\nFigures: byte-identical to the function before T1');
+console.log('\nFigures: byte-identical to fixtures/tuition-figures.golden.json');
 {
   const twoClasses = () => {
     const classB = { id: CB, name: 'Class B', session_rate_vnd: 150000 };
