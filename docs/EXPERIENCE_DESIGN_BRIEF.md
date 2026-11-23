@@ -664,7 +664,7 @@ Each phase is one or more commits that leave the app working, and ends with the 
 | 4. Admin shell, tables, money | D1 to D3 | a recorded payment shows the Seal on success and nothing on conflict |
 | 5. Admin, the rest | D4 to D7 | AI action confirm shows one Seal for the whole plan |
 | 6. Student shell and home | F2, F3, G1 to G5 for the home page and navigation, I2, I7 | four screenshots of the same made-up child's data at four birth years, plus missing date of birth; the profile switch changes band |
-| 7. Student pages | G6 | each page in each band; all old URLs still open |
+| 7. Student pages | G6, in two rounds. Round 1: the pages where a child does something (homework, the grade moment, the hand-in finish, vocabulary review, Defend My Level). Round 2: the pages a child looks at (lessons, reports, my work, gallery, videos, journal, resources, the Me pages) | each page in each band; all old URLs still open |
 | 8. Parent | H1 to H3 (H4, the tuition page, is a later phase of its own) | the home makes no call to a tuition function; any amount on the "needs you" card is one the page already held |
 | 9. Moments and copy | I3, J1 to J3 | each moment plays once and is skippable; the Vietnamese draft list is handed to the owner |
 | 10. Audit | performance (B4), accessibility, a pass on a real mid-range Android phone inside Zalo | bundle growth reported; the inventory's legacy count has not risen |

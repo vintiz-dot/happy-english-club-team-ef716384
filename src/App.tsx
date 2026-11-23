@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { StudentProfileProvider } from "./contexts/StudentProfileContext";
+import { AgeBandRoot } from "@/hooks/useAgeBand";
 import { TimerProvider } from "./contexts/TimerContext";
 import { NoiseMeterProvider } from "./contexts/NoiseMeterContext";
 import ProfilePicker from "./components/ProfilePicker";
@@ -116,6 +117,8 @@ function AppContent() {
             <ProfilePicker />
             <Suspense fallback={null}><AnnouncementRenderer /></Suspense>
             <Suspense fallback={null}><RecorderBoot /></Suspense>
+            {/* The selected child's age band, readable by every page (src/hooks/useAgeBand.tsx). Draws nothing. */}
+            <AgeBandRoot>
             <StartupGuard>
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
@@ -201,6 +204,7 @@ function AppContent() {
                 </Routes>
               </Suspense>
             </StartupGuard>
+            </AgeBandRoot>
             </IvoryScope>
           </AuthProvider>
         </BrowserRouter>

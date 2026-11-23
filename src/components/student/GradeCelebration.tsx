@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { CelebrationOverlay } from "./CelebrationOverlay";
+import { GradeMoment } from "./GradeMoment";
 import { soundManager } from "@/lib/soundManager";
 
 interface GradeCelebrationProps {
   studentId: string;
   assignments: any[];
+  /** told whenever the moment goes up or comes down, so a page can step its own Pip out (one Pip per screen) */
+  onActiveChange?: (active: boolean) => void;
 }
 
 interface GradedItem {
@@ -12,11 +14,20 @@ interface GradedItem {
   title: string;
   grade: string;
   className: string;
+  /** the teacher's words, if the submission the page already holds carries them */
+  feedback: string | null;
 }
 
-export function GradeCelebration({ studentId, assignments }: GradeCelebrationProps) {
+export function GradeCelebration({ studentId, assignments, onActiveChange }: GradeCelebrationProps) {
   const [celebrationItem, setCelebrationItem] = useState<GradedItem | null>(null);
   const [queue, setQueue] = useState<GradedItem[]>([]);
+
+  const active = !!celebrationItem;
+  useEffect(() => {
+    onActiveChange?.(active);
+    return () => onActiveChange?.(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
 
   useEffect(() => {
     // Only celebrate things graded in the last 48 hours to avoid
@@ -59,6 +70,7 @@ export function GradeCelebration({ studentId, assignments }: GradeCelebrationPro
           title: hw?.title || "Homework",
           grade: sub.grade || "✓",
           className: hw?.classes?.name || "Class",
+          feedback: typeof sub.teacher_feedback === "string" && sub.teacher_feedback.trim() ? sub.teacher_feedback : null,
         };
       });
 
@@ -85,34 +97,24 @@ export function GradeCelebration({ studentId, assignments }: GradeCelebrationPro
     localStorage.setItem(`celebration_seen_${studentId}`, JSON.stringify(seenIds));
   };
 
+  // One moment per visit: the newest grade. Closing it marks every grade in the selection as seen,
+  // so the others do not come back one by one (the extra line told the child how many there were).
   const handleComplete = () => {
-    const current = celebrationItem;
-    const remaining = queue.slice(1);
-
-    if (current) {
-      markSeen(current.id);
-    }
-
-    setQueue(remaining);
-    if (remaining.length > 0) {
-      setTimeout(() => {
-        setCelebrationItem(remaining[0]);
-        soundManager.play("success");
-      }, 300);
-    } else {
-      setCelebrationItem(null);
-    }
+    for (const item of queue) markSeen(item.id);
+    setQueue([]);
+    setCelebrationItem(null);
   };
 
   if (!celebrationItem) return null;
 
   return (
-    <CelebrationOverlay
-      show={!!celebrationItem}
-      type="achievement"
-      title={`Grade: ${celebrationItem.grade}`}
-      subtitle={`"${celebrationItem.title}" – ${celebrationItem.className}`}
-      onComplete={handleComplete}
+    <GradeMoment
+      grade={celebrationItem.grade}
+      title={celebrationItem.title}
+      className={celebrationItem.className}
+      feedback={celebrationItem.feedback}
+      more={Math.max(0, queue.length - 1)}
+      onClose={handleComplete}
     />
   );
 }

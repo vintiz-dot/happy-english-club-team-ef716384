@@ -55,6 +55,8 @@ const SUITES = [
   { name: "owing month", file: "owing-month.test.mjs", migrations: [] },
   // Every amount of money on screen goes through src/lib/money.ts ("3.780.000 ₫").
   { name: "money format", file: "money-format.test.mjs", migrations: [] },
+  // D5: every write to a money table and every RPC is pinned; a new one fails until read (docs/evidence/D5-audit.md).
+  { name: "money write paths", file: "money-write-paths.test.mjs", migrations: [] },
   // A family payment is one transaction (audit phase 1b). The suite pastes its own migrations in order.
   { name: "family payment transaction", file: "family-payment-tx.test.mjs", migrations: [] },
   // Tuition audit phase 2: the reconciliation register. Every decision is a

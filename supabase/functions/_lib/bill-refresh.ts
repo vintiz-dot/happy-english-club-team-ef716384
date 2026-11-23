@@ -39,6 +39,29 @@ export function adminMayRefresh(month: string, now: Date): boolean {
   return month === current || month === previousMonth(current);
 }
 
+/**
+ * The children of `month` whose bills a checked change (a discount, a fee, an
+ * enrolment, a lesson cancelled or moved - D2/D4) was meant to work out again
+ * and has not: rows of money_change_tuition_pending / session_cancel_tuition_pending,
+ * each with refresh_pairs [{student_id, month}]. A discount changes the total, not
+ * the lessons, so tuition_bill_gaps cannot see these; they are saved too. Unique,
+ * in first-seen order, leaving out `skip` (children the gaps list already holds).
+ */
+export function pendingChangeStudents(rows: any[], month: string, skip: Set<string>): string[] {
+  const out: string[] = [];
+  const seen = new Set(skip);
+  for (const r of rows ?? []) {
+    const pairs = Array.isArray(r?.refresh_pairs) ? r.refresh_pairs : [];
+    for (const p of pairs) {
+      const id = typeof p?.student_id === "string" ? p.student_id : null;
+      if (!id || p?.month !== month || seen.has(id)) continue;
+      seen.add(id);
+      out.push(id);
+    }
+  }
+  return out;
+}
+
 /** ok, or why not (error) and, for a refusal by the rate limiter, how long to wait. */
 export interface RecalcOutcome {
   ok: boolean;

@@ -115,19 +115,12 @@ const PINNED = {
   'supabase/functions/auto-mark-attendance/index.ts attendance insert': 1,
   'supabase/functions/calculate-payroll/index.ts payroll_summaries upsert': 1,
   'supabase/functions/calculate-tuition/index.ts invoices upsert': 2,
-  'supabase/functions/close-payroll-month/index.ts expenditures upsert': 1,
-  'supabase/functions/close-payroll-month/index.ts payroll_lines upsert': 1,
-  'supabase/functions/close-payroll-month/index.ts payroll_periods update': 2,
-  'supabase/functions/close-payroll-month/index.ts payroll_periods upsert': 1,
+  'supabase/functions/close-payroll-month/index.ts payroll_periods update': 1,
   'supabase/functions/compute-sibling-discounts/index.ts sibling_discount_state upsert': 3,
   'supabase/functions/confirm-tuition/index.ts invoices update': 2,
   'supabase/functions/delete-payment/index.ts ledger_entries insert': 1,
   'supabase/functions/delete-payment/index.ts payment_deletions insert': 1,
   'supabase/functions/delete-payment/index.ts payments delete': 1,
-  'supabase/functions/family-payment/index.ts ledger_accounts upsert': 1,
-  'supabase/functions/family-payment/index.ts ledger_entries insert': 1,
-  'supabase/functions/family-payment/index.ts payment_allocations insert': 1,
-  'supabase/functions/family-payment/index.ts payments insert': 1,
   'supabase/functions/manage-demo-student/index.ts classes insert': 1,
   'supabase/functions/manage-demo-student/index.ts enrollments delete': 1,
   'supabase/functions/manage-demo-student/index.ts enrollments insert': 1,
@@ -135,21 +128,21 @@ const PINNED = {
   'supabase/functions/manage-session/index.ts sessions update': 3,
   'supabase/functions/mark-attendance/index.ts attendance upsert': 1,
   'supabase/functions/mark-attendance/index.ts sessions update': 1,
-  'supabase/functions/modify-payment/index.ts ledger_accounts upsert': 1,
-  'supabase/functions/modify-payment/index.ts ledger_entries insert': 3,
-  'supabase/functions/modify-payment/index.ts payment_modifications insert': 1,
-  'supabase/functions/modify-payment/index.ts payments insert': 2,
   'supabase/functions/schedule-sessions/index.ts sessions delete': 1,
   'supabase/functions/schedule-sessions/index.ts sessions insert': 1,
   'supabase/functions/schedule-sessions/index.ts sessions update': 3,
-  'supabase/functions/smart-family-payment/index.ts invoices insert': 1,
-  'supabase/functions/smart-family-payment/index.ts ledger_accounts upsert': 1,
-  'supabase/functions/smart-family-payment/index.ts ledger_entries insert': 1,
-  'supabase/functions/smart-family-payment/index.ts payment_allocations insert': 1,
-  'supabase/functions/smart-family-payment/index.ts payments insert': 1,
   'supabase/functions/snapshot-monthly-finance/index.ts monthly_finance_snapshots insert': 1,
   'supabase/functions/snapshot-monthly-finance/index.ts monthly_finance_snapshots update': 1,
   'supabase/functions/watch-sibling-threshold/index.ts sibling_discount_state upsert': 1,
+  // Re-pinned 23 Nov 2026 against main as it is. This list was first written on a branch where
+  // D4 step 3B put enrolment writes through money_change_checked; on main these two still write
+  // directly, admin-only (create-family: admin check; update-enrollment-rate: authenticateUser +
+  // admin, audit row). Open gap D5 G-13 (D5-audit.md section 8): move them onto the checked path with 3B.
+  'supabase/functions/create-family/index.ts enrollments insert': 1,
+  'supabase/functions/update-enrollment-rate/index.ts enrollments update': 1,
+  // Gone since the audit: family-payment / smart-family-payment write through record_family_payment
+  // (20261121130000), modify-payment is a 410 stub, close-payroll-month closes through
+  // close_payroll_month_apply (20261117153000).
   // families / students (family link and sibling fields: D4 G-19, step 3B, NOT live), discount definitions, adjustments
   'src/components/admin/discount/AssignDiscountModal.tsx discount_definitions insert': 1,
   'src/components/admin/FamilyLinkDialog.tsx families update': 1,
@@ -157,11 +150,10 @@ const PINNED = {
   'src/components/admin/StudentEditDrawer.tsx families insert': 1,
   'src/components/admin/StudentEditDrawer.tsx students update': 1,
   'src/components/admin/StudentForm.tsx students insert': 1,
-  'src/components/shared/EconomyActions.tsx students update': 2,
+  'src/components/shared/EconomyActions.tsx students update': 1,
   'src/components/student/StudentProfileEdit.tsx students update': 2,
   'supabase/functions/create-family/index.ts families insert': 1,
   'supabase/functions/create-family/index.ts students insert': 1,
-  'supabase/functions/link-student-user/index.ts families delete': 1,
   'supabase/functions/link-student-user/index.ts families insert': 1,
   'supabase/functions/link-student-user/index.ts families update': 1,
   'supabase/functions/link-student-user/index.ts students update': 6,
@@ -211,7 +203,7 @@ console.log('\n2. every RPC called is pinned');
     class_overhead_breakdown: 'read', class_overhead_for_month: 'read', class_overhead_pool: 'read', count_vocab_saves_today: 'read',
     get_class_skill_points: 'read', get_class_skill_summary: 'read', get_class_video_wall: 'read', get_student_homeworks: 'read',
     get_student_weekly_stats: 'read', get_video_homework_for_student: 'read', get_video_progress: 'read', has_role: 'read',
-    is_teacher_of_class: 'read', log_money_automation_refused: 'D4 event', log_session_automation_refused: 'D2 event',
+    is_teacher_of_class: 'read', log_money_automation_refused: 'D4 event',
     money_change_checked: 'D4 checked path', money_change_preview: 'read', money_changes_checked_bulk: 'D4 checked path',
     post_sibling_retro_credit: 'tuition credit (admin / cron secret only, Q7)', prune_admin_auth_state: 'no',
     record_money_change_event: 'D4 event', record_session_override_event: 'D2 event', recorder_class_missing_consent: 'read',
@@ -221,6 +213,26 @@ console.log('\n2. every RPC called is pinned');
     stars_sync_effects_done: 'queue', stars_sync_finish_run: 'queue', stars_sync_readiness: 'read',
     stars_sync_resolve_conflict: 'register (person, D4 G-11)', stars_sync_retry_pending: 'queue', stars_sync_status: 'read',
     stars_sync_try_lock: 'lock', toggle_video_heart: 'no', video_staff_for_class: 'read',
+    // Pinned 23 Nov 2026 (read before pinning). Money first:
+    record_admin_payment: 'payment: payments row + ledger legs + bill by compare-and-set under FOR UPDATE, one transaction (20261117121000)',
+    record_family_payment: 'family payment: bills FOR UPDATE in id order, one transaction, service_role only (20261121130000)',
+    close_payroll_month_apply: 'payroll close in one transaction (20261117153000)',
+    decide_tuition_reconciliation_item: 'tuition audit decision; moves money only via record_admin_payment (20261121100000)',
+    approve_change_request: 'D4 approvals', change_approval_check: 'read', change_approval_status: 'D4 approvals', release_own_request: 'D4 approvals',
+    economy_process: 'class economy: points ledger row and cash in one transaction, a handled request refused',
+    tuition_bill_gaps: 'read (20261123090000)',
+    // Not money:
+    approve_cefr_draft: 'no', discard_cefr_draft: 'no', approve_lesson_report: 'no', approve_transcript_analysis: 'no',
+    withdraw_transcript_approval: 'no', can_view_student: 'read', class_work_gallery: 'read', decide_work_share: 'no',
+    request_work_share: 'no', withdraw_work_share: 'no', work_share_file: 'read', get_lesson_reports_for_student: 'read',
+    get_lesson_review_quiz: 'read', submit_lesson_review: 'points', leaderboard_board: 'read', leaderboard_centre: 'read',
+    leaderboard_json: 'read', leaderboard_period: 'read', leaderboard_tv_feed: 'read', points_manual_changes: 'read',
+    student_points_history: 'read', student_points_summary: 'read', lesson_monitor_delete_report: 'no',
+    lesson_monitor_my_classes: 'read', lesson_monitor_my_lessons: 'read', lesson_monitor_report_feedback: 'no',
+    lesson_monitor_set_class: 'no', lesson_monitor_set_targets: 'no', lesson_report_claim: 'queue', lesson_report_file: 'read',
+    lesson_report_finish: 'queue', lesson_report_teacher_can: 'read', lesson_speaker_recording: 'read',
+    lesson_speaker_roster: 'read', video_analysis_claim: 'queue', vocab_claim_daily_save: 'quota',
+    vocab_release_daily_save: 'quota', vocab_saves_today: 'read',
   };
   const added = [...rpcs.keys()].filter((r) => !(r in PINNED_RPCS)).map((r) => `${r} (${[...rpcs.get(r)].join(', ')})`);
   const gone = Object.keys(PINNED_RPCS).filter((r) => !rpcs.has(r));
@@ -265,13 +277,24 @@ console.log('\n4. recorded_payment is written only by compare-and-set (or under 
   const SQL_ALLOWED = {
     'supabase/migrations/20261107090000_ai_assisted_admin_actions.sql': 'ai_action_apply / undo: SELECT ... FOR UPDATE, then add',
     'docs/sql/ai_action_apply_undo.installed.sql': 'the same, as installed',
-    'scripts/CREDIT-past-unapplied-cash.sql': 'compare-and-set on the value read, all or nothing',
+    // (scripts/CREDIT-past-unapplied-cash.sql was pinned here from a branch; it never reached main.)
+    'supabase/migrations/20261117121000_record_admin_payment.sql': 'record_admin_payment: FOR UPDATE, then compare-and-set',
+    'supabase/migrations/20261121090000_recorded_payment_guard.sql': 'record_admin_payment again, with hec.payment_writer set',
+    'supabase/migrations/20261121130000_record_family_payment.sql': 'record_family_payment: bills FOR UPDATE in id order',
+    'supabase/migrations/20261117150000_ai_action_payment_on_ledger.sql': 'ai_action_undo: bill FOR UPDATE, then take the payment off',
   };
-  ok('SQL that sets recorded_payment: only the pinned three', setters.every((f) => f in SQL_ALLOWED) && Object.keys(SQL_ALLOWED).every((f) => setters.includes(f)), setters);
+  ok('SQL that sets recorded_payment: only the pinned files', setters.every((f) => f in SQL_ALLOWED) && Object.keys(SQL_ALLOWED).every((f) => setters.includes(f)), setters);
   const installed = readFileSync(join(repo, 'docs', 'sql', 'ai_action_apply_undo.installed.sql'), 'utf8');
-  ok('  the AI action reads the bill FOR UPDATE before each recorded_payment write', (installed.match(/FROM public\.invoices[^;]*FOR UPDATE/g) ?? []).length >= 2);
-  ok('  the past-credit script writes only WHERE recorded_payment still equals the value read',
-     /AND coalesce\(recorded_payment, 0\) = v_bill\.recorded/.test(readFileSync(join(repo, 'scripts', 'CREDIT-past-unapplied-cash.sql'), 'utf8')));
+  // apply records a payment through record_admin_payment; undo locks the bill (inv) once, then every
+  // recorded_payment write is on that locked row.
+  const undoWrites = [...installed.matchAll(/UPDATE public\.invoices\s+SET recorded_payment[\s\S]*?WHERE ([^;]*);/g)].map((m) => m[1]);
+  ok('  the AI action reads the bill FOR UPDATE, and every recorded_payment write is on that locked row',
+     /SELECT \* INTO inv FROM public\.invoices[^;]*FOR UPDATE/.test(installed) && undoWrites.length >= 1 && undoWrites.every((w) => /\bid = inv\.id\b/.test(w)), undoWrites);
+  for (const f of ['supabase/migrations/20261117121000_record_admin_payment.sql', 'supabase/migrations/20261121090000_recorded_payment_guard.sql']) {
+    const sql = readFileSync(join(repo, f), 'utf8');
+    ok(`  ${f.split('/').pop()}: the bill write is a compare-and-set on the value read under FOR UPDATE`,
+       /FOR UPDATE/.test(sql) && /coalesce\(i\.recorded_payment, 0\) = v_before/.test(sql));
+  }
 }
 
 // ------------------------------------------------------- 5. invoices.status
@@ -305,7 +328,8 @@ console.log('\n6. no NEW browser pricing');
       if (hit.length) importers.push(`${file}: ${hit.join(', ')}`);
     }
   }
-  const G8 = ['src/components/admin/reports/OperationalReports.tsx: sessionPayVnd', 'src/components/admin/reports/OperationalReports.tsx: splitPayrollByClass'];
+  // sessionPayVnd left OperationalReports before 23 Nov 2026; splitPayrollByClass is what is left of G-8.
+  const G8 = ['src/components/admin/reports/OperationalReports.tsx: splitPayrollByClass'];
   // Not payroll figures: the staff rate form shows what one lesson pays at the rate being typed, and which history row is in force.
   const FORM_PREVIEWS = ['src/components/admin/staff/PayRateFields.tsx: sessionPayVnd', 'src/components/admin/staff/PayRateHistory.tsx: rateOnDate'];
   const added = importers.filter((x) => !G8.includes(x) && !FORM_PREVIEWS.includes(x));

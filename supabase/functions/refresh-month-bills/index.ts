@@ -14,10 +14,18 @@
 //
 // It never reprices an earlier month on its own (refreshableMonths), and reports
 // every child it could not fix instead of leaving them out.
+//
+// It also saves the bills a checked change left unfinished: a discount, fee or
+// enrolment change (D4) or a lesson cancelled or moved (D2) asks calculate-tuition
+// to work its bills out again, and when that call fails the change waits in
+// money_change_tuition_pending / session_cancel_tuition_pending until an admin
+// resumes it. A discount moves the total, not the lessons, so the gaps check
+// cannot see those bills. Saving them here puts the bill right; the change itself
+// stays listed until an admin finishes it on Finance > Tuition, which records it.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { requireRole } from "../_lib/auth.ts";
 import { runnerSecretMatches } from "../_lib/runner-secret.ts";
-import { adminMayRefresh, readRecalc, refreshableMonths, type RecalcOutcome } from "../_lib/bill-refresh.ts";
+import { adminMayRefresh, pendingChangeStudents, readRecalc, refreshableMonths, type RecalcOutcome } from "../_lib/bill-refresh.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,7 +81,10 @@ Deno.serve(async (req) => {
     for (const month of months) {
       const { data: gaps, error: gapErr } = await supabase.rpc("tuition_bill_gaps", { p_month: month });
       if (gapErr) throw new Error(`The bill check for ${month} could not run: ${gapErr.message}`);
-      const listed: any[] = gaps ?? [];
+      const listed: any[] = [...(gaps ?? [])];
+      // Bills a checked change has not worked out again (see the header).
+      const pending = await pendingFor(supabase, month, new Set(listed.map((g) => g.student_id)));
+      listed.push(...pending);
       const failed: Array<{ student_id: string; name: string; error: string }> = [];
       const saved = new Set<string>();
       let notReached = 0;
@@ -131,6 +142,20 @@ Deno.serve(async (req) => {
     return json({ error: message }, 500);
   }
 });
+
+async function pendingFor(supabase: any, month: string, skip: Set<string>): Promise<any[]> {
+  const rows: any[] = [];
+  for (const view of ["money_change_tuition_pending", "session_cancel_tuition_pending"]) {
+    const { data, error } = await supabase.from(view).select("override_id, refresh_pairs").limit(1000);
+    if (error) { console.error(`refresh-month-bills: ${view} not read`, error.message); continue; }
+    rows.push(...(data ?? []));
+  }
+  const ids = pendingChangeStudents(rows, month, skip);
+  if (ids.length === 0) return [];
+  const { data: kids } = await supabase.from("students").select("id, full_name").in("id", ids);
+  const name = new Map((kids ?? []).map((k: any) => [k.id, k.full_name]));
+  return ids.map((id) => ({ student_id: id, full_name: name.get(id) ?? id, problem: "change_pending" }));
+}
 
 async function recalc(url: string, serviceKey: string, studentId: string, month: string): Promise<RecalcOutcome> {
   try {

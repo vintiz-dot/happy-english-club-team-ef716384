@@ -87,8 +87,11 @@ export function ArriveItem({ index = 0, children, ...rest }: ArriveItemProps) {
   const level = useMotionLevel();
   const active = useIsFirstArrival() && level !== "off";
   const delay = level === "full" ? stagger(index) : 0;
+  const rise = entrance(!active, delay);
+  // calm = fade only: no rise (the motion level's rule; found in the Phase 7 audit, 23 Nov 2026)
+  const enter = active && level === "calm" ? { ...rise, initial: { opacity: 0 }, animate: { opacity: 1 } } : rise;
   return (
-    <motion.div {...rest} {...entrance(!active, delay)}>
+    <motion.div {...rest} {...enter}>
       {children}
     </motion.div>
   );

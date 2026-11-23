@@ -21,6 +21,10 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useAgeBand } from "@/hooks/useAgeBand";
+import { pressable } from "@/components/fx/PaperPress";
+import { BiText } from "@/components/student/lessons/BiText";
+import { Rise } from "@/components/student/lessons/Rise";
 import {
   attendanceLabel, hasLearned, metChip, toLessonReportViews,
   type Bilingual, type LessonReportView,
@@ -128,9 +132,9 @@ function LessonReportCard({ v, studentId, open, onToggle }: {
 }) {
   const c = v.child;
   return (
-    <article className={cn(CARD, "overflow-hidden p-0")}>
+    <article className={cn(CARD, "p-0")}>
       <button type="button" onClick={onToggle} aria-expanded={open}
-        className="flex min-h-hec-target w-full items-start gap-3 p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring sm:p-5">
+        className={cn("flex min-h-hec-target w-full items-start gap-3 rounded-hec-lg p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring sm:p-5", pressable)}>
         <div className="min-w-0 flex-1 space-y-1">
           <p className="flex flex-wrap items-center gap-x-1.5 text-hec-caption text-hec-ink-soft tabular-nums">
             <CalendarDays className="h-3.5 w-3.5" aria-hidden />{v.className} · {v.date}{v.startTime ? ` · ${v.startTime}` : ""}
@@ -139,7 +143,7 @@ function LessonReportCard({ v, studentId, open, onToggle }: {
           {v.summary && <Bi text={v.summary} className={cn("text-hec-small text-hec-ink", !open && "line-clamp-2")}
             viClassName={cn("text-hec-small", !open && "line-clamp-2")} />}
         </div>
-        <ChevronDown className={cn("mt-1 h-5 w-5 shrink-0 text-hec-ink-faint transition-transform", open && "rotate-180")} aria-hidden />
+        <ChevronDown className={cn("mt-1 h-5 w-5 shrink-0 text-hec-ink-faint transition-transform duration-hec-2 ease-hec", open && "rotate-180")} aria-hidden />
       </button>
 
       {open && (
@@ -322,6 +326,8 @@ function LessonReportCard({ v, studentId, open, onToggle }: {
 }
 
 export function LessonReports({ studentId }: { studentId?: string }) {
+  const { band } = useAgeBand();
+  const little = band === "early" || band === "young";
   const [openId, setOpenId] = useState<string | null>(null);
   const q = useInfiniteQuery({
     queryKey: ["lesson-reports-for-student", studentId],
@@ -350,33 +356,38 @@ export function LessonReports({ studentId }: { studentId?: string }) {
     return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-hec-ink-faint" /></div>;
   }
   if (q.error) {
-    return <p className="text-hec-small text-destructive">Could not load the class reports. · <span lang="vi">Không tải được báo cáo.</span></p>;
+    return (
+      <div className={cn(CARD, "py-10 text-center")}>
+        <p className="mx-auto max-w-sm text-hec-body text-hec-ink-soft"><BiText k="reports.error" always /></p>
+      </div>
+    );
   }
   const seen = new Set<string>();
   const reports = (q.data?.pages ?? []).flat().filter((v) => (seen.has(v.reportId) ? false : (seen.add(v.reportId), true)));
   if (!reports.length) {
     return (
-      <div className={cn(CARD, "space-y-2 py-12 text-center")}>
-        <BookOpen className="mx-auto h-10 w-10 text-hec-ink-faint" aria-hidden />
-        <p className="text-hec-body font-medium text-hec-ink">No class reports yet</p>
-        <p lang="vi" className="text-hec-small text-hec-ink-soft">Chưa có báo cáo buổi học</p>
+      <Rise index={0} className={cn(CARD, "space-y-2 py-12 text-center")}>
+        {band !== "teen" && <BookOpen className="mx-auto h-10 w-10 text-hec-ink-faint" aria-hidden />}
+        <p className="text-hec-body font-medium text-hec-ink"><BiText k="reports.empty" always /></p>
         <p className="mx-auto max-w-sm text-hec-small text-hec-ink-soft">
-          After a lesson, the teacher checks the report and it appears here.
+          {little ? <BiText k="reports.emptyShort" always /> : <BiText k="reports.emptyHelp" always />}
         </p>
-      </div>
+      </Rise>
     );
   }
   const first = openId ?? reports[0].reportId;
   return (
     <div className="space-y-3">
-      {reports.map((v) => (
-        <LessonReportCard key={v.reportId} v={v} studentId={studentId}
-          open={first === v.reportId} onToggle={() => setOpenId(first === v.reportId ? "" : v.reportId)} />
+      {reports.map((v, i) => (
+        <Rise key={v.reportId} index={i}>
+          <LessonReportCard v={v} studentId={studentId}
+            open={first === v.reportId} onToggle={() => setOpenId(first === v.reportId ? "" : v.reportId)} />
+        </Rise>
       ))}
       {q.hasNextPage && (
         <div className="flex justify-center pt-2">
           <button type="button" className={BUTTON_SECONDARY} disabled={q.isFetchingNextPage} onClick={() => q.fetchNextPage()}>
-            {q.isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : "Older reports · Báo cáo cũ hơn"}
+            {q.isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : <BiText k="reports.older" always />}
           </button>
         </div>
       )}

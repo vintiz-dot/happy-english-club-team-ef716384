@@ -12,6 +12,7 @@ import { getHomeworkStatus } from "@/lib/homeworkStatus";
 import { richTextPreview } from "@/lib/richText";
 import { cn } from "@/lib/utils";
 import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
+import { pressable } from "@/components/fx/PaperPress";
 import { dueText, homeworkLook } from "./homeworkLook";
 
 interface Props {
@@ -20,6 +21,8 @@ interface Props {
   /** Dashboard version: no preview text, no PDF button. */
   compact?: boolean;
   index?: number;
+  /** no emoji in the state pill (the teen band's pages carry none) */
+  plain?: boolean;
 }
 
 /** Ivory badge per state: the word always shows, colour only adds to it. */
@@ -34,7 +37,7 @@ const IVORY_PILL: Record<string, string> = {
 const IVORY_FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
-export function HomeworkCard({ homework, onOpen, compact = false, index = 0 }: Props) {
+export function HomeworkCard({ homework, onOpen, compact = false, index = 0, plain = false }: Props) {
   const status = getHomeworkStatus(homework);
   const look = homeworkLook[status];
   const done = status === "submitted" || status === "graded";
@@ -48,7 +51,7 @@ export function HomeworkCard({ homework, onOpen, compact = false, index = 0 }: P
   return (
     <motion.article
       initial={false}
-      className="relative min-w-0 rounded-hec-md border border-hec-line bg-hec-paper p-4"
+      className={cn("min-w-0 rounded-hec-md border border-hec-line bg-hec-paper p-4 shadow-hec-1", pressable)}
     >
       {/* Row 1: class + state */}
       <div className="flex items-start justify-between gap-2 min-w-0">
@@ -61,7 +64,7 @@ export function HomeworkCard({ homework, onOpen, compact = false, index = 0 }: P
             IVORY_PILL[status],
           )}
         >
-          <span aria-hidden>{look.emoji}</span>
+          {!plain && <span aria-hidden>{look.emoji}</span>}
           {look.pill}
         </span>
       </div>

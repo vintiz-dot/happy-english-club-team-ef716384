@@ -94,11 +94,11 @@ function write(key: string, value: string) {
 /** Is this one of the child's own pages? (/student, /student/...) */
 export const isChildPath = (pathname: string) => pathname === "/student" || pathname.startsWith("/student/");
 
-export function AgeBandProvider({ children }: { children: ReactNode }) {
+/** Works out the band for the selected child. One copy runs for the whole app (AgeBandRoot). */
+function useAgeBandValue(): AgeBandState {
   const { user } = useAuth();
   const { studentId } = useStudentProfile();
   const { pathname } = useLocation();
-  const level = useMotionLevel();
 
   // Read-only views of two caches the shell and the home already fill. No request is made from here.
   const shell = useQuery<{ students: { id: string; date_of_birth: string | null }[] | null }>({
@@ -161,7 +161,29 @@ export function AgeBandProvider({ children }: { children: ReactNode }) {
     [band, natural, youngScale, banded, look, setLook, showPip, setShowPip, viBeneath, viSwitch, setViSwitch, studentId, schoolYear],
   );
 
-  // A profile switch that changes the band: the whole student area fades in over 240 ms.
+  return value;
+}
+
+const HasRoot = createContext(false);
+
+/**
+ * The band, for every page. Mounted once above the routes (App.tsx), so a page component can read the band
+ * itself and not only the components it renders inside <Layout>. It draws nothing.
+ * (Found 23 Nov 2026: with the provider inside Layout, a page that called useAgeBand() at its top got the fallback.)
+ */
+export function AgeBandRoot({ children }: { children: ReactNode }) {
+  const value = useAgeBandValue();
+  return (
+    <HasRoot.Provider value={true}>
+      <AgeBandContext.Provider value={value}>{children}</AgeBandContext.Provider>
+    </HasRoot.Provider>
+  );
+}
+
+/** The wrapper that carries data-hec-band / data-hec-scale, and the 240 ms fade when a profile switch changes the band. */
+function BandScope({ children }: { children: ReactNode }) {
+  const { band, banded, youngScale } = useAgeBand();
+  const level = useMotionLevel();
   const controls = useAnimationControls();
   const lastBand = useRef<AgeBand | null>(null);
   useEffect(() => {
@@ -173,15 +195,24 @@ export function AgeBandProvider({ children }: { children: ReactNode }) {
   }, [band, level, controls]);
 
   return (
-    <AgeBandContext.Provider value={value}>
-      <motion.div
-        animate={controls}
-        data-hec-band={banded ? band : undefined}
-        data-hec-scale={banded && youngScale ? "young" : undefined}
-      >
-        {children}
-      </motion.div>
-    </AgeBandContext.Provider>
+    <motion.div
+      animate={controls}
+      data-hec-band={banded ? band : undefined}
+      data-hec-scale={banded && youngScale ? "young" : undefined}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** In the student / family shell (Layout): the banded wrapper. Under AgeBandRoot it only draws; alone (a test, a preview) it also computes. */
+export function AgeBandProvider({ children }: { children: ReactNode }) {
+  const hasRoot = useContext(HasRoot);
+  if (hasRoot) return <BandScope>{children}</BandScope>;
+  return (
+    <AgeBandRoot>
+      <BandScope>{children}</BandScope>
+    </AgeBandRoot>
   );
 }
 

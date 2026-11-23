@@ -19,6 +19,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { safeHttpUrl } from "@/lib/safeUrl";
+import { useAgeBand } from "@/hooks/useAgeBand";
+import { Arrive } from "@/components/fx/Arrive";
+import { carry, useCarryNavigate } from "@/components/fx/Carry";
+import { BiText } from "@/components/student/lessons/BiText";
+import { Rise } from "@/components/student/lessons/Rise";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft, Loader2, BookOpen, NotebookPen, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, TrendingUp, Coins, FileImage, Link2, Users,
@@ -29,8 +35,11 @@ export default function StudentLessonDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const carryNavigate = useCarryNavigate();
+  const { band } = useAgeBand();
+  const little = band === "early" || band === "young";
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["student-lesson-detail", id, user?.id],
     enabled: !!id && !!user?.id,
     queryFn: async () => {
@@ -129,8 +138,12 @@ export default function StudentLessonDetail() {
     return (
       <Layout title="Lesson">
         <div className="max-w-3xl mx-auto p-4 text-center py-16 space-y-3">
-          <p className="text-hec-body text-hec-ink-soft">This lesson isn't available.</p>
-          <Button variant="outline" onClick={() => navigate("/student/lessons")}>Back to lessons</Button>
+          <p className="text-hec-body text-hec-ink-soft">
+            <BiText k={isError ? "lesson.error" : "lesson.unavailable"} />
+          </p>
+          <Button variant="outline" className="min-h-hec-target" onClick={() => carryNavigate("/student/lessons")}>
+            <BiText k="lesson.backToList" />
+          </Button>
         </div>
       </Layout>
     );
@@ -138,27 +151,39 @@ export default function StudentLessonDetail() {
 
   const m = data?.metric;
   const totalPoints = (data?.points || []).reduce((s: number, p: any) => s + (p.points || 0), 0);
+  // The early band sees no percentage of the class and no red: the same facts, in a calmer tone.
+  const calmTone = band === "early";
 
   return (
     <Layout title="Lesson">
-      <div className="max-w-3xl mx-auto space-y-4">
-        <Button variant="quiet" size="sm" className="gap-1.5 -ml-2" onClick={() => navigate("/student/lessons")}>
-          <ArrowLeft className="h-4 w-4" />All lessons
-        </Button>
+      <Arrive scope="student-lesson-detail" userId={user?.id} className="max-w-3xl mx-auto space-y-4">
+        <Rise index={0}>
+          <Button variant="quiet" size="sm" className="min-h-hec-target gap-1.5 -ml-2" onClick={() => carryNavigate("/student/lessons")}>
+            <ArrowLeft className="h-4 w-4" aria-hidden /><BiText k="lesson.back" />
+          </Button>
+        </Rise>
 
         {/* Hero */}
+        <Rise index={1}>
         <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:p-6">
           <p className="break-words text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
             {overview.classes?.name} · {overview.lesson_date}
           </p>
-          <h1 className="mt-1 break-words font-display text-hec-h1 font-medium text-hec-ink">{overview.title || "Lesson"}</h1>
+          <h1
+            style={{ viewTransitionName: carry(`lesson-${id}`) }}
+            className="mt-1 break-words font-display text-hec-h1 font-medium text-hec-ink [[data-hec-scale=young]_&]:font-bold"
+          >
+            {overview.title || "Lesson"}
+          </h1>
           {m?.cefr_estimate && (
             <Badge variant="brass" className="mt-2">Your level this lesson: {m.cefr_estimate}</Badge>
           )}
         </div>
+        </Rise>
 
         {/* Lesson summary + materials + homework */}
         {(overview.summary || (overview.materials?.length ?? 0) > 0 || overview.homework) && (
+          <Rise index={2}>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-hec-ink-soft" />What we did</CardTitle>
@@ -182,12 +207,12 @@ export default function StudentLessonDetail() {
                 </p>
               )}
             </CardContent>
-          </Card>
+          </Card></Rise>
         )}
 
         {/* Resource photos from the lesson */}
         {(data?.resources?.length ?? 0) > 0 && (
-          <Card>
+          <Rise index={3}><Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-hec-ink-soft" />What we used in class
@@ -215,20 +240,22 @@ export default function StudentLessonDetail() {
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </Card></Rise>
         )}
 
         {/* Your participation */}
         {m && (
-          <Card>
+          <Rise index={4}><Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-hec-ink-soft" />How you did</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className={cn("grid gap-2 text-center", calmTone ? "grid-cols-2" : "grid-cols-3")}>
                 <Stat icon={MessageSquareText} tone="text-hec-ink-soft" value={m.utterance_count ?? 0} label="times you spoke" />
                 <Stat icon={HelpCircle} tone="text-hec-ink-soft" value={m.questions_asked ?? 0} label="questions asked" />
-                <Stat icon={TrendingUp} tone="text-hec-ink-soft" value={`${Math.round((m.participation_share || 0) * 100)}%`} label="of class talk" />
+                {!calmTone && (
+                  <Stat icon={TrendingUp} tone="text-hec-ink-soft" value={`${Math.round((m.participation_share || 0) * 100)}%`} label="of class talk" />
+                )}
               </div>
               {m.contribution && (
                 <p className="text-hec-body text-hec-ink-soft">{m.contribution}</p>
@@ -249,16 +276,16 @@ export default function StudentLessonDetail() {
                 </p>
               )}
             </CardContent>
-          </Card>
+          </Card></Rise>
         )}
 
         {/* Points earned this lesson */}
         {(data?.points?.length ?? 0) > 0 && (
-          <Card>
+          <Rise index={5}><Card>
             <CardHeader>
               <CardTitle className="flex flex-wrap items-center gap-2">
                 <Coins className="h-4 w-4 text-hec-brass" />Points this lesson
-                <Badge variant={totalPoints >= 0 ? "success" : "destructive"} className="tabular-nums">
+                <Badge variant={totalPoints >= 0 ? "success" : calmTone ? "secondary" : "destructive"} className="tabular-nums">
                   {totalPoints > 0 ? `+${totalPoints}` : totalPoints}
                 </Badge>
               </CardTitle>
@@ -266,18 +293,18 @@ export default function StudentLessonDetail() {
             <CardContent className="space-y-1.5">
               {data!.points.map((p: any, i: number) => (
                 <div key={i} className="flex items-start gap-2 text-hec-body">
-                  <Star className={`mt-1 h-3.5 w-3.5 shrink-0 ${p.points > 0 ? "text-hec-brass fill-current" : "text-hec-danger"}`} />
+                  <Star className={`mt-1 h-3.5 w-3.5 shrink-0 ${p.points > 0 ? "text-hec-brass fill-current" : calmTone ? "text-hec-ink-faint" : "text-hec-danger"}`} aria-hidden />
                   <span className="w-10 shrink-0 font-medium tabular-nums text-hec-ink">{p.points > 0 ? `+${p.points}` : p.points}</span>
                   <span className="min-w-0 break-words text-hec-ink-soft">{p.notes || p.type}</span>
                 </div>
               ))}
             </CardContent>
-          </Card>
+          </Card></Rise>
         )}
 
         {/* Things to practice (your flagged points) */}
         {(data?.errors?.length ?? 0) > 0 && (
-          <Card>
+          <Rise index={6}><Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-hec-warn" />Practice these</CardTitle>
               <CardDescription>Small fixes from this lesson — they're also on your Fix-It flashcards.</CardDescription>
@@ -289,17 +316,17 @@ export default function StudentLessonDetail() {
                     <Badge variant="outline" className="capitalize">{e.error_type}</Badge>
                     {e.cefr_topic && <Badge variant="outline">{e.cefr_topic}</Badge>}
                   </div>
-                  <p className="text-hec-small text-hec-danger line-through">{e.error_text}</p>
+                  <p className={cn("break-words text-hec-small line-through", calmTone ? "text-hec-ink-soft" : "text-hec-danger")}>{e.error_text}</p>
                   <p className="text-hec-small text-hec-leaf">{e.corrected_text}</p>
                 </div>
               ))}
             </CardContent>
-          </Card>
+          </Card></Rise>
         )}
 
         {/* Work artifacts from this lesson */}
         {(data?.work?.length ?? 0) > 0 && (
-          <Card>
+          <Rise index={7}><Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><FileImage className="h-4 w-4 text-hec-ink-soft" />Your work from this lesson</CardTitle>
             </CardHeader>
@@ -321,15 +348,15 @@ export default function StudentLessonDetail() {
                       {w.is_teamwork && (
                         <Badge variant="secondary"><Users className="h-3 w-3" />team</Badge>
                       )}
-                      {w.teacher_notes && <p className="text-hec-caption text-hec-ink-soft line-clamp-3">{w.teacher_notes}</p>}
+                      {w.teacher_notes && <p className="text-hec-caption text-hec-ink-soft break-words">{w.teacher_notes}</p>}
                     </div>
                   </div>
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </Card></Rise>
         )}
-      </div>
+      </Arrive>
     </Layout>
   );
 }

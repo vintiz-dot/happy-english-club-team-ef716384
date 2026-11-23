@@ -15,6 +15,7 @@ import { TimerProvider } from "@/contexts/TimerContext";
 import { NoiseMeterProvider } from "@/contexts/NoiseMeterContext";
 import { StudentProfileProvider } from "@/contexts/StudentProfileContext";
 import { AuthProvider } from "@/hooks/useAuth";
+import { AgeBandRoot } from "@/hooks/useAgeBand";
 import { IvoryScope } from "@/components/theme/IvoryScope";
 import { themeKey } from "@/lib/ivoryScope";
 import "@/index.css";
@@ -47,6 +48,17 @@ const GridPage = lazy(() => import("./GridPage"));
 const AttendancePage = lazy(() => import("./AttendancePage"));
 const DrawerPage = lazy(() => import("./DrawerPage"));
 const VideoPage = lazy(() => import("./VideoPage"));
+const SrsPage = lazy(() => import("./SrsPage"));
+const StudentLessons = lazy(() => import("@/pages/StudentLessons"));
+const StudentLessonDetail = lazy(() => import("@/pages/StudentLessonDetail"));
+const StudentLessonReports = lazy(() => import("@/pages/StudentLessonReports"));
+const StudentMyWork = lazy(() => import("@/pages/StudentMyWork"));
+const StudentClassGallery = lazy(() => import("@/pages/StudentClassGallery"));
+const StudentVideos = lazy(() => import("@/pages/StudentVideos"));
+const StudentRecord = lazy(() => import("@/pages/StudentRecord"));
+const StudentResources = lazy(() => import("@/pages/StudentResources"));
+const StudentPictureReader = lazy(() => import("@/pages/StudentPictureReader"));
+const StudentDefendLevel = lazy(() => import("@/pages/StudentDefendLevel"));
 const TeacherAssignments = lazy(() => import("@/pages/TeacherAssignments"));
 const TeacherSmartUpload = lazy(() => import("@/pages/TeacherSmartUpload"));
 const TeacherPayroll = lazy(() => import("@/pages/TeacherPayroll"));
@@ -67,6 +79,7 @@ createRoot(document.getElementById("root")!).render(
         <Toaster />
         <BrowserRouter>
           <AuthProvider>
+            <AgeBandRoot>
             <IvoryScope>
               <Suspense fallback={null}>
                 <Routes>
@@ -80,6 +93,17 @@ createRoot(document.getElementById("root")!).render(
                   <Route path="/teacher/drawer" element={<DrawerPage />} />
                   <Route path="/teacher/assignments" element={<TeacherAssignments />} />
                   <Route path="/teacher/video" element={<VideoPage />} />
+                  <Route path="/student/srs" element={<SrsPage />} />
+                  <Route path="/student/lessons" element={<StudentLessons />} />
+                  <Route path="/student/lessons/:id" element={<StudentLessonDetail />} />
+                  <Route path="/student/lesson-reports" element={<StudentLessonReports />} />
+                  <Route path="/student/my-work" element={<StudentMyWork />} />
+                  <Route path="/student/class-gallery" element={<StudentClassGallery />} />
+                  <Route path="/student/videos" element={<StudentVideos />} />
+                  <Route path="/student/record" element={<StudentRecord />} />
+                  <Route path="/student/resources" element={<StudentResources />} />
+                  <Route path="/student/language-support" element={<StudentPictureReader />} />
+                  <Route path="/student/defend-level" element={<StudentDefendLevel />} />
                   <Route path="/teacher/smart-upload" element={<TeacherSmartUpload />} />
                   <Route path="/teacher/payroll" element={<TeacherPayroll />} />
                   <Route path="/admin" element={<Admin defaultTab={screen === "admin-payroll" ? "payroll" : "overview"} />} />
@@ -88,6 +112,7 @@ createRoot(document.getElementById("root")!).render(
                 </Routes>
               </Suspense>
             </IvoryScope>
+            </AgeBandRoot>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
