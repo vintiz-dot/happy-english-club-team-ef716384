@@ -3,7 +3,7 @@
 import { adminDb } from "./adminFixtures";
 
 export type Screen =
-  | "student-home" | "student-homework" | "family" | "teacher"
+  | "student-home" | "student-homework" | "family" | "teacher" | "teacher-grid"
   | "admin-overview" | "admin-tuition" | "admin-payroll" | "admin-dialogs";
 export type State = "ok" | "error" | "empty";
 
@@ -36,6 +36,7 @@ export const ROLE_OF: Record<Screen, "student" | "family" | "teacher" | "admin">
   "student-homework": "student",
   family: "family",
   teacher: "teacher",
+  "teacher-grid": "teacher",
   "admin-overview": "admin",
   "admin-tuition": "admin",
   "admin-payroll": "admin",
@@ -46,6 +47,7 @@ export const PATH_OF: Record<Screen, string> = {
   "student-homework": "/student/assignments",
   family: "/family/dashboard",
   teacher: "/teacher/dashboard",
+  "teacher-grid": "/teacher/grid",
   "admin-overview": "/admin",
   "admin-tuition": "/tuition",
   "admin-payroll": "/admin",
@@ -55,7 +57,7 @@ export const PATH_OF: Record<Screen, string> = {
 export const STUDENT_ID = "stu-quynh-tram-anh";
 export const ME = {
   userId: "user-preview-1",
-  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
+  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà", "teacher-grid": "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -160,7 +162,7 @@ export function buildDb() {
     emptyOn = ["students"];
   }
 
-  if (SCREEN === "teacher") {
+  if (SCREEN === "teacher" || SCREEN === "teacher-grid") {
     const teacherId = "teacher-ha";
     tables.teachers = [{ id: teacherId, user_id: ME.userId, full_name: ME.name, email: null, phone: null, avatar_url: null, is_active: true }];
     tables.teaching_assistants = [];
@@ -178,6 +180,17 @@ export function buildDb() {
     tables.homeworks = [];
     tables.homework_submissions = [];
     tables.session_participants = [];
+    tables.classes = [c1, c2, c3].map((c) => ({ ...c, default_teacher_id: teacherId, schedule_template: null }));
+    const kids = [
+      ["kid-an", "Nguyễn Minh Anh"], ["kid-binh", "Trần Gia Bình"], ["kid-chi", "Lê Bảo Chi"], ["kid-dung", "Phạm Hoàng Dũng"],
+      ["kid-giang", "Vũ Hương Giang"], ["kid-hai", "Đỗ Quang Hải"], ["kid-khanh", "Bùi Ngọc Khánh"], ["kid-linh", "Hoàng Thuỳ Linh"],
+    ] as const;
+    tables.enrollments = kids.map(([id, name], i) => ({
+      id: `enr-t-${i}`, student_id: id, class_id: c1.id, end_date: null, start_date: "2026-01-01", students: { id, full_name: name, avatar_url: null, is_active: true },
+    }));
+    // part-marked: the register for the lesson in progress
+    tables.attendance = kids.slice(0, 4).map(([id], i) => ({ id: `att-t-${i}`, session_id: "ses-t-now", student_id: id, status: i === 3 ? "Absent" : "Present" }));
+    tables.point_transactions = kids.slice(0, 3).map(([id], i) => ({ id: `pt-t-${i}`, student_id: id, class_id: c1.id, points: 5 * (i + 1), date: day(0), created_at: new Date().toISOString() }));
     errorOn = ["sessions"];
     emptyOn = ["sessions"];
   }

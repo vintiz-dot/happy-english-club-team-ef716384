@@ -21,6 +21,7 @@ import { Settings } from "lucide-react";
 import { coverWindow, isRosteredFor } from "@/lib/teacherAccess";
 import { PageLoading } from "@/components/ui/loading";
 import { toast } from "sonner";
+import { carry } from "@/components/fx/Carry";
 
 export default function TeacherClassDetail() {
   const { id } = useParams<{ id: string }>();
@@ -170,9 +171,27 @@ export default function TeacherClassDetail() {
     enabled: !!classData,
   });
 
+  // While the class loads, the dashboard has already told us its name (its "My Classes" read is in the cache; nothing
+  // is requested): the title is on screen from the first frame, which is what lets a Carry from the dashboard card land.
+  const cachedName = (() => {
+    for (const [, rows] of queryClient.getQueriesData<any[]>({ queryKey: ["teacher-active-classes"] })) {
+      const hit = Array.isArray(rows) ? rows.find((c) => c?.id === id) : null;
+      if (hit?.name) return hit.name as string;
+    }
+    return null;
+  })();
+
   if (classLoading) {
     return (
       <Layout title="Class">
+        {cachedName && (
+          <h1
+            className="mb-4 whitespace-normal break-words text-balance font-display text-hec-display font-medium text-hec-ink [hyphens:none]"
+            style={{ viewTransitionName: carry(`class-${id}`) }}
+          >
+            {cachedName}
+          </h1>
+        )}
         <PageLoading message="Loading class" />
       </Layout>
     );
@@ -209,6 +228,14 @@ export default function TeacherClassDetail() {
 
   return (
     <Layout title={classData.name}>
+      {/* The class name as the page's title (one per screen, never cut off). It carries the name from the dashboard's
+          class card: the same view-transition name as the card's title (Carry, brief B6). */}
+      <h1
+        className="mb-4 whitespace-normal break-words text-balance font-display text-hec-display font-medium text-hec-ink [hyphens:none]"
+        style={{ viewTransitionName: carry(`class-${id}`) }}
+      >
+        {classData.name}
+      </h1>
       {/* Real-time engagement telemetry — always visible during class */}
       <div className="mb-4">
         <LiveEngagementHUD classId={id!} />
