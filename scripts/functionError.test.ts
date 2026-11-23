@@ -27,9 +27,9 @@ test("the body can still be read by the caller afterwards (the helper reads a cl
 });
 
 test("every screen that calls a payment function shows its sentence", () => {
+  // Settle Bill is removed (D-23; settle-bill is a 410 stub), so its modal is no longer listed.
   for (const [file, fn] of [
     ["LedgerBalanceInspector.tsx", "delete-payment"],
-    ["SettleBillModal.tsx", "settle-bill"],
     ["FamilyPaymentModal.tsx", "family-payment"],
     ["SmartFamilyPaymentModal.tsx", "smart-family-payment"],
     ["BatchFamilyPaymentModal.tsx", "smart-family-payment"],

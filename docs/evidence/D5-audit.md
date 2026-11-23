@@ -324,3 +324,17 @@ Both invoice status runs are against `fixtures/tuition-figures.golden.json`, whi
 
 `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0. `npm run test:bun`: **250 pass, 0 fail** (18 files).
 
+## 8. Inventory re-pinned against main (23 Nov 2026)
+
+`money-write-paths.test.mjs` had been failing on main since it landed, and it was not in `scripts/pgtest/run.mjs`, so nothing ran it. Its lists had been written on a branch: they named `scripts/CREDIT-past-unapplied-cash.sql` and enrolment writes routed through `money_change_checked`, and neither reached main. Every entry that differed was read and re-pinned to main as it is. The suite is now registered (`money write paths`).
+
+- Gone, now behind a transaction: `family-payment` and `smart-family-payment` write through `record_family_payment` (20261121130000). `close-payroll-month` closes through `close_payroll_month_apply` (20261117153000). `modify-payment` is a 410 stub. `link-student-user` no longer deletes families.
+- SQL that sets `recorded_payment`: `record_admin_payment` (20261117121000, and again in 20261121090000) is a compare-and-set under FOR UPDATE. `record_family_payment` locks the bills in id order. `ai_action_undo` (20261117150000 and the installed copy) writes only the bill it locked.
+- New RPCs: 50 pinned with their kind. The money ones are `record_admin_payment`, `record_family_payment`, `close_payroll_month_apply`, `decide_tuition_reconciliation_item`, `economy_process` and the D4 approval RPCs.
+- G-8 has narrowed: `OperationalReports.tsx` no longer imports `sessionPayVnd`. `splitPayrollByClass` is what is left.
+
+**G-13 - Two enrolment writers skip the checked path.** Both are admin-only:
+- `create-family` inserts enrolments directly (it checks the caller is an admin).
+- `update-enrollment-rate` updates `rate_override_vnd` directly (`authenticateUser` + admin, and it writes an audit row).
+
+Neither goes through `money_change_checked`, so neither gets an approval or a closed-month check. Fix: move both onto the checked path with D4 step 3B. Pinned in `money-write-paths` section 1.

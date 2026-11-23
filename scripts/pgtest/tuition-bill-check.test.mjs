@@ -181,6 +181,8 @@ function sqlQuery(table, role = 'service_role') {
   const p = (v) => { params.push(v); return `$${params.length}`; };
   const col = (k) => `t.${k}`;
   async function run() {
+    // The D2/D4 "bills not worked out again" views: rows a case sets, else none.
+    if (globalThis.__tbPending?.[table]) return { data: globalThis.__tbPending[table], error: null };
     if (!IN_DB.has(table)) return { data: [], error: null }; // discounts, bonuses, families: none here
     const w = where.length ? ` WHERE ${where.join(' AND ')}` : '';
     try {
@@ -349,7 +351,7 @@ let rateLimitedOnce = false;
 globalThis.setTimeout = (fn) => realTimeout(fn, 0); // no real pacing in the test
 globalThis.fetch = async (url, init) => {
   const body = JSON.parse(init.body);
-  calls.push({ url: String(url), studentId: body.studentId, auth: init.headers.Authorization });
+  calls.push({ url: String(url), studentId: body.studentId, month: body.month, auth: init.headers.Authorization });
   const reply = (status, b) => new Response(JSON.stringify(b), { status, headers: { 'Content-Type': 'application/json' } });
   if (!String(url).endsWith('/functions/v1/calculate-tuition')) return reply(404, { error: 'unexpected url' });
   if (body.studentId === K.K9 && !rateLimitedOnce) { rateLimitedOnce = true; return reply(429, { error: 'Rate limit exceeded.', retryAfter: 1 }); }
@@ -398,6 +400,25 @@ try {
   const adminWrites = await tryIt(() => asRole('authenticated', ADMIN, () => db.query(`INSERT INTO public.tuition_bill_check_runs(month, started_by) VALUES ($1, 'admin')`, [MONTH])));
   ok('nobody signed in writes the run log', adminWrites?.code === '42501', adminWrites);
 
+  // A checked change (a discount, a lesson cancel) whose bills were never worked out
+  // again: the gaps check cannot see a discount, so the refresh saves those children
+  // too - this month only, each once, and not twice when the gaps list holds them.
+  globalThis.__tbPending = {
+    money_change_tuition_pending: [{ override_id: U(901), refresh_pairs: [
+      { student_id: K.K3, month: MONTH }, { student_id: K.K10, month: MONTH }, { student_id: K.K5, month: '2025-01' }] }],
+    session_cancel_tuition_pending: [{ override_id: U(902), refresh_pairs: [{ student_id: K.K3, month: MONTH }] }],
+  };
+  const before = calls.length;
+  const pend = await handlers['refresh-month-bills'](post({}, { 'x-schedule-runner-secret': 'runner-token-for-the-test-only' }));
+  const pendRun = (await pend.json()).months?.find((m) => m.month === MONTH);
+  const pendCalls = calls.slice(before);
+  ok('a pending change\'s child is saved although the gaps list does not hold them', pendCalls.filter((c) => c.studentId === K.K3).length === 1, pendCalls);
+  ok('  once, though two changes name them', pendCalls.filter((c) => c.studentId === K.K3).length === 1);
+  ok('  a child the gaps list already holds is not called twice', pendCalls.filter((c) => c.studentId === K.K10).length === 1, pendCalls);
+  ok('  an earlier month of a pending change is not repriced by the timer', !pendCalls.some((c) => c.month === '2025-01' || c.studentId === K.K5), pendCalls);
+  ok('  counted in the run: found = the two still listed + the pending one', pendRun?.found === 3 && pendRun?.recalculated === 1, pendRun);
+  globalThis.__tbPending = null;
+
   // An admin: this month yes, an old month no.
   gate = { isServiceRole: false, roles: new Set(['admin']), userId: ADMIN };
   const old = await handlers['refresh-month-bills'](post({ month: '2025-01' }));
@@ -424,6 +445,10 @@ try {
   ok('readRecalc: 200 saved is ok', m.readRecalc(200, { invoiceSaved: true }).ok === true);
   ok('readRecalc: 200 not saved is a failure', m.readRecalc(200, { invoiceSaved: false }).ok === false);
   ok('readRecalc: 429 carries the wait', m.readRecalc(429, { retryAfter: 7 }).retryAfterSeconds === 7);
+  ok('pendingChangeStudents: this month, unique, skipping the listed', m.pendingChangeStudents([
+    { refresh_pairs: [{ student_id: 'a', month: '2026-11' }, { student_id: 'b', month: '2026-10' }, { student_id: 'c', month: '2026-11' }] },
+    { refresh_pairs: [{ student_id: 'a', month: '2026-11' }, { student_id: 'd', month: '2026-11' }] },
+    { refresh_pairs: null }, {}], '2026-11', new Set(['c'])).join() === 'a,d');
   ok('readRecalc: 400 carries the error', m.readRecalc(400, { error: 'Unable to read' }).error === 'Unable to read');
 }
 
