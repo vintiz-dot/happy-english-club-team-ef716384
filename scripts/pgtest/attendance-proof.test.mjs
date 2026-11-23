@@ -584,6 +584,28 @@ console.log('=== M9 the Stars sync: Pixel Pal says Absent for a child with proof
   }
 }
 
+// ================================================================== M10 (the read-only check)
+console.log('=== M10 scripts/CHECK-attendance-proof.sql applies the same rule ===');
+{
+  const checkSql = readFileSync(join(repo, 'scripts', 'CHECK-attendance-proof.sql'), 'utf8');
+  ok('the check is a single SELECT: it never writes', !/\b(insert|update|delete|drop|create|alter|truncate)\b\s/i.test(checkSql.replace(/--.*$/gm, '')));
+  const res = await all(checkSql);
+  const fromFn = await all(`
+    SELECT r.kind, r.strength, count(*)::int AS n
+      FROM public.attendance_proof_rows(
+             (SELECT array_agg(s.id) FROM public.sessions s
+               WHERE ((s.date + s.end_time) AT TIME ZONE 'Asia/Ho_Chi_Minh') < now()), NULL, false) r
+     GROUP BY r.kind, r.strength`);
+  const a = Object.fromEntries(res.filter((r) => !r.kind.startsWith('*')).map((r) => [r.kind, Number(r.child_lessons)]));
+  const b = Object.fromEntries(fromFn.map((r) => [r.kind, r.n]));
+  const sortObj = (o) => Object.fromEntries(Object.entries(o).sort());
+  eq('the check and the function find the same child-lessons for every kind', sortObj(a), sortObj(b));
+  const anyProof = res.find((r) => r.kind === '* any proof');
+  ok('the "any proof" row is there and counts each pair once', anyProof && Number(anyProof.child_lessons) <= (a.individual_points ?? 0) + (a.speaker_mark ?? 0), anyProof);
+  const ip = res.find((r) => r.kind === 'individual_points');
+  ok('individual_points row has the columns the owner compares', ip && ['on_cancelled', 'not_enrolled', 'no_mark', 'present_late', 'absent', 'excused', 'contradicts_person', 'contradicts_system'].every((c) => c in ip), ip);
+}
+
 console.log(`
 ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
