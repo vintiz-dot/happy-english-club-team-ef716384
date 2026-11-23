@@ -27,6 +27,7 @@ export const patchRow = (table: string, id: string, values: Row) => {
   (writes.patch[table] ??= {})[id] = { ...(writes.patch[table]?.[id] ?? {}), ...values };
 };
 let nextId = 1;
+let defenseSent = false;
 
 class Query implements PromiseLike<Result> {
   private op: { kind: "update" | "insert" | "upsert" | "delete"; payload?: any; conflict?: string } | null = null;
@@ -135,6 +136,11 @@ const rpc = (name: string, args: Row = {}): PromiseLike<Result> => {
     for (const id of ids) if (db.points[id]) data[id] = copy(db.points[id]);
     out = { data, error: null };
   }
+  // Phase 7 preview: what the child handed in appears on the next read of the list.
+  if (name === "get_student_homeworks" && out.data) {
+    const added = withWrites("homework_submissions", []);
+    out = { ...out, data: { ...out.data, submissions: [...(out.data.submissions || []).filter((x: Row) => !added.some((a) => a.homework_id === x.homework_id)), ...added] } };
+  }
   // Phase 3 preview: an approval changes what the screens read next.
   if (name === "approve_video_feedback" && getState() !== "error") {
     patchRow("video_submissions", args.p_video_submission, { status: "approved" });
@@ -173,6 +179,23 @@ export const supabase: any = {
         await new Promise((r) => setTimeout(r, 5000));
         patchRow("student_work", opts?.body?.work_id, { status: "needs_review" });
         return { data: { success: true, detected_student_name: "Nguyễn Minh Anh", match_confidence: 0.92 }, error: null };
+      }
+      // Defend My Level: the last stage, then submitted (the test waits for the teacher)
+      if (name === "cefr-defense") {
+        if (opts?.body?.action === "submit_stage") {
+          await new Promise((r) => setTimeout(r, 300));
+          defenseSent = true;
+          return { data: { success: true, test: { status: "graded" } }, error: null };
+        }
+        return {
+          data: defenseSent
+            ? { claim: { claimed_level: "B1", status: "submitted" }, tests: [{ id: "t1", status: "graded" }], approved_level: null, teacher_level: null }
+            : { claim: { claimed_level: "B1", status: "test_assigned" }, tests: [{ id: "t1", status: "in_progress", current_stage: 3, total_stages: 3, active_stage: {
+                items: [{ id: "i1", skill: "reading", prompt: "Choose the best word: She ___ a book every night.", options: ["read", "reads", "reading"] }, { id: "i2", skill: "grammar", prompt: "Which sentence is correct?", options: ["He don't like fish.", "He doesn't like fish.", "He not like fish."] }],
+                writing_tasks: [{ id: "w1", prompt: "Write two sentences about your weekend." }],
+              } }], approved_level: null, teacher_level: null },
+          error: null,
+        };
       }
       if (name === "ocr-vocab-scan" && opts?.body?.approve) {
         patchRow("student_work", opts.body.work_id, { status: "approved" });

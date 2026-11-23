@@ -5,6 +5,7 @@ import { adminDb } from "./adminFixtures";
 export type Screen =
   | "student-home" | "student-homework" | "family" | "teacher" | "teacher-grid" | "teacher-attendance" | "teacher-drawer"
   | "teacher-grading" | "teacher-video" | "teacher-smart" | "teacher-payroll"
+  | "student-srs" | "student-defend"
   | "admin-overview" | "admin-tuition" | "admin-payroll" | "admin-dialogs";
 export type State = "ok" | "error" | "empty";
 
@@ -35,6 +36,8 @@ export const getTheme = () => THEME;
 export const ROLE_OF: Record<Screen, "student" | "family" | "teacher" | "admin"> = {
   "student-home": "student",
   "student-homework": "student",
+  "student-srs": "student",
+  "student-defend": "student",
   family: "family",
   teacher: "teacher",
   "teacher-grid": "teacher",
@@ -52,6 +55,8 @@ export const ROLE_OF: Record<Screen, "student" | "family" | "teacher" | "admin">
 export const PATH_OF: Record<Screen, string> = {
   "student-home": "/student/dashboard",
   "student-homework": "/student/assignments",
+  "student-srs": "/student/srs",
+  "student-defend": "/student/defend-level",
   family: "/family/dashboard",
   teacher: "/teacher/dashboard",
   "teacher-grid": "/teacher/grid",
@@ -70,7 +75,7 @@ export const PATH_OF: Record<Screen, string> = {
 export const STUDENT_ID = "stu-quynh-tram-anh";
 export const ME = {
   userId: "user-preview-1",
-  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà", "teacher-grid": "Cô Trần Thu Hà", "teacher-attendance": "Cô Trần Thu Hà", "teacher-drawer": "Cô Trần Thu Hà", "teacher-grading": "Cô Trần Thu Hà", "teacher-video": "Cô Trần Thu Hà", "teacher-smart": "Cô Trần Thu Hà", "teacher-payroll": "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
+  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-srs": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-defend": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà", "teacher-grid": "Cô Trần Thu Hà", "teacher-attendance": "Cô Trần Thu Hà", "teacher-drawer": "Cô Trần Thu Hà", "teacher-grading": "Cô Trần Thu Hà", "teacher-video": "Cô Trần Thu Hà", "teacher-smart": "Cô Trần Thu Hà", "teacher-payroll": "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -98,7 +103,7 @@ export function buildDb() {
   let homeworkRpc: any = { homeworks: [], submissions: [] };
   const points: Record<string, any> = {};
 
-  if (SCREEN === "student-home" || SCREEN === "student-homework") {
+  if (SCREEN === "student-home" || SCREEN === "student-homework" || SCREEN === "student-srs" || SCREEN === "student-defend") {
     const cls = { id: "cls-1", name: "Starters Stars (Mon/Wed)" };
     const hw = (id: string, title: string, due: string | null, body = "Do the pages in your book and be ready to read aloud.") => ({
       id, title, due_date: due, body, class_id: cls.id, classes: { name: cls.name }, homework_files: [],
@@ -119,10 +124,26 @@ export function buildDb() {
         { id: "sub-1", homework_id: "hw-done", status: "submitted", submitted_at: new Date().toISOString(), grade: null },
       ],
     };
+    // &hw=late (default) | one (a single open homework) | empty (nothing open) | grade1 | grade3 (marked in the last day)
+    const HW = params.get("hw") ?? "late";
+    const nowIso = new Date().toISOString();
+    const marked = (n: number) => Array.from({ length: n }, (_, i) => ({
+      hw: hw("hw-gr" + i, ["Colours poster", "Unit 4 listening log", "Spelling list 11"][i], day(-2 - i)),
+      sub: { id: "sub-gr" + i, homework_id: "hw-gr" + i, status: "graded", submitted_at: nowIso, graded_at: new Date(Date.now() - i * 3_600_000).toISOString(), grade: ["A-", "B+", "A"][i], teacher_feedback: i === 0 ? "You read each word clearly and your poster was tidy. Next time add one more sentence about each colour." : null },
+    }));
+    const done = homeworkRpc.homeworks.find((h: any) => h.id === "hw-done");
+    if (HW === "one") homeworkRpc.homeworks = homeworkRpc.homeworks.filter((h: any) => h.id === "hw-soon" || h.id === "hw-done");
+    if (HW === "empty") homeworkRpc.homeworks = [done];
+    if (HW === "grade1" || HW === "grade3") {
+      const m = marked(HW === "grade1" ? 1 : 3);
+      homeworkRpc.homeworks = [...homeworkRpc.homeworks, ...m.map((x) => x.hw)];
+      homeworkRpc.submissions = [...homeworkRpc.submissions, ...m.map((x) => x.sub)];
+    }
     tables.students = [{
       id: STUDENT_ID, full_name: ME.name, email: null, phone: null, date_of_birth: BORN,
       avatar_url: null, is_active: true, status_message: null, family: { name: "Nguyễn family" }, updated_at: new Date().toISOString(),
-      linked_user_id: SECOND ? ME.userId : undefined,
+      // the child's own login (the shell reads the date of birth from this row); the home finds it another way
+      linked_user_id: SECOND || SCREEN !== "student-home" ? ME.userId : undefined,
     }];
     tables.enrollments = [{ id: "enr-1", student_id: STUDENT_ID, class_id: cls.id, end_date: null, classes: { ...cls, economy_mode: ECONOMY, points_to_cash_rate: ECONOMY ? 50 : 0 } }];
     if (SECOND) {
@@ -145,6 +166,13 @@ export function buildDb() {
     // Another child is the monitor: useClassMonitor reads `data?.student_id`, which is undefined (a react-query error) for a class with none.
     tables.class_monitors = [{ class_id: cls.id, student_id: "stu-someone-else" }];
     points[STUDENT_ID] = LEVEL(420);
+    if (SCREEN === "student-srs") {
+      // the deck finds the child by the signed-in account
+      tables.students[0].linked_user_id = ME.userId;
+      const due = new Date(Date.now() - 3_600_000).toISOString();
+      const card = (id: string, front: string, back: string, hint: string | null) => ({ id, front, back, hint, ease_factor: 2.5, interval_days: 1, repetitions: 0, lapses: 0, student_id: STUDENT_ID, source: "vocab", due_date: due, suspended: false });
+      tables.srs_cards = [card("c1", "a small animal that says meow", "cat", "It likes milk."), card("c2", "the colour of the sky on a sunny day", "blue", null), card("c3", "She ___ to school every day. (go)", "goes", "Third person.")];
+    }
   }
 
   if (SCREEN === "family") {
