@@ -95,6 +95,15 @@ const kinds = (r) => r.findings.map((f) => f.kind).sort();
   eq(kinds(runPaymentChecks(i)), [], 'a reversed deletion nets to 0 and is not listed');
 }
 {
+  // delete-payment's own reversal key: payment-reversal-<payment>-<ledger entry id>.
+  const i = clean();
+  const ENTRY = '0c566b0b-a887-4d80-8bdd-37dd83dd39a3';
+  i.cashLegs.push({ tx_key: `family-payment-${GONE}-${S1}-1761320568230`, month: '2026-11', debit: 1323000, credit: 0 });
+  eq(kinds(runPaymentChecks(i)), ['orphan_legs'], 'a deleted family payment left in the bank');
+  i.cashLegs.push({ tx_key: `payment-reversal-${GONE}-${ENTRY}`, month: '2026-11', debit: 0, credit: 1323000 });
+  eq(kinds(runPaymentChecks(i)), [], 'delete-payment style reversal (other ids after the payment) cancels it');
+}
+{
   const i = clean();
   i.payments.push({ id: P2, student_id: S1, amount: 1000000, method: 'cash', occurred_at: '2026-11-05T03:10:00Z', source: 'receipt' });
   i.cashLegs.push({ tx_key: `record-payment-${P2}-${S1}`, month: '2026-11', debit: 1000000, credit: 0 });

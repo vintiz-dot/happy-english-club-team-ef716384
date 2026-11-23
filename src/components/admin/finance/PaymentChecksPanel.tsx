@@ -42,6 +42,8 @@ export function PaymentChecksPanel({ checks, names, monthLabel, compact, onSelec
     ([a], [b]) => SEVERITY_ORDER.indexOf(CHECK_INFO[a].severity) - SEVERITY_ORDER.indexOf(CHECK_INFO[b].severity),
   );
   const serious = checks.counts.error + checks.counts.warning;
+  const notInstalled = checks.notInstalled ?? [];
+  const failed = checks.unavailable.filter((k) => !notInstalled.includes(k));
 
   return (
     <Card className={checks.counts.error ? "border-hec-danger/40" : undefined}>
@@ -65,9 +67,14 @@ export function PaymentChecksPanel({ checks, names, monthLabel, compact, onSelec
           {serious === 0
             ? "Every bill matches its payments, every payment is in the ledger, and every label follows the rule."
             : "Bills against their payments, payments against the cash and bank ledger, labels against the rule, bills against the register."}
-          {checks.unavailable.length > 0 && (
+          {failed.length > 0 && (
             <span className="mt-1 block text-hec-warn">
-              Not checked (the data did not load): {[...new Set(checks.unavailable.map((k) => CHECK_INFO[k].title))].join("; ")}.
+              Not checked (the data did not load): {[...new Set(failed.map((k) => CHECK_INFO[k].title))].join("; ")}.
+            </span>
+          )}
+          {notInstalled.length > 0 && (
+            <span className="mt-1 block text-hec-warn">
+              Not checked (not installed yet): {notInstalled.map((k) => CHECK_INFO[k].title).join("; ")}. Its database migration has not been pasted.
             </span>
           )}
         </CardDescription>

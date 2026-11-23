@@ -91,6 +91,8 @@ const SUITES = [
   // Finance > Recorded and Reports > Executive: the early-warning checks on
   // a month's money (bill vs payments, payments vs ledger, labels, register).
   { name: "payment checks", file: "payment-checks.test.mjs", migrations: [] },
+  // The three family payments deleted in Oct 2025 without a reversal, reversed once (23 Nov 2026).
+  { name: "reverse deleted payments", file: "reverse-deleted-payments.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.
   { name: "enrollment row order", file: "enrollment-order.test.mjs", migrations: [] },

@@ -142,6 +142,8 @@ export interface CheckResult {
   findings: Finding[];
   /** Checks that could not run because their rows did not load. */
   unavailable: CheckKind[];
+  /** Of `unavailable`, the checks whose database function is not installed yet (set by the loader). */
+  notInstalled?: CheckKind[];
   counts: Record<Severity, number>;
 }
 
@@ -169,8 +171,10 @@ const DUPLICATE_WINDOW_MS = 30 * 60 * 1000;
 
 /**
  * The cash / bank legs, netted per payment that exists, and per key of a
- * payment that does not. Keys of a missing payment are grouped by every id
- * they carry, so a deletion's reversal leg (same ids) cancels the original.
+ * payment that does not. Keys of a missing payment are grouped by their FIRST
+ * id, which is the payment in every writer's key (record-payment-<p>-<s>,
+ * family-payment-<p>-<s>-<ts>, smart-family-<p>-..., and delete-payment's
+ * reversal payment-reversal-<p>-<entry>), so a reversal cancels the original.
  */
 export function ledgerByPayment(cashLegs: CashLeg[], knownPaymentIds: Set<string>) {
   const legsByPayment = new Map<string, { net: number; count: number }>();
@@ -183,7 +187,7 @@ export function ledgerByPayment(cashLegs: CashLeg[], knownPaymentIds: Set<string
       const cur = legsByPayment.get(hit) ?? { net: 0, count: 0 };
       legsByPayment.set(hit, { net: cur.net + net, count: cur.count + 1 });
     } else if (ids.length) {
-      const k = [...ids].sort().join("+");
+      const k = ids[0];
       const cur = orphan.get(k) ?? { net: 0, month: leg.month, key: leg.tx_key };
       orphan.set(k, { ...cur, net: cur.net + net });
     }

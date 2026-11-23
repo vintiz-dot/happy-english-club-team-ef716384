@@ -106,8 +106,12 @@ export async function loadPaymentChecks(month: string): Promise<PaymentChecksDat
     );
     return rows.map((r) => ({ tx_key: r.tx_key, month: r.month, debit: r.debit, credit: r.credit })) as CashLeg[];
   });
+  // tuition_bill_gaps comes with migration 20261123090000; until it is pasted
+  // PostgREST answers PGRST202 (no such function), shown as "not installed".
+  let gapsNotInstalled = false;
   const gapsP = maybe(async () => {
     const { data, error } = await sb.rpc("tuition_bill_gaps", { p_month: month });
+    if (error && (error.code === "PGRST202" || error.code === "42883")) gapsNotInstalled = true;
     if (error) throw error;
     return (data ?? []) as Array<RegisterGap & { full_name?: string }>;
   });
@@ -140,6 +144,7 @@ export async function loadPaymentChecks(month: string): Promise<PaymentChecksDat
   const checks = runPaymentChecks({
     month, bills, billAmounts, payments, cashLegs, knownPaymentIds, gaps, now: new Date().toISOString(),
   });
+  if (gapsNotInstalled) checks.notInstalled = ["register_gap"];
   // A payment's own student may have no bill this month (paid ahead / late).
   const missing = [...new Set((payments ?? []).map((p) => p.student_id).filter((id) => !names.has(id)))];
   if (missing.length) {
