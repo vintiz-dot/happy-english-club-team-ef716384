@@ -218,6 +218,7 @@ Facts found while building it (23 Nov 2026), which override the bullets below wh
 - The register teachers use is `src/components/admin/class/AttendanceDrawer.tsx`, opened from the calendar; admins use it too. `AttendanceMarking.tsx` is an older register on the teacher hub.
 - Both mark by a local toggle through Present, Absent and Excused and then a separate Save. There is no "Late" in either, and nothing is optimistic. Do not add a status or change when anything is saved for the sake of an effect: a faster save path is its own piece of work, with the attendance guards in `AGENTS.md` in front of it.
 - Every child starts as Present, so a "marked out of enrolled" ring would always read full; it is left out.
+- "No red flourish" below is about motion (no red flash, no shake). The status chips keep the colours they had: Absent stays in the danger tint, because that is how a register is scanned for who is missing.
 
 - Marking a child: the response is optimistic and inside 100 ms. Present: `InkCheck` draws in leaf. Late: the same tick in warn with the word "Late". Absent: an ink dash; no red flourish. The row's state is always also written in words.
 - A register ring (`InkRing`) in the header counts children marked out of children enrolled.
