@@ -396,7 +396,7 @@ Deno.serve(async (req) => {
             const actualRate = overrideRate ?? defaultRate;
             // Late students attended, so they are billed like Present. Only
             // Excused (forgiven) absences are non-billable.
-            const billable = isBillableTuitionSession(s.status, att) || (countHoles && holeIds.has(s.id));
+            const billable = isBillableTuitionSession(s.status, countHoles && holeIds.has(s.id) ? "Present" : att);
 
             if (billable && actualRate > 0) {
               baseAmount += defaultRate;
@@ -562,7 +562,7 @@ Deno.serve(async (req) => {
           // A bill saved with no breakdown (older bills) still has to be carried by
           // some class: split by the classes of the month's lessons, holes
           // included, else the child's first class - never [] against a charge.
-          if ([...savedBases.values()].reduce((n, v) => n + v, 0) <= 0 && totalAmount > 0) {
+          if (heldBill && [...savedBases.values()].reduce((n, v) => n + v, 0) <= 0 && totalAmount > 0) {
             savedBases.clear();
             savedClassDiscounts.clear();
             const weights = (passW ?? lessonPass(true)).enrollmentBaseAmounts;

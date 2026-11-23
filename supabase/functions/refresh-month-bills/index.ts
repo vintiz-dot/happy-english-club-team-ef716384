@@ -89,6 +89,8 @@ Deno.serve(async (req) => {
       // Bills calculate-tuition kept as charged because lessons have no mark:
       // their own outcome, neither saved nor failed (see readRecalc).
       const held = new Map<string, { lessons: number; message: string }>();
+      // Bills saved with the unmarked lessons priced as charged: saved, with a note.
+      const noted = new Map<string, { lessons: number; message: string }>();
       const saved = new Set<string>();
       let notReached = 0;
 
@@ -107,8 +109,10 @@ Deno.serve(async (req) => {
           await sleep(outcome.retryAfterSeconds * 1000);
           outcome = await recalc(url, serviceKey, g.student_id, month);
         }
-        if (outcome.ok) saved.add(g.student_id);
-        else if (outcome.held) held.set(g.student_id, outcome.held);
+        if (outcome.ok) {
+          saved.add(g.student_id);
+          if (outcome.note) noted.set(g.student_id, outcome.note);
+        } else if (outcome.held) held.set(g.student_id, outcome.held);
         else failed.push({ student_id: g.student_id, name: g.full_name, error: outcome.error ?? "not saved" });
       }
 
@@ -120,9 +124,10 @@ Deno.serve(async (req) => {
       // A held child stays listed (the bill differs from the register until
       // someone fixes the register); the row says so, in the same json.
       const stillOpen: any[] = (after ?? []).map((g: any) =>
-        held.has(g.student_id) ? { ...g, held: held.get(g.student_id) } : g);
+        held.has(g.student_id) ? { ...g, held: held.get(g.student_id) } : noted.has(g.student_id) ? { ...g, note: noted.get(g.student_id) } : g);
       for (const g of stillOpen) {
-        if (saved.has(g.student_id)) {
+        // A priced-as-charged bill stays listed (the check prices lessons with a mark only): not a disagreement.
+        if (saved.has(g.student_id) && !noted.has(g.student_id)) {
           saved.delete(g.student_id);
           failed.push({
             student_id: g.student_id, name: g.full_name,
@@ -147,13 +152,14 @@ Deno.serve(async (req) => {
         ...run,
         notReached,
         recorded: !logErr,
+        priced: [...noted].map(([student_id, n]) => ({ student_id, name: listedName.get(student_id) ?? "", ...n })),
         held: [...held].map(([student_id, h]) => ({ student_id, name: listedName.get(student_id) ?? "", ...h })),
       });
     }
 
     // A held bill is reported, but it is not "still wrong" for this run's answer:
     // the refresh did what it can and says so.
-    const openNotHeld = (r: any) => r.still_open.filter((o: any) => !o.held).length;
+    const openNotHeld = (r: any) => r.still_open.filter((o: any) => !o.held && !o.note).length;
     const anyOpen = results.some((r) => openNotHeld(r) > 0 || r.failed.length > 0);
     for (const r of results) for (const h of r.held) console.warn("refresh-month-bills:", h.name || h.student_id, h.message);
     if (anyOpen) console.error("refresh-month-bills: bills still wrong", JSON.stringify(results.map((r) => ({ month: r.month, open: openNotHeld(r), failed: r.failed }))));

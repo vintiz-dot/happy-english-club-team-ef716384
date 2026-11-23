@@ -125,10 +125,12 @@ export function ManualTuitionRecalc() {
 
       setBefore(oldFigures);
 
-      if (data?.held) {
+      // Only a truly held answer stops here. A priced-as-charged answer is a normal
+      // save (the bill may have moved): it is shown and logged below.
+      if (data?.held && !data.held.priced_as_charged) {
         setResult(null);
         setHeld(data.held as HeldInfo);
-        toast.warning(data.held.priced_as_charged ? "The bill was priced as charged" : "Held: the saved bill was not changed");
+        toast.warning("Held: the saved bill was not changed");
         return;
       }
 
@@ -230,9 +232,7 @@ export function ManualTuitionRecalc() {
           <Alert variant="destructive">
             <AlertDescription>
               <div className="space-y-3">
-                <p className="font-semibold">
-                  {held.priced_as_charged ? "The unmarked lessons were charged as before" : "The bill was not changed"}
-                </p>
+                <p className="font-semibold">The bill was not changed</p>
                 <p className="text-sm">
                   {held.message ||
                     `${held.lessons.length} lessons have no mark. The bill stays as charged until the register is fixed.`}
@@ -287,6 +287,9 @@ export function ManualTuitionRecalc() {
                   )}
                   {result.carry?.carryOutCredit > 0 && (
                     <p className="text-success">Credit: {formatVND(result.carry.carryOutCredit)}</p>
+                  )}
+                  {result.held?.priced_as_charged && (
+                    <p>{result.held.lessons?.length ?? 0} lessons have no mark in the register. They were charged as before.</p>
                   )}
                   {result.missingMarks?.lessons?.length > 0 && (
                     <p>{result.missingMarks.lessons.length} lessons have no mark in the register. They are not charged.</p>

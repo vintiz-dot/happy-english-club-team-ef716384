@@ -254,10 +254,11 @@ Deno.serve(async (req) => {
     // Lessons that were held, inside the enrolment, with no attendance row at
     // all: holes in the register, not decisions (_lib/register-holes.ts). The
     // same enrolment, weekday and rate rules as the pricing below. The internal
-    // sibling preview prices nothing that is saved, and a frozen bill is left
-    // as it is, so neither looks for any.
+    // sibling preview applies the same decision read-only (it writes nothing), so
+    // the family discount is judged on the figures the child is charged; a frozen
+    // bill is left as it is and looks for none.
     const registerHoles =
-      siblingPreview || tuitionFrozen
+      tuitionFrozen
         ? []
         : findRegisterHoles<any, any>(sessions ?? [], attendanceMap, hanoiToday(), {
             enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
@@ -311,7 +312,7 @@ Deno.serve(async (req) => {
 
         // Bill Present, Absent, or Late (all attended/charged); Excused is forgiven.
         const unmarked = countHoles && holeIds.has(s.id);
-        const billable = isBillableTuitionSession(s.status, att) || unmarked;
+        const billable = isBillableTuitionSession(s.status, unmarked ? "Present" : att);
         if (billable && actualRate > 0) {
           // Calculate expected using default rate
           expectedClassTuition += defaultRate;
@@ -712,7 +713,10 @@ Deno.serve(async (req) => {
       }));
     }
     if (registerHoles.length > 0) {
-      reviewFlags.push(missingMarksFlag(registerHoles, savedBase, registerBase, holeMode));
+      // The saved base is the one first seen: a later call (the bill now moved) must
+      // not overwrite it, so identical calls leave the flag, and the row, alone.
+      const firstSeen = storedFlags.find((f) => f?.type === REGISTER_MISSING_MARKS)?.details?.savedBase;
+      reviewFlags.push(missingMarksFlag(registerHoles, typeof firstSeen === "number" ? firstSeen : savedBase, registerBase, holeMode));
     }
 
     // Which labels this save may write. A recalculation must not un-confirm
@@ -826,10 +830,28 @@ Deno.serve(async (req) => {
     // A held bill is the saved bill: its lines are the saved breakdown, so they
     // add up to the figures answered (the register's own lines would not).
     const savedLines: any[] = Array.isArray(frozenInvoice?.class_breakdown) ? frozenInvoice.class_breakdown : [];
-    const heldLines =
-      heldBill && savedLines.length > 0
+    const heldLines = heldBill
+      ? savedLines.length > 0
         ? { classes: savedLines, count: savedLines.reduce((n, c) => n + Number(c?.sessions_count ?? 0), 0) }
-        : null;
+        : {
+            // No saved breakdown (older bills): one line carrying the saved figures.
+            classes: [{
+              class_id: [...priceN.enrollmentBaseAmounts.keys()][0] ?? null,
+              class_name: "As charged",
+              amount_vnd: baseAmount,
+              net_amount_vnd: Math.max(0, baseAmount - totalDiscount),
+              sessions_count: 0,
+              session_rate_vnd: 0,
+            }],
+            count: 0,
+          }
+      : null;
+    // And its discounts are the saved discount, not discounts computed on N.
+    const answeredDiscounts = heldBill
+      ? totalDiscount > 0
+        ? [{ name: "As charged", type: "amount", value: totalDiscount, amount: totalDiscount, isAsCharged: true }]
+        : []
+      : discounts;
 
     const response = {
       studentId,
@@ -837,7 +859,7 @@ Deno.serve(async (req) => {
       sessionCount: heldLines ? heldLines.count : sessionDetails.length,
       sessionDetails,
       baseAmount,
-      discounts,
+      discounts: answeredDiscounts,
       totalDiscount,
       totalAmount, // charges this month (post-discount)
       payments: {
@@ -872,8 +894,9 @@ Deno.serve(async (req) => {
           }
         : {}),
       ...(registerHoles.length > 0 && !heldBill && !pricedAsCharged
-        ? { missingMarks: { lessons: holeLessons, register_base: registerBase, saved_base: savedBase, forcedLower } }
+        ? { missingMarks: { lessons: holeLessons, register_base: registerBase, saved_base: savedBase, forcedLower: forcedLower && writeInvoice } }
         : {}),
+      ...(mayForce && pricedAsCharged ? { forceIgnored: "The month was priced with the unmarked lessons as charged, so there is no lower figure to force." } : {}),
       breakdown: {
         classes: heldLines ? heldLines.classes : classBreakdown,
       },
