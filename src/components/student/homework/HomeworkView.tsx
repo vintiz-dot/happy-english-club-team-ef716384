@@ -7,7 +7,7 @@
  *   junior  the same, the finish line, and a line about vocabulary cards only when a count is already in the cache
  *   teen    no emoji on the page; the finish line
  */
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -122,6 +122,8 @@ export function HomeworkView(p: HomeworkViewProps) {
   const emoji = (e: string) => (teen ? null : e);
   const { assignments, groups, todoCount, isLoading, isError } = p;
   const open = (a: any) => p.onSelectHomework(a);
+  // the grade moment is up: the page's own Pip steps out (one Pip per screen)
+  const [momentUp, setMomentUp] = useState(false);
 
   // The title: the page's own words, an emoji only where the band may have one.
   const allDone = todoCount === 0 && !isLoading;
@@ -274,13 +276,13 @@ export function HomeworkView(p: HomeworkViewProps) {
     const card = groups.late[0] ?? groups.next[0] ?? null;
     return (
       <>
-        {assignments.length > 0 && <GradeCelebration studentId={p.studentId} assignments={assignments} />}
+        {assignments.length > 0 && <GradeCelebration studentId={p.studentId} assignments={assignments} onActiveChange={setMomentUp} />}
         <EarlyHomework
           ready={!isLoading && !isError}
           todoCount={todoCount}
           card={isLoading || isError ? null : card}
           onOpen={open}
-          dialogOpen={!!p.selectedHomework}
+          dialogOpen={!!p.selectedHomework || momentUp}
           loading={isLoading ? <PlaceholderCard rows={2} /> : null}
           errorBlock={isError ? errorCard : null}
           grownUps={

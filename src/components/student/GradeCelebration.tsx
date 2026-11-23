@@ -5,6 +5,8 @@ import { soundManager } from "@/lib/soundManager";
 interface GradeCelebrationProps {
   studentId: string;
   assignments: any[];
+  /** told whenever the moment goes up or comes down, so a page can step its own Pip out (one Pip per screen) */
+  onActiveChange?: (active: boolean) => void;
 }
 
 interface GradedItem {
@@ -16,9 +18,16 @@ interface GradedItem {
   feedback: string | null;
 }
 
-export function GradeCelebration({ studentId, assignments }: GradeCelebrationProps) {
+export function GradeCelebration({ studentId, assignments, onActiveChange }: GradeCelebrationProps) {
   const [celebrationItem, setCelebrationItem] = useState<GradedItem | null>(null);
   const [queue, setQueue] = useState<GradedItem[]>([]);
+
+  const active = !!celebrationItem;
+  useEffect(() => {
+    onActiveChange?.(active);
+    return () => onActiveChange?.(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
 
   useEffect(() => {
     // Only celebrate things graded in the last 48 hours to avoid

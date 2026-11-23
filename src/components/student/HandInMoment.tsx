@@ -46,7 +46,8 @@ export function HandInMoment({ show, onComplete }: { show: boolean; onComplete?:
     <AnimatePresence>
       {show && (
         <motion.div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-hec-scrim/60 p-4"
+          // teen: no backdrop (the Seal is the moment); the layer stays, transparent, only so a second tap cannot send twice
+          className={`fixed inset-0 z-[70] flex items-center justify-center p-4 ${band === "teen" ? "" : "bg-hec-scrim/60"}`}
           initial={still ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={still ? undefined : { opacity: 0 }}
