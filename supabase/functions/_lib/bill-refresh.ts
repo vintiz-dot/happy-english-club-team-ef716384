@@ -73,6 +73,11 @@ export interface RecalcOutcome {
    * retry quietly: nothing the refresh does can fix it - the register must be.
    */
   held?: { lessons: number; message: string };
+  /**
+   * The bill WAS saved, priced with the unmarked lessons counted as charged
+   * (calculate-tuition's priced_as_charged): a save, with a note, not a hold.
+   */
+  note?: { lessons: number; message: string };
 }
 
 /**
@@ -89,13 +94,9 @@ export function readRecalc(status: number, body: any): RecalcOutcome {
   if (body?.error) return { ok: false, error: String(body.error) };
   if (body?.held?.reason === "register_missing_marks") {
     const lessons = Array.isArray(body.held.lessons) ? body.held.lessons.length : 0;
-    return {
-      ok: false,
-      held: {
-        lessons,
-        message: String(body.held.message || "Held: lessons have no mark. The bill stays as charged until the register is fixed."),
-      },
-    };
+    const message = String(body.held.message || "Held: lessons have no mark. The bill stays as charged until the register is fixed.");
+    if (body.held.priced_as_charged === true) return { ok: true, note: { lessons, message } };
+    return { ok: false, held: { lessons, message } };
   }
   if (body?.invoiceSaved === false) {
     return {

@@ -27,6 +27,8 @@ type Gap = {
   confirmation_status: string | null;
   /** Set by refresh-month-bills when calculate-tuition kept or priced the bill as charged because lessons have no mark. */
   held?: { lessons: number; message: string };
+  /** The bill was saved with the unmarked lessons priced as charged. */
+  note?: { lessons: number; message: string };
 };
 
 type Run = {
@@ -87,8 +89,10 @@ export function TuitionBillCheck({ month }: { month: string }) {
       const r = data?.months?.[0];
       const failed = r?.failed?.length ?? 0;
       const held = r?.held?.length ?? 0;
-      const open = (r?.still_open?.length ?? 0) - held;
-      if (!failed && open <= 0 && !held) toast.success(`Saved ${r?.recalculated ?? 0} bill(s). Every bill now matches the register.`);
+      const priced = r?.priced?.length ?? 0;
+      const open = (r?.still_open?.length ?? 0) - held - priced;
+      if (!failed && open <= 0 && !held && priced) toast.success(`Saved ${r?.recalculated ?? 0} bill(s). ${priced} had lessons with no mark, charged as before.`);
+      else if (!failed && open <= 0 && !held) toast.success(`Saved ${r?.recalculated ?? 0} bill(s). Every bill now matches the register.`);
       else if (!failed && open <= 0) toast.info(`Saved ${r?.recalculated ?? 0} bill(s). ${held} ${held === 1 ? "bill is" : "bills are"} held: lessons have no mark in the register.`);
       else toast.warning(`Saved ${r?.recalculated ?? 0} bill(s); ${Math.max(open, 0)} still need attention${held ? `, ${held} held` : ""}${failed ? `, ${failed} failed` : ""}.`);
     } catch (e: any) {
@@ -151,7 +155,7 @@ export function TuitionBillCheck({ month }: { month: string }) {
   }
 
   const failedById = new Map((run?.failed ?? []).map((f) => [f.student_id, f.error]));
-  const heldById = new Map((run?.still_open ?? []).filter((g) => g.held).map((g) => [g.student_id, g.held!.message]));
+  const heldById = new Map((run?.still_open ?? []).filter((g) => g.held || g.note).map((g) => [g.student_id, (g.held ?? g.note)!.message]));
   const wrong = rows.filter((g) => !heldById.has(g.student_id));
   if (wrong.length === 0) {
     // Every listed child is held: the bill stays as charged until the register is fixed.
@@ -161,7 +165,7 @@ export function TuitionBillCheck({ month }: { month: string }) {
           <div className="flex items-center gap-2">
             <AlertTriangle aria-hidden className="h-4 w-4 text-hec-warn" />
             <span>
-              {rows.length} {rows.length === 1 ? "bill is" : "bills are"} held for {month}: lessons have no mark in the register.
+              {rows.length} {rows.length === 1 ? "bill has" : "bills have"} lessons with no mark in the register for {month}.
             </span>
           </div>
           <ul className="list-disc pl-6 text-hec-ink-soft">

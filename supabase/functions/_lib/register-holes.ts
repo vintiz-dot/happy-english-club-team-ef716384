@@ -77,10 +77,10 @@ export function findRegisterHoles<S extends HoleSession, E>(
  *
  *   normal             no holes, no saved bill, a frozen bill, or N is not below
  *                      the saved base: save as always (holes, if any, are flagged);
- *   forced             N is below the saved base and an admin forced it: save N;
  *   priced_as_charged  N is below the saved base but W is not above it: price the
  *                      month WITH the holes, so the bill moves only by a real change
- *                      (a lesson since cancelled or excused);
+ *                      (a lesson since cancelled or excused); a force is ignored;
+ *   forced             N < saved < W and an admin forced it: save N;
  *   held               N < saved < W: some deleted marks must have been Excused and
  *                      nobody can tell which, so the saved figures stand.
  */
@@ -95,9 +95,9 @@ export function decideHoles(opts: {
   forced: boolean;
 }): HoleMode {
   if (opts.holeCount === 0 || opts.savedBase === null || opts.frozen || opts.nBase >= opts.savedBase) return "normal";
-  if (opts.forced) return "forced";
+  // Priced as charged wins over a force: there is no lower figure to force.
   if (opts.wBase !== null && opts.wBase <= opts.savedBase) return "priced_as_charged";
-  return "held";
+  return opts.forced ? "forced" : "held";
 }
 
 export const REGISTER_MISSING_MARKS = "register_missing_marks";
