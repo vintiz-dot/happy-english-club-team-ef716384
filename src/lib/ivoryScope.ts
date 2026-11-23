@@ -113,7 +113,11 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   { path: "/schedule", roles: ["admin", "teacher", "family", "student"] },
   { path: "/tuition", roles: ["admin", "teacher"] },
   { path: "/dashboard", roles: ["admin", "teacher"] },
-  // Released by the owner on 23 Nov 2026: the recorder, audit clips, /feedback.\n  { path: "/teacher/recorder" },\n  { path: "/admin", tab: "audit-clips" },\n  { path: "/feedback" },\n
+  // Released by the owner on 23 Nov 2026: the recorder, audit clips, /feedback.
+  { path: "/teacher/recorder" },
+  { path: "/admin", tab: "audit-clips" },
+  { path: "/feedback" },
+
   // parent + public (R23)
   { path: "/family/dashboard" },
   { path: "/watch/:token" },
