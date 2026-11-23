@@ -22,6 +22,7 @@
 --                                     Never changes a mark a person made.
 --   7. an hourly job for 6 (only where pg_cron exists).
 --
+-- (individual_points also needs the person who made the award to be staff: admin or teacher.)
 -- WHAT COUNTS AS PROOF (strength 'proof'). Only things a member of staff did on
 -- purpose, for ONE child, tied to THIS lesson, that staff can take back:
 --   individual_points  a participation award (points above 0, made by a person,
@@ -103,6 +104,7 @@
 -- Safe to run twice. Paste after 20261123090000.
 
 BEGIN;
+SET LOCAL lock_timeout = '5s';
 
 DO $pre$
 BEGIN
@@ -123,9 +125,16 @@ CREATE TABLE IF NOT EXISTS public.attendance_proof_refusals (
   attempted_status text,                  -- what the writer wanted (NULL for a delete)
   kept_status     text,                   -- what the register keeps
   summary         text,                   -- the proof, in a sentence
-  created_at      timestamptz NOT NULL DEFAULT now()
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  attempts        integer NOT NULL DEFAULT 1,   -- how many times the same write was tried
+  last_at         timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.attendance_proof_refusals ADD COLUMN IF NOT EXISTS attempts integer NOT NULL DEFAULT 1;
+ALTER TABLE public.attendance_proof_refusals ADD COLUMN IF NOT EXISTS last_at timestamptz NOT NULL DEFAULT now();
 -- No foreign keys on purpose: the log outlives the lesson and the child.
+-- One row per lesson, child, kind of write and status wanted; a retry counts up.
+CREATE UNIQUE INDEX IF NOT EXISTS attendance_proof_refusals_once
+  ON public.attendance_proof_refusals (session_id, student_id, op, (COALESCE(attempted_status, '')));
 CREATE INDEX IF NOT EXISTS attendance_proof_refusals_created ON public.attendance_proof_refusals (created_at DESC);
 
 CREATE TABLE IF NOT EXISTS public.attendance_evidence_runs (
@@ -199,7 +208,7 @@ BEGIN
   SELECT s.id, s.class_id, s.date,
          ((s.date + s.start_time) AT TIME ZONE 'Asia/Ho_Chi_Minh') - interval '15 minutes',
          ((s.date + s.end_time) AT TIME ZONE 'Asia/Ho_Chi_Minh')
-           + CASE WHEN s.end_time <= s.start_time THEN interval '1 day' ELSE interval '0' END
+           + CASE WHEN s.end_time < s.start_time THEN interval '1 day' ELSE interval '0' END
            + interval '30 minutes',
          s.status::text
     FROM public.sessions s
@@ -228,6 +237,8 @@ BEGIN
      AND COALESCE(pt.notes, '') NOT LIKE 'Attendance streak bonus%'
      AND COALESCE(pt.notes, '') NOT LIKE 'In-class award (from transcript)%'
      AND pt.created_at BETWEEN l.wfrom AND l.wto
+     AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = pt.created_by
+                  AND ur.role IN ('admin'::public.app_role, 'teacher'::public.app_role))
      AND NOT EXISTS (SELECT 1 FROM public.point_transactions o
                       WHERE o.session_id = pt.session_id AND o.type = 'participation'
                         AND o.created_by = pt.created_by AND o.student_id <> pt.student_id
@@ -392,15 +403,37 @@ BEGIN
 END
 $fn$;
 
+-- Enrolled on the lesson's date: the rule calculate-tuition uses (the class's first-created
+-- enrolment covering the date; its allowed_days, 0 = Sunday, NULL = every day).
+CREATE OR REPLACE FUNCTION public._attendance_enrolled_on(p_student uuid, p_class uuid, p_date date)
+RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $fn$
+DECLARE
+  v_days integer[];
+BEGIN
+  SELECT en.allowed_days INTO v_days
+    FROM public.enrollments en
+   WHERE en.student_id = p_student AND en.class_id = p_class
+     AND en.start_date <= p_date AND (en.end_date IS NULL OR en.end_date >= p_date)
+   ORDER BY en.created_at, en.id LIMIT 1;
+  IF NOT FOUND THEN RETURN false; END IF;
+  RETURN v_days IS NULL OR extract(dow FROM p_date)::int = ANY (v_days);
+END
+$fn$;
+
+-- Proof counts only for a child enrolled in the lesson's class on its date.
 CREATE OR REPLACE FUNCTION public.attendance_has_proof(p_session_id uuid, p_student_id uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$
   SELECT EXISTS (SELECT 1 FROM public.attendance_proof_rows(ARRAY[p_session_id], p_student_id, true) r
                   WHERE r.strength = 'proof')
+     AND EXISTS (SELECT 1 FROM public.sessions s
+                  WHERE s.id = p_session_id AND public._attendance_enrolled_on(p_student_id, s.class_id, s.date))
 $fn$;
 
 REVOKE ALL ON FUNCTION public._attendance_proof_lessons(uuid[]) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.attendance_proof_rows(uuid[], uuid, boolean) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.attendance_has_proof(uuid, uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public._attendance_enrolled_on(uuid, uuid, date) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public._attendance_enrolled_on(uuid, uuid, date) TO service_role;
 GRANT EXECUTE ON FUNCTION public._attendance_proof_lessons(uuid[]) TO service_role;
 GRANT EXECUTE ON FUNCTION public.attendance_proof_rows(uuid[], uuid, boolean) TO service_role;
 GRANT EXECUTE ON FUNCTION public.attendance_has_proof(uuid, uuid) TO service_role;
@@ -414,12 +447,16 @@ DECLARE
   v_new text;
   v_old text;
   v_status text;
+  v_class uuid;
+  v_date date;
   v_uid uuid;
   v_kind text;
   v_summary text;
   v_name text;
+  v_cname text;
   v_hint text;
   v_kept text;
+  v_msg text;
 BEGIN
   IF current_setting('hec.attendance_proof_bypass', true) = 'on'
      OR current_setting('hec.attendance_restore', true) = 'on' THEN
@@ -446,7 +483,7 @@ BEGIN
     IF pg_trigger_depth() > 1 THEN RETURN OLD; END IF;
   END IF;
 
-  SELECT s.status::text INTO v_status FROM public.sessions s WHERE s.id = v_sid;
+  SELECT s.status::text, s.class_id, s.date INTO v_status, v_class, v_date FROM public.sessions s WHERE s.id = v_sid;
   IF NOT FOUND OR v_status = 'Canceled' THEN
     RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
   END IF;
@@ -454,6 +491,10 @@ BEGIN
   -- The lookup may never stop a teacher marking the register: if it fails, let the write through.
   BEGIN
     v_uid := auth.uid();
+    -- A child who was not enrolled that day is never locked (the enrolment guard's Excused stands).
+    IF NOT public._attendance_enrolled_on(v_kid, v_class, v_date) THEN
+      RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+    END IF;
     SELECT r.kind, r.summary INTO v_kind, v_summary
       FROM public.attendance_proof_rows(ARRAY[v_sid], v_kid, true) r
      WHERE r.strength = 'proof'
@@ -466,27 +507,35 @@ BEGIN
     RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
   END IF;
 
+  SELECT st.full_name INTO v_name FROM public.students st WHERE st.id = v_kid;
+  SELECT c.name INTO v_cname FROM public.classes c WHERE c.id = v_class;
+  v_hint := CASE v_kind
+    WHEN 'speaker_mark' THEN 'use Undo on the lesson''s speakers page'
+    ELSE 'delete it in the child''s point history' END;
+  v_msg := format('ATTENDANCE_PROOF: %s was in the %s lesson on %s: %s. If that is a mistake, %s, then change the mark.',
+                  COALESCE(v_name, 'This child'), COALESCE(v_cname, 'class'), to_char(v_date, 'FMDD Mon YYYY'), v_summary, v_hint);
+
   IF v_uid IS NOT NULL AND pg_trigger_depth() <= 1 THEN
-    SELECT st.full_name INTO v_name FROM public.students st WHERE st.id = v_kid;
-    v_hint := CASE v_kind
-      WHEN 'speaker_mark' THEN 'use Undo on the lesson''s speakers page'
-      ELSE 'delete it in the child''s point history' END;
-    RAISE EXCEPTION 'ATTENDANCE_PROOF: % was in this lesson: %. If that is a mistake, %, then change the mark.',
-      COALESCE(v_name, 'This child'), v_summary, v_hint
-      USING ERRCODE = 'P0001';
+    RAISE EXCEPTION '%', v_msg USING ERRCODE = 'P0001';
   END IF;
 
   -- Nobody signed in is acting (service role, cron, the stars sync, a trigger, the SQL
   -- editor). A raise would abort that whole transaction, so keep the register as it is.
+  RAISE NOTICE '%', replace(v_msg, 'ATTENDANCE_PROOF:', 'ATTENDANCE_PROOF (change not made):');
   v_kept := CASE WHEN TG_OP = 'INSERT' THEN 'Present' ELSE OLD.status::text END;
   BEGIN
-    INSERT INTO public.attendance_proof_refusals (session_id, student_id, op, attempted_status, kept_status, summary)
-    VALUES (v_sid, v_kid, TG_OP, v_new, v_kept, v_summary);
+    INSERT INTO public.attendance_proof_refusals AS r (session_id, student_id, op, attempted_status, kept_status, summary)
+    VALUES (v_sid, v_kid, TG_OP, v_new, v_kept, v_summary)
+    ON CONFLICT (session_id, student_id, op, (COALESCE(attempted_status, '')))
+    DO UPDATE SET attempts = r.attempts + 1, last_at = now(), kept_status = EXCLUDED.kept_status, summary = EXCLUDED.summary;
   EXCEPTION WHEN OTHERS THEN
     RAISE WARNING 'attendance_proof_guard: could not log the refusal (%)', SQLERRM;
   END;
   IF TG_OP = 'INSERT' THEN
+    -- Not a person's mark: do not claim a teacher marked the child present.
     NEW.status := 'Present';
+    NEW.marked_by := NULL;
+    NEW.notes := 'Auto-marked from evidence: ' || v_summary;
     RETURN NEW;
   END IF;
   RETURN NULL;
@@ -563,7 +612,7 @@ BEGIN
       FROM public.sessions s JOIN public.classes c ON c.id = s.class_id
      WHERE s.date BETWEEN p_from AND p_to
        AND (((s.date + s.end_time) AT TIME ZONE 'Asia/Ho_Chi_Minh')
-            + CASE WHEN s.end_time <= s.start_time THEN interval '1 day' ELSE interval '0' END) < now()
+            + CASE WHEN s.end_time < s.start_time THEN interval '1 day' ELSE interval '0' END) < now()
   ),
   ev AS (SELECT r.* FROM public.attendance_proof_rows((SELECT array_agg(l.sid) FROM les l), NULL, false) r),
   pk AS (
@@ -625,6 +674,17 @@ BEGIN
       FROM pk p JOIN les l ON l.sid = p.sid
       LEFT JOIN att a ON a.sid = p.sid AND a.kid = p.kid
      WHERE l.lst = 'Canceled'
+    UNION ALL
+    -- a write the register did not take because of proof (a Pixel Pal "absent", a retry...)
+    SELECT 'write_kept_by_proof', f.session_id, f.student_id, a.st, a.mb IS NOT NULL, COALESCE(p.kinds, ARRAY[]::text[]),
+           format('%s (%s) was tried %s time(s), last on %s; the register kept %s. %s',
+                  COALESCE(f.attempted_status, 'removing the mark'), lower(f.op), f.attempts,
+                  to_char(f.last_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'DD Mon HH24:MI'),
+                  COALESCE(f.kept_status, 'the row'), COALESCE(p.summ, ''))
+      FROM public.attendance_proof_refusals f
+      JOIN les l ON l.sid = f.session_id
+      LEFT JOIN att a ON a.sid = f.session_id AND a.kid = f.student_id
+      LEFT JOIN pk p ON p.sid = f.session_id AND p.kid = f.student_id
   )
   SELECT r.k, r.sid, r.kid, st.full_name, l.cid, l.cname, l.ldate, r.st, r.byp, r.kinds, r.summ
     FROM rows_all r
@@ -651,6 +711,24 @@ REVOKE ALL ON FUNCTION public.attendance_evidence_gaps(date, date) FROM PUBLIC, 
 GRANT EXECUTE ON FUNCTION public.attendance_evidence_gaps(date, date) TO authenticated, service_role;
 
 -- ---------------------------------------------------------------- 6. apply
+-- The billing window the hourly bill refresh reprices (supabase/functions/_lib/bill-refresh.ts,
+-- refreshableMonths): this month, plus last month during days 1-5 (Hanoi dates). The hourly job
+-- may only touch marks inside it, so a bill is refreshed after the mark that moves it. The window
+-- is the later of (today - 14 days) and the first day of that billing window. Older lessons are
+-- left for the admin ("Fill in from proof": dry run first, then refresh the months it names).
+CREATE OR REPLACE FUNCTION public.attendance_evidence_window(p_now timestamptz DEFAULT now())
+RETURNS TABLE (from_date date, to_date date)
+LANGUAGE sql STABLE AS $fn$
+  SELECT GREATEST(t.d - 14,
+                  CASE WHEN extract(day FROM t.d)::int <= 5
+                       THEN (date_trunc('month', t.d) - interval '1 month')::date
+                       ELSE date_trunc('month', t.d)::date END),
+         t.d
+    FROM (SELECT (p_now AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS d) t
+$fn$;
+REVOKE ALL ON FUNCTION public.attendance_evidence_window(timestamptz) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.attendance_evidence_window(timestamptz) TO service_role;
+
 CREATE OR REPLACE FUNCTION public.attendance_apply_evidence(p_from date, p_to date, p_dry_run boolean DEFAULT true)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
 DECLARE
@@ -658,22 +736,30 @@ DECLARE
   v_ins int := 0;
   v_cor int := 0;
   v_left int := 0;
+  v_failed int := 0;
   v_n int;
-  v_rows jsonb := '[]'::jsonb;
+  v_rows jsonb;
   v_months jsonb;
+  v_failures jsonb;
   v_action text;
-  v_touched jsonb := '[]'::jsonb;
+  v_touched boolean;
 BEGIN
   IF NOT public._attendance_proof_admin_or_system() THEN
     RAISE EXCEPTION 'Only an administrator can apply attendance evidence' USING ERRCODE = '42501';
   END IF;
 
+  -- Rows are collected in a temporary table and turned into JSON once (no quadratic growth).
+  DROP TABLE IF EXISTS pg_temp.attendance_apply_rows;
+  CREATE TEMP TABLE attendance_apply_rows (
+    n serial, kind text, action text, session_id uuid, student_id uuid, student_name text, class_name text,
+    lesson_date date, current_status text, summary text, touched boolean, failure text
+  ) ON COMMIT DROP;
+
   FOR r IN SELECT * FROM public._attendance_evidence_gaps_core(p_from, p_to) LOOP
-    v_action := 'left';
+    v_action := 'left'; v_touched := false;
     IF r.kind = 'proof_no_mark' THEN
       IF p_dry_run THEN
-        v_ins := v_ins + 1; v_action := 'would_insert';
-        v_touched := v_touched || jsonb_build_object('student_id', r.student_id, 'month', to_char(r.lesson_date, 'YYYY-MM'));
+        v_ins := v_ins + 1; v_action := 'would_insert'; v_touched := true;
       ELSE
         BEGIN
           INSERT INTO public.attendance (session_id, student_id, status, marked_by, notes)
@@ -681,19 +767,20 @@ BEGIN
           ON CONFLICT (session_id, student_id) DO NOTHING;
           GET DIAGNOSTICS v_n = ROW_COUNT;
           IF v_n > 0 THEN
-            v_ins := v_ins + 1; v_action := 'inserted';
-            v_touched := v_touched || jsonb_build_object('student_id', r.student_id, 'month', to_char(r.lesson_date, 'YYYY-MM'));
+            v_ins := v_ins + 1; v_action := 'inserted'; v_touched := true;
           ELSE
             v_left := v_left + 1;
           END IF;
         EXCEPTION WHEN OTHERS THEN
-          v_left := v_left + 1; v_action := 'failed: ' || SQLERRM;
+          v_left := v_left + 1; v_failed := v_failed + 1; v_action := 'failed';
+          INSERT INTO pg_temp.attendance_apply_rows (kind, action, session_id, student_id, student_name, class_name, lesson_date, current_status, summary, touched, failure)
+          VALUES (r.kind, 'failed', r.session_id, r.student_id, r.student_name, r.class_name, r.lesson_date, r.current_status, r.summary, false, SQLERRM);
+          CONTINUE;
         END;
       END IF;
     ELSIF r.kind = 'proof_contradicts_system' THEN
       IF p_dry_run THEN
-        v_cor := v_cor + 1; v_action := 'would_correct';
-        v_touched := v_touched || jsonb_build_object('student_id', r.student_id, 'month', to_char(r.lesson_date, 'YYYY-MM'));
+        v_cor := v_cor + 1; v_action := 'would_correct'; v_touched := true;
       ELSE
         BEGIN
           UPDATE public.attendance a
@@ -702,29 +789,39 @@ BEGIN
              AND a.marked_by IS NULL AND a.status::text IN ('Absent', 'Excused');
           GET DIAGNOSTICS v_n = ROW_COUNT;
           IF v_n > 0 THEN
-            v_cor := v_cor + 1; v_action := 'corrected';
-            v_touched := v_touched || jsonb_build_object('student_id', r.student_id, 'month', to_char(r.lesson_date, 'YYYY-MM'));
+            v_cor := v_cor + 1; v_action := 'corrected'; v_touched := true;
           ELSE
             v_left := v_left + 1;
           END IF;
         EXCEPTION WHEN OTHERS THEN
-          v_left := v_left + 1; v_action := 'failed: ' || SQLERRM;
+          v_left := v_left + 1; v_failed := v_failed + 1;
+          INSERT INTO pg_temp.attendance_apply_rows (kind, action, session_id, student_id, student_name, class_name, lesson_date, current_status, summary, touched, failure)
+          VALUES (r.kind, 'failed', r.session_id, r.student_id, r.student_name, r.class_name, r.lesson_date, r.current_status, r.summary, false, SQLERRM);
+          CONTINUE;
         END;
       END IF;
     ELSE
       v_left := v_left + 1;
     END IF;
-    v_rows := v_rows || jsonb_build_object(
-      'kind', r.kind, 'action', v_action, 'session_id', r.session_id, 'student_id', r.student_id,
-      'student_name', r.student_name, 'class_name', r.class_name, 'lesson_date', r.lesson_date,
-      'current_status', r.current_status, 'summary', r.summary);
+    INSERT INTO pg_temp.attendance_apply_rows (kind, action, session_id, student_id, student_name, class_name, lesson_date, current_status, summary, touched)
+    VALUES (r.kind, v_action, r.session_id, r.student_id, r.student_name, r.class_name, r.lesson_date, r.current_status, r.summary, v_touched);
   END LOOP;
 
-  SELECT COALESCE(jsonb_agg(DISTINCT t), '[]'::jsonb) INTO v_months FROM jsonb_array_elements(v_touched) t;
+  SELECT COALESCE(jsonb_agg(jsonb_build_object(
+           'kind', t.kind, 'action', t.action, 'session_id', t.session_id, 'student_id', t.student_id,
+           'student_name', t.student_name, 'class_name', t.class_name, 'lesson_date', t.lesson_date,
+           'current_status', t.current_status, 'summary', t.summary, 'failure', t.failure) ORDER BY t.n), '[]'::jsonb)
+    INTO v_rows FROM pg_temp.attendance_apply_rows t;
+  SELECT COALESCE(jsonb_agg(DISTINCT jsonb_build_object('student_id', t.student_id, 'month', to_char(t.lesson_date, 'YYYY-MM'))), '[]'::jsonb)
+    INTO v_months FROM pg_temp.attendance_apply_rows t WHERE t.touched;
+  SELECT COALESCE(jsonb_agg(jsonb_build_object('session_id', t.session_id, 'student_id', t.student_id, 'error', t.failure) ORDER BY t.n), '[]'::jsonb)
+    INTO v_failures FROM pg_temp.attendance_apply_rows t WHERE t.failure IS NOT NULL;
 
-  IF NOT p_dry_run THEN
+  -- Logged when an admin ran it, or when the hourly job changed something or something failed.
+  IF NOT p_dry_run AND (auth.uid() IS NOT NULL OR v_ins + v_cor > 0 OR v_failed > 0) THEN
     INSERT INTO public.attendance_evidence_runs (ran_by, from_date, to_date, inserted, corrected, left_for_admin, detail)
-    VALUES (auth.uid(), p_from, p_to, v_ins, v_cor, v_left, jsonb_build_object('affected_months', v_months));
+    VALUES (auth.uid(), p_from, p_to, v_ins, v_cor, v_left,
+            jsonb_build_object('affected_months', v_months, 'failures', v_failures));
   END IF;
 
   RETURN jsonb_build_object('dry_run', p_dry_run, 'inserted', v_ins, 'corrected', v_cor,
@@ -735,7 +832,7 @@ REVOKE ALL ON FUNCTION public.attendance_apply_evidence(date, date, boolean) FRO
 GRANT EXECUTE ON FUNCTION public.attendance_apply_evidence(date, date, boolean) TO authenticated, service_role;
 
 -- ---------------------------------------------------------------- 7. hourly
--- The last 14 days, Hanoi dates. Only where pg_cron exists.
+-- attendance_evidence_window() dates, Hanoi time. Only where pg_cron exists.
 DO $cron$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
@@ -745,9 +842,8 @@ BEGIN
     PERFORM cron.schedule(
       'attendance-apply-evidence',
       '40 * * * *',
-      $cmd$select public.attendance_apply_evidence(
-             ((now() at time zone 'Asia/Ho_Chi_Minh')::date - 14),
-             (now() at time zone 'Asia/Ho_Chi_Minh')::date, false)$cmd$
+      $cmd$select public.attendance_apply_evidence(w.from_date, w.to_date, false)
+             from public.attendance_evidence_window() w$cmd$
     );
   ELSE
     RAISE NOTICE 'pg_cron is not installed: attendance-apply-evidence is not scheduled';

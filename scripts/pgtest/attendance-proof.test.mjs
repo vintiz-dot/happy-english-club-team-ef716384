@@ -377,7 +377,7 @@ console.log('=== M3 nobody signed in: skip, keep, log, never raise ===');
   eq('  the row is still there', (await row(L, X)).status, 'Present');
   const e3 = await tryIt(() => as('service', () => db.query(`INSERT INTO public.attendance(session_id, student_id, status, marked_by) VALUES ($1,$2,'Excused',$3)`, [L.id, N.id, T1])));
   eq('service role, INSERT of Excused: no error', e3, null);
-  eq('  it is kept as Present', (await row(L, N)).status, 'Present');
+  eq('  it is kept as Present, with no marked_by', [(await row(L, N)).status, (await row(L, N)).marked_by], ['Present', null]);
   eq('  logged as an insert', (await refusals(L)).map((r) => `${r.op}:${r.attempted_status}->${r.kept_status}`), ['UPDATE:Absent->Present', 'DELETE:null->Present', 'INSERT:Excused->Present']);
   // The SQL editor (no role claims at all, superuser) is also "nobody".
   await db.exec(`UPDATE public.attendance SET status='Excused' WHERE session_id='${L.id}' AND student_id='${X.id}'`);
@@ -391,7 +391,7 @@ console.log('=== M3 nobody signed in: skip, keep, log, never raise ===');
   const e4 = await tryIt(() => as('admin', () => db.query(`INSERT INTO public.zz_probe VALUES ($1,$2)`, [L.id, X.id])));
   eq('a write from another trigger, even as admin: no error', e4, null);
   eq('  and the mark stays', (await row(L, X)).status, 'Present');
-  eq('  logged', (await refusals(L)).length, 5);
+  eq('  logged (the same write tried again counts up, it does not add a row)', (await refusals(L)).length, 4);
 }
 
 // ================================================================== M4
@@ -445,27 +445,31 @@ console.log('=== M4 cancelled lesson, deleted lesson, bypass, fail-open ===');
 }
 
 // ================================================================== M6
-// ================================================================== M6
 console.log('=== M6 the live modify_enrollment_transfer over a lesson with proof ===');
 {
   await db.exec(mig('20261106100001_date_aware_enrollment_changes.sql'));
   const E = hanoiToday;                       // effective date: today
   const before = await lesson(CA, 'Held', { date: dayAgo(1) });
-  const after1 = await lesson(CA, 'Scheduled', { date: hanoiToday });
   const after2 = await lesson(CA, 'Scheduled', { date: new Date(Date.parse(`${hanoiToday}T12:00:00Z`) + 3 * 86400000).toISOString().slice(0, 10) });
   const T = await kid('Transfer T'), C = await kid('Transfer Control');
-  for (const L of [before, after1, after2]) { await mark(L, T, 'Present', null); await mark(L, C, 'Present', null); }
-  await points(after2, T, '09:30');           // T has proof in a lesson AFTER the effective date
-  const err = await tryIt(() => as('admin', () => db.query(`SELECT public.modify_enrollment_transfer($1,$2,$3,$4)`, [T.id, CA, CB, E])));
-  ok('a transfer over a lesson the child has proof for is refused with ATTENDANCE_PROOF', err && err.message.startsWith('ATTENDANCE_PROOF:') && err.message.includes(T.name), err);
-  eq('  nothing half-done: the old enrolment is still open', (await one(`SELECT end_date FROM public.enrollments WHERE student_id=$1 AND class_id=$2`, [T.id, CA])).end_date, null);
-  eq('  no enrolment in Class B', (await one(`SELECT count(*)::int n FROM public.enrollments WHERE student_id=$1 AND class_id=$2`, [T.id, CB])).n, 0);
-  eq('  all three placeholder marks are still there', (await one(`SELECT count(*)::int n FROM public.attendance WHERE student_id=$1`, [T.id])).n, 3);
-  eq('  no audit row', (await one(`SELECT count(*)::int n FROM public.audit_log WHERE entity_id IN (SELECT id::text FROM public.enrollments WHERE student_id=$1)`, [T.id])).n, 0);
-  // Control: the same call for a child with no proof goes through.
-  const ok6 = await tryIt(() => as('admin', () => db.query(`SELECT public.modify_enrollment_transfer($1,$2,$3,$4)`, [C.id, CA, CB, E])));
-  eq('control: the same transfer for a child with no proof works', ok6, null);
-  eq('  and removes the placeholders from the effective date on', (await one(`SELECT count(*)::int n FROM public.attendance a JOIN public.sessions s ON s.id=a.session_id WHERE a.student_id=$1 AND s.class_id=$2`, [C.id, CA])).n, 1);
+  for (const L of [before, after2]) { await mark(L, T, 'Present', null); await mark(L, C, 'Present', null); }
+  await points(before, T, '09:30');           // proof in a lesson BEFORE the effective date
+  await points(after2, T, '09:30');           // and one AFTER it
+  const res = await tryIt(() => as('admin', () => db.query(`SELECT public.modify_enrollment_transfer($1,$2,$3,$4)`, [T.id, CA, CB, E])));
+  // The transfer ends the old enrolment first and only then removes placeholder marks from the
+  // effective date on. By then the child is not enrolled in Class A for the later lesson, so its
+  // proof does not lock (the review's F5): the transfer goes through. The lesson BEFORE the
+  // effective date is not touched by the live function at all.
+  eq('a transfer is not blocked by proof for a lesson the child no longer belongs to', res, null);
+  eq('  the lesson before the effective date keeps its mark', (await row(before, T)).status, 'Present');
+  eq('  the placeholder after the effective date is removed (as before)', await row(after2, T), undefined);
+  eq('  the old enrolment ended the day before', (await one(`SELECT end_date::text d FROM public.enrollments WHERE student_id=$1 AND class_id=$2`, [T.id, CA])).d, dayAgo(1));
+  // A pause (Excused over a window) while still enrolled IS refused, nothing half-done:
+  const P = await kid('Pause P');
+  const Lp = await lesson(); await mark(Lp, P, 'Present', null); await points(Lp, P, '09:30');
+  const e2 = await tryIt(() => as('admin', () => db.query(`UPDATE public.attendance SET status='Excused', marked_by=$2 WHERE session_id=$1`, [Lp.id, ADMIN])));
+  ok('an Excused sweep over a lesson the enrolled child has proof for is refused', e2 && e2.message.startsWith('ATTENDANCE_PROOF:'), e2);
+  eq('  and the mark is unchanged', (await row(Lp, P)).status, 'Present');
 }
 
 // ================================================================== M7
@@ -544,6 +548,7 @@ console.log('=== M9 the Stars sync: Pixel Pal says Absent for a child with proof
     const sdb = new PGlite();
     await sdb.exec(pm[1]);
     for (const f of MIGS) await sdb.exec(mig(f));
+    await sdb.exec(`ALTER TABLE public.enrollments ADD COLUMN created_at timestamptz NOT NULL DEFAULT now()`); // production has it
     await sdb.exec(MIG);
     const q1 = async (q, p) => (await sdb.query(q, p)).rows[0];
     const ADM = U(91), MAI = U(92);
@@ -582,6 +587,105 @@ console.log('=== M9 the Stars sync: Pixel Pal says Absent for a child with proof
     ok('both records have an outcome', outcomes.length === 2 && outcomes.every((o) => o.outcome), outcomes);
     console.log(`    (outcomes: ${outcomes.map((o) => o.outcome).join(', ')})`);
   }
+}
+
+// ================================================================== R2 (review round)
+console.log('=== R2 review: upsert of a whole class, staff only, enrolled only, window, runs ===');
+{
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const fmt = (d) => `${Number(d.slice(8, 10))} ${monthNames[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}`;
+  const refs = async (L, k) => one(`SELECT count(*)::int n, max(attempts)::int attempts FROM public.attendance_proof_refusals WHERE session_id=$1 AND student_id=$2`, [L.id, k.id]);
+
+  // -- a whole class saved with INSERT ... ON CONFLICT DO UPDATE by the service role
+  const L = await lesson();
+  const [A, B, C] = [await kid('Up A'), await kid('Up B'), await kid('Up C')];
+  for (const k of [A, B, C]) await mark(L, k, 'Present', T1);
+  await points(L, A, '09:30');
+  const upsert = () => as('service', () => db.query(
+    `INSERT INTO public.attendance(session_id, student_id, status, marked_by) SELECT $1, s, 'Absent', $2 FROM unnest($3::uuid[]) s
+     ON CONFLICT (session_id, student_id) DO UPDATE SET status = EXCLUDED.status`, [L.id, T1, [A.id, B.id, C.id]]));
+  eq('upsert of the class as the service role: no error', await tryIt(upsert), null);
+  eq('  the child with proof keeps Present, the others save', [(await row(L, A)).status, (await row(L, B)).status, (await row(L, C)).status], ['Present', 'Absent', 'Absent']);
+  eq('  one refusal row, attempted once', await refs(L, A), { n: 1, attempts: 1 });
+  await db.query(`UPDATE public.attendance SET status='Present' WHERE session_id=$1`, [L.id]);
+  await tryIt(upsert);
+  eq('  the same save again: still one row, attempts 2', await refs(L, A), { n: 1, attempts: 2 });
+  const gk = (await gaps(L.date, L.date)).filter((r) => r.kind === 'write_kept_by_proof');
+  ok('  gaps shows it as write_kept_by_proof, with the count', gk.length === 1 && gk[0].student_id === A.id && /Absent \(update\) was tried 2 time\(s\)/.test(gk[0].summary), gk);
+  const ap = await apply(L.date, L.date, false);
+  eq('  apply leaves it for the admin and changes nothing', [ap.inserted, ap.corrected, (await row(L, A)).status], [0, 0, 'Present']);
+
+  // -- a teacher on their own JWT gets the raise
+  const eT = await tryIt(() => as('teacher1', () => db.query(`UPDATE public.attendance SET status='Absent' WHERE session_id=$1 AND student_id=$2`, [L.id, A.id])));
+  ok('a teacher on their own JWT is refused with ATTENDANCE_PROOF', eT && eT.message.startsWith('ATTENDANCE_PROOF:'), eT);
+  // -- the message names the class and the date
+  ok('  and it names the lesson: class and date', eT.message.includes(`${A.name} was in the Class A lesson on ${fmt(L.date)}: 5 participation points at 09:30.`), eT.message);
+
+  // -- who counts
+  const L2 = await lesson();
+  const [P1, P2, S1, S2, F1] = [await kid('Two 1'), await kid('Two 2'), await kid('Staff 1'), await kid('Staff 2'), await kid('Family F')];
+  const at = hn(L2.date, '09:30');
+  await points(L2, P1, '09:30', { at }); await points(L2, P2, '09:30', { at });
+  eq('a batch of exactly 2 is not proof', [(await rowsFor(L2, P1, true)).length, (await rowsFor(L2, P2, true)).length], [0, 0]);
+  const at2 = hn(L2.date, '09:40');
+  await points(L2, S1, '09:40', { at: at2, by: T1 }); await points(L2, S2, '09:40', { at: at2, by: T2 });
+  eq('two different staff at the same instant are each proof', [(await rowsFor(L2, S1, true)).length, (await rowsFor(L2, S2, true)).length], [1, 1]);
+  await points(L2, F1, '09:35', { by: FAM });
+  eq('an award made by a non-staff account is not proof', (await rowsFor(L2, F1, true)).length, 0);
+
+  // -- a child who is not enrolled that day is never locked or rewritten
+  const L3 = await lesson();
+  const NE = await kid('Not enrolled NE', null), NE2 = await kid('Not enrolled NE2', null);
+  const WD = await kid('Wrong weekday', CA, { days: [(dow(L3.date) + 2) % 7] });
+  for (const k of [NE, WD]) { await mark(L3, k, 'Present', T1); await points(L3, k, '09:30'); }
+  await points(L3, NE2, '09:30');
+  for (const k of [NE, WD]) {
+    eq(`${k.name}: Absent is allowed (proof does not lock a child who was not enrolled)`, await tryIt(() => as('admin', () => db.query(`UPDATE public.attendance SET status='Absent' WHERE session_id=$1 AND student_id=$2`, [L3.id, k.id]))), null);
+  }
+  await as('service', () => db.query(`INSERT INTO public.attendance(session_id, student_id, status, marked_by) VALUES ($1,$2,'Excused',$3)`, [L3.id, NE2.id, T1]));
+  eq('a service INSERT of Excused for a not-enrolled child with proof is kept as written', (await row(L3, NE2)).status, 'Excused');
+  eq('  and nothing was logged for them', (await refs(L3, NE2)).n, 0);
+  eq('attendance_has_proof says no for a child who was not enrolled', (await as('service', () => one(`SELECT public.attendance_has_proof($1,$2) AS p`, [L3.id, NE.id]))).p, false);
+
+  // -- the rewritten INSERT does not claim a teacher marked the child
+  const L4 = await lesson();
+  const R = await kid('Rewritten R'); await points(L4, R, '09:30');
+  await as('service', () => db.query(`INSERT INTO public.attendance(session_id, student_id, status, marked_by) VALUES ($1,$2,'Absent',$3)`, [L4.id, R.id, T1]));
+  const rr = await row(L4, R);
+  eq('a service INSERT rewritten to Present: no marked_by, auto-mark note', [rr.status, rr.marked_by, rr.notes], ['Present', null, 'Auto-marked from evidence: 5 participation points at 09:30']);
+
+  // -- RAISE NOTICE for the SQL editor
+  const notices = [];
+  await db.query(`UPDATE public.attendance SET status='Absent' WHERE session_id=$1 AND student_id=$2`, [L.id, A.id], { onNotice: (n) => notices.push(n.message) });
+  ok('the skip path says so with a NOTICE (visible in the SQL editor)', notices.some((m) => m.startsWith('ATTENDANCE_PROOF (change not made):') && m.includes(A.name)), notices);
+
+  // -- a lesson with end_time = start_time gets no extra day
+  const Z = await kid('Zero length');
+  const zid = (await one(`INSERT INTO public.sessions(class_id, teacher_id, date, start_time, end_time, status) VALUES ($1,$2,$3,'09:00','09:00','Held') RETURNING id`, [CA, TEACH1, dayAgo(++dayCounter)])).id;
+  const LZ = { id: zid, date: dayAgo(dayCounter), cls: CA };
+  await points(LZ, Z, '09:20');
+  await points(LZ, Z, '09:10', { at: new Date(Date.parse(hn(LZ.date, '09:10')) + 86400000).toISOString(), points: 7 });
+  eq('end = start: only the award inside the window counts, not one the next day', (await rowsFor(LZ, Z, true)).map((r) => r.summary), ['5 participation points at 09:20']);
+
+  // -- the hourly window (the later of today - 14 and the first day of the billing window)
+  const w = async (iso) => { const x = await one(`SELECT from_date::text f, to_date::text t FROM public.attendance_evidence_window($1::timestamptz)`, [iso]); return [x.f, x.t]; };
+  eq('window, day 3 of a month: last month is still repriced, 14 days back', await w('2026-11-03T05:00:00Z'), ['2026-10-20', '2026-11-03']);
+  eq('window, day 10: stops at the 1st of this month', await w('2026-11-10T05:00:00Z'), ['2026-11-01', '2026-11-10']);
+  eq('window, day 20: 14 days back is inside the month', await w('2026-11-20T05:00:00Z'), ['2026-11-06', '2026-11-20']);
+  eq('window uses Hanoi dates (20:00 UTC on the 5th is the 6th in Hanoi)', await w('2026-11-05T20:00:00Z'), ['2026-11-01', '2026-11-06']);
+  eq('window, day 1 of January', await w('2027-01-01T05:00:00Z'), ['2026-12-18', '2027-01-01']);
+
+  // -- a run is logged only when something changed or failed (the hourly job)
+  const runs = async () => (await one(`SELECT count(*)::int n FROM public.attendance_evidence_runs`)).n;
+  const quiet = dayAgo(300);
+  const r0 = await runs();
+  await apply(quiet, quiet, false);
+  eq('a quiet hourly run writes no run row', await runs(), r0);
+  const L5 = await lesson(); const Q = await kid('Run Q'); await points(L5, Q, '09:30');
+  const ch = await apply(L5.date, L5.date, false);
+  eq('a run that changed something is logged, with its months', [ch.inserted, await runs(), (await one(`SELECT detail->'affected_months' m FROM public.attendance_evidence_runs ORDER BY ran_at DESC, id LIMIT 1`)).m.length], [1, r0 + 1, 1]);
+  const failTry = await one(`SELECT jsonb_typeof(detail->'failures') t FROM public.attendance_evidence_runs ORDER BY ran_at DESC LIMIT 1`);
+  eq('  the run row keeps a failures list', failTry.t, 'array');
 }
 
 // ================================================================== M10 (the read-only check)

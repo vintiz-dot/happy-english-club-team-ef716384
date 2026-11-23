@@ -17,6 +17,8 @@
 --   contradicts_person    ... enrolled, Absent/Excused, marked_by is a person
 --   contradicts_system    ... enrolled, Absent/Excused, marked_by IS NULL (system)
 -- (the last six columns leave out Canceled lessons; every cancelled lesson is Excused.)
+-- The guard locks only proof for a child ENROLLED that day, and individual_points needs a staff
+-- creator (admin or teacher); the not_enrolled column shows the proof that would never lock.
 -- The row "* any proof" counts each (lesson, child) once however many proof kinds it has.
 --
 -- If lesson_speaker_marks has not been pasted yet (20261121140000), delete the block
@@ -30,11 +32,11 @@ les AS (
   SELECT s.id AS sid, s.class_id AS cid, s.date AS ldate, s.status::text AS lst,
          ((s.date + s.start_time) AT TIME ZONE 'Asia/Ho_Chi_Minh') - interval '15 minutes' AS wfrom,
          ((s.date + s.end_time) AT TIME ZONE 'Asia/Ho_Chi_Minh')
-           + CASE WHEN s.end_time <= s.start_time THEN interval '1 day' ELSE interval '0' END
+           + CASE WHEN s.end_time < s.start_time THEN interval '1 day' ELSE interval '0' END
            + interval '30 minutes' AS wto
     FROM public.sessions s
    WHERE ((s.date + s.end_time) AT TIME ZONE 'Asia/Ho_Chi_Minh')
-         + CASE WHEN s.end_time <= s.start_time THEN interval '1 day' ELSE interval '0' END < now()
+         + CASE WHEN s.end_time < s.start_time THEN interval '1 day' ELSE interval '0' END < now()
 ),
 ev AS (
   -- PROOF: individual_points
@@ -46,6 +48,7 @@ ev AS (
      AND COALESCE(pt.notes, '') NOT LIKE 'Attendance streak bonus%'
      AND COALESCE(pt.notes, '') NOT LIKE 'In-class award (from transcript)%'
      AND pt.created_at BETWEEN l.wfrom AND l.wto
+     AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = pt.created_by AND ur.role IN ('admin', 'teacher'))
      AND NOT EXISTS (SELECT 1 FROM public.point_transactions o
                       WHERE o.session_id = pt.session_id AND o.type = 'participation'
                         AND o.created_by = pt.created_by AND o.student_id <> pt.student_id
