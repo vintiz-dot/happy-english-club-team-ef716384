@@ -25,6 +25,8 @@ type Gap = {
   saved_base: number | null;
   saved_total: number | null;
   confirmation_status: string | null;
+  /** Set by refresh-month-bills when calculate-tuition kept or priced the bill as charged because lessons have no mark. */
+  held?: { lessons: number; message: string };
 };
 
 type Run = {
@@ -84,9 +86,11 @@ export function TuitionBillCheck({ month }: { month: string }) {
       if (data?.error) throw new Error(data.error);
       const r = data?.months?.[0];
       const failed = r?.failed?.length ?? 0;
-      const open = r?.still_open?.length ?? 0;
-      if (!failed && !open) toast.success(`Saved ${r?.recalculated ?? 0} bill(s). Every bill now matches the register.`);
-      else toast.warning(`Saved ${r?.recalculated ?? 0} bill(s); ${open} still need attention${failed ? `, ${failed} failed` : ""}.`);
+      const held = r?.held?.length ?? 0;
+      const open = (r?.still_open?.length ?? 0) - held;
+      if (!failed && open <= 0 && !held) toast.success(`Saved ${r?.recalculated ?? 0} bill(s). Every bill now matches the register.`);
+      else if (!failed && open <= 0) toast.info(`Saved ${r?.recalculated ?? 0} bill(s). ${held} ${held === 1 ? "bill is" : "bills are"} held: lessons have no mark in the register.`);
+      else toast.warning(`Saved ${r?.recalculated ?? 0} bill(s); ${Math.max(open, 0)} still need attention${held ? `, ${held} held` : ""}${failed ? `, ${failed} failed` : ""}.`);
     } catch (e: any) {
       toast.error(e?.message || "The bills could not be recalculated");
     } finally {
@@ -147,12 +151,37 @@ export function TuitionBillCheck({ month }: { month: string }) {
   }
 
   const failedById = new Map((run?.failed ?? []).map((f) => [f.student_id, f.error]));
+  const heldById = new Map((run?.still_open ?? []).filter((g) => g.held).map((g) => [g.student_id, g.held!.message]));
+  const wrong = rows.filter((g) => !heldById.has(g.student_id));
+  if (wrong.length === 0) {
+    // Every listed child is held: the bill stays as charged until the register is fixed.
+    return (
+      <Card>
+        <CardContent className="space-y-2 py-4 text-hec-small">
+          <div className="flex items-center gap-2">
+            <AlertTriangle aria-hidden className="h-4 w-4 text-hec-warn" />
+            <span>
+              {rows.length} {rows.length === 1 ? "bill is" : "bills are"} held for {month}: lessons have no mark in the register.
+            </span>
+          </div>
+          <ul className="list-disc pl-6 text-hec-ink-soft">
+            {rows.map((g) => (
+              <li key={g.student_id}>
+                {g.full_name}: {heldById.get(g.student_id)}
+              </li>
+            ))}
+          </ul>
+          <span className="text-hec-ink-soft">{runLine}</span>
+        </CardContent>
+      </Card>
+    );
+  }
   return (
     <Card role="alert" className="border-hec-danger/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle aria-hidden className="h-5 w-5 text-hec-danger" />
-          {rows.length} {rows.length === 1 ? "bill is" : "bills are"} missing or wrong for {month}
+          {wrong.length} {wrong.length === 1 ? "bill is" : "bills are"} missing or wrong for {month}
         </CardTitle>
         <CardDescription>
           These children have lessons the register says are owed for, and their saved bill is missing or does not
@@ -183,6 +212,9 @@ export function TuitionBillCheck({ month }: { month: string }) {
                   <td className="py-2 pr-3">
                     {PROBLEM[g.problem]}
                     {g.confirmation_status === "confirmed" && <span className="text-hec-ink-soft"> - confirmed</span>}
+                    {heldById.has(g.student_id) && (
+                      <div className="text-hec-warn">{heldById.get(g.student_id)}</div>
+                    )}
                     {failedById.has(g.student_id) && (
                       <div className="text-hec-danger">Last try: {failedById.get(g.student_id)}</div>
                     )}
@@ -202,7 +234,7 @@ export function TuitionBillCheck({ month }: { month: string }) {
         {canRecalculate && (
           <Button onClick={recalculate} disabled={running} className="gap-2">
             {running ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : <RefreshCw aria-hidden className="h-4 w-4" />}
-            {running ? "Recalculating (about 2 seconds a child)..." : `Recalculate ${rows.length === 1 ? "this bill" : `these ${rows.length} bills`}`}
+            {running ? "Recalculating (about 2 seconds a child)..." : `Recalculate ${wrong.length === 1 ? "this bill" : `these ${wrong.length} bills`}`}
           </Button>
         )}
       </CardContent>
