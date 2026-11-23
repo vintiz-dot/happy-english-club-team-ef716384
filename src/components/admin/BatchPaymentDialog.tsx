@@ -23,6 +23,7 @@ import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
 import { cashWarning, parseCash } from "@/lib/cashEntry";
 import { formatVND } from "@/lib/money";
+import { showSeal } from "@/components/fx/showSeal";
 
 interface BatchPaymentDialogProps {
   open: boolean;
@@ -156,6 +157,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
 
       if (failCount === 0) {
         toast.success(`Recorded payments for ${successCount} student${successCount > 1 ? 's' : ''}`);
+        showSeal("Recorded");
       } else {
         toast.warning(`${successCount} succeeded, ${failCount} failed`);
       }

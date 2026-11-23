@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { formatVND } from "@/lib/money";
+import { showSeal } from "@/components/fx/showSeal";
 
 interface FamilyPaymentModalProps {
   open: boolean;
@@ -253,6 +254,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
         if (error) throw new Error(await functionErrorMessage(error));
 
       toast.success(`Family payment posted for ${selectedSiblings.size} students`);
+      showSeal("Recorded");
 
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["student-tuition"] });

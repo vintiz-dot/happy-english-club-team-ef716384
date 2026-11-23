@@ -16,6 +16,7 @@ import { Loading } from "@/components/ui/loading";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage } from "@/lib/recordPayment";
 import { formatVND } from "@/lib/money";
+import { showSeal } from "@/components/fx/showSeal";
 
 interface Invoice {
   id: string;
@@ -186,6 +187,8 @@ export function RecordedPaymentManager() {
       }
 
       toast.success("Recorded payment updated successfully");
+      // only money coming in is "Recorded"; a correction back out gets no seal
+      if (attempt.kind === "payment") showSeal("Recorded");
       setEditingInvoice(null);
       
       // Invalidate React Query caches
