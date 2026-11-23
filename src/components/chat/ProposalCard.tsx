@@ -5,7 +5,10 @@
  * the model, so what it says is what Confirm will do.
  */
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ClipboardCheck, Loader2 } from "lucide-react";
+import { AlertTriangle, ClipboardCheck } from "lucide-react";
+import { motion } from "framer-motion";
+import { LiveDot } from "@/components/fx/LiveDot";
+import { dur, ease, useMotionLevel } from "@/components/fx/motion";
 import type { AiProposal } from "@/lib/aiActions";
 
 interface ProposalCardProps {
@@ -17,8 +20,18 @@ interface ProposalCardProps {
 }
 
 export function ProposalCard({ proposal, busy, onConfirm, onChange, onCancel }: ProposalCardProps) {
+  const level = useMotionLevel();
+  // Paper arriving, once: fade and an 8 px rise (calm: fade only; off: none).
+  const arrive =
+    level === "off"
+      ? { initial: false as const }
+      : {
+          initial: { opacity: 0, y: level === "calm" ? 0 : 8 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: dur.reveal, ease },
+        };
   return (
-    <div className="space-y-2 rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-hec-ink shadow-hec-1">
+    <motion.div {...arrive} className="space-y-2 rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-hec-ink shadow-hec-1">
       <p className="flex items-center gap-2 text-hec-caption font-medium text-hec-ink">
         <ClipboardCheck className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
         You asked me to:
@@ -43,8 +56,8 @@ export function ProposalCard({ proposal, busy, onConfirm, onChange, onCancel }: 
       </p>
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={onConfirm} disabled={busy}>
-          {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-          Confirm
+          {busy && <LiveDot />}
+          {busy ? "Applying" : "Confirm"}
         </Button>
         <Button size="sm" variant="outline" onClick={onChange} disabled={busy}>
           Change
@@ -53,6 +66,6 @@ export function ProposalCard({ proposal, busy, onConfirm, onChange, onCancel }: 
           Cancel
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }

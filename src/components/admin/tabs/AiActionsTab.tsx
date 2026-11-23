@@ -90,7 +90,7 @@ export default function AiActionsTab() {
             </div>
             <ul className="list-disc space-y-1 pl-5 text-hec-small text-hec-ink">
               {a.summary.map((line) => (
-                <li key={line} className={a.status === "undone" ? "break-words text-hec-ink-faint line-through" : "break-words"}>{line}</li>
+                <li key={line} className={a.status === "undone" ? "break-words text-hec-ink-faint line-through decoration-hec-ink-faint transition-colors duration-hec-2 ease-hec" : "break-words decoration-transparent transition-colors duration-hec-2 ease-hec"}>{line}</li>
               ))}
             </ul>
             <p className="break-words text-hec-caption italic text-hec-ink-soft">"{a.instruction}"</p>

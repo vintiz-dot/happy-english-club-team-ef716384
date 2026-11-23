@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { carry } from "@/components/fx/Carry";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
@@ -137,7 +138,7 @@ const FamilyDetail = () => {
       <div className="space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 space-y-2">
-            <h1 className="whitespace-normal break-words font-display text-hec-display font-medium text-hec-ink">{family.name}</h1>
+            <h1 style={{ viewTransitionName: carry(`family-${family.id}`) }} className="whitespace-normal break-words font-display text-hec-display font-medium text-hec-ink">{family.name}</h1>
             <div className="flex flex-col gap-1">
               {family.primary_user_id && family.linkedUserEmail && (
                 <div className="flex flex-wrap items-center gap-2 text-hec-small">

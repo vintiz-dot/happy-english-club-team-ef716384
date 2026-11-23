@@ -8,7 +8,8 @@ import { GraduationCap, Trash2, Eye, RotateCcw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { flushSync } from "react-dom";
+import { carry, useCarryNavigate } from "@/components/fx/Carry";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,8 +36,12 @@ interface StudentsListProps {
 
 export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClass = "all" }: StudentsListProps) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  // Carry: the pressed row's name travels to the profile heading. Only that row holds the name.
+  const carryNavigate = useCarryNavigate();
+  const [carrying, setCarrying] = useState<string | null>(null);
   const [showInactive, setShowInactive] = useState(false);
+  // "No date of birth": a filter over the rows already held, nothing is fetched for it.
+  const [noDobOnly, setNoDobOnly] = useState(false);
   
   const { data: students, isLoading } = useQuery({
     queryKey: ["students-list", searchQuery, sortBy, filterClass, showInactive],
@@ -180,6 +185,9 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
     return <p className="text-hec-body text-hec-ink-soft">Loading students...</p>;
   }
 
+  const noDobCount = (students ?? []).filter((s) => !s.date_of_birth).length;
+  const shown = noDobOnly ? (students ?? []).filter((s) => !s.date_of_birth) : students;
+
   return (
     <Card>
       <CardHeader>
@@ -187,9 +195,22 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
           <div className="min-w-0">
             <CardTitle className="flex items-center gap-2">
               <GraduationCap className="h-5 w-5 shrink-0" aria-hidden />
-              {showInactive ? "Inactive" : "All"} Students ({students?.length || 0})
+              {showInactive ? "Inactive" : "All"} Students ({shown?.length || 0})
             </CardTitle>
             <CardDescription>Manage your student records</CardDescription>
+            <button
+              type="button"
+              aria-pressed={noDobOnly}
+              onClick={() => setNoDobOnly((v) => !v)}
+              className={
+                "mt-3 inline-flex min-h-hec-target items-center rounded-full border px-3 text-hec-small tabular-nums transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring " +
+                (noDobOnly
+                  ? "border-hec-ink bg-hec-sunken text-hec-ink"
+                  : "border-hec-line bg-hec-surface text-hec-ink-soft hover:bg-hec-sunken")
+              }
+            >
+              No date of birth ({noDobCount})
+            </button>
           </div>
           <div className="flex min-h-hec-target items-center gap-2">
             <Switch id="show-inactive" checked={showInactive} onCheckedChange={setShowInactive} />
@@ -198,11 +219,11 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
         </div>
       </CardHeader>
       <CardContent>
-        {students?.length === 0 ? (
+        {shown?.length === 0 ? (
           <p className="py-8 text-center text-hec-body text-hec-ink-soft">No students found</p>
         ) : (
           <ul className="rounded-hec-lg border border-hec-line bg-hec-surface">
-            {students?.map((student) => (
+            {shown?.map((student) => (
               <li key={student.id} className="flex flex-col gap-3 border-b border-hec-line px-4 py-3 last:border-b-0 sm:flex-row sm:items-start">
                 <div className="flex min-w-0 flex-1 items-start gap-3">
                   <Avatar className="h-12 w-12 shrink-0">
@@ -217,7 +238,7 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
                   </Avatar>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-start gap-2">
-                      <p className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{student.full_name}</p>
+                      <p style={carrying === student.id ? { viewTransitionName: carry(`student-${student.id}`) } : undefined} className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{student.full_name}</p>
                       <Badge variant={student.is_active ? "success" : "secondary"} className="shrink-0">
                         {student.is_active ? "Active" : "Inactive"}
                       </Badge>
@@ -238,7 +259,10 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2 pl-16 sm:pl-0">
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/students/${student.id}`)}>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    flushSync(() => setCarrying(student.id));
+                    carryNavigate(`/students/${student.id}`);
+                  }}>
                     <Eye className="h-4 w-4" aria-hidden />
                     View
                   </Button>

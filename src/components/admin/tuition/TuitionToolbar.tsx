@@ -159,7 +159,7 @@ export function TuitionToolbar({
                       <Badge
                         key={filter.key}
                         variant={activeFilter === filter.key ? "default" : "outline"}
-                        className="cursor-pointer hover:bg-primary/10 transition-colors"
+                        className="cursor-pointer hover:bg-primary/10 transition-colors duration-hec-1 ease-hec"
                         onClick={() => onFilterChange(filter.key)}
                       >
                         {filter.label} ({filter.count})

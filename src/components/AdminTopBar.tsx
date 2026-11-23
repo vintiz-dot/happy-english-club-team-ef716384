@@ -184,7 +184,7 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
           ivory
             ? // DESIGN_SYSTEM s.15 top bar: solid paper and one hairline.
               "sticky top-0 z-40 hidden min-h-14 items-center justify-between gap-4 border-b border-hec-line bg-hec-paper px-6 py-2 md:flex"
-            : "hidden md:flex sticky top-0 z-40 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 px-6 py-3 items-center justify-between gap-4 shadow-q1"
+            : "hidden md:flex sticky top-0 z-40 bg-card px-6 py-3 items-center justify-between gap-4 shadow-q1"
         }
       >
         <div className="flex items-center gap-4 min-w-0">

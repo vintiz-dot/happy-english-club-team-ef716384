@@ -31,6 +31,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { applyProposal, type AiProposal } from "@/lib/aiActions";
 import { ProposalCard } from "./ProposalCard";
+import { showSeal } from "@/components/fx/showSeal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -256,6 +257,8 @@ export function AssistantChat({ className }: { className?: string }) {
       void persist("Confirm", reply);
       setProposal(null);
       if (result.ok) {
+        // The server has answered yes: one Seal for the whole all-or-nothing plan.
+        showSeal("Done");
         // Every screen showing this student, family or bill is now stale.
         await queryClient.invalidateQueries();
         if (result.open_path) navigate(result.open_path);

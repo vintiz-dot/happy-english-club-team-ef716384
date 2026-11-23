@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { carry } from "@/components/fx/Carry";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
@@ -109,7 +110,7 @@ const StudentDetail = () => {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1 space-y-2">
-              <h1 className="whitespace-normal break-words hyphens-none text-balance font-display text-hec-h1 font-medium text-hec-ink">{student.full_name}</h1>
+              <h1 style={{ viewTransitionName: carry(`student-${student.id}`) }} className="whitespace-normal break-words hyphens-none text-balance font-display text-hec-h1 font-medium text-hec-ink">{student.full_name}</h1>
               <div className="flex flex-col gap-1">
                 <p className="break-words text-hec-small text-hec-ink-soft">
                   Family: {student.family?.name || "No family"}

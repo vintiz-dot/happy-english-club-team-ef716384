@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { carry } from "@/components/fx/Carry";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
@@ -97,7 +98,7 @@ const TeacherProfile = () => {
                 </Avatar>
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="min-w-0 whitespace-normal break-words font-display text-hec-h1 font-medium text-hec-ink">{teacher.full_name}</h1>
+                    <h1 style={{ viewTransitionName: carry(`teacher-${teacher.id}`) }} className="min-w-0 whitespace-normal break-words font-display text-hec-h1 font-medium text-hec-ink">{teacher.full_name}</h1>
                     <Badge variant={teacher.is_active ? "default" : "secondary"} className={(teacher.is_active ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : "")}>
                       {teacher.is_active ? "Active" : "Inactive"}
                     </Badge>

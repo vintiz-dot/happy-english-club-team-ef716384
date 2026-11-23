@@ -19,13 +19,14 @@ import AuditClipsTab from "@/components/admin/tabs/AuditClipsTab";
 import ReceptionTab from "@/components/admin/tabs/ReceptionTab";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIvory } from "@/hooks/useIvory";
+import { dur, useMotionLevel } from "@/components/fx/motion";
 
 const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
   const [searchParams] = useSearchParams();
   const tab = defaultTab || searchParams.get("tab") || "overview";
-  // Every tab but audit clips is in the system (R21): there the tab change is
-  // one 8 px rise in 240 ms (DESIGN_SYSTEM s.9); audit clips keeps today's.
+  // Every tab but audit clips is in the system (R21); audit clips keeps today's.
   const ivory = useIvory();
+  const level = useMotionLevel();
 
   const renderContent = () => {
     switch (tab) {
@@ -71,10 +72,12 @@ const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
       <AnimatePresence mode="wait">
         <motion.div
           key={tab}
-          initial={{ opacity: 0, y: ivory ? 8 : 20 }}
+          // In the system the tab change is a cross-fade: 140 ms out, 240 ms in, no
+          // movement (brief D1). Motion level off swaps at once. Audit clips keeps today's.
+          initial={{ opacity: 0, y: ivory ? 0 : 20 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: ivory ? -8 : -20 }}
-          transition={{ duration: ivory ? 0.24 : 0.3 }}
+          exit={{ opacity: 0, y: ivory ? 0 : -20, transition: { duration: ivory ? (level === "off" ? 0 : dur.press) : 0.3 } }}
+          transition={{ duration: ivory ? (level === "off" ? 0 : dur.reveal) : 0.3 }}
         >
           {renderContent()}
         </motion.div>

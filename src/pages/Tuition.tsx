@@ -16,6 +16,7 @@ import { SmartFamilyPaymentModal } from "@/components/admin/SmartFamilyPaymentMo
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
 import { PageLoading } from "@/components/ui/loading";
+import { TuitionBi, ReceivedWithThanks } from "@/components/family/tuition/TuitionCopy";
 
 export default function Tuition() {
   const { role } = useAuth();
@@ -145,6 +146,9 @@ export default function Tuition() {
                   <CardDescription>Current Balance</CardDescription>
                   {statusBadge}
                 </div>
+                <p className="text-hec-body text-hec-ink-soft">
+                  <TuitionBi k="tuition.forMonth" vars={{ month: dayjs(month).format("MMMM YYYY") }} />
+                </p>
                 {/* An amount: sans, ink, tabular (DS s.14) - never the CardTitle serif. */}
                 <CardTitle className="whitespace-nowrap font-sans text-hec-display font-semibold tabular-nums text-hec-ink">{getBalanceDisplay()}</CardTitle>
               </CardHeader>
@@ -169,6 +173,12 @@ export default function Tuition() {
                     <dd className="whitespace-nowrap text-hec-h3 font-semibold tabular-nums text-hec-ink">{formatVND(tuitionData.monthPayments)}</dd>
                   </div>
                 </dl>
+                {/* H4: a payment the page already holds (Recorded Pay above). One line and a tick; nothing celebrates. */}
+                {tuitionData.monthPayments > 0 && (
+                  <div className="mt-4">
+                    <ReceivedWithThanks />
+                  </div>
+                )}
               </CardContent>
             </Card>
 

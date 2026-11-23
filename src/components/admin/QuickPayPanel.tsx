@@ -29,6 +29,7 @@ import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { CHANGED_SINCE_LOADED } from "@/lib/recordedPaymentWrite";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, type PaymentAttempt } from "@/lib/recordPayment";
 import { formatVND } from "@/lib/money";
+import { showSeal } from "@/components/fx/showSeal";
 
 interface QuickPayPanelProps {
   month: string;
@@ -189,6 +190,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
 
       if (failCount === 0) {
         toast.success(`Recorded ${successCount} payment${successCount === 1 ? "" : "s"} totalling ${formatVND(totalToCollect)}`);
+        showSeal("Recorded");
       } else {
         toast.warning(`${successCount} succeeded, ${failCount} failed`);
       }

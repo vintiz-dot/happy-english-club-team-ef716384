@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, DollarSign, BookOpen, UserX, ChevronRight, ClipboardCheck, Scale, MessageSquare, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { formatVND } from "@/lib/money";
@@ -389,11 +388,8 @@ export function AdminAlerts() {
         {alerts.map((alert, i) => {
           const Icon = alert.icon;
           const content = (
-            <motion.div
+            <div
               key={alert.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
               className={cn(
                 "flex min-h-hec-target items-start gap-3 rounded-hec-md border p-3 transition-shadow duration-hec-1 ease-hec",
                 alert.link && "cursor-pointer hover:shadow-hec-1",
@@ -415,7 +411,7 @@ export function AdminAlerts() {
               {alert.link && (
                 <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
               )}
-            </motion.div>
+            </div>
           );
 
           if (alert.link) {

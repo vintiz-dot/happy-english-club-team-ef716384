@@ -25,6 +25,7 @@ import { monthKey } from "@/lib/date";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { showSeal } from "@/components/fx/showSeal";
 
 interface BatchFamilyPaymentModalProps {
   open: boolean;
@@ -326,6 +327,8 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
     setResults(newResults);
     setProcessing(false);
     setStep("results");
+    // every family's payment was recorded (the function answered yes for each)
+    if (newResults.length > 0 && newResults.every(r => r.success)) showSeal("Recorded");
 
     // Invalidate queries
     queryClient.invalidateQueries({ queryKey: ["admin-tuition"] });

@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatVND } from "@/lib/money";
 import { monthKey } from "@/lib/date";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { showSeal } from "@/components/fx/showSeal";
 
 interface SmartFamilyPaymentModalProps {
   open: boolean;
@@ -262,6 +263,8 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
         + (data?.leftover?.type === "credit_next_bill"
           ? `; ${formatVND(Number(data.leftover.amount) || 0)} will show as credit on ${data.leftover.studentName ?? "the first child"}'s next bill`
           : ""));
+      // the function answered without an error: one Seal for the family payment
+      showSeal("Recorded");
 
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["admin-tuition"] });
