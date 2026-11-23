@@ -25,15 +25,17 @@ import { cn } from "@/lib/utils";
 import { functionRefusalText } from "@/lib/moneyGuard";
 import { heldRefusedText, participantsAfter, payOpFromDbError, type PayOp } from "@/lib/lessonPayGuard";
 import { PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import { InkCheck } from "@/components/fx/InkCheck";
+import { showSeal } from "@/components/fx/showSeal";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
-// Ivory attendance chips (DESIGN_SYSTEM s.14): present is leaf, absent is
-// red, excused is neutral - the word says which.
+// Ivory attendance chips (DESIGN_SYSTEM s.14, brief C3): present is leaf with a tick, absent is ink with a dash (no
+// red flourish), excused is neutral with a dash - the word is always there too.
 const IVORY_ATTENDANCE: Record<string, string> = {
   Present: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
-  Absent: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
+  Absent: "border-hec-line-strong bg-hec-surface text-hec-ink",
   Excused: "border-hec-line bg-hec-sunken text-hec-ink-soft",
 };
 
@@ -452,6 +454,12 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
                     )}
                     onClick={() => canEdit && toggleAttendance(student.id)}
                   >
+                    {/* the state as a mark and a word: a tick drawn in leaf, or an ink dash */}
+                    {attendance[student.id] === "Present" ? (
+                      <InkCheck size={18} className="mr-2" />
+                    ) : (
+                      <span aria-hidden className="mr-2 h-0.5 w-3.5 shrink-0 rounded-full bg-current" />
+                    )}
                     {attendance[student.id]}
                   </button>
                 ) : (
@@ -469,7 +477,12 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
           {canEdit && (
             <>
               <Button
-                onClick={saveAllAttendance}
+                onClick={async () => {
+                  // saveAllAttendance is unchanged: it throws when the save fails or is refused, so the Seal below is
+                  // reached only after a save that succeeded (the drawer has closed by then, hence showSeal).
+                  await saveAllAttendance();
+                  showSeal("Register complete");
+                }}
                 disabled={saveAllMutation.isPending}
                 className="w-full"
               >

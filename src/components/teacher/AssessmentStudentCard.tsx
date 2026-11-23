@@ -1,4 +1,7 @@
-import { memo } from "react";
+import { memo, useEffect, useRef } from "react";
+import { motion, useAnimationControls } from "framer-motion";
+import { Tick } from "@/components/fx/Tick";
+import { dur, ease, useMotionLevel } from "@/components/fx/motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -16,6 +19,8 @@ export interface FeedbackItem {
   color: string;
   count?: number;
   studentId: string;
+  /** where the teacher tapped (set by the grid); a token with one takes dur.page to land */
+  origin?: { x: number; y: number } | null;
 }
 
 interface AssessmentStudentCardProps {
@@ -80,6 +85,22 @@ function AssessmentStudentCardImpl({
   const gradientClass = AVATAR_GRADIENTS[hashIndex(studentId)];
   const ivory = useIvory();
 
+  // The avatar's one press-pulse when a positive token lands (full motion only), then it is still again.
+  const level = useMotionLevel();
+  const pulse = useAnimationControls();
+  const seen = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const timers: number[] = [];
+    for (const f of feedbacks) {
+      if (seen.current.has(f.id)) continue;
+      seen.current.add(f.id);
+      if (f.points > 0 && level === "full") {
+        timers.push(window.setTimeout(() => pulse.start({ scale: [1, 1.08, 1], transition: { duration: dur.reveal, ease } }), f.origin ? dur.page * 1000 : 0));
+      }
+    }
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [feedbacks, level, pulse]);
+
   const PointIcon =
     todayPoints > 0 ? TrendingUp : todayPoints < 0 ? TrendingDown : Minus;
 
@@ -130,12 +151,14 @@ function AssessmentStudentCardImpl({
         )}
 
         <div className="relative">
-          <Avatar className="h-14 w-14">
-            <AvatarImage src={avatarUrl || undefined} className="object-cover" />
-            <AvatarFallback className="bg-hec-sunken text-hec-body font-semibold text-hec-ink-soft">
-              {getInitials(fullName)}
-            </AvatarFallback>
-          </Avatar>
+          <motion.div animate={pulse}>
+            <Avatar className="h-14 w-14">
+              <AvatarImage src={avatarUrl || undefined} className="object-cover" />
+              <AvatarFallback className="bg-hec-sunken text-hec-body font-semibold text-hec-ink-soft">
+                {getInitials(fullName)}
+              </AvatarFallback>
+            </Avatar>
+          </motion.div>
           {attendanceStatus === "Present" && (
             <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-hec-surface bg-hec-leaf" />
           )}
@@ -156,10 +179,7 @@ function AssessmentStudentCardImpl({
           )}
         >
           <PointIcon className="h-3.5 w-3.5" />
-          <span>
-            {todayPoints > 0 ? "+" : ""}
-            {todayPoints}
-          </span>
+          <Tick value={todayPoints} format={(n) => `${Math.round(n) > 0 ? "+" : ""}${Math.round(n)}`} />
           <span className="font-medium">today</span>
         </div>
 

@@ -268,7 +268,7 @@ export function AttendanceMarking() {
     const ivoryColors = {
       Present: "border border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:bg-hec-leaf-tint",
       Absent: "border border-hec-line-strong bg-hec-surface text-hec-ink hover:bg-hec-surface",
-      Excused: "border border-hec-warn/30 bg-hec-warn-tint text-hec-warn hover:bg-hec-warn-tint"
+      Excused: "border border-hec-line bg-hec-sunken text-hec-ink-soft hover:bg-hec-sunken"
     };
     return `${ivoryColors[status]} min-h-hec-target shrink-0 px-4`;
   };

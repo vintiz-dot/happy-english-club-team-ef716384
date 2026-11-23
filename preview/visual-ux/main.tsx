@@ -45,6 +45,7 @@ const TeacherDashboard = lazy(() => import("@/pages/TeacherDashboard"));
 const TeacherClassDetail = lazy(() => import("@/pages/TeacherClassDetail"));
 const GridPage = lazy(() => import("./GridPage"));
 const AttendancePage = lazy(() => import("./AttendancePage"));
+const DrawerPage = lazy(() => import("./DrawerPage"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const Tuition = lazy(() => import("@/pages/Tuition"));
 const AdminDialogs = lazy(() => import("./AdminDialogs"));
@@ -72,6 +73,7 @@ createRoot(document.getElementById("root")!).render(
                   <Route path="/teacher/classes/:id" element={<TeacherClassDetail />} />
                   <Route path="/teacher/grid" element={<GridPage />} />
                   <Route path="/teacher/attendance-hub" element={<AttendancePage />} />
+                  <Route path="/teacher/drawer" element={<DrawerPage />} />
                   <Route path="/admin" element={<Admin defaultTab={screen === "admin-payroll" ? "payroll" : "overview"} />} />
                   <Route path="/tuition" element={screen === "admin-dialogs" ? <AdminDialogs /> : <Tuition />} />
                   <Route path="*" element={<Navigate to={PATH_OF[screen] + window.location.search} replace />} />

@@ -3,7 +3,7 @@
 import { adminDb } from "./adminFixtures";
 
 export type Screen =
-  | "student-home" | "student-homework" | "family" | "teacher" | "teacher-grid" | "teacher-attendance"
+  | "student-home" | "student-homework" | "family" | "teacher" | "teacher-grid" | "teacher-attendance" | "teacher-drawer"
   | "admin-overview" | "admin-tuition" | "admin-payroll" | "admin-dialogs";
 export type State = "ok" | "error" | "empty";
 
@@ -38,6 +38,7 @@ export const ROLE_OF: Record<Screen, "student" | "family" | "teacher" | "admin">
   teacher: "teacher",
   "teacher-grid": "teacher",
   "teacher-attendance": "teacher",
+  "teacher-drawer": "teacher",
   "admin-overview": "admin",
   "admin-tuition": "admin",
   "admin-payroll": "admin",
@@ -50,6 +51,7 @@ export const PATH_OF: Record<Screen, string> = {
   teacher: "/teacher/dashboard",
   "teacher-grid": "/teacher/grid",
   "teacher-attendance": "/teacher/attendance-hub",
+  "teacher-drawer": "/teacher/drawer",
   "admin-overview": "/admin",
   "admin-tuition": "/tuition",
   "admin-payroll": "/admin",
@@ -59,7 +61,7 @@ export const PATH_OF: Record<Screen, string> = {
 export const STUDENT_ID = "stu-quynh-tram-anh";
 export const ME = {
   userId: "user-preview-1",
-  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà", "teacher-grid": "Cô Trần Thu Hà", "teacher-attendance": "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
+  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà", "teacher-grid": "Cô Trần Thu Hà", "teacher-attendance": "Cô Trần Thu Hà", "teacher-drawer": "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -164,7 +166,7 @@ export function buildDb() {
     emptyOn = ["students"];
   }
 
-  if (SCREEN === "teacher" || SCREEN === "teacher-grid" || SCREEN === "teacher-attendance") {
+  if (SCREEN === "teacher" || SCREEN === "teacher-grid" || SCREEN === "teacher-attendance" || SCREEN === "teacher-drawer") {
     const teacherId = "teacher-ha";
     tables.teachers = [{ id: teacherId, user_id: ME.userId, full_name: ME.name, email: null, phone: null, avatar_url: null, is_active: true }];
     tables.teaching_assistants = [];
