@@ -67,6 +67,12 @@ export interface RecalcOutcome {
   ok: boolean;
   error?: string;
   retryAfterSeconds?: number;
+  /**
+   * calculate-tuition kept the saved bill because lessons have no mark in the
+   * register (a hole must never lower a bill). Not a failure and not a bill to
+   * retry quietly: nothing the refresh does can fix it - the register must be.
+   */
+  held?: { lessons: number; message: string };
 }
 
 /**
@@ -81,6 +87,16 @@ export function readRecalc(status: number, body: any): RecalcOutcome {
   }
   if (status !== 200) return { ok: false, error: String(body?.error || `calculate-tuition answered ${status}`) };
   if (body?.error) return { ok: false, error: String(body.error) };
+  if (body?.held?.reason === "register_missing_marks") {
+    const lessons = Array.isArray(body.held.lessons) ? body.held.lessons.length : 0;
+    return {
+      ok: false,
+      held: {
+        lessons,
+        message: String(body.held.message || "Held: lessons have no mark. The bill stays as charged until the register is fixed."),
+      },
+    };
+  }
   if (body?.invoiceSaved === false) {
     return {
       ok: false,
