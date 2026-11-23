@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,14 @@ import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage } from "@/lib/recordPayment";
 import { formatVND } from "@/lib/money";
 import { showSeal } from "@/components/fx/showSeal";
+import { dayjs } from "@/lib/date";
+import { invoicePaidLabel, monthPayable } from "@/lib/invoiceStatus";
+import { CHECK_INFO, type Finding } from "@/lib/finance/paymentChecks";
+import { usePaymentChecks } from "@/hooks/usePaymentChecks";
+import { PaymentChecksPanel, SEVERITY_BADGE } from "@/components/admin/finance/PaymentChecksPanel";
+import { MonthMoneyTiles } from "@/components/admin/finance/MonthMoneyTiles";
+
+type RowFilter = "all" | "flagged" | "owing" | "partial" | "paid";
 
 interface Invoice {
   id: string;
@@ -26,7 +34,8 @@ interface Invoice {
   base_amount: number;
   discount_amount: number;
   total_amount: number;
-  paid_amount: number;
+  carry_in_debt: number | null;
+  carry_in_credit: number | null;
   status: string;
   students: {
     full_name: string;
@@ -42,7 +51,12 @@ interface EditingInvoice {
 export function RecordedPaymentManager() {
   const queryClient = useQueryClient();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  // Hanoi's month: toISOString() is UTC and read the wrong month for the
+  // first seven hours of every month.
+  const [selectedMonth, setSelectedMonth] = useState(() => dayjs().tz().format("YYYY-MM"));
+  const [filter, setFilter] = useState<RowFilter>("all");
+  const [search, setSearch] = useState("");
+  const checks = usePaymentChecks(selectedMonth);
   const [loading, setLoading] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<EditingInvoice | null>(null);
   const [reversingInvoice, setReversingInvoice] = useState<{ id: string; currentValue: number } | null>(null);
@@ -194,7 +208,8 @@ export function RecordedPaymentManager() {
       // Invalidate React Query caches
       queryClient.invalidateQueries({ queryKey: ["student-tuition", invoice.student_id, invoice.month] });
       queryClient.invalidateQueries({ queryKey: ["admin-tuition"] });
-      
+      queryClient.invalidateQueries({ queryKey: ["payment-checks", invoice.month] });
+
       loadInvoices();
     } catch (error: any) {
       toast.error(error.message);
@@ -260,7 +275,8 @@ export function RecordedPaymentManager() {
       // Invalidate React Query caches
       queryClient.invalidateQueries({ queryKey: ["student-tuition", invoice.student_id, invoice.month] });
       queryClient.invalidateQueries({ queryKey: ["admin-tuition"] });
-      
+      queryClient.invalidateQueries({ queryKey: ["payment-checks", invoice.month] });
+
       loadInvoices();
     } catch (error: any) {
       toast.error(error.message);
@@ -270,15 +286,44 @@ export function RecordedPaymentManager() {
   };
 
   const generateMonthOptions = () => {
-    const options = [];
-    const today = new Date();
-    for (let i = -6; i <= 6; i++) {
-      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-      const monthStr = date.toISOString().slice(0, 7);
-      options.push(monthStr);
-    }
-    return options;
+    // Twelve months back, two ahead, in Hanoi's calendar (the old list was
+    // built with toISOString and shifted a month in UTC+7).
+    const now = dayjs().tz().startOf("month");
+    const options: string[] = [];
+    for (let i = -12; i <= 2; i++) options.push(now.add(i, "month").format("YYYY-MM"));
+    if (!options.includes(selectedMonth)) options.push(selectedMonth);
+    return options.sort().reverse();
   };
+  const monthLabel = dayjs(`${selectedMonth}-01`).format("MMMM YYYY");
+
+  // Each row's findings, by student: a bill's own checks and the checks on
+  // that child's payments this month.
+  const findingsByStudent = useMemo(() => {
+    const m = new Map<string, Finding[]>();
+    if (checks.data?.month !== selectedMonth) return m;
+    for (const f of checks.data.checks.findings) {
+      if (!f.studentId) continue;
+      m.set(f.studentId, [...(m.get(f.studentId) ?? []), f]);
+    }
+    return m;
+  }, [checks.data, selectedMonth]);
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return invoices.filter((inv) => {
+      if (q && !inv.students.full_name.toLowerCase().includes(q)) return false;
+      const label = inv.status === "credit" ? "credit" : invoicePaidLabel(inv);
+      const flags = (findingsByStudent.get(inv.student_id) ?? []).filter((f) => f.severity !== "note");
+      switch (filter) {
+        case "flagged": return flags.length > 0;
+        case "owing": return monthPayable(inv) - (inv.recorded_payment || 0) > 0;
+        case "partial": return label === "partial";
+        case "paid": return label === "paid";
+        default: return true;
+      }
+    });
+  }, [invoices, search, filter, findingsByStudent]);
+  const flaggedCount = invoices.filter((inv) => (findingsByStudent.get(inv.student_id) ?? []).some((f) => f.severity !== "note")).length;
 
   return (
     <div className="space-y-6">
@@ -286,14 +331,15 @@ export function RecordedPaymentManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Recorded Payment Manager
+            Recorded payments
           </CardTitle>
           <CardDescription>
-            View and adjust recorded_payment values for student invoices. Use this to correct accounting errors or reverse payments.
+            What each bill records as paid this month, checked against its payments and the ledger. A correction goes through
+            record-payment, which writes the payments list, the ledger and the bill together.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-2">
               <Label>Month</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -312,55 +358,103 @@ export function RecordedPaymentManager() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="rpm-search">Student</Label>
+              <Input id="rpm-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name" className="w-[200px]" />
+            </div>
+            <div className="space-y-2">
+              <Label>Show</Label>
+              <Select value={filter} onValueChange={(v) => setFilter(v as RowFilter)}>
+                <SelectTrigger className="w-[190px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All bills ({invoices.length})</SelectItem>
+                  <SelectItem value="flagged">Flagged ({flaggedCount})</SelectItem>
+                  <SelectItem value="owing">Still owing</SelectItem>
+                  <SelectItem value="partial">Partly paid</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="outline" size="sm" className="ml-auto" onClick={() => { loadInvoices(); checks.refetch(); }} disabled={loading || checks.isFetching}>
+              {checks.isFetching ? "Checking…" : "Re-check"}
+            </Button>
           </div>
+
+          {checks.data?.month === selectedMonth ? (
+            <>
+              <MonthMoneyTiles totals={checks.data.totals} />
+              <PaymentChecksPanel
+                checks={checks.data.checks}
+                names={checks.data.names}
+                monthLabel={monthLabel}
+                onSelectStudent={(id) => { setFilter("all"); setSearch(checks.data?.names.get(id) ?? ""); }}
+              />
+            </>
+          ) : checks.isError ? (
+            <p className="text-sm text-hec-danger">The month's totals and checks could not be loaded: {(checks.error as Error)?.message}</p>
+          ) : (
+            <Loading size="sm" className="py-4" />
+          )}
 
           <div className="border rounded-lg">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Student</TableHead>
-                  <TableHead className="text-right">Base Amount</TableHead>
-                  <TableHead className="text-right">Total Amount</TableHead>
-                  <TableHead className="text-right">Paid Amount</TableHead>
-                  <TableHead className="text-right">Recorded Payment</TableHead>
+                  <TableHead className="text-right">Charged</TableHead>
+                  <TableHead className="text-right">Payable</TableHead>
+                  <TableHead className="text-right">Recorded</TableHead>
+                  <TableHead className="text-right">Left to pay</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Checks</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading && invoices.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       <Loading size="sm" className="py-6" />
                     </TableCell>
                   </TableRow>
-                ) : invoices.length === 0 ? (
+                ) : rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
-                      No invoices found for this month
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                      {invoices.length === 0 ? "No bills for this month" : "No bills match this filter"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  invoices.map((invoice) => {
+                  rows.map((invoice) => {
                     const isEditing = editingInvoice?.id === invoice.id;
                     const recordedPayment = invoice.recorded_payment || 0;
-                    const hasDiscrepancy = recordedPayment !== invoice.paid_amount;
+                    const payable = monthPayable(invoice);
+                    const left = payable - recordedPayment;
+                    // The label by the one rule (src/lib/invoiceStatus.ts); an admin's credit stays.
+                    const label = invoice.status === "credit" ? "credit" : invoicePaidLabel(invoice);
+                    const flags = findingsByStudent.get(invoice.student_id) ?? [];
+                    const hasError = flags.some((f) => f.severity === "error");
 
                     return (
-                      <TableRow key={invoice.id} className={hasDiscrepancy ? "bg-destructive/5" : ""}>
+                      <TableRow key={invoice.id} className={hasError ? "bg-destructive/5" : ""}>
                         <TableCell className="font-medium">
                           {invoice.students.full_name}
                         </TableCell>
-                        <TableCell className="text-right">
-                          {formatVND(invoice.base_amount)}
-                        </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right tabular-nums">
                           {formatVND(invoice.total_amount)}
+                          {(invoice.discount_amount || 0) > 0 && (
+                            <div className="text-xs text-hec-ink-soft">base {formatVND(invoice.base_amount)}</div>
+                          )}
                         </TableCell>
-                        <TableCell className="text-right">
-                          {formatVND(invoice.paid_amount)}
+                        <TableCell className="text-right tabular-nums">
+                          {formatVND(payable)}
+                          {payable !== (invoice.total_amount || 0) && (
+                            <div className="text-xs text-hec-ink-soft">
+                              {(invoice.carry_in_debt || 0) > 0 ? `+${formatVND(invoice.carry_in_debt)} debt ` : ""}
+                              {(invoice.carry_in_credit || 0) > 0 ? `−${formatVND(invoice.carry_in_credit)} credit` : ""}
+                            </div>
+                          )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right tabular-nums">
                           {isEditing ? (
                             <div className="space-y-2">
                               {editMonth.field}
@@ -386,18 +480,29 @@ export function RecordedPaymentManager() {
                               />
                             </div>
                           ) : (
-                            <span className={hasDiscrepancy ? "text-destructive font-semibold" : ""}>
+                            <span className={hasError ? "text-destructive font-semibold" : ""}>
                               {formatVND(recordedPayment)}
                             </span>
                           )}
                         </TableCell>
+                        <TableCell className={`text-right tabular-nums ${left > 0 ? "text-hec-danger" : left < 0 ? "text-hec-leaf" : "text-hec-ink-soft"}`}>
+                          {left > 0 ? formatVND(left) : left < 0 ? `${formatVND(-left)} ahead` : "—"}
+                        </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
-                              {invoice.status}
-                            </Badge>
-                            {hasDiscrepancy && (
-                              <Badge variant="destructive">Mismatch</Badge>
+                          <Badge variant={label === "paid" ? "success" : label === "partial" ? "warning" : label === "credit" ? "brass" : "secondary"}>
+                            {label === "issued" ? "unpaid" : label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex max-w-[16rem] flex-wrap gap-1">
+                            {flags.length === 0 ? (
+                              <span className="text-xs text-hec-ink-soft">{checks.data?.month === selectedMonth ? "OK" : "…"}</span>
+                            ) : (
+                              flags.map((f, i) => (
+                                <Badge key={`${f.kind}-${i}`} variant={SEVERITY_BADGE[f.severity]} title={f.detail} className="whitespace-nowrap">
+                                  {CHECK_INFO[f.kind].title}
+                                </Badge>
+                              ))
                             )}
                           </div>
                         </TableCell>
