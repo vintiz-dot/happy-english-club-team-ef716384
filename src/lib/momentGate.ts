@@ -8,6 +8,8 @@
  * Module state, so it lasts for the page load and is empty again after a reload. Asking again with the SAME id is
  * answered yes (a re-render or a second effect run must not cancel the moment that already holds the slot).
  */
+import { useSyncExternalStore } from "react";
+
 let taken: string | null = null;
 
 export function claimMoment(id: string): boolean {
@@ -18,4 +20,37 @@ export function claimMoment(id: string): boolean {
 /** True when some moment already holds this visit's slot (for a page that wants a quiet line instead). */
 export function momentTaken(): boolean {
   return taken !== null;
+}
+
+/**
+ * One Pip per screen: a moment that draws its own Pip (a reward moment, the birthday) asks the page's Pip to step
+ * out while it is up. hidePagePip() returns the function that gives the page's Pip back.
+ */
+let pipOut = 0;
+const listeners = new Set<() => void>();
+const notify = () => listeners.forEach((l) => l());
+
+export function hidePagePip(): () => void {
+  pipOut += 1;
+  notify();
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    pipOut -= 1;
+    notify();
+  };
+}
+
+export function usePagePipHidden(): boolean {
+  return useSyncExternalStore(
+    (listener) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    () => pipOut > 0,
+    () => false,
+  );
 }

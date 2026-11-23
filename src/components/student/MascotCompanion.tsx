@@ -21,6 +21,7 @@ import { useAgeBand } from "@/hooks/useAgeBand";
 import { useCopy } from "@/lib/copy/useCopy";
 import { pipPools, type StudentCopyKey } from "@/lib/copy/student";
 import { dayjs } from "@/lib/date";
+import { usePagePipHidden } from "@/lib/momentGate";
 
 type Mood = "hello" | "happy" | "encouraging" | "excited" | "celebrating" | "loving";
 
@@ -60,6 +61,8 @@ export function MascotCompanion({ streak = 0, pendingHomework = 0, size, message
   const { en, vi, beneath } = useCopy();
   const level = useMotionLevel();
   const [bump, setBump] = useState(0);
+  // a moment that draws its own Pip is up: this one steps out (one Pip per screen), keeping its place
+  const stepOut = usePagePipHidden();
 
   // What is true today decides the pool; the day and the child pick the line.
   const choice = useMemo(() => {
@@ -116,7 +119,7 @@ export function MascotCompanion({ streak = 0, pendingHomework = 0, size, message
   );
 
   return (
-    <div className={cn("flex min-w-0 flex-col items-center gap-3", className)}>
+    <div className={cn("flex min-w-0 flex-col items-center gap-3", stepOut && "invisible", className)} aria-hidden={stepOut || undefined}>
       <motion.div ref={frame} animate={breathing ? { y: [0, -6, 0] } : { y: 0 }} transition={breathing ? { duration: 3.4, repeat: Infinity, ease: "easeInOut" } : { duration: 0 }}>
         <motion.button
           type="button"
