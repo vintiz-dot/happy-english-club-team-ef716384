@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { SignedVideo } from "./SignedVideo";
 import { ShareVideoButton } from "./ShareVideoButton";
+import { showSeal } from "@/components/fx/showSeal";
 import { videoDb } from "@/lib/video/recorder";
 import {
   CRITERION_MAX,
@@ -178,6 +179,8 @@ export function VideoReviewPanel({
     },
     onSuccess: () => {
       toast.success("Approved - the report is now with the family");
+      // the server has said yes (the approval RPC returned without an error): only now the Seal
+      showSeal("Sent to family");
       invalidate();
       onDone?.();
     },
