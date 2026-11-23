@@ -114,7 +114,8 @@ const PINNED = {
   'supabase/functions/_lib/recorded-payment-write.ts invoices update': 2,
   'supabase/functions/auto-mark-attendance/index.ts attendance insert': 1,
   'supabase/functions/calculate-payroll/index.ts payroll_summaries upsert': 1,
-  'supabase/functions/calculate-tuition/index.ts invoices upsert': 2,
+  // 3 since 23 Nov 2026: a held bill (lessons with no mark) writes only its flags, labels and balances, never base / discount / total.
+  'supabase/functions/calculate-tuition/index.ts invoices upsert': 3,
   'supabase/functions/close-payroll-month/index.ts payroll_periods update': 1,
   'supabase/functions/compute-sibling-discounts/index.ts sibling_discount_state upsert': 3,
   'supabase/functions/confirm-tuition/index.ts invoices update': 2,
@@ -221,6 +222,9 @@ console.log('\n2. every RPC called is pinned');
     approve_change_request: 'D4 approvals', change_approval_check: 'read', change_approval_status: 'D4 approvals', release_own_request: 'D4 approvals',
     economy_process: 'class economy: points ledger row and cash in one transaction, a handled request refused',
     tuition_bill_gaps: 'read (20261123090000)',
+    attendance_proof_for_session: 'read: proof a child was in a lesson, asked as the caller before Absent / Excused is written (20261123100000)',
+    attendance_evidence_gaps: 'read (admin; 20261123100000)',
+    attendance_apply_evidence: 'register: marks Present where proof exists and no mark does, dry run first; never changes a mark a person made (admin / cron; 20261123100000)',
     // Not money:
     approve_cefr_draft: 'no', discard_cefr_draft: 'no', approve_lesson_report: 'no', approve_transcript_analysis: 'no',
     withdraw_transcript_approval: 'no', can_view_student: 'read', class_work_gallery: 'read', decide_work_share: 'no',

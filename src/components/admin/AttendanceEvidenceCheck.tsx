@@ -36,7 +36,7 @@ export function AttendanceEvidenceCheck() {
     queryKey: ["attendance-evidence-gaps", from, to],
     retry: false,
     queryFn: async () => {
-      const { data, error } = await (supabase.rpc as any)("attendance_evidence_gaps", { p_from: from, p_to: to });
+      const { data, error } = await (supabase as any).rpc("attendance_evidence_gaps", { p_from: from, p_to: to });
       if (error) throw error;
       return parseGapRows(data);
     },
@@ -81,7 +81,7 @@ export function AttendanceEvidenceCheck() {
   };
 
   const callApply = async (dryRun: boolean) => {
-    const { data, error } = await (supabase.rpc as any)("attendance_apply_evidence", { p_from: from, p_to: to, p_dry_run: dryRun });
+    const { data, error } = await (supabase as any).rpc("attendance_apply_evidence", { p_from: from, p_to: to, p_dry_run: dryRun });
     if (error) throw error;
     return parseApplyResult(data);
   };
