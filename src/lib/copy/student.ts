@@ -124,6 +124,39 @@ export const studentCopy = {
   "pip.done.2": { en: "All your homework is done.", vi: "Bài tập của con đã xong hết.", draft: true },
   "pip.done.3": { en: "That is a lot of work finished.", vi: "Con đã hoàn thành rất nhiều việc.", draft: true },
   "pip.days.1": { en: "You have been here {n} days in a row.", vi: "Con đã học {n} ngày liên tiếp.", draft: true },
+  // ---- Homework page (Phase 7 round 1)
+  "hw.title": { en: "My homework", vi: "Bài tập của con", draft: true },
+  "hw.hero.doing": { en: "Let's do this!", vi: "Cùng làm nào!", draft: true },
+  "hw.hero.allDone": { en: "All done!", vi: "Xong hết rồi!", draft: true },
+  "hw.stat.todo": { en: "To do", vi: "Cần làm", draft: true },
+  "hw.stat.late": { en: "Late", vi: "Trễ hạn", draft: true },
+  "hw.stat.done": { en: "Done", vi: "Đã xong", draft: true },
+  "hw.tab.todo": { en: "To do", vi: "Cần làm", draft: true },
+  "hw.tab.done": { en: "Done", vi: "Đã xong", draft: true },
+  "hw.tab.calendar": { en: "Calendar", vi: "Lịch", draft: true },
+  "hw.section.late": { en: "Late — do these first", vi: "Trễ hạn — làm những bài này trước", draft: true },
+  "hw.section.next": { en: "Coming up", vi: "Sắp tới", draft: true },
+  "hw.section.old": { en: "Older homework you missed", vi: "Bài tập cũ con chưa làm", draft: true },
+  "hw.grownups": { en: "Grown-ups: all homework", vi: "Người lớn: tất cả bài tập", draft: true },
+  "hw.moreCards": { en: "Want more? {n} vocabulary cards are ready.", vi: "Con muốn học thêm không? {n} thẻ từ vựng đã sẵn sàng.", draft: true },
+
+  // ---- A grade the teacher has marked (one moment per visit)
+  "grade.line": { en: "Grade: {grade}", vi: "Điểm: {grade}", draft: true },
+  "grade.marked": { en: "Your teacher marked your homework.", vi: "Cô giáo đã chấm bài của con.", draft: true },
+  "grade.moreOne": { en: "1 more homework was marked.", vi: "Có 1 bài tập khác cũng đã được chấm.", draft: true },
+  "grade.moreMany": { en: "{n} more homeworks were marked.", vi: "Có {n} bài tập khác cũng đã được chấm.", draft: true },
+  "grade.wrote": { en: "Your teacher wrote:", vi: "Cô giáo viết:", draft: true },
+  "grade.close": { en: "Close", vi: "Đóng", draft: true },
+
+  // ---- Handing in
+  "handin.sentExcl": { en: "Sent to your teacher!", vi: "Đã gửi cho cô giáo!", draft: true },
+  "handin.sent": { en: "Sent to your teacher.", vi: "Đã gửi cho cô giáo.", draft: true },
+  "handin.teen": { en: "Handed in", vi: "Đã nộp bài", draft: true },
+
+  // ---- Vocabulary review and Defend My Level
+  "srs.knew": { en: "Got it", vi: "Con nhớ rồi", draft: true },
+  "srs.again": { en: "This one will come back soon. The answer: {answer}", vi: "Thẻ này sẽ quay lại sớm. Đáp án: {answer}", draft: true },
+  "defend.sent": { en: "Sent to your teacher", vi: "Đã gửi cho cô giáo", draft: true },
 } as const satisfies Record<string, CopyEntry>;
 
 /** Pip's pools by what is true today. A line is picked by the day and the child, so it changes tomorrow, not on every render. */
