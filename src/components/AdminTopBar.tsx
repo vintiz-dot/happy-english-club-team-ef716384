@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useIvory } from "@/hooks/useIvory";
 import { useAuth } from "@/hooks/useAuth";
 import { OPEN_GENERAL_PALETTE_EVENT, paletteFor } from "@/lib/paletteOwner";
+import { buildCrumbs } from "@/lib/breadcrumbs";
 
 const KBD_CLASS =
   "ml-1 hidden lg:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground";
@@ -65,72 +66,7 @@ const SHOWN_ABOVE = new Set([
   "/admin?tab=data", "/admin?tab=stars-sync", "/admin?tab=announcements",
 ]);
 
-type Crumb = { label: string; href?: string };
-
-// Map URL segments / tabs to human-readable breadcrumb labels.
-const ROUTE_LABELS: Record<string, string> = {
-  admin: "Admin",
-  students: "Students",
-  teachers: "Teachers",
-  families: "Families",
-  schedule: "Schedule",
-  classes: "Classes",
-  dashboard: "Dashboard",
-  teacher: "Teacher",
-  attendance: "Attendance",
-  assignments: "Assignments",
-  journal: "Journal",
-  payroll: "Payroll",
-  leaderboards: "Leaderboards",
-  profile: "Profile",
-  "exam-reports": "Exam Reports",
-};
-
-const TAB_LABELS: Record<string, string> = {
-  classes: "Classes",
-  assignments: "Assignments",
-  journal: "Journal",
-  "exam-reports": "Exam Reports",
-  finance: "Finance",
-  payroll: "Payroll",
-  reports: "Reports",
-  account: "Account",
-  automation: "Automation",
-  data: "Data",
-  announcements: "Announcements",
-  overview: "Overview",
-};
-
-function buildCrumbs(pathname: string, tab: string | null): Crumb[] {
-  const segments = pathname.split("/").filter(Boolean);
-  const crumbs: Crumb[] = [];
-
-  // Build path-based crumbs.
-  let acc = "";
-  for (const seg of segments) {
-    acc += `/${seg}`;
-    const label = ROUTE_LABELS[seg] ?? prettifySegment(seg);
-    crumbs.push({ label, href: acc });
-  }
-
-  // Append the tab as a leaf if present.
-  if (tab && TAB_LABELS[tab]) {
-    crumbs.push({ label: TAB_LABELS[tab] });
-  }
-
-  // Drop the last href so the leaf renders as Page (non-link).
-  if (crumbs.length > 0) crumbs[crumbs.length - 1] = { label: crumbs[crumbs.length - 1].label };
-  return crumbs;
-}
-
-function prettifySegment(seg: string): string {
-  // UUID-ish segments → "Detail". Otherwise capitalise.
-  if (/^[0-9a-f-]{20,}$/i.test(seg)) return "Detail";
-  return seg
-    .split("-")
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-    .join(" ");
-}
+// 23 Nov 2026: the trail is built in src/lib/breadcrumbs.ts, where each crumb links only to a real route (no more 404s).
 
 interface AdminTopBarProps {
   title?: string;

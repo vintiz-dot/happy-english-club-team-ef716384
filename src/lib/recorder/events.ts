@@ -39,6 +39,13 @@ export interface RecorderEvents {
   recovered: { recordingIds: string[]; othersPending?: { recordings: number; bytes: number } };
   /** C2 revision (M2): own unsent audio older than the limit. Kept until an explicit Discard, never deleted by itself. */
   stuck: { recordings: HeldAudio[] };
+  /**
+   * 23 Nov 2026: the page was reloaded (or crashed) while this recording was capturing.
+   * "resuming": the microphones are being opened again; "resumed": capture goes on in
+   * the same recording after gapMs without audio; "not_resumed": it could not be, and
+   * the part already recorded is being saved (reason in plain words).
+   */
+  resume: { recordingId: string; status: "resuming" | "resumed" | "not_resumed"; gapMs?: number; reason?: string };
   backup: { status: "off" | "on" | "needs_permission" | "failed"; detail?: string };
 }
 

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { StudentProfileProvider } from "./contexts/StudentProfileContext";
 import { AgeBandRoot } from "@/hooks/useAgeBand";
 import { TimerProvider } from "./contexts/TimerContext";
@@ -14,8 +14,9 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { StartupGuard } from "./components/StartupGuard";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { OfflineFallback } from "./components/OfflineFallback";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, type ReactNode } from "react";
 import { lazyRetry } from "./lib/lazyRetry";
+import { hookPreloadErrors } from "./lib/chunkReload";
 import { AppLoader } from "./components/AppLoader";
 import { NavProgress } from "./components/NavProgress";
 import { RouteFallback } from "./components/RouteFallback";
@@ -97,6 +98,15 @@ const queryClient = new QueryClient({
   },
 });
 
+// 23 Nov 2026: a stale chunk after a deploy reloads the same URL once (src/lib/chunkReload.ts), never a redirect.
+hookPreloadErrors();
+
+/** A page that fails shows its error in place; moving to another route clears it. */
+function RouteErrorBoundary({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
+  return <ErrorBoundary resetKey={pathname}>{children}</ErrorBoundary>;
+}
+
 function AppContent() {
   const { isOnline } = useNetworkStatus();
 
@@ -120,6 +130,7 @@ function AppContent() {
             {/* The selected child's age band, readable by every page (src/hooks/useAgeBand.tsx). Draws nothing. */}
             <AgeBandRoot>
             <StartupGuard>
+              <RouteErrorBoundary>
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
@@ -203,6 +214,7 @@ function AppContent() {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
+              </RouteErrorBoundary>
             </StartupGuard>
             </AgeBandRoot>
             </IvoryScope>

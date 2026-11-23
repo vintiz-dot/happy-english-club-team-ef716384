@@ -59,6 +59,11 @@ console.log("=== the floating bar on other pages (pure model) ===");
 const m = S.floatingBarModel;
 ok("recording, no screen attached: shown, red dot, Stop", (() => { const x = m("recording", "Starters 1", false); return x.show && x.redDot && x.stop && /Starters 1/.test(x.text); })());
 ok("stalled: NOT RECORDING, Stop, alert, no red dot", (() => { const x = m("stalled", "", false); return x.show && x.stop && x.alert && !x.redDot && /NOT RECORDING/.test(x.text); })());
+// 23 Nov 2026: a reload during the lesson resumes it, and every page says so.
+ok("reloaded, resuming: an alert that says RESUMING and to click, with Stop", (() => { const x = m("stalled", "Mars", false, { resume: { status: "resuming" } }); return x.show && x.alert && x.stop && !x.redDot && /RESUMING THE RECORDING/.test(x.text) && /click anywhere/i.test(x.text); })());
+ok("resumed: recording, red dot, and the gap said", (() => { const x = m("recording", "Mars", false, { resume: { status: "resumed", gapSec: 14 } }); return x.redDot && x.text.includes("RESUMED after the page reloaded (14 s"); })());
+ok("could not resume: an alert while saving", (() => { const x = m("uploading", "", false, { resume: { status: "not_resumed", reason: "the lesson ended" } }); return x.show && x.alert && x.text.includes("could NOT go on (the lesson ended)"); })());
+ok("the resumed note goes after a minute", S.resumeView({ status: "resumed", gapSec: 3, at: 0 }, S.RESUMED_SHOW_MS + 1) === null && S.resumeView({ status: "resuming", at: 0 }, 1e9).status === "resuming");
 ok("starting: Stop, no red dot", (() => { const x = m("starting", "", false); return x.show && x.stop && !x.redDot; })());
 ok("uploading: shown (keep the tab open), no Stop needed", (() => { const x = m("uploading", "", false); return x.show && !x.stop; })());
 ok("the recorder screen is showing it: not drawn twice", !m("recording", "", true).show);

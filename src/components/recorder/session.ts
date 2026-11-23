@@ -32,6 +32,7 @@ import { backoffDelay } from "@/lib/recorder/backoff";
 import { addMinutes, DEFAULT_MINUTES, hanoiDate, hanoiMs, shortDate, lessonPhase, lessonTimes, nextAfter, pickLesson, refusalView, type LessonLike, type WindowMinutes } from "@/lib/recorderUi";
 import type { RecorderLike } from "./engine";
 import { registerSignOutHook } from "./signOutGuard";
+import { setRecorderBusy } from "@/lib/chunkReload";
 
 export const CAPTURING_STATES: RecorderState[] = ["starting", "recording", "stalled"];
 const SAVING_STATES: RecorderState[] = ["stopping", "uploading", "finalizing"];
@@ -148,6 +149,8 @@ interface Session {
   everHeld: Set<string>;
   /** The last upload report per recording. */
   progress: Map<string, UploadProgress>;
+  /** 23 Nov 2026: what the engine said about resuming after a reload (shown for RESUMED_SHOW_MS once resumed). */
+  resume: { status: "resuming" | "resumed" | "not_resumed"; gapSec?: number; reason?: string; at: number } | null;
   refreshing: boolean; refreshAgain: boolean; lastRefresh: number; refreshTimer: ReturnType<typeof setTimeout> | null;
 }
 let current: Session | null = null;
@@ -182,6 +185,12 @@ export interface BarExtra {
   sending?: SendingView | null;
   /** 20 Nov 2026: said for a while once they have all reached the server. */
   saved?: string | null;
+  /**
+   * 23 Nov 2026: the page was reloaded while capturing. "resuming": the
+   * microphones are being opened again; "resumed": said for a while after
+   * (gapSec without audio); "not_resumed": it could not go on (reason).
+   */
+  resume?: { status: "resuming" | "resumed" | "not_resumed"; gapSec?: number; reason?: string } | null;
 }
 
 /** What the bar and the screen say about earlier recordings still on this laptop. */
@@ -204,9 +213,14 @@ export function floatingBarModel(state: RecorderState, label: string, attached: 
   const what = label ? ` - ${label}` : "";
   const bar = (text: string, o: Partial<BarModel> = {}): BarModel => ({ ...off, show: true, text, allowSound: !!extra.needsClick, ...o });
   const refused = (r: { className: string; reason: string }) => bar(`This lesson will NOT be recorded: ${r.reason} - ${r.className}. Use the backup recorder.`, { alert: true, allowSound: false });
+  const r = extra.resume;
   switch (state) {
-    case "recording": return bar(`Recording${what}`, { redDot: true, stop: true });
-    case "stalled": return bar(`NOT RECORDING - the audio stopped${what}`, { alert: true, stop: true });
+    case "recording":
+      if (r?.status === "resumed") return bar(`Recording${what} - RESUMED after the page reloaded (${r.gapSec ?? 0} s without audio)`, { redDot: true, stop: true });
+      return bar(`Recording${what}`, { redDot: true, stop: true });
+    case "stalled":
+      if (r?.status === "resuming") return bar(`RESUMING THE RECORDING${what} - the page was reloaded. Click anywhere on this page if it does not say Recording in a few seconds`, { alert: true, stop: true });
+      return bar(`NOT RECORDING - the audio stopped${what} - click anywhere on this page`, { alert: true, stop: true });
     case "starting": return bar(`Saving on this laptop - waiting for the school server${what}`, { stop: true });
     case "armed":
       if (extra.needsClick) return bar(`NOT READY - click "Allow sound" or this lesson is not recorded${what}`, { alert: true });
@@ -217,6 +231,7 @@ export function floatingBarModel(state: RecorderState, label: string, attached: 
       if (extra.refusal) return refused(extra.refusal);
       if (extra.next && extra.problem) return bar(`NOT armed: ${extra.problem} - open the recorder`, { alert: true });
       if (extra.next && extra.notArmed) return bar(`Not armed yet - retrying (${extra.notArmed}) - ${extra.next.className}`, { alert: true });
+      if (r?.status === "not_resumed") return bar(`The page was reloaded during the lesson and the recording could NOT go on (${r.reason ?? "unknown reason"}): the part recorded is being saved - keep this tab open`, { alert: true });
       return bar(extra.interrupted ? "The page was reloaded during the lesson: the recording so far is being saved - keep this tab open" : "Saving the recording - keep this tab open");
     default:
       if (extra.refusal) return refused(extra.refusal);
@@ -240,10 +255,17 @@ export function sessionFor(userId: string): RecorderLike | null {
 export function adopt(userId: string, rec: RecorderLike) {
   if (current && current.rec !== rec) void endSession();
   const s: Session = { userId, rec, label: "", attached: 0, state: rec.state, offs: [], pending: 0, contextRunning: null, devicesOk: null, day: null, holding: false,
-    held: [], heldChecked: false, everHeld: new Set(), progress: new Map(), refreshing: false, refreshAgain: false, lastRefresh: 0, refreshTimer: null };
+    held: [], heldChecked: false, everHeld: new Set(), progress: new Map(), resume: null, refreshing: false, refreshAgain: false, lastRefresh: 0, refreshTimer: null };
   s.offs.push(rec.on("state", ({ state }) => { s.state = state; onState(s); redraw(); maybeEnd(); }));
   s.offs.push(rec.on("upload", (p) => { s.pending = p?.pending ?? 0; if (p?.recordingId) s.progress.set(p.recordingId, p); requestRefresh(s); redraw(); maybeEnd(); }));
   s.offs.push(rec.on("recovered", () => { void refreshHeld(s); }));
+  // 23 Nov 2026: a reload during a lesson resumes it; said on the bar of every page.
+  s.offs.push(rec.on("resume", (e) => {
+    s.resume = { status: e.status, gapSec: e.gapMs !== undefined ? Math.round(e.gapMs / 1000) : undefined, reason: e.reason, at: Date.now() };
+    if (e.status === "resumed" && typeof setTimeout !== "undefined") setTimeout(redraw, RESUMED_SHOW_MS + 500);
+    redraw();
+  }));
+  hookWakeClick();
   current = s;
   unhookSignOut?.();
   unhookSignOut = registerSignOutHook(async () => {
@@ -260,6 +282,34 @@ export function adopt(userId: string, rec: RecorderLike) {
     teardown();
     return true;
   });
+}
+
+/** How long "RESUMED after the page reloaded" stays on the bar. */
+export const RESUMED_SHOW_MS = 60_000;
+
+/** 23 Nov 2026: what to say about a resume now (null once it is old news). Pure. */
+export function resumeView(r: Session["resume"], nowMs: number): BarExtra["resume"] {
+  if (!r) return null;
+  if (r.status === "resumed" && nowMs - r.at > RESUMED_SHOW_MS) return null;
+  return { status: r.status, gapSec: r.gapSec, reason: r.reason };
+}
+
+/**
+ * 23 Nov 2026: after a reload the browser may hold sound back until the page
+ * is clicked. Any click or key on ANY page, while the recorder is not
+ * hearing anything, is used to let the sound run (no special button to find).
+ */
+let wakeHooked = false;
+function hookWakeClick() {
+  if (wakeHooked || typeof document === "undefined") return;
+  wakeHooked = true;
+  const wake = () => {
+    const c = current;
+    if (!c) return;
+    if (c.state === "stalled" || c.contextRunning === false) void allowSound();
+  };
+  document.addEventListener("pointerdown", wake, true);
+  document.addEventListener("keydown", wake, true);
 }
 
 /** What the last prepare() found (the screen's click, or boot after a reload). */
@@ -286,7 +336,9 @@ export function startDay(deps: DayDeps) {
   // A page that died while a lesson was capturing: the rest of that lesson is armed again
   // (the engine finishes the part already recorded). One the teacher Stopped stays done.
   const r = readyFor(s.userId, d.date);
-  if (r?.capturing && !CAPTURING_STATES.includes(s.state)) {
+  // 23 Nov 2026: the engine resumed it (recover({ resume: true })): it is still this lesson's recording.
+  if (r?.capturing && CAPTURING_STATES.includes(s.state)) d.lastArmed = r.capturing;
+  else if (r?.capturing && !CAPTURING_STATES.includes(s.state)) {
     const sid = r.capturing;
     updateReady(s.userId, d.date, (x) => { x.armed = x.armed.filter((a) => a !== sid); x.capturing = null; });
     d.interrupted = true;
@@ -316,6 +368,7 @@ export async function armTick(): Promise<void> {
       catch { if (!d.lessons) return; }
     }
     if (current !== s) return;
+    if (isBusy(s.state) && d.lastArmed && !s.label) { const l = (d.lessons ?? []).find((x) => x.sessionId === d.lastArmed); if (l) s.label = l.className; }
     // R5-1: a lesson the server refused today stays said, until it is over.
     const refusedNow = (d.lessons ?? []).find((l) => ready.refused?.[l.sessionId] && lessonPhase(l, now, d.w) !== "over");
     d.refusal = refusedNow ? { className: refusedNow.className, reason: ready.refused![refusedNow.sessionId] } : null;
@@ -419,11 +472,11 @@ export function detachScreen() {
 /** For tests and the screen: what the session holds. */
 export interface HeldView { recordingId: string; sessionDate: string; onServer: number; total: number; offline: boolean; problem: string | null; finishing: boolean }
 export function sessionState(): { userId: string; state: RecorderState; attached: number; next: Day["next"]; problem: string | null; pending: number; notArmed: string | null; refusal: Day["refusal"]; armedAt: Day["armedAt"]; startOverdue: boolean;
-  held: HeldView[]; localIds: string[] | null; saved: string | null } | null {
+  held: HeldView[]; localIds: string[] | null; saved: string | null; resume: Session["resume"] } | null {
   const c = current;
   return c ? { userId: c.userId, state: c.state, attached: c.attached, next: c.day?.next ?? null, problem: c.day?.problem ?? null, pending: c.pending,
     notArmed: c.day?.notArmed ?? null, refusal: c.day?.refusal ?? null, armedAt: c.day?.armedAt ?? null, startOverdue: startOverdue(c),
-    held: heldViews(c), localIds: c.heldChecked ? [...c.everHeld] : null, saved: savedText(c.userId) } : null;
+    held: heldViews(c), localIds: c.heldChecked ? [...c.everHeld] : null, saved: savedText(c.userId), resume: c.resume } : null;
 }
 
 // ------------------------------------------------------------ earlier recordings still on this laptop (20 Nov 2026)
@@ -626,7 +679,8 @@ export async function boot(deps: BootDeps): Promise<void> {
         return;
       }
       if (current?.rec !== rec) return;   // replaced while preparing
-      await rec.recover().catch(() => null);
+      // 23 Nov 2026: a lesson that was capturing when the page went carries on (same recording).
+      await rec.recover({ resume: true }).catch(() => null);
       if (current?.rec !== rec) return;
       if (sendOnly) {
         if (current) { current.holding = false; await refreshHeld(current); }
@@ -677,6 +731,7 @@ export function barExtra(): BarExtra {
     micsOpen: s.state === "armed" ? (s.rec.micsOpen ?? null) : null,
     sending: sendingView(s),
     saved: savedText(s.userId),
+    resume: resumeView(s.resume, Date.now()),
   };
 }
 
@@ -732,6 +787,8 @@ const OVERDUE_TITLE = "⚠ NOT RECORDING - ";
 const TITLE_PREFIXES = /^(● RECORDING|◌ ARMED|⚠ NOT RECORDING|◌ WAITING FOR THE SERVER) - /;
 
 function redraw() {
+  // 23 Nov 2026: the error boundary does not reload by itself while a lesson is armed, recorded or saved.
+  setRecorderBusy(!!current && isBusy(current.state));
   if (typeof document === "undefined") return;
   hookFullscreen();
   if (current && startOverdue(current)) {

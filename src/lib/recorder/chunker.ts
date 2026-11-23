@@ -43,14 +43,32 @@ export class Chunker {
 
   get started(): boolean { return this.t0 !== null; }
   get t0Frame(): number | null { return this.t0; }
-  /** Frames since t0. */
-  get position(): number { return this.win * this.F + this.fill; }
+  /**
+   * 23 Nov 2026: frame offset of the timeline, so a capture resumed after a
+   * page reload goes on with the next chunk number at the recording's own
+   * position (chunk seq `win` starts at base + win * F). 0 for a fresh capture.
+   */
+  private base = 0;
+  /** Frames since the recording's t = 0. */
+  get position(): number { return this.base + this.win * this.F + this.fill; }
 
   setT0(absFrame: number): void { this.t0 = absFrame; }
 
+  /**
+   * Resume a recording after a reload: the next chunk is number `seq` and
+   * starts at frame `frame` of the recording's timeline (the gap before it is
+   * simply not covered; chunks never overlap). `captured`: frames already
+   * captured per track before the reload (frames_captured carries on).
+   */
+  startAt(seq: number, frame: number, captured?: Partial<Record<TrackRole, number>>): void {
+    this.win = seq; this.fill = 0;
+    this.base = frame - seq * this.F;
+    for (const t of ROLES) { this.segIndex[t] = 0; this.segFrom[t] = 0; this.captured[t] = captured?.[t] ?? 0; }
+  }
+
   /** Forget everything (a start the server did not accept). */
   reset(): void {
-    this.t0 = null; this.fill = 0; this.win = 0;
+    this.t0 = null; this.fill = 0; this.win = 0; this.base = 0;
     for (const t of ROLES) { this.segIndex[t] = 0; this.segFrom[t] = 0; this.captured[t] = 0; this.closed[t] = false; }
   }
 
@@ -82,7 +100,7 @@ export class Chunker {
           if (this.closed[t]) continue;
           while (this.fill - this.segFrom[t] >= this.segmentFrames) {
             const a = this.segFrom[t], b = a + this.segmentFrames;
-            this.onSegment({ track: t, seq: this.win, index: this.segIndex[t]++, startFrame: this.win * this.F + a, samples: this.bufs[t].slice(a, b) });
+            this.onSegment({ track: t, seq: this.win, index: this.segIndex[t]++, startFrame: this.base + this.win * this.F + a, samples: this.bufs[t].slice(a, b) });
             this.segFrom[t] = b;
           }
         }
@@ -104,6 +122,6 @@ export class Chunker {
   private emit(track: TrackRole, frames: number, final: boolean): void {
     this.segIndex[track] = 0; this.segFrom[track] = 0;
     if (frames === 0) return;
-    this.onChunk({ track, seq: this.win, startFrame: this.win * this.F, samples: this.bufs[track].slice(0, frames), final });
+    this.onChunk({ track, seq: this.win, startFrame: this.base + this.win * this.F, samples: this.bufs[track].slice(0, frames), final });
   }
 }

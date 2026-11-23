@@ -597,6 +597,117 @@ console.log("=== reload mid-recording (tab crash): recover, nothing lost or dupl
   eq("a second reload finds nothing left to do", await c.r.recover(), []);
 }
 
+console.log("=== 23 Nov 2026: a reload mid-lesson RESUMES the same recording (Venus and Mars) ===");
+{
+  clock = Date.parse("2026-11-12T09:55:00.000Z");
+  const w = world();
+  const store = new R.MemoryStore(), src = new FakeSource();
+  const a = recorder(w, store, src);
+  await a.r.prepare();
+  const row = await a.r.arm(E(w));
+  a.r.tick(); await a.r.settle();
+  w.server.offline = true;              // the last chunks are still only on the laptop
+  await src.play(27, a.r);
+  a.r.kill();                           // the page reloads (stale chunk, crash...)
+  w.server.offline = false;
+  clock += 20000;                       // 20 s until the page is back
+  const src2 = new FakeSource();
+  const b = recorder(w, store, src2);
+  const resumeEvents = [];
+  b.r.on("resume", (e) => resumeEvents.push(e.status));
+  await b.r.prepare();
+  const ids = await b.r.recover({ resume: true });
+  await b.r.settle();
+  eq("the recording is picked up", ids, [row.id]);
+  eq("it is RECORDING again, the same recording", [b.r.state, b.r.recordingId], ["recording", row.id]);
+  eq("said loudly: resuming, then resumed", resumeEvents, ["resuming", "resumed"]);
+  eq("the server row was never stopped", w.server.recordings.get(row.id).status, "recording");
+  await src2.play(25, b.r);
+  await b.r.stop(); b.r.tick(); await b.r.settle();
+  const fin = w.server.recordings.get(row.id);
+  eq("one recording for the lesson, complete, stopped by the teacher", [fin.status, fin.stop_reason, w.server.recordings.size], ["complete", "manual", 1]);
+  for (const t of ["teacher", "room"]) {
+    const rows = w.server.chunkRows(row.id).filter((c) => c.track === t).sort((x, y) => x.seq - y.seq);
+    eq(`${t}: numbering has no hole`, rows.map((c) => c.seq), rows.map((_, i) => i));
+    eq(`${t}: before the reload, as recorded and salvaged`, rows.slice(0, 3).map((c) => [c.t_start_ms, c.t_end_ms]), [[0, 10000], [10000, 20000], [20000, 25000]]);
+    const after = rows[3];
+    ok(`${t}: after the reload the timeline is the server's (the 20 s + the unsaved 2 s are a gap, not shifted audio)`, after.t_start_ms >= 46000 && after.t_start_ms <= 48500, String(after.t_start_ms));
+    ok(`${t}: nothing overlaps`, rows.every((c, i) => i === 0 || c.t_start_ms >= rows[i - 1].t_end_ms));
+  }
+  const { samples } = await decodeTrack(w.server, row.id, "teacher");
+  ok("both parts of the lesson are on the server", Math.abs(samples.length / 48000 - 50) < 1.5, `${(samples.length / 48000).toFixed(1)} s`);
+  await b.r.dispose();
+}
+{
+  // The microphones do not open at once after the reload: NOT recording, said; tick() tries again.
+  clock = Date.parse("2026-11-12T09:55:00.000Z");
+  const w = world();
+  const store = new R.MemoryStore(), src = new FakeSource();
+  const a = recorder(w, store, src);
+  await a.r.prepare();
+  const row = await a.r.arm(E(w));
+  a.r.tick(); await a.r.settle();
+  await src.play(12, a.r);
+  a.r.kill();
+  clock += 5000;
+  class SlowMics extends FakeSource { async openTracks(ids) { if (this.refuse-- > 0) throw Object.assign(new Error("NotAllowedError: Permission denied"), { name: "NotAllowedError" }); return super.openTracks(ids); } }
+  const src2 = new SlowMics(); src2.refuse = 1;
+  const b = recorder(w, store, src2);
+  await b.r.prepare();
+  await b.r.recover({ resume: true }); await b.r.settle();
+  eq("mics not open yet: stalled (NOT recording), not stopped", [b.r.state, w.server.recordings.get(row.id).status], ["stalled", "recording"]);
+  ok("and it says why", b.errors.some((e) => /NOT RECORDING: the page was reloaded/.test(e.message)));
+  clock += 3000; b.r.tick(); await b.r.settle();
+  eq("next try opens them: recording again", b.r.state, "recording");
+  await src2.play(12, b.r);
+  await b.r.stop(); b.r.tick(); await b.r.settle();
+  eq("and it completes", w.server.recordings.get(row.id).status, "complete");
+  await b.r.dispose();
+}
+{
+  // Reloaded twice: the second salvage reads the resumed (offset) timeline right.
+  clock = Date.parse("2026-11-12T09:55:00.000Z");
+  const w = world();
+  const store = new R.MemoryStore();
+  let src = new FakeSource();
+  let h = recorder(w, store, src);
+  await h.r.prepare();
+  const row = await h.r.arm(E(w));
+  h.r.tick(); await h.r.settle();
+  for (let i = 0; i < 2; i++) {
+    await src.play(17, h.r);
+    h.r.kill(); clock += 9000;
+    src = new FakeSource(); h = recorder(w, store, src);
+    await h.r.prepare(); await h.r.recover({ resume: true }); await h.r.settle();
+  }
+  eq("after two reloads: recording, the same recording", [h.r.state, h.r.recordingId], ["recording", row.id]);
+  await src.play(12, h.r);
+  await h.r.stop(); h.r.tick(); await h.r.settle();
+  eq("two reloads: it completes", w.server.recordings.get(row.id).status, "complete");
+  const rows = w.server.chunkRows(row.id).filter((c) => c.track === "room").sort((x, y) => x.seq - y.seq);
+  eq("two reloads: numbering has no hole", rows.map((c) => c.seq), rows.map((_, i) => i));
+  ok("two reloads: nothing overlaps", rows.every((c, i) => i === 0 || c.t_start_ms >= rows[i - 1].t_end_ms), JSON.stringify(rows.map((c) => [c.t_start_ms, c.t_end_ms])));
+  await h.r.dispose();
+}
+{
+  // Reloaded after the lesson's planned stop: not resumed, finished as before (crash_recovered).
+  clock = Date.parse("2026-11-12T09:55:00.000Z");
+  const w = world();
+  const store = new R.MemoryStore(), src = new FakeSource();
+  const a = recorder(w, store, src);
+  await a.r.prepare();
+  const row = await a.r.arm(E(w), { stopAt: clock + 60000 });
+  a.r.tick(); await a.r.settle();
+  await src.play(12, a.r);
+  a.r.kill();
+  clock += 120000;
+  const b = recorder(w, store, new FakeSource());
+  await b.r.prepare();
+  await b.r.recover({ resume: true }); await b.r.settle();
+  eq("past its planned stop: finished, not resumed", [w.server.recordings.get(row.id).status, w.server.recordings.get(row.id).stop_reason], ["complete", "crash_recovered"]);
+  await b.r.dispose();
+}
+
 console.log("=== a microphone unplugged mid-recording ===");
 {
   clock = Date.parse("2026-11-12T09:55:00.000Z");

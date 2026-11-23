@@ -157,6 +157,8 @@ interface Active {
   ledgerFrames: number;
   ledgerWin: { p: number; d: number }[];
   ledgerBase: number | null;
+  /** 23 Nov 2026: a capture interrupted by a page reload, waiting for its microphones to open again. */
+  resuming?: boolean;
 }
 
 const ms = (iso: string) => Date.parse(iso);
@@ -336,6 +338,8 @@ export class Recorder {
     await this.saveRec(rec);
     const planned = plan(entry, this.o.window);
     this.active = this.newActive(rec, Math.min(opts.stopAt ?? Infinity, ms(row.capture_closes_at) - STOP_MARGIN_MS));
+    rec.plannedStopAt = this.active.stopAt;
+    await this.saveRec(rec);
     void planned;
     this.setState("armed");
     await this.acquireWakeLock();
@@ -358,6 +362,8 @@ export class Recorder {
   extend(untilMs: number) {
     if (!this.active) return;
     this.active.stopAt = Math.min(untilMs, ms(this.active.rec.captureClosesAt) - STOP_MARGIN_MS);
+    this.active.rec.plannedStopAt = this.active.stopAt;
+    void this.saveRec(this.active.rec);
   }
 
   /** Stop now. Stopping never needs permission. */
@@ -365,6 +371,7 @@ export class Recorder {
     const a = this.active;
     if (!a) return;
     if (!a.capturing) {
+      if (a.resuming) { await this.finishInterrupted(a, reason, "stopped by the teacher"); return; }
       if (a.rec.phase === "armed") {
         // Armed, nothing recorded: give the row up.
         await this.o.backend.abandon(a.rec.id, reason === "manual" ? "stopped before the lesson" : reason).catch((e) => this.events.emit("error", toRecorderError(e)));
@@ -404,7 +411,7 @@ export class Recorder {
    * Another account's recordings are not touched (M1): they are counted in
    * the `recovered` event's `othersPending` so the UI can say so.
    */
-  async recover(): Promise<string[]> {
+  async recover(opts: { resume?: boolean } = {}): Promise<string[]> {
     await this.takeLock();
     await this.adoptLegacy();
     const ids: string[] = [];
@@ -417,6 +424,27 @@ export class Recorder {
       // B4: a Stop refusal recorded by an older pass is reconsidered; the
       // server's answer decides again.
       if (rec.stopRefused || rec.stopNextAt) { rec.stopRefused = undefined; rec.stopNextAt = 0; await this.saveRec(rec); }
+      if (rec.phase === "capturing" && this.active?.rec.id !== rec.id && opts.resume && (await this.resumable(rec))) {
+        // 23 Nov 2026 (Venus and Mars): a reload or a crash no longer ends the
+        // lesson. The audio of the chunk in progress is rebuilt and stored, and
+        // capture carries on IN THE SAME RECORDING from where the server's clock
+        // says it is now; the minutes the page was gone are a stated gap.
+        await this.salvage(rec, "page_reload");
+        rec.resumes = (rec.resumes ?? 0) + 1;
+        rec.updatedAt = this.serverNow();
+        await this.saveRec(rec);
+        const a = this.newActive(rec, Math.min(rec.plannedStopAt ?? Infinity, ms(rec.captureClosesAt) - STOP_MARGIN_MS));
+        a.resuming = true;
+        this.active = a;
+        this.setState("stalled");
+        this.events.emit("resume", { recordingId: rec.id, status: "resuming" });
+        this.events.emit("error", new RecorderError("capture_stalled", "The page was reloaded during the lesson: the recording is being RESUMED - the microphones are opening again. If it does not say Recording in a few seconds, click anywhere on this page.", { detail: { resuming: true } }));
+        await this.acquireWakeLock();
+        this.serial(() => this.resumeCapture());
+        ids.push(rec.id);
+        void this.drive(rec.id);   // what was already on this laptop goes up meanwhile
+        continue;
+      }
       if (rec.phase === "capturing" && this.active?.rec.id !== rec.id) {
         await this.salvage(rec);
         rec.phase = "stopped"; rec.stopReason = "crash_recovered"; rec.stopPending = true;
@@ -811,6 +839,10 @@ export class Recorder {
       if (rec.phase === "armed" && !a.capturing && now >= ms(rec.captureOpensAt) && now < ms(rec.captureClosesAt) && perf - this.lastBeginTry > 2000) {
         this.lastBeginTry = perf;
         this.serial(() => this.beginCapture());
+      }
+      if (a.resuming && !a.capturing) {
+        if (now >= a.stopAt || now >= ms(rec.captureClosesAt) - STOP_MARGIN_MS) this.serial(() => this.finishInterrupted(a, "crash_recovered", "the lesson's recording time ended before the microphones opened again"));
+        else if (perf - this.lastBeginTry > 2000) { this.lastBeginTry = perf; this.serial(() => this.resumeCapture()); }
       }
       if (a.capturing && a.rec.startedAtServer && now >= a.stopAt) {
         this.serial(() => this.endCapture("scheduled_end"));
@@ -1608,7 +1640,7 @@ export class Recorder {
   }
 
   /** Rebuild the chunk that was in progress when the tab died, from its segments. */
-  private async salvage(rec: LocalRecording) {
+  private async salvage(rec: LocalRecording, why: "device_lost" | "page_reload" = "device_lost") {
     const chunks = await this.o.store.listChunks(rec.id);
     const segs = await this.o.store.listSegments(rec.id);
     const F = framesPerChunk(rec.sampleRate, rec.chunkMs);
@@ -1624,7 +1656,8 @@ export class Recorder {
         let off = 0;
         for (const s of contiguous) { samples.set(s.samples, off); off += s.samples.length; }
         const enc = await this.encoder.encode(rec.format, samples, rec.sampleRate);
-        const startFrame = next * F, endFrame = startFrame + total;
+        // The first segment's own frame: next * F on a fresh timeline, offset on a resumed one.
+        const startFrame = contiguous[0].startFrame ?? next * F, endFrame = startFrame + total;
         const meta: ChunkMeta = {
           recordingId: rec.id, track: t.track, seq: next, startFrame, endFrame, sampleRate: rec.sampleRate,
           tStartMs: frameToMs(startFrame, rec.sampleRate), tEndMs: frameToMs(endFrame, rec.sampleRate),
@@ -1638,7 +1671,120 @@ export class Recorder {
       for (const s of segs.filter((x) => x.track === t.track)) await this.o.store.deleteSegments(rec.id, t.track, s.seq);
       t.framesCaptured = Math.max(t.framesCaptured, t.framesWritten);
     }
-    rec.discontinuities.push({ t_ms: Math.max(0, ...rec.tracks.map((t) => frameToMs(t.framesWritten, rec.sampleRate))), kind: "device_lost", wall_gap_ms: 0 });
+    if (why === "device_lost") rec.discontinuities.push({ t_ms: Math.max(0, ...rec.tracks.map((t) => frameToMs(t.framesWritten, rec.sampleRate))), kind: "device_lost", wall_gap_ms: 0 });
+  }
+
+  /**
+   * 23 Nov 2026: may this recording, found capturing after a reload, carry on?
+   * Only a FLAC/WAV recording the server started and still has as `recording`
+   * (not asked to stop), inside its planned stop and the capture window.
+   * An unreadable row (offline) is resumed on the local facts: the server
+   * refuses what it must, and the audio is never thrown away.
+   */
+  private async resumable(rec: LocalRecording): Promise<boolean> {
+    if (rec.format === "opus-webm" || !rec.startedAtServer || !rec.tracks.length) return false;
+    if (this.active && this.active.rec.phase !== "complete" && this.active.rec.phase !== "abandoned") return false;
+    const now = this.serverNow();
+    const stopAt = Math.min(rec.plannedStopAt ?? Infinity, ms(rec.captureClosesAt) - STOP_MARGIN_MS);
+    if (now >= stopAt - 10000) return false;
+    const row = await this.o.backend.getRecording(rec.id).catch(() => undefined);
+    if (row === undefined) return true;
+    return !!row && row.status === "recording" && !row.stop_requested_at;
+  }
+
+  /**
+   * 23 Nov 2026: open the microphones again and go on in the same recording.
+   * The next chunk continues the numbering and starts where the server's clock
+   * says the recording is now (never before the last stored chunk ends), so
+   * the timeline stays the server's and nothing overlaps.
+   */
+  private async resumeCapture() {
+    const a = this.active;
+    if (!a || a.capturing || !a.resuming || this.disposed) return;
+    const rec = a.rec;
+    const devices = resolveProfile(this.o.profile, await this.o.source.listDevices());
+    if (devices.status !== "ok") {
+      const code = devices.status === "same_device" ? "same_device_twice" : devices.status === "ambiguous" ? "device_ambiguous" : "device_missing";
+      this.events.emit("error", new RecorderError(code, "NOT RECORDING: the page was reloaded and the saved microphones were not found. Plug them in - the recording resumes by itself.", { detail: devices }));
+      return; // tick() tries again
+    }
+    let opened: Record<TrackRole, TrackOpen>;
+    try {
+      opened = await this.o.source.openTracks({ teacher: devices.teacher.deviceId, room: devices.room.deviceId });
+    } catch (e) {
+      const err = toRecorderError(e);
+      this.events.emit("error", new RecorderError(err.code, `NOT RECORDING: the page was reloaded and the browser has not opened the microphones again (${err.message}). Click anywhere on this page and allow the microphones - the recording resumes by itself.`, { detail: err.detail }));
+      return; // tick() tries again
+    }
+    if (this.active !== a || !a.resuming || this.disposed) { if (this.active !== a || this.disposed) this.o.source.closeTracks(); return; }
+    for (const t of rec.tracks) {
+      const o = opened[t.track];
+      if (o && o.deviceId && o.deviceId !== t.deviceId) rec.discontinuities.push({ t_ms: 0, kind: "device_restored", wall_gap_ms: 0, track: t.track });
+    }
+    const chunks = (await this.o.store.listChunks(rec.id)).filter((c) => rec.tracks.some((t) => t.track === c.track));
+    const sr = rec.sampleRate;
+    const nextSeq = chunks.reduce((m, c) => Math.max(m, c.seq + 1), 0);
+    const lastEnd = Math.max(0, ...chunks.map((c) => c.endFrame), ...rec.tracks.map((t) => t.framesWritten));
+    const origin = ms(rec.startedAtServer!) - (rec.preStartMs ?? 0);
+    const serverPos = Math.floor(((this.serverNow() - origin) * sr) / 1000);
+    const from = Math.max(lastEnd, serverPos);
+    // A track whose chunk in progress could not be rebuilt would leave a hole in
+    // its numbering (the server counts 0..n-1): a short silence takes that number.
+    for (const t of rec.tracks) {
+      if (t.refusedFromSeq !== undefined) continue;
+      const mine = chunks.filter((c) => c.track === t.track);
+      let seq = mine.reduce((m, c) => Math.max(m, c.seq + 1), 0);
+      let end = Math.max(0, ...mine.map((c) => c.endFrame));
+      while (seq < nextSeq) {
+        const n = Math.max(1, Math.min(framesPerChunk(sr, rec.chunkMs), from - end));
+        const enc = await this.encoder.encode(rec.format, new Int16Array(n), sr);
+        const meta: ChunkMeta = {
+          recordingId: rec.id, track: t.track, seq, startFrame: end, endFrame: end + n, sampleRate: sr,
+          tStartMs: frameToMs(end, sr), tEndMs: frameToMs(end + n, sr), byteSize: enc.bytes.length, sha256: enc.sha256,
+          mime: enc.mime, ext: enc.ext, encoding: enc.encoding, state: "captured", attempts: 0, createdAt: this.serverNow(),
+        };
+        await this.o.store.addChunk(meta, enc.bytes).catch(() => null);
+        seq += 1; end += n;
+      }
+    }
+    const chunker = new Chunker(sr, rec.chunkMs, (c) => this.onRawChunk(c), (s) => this.onSegment(s));
+    const captured: Partial<Record<TrackRole, number>> = {};
+    for (const t of rec.tracks) captured[t.track] = t.framesCaptured;
+    chunker.startAt(nextSeq, from, captured);
+    chunker.setT0(this.o.source.lastFrame);
+    const gapMs = Math.round(frameToMs(from - lastEnd, sr));
+    rec.discontinuities.push({ t_ms: Math.round(frameToMs(lastEnd, sr)), kind: "page_reload", wall_gap_ms: gapMs });
+    const ts = this.o.source.timestamp();
+    rec.anchors.push({ t_ms: Math.round(frameToMs(from, sr)), context_time: ts.contextTime, performance_now: ts.performanceNow, date_now: this.o.now(), server_offset_ms: this.offsetMs });
+    rec.phase = "capturing";
+    rec.updatedAt = this.serverNow();
+    a.chunker = chunker;
+    a.capturing = true;
+    a.resuming = false;
+    a.lastAudioPerf = this.o.perfNow();
+    this.health.reset();
+    await this.saveRec(rec);
+    this.o.source.forward(true);
+    this.setState(this.capturingState(a));
+    void this.queueMarker("gap", `the page reloaded: no audio for ${Math.round(gapMs / 1000)} s`);
+    this.events.emit("resume", { recordingId: rec.id, status: "resumed", gapMs });
+    void this.drive(rec.id);
+  }
+
+  /** 23 Nov 2026: a capture that could not be resumed: the part already recorded is finished and sent. */
+  private async finishInterrupted(a: Active, reason: StopReason, why: string) {
+    if (!a.resuming || a.capturing) return;
+    a.resuming = false;
+    const rec = a.rec;
+    rec.phase = "stopped"; rec.stopReason = reason === "manual" ? "manual" : "crash_recovered"; rec.stopPending = true;
+    rec.clientEndedAt = new Date(this.o.now()).toISOString();
+    rec.updatedAt = this.serverNow();
+    await this.saveRec(rec);
+    this.o.source.closeTracks();
+    this.releaseWakeLock();
+    this.events.emit("resume", { recordingId: rec.id, status: "not_resumed", reason: why });
+    this.setState("uploading");
+    await this.drive(rec.id);
   }
 
   // ------------------------------------------------------------ devices
@@ -2042,7 +2188,7 @@ export class Recorder {
       window.addEventListener("focus", () => { this.lastEarlyTry = -1e15; this.tick(); });
       window.addEventListener("online", () => void this.kickUploads());
       window.addEventListener("beforeunload", (e) => {
-        if ((this.active && (this.active.capturing || this.active.rec.phase === "armed")) || this.parked.size) { e.preventDefault(); (e as any).returnValue = ""; }
+        if ((this.active && (this.active.capturing || this.active.resuming || this.active.rec.phase === "armed")) || this.parked.size) { e.preventDefault(); (e as any).returnValue = ""; }
       });
     }
   }

@@ -91,9 +91,10 @@ export interface Discontinuity {
    * context_stall: audio stopped arriving for wall_gap_ms (the timeline is NOT padded).
    * clock_change: the laptop's wall clock jumped by wall_gap_ms (timing does not use it).
    * local_store_failed: the browser would not store this track's chunk at t_ms; the track ends there.
+   * page_reload: the page was reloaded (or crashed) while capturing; capture resumed in the same recording after wall_gap_ms with no audio.
    * pre_start_trimmed: the server stamped its start wall_gap_ms after the page asked; that audio is not part of the recording.
    */
-  kind: "context_stall" | "clock_change" | "device_lost" | "device_restored" | "local_store_failed" | "pre_start_trimmed" | "pre_start";
+  kind: "context_stall" | "clock_change" | "device_lost" | "device_restored" | "local_store_failed" | "pre_start_trimmed" | "pre_start" | "page_reload";
   wall_gap_ms: number;
   /** context_stall: how much of the gap was filled with silence (C2 round 3, N-M2). pre_start: wall_gap_ms is the audio before the server's Start. */
   padded_ms?: number;
@@ -193,6 +194,10 @@ export interface LocalRecording {
   anchors: Anchor[];
   discontinuities: Discontinuity[];
   deviceProfileId?: string | null;
+  /** 23 Nov 2026: the planned stop (server time: the back-to-back rule or "Keep recording"), so a capture resumed after a reload stops where it would have. */
+  plannedStopAt?: number;
+  /** 23 Nov 2026: how many times capture was resumed in this recording after the page reloaded. */
+  resumes?: number;
   /** 22 Nov 2026: the teacher track comes from the teacher's phone; this laptop records only the room. */
   teacherOnPhone?: boolean;
   installId: string;

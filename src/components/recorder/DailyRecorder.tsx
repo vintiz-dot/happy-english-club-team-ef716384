@@ -77,6 +77,8 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const [clipping, setClipping] = useState<{ teacher: boolean; room: boolean }>({ teacher: false, room: false });
   const [stuck, setStuck] = useState<HeldAudio[]>([]);
   const [others, setOthers] = useState<{ recordings: number; bytes: number } | null>(null);
+  /** 23 Nov 2026: the page was reloaded during the lesson - the recording is resumed (or could not be). */
+  const [resumeNote, setResumeNote] = useState<{ status: "resuming" | "resumed" | "not_resumed"; gapMs?: number; reason?: string; at: number } | null>(null);
   const [discardFor, setDiscardFor] = useState<HeldAudio | null>(null);
   const [discardWord, setDiscardWord] = useState("");
   const [startingSince, setStartingSince] = useState<number | null>(null);
@@ -122,7 +124,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const offs = useRef<(() => void)[]>([]);
   useEffect(() => {
     const have = sessionFor(userId);
-    if (have) { rec.current = have; wire(have); setState(have.state); attachScreen(); }
+    if (have) { rec.current = have; wire(have); setState(have.state); attachScreen(); const rs = sessionState()?.resume; if (rs) setResumeNote(rs); }
     return () => { for (const off of offs.current) off(); offs.current = []; if (rec.current) detachScreen(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const active = state === "armed" || capturing || SAVING.includes(state);
@@ -154,6 +156,10 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     // Only this screen's lesson: earlier recordings being sent have their own panel (20 Nov 2026).
     r.on("upload", (p) => { if (!p?.recordingId || p.recordingId === r0.recordingId) setUpload(p); });
     r.on("error", showError);
+    r.on("resume", (e) => {
+      setResumeNote({ ...e, at: Date.now() });
+      if (e.status === "resumed") clearErrors(["capture_stalled"]);
+    });
     r.on("stop_requested", ({ reason }) => setStopAsked(reason === "switch_off" ? "Recording was switched off for this class. It is finishing and saving." : "This lesson was cancelled. The recording is finishing and saving."));
     r.on("health", (h: any) => {
       if (h.kind === "device_unplugged") setUnplugged((s) => new Set(s).add(h.track));
@@ -200,9 +206,10 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
       setDevices(p.devices);
       setSoundOk(p.contextRunning);
       setPrepared({ contextRunning: p.contextRunning, devicesOk: p.devices.status === "ok" });
-      startDay(dayDeps(client, userId, now));
       setNotDurable(r.durable === false);
-      await r.recover();
+      // 23 Nov 2026: a lesson that was capturing when the page reloaded carries on in the same recording.
+      await r.recover({ resume: true });
+      startDay(dayDeps(client, userId, now));
       setStuck((await r.heldAudio().catch(() => [] as HeldAudio[])).filter((h) => h.overLimit || !!h.deleteAt));
       if (r.state === "ready" || r.state === "idle") setState(r.state);
     } catch (e: any) {
@@ -280,6 +287,15 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
         >{e.view.body}</Notice>
       ))}
     </div>
+  ) : null;
+
+  // 23 Nov 2026: said loudly after a reload during the lesson (the "resumed" note for a minute).
+  const resumeBox = resumeNote && !(resumeNote.status === "resumed" && tick - resumeNote.at > 60_000) ? (
+    resumeNote.status === "resuming"
+      ? <Notice tone="error" title="Resuming the recording" role="alert">The page was reloaded during the lesson. The recorder is opening the microphones again and carries on in the same recording. If it does not say Recording in a few seconds, click anywhere on this page.</Notice>
+      : resumeNote.status === "resumed"
+        ? <Notice tone="ok" title="Recording resumed" role="status">{`The page was reloaded during the lesson. The recording carries on (${Math.round((resumeNote.gapMs ?? 0) / 1000)} s without audio while the page was gone).`}</Notice>
+        : <Notice tone="error" title="The recording could not go on" role="alert">{`The page was reloaded during the lesson and the recording could not resume (${resumeNote.reason ?? "unknown reason"}). Everything recorded before is being saved.`}</Notice>
   ) : null;
 
   // 20 Nov 2026: earlier recordings not all on the server - sent from this laptop (with progress and Send now), or held on another one.
@@ -402,6 +418,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
               A crash would lose the audio. Open this page in Google Chrome or Microsoft Edge (not a private window). Lessons are not recorded here.
             </Notice>
           ) : null}
+          {resumeBox}
           {errorBox}
           {heldBox}
           {earlierBox}

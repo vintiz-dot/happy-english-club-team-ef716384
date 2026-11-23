@@ -275,6 +275,9 @@ const SUITES = [
   // Pixel Pal child probably is, and how the record log is read and sliced.
   { name: "stars link tool", file: "stars-link.test.mjs", migrations: [] },
   { name: "stars records", file: "stars-records.test.mjs", migrations: [] },
+  // 23 Nov 2026: every breadcrumb opens a real route; a stale chunk reloads the page in place.
+  { name: "breadcrumbs", file: "breadcrumbs.test.mjs", migrations: [] },
+  { name: "chunk reload", file: "chunk-reload.test.mjs", migrations: [] },
   // The leaderboard: one calculation for every board (rank, ties, periods,
   // categories, level, streak, what a family sees of classmates, the TV).
   { name: "leaderboard engine", file: "leaderboard.test.mjs", migrations: ["20261117120000_leaderboard_engine.sql", "20261117130000_leaderboard_review_fixes.sql", "20261117140000_leaderboard_recheck_fixes.sql"] },
