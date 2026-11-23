@@ -117,7 +117,8 @@ const PINNED = {
   // 3 since 23 Nov 2026: a held bill (lessons with no mark) writes only its flags, labels and balances, never base / discount / total.
   'supabase/functions/calculate-tuition/index.ts invoices upsert': 3,
   'supabase/functions/close-payroll-month/index.ts payroll_periods update': 1,
-  'supabase/functions/compute-sibling-discounts/index.ts sibling_discount_state upsert': 3,
+  // One call site since 23 Nov 2026: every state the function saves goes through saveState.
+  'supabase/functions/compute-sibling-discounts/index.ts sibling_discount_state upsert': 1,
   'supabase/functions/confirm-tuition/index.ts invoices update': 2,
   'supabase/functions/delete-payment/index.ts ledger_entries insert': 1,
   'supabase/functions/delete-payment/index.ts payment_deletions insert': 1,
