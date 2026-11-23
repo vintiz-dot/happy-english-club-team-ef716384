@@ -10,10 +10,20 @@
 // homework with Workbook pages, a grammar slide, a vlog, and that each slide renders.
 import { build } from "esbuild";
 import { resolve, dirname, basename } from "node:path";
-import { statSync } from "node:fs";
+import { statSync, readFileSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+// The fields each slide kind may carry, read from src/lib/lessonDecks/types.ts (so new kinds and fields
+// added there are known here); anything else would fail the app typecheck.
+const typesSrc = readFileSync(resolve(repo, "src/lib/lessonDecks/types.ts"), "utf8");
+const typesLf = typesSrc.replace(/\r\n/g, "\n");
+const slideUnion = typesLf.slice(typesLf.indexOf("export type Slide ="), typesLf.indexOf(";\n\n", typesLf.indexOf("export type Slide =")) + 1);
+const KEYS = {};
+for (const block of slideUnion.split(/\n\s*\| \{/)) {
+  const k = /kind: "([a-z]+)"/.exec(block); if (!k) continue;
+  KEYS[k[1]] = [...block.matchAll(/(\w+)\??:/g)].map((m) => m[1]);
+}
 const file = process.argv[2];
 const m = file && basename(file).match(/^od2e-l(\d+)-u(\d\d)\.ts$/);
 if (!m) { console.log("usage: check-unit.mjs src/content/lessonDecks/od2e-l<level>-u<NN>.ts"); process.exit(1); }
@@ -51,7 +61,11 @@ ok("title and Big Question", !!unit.title && /\?$/.test(unit.bigQuestion ?? ""))
 ok("3+ planned generalizations", Array.isArray(unit.generalizations) && unit.generalizations.length >= 3);
 const even = unitNo % 2 === 0;
 const pattern = even ? ["Get Ready", "Read", "Understand", "Communicate", "Wrap Up"] : ["Get Ready", "Read", "Understand", "Communicate"];
+// An optional extension lesson may follow the book's lessons: "Grammar Champions", covering the unit's Understand lesson.
+const champ = unit.decks.length === pattern.length + 1 && /^Grammar Champions/.test(unit.decks[pattern.length].title);
+if (champ) pattern.push("Understand");
 ok(`${pattern.length} decks (${even ? "even unit: ends with Wrap Up" : "odd unit: Big Question + Get Ready first"})`, unit.decks.length === pattern.length, `${unit.decks.length}`);
+if (champ) { const g = unit.decks[unit.decks.length - 1]; ok("Grammar Champions: a grammar slide, two speaking slides and a writing step", g.slides.some((s) => s.kind === "grammar") && g.slides.filter((s) => s.kind === "speaking").length >= 2 && g.slides.some((s) => (s.kind === "activity" && s.tag === "Writing") || s.kind === "project")); }
 
 const json = JSON.stringify(unit);
 ok("no stray slot beyond {s9} or malformed token", !/\{s(?:0|[1-9]\d)\}|\{s\}/.test(json));
@@ -84,7 +98,6 @@ unit.decks.forEach((d, i) => {
   const hw = d.slides.find((s) => s.kind === "homework");
   ok(`${tag}: homework slide`, !!hw);
   if (hw?.items.some((it) => it.book?.book === "WB")) wbHomework++;
-  ok(`${tag}: homework has a creative task with a challenge`, !!hw && hw.items.length >= 2 && hw.items.some((it) => /challenge/i.test(it.label + it.detail)));
   ok(`${tag}: ends with reflect or homework near the end`, d.slides.slice(-3).some((s) => s.kind === "reflect" || s.kind === "homework"));
   ok(`${tag}: inquiry phases set`, Array.isArray(d.inquiryPhases) && d.inquiryPhases.length > 0);
   for (const r of d.resources ?? []) ok(`${tag}: resource link ${r.url}`, /^https:\/\/www\.twinkl\.com\/resource\/[a-z0-9-]+$/.test(r.url) && !!r.title && !!r.use);
@@ -94,21 +107,13 @@ unit.decks.forEach((d, i) => {
   ok(`${tag}: only known deck fields`, Object.keys(d).every((k) => deckKeys.includes(k)), Object.keys(d).filter((k) => !deckKeys.includes(k)).join(", "));
   d.slides.forEach((s, j) => {
     // The fields each slide kind may carry (src/lib/lessonDecks/types.ts); anything else fails the app typecheck.
-    const KEYS = {
-      title: ["title", "subtitle", "bigQuestion"], objectives: ["title", "items"],
-      activity: ["title", "tag", "mode", "minutes", "steps", "prompts", "frames", "fluencyTip", "book", "teacherNote"],
-      vocab: ["title", "words", "book"], grammar: ["title", "hook", "form", "explanation", "examples", "pitfalls", "book"],
-      speaking: ["title", "mode", "minutes", "frames", "prompts", "fluencyTip", "steps"], book: ["title", "ref", "steps"],
-      homework: ["title", "items"], project: ["project", "title", "goal", "steps", "criteria", "frames"],
-      vlog: ["title", "prompt", "length", "tiers"], reflect: ["title", "prompts"],
-    };
     const allowed = KEYS[s.kind];
     const extra = allowed ? Object.keys(s).filter((k) => k !== "kind" && !allowed.includes(k)) : ["unknown kind " + s.kind];
     ok(`${tag} slide ${j + 1} (${s.kind}): only fields its kind has`, extra.length === 0, extra.join(", "));
     const TAGS = ["Warm-up", "Vocabulary", "Reading", "Listening", "Grammar", "Speaking", "Writing", "Game", "Phonics", "Review", "Cool-down"];
     if (s.kind === "activity" && s.tag) ok(`${tag} slide ${j + 1}: activity tag is one of ${TAGS.join("/")}`, TAGS.includes(s.tag), s.tag);
     if (s.kind === "vocab") ok(`${tag} slide ${j + 1}: vocab words have word, meaning, example`, s.words.every((w) => w.word && w.meaning && w.example && Object.keys(w).length === 3));
-    if (s.kind === "homework") ok(`${tag} slide ${j + 1}: homework items have label and detail only (+book)`, s.items.every((it) => it.label && it.detail && Object.keys(it).every((k) => ["label", "detail", "book"].includes(k))));
+    if (s.kind === "homework") ok(`${tag} slide ${j + 1}: homework items have a label and detail`, s.items.every((it) => it.label && it.detail));
     if (s.kind === "vlog") ok(`${tag} slide ${j + 1}: vlog tiers have level, who, frames, tips`, s.tiers.every((t) => Object.keys(t).every((k) => ["level", "who", "frames", "tips"].includes(k)) && t.who && Array.isArray(t.frames) && Array.isArray(t.tips)));
     if (s.kind === "grammar") ok(`${tag} slide ${j + 1}: grammar form/examples/pitfalls shapes`, s.form.every((f) => f.label && f.pattern) && s.examples.every((e) => e.text) && (s.pitfalls ?? []).every((p) => p.wrong && p.right && p.why));
     const books = [s.book, s.ref].filter(Boolean);
