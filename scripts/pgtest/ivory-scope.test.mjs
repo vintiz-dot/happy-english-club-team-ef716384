@@ -43,13 +43,13 @@ eq("complete: OAuth consent", isIvoryRoute("/.lovable/oauth/consent"), true);
 eq("complete: unknown admin tab", isIvoryRoute("/admin", "?tab=nope"), true);
 eq("complete: /dashboard as family", isIvoryRoute("/dashboard", "", undefined, undefined, "family"), true);
 eq("complete: / while the role is unknown", isIvoryRoute("/"), true);
-eq("complete: audit clips stays outside", isIvoryRoute("/admin", "?tab=audit-clips"), false);
-eq("complete: audit clips stays outside for an admin", isIvoryRoute("/admin", "?tab=audit-clips", undefined, undefined, "admin"), false);
-eq("complete: recorder stays outside", isIvoryRoute("/teacher/recorder", "", undefined, undefined, "teacher"), false);
-eq("complete: recorder, trailing slash", isIvoryRoute("/teacher/recorder/"), false);
-eq("complete: public feedback page stays outside", isIvoryRoute("/feedback"), false);
+eq("complete: audit clips released (23 Nov)", isIvoryRoute("/admin", "?tab=audit-clips"), true);
+eq("complete: audit clips released for an admin", isIvoryRoute("/admin", "?tab=audit-clips", undefined, undefined, "admin"), true);
+eq("complete: recorder released", isIvoryRoute("/teacher/recorder", "", undefined, undefined, "teacher"), true);
+eq("complete: recorder, trailing slash", isIvoryRoute("/teacher/recorder/"), true);
+eq("complete: public feedback page released", isIvoryRoute("/feedback"), true);
 eq("complete: admin overview still in", isIvoryRoute("/admin", "?tab=overview"), true);
-eq("complete: an empty outside list leaves nothing out", isIvoryRoute("/teacher/recorder", "", [], true, "teacher", []), true);
+eq("complete: an outside entry still keeps a screen out", isIvoryRoute("/teacher/recorder", "", [], true, "teacher", [{ path: "/teacher/recorder" }]), false);
 // Below: the registry itself (the record of what flipped when), read with complete = false.
 const listedIn = (p, s = "", R = undefined, _c = false, role = null) => isIvoryRoute(p, s, R, false, role);
 eq("student dashboard", listedIn("/student/dashboard"), true);
@@ -64,13 +64,13 @@ eq("admin overview, no tab", listedIn("/admin"), true);
 eq("admin overview, ?tab=overview", listedIn("/admin", "?tab=overview"), true);
 for (const t of ["classes", "assignments", "journal", "exam-reports", "finance", "reports", "account", "automation", "data", "activity", "announcements", "stars-sync", "ai-actions"])
   eq(`admin ?tab=${t}`, listedIn("/admin", `?tab=${t}`), true);
-eq("admin audit clips stays old (owner has not released it)", listedIn("/admin", "?tab=audit-clips"), false);
+eq("admin audit clips listed (released 23 Nov)", listedIn("/admin", "?tab=audit-clips"), true);
 eq("admin unknown tab stays old", listedIn("/admin", "?tab=nope"), false);
 for (const p of ["/admin/classes/c-1", "/admin/tuition-review", "/students", "/students/s-1", "/students/s-1/tuition", "/teachers", "/teachers/t-1", "/classes", "/families", "/families/f-1", "/board-window/c-1"])
   eq(`${p} (admin)`, listedIn(p, "", undefined, false, "admin"), true);
 for (const p of ["/teacher/dashboard", "/teacher/classes/c-1", "/teacher/payroll", "/teacher/attendance", "/teacher/assignments", "/teacher/journal", "/teacher/exam-reports", "/teacher/leaderboards", "/teacher/resources", "/teacher/vocabulary-audit", "/teacher/books", "/teacher/language-support", "/teacher/smart-upload", "/teacher/transcripts", "/teacher/videos"])
   eq(`${p} (teacher)`, listedIn(p, "", undefined, false, "teacher"), true);
-eq("teacher recorder stays old (owner has not released it)", listedIn("/teacher/recorder", "", undefined, false, "teacher"), false);
+eq("teacher recorder listed (released 23 Nov)", listedIn("/teacher/recorder", "", undefined, false, "teacher"), true);
 eq("/schedule as admin", listedIn("/schedule", "", undefined, false, "admin"), true);
 eq("/schedule as teacher", listedIn("/schedule", "", undefined, false, "teacher"), true);
 eq("/schedule as family flipped (R24)", listedIn("/schedule", "", undefined, false, "family"), true);
