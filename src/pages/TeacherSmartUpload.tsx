@@ -589,7 +589,8 @@ export default function TeacherSmartUpload() {
     onSuccess: (decision, { work }) => {
       toast.success(decision === "approved" ? "Approved — now visible on the student's profile" : "Rejected");
       // effects only: a rejection never asks for a Seal
-      if (decision === "approved") pendingSeal.current = { id: work.id, at: Date.now() };
+      // the last decision taken decides: a rejection clears any earlier approval's wait
+      pendingSeal.current = decision === "approved" ? { id: work.id, at: Date.now() } : null;
       refetchQueue();
       // Approved work is new journey evidence — refresh the living profile
       // in the background (fire-and-forget).
@@ -659,11 +660,13 @@ export default function TeacherSmartUpload() {
     prevQueueLen.current = reviewQueue.length;
     const pending = pendingSeal.current;
     if (!pending) return;
-    if (reviewQueue.some((w) => w.id === pending.id)) {
-      // not refreshed yet; give up on a stale wait after 20 s
-      if (Date.now() - pending.at > 20_000) pendingSeal.current = null;
+    // a wait older than 20 s is stale: clear it, no seal
+    if (Date.now() - pending.at > 20_000) {
+      pendingSeal.current = null;
       return;
     }
+    // not refreshed yet
+    if (reviewQueue.some((w) => w.id === pending.id)) return;
     pendingSeal.current = null;
     if (before !== null && before >= 1 && reviewQueue.length === 0) showSeal("All reviewed");
   }, [reviewQueue]);
