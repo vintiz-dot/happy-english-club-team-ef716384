@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, ListChecks, Loader2, Mic, Settings2, Users } from "lucide-react";
+import { Flag, ListChecks, Loader2, Mic, Settings2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,9 +25,10 @@ import {
 import type { ChunkMeta, DeviceProfile, HeldAudio, Level, ProfileResolution, RecorderError, RecorderState, TrackRole, UploadProgress, MarkerKind } from "@/lib/recorder";
 import { useRecorderDeps } from "./RecorderDeps";
 import type { RecorderLike } from "./engine";
-import { dayDeps, fetchClassSwitch, fetchEnrolled, fetchMissingConsentCount, fetchOwnUnfinished, fetchRecorderSettings, fetchTodayLessons } from "./data";
+import { dayDeps, fetchClassSwitch, fetchMissingConsentCount, fetchOwnUnfinished, fetchRecorderSettings, fetchTodayLessons } from "./data";
 import { LevelMeter, MicTick, Notice, Status } from "./pieces";
 import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
+import { SpeakerTapPanel } from "@/components/speakers/SpeakerTapPanel";
 import { adopt, askNotifications, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, resendHeld, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
 
 // `stalled` is a capturing state: Stop stays, the screen must not be left (C2 review 2, item 1).
@@ -57,7 +58,6 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const w = settings.data ?? { preRoll: 5, grace: 10, armWindow: 20 };
   const lesson = useMemo(() => pickLesson(lessons.data ?? [], tick, w), [lessons.data, tick, w]);
   const switchQ = useQuery({ queryKey: ["recorder-switch", lesson?.classId], enabled: !!lesson, queryFn: () => fetchClassSwitch(client, lesson!.classId), refetchInterval: 60_000 });
-  const kids = useQuery({ queryKey: ["recorder-kids", lesson?.classId, today], enabled: !!lesson, queryFn: () => fetchEnrolled(client, [lesson!.classId], today) });
 
   const [profile, setProfile] = useState<DeviceProfile | null>(() => engine.loadProfile(userId));
   // No setup: the backup recorder is suggested only when the server counts no child without permission today.
@@ -381,7 +381,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const ss = sessionState();
 
   return (
-    <div className={cn("space-y-5", capturing && "pb-28")}>
+    <div className={cn("space-y-5", capturing && "pb-14")}>
       {lesson ? (
         <header className="space-y-1">
           <h2 className="text-2xl font-semibold break-words">{lessonHeadline(lesson, w)}</h2>
@@ -482,7 +482,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
                     <a href={`/teacher/speakers/${lesson.sessionId}`} target="_blank" rel="noopener noreferrer" className="underline font-medium">
                       Open "Who's speaking"
                     </a>{" "}
-                    - the TA taps who talks, on a phone: {typeof window !== "undefined" ? window.location.origin : ""}/teacher/speakers/{lesson.sessionId}
+                    - the same board on a phone, for a TA: {typeof window !== "undefined" ? window.location.origin : ""}/teacher/speakers/{lesson.sessionId}
                   </p>
                 ) : null}
                 <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
@@ -490,24 +490,18 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
                   <Button variant="outline" className="min-h-16 text-base whitespace-normal" onClick={() => void addMarker("roll_call_end", "Roll-call end")}><ListChecks className="h-5 w-5 mr-2 shrink-0" aria-hidden /> Roll-call end</Button>
                   <Button variant="outline" className="min-h-16 text-base whitespace-normal" onClick={() => void addMarker("activity", "Activity")}><Flag className="h-5 w-5 mr-2 shrink-0" aria-hidden /> Activity</Button>
                 </div>
-                {kids.data && kids.data.length ? (
-                  <details className="rounded-hec-lg border border-hec-line p-3">
-                    <summary className="cursor-pointer min-h-11 flex items-center gap-2 font-medium"><Users className="h-5 w-5" aria-hidden /> Tap a child's name when they speak (optional)</summary>
-                    <div className="flex flex-wrap gap-2 pt-3">
-                      {kids.data.map((k) => (
-                        <Button key={k.student_id} variant="secondary" className="min-h-11 h-auto py-2 whitespace-normal text-left break-words max-w-full" onClick={() => void addMarker("student_name", k.name, k.student_id)}>
-                          {k.name}
-                        </Button>
-                      ))}
-                    </div>
-                  </details>
-                ) : null}
                 {marks.length ? (
                   <ul className="text-sm text-hec-ink-soft space-y-1" aria-live="polite">
                     {marks.map((m) => <li key={m.id} className="break-words">Marked: {m.text}{m.at ? ` at ${m.at}` : ""}</li>)}
                   </ul>
                 ) : null}
               </section>
+              {lesson ? (
+                <section aria-labelledby="sp-h" className="space-y-2 rounded-hec-lg border border-hec-line p-3">
+                  <h3 id="sp-h" className="text-lg font-semibold">Who's speaking</h3>
+                  <SpeakerTapPanel sessionId={lesson.sessionId} embedded />
+                </section>
+              ) : null}
               <p className="text-sm text-hec-ink-soft">The {w.preRoll} minutes before the lesson and the {w.grace} minutes after it are recorded, but they do not count as lesson time.</p>
             </>
           ) : null}

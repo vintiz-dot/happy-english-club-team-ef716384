@@ -746,7 +746,7 @@ function redraw() {
   if (!el) {
     el = document.createElement("div");
     el.id = BAR_ID;
-    el.className = "fixed inset-x-0 bottom-0 border-t-4 bg-foreground text-background shadow-lg";
+    el.className = "fixed inset-x-0 bottom-0 border-t-2 bg-foreground text-background shadow-lg";
     // Above any dialog or full-screen content, and clickable while a modal dialog disables the page.
     el.style.zIndex = "2147483647";
     el.style.pointerEvents = "auto";
@@ -761,15 +761,15 @@ function redraw() {
   el.classList.toggle("border-warning", !m.redDot && !m.alert);
   el.replaceChildren();
   const row = document.createElement("div");
-  row.className = "max-w-3xl mx-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3";
+  row.className = "max-w-3xl mx-auto flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1";
   const text = document.createElement("span");
-  text.className = "text-lg font-bold break-words min-w-0";
+  text.className = "text-sm font-semibold break-words min-w-0";
   text.textContent = `${m.redDot ? "● " : m.alert ? "⚠ " : ""}${m.text}`;
   row.appendChild(text);
   const button = (label: string, cls: string, fn: () => void) => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = `min-h-11 rounded-md px-4 font-semibold ${cls}`;
+    b.className = `h-8 rounded-md px-3 text-sm font-semibold ${cls}`;
     b.textContent = label;
     b.onclick = fn;
     row.appendChild(b);
