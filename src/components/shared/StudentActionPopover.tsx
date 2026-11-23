@@ -25,11 +25,14 @@ import {
   XCircle,
   AlertTriangle,
   ChevronLeft,
+  Lock,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { heldRefusedText } from "@/lib/lessonPayGuard";
+import { functionRefusalText } from "@/lib/moneyGuard";
+import { useAttendanceProof } from "@/hooks/useAttendanceProof";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { awardPoints, getTodaySession } from "@/lib/pointsHelper";
@@ -165,7 +168,7 @@ export function StudentActionPopover({
       const { data, error } = await supabase.functions.invoke("mark-attendance", {
         body: { sessionId: live.sessionId, studentId, status },
       });
-      if (error) throw error;
+      if (error) throw new Error(await functionRefusalText(error, "Attendance failed"));
       if (data?.error) throw new Error(data.error);
       // D4 step 3A (review N-2): the marks are saved; a refused Held flip is said.
       const notHeld = heldRefusedText(data);
@@ -180,6 +183,9 @@ export function StudentActionPopover({
     },
     onError: (error: any) => {
       toast.error("Attendance failed", { description: error.message });
+      // Show the mark the register really holds.
+      invalidateLive();
+      queryClient.invalidateQueries({ queryKey: ["attendance-proof"] });
     },
   });
 
@@ -245,6 +251,9 @@ export function StudentActionPopover({
     return null;
   };
 
+  const proof = useAttendanceProof(live?.sessionId);
+  const absentLocked = !!studentId && proof.locked(studentId);
+  const proofReason = proof.reason(studentId);
   const isBusy = awardPointsMutation.isPending || attendanceMutation.isPending || flagMutation.isPending;
   const initials = studentName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
@@ -303,11 +312,12 @@ export function StudentActionPopover({
                     <Clock className="h-4 w-4" />Late
                   </button>
                   <button
-                    disabled={isBusy}
+                    disabled={isBusy || absentLocked}
+                    title={absentLocked ? proofReason ?? undefined : undefined}
                     onClick={() => attendanceMutation.mutate("Absent")}
                     className={cn(SAP_STATE_BUTTON, "border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:border-hec-danger")}
                   >
-                    <XCircle className="h-4 w-4" />Absent
+                    {absentLocked ? <Lock className="h-4 w-4" aria-hidden /> : <XCircle className="h-4 w-4" />}Absent
                   </button>
                 </div>
               )}

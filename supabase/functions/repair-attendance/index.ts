@@ -76,6 +76,29 @@ Deno.serve(async (req) => {
     if (!plan?.allowed) {
       return fail(guardError(409, plan?.refuse_code ?? "refused", `Refused: ${plan?.refuse_code ?? "refused"}.`), { preview: plan });
     }
+    // Absent or Excused is not written for a lesson where there is proof the child
+    // was in the room (attendance_proof_for_session). A missing or failing RPC
+    // changes nothing: the repair goes ahead as before.
+    if (defaultStatus !== "Present" && sessions.length > 0) {
+      try {
+        const proven: Array<{ student_id: string; summary: string }> = [];
+        for (const l of sessions.slice(0, 80)) {
+          const { data: rows, error: proofError } = await asCaller.rpc("attendance_proof_for_session", { p_session_id: l.id });
+          if (proofError || !Array.isArray(rows)) continue;
+          const hit = (rows as any[]).find((r) => r?.strength === "proof" && r.student_id === studentId);
+          if (hit) proven.push({ student_id: studentId, summary: `${l.date}: ${String(hit.summary ?? "")}` });
+        }
+        if (proven.length > 0) {
+          return json({
+            error: "attendance_proof",
+            message: `This child was in the lesson on ${proven.map((p) => p.summary).join("; ")}. If that is a mistake, remove it first, then repair with Absent or Excused.`,
+            students: proven,
+          }, 409);
+        }
+      } catch (e) {
+        console.warn("attendance proof check skipped:", e);
+      }
+    }
     if (parsed.data.preview) {
       return json({ preview: true, message: `${sessions.length} attendance records would be added`, inserted: 0, sessions, plan });
     }

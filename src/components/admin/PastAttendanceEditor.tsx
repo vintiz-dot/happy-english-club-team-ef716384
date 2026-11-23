@@ -14,9 +14,51 @@ import { cn } from "@/lib/utils";
 import { editsAfterSave, moneyErrorText, needsMoneyDialog } from "@/lib/moneyGuard";
 import { useMoneyChange } from "@/components/admin/money-guard/useMoneyChange";
 import { MoneyGuardDialog } from "@/components/admin/money-guard/MoneyGuardDialog";
+import { useAttendanceProof } from "@/hooks/useAttendanceProof";
+import { ProofLock } from "@/components/attendance/ProofLock";
+import { nextStatus, proofRefusalFromBody, refusedBatchText } from "@/lib/attendanceProof";
 
 interface PastAttendanceEditorProps {
   classId: string;
+}
+
+// One lesson's rows. Its own component so each lesson asks for its own proof (a hook per lesson).
+function LessonRegister({ sessionId, rows, edits, colorFor, onToggle }: {
+  sessionId: string;
+  rows: any[];
+  edits?: Record<string, string>;
+  colorFor: (status: string) => string;
+  onToggle: (studentId: string, currentStatus: string, locked: boolean) => void;
+}) {
+  const proof = useAttendanceProof(sessionId);
+  return (
+    <div className="space-y-2">
+      {rows.map((att: any) => {
+        const currentStatus = edits?.[att.student_id] || att.status;
+        const reason = proof.reason(att.student_id);
+        return (
+          <div
+            key={att.id}
+            className="flex min-h-hec-target items-start justify-between gap-3 rounded-hec-md border border-hec-line bg-hec-surface px-4 py-2"
+          >
+            <span className="min-w-0 flex-1 self-center whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink">{att.students?.full_name}</span>
+            {reason && <ProofLock reason={reason} />}
+            {/* Was a clickable badge (not reachable by keyboard); same handler. */}
+            <button
+              type="button"
+              className={cn(
+                "inline-flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center rounded-full border px-4 text-hec-caption font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                colorFor(currentStatus),
+              )}
+              onClick={() => onToggle(att.student_id, currentStatus, !!reason)}
+            >
+              {currentStatus}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
@@ -89,9 +131,15 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
         // D4 step 3A (review N-2): the marks are saved; a refused Held flip is said.
         const notHeld = heldRefusedText(data);
         if (notHeld) toast.warning(notHeld);
+        const nameOf = (id: string) =>
+          (sessions ?? []).flatMap((ss: any) => ss.attendance ?? []).find((a: any) => a.student_id === id)?.students?.full_name;
+        const kept = refusedBatchText(data, nameOf);
+        if (kept) toast.warning(kept);
         return { saved: true };
       }
       const body = await readBody(error);
+      const proofText = proofRefusalFromBody(body);
+      if (proofText) throw new Error(proofText);
       if (needsMoneyDialog(body)) {
         guard.open(
           { entity: "attendance", op: "set_marks",
@@ -109,6 +157,10 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update attendance");
+      // Show the marks the register really holds, not the ones that were refused.
+      setAttendance({});
+      queryClient.invalidateQueries({ queryKey: ["past-attendance-sessions", classId, selectedMonth] });
+      queryClient.invalidateQueries({ queryKey: ["attendance-proof"] });
     },
   });
 
@@ -131,16 +183,14 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
     }
   };
 
-  const toggleAttendance = (sessionId: string, studentId: string, currentStatus: string) => {
-    const statuses = ["Present", "Absent", "Excused"];
-    const currentIndex = statuses.indexOf(currentStatus);
-    const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+  const toggleAttendance = (sessionId: string, studentId: string, currentStatus: string, locked = false) => {
+    const next = nextStatus(currentStatus, locked);
 
     setAttendance((prev) => ({
       ...prev,
       [sessionId]: {
         ...prev[sessionId],
-        [studentId]: nextStatus,
+        [studentId]: next,
       },
     }));
   };
@@ -218,30 +268,13 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
                 </CardHeader>
                 <CardContent>
                   {session.attendance && session.attendance.length > 0 ? (
-                    <div className="space-y-2">
-                      {session.attendance.map((att: any) => {
-                        const currentStatus = attendance[session.id]?.[att.student_id] || att.status;
-                        return (
-                          <div
-                            key={att.id}
-                            className="flex min-h-hec-target items-start justify-between gap-3 rounded-hec-md border border-hec-line bg-hec-surface px-4 py-2"
-                          >
-                            <span className="min-w-0 flex-1 self-center whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink">{att.students?.full_name}</span>
-                            {/* Was a clickable badge (not reachable by keyboard); same handler. */}
-                            <button
-                              type="button"
-                              className={cn(
-                                "inline-flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center rounded-full border px-4 text-hec-caption font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
-                                attendanceColor(currentStatus),
-                              )}
-                              onClick={() => toggleAttendance(session.id, att.student_id, currentStatus)}
-                            >
-                              {currentStatus}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <LessonRegister
+                      sessionId={session.id}
+                      rows={session.attendance}
+                      edits={attendance[session.id]}
+                      colorFor={attendanceColor}
+                      onToggle={(studentId, currentStatus, locked) => toggleAttendance(session.id, studentId, currentStatus, locked)}
+                    />
                   ) : (
                     <p className="text-hec-small text-hec-ink-soft">No attendance records</p>
                   )}
