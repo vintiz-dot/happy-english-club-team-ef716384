@@ -88,6 +88,9 @@ const SUITES = [
   { name: "leftover dong", file: "leftover-dong.test.mjs", migrations: ["20261117121000_record_admin_payment.sql", "20261113090000_invoice_paid_label.sql", "20261121090000_recorded_payment_guard.sql"] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   { name: "class finance tuition", file: "class-tuition.test.mjs", migrations: [] },
+  // Finance > Recorded and Reports > Executive: the early-warning checks on
+  // a month's money (bill vs payments, payments vs ledger, labels, register).
+  { name: "payment checks", file: "payment-checks.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
   // the lesson, in both calculators, whatever order the rows are fetched in.
   { name: "enrollment row order", file: "enrollment-order.test.mjs", migrations: [] },
