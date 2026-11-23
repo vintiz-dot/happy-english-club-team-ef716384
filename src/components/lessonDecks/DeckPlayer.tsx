@@ -329,7 +329,7 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
   const mm = timer.left !== null ? `${Math.floor(Math.max(0, timer.left) / 60)}:${String(Math.max(0, timer.left) % 60).padStart(2, "0")}` : "";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-hec-paper" role="dialog" aria-label={deck.title}>
+    <div data-deck-player className="fixed inset-0 z-50 flex flex-col bg-hec-paper" role="dialog" aria-label={deck.title}>
       <div className="flex items-center justify-between gap-2 border-b border-hec-line bg-hec-surface px-4 py-2">
         <div className="min-w-0">
           <p className="truncate font-medium text-hec-ink">{deck.title}</p>
@@ -381,7 +381,8 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between border-t border-hec-line bg-hec-surface px-4 py-2">
+      {/* Room on the right for the classroom tools button, which floats above the deck. */}
+      <div className="flex items-center justify-between border-t border-hec-line bg-hec-surface py-2 pl-4 pr-20 md:pr-24">
         <Button variant="outline" onClick={() => go(-1)} disabled={i === 0}><ChevronLeft className="h-5 w-5" />Back</Button>
         <div className="flex items-center gap-1" aria-label={`Slide ${i + 1} of ${slides.length}`}>
           {slides.map((_, k) => (

@@ -179,14 +179,14 @@ export function ClassroomToolsLauncher() {
             ? cn(
                 // Ink, no hover zoom, no bounce: a ringing alarm is the danger fill
                 // and the bell icon (and the label says "Stop the timer alarm").
-                "fixed bottom-4 right-4 z-40 grid h-14 w-14 place-items-center rounded-full shadow-hec-2 transition-colors duration-hec-1 ease-hec md:bottom-6 md:right-6",
+                "fixed bottom-4 right-4 z-40 [body:has([data-deck-player])_&]:z-[60] grid h-14 w-14 place-items-center rounded-full shadow-hec-2 transition-colors duration-hec-1 ease-hec md:bottom-6 md:right-6",
                 FOCUS,
                 alarming
                   ? "bg-hec-danger-fill text-hec-on-danger shadow-hec-3 hover:bg-hec-danger-fill/90"
                   : "bg-hec-action text-hec-on-action hover:bg-hec-action/90",
               )
             : cn(
-                "studio-focus fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full transition-transform md:bottom-6 md:right-6",
+                "studio-focus fixed bottom-5 right-5 z-40 [body:has([data-deck-player])_&]:z-[60] grid h-14 w-14 place-items-center rounded-full transition-transform md:bottom-6 md:right-6",
                 "hover:scale-105 active:scale-95",
                 alarming
                   ? "animate-bounce bg-[hsl(2_72%_46%)] text-white shadow-[0_10px_30px_-8px_hsl(2_72%_40%/0.7)]"
