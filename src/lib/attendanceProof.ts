@@ -42,14 +42,27 @@ export function isLocked(map: ProofMap | undefined | null, studentId: string): b
   return map?.get(studentId)?.strength === "proof";
 }
 
+/**
+ * Where to remove the proof, from its kinds. Mirrored in supabase/functions/mark-attendance/index.ts.
+ * individual_points -> the child's point history; speaker_mark -> Undo on the speakers page.
+ */
+export function removalAdvice(kinds: readonly string[] | undefined | null): string {
+  const k = kinds ?? [];
+  const parts: string[] = [];
+  if (k.includes("individual_points")) parts.push("delete it in the child's point history");
+  if (k.includes("speaker_mark")) parts.push("use Undo on the lesson's speakers page");
+  return parts.length ? parts.join(" or ") : "remove it first";
+}
+
 /** The sentence shown on the lock, or null when the child is not locked. */
 export function lockReason(map: ProofMap | undefined | null, studentId: string): string | null {
   const row = map?.get(studentId);
   if (!row || row.strength !== "proof") return null;
   const what = row.summary.trim();
+  const advice = removalAdvice(row.kinds);
   return what
-    ? `In class: ${what}. Remove it first if that was a mistake.`
-    : "There is proof this child was in this lesson. Remove it first if that was a mistake.";
+    ? `In class: ${what}. If that was a mistake, ${advice}, then change the mark.`
+    : `There is proof this child was in this lesson. If that was a mistake, ${advice}, then change the mark.`;
 }
 
 /** Absent and Excused are the two choices a lock takes away. */
@@ -69,12 +82,13 @@ export function nextStatus(current: string, locked: boolean): string {
 function collectText(value: unknown, out: string[], depth = 0): void {
   if (depth > 6 || value == null) return;
   if (typeof value === "string") {
-    out.push(value);
-    // an error body is often JSON inside a string
+    // An error body is often JSON inside a string: read its fields, never the raw text
+    // (the raw text would carry the keys that follow the message).
     const t = value.trim();
     if (t.startsWith("{") || t.startsWith("[")) {
-      try { collectText(JSON.parse(t), out, depth + 1); } catch { /* plain text */ }
+      try { collectText(JSON.parse(t), out, depth + 1); return; } catch { /* plain text */ }
     }
+    out.push(value);
     return;
   }
   if (Array.isArray(value)) { for (const v of value) collectText(v, out, depth + 1); return; }
@@ -98,6 +112,8 @@ export function parseProofRefusal(error: unknown): string | null {
     const at = t.indexOf(PREFIX);
     if (at < 0) continue;
     let rest = t.slice(at + PREFIX.length);
+    // text cut out of a broken JSON string: stop at the next key, then drop closing quotes and braces
+    rest = rest.replace(/"\s*,\s*"[A-Za-z_]+"\s*:[\s\S]*$/, "");
     rest = rest.replace(/["'}\]\\]+\s*$/, "").trim();
     if (rest) return rest;
   }
@@ -121,17 +137,24 @@ export function refusedStudentIds(data: unknown): string[] {
     .filter((s): s is string => typeof s === "string" && !!s);
 }
 
-/** A plain sentence for a batch save where some children were refused. */
+/** One sentence for a batch save where some children were refused: what was saved and who was not changed. */
 export function refusedBatchText(data: unknown, nameOf: (id: string) => string | undefined): string | null {
   const list = (data as { refused?: unknown } | null)?.refused;
   if (!Array.isArray(list) || list.length === 0) return null;
+  const kinds = new Set<string>();
   const parts = list.map((r) => {
-    const id = typeof r === "string" ? r : (r as { student_id?: string })?.student_id;
-    const summary = typeof r === "object" && r ? (r as { summary?: string }).summary : "";
+    const o = typeof r === "object" && r ? (r as { student_id?: string; summary?: string; kinds?: string[] }) : null;
+    const id = typeof r === "string" ? r : o?.student_id;
+    for (const k of o?.kinds ?? []) kinds.add(k);
     const name = (id && nameOf(id)) || "A child";
-    return summary ? `${name} (${summary})` : name;
+    return o?.summary ? `${name} (${o.summary})` : name;
   });
-  return `Saved, except ${parts.join(", ")}: there is proof in class, so the mark was kept. Remove the proof first if that was a mistake.`;
+  return `The other marks were saved. Not changed because they were in class: ${parts.join(", ")}. If that was a mistake, ${removalAdvice([...kinds])}, then change the mark.`;
+}
+
+/** True when a request would change the stored mark to Absent or Excused (no row, or a different status). */
+export function changesToAbsentOrExcused(stored: string | null | undefined, requested: string): boolean {
+  return statusIsLockedOut(requested) && stored !== requested;
 }
 
 /* ------------------------------------------------------------------ admin check */
@@ -240,11 +263,34 @@ export function monthsOf(result: ApplyResult | null): string[] {
   return Array.from(new Set((result?.affected_months ?? []).map((m) => m.month))).sort();
 }
 
-/** True when the error means the RPC is not in the database yet. */
-export function isNotInstalled(error: unknown): boolean {
+/**
+ * True only when the error says THIS function is not in the database yet (PGRST202 / 42883 that
+ * names it). Any other error, including a missing function inside it, is a real error.
+ */
+export function isNotInstalled(error: unknown, fn = "attendance_evidence_gaps"): boolean {
   const e = error as { code?: string; message?: string } | null;
   if (!e) return false;
-  return e.code === "PGRST202" || e.code === "42883" || /does not exist|schema cache|could not find the function/i.test(String(e.message ?? ""));
+  const msg = String(e.message ?? "");
+  if (!msg.includes(fn)) return false;
+  if (e.code === "PGRST202" || e.code === "42883") return true;
+  return !e.code && /does not exist|could not find the function|schema cache/i.test(msg);
+}
+
+/** Pages of a long list: the first `shown` rows. */
+export function firstRows<T>(rows: readonly T[], shown: number): T[] {
+  return rows.slice(0, Math.max(0, shown));
 }
 
 export const PROOF_LOCK_TITLE = "Absent and Excused are locked for this child";
+
+/** The proof sentence inside a supabase-js function error (reads the response body), or null. */
+export async function proofRefusalOf(error: unknown): Promise<string | null> {
+  try {
+    const ctx = (error as { context?: { clone?: () => unknown; json?: () => Promise<unknown> } } | null)?.context;
+    const src = (typeof ctx?.clone === "function" ? ctx.clone() : ctx) as { json?: () => Promise<unknown> } | undefined;
+    const body = (await src?.json?.()) ?? null;
+    return proofRefusalFromBody(body);
+  } catch {
+    return null;
+  }
+}

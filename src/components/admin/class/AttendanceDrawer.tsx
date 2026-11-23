@@ -154,13 +154,15 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
       if (notHeld) toast.warning(notHeld);
       // Children kept because of proof in class: say so; the register reload below shows the saved mark.
       const kept = refusedBatchText(data, (id) => students?.find((s: any) => s.id === id)?.full_name);
-      if (kept && refusedStudentIds(data).length) { toast.warning(kept); await showSavedMarks(); }
+      if (kept && refusedStudentIds(data).length) await showSavedMarks();
+      return kept && refusedStudentIds(data).length ? kept : null;
     },
-    onSuccess: () => {
+    onSuccess: (kept) => {
       queryClient.invalidateQueries({ queryKey: ["attendance-proof", session?.id] });
       queryClient.invalidateQueries({ queryKey: ["session-students", session?.id] });
       queryClient.invalidateQueries({ queryKey: ["calendar-sessions"] });
-      toast.success("Attendance saved");
+      // One message: when some children were kept it says what was saved and who was not changed.
+      if (kept) toast.warning(kept); else toast.success("Attendance saved");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to save attendance");

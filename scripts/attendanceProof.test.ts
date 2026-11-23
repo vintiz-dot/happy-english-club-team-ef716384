@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   GAP_KINDS, GAP_LABEL, groupGaps, isLocked, isNotInstalled, lockReason, monthsOf, nextStatus,
   parseApplyResult, parseGapRows, parseProofRefusal, parseProofRows, proofRefusalFromBody,
-  refusedBatchText, refusedStudentIds,
+  refusedBatchText, refusedStudentIds, removalAdvice, changesToAbsentOrExcused, firstRows,
 } from "../src/lib/attendanceProof";
 
 const SENTENCE = "Robot was in this lesson: 10 Speaking points at 18:13. If that is a mistake, remove it first, then change the mark.";
@@ -29,6 +29,19 @@ describe("parseProofRefusal", () => {
     expect(parseProofRefusal({ message: "boom" })).toBeNull();
     expect(parseProofRefusal({ message: "ATTENDANCE_PROOF:   " })).toBeNull();
   });
+  test("JSON string with keys after the message", () => {
+    const s = JSON.stringify({ message: `ATTENDANCE_PROOF: ${SENTENCE}`, code: "P0001", details: null });
+    expect(parseProofRefusal(s)).toBe(SENTENCE);
+  });
+  test("broken JSON text cut at the next key", () => {
+    expect(parseProofRefusal(`{"message":"ATTENDANCE_PROOF: ${SENTENCE}","code":"P0001"}x`)).toBe(SENTENCE);
+  });
+  test("nested { error: { message } }", () => {
+    expect(parseProofRefusal({ error: { message: `ATTENDANCE_PROOF: ${SENTENCE}`, code: "P0001" } })).toBe(SENTENCE);
+  });
+  test("raw Postgres error object", () => {
+    expect(parseProofRefusal({ code: "P0001", details: null, hint: null, message: `ATTENDANCE_PROOF: ${SENTENCE}` })).toBe(SENTENCE);
+  });
   test("409 body from mark-attendance", () => {
     expect(proofRefusalFromBody({ error: "attendance_proof", message: "Sentence.", students: [] })).toBe("Sentence.");
     expect(proofRefusalFromBody({ error: "other" })).toBeNull();
@@ -54,7 +67,7 @@ describe("lock map", () => {
     expect(map.get("a")?.summary).toBe("10 Speaking points at 18:13");
   });
   test("reason sentence", () => {
-    expect(lockReason(map, "a")).toBe("In class: 10 Speaking points at 18:13. Remove it first if that was a mistake.");
+    expect(lockReason(map, "a")).toBe("In class: 10 Speaking points at 18:13. If that was a mistake, delete it in the child's point history, then change the mark.");
   });
   test("empty and malformed input", () => {
     expect(parseProofRows(undefined).size).toBe(0);
@@ -66,6 +79,35 @@ describe("lock map", () => {
     expect(nextStatus("Present", true)).toBe("Present");
     expect(nextStatus("Present", false)).toBe("Absent");
     expect(nextStatus("Excused", false)).toBe("Present");
+  });
+});
+
+describe("removal advice", () => {
+  test("by kind", () => {
+    expect(removalAdvice(["individual_points"])).toBe("delete it in the child's point history");
+    expect(removalAdvice(["speaker_mark"])).toBe("use Undo on the lesson's speakers page");
+    expect(removalAdvice(["individual_points", "speaker_mark"])).toContain(" or ");
+    expect(removalAdvice(["something_else"])).toBe("remove it first");
+    expect(removalAdvice(undefined)).toBe("remove it first");
+  });
+  test("lock reason uses the kinds", () => {
+    const m = parseProofRows([{ student_id: "a", strength: "proof", kinds: ["speaker_mark"], summary: "Spoke at 18:13" }]);
+    expect(lockReason(m, "a")).toBe("In class: Spoke at 18:13. If that was a mistake, use Undo on the lesson's speakers page, then change the mark.");
+  });
+  test("only a change to Absent or Excused is refused", () => {
+    expect(changesToAbsentOrExcused(null, "Absent")).toBe(true);
+    expect(changesToAbsentOrExcused("Present", "Excused")).toBe(true);
+    expect(changesToAbsentOrExcused("Absent", "Absent")).toBe(false);
+    expect(changesToAbsentOrExcused("Absent", "Present")).toBe(false);
+    expect(changesToAbsentOrExcused(null, "Late")).toBe(false);
+  });
+});
+
+describe("long lists", () => {
+  test("first rows", () => {
+    expect(firstRows([1, 2, 3], 2)).toEqual([1, 2]);
+    expect(firstRows([1], 50)).toEqual([1]);
+    expect(firstRows([1, 2], -1)).toEqual([]);
   });
 });
 
@@ -107,9 +149,12 @@ describe("admin gaps", () => {
     expect(monthsOf(null)).toEqual([]);
   });
   test("not-installed detection", () => {
-    expect(isNotInstalled({ code: "PGRST202", message: "x" })).toBe(true);
+    expect(isNotInstalled({ code: "PGRST202", message: "x" })).toBe(false);
     expect(isNotInstalled({ message: "function public.attendance_evidence_gaps(date, date) does not exist" })).toBe(true);
     expect(isNotInstalled({ message: "permission denied" })).toBe(false);
+    expect(isNotInstalled({ code: "42883", message: "function other_helper(uuid) does not exist" })).toBe(false);
+    expect(isNotInstalled({ code: "PGRST202", message: "Could not find the function public.attendance_evidence_gaps(p_from, p_to)" })).toBe(true);
+    expect(isNotInstalled({ message: "relation foo does not exist" })).toBe(false);
     expect(isNotInstalled(null)).toBe(false);
   });
 });

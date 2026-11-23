@@ -27,7 +27,7 @@ import { heldRefusedText, payOpFromDbError, type PayOp } from "@/lib/lessonPayGu
 import { PayGuardDialog } from "@/components/admin/session-guard/GuardDialog";
 import { useAttendanceProof } from "@/hooks/useAttendanceProof";
 import { ProofLock } from "@/components/attendance/ProofLock";
-import { nextStatus } from "@/lib/attendanceProof";
+import { nextStatus, proofRefusalOf } from "@/lib/attendanceProof";
 
 interface SessionDetailDrawerProps {
   session: any;
@@ -153,7 +153,11 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
         },
       });
       // D4: an old billed lesson answers 409 with its reason and next step.
-      if (error) throw new Error(await functionRefusalText(error, "Failed to save attendance"));
+      if (error) {
+        const text = await functionRefusalText(error, "Failed to save attendance");
+        // A proof refusal is told once, at the end of "save all", so it does not stop the others.
+        throw Object.assign(new Error(text), { proofRefusal: !!(await proofRefusalOf(error)) });
+      }
       // D4 step 3A (review N-2): the marks are saved; a refused Held flip is said.
       const notHeld = heldRefusedText(data);
       if (notHeld) toast.warning(notHeld);
@@ -163,6 +167,7 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
       toast.success("Attendance saved");
     },
     onError: (error: any) => {
+      if (error?.proofRefusal) return;
       toast.error(error.message || "Failed to save attendance");
       // Show the mark the register really holds, not the one that was refused.
       setAttendance({});
@@ -173,12 +178,31 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
 
   const saveAllAttendance = async () => {
     try {
+      const refused: Array<{ id: string; message: string }> = [];
       for (const [studentId, status] of Object.entries(attendance)) {
-        await markAttendanceMutation.mutateAsync({ studentId, status });
+        try {
+          await markAttendanceMutation.mutateAsync({ studentId, status });
+        } catch (e: any) {
+          if (!e?.proofRefusal) throw e;
+          refused.push({ id: studentId, message: e.message });
+        }
       }
       // Also save notes
       await updateSessionMutation.mutateAsync({ notes });
-      toast.success("All changes saved");
+      if (refused.length === 0) {
+        toast.success("All changes saved");
+      } else {
+        // One message at the end: who was not changed and why. The other edits stay as they are.
+        const names = refused.map((r) => students?.find((s: any) => s.id === r.id)?.full_name || "A child");
+        toast.warning(
+          refused.length === 1
+            ? refused[0].message
+            : `Saved, except ${names.join(", ")}: there is proof they were in this lesson, so their mark was kept.`,
+        );
+        setAttendance((prev) => Object.fromEntries(Object.entries(prev).filter(([id]) => !refused.some((r) => r.id === id))));
+        queryClient.invalidateQueries({ queryKey: ["session-students", session?.id] });
+        queryClient.invalidateQueries({ queryKey: ["attendance-proof", session?.id] });
+      }
     } catch (error) {
       console.error("Error saving:", error);
     }
