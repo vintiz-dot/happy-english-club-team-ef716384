@@ -147,7 +147,7 @@ function sqlQuery(table, role = 'service_role') {
     try {
       if (mode === 'select') {
         const rows = (await db.query(`SELECT to_jsonb(t) AS j FROM public.${table} t${w}${order}${lim}`, params)).rows.map((r) => r.j);
-        if (table === 'students') rows.forEach((r) => { r.families = null; });
+        if (table === 'students') rows.forEach((r) => { r.families = r.family_id ? { id: r.family_id, sibling_percent_override: null } : null; });
         if (table === 'sessions') {
           const cls = (await db.query(`SELECT to_jsonb(c) AS j FROM public.classes c`)).rows.map((r) => r.j);
           rows.forEach((r) => { const c = cls.find((x) => x.id === r.class_id); r.classes = c ? { session_rate_vnd: c.session_rate_vnd } : null; });
@@ -219,7 +219,7 @@ const bundleFile = async (entry, label) => {
         a.path.includes('supabase-js') ? 'export const createClient = (...x) => globalThis.__tbClient(...x);' :
         a.path.includes('zod') ? 'export const z = globalThis.__tbZod;' :
         a.path.endsWith('/auth.ts') ? 'export const requireRole = async () => globalThis.__tbGate(); export const callerOwnsStudent = async () => true;' :
-        a.path.endsWith('/sibling-state.ts') ? 'export const resolveSiblingStates = async () => { throw new Error("no families here"); };' :
+        a.path.endsWith('/sibling-state.ts') ? 'export const resolveSiblingStates = async (sb, ids) => { if (!globalThis.__tbSibling) throw new Error("no families here"); return globalThis.__tbSibling(ids); };' :
         a.path.endsWith('/runner-secret.ts') ? 'export const runnerSecretMatches = async (req) => req.headers.get("x-schedule-runner-secret") === "runner-token-for-the-test-only";' :
         'export const checkRateLimit = () => ({limited: false}); export const getClientIP = () => "test"; export const rateLimitResponse = () => {};',
       }));
@@ -235,19 +235,23 @@ await bundleFile(fnEntry('calculate-tuition'), 'calculate-tuition');
 await bundleFile(fnEntry('calculate-tuition-bulk'), 'calculate-tuition-bulk');
 await bundleFile(fnEntry('refresh-month-bills'), 'refresh-month-bills');
 
-// The function as it was before this change, when git still has it.
+// The function as it was before this change: the newest commit of the file that
+// does not yet know about holes. Not finding it is a FAILURE (the parity cases
+// below would otherwise silently not run).
 let haveOriginal = false;
-for (const rev of ['46139f9a^', '8e4b9d66']) {
-  try {
-    const src = execFileSync('git', ['show', `${rev}:supabase/functions/calculate-tuition/index.ts`], { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    if (src.includes('register-holes')) continue; // already the new one
+try {
+  const revs = execFileSync('git', ['log', '--format=%H', '-n', '60', '--', 'supabase/functions/calculate-tuition/index.ts'], { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split(/\s+/).filter(Boolean);
+  for (const rev of revs) {
+    const src = execFileSync('git', ['show', `${rev}:supabase/functions/calculate-tuition/index.ts`], { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 26 });
+    if (src.includes('register-holes')) continue;
     const dir = mkdtempSync(join(out, 'orig-'));
     writeFileSync(join(dir, 'index.ts'), src);
     await bundleFile(join(dir, 'index.ts'), 'calculate-tuition-orig');
     haveOriginal = true;
     break;
-  } catch { /* try the next revision */ }
-}
+  }
+} catch (e) { console.log('  git:', e.message); }
+ok('the pre-change calculate-tuition is found in git (the parity cases need it)', haveOriginal);
 
 const post = (body, headers = {}) => new Request('http://functions.test/fn', {
   method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body),
@@ -274,7 +278,8 @@ const invoice = async (kid, month = PREV) =>
 const pick = (row, keys) => Object.fromEntries(keys.map((k) => [k, row?.[k]]));
 const flagOf = (row, type) => (row?.review_flags ?? []).find((f) => f.type === type);
 const FIG = ['base_amount', 'discount_amount', 'total_amount'];
-const KEPT = ['base_amount', 'discount_amount', 'total_amount', 'class_breakdown', 'status', 'confirmation_status', 'confirmed_at', 'confirmed_by', 'recorded_payment', 'paid_amount', 'tuition_tfrozen'];
+const KEPT = ['base_amount', 'discount_amount', 'total_amount', 'class_breakdown', 'status', 'confirmation_status', 'confirmed_at', 'confirmed_by', 'recorded_payment', 'paid_amount', 'tuition_frozen'];
+const netSum = (r) => (r?.classNet ?? []).reduce((n, c) => n + c.net_vnd, 0);
 const writesFor = (kid) => invoiceWrites.filter((w) => w.student_id === kid).length;
 
 // ------------------------------------------------------- the pure module
@@ -305,14 +310,13 @@ console.log('\n0. the pure module');
   const holes = m.findRegisterHoles(sessions, new Set(['held-marked']), '2026-08-20', rules);
   ok('only a past Held lesson inside the enrolment, weekday and rate, with no row, is a hole', holes.length === 1 && holes[0].session_id === 'held-hole', holes);
   ok('a hole sorts by date', m.findRegisterHoles([S('b', '2026-08-13', 'Held'), S('a', '2026-08-12', 'Held')], new Set(), '2026-09-01', rules).map((h) => h.session_id).join() === 'a,b');
-  ok('mustHold: holes, saved bill, higher than the register, not frozen, not forced',
-    m.mustHold({ holeCount: 1, savedBase: 100, tuitionFrozen: false, registerBase: 50, forced: false }) === true);
-  ok('mustHold: no holes, no saved bill, equal, frozen or forced are not holds',
-    !m.mustHold({ holeCount: 0, savedBase: 100, tuitionFrozen: false, registerBase: 50, forced: false })
-    && !m.mustHold({ holeCount: 1, savedBase: null, tuitionFrozen: false, registerBase: 50, forced: false })
-    && !m.mustHold({ holeCount: 1, savedBase: 50, tuitionFrozen: false, registerBase: 50, forced: false })
-    && !m.mustHold({ holeCount: 1, savedBase: 100, tuitionFrozen: true, registerBase: 50, forced: false })
-    && !m.mustHold({ holeCount: 1, savedBase: 100, tuitionFrozen: false, registerBase: 50, forced: true }));
+  const D = (o) => m.decideHoles({ holeCount: 1, savedBase: 840, frozen: false, nBase: 420, wBase: 630, forced: false, ...o });
+  ok('decide: N below the saved base and W not above it is priced as charged', D({}) === 'priced_as_charged');
+  ok('decide: N below, W above the saved base is held', D({ wBase: 900 }) === 'held');
+  ok('decide: W equal to the saved base is priced as charged', D({ wBase: 840 }) === 'priced_as_charged');
+  ok('decide: N at or above the saved base, no holes, no saved bill or frozen are normal',
+    D({ nBase: 840 }) === 'normal' && D({ nBase: 900 }) === 'normal' && D({ holeCount: 0 }) === 'normal' && D({ savedBase: null }) === 'normal' && D({ frozen: true }) === 'normal');
+  ok('decide: an admin force on a lowering is forced; on a normal month it changes nothing', D({ forced: true }) === 'forced' && D({ forced: true, nBase: 900 }) === 'normal');
   ok('the held sentence is the plain one', m.heldSentence(3, '2026-08') === 'Held: 3 lessons in August have no mark. The bill stays as charged until the register is fixed.', m.heldSentence(3, '2026-08'));
   ok('one lesson reads in the singular', m.heldSentence(1, '2026-08') === 'Held: 1 lesson in August has no mark. The bill stays as charged until the register is fixed.');
   ok('flags that differ only in key order are the same', m.sameFlags([{ type: 'a', details: { x: 1, y: [1, 2] } }], [{ details: { y: [1, 2], x: 1 }, type: 'a' }]));
@@ -328,7 +332,9 @@ const A1before = await invoice(A1);
   ok('the call answers', r.status === 200, r.body);
   ok('the figures are the saved ones', r.body.baseAmount === 1680000 && r.body.totalDiscount === 0 && r.body.totalAmount === 1680000
     && r.body.invoice?.base_amount === 1680000 && r.body.invoice?.total_amount === 1680000, r.body);
-  ok('held.reason is register_missing_marks', r.body.held?.reason === 'register_missing_marks', r.body.held);
+  ok('held.reason is register_missing_marks, priced as charged (W = the saved base)', r.body.held?.reason === 'register_missing_marks' && r.body.held?.priced_as_charged === true, r.body.held);
+  ok('the 8 lessons are listed on the response as unmarked lines, and the breakdown adds up to the bill',
+    r.body.sessionDetails.filter((d) => d.unmarked === true).length === 8 && r.body.breakdown.classes.reduce((n, c) => n + c.amount_vnd, 0) === 1680000, r.body.breakdown);
   ok('held lists the 8 lessons with date and class', r.body.held?.lessons?.length === 8
     && r.body.held.lessons[0].date === prevDay(2) && r.body.held.lessons[0].class_name === 'Class A' && r.body.held.lessons[7].date === prevDay(16), r.body.held?.lessons);
   ok('held carries register_base 0 and saved_base 1,680,000', r.body.held?.register_base === 0 && r.body.held?.saved_base === 1680000, r.body.held);
@@ -346,11 +352,11 @@ const A1before = await invoice(A1);
   const again = await calc(A1, PREV, 'admin');
   const after2 = await invoice(A1);
   ok('a second identical call writes nothing to the invoice row', invoiceWrites.length === writes && after2.updated_at === stamp, { writes, now: invoiceWrites.length });
-  ok('and still answers held with the same figures', again.body.held?.saved_base === 1680000 && again.body.totalAmount === 1680000);
+  ok('and still answers with the same figures', again.body.held?.saved_base === 1680000 && again.body.totalAmount === 1680000 && again.body.held?.priced_as_charged === true);
   const family = await calc(A1, PREV, 'family');
-  ok('a family caller is held too', family.status === 200 && family.body.held?.reason === 'register_missing_marks' && family.body.totalAmount === 1680000, family.body);
+  ok('a family caller gets the same bill', family.status === 200 && family.body.held?.reason === 'register_missing_marks' && family.body.totalAmount === 1680000, family.body);
   const timer = await calc(A1, PREV, 'service');
-  ok('the service role (the hourly refresh, payments, the invoice PDF) is held too', timer.body.held?.reason === 'register_missing_marks' && (await invoice(A1)).base_amount === 1680000, timer.body);
+  ok('the service role (the hourly refresh, payments, the invoice PDF) keeps the bill too', timer.body.held?.reason === 'register_missing_marks' && (await invoice(A1)).base_amount === 1680000, timer.body);
 }
 
 // ------------------------------------------------------------- H2 force
@@ -377,7 +383,7 @@ console.log('\nH2. forcing the lower figure');
     const k = await augustCase(`Forced By ${who}`);
     const r = await calc(k, PREV, who, { force: true, reason: 'I say so' });
     const rw = await invoice(k);
-    ok(`force:true as ${who} is ignored: still held, bill unchanged`, r.status === 200 && r.body.held?.reason === 'register_missing_marks' && rw.base_amount === 1680000
+    ok(`force:true as ${who} is ignored: the bill is unchanged`, r.status === 200 && r.body.held?.reason === 'register_missing_marks' && rw.base_amount === 1680000
       && !flagOf(rw, 'lowered_despite_missing_marks'), { body: r.body.held, base: rw.base_amount });
   }
 }
@@ -526,7 +532,7 @@ console.log('\nH7. bulk and single report the same');
   const bh = b.get(held);
   ok('a held bill: bulk reports the saved figures and the held marker', bh?.baseAmount === 1680000 && bh.totalAmount === 1680000 && bh.totalDiscount === 0
     && bh.held?.reason === 'register_missing_marks' && bh.held.lessons.length === 8 && bh.held.register_base === 0 && bh.held.saved_base === 1680000, bh);
-  ok('the held bill is split by class from the saved breakdown, summing to the bill', bh?.classNet && Object.values(bh.classNet).length >= 0 && JSON.stringify(bh.classNet).includes('1680000'), bh?.classNet);
+  ok('the held bill is split by class and the split sums to the bill exactly', bh?.classNet?.length >= 1 && netSum(bh) === 1680000 && bh.held.priced_as_charged === true, bh?.classNet);
   ok('an unhold bill (legit correction): bulk shows the register figure and no marker', b.get(legit).baseAmount === 420000 && b.get(legit).held === undefined, b.get(legit));
   ok('a plain bill: no marker', b.get(plain).baseAmount === 420000 && b.get(plain).held === undefined);
   for (const [name, kid] of [['held', held], ['legit', legit], ['plain', plain], ['the August case', A1]]) {
@@ -536,6 +542,172 @@ console.log('\nH7. bulk and single report the same');
       { single: [s.body.baseAmount, s.body.totalDiscount, s.body.totalAmount], bulk: [bk.baseAmount, bk.totalDiscount, bk.totalAmount] });
     ok(`${name}: single and bulk agree on the carry and on being held`, s.body.carry.payable === bk.carry.payable && s.body.carry.carryOutDebt === bk.carry.carryOutDebt && (s.body.held === undefined) === (bk.held === undefined),
       { s: s.body.carry, b: bk.carry });
+  }
+}
+
+// ------------------------------------------------------------- H11 priced as charged
+console.log('\nH11. a lesson with no mark is priced as it was charged, never beyond the saved bill');
+const mkMonth = async (name, spec, saved, opts = {}) => {
+  // spec: day -> 'hole' | 'Present' | 'Excused' | 'Canceled' | ...
+  const k = await newKid(name);
+  await enrol(k, '2026-01-01');
+  for (const [d, what] of Object.entries(spec)) {
+    const day = Number(d);
+    if (what === 'Canceled') { await sess(classOf[k], prevDay(day), 'Canceled'); continue; }
+    await lessonsOf(k, [day], what === 'hole' ? {} : { [day]: what });
+  }
+  if (saved !== null) await bill(k, PREV, saved, { paid: saved, status: 'paid', confirmation: opts.confirmation ?? 'confirmed', breakdown: opts.breakdown ?? breakdownOf(k, saved, saved / 210000) });
+  return k;
+};
+{
+  // F1: one old hole; another lesson of the month is later cancelled or excused.
+  // The bill must drop by exactly that lesson, no more, no less.
+  const cancel = await mkMonth('Hole Then Cancel', { 3: 'Present', 5: 'Present', 7: 'hole', 9: 'Canceled' }, 840000);
+  const rc = await calc(cancel, PREV, 'admin');
+  const rowC = await invoice(cancel);
+  ok('hole + a lesson since cancelled: the bill drops by exactly one lesson (840,000 -> 630,000)', rc.body.baseAmount === 630000 && rowC.base_amount === 630000 && rowC.total_amount === 630000, { body: rc.body.baseAmount, row: pick(rowC, FIG) });
+  ok('it says so: priced as charged, the hole listed, its line marked unmarked', rc.body.held?.priced_as_charged === true && rc.body.held.lessons.length === 1
+    && rc.body.held.register_base === 420000 && rc.body.held.saved_base === 840000
+    && rc.body.sessionDetails.filter((d) => d.unmarked === true).length === 1 && rc.body.sessionCount === 3, rc.body);
+  ok('the lines add up to the bill', rc.body.breakdown.classes.reduce((n, c) => n + c.amount_vnd, 0) === 630000 && rowC.class_breakdown[0].amount_vnd === 630000, rowC.class_breakdown);
+  ok('a confirmed bill that really changed goes to review with the usual flag, and the holes are flagged',
+    rowC.confirmation_status === 'needs_review' && !!flagOf(rowC, 'changed_after_confirmation') && flagOf(rowC, 'register_missing_marks')?.details?.mode === 'priced_as_charged', rowC.review_flags);
+
+  const excuse = await mkMonth('Hole Then Excuse', { 3: 'Present', 5: 'Present', 7: 'hole', 9: 'Excused' }, 840000);
+  const re = await calc(excuse, PREV, 'admin');
+  ok('hole + a lesson since excused: the bill drops by exactly one lesson', re.body.baseAmount === 630000 && (await invoice(excuse)).base_amount === 630000, re.body.baseAmount);
+
+  // Nothing else changed: W equals the saved bill, the figures do not move and nothing is rewritten.
+  const same = await mkMonth('Holes Unchanged', { 3: 'Present', 5: 'Present', 7: 'hole', 9: 'hole' }, 840000);
+  const before = await invoice(same);
+  const first = await calc(same, PREV, 'admin');
+  const mid = await invoice(same);
+  ok('two holes, nothing else changed: the figures do not move', first.body.baseAmount === 840000 && mid.base_amount === 840000 && mid.total_amount === 840000
+    && JSON.stringify(pick(mid, KEPT)) === JSON.stringify(pick(before, KEPT)), { before: pick(before, KEPT), after: pick(mid, KEPT) });
+  const w = writesFor(same), stamp = mid.updated_at;
+  await calc(same, PREV, 'admin');
+  ok('and a second call writes nothing', writesFor(same) === w && (await invoice(same)).updated_at === stamp, { w, now: writesFor(same) });
+
+  // Case c: N < saved < W - some deleted marks must have been Excused and nobody can tell which.
+  const held = await mkMonth('Case C Held', { 3: 'Present', 5: 'Present', 7: 'hole', 9: 'hole' }, 630000);
+  const rh = await calc(held, PREV, 'admin');
+  const rowH = await invoice(held);
+  ok('N < saved < W: the saved figures stand, answered as held (not priced as charged)', rh.body.held?.priced_as_charged === false && rh.body.baseAmount === 630000 && rowH.base_amount === 630000
+    && rh.body.held.register_base === 420000 && rh.body.held.saved_base === 630000, rh.body.held);
+  ok('the held answer\'s lines are the saved breakdown and add up to its total', rh.body.breakdown.classes.reduce((n, c) => n + c.amount_vnd, 0) === 630000 && rh.body.sessionCount === 3, { classes: rh.body.breakdown.classes, count: rh.body.sessionCount });
+  ok('the saved row is unchanged but for the flag', JSON.stringify(pick(rowH, KEPT)) === JSON.stringify(pick(await invoice(held), KEPT)) && rowH.confirmation_status === 'confirmed' && flagOf(rowH, 'register_missing_marks')?.details?.mode === 'held');
+  const bh = (await bulk([held], PREV)).get(held);
+  ok('bulk reports the held bill the same: saved figures, held, and no priced-as-charged', bh.baseAmount === 630000 && bh.held?.priced_as_charged === false && netSum(bh) === 630000, bh);
+
+  // A bill saved with no breakdown (older bills): the split still carries the whole charge.
+  for (const [label, saved] of [['an empty breakdown', []], ['a NULL breakdown', null]]) {
+    const k = await mkMonth(`Case C ${label}`, { 3: 'Present', 5: 'Present', 7: 'hole', 9: 'hole' }, 630000, { breakdown: [] });
+    if (saved === null) await db.query(`UPDATE public.invoices SET class_breakdown = NULL WHERE student_id = $1`, [k]);
+    const r = (await bulk([k], PREV)).get(k);
+    ok(`held, ${label}: classNet still sums to the charge exactly (never [] against a charge)`, r.totalAmount === 630000 && r.classNet.length >= 1 && netSum(r) === 630000, r);
+    const single = await calc(k, PREV, 'admin');
+    ok(`held, ${label}: single answers the saved figures`, single.body.totalAmount === 630000 && single.body.held?.priced_as_charged === false);
+  }
+  // A frozen bill with no breakdown is carried the same way.
+  {
+    const k = await newKid('Frozen No Breakdown');
+    await enrol(k, '2026-01-01');
+    await lessonsOf(k, [3, 5], { 3: 'Present', 5: 'Present' });
+    await bill(k, PREV, 420000, { frozen: true, breakdown: [] });
+    const r = (await bulk([k], PREV)).get(k);
+    ok('frozen, no breakdown: classNet sums to the charge exactly', netSum(r) === 420000, r.classNet);
+  }
+
+  // A hole in the CURRENT month.
+  const todayN = hanoi.getUTCDate();
+  if (todayN > 1) {
+    const k = await newKid('Hole This Month');
+    await enrol(k, '2026-01-01');
+    for (const d of [1]) await sess(classOf[k], `${CUR}-${pad(d)}`, 'Held'); // a past day, no row
+    await bill(k, CUR, 210000, { paid: 210000, status: 'paid', confirmation: 'confirmed', breakdown: breakdownOf(k, 210000, 1) });
+    const r = await calc(k, CUR, 'admin');
+    const row = await invoice(k, CUR);
+    ok('a hole in the current month: the bill stands (priced as charged)', r.body.baseAmount === 210000 && row.base_amount === 210000 && r.body.held?.priced_as_charged === true && !!flagOf(row, 'register_missing_marks'), r.body.held);
+  } else {
+    ok('a hole in the current month: today is the 1st, so no day of this month is past yet (covered by last month\'s cases)', true);
+  }
+
+  // Two classes, one of them with a hole.
+  {
+    const k = await newKid('Two Classes');
+    const second = U(classCounter++);
+    await db.query(`INSERT INTO public.classes VALUES ($1, 'Class B', 210000)`, [second]);
+    await enrol(k, '2026-01-01');
+    await db.query(`INSERT INTO public.enrollments(student_id, class_id, start_date, created_at) VALUES ($1, $2, '2026-01-01', '2026-01-02T00:00:00Z')`, [k, second]);
+    await lessonsOf(k, [3, 5], { 3: 'Present', 5: 'Present' });             // class one: 2 marked
+    const s1 = await sess(second, prevDay(4), 'Held'); await mark(s1, k, 'Present');
+    await sess(second, prevDay(6), 'Held');                                // class two: a hole
+    await bill(k, PREV, 840000, { paid: 840000, status: 'paid', confirmation: 'confirmed',
+      breakdown: [{ class_id: classOf[k], class_name: 'Class A', amount_vnd: 420000, net_amount_vnd: 420000, sessions_count: 2, session_rate_vnd: 210000 },
+        { class_id: second, class_name: 'Class B', amount_vnd: 420000, net_amount_vnd: 420000, sessions_count: 2, session_rate_vnd: 210000 }] });
+    const r = await calc(k, PREV, 'admin');
+    const row = await invoice(k);
+    ok('two classes, a hole in one: the bill is priced as charged, class by class', r.body.baseAmount === 840000 && r.body.held?.priced_as_charged === true
+      && row.class_breakdown.length === 2 && row.class_breakdown.every((c) => c.amount_vnd === 420000), row.class_breakdown);
+    ok('the hole is listed with its own class', r.body.held.lessons.length === 1 && r.body.held.lessons[0].class_name === 'Class B', r.body.held.lessons);
+    const b = (await bulk([k], PREV)).get(k);
+    ok('bulk: same figures, split over both classes summing to the charge', b.baseAmount === 840000 && b.classNet.length === 2 && netSum(b) === 840000, b);
+  }
+
+  // A sibling-discounted child: the family discount is recomputed from the priced month.
+  {
+    const FAM = U(9000);
+    const k = await newKid('Sibling Child');
+    await db.query(`UPDATE public.students SET family_id = $1 WHERE id = $2`, [FAM, k]);
+    await enrol(k, '2026-01-01');
+    await lessonsOf(k, [3, 5], { 3: 'Present', 5: 'Present' });
+    await lessonsOf(k, [7]);                       // a hole
+    await sess(classOf[k], prevDay(9), 'Canceled'); // a lesson since cancelled
+    await bill(k, PREV, 840000, { paid: 756000, status: 'paid', confirmation: 'confirmed', breakdown: breakdownOf(k, 840000, 4) });
+    await db.query(`UPDATE public.invoices SET discount_amount = 84000, total_amount = 756000 WHERE student_id = $1`, [k]);
+    globalThis.__tbSibling = (ids) => ids.map((id) => ({ family_id: id, status: 'assigned', sibling_percent: 10, winner_student_id: k, winner_class_id: classOf[k], reason: null }));
+    try {
+      const b = (await bulk([k], PREV)).get(k);
+      const r = await calc(k, PREV, 'admin');
+      const row = await invoice(k);
+      ok('sibling discount: base 630,000 (3 lessons, the hole counted), discount 63,000 (10%), total 567,000', r.body.baseAmount === 630000 && r.body.totalDiscount === 63000 && r.body.totalAmount === 567000
+        && row.base_amount === 630000 && row.discount_amount === 63000 && row.total_amount === 567000, { body: [r.body.baseAmount, r.body.totalDiscount, r.body.totalAmount], row: pick(row, FIG) });
+      ok('sibling discount: bulk reports the same', b.baseAmount === 630000 && b.totalDiscount === 63000 && b.totalAmount === 567000 && netSum(b) === 567000, b);
+    } finally { delete globalThis.__tbSibling; }
+  }
+
+  // A bill with a waiting changed_after_confirmation flag, under a hold.
+  {
+    const k = await mkMonth('Waiting Flag', { 3: 'Present', 5: 'Present', 7: 'hole', 9: 'hole' }, 630000, { confirmation: 'needs_review' });
+    const waiting = { type: 'changed_after_confirmation', label: 'Changed after confirmation',
+      details: { previousStatus: 'confirmed', confirmedAt: null, confirmedBy: null, confirmed: { base_amount: 700000, discount_amount: 0, total_amount: 700000 },
+        current: { base_amount: 630000, discount_amount: 0, total_amount: 630000 }, difference: -70000, changedAt: '2026-09-01T00:00:00Z' } };
+    await db.query(`UPDATE public.invoices SET review_flags = $2::jsonb WHERE student_id = $1`, [k, JSON.stringify([waiting])]);
+    await calc(k, PREV, 'admin');
+    const row = await invoice(k);
+    const waits = row.review_flags.filter((f) => f.type === 'changed_after_confirmation');
+    ok('a held bill keeps its waiting flag, once, beside the missing-marks flag', waits.length === 1 && waits[0].details.confirmed.total_amount === 700000 && !!flagOf(row, 'register_missing_marks') && row.confirmation_status === 'needs_review', row.review_flags);
+    const w = writesFor(k), stamp = row.updated_at;
+    await calc(k, PREV, 'admin');
+    ok('and a second call writes nothing', writesFor(k) === w && (await invoice(k)).updated_at === stamp);
+  }
+
+  // Overlapping enrolments: the first-created one decides, for holes as for pricing.
+  {
+    const mk = async (name, firstOverride, secondOverride) => {
+      const k = await newKid(name);
+      await db.query(`INSERT INTO public.enrollments(student_id, class_id, start_date, created_at, rate_override_vnd) VALUES ($1, $2, '2026-01-01', '2026-01-01T00:00:00Z', $3)`, [k, classOf[k], firstOverride]);
+      await db.query(`INSERT INTO public.enrollments(student_id, class_id, start_date, created_at, rate_override_vnd) VALUES ($1, $2, '2026-01-01', '2026-02-01T00:00:00Z', $3)`, [k, classOf[k], secondOverride]);
+      await lessonsOf(k, [3, 5, 7, 9]);
+      await bill(k, PREV, 840000, { paid: 840000, status: 'paid', confirmation: 'confirmed', breakdown: breakdownOf(k, 840000, 4) });
+      return k;
+    };
+    const zeroFirst = await mk('Overlap Zero First', 0, null);
+    const rz = await calc(zeroFirst, PREV, 'admin');
+    ok('the first-created enrolment has a zero rate: the lessons are not holes, so today\'s rule applies (as before)', rz.body.held === undefined && rz.body.missingMarks === undefined && rz.body.baseAmount === 0, rz.body.held);
+    const normalFirst = await mk('Overlap Normal First', null, 0);
+    const rn = await calc(normalFirst, PREV, 'admin');
+    ok('the first-created enrolment has a normal rate: four holes, the bill stands', rn.body.held?.priced_as_charged === true && rn.body.baseAmount === 840000 && rn.body.held.lessons.length === 4, rn.body.held);
   }
 }
 
@@ -613,8 +785,7 @@ console.log('\nsource facts');
 {
   const src = read('supabase', 'functions', 'calculate-tuition', 'index.ts');
   ok('force is honoured only for the admin role, never the service key', /force === true && gate\.roles\.has\("admin"\) && !gate\.isServiceRole/.test(src));
-  ok('the internal sibling preview looks for no holes and so writes and flags nothing', /const registerHoles = siblingPreview|let registerHoles = siblingPreview/.test(src) && /siblingPreview\s*\?\s*\[\]/.test(src));
-  ok('the golden fixture is not part of this change', true);
+  ok('the internal sibling preview looks for no holes and so writes and flags nothing', /siblingPreview \|\| tuitionFrozen\s*\?\s*\[\]/.test(src));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
