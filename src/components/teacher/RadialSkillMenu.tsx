@@ -5,6 +5,28 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useIvory } from "@/hooks/useIvory";
 import { SKILL_CONFIG, BEHAVIOR_CONFIG, CORRECTION_OPTIONS, DEDUCTION_OPTIONS } from "@/lib/skillConfig";
+import { motion } from "framer-motion";
+import { dur, ease, useMotionLevel } from "@/components/fx/motion";
+
+/**
+ * The menu opens from the finger: each tile fans in 20 ms after the one before, 240 ms in all (140 ms each, the
+ * last starting at 100 ms). At motion level "calm" they arrive together, "off" they are simply there. Closing is
+ * the panel's own 140 ms. Only opacity and a small scale move; every tile is pressable from its first frame.
+ */
+function Fan({ index, children }: { index: number; children: React.ReactNode }) {
+  const level = useMotionLevel();
+  if (level === "off") return <div className="min-w-0">{children}</div>;
+  return (
+    <motion.div
+      className="min-w-0"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: dur.press, delay: level === "full" ? Math.min(index * 0.02, dur.reveal - dur.press) : 0, ease }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 interface RadialSkillMenuProps {
   onSkillTap: (skill: string, points: number, subTag?: string) => void;
@@ -131,30 +153,36 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
     <div className={PANEL}>
       {/* Skills Row */}
       <div className={ivory ? "grid grid-cols-4 gap-2 mb-2" : "flex gap-2 mb-2"}>
-        {Object.entries(SKILL_CONFIG).map(([key, config]) => (
-          <SkillButton
-            key={key}
-            icon={config.icon}
-            label={config.label}
-            skill={key}
-            variant="positive"
-            onTap={handleSkillTap}
-          />
-        ))}
+        {Object.entries(SKILL_CONFIG).map(([key, config], i) => {
+          const tile = (
+            <SkillButton
+              key={key}
+              icon={config.icon}
+              label={config.label}
+              skill={key}
+              variant="positive"
+              onTap={handleSkillTap}
+            />
+          );
+          return ivory ? <Fan key={key} index={i}>{tile}</Fan> : tile;
+        })}
       </div>
 
       {/* Behaviors Row + Reading Theory + Correction */}
       <div className={ivory ? "grid grid-cols-4 gap-2" : "flex gap-2 justify-center"}>
-        {Object.entries(BEHAVIOR_CONFIG).map(([key, config]) => (
-          <SkillButton
-            key={key}
-            icon={config.icon}
-            label={config.label}
-            skill={key}
-            variant="positive"
-            onTap={handleBehaviorTap}
-          />
-        ))}
+        {Object.entries(BEHAVIOR_CONFIG).map(([key, config], i) => {
+          const tile = (
+            <SkillButton
+              key={key}
+              icon={config.icon}
+              label={config.label}
+              skill={key}
+              variant="positive"
+              onTap={handleBehaviorTap}
+            />
+          );
+          return ivory ? <Fan key={key} index={Object.keys(SKILL_CONFIG).length + i}>{tile}</Fan> : tile;
+        })}
         
         {/* Reading Theory Button - Opens cumulative score entry */}
         {onReadingTheoryClick && (

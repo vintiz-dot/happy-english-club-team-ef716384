@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { POINT_OPTIONS } from "@/lib/skillConfig";
 import { Check } from "lucide-react";
+import { noteTapOrigin } from "@/components/fx/flight";
 
 interface SkillButtonProps {
   icon: LucideIcon;
@@ -31,7 +32,9 @@ export function SkillButton({
   const [customValue, setCustomValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    // where the tapped skill is on screen: the point token flies from here (nothing is saved or sent from this)
+    noteTapOrigin(e.currentTarget);
     setShowPointOptions(true);
     setCustomValue("");
     if (navigator.vibrate) {

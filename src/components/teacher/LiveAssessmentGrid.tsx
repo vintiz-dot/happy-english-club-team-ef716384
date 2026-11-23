@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { useIvory } from "@/hooks/useIvory";
 import { AssessmentStudentCard } from "./AssessmentStudentCard";
 import { motion, AnimatePresence } from "framer-motion";
+import { peekTapOrigin } from "@/components/fx/flight";
+import { dur, ease, useMotionLevel } from "@/components/fx/motion";
 
 interface LiveAssessmentGridProps {
   classId: string;
@@ -41,6 +43,8 @@ interface FeedbackItem {
   color: string;
   count?: number;
   studentId: string;
+  /** where the teacher tapped the skill (viewport px), for the token to fly from */
+  origin?: { x: number; y: number } | null;
 }
 
 export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridProps) {
@@ -168,6 +172,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
 
       // Show feedback animation for each student
       const icon = SKILL_ICONS[skill] || MessageSquare;
+      const origin = peekTapOrigin();
       studentIds.forEach(studentId => {
         const feedbackId = `${studentId}-${Date.now()}`;
         setFeedbacks(prev => ({
@@ -181,6 +186,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
               color: points > 0 ? "green" : "red",
               count: studentIds.length > 1 ? studentIds.length : undefined,
               studentId,
+              origin,
             },
           ],
         }));
@@ -454,6 +460,17 @@ function SmartSkillPanel({
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const ivory = useIvory();
+  const level = useMotionLevel();
+  // The panel opens from the child's card (where the finger was): the scale grows from that point.
+  const [from, setFrom] = useState("50% 100%");
+  useEffect(() => {
+    if (!activeStudent || !pos) return;
+    const card = document.querySelector<HTMLElement>(`[data-student-card="${activeStudent.id}"]`);
+    if (!card) return;
+    const r = card.getBoundingClientRect();
+    setFrom(`${Math.round(r.left + r.width / 2 - pos.x)}px ${Math.round(r.top + r.height / 2 - pos.y)}px`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStudent?.id, pos !== null]);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
   const panelWidth = isMobile
@@ -582,11 +599,12 @@ function SmartSkillPanel({
         <motion.div
           ref={panelRef}
           key="smart-skill-panel"
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={level === "off" ? false : { opacity: 0, scale: level === "full" ? 0.92 : 1 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.18, ease: "easeOut" }}
+          exit={level === "off" ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, scale: level === "full" ? 0.96 : 1, transition: { duration: dur.press, ease } }}
+          transition={level === "off" ? { duration: 0 } : { duration: dur.reveal, ease }}
           style={{
+            transformOrigin: from,
             position: "fixed",
             left: pos.x,
             top: pos.y,

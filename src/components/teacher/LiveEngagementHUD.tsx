@@ -16,6 +16,7 @@ import { StudentActionPopover } from "@/components/shared/StudentActionPopover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { dur, ease, useMotionLevel } from "@/components/fx/motion";
 import { Activity, Radio, MoonStar } from "lucide-react";
 
 interface Props {
@@ -46,6 +47,7 @@ function minutesSince(iso: string | null): number | null {
 export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHistory }: Props) {
   const queryClient = useQueryClient();
   const [, forceTick] = useState(0);
+  const level = useMotionLevel();
 
   // Recency colors need a clock even without new events.
   useEffect(() => {
@@ -187,10 +189,12 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
         </div>
         {/* Engagement balance meter */}
         <div className="h-2 rounded-full bg-hec-sunken overflow-hidden mt-2">
+          {/* the meter grows with a transform, not a width (budget B4); instant at motion level "off" */}
           <motion.div
-            animate={{ width: `${Math.round(balance * 100)}%` }}
-            transition={{ duration: 0.6 }}
-            className={cn("h-full rounded-full", balance >= 0.7 ? "bg-hec-leaf" : balance >= 0.4 ? "bg-hec-warn" : "bg-hec-danger")}
+            initial={false}
+            animate={{ scaleX: Math.round(balance * 100) / 100 }}
+            transition={level === "off" ? { duration: 0 } : { duration: dur.page, ease }}
+            className={cn("h-full w-full origin-left rounded-full", balance >= 0.7 ? "bg-hec-leaf" : balance >= 0.4 ? "bg-hec-warn" : "bg-hec-danger")}
           />
         </div>
       </CardHeader>
