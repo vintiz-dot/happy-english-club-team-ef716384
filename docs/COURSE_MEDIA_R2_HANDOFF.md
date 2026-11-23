@@ -1,6 +1,13 @@
 # Hand-off: moving the Reach Higher class videos into R2
 
-Status on 23 Nov 2026: **the code is live, the videos are not in R2 yet.** Until
+**DONE on 23 Nov 2026 (steps 2-5):** the migration was already applied, wrangler was
+already signed in, the hec-files Worker was deployed (version edaba9d1), and all eight
+videos were uploaded from the Drive backup, each read back byte-identical to the
+publisher's original (SHA-256). **Left: step 6**, a teacher or admin pressing watch on
+one 3A and one 3B unit and seeing "From the school's file store" (it needs a signed-in
+session). Delete this file once that is seen.
+
+Original status text: on 23 Nov 2026 **the code is live, the videos are not in R2 yet.** Until
 they are, every unit video plays from the Google Drive copy, so nothing is
 broken. Nothing in this hand-off needs the original laptop or its downloads:
 the script fetches the videos from the Drive backup and proves each one is the
