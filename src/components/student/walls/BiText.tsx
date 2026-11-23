@@ -11,18 +11,21 @@ export function BiText({
   vars,
   className,
   viClassName,
+  always,
 }: {
   entry: CopyEntry;
   vars?: Record<string, string | number>;
   className?: string;
   viClassName?: string;
+  /** show the Vietnamese whatever the band: for a page that was bilingual for everyone before the bands */
+  always?: boolean;
 }) {
   const { viBeneath } = useAgeBand();
   const say = (s: string) => (vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : s);
   return (
     <span className={cn("inline-block break-words", className)}>
       <span>{say(entry.en)}</span>
-      {viBeneath && (
+      {(viBeneath || always) && (
         <span lang="vi" className={cn("block text-hec-small font-normal text-hec-ink-soft", viClassName)}>
           {say(entry.vi)}
         </span>
