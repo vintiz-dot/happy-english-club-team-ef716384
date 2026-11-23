@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, FolderOpen, ChevronLeft, ChevronRight, Loader2, Sparkles } from "lucide-react";
+import { Arrive, ArriveItem } from "@/components/fx/Arrive";
+import { pressable } from "@/components/fx/PaperPress";
+import { readingLine, useReadingCopy } from "@/lib/copy/studentReading";
 import { cn } from "@/lib/utils";
 import { useStudentResources, useResourceSearch, usePagination, useClasses } from "@/hooks/useResources";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
@@ -15,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function StudentResources() {
   const { user } = useAuth();
   const { studentId } = useStudentProfile();
+  const t = useReadingCopy();
   const [query, setQuery] = useState("");
   const [classFilter, setClassFilter] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -75,28 +79,33 @@ export default function StudentResources() {
 
   return (
     <Layout title="Resources">
-      <div className="space-y-6">
+      <Arrive scope="student-resources" userId={user?.id} className="space-y-6">
         {/* ---- Header ---- */}
         {/* The same page header as Lessons, Videos and My Work: icon tile, title, one line under it. */}
-        <div className="flex items-center gap-3">
+        <ArriveItem index={0} className="flex items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-md border border-hec-line bg-hec-sunken">
             <Sparkles className="h-5 w-5 text-hec-brass" aria-hidden />
           </div>
           <div className="min-w-0">
             <h1 className="font-display text-hec-h1 font-medium text-hec-ink">
-              My Resources
+              {readingLine(t.en("res.title"), t.vi("res.title"), t.beneath)}
             </h1>
             <p className="text-hec-small text-hec-ink-soft">
-              {totalItems} thing{totalItems !== 1 ? "s" : ""} to explore! 🎉
+              {readingLine(
+                t.en(totalItems === 1 ? "res.countOne" : "res.countMany", { n: totalItems }),
+                t.vi(totalItems === 1 ? "res.countOne" : "res.countMany", { n: totalItems }),
+                t.beneath,
+              )}
             </p>
           </div>
-        </div>
+        </ArriveItem>
 
         {/* ---- Search ---- */}
-        <div className="relative max-w-lg">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-hec-ink-soft" />
+        <ArriveItem index={1} className="relative max-w-lg">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-hec-ink-soft" aria-hidden />
           <Input
-            placeholder="🔍 Search for resources..."
+            placeholder={t.en("res.search")}
+            aria-label={t.en("res.search")}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -104,28 +113,30 @@ export default function StudentResources() {
             }}
             className="min-h-hec-target pl-12"
           />
-        </div>
+        </ArriveItem>
 
         {/* ---- Class filter chips ---- */}
         {enrolledClasses.length > 1 && (
-          <div className="flex flex-wrap gap-2">
+          <ArriveItem index={2} className="flex flex-wrap gap-2">
             <button
               onClick={() => { setClassFilter(null); setPage(1); }}
               className={cn(
-                "min-h-hec-target max-w-full rounded-full border px-4 py-2 text-hec-small font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                pressable,
+                "min-h-hec-target max-w-full rounded-full border px-4 py-2 text-hec-small font-medium shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
                 !classFilter
                   ? "border-hec-action bg-hec-action text-hec-on-action"
                   : "border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken",
               )}
             >
-              ✨ All
+              {readingLine(t.en("res.all"), t.vi("res.all"), t.beneath)}
             </button>
             {enrolledClasses.map((c) => (
               <button
                 key={c.id}
                 onClick={() => { setClassFilter(c.id); setPage(1); }}
                 className={cn(
-                  "min-h-hec-target max-w-full whitespace-normal break-words rounded-full border px-4 py-2 text-hec-small font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                  pressable,
+                  "min-h-hec-target max-w-full whitespace-normal break-words rounded-full border px-4 py-2 text-hec-small font-medium shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
                   classFilter === c.id
                     ? "border-hec-action bg-hec-action text-hec-on-action"
                     : "border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken",
@@ -134,7 +145,7 @@ export default function StudentResources() {
                 {c.name}
               </button>
             ))}
-          </div>
+          </ArriveItem>
         )}
 
         {/* ---- Cards Grid ---- */}
@@ -143,14 +154,16 @@ export default function StudentResources() {
             <Loader2 className="h-10 w-10 animate-spin text-hec-ink-soft" />
           </div>
         ) : paged.length === 0 ? (
-          <div className="text-center py-16 space-y-4">
-            <div className="text-6xl">📚</div>
-            <p className="text-hec-h3 text-hec-ink-soft">
-              {resources.length === 0 ? "No resources yet!" : "Nothing found — try a different search!"}
+          <div className="mx-auto flex max-w-sm flex-col items-center gap-3 rounded-hec-lg border border-dashed border-hec-line-strong bg-hec-surface px-6 py-12 text-center">
+            <FolderOpen className="h-10 w-10 text-hec-ink-soft" aria-hidden />
+            <p className="text-hec-body text-hec-ink-soft">
+              {resources.length === 0
+                ? readingLine(t.en("res.emptyNone"), t.vi("res.emptyNone"), t.beneath)
+                : readingLine(t.en("res.emptyNoMatch"), t.vi("res.emptyNoMatch"), t.beneath)}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <ArriveItem index={3} className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {paged.map((resource) => (
               <ResourceCard
                 key={resource.id}
@@ -158,7 +171,7 @@ export default function StudentResources() {
                 classNameMap={classNameMap}
               />
             ))}
-          </div>
+          </ArriveItem>
         )}
 
         {/* ---- Pagination ---- */}
@@ -171,8 +184,8 @@ export default function StudentResources() {
               onClick={() => setPage((p) => p - 1)}
               className="min-h-hec-target gap-2 px-6"
             >
-              <ChevronLeft className="h-5 w-5" />
-              Back
+              <ChevronLeft className="h-5 w-5 shrink-0" />
+              {readingLine(t.en("res.back"), t.vi("res.back"), t.beneath)}
             </Button>
             <span className="rounded-hec-sm bg-hec-sunken px-3 py-2 text-hec-small font-medium tabular-nums text-hec-ink-soft">
               {currentPage} / {totalPages}
@@ -184,12 +197,12 @@ export default function StudentResources() {
               onClick={() => setPage((p) => p + 1)}
               className="min-h-hec-target gap-2 px-6"
             >
-              Next
-              <ChevronRight className="h-5 w-5" />
+              {readingLine(t.en("res.next"), t.vi("res.next"), t.beneath)}
+              <ChevronRight className="h-5 w-5 shrink-0" />
             </Button>
           </div>
         )}
-      </div>
+      </Arrive>
     </Layout>
   );
 }
