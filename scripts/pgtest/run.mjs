@@ -354,6 +354,7 @@ const SUITES = [
   { name: "attendance proof", file: "attendance-proof.test.mjs", migrations: ["20261123100000_attendance_proof.sql"] },
   { name: "register holes", file: "register-holes.test.mjs", migrations: [] },
   { name: "restore transfer marks", file: "restore-transfer-marks.test.mjs", migrations: [] },
+  { name: "uncancel restores marks", file: "uncancel-restores-marks.test.mjs", migrations: [] },
   // Stage A without a database: the AI reply checked against the records, and what approval sends.
   { name: "lesson report approval", file: "lesson-report-approval.test.mjs", migrations: [] },
   {
