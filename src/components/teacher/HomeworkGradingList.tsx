@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { files } from "@/lib/files";
@@ -17,6 +18,10 @@ import { RichTextView } from "@/components/rich-text";
 import { dayjs } from "@/lib/date";
 import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
 import { PagedListControls, usePagedList } from "@/components/shared/PagedListControls";
+import { InkCheck } from "@/components/fx/InkCheck";
+import { InkRing } from "@/components/fx/InkRing";
+import { showSeal } from "@/components/fx/showSeal";
+import { soft, useMotionLevel } from "@/components/fx/motion";
 
 interface HomeworkGradingListProps {
   statusFilter?: string;
@@ -30,6 +35,11 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
   const [points, setPoints] = useState("");
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  // The card graded in this session (phase 3 effects only: nothing here is read by a save or a query).
+  const [justGradedId, setJustGradedId] = useState<string | null>(null);
+  const pendingSeal = useRef<string | null>(null);
+  const prevUngraded = useRef<number | null>(null);
+  const level = useMotionLevel();
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["all-homework-submissions", user?.id],
@@ -126,11 +136,14 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
         if (pointsError) throw pointsError;
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["all-homework-submissions"] });
       queryClient.invalidateQueries({ queryKey: ["class-board"] });
       queryClient.invalidateQueries({ queryKey: ["monthly-leader"] });
       toast.success("Grade submitted successfully");
+      // effects only: remember which card was graded, for its tick and the last-one Seal
+      setJustGradedId(variables.submissionId);
+      pendingSeal.current = variables.submissionId;
       setSelectedSubmission(null);
       setGrade("");
       setFeedback("");
@@ -226,10 +239,47 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
 
   const paged = usePagedList(filteredSubmissions);
 
+  // Ring figures: the list held, after the class filter, with the same predicates the status filter uses.
+  const inClass = submissions.filter((submission: any) => !classFilter || classFilter === "all" || submission.homeworks?.class_id === classFilter);
+  const gradedCount = inClass.filter((submission: any) => submission.grade !== null).length;
+  const handedInCount = inClass.filter((submission: any) => !!submission.submitted_at || submission.grade !== null).length;
+
+  // Handed in and not graded, in the whole held list (the "submitted" predicate).
+  const ungradedCount = submissions.filter((submission: any) => submission.submitted_at && !submission.grade).length;
+  useEffect(() => {
+    const before = prevUngraded.current;
+    prevUngraded.current = ungradedCount;
+    const id = pendingSeal.current;
+    if (!id) return;
+    // wait for the refetch that carries the grade this session just saved
+    const row: any = submissions.find((submission: any) => submission.id === id);
+    if (!row || row.grade === null) return;
+    pendingSeal.current = null;
+    if (before !== null && before >= 1 && ungradedCount === 0) showSeal("All graded");
+  }, [submissions, ungradedCount]);
+
+  // forget the just-graded card about 1.2 s after its graded state is on screen
+  useEffect(() => {
+    if (!justGradedId) return;
+    const row: any = submissions.find((submission: any) => submission.id === justGradedId);
+    if (!row || row.grade === null) return;
+    const t = window.setTimeout(() => setJustGradedId(null), 1200);
+    return () => window.clearTimeout(t);
+  }, [justGradedId, submissions]);
+
   if (isLoading) return <div className="py-8 text-center text-hec-body text-hec-ink-soft">Loading submissions...</div>;
 
   const getStatusBadge = (submission: any) => {
     if (submission.grade !== null) {
+      // the card graded a moment ago draws its tick once; cards graded before the page loaded show the character
+      if (submission.id === justGradedId) {
+        return (
+          <Badge variant="success">
+            <InkCheck size={12} className="mr-1" />
+            Graded
+          </Badge>
+        );
+      }
       return <Badge variant="success">✓ Graded</Badge>;
     }
     if (submission.submitted_at) {
@@ -242,8 +292,20 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
     );
   };
 
+  const progress =
+    handedInCount > 0 ? (
+      <div className="mb-3 flex items-center gap-3 rounded-hec-lg border border-hec-line bg-hec-surface px-4 py-2.5 md:mb-4">
+        <InkRing value={gradedCount} max={handedInCount} size={28} strokeWidth={3} label={`${gradedCount} of ${handedInCount} graded`} />
+        <p className="text-hec-small text-hec-ink-soft tabular-nums">
+          {gradedCount} of {handedInCount} graded
+        </p>
+      </div>
+    ) : null;
+
   if (filteredSubmissions.length === 0) {
     return (
+      <>
+        {progress}
       <Card className="border-dashed">
         <CardContent className="py-16 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-hec-sunken">
@@ -255,17 +317,28 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
           <p className="text-hec-small text-hec-ink-soft">Submissions will appear here once students submit their work</p>
         </CardContent>
       </Card>
+      </>
     );
   }
 
   return (
     <>
-      <div className="space-y-3 md:space-y-4">
+      {progress}
+      <div className="relative space-y-3 md:space-y-4">
+        <AnimatePresence mode="popLayout" initial={false}>
         {paged.slice.map((submission: any) => {
           const homework = submission.homeworks;
-
+          // Only the card graded this session leaves with an exit; filter and page changes stay instant.
+          const leaving = submission.id === justGradedId && level !== "off";
           return (
-            <Card key={submission.id} className="long-list-item min-w-0 overflow-hidden">
+            <motion.div
+              key={submission.id}
+              // siblings rise (soft spring) only while a just-graded card is leaving, and only at full motion
+              layout={leaving || (justGradedId !== null && level === "full") ? "position" : false}
+              transition={{ layout: soft }}
+              exit={leaving ? (level === "full" ? { opacity: 0, x: -16, transition: { duration: 0.18 } } : { opacity: 0, transition: { duration: 0.18 } }) : undefined}
+            >
+            <Card className="long-list-item min-w-0 overflow-hidden">
               <CardHeader className="min-w-0 p-4 pb-3 sm:p-6">
                 <div className="flex flex-col gap-3 min-w-0">
                   <div className="flex items-start gap-2 min-w-0">
@@ -347,8 +420,10 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
                 )}
               </CardContent>
             </Card>
+            </motion.div>
           );
         })}
+        </AnimatePresence>
       </div>
 
       <PagedListControls
