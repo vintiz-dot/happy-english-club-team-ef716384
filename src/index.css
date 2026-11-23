@@ -2017,3 +2017,10 @@ html[data-hec-theme="ivory"][data-hec-tide]:not(.dark) {
   [data-hec-theme="ivory"] .hec-progress-nav { animation: none; transform: scaleX(1); opacity: 0.7; }
   [data-hec-theme="ivory"] .hec-progress-saving { animation: none; transform: scaleX(1); opacity: 0.5; }
 }
+
+/* A Vietnamese line under the English inside a dark action button (Bi, BiText): it takes the button's own text
+   colour, a little quieter, instead of soft ink on ink (found in the Phase 7 preview, 23 Nov 2026). */
+.bg-hec-action [lang="vi"] {
+  color: inherit;
+  opacity: 0.8;
+}
