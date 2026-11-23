@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminTuitionListEnhanced } from "@/components/admin/AdminTuitionListEnhanced";
+import { TuitionBillCheck } from "@/components/admin/TuitionBillCheck";
 import { TuitionBulkDownload } from "@/components/admin/TuitionBulkDownload";
 import { DiscountManager } from "@/components/admin/DiscountManager";
 import { SiblingDiscountCompute } from "@/components/admin/SiblingDiscountCompute";
@@ -87,6 +88,7 @@ const FinanceTab = () => {
 
       <TabsContent value="overview" className="space-y-4">
         <MonthPicker value={currentMonth} onChange={setCurrentMonth} minMonth={earliestMonth} maxMonth={dayjs().add(2, "month").format("YYYY-MM")} />
+        <TuitionBillCheck month={currentMonth} />
         <AdminTuitionListEnhanced month={currentMonth} />
       </TabsContent>
 

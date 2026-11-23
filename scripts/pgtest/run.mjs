@@ -104,6 +104,9 @@ const SUITES = [
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
+  // Every child with lessons to pay for has a bill that matches the register: the check
+  // beside the real calculate-tuition, and the hourly refresh-month-bills (Nov 2026: seven bills missing or 0).
+  { name: "tuition bill check", file: "tuition-bill-check.test.mjs", migrations: [] },
   {
     name: "cancelled lessons",
     file: "cancelled-lessons.test.mjs",

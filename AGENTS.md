@@ -83,6 +83,11 @@ Several sessions and many subagents work in this repo at the same time. Every ag
 # Nested rules
 - Subdirectories carry their own `AGENTS.md` for the files there: read `supabase/AGENTS.md` before database, migration or edge-function work, and `src/components/leaderboard/AGENTS.md` before class-board changes.
 
+# Every month's bills exist and match the register (23 Nov 2026)
+- A bill (`invoices` row) is saved ONLY by calculate-tuition. `calculate-tuition-bulk` reads and never saves; it is not a way to "refresh invoices" (schedule-sessions called it for that and reported "ok" while November 2026 had seven children with no bill or a bill of 0).
+- `public.tuition_bill_gaps(month)` (`20261123090000`) lists every child whose saved bill is missing or whose `base_amount` differs from the register, priced by calculate-tuition's own lesson rule; frozen bills are not listed. `refresh-month-bills` runs it every hour (pg_cron, runner token) and asks calculate-tuition to save each child, for this month and, in the first five days, last month - never older months; it logs every run in `tuition_bill_check_runs` and names every child it could not fix. Finance > Tuition shows the list (`TuitionBillCheck.tsx`).
+- Change which lessons are billable or how they are priced in calculate-tuition and you change `tuition_bill_expected` in a new migration too: `tuition-bill-check.test.mjs` runs the real calculate-tuition beside the SQL and fails when they disagree.
+
 # Frozen bills
 - `invoices.tuition_frozen` locks a bill's charged figures (base, discount, total, class breakdown): a trigger keeps them on every update, and calculate-tuition / calculate-tuition-bulk report the saved figures instead of repricing. Used when enrollment history is corrected but what was billed must stand; only an admin explicitly setting it false unfreezes.
 

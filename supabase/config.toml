@@ -290,3 +290,8 @@ verify_jwt = true
 # Lesson reports, stage A: the AI draft for a lesson's teacher or an admin; reads everything as the caller.
 [functions.lesson-report-draft]
 verify_jwt = true
+
+# Saves the month's missing / out-of-date bills (hourly pg_cron, 20261123090000) and
+# the Recalculate button on Finance > Tuition. Admin JWT or the schedule_runner token.
+[functions.refresh-month-bills]
+verify_jwt = true

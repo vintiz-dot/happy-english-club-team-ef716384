@@ -60,13 +60,6 @@ function normalizeTime(t: string): string {
   return /^\d{2}:\d{2}$/.test(t) ? `${t}:00` : t;
 }
 
-/** Split a list into Supabase-sized pieces for .in() filters. */
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
-
 /**
  * Did the nightly timer ask for this run?
  *
@@ -97,51 +90,6 @@ async function runnerSecretMatches(req: Request, supabase: any): Promise<boolean
     diff |= expected.charCodeAt(i) ^ presented.charCodeAt(i);
   }
   return diff === 0;
-}
-
-/**
- * The students whose money this rebuild could have moved: enrolled in one of
- * the classes just rebuilt, with an enrolment overlapping `month`, and still
- * on the roster during it. Mirrors src/lib/finance/studentsInMonth.ts, the
- * same predicate the finance screens use, so the refresh covers exactly the
- * students those screens would show - and nobody else.
- */
-async function tuitionRosterForMonth(
-  supabase: any,
-  classIds: string[],
-  month: string,
-): Promise<string[]> {
-  if (classIds.length === 0) return [];
-
-  const monthStart = `${month}-01`;
-  const year = Number(month.slice(0, 4));
-  const monthNumber = Number(month.slice(5, 7));
-  // Day 0 of the following month is the last day of this one.
-  const monthEnd = new Date(Date.UTC(year, monthNumber, 0)).toISOString().slice(0, 10);
-
-  const { data: enrollments, error: enrollmentError } = await supabase
-    .from('enrollments')
-    .select('student_id')
-    .in('class_id', classIds)
-    .lte('start_date', monthEnd)
-    .or(`end_date.is.null,end_date.gte.${monthStart}`);
-  if (enrollmentError) throw enrollmentError;
-
-  const enrolled = [
-    ...new Set((enrollments ?? []).map((e: { student_id: string }) => e.student_id)),
-  ];
-
-  const roster = new Set<string>();
-  for (const ids of chunk(enrolled, 200)) {
-    const { data: students, error: studentsError } = await supabase
-      .from('students')
-      .select('id')
-      .in('id', ids)
-      .or(`is_active.eq.true,deactivated_at.gte.${monthStart}`);
-    if (studentsError) throw studentsError;
-    (students ?? []).forEach((s: { id: string }) => roster.add(s.id));
-  }
-  return [...roster];
 }
 
 Deno.serve(async (req) => {
@@ -309,27 +257,14 @@ Deno.serve(async (req) => {
         refresh.payroll = payrollError?.message || 'Payroll refresh failed';
       }
 
-      try {
-        const roster = await tuitionRosterForMonth(
-          supabase,
-          (classes || []).map((c: { id: string }) => c.id),
-          targetMonth,
-        );
-        for (const ids of chunk(roster, 200)) {
-          const { error: tuitionError } = await supabase.functions.invoke('calculate-tuition-bulk', {
-            body: { studentIds: ids, month: targetMonth },
-          });
-          if (tuitionError) {
-            console.error('Tuition calculation error:', tuitionError);
-            refresh.tuition = tuitionError.message || 'Tuition refresh failed';
-            break;
-          }
-        }
-        refresh.tuition = refresh.tuition === 'ok' ? `ok (${roster.length} students)` : refresh.tuition;
-      } catch (tuitionError: any) {
-        console.error('Tuition calculation error:', tuitionError);
-        refresh.tuition = tuitionError?.message || 'Tuition refresh failed';
-      }
+      // Tuition is NOT refreshed here. This step used to call
+      // calculate-tuition-bulk "to keep invoices in step with the timetable"
+      // and reported "ok (N students)" every night - but calculate-tuition-bulk
+      // only reads; it has never saved a bill. Children nobody happened to
+      // touch had no bill for the month (November 2026: seven of them). Bills
+      // are now saved by refresh-month-bills, every hour, from the check in
+      // 20261123090000_tuition_bill_check.sql; this says so instead of "ok".
+      refresh.tuition = 'not refreshed here: refresh-month-bills saves the bills every hour';
 
 
       // Step 7: Generate per-teacher report

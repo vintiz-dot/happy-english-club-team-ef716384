@@ -44,27 +44,50 @@ export function GenerateTuition() {
       );
 
       if (activeStudentIds.length === 0) {
-        return { success: true, processed: 0, errors: [], needsReview: 0 };
+        return { success: true, processed: 0, errors: [], needsReview: 0, stillWrong: null };
       }
 
-      const results = { processed: 0, errors: [] as string[], needsReview: 0 };
+      const names = new Map<string, string>(
+        (enrollments ?? []).map((e: any) => [e.student_id, e.students?.full_name ?? e.student_id]),
+      );
+      const results = { processed: 0, errors: [] as string[], needsReview: 0, stillWrong: null as number | null };
 
-      for (const studentId of activeStudentIds) {
+      // calculate-tuition allows 30 calls a minute. Firing every child at once
+      // got the later ones refused (429), and the screen said only "N errors",
+      // so a child could be left with no bill and nobody knew who. One call
+      // every 2.1 s, one retry after a refusal, and every failure by name.
+      const call = async (studentId: string) => {
+        const { data, error } = await supabase.functions.invoke("calculate-tuition", { body: { studentId, month } });
+        const status = (error as any)?.context?.status;
+        return { data, error, status };
+      };
+      for (const [i, studentId] of activeStudentIds.entries()) {
+        const name = names.get(studentId) ?? studentId;
+        if (i > 0) await new Promise((r) => setTimeout(r, 2100));
         try {
-          const { data, error } = await supabase.functions.invoke("calculate-tuition", {
-            body: { studentId, month },
-          });
-          if (error) {
-            results.errors.push(`Student ${studentId}: ${error.message}`);
-          } else if (data?.error) {
-            results.errors.push(`Student ${studentId}: ${data.error}`);
+          let r = await call(studentId);
+          if (r.error && r.status === 429) {
+            await new Promise((done) => setTimeout(done, 30000));
+            r = await call(studentId);
+          }
+          if (r.error) {
+            results.errors.push(`${name}: ${r.error.message}`);
+          } else if (r.data?.error) {
+            results.errors.push(`${name}: ${r.data.error}`);
+          } else if (r.data?.invoiceSaved === false) {
+            results.errors.push(`${name}: not saved${r.data?.siblingUnresolved ? " (family discount still being worked out)" : ""}`);
           } else {
             results.processed++;
           }
         } catch (err: any) {
-          results.errors.push(`Student ${studentId}: ${err.message}`);
+          results.errors.push(`${name}: ${err.message}`);
         }
       }
+
+      // The check the database keeps (20261123090000): anyone still without a
+      // matching bill. Absent before the migration is pasted; then it says nothing.
+      const { data: gaps, error: gapError } = await (supabase.rpc as any)("tuition_bill_gaps", { p_month: month });
+      if (!gapError) results.stillWrong = (gaps ?? []).length;
 
       const { data: invoices } = await supabase
         .from("invoices")
@@ -121,6 +144,19 @@ export function GenerateTuition() {
           <ResultBox>
             <AlertDescription className="text-hec-small">
               Generated tuition for {results.processed} students.
+              {results.errors.length > 0 && (
+                <div className="mt-2">
+                  <strong className="font-semibold text-hec-danger">{results.errors.length} not saved:</strong>
+                  <ul className="mt-1 list-disc pl-5">
+                    {results.errors.map((e: string) => <li key={e}>{e}</li>)}
+                  </ul>
+                </div>
+              )}
+              {results.stillWrong != null && results.stillWrong > 0 && (
+                <div className="mt-2 font-semibold text-hec-danger">
+                  {results.stillWrong} bill(s) for this month are still missing or do not match the register (Finance &gt; Tuition lists them).
+                </div>
+              )}
               {results.needsReview > 0 && (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <strong className="font-semibold text-hec-warn">{results.needsReview} students need review.</strong>
