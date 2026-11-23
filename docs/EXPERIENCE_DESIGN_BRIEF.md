@@ -213,6 +213,12 @@ Remove from this page the per-item `initial={{ x: -8 }}` and `x: 8` entrances; `
 
 This is the screen used with a room full of children waiting. Speed is the luxury.
 
+Facts found while building it (23 Nov 2026), which override the bullets below where they differ:
+
+- The register teachers use is `src/components/admin/class/AttendanceDrawer.tsx`, opened from the calendar; admins use it too. `AttendanceMarking.tsx` is an older register on the teacher hub.
+- Both mark by a local toggle through Present, Absent and Excused and then a separate Save. There is no "Late" in either, and nothing is optimistic. Do not add a status or change when anything is saved for the sake of an effect: a faster save path is its own piece of work, with the attendance guards in `AGENTS.md` in front of it.
+- Every child starts as Present, so a "marked out of enrolled" ring would always read full; it is left out.
+
 - Marking a child: the response is optimistic and inside 100 ms. Present: `InkCheck` draws in leaf. Late: the same tick in warn with the word "Late". Absent: an ink dash; no red flourish. The row's state is always also written in words.
 - A register ring (`InkRing`) in the header counts children marked out of children enrolled.
 - Rapid marking: animations never queue. A second tap during an animation finishes the first instantly.
@@ -226,7 +232,7 @@ The children can see this screen. It is the one staff surface where delight is t
 - Awarding points: the existing pill becomes a small brass token that travels from the tapped skill to the child's avatar (420 ms, `--hec-ease`), the avatar gives one press-pulse, the child's score ticks up. Removing points: an ink token leaves the avatar and fades; no shake, no red flash.
 - Ten awards in two seconds must stay smooth: cap live tokens at 6; beyond that, update the numbers and skip the flight.
 - The radial menu opens from the finger: items fan out with a 20 ms stagger, 240 ms in all; closing is 140 ms.
-- A child's rank changing inside this grid: rows glide to their new place (`layout`, `soft`). Never animate rank changes in the display boards from here.
+- The live grid shows no rank today, so there is no rank glide to build (found 23 Nov 2026). Never animate rank changes in the display boards from here.
 - Homework from a lesson deck goes only to children marked Present or Late (see `AGENTS.md`); do not let an animation suggest otherwise.
 
 ### C5. Assignments and grading (`TeacherAssignments.tsx`, `HomeworkGrading.tsx`, `HomeworkGradingList.tsx`, `GradeOfflineDialog.tsx`)
