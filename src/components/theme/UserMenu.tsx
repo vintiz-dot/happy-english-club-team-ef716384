@@ -1,4 +1,5 @@
-import { Ban, LogOut, Monitor, Moon, Sparkles, Sun, UserRound, Wind } from "lucide-react";
+import { useSyncExternalStore } from "react";
+import { Ban, LogOut, Monitor, Moon, Sparkles, Sun, UserRound, Volume2, VolumeX, Wind } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeChoice } from "@/components/theme/IvoryScope";
 import type { ThemeChoice } from "@/lib/ivoryScope";
 import { setMotionLevel, useMotionLevel, useMotionLocked, type MotionLevel } from "@/components/fx/motion";
+import { soundManager } from "@/lib/soundManager";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
@@ -49,6 +51,8 @@ export function UserMenu({
   // Motion level (DESIGN_SYSTEM s.9b): what is in force, and whether the device itself asked for none.
   const motion = useMotionLevel();
   const motionLocked = useMotionLocked();
+  // Sound on or off for this device: the same stored setting the speaker button on the young homes writes.
+  const soundOn = useSyncExternalStore(soundManager.subscribe, () => soundManager.isEnabled(), () => false);
   return (
     // modal={false}: the page behind stays in the accessibility tree (no aria-hidden over focusable content).
     <DropdownMenu modal={false}>
@@ -111,6 +115,31 @@ export function UserMenu({
         {motionLocked && (
           <p className="px-3 pb-2 text-hec-caption text-hec-ink-soft">This device asks for reduced motion.</p>
         )}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel id="hec-sound" className="px-3 pb-1 pt-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
+          Sound
+        </DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          aria-labelledby="hec-sound"
+          value={soundOn ? "on" : "off"}
+          onValueChange={(v) => {
+            if (v === "on") {
+              soundManager.enable();
+              soundManager.play("click");
+            } else {
+              soundManager.disable();
+            }
+          }}
+        >
+          <DropdownMenuRadioItem value="on" onSelect={(e) => e.preventDefault()}>
+            <Volume2 className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden="true" />
+            On
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="off" onSelect={(e) => e.preventDefault()}>
+            <VolumeX className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden="true" />
+            Off
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onSignOut}>
           <LogOut className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden="true" />

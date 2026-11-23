@@ -22,6 +22,12 @@ class SoundManager {
   /** the person has chosen on or off themselves; the role default no longer applies */
   private hasStoredChoice = false;
   private listeners = new Set<() => void>();
+  /** a classroom sound (feedback on a teacher's action on a child) is audible until this time even when the role default is off */
+  private classroomUntil = 0;
+
+  private isAudible(): boolean {
+    return this.enabled || Date.now() < this.classroomUntil;
+  }
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -79,7 +85,7 @@ class SoundManager {
   }
 
   private playTone(frequency: number, duration: number, type: OscillatorType = 'sine') {
-    if (!this.enabled || !this.context) return;
+    if (!this.isAudible() || !this.context) return;
 
     try {
       if (this.context.state === 'suspended') {
@@ -108,7 +114,7 @@ class SoundManager {
   }
 
   private playChord(frequencies: number[], duration: number) {
-    if (!this.enabled || !this.context) return;
+    if (!this.isAudible() || !this.context) return;
 
     frequencies.forEach((freq, index) => {
       setTimeout(() => this.playTone(freq, duration * 0.8, 'sine'), index * 50);
@@ -116,15 +122,26 @@ class SoundManager {
   }
 
   private playArpeggio(frequencies: number[], duration: number) {
-    if (!this.enabled || !this.context) return;
+    if (!this.isAudible() || !this.context) return;
 
     frequencies.forEach((freq, index) => {
       setTimeout(() => this.playTone(freq, duration, 'sine'), index * 100);
     });
   }
 
-  play(soundType: SoundType) {
+  /**
+   * `classroom: true` marks feedback on a teacher's action on a child (points, attendance, check-in): a classroom
+   * feature that keeps playing as it always has, whatever the role default. It still respects an explicit stored
+   * "off", the stored volume, the tap-first rule and a device that asks for reduced motion.
+   */
+  play(soundType: SoundType, options?: { classroom?: boolean }) {
     if (!this.tapped) return; // never before a tap on this visit
+    if (options?.classroom && !this.enabled) {
+      const explicitOff = this.hasStoredChoice;
+      const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (explicitOff || reduced) return;
+      this.classroomUntil = Date.now() + 1500;
+    }
     const soundFn = this.sounds.get(soundType);
     if (soundFn) {
       soundFn();
