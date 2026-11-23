@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History, Plug, Bot, Languages, Mic, Tv, FileAudio, Images, ClipboardList} from "lucide-react";
+import { LogOut, Menu, X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
 import { ChangePassword } from "@/components/auth/ChangePassword";
 import NotificationBell from "@/components/NotificationBell";
@@ -28,6 +28,9 @@ import { navProgress } from "@/lib/navProgress";
 import { dur, ease, snappy, useMotionLevel, useSyncMotionLevel } from "@/components/fx/motion";
 import { carriedRecently } from "@/components/fx/Carry";
 import { AgeBandProvider } from "@/hooks/useAgeBand";
+import { navGroupsFor, sectionIsActive, groupOfPath, type NavSection } from "@/lib/navSections";
+import { navIcon } from "@/components/navIcons";
+import { SectionTabs } from "@/components/SectionTabs";
 
 interface LayoutProps {
   children: ReactNode;
@@ -36,10 +39,17 @@ interface LayoutProps {
 }
 
 const SIDEBAR_KEY = "sidebar-collapsed";
+const GROUPS_KEY = "sidebar-groups-closed";
 
-// A nav item is current when its path is the page, or (with a ?tab=) the page and query.
-const navPathActive = (itemPath: string, pathname: string, search: string) =>
-  itemPath.includes("?") ? pathname + search === itemPath : pathname === itemPath && !search;
+// Which admin headings the person folded shut (headings are open unless listed here).
+const readClosedGroups = (): string[] => {
+  try {
+    const v = JSON.parse(localStorage.getItem(GROUPS_KEY) || "[]");
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+};
 
 // Every page renders its own <Layout>, so the sidebar is built again on each navigation.
 // The shared active marker starts where it was on the previous page and glides to the
@@ -64,6 +74,13 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
     return saved !== "true"; // collapsed = true means sidebar is closed
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [closedGroups, setClosedGroups] = useState<string[]>(readClosedGroups);
+  const toggleGroup = (id: string) =>
+    setClosedGroups((c) => {
+      const next = c.includes(id) ? c.filter((x) => x !== id) : [...c, id];
+      try { localStorage.setItem(GROUPS_KEY, JSON.stringify(next)); } catch { /* storage unavailable: the fold lasts this visit */ }
+      return next;
+    });
   const ivory = useIvory();
   const motionLevel = useMotionLevel();
   // Where the shared active marker sits: the previous page's item first, then this page's (see lastMarker).
@@ -92,63 +109,17 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
     );
   }
 
-  const getNavigationItems = () => {
-    switch (role) {
-      case "admin":
-        return [
-          { icon: LayoutGrid, label: "Dashboard", path: "/admin" },
-          { icon: UsersRound, label: "Students", path: "/students" },
-          { icon: UserCog, label: "Teachers", path: "/teachers" },
-          { icon: School, label: "Classes", path: "/admin?tab=classes" },
-          { icon: Building2, label: "Families", path: "/families" },
-          { icon: CalendarDays, label: "Schedule", path: "/schedule" },
-          { icon: ListTodo, label: "Assignments", path: "/admin?tab=assignments" },
-          { icon: NotebookPen, label: "Journal", path: "/admin?tab=journal" },
-          { icon: FileBarChart2, label: "Exam Reports", path: "/admin?tab=exam-reports" },
-          { icon: PiggyBank, label: "Finance", path: "/admin?tab=finance" },
-          { icon: Receipt, label: "Payroll", path: "/admin?tab=payroll" },
-          { icon: TrendingUp, label: "Reports", path: "/admin?tab=reports" },
-          { icon: Settings2, label: "Automation", path: "/admin?tab=automation" },
-          { icon: History, label: "Activity", path: "/admin?tab=activity" },
-          { icon: Bot, label: "AI actions", path: "/admin?tab=ai-actions" },
-          { icon: HardDrive, label: "Data", path: "/admin?tab=data" },
-          { icon: Plug, label: "Stars Sync", path: "/admin?tab=stars-sync" },
-          { icon: AudioLines, label: "Audit clips", path: "/admin?tab=audit-clips" },
-          { icon: Megaphone, label: "Announcements", path: "/admin?tab=announcements" },
-          { icon: Tv, label: "Reception TV", path: "/admin?tab=reception" },
-          { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
-          { icon: Images, label: "Student Work", path: "/admin/student-work" },
-          { icon: Mic, label: "Record & transcripts", path: "/teacher/recorder" },
-          { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
-          { icon: Languages, label: "Language Support", path: "/teacher/language-support" },
-          { icon: ClipboardList, label: "Class reports", path: "/teacher/class-reports" },
-        ];
-      case "teacher":
-        return [
-          { icon: TrendingUp, label: "Dashboard", path: "/dashboard" },
-          { icon: CalendarDays, label: "Schedule", path: "/schedule" },
-          { icon: Trophy, label: "Leaderboard", path: "/teacher/leaderboards" },
-          { icon: PiggyBank, label: "Payroll", path: "/teacher/payroll" },
-          { icon: BookOpenCheck, label: "Assignments", path: "/teacher/assignments" },
-          { icon: ListTodo, label: "Attendance", path: "/teacher/attendance" },
-          { icon: NotebookPen, label: "Journal", path: "/teacher/journal" },
-          { icon: FileBarChart2, label: "Exam Reports", path: "/teacher/exam-reports" },
-          { icon: Sparkles, label: "Vocabulary Audit", path: "/teacher/vocabulary-audit" },
-          { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
-          { icon: Images, label: "My Student Works", path: "/teacher/my-student-works" },
-          { icon: Mic, label: "Record & transcripts", path: "/teacher/recorder" },
-          { icon: FolderOpen, label: "Resources", path: "/teacher/resources" },
-          { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
-          { icon: Languages, label: "Language Support", path: "/teacher/language-support" },
-          { icon: ClipboardList, label: "Class reports", path: "/teacher/class-reports" },
-          ...((pilotClasses.data ?? []).length ? [{ icon: FileAudio, label: "Lesson reports", path: "/teacher/lesson-reports" }] : []),
-        ];
-      default:
-        return [];
-    }
-  };
-
-  const navItems = getNavigationItems();
+  const navGroups = navGroupsFor(role, { pilot: (pilotClasses.data ?? []).length > 0 });
+  // One sidebar entry per section; it opens the section's first page and is current on any member page.
+  const entryOf = (section: NavSection) => ({
+    key: section.id,
+    label: section.label,
+    path: section.members[0].path,
+    icon: navIcon(section.icon),
+    section,
+  });
+  type NavEntry = ReturnType<typeof entryOf>;
+  const activeGroupId = groupOfPath(navGroups, location.pathname, location.search)?.id;
   const showSidebar = role === "admin" || role === "teacher";
 
   // Student/Family layout (Ivory design system). Solid paper, no glow; the
@@ -265,11 +236,35 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
         {/* Navigation */}
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           <TooltipProvider delayDuration={100}>
-            {navItems.map((item) => {
-              const isActive = item.path.includes('?') 
-                ? location.pathname + location.search === item.path
-                : location.pathname === item.path && !location.search;
-              
+            {navGroups.map((group) => {
+              const entries = group.sections.map(entryOf);
+              // A heading folds its entries (admin); the one holding the current page is always open.
+              // A collapsed (icon-only) sidebar shows no headings, only a hairline between groups.
+              const foldable = !!group.label && sidebarOpen;
+              const groupOpen = !foldable || group.id === activeGroupId || !closedGroups.includes(group.id);
+              return (
+              <div key={group.id} className={cn(!sidebarOpen && group.label && "border-t border-hec-line pt-1 first:border-t-0 first:pt-0")}>
+                {foldable && (
+                  <button
+                    type="button"
+                    aria-expanded={groupOpen}
+                    aria-controls={`nav-group-${group.id}`}
+                    onClick={() => { if (group.id !== activeGroupId) toggleGroup(group.id); }}
+                    className={cn(
+                      "mt-2 flex min-h-hec-target w-full items-center justify-between gap-2 rounded-hec-md px-3 text-left",
+                      ivory
+                        ? cn("text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft hover:text-hec-ink", IV_FOCUS)
+                        : "text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground focus-premium",
+                    )}
+                  >
+                    <span>{group.label}</span>
+                    <ChevronDown aria-hidden className={cn("h-4 w-4 shrink-0 transition-transform duration-hec-1", !groupOpen && "-rotate-90")} />
+                  </button>
+                )}
+                <div id={`nav-group-${group.id}`} className="space-y-1" hidden={!groupOpen}>
+            {entries.map((item) => {
+              const isActive = sectionIsActive(item.section, location.pathname, location.search);
+
               const buttonContent = ivory ? (
                 // Ivory nav item (DESIGN_SYSTEM s.15): 44 px, sunken wash and a brass mark at the left edge
                 // when current. The wash and the mark are ONE shared element (layoutId) that glides between
@@ -286,7 +281,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                   )}
                   onClick={() => { if (item.path !== location.pathname) navProgress.start(); navigate(item.path); }}
                 >
-                  {navPathActive(item.path, marker.pathname, marker.search) && (
+                  {sectionIsActive(item.section, marker.pathname, marker.search) && (
                     <motion.span
                       layoutId="hec-nav-marker"
                       aria-hidden
@@ -341,6 +336,10 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                   </TooltipTrigger>
                   <RichTooltipContent side="right" icon={item.icon} title={item.label} />
                 </Tooltip>
+              );
+            })}
+                </div>
+              </div>
               );
             })}
           </TooltipProvider>
@@ -435,10 +434,13 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               exit={ivory && motionLevel !== "off" ? { opacity: 0, y: -8, transition: { duration: dur.press, ease } } : { opacity: 1, transition: { duration: 0 } }}
               transition={{ duration: dur.reveal, ease }}
               className={ivory ? "max-h-[calc(100dvh-4rem)] space-y-1 overflow-y-auto border-t border-hec-line bg-hec-surface p-2" : "border-t bg-card p-2 space-y-1"}>
-              {navItems.map((item) => {
-                const isActive = item.path.includes('?') 
-                  ? location.pathname + location.search === item.path
-                  : location.pathname === item.path && !location.search;
+              {navGroups.map((group) => (
+                <div key={group.id} className="space-y-1">
+                  {group.label && (
+                    <p className={cn("px-3 pt-2", ivory ? "text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft" : "text-xs font-semibold uppercase tracking-wider text-muted-foreground")}>{group.label}</p>
+                  )}
+                  {group.sections.map(entryOf).map((item) => {
+                const isActive = sectionIsActive(item.section, location.pathname, location.search);
                 return (
                   <Button
                     key={item.path}
@@ -462,6 +464,8 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                   </Button>
                 );
               })}
+                </div>
+              ))}
               <PWAInstallButton className="w-full" variant="ghost" />
               <Button
                 variant="ghost"
@@ -500,6 +504,8 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
         >
           {/* What the assistant set up, until the admin says it looks right or undoes it */}
           <AiActionBanner />
+          {/* The tab strip of a multi-page section (teacher menu): the same pages, one entry in the sidebar. */}
+          <SectionTabs groups={navGroups} />
           {children}
         </motion.main>
       </div>

@@ -1,6 +1,8 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronRight, Command, Plus, Search, Plug} from "lucide-react";
+import { allMembers, ADMIN_GROUPS } from "@/lib/navSections";
+import { navIcon } from "@/components/navIcons";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -55,6 +57,13 @@ import {
   Lock,
   UserPlus,
 } from "lucide-react";
+
+// The paths the Admin group above already lists by hand.
+const SHOWN_ABOVE = new Set([
+  "/students", "/teachers", "/admin?tab=classes", "/schedule", "/admin?tab=assignments", "/admin?tab=journal",
+  "/admin?tab=exam-reports", "/admin?tab=finance", "/admin?tab=payroll", "/admin?tab=reports", "/admin?tab=automation",
+  "/admin?tab=data", "/admin?tab=stars-sync", "/admin?tab=announcements",
+]);
 
 type Crumb = { label: string; href?: string };
 
@@ -264,6 +273,10 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
             <PaletteItem icon={HardDrive} label="Data" onSelect={() => go("/admin?tab=data")} />
             <PaletteItem icon={Plug} label="Stars Sync" onSelect={() => go("/admin?tab=stars-sync")} />
             <PaletteItem icon={Megaphone} label="Announcements" onSelect={() => go("/admin?tab=announcements")} />
+            {/* Every other page of the admin menu, from the sidebar's own definition (nothing is findable only by scrolling). */}
+            {allMembers(ADMIN_GROUPS)
+              .filter((m) => !SHOWN_ABOVE.has(m.path))
+              .map((m) => <PaletteItem key={m.path} icon={navIcon(m.icon)} label={m.label} onSelect={() => go(m.path)} />)}
           </CommandGroup>
 
           <CommandSeparator className={ivory ? "bg-hec-line" : undefined} />

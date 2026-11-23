@@ -151,6 +151,7 @@ const SUITES = [
   // The app's own types. `tsc --noEmit` at the root checks nothing - see
   // the file - so this is the type check, not that.
   { name: "app typecheck", file: "app-typecheck.test.mjs", migrations: [] },
+  { name: "nav sections", file: "nav-sections.test.mjs", migrations: [] },
   // The public sign-up form offers no staff role (audit F-01).
   { name: "signup form (F-01)", file: "signup-form.test.mjs", migrations: [] },
   // Nor this: the assistant's chat function, run against a stand-in for

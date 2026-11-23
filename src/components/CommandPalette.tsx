@@ -16,12 +16,10 @@ import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput,
   CommandItem, CommandList, CommandSeparator, CommandShortcut,
 } from "@/components/ui/command";
-import {
-  LayoutGrid, UsersRound, UserCog, School, CalendarDays, Trophy,
-  ScanText, AudioLines, BookOpen, GraduationCap, PiggyBank,
-  NotebookPen, Sparkles, FileBarChart2, ListTodo,
-  Languages,
-} from "lucide-react";
+import { GraduationCap, School, Sparkles } from "lucide-react";
+import { allMembers, navGroupsFor } from "@/lib/navSections";
+import { navIcon } from "@/components/navIcons";
+import { useMyPilotClasses } from "@/hooks/useLessonMonitor";
 
 // ui/command has no ivory branch: on a listed route the palette's parts take the
 // system's menu recipe from here (DESIGN_SYSTEM s.15); elsewhere nothing is passed.
@@ -47,6 +45,7 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ivory = useIvory();
+  const pilotClasses = useMyPilotClasses(role === "teacher");
 
   const enabled = role === "admin" || role === "teacher";
   // On an admin page an admin's Ctrl+K is AdminTopBar's; this bar answers it
@@ -82,38 +81,12 @@ export function CommandPalette() {
     [navigate],
   );
 
-  const pages: JumpTarget[] = useMemo(() => {
-    if (role === "admin") {
-      return [
-        { label: "Dashboard", path: "/admin", icon: LayoutGrid },
-        { label: "Students", path: "/students", icon: UsersRound },
-        { label: "Teachers", path: "/teachers", icon: UserCog },
-        { label: "Classes", path: "/admin?tab=classes", icon: School },
-        { label: "Schedule", path: "/schedule", icon: CalendarDays },
-        { label: "Finance", path: "/admin?tab=finance", icon: PiggyBank },
-        { label: "Exam Reports", path: "/admin?tab=exam-reports", icon: FileBarChart2 },
-        { label: "Journal", path: "/admin?tab=journal", icon: NotebookPen },
-        { label: "Smart Upload (OCR)", path: "/teacher/smart-upload", icon: ScanText, keywords: "ocr scan photo vision bulk upload" },
-        { label: "Record & transcripts", path: "/teacher/recorder", icon: AudioLines, keywords: "record recording microphone lapel s500 audio lesson transcript analysis engagement" },
-        { label: "Flipbooks", path: "/teacher/books", icon: BookOpen },
-      { label: "Language Support", path: "/teacher/language-support", icon: Languages, keywords: "picture pictures sentence esl symbols arasaac widgit reader" },
-      ];
-    }
-    return [
-      { label: "Dashboard", path: "/dashboard", icon: LayoutGrid },
-      { label: "Schedule", path: "/schedule", icon: CalendarDays },
-      { label: "Leaderboard", path: "/teacher/leaderboards", icon: Trophy, keywords: "points award" },
-      { label: "Attendance", path: "/teacher/attendance", icon: ListTodo },
-      { label: "Assignments", path: "/teacher/assignments", icon: ListTodo },
-      { label: "Journal", path: "/teacher/journal", icon: NotebookPen },
-      { label: "Exam Reports", path: "/teacher/exam-reports", icon: FileBarChart2 },
-      { label: "Vocabulary Audit", path: "/teacher/vocabulary-audit", icon: Sparkles },
-      { label: "Smart Upload (OCR)", path: "/teacher/smart-upload", icon: ScanText, keywords: "ocr scan photo vision bulk upload" },
-      { label: "Record & transcripts", path: "/teacher/recorder", icon: AudioLines, keywords: "record recording microphone lapel s500 audio lesson transcript analysis engagement" },
-      { label: "Flipbooks", path: "/teacher/books", icon: BookOpen },
-      { label: "Language Support", path: "/teacher/language-support", icon: Languages, keywords: "picture pictures sentence esl symbols arasaac widgit reader" },
-    ];
-  }, [role]);
+  // Every page by name, from the same definition as the sidebar: a page inside a section is still found here.
+  const pilot = (pilotClasses.data ?? []).length > 0;
+  const pages: JumpTarget[] = useMemo(
+    () => allMembers(navGroupsFor(role, { pilot })).map((m) => ({ ...m, icon: navIcon(m.icon) })),
+    [role, pilot],
+  );
 
   // Live entity search once the user has typed 2+ characters.
   const { data: found } = useQuery({
