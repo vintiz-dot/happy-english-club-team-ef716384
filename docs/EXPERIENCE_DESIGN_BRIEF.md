@@ -671,6 +671,21 @@ Each phase is one or more commits that leave the app working, and ends with the 
 
 Phases 1 to 5 and 6 to 9 are independent after Phase 0.
 
+### K1a. Where the build stands (23 Nov 2026)
+
+Live on main: phases 0, 1, 2, 3 (C5 to C7), 4, 5, 6, 7 (both rounds), 8 (H1 to H4) and 9 (the parts below). What was found on the way, and what is left:
+
+- F2: the band is worked out once above the routes (`AgeBandRoot` in `App.tsx`); `Layout` only draws the banded wrapper. A page component may call `useAgeBand()` at its top.
+- C8 lesson decks: on hold (another session changes those files daily). C9 teacher milestones: need a read-only server answer.
+- D1: the command palette is a `src/components/ui` primitive that takes no class name; its 140 ms opening needs a change in the primitive (A4.6), so it is not built. D5: no chart lives in the overview or reports files. D6: there is no student edit drawer (the list opens the profile page); the class list has no Carry because its profile page was outside that pass. D2's brass underline on a changed value and the row add and remove motion are not built.
+- D3: every payment form shows the Seal "Recorded" only after the server said yes; a correction and every conflict path show nothing new. The payroll lock glyph was already there and stays still.
+- G6: the Me pages already existed from phase 6. Lesson reports are read by parents, so they are not banded beyond type and motion: the attendance chip shows for every band.
+- I3: built: hand-in, grade, level reached, moving up, birthday, one moment per visit (`src/lib/momentGate.ts`). Not buildable from data a page already holds: approved feedback as a letter (no teacher name or photo reaches the child's pages), the family anniversary (no enrolment start date is read), the monthly recap (attendance is read over a rolling 30 days and no hand-ins are read by the family home). Each needs a read-only server answer.
+- J3: interface tones are off by default for staff and parents and on for students; a stored choice always wins; every role has a Sound row in the user menu, and the early and young home has a speaker button. Classroom sounds (the chords on awarding points, check-in) keep playing as before unless the person switched sound off. The Seal plays the success chord only for a person with sound on.
+- J2: every drafted Vietnamese line is listed in `docs/VIETNAMESE_DRAFTS.md` for a Vietnamese speaker to read.
+- Phase 10 is not done: no pass on a real mid-range Android phone inside Zalo, no screen-reader pass, and the browser checks were made on made-up data only.
+
+
 ### K2. Checks before every push
 
 - `node scripts/pgtest/run.mjs` (includes the app type-check; `tsc --noEmit` at the root checks nothing).
