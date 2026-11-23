@@ -166,7 +166,7 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
       queryClient.invalidateQueries({ queryKey: ["live-assessment-students"] });
       
       // Play sound
-      soundManager.play(pointsValue > 0 ? "success" : "error");
+      soundManager.play(pointsValue > 0 ? "success" : "error", { classroom: true });
       
       toast.success(
         `${pointsValue > 0 ? "Added" : "Deducted"} ${Math.abs(pointsValue)} points`,

@@ -13,6 +13,8 @@ export interface HomeData {
   statusMessage?: string | null;
 
   level: number;
+  /** the level figure has been read (false while the points are loading: level is then a placeholder) */
+  levelReady?: boolean;
   levelTitle: string;
   currentXp: number;
   nextLevelXp: number;

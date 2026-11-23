@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { GradeMoment } from "./GradeMoment";
 import { soundManager } from "@/lib/soundManager";
+import { claimMoment } from "@/lib/momentGate";
 
 interface GradeCelebrationProps {
   studentId: string;
@@ -74,7 +75,9 @@ export function GradeCelebration({ studentId, assignments, onActiveChange }: Gra
         };
       });
 
-    if (pending.length > 0 && !celebrationItem && queue.length === 0) {
+    // One moment per visit: if another moment already holds this visit's slot, this one is skipped and NOT marked
+    // seen (nothing is written until it is closed), so it plays on a later visit.
+    if (pending.length > 0 && !celebrationItem && queue.length === 0 && claimMoment("grade")) {
       setQueue(pending);
       setCelebrationItem(pending[0]);
       soundManager.play("success");

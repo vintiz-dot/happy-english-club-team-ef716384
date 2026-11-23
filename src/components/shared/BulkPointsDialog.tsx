@@ -154,7 +154,7 @@ export function BulkPointsDialog({
       queryClient.invalidateQueries({ queryKey: ["available-months"] });
       queryClient.invalidateQueries({ queryKey: ["live-assessment-students"] });
       
-      soundManager.play(pointsValue > 0 ? "success" : "error");
+      soundManager.play(pointsValue > 0 ? "success" : "error", { classroom: true });
       
       toast.success(
         `${pointsValue > 0 ? "Added" : "Deducted"} ${Math.abs(pointsValue)} points to ${selectedStudents.length} students`,

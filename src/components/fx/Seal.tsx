@@ -10,6 +10,7 @@
  * Use it only for a real completion of the person's own work (design brief B8:
  * no more than one signature moment per screen visit). Never on money.
  */
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { dur, easeDraw, useMotionLevel } from "./motion";
@@ -23,14 +24,22 @@ export interface SealProps {
   /** also draw the label as visible text beside the mark */
   visibleLabel?: boolean;
   className?: string;
+  /** play the existing "success" chord as it appears: only when this person has sound on (staff and parents are silent by default) */
+  sound?: boolean;
 }
 
 const RING_S = 0.42;
 const TICK_S = 0.24;
 const PULSE_S = 0.26;
 
-export function Seal({ show, label, size = 40, visibleLabel = false, className }: SealProps) {
+export function Seal({ show, label, size = 40, visibleLabel = false, className, sound = false }: SealProps) {
   const instant = useMotionLevel() === "off";
+  // the existing "success" chord, reserved for the Seal (brief J3). The sound manager decides: it plays only when
+  // this person has sound on and has tapped on this visit.
+  useEffect(() => {
+    if (!show || !sound) return;
+    import("@/lib/soundManager").then(({ soundManager }) => soundManager.play("success")).catch(() => undefined);
+  }, [show, sound]);
   const c = 20;
   const r = 17;
   return (

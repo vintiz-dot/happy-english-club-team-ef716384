@@ -53,6 +53,11 @@ export interface AgeBandState {
   studentId?: string;
   /** The school year that began in the September before today (Hanoi). */
   schoolYear: number;
+  /**
+   * The selected child's own date of birth (YYYY-MM-DD) as the shell's and the home's caches hold it; null when
+   * not known yet. For the birthday moment only: it is never sent anywhere and never shown to anyone else.
+   */
+  dateOfBirth: string | null;
 }
 
 const FALLBACK: AgeBandState = {
@@ -68,6 +73,7 @@ const FALLBACK: AgeBandState = {
   viSwitch: false,
   setViSwitch: () => {},
   schoolYear: 2000,
+  dateOfBirth: null,
 };
 
 const AgeBandContext = createContext<AgeBandState>(FALLBACK);
@@ -96,7 +102,11 @@ export const isChildPath = (pathname: string) => pathname === "/student" || path
 
 /** Works out the band for the selected child. One copy runs for the whole app (AgeBandRoot). */
 function useAgeBandValue(): AgeBandState {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  // Sound's default follows the role (students on; staff and parents off). The sound manager loads only now.
+  useEffect(() => {
+    import("@/lib/soundManager").then(({ soundManager }) => soundManager.setRole(role)).catch(() => undefined);
+  }, [role]);
   const { studentId } = useStudentProfile();
   const { pathname } = useLocation();
 
@@ -157,8 +167,8 @@ function useAgeBandValue(): AgeBandState {
   const viBeneath = band === "early" || band === "young" || viSwitch;
 
   const value = useMemo<AgeBandState>(
-    () => ({ band, natural, youngScale, banded, look, setLook, showPip, setShowPip, viBeneath, viSwitch, setViSwitch, studentId, schoolYear }),
-    [band, natural, youngScale, banded, look, setLook, showPip, setShowPip, viBeneath, viSwitch, setViSwitch, studentId, schoolYear],
+    () => ({ band, natural, youngScale, banded, look, setLook, showPip, setShowPip, viBeneath, viSwitch, setViSwitch, studentId, schoolYear, dateOfBirth: dob }),
+    [band, natural, youngScale, banded, look, setLook, showPip, setShowPip, viBeneath, viSwitch, setViSwitch, studentId, schoolYear, dob],
   );
 
   return value;

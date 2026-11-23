@@ -135,7 +135,7 @@ export function ManualPointAdjustment() {
       queryClient.invalidateQueries({ queryKey: ["student-points"] });
       queryClient.invalidateQueries({ queryKey: ["point-history"] });
 
-      soundManager.play(pointsValue > 0 ? "success" : "error");
+      soundManager.play(pointsValue > 0 ? "success" : "error", { classroom: true });
 
       toast({
         title: "Success",

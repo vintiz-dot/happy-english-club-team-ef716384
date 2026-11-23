@@ -147,7 +147,7 @@ export function StudentActionPopover({
     },
     onSuccess: (pointsValue) => {
       invalidateLive();
-      soundManager.play(pointsValue > 0 ? "success" : "error");
+      soundManager.play(pointsValue > 0 ? "success" : "error", { classroom: true });
       toast.success(
         `${pointsValue > 0 ? `+${pointsValue}` : pointsValue} point${Math.abs(pointsValue) === 1 ? "" : "s"} for ${studentName}`,
         { description: "Leaderboard updated" },
@@ -175,7 +175,7 @@ export function StudentActionPopover({
     onSuccess: (status) => {
       invalidateLive();
       queryClient.invalidateQueries({ queryKey: ["attendance"] });
-      soundManager.play("success");
+      soundManager.play("success", { classroom: true });
       toast.success(`${studentName} marked ${status}`);
     },
     onError: (error: any) => {

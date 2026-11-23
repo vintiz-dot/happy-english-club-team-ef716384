@@ -30,7 +30,14 @@ export function HandInMoment({ show, onComplete }: { show: boolean; onComplete?:
 
   useEffect(() => {
     if (!show) return;
-    if (band === "teen") showSeal(en("handin.teen"));
+    // the hand-in already plays its own sound (questComplete): the Seal stays quiet here
+    if (band === "teen") showSeal(en("handin.teen"), { sound: false });
+    // one tiny haptic tick where the device has one, at full motion (a student moment)
+    try {
+      if (level === "full" && typeof navigator !== "undefined" && typeof navigator.vibrate === "function") navigator.vibrate(10);
+    } catch {
+      /* no vibration */
+    }
     const t = window.setTimeout(() => done.current?.(), SHOW_MS[band]);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

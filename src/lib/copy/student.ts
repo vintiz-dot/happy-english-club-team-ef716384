@@ -157,6 +157,13 @@ export const studentCopy = {
   "srs.knew": { en: "Got it", vi: "Con nhớ rồi", draft: true },
   "srs.again": { en: "This one will come back soon. The answer: {answer}", vi: "Thẻ này sẽ quay lại sớm. Đáp án: {answer}", draft: true },
   "defend.sent": { en: "Sent to your teacher", vi: "Đã gửi cho cô giáo", draft: true },
+
+  // ---- Moments: a level reached, a birthday (Phase 9)
+  "level.reached": { en: "You reached Level {level}", vi: "Con đã lên Cấp {level}", draft: true },
+  "level.moment": { en: "Your level grew.", vi: "Cấp của con đã tăng lên.", draft: true },
+  "birthday.title": { en: "Happy birthday, {name}", vi: "Chúc mừng sinh nhật, {name}", draft: true },
+  "sound.on": { en: "Sound on", vi: "Đang bật âm thanh", draft: true },
+  "sound.off": { en: "Sound off", vi: "Đang tắt âm thanh", draft: true },
 } as const satisfies Record<string, CopyEntry>;
 
 /** Pip's pools by what is true today. A line is picked by the day and the child, so it changes tomorrow, not on every render. */

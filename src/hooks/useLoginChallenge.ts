@@ -167,7 +167,7 @@ export function useLoginChallenge(studentId: string | undefined) {
     },
     onSuccess: (data) => {
       if (data && !data.alreadyClaimed) {
-        soundManager.play("checkin");
+        soundManager.play("checkin", { classroom: true });
         toast({
           title: "🎉 Daily Check-In Complete!",
           description: `+1 XP earned! Streak: ${data.newStreak} days`,

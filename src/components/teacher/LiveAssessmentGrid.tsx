@@ -165,9 +165,9 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
       
       // Play sound
       if (points > 0) {
-        soundManager.play("success");
+        soundManager.play("success", { classroom: true });
       } else {
-        soundManager.play("error");
+        soundManager.play("error", { classroom: true });
       }
 
       // Show feedback animation for each student
@@ -200,7 +200,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
     onError: (error) => {
       console.error("Failed to award skill:", error);
       toast.error("Failed to award skill");
-      soundManager.play("error");
+      soundManager.play("error", { classroom: true });
     },
   });
 

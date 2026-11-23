@@ -207,7 +207,7 @@ export function ReadingTheoryScoreEntry({
       queryClient.invalidateQueries({ queryKey: ["reading-theory-current-scores", classId] });
       queryClient.invalidateQueries({ queryKey: ["live-assessment-students", classId] });
 
-      soundManager.play("success");
+      soundManager.play("success", { classroom: true });
       toast.success(`Updated reading theory scores for ${count} student${count !== 1 ? "s" : ""}`);
 
       // Reset form

@@ -8,6 +8,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useAgeBand } from "@/hooks/useAgeBand";
+import { claimMoment } from "@/lib/momentGate";
 
 export const bandSeenKey = (studentId: string) => `hec-band-seen:${studentId}`;
 
@@ -44,7 +45,8 @@ export function useMovingUp(): { due: boolean; done: () => void } {
     if (!seen) {
       writeSeen(studentId, { band: natural.band, year: schoolYear });
     } else if (seen.year < schoolYear && seen.band !== natural.band) {
-      setDue(true);
+      // one moment per visit: when another holds the slot this waits (nothing is recorded) and plays next visit
+      if (claimMoment("moving-up")) setDue(true);
     } else if (seen.band !== natural.band || seen.year !== schoolYear) {
       writeSeen(studentId, { band: natural.band, year: schoolYear }); // a corrected date of birth, or the same band in a new year
     }

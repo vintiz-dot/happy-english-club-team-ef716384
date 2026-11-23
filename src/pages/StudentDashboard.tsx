@@ -14,7 +14,6 @@ import { useLoginChallenge } from "@/hooks/useLoginChallenge";
 
 // New kid-friendly components
 import HomeworkDetailDialog from "@/components/student/HomeworkDetailDialog";
-import { CelebrationOverlay } from "@/components/student/CelebrationOverlay";
 import { HowToEarnXP } from "@/components/student/HowToEarnXP";
 import { AchievementBadges } from "@/components/student/AchievementBadges";
 import { StudentScheduleCalendar } from "@/components/student/StudentScheduleCalendar";
@@ -60,7 +59,6 @@ export default function StudentDashboard() {
   const [searchParams] = useSearchParams();
   const currentMonth = dayjs().format("YYYY-MM");
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
   const [openHomework, setOpenHomework] = useState<any>(null);
   const [featuredBadgeId, setFeaturedBadgeId] = useState<string | null>(() => {
     try { return localStorage.getItem("featured_badge_id"); } catch { return null; }
@@ -341,6 +339,7 @@ export default function StudentDashboard() {
     avatarUrl: studentProfile.avatar_url,
     statusMessage: (studentProfile as any).status_message,
     level: levelInfo.level,
+    levelReady: !!pointsSummary?.hero,
     levelTitle: getLevelTitle(levelInfo.level),
     currentXp: levelInfo.currentXp,
     nextLevelXp: levelInfo.nextLevelXp,
@@ -389,14 +388,6 @@ export default function StudentDashboard() {
         className="relative"
       >
       <MovingUpGate />
-      {/* Celebration Overlay */}
-      <CelebrationOverlay
-        show={showCelebration}
-        type="level_up"
-        title="Level Up!"
-        subtitle="You've reached a new level!"
-        onComplete={() => setShowCelebration(false)}
-      />
 
       {/* The paper: one calm, solid page colour behind the whole screen (no glow, no starfield). */}
       <div className="pointer-events-none fixed inset-0 z-0 bg-hec-paper" aria-hidden />
