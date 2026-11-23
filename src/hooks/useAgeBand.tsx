@@ -102,7 +102,11 @@ export const isChildPath = (pathname: string) => pathname === "/student" || path
 
 /** Works out the band for the selected child. One copy runs for the whole app (AgeBandRoot). */
 function useAgeBandValue(): AgeBandState {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  // Sound's default follows the role (students on; staff and parents off). The sound manager loads only now.
+  useEffect(() => {
+    import("@/lib/soundManager").then(({ soundManager }) => soundManager.setRole(role)).catch(() => undefined);
+  }, [role]);
   const { studentId } = useStudentProfile();
   const { pathname } = useLocation();
 

@@ -10,14 +10,14 @@ import { Seal } from "@/components/fx/Seal";
 
 const SHOW_MS = 2200;
 
-export function showSeal(label: string) {
+export function showSeal(label: string, options?: { sound?: boolean }) {
   if (typeof document === "undefined") return;
   const host = document.createElement("div");
   host.setAttribute("data-hec-seal", "");
   host.className = "pointer-events-none fixed left-1/2 top-4 z-[80] whitespace-nowrap -translate-x-1/2 rounded-hec-lg border border-hec-line bg-hec-raised px-4 py-2 shadow-hec-3";
   document.body.appendChild(host);
   const root = createRoot(host);
-  root.render(<Seal show label={label} visibleLabel size={36} />);
+  root.render(<Seal show label={label} visibleLabel size={36} sound={options?.sound !== false} />);
   window.setTimeout(() => {
     root.unmount();
     host.remove();
