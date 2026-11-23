@@ -20,7 +20,7 @@ export function RecordingBar({ state, startingLong, elapsed, className, bothMics
     : startingLong ? "Saving on this laptop - the school server has not confirmed yet" : "Starting...";
   return (
     <div
-      className={cn("fixed inset-x-0 bottom-0 z-50 border-t-4 bg-foreground text-background shadow-lg", state === "recording" ? "border-destructive" : "border-warning")}
+      className={cn("fixed inset-x-0 bottom-0 z-50 border-t-4 bg-hec-surface text-hec-ink shadow-hec-2", state === "recording" ? "border-hec-danger" : "border-hec-warn")}
       role={loud ? "alert" : "status"}
       aria-live={loud ? "assertive" : "polite"}
       aria-label={state === "recording" ? "Recording in progress" : state === "stalled" ? "Not recording" : "Waiting for the school server"}
@@ -29,16 +29,16 @@ export function RecordingBar({ state, startingLong, elapsed, className, bothMics
       <div className="max-w-3xl mx-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
         <span className="inline-flex items-center gap-2 text-lg font-bold break-words min-w-0">
           {state === "recording"
-            ? <CircleDot className="h-6 w-6 shrink-0 text-destructive fill-destructive motion-safe:animate-pulse" aria-hidden data-red-dot="" />
+            ? <CircleDot className="h-6 w-6 shrink-0 text-hec-danger fill-hec-danger motion-safe:animate-pulse" aria-hidden data-red-dot="" />
             : loud
-              ? <AlertTriangle className="h-6 w-6 shrink-0 text-warning" aria-hidden data-warning-sign="" />
+              ? <AlertTriangle className="h-6 w-6 shrink-0 text-hec-warn" aria-hidden data-warning-sign="" />
               // A calm state (starting, under 5 s) needs no action: no warning sign (C2 review 5).
               : <Clock className="h-6 w-6 shrink-0" aria-hidden />}
           {text}
         </span>
         <span className="tabular-nums text-lg">{elapsed}</span>
         <span className="min-w-0 break-words">{className}</span>
-        <Button className="ml-auto min-h-11 text-base bg-background text-foreground hover:bg-background/90 font-semibold" onClick={onStop}>
+        <Button className="ml-auto min-h-11 text-base bg-hec-action text-hec-on-action hover:bg-hec-action/90 font-semibold" onClick={onStop}>
           <Square className="h-4 w-4 mr-2" aria-hidden /> Stop
         </Button>
       </div>

@@ -90,7 +90,7 @@ export function RecorderAdminPanel() {
     <section aria-labelledby="rec-admin-h" className="space-y-4">
       <div className="space-y-1">
         <h2 id="rec-admin-h" className="text-2xl font-semibold">Recorder admin</h2>
-        <p className="text-muted-foreground">Recording is off for every class until you switch it on here. Recordings are kept {settings.data?.retentionDays ?? 30} days, then deleted by themselves.</p>
+        <p className="text-hec-ink-soft">Recording is off for every class until you switch it on here. Recordings are kept {settings.data?.retentionDays ?? 30} days, then deleted by themselves.</p>
       </div>
       <Tabs defaultValue="classes">
         <TabsList className="flex flex-wrap h-auto">
@@ -112,7 +112,7 @@ export function RecorderAdminPanel() {
         </TabsContent>
 
         <TabsContent value="recordings" className="space-y-3 pt-2">
-          <p className="text-sm text-muted-foreground">Duration is what the server verified from the saved audio, not what the laptop claimed. There is no playback in this version.</p>
+          <p className="text-sm text-hec-ink-soft">Duration is what the server verified from the saved audio, not what the laptop claimed. There is no playback in this version.</p>
           {recordings.isLoading ? <Status line={{ tone: "info", text: "Loading recordings..." }} live /> : null}
           {recordings.data && !recordings.data.length ? <Status line={{ tone: "info", text: "No recordings yet." }} /> : null}
           <ul className="space-y-3">
@@ -122,13 +122,13 @@ export function RecorderAdminPanel() {
 
         <TabsContent value="audit" className="pt-2">
           {audit.data && !audit.data.length ? <Status line={{ tone: "info", text: "Nothing has happened yet." }} /> : null}
-          <ol className="divide-y divide-border rounded-xl border border-border">
+          <ol className="divide-y divide-hec-line rounded-hec-lg border border-hec-line">
             {(audit.data ?? []).map((a) => (
               <li key={a.id} className="p-3 flex flex-col sm:flex-row sm:items-baseline gap-x-4 gap-y-0.5">
-                <span className="text-sm text-muted-foreground tabular-nums sm:w-44 shrink-0">{when(a.at)}</span>
+                <span className="text-sm text-hec-ink-soft tabular-nums sm:w-44 shrink-0">{when(a.at)}</span>
                 <span className="min-w-0 break-words"><span className="font-medium">{who(a.actor)}</span> - {auditActionLabel(a.action)}{a.class_id ? ` - ${className(a.class_id)}` : ""}
-                  {typeof a.detail?.note === "string" && a.detail.note ? <span className="text-muted-foreground"> ({String(a.detail.note)})</span> : null}
-                  {typeof a.detail?.reason === "string" ? <span className="text-muted-foreground"> ({String(a.detail.reason)})</span> : null}
+                  {typeof a.detail?.note === "string" && a.detail.note ? <span className="text-hec-ink-soft"> ({String(a.detail.note)})</span> : null}
+                  {typeof a.detail?.reason === "string" ? <span className="text-hec-ink-soft"> ({String(a.detail.reason)})</span> : null}
                 </span>
               </li>
             ))}
@@ -166,7 +166,7 @@ function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged, setup, t
   });
 
   return (
-    <article className="rounded-xl border border-border p-4 space-y-3" aria-labelledby={`cls-${cls.id}`}>
+    <article className="rounded-hec-lg border border-hec-line p-4 space-y-3" aria-labelledby={`cls-${cls.id}`}>
       {/* On a phone the switch button goes under the class name and status (C2 review 5: one cramped row). */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start" data-class-card-head="">
         <div className="min-w-0 flex-1 space-y-1">
@@ -176,7 +176,7 @@ function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged, setup, t
           ) : (
             <Status line={{ tone: "info", text: cls.switch?.disabled_at ? `Recording is OFF - switched off by ${who(cls.switch.disabled_by)} on ${when(cls.switch.disabled_at)}` : "Recording is OFF" }} />
           )}
-          {on && cls.switch?.consent_note ? <p className="text-sm text-muted-foreground break-words">Signed forms: {cls.switch.consent_note}</p> : null}
+          {on && cls.switch?.consent_note ? <p className="text-sm text-hec-ink-soft break-words">Signed forms: {cls.switch.consent_note}</p> : null}
         </div>
         {on ? (
           <Button variant="outline" className="min-h-11 self-start shrink-0" onClick={() => { setServerSaid(null); setOpenOff(true); }}><PowerOff className="h-4 w-4 mr-2" aria-hidden /> Switch off</Button>
@@ -197,7 +197,7 @@ function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged, setup, t
       ) : null}
 
       {gaps.length ? (
-        <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 space-y-2">
+        <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 space-y-2">
           <p className="font-medium">{gaps.length} of {enrolledCount} {enrolledCount === 1 ? "child needs" : "children need"} parents' permission under wording {wording ?? "(not set)"} before this class can be recorded</p>
           <ul className="space-y-2">
             {gaps.map((g) => (
@@ -222,7 +222,7 @@ function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged, setup, t
           <div className="space-y-4">
             <p className="text-sm">Consent wording version: <span className="font-semibold">{wording ?? "not set"}</span></p>
             {gaps.length ? <Status line={{ tone: "warn", text: `${gaps.length} ${gaps.length === 1 ? "child has" : "children have"} no permission on file under this wording. The server will refuse until that is recorded.` }} /> : null}
-            <Label htmlFor={`tick-${cls.id}`} className="flex items-start gap-3 rounded-lg border border-border p-3 min-h-12 cursor-pointer font-normal">
+            <Label htmlFor={`tick-${cls.id}`} className="flex items-start gap-3 rounded-hec-md border border-hec-line p-3 min-h-12 cursor-pointer font-normal">
               <Checkbox id={`tick-${cls.id}`} checked={ticked} onCheckedChange={(v) => setTicked(v === true)} className="mt-0.5" />
               <span>I confirm that signed parental permission for recording is on file for every child in this class, under wording {wording ?? "(not set)"}.</span>
             </Label>
@@ -254,7 +254,7 @@ function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged, setup, t
           {serverSaid ? <Notice tone="error" title="The server said no" role="alert">{serverSaid}</Notice> : null}
           <DialogFooter className="gap-2">
             <Button variant="outline" className="min-h-11" onClick={() => setOpenOff(false)}>Cancel</Button>
-            <Button className="min-h-11 bg-foreground text-background hover:bg-foreground/90" disabled={switchOff.isPending} onClick={() => switchOff.mutate()}>Switch off</Button>
+            <Button className="min-h-11 bg-hec-action text-hec-on-action hover:bg-foreground/90" disabled={switchOff.isPending} onClick={() => switchOff.mutate()}>Switch off</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -307,11 +307,11 @@ function RecordingItem({ r, className, by, onChanged }: { r: RecordingRow; class
   const gone = r.status === "deleted" || !!r.audio_deleted_at;
   const requested = !!r.deletion_requested_at;
   return (
-    <li className="rounded-xl border border-border p-4 space-y-2">
+    <li className="rounded-hec-lg border border-hec-line p-4 space-y-2">
       <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
         <div className="min-w-0 flex-1 space-y-0.5">
           <p className="font-semibold break-words">{className} - {day(r.scheduled_start)}</p>
-          <p className="text-sm text-muted-foreground">Lesson {dayjs(r.scheduled_start).tz().format("HH:mm")}-{dayjs(r.scheduled_end).tz().format("HH:mm")}, recorded by {by}</p>
+          <p className="text-sm text-hec-ink-soft">Lesson {dayjs(r.scheduled_start).tz().format("HH:mm")}-{dayjs(r.scheduled_end).tz().format("HH:mm")}, recorded by {by}</p>
         </div>
         <Badge variant={r.status === "complete" && !requested ? "secondary" : "outline"}>{recordingStatusLabel(r.status, requested)}</Badge>
       </div>
@@ -319,12 +319,12 @@ function RecordingItem({ r, className, by, onChanged }: { r: RecordingRow; class
         {savedLines(r, by).map((l) => <Status key={l.text} line={l} className="text-sm" />)}
       </div>
       <dl className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1 text-sm">
-        <div><dt className="text-muted-foreground inline">Verified: </dt><dd className="inline font-medium">{r.verified_audio_ms === null ? "not yet" : durationWords(r.verified_audio_ms)}</dd></div>
-        <div><dt className="text-muted-foreground inline">Inside the lesson: </dt><dd className="inline font-medium">{r.verified_lesson_ms === null ? "not yet" : durationWords(r.verified_lesson_ms)}</dd></div>
+        <div><dt className="text-hec-ink-soft inline">Verified: </dt><dd className="inline font-medium">{r.verified_audio_ms === null ? "not yet" : durationWords(r.verified_audio_ms)}</dd></div>
+        <div><dt className="text-hec-ink-soft inline">Inside the lesson: </dt><dd className="inline font-medium">{r.verified_lesson_ms === null ? "not yet" : durationWords(r.verified_lesson_ms)}</dd></div>
         <div><dt className="sr-only">Retention</dt><dd>{retentionText(r, day)}</dd></div>
       </dl>
-      {r.abandon_reason && r.status === "abandoned" ? <p className="text-sm text-muted-foreground break-words">Not finished: {r.abandon_reason}</p> : null}
-      {requested && r.deletion_reason ? <p className="text-sm text-muted-foreground break-words">Deletion asked for: {r.deletion_reason}</p> : null}
+      {r.abandon_reason && r.status === "abandoned" ? <p className="text-sm text-hec-ink-soft break-words">Not finished: {r.abandon_reason}</p> : null}
+      {requested && r.deletion_reason ? <p className="text-sm text-hec-ink-soft break-words">Deletion asked for: {r.deletion_reason}</p> : null}
       {!gone && !requested ? (
         <Button variant="outline" className="min-h-11" onClick={() => setOpen(true)}><Trash2 className="h-4 w-4 mr-2" aria-hidden /> Request deletion</Button>
       ) : null}
@@ -341,7 +341,7 @@ function RecordingItem({ r, className, by, onChanged }: { r: RecordingRow; class
           {err ? <Notice tone="error" title="The server said no" role="alert">{err}</Notice> : null}
           <DialogFooter className="gap-2">
             <Button variant="outline" className="min-h-11" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button className="min-h-11 bg-foreground text-background hover:bg-foreground/90" disabled={!validReason(reason) || m.isPending} onClick={() => m.mutate()}><Trash2 className="h-4 w-4 mr-2" aria-hidden /> Request deletion</Button>
+            <Button className="min-h-11 bg-hec-action text-hec-on-action hover:bg-foreground/90" disabled={!validReason(reason) || m.isPending} onClick={() => m.mutate()}><Trash2 className="h-4 w-4 mr-2" aria-hidden /> Request deletion</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

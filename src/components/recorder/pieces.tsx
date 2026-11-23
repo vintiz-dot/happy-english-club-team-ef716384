@@ -9,16 +9,16 @@ import { levelWord, meterFraction, type StatusLine, type Tone } from "@/lib/reco
 import type { Level } from "@/lib/recorder";
 
 export const toneText: Record<Tone, string> = {
-  ok: "text-success",
-  info: "text-muted-foreground",
-  warn: "text-warning",
-  error: "text-destructive",
+  ok: "text-hec-leaf",
+  info: "text-hec-ink-soft",
+  warn: "text-hec-warn",
+  error: "text-hec-danger",
 };
 const toneBox: Record<Tone, string> = {
-  ok: "border-success/40 bg-success/5",
-  info: "border-border bg-muted/40",
-  warn: "border-warning/50 bg-warning/10",
-  error: "border-destructive/50 bg-destructive/5",
+  ok: "border-hec-leaf/30 bg-hec-leaf-tint",
+  info: "border-hec-line bg-hec-sunken",
+  warn: "border-hec-warn/30 bg-hec-warn-tint",
+  error: "border-hec-danger/30 bg-hec-danger-tint",
 };
 
 export function ToneIcon({ tone, className }: { tone: Tone; className?: string }) {
@@ -39,12 +39,12 @@ export function Status({ line, live, className }: { line: StatusLine; live?: boo
 /** A boxed message with a title, a body and at most one action. */
 export function Notice({ tone, title, children, action, role }: { tone: Tone; title: string; children?: ReactNode; action?: ReactNode; role?: "alert" | "status" }) {
   return (
-    <div className={cn("rounded-xl border p-4 space-y-2", toneBox[tone])} role={role}>
+    <div className={cn("rounded-hec-lg border p-4 space-y-2", toneBox[tone])} role={role}>
       <div className="flex items-start gap-2">
         <ToneIcon tone={tone} className="mt-0.5" />
         <div className="space-y-1 min-w-0">
           <p className="font-semibold text-base break-words">{title}</p>
-          {children ? <div className="text-sm text-muted-foreground break-words">{children}</div> : null}
+          {children ? <div className="text-sm text-hec-ink-soft break-words">{children}</div> : null}
         </div>
       </div>
       {action ? <div className="pl-7">{action}</div> : null}
@@ -62,13 +62,13 @@ export function LevelMeter({ label, level, device, clipping }: { label: string; 
     <div className="space-y-1.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <span className="font-medium">{label}</span>
-        <span className="text-sm font-medium inline-flex items-center gap-1 text-foreground">
+        <span className="text-sm font-medium inline-flex items-center gap-1 text-hec-ink">
           <ToneIcon tone={w.tone} className="h-4 w-4" /> {level ? w.word : "Not listening"}
         </span>
       </div>
-      {device ? <p className="text-xs text-muted-foreground break-words">{device}</p> : null}
+      {device ? <p className="text-xs text-hec-ink-soft break-words">{device}</p> : null}
       <div
-        className="h-3 w-full rounded-full bg-muted overflow-hidden"
+        className="h-3 w-full rounded-full bg-hec-sunken overflow-hidden"
         role="meter"
         aria-label={`${label} level`}
         aria-valuemin={0}
@@ -77,7 +77,7 @@ export function LevelMeter({ label, level, device, clipping }: { label: string; 
         aria-valuetext={level ? w.word : "Not listening"}
       >
         <div
-          className={cn("h-full rounded-full motion-safe:transition-[width] motion-safe:duration-100", w.tone === "error" ? "bg-destructive" : w.tone === "warn" ? "bg-warning" : "bg-primary")}
+          className={cn("h-full rounded-full motion-safe:transition-[width] motion-safe:duration-100", w.tone === "error" ? "bg-hec-danger" : w.tone === "warn" ? "bg-hec-warn" : "bg-hec-leaf")}
           style={{ width: `${Math.round(frac * 100)}%` }}
         />
       </div>
@@ -91,8 +91,8 @@ export function MicTick({ label, ok, detail }: { label: string; ok: boolean; det
     <div className="flex items-start gap-2 min-w-0">
       <ToneIcon tone={ok ? "ok" : "error"} className="mt-0.5 h-6 w-6" />
       <div className="min-w-0">
-        <p className="font-medium">{label} <span className="text-sm font-semibold text-foreground">- {ok ? "ready" : "not ready"}</span></p>
-        <p className="text-sm text-muted-foreground break-words">{detail}</p>
+        <p className="font-medium">{label} <span className="text-sm font-semibold text-hec-ink">- {ok ? "ready" : "not ready"}</span></p>
+        <p className="text-sm text-hec-ink-soft break-words">{detail}</p>
       </div>
     </div>
   );

@@ -46,20 +46,20 @@ export default function ReceptionFeedback() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(160deg,#0b1b3a,#13254d)" }}>
+    <div className="min-h-screen bg-hec-paper text-hec-ink">
       <div className="mx-auto max-w-lg px-4 py-8">
         <header className="text-center mb-6">
           <img src="/reception-tv/assets/logo-gold.png" alt="Happy English Club" className="mx-auto h-20" />
-          <h1 className="mt-4 text-2xl font-bold text-[#f7f1e3]" style={{ fontFamily: "Georgia, serif" }}>Tell us how we are doing</h1>
-          <p className="text-[#aebbd6]">Hãy cho chúng tôi biết cảm nhận của bạn</p>
+          <h1 className="mt-4 font-display text-hec-h1 font-medium text-hec-ink">Tell us how we are doing</h1>
+          <p className="text-hec-ink-soft">Hãy cho chúng tôi biết cảm nhận của bạn</p>
         </header>
 
-        <div className="rounded-2xl bg-white p-5 shadow-xl text-slate-900">
+        <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-5 shadow-hec-2 text-hec-ink">
           {sent ? (
             <div className="py-8 text-center space-y-3">
-              <CheckCircle2 className="mx-auto h-12 w-12 text-green-600" />
+              <CheckCircle2 className="mx-auto h-12 w-12 text-hec-leaf" />
               <p className="text-lg font-semibold">Thank you! · Cảm ơn bạn!</p>
-              <p className="text-sm text-slate-600">The centre has your message. · Trung tâm đã nhận được góp ý của bạn.</p>
+              <p className="text-hec-small text-hec-ink-soft">The centre has your message. · Trung tâm đã nhận được góp ý của bạn.</p>
               <Button variant="outline" onClick={() => { setSent(false); setMessage(""); setRating(0); }}>Send another · Gửi thêm</Button>
             </div>
           ) : (
@@ -69,7 +69,7 @@ export default function ReceptionFeedback() {
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <button key={n} type="button" aria-label={`${n} stars`} onClick={() => setRating(n)} className="p-1">
-                      <Star className={`h-9 w-9 ${n <= rating ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
+                      <Star className={`h-9 w-9 ${n <= rating ? "fill-hec-brass text-hec-brass" : "text-hec-line-strong"}`} />
                     </button>
                   ))}
                 </div>
@@ -84,7 +84,7 @@ export default function ReceptionFeedback() {
                 <div className="flex flex-wrap gap-2">
                   {RELATIONS.map((r) => (
                     <button key={r.value} type="button" onClick={() => setRelation(r.value)}
-                      className={`rounded-full border px-3 py-1.5 text-sm ${relation === r.value ? "border-[#0b1b3a] bg-[#0b1b3a] text-white" : "border-slate-300"}`}>
+                      className={`rounded-full border min-h-hec-target px-3 py-1.5 text-sm ${relation === r.value ? "border-hec-action bg-hec-action text-hec-on-action" : "border-hec-line-strong text-hec-ink"}`}>
                       {r.en} · {r.vi}
                     </button>
                   ))}
@@ -102,9 +102,9 @@ export default function ReceptionFeedback() {
                 <Checkbox checked={mayShow} onCheckedChange={(v) => setMayShow(v === true)} className="mt-0.5" />
                 <span>The centre may show my words and name on the reception screen. · Trung tâm có thể hiển thị góp ý và tên của tôi trên màn hình tại quầy lễ tân.</span>
               </label>
-              <p className="text-xs text-slate-500">Your phone number is never shown. · Số điện thoại sẽ không bao giờ được hiển thị.</p>
-              {error && <p className="text-sm text-red-600">{error}</p>}
-              <Button className="w-full h-12 text-base bg-[#0b1b3a] hover:bg-[#13254d]" onClick={send} disabled={busy}>
+              <p className="text-hec-caption text-hec-ink-soft">Your phone number is never shown. · Số điện thoại sẽ không bao giờ được hiển thị.</p>
+              {error && <p className="text-hec-small text-hec-danger">{error}</p>}
+              <Button className="w-full h-12 text-base bg-hec-action text-hec-on-action hover:bg-hec-action/90" onClick={send} disabled={busy}>
                 {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Send · Gửi
               </Button>
             </div>
