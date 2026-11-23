@@ -53,15 +53,17 @@ export function wordAudio(unit: number, part: Part, words: string[], label = "Sa
 // is the backup: 3A's in the shared course folder, 3B's in the owner's 3B video
 // folder (22 Nov 2026). The unit order of the files was read from their own
 // metadata: 1e = the first unit of the book, 1e_2 the second, and so on.
-const VIDEOS: Record<number, { title: string; driveId?: string; r2?: string; file?: string }> = {
-  1: { title: "Saving Stranded Whales", driveId: "1SU7Qtc8F7S1hb9cfZHGqw4wgjBXBkNCi", r2: "reach-higher/3a/unit-1-video.mp4", file: "Video Level 3A - Reach Higher 1e.mp4" },
-  2: { title: "The Great Barrier Reef", driveId: "1_H0vBv9AGzl0rlAtG0ZskXXnbtUwmoDg", r2: "reach-higher/3a/unit-2-video.mp4", file: "Video Level 3A - Reach Higher 1e_2.mp4" },
-  3: { title: "Rainforests Around the World", driveId: "1WBiPXBjY5nhSPzVPsR4BkNJbrAzqnJ8x", r2: "reach-higher/3a/unit-3-video.mp4", file: "Video Level 3A - Reach Higher 1e_3.mp4" },
-  4: { title: "Clean Up the Coasts", driveId: "1UXg8TN7ptcyUpPpVPAtBjM3sfXiPHABR", r2: "reach-higher/3a/unit-4-video.mp4", file: "Video Level 3A - Reach Higher 1e_4.mp4" },
-  5: { title: "Matter Is Everywhere!", driveId: "1WoAkAtMUaOwfCdinmnhcYlFZX9LP0iCv", r2: "reach-higher/3b/unit-5-video.mp4", file: "Video Level 3B - Reach Higher 1e.mp4" },
-  6: { title: "Traditions of Japan", driveId: "1oNHsjLU7AvUGpLn5Y2ITaTrCAlCnQPra", r2: "reach-higher/3b/unit-6-video.mp4", file: "Video Level 3B - Reach Higher 1e_2.mp4" },
-  7: { title: "Amazing Volcanoes", driveId: "1ciMYPMIKMFbDEqBcL3usq6fDF-OqwTKf", r2: "reach-higher/3b/unit-7-video.mp4", file: "Video Level 3B - Reach Higher 1e_3.mp4" },
-  8: { title: "Never Give Up on Your Goals!", driveId: "1_K-5Bsaua3NB86qsfadW56z9hmbvtjsI", r2: "reach-higher/3b/unit-8-video.mp4", file: "Video Level 3B - Reach Higher 1e_4.mp4" },
+// `sha256` / `bytes` are the publisher originals' (22 Nov 2026): the upload script
+// refuses any copy, from a folder or from the Drive backup, that differs.
+const VIDEOS: Record<number, { title: string; driveId?: string; r2?: string; file?: string; sha256?: string; bytes?: number }> = {
+  1: { title: "Saving Stranded Whales", driveId: "1SU7Qtc8F7S1hb9cfZHGqw4wgjBXBkNCi", r2: "reach-higher/3a/unit-1-video.mp4", file: "Video Level 3A - Reach Higher 1e.mp4", sha256: "9584b48941b42e69ca6e8b3359f449a80ce05b76d12ee484b124fbac84ee4e6d", bytes: 144824507 },
+  2: { title: "The Great Barrier Reef", driveId: "1_H0vBv9AGzl0rlAtG0ZskXXnbtUwmoDg", r2: "reach-higher/3a/unit-2-video.mp4", file: "Video Level 3A - Reach Higher 1e_2.mp4", sha256: "743602648cd2da17190c269a2aceb3c459384190f3bc5349c888ac6fc6e98925", bytes: 151536274 },
+  3: { title: "Rainforests Around the World", driveId: "1WBiPXBjY5nhSPzVPsR4BkNJbrAzqnJ8x", r2: "reach-higher/3a/unit-3-video.mp4", file: "Video Level 3A - Reach Higher 1e_3.mp4", sha256: "01d1f01d61f4f03815b48a621e7fb181878ecadf46d40fd29d0aee51ebc0f052", bytes: 161894892 },
+  4: { title: "Clean Up the Coasts", driveId: "1UXg8TN7ptcyUpPpVPAtBjM3sfXiPHABR", r2: "reach-higher/3a/unit-4-video.mp4", file: "Video Level 3A - Reach Higher 1e_4.mp4", sha256: "2c0f1e03ca15d5ecf52cc1365945911512a9ac06a50905b378d2447dc8d9f8c2", bytes: 163549724 },
+  5: { title: "Matter Is Everywhere!", driveId: "1WoAkAtMUaOwfCdinmnhcYlFZX9LP0iCv", r2: "reach-higher/3b/unit-5-video.mp4", file: "Video Level 3B - Reach Higher 1e.mp4", sha256: "c76444b04cb74a8e8619632daacc3f059e0d906266d13e0edf18afa1a4772604", bytes: 143565966 },
+  6: { title: "Traditions of Japan", driveId: "1oNHsjLU7AvUGpLn5Y2ITaTrCAlCnQPra", r2: "reach-higher/3b/unit-6-video.mp4", file: "Video Level 3B - Reach Higher 1e_2.mp4", sha256: "05eb859bff1e390c04bfd82fd47298db45456ba11866555f6da8d21c3b7482fb", bytes: 162320870 },
+  7: { title: "Amazing Volcanoes", driveId: "1ciMYPMIKMFbDEqBcL3usq6fDF-OqwTKf", r2: "reach-higher/3b/unit-7-video.mp4", file: "Video Level 3B - Reach Higher 1e_3.mp4", sha256: "44f1c809ecd694b1ba490a81c2ffb3580f6c625979f75a59b7618b851aad2eda", bytes: 187821331 },
+  8: { title: "Never Give Up on Your Goals!", driveId: "1_K-5Bsaua3NB86qsfadW56z9hmbvtjsI", r2: "reach-higher/3b/unit-8-video.mp4", file: "Video Level 3B - Reach Higher 1e_4.mp4", sha256: "d0cbb5c304e74817c510e9728a94431f2af2ed1ed87e83ee513c9033ca8f55d9", bytes: 170985114 },
 };
 
 /** The unit video, or null while its file is not in the Drive yet. */
