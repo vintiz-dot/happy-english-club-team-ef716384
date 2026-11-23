@@ -16,6 +16,7 @@ import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { DIFFERENT_PAYMENT_LABEL, paymentKeys, receiptDateToday, recordPayment, waitingDuplicateMessage, waitingNotice } from "@/lib/recordPayment";
 import { formatVND } from "@/lib/money";
+import { showSeal } from "@/components/fx/showSeal";
 
 interface RecordPaymentDialogProps {
   open: boolean;
@@ -161,6 +162,8 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
           ? `Corrected payment by -${formatVND(enteredAmount)} for ${studentName}`
           : `Recorded ${formatVND(enteredAmount)} for ${studentName}`
       );
+      // the server has answered yes: only money coming in is "Recorded"; a correction gets no seal
+      if (mode !== "correction") showSeal("Recorded");
       onSuccess?.();
       handleClose();
     } catch (error: any) {
