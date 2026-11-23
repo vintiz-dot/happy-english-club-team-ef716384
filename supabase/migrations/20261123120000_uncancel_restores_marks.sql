@@ -188,7 +188,11 @@ BEGIN
 
     -- Keep the notes when anything could not be put back, so it can be looked at.
     IF v_failed = 0 THEN
-      DELETE FROM public.attendance_cancel_snapshots WHERE session_id = NEW.id;
+      BEGIN
+        DELETE FROM public.attendance_cancel_snapshots WHERE session_id = NEW.id;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE WARNING 'Could not clear the notes of lesson % (%). The marks were put back.', NEW.id, SQLERRM;
+      END;
     END IF;
   EXCEPTION WHEN OTHERS THEN
     RAISE WARNING 'Could not put back the marks of lesson % (%). The lesson was un-cancelled; its marks were left as they are.', NEW.id, SQLERRM;
@@ -211,7 +215,8 @@ DROP FUNCTION IF EXISTS public._uncancelled_marks_candidates();
 -- Internal. Every Excused mark on a past lesson that was cancelled and has left
 -- Canceled, for a child enrolled that day, sorted by what put it there:
 --   candidate              the cancel changed it (updated_at within a minute of the
---                          cancel), or nobody ever made or touched it (a seeded row).
+--                          cancel and later than the row's creation), or nobody ever
+--                          made or touched it (a seeded row).
 --   remarked_since         a person changed it after the cancel (updated_at later).
 --   excused_before_cancel  it was already Excused and a person made it so before the
 --                          cancel (the cancel did not touch it): not ours to change.
@@ -221,7 +226,8 @@ RETURNS TABLE (attendance_id uuid, student_id uuid, session_id uuid, class_id uu
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$
   SELECT a.id, a.student_id, s.id, s.class_id, s.date, to_char(s.date, 'YYYY-MM'), s.status::text, s.canceled_at, a.marked_by,
          CASE
-           WHEN a.updated_at BETWEEN s.canceled_at - interval '1 minute' AND s.canceled_at + interval '1 minute' THEN 'candidate'
+           WHEN a.updated_at BETWEEN s.canceled_at - interval '1 minute' AND s.canceled_at + interval '1 minute'
+                AND (a.created_at IS NULL OR a.updated_at > a.created_at + interval '1 second') THEN 'candidate'
            WHEN a.marked_by IS NULL AND a.updated_at <= coalesce(a.created_at, a.updated_at) + interval '1 second' THEN 'candidate'
            WHEN a.updated_at > s.canceled_at + interval '1 minute' THEN 'remarked_since'
            ELSE 'excused_before_cancel'
