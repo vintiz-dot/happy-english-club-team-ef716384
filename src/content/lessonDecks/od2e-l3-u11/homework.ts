@@ -268,7 +268,7 @@ export const odL3U11Creative: Record<string, Creative> = {
   // Lesson 5 (Grammar Champions): rank three sounds with comparatives and superlatives, and justify the winner
   "od2e-l3-u11-l5": {
     kind: "creative",
-    thinking: "Rank and justify",
+    thinking: "Compare and justify",
     uses: {
       words: ["orchestra", "conductor", "cello", "timpani", "trombone", "bassoon", "deafening"],
       grammar: ["comparative adjectives with than", "superlative adjectives with the", "because / so"],
