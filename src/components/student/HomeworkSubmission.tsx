@@ -12,7 +12,7 @@ import { RichText } from "@/components/homework/RichText";
 import { dayjs } from "@/lib/date";
 import { soundManager } from "@/lib/soundManager";
 import { motion, AnimatePresence } from "framer-motion";
-import { SubmitCheckmark } from "./SubmitCheckmark";
+import { HandInMoment } from "./HandInMoment";
 import { useIvory } from "@/hooks/useIvory";
 import { shrinkPhoto } from "@/lib/shrinkPhoto";
 import VideoHomeworkSubmission, { useVideoHomework } from "@/components/video-homework/VideoHomeworkSubmission";
@@ -208,7 +208,7 @@ function WrittenHomeworkSubmission({
       // Show checkmark animation
       setShowCheckmark(true);
       soundManager.play("questComplete");
-      toast.success("Homework submitted successfully");
+      // the hand-in moment (below) carries these words now: it is shown only because this succeeded
       queryClient.invalidateQueries({ queryKey: ["student-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["homework-submission", homeworkId, studentId] });
       queryClient.invalidateQueries({ queryKey: ["homework-submissions"] });
@@ -257,7 +257,7 @@ function WrittenHomeworkSubmission({
 
   return (
     <>
-      <SubmitCheckmark
+      <HandInMoment
         show={showCheckmark}
         onComplete={() => {
           setShowCheckmark(false);

@@ -10,7 +10,7 @@ import { ChevronDown, ChevronRight, Volume2 } from "lucide-react";
 import { Bi } from "@/components/student/band/Bi";
 import { MascotCompanion } from "@/components/student/MascotCompanion";
 import { FinishState } from "@/components/student/home/FinishState";
-import { BUTTON, CARD, FOCUS, LABEL } from "@/components/student/nova/ivory";
+import { BUTTON, CARD, FOCUS } from "@/components/student/nova/ivory";
 import { pressable } from "@/components/fx/PaperPress";
 import { useSpeech } from "@/components/lessonDecks/speech";
 import { useCopy } from "@/lib/copy/useCopy";
@@ -74,7 +74,6 @@ export function EarlyHomework({
 
       {card && (
         <section aria-labelledby="early-hw-title" className={cn(CARD, "space-y-4")}>
-          <p className={LABEL}><Bi k="hw.title" /></p>
           <div className="min-w-0 space-y-1">
             <h2 id="early-hw-title" className="break-words font-display text-hec-h1 font-bold text-hec-ink">{card.title || "Homework"}</h2>
             <p className="whitespace-normal break-words text-hec-small text-hec-ink-soft">{card.classes?.name || "Class"}</p>
