@@ -17,10 +17,10 @@ import {
   findRegisterHoles,
   hanoiToday,
   heldSentence,
+  decideHoles,
   loweredDespiteFlag,
   LOWERED_DESPITE_MISSING_MARKS,
   missingMarksFlag,
-  mustHold,
   REGISTER_MISSING_MARKS,
   sameFlags,
 } from "../_lib/register-holes.ts";
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
       supabase
         .from("invoices")
         .select(
-          "recorded_payment, tuition_frozen, base_amount, discount_amount, total_amount, status, confirmation_status, review_flags, confirmed_at, confirmed_by, paid_amount, carry_in_credit, carry_in_debt, carry_out_credit, carry_out_debt",
+          "recorded_payment, tuition_frozen, base_amount, discount_amount, total_amount, status, confirmation_status, review_flags, confirmed_at, confirmed_by, class_breakdown, paid_amount, carry_in_credit, carry_in_debt, carry_out_credit, carry_out_debt",
         )
         .eq("student_id", studentId)
         .eq("month", month)
@@ -244,99 +244,143 @@ Deno.serve(async (req) => {
     const attendanceMap = new Map<string, AttendanceStatus>();
     for (const a of (attendanceRes.data as any[]) ?? []) attendanceMap.set(a.session_id, a.status);
 
-    // Calculate expected tuition using CLASS DEFAULT rates (for review comparison)
-    let expectedClassTuition = 0;
-
-    // Base charges: bill Present or Absent; Excused not billable
-    // Track base amounts per enrollment for accurate discount calculation
-    let baseAmount = 0;
-    const enrollmentBaseAmounts = new Map<string, number>(); // class_id -> base amount
-    const datedEnrollmentBases = new Map<EnrollmentRow, number>();
-    const rateAdjustmentSavings = new Map<string, number>(); // class_id -> savings
-    const sessionDetails: Array<{
-      date: string;
-      rate: number;
-      status: AttendanceStatus | "Scheduled";
-      class_id: string;
-      class_name: string;
-    }> = [];
-
     // Class names already fetched in Wave 3
     const classNameMap = new Map((classesNamesRes.data as any[])?.map((c: any) => [c.id, c.name]) || []);
 
-    for (const s of sessions ?? []) {
-      // Check if student was enrolled on this specific session date
-      const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
-
-      if (!enrollment) continue; // Skip sessions outside enrollment period
-
-      // Check if session day is in student's allowed_days (null means all days allowed)
-      const sessionDayOfWeek = getDayOfWeek(s.date);
-      if (enrollment.allowed_days && !enrollment.allowed_days.includes(sessionDayOfWeek)) {
-        continue; // Skip sessions on days the student doesn't attend
-      }
-
-      const att = attendanceMap.get(s.id);
-      const classData = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
-      const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classData?.session_rate_vnd ?? 0));
-      const overrideRate = enrollment?.rate_override_vnd;
-      const actualRate = overrideRate ?? defaultRate;
-      const className = classNameMap.get(s.class_id) || "Unknown";
-
-      // Bill Present, Absent, or Late (all attended/charged); Excused is forgiven.
-      const billable = isBillableTuitionSession(s.status, att);
-      if (billable && actualRate > 0) {
-        // Calculate expected using default rate
-        expectedClassTuition += defaultRate;
-
-        // ALWAYS use default rate for base amount (not override)
-        baseAmount += defaultRate;
-        // Track per-enrollment base amount using default rate
-        const currentAmount = enrollmentBaseAmounts.get(s.class_id) || 0;
-        enrollmentBaseAmounts.set(s.class_id, currentAmount + defaultRate);
-        datedEnrollmentBases.set(enrollment, (datedEnrollmentBases.get(enrollment) || 0) + defaultRate);
-
-        // Track rate savings if override is lower than default
-        if (overrideRate && overrideRate < defaultRate) {
-          const savings = defaultRate - overrideRate;
-          const currentSavings = rateAdjustmentSavings.get(s.class_id) || 0;
-          rateAdjustmentSavings.set(s.class_id, currentSavings + savings);
-        }
-
-        sessionDetails.push({
-          date: s.date,
-          rate: actualRate, // Show actual rate paid
-          status: (att ?? "Present") as any,
-          class_id: s.class_id,
-          class_name: className,
-        });
-      } else {
-        // still return session detail for UI if needed
-        if (att)
-          sessionDetails.push({
-            date: s.date,
-            rate: actualRate,
-            status: att,
-            class_id: s.class_id,
-            class_name: className,
-          });
-      }
-    }
+    const savedInvoice: any = currentInvoiceRes.data;
+    // A frozen bill keeps its saved figures whatever the enrollment says now.
+    const tuitionFrozen = savedInvoice?.tuition_frozen === true;
 
     // Lessons that were held, inside the enrolment, with no attendance row at
     // all: holes in the register, not decisions (_lib/register-holes.ts). The
-    // same enrolment, weekday and rate rules as the loop above. The internal
-    // sibling preview prices nothing that is saved, so it looks for none.
-    let registerHoles = siblingPreview
-      ? []
-      : findRegisterHoles<any, any>(sessions ?? [], attendanceMap, hanoiToday(), {
-          enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
-          onAllowedDay: (s: any, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
-          rateOf: (s: any, e: any) => {
-            const cd: any = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
-            return e.rate_override_vnd ?? classFeeOn(feeHistory, s.class_id, s.date, Number(cd?.session_rate_vnd ?? 0));
-          },
-        });
+    // same enrolment, weekday and rate rules as the pricing below. The internal
+    // sibling preview prices nothing that is saved, and a frozen bill is left
+    // as it is, so neither looks for any.
+    const registerHoles =
+      siblingPreview || tuitionFrozen
+        ? []
+        : findRegisterHoles<any, any>(sessions ?? [], attendanceMap, hanoiToday(), {
+            enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
+            onAllowedDay: (s: any, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
+            rateOf: (s: any, e: any) => {
+              const cd: any = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
+              return e.rate_override_vnd ?? classFeeOn(feeHistory, s.class_id, s.date, Number(cd?.session_rate_vnd ?? 0));
+            },
+          });
+    const holeIds = new Set(registerHoles.map((h) => h.session_id));
+
+    // The month's lessons priced one way: Present, Absent or Late are billed,
+    // Excused is forgiven. With countHoles the lessons that have no row at all
+    // are billed too, at their normal rate (the August case, see register-holes.ts).
+    const priceLessons = (countHoles: boolean) => {
+      // Calculate expected tuition using CLASS DEFAULT rates (for review comparison)
+      let expectedClassTuition = 0;
+      // Base charges: bill Present or Absent; Excused not billable
+      // Track base amounts per enrollment for accurate discount calculation
+      let baseAmount = 0;
+      const enrollmentBaseAmounts = new Map<string, number>(); // class_id -> base amount
+      const datedEnrollmentBases = new Map<EnrollmentRow, number>();
+      const rateAdjustmentSavings = new Map<string, number>(); // class_id -> savings
+      const sessionDetails: Array<{
+        date: string;
+        rate: number;
+        status: AttendanceStatus | "Scheduled";
+        class_id: string;
+        class_name: string;
+        unmarked?: boolean;
+      }> = [];
+
+      for (const s of sessions ?? []) {
+        // Check if student was enrolled on this specific session date
+        const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
+
+        if (!enrollment) continue; // Skip sessions outside enrollment period
+
+        // Check if session day is in student's allowed_days (null means all days allowed)
+        const sessionDayOfWeek = getDayOfWeek(s.date);
+        if (enrollment.allowed_days && !enrollment.allowed_days.includes(sessionDayOfWeek)) {
+          continue; // Skip sessions on days the student doesn't attend
+        }
+
+        const att = attendanceMap.get(s.id);
+        const classData = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
+        const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classData?.session_rate_vnd ?? 0));
+        const overrideRate = enrollment?.rate_override_vnd;
+        const actualRate = overrideRate ?? defaultRate;
+        const className = classNameMap.get(s.class_id) || "Unknown";
+
+        // Bill Present, Absent, or Late (all attended/charged); Excused is forgiven.
+        const unmarked = countHoles && holeIds.has(s.id);
+        const billable = isBillableTuitionSession(s.status, att) || unmarked;
+        if (billable && actualRate > 0) {
+          // Calculate expected using default rate
+          expectedClassTuition += defaultRate;
+
+          // ALWAYS use default rate for base amount (not override)
+          baseAmount += defaultRate;
+          // Track per-enrollment base amount using default rate
+          const currentAmount = enrollmentBaseAmounts.get(s.class_id) || 0;
+          enrollmentBaseAmounts.set(s.class_id, currentAmount + defaultRate);
+          datedEnrollmentBases.set(enrollment, (datedEnrollmentBases.get(enrollment) || 0) + defaultRate);
+
+          // Track rate savings if override is lower than default
+          if (overrideRate && overrideRate < defaultRate) {
+            const savings = defaultRate - overrideRate;
+            const currentSavings = rateAdjustmentSavings.get(s.class_id) || 0;
+            rateAdjustmentSavings.set(s.class_id, currentSavings + savings);
+          }
+
+          sessionDetails.push({
+            date: s.date,
+            rate: actualRate, // Show actual rate paid
+            status: (att ?? "Present") as any,
+            class_id: s.class_id,
+            class_name: className,
+            ...(unmarked ? { unmarked: true } : {}),
+          });
+        } else {
+          // still return session detail for UI if needed
+          if (att)
+            sessionDetails.push({
+              date: s.date,
+              rate: actualRate,
+              status: att,
+              class_id: s.class_id,
+              class_name: className,
+            });
+        }
+      }
+      return { expectedClassTuition, baseAmount, enrollmentBaseAmounts, datedEnrollmentBases, rateAdjustmentSavings, sessionDetails };
+    };
+
+    // N: today's rule. W: the same month with the holes counted - needed only
+    // when a saved bill is higher than N.
+    const priceN = priceLessons(false);
+    const savedBase = savedInvoice ? Number(savedInvoice.base_amount ?? 0) : null;
+    const priceW = registerHoles.length > 0 && savedBase !== null && priceN.baseAmount < savedBase ? priceLessons(true) : null;
+    const mayForce = force === true && gate.roles.has("admin") && !gate.isServiceRole;
+    const holeMode = decideHoles({
+      holeCount: registerHoles.length,
+      savedBase,
+      frozen: tuitionFrozen,
+      nBase: priceN.baseAmount,
+      wBase: priceW ? priceW.baseAmount : null,
+      forced: mayForce,
+    });
+    const forcedLower = holeMode === "forced";
+    const pricedAsCharged = holeMode === "priced_as_charged";
+    const heldBill = holeMode === "held";
+    if (forcedLower && !(reason ?? "").trim()) throw new Error("Give a reason to save the lower figure.");
+    const registerBase = priceN.baseAmount; // what the register prices, holes not billed
+
+    const priced = pricedAsCharged ? priceW! : priceN;
+    const expectedClassTuition = priced.expectedClassTuition;
+    let baseAmount = priced.baseAmount;
+    const enrollmentBaseAmounts = priced.enrollmentBaseAmounts;
+    const datedEnrollmentBases = priced.datedEnrollmentBases;
+    const rateAdjustmentSavings = priced.rateAdjustmentSavings;
+    // A held bill lists every lesson, the unmarked ones too, marked as such.
+    const sessionDetails = heldBill && priceW ? priceW.sessionDetails : priced.sessionDetails;
 
     // Discounts bucket
     const discounts: Array<{
@@ -433,34 +477,14 @@ Deno.serve(async (req) => {
     }
 
     let totalAmount = Math.max(0, baseAmount - totalDiscount);
-    const registerBaseBeforeFreeze = baseAmount; // what the register prices
-    // A frozen bill keeps its saved figures whatever the enrollment says now.
-    const frozenInvoice: any = currentInvoiceRes.data;
-    const tuitionFrozen = frozenInvoice?.tuition_frozen === true;
+    const frozenInvoice: any = savedInvoice;
     if (tuitionFrozen) {
       baseAmount = Number(frozenInvoice.base_amount ?? 0);
       totalDiscount = Number(frozenInvoice.discount_amount ?? 0);
       totalAmount = Number(frozenInvoice.total_amount ?? 0);
     }
-
-    // A hole must never lower a bill that is already saved. When the register
-    // prices the month lower only because lessons have no row, the saved
-    // figures stand (as for a frozen bill) and the holes are flagged. An admin
-    // may save the lower figure anyway, with a reason.
-    if (tuitionFrozen) registerHoles = []; // a frozen bill is left as it is
-    const registerBase = registerBaseBeforeFreeze;
-    const savedBase = frozenInvoice ? Number(frozenInvoice.base_amount ?? 0) : null;
-    const wouldLower = mustHold({
-      holeCount: registerHoles.length,
-      savedBase,
-      tuitionFrozen,
-      registerBase,
-      forced: false,
-    });
-    const mayForce = force === true && gate.roles.has("admin") && !gate.isServiceRole;
-    const heldBill = wouldLower && !mayForce;
-    const forcedLower = wouldLower && mayForce;
-    if (forcedLower && !(reason ?? "").trim()) throw new Error("Give a reason to save the lower figure.");
+    // Held: some deleted marks must have been Excused and nobody can tell
+    // which, so the saved figures stand (as for a frozen bill).
     if (heldBill) {
       baseAmount = Number(frozenInvoice.base_amount ?? 0);
       totalDiscount = Number(frozenInvoice.discount_amount ?? 0);
@@ -688,7 +712,7 @@ Deno.serve(async (req) => {
       }));
     }
     if (registerHoles.length > 0) {
-      reviewFlags.push(missingMarksFlag(registerHoles, savedBase, registerBase));
+      reviewFlags.push(missingMarksFlag(registerHoles, savedBase, registerBase, holeMode));
     }
 
     // Which labels this save may write. A recalculation must not un-confirm
@@ -729,9 +753,17 @@ Deno.serve(async (req) => {
     const writeInvoice = !siblingPreview && !siblingUnresolved;
     let invoiceUpsertOk = true;
     let invoiceErrorMsg = "";
-    // A held bill is not repriced: only what changed in its labels, flags and
+    // A held bill is not repriced, and a bill priced as charged whose figures did
+    // not move is not rewritten: only what changed in its labels, flags and
     // balances is written, and nothing at all when nothing changed.
-    if (heldBill && writeInvoice) {
+    const figuresUnchanged =
+      !!frozenInvoice &&
+      Number(frozenInvoice.base_amount ?? 0) === baseAmount &&
+      Number(frozenInvoice.discount_amount ?? 0) === totalDiscount &&
+      Number(frozenInvoice.total_amount ?? 0) === totalAmount &&
+      sameFlags(frozenInvoice.class_breakdown, classBreakdown);
+    const patchOnly = heldBill || (pricedAsCharged && figuresUnchanged);
+    if (patchOnly && writeInvoice) {
       const stored: any = frozenInvoice;
       const patch: Record<string, unknown> = {};
       if (!sameFlags(stored.review_flags, labelFields.review_flags)) patch.review_flags = labelFields.review_flags;
@@ -757,7 +789,7 @@ Deno.serve(async (req) => {
         }
       }
     }
-    if (writeInvoice && !heldBill)
+    if (writeInvoice && !patchOnly)
       try {
         const { error: invoiceErr1 } = await supabase
           .from("invoices")
@@ -771,7 +803,7 @@ Deno.serve(async (req) => {
         invoiceErrorMsg = e?.message ?? String(e);
       }
 
-    if (writeInvoice && !heldBill && !invoiceUpsertOk) {
+    if (writeInvoice && !patchOnly && !invoiceUpsertOk) {
       // fallback minimal upsert (existing schema in your earlier code)
       const { error: invoiceErr2 } = await supabase.from("invoices").upsert(
         {
@@ -791,10 +823,18 @@ Deno.serve(async (req) => {
       }
     }
 
+    // A held bill is the saved bill: its lines are the saved breakdown, so they
+    // add up to the figures answered (the register's own lines would not).
+    const savedLines: any[] = Array.isArray(frozenInvoice?.class_breakdown) ? frozenInvoice.class_breakdown : [];
+    const heldLines =
+      heldBill && savedLines.length > 0
+        ? { classes: savedLines, count: savedLines.reduce((n, c) => n + Number(c?.sessions_count ?? 0), 0) }
+        : null;
+
     const response = {
       studentId,
       month,
-      sessionCount: sessionDetails.length,
+      sessionCount: heldLines ? heldLines.count : sessionDetails.length,
       sessionDetails,
       baseAmount,
       discounts,
@@ -819,9 +859,10 @@ Deno.serve(async (req) => {
       siblingUnresolved,
       invoiceSaved: writeInvoice,
       tuitionFrozen,
-      ...(heldBill
+      ...(heldBill || pricedAsCharged
         ? {
             held: {
+              priced_as_charged: pricedAsCharged,
               reason: "register_missing_marks",
               message: heldSentence(holeLessons.length, month),
               lessons: holeLessons,
@@ -830,11 +871,11 @@ Deno.serve(async (req) => {
             },
           }
         : {}),
-      ...(registerHoles.length > 0 && !heldBill
+      ...(registerHoles.length > 0 && !heldBill && !pricedAsCharged
         ? { missingMarks: { lessons: holeLessons, register_base: registerBase, saved_base: savedBase, forcedLower } }
         : {}),
       breakdown: {
-        classes: classBreakdown,
+        classes: heldLines ? heldLines.classes : classBreakdown,
       },
       enrollments:
         enrollments?.map((e) => ({
