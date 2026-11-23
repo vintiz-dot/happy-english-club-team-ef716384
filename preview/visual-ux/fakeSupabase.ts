@@ -1,5 +1,17 @@
 // In-memory stand-in for the Supabase client. Made-up data only.
 import { buildDb, getState, ME } from "./fixtures";
+import { isPicturePath, stubPicture } from "./fakeFiles";
+
+// The class gallery fetches a classmate's file through a function with a plain fetch: answer it with a picture.
+const realFetch = window.fetch.bind(window);
+window.fetch = ((input: any, init?: any) => {
+  const url = typeof input === "string" ? input : input?.url ?? "";
+  if (url.includes("work-gallery-file")) {
+    const svg = decodeURIComponent(stubPicture(String(init?.body ?? "gallery")).replace("data:image/svg+xml;utf8,", ""));
+    return Promise.resolve(new Response(svg, { status: 200, headers: { "Content-Type": "image/svg+xml" } }));
+  }
+  return realFetch(input, init);
+}) as typeof window.fetch;
 
 type Row = Record<string, any>;
 type Result = { data: any; error: any; count?: number | null };
@@ -218,7 +230,7 @@ export const supabase: any = {
   storage: {
     from: () => ({
       getPublicUrl: (p: string) => ({ data: { publicUrl: `about:blank#${p}` } }),
-      createSignedUrl: (p: string) => Promise.resolve({ data: { signedUrl: `about:blank#${p}` }, error: null }),
+      createSignedUrl: (p: string) => Promise.resolve({ data: { signedUrl: isPicturePath(p) ? stubPicture(p) : `about:blank#${p}` }, error: null }),
       createSignedUrls: () => Promise.resolve({ data: [], error: null }),
       list: () => Promise.resolve({ data: [], error: null }),
     }),

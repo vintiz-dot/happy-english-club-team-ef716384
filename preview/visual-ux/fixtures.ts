@@ -1,13 +1,17 @@
 // Made-up people and records for the preview. Nobody here is real.
 // Dates are relative to today so the screens always look "current".
 import { adminDb } from "./adminFixtures";
+import { stubPicture } from "./fakeFiles";
 
 export type Screen =
   | "student-home" | "student-homework" | "family" | "teacher" | "teacher-grid" | "teacher-attendance" | "teacher-drawer"
   | "teacher-grading" | "teacher-video" | "teacher-smart" | "teacher-payroll"
   | "student-srs" | "student-defend"
+  | "student-lessons" | "student-lesson" | "student-reports" | "student-mywork" | "student-gallery" | "student-videos" | "student-record" | "student-resources" | "student-reader"
   | "admin-overview" | "admin-tuition" | "admin-payroll" | "admin-dialogs";
 export type State = "ok" | "error" | "empty";
+/** the class video wall's hearts, kept in memory so a tap can be watched */
+export const heartState = new Set<string>();
 
 // Read once: the app may rewrite the URL, the preview must not forget what it was asked for.
 const params = new URLSearchParams(window.location.search);
@@ -37,6 +41,15 @@ export const ROLE_OF: Record<Screen, "student" | "family" | "teacher" | "admin">
   "student-home": "student",
   "student-homework": "student",
   "student-srs": "student",
+  "student-lessons": "student",
+  "student-lesson": "student",
+  "student-reports": "student",
+  "student-mywork": "student",
+  "student-gallery": "student",
+  "student-videos": "student",
+  "student-record": "student",
+  "student-resources": "student",
+  "student-reader": "student",
   "student-defend": "student",
   family: "family",
   teacher: "teacher",
@@ -56,6 +69,15 @@ export const PATH_OF: Record<Screen, string> = {
   "student-home": "/student/dashboard",
   "student-homework": "/student/assignments",
   "student-srs": "/student/srs",
+  "student-lessons": "/student/lessons",
+  "student-lesson": "/student/lessons/les-1",
+  "student-reports": "/student/lesson-reports",
+  "student-mywork": "/student/my-work",
+  "student-gallery": "/student/class-gallery",
+  "student-videos": "/student/videos",
+  "student-record": "/student/record",
+  "student-resources": "/student/resources",
+  "student-reader": "/student/language-support",
   "student-defend": "/student/defend-level",
   family: "/family/dashboard",
   teacher: "/teacher/dashboard",
@@ -75,7 +97,7 @@ export const PATH_OF: Record<Screen, string> = {
 export const STUDENT_ID = "stu-quynh-tram-anh";
 export const ME = {
   userId: "user-preview-1",
-  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-srs": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-defend": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà", "teacher-grid": "Cô Trần Thu Hà", "teacher-attendance": "Cô Trần Thu Hà", "teacher-drawer": "Cô Trần Thu Hà", "teacher-grading": "Cô Trần Thu Hà", "teacher-video": "Cô Trần Thu Hà", "teacher-smart": "Cô Trần Thu Hà", "teacher-payroll": "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
+  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-srs": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-lessons": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-lesson": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-reports": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-mywork": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-gallery": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-videos": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-record": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-resources": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-reader": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-defend": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà", "teacher-grid": "Cô Trần Thu Hà", "teacher-attendance": "Cô Trần Thu Hà", "teacher-drawer": "Cô Trần Thu Hà", "teacher-grading": "Cô Trần Thu Hà", "teacher-video": "Cô Trần Thu Hà", "teacher-smart": "Cô Trần Thu Hà", "teacher-payroll": "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -103,7 +125,7 @@ export function buildDb() {
   let homeworkRpc: any = { homeworks: [], submissions: [] };
   const points: Record<string, any> = {};
 
-  if (SCREEN === "student-home" || SCREEN === "student-homework" || SCREEN === "student-srs" || SCREEN === "student-defend") {
+  if (SCREEN === "student-home" || SCREEN === "student-homework" || SCREEN === "student-srs" || SCREEN === "student-defend" || (["student-lessons","student-lesson","student-reports","student-mywork","student-gallery","student-videos","student-record","student-resources","student-reader"] as string[]).includes(SCREEN)) {
     const cls = { id: "cls-1", name: "Starters Stars (Mon/Wed)" };
     const hw = (id: string, title: string, due: string | null, body = "Do the pages in your book and be ready to read aloud.") => ({
       id, title, due_date: due, body, class_id: cls.id, classes: { name: cls.name }, homework_files: [],
@@ -260,6 +282,145 @@ export function buildDb() {
     emptyOn = admin.emptyOn;
     functions = admin.functions;
     rpcs = admin.rpcs;
+  }
+
+
+  // ---- Phase 7 round 2 screens (made-up names). &born=YYYY|none for the band, &state=empty for the empty variants ----
+  if ((["student-lessons","student-lesson","student-reports","student-mywork","student-gallery","student-videos","student-record","student-resources","student-reader"] as string[]).includes(SCREEN)) {
+    const cls1 = { id: "cls-1", name: "Starters Stars (Mon/Wed)" };
+    const empty = STATE === "empty";
+    const at = (n: number, hh = "10:00:00") => `${day(n)}T${hh}`;
+    const mate = (id: string, name: string) => ({ id, name });
+
+    // lessons
+    const lessonRows = [
+      ["les-1", "Animals on the farm", -1, "We learned farm animal names and the pattern 'It has got ...'. Phương Anh spoke clearly and helped a partner.", "Draw your favourite farm animal and write two sentences."],
+      ["les-2", "Fruit and colours", -4, "Reviewed fruit words and colours with a guessing game.", null],
+      ["les-3", "Bài học đặc biệt: Chúng ta cùng khám phá thế giới động vật hoang dã ở châu Phi và châu Á", -8, "A longer lesson with a Vietnamese title to check that long titles wrap.", null],
+      ["les-4", "My family", -11, "We talked about family members and used 'This is my ...'.", null],
+      ["les-5", "Numbers 1 to 20", -15, "Counting games and a number song.", "Count ten things at home and tell a grown-up in English."],
+      ["les-6", "Hello and goodbye", -18, "Greetings, names and a circle game.", null],
+    ] as const;
+    tables.lesson_overviews = empty ? [] : lessonRows.map(([id, title, d, summary, homework], i) => ({
+      id, class_id: cls1.id, title, lesson_date: day(d), summary, homework,
+      materials: i % 2 === 0 ? [{ name: "Oxford Discover 2, Student Book", pages: "pp. 42-43" }, { name: "Worksheet: farm animals", pages: "" }] : [{ name: "Flashcards", pages: "set 4" }],
+      transcript_id: id === "les-1" ? "tr-1" : null, classes: { name: cls1.name },
+    }));
+    tables.transcript_speaker_metrics = [{ id: "tsm-1", transcript_id: "tr-1", student_id: STUDENT_ID, utterance_count: 14, questions_asked: 3, participation_share: 0.22 }];
+    tables.student_error_log = [
+      { id: "err-1", source: "transcript", source_id: "tr-1", student_id: STUDENT_ID, error_text: "He go to school.", corrected_text: "He goes to school.", error_type: "grammar", cefr_topic: "present simple" },
+      { id: "err-2", source: "transcript", source_id: "tr-1", student_id: STUDENT_ID, error_text: "I have two cat.", corrected_text: "I have two cats.", error_type: "grammar", cefr_topic: "plurals" },
+    ];
+    tables.point_transactions = [
+      { id: "pt-1", student_id: STUDENT_ID, class_id: cls1.id, date: day(-1), points: 5, type: "participation", notes: "Great talking in pairs" },
+      { id: "pt-2", student_id: STUDENT_ID, class_id: cls1.id, date: day(-1), points: 3, type: "homework", notes: "Homework handed in" },
+      { id: "pt-3", student_id: STUDENT_ID, class_id: cls1.id, date: day(-1), points: -2, type: "behaviour", notes: "Talking while a classmate was reading" },
+    ];
+    tables.lesson_resources = [];
+
+    // work: mine, approved
+    const work = (id: string, extra: Record<string, unknown>) => ({
+      id, class_id: cls1.id, student_id: STUDENT_ID, status: "approved", storage_path: null, external_url: null, is_teamwork: false, member_student_ids: [],
+      teacher_notes: null, workflow: "general", ocr_text: null, approved_at: at(-1), created_at: at(-1), ...extra,
+    });
+    tables.student_work = empty ? [] : [
+      work("sw-1", { storage_path: "farm-poster.png", teacher_notes: "A lovely poster, Phương Anh. I like the way you labelled every animal." }),
+      work("sw-2", { external_url: "https://example.com/my-slides", workflow: "link", approved_at: at(-5), created_at: at(-5) }),
+      work("sw-3", { storage_path: "team-model.jpg", is_teamwork: true, member_student_ids: [STUDENT_ID, "kid-bao"], teacher_notes: "A team model of the farm. Everyone spoke English while building it.", approved_at: at(-9), created_at: at(-9) }),
+    ];
+    tables.work_shares = empty ? [] : [{ id: "ws-1", source: "student_work", source_id: "sw-1", status: "approved" }];
+    tables.homework_submissions = empty ? [] : [
+      { id: "hs-1", student_id: STUDENT_ID, homework_id: "hw-g1", storage_key: "submissions/hw-g1/colours.jpg", file_name: "colours.jpg", submitted_at: at(-3), created_at: at(-3), homeworks: { title: "Colours worksheet", class_id: cls1.id } },
+    ];
+
+    // resources: shared with the class
+    const res = (id: string, title: string, description: string, file_name: string | null, file_type: string | null, tags: string[]) => ({
+      id, title, description, file_name, file_size: file_name ? 240_000 : null, file_type, storage_key: file_name ? "resources/" + file_name : null, external_url: file_name ? null : "https://example.com/games",
+      thumbnail_url: null, visibility: "shared", blooms_levels: [], pyp_themes: [], vocab_tags: tags, uploaded_by: "teacher-ha", created_at: at(-2), updated_at: at(-2),
+    });
+    tables.resource_class_access = empty ? [] : [{ resource_id: "r-1", class_id: cls1.id }, { resource_id: "r-2", class_id: cls1.id }, { resource_id: "r-3", class_id: cls1.id }];
+    tables.resources = empty ? [] : [
+      res("r-1", "Farm animals word cards", "Printable cards with the farm animal words from Unit 3.", "farm-cards.pdf", "application/pdf", ["cow", "pig", "sheep"]),
+      res("r-2", "Colours song", "A short song to practise colours at home.", null, null, ["red", "blue", "green"]),
+      res("r-3", "Number games", "Three games for numbers 1 to 20.", "numbers.pdf", "application/pdf", ["one", "two", "three"]),
+    ];
+
+    // picture reader: one set, switched on for this class, three sentences
+    const cell = (text: string, start: number, n: number) => ({ tokens: [start], start, text, kind: "entity" as const, concept: text, pictogram: 1000 + n, url: stubPicture(text) });
+    const sentence = (text: string) => {
+      const words = text.replace(/[.?]/g, "").split(" ");
+      return { text, tokens: words, cells: words.map((w, i) => cell(w, i, i)), approved: day(-2) };
+    };
+    tables.language_support_set_classes = empty ? [] : [{ set_id: "set-1", class_id: cls1.id, active: true }];
+    tables.language_support_sets = empty ? [] : [{ id: "set-1", owner_user_id: "teacher-ha", title: "At the farm", description: "Sentences about farm animals.", sentences: [sentence("The cow eats grass."), sentence("I see two sheep."), sentence("The pig is big.")], updated_at: at(-2) }];
+
+    // videos: two video homeworks, the progress journey and the class wall
+    const vids = [
+      { id: "hw-vid-todo", title: "Say hello to your class (video)", due_date: day(-2), submission_type: "video", submission: null },
+      { id: "hw-vid-sent", title: "My favourite animal (video)", due_date: day(-6), submission_type: "video", submission: { status: "submitted" } },
+    ];
+    if (SCREEN === "student-record") {
+      homeworkRpc = {
+        homeworks: empty ? [] : vids.map((v) => ({ id: v.id, title: v.title, due_date: v.due_date, body: "Record a short video.", class_id: cls1.id, classes: { name: cls1.name }, homework_files: [], submission_type: "video" })),
+        submissions: empty ? [] : [{ id: "vsub-1", homework_id: "hw-vid-sent", status: "submitted", submitted_at: at(-6), grade: null }],
+      };
+      rpcs.get_video_homework_for_student = (a: any) => {
+        const v = vids.find((x) => x.id === a.p_homework);
+        return v ? { submission_type: "video", title: v.title, submission: v.submission } : null;
+      };
+    }
+    if (SCREEN === "student-videos") {
+      rpcs.get_video_progress = () => ({ videos: empty ? [] : [
+        { video_submission_id: "vp-1", homework_title: "My favourite animal", date: day(-20), score: 62, criteria: [{ key: "clarity", label: "Speaking clearly", score: 3, max: 5 }], gaps: [{ error_type: "grammar", error_text: "He have a dog", corrected_text: "He has a dog", cefr_topic: "present simple" }] },
+        { video_submission_id: "vp-2", homework_title: "My family", date: day(-9), score: 71, criteria: [{ key: "clarity", label: "Speaking clearly", score: 4, max: 5 }], gaps: [{ error_type: "grammar", error_text: "She have two brothers", corrected_text: "She has two brothers", cefr_topic: "present simple" }] },
+        { video_submission_id: "vp-3", homework_title: "Say hello", date: day(-2), score: 78, criteria: [{ key: "clarity", label: "Speaking clearly", score: 4, max: 5 }], gaps: [] },
+      ] });
+      const wall = [
+        { id: "v-1", student_name: "Hoàng", homework_title: "Say hello to your class", video_path: "videos/v1.mp4", poster_path: "videos/v1-poster.png", submitted_at: at(-2), base: 3, mine: false },
+        { id: "v-2", student_name: "Trâm Anh", homework_title: "Say hello to your class", video_path: "videos/v2.mp4", poster_path: "videos/v2-poster.png", submitted_at: at(-2), base: 5, mine: true },
+        { id: "v-3", student_name: "Lan", homework_title: "My favourite animal", video_path: "videos/v3.mp4", poster_path: "videos/v3-poster.png", submitted_at: at(-6), base: 1, mine: false },
+      ];
+      rpcs.get_class_video_wall = () => empty ? [] : wall.map((w) => ({ id: w.id, student_name: w.student_name, homework_title: w.homework_title, video_path: w.video_path, poster_path: w.poster_path, submitted_at: w.submitted_at, hearts: w.base + (heartState.has(w.id) ? 1 : 0), hearted: heartState.has(w.id), mine: w.mine }));
+      rpcs.toggle_video_heart = (a: any) => { if (heartState.has(a.p_video)) heartState.delete(a.p_video); else heartState.add(a.p_video); return null; };
+    }
+
+    // the class gallery: three classmates' pieces, first names only
+    rpcs.class_work_gallery = () => empty ? [] : [
+      { share_id: "sh-1", class_id: cls1.id, class_name: cls1.name, title: "Farm poster", kind: "file", file_name: "poster-a.png", external_url: null, students: [mate("kid-an", "Minh")], work_at: at(-2), is_teamwork: false },
+      { share_id: "sh-2", class_id: cls1.id, class_name: cls1.name, title: "Our slides", kind: "link", file_name: null, external_url: "https://example.com/class-slides", students: [mate("kid-chi", "Chi")], work_at: at(-4), is_teamwork: false },
+      { share_id: "sh-3", class_id: cls1.id, class_name: cls1.name, title: "Team model", kind: "file", file_name: "model-b.jpg", external_url: null, students: [mate("kid-hai", "Hải"), mate("kid-giang", "Giang")], work_at: at(-7), is_teamwork: true },
+    ];
+
+    // lesson reports: two approved, one where the child came a little late
+    const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+    rpcs.get_lesson_reports_for_student = () => empty ? [] : [
+      {
+        report_id: uuid(1), session_id: uuid(11), session_date: day(-1), start_time: "17:30:00", class_name: cls1.name, review_homework_id: null, photos: [],
+        class_part: {
+          lesson: { title: "Animals on the farm", title_vi: "Các con vật ở nông trại", summary: "We learned the names of farm animals and the pattern 'It has got ...'.", summary_vi: "Chúng ta học tên các con vật ở nông trại và mẫu câu 'It has got ...'." },
+          objectives: [{ text: "Name six farm animals", text_vi: "Gọi tên sáu con vật ở nông trại", met: "yes" }, { text: "Say 'It has got ...'", text_vi: "Nói 'It has got ...'", met: "partly" }],
+          taught: [{ topic: "Farm animals", detail: "cow, pig, sheep, horse, hen, duck", detail_vi: "bò, lợn, cừu, ngựa, gà mái, vịt" }],
+          words: [{ en: "sheep", vi: "con cừu", example: "The sheep is white." }, { en: "duck", vi: "con vịt", example: "The duck can swim." }],
+          structures: [{ pattern: "It has got ...", example: "It has got four legs." }],
+          activities: [{ name: "Guess the animal", description: "Pairs describe an animal and the partner guesses.", description_vi: "Từng cặp mô tả con vật để bạn đoán." }],
+          class_focus: [{ en: "Speaking in full sentences", vi: "Nói thành câu đầy đủ" }],
+          parents: { tips: [{ en: "Ask your child to show you three farm animals in a picture book.", vi: "Hãy nhờ con chỉ ba con vật ở nông trại trong một cuốn sách tranh." }], ask_your_child: [{ en: "Which animal has got four legs?", vi: "Con vật nào có bốn chân?" }], next_lesson: { en: "Next lesson: my family.", vi: "Buổi sau: gia đình của em." } },
+          homework: [{ homework_id: uuid(21), title: "Draw your favourite farm animal", due_date: day(2) }],
+        },
+        part: { highlight: "Spoke clearly and helped a partner with spelling.", highlight_vi: "Nói rõ ràng và giúp bạn đánh vần.", focus_next: "Add one more detail to each sentence.", focus_next_vi: "Thêm một chi tiết nữa vào mỗi câu.", attendance: "Present", points: 8, work_ids: [], teacher_comment: "Phương Anh is growing in confidence.", teacher_comment_vi: "Phương Anh ngày càng tự tin hơn." },
+      },
+      {
+        report_id: uuid(2), session_id: uuid(12), session_date: day(-4), start_time: "17:30:00", class_name: cls1.name, review_homework_id: null, photos: [],
+        class_part: {
+          lesson: { title: "Fruit and colours", title_vi: "Trái cây và màu sắc", summary: "Reviewed fruit words and colours with a guessing game.", summary_vi: "Ôn từ về trái cây và màu sắc bằng trò chơi đoán." },
+          objectives: [{ text: "Say the colour of each fruit", text_vi: "Nói màu của từng loại trái cây", met: "yes" }],
+          taught: [], words: [{ en: "banana", vi: "quả chuối", example: "A banana is yellow." }], structures: [], activities: [], class_focus: [],
+          parents: { tips: [], ask_your_child: [{ en: "What colour is a banana?", vi: "Quả chuối màu gì?" }], next_lesson: null },
+          homework: [],
+        },
+        part: { highlight: "Joined the guessing game with a big smile.", highlight_vi: "Tham gia trò chơi đoán với nụ cười rạng rỡ.", focus_next: null, focus_next_vi: null, attendance: "Late", points: 5, work_ids: [], teacher_comment: null, teacher_comment_vi: null },
+      },
+    ];
   }
 
   // ---- Phase 3 screens (made-up names) ----
