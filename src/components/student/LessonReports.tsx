@@ -21,10 +21,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
 import { useAgeBand } from "@/hooks/useAgeBand";
 import { pressable } from "@/components/fx/PaperPress";
-import { MascotCompanion } from "@/components/student/MascotCompanion";
 import { BiText } from "@/components/student/lessons/BiText";
 import { Rise } from "@/components/student/lessons/Rise";
 import {
@@ -133,10 +131,6 @@ function LessonReportCard({ v, studentId, open, onToggle }: {
   v: LessonReportView; studentId: string; open: boolean; onToggle: () => void;
 }) {
   const c = v.child;
-  const { band } = useAgeBand();
-  const { role } = useAuth();
-  // The youngest child's own login never sees the word "late" (brief G2); a parent's view is unchanged.
-  const hideLate = band === "early" && role === "student" && c?.attendance === "Late";
   return (
     <article className={cn(CARD, "p-0")}>
       <button type="button" onClick={onToggle} aria-expanded={open}
@@ -232,7 +226,7 @@ function LessonReportCard({ v, studentId, open, onToggle }: {
             <section className="space-y-3 rounded-hec-lg border border-hec-brass/40 bg-hec-sunken p-4">
               <SectionTitle icon={Star} en="Your child today" vi="Con hôm nay" />
               <div className="flex flex-wrap gap-2">
-                {c.attendance && !hideLate && (
+                {c.attendance && (
                   <span className={c.attendance === "Present" ? BADGE_SUCCESS : c.attendance === "Late" ? BADGE_WARN : BADGE_NEUTRAL}>
                     {attendanceLabel(c.attendance).en} · <span lang="vi">{attendanceLabel(c.attendance).vi}</span>
                   </span>
@@ -373,11 +367,7 @@ export function LessonReports({ studentId }: { studentId?: string }) {
   if (!reports.length) {
     return (
       <Rise index={0} className={cn(CARD, "space-y-2 py-12 text-center")}>
-        {little ? (
-          <div className="flex justify-center"><MascotCompanion pendingHomework={null} silent /></div>
-        ) : band === "teen" ? null : (
-          <BookOpen className="mx-auto h-10 w-10 text-hec-ink-faint" aria-hidden />
-        )}
+        {band !== "teen" && <BookOpen className="mx-auto h-10 w-10 text-hec-ink-faint" aria-hidden />}
         <p className="text-hec-body font-medium text-hec-ink"><BiText k="reports.empty" always /></p>
         <p className="mx-auto max-w-sm text-hec-small text-hec-ink-soft">
           {little ? <BiText k="reports.emptyShort" always /> : <BiText k="reports.emptyHelp" always />}

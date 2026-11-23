@@ -151,8 +151,8 @@ export default function StudentLessonDetail() {
 
   const m = data?.metric;
   const totalPoints = (data?.points || []).reduce((s: number, p: any) => s + (p.points || 0), 0);
-  // The youngest see no percentage of the class and no red: the same facts, in a calmer tone.
-  const calmTone = little;
+  // The early band sees no percentage of the class and no red: the same facts, in a calmer tone.
+  const calmTone = band === "early";
 
   return (
     <Layout title="Lesson">
