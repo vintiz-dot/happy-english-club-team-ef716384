@@ -236,31 +236,37 @@ The children can see this screen. It is the one staff surface where delight is t
 - The live grid shows no rank today, so there is no rank glide to build (found 23 Nov 2026). Never animate rank changes in the display boards from here.
 - Homework from a lesson deck goes only to children marked Present or Late (see `AGENTS.md`); do not let an animation suggest otherwise.
 
-### C5. Assignments and grading (`TeacherAssignments.tsx`, `HomeworkGrading.tsx`, `HomeworkGradingList.tsx`, `GradeOfflineDialog.tsx`)
+### C5. Assignments and grading (`TeacherAssignments.tsx`, `HomeworkGradingList.tsx`)
 
-- The grading list is a queue: grading one submission slides it out to the left and the next rises into place (`soft`). A slim `InkRing` shows graded out of total.
-- Saving a grade: the button's label fades to an `InkCheck` and back in 900 ms; the button stays pressable.
-- Last submission graded: `Seal`, "All graded". This is the same moment as the dashboard tile; it plays in whichever place the teacher is.
-- Video review (`VideoReviewQueue`, `TeacherVideoDashboard.tsx`): approving feedback plays the Seal with "Sent to family". Nothing here may imply a report is visible to a family before approval.
+Facts checked 23 Nov 2026: the grading tab is a paged list filtered by status and class. "Grade Submission" opens a dialog, and a grade that saved closes it. There is no Save button that stays on screen. `HomeworkGrading.tsx` is imported by nothing; leave it. `GradeOfflineDialog.tsx` gets no effect.
 
-### C6. Journal, reports, Smart Upload, transcripts, vocabulary audit
+- The card graded in this visit shows its "Graded" badge with an `InkCheck` drawn once. Cards already graded when the page loaded draw nothing.
+- Under the "submitted" filter the graded card leaves to the left and the cards below rise (`soft`). A slim `InkRing` shows graded out of total, counted from the list the page already holds.
+- Last handed-in submission graded in this visit: `Seal`, "All graded". Never on page load or on a filter change.
+- Video review (`VideoReviewPanel.tsx`): an approval that succeeded plays the Seal with "Sent to family". Nothing here may imply a report is visible to a family before approval.
 
-- Long writing surfaces get no ambient motion at all. Autosave shows as a small "Saved" that fades in and out, with an `InkCheck`.
-- Smart Upload and transcripts already use framer-motion; bring their durations and easings onto the tokens. Work in progress shows honest stages named in words; never a fake progress bar. If the real progress is unknown, show the stage name and a `LiveDot`.
-- Approving AI drafts (CEFR points, vocabulary, feedback): each approval is a small `InkCheck`; approving the last one in a batch is a `Seal`.
+### C6. Smart Upload and other approvals
 
-### C7. Payroll (`TeacherPayroll.tsx`, `TeacherPayrollCalendar.tsx`)
+Facts checked 23 Nov 2026: the teacher journal has no autosave, and children use the same editor (`src/components/journal/`), so it is not changed in the teacher phases. The transcripts page lives inside the recorder page, which waits for the owner's recorder release; it is not changed either.
 
-The most restrained teacher screen. Month changes slide the calendar in the direction of travel (240 ms). Figures appear; they do not count, pulse or highlight. "Figure unavailable" is never animated. A closed month shows a small closed-lock glyph, drawn in ink, static.
+- Smart Upload already uses framer-motion; bring its durations and easings onto the tokens. A running job shows its real stage message with a `LiveDot`; a finished one an `InkCheck`; a failed one does not move. Never a progress bar.
+- Review queue: an approval that empties the queue is a `Seal`, "All reviewed". A rejection never shows a seal.
+- CEFR drafts and the vocabulary audit: decided after the build session reports what the approve action is on each.
 
-### C8. Flipbooks and lesson decks (`TeacherBooks.tsx`, `src/components/lessonDecks/`)
+### C7. Payroll (`TeacherPayroll.tsx`, `TeacherPayrollCalendar.tsx`, `FinancialPrivacy.tsx`)
+
+The most restrained teacher screen. Month changes slide the calendar block in the direction of travel (240 ms); the slide is on the container, never on a figure. Figures appear; they do not count, pulse or highlight. "Figure unavailable" is never animated. A closed month shows a small closed-lock glyph, drawn in ink, static, beside the sentence that already says so. The reveal of hidden figures is a plain fade, without blur. `TeacherPayrollCalendar` is also the admin's view of one teacher, which gets the same slide.
+
+### C8. Flipbooks and lesson decks (`TeacherBooks.tsx`, `src/components/lessonDecks/`). ON HOLD.
+
+On hold since 23 Nov 2026: another session changes these files daily, and a slide transition that remounts a slide would lose exam answers and media players. Not to be built until that work settles and its session agrees who edits the files.
 
 - Slides advance with paper sliding over paper, 240 ms, direction-aware. Projected in class, so `calm` and `full` look the same here: no pointer effects.
 - The flipbook frame is another site's; do not animate or overlay it.
 
-### C9. Teacher milestones (moments, once each)
+### C9. Teacher milestones. NOT BUILDABLE YET.
 
-First register of a new term; 100th, 500th, 1000th lesson held (from figures the payroll function already returns; do not query for it); a class's first week with every child present. Each is one line of serif text and a Seal, shown on the dashboard, dismissed by doing nothing.
+First register of a new term; 100th, 500th, 1000th lesson held; a class's first week with every child present. Checked 23 Nov 2026: the payroll function returns one month's figures, not a lifetime count, and no page holds a term's first register or a week's attendance for a class. Each needs a read-only server answer first (Part L). Do not query for them from the browser.
 
 ---
 
@@ -654,7 +660,7 @@ Each phase is one or more commits that leave the app working, and ends with the 
 | 0. Foundations | design system section 9b; tokens (B2) and the token check; the kit (B5) with a preview page of every piece on made-up data; motion level (B3) in `UserMenu`; `ageBand.ts` and its tests (F1, F4); Tailwind band variants | every kit piece renders in light, dark, `calm`, `off` and at 375 px; no screen has changed yet |
 | 1. Teacher shell and dashboard | C1, C2 | the dashboard shows C2's table working; first-arrival logic verified across two visits |
 | 2. Teacher in class | C3, C4 | 30 rapid attendance marks and 10 rapid point awards stay smooth on a throttled CPU (4x slowdown in dev tools) |
-| 3. Teacher, the rest | C5 to C9 | each listed page aligned; payroll shows no animated figure |
+| 3. Teacher, the rest | C5 to C7 (C8 lesson decks on hold, C9 milestones wait for a server answer) | grading, approvals and payroll aligned; payroll shows no animated figure |
 | 4. Admin shell, tables, money | D1 to D3 | a recorded payment shows the Seal on success and nothing on conflict |
 | 5. Admin, the rest | D4 to D7 | AI action confirm shows one Seal for the whole plan |
 | 6. Student shell and home | F2, F3, G1 to G5 for the home page and navigation, I2, I7 | four screenshots of the same made-up child's data at four birth years, plus missing date of birth; the profile switch changes band |
