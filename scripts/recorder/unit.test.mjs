@@ -2264,5 +2264,274 @@ console.log("=== 22 Nov 2026: the teacher's phone as the teacher microphone ==="
   await r.dispose();
 }
 
+console.log("=== 23 Nov 2026: the phone link - Record and Stop on either device does both ===");
+{
+  // A stand-in for the Realtime channel: every message reaches the OTHER ends; `drop` loses them all.
+  function linkHub() {
+    const ends = [];
+    const hub = {
+      drop: false, sent: [],
+      transport(name) {
+        const t = {
+          name, closed: false, fns: new Set(),
+          async send(m) {
+            if (t.closed) return;
+            hub.sent.push({ from: name, m });
+            if (hub.drop) return;
+            for (const e of ends) if (e !== t && !e.closed) for (const f of e.fns) f(JSON.parse(JSON.stringify(m)));
+          },
+          onMessage(fn) { t.fns.add(fn); return () => t.fns.delete(fn); },
+          status: () => (t.closed ? "closed" : "open"),
+          async close() { t.closed = true; },
+        };
+        ends.push(t);
+        return t;
+      },
+    };
+    return hub;
+  }
+  const flush = async () => { for (let i = 0; i < 5; i++) { await realSleep(1); } };
+  class RoomOnlySource extends FakeSource {
+    async openTracks(ids) {
+      this.opens = (this.opens ?? 0) + 1; this.open = true;
+      const d = this.devices.find((x) => x.deviceId === ids.room);
+      const room = { role: "room", deviceId: d.deviceId, label: d.label, groupId: d.groupId, requested: R.buildConstraints(d.deviceId, {}), notHonoured: [],
+        applied: { deviceId: d.deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1, sampleRate: 48000 } };
+      return { teacher: { role: "teacher", deviceId: ids.teacher, label: "Teacher's phone", groupId: "phone", requested: {}, applied: {}, notHonoured: [] }, room };
+    }
+  }
+  const phoneProfile = { ...profile, teacherOnPhone: true, teacher: { deviceId: R.PHONE_TEACHER.deviceId, groupId: R.PHONE_TEACHER.groupId, label: R.PHONE_TEACHER.label } };
+  const voice = (sec) => Float32Array.from({ length: Math.round(sec * 48000) }, (_, k) => 0.25 * Math.sin(k / 7) + (rnd() - 0.5) * 0.05);
+  const PHASE = { armed: "armed", starting: "recording", recording: "recording", stalled: "recording", stopping: "saving", uploading: "saving", finalizing: "saving", complete: "done" };
+
+  /** The two devices: a real recorder (laptop) and a real PhoneTeacherTrack (phone), linked through the hub. */
+  async function pair({ readyAtStart = false } = {}) {
+    clock = Date.parse("2026-11-12T09:55:00.000Z");
+    const w = world();
+    const hub = linkHub();
+    const src = new RoomOnlySource();
+    const { r, errors } = recorder(w, new R.MemoryStore(), src, { profile: phoneProfile });
+    await r.prepare();
+    const lap = { ready: readyAtStart, pressed: 0, stops: 0 };
+    // The session's armTick, by hand: Ready pressed in the lesson's window arms it and the engine starts it.
+    const armNow = async () => { if (!["armed", "starting", "recording", "stalled"].includes(r.state)) { await r.arm(E(w)); r.tick(); await r.settle(); } };
+    const laptop = new R.LaptopLink({
+      transport: hub.transport("laptop"), device: "laptop-1", now,
+      snapshot: () => ({ phase: lap.ready ? (PHASE[r.state] ?? "waiting") : "not_ready", recordingId: r.recordingId ?? null, className: "Jupiter", startsAt: "16:55", note: null }),
+      pressReady: async () => { lap.pressed += 1; lap.ready = true; await armNow(); },
+      stop: async () => { lap.stops += 1; await r.stop("manual"); r.tick(); await r.settle(); },
+      onPhone: (v) => { lap.view = v; },
+    });
+    const ph = { joins: 0, finishes: [], track: null, view: null };
+    const phoneBackend = R.supabaseBackend(w.client(TEACHER));
+    const mine = () => [...w.server.recordings.values()].filter((x) => x.started_by === TEACHER);
+    const phone = new R.PhoneLink({
+      transport: hub.transport("phone"), device: "phone-1", now,
+      findRecording: async () => { const x = mine().filter((y) => y.status === "armed" || y.status === "recording").at(-1); return x ? { ...x } : null; },
+      getRecording: async (id) => { const x = w.server.recordings.get(id); return x && ["armed", "recording", "uploading"].includes(x.status) ? { ...x } : null; },
+      join: async (row) => {
+        ph.joins += 1;
+        ph.track = new R.PhoneTeacherTrack({ backend: phoneBackend, recording: row, sampleRate: 48000, deviceLabel: "iPhone Microphone", perfNow: now, retryMs: 0, sleep: async () => {} });
+        await ph.track.measureClock();
+        await ph.track.tryOrigin();
+      },
+      finish: async (endedAt) => { ph.finishes.push(endedAt); await ph.track?.finish(endedAt); },
+      onView: (v) => { ph.view = v; },
+    });
+    /** Both devices tick (every 3 s in the app). */
+    const both = async () => { await laptop.tick(); await phone.tick(); await flush(); };
+    /** `sec` seconds of lesson: the laptop records the room, the phone (once joined) sends its voice. */
+    const lesson = async (sec) => {
+      await src.play(sec, r);
+      if (ph.track) { await ph.track.tryOrigin(); ph.track.push(voice(sec), now()); await ph.track.pump(); }
+    };
+    return { w, hub, r, errors, src, lap, laptop, phone, ph, both, lesson, armNow };
+  }
+  const tch = (w, id) => w.server.chunkRows(id).filter((c) => c.track === "teacher").sort((a, b) => a.seq - b.seq);
+
+  // ---- 1. Record on the PHONE: the laptop gets ready and records; the phone joins. Stop on the LAPTOP: the phone stops.
+  {
+    const P = await pair();
+    await P.both();
+    ok("link: each device sees the other connected", P.ph.view.laptopConnected && P.lap.view.connected, `${P.ph.view.message} | ${P.lap.view.line}`);
+    ok("link: the phone says the laptop is not ready yet and Record gets both ready", /Press Record/.test(P.ph.view.message), P.ph.view.message);
+    eq("link: before Record nothing is pressed and nothing joined", [P.lap.pressed, P.ph.joins], [0, 0]);
+    await P.phone.record();
+    await flush();
+    eq("link: Record on the phone pressed Ready on the laptop, once", P.lap.pressed, 1);
+    eq("link: and the laptop records", P.r.state, "recording");
+    await P.both();
+    eq("link: the laptop acknowledged the start (no command left to resend)", P.ph.view.pending, null);
+    eq("link: the phone joined the laptop's recording at once", [P.ph.joins, P.ph.view.joinedId], [1, P.r.recordingId]);
+    const sentStarts = P.hub.sent.filter((x) => x.m.role === "command" && x.m.kind === "start").length;
+    await P.both(); clock += 3000; await P.both();
+    eq("link: an acknowledged start is not sent again", P.hub.sent.filter((x) => x.m.role === "command" && x.m.kind === "start").length, sentStarts);
+    ok("link: the phone says it is recording on both", /Recording on both/.test(P.ph.view.message), P.ph.view.message);
+    P.phone.setPhone({ phase: "recording", sentChunks: 2 });
+    await flush();
+    ok("link: the laptop shows the phone recording", /Phone connected and recording \(2 pieces sent\)/.test(P.lap.view.line), P.lap.view.line);
+
+    // The same command delivered twice (a resend that crossed the ack) is handled once.
+    const dup = { role: "command", id: "dup-1", from: "phone-1", kind: "start", recordingId: null, at: now() };
+    const t2 = P.hub.transport("phone-again");
+    await t2.send(dup); await t2.send(dup); await flush();
+    eq("link: one command id is handled once", P.lap.pressed, 1);
+
+    await P.lesson(35);
+    const id = P.r.recordingId;
+    ok("link: the phone's chunks reach the laptop's recording", tch(P.w, id).length >= 3 && tch(P.w, id).every((c) => c.confirmed_at), `${tch(P.w, id).length}`);
+
+    // A pause (iPhone stopped the microphone for 8 s; the page restarted it): a new stretch at the clock, no overlap.
+    const before = tch(P.w, id).at(-1);
+    await P.ph.track.breakStretch(true);
+    clock += 8000;
+    await P.lesson(12);
+    const after = tch(P.w, id);
+    ok("pause: the chunks after the pause never overlap the ones before", after.every((c, i) => i === 0 || c.t_start_ms >= after[i - 1].t_end_ms));
+    ok("pause: the first chunk after it starts where the clock says (about 8 s later)", after.some((c) => c.seq > before.seq && c.t_start_ms >= before.t_end_ms + 7000), after.map((c) => `${c.t_start_ms}-${c.t_end_ms}`).join(" "));
+
+    await P.r.stop("manual"); P.r.tick(); await P.r.settle();
+    await P.both();
+    eq("link: Stop on the laptop finished the phone's track, trimmed at the laptop's Stop", P.ph.finishes, [P.w.server.recordings.get(id).ended_at]);
+    eq("link: the phone stated its counts", P.w.server.tracks.get(`${id}|teacher`).chunk_count, tch(P.w, id).length);
+    clock += 6000; P.r.tick(); await P.r.settle();
+    eq("link: and the laptop completes the recording with both tracks", P.w.server.recordings.get(id).status, "complete");
+    await P.r.dispose(); await P.phone.close(); await P.laptop.close();
+  }
+
+  // ---- 2. The laptop starts by itself; the phone is opened LATE; Stop on the PHONE stops the laptop.
+  {
+    const P = await pair({ readyAtStart: true });
+    await P.armNow();
+    await P.lesson(35);
+    const id = P.r.recordingId;
+    await P.both();
+    ok("late: the phone page sees the laptop recording and asks for one tap (iOS needs it for the microphone)", P.ph.view.canJoinNow && P.ph.view.alert && /Tap Record/.test(P.ph.view.message), P.ph.view.message);
+    eq("late: it does not join without the tap", P.ph.joins, 0);
+    await P.phone.record(); await flush();
+    eq("late: Record joins straight away", [P.ph.joins, P.ph.view.joinedId], [1, id]);
+    eq("late: a start while the laptop records presses nothing", P.lap.pressed, 0);
+    await P.lesson(20);
+    ok("late: the phone's chunks start after the laptop's (a phone opened late sends from when it joined)", tch(P.w, id).length >= 1 && tch(P.w, id)[0].t_start_ms >= 30000, `${tch(P.w, id)[0]?.t_start_ms}`);
+    await P.phone.stop(); await flush();
+    eq("stop on the phone: the laptop was stopped", P.lap.stops, 1);
+    ok("stop on the phone: the laptop's recording is no longer capturing", ["uploading", "finalizing", "complete"].includes(P.w.server.recordings.get(id).status), P.w.server.recordings.get(id).status);
+    await P.both();
+    eq("stop on the phone: the phone finished at the laptop's Stop", P.ph.finishes, [P.w.server.recordings.get(id).ended_at]);
+    clock += 6000; P.r.tick(); await P.r.settle();
+    eq("stop on the phone: the recording completes", P.w.server.recordings.get(id).status, "complete");
+    // A stop that arrives late (after the capture) or for an armed lesson stops nothing.
+    await P.hub.transport("phone-late").send({ role: "command", id: "late-stop", from: "phone-1", kind: "stop", recordingId: id, at: now() });
+    await flush();
+    eq("stop: a stop for a recording that is no longer capturing stops nothing", P.lap.stops, 1);
+    await P.r.dispose(); await P.phone.close(); await P.laptop.close();
+  }
+
+  // ---- 3. Every message lost: the phone still joins and stops through the recording row.
+  {
+    const P = await pair({ readyAtStart: true });
+    P.hub.drop = true;
+    await P.phone.record(); await flush();
+    eq("lost messages: the laptop heard nothing", P.lap.pressed, 0);
+    ok("lost messages: the phone says the laptop is not connected", !P.ph.view.laptopConnected && /not connected/.test(P.ph.view.message), P.ph.view.message);
+    await P.armNow();
+    await P.lesson(5);
+    await P.phone.tick();
+    eq("lost messages: the phone joined from the row alone", P.ph.joins, 1);
+    await P.lesson(30);
+    const id = P.r.recordingId;
+    ok("lost messages: its chunks are in", tch(P.w, id).length >= 2);
+    ok("lost messages: the laptop shows the phone as not connected, loudly, while capturing", P.laptop.view().alert && /Phone NOT connected/.test(P.laptop.view().line));
+    await P.r.stop("manual"); P.r.tick(); await P.r.settle();
+    await P.phone.tick();
+    eq("lost messages: the laptop's Stop reached the phone through the row", P.ph.finishes, [P.w.server.recordings.get(id).ended_at]);
+    clock += 6000; P.r.tick(); await P.r.settle();
+    eq("lost messages: the recording completes", P.w.server.recordings.get(id).status, "complete");
+    await P.r.dispose(); await P.phone.close(); await P.laptop.close();
+  }
+
+  // ---- 4. Stop on the phone while the laptop cannot hear: the phone waits, then finishes its own track and says the laptop did NOT stop.
+  {
+    const P = await pair({ readyAtStart: true });
+    await P.armNow();
+    const id4 = P.r.recordingId;
+    await P.lesson(5);
+    await P.phone.record(); await flush();
+    await P.lesson(30);
+    P.hub.drop = true;
+    await P.phone.stop();
+    eq("unheard stop: the phone does not finish at once", P.ph.finishes.length, 0);
+    clock += R.PHONE_STOP_WAIT_MS + 1000;
+    await P.phone.tick();
+    eq("unheard stop: after the wait the phone finishes its own track (not trimmed)", P.ph.finishes, [null]);
+    ok("unheard stop: and says loudly that the laptop did not stop", P.ph.view.alert && /LAPTOP DID NOT STOP/.test(P.ph.view.message), P.ph.view.message);
+    eq("unheard stop: the laptop is still recording (nothing stopped it behind its back)", P.r.state, "recording");
+    await P.r.stop("manual"); P.r.tick(); await P.r.settle();
+    clock += 6000; P.r.tick(); await P.r.settle();
+    eq("unheard stop: the laptop still completes with the phone's (shorter) track", P.w.server.recordings.get(id4).status, "complete");
+    await P.r.dispose(); await P.phone.close(); await P.laptop.close();
+  }
+
+  // ---- 5. The words, and the message shapes.
+  {
+    eq("laptop view: no phone while capturing is an alert", R.laptopPhoneView(null, false, { phase: "recording" }).alert, true);
+    eq("laptop view: no phone while waiting is not", R.laptopPhoneView(null, false, { phase: "waiting" }).alert, false);
+    const beacon = { role: "phone", device: "p", at: 1, phase: "recording", recordingId: "r", sentChunks: 0, note: null, hidden: true };
+    ok("laptop view: a hidden phone page is PAUSED, loudly", R.laptopPhoneView(beacon, true, { phase: "recording" }).alert && /PAUSED/.test(R.laptopPhoneView(beacon, true, { phase: "recording" }).line));
+    const lapB = (phase, extra = {}) => ({ role: "laptop", device: "l", at: 1, phase, recordingId: null, className: "Jupiter", startsAt: "16:55", note: null, acks: [], ...extra });
+    const pv = (laptop, extra = {}) => R.phoneLinkView({ linkOpen: true, laptop, laptopConnected: !!laptop, ready: false, joinedId: null, finishing: false, pending: null, row: null, ...extra });
+    ok("phone view: the laptop needs a click is said loudly", pv(lapB("needs_click")).alert && /ONE CLICK/.test(pv(lapB("needs_click")).message));
+    ok("phone view: armed says when", /Jupiter records by itself at 16:55/.test(pv(lapB("armed")).message), pv(lapB("armed")).message);
+    ok("phone view: a laptop problem is said with its reason", /will not record: a microphone is not plugged in/.test(pv(lapB("problem", { note: "a microphone is not plugged in" })).message));
+    ok("messages: a beacon and a command are recognised", R.isLinkMessage(beacon) && R.isLinkMessage({ role: "command", id: "x", kind: "stop", at: 1 }));
+    ok("messages: anything else is not", !R.isLinkMessage({ role: "command", id: "x", kind: "delete", at: 1 }) && !R.isLinkMessage(null) && !R.isLinkMessage({ role: "laptop" }));
+    eq("the channel is the teacher's own", R.linkTopic(TEACHER), `recorder-link:${TEACHER}`);
+  }
+}
+
+console.log("=== 23 Nov 2026: the phone's screen and microphone (wake lock, capture watch) ===");
+{
+  const healthy = { visible: true, trackState: "live", trackMuted: false, contextState: "running", sinceAudioMs: 100 };
+  eq("capture: running", R.captureHealth(healthy).ok, true);
+  const v = (p) => R.captureHealth({ ...healthy, ...p });
+  eq("capture: hidden page (screen locked) waits until visible", [v({ visible: false }).reason, v({ visible: false }).restart], ["hidden", "when_visible"]);
+  eq("capture: an ended track restarts now", [v({ trackState: "ended" }).reason, v({ trackState: "ended" }).restart], ["track_ended", "now"]);
+  eq("capture: Safari's 'interrupted' context restarts now", v({ contextState: "interrupted" }).reason, "context_stopped");
+  eq("capture: a muted track (a call, Siri) restarts now", v({ trackMuted: true }).reason, "track_muted");
+  eq("capture: no audio for 4 s while all looks fine is still a stop", v({ sinceAudioMs: 4000 }).reason, "no_audio");
+
+  // The wake lock: asked for when started, asked for AGAIN when the page is visible after the lock was let go.
+  const listeners = {};
+  const doc = { visibilityState: "visible", addEventListener: (t, f) => { listeners[t] = f; }, removeEventListener: (t) => { delete listeners[t]; } };
+  let requests = 0;
+  const sentinels = [];
+  const nav = { wakeLock: { async request(type) {
+    requests += 1;
+    const s = { type, released: false, fns: [], addEventListener(t, f) { this.fns.push(f); }, async release() { this.released = true; this.fns.forEach((f) => f()); } };
+    sentinels.push(s); return s;
+  } } };
+  const states = [];
+  const k = new R.ScreenKeeper(nav, doc, (s) => states.push(s.held));
+  await k.start();
+  eq("wake lock: requested on start", [requests, k.state.held], [1, true]);
+  // The page is hidden: the browser lets the lock go.
+  doc.visibilityState = "hidden"; await sentinels[0].release(); listeners.visibilitychange?.();
+  eq("wake lock: let go while hidden, not asked for while hidden", [k.state.held, requests], [false, 1]);
+  doc.visibilityState = "visible"; listeners.visibilitychange?.(); await realSleep(1);
+  eq("wake lock: asked for again when the page is visible", [requests, k.state.held], [2, true]);
+  listeners.visibilitychange?.(); await realSleep(1);
+  eq("wake lock: not asked twice while held", requests, 2);
+  await k.stop();
+  ok("wake lock: let go on stop, and no longer watched", sentinels[1].released && !listeners.visibilitychange && !k.state.held);
+  const none = new R.ScreenKeeper({}, doc);
+  await none.start();
+  eq("wake lock: a browser without it says so (the page tells the teacher to set Auto-Lock to Never)", none.state.supported, false);
+  await none.stop();
+  const refusing = new R.ScreenKeeper({ wakeLock: { request: async () => { throw new Error("NotAllowedError: low power mode"); } } }, doc);
+  await refusing.start();
+  ok("wake lock: a refusal is kept as the reason, not thrown", !refusing.state.held && /low power/.test(refusing.state.error));
+  await refusing.stop();
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

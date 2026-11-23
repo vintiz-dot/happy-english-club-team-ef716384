@@ -211,6 +211,23 @@ export class PhoneTeacherTrack {
     void this.pump();
   }
 
+  /**
+   * 23 Nov 2026: the capture was interrupted (Safari paused the microphone:
+   * screen locked, page hidden, a call). What was captured before is closed
+   * as its own chunk, and the next audio starts a NEW stretch where the
+   * server's clock says - after re-measuring it, because a phone's monotonic
+   * clock may stand still while it sleeps. Never earlier than the last chunk's
+   * end (no overlap); the silence between is a gap in the track, as for any
+   * other gap of more than PHONE_GAP_MS.
+   */
+  async breakStretch(remeasure = true): Promise<void> {
+    if (this.finished) return;
+    if (this.origin !== null) this.cut();
+    else this.held = null; // before the timeline is fixed: the held audio was before the pause, and is let go
+    void this.pump();
+    if (remeasure) await this.measureClock();
+  }
+
   /** Close the current chunk; returns its end (ms). */
   private cut(trimToMs?: number): number {
     const c = this.cur;

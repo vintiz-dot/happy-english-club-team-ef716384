@@ -28,6 +28,7 @@ import type { RecorderLike } from "./engine";
 import { dayDeps, fetchClassSwitch, fetchMissingConsentCount, fetchOwnUnfinished, fetchRecorderSettings, fetchTodayLessons } from "./data";
 import { LevelMeter, MicTick, Notice, Status } from "./pieces";
 import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
+import { PhoneLinkStatus } from "./PhoneLinkStatus";
 import { SpeakerTapPanel } from "@/components/speakers/SpeakerTapPanel";
 import { adopt, askNotifications, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, resendHeld, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
 
@@ -485,7 +486,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
             <>
               <section aria-label="Levels" className="rounded-hec-lg border border-hec-line p-4 space-y-4">
                 {profile?.teacherOnPhone ? (
-                  <p className="text-base">Your microphone is your phone: on the phone, open <b>/teacher/recorder/phone</b> and press Join. This laptop records the room only.</p>
+                  <PhoneLinkStatus />
                 ) : (
                   <LevelMeter label={trackName("teacher")} clipping={clipping.teacher} level={unplugged.has("teacher") || lost.has("teacher") ? null : levels?.teacher ?? null} />
                 )}

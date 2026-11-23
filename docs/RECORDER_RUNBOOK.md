@@ -63,14 +63,56 @@ Start the backup (the quick recorder the school already uses) as well as this on
 - Check the laptop's date and time are right before pressing Ready.
 - Unsent audio that the server has given up is deleted from the laptop by itself 14 days later. This happens when the recorder is opened on that laptop (or the app is opened with Ready pressed); a laptop nobody opens keeps it longer.
 
-## Teacher microphone on the phone (22 Nov 2026)
+## Teacher microphone on the phone (22 Nov 2026; linked 23 Nov)
 
 For a lesson without the lapel: the laptop records the Anker S500 only, and the teacher's phone records the teacher's voice into the same recording.
 
 1. Laptop, once: Class recorder, Microphones, tick **My microphone is my phone**, choose the S500, **Save**.
-2. Each lesson: start the recording on the laptop as usual. On the phone, signed in as the same teacher, open `/teacher/recorder/phone` and press **Join as my microphone**. Keep that page open and the screen on (the browser stops the microphone when the page is hidden or the phone locks). Plug the phone in for long lessons.
+2. Each lesson: on the phone, signed in as the same teacher, open `/teacher/recorder/phone` and press **Record**. That is all: the phone gets the laptop ready (it presses Ready for today there if nobody did) and joins the moment the laptop records. Pressing Ready on the laptop instead works too: the phone joins when you press Record on it. Keep the phone page open and the screen on (see below). Plug the phone in for long lessons.
 3. The phone sends nothing until the laptop has sent its first piece of room audio (the laptop states the recording's start first). It stops by itself when the laptop is stopped, sends the rest, and says **Done**. The laptop completes the recording only after that, and says it is waiting for the phone until then. A phone that never joined: the recording completes with the room track alone.
 
 Rules: `src/lib/recorder/phoneTrack.ts`; the laptop side is `teacherOnPhone` in `devices.ts` / `controller.ts`. No database change: a recording's tracks and chunks were already the recording teacher's, from any device (20261112100000). Tested in `scripts/recorder/unit.test.mjs` ("the teacher's phone as the teacher microphone").
 
 Known limit: a phone that dies between registering a chunk and confirming it leaves that chunk unconfirmed, and the laptop cannot complete until the phone page is opened again and joins (a rejoin carries on from the server's last chunk only while the recording is still running).
+
+### Start and stop together (23 Nov 2026)
+
+- **Record on the phone** gets both going: the laptop presses its own Ready for today if it was not pressed, then records the lesson at its time (or at once when the lesson's recording window is already open). The phone joins at that moment. The laptop never starts outside the lesson's window: the server refuses that, as before.
+- **The laptop starts by itself** (Ready pressed there): a phone page with Record pressed joins at once. A phone page opened after the start says **The laptop is recording now. Tap Record to join**. iPhone needs that one tap before it lets a page use the microphone.
+- **Stop on either device stops both.** Stop on the phone asks twice, then stops the laptop. The phone finishes when the laptop has stopped, trimmed at the laptop's Stop. If the laptop does not answer within 20 seconds (it is closed, or offline), the phone finishes its own track and says **The LAPTOP DID NOT STOP: stop it on the laptop**. Stop on the phone never gives up a lesson that is only armed.
+- **Each shows the other.** The phone says **Laptop: connected / not connected** and what the laptop is doing (ready, armed for HH:MM, needs one click, recording). The laptop's recording screen says **Phone connected and recording (n pieces sent)**, or **Phone NOT connected** or **Phone PAUSED** in red.
+- **Nothing depends on a message arriving.** The phone reads the recording's status from the server every 3 seconds as well: it joins when the recording runs and stops when it stops, even with the link down. A Record or Stop that was not acknowledged is sent again every 3 seconds.
+
+How it works: both devices are signed in as the same teacher and join one private Supabase Realtime broadcast channel, `recorder-link:<user id>`. They do not need to reach each other over the Wi-Fi. Rules in `src/lib/recorder/deviceLink.ts`. The laptop's side runs next to the recorder session on any page (`src/components/recorder/phoneLinkLaptop.ts`, started by `RecorderBoot`), only on a device whose microphone setup says **My microphone is my phone**. The timeline rules have not changed (`phoneTrack.ts`): the phone measures the server's clock, sends nothing before the laptop's first room chunk, and never overlaps its own chunks.
+
+Access: the channel is private. Migration `20261123170000_recorder_link_realtime.sql` lets only the teacher or admin whose id is in the topic listen to it or send on it. Another teacher, a family, a child and the signed-out get nothing. Before this migration no private Realtime channel was allowed at all. The channel carries only "start", "stop" and each device's state. The recording row and the chunk functions still decide everything, as the signed-in teacher. Tested by `scripts/pgtest/recorder-link-realtime.test.mjs` and the "phone link" cases in `scripts/recorder/unit.test.mjs`. **Until the owner pastes that migration,** the link cannot join: both devices say "not connected", and the phone still joins and stops through the server's status (the 22 Nov behaviour, with Record in place of Join). Stop on the phone then cannot stop the laptop.
+
+### The phone and the locked screen
+
+What iPhone does: Safari stops a web page's microphone when the screen locks, when you switch apps or go to the home screen, and when a call or Siri takes the audio. An app added to the home screen loses it the same way, and reports say even sooner. No web page can keep recording behind a locked screen. Some iOS versions let a Safari tab keep the microphone for a while in the background, but it is not reliable. Plan for it to stop.
+
+What the page does about it:
+1. **It keeps the screen on.** It holds a Screen Wake Lock (Safari 16.4 or later) and asks for it again every time the page is visible, so the phone does not lock on its own while you teach. If the browser refuses, the page says so: set Settings > Display & Brightness > Auto-Lock to **Never** for the lesson.
+2. **Dim the screen (keep it open):** a black screen showing only a small "Recording" line. It uses little battery on an iPhone OLED screen. Tap it to bring the controls back. Do not press the side button: that locks the phone.
+3. **It recovers, loudly.** When the microphone stops, the phone goes red (**YOUR MICROPHONE STOPPED**) and the laptop shows **Phone PAUSED** or **Phone NOT connected**. The moment the page is visible again the phone restarts the microphone by itself. If iPhone wants a tap first, the red screen has the button. The restarted audio goes onto the timeline where the clock says, after a fresh clock reading. The time in between is a gap in the teacher track (never shifted, never overlapped). The phone lists each gap ("10:42: 35 s missing from your track").
+4. Use it in **Safari**, not as a home-screen app.
+
+### Recording with the screen locked: needs the owner's decision (not built)
+
+Only a native app can keep the microphone on behind a locked screen. Options, with their costs:
+
+| Option | What it is | Effort | Costs and risks |
+|---|---|---|---|
+| **A. Capacitor wrapper of the phone page** (recommended if a locked screen must work) | The same `/teacher/recorder/phone` page inside a small iOS app. A native audio plugin records with the `audio` background mode (`UIBackgroundModes`, AVAudioSession play-and-record) and passes the audio to the existing `PhoneTeacherTrack`, or writes 30-second files that the page uploads. | About 3-5 days for a first TestFlight build, plus Apple review. | Needs an Apple Developer account (99 USD a year), a Mac with Xcode, TestFlight or App Store distribution, and an update whenever iOS changes. Recording must START while the app is in front (iOS refuses to start it in the background). Apple may ask why a school app records in the background. |
+| **B. Record in a native app, upload afterwards** | Voice Memos or a recorder app records the whole lesson. Afterwards the file is uploaded and lined up with the room track. | 2-3 days for an upload and alignment screen (the clock must be matched by a clap or by correlating against the room audio). | The audio only arrives after the lesson. Lining it up is not exact without a shared start mark. One more manual step for the teacher. The upload is about 100-300 MB a lesson. |
+| **C. Keep the screen on (built now)** | The wake lock and the dimmed view above. | Done. | Works only while nobody locks the phone and the page stays in front. Battery use is about a lit black screen for 90 minutes. Plug the phone in. |
+
+Recommendation: use C now. If teachers need to pocket a locked phone, build A, and only with the owner's yes.
+
+### Still to prove on a real iPhone
+
+- The wake lock holds for a 90-minute lesson on the owner's iPhone in Safari (and whether Low Power Mode refuses it).
+- What exactly happens on lock and unlock: whether the track ends or only mutes, and whether the restart works without a tap or needs the red button.
+- The gap after a restart is the real locked time, and the clock reading after the restart is right (the phone's clock may stand still while it sleeps).
+- The Realtime channel joins on both devices once the migration is pasted (the phone shows **Laptop: connected**), and Record and Stop cross in about a second over the school Wi-Fi.
+- Record on the phone at a lesson's start presses Ready on the laptop, and the laptop records. If the laptop's browser wants a click for sound, the phone shows "The laptop needs ONE CLICK".

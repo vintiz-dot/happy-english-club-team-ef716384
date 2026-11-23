@@ -352,6 +352,8 @@ const SUITES = [
   { name: "recorder engine", file: "../recorder/unit.test.mjs", migrations: [] },
   { name: "recorder screens logic", file: "../recorder/ui.test.mjs", migrations: [] },
   { name: "recorder screens render", file: "../recorder/screens.test.mjs", migrations: [] },
+  // The phone link's private Realtime channel: only the account in the topic, teacher or admin (23 Nov 2026).
+  { name: "recorder phone link channel", file: "recorder-link-realtime.test.mjs", migrations: ["20261123170000_recorder_link_realtime.sql"] },
   // The retention schedule (pg_cron / pg_net stand-ins: pglite has neither).
   { name: "recorder cron", file: "recorder-cron.test.mjs", migrations: ["20261112101000_recorder_retention_cron.sql"] },
   // 20260717090000 first: the existing class-recordings bucket and its policy,
