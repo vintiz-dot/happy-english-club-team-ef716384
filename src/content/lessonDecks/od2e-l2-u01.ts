@@ -1031,6 +1031,10 @@ export const odL2U1: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l2-u01-l5",
+      resources: [
+        { title: "Object Pronouns Interactive Game for ELL", url: "https://www.twinkl.com/resource/object-pronouns-interactive-game-for-ell-us-tg-1700592860", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: They, it and them\"", slide: "Grammar: They, it and them" },
+        { title: "Mixed Subject and Object Pronouns Worksheet for ELL", url: "https://www.twinkl.com/resource/mixed-subject-and-object-pronouns-worksheet-for-ell-us-e-1756230502", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: They, it and them\"", slide: "Grammar: They, it and them" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 1,

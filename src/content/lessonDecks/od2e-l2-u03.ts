@@ -1001,6 +1001,10 @@ export const odL2U3: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l2-u03-l5",
+      resources: [
+        { title: "ESL Was/ Were Powerpoint Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-was-were-powerpoint-lesson-kids-a1-t-e-1717087733", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: was, were, wasn't and weren't\"", slide: "Grammar: was, were, wasn't and weren't" },
+        { title: "ESL Was/Were Activity Sheet [Kids, A2]", url: "https://www.twinkl.com/resource/esl-was-were-worksheet-kids-a2-t-1719513111", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: was, were, wasn't and weren't\"", slide: "Grammar: was, were, wasn't and weren't" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 3,

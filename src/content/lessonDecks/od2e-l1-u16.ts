@@ -1347,6 +1347,10 @@ export const odL1U16: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l1-u16-l6",
+      resources: [
+        { title: "ESL Present Continuous Game [Kids, A2]", url: "https://www.twinkl.com/resource/esl-present-continuous-game-kids-a2-t-1766232659", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Is she dancing? Are they playing?\"", slide: "Grammar: Is she dancing? Are they playing?" },
+        { title: "ESL Present Continuous Worksheet [Kids, A1-A2]", url: "https://www.twinkl.com/resource/esl-present-continuous-worksheet-t-e-1663580761", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Is she dancing? Are they playing?\"", slide: "Grammar: Is she dancing? Are they playing?" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 16,

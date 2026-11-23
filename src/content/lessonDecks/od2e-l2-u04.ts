@@ -1338,6 +1338,10 @@ export const odL2U4: Unit = {
     // ------------------------------------------------------------------ Lesson 6 (extension)
     {
       id: "od2e-l2-u04-l6",
+      resources: [
+        { title: "ESL Was/Were Revision and General Knowledge Quiz [Kids, A1-A2]", url: "https://www.twinkl.com/resource/was-were-revision-and-general-knowledge-quiz-t-mfl-292", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: was and were, how things were before\"", slide: "Grammar: was and were, how things were before" },
+        { title: "Was and Were PowerPoint Pack", url: "https://www.twinkl.com/resource/t2-e-1511-was-and-were-powerpoint-pack", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: was and were, how things were before\"", slide: "Grammar: was and were, how things were before" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 4,

@@ -1302,6 +1302,9 @@ export const odL2U12: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l2-u12-l6",
+      resources: [
+        { title: "ESL Prepositions of Place [Kids, A1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-place-t-eal-1643881128", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Place words, Where's ...? and Is there ...?\"", slide: "Grammar: Place words, Where's ...? and Is there ...?" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 12,

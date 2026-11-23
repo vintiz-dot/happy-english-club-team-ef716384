@@ -995,6 +995,9 @@ export const odL1U1: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l1-u01-l5",
+      resources: [
+        { title: "ESL The Verb 'To Be' Grammar Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-the-verb-to-be-grammar-lesson-kids-a1-t-e-1726494515", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: I'm, he's, she's, is and are\"", slide: "Grammar: I'm, he's, she's, is and are" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 1,

@@ -1199,6 +1199,9 @@ export const odL2U2: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l2-u02-l6",
+      resources: [
+        { title: "ESL Adverbs of Frequency Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-adverbs-of-frequency-lesson-kids-a1-t-1749205669", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: How often? always, usually, sometimes, hardly ever, never\"", slide: "Grammar: How often? always, usually, sometimes, hardly ever, never" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 2,

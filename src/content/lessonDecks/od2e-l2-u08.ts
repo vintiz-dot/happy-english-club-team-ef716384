@@ -1380,6 +1380,10 @@ export const odL2U8: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l2-u08-l6",
+      resources: [
+        { title: "Second Grade Go, Going, and Went: Past and Present Tense Worksheet", url: "https://www.twinkl.com/resource/second-grade-go-going-and-went-past-and-present-tense-activity-us-e-1706134999", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Yesterday words and Did + the plain verb\"", slide: "Grammar: Yesterday words and Did + the plain verb" },
+        { title: "Past Tense Pairs Matching Cards Game for K-2nd Grade", url: "https://www.twinkl.com/resource/past-tense-pairs-matching-game-us-e-1760565439", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Yesterday words and Did + the plain verb\"", slide: "Grammar: Yesterday words and Did + the plain verb" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 8,

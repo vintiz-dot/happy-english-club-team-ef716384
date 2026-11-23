@@ -1253,6 +1253,10 @@ export const odL1U14: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l1-u14-l6",
+      resources: [
+        { title: "ESL Possessive Adjectives Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-possessive-adjectives-lesson-kids-a1-t-1747317233", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: His, her and your\"", slide: "Grammar: His, her and your" },
+        { title: "ESL Possessive Adjectives Activity Sheet [Kids, A1]", url: "https://www.twinkl.com/resource/esl-possessive-adjectives-activity-sheet-kids-a1-t-1747418745", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: His, her and your\"", slide: "Grammar: His, her and your" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 14,

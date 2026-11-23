@@ -1281,6 +1281,9 @@ export const odL2U16: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l2-u16-l6",
+      resources: [
+        { title: "ELL Curriculum: Level 5, Lesson 8 Superlative Adjectives Worksheet", url: "https://www.twinkl.com/resource/ell-curriculum-level-5-lesson-8-superlative-adjectives-worksheet-us-e-1786472778", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: the strongest, the fastest, the best\"", slide: "Grammar: the strongest, the fastest, the best" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 16,

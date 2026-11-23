@@ -1278,6 +1278,10 @@ export const odL3U8: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l3-u08-l6",
+      resources: [
+        { title: "ESL Going to for Future Plans Lesson (US-English) [Kids, A1-A2]", url: "https://www.twinkl.com/resource/esl-going-to-for-future-plans-lesson-us-english-kids-a1-a2-t-1732908150", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: plans with going to\"", slide: "Grammar: plans with going to" },
+        { title: "\"Going to\" Future Plans Speaking Game for ELL", url: "https://www.twinkl.com/resource/going-to-future-plans-speaking-game-for-ell-us-e-1786645791", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: plans with going to\"", slide: "Grammar: plans with going to" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 8,

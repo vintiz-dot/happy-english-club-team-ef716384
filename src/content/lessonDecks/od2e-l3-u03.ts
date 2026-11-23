@@ -1134,6 +1134,10 @@ export const odL3U3: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l3-u03-l5",
+      resources: [
+        { title: "ESL Can and Could Activity Sheet [Kids, A2]", url: "https://www.twinkl.com/resource/esl-can-and-could-activity-sheet-kids-a2-t-1767711541", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: can, can't, could and couldn't: now and before\"", slide: "Grammar: can, can't, could and couldn't: now and before" },
+        { title: "Using Can and Could Worksheet for ELL", url: "https://www.twinkl.com/resource/using-can-and-could-worksheet-for-ell-us-e-1790703775", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: can, can't, could and couldn't: now and before\"", slide: "Grammar: can, can't, could and couldn't: now and before" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 3,

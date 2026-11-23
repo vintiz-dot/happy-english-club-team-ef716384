@@ -1119,6 +1119,10 @@ export const odL1U17: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l1-u17-l5",
+      resources: [
+        { title: "ESL Can and Can't for Ability (US-English) [Kids, A1]", url: "https://www.twinkl.com/resource/esl-can-and-cant-for-ability-us-english-kids-a1-t-1732882998", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: can and can't\"", slide: "Grammar: can and can't" },
+        { title: "ESL 'Can' and 'Can't' for Ability Activity Sheet [Kids, A1-A2]", url: "https://www.twinkl.com/resource/esl-can-and-cant-for-ability-activity-sheet-kids-a1-a2-t-1732600463", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: can and can't\"", slide: "Grammar: can and can't" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 17,

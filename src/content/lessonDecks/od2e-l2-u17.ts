@@ -980,6 +980,9 @@ export const odL2U17: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l2-u17-l5",
+      resources: [
+        { title: "ESL Quantifiers: Much or Many Worksheet", url: "https://www.twinkl.com/resource/esl-quantifiers-much-or-many-worksheet-t-eal-1655131349", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: a lot of and any\"", slide: "Grammar: a lot of and any" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 17,

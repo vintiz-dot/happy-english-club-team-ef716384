@@ -1029,6 +1029,10 @@ export const odL3U12: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l3-u12-l6",
+      resources: [
+        { title: "Comparative Adjectives Matching Cards for ELL", url: "https://www.twinkl.com/resource/comparative-adjectives-matching-cards-for-ell-us-e-1785960996", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: as ... as and not as ... as\"", slide: "Grammar: as ... as and not as ... as" },
+        { title: "ESL Comparative and Superlative Adjectives Worksheet", url: "https://www.twinkl.com/resource/esl-comparative-superlative-worksheet-t2-e-210", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: as ... as and not as ... as\"", slide: "Grammar: as ... as and not as ... as" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 12,

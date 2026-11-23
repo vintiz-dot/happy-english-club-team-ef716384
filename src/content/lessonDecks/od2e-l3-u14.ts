@@ -1118,6 +1118,9 @@ export const odL3U14: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l3-u14-l6",
+      resources: [
+        { title: "ESL Comparative Adverbs Writing Activity [Kids, A2]", url: "https://www.twinkl.com/resource/esl-comparative-adverbs-writing-activity-kids-a2-t-e-1748599284", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: faster than, the fastest, more carefully than, the most carefully\"", slide: "Grammar: faster than, the fastest, more carefully than, the most carefully" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 14,

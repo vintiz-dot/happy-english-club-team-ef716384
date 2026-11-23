@@ -1077,6 +1077,9 @@ export const odL1U15: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l1-u15-l5",
+      resources: [
+        { title: "ESL Present Continuous Picture Description Activity [Kids, A1-A2]", url: "https://www.twinkl.com/resource/esl-present-continuous-picture-description-activity-t-eal-1649848449", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: am, is, are + -ing\"", slide: "Grammar: am, is, are + -ing" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 15,

@@ -1133,6 +1133,9 @@ export const odL2U11: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l2-u11-l5",
+      resources: [
+        { title: "ESL Prepositions of Place Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-place-lesson-kids-a1-t-e-1723720640", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Where is it? Is it behind the tree?\"", slide: "Grammar: Where is it? Is it behind the tree?" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 11,

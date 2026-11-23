@@ -1068,6 +1068,9 @@ export const odL2U5: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l2-u05-l5",
+      resources: [
+        { title: "Past Tense Pairs Matching Cards Game for K-2nd Grade", url: "https://www.twinkl.com/resource/past-tense-pairs-matching-game-us-e-1760565439", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: It happened (-ed) or it didn't (didn't + plain verb)\"", slide: "Grammar: It happened (-ed) or it didn't (didn't + plain verb)" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 5,

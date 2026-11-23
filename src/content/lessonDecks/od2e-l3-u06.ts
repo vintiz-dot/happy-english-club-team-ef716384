@@ -1171,6 +1171,9 @@ export const odL3U6: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l3-u06-l6",
+      resources: [
+        { title: "ESL Past Continuous Activity Sheet [Teens, A2]", url: "https://www.twinkl.com/resource/esl-past-continuous-activity-sheet-teens-a1-t-1715586255", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: was / were + -ing, and when\"", slide: "Grammar: was / were + -ing, and when" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 6,

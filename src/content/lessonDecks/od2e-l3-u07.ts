@@ -1152,6 +1152,9 @@ export const odL3U7: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l3-u07-l5",
+      resources: [
+        { title: "ESL Simple Future Tense: Will Activity Sheet [Kids, A2]", url: "https://www.twinkl.com/resource/esl-future-simple-activity-sheet-kids-a2-t-e-1725031555", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: future facts with will and won't\"", slide: "Grammar: future facts with will and won't" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 7,

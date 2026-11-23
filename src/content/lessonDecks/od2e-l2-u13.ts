@@ -1063,6 +1063,10 @@ export const odL2U13: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l2-u13-l5",
+      resources: [
+        { title: "ESL Prepositions of Time: In, On and At Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-time-in-on-and-at-lesson-kids-a1-t-1767544961", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: in, at and on tell us WHEN\"", slide: "Grammar: in, at and on tell us WHEN" },
+        { title: "ESL Prepositions of Time Game", url: "https://www.twinkl.com/resource/esl-prepositions-of-time-game-t-1789496867", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: in, at and on tell us WHEN\"", slide: "Grammar: in, at and on tell us WHEN" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 13,

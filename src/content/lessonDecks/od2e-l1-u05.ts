@@ -1003,6 +1003,9 @@ export const odL1U5: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l1-u05-l5",
+      resources: [
+        { title: "ESL 'To Be' Question Cards [Kids, A1]", url: "https://www.twinkl.com/resource/esl-to-be-question-cards-kids-a1-t-e-1726577507", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Where's ... ? Where are ... ?\"", slide: "Grammar: Where's ... ? Where are ... ?" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 5,

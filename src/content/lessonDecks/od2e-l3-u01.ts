@@ -1070,6 +1070,9 @@ export const odL3U1: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l3-u01-l5",
+      resources: [
+        { title: "ESL Adjectives Ending in -Ed and -Ing Activity Sheet [Adults, A1-A2]", url: "https://www.twinkl.com/resource/esl-adjectives-ending-in-ed-and-ing-activity-sheet-adults-a1-a2-t-1717156661", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: -ed and -ing adjectives\"", slide: "Grammar: -ed and -ing adjectives" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 1,

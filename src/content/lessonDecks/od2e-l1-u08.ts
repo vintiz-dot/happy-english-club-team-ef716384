@@ -1125,6 +1125,9 @@ export const odL1U8: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l1-u08-l6",
+      resources: [
+        { title: "ESL Present Simple Stepping Stone Game PowerPoint", url: "https://www.twinkl.com/resource/esl-present-simple-stepping-stone-game-powerpoint-t2-e-5339", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: I do, you do, I don't, Do you?\"", slide: "Grammar: I do, you do, I don't, Do you?" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 8,

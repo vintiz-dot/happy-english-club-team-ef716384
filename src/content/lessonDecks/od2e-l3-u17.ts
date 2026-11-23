@@ -1164,6 +1164,10 @@ export const odL3U17: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l3-u17-l5",
+      resources: [
+        { title: "ESL Prepositions of Movement Lesson [Teens, A2-B1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-movement-lesson-teens-a2-b1-t-1737469552", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: route words (down, through, around, across, along, past)\"", slide: "Grammar: route words (down, through, around, across, along, past)" },
+        { title: "ESL Prepositions of Movement: Animals on the Move [Teens, A2]", url: "https://www.twinkl.com/resource/prepositions-of-movement-animals-esl-ppt-lesson-t-e-1745276580", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: route words (down, through, around, across, along, past)\"", slide: "Grammar: route words (down, through, around, across, along, past)" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 17,

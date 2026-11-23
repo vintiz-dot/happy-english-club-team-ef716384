@@ -1050,6 +1050,10 @@ export const odL1U3: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l1-u03-l5",
+      resources: [
+        { title: "ESL 'There Is' or 'There Are' Matching Game [Kids, A1]", url: "https://www.twinkl.com/resource/esl-there-is-or-there-are-matching-game-t-eal-1656599290", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: There is / There are\"", slide: "Grammar: There is / There are" },
+        { title: "ESL There Is/There Are Writing Activity [Kids, A1]", url: "https://www.twinkl.com/resource/esl-there-is-there-are-writing-activity-kids-a1-t-e-1748164307", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: There is / There are\"", slide: "Grammar: There is / There are" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 3,

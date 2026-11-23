@@ -1309,6 +1309,10 @@ export const odL1U18: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l1-u18-l6",
+      resources: [
+        { title: "ESL Should or Shouldn't Worksheet [Kids, A2]", url: "https://www.twinkl.com/resource/esl-should-or-shouldnt-worksheet-kids-a2-t-1716886673", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: should and shouldn't\"", slide: "Grammar: should and shouldn't" },
+        { title: "ESL Should / Shouldn't Matching Cards [Kids, A2]", url: "https://www.twinkl.com/resource/esl-should-shouldnt-matching-cards-kids-a2-t-e-1728584786", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: should and shouldn't\"", slide: "Grammar: should and shouldn't" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 18,

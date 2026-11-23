@@ -1127,6 +1127,10 @@ export const odL3U9: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l3-u09-l5",
+      resources: [
+        { title: "ESL Modals: Might, May, Will, Probably Lesson [Kids, B1]", url: "https://www.twinkl.com/resource/esl-modals-might-may-will-probably-lesson-kids-b1-t-1761912497", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: will, may and might\"", slide: "Grammar: will, may and might" },
+        { title: "ESL Modals: Might, May, Will, Probably Board Game [Kids, B1]", url: "https://www.twinkl.com/resource/esl-modals-might-may-will-probably-board-game-kids-b1-t-1762119536", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: will, may and might\"", slide: "Grammar: will, may and might" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 9,

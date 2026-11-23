@@ -1054,6 +1054,9 @@ export const odL3U11: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l3-u11-l5",
+      resources: [
+        { title: "ESL Comparative and Superlative Adjectives PPT Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-comparatives-and-superlatives-ppt-lesson-kids-a1-t-1767559587", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: comparing with -er, -est, more and most\"", slide: "Grammar: comparing with -er, -est, more and most" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 11,

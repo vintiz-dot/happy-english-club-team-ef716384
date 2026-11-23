@@ -1184,6 +1184,10 @@ export const odL2U15: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l2-u15-l5",
+      resources: [
+        { title: "Workstation Bigger and Smaller Sorting Activity", url: "https://www.twinkl.com/resource/bigger-and-smaller-sorting-activity-t-n-10088", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Comparing two things with -er than\"", slide: "Grammar: Comparing two things with -er than" },
+        { title: "ESL Comparative and Superlative Adjectives PPT Quiz [Kids, A1]", url: "https://www.twinkl.com/resource/esl-comparative-and-superlative-adjectives-ppt-quiz-kids-a1-t-1767697640", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Comparing two things with -er than\"", slide: "Grammar: Comparing two things with -er than" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 15,

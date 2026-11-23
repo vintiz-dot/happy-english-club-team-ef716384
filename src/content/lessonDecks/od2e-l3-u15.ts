@@ -993,6 +993,9 @@ export const odL3U15: Unit = {
     // ------------------------------------------------------------------ Lesson 5
     {
       id: "od2e-l3-u15-l5",
+      resources: [
+        { title: "ESL Writing a Recipe: Food and Containers [Teens, A1-A2]", url: "https://www.twinkl.com/resource/esl-writing-a-recipe-food-and-containers-teens-a1-t-1713939256", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: measure word + of + food\"", slide: "Grammar: measure word + of + food" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 15,

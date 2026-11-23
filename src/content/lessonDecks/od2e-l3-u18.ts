@@ -1347,6 +1347,10 @@ export const odL3U18: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l3-u18-l6",
+      resources: [
+        { title: "ESL in the Classroom: Modal Verbs of Obligation Powerpoint [Kids, A1]", url: "https://www.twinkl.com/resource/esl-in-the-classroom-modal-verbs-of-obligation-powerpoint-kids-a1-t-1700121403", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: want to, need to, have to\"", slide: "Grammar: want to, need to, have to" },
+        { title: "ESL Obligations and Prohibitions Board Game", url: "https://www.twinkl.com/resource/obligations-and-prohibitions-board-game-t-eal-1643058232", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: want to, need to, have to\"", slide: "Grammar: want to, need to, have to" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 18,

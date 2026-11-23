@@ -1014,6 +1014,10 @@ export const odL1U13: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l1-u13-l5",
+      resources: [
+        { title: "ESL Possessive 'S Lesson Plan [Kids, A1]", url: "https://www.twinkl.com/resource/esl-possessive-039s-lesson-plan-kids-a1-t-e-1747939962", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Whose is it? Owner + 's + thing\"", slide: "Grammar: Whose is it? Owner + 's + thing" },
+        { title: "ELL Curriculum: Level 4, Lesson 10 Whose Is This? Singular Possessive \"S\" Google Slides & PowerPoint", url: "https://www.twinkl.com/resource/ell-curriculum-level-4-lesson-10-whose-is-this-possessives-s-google-slides-powerpoint-us-e-1778777880", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Whose is it? Owner + 's + thing\"", slide: "Grammar: Whose is it? Owner + 's + thing" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 13,

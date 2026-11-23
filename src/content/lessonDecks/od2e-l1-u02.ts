@@ -1121,6 +1121,9 @@ export const odL1U2: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l1-u02-l6",
+      resources: [
+        { title: "ESL Demonstrative Pronouns Worksheet [Kids, A1]", url: "https://www.twinkl.com/resource/esl-demonstrative-pronouns-worksheet-t-eal-1642667050", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: This, that, these, those\"", slide: "Grammar: This, that, these, those" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 2,

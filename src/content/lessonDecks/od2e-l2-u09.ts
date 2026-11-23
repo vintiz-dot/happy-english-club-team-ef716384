@@ -1033,6 +1033,10 @@ export const odL2U9: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l2-u09-l5",
+      resources: [
+        { title: "ESL Possessive Pronouns Worksheet [Kids, A1]", url: "https://www.twinkl.com/resource/esl-possessive-pronouns-worksheet-kids-a1-t-e-1716990949", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: my + thing, but the thing is mine\"", slide: "Grammar: my + thing, but the thing is mine" },
+        { title: "ESL Possessive Pronouns Interactive Multiple Choice Quiz [Kids, A1]", url: "https://www.twinkl.com/resource/esl-possessive-pronouns-interactive-multiple-choice-quiz-kids-a1-t-e-1728913004", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: my + thing, but the thing is mine\"", slide: "Grammar: my + thing, but the thing is mine" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 9,

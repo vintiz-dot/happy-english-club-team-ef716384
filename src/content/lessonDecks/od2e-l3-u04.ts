@@ -1208,6 +1208,10 @@ export const odL3U4: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l3-u04-l6",
+      resources: [
+        { title: "ESL Zero Conditional Stepping Stone Game [Kids, A2]", url: "https://www.twinkl.com/resource/esl-zero-conditional-stepping-stone-game-kids-a2-t-1778505155", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: if and when, with the comma that waits\"", slide: "Grammar: if and when, with the comma that waits" },
+        { title: "ESL Zero Conditionals Worksheet [Teens, A2]", url: "https://www.twinkl.com/resource/esl-zero-conditionals-worksheet-teens-a2-t-1701422262", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: if and when, with the comma that waits\"", slide: "Grammar: if and when, with the comma that waits" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 4,

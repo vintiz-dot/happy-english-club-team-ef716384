@@ -1134,6 +1134,10 @@ export const odL1U4: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l1-u04-l6",
+      resources: [
+        { title: "ESL Prepositions of Place Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-place-lesson-kids-a1-t-e-1723720640", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Where is it? In, on, under, next to\"", slide: "Grammar: Where is it? In, on, under, next to" },
+        { title: "ESL Prepositions of Place [Kids, A1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-place-t-eal-1643881128", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Where is it? In, on, under, next to\"", slide: "Grammar: Where is it? In, on, under, next to" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 4,

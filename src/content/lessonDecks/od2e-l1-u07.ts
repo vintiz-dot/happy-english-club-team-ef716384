@@ -1099,6 +1099,10 @@ export const odL1U7: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l1-u07-l5",
+      resources: [
+        { title: "ESL Weather Activity Sheet [Kids, A1]", url: "https://www.twinkl.com/resource/esl-weather-worksheet-kids-a1-t-e-1721655573", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: It gets, it snows, it doesn't\"", slide: "Grammar: It gets, it snows, it doesn't" },
+        { title: "ESL Weather Wheel [Kids, A1]", url: "https://www.twinkl.com/resource/esl-weather-wheel-kids-a1-t-e-1721660960", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: It gets, it snows, it doesn't\"", slide: "Grammar: It gets, it snows, it doesn't" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 7,

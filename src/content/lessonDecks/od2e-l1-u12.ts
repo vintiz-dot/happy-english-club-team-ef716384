@@ -1201,6 +1201,9 @@ export const odL1U12: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l1-u12-l6",
+      resources: [
+        { title: "Do or Does Worksheet for ELL", url: "https://www.twinkl.com/resource/do-or-does-worksheet-for-ell-us-e-1764951244", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Does she want it? She wants it!\"", slide: "Grammar: Does she want it? She wants it!" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 12,

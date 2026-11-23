@@ -1146,6 +1146,9 @@ export const odL2U7: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l2-u07-l5",
+      resources: [
+        { title: "Past Tense Pairs Matching Cards Game for K-2nd Grade", url: "https://www.twinkl.com/resource/past-tense-pairs-matching-game-us-e-1760565439", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: I ate it, I didn't eat it\"", slide: "Grammar: I ate it, I didn't eat it" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 7,

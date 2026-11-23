@@ -1322,6 +1322,9 @@ export const odL2U14: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l2-u14-l6",
+      resources: [
+        { title: "ESL Adverbs of Time and Frequency Game [Kids, A2]", url: "https://www.twinkl.com/resource/esl-adverbs-of-time-and-frequency-game-kids-a2-t-1768303395", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: finished time words, finished verbs\"", slide: "Grammar: finished time words, finished verbs" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 14,

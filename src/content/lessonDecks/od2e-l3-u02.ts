@@ -1259,6 +1259,10 @@ export const odL3U2: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l3-u02-l6",
+      resources: [
+        { title: "ESL Gerunds: Talking about Hobbies [Kids, A2]", url: "https://www.twinkl.com/resource/esl-gerunds-talking-about-hobbies-kids-a2-t-1698053033", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: swimming, dancing, skipping: verb + -ing as a thing\"", slide: "Grammar: swimming, dancing, skipping: verb + -ing as a thing" },
+        { title: "ESL Gerunds: Emotions Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-gerunds-emotions-lesson-kids-a1-t-1732538995", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: swimming, dancing, skipping: verb + -ing as a thing\"", slide: "Grammar: swimming, dancing, skipping: verb + -ing as a thing" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 2,

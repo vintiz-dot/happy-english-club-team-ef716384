@@ -1145,6 +1145,9 @@ export const odL3U5: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l3-u05-l5",
+      resources: [
+        { title: "ESL Past Continuous PPT Lesson [Teens, A2]", url: "https://www.twinkl.com/resource/esl-past-continuous-ppt-lesson-teens-a1-t-1715586152", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: was and were + -ing\"", slide: "Grammar: was and were + -ing" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 5,

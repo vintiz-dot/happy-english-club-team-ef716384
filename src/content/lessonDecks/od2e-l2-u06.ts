@@ -1305,6 +1305,9 @@ export const odL2U6: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l2-u06-l6",
+      resources: [
+        { title: "ESL Irregular Simple Past Verbs Activity Sheet [Kids, A2]", url: "https://www.twinkl.com/resource/esl-irregular-simple-past-verbs-activity-sheet-kids-a2-t-e-1729691958", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: Finished actions (-ed, and Did + the plain verb)\"", slide: "Grammar: Finished actions (-ed, and Did + the plain verb)" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 2,
       unit: 6,

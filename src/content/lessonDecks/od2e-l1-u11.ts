@@ -1069,6 +1069,10 @@ export const odL1U11: Unit = {
     // ------------------------------------------------------------------ Lesson 5: Grammar Champions
     {
       id: "od2e-l1-u11-l5",
+      resources: [
+        { title: "Present Simple Third Person Affirmative Form Worksheet", url: "https://www.twinkl.com/resource/present-simple-third-person-affirmative-form-activity-sheet-t-e-2550374", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: has, wants, needs and doesn't\"", slide: "Grammar: has, wants, needs and doesn't" },
+        { title: "Daily Routines Speaking Activity: What Do You Do Every Day? [Kids, A1-A2]", url: "https://www.twinkl.com/resource/daily-routines-speaking-activity-the-daily-routines-of-a-cat-a-spy-and-the-queen-t-eal-105", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: has, wants, needs and doesn't\"", slide: "Grammar: has, wants, needs and doesn't" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 1,
       unit: 11,

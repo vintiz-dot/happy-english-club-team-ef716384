@@ -1196,6 +1196,10 @@ export const odL3U10: Unit = {
     // ------------------------------------------------------------------ Lesson 6: Grammar Champions
     {
       id: "od2e-l3-u10-l6",
+      resources: [
+        { title: "Large English Classes Lesson Pack: Quantifiers (Few, a Few, Little, a Bit of)", url: "https://www.twinkl.com/resource/large-english-classes-lesson-pack-quantifiers-few-a-few-little-a-bit-of-kids-a1-t-1774853048", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: a lot of, lots of, a few and a little\"", slide: "Grammar: a lot of, lots of, a few and a little" },
+        { title: "ESL Some, Any, A lot Games and Activities PPT [Kids, A2]", url: "https://www.twinkl.com/resource/esl-some-any-a-lot-t-1676637021", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: a lot of, lots of, a few and a little\"", slide: "Grammar: a lot of, lots of, a few and a little" },
+      ],
       curriculum: "oxford-discover-2e",
       level: 3,
       unit: 10,
