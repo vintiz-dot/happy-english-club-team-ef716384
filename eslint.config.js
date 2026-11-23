@@ -5,7 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "hec-docs"] }, // hec-docs lints itself (hec-docs/eslint.config.js)
+  { ignores: ["dist", "hec-docs", "ios-phone-mic"] }, // hec-docs lints itself (hec-docs/eslint.config.js); ios-phone-mic is the iPhone app shell (built on a Mac)
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

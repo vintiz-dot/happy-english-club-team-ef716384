@@ -1,0 +1,15 @@
+{
+  "appId": "com.happyenglishclub.phonemic",
+  "appName": "HEC Phone Mic",
+  "webDir": "www",
+  "server": {
+    "url": "https://user.hanoienglish.com/teacher/recorder/phone",
+    "allowNavigation": ["user.hanoienglish.com"],
+    "errorPath": "offline.html"
+  },
+  "ios": {
+    "contentInset": "never",
+    "limitsNavigationsToAppBoundDomains": false,
+    "backgroundColor": "#000000"
+  }
+}

@@ -65,6 +65,8 @@ export type PhonePhase = "idle" | "ready" | "waiting_for_laptop" | "recording" |
 export interface PhoneBeacon {
   role: "phone"; device: string; at: number;
   phase: PhonePhase; recordingId: string | null; sentChunks: number; note: string | null; hidden: boolean;
+  /** Recording with the iPhone app's own microphone (it keeps recording while the phone is locked). */
+  native?: boolean;
 }
 
 export interface LinkCommand {
@@ -418,13 +420,18 @@ export class LaptopLink {
 /** The laptop's one line about the phone (pure, tested). */
 export function laptopPhoneView(phone: PhoneBeacon | null, connected: boolean, me: Pick<LaptopSnapshot, "phase" | "recordingId">): LaptopPhoneView {
   const capturing = me.phase === "recording";
+  // The HEC app keeps recording behind a locked screen while its page (and so its link) may be paused.
+  if (!connected && phone?.native && (phone.phase === "recording" || phone.phase === "waiting_for_laptop")) {
+    return { connected: false, phone, alert: false,
+      line: "Phone locked: the HEC app keeps recording the teacher microphone. Its link is quiet until the phone is unlocked." };
+  }
   if (!connected || !phone) {
     return { connected: false, phone: null, alert: capturing,
       line: capturing ? "Phone NOT connected: the teacher microphone may not be recording (phone screen locked, page closed or no internet). Unlock the phone and keep /teacher/recorder/phone open."
         : "Phone not connected. On the phone open /teacher/recorder/phone and press Record." };
   }
   const sent = phone.sentChunks ? ` (${phone.sentChunks} pieces sent)` : "";
-  if (phone.hidden || phone.phase === "paused")
+  if ((phone.hidden && !phone.native) || phone.phase === "paused")
     return { connected: true, phone, alert: true, line: "Phone PAUSED: its screen is locked or the page is hidden. Unlock the phone and keep the recorder page open." };
   switch (phone.phase) {
     case "recording": return { connected: true, phone, alert: false, line: `Phone connected and recording${sent}.` };

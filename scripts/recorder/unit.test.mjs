@@ -2533,5 +2533,151 @@ console.log("=== 23 Nov 2026: the phone's screen and microphone (wake lock, capt
   await refusing.stop();
 }
 
+console.log("=== 23 Nov 2026: the iPhone app's microphone (native capture into the same PhoneTeacherTrack) ===");
+{
+  // base64 of Int16, both ways, odd lengths included.
+  const pcm = Int16Array.from([0, 1, -1, 32767, -32768, 1234, -4321]);
+  eq("native: Int16 survives base64 both ways", Array.from(R.int16FromBase64(R.int16ToBase64(pcm))), Array.from(pcm));
+  eq("native: an empty batch decodes to nothing", R.int16FromBase64("").length, 0);
+  eq("native: no plugin in a browser", R.nativeMicPlugin({}), null);
+  eq("native: no plugin when Capacitor says it is not the app", R.nativeMicPlugin({ Capacitor: { isNativePlatform: () => false, Plugins: { HecPhoneMic: { read() {} } } } }), null);
+  const fakeP = { read() {}, start() {}, stop() {}, status() {} };
+  ok("native: the app's plugin is found", R.nativeMicPlugin({ Capacitor: { isNativePlatform: () => true, isPluginAvailable: (n) => n === "HecPhoneMic", Plugins: { HecPhoneMic: fakeP } } }) === fakeP);
+
+  /** The Swift plugin's contract, in JavaScript: batches of 0.1 s, stamped with when their last sample was heard. */
+  class FakeNativeMic {
+    constructor() { this.batches = []; this.events = []; this.seq = 0; this.running = false; this.reads = 0; this.repeatNext = false; }
+    st() { return { running: this.running, permission: "granted", waiting: this.batches.length, lastError: null, sampleRate: 48000 }; }
+    async start() { this.running = true; return this.st(); }
+    async stop() { this.running = false; return this.st(); }
+    async status() { return this.st(); }
+    /** `sec` seconds heard, the last sample at wall time `endMs`. */
+    hear(sec, endMs) {
+      const n = Math.round(sec * 10);
+      for (let i = 0; i < n; i++) {
+        const s = Int16Array.from({ length: 4800 }, (_, k) => Math.round(8000 * Math.sin((this.seq * 4800 + k) / 7) + (rnd() - 0.5) * 800));
+        this.batches.push({ seq: this.seq++, endUnixMs: endMs - (n - 1 - i) * 100, sampleRate: 48000, frames: 4800, b64: R.int16ToBase64(s) });
+      }
+    }
+    async read({ after, max = 40 }) {
+      this.reads += 1;
+      this.batches = this.batches.filter((b) => b.seq > after);
+      const out = this.batches.slice(0, max);
+      const ev = this.events; this.events = [];
+      return { batches: out, events: ev, running: this.running, waiting: this.batches.length - out.length };
+    }
+  }
+
+  class RoomOnlySource extends FakeSource {
+    async openTracks(ids) {
+      this.open = true;
+      const d = this.devices.find((x) => x.deviceId === ids.room);
+      const room = { role: "room", deviceId: d.deviceId, label: d.label, groupId: d.groupId, requested: R.buildConstraints(d.deviceId, {}), notHonoured: [],
+        applied: { deviceId: d.deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1, sampleRate: 48000 } };
+      return { teacher: { role: "teacher", deviceId: ids.teacher, label: "Teacher's phone", groupId: "phone", requested: {}, applied: {}, notHonoured: [] }, room };
+    }
+  }
+  const phoneProfile = { ...profile, teacherOnPhone: true, teacher: { deviceId: R.PHONE_TEACHER.deviceId, groupId: R.PHONE_TEACHER.groupId, label: R.PHONE_TEACHER.label } };
+  async function nativeLesson() {
+    clock = Date.parse("2026-11-12T09:55:00.000Z");
+    const w = world();
+    const src = new RoomOnlySource();
+    const { r } = recorder(w, new R.MemoryStore(), src, { profile: phoneProfile });
+    await r.prepare();
+    await r.arm(E(w)); r.tick(); await r.settle();
+    const mic = new FakeNativeMic();
+    const feed = new R.NativeMicFeed(mic);
+    await feed.start({ keepScreenOn: true });
+    const row = { ...w.server.recordings.get(r.recordingId) };
+    // As the page does in the app: the track keeps time on the wall clock (Date.now), the clock the plugin stamps with.
+    const track = new R.PhoneTeacherTrack({ backend: R.supabaseBackend(w.client(TEACHER)), recording: row, sampleRate: 48000, deviceLabel: "iPhone microphone (HEC app)", perfNow: now, retryMs: 0, sleep: async () => {} });
+    await track.measureClock();
+    feed.attach(track);
+    /** `sec` seconds: the laptop records the room, the phone's engine hears the teacher; `pageRuns`: the page reads and sends. */
+    const lesson = async (sec, pageRuns = true) => {
+      const end = now() + sec * 1000;
+      await src.play(sec, r);
+      mic.hear(sec, end);
+      if (pageRuns) { await track.tryOrigin(); await feed.pull(); await track.pump(); }
+    };
+    return { w, r, src, mic, feed, track, lesson, id: r.recordingId };
+  }
+  const tch = (w, id) => w.server.chunkRows(id).filter((c) => c.track === "teacher").sort((a, b) => a.seq - b.seq);
+  const room = (w, id) => w.server.chunkRows(id).filter((c) => c.track === "room").sort((a, b) => a.seq - b.seq);
+
+  {
+    const L = await nativeLesson();
+    await L.lesson(35);
+    ok("native: the app's audio becomes teacher chunks, registered and confirmed", tch(L.w, L.id).length >= 3 && tch(L.w, L.id).every((c) => c.confirmed_at), `${tch(L.w, L.id).length}`);
+    ok("native: on the laptop's timeline (the first starts within a second of the room's)", Math.abs(tch(L.w, L.id)[0].t_start_ms - room(L.w, L.id)[0].t_start_ms) < 1000, `${tch(L.w, L.id)[0]?.t_start_ms} vs ${room(L.w, L.id)[0]?.t_start_ms}`);
+    eq("native: the plugin's waiting batches are let go once read", (await L.mic.read({ after: 1e9 })).batches.length, 0);
+
+    // Locked for 4 minutes: the page reads nothing; the phone keeps hearing; on unlock everything is read, in order, where it was heard.
+    const before = tch(L.w, L.id).length;
+    const lockedFrom = now();
+    for (let i = 0; i < 8; i++) await L.lesson(30, false);
+    eq("locked: nothing was sent while the page was paused", tch(L.w, L.id).length, before);
+    ok("locked: the phone kept every batch (4 minutes)", L.mic.batches.length === 2400, `${L.mic.batches.length}`);
+    await L.track.tryOrigin(); do { await L.feed.pull(); } while (L.feed.view.waiting > 0); await L.track.pump();
+    const all = tch(L.w, L.id);
+    const origin = Date.parse(L.w.server.recordings.get(L.id).started_at) - (L.w.server.recordings.get(L.id).pre_start_ms ?? 0);
+    ok("unlocked: all of it was sent", all.length >= before + 23, `${all.length}`);
+    ok("unlocked: placed where it was HEARD, not where it was read (no gap at the lock)", all.every((c, i) => i === 0 || c.t_start_ms === all[i - 1].t_end_ms), all.slice(before - 1, before + 2).map((c) => `${c.t_start_ms}-${c.t_end_ms}`).join(" "));
+    ok("unlocked: the chunk at the lock starts about when the lock began", all.some((c) => Math.abs(c.t_start_ms - (lockedFrom - origin)) < 11000));
+    ok("unlocked: 4 minutes late is still in time (not marked late)", all.every((c) => !c.late));
+
+    // A call: iOS stops the engine and restarts it after; the plugin says so. What follows starts at the clock, never overlapping.
+    const n0 = tch(L.w, L.id).length;
+    L.mic.events.push({ kind: "interrupted", atUnixMs: now() });
+    clock += 15000;  // 15 s of call: nothing heard
+    L.mic.events.push({ kind: "restarted", atUnixMs: now() });
+    await L.lesson(30);
+    const after = tch(L.w, L.id);
+    ok("call: no overlap after the interruption", after.every((c, i) => i === 0 || c.t_start_ms >= after[i - 1].t_end_ms));
+    ok("call: the next chunk starts about 15 s after the last (the call is a gap)", after.slice(n0).some((c) => c.t_start_ms >= after[n0 - 1].t_end_ms + 14000), after.slice(n0 - 1, n0 + 1).map((c) => `${c.t_start_ms}-${c.t_end_ms}`).join(" "));
+    ok("call: counted as an interruption", L.feed.view.interruptions === 1);
+
+    // A batch read twice (a retried call) is pushed once.
+    const reg0 = tch(L.w, L.id).length;
+    L.mic.hear(1, now());
+    const dup = L.mic.batches.at(-1);
+    await L.feed.pull();
+    L.mic.batches.push(dup);
+    await L.feed.pull(); await L.track.pump();
+    ok("native: a batch read twice is pushed once", L.feed.view.read > 0 && tch(L.w, L.id).length <= reg0 + 1);
+
+    // Stop on the laptop; the app's audio up to the Stop is read and the track finished.
+    await L.lesson(5);
+    await L.r.stop("manual"); L.r.tick(); await L.r.settle();
+    await L.feed.pull();
+    await L.track.finish(L.w.server.recordings.get(L.id).ended_at);
+    await L.feed.stop();
+    eq("native: the track's counts are stated", L.w.server.tracks.get(`${L.id}|teacher`).chunk_count, tch(L.w, L.id).length);
+    clock += 6000; L.r.tick(); await L.r.settle();
+    eq("native: the recording completes with the app's teacher track", L.w.server.recordings.get(L.id).status, "complete");
+    eq("native: the track says where it came from", L.w.server.tracks.get(`${L.id}|teacher`).device_label, "Phone: iPhone microphone (HEC app)");
+    await L.r.dispose();
+  }
+
+  {
+    // The honest limit: a page paused longer than late_after (10 min) sends its audio late. Stored, but never evidence.
+    const L = await nativeLesson();
+    await L.lesson(35);
+    for (let i = 0; i < 26; i++) await L.lesson(30, false);  // 13 minutes locked, the page never ran
+    await L.track.tryOrigin(); do { await L.feed.pull(); } while (L.feed.view.waiting > 0); await L.track.pump();
+    const all = tch(L.w, L.id);
+    ok("limit: after 13 minutes paused, the oldest audio reaches the server late (marked late)", all.some((c) => c.late), `${all.filter((c) => c.late).length} late of ${all.length}`);
+    ok("limit: the newest is still in time", all.slice(-3).every((c) => !c.late));
+    await L.r.dispose();
+  }
+
+  // What the laptop says of a locked phone in the app.
+  const lockedApp = { role: "phone", device: "p", at: 1, phase: "recording", recordingId: "r", sentChunks: 5, note: null, hidden: true, native: true };
+  const lv = R.laptopPhoneView(lockedApp, false, { phase: "recording" });
+  ok("laptop: a locked phone in the app is said as still recording, not as missing", !lv.alert && /HEC app keeps recording/.test(lv.line), lv.line);
+  ok("laptop: a hidden page in the app is not PAUSED", !/PAUSED/.test(R.laptopPhoneView(lockedApp, true, { phase: "recording" }).line));
+  ok("laptop: a hidden page in Safari still is", /PAUSED/.test(R.laptopPhoneView({ ...lockedApp, native: false }, true, { phase: "recording" }).line));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

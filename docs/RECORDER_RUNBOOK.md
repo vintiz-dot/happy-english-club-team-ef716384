@@ -97,7 +97,7 @@ What the page does about it:
 3. **It recovers, loudly.** When the microphone stops, the phone goes red (**YOUR MICROPHONE STOPPED**) and the laptop shows **Phone PAUSED** or **Phone NOT connected**. The moment the page is visible again the phone restarts the microphone by itself. If iPhone wants a tap first, the red screen has the button. The restarted audio goes onto the timeline where the clock says, after a fresh clock reading. The time in between is a gap in the teacher track (never shifted, never overlapped). The phone lists each gap ("10:42: 35 s missing from your track").
 4. Use it in **Safari**, not as a home-screen app.
 
-### Recording with the screen locked: needs the owner's decision (not built)
+### Recording with the screen locked: the options (23 Nov; the owner chose A)
 
 Only a native app can keep the microphone on behind a locked screen. Options, with their costs:
 
@@ -107,7 +107,26 @@ Only a native app can keep the microphone on behind a locked screen. Options, wi
 | **B. Record in a native app, upload afterwards** | Voice Memos or a recorder app records the whole lesson. Afterwards the file is uploaded and lined up with the room track. | 2-3 days for an upload and alignment screen (the clock must be matched by a clap or by correlating against the room audio). | The audio only arrives after the lesson. Lining it up is not exact without a shared start mark. One more manual step for the teacher. The upload is about 100-300 MB a lesson. |
 | **C. Keep the screen on (built now)** | The wake lock and the dimmed view above. | Done. | Works only while nobody locks the phone and the page stays in front. Battery use is about a lit black screen for 90 minutes. Plug the phone in. |
 
-Recommendation: use C now. If teachers need to pocket a locked phone, build A, and only with the owner's yes.
+Recommendation was C now and A if teachers need to pocket a locked phone. **The owner said yes to A on 23 Nov 2026: see the next section.**
+
+### The iPhone app: HEC Phone Mic (built 23 Nov 2026, not yet on a phone)
+
+`ios-phone-mic/` is a small Capacitor app. It opens this same phone page from the school site and gives it the iPhone's own microphone, which keeps recording with the screen locked. For the teacher, it is the same page with the same Record and Stop. The only difference is one line: **"HEC app: you may lock the phone and put it in your pocket. It keeps recording."**
+
+- The page finds the app's microphone by itself (`src/lib/recorder/nativeMic.ts`) and uses it in place of the browser's. In Safari nothing changes.
+- There is still one recorder: the audio goes into `PhoneTeacherTrack`, with the same timeline, chunks and upload. The Swift plugin only records, and keeps what the page has not read yet on the phone with the time it was heard.
+- The laptop shows a locked phone in the app as **"Phone locked: the HEC app keeps recording the teacher microphone"**, not as missing.
+- A call or Siri pauses it. The app restarts the microphone after, and the gap goes on the timeline like any other.
+- Building it needs a Mac, Xcode and the Apple Developer account (99 USD a year). The steps, in order, are in `ios-phone-mic/README.md`. Page changes reach the app with every push to main. Only a change to the Swift needs a new build.
+
+### The iPhone app: still to prove
+
+- It builds: the Swift was written without a compiler (README step 6).
+- **The key one:** lock the phone for 15 minutes during a test recording. Then check that the teacher chunks of those minutes reached the server WHILE it was locked (`class_recording_chunks.registered_at` close to each chunk's time, `late` false). If they all arrive at the unlock, the web view's JavaScript was paused, and a lock of more than 10 minutes gives late audio, which is never evidence. The fix (README step 11) then needs another yes.
+- The microphone keeps recording after a lock and unlock, after a call (the restart after an interruption), and when a Bluetooth headset connects or disconnects.
+- The chunks line up with the room track: the app stamps the audio with the phone's clock, and the page measures that clock against the server's.
+- Sign-in inside the app works and stays signed in across lessons, and the phone link (Realtime) joins from the app.
+- Battery and storage over a 90-minute lesson, locked.
 
 ### Still to prove on a real iPhone
 

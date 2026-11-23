@@ -1,0 +1,3 @@
+node_modules/
+# Made on the Mac by scripts/setup-ios.sh. Commit it after the first good build if you want the Xcode settings kept.
+ios/

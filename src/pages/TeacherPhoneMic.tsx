@@ -10,6 +10,7 @@ import { supabaseBackend, type SupabaseLike } from "@/lib/recorder/backend";
 import { PhoneTeacherTrack, type PhoneStatus } from "@/lib/recorder/phoneTrack";
 import { PhoneLink, supabaseLinkTransport, type LinkRow, type PhoneLinkView, type PhonePhase } from "@/lib/recorder/deviceLink";
 import { ScreenKeeper, captureHealth, type CaptureVerdict, type KeeperState } from "@/lib/recorder/phoneWake";
+import { NativeMicFeed, nativeMicPlugin, type NativeFeedView } from "@/lib/recorder/nativeMic";
 
 /**
  * /teacher/recorder/phone - the teacher's phone as the teacher microphone.
@@ -29,6 +30,8 @@ const db = supabase as any;
 const backend = supabaseBackend(supabase as unknown as SupabaseLike);
 const COLS = "id,class_id,session_id,armed_session_id,session_date,scheduled_start,scheduled_end,capture_opens_at,capture_closes_at,status,format,chunk_ms,max_duration_ms,min_bytes_per_sec,clock_tolerance_ms,purpose,started_at,ended_at,stop_reason,stop_requested_at,late_after_ms,manifest_path,manifest_sha256,pre_start_ms,started_by,client_info,classes(name)";
 const TICK_MS = 3000;
+/** Inside the iPhone app (ios-phone-mic/): its own microphone, which keeps recording with the screen locked. */
+const nativeMic = nativeMicPlugin();
 const deviceId = (() => { try { const k = "hec-phone-link-device"; const v = localStorage.getItem(k) ?? `phone-${Math.random().toString(36).slice(2, 10)}`; localStorage.setItem(k, v); return v; } catch { return `phone-${Math.random().toString(36).slice(2, 10)}`; } })();
 
 const AUDIO: MediaStreamConstraints = { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } };
@@ -64,8 +67,13 @@ export default function TeacherPhoneMic() {
   const done = useRef(false);
   /** The microphone is open (a ref: listeners made at the tap read it later). */
   const micOn = useRef(false);
+  /** The iPhone app's microphone feed (null in a browser). */
+  const feed = useRef<NativeMicFeed | null>(null);
+  const [native, setNative] = useState<NativeFeedView | null>(null);
 
   const releaseMic = useCallback(async () => {
+    const f = feed.current; feed.current = null;
+    if (f) { f.attach(null); await f.stop().catch(() => {}); }
     stream.current?.getTracks().forEach((t) => t.stop());
     stream.current = null;
     await graph.current?.close().catch(() => {});
@@ -79,6 +87,8 @@ export default function TeacherPhoneMic() {
   const finishTrack = useCallback(async (endedAt: string | null) => {
     const e = engine.current;
     graph.current?.forward(false);
+    // The app: what the phone heard up to now is read first, then the track is finished (and trimmed at the laptop's Stop).
+    if (feed.current) await feed.current.pull().catch(() => {});
     if (e) await e.finish(endedAt).catch((err) => setStatus({ ...e.state, phase: "error", lastError: String(err?.message ?? err) }));
     done.current = true;
     await releaseMic();
@@ -95,6 +105,20 @@ export default function TeacherPhoneMic() {
         .order("capture_opens_at", { ascending: false }).limit(1).maybeSingle()),
       getRecording: (id) => readRow(db.from("class_recordings").select(COLS).eq("id", id).maybeSingle()),
       join: async (row) => {
+        const f = feed.current;
+        if (f) {
+          // The app's microphone: 48 kHz, stamped on the wall clock, so the track keeps time on the same clock.
+          const e = new PhoneTeacherTrack({
+            backend, recording: row, sampleRate: 48000, deviceLabel: "iPhone microphone (HEC app)",
+            appliedSettings: { capture: "ios-avaudioengine", background: true }, perfNow: () => Date.now(), onStatus: setStatus,
+          });
+          await e.measureClock();
+          engine.current = e;
+          f.attach(e);
+          setStatus(e.state);
+          await e.tryOrigin().catch(() => false);
+          return;
+        }
         const g = graph.current, s = stream.current;
         if (!g || !s) throw new Error("the microphone is not open");
         const track = s.getAudioTracks()[0];
@@ -133,8 +157,8 @@ export default function TeacherPhoneMic() {
     if (!l) return;
     const hidden = typeof document !== "undefined" && document.visibilityState !== "visible";
     const phase: PhonePhase = !health.ok && micReady ? "paused" : status ? status.phase : micReady ? "ready" : "idle";
-    l.setPhone({ phase, sentChunks: status?.sentChunks ?? 0, note: health.ok ? status?.lastError ?? null : health.text, hidden });
-  }, [status, micReady, health, view?.linkOpen]);
+    l.setPhone({ phase, sentChunks: status?.sentChunks ?? 0, note: health.ok ? status?.lastError ?? null : health.text, hidden, native: !!feed.current });
+  }, [status, micReady, health, view?.linkOpen, native?.running]);
 
   /** Open the microphone and the sound (inside a tap: iOS asks for it). */
   const openMic = async (): Promise<boolean> => {
@@ -171,15 +195,31 @@ export default function TeacherPhoneMic() {
     setBusy(true);
     try {
       done.current = false;
-      await openMic();
+      if (nativeMic) {
+        // The app: iOS's own audio engine, started here (in front, as iOS requires); it keeps running when the phone locks.
+        const f = new NativeMicFeed(nativeMic, setNative, (smp) => {
+          let sum = 0;
+          for (let i = 0; i < smp.length; i += 8) { const x = smp[i] / 32768; sum += x * x; }
+          setLevel(Math.min(1, Math.sqrt(sum / Math.max(1, smp.length / 8)) * 4));
+        });
+        await f.start({ keepScreenOn: true });
+        feed.current = f;
+      } else {
+        await openMic();
+      }
       micOn.current = true;
       setMicReady(true);
-      if (!keep.current) keep.current = new ScreenKeeper(navigator as any, document, setKeeper);
-      await keep.current.start();
+      if (!nativeMic) {
+        if (!keep.current) keep.current = new ScreenKeeper(navigator as any, document, setKeeper);
+        await keep.current.start();
+      }
       await link.current?.record();
     } catch (err: any) {
       await releaseMic();
-      setMicErr(err?.name === "NotAllowedError" ? "The microphone was not allowed. Allow it in Settings > Safari > Microphone and try again." : String(err?.message ?? err));
+      const msg = String(err?.message ?? err);
+      setMicErr(err?.name === "NotAllowedError" || /microphone_denied/.test(msg)
+        ? (nativeMic ? "The microphone was not allowed. Allow it in Settings > HEC Phone Mic > Microphone and try again." : "The microphone was not allowed. Allow it in Settings > Safari > Microphone and try again.")
+        : msg);
     } finally { setBusy(false); }
   };
 
@@ -187,6 +227,22 @@ export default function TeacherPhoneMic() {
   const restart = async (byTap: boolean) => {
     if (restarting.current || !micOn.current || done.current) return;
     restarting.current = true;
+    if (feed.current) {
+      try {
+        await feed.current.start({ keepScreenOn: true });
+        await engine.current?.breakStretch(true);
+        if (feed.current.view.running && pausedSince.current !== null) {
+          const seconds = Math.round((Date.now() - pausedSince.current) / 1000);
+          setGaps((x) => [{ at: new Date(pausedSince.current!).toLocaleTimeString(), seconds }, ...x].slice(0, 5));
+          pausedSince.current = null;
+        }
+        setNeedsTap(!feed.current.view.running);
+      } catch (err: any) {
+        setNeedsTap(true);
+        setMicErr(`The microphone could not be restarted: ${String(err?.message ?? err)}. Tap the red button.`);
+      } finally { restarting.current = false; }
+      return;
+    }
     try {
       const old = stream.current?.getAudioTracks()[0];
       const g = graph.current;
@@ -214,6 +270,17 @@ export default function TeacherPhoneMic() {
   /** Is the capture running? Said at once; restarted at once when the page is visible. */
   const check = async (mayRestart = true) => {
     if (!micOn.current || done.current) { setHealth({ ok: true }); return; }
+    if (feed.current) {
+      const nv = feed.current.view;
+      const v: CaptureVerdict = nv.running ? { ok: true }
+        : { ok: false, reason: "track_ended", restart: "now", text: nv.lastError ? `The app's microphone stopped: ${nv.lastError}. Restarting it...` : "The app's microphone stopped (a call or another app took it). Restarting it..." };
+      setHealth(v);
+      if (!v.ok) {
+        if (pausedSince.current === null) pausedSince.current = Date.now();
+        if (mayRestart) await restart(false);
+      }
+      return;
+    }
     const track = stream.current?.getAudioTracks()[0] ?? null;
     const v = captureHealth({
       visible: document.visibilityState === "visible",
@@ -231,11 +298,12 @@ export default function TeacherPhoneMic() {
 
   useEffect(() => {
     if (!micReady) return;
-    const onVis = () => { void check(); void link.current?.tick(); };
+    const onVis = () => { void feed.current?.pull(); void check(); void link.current?.tick(); };
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("pageshow", onVis);
     const t = setInterval(() => { void check(); }, 1000);
-    return () => { document.removeEventListener("visibilitychange", onVis); window.removeEventListener("pageshow", onVis); clearInterval(t); };
+    const pull = setInterval(() => { void feed.current?.pull(); }, 250);
+    return () => { document.removeEventListener("visibilitychange", onVis); window.removeEventListener("pageshow", onVis); clearInterval(t); clearInterval(pull); };
   }, [micReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => { void releaseMic(); }, [releaseMic]);
@@ -336,10 +404,15 @@ export default function TeacherPhoneMic() {
                 ) : null}
                 {micReady ? (
                   <>
-                    <p className="text-sm">
+                    {nativeMic ? (
+                      <p className="text-sm" data-native-mic="">
+                        HEC app: you may lock the phone and put it in your pocket. It keeps recording.{native?.waiting ? ` ${native.waiting} pieces wait on the phone and are sent when it can.` : ""}
+                      </p>
+                    ) : null}
+                    {nativeMic ? null : <p className="text-sm">
                       Do not lock the phone or switch apps: iPhone stops the microphone when the screen locks.
                       {keeper ? (keeper.held ? " The screen is kept on." : keeper.supported ? " The screen could not be kept on: set Auto-Lock to Never while you record." : " This browser cannot keep the screen on: set Settings > Display & Brightness > Auto-Lock to Never.") : ""}
-                    </p>
+                    </p>}
                     <Button variant="secondary" className="w-full min-h-12" onClick={() => setDim(true)}>
                       <Moon className="h-4 w-4 mr-2" aria-hidden /> Dim the screen (keep it open)
                     </Button>

@@ -159,6 +159,18 @@ export class PhoneTeacherTrack {
     if (this.finished || samples.length === 0) return;
     const i16 = new Int16Array(samples.length);
     floatToInt16(samples, i16);
+    this.pushInt16(i16, perfAtEnd);
+  }
+
+  /**
+   * 23 Nov 2026 (the iPhone app): 16-bit samples as the native microphone
+   * delivers them, `perfAtEnd` on this track's clock (perfNow). The native
+   * capture stamps each batch with the time its last sample was heard, so a
+   * batch read late (the web view was paused) is still placed where it was
+   * heard, not where it was read.
+   */
+  pushInt16(i16: Int16Array, perfAtEnd = this.o.perfNow()) {
+    if (this.finished || i16.length === 0) return;
     const msOf = (n: number) => n * 1000 / this.o.sampleRate;
     const startServer = perfAtEnd + (this.offset ?? 0) - msOf(i16.length);
     if (this.origin === null) {
