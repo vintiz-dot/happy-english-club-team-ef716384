@@ -17,7 +17,7 @@ export function useAttendanceProof(sessionId: string | null | undefined) {
     retry: false,
     queryFn: async (): Promise<ProofMap> => {
       try {
-        const { data, error } = await (supabase.rpc as any)("attendance_proof_for_session", { p_session_id: sessionId });
+        const { data, error } = await (supabase as any).rpc("attendance_proof_for_session", { p_session_id: sessionId });
         if (error) return EMPTY;
         return parseProofRows(data);
       } catch {
