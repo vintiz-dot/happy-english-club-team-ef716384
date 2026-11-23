@@ -288,5 +288,72 @@ export const odL1U9Creative: Record<string, Creative> = {
         }
       }
     ]
-  }
+  },
+  "od2e-l1-u09-l5": {
+    "kind": "creative",
+    "thinking": "Create",
+    "uses": {
+      "words": [
+        "numbers",
+        "count",
+        "plus",
+        "equals"
+      ],
+      "grammar": [
+        "I have ___ ___.",
+        "I don't have ___.",
+        "We have ___ in all."
+      ]
+    },
+    "base": {
+      "title": "My number monster",
+      "task": "Invent a monster. Draw it and count its parts. Write what it has and what it doesn't have.",
+      "steps": [
+        "Draw a monster with your own number of eyes, legs and arms.",
+        "Count each part and write the number by it.",
+        "Write two sentences with I have and one with I don't have.",
+        "Choose your monster's best part and say why to someone at home."
+      ],
+      "frames": [
+        "I have ___ eyes.",
+        "I have ___ legs.",
+        "I don't have ___.",
+        "My best part is ___ because ___."
+      ],
+      "success": [
+        "I can write I have with a number and an -s word.",
+        "I can write one I don't have sentence.",
+        "I can say why I like one part."
+      ],
+      "challenge": "Give your monster a friend. Add their legs together: My monster has ___ legs, my friend has ___ legs. We have ___ legs in all!"
+    },
+    "variants": [
+      {
+        "interest": "football",
+        "label": "Football edition",
+        "task": {
+          "title": "My football kit bag",
+          "task": "Draw your own football bag. Count what is in it. Write what you have and what you don't have.",
+          "steps": [
+            "Draw a football bag with balls, boots, socks and shirts inside.",
+            "Count each thing and write the number by it.",
+            "Write two sentences with I have and one with I don't have.",
+            "Choose the most important thing in your bag and say why."
+          ],
+          "frames": [
+            "I have ___ balls.",
+            "I have ___ socks.",
+            "I don't have ___.",
+            "The most important thing is ___ because ___."
+          ],
+          "success": [
+            "I can write I have with a number and an -s word.",
+            "I can write one I don't have sentence.",
+            "I can say why one thing matters most."
+          ],
+          "challenge": "Your team has two bags like yours. How many balls do you have in all? Write: We have ___ balls in all."
+        }
+      }
+    ]
+  },
 };

@@ -359,5 +359,73 @@ export const odL1U10Creative: Record<string, Creative> = {
         }
       }
     ]
-  }
+  },
+  "od2e-l1-u10-l6": {
+    "kind": "creative",
+    "thinking": "Design",
+    "uses": {
+      "words": [
+        "soup",
+        "carrots",
+        "onions",
+        "potatoes"
+      ],
+      "grammar": [
+        "Do you have ___?",
+        "Yes, I do.",
+        "No, I don't.",
+        "I have ___ ___."
+      ]
+    },
+    "base": {
+      "title": "My magic soup",
+      "task": "Design your own soup. Draw the pot and what goes in. Ask someone at home what they have for it.",
+      "steps": [
+        "Draw a big soup pot.",
+        "Draw and count what goes in: carrots, onions, potatoes or your own idea.",
+        "Ask someone at home: Do you have ___? Write their answer.",
+        "Write what your soup has and choose the best thing in it."
+      ],
+      "frames": [
+        "My soup has ___ ___.",
+        "Do you have ___?",
+        "Yes, I do. / No, I don't.",
+        "The best thing is ___ because ___."
+      ],
+      "success": [
+        "I can ask a Do you have question.",
+        "I can write the answer Yes, I do or No, I don't.",
+        "I can count what is in my soup."
+      ],
+      "challenge": "Add it up: I have ___ carrots and ___ onions. That is ___ things in my soup!"
+    },
+    "variants": [
+      {
+        "interest": "football",
+        "label": "Football edition",
+        "task": {
+          "title": "My football team snack",
+          "task": "Design a snack box for a football team. Draw it, count what is in it, and ask someone at home what they have.",
+          "steps": [
+            "Draw a snack box for your football team.",
+            "Draw and count the food: oranges, bananas, sandwiches or your own idea.",
+            "Ask someone at home: Do you have ___? Write their answer.",
+            "Choose the best snack for players and say why."
+          ],
+          "frames": [
+            "My box has ___ ___.",
+            "Do you have ___?",
+            "Yes, I do. / No, I don't.",
+            "The best snack is ___ because ___."
+          ],
+          "success": [
+            "I can ask a Do you have question.",
+            "I can write the answer Yes, I do or No, I don't.",
+            "I can count what is in my box."
+          ],
+          "challenge": "There are eleven players. Do you have one orange for each player? Write: I have ___ oranges. I need ___ more."
+        }
+      }
+    ]
+  },
 };
