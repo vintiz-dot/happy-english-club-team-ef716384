@@ -26,6 +26,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { showSeal } from "@/components/fx/showSeal";
+import { dur, ease, stagger, useMotionLevel } from "@/components/fx/motion";
+import { useAgeBand } from "@/hooks/useAgeBand";
+import { fill } from "@/lib/copy/student";
+import { studentDefendCopy, type StudentDefendKey } from "@/lib/copy/studentDefend";
 import {
   Scale, Loader2, ShieldCheck, PenLine, CheckCircle2, ArrowRight,
 } from "lucide-react";
@@ -44,7 +49,19 @@ const invokeDefense = async (body: Record<string, unknown>) => {
   return data;
 };
 
+/** The Vietnamese draft beneath a key label, for the bands (and devices) that ask for it. */
+function ViBeneath({ k, vars, show }: { k: StudentDefendKey; vars?: Record<string, string | number>; show: boolean }) {
+  if (!show) return null;
+  return (
+    <span lang="vi" className="block text-hec-small font-normal text-hec-ink-soft">
+      {fill(studentDefendCopy[k].vi, vars)}
+    </span>
+  );
+}
+
 export default function StudentDefendLevel() {
+  const { viBeneath } = useAgeBand();
+  const motionLevel = useMotionLevel();
   const queryClient = useQueryClient();
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
 
@@ -81,6 +98,7 @@ export default function StudentDefendLevel() {
       setAnswers({});
       if (d.test?.status === "graded") {
         toast.success("Test submitted! Your teacher will review it.");
+        showSeal(studentDefendCopy["defend.sealSent"].en);
       } else {
         toast.success("Stage done. Next stage ready!");
       }
@@ -104,9 +122,13 @@ export default function StudentDefendLevel() {
             <Scale className="h-6 w-6 text-hec-ink" />
           </div>
           <div className="min-w-0">
-            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Defend My Level</h1>
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">
+              Defend My Level
+              <ViBeneath k="defend.title" show={viBeneath} />
+            </h1>
             <p className="text-hec-small text-hec-ink-soft">
               Prove your English level in an adaptive challenge — the questions adjust to how well you do.
+              <ViBeneath k="defend.intro" show={viBeneath} />
             </p>
           </div>
         </div>
@@ -151,8 +173,12 @@ export default function StudentDefendLevel() {
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <CardTitle className="text-base">
                       Stage {activeTest.current_stage} of {activeTest.total_stages}
+                      <ViBeneath k="defend.stage" vars={{ n: activeTest.current_stage, total: activeTest.total_stages }} show={viBeneath} />
                     </CardTitle>
-                    <Badge variant="secondary">{answeredCount}/{totalCount} answered</Badge>
+                    <Badge variant="secondary" className="h-auto flex-col items-start whitespace-normal">
+                      {answeredCount}/{totalCount} answered
+                      <ViBeneath k="defend.answered" vars={{ n: answeredCount, total: totalCount }} show={viBeneath} />
+                    </Badge>
                   </div>
                   <Progress value={(answeredCount / Math.max(totalCount, 1)) * 100} aria-label="Questions answered" className="h-1.5 mt-2" />
                   <CardDescription className="mt-2 text-hec-small">
@@ -163,9 +189,9 @@ export default function StudentDefendLevel() {
                   {(stage.items || []).map((it: any, i: number) => (
                     <motion.div
                       key={it.id}
-                      initial={{ opacity: 0, y: 8 }}
+                      initial={motionLevel === "off" ? false : { opacity: 0, ...(motionLevel === "full" ? { y: 8 } : {}) }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03 }}
+                      transition={motionLevel === "off" ? { duration: 0 } : { duration: dur.reveal, ease, delay: stagger(i) }}
                       className="rounded-hec-md border border-hec-line p-3 space-y-2"
                     >
                       <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
@@ -208,7 +234,7 @@ export default function StudentDefendLevel() {
                   ))}
 
                   <Button
-                    className="w-full gap-2"
+                    className="h-auto min-h-hec-target w-full gap-2 whitespace-normal"
                     disabled={submitMutation.isPending || answeredCount < totalCount}
                     onClick={() => submitMutation.mutate()}
                   >
@@ -216,7 +242,11 @@ export default function StudentDefendLevel() {
                       <><Loader2 className="h-4 w-4 animate-spin" />
                         {activeTest.current_stage === 3 ? "Sending your test…" : "Preparing the next stage…"}</>
                     ) : (
-                      <>{activeTest.current_stage === 3 ? "Finish & send to my teacher" : "Submit stage"}<ArrowRight className="h-4 w-4" /></>
+                      <><span className="text-left">
+                        {activeTest.current_stage === 3 ? "Finish & send to my teacher" : "Submit stage"}
+                        <ViBeneath k={activeTest.current_stage === 3 ? "defend.finish" : "defend.submitStage"} show={viBeneath} />
+                      </span>
+                      <ArrowRight className="h-4 w-4 shrink-0" /></>
                     )}
                   </Button>
                 </CardContent>
