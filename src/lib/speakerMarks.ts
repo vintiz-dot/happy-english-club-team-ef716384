@@ -27,3 +27,32 @@ export function offsetLabel(ms: number | null | undefined): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return h ? `${h}:${p(m)}:${p(s)}` : `${m}:${p(s)}`;
 }
+
+/**
+ * 23 Nov 2026 (owner): two or more children speaking at once is a
+ * conversation / dialogue. A mark already holds everyone speaking from that
+ * moment, so this is read from the mark, never stored twice.
+ */
+export function isConversation(s: { kind: SpeakerKind; studentIds?: string[]; student_ids?: string[] | null }): boolean {
+  const ids = s.studentIds ?? s.student_ids ?? [];
+  return s.kind === "student" && ids.length >= 2;
+}
+
+/** How the board names what is going on now. */
+export function speakingLabel(s: SpeakerState, nameOf: (id: string) => string): string {
+  if (s.kind === "teacher") return "Teacher speaking";
+  if (s.kind === "chorus") return "Everyone (chorus)";
+  if (s.kind === "stop" || !s.studentIds.length) return "Nobody marked";
+  const names = s.studentIds.map(nameOf).join(" + ");
+  return isConversation(s) ? `Conversation: ${names}` : `${names} speaking`;
+}
+
+/**
+ * The children to show: those marked Present or Late at this lesson. With no
+ * register read (not marked yet, or not readable), everyone enrolled.
+ */
+export function presentChildren<K extends { student_id: string }>(roster: K[], register: { student_id: string; status: string }[] | null | undefined): K[] {
+  if (!register || !register.length) return roster;
+  const here = new Set(register.filter((r) => /^(present|late)$/i.test(r.status)).map((r) => r.student_id));
+  return roster.filter((k) => here.has(k.student_id));
+}

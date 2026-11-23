@@ -47,6 +47,8 @@ const SUITES = [
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   // Payment screens take typed cash, never the balance (Nov 2026 tuition audit).
   { name: "cash entry", file: "cash-entry.test.mjs", migrations: [] },
+  // Who's speaking on the recorder screen: tap on / off, two or more = conversation, present children only.
+  { name: "speaker board", file: "speaker-board.test.mjs", migrations: [] },
   // Vocabulary: 10 new words a Hanoi day, held by the database; the word bank only through save-word.
   { name: "vocab daily cap", file: "vocab-daily-cap.test.mjs", migrations: [] },
   // A bill's paid figure moves only with a payment behind it (audit phase 1).

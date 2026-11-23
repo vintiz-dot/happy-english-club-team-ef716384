@@ -20,26 +20,27 @@ export function RecordingBar({ state, startingLong, elapsed, className, bothMics
     : startingLong ? "Saving on this laptop - the school server has not confirmed yet" : "Starting...";
   return (
     <div
-      className={cn("fixed inset-x-0 bottom-0 z-50 border-t-4 bg-hec-surface text-hec-ink shadow-hec-2", state === "recording" ? "border-hec-danger" : "border-hec-warn")}
+      className={cn("fixed inset-x-0 bottom-0 z-50 border-t-2 bg-hec-surface text-hec-ink shadow-hec-2", state === "recording" ? "border-hec-danger" : "border-hec-warn")}
       role={loud ? "alert" : "status"}
       aria-live={loud ? "assertive" : "polite"}
       aria-label={state === "recording" ? "Recording in progress" : state === "stalled" ? "Not recording" : "Waiting for the school server"}
       data-recorder-bar={state}
     >
-      <div className="max-w-3xl mx-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-        <span className="inline-flex items-center gap-2 text-lg font-bold break-words min-w-0">
+      <div className={cn("max-w-3xl mx-auto flex items-center gap-x-3 px-3 py-1", loud && "flex-wrap gap-y-1")}>
+        {/* Small while all is well; a warning (NOT RECORDING) still wraps and is read out in full. */}
+        <span className={cn("inline-flex items-center gap-1.5 text-sm font-semibold min-w-0", loud ? "break-words" : "truncate")}>
           {state === "recording"
-            ? <CircleDot className="h-6 w-6 shrink-0 text-hec-danger fill-hec-danger motion-safe:animate-pulse" aria-hidden data-red-dot="" />
+            ? <CircleDot className="h-3.5 w-3.5 shrink-0 text-hec-danger fill-hec-danger motion-safe:animate-pulse" aria-hidden data-red-dot="" />
             : loud
-              ? <AlertTriangle className="h-6 w-6 shrink-0 text-hec-warn" aria-hidden data-warning-sign="" />
+              ? <AlertTriangle className="h-4 w-4 shrink-0 text-hec-warn" aria-hidden data-warning-sign="" />
               // A calm state (starting, under 5 s) needs no action: no warning sign (C2 review 5).
-              : <Clock className="h-6 w-6 shrink-0" aria-hidden />}
+              : <Clock className="h-4 w-4 shrink-0" aria-hidden />}
           {text}
         </span>
-        <span className="tabular-nums text-lg">{elapsed}</span>
-        <span className="min-w-0 break-words">{className}</span>
-        <Button className="ml-auto min-h-11 text-base bg-hec-action text-hec-on-action hover:bg-hec-action/90 font-semibold" onClick={onStop}>
-          <Square className="h-4 w-4 mr-2" aria-hidden /> Stop
+        <span className="tabular-nums text-sm">{elapsed}</span>
+        <span className="min-w-0 truncate text-sm opacity-80 hidden sm:inline">{className}</span>
+        <Button size="sm" className="ml-auto h-8 min-h-8 px-3 text-sm bg-hec-action text-hec-on-action hover:bg-hec-action/90 font-semibold" onClick={onStop}>
+          <Square className="h-3 w-3 mr-1.5" aria-hidden /> Stop
         </Button>
       </div>
     </div>
