@@ -168,21 +168,24 @@ $pol$;
 -- The guard runs on every register write: it must find a child's points for a
 -- lesson by index, not by scanning point_transactions.
 DO $idx$
+DECLARE
+  r record;
 BEGIN
-  IF to_regclass('public.point_transactions') IS NOT NULL THEN
-    EXECUTE 'CREATE INDEX IF NOT EXISTS point_transactions_proof_session_student
-             ON public.point_transactions (session_id, student_id) WHERE session_id IS NOT NULL';
-    EXECUTE 'CREATE INDEX IF NOT EXISTS point_transactions_proof_class_created
-             ON public.point_transactions (class_id, created_at)';
-  END IF;
-  IF to_regclass('public.skill_assessments') IS NOT NULL THEN
-    EXECUTE 'CREATE INDEX IF NOT EXISTS skill_assessments_proof_session
-             ON public.skill_assessments (session_id, student_id) WHERE session_id IS NOT NULL';
-  END IF;
-  IF to_regclass('public.lesson_speaker_marks') IS NOT NULL THEN
-    EXECUTE 'CREATE INDEX IF NOT EXISTS lesson_speaker_marks_proof_session
-             ON public.lesson_speaker_marks (session_id)';
-  END IF;
+  -- Each index on its own: a table without the column is skipped with a notice.
+  FOR r IN SELECT * FROM (VALUES
+    ('point_transactions', 'point_transactions_proof_session_student', '(session_id, student_id) WHERE session_id IS NOT NULL'),
+    ('point_transactions', 'point_transactions_proof_class_created', '(class_id, created_at)'),
+    ('skill_assessments', 'skill_assessments_proof_session', '(session_id, student_id) WHERE session_id IS NOT NULL'),
+    ('lesson_speaker_marks', 'lesson_speaker_marks_proof_session', '(session_id)')
+  ) AS v(tbl, idx, def) LOOP
+    IF to_regclass('public.' || r.tbl) IS NOT NULL THEN
+      BEGIN
+        EXECUTE format('CREATE INDEX IF NOT EXISTS %I ON public.%I %s', r.idx, r.tbl, r.def);
+      EXCEPTION WHEN undefined_column THEN
+        RAISE NOTICE 'index % skipped: % lacks a column', r.idx, r.tbl;
+      END;
+    END IF;
+  END LOOP;
 END
 $idx$;
 
