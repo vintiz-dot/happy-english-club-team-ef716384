@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { dur, ease, useMotionLevel } from "@/components/fx/motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
@@ -28,6 +30,8 @@ interface TeacherPayrollCalendarProps {
   earnedByDate: Map<string, number | null>;
   month: Date;
   onMonthChange: (date: Date) => void;
+  /** which way the month moved: 1 later, -1 earlier, 0 not changed (first view). Only the container's entrance reads it. */
+  travel?: 0 | 1 | -1;
 }
 
 const toSelectorSession = (s: TeacherPayrollSession): Session => ({
@@ -43,7 +47,9 @@ export default function TeacherPayrollCalendar({
   sessions: payrollSessions,
   earnedByDate,
   month,
+  travel = 0,
 }: TeacherPayrollCalendarProps) {
+  const level = useMotionLevel();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showClassSelector, setShowClassSelector] = useState(false);
 
@@ -83,6 +89,13 @@ export default function TeacherPayrollCalendar({
 
   return (
     <>
+      {/* The slide is on this container (240 ms, 16 px from the side the month came from); no figure moves on its own. */}
+      <motion.div
+        key={format(month, "yyyy-MM")}
+        initial={travel === 0 || level === "off" ? false : { opacity: 0, x: level === "full" ? 16 * travel : 0 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={level === "off" ? { duration: 0 } : { duration: dur.reveal, ease }}
+      >
       <Card>
         <CardHeader>
           <CardTitle className="text-hec-h2">Calendar View</CardTitle>
@@ -168,6 +181,7 @@ export default function TeacherPayrollCalendar({
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {showClassSelector && selectedDate && (
         <ClassSelector

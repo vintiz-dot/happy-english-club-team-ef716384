@@ -51,9 +51,9 @@ export function PrivateValue({ children, mask = "••••" }: { children: Re
         {hidden ? (
           <motion.span
             key="masked"
-            initial={{ opacity: 0, filter: "blur(6px)" }}
-            animate={{ opacity: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, filter: "blur(6px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: level === "off" ? 0 : dur.press, ease }}
             className="select-none tracking-[0.18em] text-hec-ink-faint"
           >
@@ -63,9 +63,9 @@ export function PrivateValue({ children, mask = "••••" }: { children: Re
         ) : (
           <motion.span
             key="shown"
-            initial={{ opacity: 0, filter: "blur(6px)" }}
-            animate={{ opacity: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, filter: "blur(6px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: level === "off" ? 0 : dur.press, ease }}
           >
             {children}

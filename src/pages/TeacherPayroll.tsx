@@ -8,7 +8,7 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Download, TrendingDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Lock, TrendingDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -32,6 +32,8 @@ export default function TeacherPayroll() {
   const [monthStr, setMonthStr] = useState(dayjs().format("YYYY-MM"));
   const [monthDate, setMonthDate] = useState(new Date());
   const currentMonth = dayjs().format("YYYY-MM");
+  // Which way the month last moved; read only by the calendar block's entrance.
+  const [travel, setTravel] = useState<0 | 1 | -1>(0);
   const { user } = useAuth();
 
   const month = monthStr;
@@ -111,6 +113,7 @@ export default function TeacherPayroll() {
 
   const prevMonth = () => {
     const newMonth = dayjs(month).subtract(1, "month").format("YYYY-MM");
+    setTravel(-1);
     setMonthStr(newMonth);
     setMonthDate(dayjs(newMonth).toDate());
   };
@@ -118,6 +121,7 @@ export default function TeacherPayroll() {
   const nextMonth = () => {
     const next = dayjs(month).add(1, "month").format("YYYY-MM");
     if (next <= currentMonth) {
+      setTravel(1);
       setMonthStr(next);
       setMonthDate(dayjs(next).toDate());
     }
@@ -227,14 +231,18 @@ export default function TeacherPayroll() {
         </div>
 
         {view?.closed && (
-          <p className="text-hec-small text-hec-ink-soft">
-            This month is closed: the totals are what it was paid at.
-            {!view.perSessionAvailable && " Lessons were corrected after it closed, so per-lesson amounts are not shown."}
+          <p className="flex items-start gap-2 text-hec-small text-hec-ink-soft">
+            <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-hec-ink" aria-hidden="true" />
+            <span>
+              This month is closed: the totals are what it was paid at.
+              {!view.perSessionAvailable && " Lessons were corrected after it closed, so per-lesson amounts are not shown."}
+            </span>
           </p>
         )}
         {view?.monthLocked && !view.closed && (
-          <p className="text-hec-small text-hec-ink-soft">
-            This month is closed, but nothing was recorded for you when it closed: the figures below are calculated now, not what was paid.
+          <p className="flex items-start gap-2 text-hec-small text-hec-ink-soft">
+            <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-hec-ink" aria-hidden="true" />
+            <span>This month is closed, but nothing was recorded for you when it closed: the figures below are calculated now, not what was paid.</span>
           </p>
         )}
 
@@ -303,6 +311,7 @@ export default function TeacherPayroll() {
               earnedByDate={view.earnedByDate}
               month={monthDate}
               onMonthChange={handleMonthChange}
+              travel={travel}
             />
 
             <Card>
