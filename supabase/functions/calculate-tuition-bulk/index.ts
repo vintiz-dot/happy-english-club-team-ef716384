@@ -2,11 +2,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { requireRole } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
-import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
-import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
+import { enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
 import { monthPayable } from "../_lib/invoice-status.ts";
 import { classNetAmounts } from "../_lib/class-net.ts";
-import { decideHoles, findRegisterHoles, hanoiToday, heldSentence } from "../_lib/register-holes.ts";
+import { priceStudentMonth, type MonthDiscount } from "../_lib/tuition-pricing.ts";
+import { refreshableMonths } from "../_lib/bill-refresh.ts";
+import { clockNow } from "../_lib/clock.ts";
+import { decidePastMonth, figuresOf, isClosedMonth, pastMonthHeld } from "../_lib/past-month-hold.ts";
 import { classFeeOn, indexClassFees, isMissingFeeHistory, type ClassFeeHistory } from "../_lib/class-fee.ts";
 
 const corsHeaders = {
@@ -14,8 +16,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-type AttendanceStatus = "Present" | "Absent" | "Excused" | "Late";
 
 function getDayOfWeek(dateStr: string): number {
   const date = new Date(`${dateStr}T12:00:00+07:00`);
@@ -26,18 +26,14 @@ function getDayOfWeek(dateStr: string): number {
 type LessonForgone = { session_id: string; date: string; class_id: string; rate_vnd: number };
 
 /**
- * What one lesson adds to a student's month before the month-level discounts:
- * exactly the two lines the billable branch of the loop below adds for it -
- * the class's default rate into the base, less the rate-adjustment saving when
- * the enrollment's override is lower - and 0 when that branch would skip the
- * lesson (no positive rate). Used ONLY for the excused / cancelled lessons
- * reported beside the totals; no charged figure goes through here.
+ * What one lesson would add to a student's month before any discount: the
+ * enrollment's custom rate when it has one, else the class fee on the date
+ * (the price rule of _lib/tuition-pricing.ts). Used ONLY for the cancelled
+ * lessons reported beside the totals; no charged figure goes through here.
  */
 function lessonCharge(defaultRate: number, overrideRate: number | null | undefined): number {
-  const actualRate = overrideRate ?? defaultRate;
-  if (!(actualRate > 0)) return 0;
-  const saving = overrideRate && overrideRate < defaultRate ? defaultRate - overrideRate : 0;
-  return defaultRate - saving;
+  const price = overrideRate ?? defaultRate;
+  return price > 0 ? price : 0;
 }
 
 function monthRange(month: string) {
@@ -262,7 +258,7 @@ Deno.serve(async (req) => {
       supabase, "discount_assignments",
       "id, student_id, discount_definitions(*)",
       "student_id", studentIds,
-      (q: any) => q.lte("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
+      (q: any) => q.lt("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
     );
     const discountsByStudent = new Map<string, any[]>();
     for (const d of allDiscountAssignments) {
@@ -277,7 +273,7 @@ Deno.serve(async (req) => {
       supabase, "referral_bonuses",
       "id, student_id, type, value",
       "student_id", studentIds,
-      (q: any) => q.lte("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
+      (q: any) => q.lt("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
     );
     const referralsByStudent = new Map<string, any[]>();
     for (const r of allReferralBonuses) {
@@ -329,6 +325,8 @@ Deno.serve(async (req) => {
 
     // ---- PROCESS EACH STUDENT IN-MEMORY ----
     const results: any[] = [];
+    // A closed month's saved bill stands (_lib/past-month-hold.ts), as in calculate-tuition.
+    const monthClosed = isClosedMonth(month, refreshableMonths(clockNow()));
 
     for (const sid of studentIds) {
       try {
@@ -351,96 +349,50 @@ Deno.serve(async (req) => {
           studentSessions.push(...classSessions);
         }
 
-        // Lessons held, inside the enrolment, with no attendance row: holes in the
-        // register (_lib/register-holes.ts), judged by the same enrolment, weekday
-        // and rate rules as the pricing below - and as calculate-tuition does.
-        // A frozen bill is left as it is and looks for none.
-        const savedInv = currentInvoiceMap.get(sid);
-        const registerHoles = savedInv?.tuition_frozen
-          ? []
-          : findRegisterHoles(
-              studentSessions,
-              { has: (sessionId: string) => attendanceMap.has(attendanceKey(sessionId, sid)) },
-              hanoiToday(),
-              {
-                enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
-                onAllowedDay: (s: any, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
-                rateOf: (s: any, e: any) =>
-                  e.rate_override_vnd ?? classFeeOn(feeHistory, s.class_id, s.date, Number(classMap.get(s.class_id)?.session_rate_vnd ?? 0)),
-              },
-            );
-        const holeIds = new Set(registerHoles.map((h) => h.session_id));
+        const feeOn = (classId: string, date: string) =>
+          classFeeOn(feeHistory, classId, date, Number(classMap.get(classId)?.session_rate_vnd ?? 0));
 
-        // The month's lessons priced one way (the loop of calculate-tuition): with
-        // countHoles the lessons that have no row at all are billed too.
-        const lessonPass = (countHoles: boolean) => {
-          let baseAmount = 0;
-          const enrollmentBaseAmounts = new Map<string, number>();
-          const datedEnrollmentBases = new Map<any, number>();
-          const rateAdjustmentSavings = new Map<string, number>();
-          // Lessons this student is not charged for, each with what it would
-          // have added to the month: see lessonCharge. Display figures only.
-          const excusedLessons: LessonForgone[] = [];
+        // The student's own discounts and bonuses.
+        const monthDiscounts: MonthDiscount[] = [];
+        for (const a of discountsByStudent.get(sid) || []) {
+          const def = a.discount_definitions;
+          if (!def || !def.is_active) continue;
+          monthDiscounts.push({ name: def.name, type: def.type, value: def.value });
+        }
+        for (const b of referralsByStudent.get(sid) || []) {
+          monthDiscounts.push({ name: "Referral Bonus", type: b.type, value: b.value });
+        }
 
-          for (const s of studentSessions) {
-            const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
-            if (!enrollment) continue;
+        // The family's sibling discount, when this child holds it.
+        const sd = family?.id ? siblingStateMap.get(family.id) : null;
+        const siblingAward =
+          sd && sd.status === "assigned" && sd.winner_student_id === sid && sd.winner_class_id
+            ? { percent: Number(sd.sibling_percent ?? 0), classId: sd.winner_class_id as string }
+            : null;
 
-            const sessionDayOfWeek = getDayOfWeek(s.date);
-            if (enrollment.allowed_days && !enrollment.allowed_days.includes(sessionDayOfWeek)) continue;
-
-            const att = attendanceMap.get(attendanceKey(s.id, sid)) as AttendanceStatus | undefined;
-            const classInfo = classMap.get(s.class_id);
-            const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classInfo?.session_rate_vnd ?? 0));
-            const overrideRate = enrollment.rate_override_vnd;
-            const actualRate = overrideRate ?? defaultRate;
-            // Late students attended, so they are billed like Present. Only
-            // Excused (forgiven) absences are non-billable.
-            const billable = isBillableTuitionSession(s.status, countHoles && holeIds.has(s.id) ? "Present" : att);
-
-            if (billable && actualRate > 0) {
-              baseAmount += defaultRate;
-              enrollmentBaseAmounts.set(s.class_id, (enrollmentBaseAmounts.get(s.class_id) || 0) + defaultRate);
-              datedEnrollmentBases.set(enrollment, (datedEnrollmentBases.get(enrollment) || 0) + defaultRate);
-
-              if (overrideRate && overrideRate < defaultRate) {
-                const savings = defaultRate - overrideRate;
-                rateAdjustmentSavings.set(s.class_id, (rateAdjustmentSavings.get(s.class_id) || 0) + savings);
-              }
-            } else if (att === "Excused") {
-              excusedLessons.push({ session_id: s.id, date: s.date, class_id: s.class_id,
-                rate_vnd: lessonCharge(defaultRate, overrideRate) });
-            }
-          }
-          return { baseAmount, enrollmentBaseAmounts, datedEnrollmentBases, rateAdjustmentSavings, excusedLessons };
-        };
-
-        // N: today's rule; W: holes counted - the same decision, by the same
-        // helper, as calculate-tuition (a lesson with no mark is priced as it was
-        // charged, never beyond the saved bill).
-        const passN = lessonPass(false);
-        const savedBaseNow = savedInv ? Number(savedInv.base_amount ?? 0) : null;
-        const passW = registerHoles.length > 0 && savedBaseNow !== null && passN.baseAmount < savedBaseNow ? lessonPass(true) : null;
-        const holeMode = decideHoles({
-          holeCount: registerHoles.length,
-          savedBase: savedBaseNow,
-          frozen: !!savedInv?.tuition_frozen,
-          nBase: passN.baseAmount,
-          wBase: passW ? passW.baseAmount : null,
-          forced: false,
+        // THE PRICE: _lib/tuition-pricing.ts, the same call as calculate-tuition.
+        // Nothing is priced in this file.
+        const pricedMonth = priceStudentMonth({
+          enrollments,
+          sessions: studentSessions,
+          markOf: (sessionId: string) => attendanceMap.get(attendanceKey(sessionId, sid)),
+          classFeeOn: feeOn,
+          monthDiscounts,
+          sibling: siblingAward,
         });
-        const pricedAsCharged = holeMode === "priced_as_charged";
-        const heldBill = holeMode === "held";
-        const pass = pricedAsCharged ? passW! : passN;
-        let baseAmount = pass.baseAmount;
-        const enrollmentBaseAmounts = pass.enrollmentBaseAmounts;
-        const datedEnrollmentBases = pass.datedEnrollmentBases;
-        const rateAdjustmentSavings = pass.rateAdjustmentSavings;
-        const excusedLessons = pass.excusedLessons;
+        const projected = pricedMonth.projected;
+        const actual = pricedMonth.actual;
+        const computed = { base: projected.baseAmount, discount: projected.totalDiscount, total: projected.totalAmount };
+
+        // Lessons this student is not charged for because they were excused,
+        // each with what it would have added to the month. Display figures only.
+        const excusedLessons: LessonForgone[] = pricedMonth.lessons
+          .filter((l) => l.state === "excused")
+          .map((l) => ({ session_id: l.session_id, date: l.date, class_id: l.class_id, rate_vnd: l.price_vnd }));
 
         // The month's cancelled lessons in this student's classes, on the
         // student's enrolled dates and weekdays - the same two tests a charged
-        // lesson passes above. Null when they could not be read.
+        // lesson passes. Null when they could not be read.
         let cancelledLessons: LessonForgone[] | null = null;
         if (cancelledByClass) {
           cancelledLessons = [];
@@ -450,71 +402,15 @@ Deno.serve(async (req) => {
               if (!enrollment) continue;
               if (enrollment.allowed_days && !enrollment.allowed_days.includes(getDayOfWeek(s.date))) continue;
               cancelledLessons.push({ session_id: s.id, date: s.date, class_id: s.class_id,
-                // The fee in force on the lesson's date, as a charged lesson
-                // is priced above (D4 step 2), not the class's current fee.
-                rate_vnd: lessonCharge(
-                  classFeeOn(feeHistory, s.class_id, s.date, Number(classMap.get(s.class_id)?.session_rate_vnd ?? 0)),
-                  enrollment.rate_override_vnd,
-                ) });
+                // Priced as a charged lesson would be: custom rate, else the fee on its date.
+                rate_vnd: lessonCharge(feeOn(s.class_id, s.date), enrollment.rate_override_vnd) });
             }
           }
         }
 
-        // Discounts
-        let totalDiscount = 0;
-        // class -> the discounts that belong to that class, for classNet.
-        const classDiscounts = new Map<string, number>();
-        const toClass = (classId: string, amount: number) =>
-          classDiscounts.set(classId, (classDiscounts.get(classId) || 0) + amount);
-
-        // Rate adjustments
-        for (const [classId, savings] of rateAdjustmentSavings) {
-          if (savings > 0) {
-            totalDiscount += savings;
-            toClass(classId, savings);
-          }
-        }
-
-        // Enrollment-level discounts
-        for (const discount of enrollmentDiscounts(datedEnrollmentBases)) {
-          totalDiscount += discount.amount;
-          toClass(discount.class_id, discount.amount);
-        }
-
-        // Student-level discounts
-        const studentDiscounts = discountsByStudent.get(sid) || [];
-        for (const a of studentDiscounts) {
-          const def = a.discount_definitions;
-          if (!def || !def.is_active) continue;
-          const amt = def.type === "percent"
-            ? Math.round(baseAmount * (def.value / 100))
-            : Math.round(def.value);
-          if (amt > 0) totalDiscount += amt;
-        }
-
-        // Referral bonuses
-        const studentReferrals = referralsByStudent.get(sid) || [];
-        for (const b of studentReferrals) {
-          const amt = b.type === "percent"
-            ? Math.round(baseAmount * (b.value / 100))
-            : Math.round(b.value);
-          if (amt > 0) totalDiscount += amt;
-        }
-
-        // Sibling discount
-        if (family?.id) {
-          const sd = siblingStateMap.get(family.id);
-          if (sd && sd.status === "assigned" && sd.winner_student_id === sid && sd.winner_class_id) {
-            const winnerClassBase = enrollmentBaseAmounts.get(sd.winner_class_id) || 0;
-            const amt = Math.round(winnerClassBase * (sd.sibling_percent / 100));
-            if (amt > 0) {
-              totalDiscount += amt;
-              toClass(sd.winner_class_id, amt);
-            }
-          }
-        }
-
-        let totalAmount = Math.max(0, baseAmount - totalDiscount);
+        let baseAmount = computed.base;
+        let totalDiscount = computed.discount;
+        let totalAmount = computed.total;
         const frozenInv = currentInvoiceMap.get(sid);
         // A frozen bill keeps its saved figures whatever the enrollment says now.
         if (frozenInv?.tuition_frozen) {
@@ -522,37 +418,37 @@ Deno.serve(async (req) => {
           totalDiscount = Number(frozenInv.discount_amount ?? 0);
           totalAmount = Number(frozenInv.total_amount ?? 0);
         }
-        // So does a bill the register would only lower because lessons have no
-        // row, when nobody can tell which marks were Excused (held): calculate-tuition
-        // keeps it, and this reports what it will keep, never a lower figure.
-        const heldInfo = holeMode === "held" || pricedAsCharged
-          ? {
-              reason: "register_missing_marks",
-              priced_as_charged: pricedAsCharged,
-              message: heldSentence(registerHoles.length, month),
-              lessons: registerHoles.map((h) => ({
-                date: h.date,
-                class_name: classMap.get(h.class_id)?.name || "Unknown",
-              })),
-              register_base: passN.baseAmount,
-              saved_base: Number(frozenInv.base_amount ?? 0),
-            }
-          : null;
+        // So does a CLOSED month's saved bill when today's pricing gives other
+        // figures: calculate-tuition keeps it until an admin approves the change,
+        // and this reports what it keeps, with both sets of figures in `held`.
+        const siblingUnresolved = family?.id ? siblingStateMap.get(family.id)?.status === "unresolved" : false;
+        const savedFigures = frozenInv ? figuresOf(frozenInv) : null;
+        const heldBill =
+          !siblingUnresolved &&
+          decidePastMonth({
+            closed: monthClosed,
+            saved: savedFigures,
+            frozen: !!frozenInv?.tuition_frozen,
+            next: computed,
+            approved: false,
+          }) === "held";
+        const heldInfo = heldBill ? pastMonthHeld(month, savedFigures!, computed) : null;
         if (heldBill) {
-          baseAmount = Number(frozenInv.base_amount ?? 0);
-          totalDiscount = Number(frozenInv.discount_amount ?? 0);
-          totalAmount = Number(frozenInv.total_amount ?? 0);
+          baseAmount = savedFigures!.base;
+          totalDiscount = savedFigures!.discount;
+          totalAmount = savedFigures!.total;
         }
 
         // The charge split by class, after EVERY discount (student, referral
         // and sibling included), summing to totalAmount exactly. For the
-        // per-class report; see _lib/class-net.ts. A frozen bill is split
+        // per-class report; see _lib/class-net.ts. A frozen or held bill is split
         // along the class breakdown it was saved with, not today's register.
+        const savedLines: any[] = Array.isArray(frozenInv?.class_breakdown) ? frozenInv.class_breakdown : [];
         let classNet;
         if (frozenInv?.tuition_frozen || heldBill) {
           const savedBases = new Map<string, number>();
           const savedClassDiscounts = new Map<string, number>();
-          for (const c of (Array.isArray(frozenInv.class_breakdown) ? frozenInv.class_breakdown : []) as any[]) {
+          for (const c of savedLines) {
             if (!c?.class_id) continue;
             const amount = Number(c.amount_vnd ?? 0);
             savedBases.set(c.class_id, (savedBases.get(c.class_id) || 0) + amount);
@@ -560,18 +456,23 @@ Deno.serve(async (req) => {
             savedClassDiscounts.set(c.class_id, (savedClassDiscounts.get(c.class_id) || 0) + Math.max(0, own));
           }
           // A bill saved with no breakdown (older bills) still has to be carried by
-          // some class: split by the classes of the month's lessons, holes
-          // included, else the child's first class - never [] against a charge.
+          // some class: split by the classes of the month's lessons, else the
+          // child's first class - never [] against a charge.
           if (heldBill && [...savedBases.values()].reduce((n, v) => n + v, 0) <= 0 && totalAmount > 0) {
             savedBases.clear();
             savedClassDiscounts.clear();
-            const weights = (passW ?? lessonPass(true)).enrollmentBaseAmounts;
-            for (const [cid, v] of weights) if (v > 0) savedBases.set(cid, v);
+            for (const c of projected.classes) if (c.base_vnd > 0) savedBases.set(c.class_id, c.base_vnd);
             if (savedBases.size === 0 && activeClassIds.length > 0) savedBases.set(activeClassIds[0], 1);
           }
           classNet = classNetAmounts(savedBases, savedClassDiscounts, totalAmount);
         } else {
-          classNet = classNetAmounts(enrollmentBaseAmounts, classDiscounts, totalAmount);
+          classNet = classNetAmounts(
+            new Map(projected.classes.map((c) => [c.class_id, c.base_vnd])),
+            // The discounts that belong to one class: its enrollment terms and,
+            // on the winner class, the sibling discount.
+            new Map(projected.classes.map((c) => [c.class_id, c.own_discount_vnd + c.sibling_discount_vnd])),
+            totalAmount,
+          );
         }
 
         // Payments / carry
@@ -605,17 +506,35 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Build class breakdown
-        const classBreakdown: any[] = [];
-        for (const [classId, classBase] of enrollmentBaseAmounts) {
-          const classInfo = classMap.get(classId);
-          classBreakdown.push({
-            class_id: classId,
-            class_name: classInfo?.name || "Unknown",
-            amount_vnd: classBase,
-            session_rate_vnd: classFeeOn(feeHistory, classId, startDate, Number(classInfo?.session_rate_vnd ?? 0)),
-          });
-        }
+        // Per-class lines, from the priced month; a held bill answers the lines
+        // it was saved with, so they add up to the figures beside them. The same
+        // four fields as always (no per-class net here: the reports read classNet).
+        const pricedLines = projected.classes.map((c) => {
+          const prices = [
+            ...new Set(pricedMonth.lessons.filter((l) => l.state === "billed" && l.class_id === c.class_id).map((l) => l.price_vnd)),
+          ];
+          return {
+            class_id: c.class_id,
+            class_name: classMap.get(c.class_id)?.name || "Unknown",
+            amount_vnd: c.base_vnd,
+            session_rate_vnd: prices.length === 1 ? prices[0] : feeOn(c.class_id, startDate),
+          };
+        });
+        const classBreakdown: any[] = !heldBill
+          ? pricedLines
+          : savedLines.length > 0
+            ? savedLines.map((c: any) => ({
+                class_id: c?.class_id ?? null,
+                class_name: c?.class_name ?? classMap.get(c?.class_id)?.name ?? "Unknown",
+                amount_vnd: Number(c?.amount_vnd ?? 0),
+                session_rate_vnd: Number(c?.session_rate_vnd ?? 0),
+              }))
+            : [{
+                class_id: projected.classes[0]?.class_id ?? activeClassIds[0] ?? null,
+                class_name: "As charged",
+                amount_vnd: baseAmount,
+                session_rate_vnd: 0,
+              }];
 
         results.push({
           studentId: sid,
@@ -631,9 +550,12 @@ Deno.serve(async (req) => {
           },
           // The family discount is still being decided: totalAmount leaves it
           // out, so the figures are provisional (same meaning as in calculate-tuition).
-          siblingUnresolved: family?.id ? siblingStateMap.get(family.id)?.status === "unresolved" : false,
+          siblingUnresolved,
           breakdown: { classes: classBreakdown },
           classNet,
+          // The whole month as today's pricing gives it, and the lessons already held.
+          projected: { lessons: projected.lessons, baseAmount: computed.base, totalDiscount: computed.discount, totalAmount: computed.total },
+          actual: { lessons: actual.lessons, baseAmount: actual.baseAmount, totalDiscount: actual.totalDiscount, totalAmount: actual.totalAmount },
           ...(heldInfo ? { held: heldInfo } : {}),
           invoiceId: currentInvoice?.id || null,
           invoiceStatus: currentInvoice?.status || null,

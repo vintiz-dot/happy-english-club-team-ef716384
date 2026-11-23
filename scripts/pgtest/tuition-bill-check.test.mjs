@@ -264,12 +264,13 @@ const bundle = async (name) => {
   const b = await build({
     entryPoints: [resolve(repo, 'supabase', 'functions', name, 'index.ts')], bundle: true, format: 'esm', platform: 'node', write: false,
     plugins: [{ name: 'test-boundaries', setup(bd) {
-      bd.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/rate-limit\.ts$)/ }, (a) => ({ path: a.path, namespace: 'test' }));
+      bd.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/clock\.ts$|\/rate-limit\.ts$)/ }, (a) => ({ path: a.path, namespace: 'test' }));
       bd.onResolve({ filter: /\/_lib\/[^/]+\.ts$/ }, (a) => ({ path: join(libDir, a.path.split('/').pop()) }));
       bd.onLoad({ filter: /.*/, namespace: 'test' }, (a) => ({ loader: 'js', contents:
         a.path.includes('supabase-js') ? 'export const createClient = (...x) => globalThis.__tbClient(...x);' :
         a.path.includes('zod') ? 'export const z = globalThis.__tbZod;' :
         a.path.endsWith('/auth.ts') ? 'export const requireRole = async () => globalThis.__tbGate(); export const callerOwnsStudent = async () => true;' :
+        a.path.endsWith('/clock.ts') ? 'export const clockNow = () => new Date(globalThis.__hecNow ?? "2000-01-01T00:00:00Z");' :
         a.path.endsWith('/sibling-state.ts') ? 'export const resolveSiblingStates = async () => { throw new Error("no families here"); };' :
         'export const checkRateLimit = () => ({limited: false}); export const getClientIP = () => "test"; export const rateLimitResponse = () => {};',
       }));

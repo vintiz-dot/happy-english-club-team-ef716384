@@ -84,11 +84,12 @@ globalThis.Deno = { env: { get: () => 'synthetic-test-only' }, serve: h => { han
     entryPoints: [resolve('supabase/functions/calculate-tuition-bulk/index.ts')], bundle: true,
     format: 'esm', platform: 'node', write: false,
     plugins: [{ name: 'test-boundaries', setup(b) {
-      b.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/rate-limit\.ts$)/ }, args => ({ path: args.path, namespace: 'test' }));
+      b.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/clock\.ts$|\/rate-limit\.ts$)/ }, args => ({ path: args.path, namespace: 'test' }));
       b.onLoad({ filter: /.*/, namespace: 'test' }, args => ({ loader: 'js', contents:
         args.path.includes('supabase-js') ? 'export const createClient = globalThis.__tuitionClient;' :
         args.path.includes('zod') ? 'const chain = new Proxy({}, {get: (_, key) => key === "parse" ? v => v : () => chain}); export const z = chain;' :
         args.path.endsWith('/auth.ts') ? 'export const requireRole = async () => ({isServiceRole: false, roles: new Set(["admin"])}); export const callerOwnsStudent = async () => true;' :
+        args.path.endsWith('/clock.ts') ? 'export const clockNow = () => new Date(globalThis.__hecNow ?? "2000-01-01T00:00:00Z");' :
         args.path.endsWith('/sibling-state.ts') ? 'export const resolveSiblingStates = async () => globalThis.__siblingStates();' :
         'export const checkRateLimit = () => ({limited: false}); export const getClientIP = () => "test"; export const rateLimitResponse = () => {};'
       }));
@@ -131,15 +132,21 @@ async function bulk() {
 {
   register();
   const r = await bulk();
-  // Base 300k + 300k. Discounts: 10% enrollment on A (30k), 5% student (30k),
-  // 20k referral, 10% sibling on B (30k) = 110k. Charge 490k.
-  eq([r.baseAmount, r.totalDiscount, r.totalAmount], [600000, 110000, 490000], 'the function prices as before');
+  // Base 300k + 300k, priced by _lib/tuition-pricing.ts (the owner's order, 23 Nov
+  // 2026: the school gives away the least). 10% enrollment on A = 30k, leaving 570k;
+  // the 20k referral (fixed amounts first) leaves 550k; 5% student on what is left =
+  // 27.5k, leaving 522.5k; 10% sibling on B's share of that (522.5k x 300/570 = 275k)
+  // = 27.5k. Discounts 105k, charge 495k. (Every percentage on the gross base, as
+  // before the rule, gave 110k and 490k.)
+  eq([r.baseAmount, r.totalDiscount, r.totalAmount], [600000, 105000, 495000], 'the function prices by the shared rules');
   ok(Array.isArray(r.classNet) && r.classNet.length === 2, 'classNet sent, one line per class');
   eq(sumNet(r.classNet), r.totalAmount, 'classNet sums to the charge, sibling and student discounts included');
   const m = byId(r.classNet);
   eq([m['class-a'].gross_vnd, m['class-b'].gross_vnd], [300000, 300000], 'gross per class is its base');
-  // Weights: A 270k, B 270k (each lost its own 30k), so the 490k splits evenly.
-  eq([m['class-a'].net_vnd, m['class-b'].net_vnd], [245000, 245000], 'month-wide discounts spread by what each class still costs');
+  // Weights: A 270k (less its 30k enrollment discount), B 272.5k (less its 27.5k
+  // sibling discount), so the 495k splits 246,359 / 248,641.
+  eq([m['class-a'].net_vnd, m['class-b'].net_vnd], [246359, 248641], 'month-wide discounts spread by what each class still costs');
+  eq([r.projected.totalAmount, r.actual.totalAmount], [495000, 495000], 'projected (whole month) and actual (lessons held) are both sent; every lesson here was held');
   // The stored breakdown's old net would have said 270k + 300k = 570k.
   ok(r.breakdown.classes.every((c) => c.net_amount_vnd === undefined), 'breakdown.classes is unchanged for its other readers');
 }

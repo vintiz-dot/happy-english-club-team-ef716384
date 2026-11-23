@@ -119,11 +119,12 @@ for (const name of ['calculate-tuition', 'calculate-tuition-bulk']) {
   const bundle = await build({
     entryPoints: [resolve(`supabase/functions/${name}/index.ts`)], bundle: true, format: 'esm', platform: 'node', write: false, logLevel: 'silent',
     plugins: [{ name: 'test-boundaries', setup(b) {
-      b.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/rate-limit\.ts$)/ }, (args) => ({ path: args.path, namespace: 'test' }));
+      b.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/clock\.ts$|\/rate-limit\.ts$)/ }, (args) => ({ path: args.path, namespace: 'test' }));
       b.onLoad({ filter: /.*/, namespace: 'test' }, (args) => ({ loader: 'js', contents:
         args.path.includes('supabase-js') ? 'export const createClient = globalThis.__tuitionClient;' :
         args.path.includes('zod') ? 'const chain = new Proxy({}, {get: (_, key) => key === "parse" ? v => v : () => chain}); export const z = chain;' :
         args.path.endsWith('/auth.ts') ? 'export const requireRole = async () => ({isServiceRole: false, roles: new Set(["admin"])}); export const callerOwnsStudent = async () => true;' :
+        args.path.endsWith('/clock.ts') ? 'export const clockNow = () => new Date(globalThis.__hecNow ?? "2000-01-01T00:00:00Z");' :
         args.path.endsWith('/sibling-state.ts') ? 'export const resolveSiblingStates = async (_sb, ids, month) => globalThis.__siblingStates(ids, month);' :
         'export const checkRateLimit = () => ({limited: false}); export const getClientIP = () => "test"; export const rateLimitResponse = () => {};'
       }));
@@ -282,18 +283,21 @@ ok(bulk.find((r) => r.studentId === id(8)).carry.payable === 0, 'paid on October
   rowCap = Infinity; requests = [];
   const free = (await call('calculate-tuition-bulk', { studentIds: many, month: MONTH })).results;
   const freeRequests = requests.length;
-  ok(free.length === 60 && free.every((r) => r.carry.carryInDebt === 2000000 && r.carry.payable === 2000000), 'bulk, no cap: 60 students each carry in 2,000,000');
+  // No register mark at all for these 60: the month's 8 lessons are billed all the same (a
+  // missing mark never shrinks a bill), so each owes the 2,000,000 carried in plus the month.
+  ok(free.length === 60 && free.every((r) => r.carry.carryInDebt === 2000000 && r.totalAmount === FULL && r.carry.payable === 2000000 + FULL), 'bulk, no cap: 60 students each carry in 2,000,000 and are billed the month although nobody marked them');
   for (const cap of [1000, 37, 7]) {
     rowCap = cap; requests = [];
     const capped60 = (await call('calculate-tuition-bulk', { studentIds: many, month: MONTH })).results;
-    ok(capped60.length === 60 && capped60.every((r) => r.carry.carryInDebt === 2000000 && r.carry.carryOutDebt === 2000000),
+    ok(capped60.length === 60 && capped60.every((r) => r.carry.carryInDebt === 2000000 && r.carry.carryOutDebt === 2000000 + FULL),
       `bulk at ${cap} rows per request: all 60 students' arrears come back (2,000,000 each)`);
     assert.deepEqual(capped60, free, `bulk at ${cap} rows per request answers exactly as with no cap`); passed += 1;
     ok(requests.filter((t) => t === 'invoices').length >= Math.ceil(1200 / cap), `and it took ${requests.length} requests instead of ${freeRequests}: the history was read in pages`);
   }
 
-  // Attendance is the second read a cap can cut: a lesson with no attendance row is not billable,
-  // so a short read charged the last students of a batch 0 for the month.
+  // Attendance is the second read a cap can cut. (While a lesson with no attendance row was not
+  // billable a short read charged the last students of a batch 0; now a missing row is billed,
+  // and a short read could only miss an Excused mark. Either way every row must come back.)
   const school = Array.from({ length: 150 }, (_, i) => id(2000 + i));
   source = { ...fixture, students: school.map((sid) => ({ id: sid, family_id: null, families: null })),
     enrollments: school.map((sid) => ({ student_id: sid, class_id: CLASS, start_date: '2025-01-01', end_date: null, allowed_days: null })),

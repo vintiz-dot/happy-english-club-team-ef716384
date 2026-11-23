@@ -388,7 +388,7 @@ for (const name of ['calculate-tuition', 'calculate-tuition-bulk', 'confirm-tuit
   const bundle = await build({
     entryPoints: [entry], bundle: true, format: 'esm', platform: 'node', write: false,
     plugins: [{ name: 'test-boundaries', setup(b) {
-      b.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/rate-limit\.ts$)/ },
+      b.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/clock\.ts$|\/rate-limit\.ts$)/ },
         (args) => ({ path: args.path, namespace: 'test' }));
       // A copy of the function kept somewhere else still uses the repo's _lib.
       b.onResolve({ filter: /\/_lib\/[^/]+\.ts$/ }, (args) => ({ path: join(libDir, args.path.split('/').pop()) }));
@@ -396,6 +396,7 @@ for (const name of ['calculate-tuition', 'calculate-tuition-bulk', 'confirm-tuit
         args.path.includes('supabase-js') ? 'export const createClient = globalThis.__t1Client;' :
         args.path.includes('zod') ? 'export const z = globalThis.__t1Zod;' :
         args.path.endsWith('/auth.ts') ? 'export const requireRole = async () => globalThis.__t1Gate; export const callerOwnsStudent = async () => true;' :
+        args.path.endsWith('/clock.ts') ? 'export const clockNow = () => new Date(globalThis.__hecNow ?? "2000-01-01T00:00:00Z");' :
         args.path.endsWith('/sibling-state.ts') ? 'export const resolveSiblingStates = (...a) => globalThis.__t1Sibling(...a);' :
         'export const checkRateLimit = () => ({limited: false}); export const getClientIP = () => "test"; export const rateLimitResponse = () => {};',
       }));

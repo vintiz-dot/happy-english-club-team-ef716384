@@ -4,9 +4,21 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { checkRateLimit, getClientIP, rateLimitResponse } from "../_lib/rate-limit.ts";
 import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
-import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
-import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
+import { enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
 import { classFeeOn, readClassFeeHistory } from "../_lib/class-fee.ts";
+import { priceStudentMonth, type MonthDiscount } from "../_lib/tuition-pricing.ts";
+import { refreshableMonths } from "../_lib/bill-refresh.ts";
+import { clockNow } from "../_lib/clock.ts";
+import {
+  decidePastMonth,
+  figuresOf,
+  isClosedMonth,
+  PAST_MONTH_DIFFERS,
+  PAST_MONTH_REPRICED,
+  pastMonthDiffersFlag,
+  pastMonthHeld,
+  pastMonthRepricedFlag,
+} from "../_lib/past-month-hold.ts";
 import {
   invoiceLabelFields,
   monthCharged,
@@ -16,9 +28,6 @@ import {
 import {
   findRegisterHoles,
   hanoiToday,
-  heldSentence,
-  decideHoles,
-  loweredDespiteFlag,
   LOWERED_DESPITE_MISSING_MARKS,
   missingMarksFlag,
   REGISTER_MISSING_MARKS,
@@ -100,8 +109,8 @@ Deno.serve(async (req) => {
       month: z.string().regex(/^\d{4}-\d{2}$/, "Invalid month format. Expected YYYY-MM"),
       // Internal preview used by the sibling calculator to avoid recursion/writes.
       siblingPreview: z.boolean().optional().default(false),
-      // An admin may save a lower figure although lessons have no mark in the
-      // register, with a reason. Ignored for anyone else.
+      // An admin may approve a closed month's new figures, with a reason
+      // (_lib/past-month-hold.ts). Ignored for anyone else.
       force: z.boolean().optional().default(false),
       reason: z.string().max(500).optional(),
     });
@@ -144,13 +153,19 @@ Deno.serve(async (req) => {
         .from("discount_assignments")
         .select("discount_definitions(*)")
         .eq("student_id", studentId)
-        .lte("effective_from", nextMonthStart)
+        // In force on at least one day of the month: started before the next
+        // month begins. (It was "on or before", so a discount starting on the
+        // 1st also cut the month before it.)
+        .lt("effective_from", nextMonthStart)
         .or(`effective_to.is.null,effective_to.gte.${startDate}`),
       supabase
         .from("referral_bonuses")
         .select("*")
         .eq("student_id", studentId)
-        .lte("effective_from", nextMonthStart)
+        // In force on at least one day of the month: started before the next
+        // month begins. (It was "on or before", so a discount starting on the
+        // 1st also cut the month before it.)
+        .lt("effective_from", nextMonthStart)
         .or(`effective_to.is.null,effective_to.gte.${startDate}`),
       supabase
         .from("invoices")
@@ -214,7 +229,8 @@ Deno.serve(async (req) => {
         .in("class_id", activeClassIds.length ? activeClassIds : ["00000000-0000-0000-0000-000000000000"])
         .gte("date", startDate)
         .lt("date", nextMonthStart)
-        .in("status", ["Scheduled", "Held"]),
+        // Cancelled lessons are read too: they are listed, never billed.
+        .in("status", ["Scheduled", "Held", "Canceled"]),
       family?.id
         ? resolveSiblingStates(supabase, [family.id], month, !siblingPreview).then((states) => ({
             data: states[0] ?? null,
@@ -251,202 +267,27 @@ Deno.serve(async (req) => {
     // A frozen bill keeps its saved figures whatever the enrollment says now.
     const tuitionFrozen = savedInvoice?.tuition_frozen === true;
 
-    // Lessons that were held, inside the enrolment, with no attendance row at
-    // all: holes in the register, not decisions (_lib/register-holes.ts). The
-    // same enrolment, weekday and rate rules as the pricing below. The internal
-    // sibling preview applies the same decision read-only (it writes nothing), so
-    // the family discount is judged on the figures the child is charged; a frozen
-    // bill is left as it is and looks for none.
-    const registerHoles =
-      tuitionFrozen
-        ? []
-        : findRegisterHoles<any, any>(sessions ?? [], attendanceMap, hanoiToday(), {
-            enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
-            onAllowedDay: (s: any, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
-            rateOf: (s: any, e: any) => {
-              const cd: any = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
-              return e.rate_override_vnd ?? classFeeOn(feeHistory, s.class_id, s.date, Number(cd?.session_rate_vnd ?? 0));
-            },
-          });
-    const holeIds = new Set(registerHoles.map((h) => h.session_id));
-
-    // The month's lessons priced one way: Present, Absent or Late are billed,
-    // Excused is forgiven. With countHoles the lessons that have no row at all
-    // are billed too, at their normal rate (the August case, see register-holes.ts).
-    const priceLessons = (countHoles: boolean) => {
-      // Calculate expected tuition using CLASS DEFAULT rates (for review comparison)
-      let expectedClassTuition = 0;
-      // Base charges: bill Present or Absent; Excused not billable
-      // Track base amounts per enrollment for accurate discount calculation
-      let baseAmount = 0;
-      const enrollmentBaseAmounts = new Map<string, number>(); // class_id -> base amount
-      const datedEnrollmentBases = new Map<EnrollmentRow, number>();
-      const rateAdjustmentSavings = new Map<string, number>(); // class_id -> savings
-      const sessionDetails: Array<{
-        date: string;
-        rate: number;
-        status: AttendanceStatus | "Scheduled";
-        class_id: string;
-        class_name: string;
-        unmarked?: boolean;
-      }> = [];
-
-      for (const s of sessions ?? []) {
-        // Check if student was enrolled on this specific session date
-        const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
-
-        if (!enrollment) continue; // Skip sessions outside enrollment period
-
-        // Check if session day is in student's allowed_days (null means all days allowed)
-        const sessionDayOfWeek = getDayOfWeek(s.date);
-        if (enrollment.allowed_days && !enrollment.allowed_days.includes(sessionDayOfWeek)) {
-          continue; // Skip sessions on days the student doesn't attend
-        }
-
-        const att = attendanceMap.get(s.id);
-        const classData = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
-        const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classData?.session_rate_vnd ?? 0));
-        const overrideRate = enrollment?.rate_override_vnd;
-        const actualRate = overrideRate ?? defaultRate;
-        const className = classNameMap.get(s.class_id) || "Unknown";
-
-        // Bill Present, Absent, or Late (all attended/charged); Excused is forgiven.
-        const unmarked = countHoles && holeIds.has(s.id);
-        const billable = isBillableTuitionSession(s.status, unmarked ? "Present" : att);
-        if (billable && actualRate > 0) {
-          // Calculate expected using default rate
-          expectedClassTuition += defaultRate;
-
-          // ALWAYS use default rate for base amount (not override)
-          baseAmount += defaultRate;
-          // Track per-enrollment base amount using default rate
-          const currentAmount = enrollmentBaseAmounts.get(s.class_id) || 0;
-          enrollmentBaseAmounts.set(s.class_id, currentAmount + defaultRate);
-          datedEnrollmentBases.set(enrollment, (datedEnrollmentBases.get(enrollment) || 0) + defaultRate);
-
-          // Track rate savings if override is lower than default
-          if (overrideRate && overrideRate < defaultRate) {
-            const savings = defaultRate - overrideRate;
-            const currentSavings = rateAdjustmentSavings.get(s.class_id) || 0;
-            rateAdjustmentSavings.set(s.class_id, currentSavings + savings);
-          }
-
-          sessionDetails.push({
-            date: s.date,
-            rate: actualRate, // Show actual rate paid
-            status: (att ?? "Present") as any,
-            class_id: s.class_id,
-            class_name: className,
-            ...(unmarked ? { unmarked: true } : {}),
-          });
-        } else {
-          // still return session detail for UI if needed
-          if (att)
-            sessionDetails.push({
-              date: s.date,
-              rate: actualRate,
-              status: att,
-              class_id: s.class_id,
-              class_name: className,
-            });
-        }
-      }
-      return { expectedClassTuition, baseAmount, enrollmentBaseAmounts, datedEnrollmentBases, rateAdjustmentSavings, sessionDetails };
-    };
-
-    // N: today's rule. W: the same month with the holes counted - needed only
-    // when a saved bill is higher than N.
-    const priceN = priceLessons(false);
-    const savedBase = savedInvoice ? Number(savedInvoice.base_amount ?? 0) : null;
-    const priceW = registerHoles.length > 0 && savedBase !== null && priceN.baseAmount < savedBase ? priceLessons(true) : null;
-    const mayForce = force === true && gate.roles.has("admin") && !gate.isServiceRole;
-    const holeMode = decideHoles({
-      holeCount: registerHoles.length,
-      savedBase,
-      frozen: tuitionFrozen,
-      nBase: priceN.baseAmount,
-      wBase: priceW ? priceW.baseAmount : null,
-      forced: mayForce,
-    });
-    const forcedLower = holeMode === "forced";
-    const pricedAsCharged = holeMode === "priced_as_charged";
-    const heldBill = holeMode === "held";
-    if (forcedLower && !(reason ?? "").trim()) throw new Error("Give a reason to save the lower figure.");
-    const registerBase = priceN.baseAmount; // what the register prices, holes not billed
-
-    const priced = pricedAsCharged ? priceW! : priceN;
-    const expectedClassTuition = priced.expectedClassTuition;
-    let baseAmount = priced.baseAmount;
-    const enrollmentBaseAmounts = priced.enrollmentBaseAmounts;
-    const datedEnrollmentBases = priced.datedEnrollmentBases;
-    const rateAdjustmentSavings = priced.rateAdjustmentSavings;
-    // A held bill lists every lesson, the unmarked ones too, marked as such.
-    const sessionDetails = heldBill && priceW ? priceW.sessionDetails : priced.sessionDetails;
-
-    // Discounts bucket
-    const discounts: Array<{
-      name: string;
-      type: "percent" | "amount";
-      value: number;
-      amount: number;
-      [k: string]: any;
-    }> = [];
-    let totalDiscount = 0;
-
-    // Add rate adjustment discounts first
-    for (const [classId, savings] of rateAdjustmentSavings.entries()) {
-      if (savings > 0) {
-        const className = classNameMap.get(classId) || "Unknown";
-        // Get enrollment to show override rate details
-        const enrollment = (enrollments as EnrollmentRow[] | null | undefined)?.find((e) => e.class_id === classId);
-        const overrideRate = enrollment?.rate_override_vnd || 0;
-        const defaultRate = sessions?.find((s) => s.class_id === classId)?.classes?.[0]?.session_rate_vnd || 0;
-        const savingsPerSession = defaultRate - overrideRate;
-
-        discounts.push({
-          name: `Rate Adjustment`,
-          type: "amount",
-          value: savings,
-          amount: savings,
-          class_id: classId,
-          appliedToClass: className,
-          isRateAdjustment: true,
-          overrideRate: overrideRate,
-          defaultRate: defaultRate,
-          savingsPerSession: savingsPerSession,
-        });
-        totalDiscount += savings;
-      }
+    // The class's own rate, for dates its fee history does not cover.
+    const classRate = new Map<string, number>();
+    for (const s of (sessions ?? []) as any[]) {
+      if (classRate.has(s.class_id)) continue;
+      const cd: any = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
+      classRate.set(s.class_id, Number(cd?.session_rate_vnd ?? 0));
     }
+    const feeOn = (classId: string, date: string) => classFeeOn(feeHistory, classId, date, classRate.get(classId) ?? 0);
 
-    const datedDiscounts = enrollmentDiscounts(datedEnrollmentBases);
-    for (const discount of datedDiscounts) {
-      discounts.push(discount);
-      totalDiscount += discount.amount;
-    }
-
-    // Special per-student discounts (already fetched in Wave 1)
+    // The student's own discounts and bonuses (already fetched in Wave 1).
+    const monthDiscounts: MonthDiscount[] = [];
     for (const a of discountAssignments ?? []) {
       const def = (a as any).discount_definitions;
       if (!def || !def.is_active) continue;
-      const amt = def.type === "percent" ? Math.round(baseAmount * (def.value / 100)) : Math.round(def.value);
-      if (amt > 0) {
-        discounts.push({ name: def.name, type: def.type, value: def.value, amount: amt });
-        totalDiscount += amt;
-      }
+      monthDiscounts.push({ name: def.name, type: def.type, value: def.value });
     }
+    for (const b of referralBonuses ?? []) monthDiscounts.push({ name: "Referral Bonus", type: b.type, value: b.value });
 
-    // Referral bonuses (already fetched in Wave 1)
-    for (const b of referralBonuses ?? []) {
-      const amt = b.type === "percent" ? Math.round(baseAmount * (b.value / 100)) : Math.round(b.value);
-      if (amt > 0) {
-        discounts.push({ name: "Referral Bonus", type: b.type, value: b.value, amount: amt });
-        totalDiscount += amt;
-      }
-    }
-
-    // Sibling discount if assigned (already fetched in Wave 2)
+    // The family's sibling discount, when this child holds it (fetched in Wave 2).
     let siblingState: any = null;
+    let siblingAward: { percent: number; classId: string } | null = null;
     if (family?.id) {
       const sd = (siblingStateRes as any).data;
       if (sd) {
@@ -457,44 +298,134 @@ Deno.serve(async (req) => {
           isWinner: sd.winner_student_id === studentId,
           winnerClassId: sd.winner_class_id,
         };
-
         if (sd.status === "assigned" && sd.winner_student_id === studentId && sd.winner_class_id) {
-          // Apply discount only to the winner class
-          const winnerClassBase = enrollmentBaseAmounts.get(sd.winner_class_id) || 0;
-          const amt = Math.round(winnerClassBase * (sd.sibling_percent / 100));
-          if (amt > 0) {
-            discounts.push({
-              name: "Sibling Discount",
-              type: "percent",
-              value: sd.sibling_percent,
-              amount: amt,
-              isSiblingWinner: true,
-              appliedToClass: sd.winner_class_id,
-            });
-            totalDiscount += amt;
-          }
+          siblingAward = { percent: Number(sd.sibling_percent ?? 0), classId: sd.winner_class_id };
         }
       }
     }
 
-    let totalAmount = Math.max(0, baseAmount - totalDiscount);
+    // THE PRICE. Every rule is in _lib/tuition-pricing.ts (the owner's, 23 Nov
+    // 2026): a lesson is billed unless it is cancelled or the child is Excused,
+    // a mark or no mark; the custom rate IS the price; the enrollment's terms,
+    // then fixed amounts, then percentages on what is left, then the sibling
+    // percentage on the winner class's share. Nothing is priced in this file.
+    const pricedMonth = priceStudentMonth({
+      enrollments,
+      sessions: (sessions ?? []) as any[],
+      markOf: (sessionId: string) => attendanceMap.get(sessionId),
+      classFeeOn: feeOn,
+      monthDiscounts,
+      sibling: siblingAward,
+    });
+    // projected: the whole month as the timetable stands - the bill.
+    // actual: the lessons already held - shown to admins beside it.
+    const projected = pricedMonth.projected;
+    const actual = pricedMonth.actual;
+    const computed = { base: projected.baseAmount, discount: projected.totalDiscount, total: projected.totalAmount };
+    const expectedClassTuition = projected.expectedClassTuition;
+
+    // Lessons that were held, inside the enrolment, with no attendance row at
+    // all: holes in the register (_lib/register-holes.ts). They ARE billed (a
+    // missing mark never shrinks a bill); they are found so the bill can say
+    // which lessons nobody marked. A frozen bill is left as it is.
+    const registerHoles =
+      tuitionFrozen
+        ? []
+        : findRegisterHoles<any, any>((sessions ?? []) as any[], attendanceMap, hanoiToday(), {
+            enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
+            onAllowedDay: (s: any, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
+            rateOf: (s: any, e: any) => e.rate_override_vnd ?? feeOn(s.class_id, s.date),
+          });
+    const holeIds = new Set(registerHoles.map((h) => h.session_id));
+    const holeLessons = registerHoles.map((h) => ({
+      date: h.date,
+      class_name: (classNameMap.get(h.class_id) as string | undefined) || "Unknown",
+    }));
+    // What the month would come to without the unmarked lessons.
+    const registerBase =
+      computed.base -
+      pricedMonth.lessons
+        .filter((l) => l.state === "billed" && holeIds.has(l.session_id))
+        .reduce((n, l) => n + l.price_vnd, 0);
+    const savedBase = savedInvoice ? Number(savedInvoice.base_amount ?? 0) : null;
+
+    // Every lesson of the month that concerns the child, billed or not.
+    const lessonList = pricedMonth.lessons.map((l) => ({
+      session_id: l.session_id,
+      date: l.date,
+      class_id: l.class_id,
+      class_name: (classNameMap.get(l.class_id) as string | undefined) || "Unknown",
+      price_vnd: l.price_vnd,
+      mark: l.mark,
+      held: l.held,
+      state: l.state, // billed | excused | cancelled | free
+      ...(l.state === "billed" && holeIds.has(l.session_id) ? { unmarked: true } : {}),
+    }));
+    // The lines the screens have always read: the billed lessons, and the
+    // marked ones that are not billed (Excused, or a free place).
+    const sessionDetails: Array<{
+      date: string;
+      rate: number;
+      status: AttendanceStatus | "Scheduled";
+      class_id: string;
+      class_name: string;
+      unmarked?: boolean;
+    }> = lessonList
+      .filter((l) => l.state === "billed" || ((l.state === "excused" || l.state === "free") && !!l.mark))
+      .map((l) => ({
+        date: l.date,
+        rate: l.price_vnd,
+        status: (l.state === "billed" ? (l.mark ?? "Present") : l.mark) as AttendanceStatus,
+        class_id: l.class_id,
+        class_name: l.class_name,
+        ...((l as any).unmarked ? { unmarked: true } : {}),
+      }));
+
+    const discounts: Array<{
+      name: string;
+      type: "percent" | "amount";
+      value: number;
+      amount: number;
+      [k: string]: any;
+    }> = projected.discounts;
+
+    let baseAmount = computed.base;
+    let totalDiscount = computed.discount;
+    let totalAmount = computed.total;
     const frozenInvoice: any = savedInvoice;
     if (tuitionFrozen) {
       baseAmount = Number(frozenInvoice.base_amount ?? 0);
       totalDiscount = Number(frozenInvoice.discount_amount ?? 0);
       totalAmount = Number(frozenInvoice.total_amount ?? 0);
     }
-    // Held: some deleted marks must have been Excused and nobody can tell
-    // which, so the saved figures stand (as for a frozen bill).
+
+    // A CLOSED month's saved bill never changes on its own (_lib/past-month-hold.ts):
+    // when today's pricing gives other figures the saved ones stand, the bill is
+    // flagged, and only an admin's approval with a reason saves the new ones.
+    // The internal sibling preview prices by the rules and writes nothing, and a
+    // month whose family discount is still being decided is not saved at all, so
+    // neither is judged.
+    const siblingUnresolved = siblingState?.status === "unresolved";
+    const savedFigures = savedInvoice ? figuresOf(savedInvoice) : null;
+    const mayForce = force === true && gate.roles.has("admin") && !gate.isServiceRole;
+    const pastMode =
+      siblingPreview || siblingUnresolved
+        ? "normal"
+        : decidePastMonth({
+            closed: isClosedMonth(month, refreshableMonths(clockNow())),
+            saved: savedFigures,
+            frozen: tuitionFrozen,
+            next: computed,
+            approved: mayForce,
+          });
+    const heldBill = pastMode === "held";
+    const approvedChange = pastMode === "approved";
+    if (approvedChange && !(reason ?? "").trim()) throw new Error("Give a reason to change a closed month's bill.");
     if (heldBill) {
-      baseAmount = Number(frozenInvoice.base_amount ?? 0);
-      totalDiscount = Number(frozenInvoice.discount_amount ?? 0);
-      totalAmount = Number(frozenInvoice.total_amount ?? 0);
+      baseAmount = savedFigures!.base;
+      totalDiscount = savedFigures!.discount;
+      totalAmount = savedFigures!.total;
     }
-    const holeLessons = registerHoles.map((h) => ({
-      date: h.date,
-      class_name: (classNameMap.get(h.class_id) as string | undefined) || "Unknown",
-    }));
 
     // ---------- Payments and carryovers ----------
     // Prior charges and current month invoice already fetched in Wave 1
@@ -622,49 +553,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Build per-class breakdown for multi-enrollment students
-    // Calculate per-class discounts for net_amount_vnd
-    const classDiscounts = new Map<string, number>(); // class_id -> total discounts for that class
-
-    // Add rate adjustment savings
-    for (const [classId, savings] of rateAdjustmentSavings.entries()) {
-      classDiscounts.set(classId, (classDiscounts.get(classId) || 0) + savings);
-    }
-
-    // Add enrollment-level discounts
-    for (const discount of datedDiscounts) {
-      classDiscounts.set(discount.class_id, (classDiscounts.get(discount.class_id) || 0) + discount.amount);
-    }
-
-    const classBreakdown = [];
-    for (const [classId, baseAmount] of enrollmentBaseAmounts.entries()) {
-      // Get class details from sessions
-      const classSession = sessions?.find((s) => s.class_id === classId);
-      const classData = classSession?.classes
-        ? Array.isArray(classSession.classes)
-          ? classSession.classes[0]
-          : classSession.classes
-        : null;
-
-      const className = (classNameMap.get(classId) as string | undefined) || "Unknown";
-      const sessionRate = classFeeOn(feeHistory, classId, startDate, Number(classData?.session_rate_vnd ?? 0));
-      const sessionsCount = sessionDetails.filter(
-        (sd) => sd.class_id === classId && (sd.status === "Present" || sd.status === "Absent"),
-      ).length;
-
-      // net_amount_vnd = base - class-specific discounts (enrollment + rate adjustments)
-      const classSpecificDiscounts = classDiscounts.get(classId) || 0;
-      const netAmount = Math.max(0, baseAmount - classSpecificDiscounts);
-
-      classBreakdown.push({
-        class_id: classId,
-        class_name: className,
-        amount_vnd: baseAmount,
-        net_amount_vnd: netAmount, // After class-specific discounts, before sibling/student discounts
-        sessions_count: sessionsCount,
-        session_rate_vnd: sessionRate,
-      });
-    }
+    // Per-class lines, from the priced month.
+    const classBreakdown = projected.classes.map((c) => {
+      const prices = [
+        ...new Set(pricedMonth.lessons.filter((l) => l.state === "billed" && l.class_id === c.class_id).map((l) => l.price_vnd)),
+      ];
+      return {
+        class_id: c.class_id,
+        class_name: (classNameMap.get(c.class_id) as string | undefined) || "Unknown",
+        amount_vnd: c.base_vnd, // lessons x price (the custom rate when there is one)
+        net_amount_vnd: c.after_own_vnd, // after the enrollment's own discounts, before sibling/student discounts
+        sessions_count: c.lessons,
+        // One price for the month's lessons: that price. Mixed (a fee change
+        // mid-month): the class fee at the start of the month, as before.
+        session_rate_vnd: prices.length === 1 ? prices[0] : feeOn(c.class_id, startDate),
+        // What a sibling percentage would be taken from (compute-sibling-discounts reads this).
+        sibling_basis_vnd: c.sibling_basis_vnd,
+      };
+    });
 
     // ---------- Persist invoice (safe) ----------
     // Calculate cumulative paid amount (all payments up to and including this month)
@@ -675,48 +581,51 @@ Deno.serve(async (req) => {
     const reviewFlags: any[] = [];
 
     const storedFlags: any[] = Array.isArray(frozenInvoice?.review_flags) ? frozenInvoice.review_flags : [];
-    if (heldBill) {
-      // The bill stands as it was: keep what it already says, add the holes.
-      for (const f of storedFlags) {
-        if (f?.type !== REGISTER_MISSING_MARKS && f?.type !== "changed_after_confirmation") reviewFlags.push(f);
-      }
-    }
-    // Only flag if there's a difference between expected and final
-    else if (totalAmount !== expectedClassTuition) {
-      const discountReasons = discounts.map((d) => d.name).filter((v, i, a) => a.indexOf(v) === i);
-      reviewFlags.push({
-        type: "tuition_adjustment",
-        label: "Tuition differs from class rate",
-        details: {
-          expectedClassTuition,
-          actualPayable: totalAmount,
-          difference: expectedClassTuition - totalAmount,
-          reasons: discountReasons,
-        },
-      });
-    }
-
-    if (!heldBill) {
-      // What an admin recorded when forcing a lower figure stays on the bill.
-      for (const f of storedFlags) if (f?.type === LOWERED_DESPITE_MISSING_MARKS) reviewFlags.push(f);
-    }
     const savedAt = new Date().toISOString();
-    if (forcedLower) {
-      reviewFlags.push(loweredDespiteFlag({
-        savedBase: savedBase ?? 0,
-        newBase: registerBase,
-        count: registerHoles.length,
-        actorUserId: gate.userId || null,
-        actorEmail: gate.email ?? null,
-        reason: (reason ?? "").trim(),
-        at: savedAt,
-      }));
+    if (heldBill) {
+      // The bill stands as it was: keep what it already says, add the difference.
+      for (const f of storedFlags) {
+        if (f?.type !== PAST_MONTH_DIFFERS && f?.type !== REGISTER_MISSING_MARKS && f?.type !== "changed_after_confirmation") {
+          reviewFlags.push(f);
+        }
+      }
+      reviewFlags.push(pastMonthDiffersFlag(savedFigures!, computed));
+    } else {
+      // Only flag if there's a difference between expected and final
+      if (totalAmount !== expectedClassTuition) {
+        const discountReasons = discounts.map((d) => d.name).filter((v, i, a) => a.indexOf(v) === i);
+        if (baseAmount !== expectedClassTuition) discountReasons.unshift("Custom rate");
+        reviewFlags.push({
+          type: "tuition_adjustment",
+          label: "Tuition differs from class rate",
+          details: {
+            expectedClassTuition,
+            actualPayable: totalAmount,
+            difference: expectedClassTuition - totalAmount,
+            reasons: discountReasons,
+          },
+        });
+      }
+      // What an admin recorded when changing a held bill stays on the bill.
+      for (const f of storedFlags) {
+        if (f?.type === LOWERED_DESPITE_MISSING_MARKS || f?.type === PAST_MONTH_REPRICED) reviewFlags.push(f);
+      }
+      if (approvedChange) {
+        reviewFlags.push(pastMonthRepricedFlag({
+          saved: savedFigures!,
+          next: computed,
+          actorUserId: gate.userId || null,
+          actorEmail: gate.email ?? null,
+          reason: (reason ?? "").trim(),
+          at: savedAt,
+        }));
+      }
     }
     if (registerHoles.length > 0) {
       // The saved base is the one first seen: a later call (the bill now moved) must
       // not overwrite it, so identical calls leave the flag, and the row, alone.
       const firstSeen = storedFlags.find((f) => f?.type === REGISTER_MISSING_MARKS)?.details?.savedBase;
-      reviewFlags.push(missingMarksFlag(registerHoles, typeof firstSeen === "number" ? firstSeen : savedBase, registerBase, holeMode));
+      reviewFlags.push(missingMarksFlag(registerHoles, typeof firstSeen === "number" ? firstSeen : savedBase, registerBase, "normal"));
     }
 
     // Which labels this save may write. A recalculation must not un-confirm
@@ -753,20 +662,12 @@ Deno.serve(async (req) => {
 
     // Never save a bill while the family discount is still being decided:
     // that would overwrite the stored invoice without the discount.
-    const siblingUnresolved = siblingState?.status === "unresolved";
     const writeInvoice = !siblingPreview && !siblingUnresolved;
     let invoiceUpsertOk = true;
     let invoiceErrorMsg = "";
-    // A held bill is not repriced, and a bill priced as charged whose figures did
-    // not move is not rewritten: only what changed in its labels, flags and
+    // A held bill is not repriced: only what changed in its labels, flags and
     // balances is written, and nothing at all when nothing changed.
-    const figuresUnchanged =
-      !!frozenInvoice &&
-      Number(frozenInvoice.base_amount ?? 0) === baseAmount &&
-      Number(frozenInvoice.discount_amount ?? 0) === totalDiscount &&
-      Number(frozenInvoice.total_amount ?? 0) === totalAmount &&
-      sameFlags(frozenInvoice.class_breakdown, classBreakdown);
-    const patchOnly = heldBill || (pricedAsCharged && figuresUnchanged);
+    const patchOnly = heldBill;
     if (patchOnly && writeInvoice) {
       const stored: any = frozenInvoice;
       const patch: Record<string, unknown> = {};
@@ -836,7 +737,7 @@ Deno.serve(async (req) => {
         : {
             // No saved breakdown (older bills): one line carrying the saved figures.
             classes: [{
-              class_id: [...priceN.enrollmentBaseAmounts.keys()][0] ?? null,
+              class_id: projected.classes[0]?.class_id ?? activeClassIds[0] ?? null,
               class_name: "As charged",
               amount_vnd: baseAmount,
               net_amount_vnd: Math.max(0, baseAmount - totalDiscount),
@@ -846,7 +747,7 @@ Deno.serve(async (req) => {
             count: 0,
           }
       : null;
-    // And its discounts are the saved discount, not discounts computed on N.
+    // And its discounts are the saved discount, not the ones priced today.
     const answeredDiscounts = heldBill
       ? totalDiscount > 0
         ? [{ name: "As charged", type: "amount", value: totalDiscount, amount: totalDiscount, isAsCharged: true }]
@@ -881,22 +782,21 @@ Deno.serve(async (req) => {
       siblingUnresolved,
       invoiceSaved: writeInvoice,
       tuitionFrozen,
-      ...(heldBill || pricedAsCharged
-        ? {
-            held: {
-              priced_as_charged: pricedAsCharged,
-              reason: "register_missing_marks",
-              message: heldSentence(holeLessons.length, month),
-              lessons: holeLessons,
-              register_base: registerBase,
-              saved_base: savedBase,
-            },
-          }
+      // The whole month as today's pricing gives it (the saved bill when it is
+      // not held or frozen), and, for staff, the lessons already held.
+      projected: { lessons: projected.lessons, baseAmount: computed.base, totalDiscount: computed.discount, totalAmount: computed.total },
+      ...(gate.isServiceRole || gate.roles.has("admin")
+        ? { actual: { lessons: actual.lessons, baseAmount: actual.baseAmount, totalDiscount: actual.totalDiscount, totalAmount: actual.totalAmount } }
         : {}),
-      ...(registerHoles.length > 0 && !heldBill && !pricedAsCharged
-        ? { missingMarks: { lessons: holeLessons, register_base: registerBase, saved_base: savedBase, forcedLower: forcedLower && writeInvoice } }
+      lessons: lessonList,
+      ...(heldBill ? { held: pastMonthHeld(month, savedFigures!, computed) } : {}),
+      ...(registerHoles.length > 0 && !heldBill
+        ? { missingMarks: { lessons: holeLessons, register_base: registerBase, saved_base: savedBase, forcedLower: false, billed: true } }
         : {}),
-      ...(mayForce && pricedAsCharged ? { forceIgnored: "The month was priced with the unmarked lessons as charged, so there is no lower figure to force." } : {}),
+      ...(approvedChange && writeInvoice
+        ? { approvedChange: { saved: savedFigures, next: computed, reason: (reason ?? "").trim() } }
+        : {}),
+      ...(mayForce && pastMode === "normal" ? { forceIgnored: "Nothing was held for this month, so there was nothing to approve." } : {}),
       breakdown: {
         classes: heldLines ? heldLines.classes : classBreakdown,
       },

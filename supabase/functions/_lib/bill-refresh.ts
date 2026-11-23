@@ -92,9 +92,12 @@ export function readRecalc(status: number, body: any): RecalcOutcome {
   }
   if (status !== 200) return { ok: false, error: String(body?.error || `calculate-tuition answered ${status}`) };
   if (body?.error) return { ok: false, error: String(body.error) };
-  if (body?.held?.reason === "register_missing_marks") {
+  // Held for any reason calculate-tuition gives (lessons with no mark; a closed
+  // month that now prices differently, _lib/past-month-hold.ts): the saved bill
+  // stands, and nothing the refresh does can change that.
+  if (body?.held && typeof body.held === "object") {
     const lessons = Array.isArray(body.held.lessons) ? body.held.lessons.length : 0;
-    const message = String(body.held.message || "Held: lessons have no mark. The bill stays as charged until the register is fixed.");
+    const message = String(body.held.message || "Held: the bill stays as charged.");
     if (body.held.priced_as_charged === true) return { ok: true, note: { lessons, message } };
     return { ok: false, held: { lessons, message } };
   }

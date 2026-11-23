@@ -62,11 +62,12 @@ for (const name of ['calculate-tuition', 'calculate-tuition-bulk']) {
     entryPoints: [resolve(`supabase/functions/${name}/index.ts`)], bundle: true,
     format: 'esm', platform: 'node', write: false, logLevel: 'silent',
     plugins: [{ name: 'test-boundaries', setup(b) {
-      b.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/rate-limit\.ts$)/ }, args => ({ path: args.path, namespace: 'test' }));
+      b.onResolve({ filter: /(^https?:\/\/|\/auth\.ts$|\/sibling-state\.ts$|\/clock\.ts$|\/rate-limit\.ts$)/ }, args => ({ path: args.path, namespace: 'test' }));
       b.onLoad({ filter: /.*/, namespace: 'test' }, args => ({ loader: 'js', contents:
         args.path.includes('supabase-js') ? 'export const createClient = globalThis.__tuitionClient;' :
         args.path.includes('zod') ? 'const chain = new Proxy({}, {get: (_, key) => key === "parse" ? v => v : () => chain}); export const z = chain;' :
         args.path.endsWith('/auth.ts') ? 'export const requireRole = async () => ({isServiceRole: false, roles: new Set(["admin"])}); export const callerOwnsStudent = async () => true;' :
+        args.path.endsWith('/clock.ts') ? 'export const clockNow = () => new Date(globalThis.__hecNow ?? "2000-01-01T00:00:00Z");' :
         args.path.endsWith('/sibling-state.ts') ? 'export const resolveSiblingStates = async () => { throw new Error("Unexpected family calculation"); };' :
         'export const checkRateLimit = () => ({limited: false}); export const getClientIP = () => "test"; export const rateLimitResponse = () => {};'
       }));
