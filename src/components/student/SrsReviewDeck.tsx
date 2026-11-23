@@ -7,7 +7,7 @@
  * ease factor, interval and due date, and every review is logged to
  * `srs_reviews` for the growth analytics.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,8 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
-  Layers, PartyPopper, RotateCcw, Lightbulb, Loader2,
+  Layers, RotateCcw, Lightbulb, Loader2,
 } from "lucide-react";
+import { InkCheck } from "@/components/fx/InkCheck";
+import { dur, ease, useMotionLevel } from "@/components/fx/motion";
+import { useAgeBand } from "@/hooks/useAgeBand";
+import { fill } from "@/lib/copy/student";
+import { studentVocabCopy, type VocabCopyKey } from "@/lib/copy/studentVocab";
 
 interface SrsCard {
   id: string;
@@ -51,12 +56,16 @@ function sm2(card: SrsCard, quality: number) {
   return { ease_factor: ef, interval_days: interval, repetitions: reps, lapses, due_date: due.toISOString() };
 }
 
+// Calm for a miss: no danger or warning colour. Only the two passing grades carry the leaf colour.
 const RATINGS = [
-  { label: "Again", quality: 2, className: "border-hec-danger/30 text-hec-danger hover:bg-hec-danger-tint" },
-  { label: "Hard", quality: 3, className: "border-hec-warn/30 text-hec-warn hover:bg-hec-warn-tint" },
-  { label: "Good", quality: 4, className: "border-hec-leaf/30 text-hec-leaf hover:bg-hec-leaf-tint" },
-  { label: "Easy", quality: 5, className: "border-hec-line-strong text-hec-ink hover:bg-hec-sunken" },
-] as const;
+  { label: "Again", copy: "vocab.rate.again", quality: 2, className: "border-hec-line-strong text-hec-ink hover:bg-hec-sunken" },
+  { label: "Hard", copy: "vocab.rate.hard", quality: 3, className: "border-hec-line-strong text-hec-ink hover:bg-hec-sunken" },
+  { label: "Good", copy: "vocab.rate.good", quality: 4, className: "border-hec-leaf/30 text-hec-leaf hover:bg-hec-leaf-tint" },
+  { label: "Easy", copy: "vocab.rate.easy", quality: 5, className: "border-hec-leaf/30 text-hec-leaf hover:bg-hec-leaf-tint" },
+] as const satisfies readonly { label: string; copy: VocabCopyKey; quality: number; className: string }[];
+
+/** How long the verdict (tick, or the calm answer) stays on the card before the next one: under 300 ms. */
+const VERDICT_MS = 280;
 
 export function SrsReviewDeck() {
   const { user } = useAuth();
@@ -64,6 +73,16 @@ export function SrsReviewDeck() {
   const [flipped, setFlipped] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [doneCount, setDoneCount] = useState(0);
+  const motionLevel = useMotionLevel();
+  const { band, viBeneath } = useAgeBand();
+  // The card just rated, shown with its verdict until the next card is ready. Set only after the save succeeded.
+  const [verdict, setVerdict] = useState<{ card: SrsCard; knew: boolean } | null>(null);
+  const verdictTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (verdictTimer.current) clearTimeout(verdictTimer.current); }, []);
+  const words = (key: VocabCopyKey, vars?: Record<string, string | number>) => ({
+    en: fill(studentVocabCopy[key].en, vars),
+    vi: fill(studentVocabCopy[key].vi, vars),
+  });
 
   const { data: studentId } = useQuery<string | null>({
     queryKey: ["srs-student-id", user?.id],
@@ -140,19 +159,49 @@ export function SrsReviewDeck() {
     );
   }
 
-  if (!current) {
+  // The finish: one calm sentence. No emoji; the teen band has no picture at all.
+  if (!current && !verdict) {
+    const line = words(`vocab.${doneCount > 0 ? "finish" : "none"}.${band}` as VocabCopyKey);
     return (
-      <div className="text-center py-16 space-y-3">
-        <PartyPopper className="h-10 w-10 mx-auto text-hec-brass" />
-        <h3 className="font-display text-hec-h2 font-medium text-hec-ink">All caught up!</h3>
-        <p className="text-hec-small text-hec-ink-soft max-w-sm mx-auto">
-          {doneCount > 0
-            ? `You reviewed ${doneCount} card${doneCount === 1 ? "" : "s"} today. New cards appear here automatically when your teacher flags something to practice.`
-            : "No cards due. Cards are created automatically from things flagged in class — check back after your next lesson!"}
-        </p>
+      <div className="text-center py-16 space-y-3" role="status">
+        {band !== "teen" && <InkCheck size={36} className="mx-auto text-hec-leaf" />}
+        <p className="font-display text-hec-h3 font-medium text-hec-ink max-w-sm mx-auto">{line.en}</p>
+        {viBeneath && <p className="text-hec-small text-hec-ink-soft max-w-sm mx-auto">{line.vi}</p>}
       </div>
     );
   }
+
+  const shown = verdict ? verdict.card : current!;
+
+  // Paper turn: 240 ms in all (half out, half in). Calm: cross-fade only. Off: plain swap.
+  const cardMotion =
+    motionLevel === "off"
+      ? { initial: false as const, animate: {}, exit: undefined, transition: { duration: 0 } }
+      : motionLevel === "calm"
+        ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: dur.reveal / 2, ease } }
+        : {
+            initial: { rotateY: -90 },
+            animate: { rotateY: 0 },
+            exit: { rotateY: 90 },
+            transition: { duration: dur.reveal / 2, ease },
+          };
+
+  // The verdict is shown only once the review is saved, and the next card is never held back by more than VERDICT_MS.
+  const rate = (quality: number) =>
+    reviewMutation.mutate(
+      { card: current!, quality },
+      {
+        onSuccess: () => {
+          setVerdict({ card: current!, knew: quality >= 3 });
+          if (verdictTimer.current) clearTimeout(verdictTimer.current);
+          verdictTimer.current = setTimeout(() => setVerdict(null), VERDICT_MS);
+        },
+      },
+    );
+
+  const verdictLine = verdict ? words(verdict.knew ? "vocab.knew" : "vocab.again") : null;
+  const reveal = words("vocab.tapToReveal");
+  const showAnswer = words("vocab.showAnswer");
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
@@ -164,63 +213,85 @@ export function SrsReviewDeck() {
       </div>
 
       {/* Flip card */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         <motion.div
-          key={current.id + (flipped ? "-b" : "-f")}
-          initial={{ y: 8, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 0, opacity: 0 }}
-          transition={{ duration: 0.14 }}
+          key={shown.id + (verdict ? "-v" : flipped ? "-b" : "-f")}
+          {...cardMotion}
+          style={motionLevel === "full" ? { transformPerspective: 900 } : undefined}
           className="rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1 min-h-[220px] p-6 flex flex-col cursor-pointer select-none"
-          onClick={() => !flipped && setFlipped(true)}
+          onClick={() => !verdict && !flipped && setFlipped(true)}
         >
-          <div className="flex items-center justify-between mb-3">
-            <Badge variant="outline" className="text-hec-caption uppercase tracking-wider">
-              {flipped ? "Answer" : current.source === "vocab" ? "Vocabulary" : "Fix the error"}
-            </Badge>
-            {!flipped && current.hint && (
-              <Button
-                variant="ghost" size="sm" className="min-h-hec-target gap-1 text-hec-caption text-hec-warn"
-                onClick={(e) => { e.stopPropagation(); setShowHint((h) => !h); }}
-              >
-                <Lightbulb className="h-3.5 w-3.5" />Hint
-              </Button>
-            )}
-          </div>
+          {verdict && verdictLine ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center gap-3" role="status">
+              {verdict.knew && <InkCheck size={36} className="text-hec-leaf" label={verdictLine.en} />}
+              <p className="whitespace-pre-line text-hec-h3 text-hec-ink font-medium">{verdict.card.back}</p>
+              <p className="text-hec-small text-hec-ink-soft">
+                {verdictLine.en}
+                {viBeneath && <span className="block">{verdictLine.vi}</span>}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <Badge variant="outline" className="text-hec-caption uppercase tracking-wider">
+                  {flipped ? "Answer" : shown.source === "vocab" ? "Vocabulary" : "Fix the error"}
+                </Badge>
+                {!flipped && shown.hint && (
+                  <Button
+                    variant="ghost" size="sm" className="min-h-hec-target gap-1 text-hec-caption text-hec-warn"
+                    onClick={(e) => { e.stopPropagation(); setShowHint((h) => !h); }}
+                  >
+                    <Lightbulb className="h-3.5 w-3.5" />Hint
+                  </Button>
+                )}
+              </div>
 
-          <div className="flex-1 flex items-center justify-center text-center">
-            <p className={`whitespace-pre-line text-hec-h3 ${flipped ? "text-hec-leaf font-semibold" : "text-hec-ink font-medium"}`}>
-              {flipped ? current.back : current.front}
-            </p>
-          </div>
+              <div className="flex-1 flex items-center justify-center text-center">
+                <p className={`whitespace-pre-line text-hec-h3 ${flipped ? "text-hec-leaf font-semibold" : "text-hec-ink font-medium"}`}>
+                  {flipped ? shown.back : shown.front}
+                </p>
+              </div>
 
-          {!flipped && showHint && current.hint && (
-            <p className="text-hec-caption text-hec-warn text-center mt-2">{current.hint}</p>
-          )}
-          {!flipped && (
-            <p className="text-hec-caption text-hec-ink-soft text-center mt-3">tap to reveal</p>
+              {!flipped && showHint && shown.hint && (
+                <p className="text-hec-caption text-hec-warn text-center mt-2">{shown.hint}</p>
+              )}
+              {!flipped && (
+                <p className="text-hec-caption text-hec-ink-soft text-center mt-3">
+                  {reveal.en}
+                  {viBeneath && <span className="block">{reveal.vi}</span>}
+                </p>
+              )}
+            </>
           )}
         </motion.div>
       </AnimatePresence>
 
       {/* Ratings */}
-      {flipped ? (
+      {verdict ? null : flipped ? (
         <div className="grid grid-cols-4 gap-2">
-          {RATINGS.map((r) => (
-            <Button
-              key={r.label}
-              variant="outline"
-              disabled={reviewMutation.isPending}
-              className={`min-h-hec-target rounded-hec-md px-2 font-semibold ${r.className}`}
-              onClick={() => reviewMutation.mutate({ card: current, quality: r.quality })}
-            >
-              {r.label}
-            </Button>
-          ))}
+          {RATINGS.map((r) => {
+            const w = words(r.copy);
+            return (
+              <Button
+                key={r.label}
+                variant="outline"
+                disabled={reviewMutation.isPending}
+                className={`min-h-hec-target h-auto flex-col gap-0 whitespace-normal rounded-hec-md px-2 py-2 font-semibold ${r.className}`}
+                onClick={() => rate(r.quality)}
+              >
+                {w.en}
+                {viBeneath && <span className="text-hec-caption font-normal">{w.vi}</span>}
+              </Button>
+            );
+          })}
         </div>
       ) : (
-        <Button variant="outline" className="min-h-hec-target w-full rounded-hec-md gap-2" onClick={() => setFlipped(true)}>
-          <RotateCcw className="h-4 w-4" />Show answer
+        <Button variant="outline" className="min-h-hec-target h-auto w-full whitespace-normal rounded-hec-md gap-2" onClick={() => setFlipped(true)}>
+          <RotateCcw className="h-4 w-4 shrink-0" />
+          <span>
+            {showAnswer.en}
+            {viBeneath && <span className="block text-hec-caption font-normal">{showAnswer.vi}</span>}
+          </span>
         </Button>
       )}
     </div>
