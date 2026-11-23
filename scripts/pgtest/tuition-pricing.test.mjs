@@ -1,0 +1,221 @@
+// The owner's tuition rules (23 Nov 2026) as worked examples, against the real
+// supabase/functions/_lib/tuition-pricing.ts. No database, no network.
+import assert from 'node:assert/strict';
+import { transform } from 'esbuild';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const src = readFileSync(resolve('supabase/functions/_lib/tuition-pricing.ts'), 'utf8');
+assert.ok(!/^\s*import\s/m.test(src), 'tuition-pricing.ts imports nothing');
+const { code } = await transform(src, { loader: 'ts', format: 'esm' });
+const dir = mkdtempSync(join(tmpdir(), 'tuition-pricing-'));
+writeFileSync(join(dir, 'pricing.mjs'), code);
+const { priceStudentMonth, chooseSiblingClass, weekdayOf } = await import(pathToFileURL(join(dir, 'pricing.mjs')).href);
+
+let passed = 0, failed = 0;
+function test(name, fn) {
+  try { fn(); passed++; }
+  catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
+}
+
+// November 2026: Tuesdays and Thursdays, eight lessons.
+const DATES = ['2026-11-03', '2026-11-05', '2026-11-10', '2026-11-12', '2026-11-17', '2026-11-19', '2026-11-24', '2026-11-26'];
+const sessions = (classId, statuses = {}, dates = DATES) =>
+  dates.map((date, i) => ({ id: `${classId}-${i}`, date, class_id: classId, status: statuses[i] ?? 'Scheduled' }));
+const enrol = (classId, extra = {}) => ({ class_id: classId, start_date: '2026-01-01', end_date: null, ...extra });
+const price = ({ enrollments, sess, marks = {}, fees = { A: 200000, B: 260000 }, monthDiscounts = [], sibling = null }) =>
+  priceStudentMonth({
+    enrollments, sessions: sess, markOf: (id) => marks[id], classFeeOn: (c) => fees[c] ?? 0, monthDiscounts, sibling,
+  });
+
+test('weekday comes from the date alone', () => {
+  assert.equal(weekdayOf('2026-11-03'), 2); // Tuesday
+  assert.equal(weekdayOf('2026-11-01'), 0); // Sunday
+});
+
+test('held or scheduled lessons are billed; cancelled and excused are not', () => {
+  const r = price({
+    enrollments: [enrol('A')],
+    sess: sessions('A', { 0: 'Held', 1: 'Held', 6: 'Canceled' }),
+    marks: { 'A-0': 'Present', 'A-1': 'Excused', 'A-2': 'Absent', 'A-3': 'Late' },
+  });
+  // 8 on the timetable, 1 cancelled, 1 excused -> 6 billed.
+  assert.equal(r.projected.lessons, 6);
+  assert.equal(r.projected.baseAmount, 6 * 200000);
+  assert.equal(r.projected.totalAmount, 1200000);
+  assert.deepEqual(r.lessons.filter((l) => l.state !== 'billed').map((l) => [l.session_id, l.state]), [['A-1', 'excused'], ['A-6', 'cancelled']]);
+});
+
+test('a lesson with no register mark is billed', () => {
+  const r = price({ enrollments: [enrol('A')], sess: sessions('A'), marks: {} });
+  assert.equal(r.projected.lessons, 8);
+  assert.equal(r.projected.totalAmount, 1600000);
+});
+
+test('actual counts only lessons already held; projected the whole month', () => {
+  const r = price({ enrollments: [enrol('A')], sess: sessions('A', { 0: 'Held', 1: 'Held', 2: 'Held' }) });
+  assert.equal(r.actual.totalAmount, 600000);
+  assert.equal(r.projected.totalAmount, 1600000);
+});
+
+test('lessons outside the enrollment dates or weekdays are not billed', () => {
+  const r = price({
+    enrollments: [enrol('A', { start_date: '2026-11-10', end_date: '2026-11-20', allowed_days: [2] })], // Tuesdays only
+    sess: sessions('A'),
+  });
+  assert.deepEqual(r.lessons.map((l) => l.date), ['2026-11-10', '2026-11-17']);
+  assert.equal(r.projected.totalAmount, 400000);
+});
+
+test('the custom rate is the price, lower or higher than the class fee', () => {
+  const lower = price({ enrollments: [enrol('A', { rate_override_vnd: 150000 })], sess: sessions('A') });
+  assert.equal(lower.projected.baseAmount, 1200000);
+  assert.equal(lower.projected.totalDiscount, 0);
+  assert.equal(lower.projected.totalAmount, 1200000);
+  assert.equal(lower.projected.expectedClassTuition, 1600000);
+  const higher = price({ enrollments: [enrol('A', { rate_override_vnd: 250000 })], sess: sessions('A') });
+  assert.equal(higher.projected.totalAmount, 2000000);
+});
+
+test('a custom rate of 0 is a free place: nothing billed', () => {
+  const r = price({ enrollments: [enrol('A', { rate_override_vnd: 0 })], sess: sessions('A') });
+  assert.equal(r.projected.lessons, 0);
+  assert.equal(r.projected.totalAmount, 0);
+  assert.ok(r.lessons.every((l) => l.state === 'free'));
+});
+
+test('a percentage discount comes off the custom rate (owner example: 1,080,000)', () => {
+  const r = price({
+    enrollments: [enrol('A', { rate_override_vnd: 150000, discount_type: 'percent', discount_value: 10, discount_cadence: 'monthly' })],
+    sess: sessions('A'),
+  });
+  assert.equal(r.projected.baseAmount, 1200000);
+  assert.equal(r.projected.totalAmount, 1080000);
+});
+
+test('two percentages: the second is taken from what is left (owner example: 1,368,000)', () => {
+  const r = price({
+    enrollments: [enrol('A', { discount_type: 'percent', discount_value: 10, discount_cadence: 'monthly' })],
+    sess: sessions('A'),
+    sibling: { percent: 5, classId: 'A' },
+  });
+  assert.equal(r.projected.baseAmount, 1600000);
+  assert.deepEqual(r.projected.discounts.map((d) => [d.name, d.amount]), [['Enrollment Discount', 160000], ['Sibling Discount', 72000]]);
+  assert.equal(r.projected.totalAmount, 1368000);
+  assert.equal(r.projected.totalDiscount, 232000);
+});
+
+test('fixed amounts go first, percentages after: the school gives away the least', () => {
+  const r = price({
+    enrollments: [enrol('A')],
+    sess: sessions('A'),
+    monthDiscounts: [{ name: 'Scholarship', type: 'percent', value: 10 }, { name: 'Voucher', type: 'amount', value: 100000 }],
+  });
+  // (1,600,000 - 100,000) x 0.9 = 1,350,000, not 1,600,000 x 0.9 - 100,000 = 1,340,000.
+  assert.deepEqual(r.projected.discounts.map((d) => [d.name, d.amount]), [['Voucher', 100000], ['Scholarship', 150000]]);
+  assert.equal(r.projected.totalAmount, 1350000);
+});
+
+test('a discount never takes more than the amount it applies to', () => {
+  const r = price({
+    enrollments: [enrol('A')],
+    sess: sessions('A', {}, DATES.slice(0, 2)),
+    monthDiscounts: [{ name: 'Voucher', type: 'amount', value: 1000000 }],
+  });
+  assert.equal(r.projected.totalAmount, 0);
+  assert.equal(r.projected.totalDiscount, 400000);
+});
+
+test('identical terms on a weekday split are one discount', () => {
+  const terms = { discount_type: 'amount', discount_value: 100000, discount_cadence: 'monthly' };
+  const r = price({
+    enrollments: [enrol('A', { end_date: '2026-11-11', ...terms }), enrol('A', { start_date: '2026-11-12', ...terms })],
+    sess: sessions('A'),
+  });
+  assert.equal(r.projected.discounts.length, 1);
+  assert.equal(r.projected.totalAmount, 1500000);
+});
+
+test('the sibling percentage applies to the winner class only', () => {
+  const r = price({
+    enrollments: [enrol('A'), enrol('B')],
+    sess: [...sessions('A'), ...sessions('B', {}, DATES.slice(0, 4))],
+    sibling: { percent: 5, classId: 'B' },
+  });
+  // A 1,600,000 + B 1,040,000; 5% of B = 52,000.
+  assert.equal(r.projected.totalAmount, 1600000 + 1040000 - 52000);
+  assert.equal(r.projected.classes.find((c) => c.class_id === 'B').sibling_discount_vnd, 52000);
+  assert.equal(r.projected.classes.find((c) => c.class_id === 'A').sibling_discount_vnd, 0);
+});
+
+test('totals always add up: base - discounts = total', () => {
+  const r = price({
+    enrollments: [enrol('A', { discount_type: 'percent', discount_value: 7, discount_cadence: 'monthly' }), enrol('B', { rate_override_vnd: 233333 })],
+    sess: [...sessions('A'), ...sessions('B')],
+    monthDiscounts: [{ name: 'x', type: 'percent', value: 3 }, { name: 'y', type: 'amount', value: 12345 }],
+    sibling: { percent: 5, classId: 'A' },
+  });
+  const p = r.projected;
+  assert.equal(p.baseAmount - p.discounts.reduce((n, d) => n + d.amount, 0), p.totalAmount);
+  assert.equal(p.baseAmount - p.totalDiscount, p.totalAmount);
+  assert.ok(Number.isInteger(p.totalAmount));
+});
+
+// ---- who gets the sibling discount
+const child = (studentId, spec) => ({ studentId, month: price({ ...spec, sibling: null }).projected });
+
+test('sibling: percent 0 means off', () => {
+  const kids = [child('s1', { enrollments: [enrol('A')], sess: sessions('A') }), child('s2', { enrollments: [enrol('A')], sess: sessions('A') })];
+  assert.equal(chooseSiblingClass(kids, 0).status, 'off');
+});
+
+test('sibling: needs two children with billable lessons', () => {
+  const kids = [
+    child('s1', { enrollments: [enrol('A')], sess: sessions('A') }),
+    child('s2', { enrollments: [enrol('A')], sess: sessions('A', Object.fromEntries(DATES.map((_, i) => [i, 'Canceled']))) }),
+  ];
+  const c = chooseSiblingClass(kids, 5);
+  assert.equal(c.status, 'pending');
+  assert.equal(c.billableChildren, 1);
+});
+
+test('sibling: goes to the class where it costs the school least, across all the children', () => {
+  const kids = [
+    // s1: one big class.
+    child('s1', { enrollments: [enrol('A')], sess: sessions('A') }),                       // A 1,600,000
+    // s2: a big class and a small one. The small one is the cheapest in the family.
+    child('s2', { enrollments: [enrol('A'), enrol('B')], sess: [...sessions('A'), ...sessions('B', {}, DATES.slice(0, 2))] }), // B 520,000
+  ];
+  const c = chooseSiblingClass(kids, 5);
+  assert.equal(c.status, 'assigned');
+  assert.deepEqual([c.studentId, c.classId, c.amount], ['s2', 'B', 26000]);
+});
+
+test('sibling: the comparison is after the class own discounts', () => {
+  const kids = [
+    child('s1', { enrollments: [enrol('A', { discount_type: 'percent', discount_value: 50, discount_cadence: 'monthly' })], sess: sessions('A') }), // 800,000 left
+    child('s2', { enrollments: [enrol('B')], sess: sessions('B', {}, DATES.slice(0, 4)) }),                                                         // 1,040,000
+  ];
+  const c = chooseSiblingClass(kids, 5);
+  assert.deepEqual([c.studentId, c.classId, c.amount], ['s1', 'A', 40000]);
+});
+
+test('sibling: a free place does not count as a billable child', () => {
+  const kids = [
+    child('s1', { enrollments: [enrol('A')], sess: sessions('A') }),
+    child('s2', { enrollments: [enrol('A', { rate_override_vnd: 0 })], sess: sessions('A') }),
+  ];
+  assert.equal(chooseSiblingClass(kids, 5).status, 'pending');
+});
+
+test('sibling: equal cost is settled by the tie order, the same way every time', () => {
+  const kids = [child('s1', { enrollments: [enrol('A')], sess: sessions('A') }), child('s2', { enrollments: [enrol('A')], sess: sessions('A') })];
+  const first = chooseSiblingClass(kids, 5, (s) => (s === 's2' ? 0 : 1));
+  assert.equal(first.studentId, 's2');
+  assert.equal(chooseSiblingClass([...kids].reverse(), 5, (s) => (s === 's2' ? 0 : 1)).studentId, 's2');
+});
+
+console.log(`${passed} passed, ${failed} failed`);
+process.exit(failed ? 1 : 0);
