@@ -76,6 +76,20 @@ export async function fetchInvoiceData(
     }));
   }
 
+  // A held bill (lessons with no mark, saved figures kept) must not print lines
+  // that do not add up to its total: one line, "As charged", when they would not.
+  if (tuitionData.held && !tuitionData.held.priced_as_charged) {
+    const linesTotal = classBreakdownArray.reduce((n: number, c: any) => n + Number(c.amount_vnd || 0), 0);
+    if (linesTotal !== Number(tuitionData.baseAmount ?? 0)) {
+      classBreakdownArray = [{
+        class_name: 'As charged',
+        sessions_count: 0,
+        amount_vnd: Number(tuitionData.baseAmount ?? 0),
+        net_amount_vnd: Number(tuitionData.totalAmount ?? 0),
+      }];
+    }
+  }
+
   // Map to invoice format
   const invoice = mapUpstreamToInvoice({
     ...tuitionData,

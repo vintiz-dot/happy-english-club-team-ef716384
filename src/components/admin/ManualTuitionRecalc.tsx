@@ -27,6 +27,8 @@ interface HeldInfo {
   lessons: Array<{ date: string; class_name: string }>;
   register_base: number;
   saved_base: number;
+  /** True when the month was priced with the unmarked lessons counted, so the bill did not go down. */
+  priced_as_charged?: boolean;
 }
 
 const figuresOf = (r: any): Figures => ({
@@ -125,13 +127,16 @@ export function ManualTuitionRecalc() {
       if (data?.held) {
         setResult(null);
         setHeld(data.held as HeldInfo);
-        toast.warning("Held: the saved bill was not changed");
+        toast.warning(data.held.priced_as_charged ? "The bill was priced as charged" : "Held: the saved bill was not changed");
         return;
       }
 
       setHeld(null);
       setResult(data);
-      toast.success(force ? "Lower figure saved" : "Tuition recalculated successfully");
+      // Only the server says whether the lower figure was really forced: if the
+      // holes were fixed meanwhile it saved the register's figure as usual.
+      const reallyForced = force && data?.missingMarks?.forcedLower === true;
+      toast.success(reallyForced ? "Lower figure saved" : "Tuition recalculated successfully");
 
       // Log audit: the old figures, the new figures, why, and who.
       const { data: userData } = await supabase.auth.getUser();
@@ -142,7 +147,7 @@ export function ManualTuitionRecalc() {
         total_amount: data.totalAmount,
       };
       await supabase.from("audit_log").insert({
-        action: force ? "manual_tuition_recalc_forced_lower" : "manual_tuition_recalc",
+        action: reallyForced ? "manual_tuition_recalc_forced_lower" : "manual_tuition_recalc",
         entity: "invoice",
         entity_id: `${selectedStudent}-${month}`,
         actor_user_id: actor,
@@ -150,7 +155,7 @@ export function ManualTuitionRecalc() {
           student_id: selectedStudent,
           month,
           actor_user_id: actor,
-          reason: force ? reason.trim() : null,
+          reason: reallyForced ? reason.trim() : null,
           old: oldFigures,
           new: newFigures,
           // Kept under the old key too, for anything that already reads it.
@@ -220,7 +225,9 @@ export function ManualTuitionRecalc() {
           <Alert variant="destructive">
             <AlertDescription>
               <div className="space-y-3">
-                <p className="font-semibold">The bill was not changed</p>
+                <p className="font-semibold">
+                  {held.priced_as_charged ? "The unmarked lessons were charged as before" : "The bill was not changed"}
+                </p>
                 <p className="text-sm">
                   {held.message ||
                     `${held.lessons.length} lessons have no mark. The bill stays as charged until the register is fixed.`}
