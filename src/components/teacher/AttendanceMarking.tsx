@@ -267,8 +267,8 @@ export function AttendanceMarking() {
   const getStatusBadge = (status: 'Present' | 'Absent' | 'Excused') => {
     const ivoryColors = {
       Present: "border border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:bg-hec-leaf-tint",
-      Absent: "border border-hec-line-strong bg-hec-surface text-hec-ink hover:bg-hec-surface",
-      Excused: "border border-hec-line bg-hec-sunken text-hec-ink-soft hover:bg-hec-sunken"
+      Absent: "border border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:bg-hec-danger-tint",
+      Excused: "border border-hec-warn/30 bg-hec-warn-tint text-hec-warn hover:bg-hec-warn-tint"
     };
     return `${ivoryColors[status]} min-h-hec-target shrink-0 px-4`;
   };
@@ -314,7 +314,7 @@ export function AttendanceMarking() {
                 className={`cursor-pointer gap-2 ${getStatusBadge(attendance[student.id])}`}
                 onClick={() => canEdit && toggleAttendance(student.id)}
               >
-                {/* The state is a mark AND a word: a tick drawn in leaf for Present; an ink dash for Absent and Excused (no red). */}
+                {/* The state is a mark AND a word: a tick drawn in leaf for Present; a dash for Absent and Excused; the colours are the register's own. */}
                 {attendance[student.id] === "Present" ? (
                   <InkCheck size={18} />
                 ) : (

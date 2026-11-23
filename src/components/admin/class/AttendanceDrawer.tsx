@@ -31,11 +31,12 @@ import { showSeal } from "@/components/fx/showSeal";
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
-// Ivory attendance chips (DESIGN_SYSTEM s.14, brief C3): present is leaf with a tick, absent is ink with a dash (no
-// red flourish), excused is neutral with a dash - the word is always there too.
+// Ivory attendance chips (DESIGN_SYSTEM s.14): present is leaf, absent is
+// red, excused is neutral - the word says which. Brief C3 adds a mark: a tick for Present, a dash for Absent and
+// Excused; the word is always there too.
 const IVORY_ATTENDANCE: Record<string, string> = {
   Present: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
-  Absent: "border-hec-line-strong bg-hec-surface text-hec-ink",
+  Absent: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
   Excused: "border-hec-line bg-hec-sunken text-hec-ink-soft",
 };
 
