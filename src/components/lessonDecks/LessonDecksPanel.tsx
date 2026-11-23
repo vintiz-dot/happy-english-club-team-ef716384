@@ -21,6 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Play, Printer, Users, BookOpen, CalendarDays, ExternalLink, FileText, ClipboardCheck, Trophy, Lightbulb, PenLine, RotateCcw, Send, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { pickSession } from "@/lib/lessonDecks/covered";
+import { odCompanions } from "@/lib/lessonDecks/odCompanions";
 
 type ClassLite = { id: string; name: string };
 type FlipbookRow = ClassFlipbook & { class_id: string | null };
@@ -327,6 +328,21 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                 </li>
               );
             })}
+          </ul>
+        </div>
+      )}
+
+      {unit && odCompanions(unit.curriculum, unit.level, unit.unit).length > 0 && (
+        <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1">
+          <h3 className="mb-1 font-display text-hec-h3 text-hec-ink flex items-center gap-2"><BookOpen className="h-5 w-5" />Oxford Discover companion books</h3>
+          <p className="mb-3 text-hec-small text-hec-ink-soft">Pages in the 2nd-edition books that go with this unit. Answers are in each book's answer key.</p>
+          <ul className="space-y-2">
+            {odCompanions(unit.curriculum, unit.level, unit.unit).map((c) => (
+              <li key={c.book} className="text-hec-small">
+                <span className="font-medium text-hec-ink">{c.book}, {c.label}, pp. {c.pages}</span>
+                <span className="text-hec-ink-soft"> · {c.note}</span>
+              </li>
+            ))}
           </ul>
         </div>
       )}

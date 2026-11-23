@@ -395,5 +395,19 @@ for (const { f, u } of units) {
   }
 }
 
+// Oxford Discover companion books (pages from the 2nd-edition answer keys).
+{
+  const OC = await load("src/lib/lessonDecks/odCompanions.ts", "ld-od-companions");
+  eq("Grammar Book pages: Unit 1, Unit 2, Unit 10, Unit 16, Unit 18", [1, 2, 10, 16, 18].map((u) => OC.grammarBookPages(u)),
+    [{ pages: "13-16", review: 21 }, { pages: "17-20", review: 21 }, { pages: "53-56", review: 57 }, { pages: "80-83", review: 84 }, { pages: "89-92", review: 93 }]);
+  eq("Writing & Spelling: Level 1 Unit 9 is Module 5, pp. 20-23, spelling p. 44", OC.writingBookPages(1, 9), { module: 5, pages: "20-23", spelling: 44 });
+  eq("Writing & Spelling: Level 3 Unit 3 is Module 2, pp. 10-15, spelling p. 61", OC.writingBookPages(3, 3), { module: 2, pages: "10-15", spelling: 61 });
+  for (const l of [1, 2, 3]) for (let u = 1; u <= 18; u++) {
+    const c = OC.odCompanions("oxford-discover-2e", l, u);
+    ok(`companions L${l} U${u}: Grammar Book and Writing & Spelling, with pages`, c.length >= 2 && c.every((x) => /^\d+-\d+$/.test(x.pages) && x.note));
+  }
+  eq("companions: nothing for another course or Level 4", [OC.odCompanions("reach-higher", 3, 1), OC.odCompanions("oxford-discover-2e", 4, 1)], [[], []]);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
