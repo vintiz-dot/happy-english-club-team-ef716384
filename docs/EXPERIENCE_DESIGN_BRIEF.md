@@ -251,7 +251,7 @@ Facts checked 23 Nov 2026: the teacher journal has no autosave, and children use
 
 - Smart Upload already uses framer-motion; bring its durations and easings onto the tokens. A running job shows its real stage message with a `LiveDot`; a finished one an `InkCheck`; a failed one does not move. Never a progress bar.
 - Review queue: an approval that empties the queue is a `Seal`, "All reviewed". A rejection never shows a seal.
-- CEFR drafts and the vocabulary audit: decided after the build session reports what the approve action is on each.
+- CEFR drafts (`CefrDraftsCard.tsx`) are approved one row at a time and the card goes when the list empties: no effect there for now. The vocabulary audit is a read-only monthly view: nothing to add.
 
 ### C7. Payroll (`TeacherPayroll.tsx`, `TeacherPayrollCalendar.tsx`, `FinancialPrivacy.tsx`)
 
