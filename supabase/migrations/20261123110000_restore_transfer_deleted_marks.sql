@@ -2,6 +2,7 @@
 --
 --   SELECT public.admin_restore_transfer_deleted_marks();           -- dry run (the default): writes nothing
 --   SELECT public.admin_restore_transfer_deleted_marks(false);      -- does it
+--   (third argument p_before: the cutoff time, see THE CUTOFF below)
 --   SELECT public.admin_restore_transfer_deleted_marks(false,
 --     '[{"student_id":"<child id>","month":"2026-08"}]');            -- also puts back the months you decided on
 --
@@ -13,6 +14,12 @@
 -- it, so a lesson with no mark is not billed, and the next time a bill is
 -- recalculated it drops. (One child's August 2026 bill of 1,680,000 VND, already
 -- paid, went to 0 this way.)
+--
+-- THE CUTOFF. Only transfers logged before 2026-11-06 12:00 UTC are looked at:
+-- that is the moment the fixed modify_enrollment_transfer (20261106100001) was
+-- written. If the fix was pasted into the database LATER than that, pass the
+-- later time as the third argument (p_before) so transfers made in between are
+-- included too.
 --
 -- WHAT THIS DOES. It finds every lesson that was Held, is before today, falls
 -- inside an enrolment the child had in the class they left, and has no mark.
@@ -82,8 +89,11 @@ END
 $pre$;
 
 -- ---------------------------------------------------------------- the holes
+DROP FUNCTION IF EXISTS public._restore_marks_holes();
+DROP FUNCTION IF EXISTS public.admin_restore_transfer_deleted_marks(boolean, jsonb);
+
 -- Internal. One row per lesson a transfer wiped out and nobody has marked since.
-CREATE OR REPLACE FUNCTION public._restore_marks_holes()
+CREATE OR REPLACE FUNCTION public._restore_marks_holes(p_before timestamptz)
 RETURNS TABLE (student_id uuid, session_id uuid, class_id uuid, lesson_date date, month text, transfer_date date)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$
   WITH t AS (
@@ -95,7 +105,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$
                 THEN left(l.diff ->> 'effective_date', 10)::date END AS eff
       FROM public.audit_log l
      WHERE l.entity = 'enrollment' AND l.action = 'transfer'
-       AND l.occurred_at < timestamptz '2026-11-06 12:00+00'
+       AND l.occurred_at < p_before
        AND CASE WHEN l.diff ->> 'deleted_attendance' ~ '^\d{1,9}$' THEN (l.diff ->> 'deleted_attendance')::integer ELSE 0 END > 0
   ),
   tr AS (
@@ -115,16 +125,17 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$
        SELECT 1 FROM public.enrollments e
         WHERE e.student_id = tr.student_id AND e.class_id = s.class_id
           AND e.start_date <= s.date AND (e.end_date IS NULL OR e.end_date >= s.date)
-          AND (e.allowed_days IS NULL OR cardinality(e.allowed_days) = 0
-               OR extract(dow FROM s.date)::integer = ANY (e.allowed_days)))
+          -- As billing reads it: NULL = every day; an empty list = no day.
+          AND (e.allowed_days IS NULL OR extract(dow FROM s.date)::integer = ANY (e.allowed_days)))
    ORDER BY tr.student_id, s.id, tr.eff
 $fn$;
-REVOKE ALL ON FUNCTION public._restore_marks_holes() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public._restore_marks_holes(timestamptz) FROM PUBLIC, anon, authenticated, service_role;
 
 -- ------------------------------------------------------------ the restore
 CREATE OR REPLACE FUNCTION public.admin_restore_transfer_deleted_marks(
   p_dry_run boolean DEFAULT true,
-  p_force jsonb DEFAULT '[]'::jsonb
+  p_force jsonb DEFAULT '[]'::jsonb,
+  p_before timestamptz DEFAULT timestamptz '2026-11-06 12:00+00'
 ) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
 DECLARE
@@ -139,6 +150,7 @@ DECLARE
   inv record;
   v_rows jsonb := '[]'::jsonb;
   v_force_ignored jsonb := '[]'::jsonb;
+  v_skipped jsonb := '[]'::jsonb;
   v_steps jsonb := '[]'::jsonb;
   v_result jsonb;
   v_reg bigint;
@@ -164,10 +176,14 @@ BEGIN
     RAISE EXCEPTION 'The second argument must be a list like [{"student_id":"...","month":"2026-08"}].' USING ERRCODE = '22023';
   END IF;
 
+  IF p_before IS NULL THEN
+    RAISE EXCEPTION 'The cutoff time (p_before) cannot be empty.' USING ERRCODE = '22023';
+  END IF;
+
   SELECT count(*) INTO v_transfers
     FROM public.audit_log l
    WHERE l.entity = 'enrollment' AND l.action = 'transfer'
-     AND l.occurred_at < timestamptz '2026-11-06 12:00+00'
+     AND l.occurred_at < p_before
      AND CASE WHEN l.diff ->> 'deleted_attendance' ~ '^\d{1,9}$' THEN (l.diff ->> 'deleted_attendance')::integer ELSE 0 END > 0;
 
   BEGIN
@@ -175,7 +191,7 @@ BEGIN
       SELECT h.student_id, h.month, count(*)::integer AS holes,
              string_agg(DISTINCT c.name::text, ', ' ORDER BY c.name::text) AS class_name,
              st.full_name::text AS student_name
-        FROM public._restore_marks_holes() h
+        FROM public._restore_marks_holes(p_before) h
         JOIN public.students st ON st.id = h.student_id
         LEFT JOIN public.classes c ON c.id = h.class_id
        GROUP BY h.student_id, h.month, st.full_name
@@ -197,7 +213,7 @@ BEGIN
       BEGIN
         INSERT INTO public.attendance (session_id, student_id, status, marked_by, marked_at, notes)
         SELECT h.session_id, h.student_id, 'Present', NULL, now(), 'trial'
-          FROM public._restore_marks_holes() h WHERE h.student_id = r.student_id AND h.month = r.month;
+          FROM public._restore_marks_holes(p_before) h WHERE h.student_id = r.student_id AND h.month = r.month;
         SELECT coalesce((SELECT x.expected_base FROM public.tuition_bill_expected(r.month) x WHERE x.student_id = r.student_id), 0)
           INTO v_reg;
         RAISE EXCEPTION 'trial over' USING ERRCODE = 'HCR00';
@@ -232,10 +248,11 @@ BEGIN
         SELECT h.session_id, h.student_id, 'Present', NULL, now(),
                'Restored ' || to_char(v_today, 'YYYY-MM-DD') || ': deleted by the class transfer of '
                || to_char(h.transfer_date, 'YYYY-MM-DD') || '; the bill charged at the time counts these lessons.'
-          FROM public._restore_marks_holes() h WHERE h.student_id = r.student_id AND h.month = r.month;
+          FROM public._restore_marks_holes(p_before) h WHERE h.student_id = r.student_id AND h.month = r.month
+        ON CONFLICT (session_id, student_id) DO NOTHING;
         GET DIAGNOSTICS v_n = ROW_COUNT;
         v_restored := v_restored + v_n;
-        v_cm_restored := v_cm_restored + 1;
+        IF v_n > 0 THEN v_cm_restored := v_cm_restored + 1; END IF;
         v_months_done := v_months_done || r.month;
       ELSE
         v_cm_decide := v_cm_decide + 1;
@@ -250,6 +267,25 @@ BEGIN
         'frozen', CASE WHEN v_saved IS NULL THEN NULL ELSE inv.frozen END,
         'confirmation_status', inv.conf, 'reason', v_reason);
     END LOOP;
+
+    -- Logged transfers that cannot be followed: the old enrolment row is gone,
+    -- or the log lacks the class or the date.
+    SELECT coalesce(jsonb_agg(jsonb_build_object('audit_id', x.id, 'entity_id', x.entity_id,
+             'reason', CASE WHEN x.en_id IS NULL THEN 'The old enrolment no longer exists, so the child cannot be found.'
+                            ELSE 'The log row has no readable class or date.' END)), '[]'::jsonb)
+      INTO v_skipped
+      FROM (
+        SELECT l.id, l.entity_id, en.id AS en_id,
+               (l.diff ->> 'old_class_id' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+                AND l.diff ->> 'effective_date' ~ '^\d{4}-\d{2}-\d{2}') AS readable
+          FROM public.audit_log l
+          LEFT JOIN public.enrollments en
+            ON l.entity_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' AND en.id::text = l.entity_id
+         WHERE l.entity = 'enrollment' AND l.action = 'transfer'
+           AND l.occurred_at < p_before
+           AND CASE WHEN l.diff ->> 'deleted_attendance' ~ '^\d{1,9}$' THEN (l.diff ->> 'deleted_attendance')::integer ELSE 0 END > 0
+      ) x
+     WHERE x.en_id IS NULL OR NOT x.readable;
 
     -- A forced child-month with no hole is reported, not an error.
     FOR f IN SELECT e FROM jsonb_array_elements(p_force) e LOOP
@@ -278,6 +314,9 @@ BEGIN
         || array_to_string(ARRAY(SELECT DISTINCT m FROM unnest(v_months_open) m ORDER BY m), ', ')
         || '). Nothing was written for them. Read each reason. If you know the lessons were held and the child was there, run again with the second argument listing the child and month, for example [{"student_id":"<child id>","month":"2026-08"}]. If a lesson was really Excused, leave it.'::text);
     END IF;
+    IF jsonb_array_length(v_skipped) > 0 THEN
+      v_steps := v_steps || to_jsonb(jsonb_array_length(v_skipped) || ' logged transfer(s) could not be followed and were skipped (see transfers_skipped). Their children may still have missing marks: check them by hand.'::text);
+    END IF;
     IF jsonb_array_length(v_force_ignored) > 0 THEN
       v_steps := v_steps || to_jsonb(jsonb_array_length(v_force_ignored) || ' child-month(s) you listed have no missing marks and were skipped.'::text);
     END IF;
@@ -285,13 +324,13 @@ BEGIN
     v_result := jsonb_build_object(
       'dry_run', p_dry_run, 'transfers', v_transfers, 'holes', v_holes, 'restored', v_restored,
       'child_months_restored', v_cm_restored, 'child_months_to_decide', v_cm_decide,
-      'child_months', v_rows, 'force_ignored', v_force_ignored, 'next_steps', v_steps);
+      'child_months', v_rows, 'force_ignored', v_force_ignored, 'transfers_skipped', v_skipped, 'cutoff', p_before, 'next_steps', v_steps);
 
     INSERT INTO public.audit_log (entity, entity_id, action, actor_user_id, diff)
     VALUES ('attendance', 'transfer-deleted-marks', 'restore_transfer_deleted_marks', v_uid,
             jsonb_build_object('transfers', v_transfers, 'holes', v_holes, 'restored', v_restored,
                                'child_months_restored', v_cm_restored, 'child_months_to_decide', v_cm_decide,
-                               'forced', p_force, 'child_months', v_rows));
+                               'forced', p_force, 'cutoff', p_before, 'transfers_skipped', v_skipped, 'child_months', v_rows));
 
     IF p_dry_run THEN
       RAISE EXCEPTION 'restore dry run' USING ERRCODE = 'HCR01';
@@ -302,7 +341,7 @@ BEGIN
   RETURN v_result;
 END
 $fn$;
-REVOKE ALL ON FUNCTION public.admin_restore_transfer_deleted_marks(boolean, jsonb) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.admin_restore_transfer_deleted_marks(boolean, jsonb, timestamptz) FROM PUBLIC, anon, authenticated, service_role;
 
-COMMENT ON FUNCTION public.admin_restore_transfer_deleted_marks(boolean, jsonb) IS
+COMMENT ON FUNCTION public.admin_restore_transfer_deleted_marks(boolean, jsonb, timestamptz) IS
   'Puts back attendance marks that modify_enrollment_transfer deleted before 6 Nov 2026. Per child and month: restores them as Present only when the register then prices the month at the bill saved at the time; otherwise reports and writes nothing. p_force lists child-months to restore anyway. Dry run by default (does every write, then rolls back). Adds marks only; never changes a mark or a bill. SQL editor (owner) only.';
