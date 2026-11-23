@@ -40,35 +40,35 @@ export function ConsequenceTable({ preview, consequences }: { preview: GuardPrev
 
   return (
     <section aria-labelledby="sg-conseq-h" className="space-y-3">
-      <h3 id="sg-conseq-h" className="text-sm font-semibold text-foreground">
+      <h3 id="sg-conseq-h" className="text-sm font-semibold text-hec-ink">
         What would change
       </h3>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-hec-ink-soft">
         {kids === 0 ? "No children are on this lesson's register." : `${kids} ${kids === 1 ? "child is" : "children are"} on this lesson.`}
         {preview.after_cancel && preview.after_cancel.marks_excused ? ` ${preview.after_cancel.marks_excused} attendance ${preview.after_cancel.marks_excused === 1 ? "mark" : "marks"} would be set to Excused.` : ""}
       </p>
 
       {requested && rows.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-border">
+        <div className="overflow-hidden rounded-hec-lg border border-hec-line">
           <table className="w-full text-sm">
             <caption className="sr-only">Each affected child's saved bill as it stands</caption>
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="bg-hec-sunken text-left text-xs text-hec-ink-soft">
               <tr>
                 <th scope="col" className="px-3 py-2 font-medium">Child and month</th>
                 <th scope="col" className="px-3 py-2 font-medium">Bill as it stands</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-hec-line">
               {rows.map((r) => (
                 <tr key={r.key} className="align-top">
                   <th scope="row" className="px-3 py-2 text-left font-medium break-words">
                     {names?.[r.studentId] ?? "Child"}
-                    <span className="block text-xs font-normal text-muted-foreground">{r.month}</span>
+                    <span className="block text-xs font-normal text-hec-ink-soft">{r.month}</span>
                   </th>
                   <td className="px-3 py-2 break-words">
                     {r.nowText}
                     {r.notes.map((n) => (
-                      <span key={n} className="mt-1 block text-xs text-muted-foreground">
+                      <span key={n} className="mt-1 block text-xs text-hec-ink-soft">
                         {n}
                       </span>
                     ))}
@@ -77,7 +77,7 @@ export function ConsequenceTable({ preview, consequences }: { preview: GuardPrev
               ))}
             </tbody>
             <tfoot>
-              <tr className="bg-muted/50">
+              <tr className="bg-hec-sunken">
                 <th scope="row" colSpan={2} className="px-3 py-2 text-left font-medium break-words">
                   Total: {totals.sentence}
                 </th>
@@ -86,11 +86,11 @@ export function ConsequenceTable({ preview, consequences }: { preview: GuardPrev
           </table>
         </div>
       )}
-      {requested && rows.length > 0 && <p className="text-sm text-muted-foreground">{NEW_BILL_LINE}</p>}
-      {requested && rows.length === 0 && <p className="text-sm text-muted-foreground">No family bill depends on this lesson.</p>}
-      {!requested && <p className="text-sm text-muted-foreground">Bill figures were not requested for this check. Check Tuition after the change.</p>}
+      {requested && rows.length > 0 && <p className="text-sm text-hec-ink-soft">{NEW_BILL_LINE}</p>}
+      {requested && rows.length === 0 && <p className="text-sm text-hec-ink-soft">No family bill depends on this lesson.</p>}
+      {!requested && <p className="text-sm text-hec-ink-soft">Bill figures were not requested for this check. Check Tuition after the change.</p>}
 
-      <p className="text-sm text-muted-foreground">{pay.text}</p>
+      <p className="text-sm text-hec-ink-soft">{pay.text}</p>
 
       {preview.action === "move" || preview.change ? <MoveNotes preview={preview} /> : null}
     </section>
@@ -107,7 +107,7 @@ function MoveNotes({ preview }: { preview: GuardPreview }) {
   if (preview.settled_any) notes.push("The month it moves out of is already billed or paid.");
   if (!notes.length) return null;
   return (
-    <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+    <ul className="list-disc space-y-1 pl-5 text-sm text-hec-ink-soft">
       {notes.map((n) => (
         <li key={n}>{n}</li>
       ))}

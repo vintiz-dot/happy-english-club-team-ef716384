@@ -188,7 +188,7 @@ function OverridesList() {
         </div>
 
         {state === "digest" && (
-          <p className="rounded-xl border border-border bg-muted/30 p-3 text-sm" role="status">
+          <p className="rounded-hec-lg border border-hec-line bg-hec-sunken p-3 text-sm" role="status">
             Cancellations in the last 7 days that went through although the system had evidence the lesson took place:{" "}
             <strong>{rows.length}</strong>.
           </p>
@@ -203,18 +203,18 @@ function OverridesList() {
         )}
 
         {error && (
-          <div role="alert" className="space-y-2 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
+          <div role="alert" className="space-y-2 rounded-hec-lg border border-hec-danger/30 bg-hec-danger-tint p-3 text-sm">
             <p className="font-semibold">The override list could not be loaded.</p>
             <p className="break-words">
               {String((error as any)?.message ?? error)}. If the database update for checked cancellation has not been applied yet, there is nothing to show.
             </p>
-            <button type="button" className="min-h-11 rounded-lg border border-border px-3 text-sm underline" onClick={() => void refetch()}>
+            <button type="button" className="min-h-11 rounded-hec-md border border-hec-line px-3 text-sm underline" onClick={() => void refetch()}>
               Try again
             </button>
           </div>
         )}
 
-        {data && !error && rows.length === 0 && <p className="text-sm text-muted-foreground">Nothing matches these filters.</p>}
+        {data && !error && rows.length === 0 && <p className="text-sm text-hec-ink-soft">Nothing matches these filters.</p>}
 
         {data && rows.length > 0 && (
           <ul className="space-y-2" aria-label="Overrides">
@@ -223,7 +223,7 @@ function OverridesList() {
             ))}
           </ul>
         )}
-        {data?.hitLimit && <p className="text-xs text-muted-foreground">Showing the latest {LIMIT}. Narrow the dates to see older ones.</p>}
+        {data?.hitLimit && <p className="text-xs text-hec-ink-soft">Showing the latest {LIMIT}. Narrow the dates to see older ones.</p>}
       </CardContent>
     </Card>
   );
@@ -239,20 +239,20 @@ function OverrideItem({ row, names, className, onReviewed }: { row: OverrideRow;
   const invoices: any[] = Array.isArray(row.invoices_before) ? row.invoices_before : [];
   const queued = row.review_required && !row.reviewed;
   return (
-    <li className="rounded-xl border border-border">
+    <li className="rounded-hec-lg border border-hec-line">
       <button
         type="button"
         aria-expanded={open}
         aria-controls={`${id}-body`}
         onClick={() => setOpen((o) => !o)}
-        className="flex min-h-11 w-full items-start gap-3 rounded-xl p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex min-h-11 w-full items-start gap-3 rounded-hec-lg p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {open ? <ChevronDown className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <ChevronRight className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}
         <span className="min-w-0 flex-1 space-y-1">
           <span className="block break-words text-sm font-medium">
             {ACTION_WORD[row.action] ?? row.action}: {className}, lesson of {longDate(row.session_date)}
           </span>
-          <span className="block break-words text-xs text-muted-foreground">
+          <span className="block break-words text-xs text-hec-ink-soft">
             {when} by {names[row.actor_user_id] ?? "an administrator"}
             {askedBy(row) ? `, asked for by ${names[askedBy(row) as string] ?? "another administrator"}` : ""}
           </span>
@@ -266,46 +266,46 @@ function OverrideItem({ row, names, className, onReviewed }: { row: OverrideRow;
         </span>
       </button>
       {open && (
-        <div id={`${id}-body`} className="space-y-3 border-t border-border p-3 text-sm">
+        <div id={`${id}-body`} className="space-y-3 border-t border-hec-line p-3 text-sm">
           <dl className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-[10rem_1fr]">
-            <dt className="text-muted-foreground">Who</dt>
+            <dt className="text-hec-ink-soft">Who</dt>
             <dd className="break-words">
               {askedBy(row)
                 ? `Asked by ${names[askedBy(row) as string] ?? "an administrator"}; approved and made by ${names[row.actor_user_id] ?? "another administrator"}`
                 : names[row.actor_user_id] ?? "an administrator"}
             </dd>
-            <dt className="text-muted-foreground">When</dt>
+            <dt className="text-hec-ink-soft">When</dt>
             <dd>{when}</dd>
-            <dt className="text-muted-foreground">Teacher</dt>
+            <dt className="text-hec-ink-soft">Teacher</dt>
             <dd className="break-words">{names[row.teacher_id] ?? "-"}</dd>
-            <dt className="text-muted-foreground">How</dt>
+            <dt className="text-hec-ink-soft">How</dt>
             <dd>{row.via === "bulk" ? "Part of a bulk cancellation" : "Single lesson"}{row.confirmed ? ", confirmed by the admin" : ""}</dd>
-            <dt className="text-muted-foreground">Level of care</dt>
+            <dt className="text-hec-ink-soft">Level of care</dt>
             <dd>{TIER_WORDS[row.tier] ?? `Tier ${row.tier}`}</dd>
-            <dt className="text-muted-foreground">Reason</dt>
+            <dt className="text-hec-ink-soft">Reason</dt>
             <dd className="break-words">{row.reason}</dd>
             {row.correction_reason && (
               <>
-                <dt className="text-muted-foreground">Correction reason</dt>
+                <dt className="text-hec-ink-soft">Correction reason</dt>
                 <dd className="break-words">{row.correction_reason}</dd>
               </>
             )}
             {row.action === "move" && row.change && (
               <>
-                <dt className="text-muted-foreground">Moved to</dt>
+                <dt className="text-hec-ink-soft">Moved to</dt>
                 <dd>
                   {row.change.date ? longDate(row.change.date) : ""} {row.change.start_time ? `${String(row.change.start_time).slice(0, 5)}-${String(row.change.end_time ?? "").slice(0, 5)}` : ""}
                 </dd>
               </>
             )}
-            <dt className="text-muted-foreground">Children on it</dt>
+            <dt className="text-hec-ink-soft">Children on it</dt>
             <dd>{row.affected?.length ?? 0}</dd>
           </dl>
 
           <section aria-label="Evidence the system had" className="space-y-1.5">
             <h4 className="font-semibold">Evidence at the time</h4>
             {items.length === 0 ? (
-              <p className="text-muted-foreground">Nothing was recorded for this lesson.</p>
+              <p className="text-hec-ink-soft">Nothing was recorded for this lesson.</p>
             ) : (
               <ul className="list-disc space-y-1 pl-5">
                 {items.map((i, k) => (
@@ -322,7 +322,7 @@ function OverrideItem({ row, names, className, onReviewed }: { row: OverrideRow;
               <h4 className="font-semibold">Bills at the time (as stored)</h4>
               <ul className="space-y-1">
                 {invoices.map((inv, k) => (
-                  <li key={inv?.id ?? k} className={cn("break-words rounded-lg border border-border p-2")}>
+                  <li key={inv?.id ?? k} className={cn("break-words rounded-hec-md border border-hec-line p-2")}>
                     {inv?.month ?? ""}: {inv?.total_amount !== undefined ? formatVnd(inv.total_amount) : "-"}
                     {inv?.status ? ` (${inv.status})` : ""}
                     {inv?.tuition_frozen ? ", frozen" : ""}
@@ -374,7 +374,7 @@ function MarkReviewed({ overrideId, onDone }: { overrideId: string; onDone: () =
     }
   };
   return (
-    <section aria-label="Review this override" className="space-y-3 rounded-xl border border-border p-3">
+    <section aria-label="Review this override" className="space-y-3 rounded-hec-lg border border-hec-line p-3">
       <ReasonField label="Review note (required)" help="What you checked and what you found. At least 15 characters." value={note} onChange={setNote} min={REASON_MIN} disabled={busy} />
       {err && (
         <p role="alert" className="break-words text-sm font-medium">

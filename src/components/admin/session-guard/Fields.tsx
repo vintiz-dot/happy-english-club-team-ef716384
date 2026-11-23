@@ -37,10 +37,10 @@ export function ReasonField({ label, value, onChange, min, disabled, help }: Rea
         aria-describedby={`${id}-help ${id}-count`}
         className="min-h-[88px] text-base sm:text-sm"
       />
-      <p id={`${id}-help`} className="text-xs text-muted-foreground">
+      <p id={`${id}-help`} className="text-xs text-hec-ink-soft">
         {help ?? `Say what actually happened. At least ${min} characters; stock phrases are not accepted.`}
       </p>
-      <p id={`${id}-count`} role="status" aria-live="polite" className={cn("text-xs", touched && !check.ok ? "font-semibold text-foreground" : "text-muted-foreground")}>
+      <p id={`${id}-count`} role="status" aria-live="polite" className={cn("text-xs", touched && !check.ok ? "font-semibold text-hec-ink" : "text-hec-ink-soft")}>
         {touched ? check.message : `0 of ${min} characters`}
       </p>
     </div>
@@ -80,10 +80,10 @@ export function TypedDateField({ lessonDate, value, onChange, disabled }: TypedD
         }}
         className="h-11 text-base sm:text-sm"
       />
-      <p id={`${id}-hint`} className="text-xs text-muted-foreground">
+      <p id={`${id}-hint`} className="text-xs text-hec-ink-soft">
         {TYPED_DATE_HINT} Look at the lesson's date at the top of this window and type it yourself.
       </p>
-      <p id={`${id}-state`} role="status" aria-live="polite" className={cn("text-xs", touched && !ok ? "font-semibold text-foreground" : "text-muted-foreground")}>
+      <p id={`${id}-state`} role="status" aria-live="polite" className={cn("text-xs", touched && !ok ? "font-semibold text-hec-ink" : "text-hec-ink-soft")}>
         {!touched ? "Not typed yet." : ok ? "Date matches." : "That is not this lesson's date."}
       </p>
     </div>
@@ -101,7 +101,7 @@ interface TickProps {
 export function ConfirmTick({ checked, onChange, children, disabled }: TickProps) {
   const id = useId();
   return (
-    <div className="flex min-h-11 items-start gap-3 rounded-xl border border-border p-3">
+    <div className="flex min-h-11 items-start gap-3 rounded-hec-lg border border-hec-line p-3">
       <Checkbox id={id} checked={checked} onCheckedChange={(v) => onChange(v === true)} disabled={disabled} className="mt-0.5 h-5 w-5" />
       <Label htmlFor={id} className="cursor-pointer text-sm font-normal leading-snug break-words">
         {children}

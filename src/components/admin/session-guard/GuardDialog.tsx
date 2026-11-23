@@ -156,7 +156,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
         // translate for the 0.4 s of the animation and throws the dialog to the
         // bottom-right (top-left at 50%/50%). With no translate to lose, the scale
         // animates around the centre. Body scrolls; header and footer stay put.
-        className="inset-0 m-auto flex h-fit max-h-[92dvh] w-[calc(100vw-1rem)] max-w-xl translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden !bg-background p-0 sm:max-h-[90dvh]"
+        className="inset-0 m-auto flex h-fit max-h-[92dvh] w-[calc(100vw-1rem)] max-w-xl translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden !bg-hec-surface p-0 sm:max-h-[90dvh]"
         onOpenAutoFocus={(e) => {
           // Keep lesson is the default: it, not the first form field, takes focus.
           e.preventDefault();
@@ -167,10 +167,10 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
         }}
         aria-busy={phase === "loading" || busy}
       >
-        <DialogHeader className="space-y-1 border-b border-border p-4 pr-12 text-left sm:p-5 sm:pr-12">
+        <DialogHeader className="space-y-1 border-b border-hec-line p-4 pr-12 text-left sm:p-5 sm:pr-12">
           <DialogTitle className="text-lg leading-snug">{phase === "done" ? DONE_TITLE[op] : COPY.titles[op]}</DialogTitle>
           <DialogDescription className="break-words">
-            {className ? <span className="font-medium text-foreground">{className}</span> : null}
+            {className ? <span className="font-medium text-hec-ink">{className}</span> : null}
             {className ? " - " : ""}
             {header.date ? longDate(header.date) : ""}
             {header.start_time ? `, ${hm(header.start_time)}${header.end_time ? `-${hm(header.end_time)}` : ""}` : ""}
@@ -199,7 +199,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
           {ready && preview && (
             <>
               {stale && (
-                <div role="alert" className="space-y-2 rounded-xl border border-warning/60 bg-warning/10 p-3 text-sm">
+                <div role="alert" className="space-y-2 rounded-hec-lg border border-hec-warn/30 bg-hec-warn-tint p-3 text-sm">
                   <p className="flex items-center gap-2 font-semibold">
                     <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
                     {COPY.stale}
@@ -211,7 +211,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                       </li>
                     ))}
                   </ul>
-                  <p className="text-muted-foreground">{COPY.stalePrompt}</p>
+                  <p className="text-hec-ink-soft">{COPY.stalePrompt}</p>
                 </div>
               )}
 
@@ -229,14 +229,14 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
               <ConsequenceTable preview={preview} consequences={consequences} />
 
               {(preview.settled_any || req.reviewRequired) && !blocked && (
-                <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                <div className="space-y-1 rounded-hec-lg border border-hec-line bg-hec-sunken p-3 text-sm">
                   {preview.settled_any && <p>{COPY.settled}</p>}
                   {req.reviewRequired && <p className="font-medium">{COPY.reviewNote}</p>}
                 </div>
               )}
 
               {!blocked && unguarded && (
-                <p className="rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                <p className="rounded-hec-lg border border-hec-line bg-hec-sunken p-3 text-sm">
                   This is a time change on the same day. Nothing recorded for the lesson depends on the time, so no reason is needed.
                 </p>
               )}
@@ -275,7 +275,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
 
               {error && error.code !== "approval_required" && <ErrorBanner id="sg-error" title="Nothing was changed" text={oneChangeText(error) ?? errorText(error.code, error.message)} code={error.code} />}
               {error?.code === "approval_required" && (
-                <div id="sg-error" role="status" className="space-y-2 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                <div id="sg-error" role="status" className="space-y-2 rounded-hec-lg border border-hec-line bg-hec-sunken p-3 text-sm">
                   <p className="font-medium">{approvalErrorText("approval_required", error.detail ?? (error as any).details)}</p>
                   {g.approval?.sent ? (
                     <p>Sent. The lesson stays as it is until another administrator approves it in Automation, Approvals.</p>
@@ -292,7 +292,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
           )}
         </div>
 
-        <div className="border-t border-border bg-background p-4 sm:p-5">
+        <div className="border-t border-hec-line bg-hec-surface p-4 sm:p-5">
           {phase === "done" ? (
             <Button ref={doneRef} size="lg" className="min-h-12 w-full sm:w-auto sm:min-w-32" onClick={close}>
               Done
@@ -300,7 +300,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
           ) : (
             <>
               {missing.length > 0 && !busy && (
-                <p id="sg-missing" className="mb-3 text-xs text-muted-foreground">
+                <p id="sg-missing" className="mb-3 text-xs text-hec-ink-soft">
                   To enable the button: {missing.join(", ")}.
                 </p>
               )}
@@ -314,7 +314,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                   </Button>
                 )}
                 {useCancel && onCancelInstead && (
-                  <Button variant="outline" size="lg" className="min-h-12 w-full border-border sm:w-auto" onClick={onCancelInstead} disabled={busy}>
+                  <Button variant="outline" size="lg" className="min-h-12 w-full border-hec-line sm:w-auto" onClick={onCancelInstead} disabled={busy}>
                     <Ban aria-hidden="true" /> Cancel instead
                   </Button>
                 )}
@@ -322,7 +322,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                   <Button
                     variant="outline"
                     size="lg"
-                    className="min-h-12 w-full border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive sm:w-auto"
+                    className="min-h-12 w-full border-hec-danger text-hec-ink hover:bg-hec-danger-tint hover:text-hec-ink [&_svg]:text-hec-danger sm:w-auto"
                     disabled={!canGo || busy || phase === "loading" || phase === "failed" || !!blockingError}
                     aria-describedby={[missing.length && !busy ? "sg-missing" : "", error ? "sg-error" : ""].filter(Boolean).join(" ") || undefined}
                     onClick={() => void g.submit(form)}
@@ -412,7 +412,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
   return (
     <Dialog open={open} onOpenChange={(o) => !o && close()}>
       <DialogContent
-        className="inset-0 m-auto flex h-fit max-h-[92dvh] w-[calc(100vw-1rem)] max-w-xl translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden !bg-background p-0 sm:max-h-[90dvh]"
+        className="inset-0 m-auto flex h-fit max-h-[92dvh] w-[calc(100vw-1rem)] max-w-xl translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden !bg-hec-surface p-0 sm:max-h-[90dvh]"
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           (phase === "done" ? doneRef.current : keepRef.current)?.focus();
@@ -422,10 +422,10 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
         }}
         aria-busy={phase === "loading" || busy}
       >
-        <DialogHeader className="space-y-1 border-b border-border p-4 pr-12 text-left sm:p-5 sm:pr-12">
+        <DialogHeader className="space-y-1 border-b border-hec-line p-4 pr-12 text-left sm:p-5 sm:pr-12">
           <DialogTitle className="text-lg leading-snug">{phase === "done" ? PAY_COPY.done[op] : PAY_COPY.titles[op]}</DialogTitle>
           <DialogDescription className="break-words">
-            {className ? <span className="font-medium text-foreground">{className}</span> : null}
+            {className ? <span className="font-medium text-hec-ink">{className}</span> : null}
             {className ? " - " : ""}
             {session.date ? longDate(session.date) : ""}
             {session.start_time ? `, ${hm(session.start_time)}${session.end_time ? `-${hm(session.end_time)}` : ""}` : ""}
@@ -458,12 +458,12 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
           {ready && plan && (
             <>
               {stale && (
-                <div role="alert" className="space-y-2 rounded-xl border border-warning/60 bg-warning/10 p-3 text-sm">
+                <div role="alert" className="space-y-2 rounded-hec-lg border border-hec-warn/30 bg-hec-warn-tint p-3 text-sm">
                   <p className="flex items-center gap-2 font-semibold">
                     <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
                     {COPY.stale}
                   </p>
-                  <p className="text-muted-foreground">{COPY.stalePrompt}</p>
+                  <p className="text-hec-ink-soft">{COPY.stalePrompt}</p>
                 </div>
               )}
 
@@ -471,7 +471,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
                 <ErrorBanner id="pg-refusal" title="This change is not allowed" text={payErrorText(plan.refuse_code ?? "bad_change")} code={plan.refuse_code ?? "bad_change"} />
               )}
 
-              <section aria-labelledby="pg-change-h" className="space-y-2 rounded-xl border border-border p-3 text-sm">
+              <section aria-labelledby="pg-change-h" className="space-y-2 rounded-hec-lg border border-hec-line p-3 text-sm">
                 <h3 id="pg-change-h" className="font-semibold">
                   What changes
                 </h3>
@@ -488,7 +488,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
               {evidence && <EvidenceCards preview={evidence} />}
 
               {payNotes(plan).length > 0 && (
-                <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                <div className="space-y-1 rounded-hec-lg border border-hec-line bg-hec-sunken p-3 text-sm">
                   {payNotes(plan).map((n) => (
                     <p key={n}>{n}</p>
                   ))}
@@ -518,7 +518,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
 
               {error && error.code !== "approval_required" && <ErrorBanner id="pg-error" title="Nothing was changed" text={payErrorText(error.code, errorText(error.code, error.message))} code={error.code} />}
               {error?.code === "approval_required" && (
-                <div id="pg-error" role="status" className="space-y-2 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                <div id="pg-error" role="status" className="space-y-2 rounded-hec-lg border border-hec-line bg-hec-sunken p-3 text-sm">
                   <p className="font-medium">{approvalErrorText("approval_required", error.detail ?? (error as any).details)}</p>
                   {g.approval?.sent ? (
                     <p>Sent. Nothing changes until another administrator approves it in Automation, Approvals.</p>
@@ -535,7 +535,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
           )}
         </div>
 
-        <div className="border-t border-border bg-background p-4 sm:p-5">
+        <div className="border-t border-hec-line bg-hec-surface p-4 sm:p-5">
           {phase === "done" ? (
             <Button ref={doneRef} size="lg" className="min-h-12 w-full sm:w-auto sm:min-w-32" onClick={close}>
               Done
@@ -543,7 +543,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
           ) : (
             <>
               {missing.length > 0 && !busy && (
-                <p id="pg-missing" className="mb-3 text-xs text-muted-foreground">
+                <p id="pg-missing" className="mb-3 text-xs text-hec-ink-soft">
                   To enable the button: {missing.join(", ")}.
                 </p>
               )}
@@ -559,7 +559,7 @@ export function PayGuardDialog({ open, session, op, args, names, onClose, onDone
                 <Button
                   variant="outline"
                   size="lg"
-                  className="min-h-12 w-full border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive sm:w-auto"
+                  className="min-h-12 w-full border-hec-danger text-hec-ink hover:bg-hec-danger-tint hover:text-hec-ink [&_svg]:text-hec-danger sm:w-auto"
                   disabled={!canGo || busy || phase === "loading" || phase === "failed" || !!blockingError}
                   aria-describedby={[missing.length && !busy ? "pg-missing" : "", error ? "pg-error" : ""].filter(Boolean).join(" ") || undefined}
                   onClick={() => void g.submit(form)}
@@ -591,13 +591,13 @@ function LoadingBody() {
 
 function ErrorBanner({ id, title, text, code, quiet }: { id: string; title: string; text: string; code?: string; quiet?: boolean }) {
   return (
-    <div id={id} role={quiet ? "status" : "alert"} className="space-y-1 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
+    <div id={id} role={quiet ? "status" : "alert"} className="space-y-1 rounded-hec-lg border border-hec-danger/30 bg-hec-danger-tint p-3 text-sm">
       <p className="flex items-center gap-2 font-semibold">
         <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
         {title}
       </p>
       <p className="break-words">{text}</p>
-      {code && <p className="text-xs text-muted-foreground">Code: {code}</p>}
+      {code && <p className="text-xs text-hec-ink-soft">Code: {code}</p>}
     </div>
   );
 }
@@ -626,19 +626,19 @@ function DoneBody({ op, success, retrying, retryError, onRetry }: { op: GuardOp;
           {results.length > 0 ? (
             <ul className="space-y-2">
               {results.map((r, i) => (
-                <li key={`${r.student_id}-${r.month}-${i}`} className="flex items-start justify-between gap-3 rounded-xl border border-border p-3 text-sm">
+                <li key={`${r.student_id}-${r.month}-${i}`} className="flex items-start justify-between gap-3 rounded-hec-lg border border-hec-line p-3 text-sm">
                   <span className="min-w-0 break-words">
-                    {names?.[r.student_id] ?? "Child"} <span className="text-muted-foreground">({r.month})</span>
+                    {names?.[r.student_id] ?? "Child"} <span className="text-hec-ink-soft">({r.month})</span>
                   </span>
-                  <span className={r.ok ? "shrink-0 text-muted-foreground" : "shrink-0 font-semibold"}>{r.ok ? "Bill refreshed" : "Not refreshed"}</span>
+                  <span className={r.ok ? "shrink-0 text-hec-ink-soft" : "shrink-0 font-semibold"}>{r.ok ? "Bill refreshed" : "Not refreshed"}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">The server did not say whether the bills were refreshed.</p>
+            <p className="text-sm text-hec-ink-soft">The server did not say whether the bills were refreshed.</p>
           )}
           {sum.needsRetry && (
-            <div role="alert" className="space-y-2 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
+            <div role="alert" className="space-y-2 rounded-hec-lg border border-hec-danger/30 bg-hec-danger-tint p-3 text-sm">
               <p className="font-semibold">
                 {sum.failed.length > 0
                   ? `The lesson was changed, but ${sum.failed.length} ${sum.failed.length === 1 ? "bill was" : "bills were"} not recalculated.`
@@ -646,7 +646,7 @@ function DoneBody({ op, success, retrying, retryError, onRetry }: { op: GuardOp;
               </p>
               <p>Until they are, those families may be shown a bill that still includes this lesson.</p>
               {retryError && <p className="font-medium">Retry failed: {errorText(retryError)}</p>}
-              <Button variant="outline" className="min-h-11 border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive" onClick={onRetry} disabled={retrying || !success.result?.override_id}>
+              <Button variant="outline" className="min-h-11 border-hec-danger text-hec-ink hover:bg-hec-danger-tint hover:text-hec-ink [&_svg]:text-hec-danger" onClick={onRetry} disabled={retrying || !success.result?.override_id}>
                 {retrying ? <Loader2 className="animate-spin" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />}
                 Retry the bill refresh
               </Button>
@@ -654,7 +654,7 @@ function DoneBody({ op, success, retrying, retryError, onRetry }: { op: GuardOp;
           )}
         </section>
       )}
-      {noPairs && <p className="text-sm text-muted-foreground">No family bill depended on this lesson.</p>}
+      {noPairs && <p className="text-sm text-hec-ink-soft">No family bill depended on this lesson.</p>}
     </div>
   );
 }

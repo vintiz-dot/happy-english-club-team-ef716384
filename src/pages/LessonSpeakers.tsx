@@ -202,7 +202,7 @@ function SpeakerBoard({ sessionId }: { sessionId: string }) {
         </div>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-hec-line bg-hec-surface">
         <div className="max-w-3xl mx-auto p-3 space-y-2">
           <div className="flex gap-2">
             <Button variant="destructive" className="flex-1 min-h-14 text-lg" disabled={busy || state.kind === "stop"} onClick={() => void send(NOBODY)}>

@@ -237,7 +237,7 @@ export function ReadingTheoryScoreEntry({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <GraduationCap className={ivory ? "h-5 w-5 shrink-0 text-hec-ink-soft" : "h-5 w-5 text-teal-600"} />
+            <GraduationCap className={ivory ? "h-5 w-5 shrink-0 text-hec-ink-soft" : "h-5 w-5 shrink-0 text-hec-ink-soft"} />
             Reading Theory Score Entry
           </DialogTitle>
           <DialogDescription>
@@ -351,11 +351,7 @@ export function ReadingTheoryScoreEntry({
                             <span
                               className={ivory
                                 ? `text-hec-small font-semibold tabular-nums ${diff > 0 ? "text-hec-leaf" : "text-hec-danger"}`
-                                : `text-sm font-bold ${
-                                diff > 0
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-red-600 dark:text-red-400"
-                              }`}
+                                : `text-hec-small font-semibold tabular-nums ${diff > 0 ? "text-hec-leaf" : "text-hec-danger"}`}
                             >
                               {diff > 0 ? "+" : ""}{diff}
                             </span>
@@ -371,8 +367,8 @@ export function ReadingTheoryScoreEntry({
 
           {/* Summary */}
           {changedStudents.length > 0 && (
-            <div className={ivory ? "p-3 rounded-hec-md border border-hec-line bg-hec-sunken" : "p-3 rounded-lg bg-teal-500/10 border border-teal-500/20"}>
-              <span className={ivory ? "text-hec-small text-hec-ink tabular-nums" : "text-sm text-teal-700 dark:text-teal-300"}>
+            <div className={ivory ? "p-3 rounded-hec-md border border-hec-line bg-hec-sunken" : "p-3 rounded-hec-md border border-hec-line bg-hec-sunken"}>
+              <span className={ivory ? "text-hec-small text-hec-ink tabular-nums" : "text-hec-small text-hec-ink tabular-nums"}>
                 {changedStudents.length} student{changedStudents.length !== 1 ? "s" : ""} will be updated
               </span>
             </div>
@@ -382,7 +378,7 @@ export function ReadingTheoryScoreEntry({
           <Button
             onClick={() => submitMutation.mutate()}
             disabled={submitMutation.isPending || changedStudents.length === 0 || !selectedReason}
-            className={ivory ? "w-full h-12" : "w-full h-12 bg-teal-600 hover:bg-teal-700 text-white"}
+            className={ivory ? "w-full h-12" : "w-full h-12"}
           >
             {submitMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />

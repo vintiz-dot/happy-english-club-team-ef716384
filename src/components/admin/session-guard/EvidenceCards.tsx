@@ -28,22 +28,22 @@ export function EvidenceCards({ preview }: { preview: GuardPreview }) {
 
   return (
     <section aria-labelledby="sg-evidence-h" className="space-y-3">
-      <h3 id="sg-evidence-h" className="text-sm font-semibold text-foreground">
+      <h3 id="sg-evidence-h" className="text-sm font-semibold text-hec-ink">
         What the system found
       </h3>
 
       <div
         className={cn(
-          "flex items-start gap-3 rounded-xl border p-3 text-sm",
-          strong ? "border-destructive/50 bg-destructive/10" : some ? "border-warning/50 bg-warning/10" : "border-border bg-muted/40",
+          "flex items-start gap-3 rounded-hec-lg border p-3 text-sm",
+          strong ? "border-hec-danger/30 bg-hec-danger-tint" : some ? "border-hec-warn/30 bg-hec-warn-tint" : "border-hec-line bg-hec-sunken",
         )}
       >
         {strong ? (
-          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-hec-danger" aria-hidden="true" />
         ) : some ? (
-          <ClipboardCheck className="mt-0.5 h-5 w-5 shrink-0 text-foreground" aria-hidden="true" />
+          <ClipboardCheck className="mt-0.5 h-5 w-5 shrink-0 text-hec-ink" aria-hidden="true" />
         ) : (
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden="true" />
         )}
         <p className="min-w-0 break-words">
           <span className="font-semibold">{strong ? "Strong evidence. " : some ? "Some evidence. " : mode === "none_past" ? "Nobody marked this lesson. " : "Nothing recorded. "}</span>
@@ -54,11 +54,11 @@ export function EvidenceCards({ preview }: { preview: GuardPreview }) {
       {items.length > 0 && (
         <ul className="space-y-2" aria-label="Evidence items">
           {items.map((e) => (
-            <li key={e.key} className="flex items-start gap-3 rounded-xl border border-border bg-background p-3 text-sm">
+            <li key={e.key} className="flex items-start gap-3 rounded-hec-lg border border-hec-line bg-hec-surface p-3 text-sm">
               <span
                 className={cn(
-                  "mt-0.5 shrink-0 rounded-md border px-2 py-0.5 text-xs font-medium",
-                  e.strength === "Strong" ? "border-destructive/50 text-foreground" : "border-border text-muted-foreground",
+                  "mt-0.5 shrink-0 rounded-hec-md border px-2 py-0.5 text-xs font-medium",
+                  e.strength === "Strong" ? "border-hec-danger/30 text-hec-ink" : "border-hec-line text-hec-ink-soft",
                 )}
               >
                 {e.strength}
@@ -70,7 +70,7 @@ export function EvidenceCards({ preview }: { preview: GuardPreview }) {
       )}
 
       {once && (
-        <div className="space-y-2 rounded-xl border border-warning/50 bg-warning/10 p-3 text-sm" role="note" aria-labelledby="sg-floor-h">
+        <div className="space-y-2 rounded-hec-lg border border-hec-warn/30 bg-hec-warn-tint p-3 text-sm" role="note" aria-labelledby="sg-floor-h">
           <p id="sg-floor-h" className="flex items-start gap-2 break-words">
             <History className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
@@ -82,7 +82,7 @@ export function EvidenceCards({ preview }: { preview: GuardPreview }) {
             <ul className="space-y-1.5" aria-label={COPY.floorRemoved}>
               {removed.map((e) => (
                 <li key={e.key} className="flex items-start gap-2 break-words">
-                  <span className="mt-0.5 shrink-0 rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  <span className="mt-0.5 shrink-0 rounded-hec-md border border-hec-line px-2 py-0.5 text-xs font-medium text-hec-ink-soft">
                     Removed
                   </span>
                   <span className="min-w-0">{e.text}</span>
@@ -94,7 +94,7 @@ export function EvidenceCards({ preview }: { preview: GuardPreview }) {
       )}
 
       {erased.length > 0 && (
-        <p className="rounded-xl border border-warning/50 bg-warning/10 p-3 text-sm break-words">
+        <p className="rounded-hec-lg border border-hec-warn/30 bg-hec-warn-tint p-3 text-sm break-words">
           <span className="font-semibold">{COPY.erasedNote}. </span>
           {erased.length === 1 ? "One record about this lesson was removed shortly before this change." : `${erased.length} records about this lesson were removed shortly before this change.`}
         </p>

@@ -41,7 +41,7 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
   // ivory: a solid raised panel (no glass) and tiles that match SkillButton's
   const PANEL = ivory
     ? "mx-auto w-[min(22rem,calc(100vw-2rem))] max-w-full rounded-hec-lg border border-hec-line bg-hec-raised p-3 text-hec-ink shadow-hec-2"
-    : "glass rounded-2xl p-3 shadow-xl border border-border/50";
+    : "mx-auto w-[min(22rem,calc(100vw-2rem))] max-w-full rounded-hec-lg border border-hec-line bg-hec-raised p-3 text-hec-ink shadow-hec-2";
   const TILE =
     "flex w-full min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 rounded-hec-md border min-h-[56px] transition-colors duration-hec-1 ease-hec touch-manipulation select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
@@ -107,7 +107,7 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
               size="sm"
               className={ivory
                 ? "h-auto min-h-hec-target whitespace-normal py-2 px-3 text-hec-small text-hec-danger border-hec-danger/30 hover:bg-hec-danger-tint hover:text-hec-danger"
-                : "h-auto py-2 px-3 text-xs text-red-600 dark:text-red-400 hover:bg-red-500/10 border-red-500/30"}
+                : "h-auto min-h-hec-target whitespace-normal py-2 px-3 text-hec-small text-hec-danger border-hec-danger/30 hover:bg-hec-danger-tint hover:text-hec-danger"}
               onClick={() => handleReasonSelect(option.value)}
             >
               {option.label}
@@ -137,7 +137,7 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
               size="sm"
               className={ivory
                 ? "min-h-[56px] min-w-[56px] p-0 text-hec-h3 font-semibold tabular-nums text-hec-danger border-hec-danger/30 hover:bg-hec-danger-tint hover:text-hec-danger"
-                : "w-12 h-12 p-0 text-lg font-bold text-red-600 dark:text-red-400 hover:bg-red-500/20 border-red-500/30"}
+                : "min-h-[56px] min-w-[56px] p-0 text-hec-h3 font-semibold tabular-nums text-hec-danger border-hec-danger/30 hover:bg-hec-danger-tint hover:text-hec-danger"}
               onClick={() => handleDeductionSelect(pts)}
             >
               {pts}
@@ -189,7 +189,7 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
           <button
             className={ivory
               ? cn(TILE, "border-hec-line-strong bg-hec-sunken text-hec-ink hover:bg-hec-raised")
-              : "flex flex-col items-center justify-center gap-1 p-3 rounded-xl min-w-[56px] min-h-[56px] transition-all active:scale-95 touch-manipulation select-none bg-teal-500/20 hover:bg-warmGray hover:text-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light text-teal-600 dark:text-teal-400"}
+              : cn(TILE, "border-hec-line-strong bg-hec-sunken text-hec-ink hover:bg-hec-raised")}
             onClick={handleReadingTheoryButtonClick}
             aria-label={ivory ? "RT, reading theory scores" : undefined}
           >
@@ -202,7 +202,7 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
         <button
           className={ivory
             ? cn(TILE, "border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:border-hec-danger")
-            : "flex flex-col items-center justify-center gap-1 p-3 rounded-xl min-w-[56px] min-h-[56px] transition-all active:scale-95 touch-manipulation select-none bg-red-500/20 hover:bg-warmGray hover:text-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light text-red-600 dark:text-red-400"}
+            : cn(TILE, "border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:border-hec-danger")}
           onClick={handleCorrectionClick}
         >
           <AlertTriangle className="h-6 w-6" />
