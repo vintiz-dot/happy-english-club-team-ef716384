@@ -328,4 +328,67 @@ export const odL3U18Creative: Record<string, Creative> = {
       },
     ],
   },
+  // Lesson 6: Grammar Champions (want to / need to / have to, with because and so)
+  "od2e-l3-u18-l6": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["kelp", "coral", "diver", "goggles", "squid", "octopus", "freezing"],
+      grammar: ["want to / need to / have to", "because and so", "don't need to / don't have to"],
+    },
+    base: {
+      title: "A plan for a secret exploration",
+      task: "Invent a secret exploration to a place nobody has visited, for example a cave under a frozen lake or a forest at the bottom of the sea. Draw a map, then write a plan for your team: what you want to find, what you need to take, and what you have to do before you go.",
+      steps: [
+        "Choose your place and draw a small map with three things to find. Give the place a name.",
+        "Write one sentence with want to to say what you hope to find, and add because.",
+        "Write two sentences with need to or have to to say what to take and what to do first. Use so in one of them.",
+        "Write one sentence with don't have to to say what the team can leave at home, then read your plan aloud to someone at home.",
+      ],
+      frames: [
+        "We want to explore ___ because ___.",
+        "We need to take ___, so ___.",
+        "Before we go, we have to ___ because ___.",
+        "We don't have to take ___ because ___.",
+        "If we find ___, we will ___.",
+      ],
+      success: [
+        "My plan uses want to, need to and have to in the right places, with a plain verb after to.",
+        "My plan uses because and so at least once each, with a comma before so.",
+        "My plan uses wants, needs or has when it talks about one person (she, he or the captain).",
+      ],
+      challenge:
+        "Add a paragraph that answers a visitor who says 'Nobody needs to explore, because we already know everything!' Give two reasons that answer them politely.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "A secret training camp",
+          task: "Invent a secret training camp for a football team, for example in a cave under a frozen lake or on an island with a coral reef. Draw a map, then write a plan for the team: what you want to find, what you need to take, and what you have to do before you go.",
+          steps: [
+            "Choose your place and draw a small map with three things the team can find, such as a new pitch or a hidden beach. Give the place a name.",
+            "Write one sentence with want to to say what the team hopes to find, and add because.",
+            "Write two sentences with need to or have to to say what to take and what to do first. Use so in one of them.",
+            "Write one sentence with don't have to to say what the team can leave at home, then read your plan aloud to someone at home.",
+          ],
+          frames: [
+            "The team wants to explore ___ because ___.",
+            "We need to take ___, so ___.",
+            "Before we go, we have to ___ because ___.",
+            "We don't have to take ___ because ___.",
+            "If we find ___, we will ___.",
+          ],
+          success: [
+            "My plan uses want to, need to and have to in the right places, with a plain verb after to.",
+            "My plan uses because and so at least once each, with a comma before so.",
+            "My plan uses wants, needs or has when it talks about one person (she, he or the coach).",
+          ],
+          challenge:
+            "Add a paragraph that answers a visitor who says 'Football players only need to train on a pitch!' Give two reasons that answer them politely.",
+        },
+      },
+    ],
+  },
 };

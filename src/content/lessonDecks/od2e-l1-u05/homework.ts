@@ -176,4 +176,46 @@ export const odL1U5Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 5: Grammar Champions, Where's / Where are
+  "od2e-l1-u05-l5": {
+    kind: "creative",
+    thinking: "Design",
+    uses: {
+      words: ["frog", "pond", "squirrel", "mouse", "nest", "hive", "woods"],
+      grammar: ["Where's the ___?", "It's in / on / under the ___.", "Where are the ___?", "They're ___."],
+    },
+    base: {
+      title: "My hide-and-find page",
+      task: "Design a hide-and-find page. Hide one animal and two of another animal. Write a question and an answer for each.",
+      steps: [
+        "Draw a garden or a room with a tree, a pond, a log and a box.",
+        "Hide one animal in one place and two animals of another kind in a second place.",
+        "Write: Where's the ___? It's ___ the ___.",
+        "Write: Where are the ___? They're ___ the ___. Say which hiding place is best.",
+      ],
+      frames: ["Where's the ___?", "It's in / on / under the ___.", "Where are the ___?", "They're next to the ___."],
+      success: ["I can write one question for one animal and one for two animals.", "I can write the right answer: It's or They're."],
+      challenge: "Hide a third animal and give your friend a clue: \"It's next to the pond. Where is it?\"",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "Hide-and-find on the football pitch",
+          task: "Design a hide-and-find page on a football pitch. Hide a ball and two boots. Write a question and an answer for each.",
+          steps: [
+            "Draw a football pitch with a goal, a bench, a bag and a flag.",
+            "Hide one ball in one place and two boots in another place.",
+            "Write: Where's the ball? It's ___ the ___.",
+            "Write: Where are the boots? They're ___ the ___. Say which place is best.",
+          ],
+          frames: ["Where's the ___?", "It's in / on / under the ___.", "Where are the ___?", "They're next to the ___."],
+          success: ["I can write one question for one thing and one for two things.", "I can write the right answer: It's or They're."],
+          challenge: "Hide a third thing and give your friend a clue: \"It's next to the goal. Where is it?\"",
+        },
+      },
+    ],
+  },
 };

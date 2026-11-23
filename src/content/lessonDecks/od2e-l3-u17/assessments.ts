@@ -176,7 +176,7 @@ export const odL3U17Assessments: Assessment[] = [
     id: "od2e-l3-u17-test",
     title: "Unit 17 test",
     kind: "summative",
-    afterLesson: 4,
+    afterLesson: 5,
     minutes: 45,
     covers: [
       "The 10 weather and landform words",

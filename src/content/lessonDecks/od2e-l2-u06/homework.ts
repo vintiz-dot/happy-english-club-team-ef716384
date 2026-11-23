@@ -256,4 +256,54 @@ export const odL2U06Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 6: Grammar Champions (finished actions: -ed, and Did + the plain verb)
+  "od2e-l2-u06-l6": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["travel", "visit", "arrive", "ask", "enter", "check", "crowded"],
+      grammar: ["verb + -ed (finished)", "Did + person + plain verb?", "Yes, I did. / No, I didn't."],
+    },
+    base: {
+      title: "Interview with a time traveler",
+      task: "A time traveler from a hundred years ago arrives in your town today. Draw the traveler. Then write an interview: five questions, and the answers the traveler gives.",
+      steps: [
+        "Draw the time traveler and give the traveler a name.",
+        "Write three questions with Did, for example Did you travel by ship?",
+        "Write two questions with Where or How, for example How did you arrive?",
+        "Write the answers the traveler gives, with -ed verbs where the action is finished.",
+      ],
+      frames: ["Did you ___ ?", "Yes, I did. I ___ed ___.", "No, I didn't. I ___ed ___.", "Where / How did you ___ ?"],
+      success: [
+        "After Did, my verb is plain.",
+        "In my answers, finished actions have -ed.",
+        "I wrote three questions with Did and two with Where or How.",
+      ],
+      challenge: "Write what the time traveler says is the same today as long ago, and what is different.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "Interview with a footballer from long ago",
+          task: "A footballer from a hundred years ago arrives at a big stadium today. Draw the footballer. Then write an interview: five questions, and the answers the footballer gives.",
+          steps: [
+            "Draw the footballer and give the footballer a name.",
+            "Write three questions with Did, for example Did you travel to the match by train?",
+            "Write two questions with Where or How, for example How did you arrive?",
+            "Write the answers the footballer gives, with -ed verbs where the action is finished.",
+          ],
+          frames: ["Did you ___ ?", "Yes, I did. I ___ed ___.", "No, I didn't. I ___ed ___.", "Where / How did you ___ ?"],
+          success: [
+            "After Did, my verb is plain.",
+            "In my answers, finished actions have -ed.",
+            "I wrote three questions with Did and two with Where or How.",
+          ],
+          challenge: "Write what the footballer says is the same in the stadium today as long ago, and what is different.",
+        },
+      },
+    ],
+  },
 };

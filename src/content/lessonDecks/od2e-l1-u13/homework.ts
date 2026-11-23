@@ -65,4 +65,17 @@ export const odL1U13Creative: Record<string, Creative> = {
       ["It's ___.", "It's ___ and ___.", "I like the ___ place."],
       ["I drew a noisy place and a quiet place.", "I wrote two sentences with It's.", "I circled my favourite place."],
       "Write: I like it because ___. Use safe, interesting or boring.")),
+
+  // Lesson 5: Grammar Champions (owner + 's)
+  "od2e-l1-u13-l5": make("Create", ["street", "neighborhood", "town", "city", "country", "apartment"], ["___'s house.", "Whose is it?", "___'s house is in the ___."],
+    task("Whose house is it?", "Draw a street with three houses. Give each house an owner (a toy, a pet or a pretend friend). Choose the house you would most like to visit and say why.",
+      ["Draw a street with three houses.", "Give each house an owner and write its name: ___'s house.", "Write where each house is: in the city, in the country or in a town.", "Circle the house you would most like to visit. Say why."],
+      ["___'s house is in the ___.", "Whose is it?", "I want to visit ___'s house because ___."],
+      ["I drew three houses with three owners.", "I wrote the owner first and added 's.", "I said which house I want to visit and why."],
+      "Write one more sentence with a feeling word: ___'s house is noisy. Use noisy, quiet or safe."),
+    task("Whose stadium is it?", "Draw a street with three football homes: a stadium, a pitch and a clubhouse. Give each an owner (a toy, a pet or a pretend friend). Choose the one you would most like to visit and say why.",
+      ["Draw a street with a stadium, a pitch and a clubhouse.", "Give each one an owner and write its name: ___'s stadium.", "Write where each one is: in the city, in the country or in a town.", "Circle the one you would most like to visit. Say why."],
+      ["___'s stadium is in the ___.", "Whose is it?", "I want to visit ___'s pitch because ___."],
+      ["I drew three football places with three owners.", "I wrote the owner first and added 's.", "I said which place I want to visit and why."],
+      "Write one more sentence with a feeling word: ___'s stadium is noisy. Use noisy, quiet or safe.")),
 };

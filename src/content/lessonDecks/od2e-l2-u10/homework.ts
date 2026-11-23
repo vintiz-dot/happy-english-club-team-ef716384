@@ -353,5 +353,55 @@ export const odL2U10Creative: Record<string, Creative> = {
         }
       }
     ]
-  }
+  },
+  "od2e-l2-u10-l6": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["knock", "invite", "share", "pass", "thoughtful", "rude"],
+      grammar: ["Can I + action word? / May I + action word?", "Yes, you can / may. No, you can't / may not.", "because for a reason"],
+    },
+    base: {
+      title: "The magic door with a rule sign",
+      task: "Invent a magic door. Draw it with a sign. Write the questions people ask to come through and the answers they get. Then choose which door you would like to open, and say why.",
+      steps: [
+        "Invent a magic door and give it a funny name.",
+        "Draw the door and a sign that says who may come in.",
+        "Write four questions with Can I or May I, and an answer for each one with you.",
+        "Make one answer a no, and give a reason with because.",
+        "Say which door you would like to open and why.",
+      ],
+      frames: ["May I come in, please?", "Yes, you ___. / No, you ___ not.", "No, you may not because ___.", "I would like to open the ___ door because ___."],
+      success: [
+        "I wrote four questions that start with Can I or May I.",
+        "Every answer says you.",
+        "I gave a reason for one no.",
+      ],
+      challenge: "Add a sign that is kind but firm, and say how a thoughtful person knocks and asks before the door opens.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "The magic door to the dressing room",
+          task: "Invent a magic door to a football team's dressing room. Draw it with a sign. Write the questions a young fan asks to come in and the answers. Then say which team room you would like to visit, and why.",
+          steps: [
+            "Invent a magic door to a dressing room and give it a team name.",
+            "Draw the door and a sign that says who may come in.",
+            "Write four questions with Can I or May I (for a photo, a ball, a visit), and an answer for each one with you.",
+            "Make one answer a no, and give a reason with because.",
+            "Say which dressing room you would like to visit and why.",
+          ],
+          frames: ["May I have a photo, please?", "Yes, you ___. / No, you ___ not.", "No, you may not because ___.", "I would like to visit the ___ room because ___."],
+          success: [
+            "I wrote four questions that start with Can I or May I.",
+            "Every answer says you.",
+            "I gave a reason for one no.",
+          ],
+          challenge: "Add a sign that is kind but firm, and say how a thoughtful fan asks and waits.",
+        },
+      },
+    ],
+  },
 };

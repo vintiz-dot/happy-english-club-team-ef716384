@@ -175,7 +175,7 @@ export const odL3U14Assessments: Assessment[] = [
     id: "od2e-l3-u14-test",
     title: "Unit 14 test",
     kind: "summative",
-    afterLesson: 5,
+    afterLesson: 6,
     minutes: 45,
     covers: [
       "The 10 glass words: glass, glassblower, workshop, furnace, vase, pitcher, glassware, eyeglasses, frames, wire",

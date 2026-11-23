@@ -185,7 +185,7 @@ export const odL3U18Assessments: Assessment[] = [
     id: "od2e-l3-u18-test",
     title: "Unit 18 test",
     kind: "summative",
-    afterLesson: 5,
+    afterLesson: 6,
     minutes: 45,
     covers: [
       "The 10 sea words and words in context: diver, hose, tethered, freezing",

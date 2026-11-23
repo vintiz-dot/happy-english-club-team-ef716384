@@ -218,4 +218,46 @@ export const odL1U6Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 6: Grammar Champions (What's this? Who's that?)
+  "od2e-l1-u06-l6": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["reserve", "orangutan", "rainforest", "take care of", "nest", "pond"],
+      grammar: ["What's this? What's that?", "Who's this? Who's that?", "It's ___."],
+    },
+    base: {
+      title: "My reserve tour",
+      task: "Be a reserve ranger. Draw your reserve with three things and three animal friends. Give each friend a name, ask a question about each one and answer it. Choose the friend you most want to meet and say why.",
+      steps: [
+        "Draw a reserve with three things (a nest, a pond, a hive...).",
+        "Draw three animal friends and give each one a name.",
+        "Write a question and an answer for each picture: What's this? It's a ___. Who's that? It's ___.",
+        "Choose the friend you want to meet and say why.",
+      ],
+      frames: ["What's this? It's a ___.", "Who's that? It's ___.", "I want to meet ___ because ___."],
+      success: ["I can ask What for a thing and Who for a friend.", "I can answer with It's.", "I can say why I want to meet one friend."],
+      challenge: "Write one question with this and one with that about the same picture. Say which one is close and which is far.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "A reserve beside the stadium",
+          task: "Be a ranger at a reserve beside the Emirates Stadium. Draw three things and three animal friends in red and white. Give each friend a name, ask a question about each one and answer it. Choose the friend you want to meet and say why.",
+          steps: [
+            "Draw a reserve with the stadium far away and three things close to you.",
+            "Draw three animal friends in red and white and name them.",
+            "Write a question and an answer for each picture: What's that? It's the stadium. Who's this? It's ___.",
+            "Choose the friend you want to meet and say why.",
+          ],
+          frames: ["What's that? It's ___.", "Who's this? It's ___.", "I want to meet ___ because ___."],
+          success: ["I can ask What for a thing and Who for a friend.", "I can answer with It's.", "I can say why I want to meet one friend."],
+          challenge: "Write one question with this and one with that about the same picture. Say which one is close and which is far.",
+        },
+      },
+    ],
+  },
 };

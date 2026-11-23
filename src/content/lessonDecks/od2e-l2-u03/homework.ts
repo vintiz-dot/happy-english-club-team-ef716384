@@ -208,4 +208,54 @@ export const odL2U03Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 5: Grammar Champions, was and were
+  "od2e-l2-u03-l5": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["ice cube", "puddle", "freeze", "melt", "solid", "liquid", "water"],
+      grammar: ["was / were", "wasn't / weren't", "It was ... but now it is ..."],
+    },
+    base: {
+      title: "A letter from an ice cube",
+      task: "Imagine you are a thing that changed, like an ice cube or a snowman. Write a short letter that says what you were, what you weren't and what you are now. Draw yourself then and now.",
+      steps: [
+        "Choose a thing that changed, for example an ice cube. Never touch anything hot.",
+        "Draw it in two boxes: Then and Now.",
+        "Write your letter. Start with: Hello! I was a ...",
+        "Say what was not true about you before, and what you are now. Say what made you change.",
+      ],
+      frames: ["Hello! I was a ___.", "I wasn't ___. / We weren't ___.", "Now I am ___.", "I changed because ___."],
+      success: [
+        "I used was or were, and wasn't or weren't.",
+        "I used am, is or are for now.",
+        "I said what made the change.",
+      ],
+      challenge: "Write a reply from a friend of the thing, with we were and they weren't, and say who changed more.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "A letter from a match-day ice pop",
+          task: "Imagine you are an ice pop in a fan's hand on a hot match day. Write a short letter that says what you were, what you weren't and what you are now. Draw yourself then and now.",
+          steps: [
+            "Draw the ice pop in a red and white cup holder, then draw the sticky puddle after the match. Never touch anything hot.",
+            "Write your letter. Start with: Hello! I was an ice pop at the match.",
+            "Say what you were and what was not true about you before the sun came out.",
+            "Say what you are now and who helped you change.",
+          ],
+          frames: ["Hello! I was a ___.", "I wasn't ___. / We weren't ___.", "Now I am ___.", "The match was ___ and I changed because ___."],
+          success: [
+            "I used was or were, and wasn't or weren't.",
+            "I used am, is or are for now.",
+            "I said what made the change.",
+          ],
+          challenge: "Write a reply from a friend of the ice pop, with we were and they weren't, and say who changed more.",
+        },
+      },
+    ],
+  },
 };

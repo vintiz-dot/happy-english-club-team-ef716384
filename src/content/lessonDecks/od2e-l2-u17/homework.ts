@@ -220,4 +220,57 @@ export const odL2U17Creative: Record<string, Creative> = {
       challenge: "Say why a different kind of art would not be as good, and say what you would write on a kind card with it.",
     },
   ),
+
+  // Lesson 5: Grammar Champions, a lot of and any
+  "od2e-l2-u17-l5": creative(
+    "Design",
+    ["star", "collage", "pattern", "sculpture", "mosaic", "oval"],
+    ["There are a lot of ___.", "There is a lot of ___.", "There aren't any ___. / There isn't any ___."],
+    {
+      title: "Design a magic art cupboard",
+      task: "Design a magic art cupboard for an artist. Draw it with things we can count and things we can't count. Write what there is a lot of and what there isn't any of, and say why the artist needs it.",
+      steps: [
+        "Draw a cupboard with three shelves.",
+        "Put things we can count on one shelf, for example stars, tiles or beads. Put things we can't count on the next shelf, for example paint, glue or sand.",
+        "Leave the top shelf empty for two things that are missing.",
+        "Write one sentence for each shelf.",
+        "Say what the artist can make, and why the missing things do not matter (or do matter).",
+      ],
+      frames: [
+        "There are a lot of ___ in the cupboard.",
+        "There is a lot of ___ in the cupboard.",
+        "There aren't any ___, and there isn't any ___.",
+        "The artist can make ___ because ___.",
+      ],
+      success: [
+        "I used are with things we can count and is with things we can't count.",
+        "I wrote one sentence with any.",
+        "I gave a reason with because.",
+      ],
+      challenge: "Join two ideas with but: There are a lot of ___, but there isn't any ___. Then say how the artist can still make art.",
+    },
+    {
+      title: "Design the banner box for the football fans",
+      task: "Design a box of art things for making a big banner for the football fans. Draw it with things we can count and things we can't count. Write what there is a lot of and what there isn't any of, and say why the fans need it.",
+      steps: [
+        "Draw a big box with three parts.",
+        "In one part, put things we can count, for example stars, flags or stickers. In the next, put things we can't count, for example paint, glue or glitter.",
+        "Leave the last part empty for two things that are missing.",
+        "Write one sentence for each part.",
+        "Say what the fans can make, and why the missing things do not matter (or do matter).",
+      ],
+      frames: [
+        "There are a lot of ___ in the box.",
+        "There is a lot of ___ in the box.",
+        "There aren't any ___, and there isn't any ___.",
+        "The fans can make ___ because ___.",
+      ],
+      success: [
+        "I used are with things we can count and is with things we can't count.",
+        "I wrote one sentence with any.",
+        "I gave a reason with because.",
+      ],
+      challenge: "Join two ideas with but: There are a lot of ___, but there isn't any ___. Then say how the fans can still make a great banner.",
+    },
+  ),
 };

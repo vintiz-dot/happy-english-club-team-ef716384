@@ -258,4 +258,54 @@ export const odL2U04Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 6: Grammar Champions, was and were
+  "od2e-l2-u04-l6": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["freezer", "open", "closed", "cream", "mixture", "pour"],
+      grammar: ["was / were", "Was ...? Yes, it was.", "but"],
+    },
+    base: {
+      title: "The kitchen mystery",
+      task: "Draw a kitchen from yesterday and a kitchen from today. Make three changes. Write clue sentences so a friend can find them.",
+      steps: [
+        "Draw the kitchen yesterday: the door, the window, the cups and something cold.",
+        "Draw the kitchen today and change three things.",
+        "Write three clue sentences about yesterday with was and were.",
+        "Give your friend your clues. Can they find the three changes?",
+      ],
+      frames: ["Yesterday the ___ was ___.", "The ___ were ___.", "The ___ was ___, but now it is ___.", "Was the ___ ___? Yes, it was."],
+      success: [
+        "I drew two pictures with three changes.",
+        "I used was with one thing and were with more than one.",
+        "I used but in one clue.",
+      ],
+      challenge: "Write one sentence that says why a thing changed, with because or so.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "The kit room mystery",
+          task: "Draw a football kit room yesterday and today. Make three changes. Write clue sentences so a friend can find them.",
+          steps: [
+            "Draw the kit room yesterday: the door, the boots, the shirts and the water bottles.",
+            "Draw the kit room today and change three things.",
+            "Write three clue sentences about yesterday with was and were.",
+            "Give your friend your clues. Can they find the three changes?",
+          ],
+          frames: ["Yesterday the ___ was ___.", "The boots were ___.", "The ___ was ___, but now it is ___.", "Were the ___ ___? Yes, they were."],
+          success: [
+            "I drew two pictures with three changes.",
+            "I used was with one thing and were with more than one.",
+            "I used but in one clue.",
+          ],
+          challenge: "Write one sentence that says why a thing changed, with because or so.",
+        },
+      },
+    ],
+  },
 };

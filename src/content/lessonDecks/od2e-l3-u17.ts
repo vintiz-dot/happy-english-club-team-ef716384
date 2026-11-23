@@ -7,10 +7,66 @@
 // confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL3U17Creative } from "./od2e-l3-u17/homework";
 import { odL3U17Assessments, odL3U17Worksheets } from "./od2e-l3-u17/assessments";
 import { odL3U17FirstEdition } from "./od2e-l3-u17/firstEdition";
+
+// Grammar Champions (Lesson 5): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l3-u17-ws-champions",
+  title: "Grammar Champions: down, through, around, across, along, past",
+  grammar: "prepositions of movement: choosing the route word that fits the place; two-step routes with then; because and so",
+  deckId: "od2e-l3-u17-l5",
+  slide: "Write it: a route note for a new explorer",
+  intro:
+    "A route word comes BEFORE the place and has no to in front: Walk across the bridge. Choose the word that fits the path: through for inside and out the other end, around for something you cannot cross, across for one side to the other, along for beside the length, past for going by. Say the steps with First, Then and Finally, and give a reason with because or so.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right answer. Then read the whole sentence aloud.",
+      example: "The explorers walked ___ the dark cave and saw light at the end.  (through / around)  ->  through",
+      items: [
+        { q: "A huge rock is in the path, so we walk ___ it.", options: ["around", "through"], answer: "around" },
+        { q: "The canoe floats ___ the river to the sea.", options: ["down", "over"], answer: "down" },
+        { q: "We walked from one side of the desert to the other. We walked ___ the desert.", options: ["across", "along"], answer: "across" },
+        { q: "The path runs ___ the coast, beside the sea.", options: ["along", "through"], answer: "along" },
+        { q: "The plane flew ___ the mountain and landed in the valley.", options: ["over", "under"], answer: "over" },
+        { q: "The ship sailed ___ the lighthouse and did not stop.", options: ["past", "into"], answer: "past" },
+        { q: "Which sentence is correct?", options: ["Walk across the bridge.", "Walk the bridge across."], answer: "Walk across the bridge." },
+        { q: "Which sentence is correct?", options: ["Go to up the hill.", "Go up the hill."], answer: "Go up the hill." },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing route word, put the words in order, correct the mistake or join the sentences. Write the whole sentence where it asks.",
+      example: "The monkey climbed ___ the tree to reach the fruit.  ->  up",
+      items: [
+        { q: "The explorers walked ___ the forest in a straight line: in at one side and out at the other.", answer: "through" },
+        { q: "The path goes ___ the lake because the water is too deep to cross.", answer: "around" },
+        { q: "Put in order: through / First, / the cave / go / .", answer: "First, go through the cave." },
+        { q: "Put in order: along / Then / the river / walk / .", answer: "Then walk along the river." },
+        { q: "Correct the mistake: The canoe went through the island.", answer: "The canoe went around the island." },
+        { q: "Correct the mistake: We walked to across the glacier.", answer: "We walked across the glacier." },
+        { q: "Join with because: We go around the swamp. It is too muddy.", answer: "We go around the swamp because it is too muddy." },
+        { q: "Join with so: The bridge is broken. We cross the river by the rocks.", answer: "The bridge is broken, so we cross the river by the rocks." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Write whole sentences of your own, or fix the mistakes. Check every route word, every comma and every little word.",
+      example: "(the beach, the camp; First, Then)  ->  First, go along the beach. Then walk up to the camp.",
+      items: [
+        { q: "Write a three-step route from your front door to a shop or park near your home. Use First, Then and Finally and three different route words.", answer: "e.g. First, go down the street. Then walk across the small bridge. Finally, go through the gate of the park." },
+        { q: "Find and fix three mistakes: 'Go in the tunnel to the other end. Then walk to up the hill. Finally, run the lake around.'", answer: "Go through the tunnel to the other end. Then walk up the hill. Finally, run around the lake." },
+        { q: "Why do explorers go around a mountain but through a tunnel? Answer in one sentence with because.", answer: "e.g. Explorers go around a mountain because it is solid and they cannot pass inside it, but a tunnel is open inside, so they can go through it." },
+        { q: "Write a safety rule for explorers with Don't and because.", answer: "e.g. Don't walk across the ice because it may break." },
+        { q: "A bridge can be crossed with across or over, but not with through. Say why in your own words.", answer: "e.g. Across and over show going from one side to the other on top. Through means inside something, and you cannot be inside a flat bridge." },
+        { q: "Write a route for a friend that has a reason with so, and say where the friend arrives.", answer: "e.g. The path is wet, so go along the wall, then through the door. Finally, you arrive at the library." },
+      ],
+    },
+  ],
+};
 
 export const odL3U17: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1104,8 +1160,305 @@ export const odL3U17: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 5: Grammar Champions
+    {
+      id: "od2e-l3-u17-l5",
+      resources: [
+        { title: "ESL Prepositions of Movement Lesson [Teens, A2-B1]", url: "https://www.twinkl.com/resource/esl-prepositions-of-movement-lesson-teens-a2-b1-t-1737469552", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: route words (down, through, around, across, along, past)\"", slide: "Grammar: route words (down, through, around, across, along, past)" },
+        { title: "ESL Prepositions of Movement: Animals on the Move [Teens, A2]", url: "https://www.twinkl.com/resource/prepositions-of-movement-animals-esl-ppt-lesson-t-e-1745276580", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: route words (down, through, around, across, along, past)\"", slide: "Grammar: route words (down, through, around, across, along, past)" },
+      ],
+      curriculum: "oxford-discover-2e",
+      level: 3,
+      unit: 17,
+      lesson: 5,
+      covers: { unitFrom: 17, lesson: "Understand" },
+      title: "Grammar Champions: down, through, around, across, along, past",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "173", activities: ["D", "E"], note: "Grammar in Use: prepositions of movement" },
+        { book: "WB", pages: "157-159", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: route words", subtitle: "Lesson 5 · Grammar and speaking", bigQuestion: "Why do we explore?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can give a route of two or three steps with down, through, around, across, along and past, and explain my choice with because.",
+            "I can ask 'How do I get to ...?' and answer with First, Then and Finally.",
+            "I can write a short route note of five or more sentences and edit it with the checklist.",
+            "I can explain in my own words how a route word is chosen, and test my rule on a new case.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 6,
+          steps: [
+            "Word relay. The teacher gives a meaning and you shout the word: 'water that falls from high rocks' (waterfall), 'thick cloud close to the ground' (fog), 'the land next to the sea' (coast), 'a big storm with strong wind' (storm).",
+            "Route mime. The teacher says a place from last lesson and you show the movement with your body and your voice: 'down the stairs', 'through the door', 'around the chair'. Everybody does it together and says the whole phrase.",
+            "Pairs: say two true sentences about your journey to school today. One has a weather word and one has a route word. Then tell the class your partner's best sentence.",
+          ],
+          prompts: ["Show me: through!", "Which word shows a curve?", "I walked ___ the ___ to school.", "The weather was ___ and I went ___ the ___."],
+          teacherNote:
+            "Retrieval first: pull back the unit's weather and landform words and last lesson's three route words before today's pattern. Keep each round to about 20 seconds. Do not correct sentences yet: raise your eyebrows and repeat the sentence up to the word with a rising voice. Ask {s1} to be the teacher for one round.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: the hidden waterfall",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 7,
+          steps: [
+            "Close your books. The teacher is the expedition leader and tells the story of three explorers (prompts on the right). Listen with your whole body.",
+            "First listening: stand up every time you hear a little word that shows how the explorers MOVE. Sit down quickly after. Whisper the word to a partner.",
+            "Second listening: clap when you hear a place that comes right after the little word.",
+            "The mystery: 'The map says THROUGH the cave but AROUND the lake. Why?' Talk for one minute with a partner and say your idea out loud. Do not look for the rule yet: the teacher writes your ideas on the board and keeps them.",
+          ],
+          prompts: [
+            "Part 1: 'Ana, Omar and Tessa want to find a hidden waterfall. First, they walk down the hill to the dark forest. Then they walk through the forest, between the tall trees.'",
+            "Part 2: 'At the end of the forest there is a deep lake. Omar wants to swim across it, but Tessa says no. They walk around the lake on a muddy path and past a family of ducks.'",
+            "Part 3: 'Next they find a tunnel in the rock. Ana looks through it and sees a small light. They walk through the tunnel, one by one, and come out on a rope bridge.'",
+            "Part 4: 'Across the bridge there is a path along the cliff. Tessa walks along the path very slowly because the stones are wet. At last, they climb up the rocks and hear a loud sound: the waterfall!'",
+            "Part 5: 'They go behind the water for a second and into a secret cave. The cave is small, so they sit down and smile. {s1} and {s2} cheer for the three explorers. Which way did they go first? Why did they walk around the lake?'",
+          ],
+          teacherNote:
+            "Input flood: the route words come many times in the same places in an invented story. Read slowly with a smile and lean on the route word. Pause after each part so the standers and clappers can check each other. Do NOT explain the grammar. Link to the Big Question: explorers see new places and find things that nobody has seen, and they need route words to tell others how to follow. Write the children's own ideas exactly as they say them.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group gets 16 sentence cards and four mats: IN AND OUT, BESIDE OR ROUND, FROM SIDE TO SIDE OR UP AND DOWN, and NOT RIGHT.",
+            "Read each card aloud and act it with your hands on the desk. Decide where it goes. Argue politely: 'I think this card goes here because ...'",
+            "Look at one mat at a time. What is the same about the places? What does the path look like? Say it with the frames.",
+            "Look at the NOT RIGHT mat. What is wrong with each card? Fix two cards with a pencil and say why.",
+            "Tell the class: 'I think the rule is ___ because ___.' The teacher writes your words on the board but does not say if they are right yet.",
+          ],
+          frames: [
+            "On the ___ mat the path goes ___.",
+            "We choose through / around because the place is ___.",
+            "This card is not right because ___.",
+            "I think the rule is ___ because ___.",
+          ],
+          prompts: [
+            "In and out: 'They walked through the tunnel.' 'The boat sailed through the narrow strait.' 'We ran into the tent.'",
+            "Beside or round: 'The path goes around the lake.' 'We walked along the river.' 'The ship sailed past the lighthouse.' 'The goats walked around the big rock.'",
+            "Side to side or up and down: 'They went across the bridge.' 'They climbed up the rocks.' 'We walked down the hill.' 'The plane flew over the mountain.'",
+            "Not right: 'They walked in the tunnel to the other end.' 'The boat sailed through the island.' 'We walked to across the bridge.' 'The ship sailed the coast around.'",
+          ],
+          teacherNote:
+            "Print the cards in big letters, one sentence per card, and mix them for each group. Add a few pictures if the class likes them. The sorting is the point, so give the children time. Collect their words and write them on the board exactly as said ('through is when you go in one side and out of the other', 'around is for something big'). Ask 'How do you know?' and 'Show me with your hands.' Do NOT tell the rule yet: the next slide puts their words into the form. Early finishers write one more right card and one more not-right card for another group to sort.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: route words (down, through, around, across, along, past)",
+          hook: "Pick the route word that draws the right line: the little word comes BEFORE the place and has no 'to' in front of it.",
+          form: [
+            { label: "One step", pattern: "Go / Walk / Sail + route word + the place   (Walk across the bridge.)" },
+            { label: "Two or three steps", pattern: "First, go ... Then walk ... Finally, ...   (First, go down the hill. Then walk through the forest.)" },
+            { label: "With a reason", pattern: "... because + reason   /   ..., so + result   (Walk around the lake because it is deep.)" },
+            { label: "Past story", pattern: "We + verb-ed + route word + the place   (We sailed past the lighthouse.)" },
+            { label: "Negative", pattern: "Don't + go / walk + route word + the place   (Don't walk across the ice.)" },
+            { label: "Question", pattern: "How do we get to + the place?   /   Which way is + the place?" },
+          ],
+          explanation: [
+            "What it means: a route word (a preposition of movement) shows the line that a traveller draws. Down and up follow a slope or stairs. Through goes in one side and out of the other. Around goes in a curve and does not cross the thing. Across goes from one side to the other. Along follows the length of something. Past goes by and does not stop.",
+            "When we use it: to give directions ('Go along the river.'), to tell a journey ('We sailed past the lighthouse.') and to plan an exploration ('We will go around the lake.'). We choose the word by the PLACE: something with an inside (a tunnel, a forest, a cave) takes through; something solid or too deep to cross (an island, a rock, a lake) takes around; something flat to cross (a street, a bridge, a river) takes across.",
+            "How we say it: the route word comes BEFORE the place and the place usually has the. There is no to before it: not 'to across the bridge'. We do not need to repeat the verb for each step: 'Go down the hill, through the forest and around the lake.' We can add First, Then and Finally, and because or so to give a reason.",
+            "Place or movement? 'The tent is in the forest' says WHERE it is, and nothing moves. 'We walked through the forest' says HOW we moved. The little word is different because the idea is different.",
+            "Vietnamese tip: Vietnamese often uses 'đi qua' for through, across and past, and 'đi vòng' for around. English chooses a different word each time and puts it before the place: 'đi xuyên qua' = through, 'băng qua' = across, 'đi dọc theo' = along, 'đi ngang qua' = past. Also 'lên' = up, 'xuống' = down, 'vào' = into, 'ra khỏi' = out of.",
+            "Why it matters for talking: with route words you can tell a friend the way, tell the story of a trip and explain why explorers choose one path and not another. Your talk sounds clear and your listener can follow you.",
+          ],
+          examples: [
+            { text: "{s1}, go down the stairs and through the big door.", note: "two steps with one verb" },
+            { text: "{s2} walked around the pond and then across the bridge.", note: "past story: two route words" },
+            { text: "The boat sailed around the island because it could not go through it.", note: "because: a reason for the route" },
+            { text: "First, go along the river. Then walk up the hill.", note: "First and Then for steps" },
+            { text: "Don't walk across the ice, {s3}! It may break.", note: "negative direction" },
+            { text: "The path is wet, so we walk past the waterfall very slowly.", note: "so: a result" },
+          ],
+          pitfalls: [
+            { wrong: "Walk to across the bridge.", right: "Walk across the bridge.", why: "No to before a route word. Vietnamese says 'đi đến' (go to) before a place, so children add to. After a route word English needs no to: the one little word is enough." },
+            { wrong: "The boat sailed through the island.", right: "The boat sailed around the island.", why: "Through means in one side and out of the other. An island is solid, so you go around it." },
+            { wrong: "Walk in the tunnel to the other end.", right: "Walk through the tunnel to the other end.", why: "In says where you are. Through shows movement to the other side." },
+            { wrong: "The ship sailed the coast around.", right: "The ship sailed around the coast.", why: "The route word goes BEFORE the place in English." },
+          ],
+          book: { book: "SB", pages: "173", activities: ["E"], note: "Learn Grammar" },
+        },
+        {
+          kind: "activity",
+          title: "Expedition: walk the map",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Make a floor map with tape and chairs: a hill (two mats), a forest (desks in a line, open at both ends), a lake (a circle of chairs), a bridge (two lines of tape) and a cave (a table). Put a card 'treasure' behind the table.",
+            "Teams of four. One child is the guide, one is the explorer and two are the judges. The guide gets a route card with a picture of three steps. The guide says the route, step by step. The explorer walks it.",
+            "The guide must say each step with a route word and a place: 'First, go up the hill. Then walk around the lake. Finally, go under the table to the treasure.' If the route word fits, the judges say 'Yes!' and the team scores a point for each step.",
+            "Not sure? The judges ask: 'Why that word?' and the guide says one reason with because. Change roles after every route. Play until everybody has been the guide.",
+          ],
+          prompts: [
+            "Route 1: 'First, go up the hill. Then walk through the forest.'",
+            "Route 2: 'First, walk around the lake. Then go across the bridge.'",
+            "Route 3: 'First, go down the hill. Then walk past the lake and into the cave.'",
+            "Route 4: 'Don't walk through the lake! Walk around it, because it is deep.'",
+          ],
+          teacherNote:
+            "The point goes to the right route word for the place, not to the fastest explorer, so every team can win. Correct with PROMPTS before you recast: repeat the error with a rising voice ('walk in the lake ...?'), use a hand signal (a hand curve for around, a finger going in one side and out of the other for through, a flat hand moving across for across) and tug your ear for a missing little word. Say the sentence yourself only when the child is stuck. Keep the floor free and ask children to walk, not run. Use places and made-up explorers only.",
+        },
+        {
+          kind: "speaking",
+          title: "Two maps, one route: ask and answer",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Partner A has Map A and Partner B has Map B. Do not look at each other's papers. Both maps show the same island, but each one has a different half of the path.",
+            "Your job: find the route from the boat to the treasure together. Ask: 'How do we get from ___ to ___?' Your partner reads the next steps from their map. Use First, Then and Finally.",
+            "Draw the route on the blank island at the bottom of your paper. Give a reason when the route avoids a place: 'We go around the lake because it is deep.'",
+            "Put the papers together. Is the route the same? Then swap: you give the route back to your partner without looking.",
+            "Tell another pair your route. They agree or disagree politely: 'I agree because ...' / 'Actually, I think we should go ...'",
+          ],
+          frames: [
+            "How do we get from the ___ to the ___?",
+            "First, go ___ the ___. Then walk ___ the ___.",
+            "We go around / through the ___ because ___.",
+            "Finally, we arrive at the ___. It is ___ the ___.",
+          ],
+          prompts: ["Where does the path go after the cave?", "Is the lake in front of us or behind us?", "Why do we go around it?", "Is that the same on your map?"],
+          fluencyTip: "Always give the next step as a whole sentence, and use because for the one place where the route changes.",
+          teacherNote:
+            "Make two papers before the lesson. Island: beach (start, with a boat), a hill, a forest, a deep lake, a cave, a rope bridge, a river and a waterfall with the treasure behind it. Map A shows the first half: beach, up the hill, through the forest, around the lake, the cave. Map B shows the second half: out of the cave, across the rope bridge, along the river, past the waterfall, the treasure. Each paper shows a half-route with a few blanks. The children need the other paper's information to finish. Walk round and use prompts first: 'Is it one word or a whole sentence?' 'Where is the little word?' 'Which word fits a lake?' The islands are invented, so no child is compared with anyone.",
+        },
+        {
+          kind: "activity",
+          title: "Freeze and travel: movement break",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Music on: explore the room as a team of explorers. Music off: freeze.",
+            "The teacher calls out a route word and a place: 'Through the tunnel!' (arms over your head, creep slowly) 'Around the lake!' (a big circle) 'Across the bridge!' (arms out, balance) 'Past the waterfall!' (hurry by).",
+            "Whisper the whole sentence to the person next to you: 'I walk around the lake.'",
+          ],
+          prompts: ["I walk through the tunnel.", "I walk around the lake.", "I walk past the waterfall."],
+          teacherNote: "A movement break that keeps the pattern in the body. Everyone moves at the same time, so no child is on show.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "173", activities: ["E"], note: "Give directions to a partner, here a route you know" },
+          steps: [
+            "Choose a route you know well: from the classroom to the canteen, from your house to a park, or from a shop to your home. Plan a talk of six sentences: a question to start, three steps with First, Then and Finally, one Don't, and one sentence with because or so.",
+            "Round 1 (90 seconds): tell partner 1. Your partner shows a thumb for every correct route word and shows a finger for every place with no 'to' in front.",
+            "Stop. The teacher shares ONE champion tip from the errors heard and the class says the right sentence together.",
+            "Round 2 (60 seconds): a new partner, the same talk, a little faster. Round 3 (45 seconds): another new partner, smooth and clear.",
+            "Finish: 'Which route was the clearest? Why?' Say one sentence with because.",
+          ],
+          frames: [
+            "How do I get to the ___? First, go ___ the ___.",
+            "Then walk ___ the ___ and finally, go ___ the ___.",
+            "Don't go ___ the ___ because ___.",
+            "The route is easy / hard because ___, so you should ___.",
+          ],
+          prompts: ["Is that a long route or a short route?", "Why do you walk around it?", "What do you see on the way?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and shorter. Keep going if one word is not perfect, and fix it in the next round.",
+          teacherNote:
+            "Use a timer everyone can see. Between rounds 1 and 2 give ONE feedback moment only: the most common error you heard (prompt it first: rising voice, hand signal, ear tug). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support keep a small drawing of the route in front of them and point to one step for each sentence.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: a route note for a new explorer",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          book: { book: "SB", pages: "173", activities: ["E"], note: "Written in the Workbook or your notebook" },
+          steps: [
+            "Say it first. Tell your partner your route note in five sentences, using your talk from before.",
+            "Watch: the teacher and the class write the first two sentences together. Where does the route word go? Is there a to? Where does the comma go after First and after Then?",
+            "Write your route note of five or six sentences: 1 a first sentence saying where the route begins and ends, 2-3 steps with First, Then and Finally and a different route word each time, 1 a Don't with because, and a last sentence with so about what the explorer will find.",
+            "Read your route note to a partner. Put a finger on every route word and on every place.",
+            "Finished early? Write the rule in your own words: 'When we choose a route word ...'",
+          ],
+          frames: [
+            "This route goes from the ___ to the ___.",
+            "First, go ___ the ___. Then walk ___ the ___. Finally, go ___ the ___.",
+            "Don't go ___ the ___ because ___.",
+            "The path is ___, so you will find the ___ and see ___.",
+          ],
+          prompts: ["Say it before you write it.", "Which route word fits this place?", "Where is the little word?", "Because or so: which one fits?"],
+          tiers: [
+            { level: "Support", task: "Copy the shared sentences and change two words. Write three sentences with the frames. Then do the worksheet's Support part.", frames: ["First, go ___ the ___.", "Then walk ___ the ___."] },
+            { level: "Core", task: "Write five sentences. Use three different route words, First, Then and Finally, and one sentence with because or so. Then do the worksheet's Core part.", frames: ["First, go ___ the ___. Then ... Finally, ..."] },
+            { level: "Stretch", task: "Write a paragraph of six or more sentences. Give a route with three steps, two reasons with because and a safety rule with Don't. Then do the worksheet's Challenge part.", frames: ["Don't go ___ the ___ because ___, so go ___ it instead."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model one sentence on the board with a gap for the route word, then release. Model: 'This route goes from the school gate to the library. First, go along the wall. Then walk through the garden because the path is short and dry.' Praise the little words first (the route word, no to), then the order words with commas, then the capital letter and the period. Hand out the worksheet after the note (Support, Core or Challenge part). The printed worksheet 'Grammar Champions: down, through, around, across, along, past' follows this slide.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your route note. Check each point and give yourself a tick.",
+            "1. My route word comes BEFORE the place and there is no 'to'. 2. The route word fits the path: through for in and out, around for something I cannot cross, across for side to side, along for beside. 3. I used First, Then and Finally with commas. 4. Because and so join my ideas, and every sentence has a capital letter and a period.",
+            "Swap notes. Check your partner's note. Say one star: 'Great ___!' and one step: 'Check the ___ here.'",
+            "Fix one thing with your pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["I found through here.", "You used around because it is a lake. Great!", "Check the little word here.", "Four ticks: champion!"],
+          teacherNote:
+            "Draw the four checks on the board with small pictures (a place with no 'to', a curve and a line, three step marks, a link for because / so). Children give a star for every tick on their partner's page. Collect one or two sentences without names to read to the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "The teacher shows four cases. For each: thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then say why.",
+            "Case 1, place or movement: 'The cat is in the box.' and 'The cat jumped into the box.' Which one has a route word? What is different?",
+            "Case 2, no place after it: 'Go down!' 'Come in!' What happens when the place is missing? Is the little word still a route word?",
+            "Case 3, a new place: 'We walked ___ the desert.' (across / through / around). Which one is possible, and which one changes the meaning? Talk about a desert, a forest and a mountain.",
+            "Case 4, the same place, two words: 'over the bridge' and 'across the bridge'. What is the same? Can we say 'through the bridge'? When could we?",
+            "Think: why do we need route words in journals and maps? How do they help us answer the Big Question?",
+          ],
+          frames: ["The rule works because ___.", "The rule does not work because ___.", "We can say it a new way: ___."],
+          prompts: ["Is the cat moving?", "What kind of place is it?", "Which word draws the right line?"],
+          teacherNote:
+            "Transfer to new cases, and a link to the Big Question: explorers write their routes so that others can follow, so clear route words are part of how we learn about the world. Let the children's own words stand and write the best one on the class chart. Keep names out of the cases.",
+        },
+        odL3U17Creative["od2e-l3-u17-l5"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: prepositions of movement.", book: { book: "WB", pages: "157-159", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Invent an explorer who travels through an imaginary place: a jungle, a cave or an ice land. Draw the place and its path. Write five sentences telling the route, with three different route words and one with because." },
+            { label: "Challenge", detail: "Ask a person at home to tell you the way to a place they know well. Write their directions in five sentences with First, Then and Finally, and circle every route word. Find one route word they used that we have not met yet." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words. How do we choose between through and around?",
+            "I used to think ___, now I think ___. (About the rule, or about explorers.)",
+            "Why do we explore? Use a route word in your answer. Show me with your hands how sure you are.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL3U17Worksheets,
+  worksheets: [...odL3U17Worksheets, championsWorksheet],
   assessments: odL3U17Assessments,
   firstEdition: odL3U17FirstEdition,
 };

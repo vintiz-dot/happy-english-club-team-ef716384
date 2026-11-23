@@ -9,7 +9,7 @@
 // player can offer them there. Facts are checked: a lever turns on one point, a
 // ramp is a slope, a wedge is thick at one end and thin at the other, a screw is
 // a ramp wound round a rod, a wheel and axle turns together, and a wheelbarrow
-// combines a wheel and axle with a lever. This unit's test sits after Lesson 4;
+// combines a wheel and axle with a lever. This unit's test sits after Lesson 5 (Grammar Champions);
 // the Wrap Up lesson belongs to Unit 14.
 import type { Assessment, Worksheet } from "@/lib/lessonDecks/types";
 
@@ -175,7 +175,7 @@ export const odL3U13Assessments: Assessment[] = [
     id: "od2e-l3-u13-test",
     title: "Unit 13 test",
     kind: "summative",
-    afterLesson: 4,
+    afterLesson: 5,
     minutes: 45,
     covers: [
       "The 10 machine and invention words and the five simple machines",

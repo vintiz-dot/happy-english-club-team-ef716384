@@ -271,4 +271,55 @@ export const odL2U16Creative: Record<string, Creative> = {
       challenge: "Write a short play with two stubborn fans who both push the same way and a clever friend who helps.",
     },
   ),
+
+  // Lesson 6: Grammar Champions, the -est words
+  "od2e-l2-u16-l6": creative(
+    "Compare and justify",
+    ["goat", "mountain", "stubborn", "forward", "horns", "wet"],
+    ["the + -est: the strongest, the fastest", "good, the best", "stronger than / the strongest"],
+    {
+      title: "Goat Games champion",
+      task: "Invent three goats and three mountain games. Make a scoreboard, find the winner of each game, then choose the champion and say why.",
+      steps: [
+        "Draw three goats and give each one a name.",
+        "Choose three games, for example the highest jump, the fastest run and the heaviest box. Write a number for each goat in each game.",
+        "Write a sentence for each game with an -est word: who is the winner?",
+        "Choose the champion of the Goat Games. Say why in one sentence with because.",
+      ],
+      frames: [
+        "___ has the ___est ___.",
+        "___ is the ___est goat on the mountain.",
+        "___ is stronger than ___, but ___ is the strongest.",
+        "I think ___ is the champion because ___.",
+      ],
+      success: [
+        "My scoreboard has three goats and three games with numbers.",
+        "I wrote three sentences with the + an -est word, and the endings are right.",
+        "I chose a champion and gave a reason with because.",
+      ],
+      challenge: "Make a tie: two goats win a game with the same number. Write one sentence to say why nobody is the strongest, and what the goats can do.",
+    },
+    {
+      title: "Football skills day champion",
+      task: "Invent three football players and three skills games. Make a scoreboard, find the winner of each game, then choose the champion and say why.",
+      steps: [
+        "Draw three football players and give each one a name.",
+        "Choose three games, for example the fastest run, the highest header and the longest throw. Write a number for each player in each game.",
+        "Write a sentence for each game with an -est word: who is the winner?",
+        "Choose the champion of skills day. Say why in one sentence with because.",
+      ],
+      frames: [
+        "___ has the ___est ___.",
+        "___ is the ___est player on the team.",
+        "___ is stronger than ___, but ___ is the strongest.",
+        "I think ___ is the champion because ___.",
+      ],
+      success: [
+        "My scoreboard has three players and three games with numbers.",
+        "I wrote three sentences with the + an -est word, and the endings are right.",
+        "I chose a champion and gave a reason with because.",
+      ],
+      challenge: "Make a tie: two players win a game with the same number. Write one sentence to say why nobody is the best, and what the coach can do.",
+    },
+  ),
 };

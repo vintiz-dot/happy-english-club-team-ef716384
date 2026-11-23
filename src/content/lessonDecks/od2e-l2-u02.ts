@@ -1,5 +1,5 @@
 // Oxford Discover 2nd edition, Level 2, Unit 2 (Big Question 1: How are animals different from one another?)
-// Five 90-minute lessons that follow the Student Book (SB pp. 16-25, the unit plus the Units 1 and 2
+// Five 90-minute lessons (plus a sixth, Grammar Champions, on how often: always, usually, sometimes, hardly ever, never) that follow the Student Book (SB pp. 16-25, the unit plus the Units 1 and 2
 // Wrap Up) and Workbook (WB pp. 10-19) page by page. Activities are the school's own, written around
 // the book's activity letters so the children always know which page they are on; nothing from the
 // book is reproduced. Play-based learning (songs, TPR, games, role play) is blended with
@@ -7,9 +7,66 @@
 // The class's main aim is speaking fluently and confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U02Creative } from "./od2e-l2-u02/homework";
 import { odL2U02Worksheets } from "./od2e-l2-u02/assessments";
+
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l2-u02-ws-champions",
+  title: "Grammar Champions: how often?",
+  grammar: "adverbs of frequency: where the word goes; he / she / it + -s; never already means not",
+  deckId: "od2e-l2-u02-l6",
+  slide: "Write it: how often?",
+  intro:
+    "The five words say how often. They go before a doing word (The panda usually eats) and after is / are (The panda is usually calm). With he, she or it add -s. Never already means not.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right answer. Then read the sentence aloud.",
+      example: "An owl ___ sleeps in the day. (always / never)  ->  always",
+      items: [
+        { q: "The sun ___ comes up in the morning. It comes up every day.", options: ["always", "never"], answer: "always" },
+        { q: "A penguin ___ flies. It can swim, but it cannot fly.", options: ["never", "usually"], answer: "never" },
+        { q: "A panda ___ eats bamboo. It eats it on most days.", options: ["usually", "never"], answer: "usually" },
+        { q: "My rabbit ___ hops on the sofa. It hops there on two days a week.", options: ["sometimes", "always"], answer: "sometimes" },
+        { q: "A camel ___ drinks water in the desert. It drinks one time in many days.", options: ["hardly ever", "always"], answer: "hardly ever" },
+        { q: "Which sentence is correct?", options: ["The snake always eats mice.", "The snake eats always mice."], answer: "The snake always eats mice." },
+        { q: "Which sentence is correct?", options: ["The giraffe is usually calm.", "The giraffe usually is calm."], answer: "The giraffe is usually calm." },
+        { q: "Which sentence is correct?", options: ["My cat never sleep.", "My cat never sleeps."], answer: "My cat never sleeps." },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write always, usually, sometimes, hardly ever or never. Then put the word in the right place and fix the mistakes.",
+      example: "A bird ___ lays eggs. (every bird, every time)  ->  always",
+      items: [
+        { q: "A giraffe ___ eats leaves. (every day, every time)", answer: "always" },
+        { q: "A frog ___ sits on a lily pad. (most days)", answer: "usually" },
+        { q: "My dog ___ chases a cat. (one or two times in a year)", answer: "hardly ever" },
+        { q: "A fish ___ climbs a tree. (no times)", answer: "never" },
+        { q: "Put the word in the right place: The penguin swims. (usually)", answer: "The penguin usually swims." },
+        { q: "Put the word in the right place: The ant is busy. (always)", answer: "The ant is always busy." },
+        { q: "Fix the mistake: The cat is always sleeps.", answer: "The cat always sleeps." },
+        { q: "Join the sentences with but: The bear usually sleeps in winter. It sometimes wakes up.", answer: "The bear usually sleeps in winter, but it sometimes wakes up." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Write one full sentence for each one, or fix the mistake. Check where the word goes.",
+      example: "(whale, swim, in the sea, always)  ->  A whale always swims in the sea.",
+      items: [
+        { q: "(elephant, drink, water, usually)", answer: "e.g. An elephant usually drinks water." },
+        { q: "(kangaroo, is, sleepy, hardly ever)", answer: "e.g. The kangaroo is hardly ever sleepy." },
+        { q: "Fix the mistake: The monkey usually eat fruit.", answer: "The monkey usually eats fruit." },
+        { q: "Fix the mistake: Whales don't never walk.", answer: "Whales never walk." },
+        { q: "Join the sentences with but: The owl always sleeps in the day. It never sleeps at night.", answer: "The owl always sleeps in the day, but it never sleeps at night." },
+        { q: "Write two sentences about YOUR animal: one with usually and one with hardly ever. Then join them with but.", answer: "e.g. My cat usually sleeps in the sun, but it hardly ever sleeps on the floor." },
+        { q: "Write the rule in your own words: where does the word go?", answer: "e.g. It goes before a doing word. It goes after is or are. With he, she or it, the doing word has -s." },
+      ],
+    },
+  ],
+};
 
 export const odL2U2: Unit = {
   curriculum: "oxford-discover-2e",
@@ -25,7 +82,7 @@ export const odL2U2: Unit = {
     "We use always, usually, sometimes, hardly ever and never to say how often something happens; they go before most verbs and after is, am and are.",
     "A speaker or writer uses it, they and we in place of nouns so that the talk sounds smooth, and describes an animal with its group, what it has, what it can do and what it is like.",
   ],
-  worksheets: odL2U02Worksheets,
+  worksheets: [...odL2U02Worksheets, championsWorksheet],
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -1134,6 +1191,277 @@ export const odL2U2: Unit = {
           items: [
             { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Review pages for Units 1 and 2.", book: { book: "WB", pages: "18-19", note: "Review" } },
+          ],
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l2-u02-l6",
+      resources: [
+        { title: "ESL Adverbs of Frequency Lesson [Kids, A1]", url: "https://www.twinkl.com/resource/esl-adverbs-of-frequency-lesson-kids-a1-t-1749205669", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: How often? always, usually, sometimes, hardly ever, never\"", slide: "Grammar: How often? always, usually, sometimes, hardly ever, never" },
+      ],
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 2,
+      lesson: 6,
+      covers: { unitFrom: 2, lesson: "Understand" },
+      title: "Grammar Champions: How often? always, usually, sometimes, hardly ever, never",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "21", activities: ["D", "E", "F"], note: "Grammar in Use: song, Learn Grammar and the partner table" },
+        { book: "WB", pages: "13-15", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: How often?", subtitle: "Lesson 6 · Grammar and speaking", bigQuestion: "How are animals different from one another?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can say how often animals and people do things with always, usually, sometimes, hardly ever and never.",
+            "I can ask 'How often ...?' and answer in a whole sentence.",
+            "I can write four or more sentences and join two of them with and or but.",
+            "I can explain, in my own words, where the word goes in a sentence.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 7,
+          steps: [
+            "Teacher says an action word from this unit: creep, peck, hunt, escape, squawk. Do the action fast, then say the word.",
+            "Now the finger ladder: always = four fingers, usually = three, sometimes = two, hardly ever = one, never = a fist. Teacher shows fingers, you shout the word!",
+            "Teacher says a word, you show the fingers. Then shout it backwards: never first, always last. {s1} is the teacher for one round.",
+            "Pairs: Partner A says an animal and an action, for example 'a snail ... run'. Partner B shows the fingers and says the whole sentence: 'A snail hardly ever runs.'",
+          ],
+          prompts: ["Four fingers!", "Which word is one finger?", "A ___ ___ ___.", "Is it always, or is it sometimes?"],
+          teacherNote:
+            "Retrieval: pull back Lesson 3's five words and the unit's action words before today's pattern. Keep it quick, about 20 seconds a round. Do not correct sentences yet: if the word is in the wrong place, only raise your eyebrows and repeat the sentence up to the word with a rising voice. Fingers go on the chest so every child can see everyone's fingers.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: a week at Sunny Zoo",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Sit down and close your books. Teacher is the zoo guide. Listen to the story about Sunny Zoo (on the right).",
+            "First listening: clap once every time you hear one of the five little words.",
+            "Second listening: show the finger ladder when you hear the word. Is it four fingers, three, two, one or a fist?",
+            "Ask: 'What is the mystery? What do the five little words tell us about the animals?' Say your idea to a partner. Do not give the rule yet.",
+          ],
+          prompts: [
+            "Story 1: 'Welcome to Sunny Zoo! Ollie the owl always sleeps in the day. At night he is awake and he hunts. He never sleeps at night!'",
+            "Story 2: 'Mimi the monkey usually eats bananas. She sometimes eats a mango, and she hardly ever eats berries. Mimi is always busy.'",
+            "Story 3: 'Toby the tortoise is never fast, but he is always patient. He usually walks in the shade and he hardly ever runs. Look at his shell: it is very big.'",
+            "Story 4: 'Dina the duck is usually in the pond. She sometimes walks on the grass and she never sleeps in a tree. {s1} and {s2} always say hello to her.'",
+            "Story 5: 'Kiki the parrot always squawks in the morning. She usually sings in the afternoon, and she hardly ever squawks at night. At night the zoo is quiet. Shh!'",
+            "Story 6: 'All the animals at Sunny Zoo are different. Who always sleeps in the day? Who is never fast? Who usually eats bananas?'",
+          ],
+          teacherNote:
+            "This is input flood: the five words come many times, in the same places, in an invented zoo, so no child is talked about. Read slowly with a smile and let your voice lean on the frequency word. Do NOT explain the grammar. Use the Big Question to open the mystery: the animals are different, and the five words are part of how we say it. Write the children's own ideas on the board exactly as they say them.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group gets 12 sentence cards and three mats: DOING WORD, IS / ARE and NOT RIGHT.",
+            "Read each card out loud. Decide: is the sentence right or not right? Then put it on a mat.",
+            "Look at the DOING WORD mat and the IS / ARE mat. What is the same on both mats? What is different? Say it with the frames.",
+            "Look at the NOT RIGHT mat. What is wrong with each card? Fix two cards with your pencil and say why.",
+            "Tell the class: 'I think the rule is ___ because ___.' Teacher writes your words on the board.",
+          ],
+          frames: ["On both mats I see ___.", "On this mat the word is before / after ___.", "The cards are different because ___.", "I think the rule is ___ because ___."],
+          prompts: [
+            "Right cards (a doing word): 'Ollie always sleeps in the day.' 'Mimi usually eats bananas.' 'A snail hardly ever runs.' 'The penguin never flies.' 'A panda sometimes climbs a tree.'",
+            "Right cards (is / are): 'Toby is never fast.' 'The ducks are sometimes noisy.' 'The panda is usually calm.' 'My dog is always happy.'",
+            "Not right cards: 'Mimi eats usually bananas.' 'Toby always is slow.' 'Ollie never sleep at night.' 'The duck is sometimes swims.'",
+          ],
+          teacherNote:
+            "Print the cards in big letters (one sentence per card). The sorting is the point, so give the children time. Collect their words and write them on the board exactly as they say them, for example 'word is near the verb' or 'with is, the word is behind'. Ask 'How do you know?' and 'Show me with your hands.' Do NOT tell the rule: the next slide puts their words into the form. Early finishers: write one more right card and one not right card for another group to sort.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: How often? always, usually, sometimes, hardly ever, never",
+          hook: "Five little words, one big question: how often? Choose the right word and your sentence tells the truth about an animal's week.",
+          form: [
+            { label: "Before a doing word", pattern: "subject + ALWAYS / USUALLY / SOMETIMES / HARDLY EVER / NEVER + verb" },
+            { label: "After is / am / are", pattern: "subject + is / am / are + ALWAYS / USUALLY / ... + describing word" },
+            { label: "He / she / it", pattern: "a tortoise / she / it + word + verb + s (it usually walks)" },
+            { label: "Ask", pattern: "How often + does / do + subject + verb?" },
+          ],
+          explanation: [
+            "What it means: these words say how often without counting. Always is every time. Usually is nearly every time. Sometimes is some times, not most. Hardly ever is only one or two times. Never is no times. Think of a ladder: always at the top, never at the bottom.",
+            "When we use it: for habits and routines, and for what animals and people do again and again. One animal can be gentle most days and fierce once, so these words tell the truth better than one word alone. That is how animals are different from one another: not only what they do, but how often they do it.",
+            "Where the word goes: next to the verb. Before a doing word: The owl always sleeps. After is, am or are: The owl is always quiet. The word never already means not, so do not add don't.",
+            "Vietnamese tip: Vietnamese has these words too (luôn luôn, thường, thỉnh thoảng, hiếm khi, không bao giờ), and they go before the verb, as in English. Two things are new. Vietnamese does not need 'is' before a describing word, so do not put is before a doing word: not 'The cat is always sleep'. And English needs -s after he, she or it: 'The cat always sleeps'.",
+            "Why it matters for talking: with these words you can say true things fast, ask 'How often ...?' and answer in a whole sentence. Your talk sounds smooth, and you can tell a friend exactly how two animals are different.",
+          ],
+          examples: [
+            { text: "{s1} always helps a friend.", note: "always = every time" },
+            { text: "{s2} and {s3} usually sit together at break.", note: "usually = nearly every time" },
+            { text: "A cat sometimes climbs a tree.", note: "sometimes = some times, not most" },
+            { text: "A tortoise hardly ever runs.", note: "hardly ever = one or two times" },
+            { text: "A penguin never flies.", note: "never = no times; it already means not" },
+            { text: "{s4} is always ready to play.", note: "after is" },
+          ],
+          pitfalls: [
+            { wrong: "A cat sleeps always in the sun.", right: "A cat always sleeps in the sun.", why: "Put the word before the doing word, not after it." },
+            { wrong: "The cat is always sleeps.", right: "The cat always sleeps.", why: "A doing word does not need is. Use is only before a describing word: The cat is always calm." },
+            { wrong: "The owl never sleep at night.", right: "The owl never sleeps at night.", why: "He, she and it need -s on the verb, even after never." },
+            { wrong: "Fish don't never walk.", right: "Fish never walk.", why: "Never already means not, so do not add don't." },
+          ],
+          book: { book: "SB", pages: "21", activities: ["E"], note: "Learn Grammar" },
+        },
+        {
+          kind: "activity",
+          title: "Zookeeper's line: run and say",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Put five signs on the floor in one long line: ALWAYS, USUALLY, SOMETIMES, HARDLY EVER, NEVER. Make teams of four at one end of the room.",
+            "The zookeeper (teacher, then a child) reads a card with a gap: 'A snail ___ runs.' Each team sends one runner to the sign they choose.",
+            "The runner stands on the sign and says the WHOLE sentence: 'A snail hardly ever runs.' If the word is in the right place, the team gets a point.",
+            "Not sure? The class asks 'Why?' and the runner says one reason. Sometimes two signs are fine! Next runner.",
+            "Change the zookeeper after four cards. Play until every child has run once.",
+          ],
+          prompts: [
+            "Cards: 'A snail ___ runs.' 'A fish ___ lives in water.' 'A parrot ___ squawks.' 'The cat is ___ calm.' 'A penguin ___ flies.' 'The ducks are ___ in the pond.' 'A monkey ___ eats a banana.' 'An owl ___ sleeps in the night.'",
+            "Say it: 'A ___ always ___.' 'A ___ is usually ___.' 'A ___ never ___.'",
+          ],
+          teacherNote:
+            "A point goes to the sentence with the word in the right place, not to the fastest runner, so every team can win. Correct with PROMPTS before a recast: repeat the error with a rising voice ('A snail runs hardly ever...?'), do the hand sandwich (one hand is the frequency word, the other hand is the verb: the word hand goes in FRONT), tug your ear for a missing -s, and tap 'is' on your chest for the is-sentences. Say the correct sentence yourself only if the child is stuck. Some cards have two good answers (a parrot usually or always squawks): ask for the reason. Use invented or animal sentences, never real children.",
+        },
+        {
+          kind: "speaking",
+          title: "Zoo diary: ask and fill in",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Partner A has Diary A. Partner B has Diary B. Do not look at each other's papers. Each diary shows a week (Mon to Sun) for six animal actions. Some rows have ticks, some rows are empty.",
+            "Look at your empty rows. Ask your partner: 'How often does ___ ___?' Your partner counts the ticks and answers with a whole sentence.",
+            "Write the word your partner says in your empty row. Then swap: your partner asks and you answer.",
+            "Put the papers together. Are the diaries the same? Fix any row that is different and say why: 'We have different words because ...'",
+            "Pick two animals from your diary. Say how they are different with but: 'Dina always swims, but Toby never swims.'",
+          ],
+          frames: ["How often does ___ ___?", "___ always / usually / sometimes / hardly ever / never ___.", "It is ___ ___.", "___ and ___ are different: ___ ___, but ___ ___."],
+          prompts: ["How often does Ollie sleep in the day?", "How often does Mimi eat a mango?", "Is that the same in your diary?", "Why are they different?"],
+          fluencyTip: "Answer in a whole sentence, not one word. Look at your partner, not at the paper, when you say it.",
+          teacherNote:
+            "Make two diaries before the lesson. Each has six rows (an animal and an action, for example Ollie sleeps in the day, Mimi eats a mango, Toby runs, Dina swims, Kiki squawks, Rex the lizard sits in the sun) and seven boxes for Mon to Sun. In Diary A, rows 1, 2 and 3 have ticks and rows 4, 5 and 6 are empty; in Diary B it is the other way round. Count to check: seven ticks = always, five or six = usually, three or four = sometimes, one or two = hardly ever, none = never. Let children say what the ticks mean before you give the counts: that is the concept. Walk round and use prompts first: 'Is it one word or a whole sentence?' 'Where does the word go?'",
+        },
+        {
+          kind: "activity",
+          title: "Body ladder: freeze and show",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Music on: dance like an animal! Music off: freeze.",
+            "Teacher says a word. Show it with your body: always = stand tall with arms up, usually = arms out wide, sometimes = hands on hips, hardly ever = crouch low, never = arms crossed.",
+            "Teacher says an animal fact: 'A fish ___ climbs trees.' Freeze in the right pose and whisper the whole sentence to the child next to you.",
+          ],
+          prompts: ["A fish never climbs a tree.", "A bird usually sings in the morning.", "A snail hardly ever runs."],
+          teacherNote: "A movement break that keeps the pattern in the body. Use animal facts only. Everyone moves at once, so no child is on show.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "21", activities: ["F"], note: "Tell about someone, here an animal" },
+          steps: [
+            "Choose an animal you know or invent one. Plan four sentences: its name, one always sentence, one sometimes or hardly ever sentence, one never sentence. Join two with but.",
+            "Round 1 (90 seconds): tell partner 1 about your animal. Your partner shows a thumb for each sentence with the word in the right place.",
+            "Stop. Teacher shares ONE champion tip from the errors heard. Say it together once.",
+            "Round 2 (60 seconds): new partner, the same talk, a little faster. Round 3 (45 seconds): another new partner, smooth and clear.",
+            "Last: 'How is your animal different from another animal?' Say one sentence with but.",
+          ],
+          frames: ["My animal is a ___. It is ___.", "It always ___. It usually ___, but it sometimes ___.", "It hardly ever ___ and it never ___.", "My ___ is different from a ___ because ..."],
+          prompts: ["How often does it ___?", "Is it always the same?", "How is it different from a ___?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and faster. Keep going, even if one word is not perfect.",
+          teacherNote:
+            "Use a timer everyone can see. Between rounds 1 and 2, give ONE feedback moment only: the most common error you heard (prompt it first: rising voice, hand sandwich, ear tug for -s). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support keep a picture of their animal in front of them and point to a box for each sentence. Animals are invented, so no child has to say anything about themselves.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: how often?",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          book: { book: "SB", pages: "21", activities: ["E"], note: "Practice table" },
+          steps: [
+            "Say your sentences to a partner first. Use your animal from the Champion talk.",
+            "Watch: the teacher and the class write one sentence together: 'A tortoise is never fast.' Where is the word? Now join two sentences: '..., but ...'. Where does the comma go?",
+            "Write five sentences about your animal, or about two animals that are different. Use at least four of the five words. Join two sentences with and or but.",
+            "Read your writing to a partner. Put a finger on each frequency word and each verb.",
+            "Finished early? Write the rule: 'In a sentence, the word goes ...'",
+          ],
+          frames: ["A ___ always ___, but it never ___.", "A ___ is usually ___ and sometimes ___.", "A ___ hardly ever ___.", "A ___ usually ___, but a ___ hardly ever ___."],
+          prompts: ["A ___ ___ ___.", "How often does it ___?", "Where does my word go?"],
+          tiers: [
+            { level: "Support", task: "Copy the shared sentence and change one word. Write three sentences with the frames. Then do the worksheet's Support part.", frames: ["A ___ always ___.", "A ___ never ___."] },
+            { level: "Core", task: "Write four or five sentences. Join two with and or but. Then do the worksheet's Core part.", frames: ["A ___ usually ___, but it sometimes ___."] },
+            { level: "Stretch", task: "Write a short paragraph of five or more sentences that compares two animals, and add one because. Then do the worksheet's Challenge part.", frames: ["A ___ and a ___ are different because ___."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model one sentence on the board with a gap for the word, then release. Praise the right place for the word first, then the -s, then the capital letter and period. Hand out the worksheet after the sentences (Support, Core or Challenge part). Check that no sentence teases a child: the animals are invented.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your writing. Check each point and give yourself a tick.",
+            "1. My word fits: always is every time, never is no times. 2. My word is next to the verb: before a doing word, after is / are. 3. He, she or it: the verb has -s. 4. I did not write don't with never. And my sentences have a capital letter and a period.",
+            "Swap papers. Check your partner's writing. Say one star: 'Great word!' and one step: 'Check the -s here.'",
+            "Fix one thing with your pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["Your word fits because ...", "Your word is next to the verb. Great!", "Check the -s here.", "Four ticks: champion!"],
+          teacherNote: "Draw the four checks on the board with small pictures (a ladder, a verb with a word beside it, an s, a capital letter and a dot). Children give a star for every tick on their partner's page. Collect one or two sentences without names to share with the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "Teacher shows three tricky cases. Thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then say why.",
+            "Case 1, a question: 'Does the owl always sleep in the day?' Where is always? Is it still next to the verb?",
+            "Case 2, a new word: 'The owl is often awake.' Often is a new word. Where does it go in the sentence? Where is it on the ladder?",
+            "Case 3, a song: open SB 21 D. Find three of the five words. Does each one sit next to the verb?",
+            "Think: why do five little words help us say how animals are different from one another?",
+          ],
+          frames: ["The rule works because ___.", "The rule does not work because ___.", "These words help us say how animals are different because ___."],
+          prompts: ["Is it next to the verb?", "Is it before or after is?", "Between which two words is often?"],
+          teacherNote:
+            "Transfer to new cases, and a link to the Big Question: one word tells us what an animal does, but the five words tell us how often, and that is how two animals can be different. Case 2: often fits between usually and sometimes on the ladder, and it goes in the same place as the other words. Let children's own words stand and write the best one on the class chart. Keep names out of the cases.",
+        },
+        odL2U02Creative["od2e-l2-u02-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: how often.", book: { book: "WB", pages: "13-15", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Invent two animals that are different. Draw them. Write four sentences about each one with always, usually, sometimes, hardly ever or never. Then choose which animal you like better and say why." },
+            { label: "Challenge", detail: "Watch one animal (a bird, a cat, a fish or an insect) for five minutes. Write what it always does, what it sometimes does and what it never does. Then say how it is different from another animal you know." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say where the word goes, in your own words.",
+            "I used to think ___, now I think ___. (About the five words, or about animals.)",
+            "How are animals different from one another? Use one of the five words in your answer. Show me with your hands how sure you are.",
           ],
         },
       ],

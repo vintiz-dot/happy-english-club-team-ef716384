@@ -281,5 +281,63 @@ export const odL2U11Creative: Record<string, Creative> = {
         }
       }
     ]
-  }
+  },
+  "od2e-l2-u11-l5": {
+    "kind": "creative",
+    "thinking": "Design",
+    "uses": {
+      "words": ["trash", "reuse", "reduce", "land", "wood", "resources"],
+      "grammar": ["Where is the ___? It is above / behind / in front of / across from the ___.", "Is the ___ behind the ___? Yes, it is."]
+    },
+    "base": {
+      "title": "Plan a clean park: where does everything go?",
+      "task": "Design a clean park on paper. Put a recycling bin in the best place, and say why. Write a question and an answer about your map.",
+      "steps": [
+        "Draw a park with six things: a tree, a bench, a pond, a trash can, a recycling bin and one thing you choose.",
+        "Decide the best place for the recycling bin. Put it there.",
+        "Write three sentences that say where things are, with two different place words.",
+        "Write one question and its answer, and one sentence that says why the bin is in that place."
+      ],
+      "frames": [
+        "The ___ is above / behind / in front of / across from the ___.",
+        "Is the ___ behind the ___? Yes, it is. / No, it isn't.",
+        "I put the recycling bin ___ the ___ because ___.",
+        "A clean park helps the Earth because ___."
+      ],
+      "success": [
+        "My map has six things and a recycling bin.",
+        "Each place sentence has two things and is or are.",
+        "My question starts with Is, Are or Where, and I can say why the bin is there."
+      ],
+      "challenge": "Write the opposite of each place sentence: if the bin is behind the tree, the tree is in front of the bin. Then explain to someone at home why we need two things for a place word."
+    },
+    "variants": [
+      {
+        "interest": "football",
+        "label": "Football edition",
+        "task": {
+          "title": "Plan a clean football park: where does everything go?",
+          "task": "Design a clean football park on paper. Put a recycling bin in the best place, and say why. Write a question and an answer about your map.",
+          "steps": [
+            "Draw a football park with six things: a pitch, a goal, a bench, a trash can, a recycling bin and one thing you choose.",
+            "Decide the best place for the recycling bin so fans use it. Put it there.",
+            "Write three sentences that say where things are, with two different place words.",
+            "Write one question and its answer, and one sentence that says why the bin is in that place."
+          ],
+          "frames": [
+            "The ___ is above / behind / in front of / across from the ___.",
+            "Is the ___ behind the ___? Yes, it is. / No, it isn't.",
+            "I put the recycling bin ___ the ___ because ___.",
+            "A clean football park helps the Earth because ___."
+          ],
+          "success": [
+            "My map has six things and a recycling bin.",
+            "Each place sentence has two things and is or are.",
+            "My question starts with Is, Are or Where, and I can say why the bin is there."
+          ],
+          "challenge": "Write the opposite of each place sentence: if the goal is behind the bench, the bench is in front of the goal. Then explain to someone at home why we need two things for a place word."
+        }
+      }
+    ]
+  },
 };

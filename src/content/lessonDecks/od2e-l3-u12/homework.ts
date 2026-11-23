@@ -328,4 +328,68 @@ export const odL3U12Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 6: Grammar Champions (as ... as and not as ... as, with because and so)
+  "od2e-l3-u12-l6": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["flute", "tuba", "drum", "pipes", "strings", "vibrate", "pitch", "traditional"],
+      grammar: ["as + adjective + as", "not as + adjective + as", "because and so"],
+    },
+    base: {
+      title: "Invent a mixed-up instrument",
+      task: "Invent a new instrument by joining two real ones, for example a flute and a drum. Draw it, name it and write a paragraph that explains how it is like each parent and how it is different.",
+      steps: [
+        "Choose two instruments and join them in a drawing. Give your new instrument a name.",
+        "Write one sentence with as ... as to say how it is like the first instrument.",
+        "Write one sentence with not as ... as to say how it is different from the second one.",
+        "Add a sentence with because and a sentence with so, then read your paragraph aloud to someone at home.",
+      ],
+      frames: [
+        "I call my instrument the ___. It is a mix of a ___ and a ___.",
+        "Its sound is as ___ as a ___.",
+        "It isn't as ___ as a ___, so ___.",
+        "You play it by ___ because ___.",
+        "People would love it because ___.",
+      ],
+      success: [
+        "My paragraph has two as in every as ... as and not as ... as sentence, with a plain adjective in the middle.",
+        "My paragraph uses because and so at least once each.",
+        "My paragraph says how the instrument makes its sound (blow, hit, pluck or bow, and how it vibrates).",
+      ],
+      challenge:
+        "Write a second paragraph that answers a visitor who says 'Nobody needs a mixed-up instrument!' Give two reasons that answer them politely.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "A mixed-up instrument for the Emirates Stadium",
+          task: "Invent a new instrument for the Arsenal fans by joining two real ones, for example a drum and a trumpet. Draw it, name it and write a paragraph that explains how it is like each parent and how it is different.",
+          steps: [
+            "Choose two instruments and join them in a drawing. Give your instrument a name that the Gunners' fans would like.",
+            "Write one sentence with as ... as to say how it sounds like the first instrument.",
+            "Write one sentence with not as ... as to say how it is different from the second one.",
+            "Add a sentence with because and a sentence with so about match day, then read your paragraph aloud to someone at home.",
+          ],
+          frames: [
+            "I call my instrument the ___. It is a mix of a ___ and a ___.",
+            "Its sound is as ___ as ___ in the stadium.",
+            "It isn't as ___ as a ___, so ___.",
+            "The fans play it by ___ because ___.",
+            "On match day it would help because ___.",
+          ],
+          success: [
+            "My paragraph has two as in every as ... as and not as ... as sentence, with a plain adjective in the middle.",
+            "My paragraph uses because and so at least once each.",
+            "My paragraph says how the instrument makes its sound (blow, hit, pluck or bow, and how it vibrates).",
+          ],
+          challenge:
+            "Write a second paragraph that answers a neighbor of the stadium who says 'It will be too loud!' Give two reasons that answer them politely.",
+        },
+      },
+    ],
+  },
 };

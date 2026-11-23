@@ -176,7 +176,7 @@ export const odL3U16Assessments: Assessment[] = [
     id: "od2e-l3-u16-test",
     title: "Unit 16 test",
     kind: "summative",
-    afterLesson: 5,
+    afterLesson: 6,
     minutes: 45,
     covers: [
       "The 10 garden words and words in context: water, curious, bloom, empty",

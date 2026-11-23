@@ -6,10 +6,69 @@
 // confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL3U16Creative } from "./od2e-l3-u16/homework";
 import { odL3U16Assessments, odL3U16Worksheets } from "./od2e-l3-u16/assessments";
 import { odL3U16FirstEdition } from "./od2e-l3-u16/firstEdition";
+
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l3-u16-ws-champions",
+  title: "Grammar Champions: curious about, happy with, surprised at",
+  grammar: "adjectives with prepositions: curious about, happy with, surprised at; because and so",
+  deckId: "od2e-l3-u16-l6",
+  slide: "Write it: a paragraph about my garden",
+  intro:
+    "A feeling word has a small partner: curious ABOUT, happy WITH, surprised AT. After the partner we say a thing or how and a clause. Then add because for the reason and so for the result, with a comma before so.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right answer. Then read the whole sentence aloud.",
+      example: "Tess is curious ___ the bees.  (about / for)  ->  about",
+      items: [
+        { q: "Our class is curious ___ how seeds grow.", options: ["about", "for"], answer: "about" },
+        { q: "The gardener is happy ___ the new fence.", options: ["with", "of"], answer: "with" },
+        { q: "We were surprised ___ the huge pumpkin.", options: ["at", "on"], answer: "at" },
+        { q: "Which sentence is correct?", options: ["Omar is curious about the worms.", "Omar is curious with the worms."], answer: "Omar is curious about the worms." },
+        { q: "Are you happy ___ your tomato plant?", options: ["with", "for"], answer: "with" },
+        { q: "Which sentence is correct?", options: ["Raj was surprised at how fast the vines grew.", "Raj was surprised on how fast the vines grew."], answer: "Raj was surprised at how fast the vines grew." },
+        { q: "I'm curious about bees ___ they help the flowers.", options: ["because", "so"], answer: "because" },
+        { q: "The pots were empty, ___ we planted some seeds.", options: ["so", "because"], answer: "so" },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing small word, or write the whole sentence where it asks you to rewrite or correct.",
+      example: "We are happy ___ our beans.  ->  with",
+      items: [
+        { q: "My cousin is curious ___ how bees make honey.", answer: "about" },
+        { q: "Our class is happy ___ the new school garden.", answer: "with" },
+        { q: "The farmer was surprised ___ the size of the sweet potato.", answer: "at" },
+        { q: "Make it negative: I'm happy with my small beans.", answer: "I'm not happy with my small beans. (or: I am not happy with my small beans.)" },
+        { q: "Make it a question: Lena is curious about the new seeds.", answer: "Is Lena curious about the new seeds?" },
+        { q: "Correct the mistake: Pia is curious for the sunflower.", answer: "Pia is curious about the sunflower." },
+        { q: "Join with because: I'm curious about worms. They help the soil.", answer: "I'm curious about worms because they help the soil." },
+        { q: "Join with so: We were surprised at the haze. We closed the window.", answer: "We were surprised at the haze, so we closed the window." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Think carefully. Some answers need a sentence of your own, so check every small word.",
+      example: "Kai was surprised. The vines grew so fast.  ->  Kai was surprised at how fast the vines grew.",
+      items: [
+        { q: "Join with how: Lena was curious. The sunflower turns toward the sun.", answer: "Lena was curious about how the sunflower turns toward the sun." },
+        { q: "Correct the mistake: I'm surprised at it grew so tall.", answer: "I'm surprised at how tall it grew. (or: I'm surprised at how it grew so tall.)" },
+        {
+          q: "Find and fix three mistakes: 'Rosa is curious for the seeds. She was surprised on how small they were. Now she is happy of her little garden.'",
+          answer: "curious about; surprised at; happy with.",
+        },
+        { q: "Write two sentences about a garden. One has curious about and because. The other has surprised at and so.", answer: "e.g. I'm curious about sweet potatoes because they grow under the ground. We were surprised at the haze over the garden, so we waited for it to clear." },
+        { q: "Write a question for your partner with curious about and a follow-up question with Why.", answer: "e.g. What are you curious about in the garden? Why do you want to know more?" },
+        { q: "Write a three-sentence paragraph about a garden. Use curious about, happy with and surprised at once each, and one because or so.", answer: "e.g. I was curious about the small garden near my school. I was surprised at how many vegetables grew in it. I'm happy with it because it gives the neighbors fresh food." },
+      ],
+    },
+  ],
+};
 
 export const odL3U16: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1096,8 +1155,304 @@ export const odL3U16: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l3-u16-l6",
+      curriculum: "oxford-discover-2e",
+      level: 3,
+      unit: 16,
+      lesson: 6,
+      covers: { unitFrom: 16, lesson: "Understand" },
+      title: "Grammar Champions: curious about, happy with, surprised at",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "161", activities: ["D", "E", "F", "G"], track: "2.53", note: "Grammar in Use: adjectives with prepositions" },
+        { book: "WB", pages: "146-148", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: curious about, happy with, surprised at", subtitle: "Lesson 6 · Grammar and speaking", bigQuestion: "Why do we need plants?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can say how I feel about plants and gardens with curious about, happy with and surprised at, and give a reason with because.",
+            "I can ask 'What are you curious about?' and 'What are you happy with?' and answer in a long turn with because and so.",
+            "I can write a short paragraph of five or more sentences about a garden and edit it with the checklist.",
+            "I can explain the rule in my own words and test it on a new case.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 7,
+          steps: [
+            "Meaning relay. The teacher gives a meaning and you shout the word: 'young people between 13 and 19' (teenagers), 'plants with long stems that climb' (vines), 'a thin cloud of dust in the air' (haze), 'all the people who live in one place' (community).",
+            "Plot in three. Three children each say one sentence about the Garden of Happiness: a beginning, a middle and an end. The class shows thumbs up if it is an important event and sideways if it is only a detail.",
+            "Pair game. The teacher calls a feeling word (curious, happy, surprised). The class shouts the small word that goes with it, last lesson's pairs. Then the teacher says a gap sentence: 'The gardener is ___ the new seeds.' and the class shows the pair with hands: a circle in the air for about, two hands joined for with, a pointing finger for at.",
+            "Pairs: say two true sentences about plants or gardens with a feeling pair. Then tell the class your partner's best sentence: '{s1} is curious about ...'.",
+          ],
+          prompts: ["Show me the small word!", "{s2}, give me a sentence with surprised at.", "Which pair did you use? Say it again, a little slower.", "My partner's best sentence was ..."],
+          teacherNote:
+            "Retrieval first: pull back this unit's words, the plot idea and the three pairs before today's lesson. Keep each round to about 20 seconds. Do not correct a wrong pair yet: raise your eyebrows and repeat the sentence up to the little word with a rising voice. Teach the three hand signs now (circle for about, joined hands for with, pointing finger for at), because they are used all lesson.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: the school garden",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Close your books. The teacher tells the story of the school garden (the parts are in the prompts). Listen with your whole body.",
+            "First listening: clap every time you hear a feeling word (curious, happy or surprised). Stand up for two seconds when you hear the small word that comes right after it.",
+            "Second listening: when you hear the small word, show its hand sign (circle, joined hands or pointing finger). Then whisper to a partner: which small word came with which feeling word?",
+            "The mystery: 'What do the feeling words and their small words tell us about Rosa, Ben and Leo?' Talk for one minute with a partner and say your idea out loud. Do not look for the rule yet: the teacher writes your ideas on the board and keeps them.",
+          ],
+          prompts: [
+            "Part 1: 'Last spring our school got a tiny garden behind the gym. Rosa was curious about the little brown seeds. \"Which plants are inside?\" she asked. Ben was curious about the worms in the soil. Leo was curious about how a seed becomes a plant. Everybody was curious about something!'",
+            "Part 2: 'They planted beans, sweet potatoes and sunflowers, and they watered them every morning. After two weeks Rosa was surprised at the tiny green leaves. Ben was surprised at how fast the bean vines grew. Leo was surprised at the bees that came to the flowers.'",
+            "Part 3: '\"We are happy with our garden,\" said Rosa, \"so we will keep working!\" Ben was happy with his tall vines, and Leo was happy with the big yellow sunflower. Mr. Green, the school gardener, was happy with all three of them.'",
+            "Part 4: 'Then a strong wind came and broke the sunflower. Leo was not happy with the wind. But Rosa had an idea: \"I'm curious about what a fence can do. Let's build one!\" They built a low fence, so the wind could not hurt the new plants.'",
+            "Part 5: 'At the end of summer the whole community came to see the garden. {s1} was surprised at how many beans there were. {s2} was curious about the sweet potatoes. {s3} was happy with the sunflower seeds. What are YOU curious about? What are you happy with? What would surprise you in a garden?'",
+          ],
+          teacherNote:
+            "Input flood: the three pairs come many times in a made-up story with invented characters, and the story has a beginning, a middle (the wind) and an end, like the reading. Read slowly with a smile and lean on the small word. Pause after each part so the clappers and standers can check each other. Do NOT explain the grammar. Link to the Big Question: the garden gave the children food, a project and a reason to meet, so plants give us more than food. Write the children's own ideas exactly as they say them.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group gets 14 sentence cards and four mats: ABOUT, WITH, AT and NOT RIGHT.",
+            "Read each card aloud. Decide which mat it goes on. Argue politely: 'I think this card goes here because ...'",
+            "Look at the three right mats. What is the same on every mat? What is different? Look at the feeling words and at what comes after the small word (a thing, a how-clause). Say it with the frames.",
+            "Look at the NOT RIGHT mat. What is wrong with each card? Fix two cards with a pencil and say why.",
+            "Tell the class: 'I think the rule is ___ because ___.' The teacher writes your words on the board but does not say if they are right yet.",
+          ],
+          frames: [
+            "On the ___ mat I see the feeling word ___ every time.",
+            "After ___ we always say ___, and then ...",
+            "This card is not right because ___.",
+            "I think the rule is ___ because ___.",
+          ],
+          prompts: [
+            "ABOUT mat: 'Rosa is curious about the seeds.' 'Are you curious about bees?' '{s1} is curious about how a seed grows.'",
+            "WITH mat: 'We are happy with our garden.' 'Mr. Green is happy with the new fence.' 'I'm not happy with my small tomato.'",
+            "AT mat: 'Leo was surprised at the bees.' '{s2} was surprised at how tall the sunflower was.' 'Were you surprised at the size?'",
+            "NOT RIGHT mat: 'Rosa is curious for the seeds.' 'Ben is happy of his vines.' 'Leo was surprised on the wind.' 'We are curious with the worms.' 'I'm curious about it grows.'",
+          ],
+          teacherNote:
+            "Print the cards in big letters, one sentence per card, and mix them up for each group. The sorting is the point, so give the children time. Collect their words and write them on the board exactly as said ('curious has about', 'after the little word comes a thing'). Ask 'How do you know?' and 'Show me on the cards.' Do NOT tell the rule yet: the next slide puts their words into the form. If a child says 'happy about' or 'surprised by', say 'Yes, some words have a second partner. Today we master these three.' and do not put them on cards. Early finishers write one more right card and one more not-right card for another group to sort.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: curious about, happy with, surprised at",
+          hook: "A feeling word and its small partner travel as a pair: curious ABOUT, happy WITH, surprised AT. Learn the pair, not just the word.",
+          form: [
+            { label: "Statement", pattern: "Subject + be + feeling word + small word + a thing / an -ing word / how ...   (Rosa is curious about the seeds.)" },
+            { label: "Negative", pattern: "Subject + be + not + feeling word + small word + ...   (Leo wasn't happy with the wind.)" },
+            { label: "Question", pattern: "Be + subject + feeling word + small word + ...?   (Are you surprised at the size?)" },
+            { label: "Wh-question", pattern: "What / Who + be + subject + feeling word + small word?   (What are you curious about?)" },
+            { label: "Reason and result", pattern: "... because + reason.   /   ..., so + result.   (I'm curious about bees because they help flowers, so I watch them.)" },
+            { label: "The three pairs", pattern: "curious + about      happy + with      surprised + at" },
+          ],
+          explanation: [
+            "What it means: a feeling word (an adjective) tells us how someone feels. The small word after it (a preposition) tells us what the feeling is about. 'I'm curious' gives only the feeling. 'I'm curious about worms' gives the feeling AND the thing it is about.",
+            "When we use it: curious about = you want to find out more about something. happy with = you like how something is or how it turned out. surprised at = you did not expect it. This is the language for talking about gardens, plants and everything you notice in the world. Plants make people curious, happy and surprised, and that enjoyment is one reason we need them.",
+            "How it is made: be + feeling word + small word, then a thing (the bees), an -ing word (seeing so many bees) or a how / what / why clause (how it grows). Only the word 'be' changes (I am, she is, they were). The pair itself never changes: curious about, in the present and in the past, for I, you, she, we and they.",
+            "Say more with because and so. Because gives the reason: 'I'm curious about bees because they help flowers.' So gives the result: 'I'm curious about bees, so I watch them every day.' Put a comma before so.",
+            "Vietnamese tip: Vietnamese also has a little word after a feeling ('tò mò về', 'hài lòng với', 'ngạc nhiên trước'), but it does not always match the English one. Do not translate the little word: learn the English pair as one chunk, curious about, like a line of a song.",
+            "Why it matters for talking: with these pairs you can say what you feel AND give a reason in one long sentence, which is what makes a talk sound smooth and interesting.",
+          ],
+          examples: [
+            { text: "{s1} is curious about how seeds turn into plants.", note: "curious + about, then a how-clause" },
+            { text: "We are happy with our garden because it gives us food.", note: "happy + with, then a reason with because" },
+            { text: "{s2} was surprised at the giant pumpkin, so everybody came to look at it.", note: "surprised + at, then a result with so" },
+            { text: "Are you curious about the new fence?", note: "question: the small word stays with the feeling word" },
+            { text: "I'm not happy with the empty pots.", note: "negative form" },
+            { text: "What are you surprised at, {s3}?", note: "wh-question: the small word goes to the end" },
+          ],
+          pitfalls: [
+            { wrong: "Rosa is curious for the seeds.", right: "Rosa is curious about the seeds.", why: "curious always goes with about" },
+            { wrong: "Ben is happy of his vines.", right: "Ben is happy with his vines.", why: "learn the pair happy with; the small word does not follow the Vietnamese one" },
+            { wrong: "Leo was surprised at it was so tall.", right: "Leo was surprised at how tall it was.", why: "after the small word we need a thing or a how / what clause" },
+            { wrong: "I was surprised at the big pumpkin. Because it was heavy.", right: "I was surprised at the big pumpkin because it was heavy.", why: "because joins the reason to the sentence; it does not stand alone" },
+          ],
+          book: { book: "SB", pages: "161", activities: ["F"], note: "Learn Grammar" },
+        },
+        {
+          kind: "activity",
+          title: "Pair hunt relay",
+          tag: "Game",
+          mode: "groups",
+          minutes: 9,
+          steps: [
+            "Put three signs on three walls: ABOUT, WITH and AT. Make teams of four at the start line.",
+            "The teacher (later a child) holds up a card with a picture and a feeling word, for example a bee and 'curious'. One runner from each team runs to the sign that fits.",
+            "The runner shows the hand sign and says a WHOLE sentence with a reason: 'I'm curious about bees because they visit the flowers.' If the pair is right, the team scores a point. Not sure? Ask the team: 'Why that sign?' and say one reason.",
+            "Change the runner after every card. Change the card-holder after four cards. Play until everybody has run once.",
+          ],
+          prompts: [
+            "Bee + curious: 'I'm curious about bees because they visit the flowers.'",
+            "Giant pumpkin + surprised: 'We were surprised at the giant pumpkin, so we measured it.'",
+            "Tall sunflower + happy: 'She is happy with her tall sunflower because she planted it herself.'",
+            "Empty pots + not happy: 'They aren't happy with the empty pots because no seeds came up.'",
+            "Haze over the garden + curious: 'He is curious about the haze because it is very thick today.'",
+            "Fast vines + surprised: 'We were surprised at how fast the vines grew.'",
+          ],
+          teacherNote:
+            "Make eight or ten cards before the lesson (a picture and one feeling word). The point goes to the correct pair, not to the fastest runner, so every team can win. Correct with PROMPTS before you recast: repeat the error with a rising voice ('curious for ...?'), show the three hand signs and wait, and tug your ear for a missing small word. Say the sentence yourself only when the child is stuck. Ask for a 'because' every time so the turns are long. Use things and animals only, never real children.",
+        },
+        {
+          kind: "speaking",
+          title: "Garden club: ask and fill in",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Partner A has Paper A and Partner B has Paper B. Do not look at each other's papers. Each paper shows six garden club members. Some members have a feeling, a thing and a clue. Three members are blank.",
+            "Look at your blank members. Ask your partner: 'What is Raj curious about?' or 'Who is surprised at the pumpkin?' or 'Is Lena happy with the pots?' Your partner looks at the clue and answers with a whole sentence and because.",
+            "Write the answer next to the member: the feeling, the small word and the thing. Then swap: your partner asks and you answer.",
+            "Put the papers together. Do they match? Then decide together: which member would you choose to help you in a garden? Say why with because and so.",
+            "Tell another pair your decision. They agree or disagree politely: 'I agree because ...' / 'Actually, I think ...'",
+          ],
+          frames: [
+            "What is ___ curious about? / Who is surprised at ___?",
+            "___ is curious about / happy with / surprised at ___ because ...",
+            "I would choose ___ because ___, so ...",
+            "I agree because ... / Actually, I think ...",
+          ],
+          prompts: ["What is Tess curious about?", "Is Kai happy with the vines?", "How do you know?", "Is that the same on your paper?"],
+          fluencyTip: "Answer with the pair, the thing AND the clue: 'Tess is curious about the bees because she saw three on the flowers.'",
+          teacherNote:
+            "Make two papers before the lesson with invented club members. Paper A shows: Tess, curious about the bees on the bean flowers (clue: she saw three bees there on Monday); Omar, happy with the tomato plants (clue: they gave twenty tomatoes); Pia, surprised at the giant pumpkin (clue: it was bigger than a basketball). Paper A is blank for Raj, Lena and Kai. Paper B shows: Raj, curious about why the leaves are yellow (clue: some leaves turned yellow in the heat); Lena, not happy with the empty pots (clue: no seeds came up in two pots); Kai, surprised at how fast the vines grew (clue: they grew thirty centimeters in a week). Paper B is blank for Tess, Omar and Pia. Walk round and use prompts first: 'Where is the small word?' 'Is it a thing or a whole sentence after it?' 'Where is because?' The members are invented, so nobody is described in front of the class.",
+        },
+        {
+          kind: "activity",
+          title: "Feeling statues: freeze and show",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Music on: walk around the room like a gardener. Music off: freeze.",
+            "The teacher says a feeling and a thing: 'curious, bees'. Show the feeling with your face and body (a tilted head and a hand behind the ear for curious, a big smile for happy, wide eyes and open hands for surprised).",
+            "Whisper the whole sentence with its hand sign to the person next to you: 'I'm curious about bees.' Then the teacher calls a new feeling.",
+          ],
+          prompts: ["I'm curious about bees.", "I'm happy with my plant.", "I'm surprised at the pumpkin."],
+          teacherNote: "A movement break that keeps the pair in the body. Everyone moves at the same time, so no child is on show.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "161", activities: ["G"], note: "Talk about what you are curious about or happy with" },
+          steps: [
+            "Think of a plant or a garden you know (at home, at school, in your neighborhood). Plan a talk of five sentences: one with curious about and because, one with happy with and because, one with surprised at and so, one that says what a plant gives us, and one opinion.",
+            "Round 1 (90 seconds): tell partner 1. Your partner shows the hand sign for every pair they hear and a thumb for every right small word.",
+            "Stop. The teacher shares ONE champion tip from the errors heard and the class says the right sentence together.",
+            "Round 2 (60 seconds): a new partner, the same talk, a little faster. Round 3 (45 seconds): another new partner, smooth and clear.",
+            "Finish: 'Why do we need plants?' Say one sentence with because.",
+          ],
+          frames: [
+            "I'm curious about ___ because ...",
+            "I'm happy with ___ because ..., so ...",
+            "I was surprised at ___, so ...",
+            "In my opinion, plants are important because ...",
+          ],
+          prompts: ["Why do you think so?", "What did you learn?", "Would you like to see it again? Why?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and shorter. Keep going if one word is not perfect, and fix it in the next round.",
+          teacherNote:
+            "Use a timer everyone can see. Between rounds 1 and 2 give ONE feedback moment only: the most common error you heard (prompt it first: rising voice, hand sign, ear tug). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support keep three small pictures in front of them and point to one for each sentence.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: a paragraph about my garden",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          book: { book: "WB", pages: "146-148", note: "Written in the Workbook or your notebook" },
+          steps: [
+            "Say it first. Tell your partner your paragraph in five sentences, using your talk from before.",
+            "Watch: the teacher and the class write the first two sentences together. Where does the small word go? What comes after it? Where does the comma go before so?",
+            "Write your paragraph of five or six sentences: 1 a topic sentence (where the garden is), 2 a sentence with curious about and because, 3 a sentence with surprised at (a thing or how), 4 a sentence with happy with and so or because, and a last sentence that answers 'Why do we need plants?'",
+            "Read your paragraph to a partner. Put a finger on every small word after a feeling word.",
+            "Finished early? Write the rule in your own words: 'When we say what a feeling is about, we ...'",
+          ],
+          frames: [
+            "Last ___ I visited ___.",
+            "I was curious about ___ because ___.",
+            "I was surprised at ___, so ___.",
+            "I'm happy with ___ because ___.",
+            "We need plants because ___.",
+          ],
+          prompts: ["Say it before you write it.", "Which small word goes with surprised?", "What comes after the small word?", "Because or so: which one fits?"],
+          tiers: [
+            { level: "Support", task: "Copy the shared sentences and change two words. Write three sentences with the frames. Then do the worksheet's Support part.", frames: ["I'm curious about ___.", "I'm happy with ___."] },
+            { level: "Core", task: "Write five sentences. Use curious about, surprised at and happy with once each, and because and so once each. Then do the worksheet's Core part.", frames: ["I was curious about ___ because ___.", "I was surprised at ___, so ___."] },
+            { level: "Stretch", task: "Write a paragraph of six or more sentences. Use each pair at least once with a how-clause, and finish with an opinion about plants. Then do the worksheet's Challenge part.", frames: ["I was surprised at how ___, so ___.", "In my opinion, ___ because ___."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model one sentence on the board with a gap for the small word, then release. Model: 'On Saturday our class visited the school garden. I was curious about the sweet potatoes because they grow under the ground. I was surprised at how big the leaves were, so I took a photo.' Praise the pair first, then the because or so, then the capital letter and the period. Hand out the worksheet after the paragraph (Support, Core or Challenge part). Check that no sentence is about a classmate's looks or ability: write about plants and gardens. The printed worksheet 'Grammar Champions: curious about, happy with, surprised at' follows this slide.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your paragraph. Check each point and give yourself a tick.",
+            "1. Every feeling word has its right small word: curious ABOUT, happy WITH, surprised AT. 2. After the small word I wrote a thing, an -ing word or a how / what clause. 3. I gave a reason with because and a result with so, with a comma before so. 4. My sentences have a capital letter and a period, and I read them aloud twice.",
+            "Swap papers. Check your partner's paragraph. Say one star: 'Great ___!' and one step: 'Check the small word here.'",
+            "Fix one thing with your pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["I found curious about here.", "You wrote surprised at how. Great!", "Check the small word here.", "Four ticks: champion!"],
+          teacherNote:
+            "Draw the four checks on the board with small pictures (a circle for about, joined hands for with, a pointing finger for at, a link for because and so). Children give a star for every tick on their partner's page. Collect one or two sentences without names to read to the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "The teacher shows four cases. For each: thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then say why.",
+            "Case 1, more feeling words: 'interested ___ birds', 'excited ___ the trip', 'proud ___ our plants', 'good ___ drawing'. Do these feeling words have a partner too? Guess the small words (in, about, of, at). What is the same? What is different?",
+            "Case 2, no partner: 'I'm happy.' Is this right without a small word? When do we need the partner?",
+            "Case 3, an action after the small word: 'I'm curious about seeing the bees.' / 'I'm curious about to see the bees.' Which one works? Why?",
+            "Think: why do plants make people curious, happy or surprised? Use because, and one pair, to answer the Big Question: Why do we need plants?",
+          ],
+          frames: ["The rule works because ___.", "The rule does not work because ___.", "We can say it a new way: ___."],
+          prompts: ["Is there a small word after it?", "What comes after the small word?", "How can we say it with because?"],
+          teacherNote:
+            "Transfer to new cases, and a link to the Big Question: plants give us enjoyment, so people feel curious, happy and surprised about them. The partner idea holds for many feeling words, but each word has its own partner, so we learn the pairs. Let the children's own words stand and write the best one on the class chart. Keep names out of the cases.",
+        },
+        odL3U16Creative["od2e-l3-u16-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: adjectives with prepositions.", book: { book: "WB", pages: "146-148", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Invent a plant that no one has ever seen. Draw it and label two parts. Write five sentences: what people are curious about, what would surprise them and what they would be happy with, with because and so, and say why we would need your plant." },
+            { label: "Challenge", detail: "Interview two people at home about a garden or a plant. Ask: What are you curious about? What are you happy with? What surprised you? Write six sentences with about, with and at, and ask 'Why?' so you can add because." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words. Which small word goes with curious, with happy and with surprised?",
+            "I used to think ___, now I think ___. (About the rule, or about plants.)",
+            "Why do we need plants? Use a feeling pair and because in your answer. Show me with your hands how sure you are.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL3U16Worksheets,
+  worksheets: [...odL3U16Worksheets, championsWorksheet],
   assessments: odL3U16Assessments,
   firstEdition: odL3U16FirstEdition,
 };

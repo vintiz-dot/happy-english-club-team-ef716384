@@ -291,5 +291,49 @@ export const odL1U11Creative: Record<string, Creative> = {
         }
       }
     ]
+  },
+
+  // Lesson 5: Grammar Champions (He has, she wants, he doesn't need)
+  "od2e-l1-u11-l5": {
+    kind: "creative",
+    thinking: "Evaluate",
+    uses: {
+      words: ["doll", "stickers", "comic book", "board game", "buy", "sell"],
+      grammar: ["He / She has ___.", "He / She wants ___.", "He / She needs ___.", "He / She doesn't ___."],
+    },
+    base: {
+      title: "My friend's needs and wants",
+      task: "Invent a make-believe friend. Draw your friend. Write what your friend has, wants and needs. Choose the one thing your friend needs the most and say why.",
+      steps: [
+        "Draw a make-believe friend: a dragon, a robot, a pony or a monster.",
+        "Is your friend a he or a she? Write the name.",
+        "Write: He / She has ___. He / She wants ___. He / She needs ___.",
+        "Write one thing your friend doesn't want: He / She doesn't want ___.",
+        "Choose the thing your friend needs the most and say why.",
+      ],
+      frames: ["He / She has ___.", "He / She wants ___.", "He / She needs ___.", "He / She doesn't want ___.", "He / She needs ___ the most because ___."],
+      success: ["I can write has, wants and needs for one friend.", "I can write one sentence with doesn't and a short word.", "I can say what my friend needs most and why."],
+      challenge: "Write a sentence about a friend who wants one thing but needs another: He wants ___, but he needs ___. Say which comes first.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "My football friend",
+          task: "Invent a make-believe football friend who loves the Gunners. Draw your friend in red and white. Write what your friend has, wants and needs. Choose the one thing your friend needs the most and say why.",
+          steps: [
+            "Draw a make-believe football friend in red and white.",
+            "Is your friend a he or a she? Write the name.",
+            "Write: He / She has ___. He / She wants ___. He / She needs ___.",
+            "Write one thing your friend doesn't want: He / She doesn't want ___.",
+            "Choose the thing your friend needs the most and say why.",
+          ],
+          frames: ["He / She has a ___.", "He / She wants ___.", "He / She needs ___.", "He / She doesn't want ___.", "He / She needs ___ the most because ___."],
+          success: ["I can write has, wants and needs for one friend.", "I can write one sentence with doesn't and a short word.", "I can say what my football friend needs most and why."],
+          challenge: "Write a sentence about a friend who wants a new ball but needs water: He wants ___, but he needs ___. Say which comes first.",
+        },
+      },
+    ],
   }
 };

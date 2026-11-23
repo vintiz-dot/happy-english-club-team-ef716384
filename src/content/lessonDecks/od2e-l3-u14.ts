@@ -7,10 +7,78 @@
 // and confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL3U14Creative } from "./od2e-l3-u14/homework";
 import { odL3U14Assessments, odL3U14Worksheets } from "./od2e-l3-u14/assessments";
 import { odL3U14FirstEdition } from "./od2e-l3-u14/firstEdition";
+
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l3-u14-ws-champions",
+  title: "Grammar Champions: faster than, the fastest, more carefully than",
+  grammar: "comparative and superlative adverbs: than for two, the for the top, -er / -est or more / the most; because and so",
+  deckId: "od2e-l3-u14-l6",
+  slide: "Write it: a paragraph about two inventions",
+  intro:
+    "Two actions? Use -er or more and then than: a jet flies higher than a plane. The top of three or more? Use the and -est or the most: a rocket flies the highest. Short words take -er / -est and -ly words take more / the most. Join your ideas with because (the reason) and so (the result).",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right answer. Then read the whole sentence aloud.",
+      example: "A rocket travels ___ a train.  (faster than / more fast than)  ->  faster than",
+      items: [
+        { q: "A bus goes ___ a bicycle.", options: ["faster than", "more fast than"], answer: "faster than" },
+        { q: "My cat walks ___ my dog.", options: ["more quietly than", "quietlier than"], answer: "more quietly than" },
+        { q: "Of the three birds, the eagle flies ___.", options: ["the highest", "highest"], answer: "the highest" },
+        { q: "A lamp shines ___ a candle.", options: ["more brightly than", "brightlier than"], answer: "more brightly than" },
+        { q: "Who climbs ___, the monkey or the cat?", options: ["higher", "more high"], answer: "higher" },
+        { q: "Our teacher speaks ___ of all.", options: ["the most clearly", "the clearlyest"], answer: "the most clearly" },
+        { q: "My grandfather sings ___ in the choir.", options: ["the best", "the goodest"], answer: "the best" },
+        { q: "Which sentence is correct?", options: ["The turtle walks more slowly than the rabbit.", "The turtle walks slowlier than the rabbit."], answer: "The turtle walks more slowly than the rabbit." },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing words, correct the mistake or join the sentences. For corrections and joining, write the whole sentence.",
+      example: "A train goes ___ ___ a car. (fast)  ->  faster than",
+      items: [
+        { q: "A jet flies ___ ___ a helicopter. (fast)", answer: "faster than" },
+        { q: "The glassblower works ___ ___ of all the helpers. (carefully)", answer: "the most carefully" },
+        { q: "My grandmother gets up ___ ___ in our house. (early)", answer: "the earliest" },
+        { q: "The little robot carries the cups ___ ___ ___ the big robot. (quietly)", answer: "more quietly than" },
+        { q: "Correct the mistake: The jet flies more high than the plane.", answer: "The jet flies higher than the plane." },
+        { q: "Correct the mistake: Of all the machines, this one works most quickly.", answer: "Of all the machines, this one works the most quickly." },
+        { q: "Join with because: A phone is useful. It sends a message more quickly than a letter.", answer: "A phone is useful because it sends a message more quickly than a letter." },
+        { q: "Join with so: Lamps shine more brightly than candles. People can read at night.", answer: "Lamps shine more brightly than candles, so people can read at night." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Write whole sentences of your own, or fix the mistakes. Check every than, every the and every ending.",
+      example: "(a bicycle, a car; travel, fast)  ->  A car travels faster than a bicycle.",
+      items: [
+        {
+          q: "Compare a car and a bicycle with an adverb and because.",
+          answer: "e.g. A car travels faster than a bicycle because it has an engine.",
+        },
+        {
+          q: "Find and fix three mistakes: 'A jet flies more fast than a car. The rocket flies fastest of all. My robot works more carefullier than yours.'",
+          answer: "faster than; the fastest of all; more carefully than.",
+        },
+        {
+          q: "A candle, a lamp and a torch all give light. Write one sentence with a comparative and one with a superlative.",
+          answer: "e.g. A lamp shines more brightly than a candle. A torch shines the most brightly of the three.",
+        },
+        { q: "Why do we say 'more carefully' and not 'carefuller'? Answer in one sentence.", answer: "e.g. Careful and carefully are long words, so we put more before the adverb and do not change it." },
+        { q: "Why do we say 'harder' and not 'hardlier'? What does hardly mean?", answer: "e.g. Hard is a short word, so it takes -er. Hardly is a different word that means almost not, as in 'he hardly works'." },
+        {
+          q: "Write a sentence about how one invention changed life. Use the + a superlative adverb, and because or so.",
+          answer: "e.g. The phone sends a message the most quickly, so people can talk to each other at once.",
+        },
+      ],
+    },
+  ],
+};
 
 export const odL3U14: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1046,8 +1114,307 @@ export const odL3U14: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l3-u14-l6",
+      resources: [
+        { title: "ESL Comparative Adverbs Writing Activity [Kids, A2]", url: "https://www.twinkl.com/resource/esl-comparative-adverbs-writing-activity-kids-a2-t-e-1748599284", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: faster than, the fastest, more carefully than, the most carefully\"", slide: "Grammar: faster than, the fastest, more carefully than, the most carefully" },
+      ],
+      curriculum: "oxford-discover-2e",
+      level: 3,
+      unit: 14,
+      lesson: 6,
+      covers: { unitFrom: 14, lesson: "Understand" },
+      title: "Grammar Champions: faster than, the fastest, more carefully than",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "141", activities: ["D", "E", "F", "G"], track: "2.39", note: "Grammar in Use: comparative and superlative adverbs" },
+        { book: "WB", pages: "127-129", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: faster, the fastest, more carefully", subtitle: "Lesson 6 · Grammar and speaking", bigQuestion: "How do inventions change our lives?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can compare two actions with -er / more ... than, and name the top of three or more with the -est / the most, when I speak.",
+            "I can ask 'Who ... faster, A or B?' and 'Who ... the fastest?' and answer in a whole sentence with because.",
+            "I can write a short paragraph of five or more sentences with than, because and so, and edit it with the checklist.",
+            "I can explain the rule in my own words and test it on a new case.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 7,
+          steps: [
+            "Word relay. The teacher gives a meaning and you shout the word: 'a very hot oven for glass' (furnace), 'it breaks if it falls' (delicate), 'a person who shapes hot glass' (glassblower), 'the part that holds the glass in eyeglasses' (frames).",
+            "Mime and say. Pretend to carry a delicate vase. The teacher calls out how: carefully, quietly, quickly, slowly. Everybody mimes and says 'We carry it carefully.'",
+            "Thing or action? The teacher says 'Clara is a careful girl.' (a word for a THING: one hand up) and 'Clara works carefully.' (a word for an ACTION: both hands up). Try four more pairs, then {s1} is the teacher for one round.",
+            "Pairs: say two true sentences about Unit 14. One has a glass word and one tells HOW someone does something. Then tell the class your partner's best sentence.",
+          ],
+          prompts: ["Show me: thing or action?", "Which word tells us how?", "{s2} carries it ___. Say it again, a little slower!", "I used the word ___ and the how-word ___."],
+          teacherNote:
+            "Retrieval first: pull back this unit's words and the how-word before today's pattern. Keep each round to about 20 seconds. Do not correct sentences yet: if a word is wrong, raise your eyebrows and repeat the sentence up to the word with a rising voice. Bring a plastic cup to be the 'delicate vase'.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: the glass fair",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Close your books. The teacher is the fair announcer and tells the story of the glass fair (prompts on the right). Listen with your whole body.",
+            "First listening: clap every time you hear a word that compares TWO people. Stand up when you hear a word that names the TOP of three. Sit down quickly after.",
+            "Second listening: listen for the little words that come before or after the how-word. Which ones? Whisper them to a partner.",
+            "The mystery: 'What do the changing words tell us about Marta, Teo and Zara?' Talk for one minute with a partner and say your idea out loud. Do not look for the rule yet: the teacher writes your ideas on the board and keeps them.",
+          ],
+          prompts: [
+            "Part 1: 'At the glass fair, three glassblowers each made a vase. Marta works carefully. Teo works faster than Marta, but Zara works the fastest of the three.'",
+            "Part 2: 'Teo carries his vase more quickly than Marta carries hers. Zara carries hers the most quietly, because the glass is so delicate. Nobody even hears her footsteps!'",
+            "Part 3: 'Zara blows harder than Teo, and Marta blows the hardest of all. Her bubble grows higher than Zara's. It grows the highest in the whole fair!'",
+            "Part 4: 'The judges looked closely at the three vases. Marta's vase shines more brightly than Teo's, but Zara's shines the most brightly. Everyone won a prize: Zara for the fastest hands, Marta for working the most carefully, and Teo for the best idea.'",
+            "Part 5: 'Everybody in the crowd cheered. {s1} and {s2} cheered the most happily. Who worked the fastest? Who carried a vase more quietly, Teo or Zara? Which of these three would you ask to make you a vase?'",
+          ],
+          teacherNote:
+            "Input flood: the pattern comes many times in the same places, in a made-up story with invented characters. Read slowly with a smile and lean on the changing word. Pause after each part so the clappers and standers can check each other. Do NOT explain the grammar. Link to the Big Question: people invent tools and skills so that things can be done faster, more carefully, more safely. Write the children's own ideas exactly as they say them.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group gets 14 sentence cards and four mats: ONE ACTION, COMPARE TWO, THE TOP and NOT RIGHT.",
+            "Read each card aloud. Decide where it goes. Argue politely: 'I think this card goes here because ...'",
+            "Look at the COMPARE TWO mat and the THE TOP mat. What is the same? What changes? Look at the short words (fast, hard, high) and the long words (carefully, quietly). Say it with the frames.",
+            "Look at the NOT RIGHT mat. What is wrong with each card? Fix two cards with a pencil and say why.",
+            "Tell the class: 'I think the rule is ___ because ___.' The teacher writes your words on the board but does not say if they are right yet.",
+          ],
+          frames: [
+            "On the ___ mat I see the words ___.",
+            "With a short word like ___ we ___, but with a long word like ___ we ___.",
+            "This card is not right because ___.",
+            "I think the rule is ___ because ___.",
+          ],
+          prompts: [
+            "One action: 'Teo works carefully.' 'Zara walks quietly.' 'Marta blows hard.'",
+            "Compare two: 'Teo works faster than Marta.' 'Zara carries the vase more quietly than Teo.' 'Marta's bubble grows higher than Zara's.'",
+            "The top: 'Zara works the fastest of the three.' 'Marta works the most carefully.' 'Marta blows the hardest.'",
+            "Not right: 'Teo works more fast than Marta.' 'Zara carries the vase quietlier than Teo.' 'Marta works most carefully of all.' 'Zara works faster Marta.' 'Teo works the most fastest.'",
+          ],
+          teacherNote:
+            "Print the cards in big letters, one sentence per card, and mix them up for each group. The sorting is the point, so give the children time. Collect their words and write them on the board exactly as said ('the word gets -er', 'we need than for two'). Ask 'How do you know?' and 'Show me on the cards.' Do NOT tell the rule yet: the next slide puts their words into the form. Early finishers write one more right card and one more not-right card for another group to sort.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: faster than, the fastest, more carefully than, the most carefully",
+          hook: "Two actions? Add -er and than. Three or more? Crown the winner with the and -est. Long words need more or the most.",
+          form: [
+            { label: "Short word: compare two", pattern: "A + verb + adverb-er + than + B   (works faster than Marta)" },
+            { label: "Short word: the top", pattern: "A + verb + the + adverb-est + (of / in ...)   (works the fastest of the three)" },
+            { label: "Long (-ly) word: compare two", pattern: "A + verb + more + adverb + than + B   (carries more carefully than Teo)" },
+            { label: "Long (-ly) word: the top", pattern: "A + verb + the most + adverb + (of / in ...)   (works the most carefully in the fair)" },
+            { label: "Irregular", pattern: "well, better than, the best   /   badly, worse than, the worst" },
+            { label: "Question", pattern: "Who + verb + adverb-er, A or B?   /   Who + verb + the + adverb-est?" },
+          ],
+          explanation: [
+            "What it means: an ADVERB tells us how someone does an action. When we want to say that one action is MORE than another, we compare. With two actions we use the comparative: 'Teo works faster than Marta.' With three or more we use the superlative, which names the top: 'Zara works the fastest of the three.'",
+            "When we use it: to compare two people, animals or machines (a jet flies higher than a plane) and to say who or what is the top of a group (a rocket travels the fastest of all). It is the language of inventions: people invented the bicycle, the car and the jet because they wanted to travel faster, more safely, more easily. That is one way inventions change our lives.",
+            "How it is made: short words (fast, hard, high, late) add -er and -est: faster, the fastest. A word that ends in -y changes the y to i (early becomes earlier, the earliest). Words with -ly are long, so they do not change: we put more or the most before them (more quietly, the most quietly). A few are irregular: well becomes better and the best.",
+            "Two little words matter. Use than with the comparative (faster THAN), and use the before the superlative (THE fastest). Never put them together in one word: not 'the most fastest'.",
+            "Vietnamese tip: Vietnamese says 'chạy nhanh hơn' (run faster than) and 'chạy nhanh nhất' (run the fastest) and the word 'nhanh' never changes. English changes the word (fast, faster, the fastest) or adds more / the most. Watch out for the little words 'than' (it is 'hơn') and 'the' (English needs it).",
+            "Why it matters for talking: with this pattern you can give an opinion with a reason ('A phone is better than a letter because it is faster'), argue politely and compare two ideas. Your talk sounds smooth and clear.",
+          ],
+          examples: [
+            { text: "{s1} draws more carefully than a robot.", note: "long word: more + adverb + than" },
+            { text: "{s2} jumps higher than a frog.", note: "short word: -er + than" },
+            { text: "The glassblower works the most carefully because glass is delicate.", note: "the most + long adverb" },
+            { text: "A jet travels the fastest of all the machines.", note: "the + -est: the top of a group" },
+            { text: "{s3} gets up earlier on school days than on Sundays.", note: "early: y changes to i" },
+            { text: "A phone sends a message more quickly than a letter, so people talk at once.", note: "compare, then a result with so" },
+          ],
+          pitfalls: [
+            { wrong: "A jet flies more fast than a car.", right: "A jet flies faster than a car.", why: "Short words take -er. More is for long -ly words." },
+            { wrong: "Teo works carefullier than Marta.", right: "Teo works more carefully than Marta.", why: "A -ly word is long, so use more and do not change the word." },
+            { wrong: "Zara works fastest of the three.", right: "Zara works the fastest of the three.", why: "A superlative needs the in front of it." },
+            { wrong: "A car goes faster a bicycle.", right: "A car goes faster than a bicycle.", why: "Compare two things with than. Vietnamese has 'hơn' and English needs than." },
+          ],
+          book: { book: "SB", pages: "141", activities: ["F"], note: "Learn Grammar" },
+        },
+        {
+          kind: "activity",
+          title: "Invention race: run and say",
+          tag: "Game",
+          mode: "groups",
+          minutes: 9,
+          steps: [
+            "Put two signs on the floor, far apart: TWO (than) and THE TOP (the ...). Make teams of four at the start line.",
+            "The teacher (later a child) shows a card with two or three pictures and an action word. One runner from each team runs to the sign that fits the cards.",
+            "The runner stands on the sign and says a WHOLE sentence. If the pattern is right, the team scores a point. Not sure? Ask the team: 'Why that sign?' and say one reason.",
+            "Change the runner after every card. Change the teacher after four cards. Play until everybody has run once.",
+          ],
+          prompts: [
+            "Bicycle and car, travel: 'A car travels faster than a bicycle.'",
+            "Bicycle, car and jet, travel: 'A jet travels the fastest.'",
+            "Candle and lamp, shine: 'A lamp shines more brightly than a candle.'",
+            "Letter and phone, send a message: 'A phone sends a message more quickly than a letter.'",
+            "Clara with and without eyeglasses, read: 'Clara reads better with eyeglasses than without them.'",
+            "Frog, kangaroo and flea, jump: 'A kangaroo jumps the highest of the three.'",
+          ],
+          teacherNote:
+            "Make eight or ten cards before the lesson (a picture or two or three small drawings, and an action word). The point goes to the correct pattern, not to the fastest runner, so every team can win. Correct with PROMPTS before you recast: repeat the error with a rising voice ('more fast ...?'), use a hand signal (two hands side by side for than, three fingers up for the top, tap your head for the), and tug your ear for a missing -er or -est. Say the sentence yourself only when the child is stuck. Some cards have two good answers (more quickly / faster): ask for the reason. Use things and animals only, never real children.",
+        },
+        {
+          kind: "speaking",
+          title: "Robot helpers: ask and fill in",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Partner A has Results A and Partner B has Results B. Do not look at each other's papers. Each paper shows three robot helpers (Zip, Zoom and Zed) in three tests. Some boxes are empty.",
+            "Look at your empty boxes. Ask your partner: 'Who ___ faster, Zip or Zoom?' or 'Who ___ the most carefully?' Your partner looks at the numbers and answers with a whole sentence and because.",
+            "Write the answer next to the test. Then swap: your partner asks and you answer.",
+            "Put the papers together. Do they match? Then decide together: which robot is the best helper overall? Say why with because.",
+            "Tell another pair your decision. They agree or disagree politely: 'I agree because ...' / 'Actually, I think ...'",
+          ],
+          frames: [
+            "Who ___ faster / more carefully, ___ or ___?",
+            "___ does, because ___ took ___ seconds and ___ took ___.",
+            "___ ___ the ___est / the most ___ of the three.",
+            "In my opinion ___ is the best helper because ..., so ...",
+          ],
+          prompts: ["Who carried the vase more carefully, Zip or Zoom?", "Who jumped the highest?", "How do you know?", "Is that the same on your paper?"],
+          fluencyTip: "Always answer with because and a number: 'Zoom runs faster than Zip because Zoom took six seconds and Zip took eight.'",
+          teacherNote:
+            "Make two papers before the lesson. Tests (Zip / Zoom / Zed): 1 run across the room, seconds, 8 / 6 / 10 (fewer seconds = faster); 2 carry a glass vase, care score out of 10, 9 / 5 / 7; 3 jump, centimeters, 40 / 55 / 30; 4 stack the cups, seconds, 12 / 15 / 9; 5 talk, loudness out of 10, 3 / 7 / 5 (lower = more quietly); 6 polish a glass, shine score out of 10, 6 / 8 / 9. Results A shows tests 1-3 and is blank for 4-6; Results B shows tests 4-6 and is blank for 1-3. The numbers are the evidence, so the because comes naturally. Walk round and use prompts first: 'Is it one word or a whole sentence?' 'Where is than?' 'Where is the?' Robots are invented, so nobody is compared with a classmate.",
+        },
+        {
+          kind: "activity",
+          title: "Body ladder: freeze and show",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Music on: walk around like a glassblower carrying a delicate vase. Music off: freeze.",
+            "The teacher says a sentence with a gap: 'Walk ___.' Show it: walk carefully (one step), more carefully (slower, arms out), the most carefully (statue-slow, whisper 'shh').",
+            "The same with quietly, quickly and slowly. Whisper the whole sentence to the person next to you: 'I walk the most quietly.'",
+          ],
+          prompts: ["I walk carefully.", "I walk more quietly.", "I walk the most slowly."],
+          teacherNote: "A movement break that keeps the pattern in the body. Everyone moves at the same time, so no child is on show.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "141", activities: ["G"], note: "Compare yourself and others, here inventions" },
+          steps: [
+            "Choose three inventions you know (for example a bicycle, a car and a jet, or a letter, a phone and a computer). Plan a talk of five sentences: two comparisons with than, one with the + superlative, one with because and one with so.",
+            "Round 1 (90 seconds): tell partner 1. Your partner counts the comparisons on their fingers and shows a thumb for every sentence with the right little word (than / the).",
+            "Stop. The teacher shares ONE champion tip from the errors heard and the class says the right sentence together.",
+            "Round 2 (60 seconds): a new partner, the same talk, a little faster. Round 3 (45 seconds): another new partner, smooth and clear.",
+            "Finish: 'Which invention changed our lives the most?' Say one sentence with because.",
+          ],
+          frames: [
+            "A ___ travels / works / sends faster than a ___ because ...",
+            "A ___ works more ___ly than a ___, so ...",
+            "The ___ works the fastest / the most ___ly of the three because ...",
+            "In my opinion, the ___ changed our lives the most because ...",
+          ],
+          prompts: ["Why do you think so?", "Is that always true?", "Which one would you choose? Why?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and shorter. Keep going if one word is not perfect, and fix it in the next round.",
+          teacherNote:
+            "Use a timer everyone can see. Between rounds 1 and 2 give ONE feedback moment only: the most common error you heard (prompt it first: rising voice, hand signal, ear tug). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support keep three small pictures in front of them and point to one for each sentence.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: a paragraph about two inventions",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          book: { book: "SB", pages: "141", activities: ["G"], note: "Written in the Workbook or your notebook" },
+          steps: [
+            "Say it first. Tell your partner your paragraph in five sentences, using your talk from before.",
+            "Watch: the teacher and the class write the first two sentences together. Where does than go? Where does the go? Where does the comma go before because or so?",
+            "Write your paragraph of five or six sentences: 1 a topic sentence naming two inventions, 2-3 comparisons with than (one with because), 1 the + superlative with so, and a last sentence about how inventions change our lives.",
+            "Read your paragraph to a partner. Put a finger on every than, every the and every because or so.",
+            "Finished early? Write the rule in your own words: 'When we compare ...'",
+          ],
+          frames: [
+            "A ___ and a ___ help people ___.",
+            "A ___ works faster / more ___ly than a ___ because ___.",
+            "The ___ works the fastest / the most ___ly of all, so ___.",
+            "Inventions change our lives because ___.",
+          ],
+          prompts: ["Say it before you write it.", "Where is than?", "Where is the?", "Because or so: which one fits?"],
+          tiers: [
+            { level: "Support", task: "Copy the shared sentences and change two words. Write three sentences with the frames. Then do the worksheet's Support part.", frames: ["A ___ works faster than a ___.", "The ___ works the fastest."] },
+            { level: "Core", task: "Write five sentences. Use than twice, the + superlative once, and because and so once each. Then do the worksheet's Core part.", frames: ["A ___ works more carefully than a ___ because ___."] },
+            { level: "Stretch", task: "Write a paragraph of six or more sentences. Compare three inventions and give a reason with because for each. Then do the worksheet's Challenge part.", frames: ["A ___ works faster than a ___, but a ___ works the fastest because ___."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model one sentence on the board with a gap for the word, then release. Model: 'A phone is better than a letter. It sends a message more quickly than a letter, so people can talk at once.' Praise the little words first (than, the), then the -er / more choice, then the capital letter and the period. Hand out the worksheet after the paragraph (Support, Core or Challenge part). Check that no sentence compares a classmate: use inventions only. The printed worksheet 'Grammar Champions: faster than, the fastest, more carefully than' follows this slide.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your paragraph. Check each point and give yourself a tick.",
+            "1. When I compare two, I used -er or more, and THAN. 2. When I name the top, I used THE and -est or the most. 3. Short words (fast, high) end in -er / -est and long -ly words (carefully) use more / the most. 4. Because and so join my ideas, with a comma before so, and my sentences have a capital letter and a period.",
+            "Swap papers. Check your partner's paragraph. Say one star: 'Great ___!' and one step: 'Check the ___ here.'",
+            "Fix one thing with your pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["I found than here.", "You wrote the most carefully. Great!", "Check the 'the' here.", "Four ticks: champion!"],
+          teacherNote:
+            "Draw the four checks on the board with small pictures (than between two cups, a crown with 'the', a ladder, a link for because / so). Children give a star for every tick on their partner's page. Collect one or two sentences without names to read to the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "The teacher shows four cases. For each: thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then say why.",
+            "Case 1, a thing, not an action: 'A jet is faster than a car.' Does -er + than work here too? (Fast describes the jet, so it is an adjective.) What is the same? What is different?",
+            "Case 2, a tricky word: 'Clara sees ___ with her eyeglasses.' (well) Why do we say 'better', not 'weller'? And the top: 'Of all the children, ___ sees the ___.'",
+            "Case 3, hard and hardly: 'Teo works hard.' Say 'Teo works ___ than Marta.' Why not 'hardlier'? What does 'hardly' mean?",
+            "Case 4, the same: 'Zara works as fast as Teo.' What happens when two are the same? Look at the little words.",
+            "Think: why do we need these words to talk about inventions? How do they help us say how life is better or easier?",
+          ],
+          frames: ["The rule works because ___.", "The rule does not work because ___.", "We can say it a new way: ___."],
+          prompts: ["Is it a thing or an action?", "Is it a long word or a short word?", "Which little word do we need?"],
+          teacherNote:
+            "Transfer to new cases, and a link to the Big Question: when people invent a tool, they want to do a job faster, more carefully or more easily than before, so comparing is how we describe what changed. Let the children's own words stand and write the best one on the class chart. Keep names out of the cases.",
+        },
+        odL3U14Creative["od2e-l3-u14-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: comparative and superlative adverbs.", book: { book: "WB", pages: "127-129", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Invent a new machine that does a job faster and more carefully than a person. Draw it and label two parts. Write four sentences with a comparative adverb and one with a superlative, and say why your machine would change people's lives." },
+            { label: "Challenge", detail: "Ask two people at home about one invention they use (a phone, a washing machine, a bicycle). How did they do that job before it? Write five sentences about before and after with a comparative adverb, because and so." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words. When do we use than? When do we use the?",
+            "I used to think ___, now I think ___. (About the rule, or about inventions.)",
+            "How do inventions change our lives? Use faster, more or the most in your answer. Show me with your hands how sure you are.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL3U14Worksheets,
+  worksheets: [...odL3U14Worksheets, championsWorksheet],
   assessments: odL3U14Assessments,
   firstEdition: odL3U14FirstEdition,
 };

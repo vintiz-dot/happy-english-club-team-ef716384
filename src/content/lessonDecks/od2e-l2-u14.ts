@@ -1,5 +1,5 @@
 // Oxford Discover 2nd edition, Level 2, Unit 14 (Big Question 7: How does music make us feel?)
-// Five 90-minute lessons that follow the Student Book (SB pp. 136-145, the unit plus the Units 13 and 14
+// Five 90-minute lessons (plus a sixth, Grammar Champions, on time words and past verbs) that follow the Student Book (SB pp. 136-145, the unit plus the Units 13 and 14
 // Wrap Up) and Workbook (WB pp. 118-127) page by page. Activities are the school's own, written around
 // the book's activity letters so the children always know which page they are on; nothing from the
 // book is reproduced. Play-based learning (songs, TPR, games, role play) is blended with
@@ -7,9 +7,64 @@
 // The class's main aim is speaking fluently and confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U14Creative } from "./od2e-l2-u14/homework";
 import { odL2U14Worksheets } from "./od2e-l2-u14/assessments";
+
+// The Grammar Champions worksheet (Lesson 6): the school's own sentences, with answers.
+const odL2U14ChampionWorksheet: Worksheet = {
+  id: "od2e-l2-u14-ws-champions",
+  title: "Grammar Champions: yesterday, last night, last week",
+  grammar: "finished time words with a past verb (When did you ...? Did you ...?)",
+  deckId: "od2e-l2-u14-l6",
+  slide: "Say it, then write: my music yesterday",
+  intro:
+    "Yesterday, last night and last week are finished times, so the verb looks back too: Pip played the drum. Some verbs are special: went, sang, made. After did the verb stays plain: Did you sing? Show the past one time only.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right word. Then read the sentence aloud to a partner.",
+      example: "Yesterday, Pip ___ the drum. (played / play)  ->  played",
+      items: [
+        { q: "Last night, Kiki ___ to a lullaby.", options: ["listened", "listen"], answer: "listened" },
+        { q: "Last week, we ___ to a concert.", options: ["went", "go"], answer: "went" },
+        { q: "Yesterday afternoon, Pip ___ a new drum.", options: ["made", "make"], answer: "made" },
+        { q: "Every day, Pip ___ the flute.", options: ["practices", "practiced"], answer: "practices" },
+        { q: "___ you sing last night?", options: ["Did", "Do"], answer: "Did" },
+        { q: "When did Kiki dance? She ___ yesterday.", options: ["danced", "dance"], answer: "danced" },
+        { q: "Which sentence is right?", options: ["Last night, Pip sang a song.", "Last night, Pip sing a song."], answer: "Last night, Pip sang a song." },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the verb in the gap. Use the verb in brackets. In the last three, find the mistake and write the sentence again.",
+      example: "Yesterday morning, Kiki ___ the guitar. (play)  ->  played",
+      items: [
+        { q: "Last night, Pip ___ a big drum. (make)", answer: "made" },
+        { q: "Last week, we ___ to the park. (go)", answer: "went" },
+        { q: "Yesterday, Pip ___ to the ducks. (talk)", answer: "talked" },
+        { q: "Yesterday afternoon, Kiki ___ a song. (sing)", answer: "sang" },
+        { q: "When did you ___ the song? (sing)", answer: "sing" },
+        { q: "Correct the mistake: Yesterday, I play the flute.", answer: "Yesterday, I played the flute." },
+        { q: "Correct the mistake: When did Kiki danced?", answer: "When did Kiki dance?" },
+        { q: "Correct the mistake: I listened to music yesterday night.", answer: "I listened to music last night." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Write a whole sentence, join, or explain. Check every verb and every time word.",
+      example: "Pip played the drum last week. Pip played the flute yesterday.  ->  Pip played the drum last week, but he played the flute yesterday.",
+      items: [
+        { q: "Join with but: Kiki danced yesterday afternoon. Kiki did not sing.", answer: "Kiki danced yesterday afternoon, but she did not sing." },
+        { q: "Join with and: Pip practiced the flute yesterday morning. Pip sang a song last night.", answer: "Pip practiced the flute yesterday morning, and he sang a song last night." },
+        { q: "Write a question with When about Pip (make a drum).", answer: "When did Pip make a drum?" },
+        { q: "Write about music and a feeling. Use last night and made me feel.", answer: "e.g. Last night I listened to a slow song. It made me feel sleepy." },
+        { q: "Write two sentences about before today: one with yesterday morning and one with last week. Use one special verb.", answer: "e.g. Yesterday morning I played football. Last week I went to a concert." },
+        { q: "Explain: why do we say Did you sing and not Did you sang?", answer: "e.g. Did already shows the past, so the verb stays plain. We show the past one time only." },
+      ],
+    },
+  ],
+};
 
 export const odL2U14: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1263,6 +1318,256 @@ export const odL2U14: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l2-u14-l6",
+      resources: [
+        { title: "ESL Adverbs of Time and Frequency Game [Kids, A2]", url: "https://www.twinkl.com/resource/esl-adverbs-of-time-and-frequency-game-kids-a2-t-1768303395", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: finished time words, finished verbs\"", slide: "Grammar: finished time words, finished verbs" },
+      ],
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 14,
+      lesson: 6,
+      covers: { unitFrom: 14, lesson: "Understand" },
+      title: "Grammar Champions: yesterday, last night, last week (when did the music happen?)",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "141", activities: ["D", "E", "F"], note: "Song, Track 3•04; Learn Grammar: Adverbs of Time" },
+        { book: "WB", pages: "121-123", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Unit 14: Music and Feelings", subtitle: "Lesson 6 · Grammar Champions", bigQuestion: "How does music make us feel?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can say when something happened: 'Yesterday I played. Last night I sang.'",
+            "I can ask 'When did you ...?' and 'Did you ...?' and answer.",
+            "I can write three or more sentences about music I heard and how it made me feel.",
+            "I can explain the rule for time words and past verbs in my own words.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "pairs",
+          minutes: 7,
+          steps: [
+            "Whole class, fast: the teacher holds up a word card and everybody says it and shows it with an action. First the music words (musician, notes, solo, record, hummingbird), then the action phrases (talk to fans, give a concert, do an interview, make a mistake, sign an autograph).",
+            "Still whole class: the teacher says a time word (yesterday morning, yesterday afternoon, last night, last week). Everybody says it and throws a thumb back over the shoulder, like pointing to the past.",
+            "Pairs: Partner A says a time word. Partner B says a true or made-up sentence with it: 'Last night I ___.' Do four each, then swap.",
+            "Ask: 'When we talk about yesterday, what happens to the verb? Is it always the same?' Collect guesses on the board. Do not say the answer yet.",
+          ],
+          prompts: ["Last night I ___.", "Yesterday morning I ___.", "{s1}, show us 'give a concert'.", "What happens to the verb?"],
+          teacherNote: "Retrieval and spacing: children pull back the Lesson 4 verb phrases and the Lesson 3 time words before anything new. Keep it quick and cheerful. Listen for children who say 'Yesterday I play': note them for the Focus slide, but do not correct yet.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: Pip the penguin's busy week",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 7,
+          steps: [
+            "Tell the children: 'Listen to my story about Pip the penguin. Throw your thumb over your shoulder every time you hear a time that is finished. Point to the floor every time you hear every day or now.'",
+            "Tell it slowly with actions, then again a little faster: 'Pip the penguin loves music. Every day Pip practices the drum. Last week Pip played in the park, and the ducks danced. Yesterday morning Pip talked to the ducks about a big concert. Yesterday afternoon Pip went to the shop and made a new drumstick. Last night Pip gave a concert, and Pip sang a solo. The ducks cheered! Now Pip is tired and proud. Pip listens to slow music. Every day Pip practices again!'",
+            "Third time: children do the thumb and floor signals and say the verb that comes after each time word, with you. Then in pairs: 'What did you notice about the verbs after the thumb words?' Take two or three ideas. Do not give the rule.",
+          ],
+          prompts: ["I heard '___' and I threw my thumb.", "I noticed ___.", "{s2}, what did the verb sound like after 'last night'?"],
+          teacherNote: "Input flood: the pattern comes back again and again, so children hear it before they are asked to say it. Say the verbs clearly but do not stress them more than other words: the pattern is the clue, not your voice. Link to the Big Question as you tell it: Pip made music for the ducks, and it made them dance and cheer.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group of four gets a set of sentence cards (the teacher prepares them) and two mats: Time and verb match and Time and verb do not match.",
+            "Round 1, sort. Match: 'Yesterday I played the drum.' 'Last night Kiki listened to a lullaby.' 'Last week we went to a concert.' 'Every day Pip practices the flute.' 'Now we sing a song.' Do not match: 'Yesterday I play the drum.' 'Last night Kiki listen to a lullaby.' 'Last week we go to a concert.' 'Right now we sang a song.' 'Last night Pip sings a song.'",
+            "Round 2: take the matching cards only. Sort them again into two piles by the time word: a FINISHED time (yesterday, last night, last week) and a time that is NOW or happens again and again (every day, now). Look at the verbs in each pile. What is the same? What is different?",
+            "A mystery card for every group: 'Pip gave a concert last night.' Which pile does it go in? Why does the verb not end in -ed?",
+            "Say what you notice: 'I notice that ___.' Then: 'I think the rule is ___ because ___.' One child writes the group's idea on a big card.",
+          ],
+          frames: ["I notice that ___.", "In the 'finished' pile the verbs ___.", "In the 'now' pile the verbs ___.", "I think the rule is ___ because ___."],
+          prompts: ["Do the time and the verb match? Why?", "What is the same in this pile?", "What is different?"],
+          teacherNote: "Concept formation: the cards that do not match show what the rule is NOT, next to what it is. Walk around and collect the children's own words ('the time is over', 'the verb goes back', 'has -ed on the end', 'some verbs are special') on the board. Do not tell the rule yet. Do not use the word 'tense'. Support children: give a set with the time word and the verb already underlined. Stretch children: write their own mystery card.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: finished time words, finished verbs",
+          hook: "Yesterday is finished, so the verb goes back in time with it!",
+          form: [
+            { label: "Finished time + past verb", pattern: "Yesterday / Last night / Last week + I / he / we + played" },
+            { label: "Most verbs: add -ed", pattern: "play - played, listen - listened, practice - practiced, talk - talked, dance - danced" },
+            { label: "Special verbs", pattern: "go - went, sing - sang, have - had, make - made, give - gave" },
+            { label: "Ask when", pattern: "When + did + you / he / they + play? (the plain verb after did)" },
+            { label: "Ask yes or no", pattern: "Did + you + sing + last night? Yes, I did. / No, I didn't." },
+            { label: "The rule to remember", pattern: "Show the past ONE time: played, or did + play, never both." },
+          ],
+          explanation: [
+            "A finished time is a time that is already over: yesterday, last night, last week, and this morning when the morning is over. The time word says WHEN and the verb says WHAT, and the two are a team: both look back. Compare: 'Every day Pip practices' (it happens again and again, now) and 'Yesterday Pip practiced' (it happened and it is finished).",
+            "Most verbs add -ed: played, listened, talked. A verb that ends in e only adds d: danced. A few very common verbs are special, and have no -ed: went, sang, had, made, gave. We learn the special ones as a list and say them out loud many times.",
+            "To ask a question we use did, and did already shows the past. So the verb goes back to its plain form: 'When did you sing?' 'Did you make a drum?' We show the past one time only, never twice.",
+            "Vietnamese tip: Vietnamese uses a time word like 'hôm qua' or 'tuần trước' and the verb stays the same (sometimes with 'đã'). English changes the verb itself as well, so we say 'Yesterday I played', not 'Yesterday I play'. In questions with did, the verb stays plain.",
+            "Why it matters for the Big Question: to tell a friend what music did to you, you need the past. 'Last night I listened to a slow song, and it made me feel sleepy' is a clear story about WHEN and about the feeling.",
+          ],
+          examples: [
+            { text: "{s1} played the drum yesterday afternoon.", note: "finished time at the end, verb + -ed" },
+            { text: "Last night, {s2} and {s3} listened to slow music.", note: "finished time first, comma after it" },
+            { text: "We went to a concert last week.", note: "a special verb: go becomes went" },
+            { text: "When did {s4} sing the song? {s4} sang it last night.", note: "did + plain verb; the answer has the special verb" },
+            { text: "Did you make a drum? No, I didn't.", note: "a short answer with did" },
+            { text: "Every day {s5} practices the flute, but yesterday {s5} played football.", note: "now and finished in one sentence" },
+          ],
+          pitfalls: [
+            { wrong: "Yesterday I play the drum.", right: "Yesterday I played the drum.", why: "A finished time needs a past verb. The time word and the verb must match." },
+            { wrong: "When did you played?", right: "When did you play?", why: "Did already shows the past. The verb stays plain, so the past is shown one time." },
+            { wrong: "Last week I goed to a concert.", right: "Last week I went to a concert.", why: "Go is a special verb. It becomes went, not goed." },
+            { wrong: "I listened to music yesterday night.", right: "I listened to music last night.", why: "English says last night, not yesterday night." },
+          ],
+          book: { book: "SB", pages: "141", activities: ["E"] },
+        },
+        {
+          kind: "activity",
+          title: "Time machine: now or before?",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Put two mats on the floor, far apart: a blue one called NOW and a gold one called BEFORE. Teams of four stand in a line. Each team has a pile of action pictures (play the drum, sing a song, dance, go to a concert, make a mistake, talk to fans, listen to a song, give a concert) and a pile of time cards (every day, now, yesterday afternoon, last night, last week).",
+            "The first player turns over one action card and one time card, runs to the right mat (every day and now go to NOW; all the others go to BEFORE), mimes the action and says a whole sentence: 'Last night I sang a song.' 'Every day I dance.'",
+            "The team judges with thumbs. The right mat AND the right verb: the team colors one note on its music bar (eight notes). If the verb is wrong, the team gives a prompt, and the player tries again.",
+            "Bonus: say a sentence with and or but, or ask a teammate 'When did you ___?' and get a whole answer. That colors two notes.",
+            "The first team with a full music bar sits down and says the rule in its own words: 'When the time is ___, the verb ___.'",
+          ],
+          prompts: ["Last night I ___.", "Every day I ___.", "When did you ___?", "I ___ yesterday afternoon."],
+          teacherNote: "Saying the pattern correctly is the winning move. Correct with PROMPTS before you recast. 1) Elicit: say the start and wait: 'Last night I ... sing?' 2) Repeat the error with a rising voice: 'I SING?' 3) Hand signal: thumb back over the shoulder for 'this is past'; one finger up for 'show the past ONE time' when a child says 'did you played'. 4) Only then recast: 'I SANG.' Do it straight away and kindly. Prepare the mats and 8 to 10 action pictures per team (quick drawings are fine). Keep the volume friendly.",
+        },
+        {
+          kind: "speaking",
+          title: "Pip and Kiki's music diary: the information gap",
+          mode: "pairs",
+          minutes: 12,
+          frames: [
+            "What did ___ do yesterday afternoon?",
+            "___ played / listened to / made / sang ___ last night.",
+            "When did ___ ___?",
+            "___ ___ed ... last week.",
+            "I think the ___ made ___ feel ___.",
+          ],
+          prompts: ["Can you say it again?", "Is it 'sang' or 'sing'?", "When did Pip make a drum?", "How did the music make Kiki feel?"],
+          fluencyTip: "Ask the whole question, then answer with a whole sentence. If you are not sure, say 'Can you say it again?'",
+          steps: [
+            "Partner A has Card A and partner B has Card B. Do not look at each other's card. Both cards show the same diary of two invented friends, Pip the penguin and Kiki the parrot, with five times: last week, yesterday morning, yesterday afternoon, last night, this morning. Each card has five boxes filled and five empty.",
+            "Card A knows: Pip played the drum last week, Pip made a drum yesterday afternoon, Pip listened to slow music this morning; Kiki played the guitar yesterday morning, Kiki listened to a lullaby last night. Card B knows: Pip practiced the flute yesterday morning, Pip sang a song last night; Kiki went to a concert last week, Kiki danced with the ducks yesterday afternoon, Kiki talked to fans this morning.",
+            "Ask each other: 'What did Pip do yesterday morning?' 'When did Kiki dance?' Answer with a whole sentence from your card. Write a word or draw a picture in each empty box. When both cards are full, compare them: are they the same?",
+            "Round 2: choose one box and say how the music made the character feel, with a reason: 'I think the slow music made Pip feel sleepy because it was quiet.' Your partner says 'I agree.' or 'I don't agree. I think ___.'",
+          ],
+          teacherNote: "Information gap: neither child can finish alone, so they really have to ask and listen. Prepare the two cards before class (a grid of two characters and five times, with the boxes each child knows filled in). Invented friends keep the stories kind and silly. Listen for the finished verb in every answer and for the plain verb after did. Use prompt-style corrections: say the start and wait, repeat the error with a rising voice, then the thumb signal. Round 2 is the Big Question link: the music changes the feeling.",
+        },
+        {
+          kind: "activity",
+          title: "Movement break: Thumb over the shoulder",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "The teacher says a sentence about now: 'Every day I dance.' Everybody says it again about yesterday and steps back with a thumb over the shoulder: 'Yesterday I danced!'",
+            "Now the teacher says it about yesterday and everybody says it about every day, and steps forward, pointing at the floor: 'Every day I sing!'",
+            "Give the calling job to a child. {s6} says the next sentence.",
+          ],
+          prompts: ["Every day I ___. Yesterday I ___!", "Last night I ___!", "Now I ___!"],
+          teacherNote: "Keep it fast and silly. Use a few special verbs (sing, make, go) among the -ed ones. Listen for the right verb as children step back and forward.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          frames: [
+            "Yesterday morning I ___.",
+            "Last night I listened to ___. It made me feel ___.",
+            "Last week I ___, but this morning I ___.",
+            "When did you ___? Did you ___?",
+          ],
+          prompts: ["When did you listen to music?", "What music was it?", "How did it make you feel?", "Why?"],
+          fluencyTip: "Tell the same talk three times to three friends. Each time it gets shorter and smoother. Look at your partner, not at your paper.",
+          steps: [
+            "Plan a talk called 'My music, before today': when you listened to or played music, what the music was, and how it made you feel. It can be real or made up.",
+            "Round 1 (90 seconds): tell partner 1. Round 2 (60 seconds): move to a new partner and tell it again, shorter. Round 3 (45 seconds): a new partner, even shorter.",
+            "Between round 1 and round 2 the teacher gives one feedback moment to the whole class: one thing you did well, one thing to fix (for example the verb after a finished time).",
+            "Listeners: after each round say 'I liked ___.' and ask one question: 'When did you ___?'",
+          ],
+          teacherNote: "Task repetition builds fluency: same message, shorter time, new listener. Give the single feedback moment after round 1 and use a prompt first ('Last night I ... listen?') before the right answer, so mistakes do not set before the next round. Do not stop children during the rounds.",
+        },
+        {
+          kind: "activity",
+          title: "Say it, then write: my music yesterday",
+          tag: "Writing",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Say your music story to a partner first: two or three finished times, what you did, and how the music made you feel.",
+            "The teacher models with the class: 'Yesterday morning Pip practiced the flute, but Kiki danced. Last night Pip sang a slow song, and the ducks yawned.' Children say which words show WHEN and which verbs changed. Write another one together about Kiki.",
+            "Now write three to five sentences about your own music, before today. Use the frames. Join two ideas with and or but. Read each sentence quietly and check it.",
+            "Swap papers with your partner. Underline one great sentence and say: 'I like this sentence because ___.'",
+          ],
+          frames: ["Yesterday morning I ___ and ___.", "Last night I listened to ___. It made me feel ___.", "Last week I ___, but ___.", "This morning I ___ and ___."],
+          prompts: ["Is the time finished?", "Does the verb match the time?", "How did the music make you feel?"],
+          teacherNote: "Oral rehearsal first, then writing: children who said it can write it. Support children: give a gapped version of the model ('Yesterday I ___ the ___. Last night I ___.'). Stretch children: add a sentence with because. The printed worksheet 'Grammar Champions: yesterday, last night, last week' follows this slide, in three levels (Support, Core, Challenge).",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Write the four checks on the board. Read your own writing. Tick each one in pencil.",
+            "1. Every sentence has a finished time word and a verb that matches it. 2. I used -ed, or a special verb (went, sang, had, made, gave) in the right place. 3. I wrote one idea with and or but. 4. I have a capital letter and a full stop in every sentence.",
+            "Swap with your partner. Tick again with a different color. Say: 'You are a champion at ___. Next time, try ___.'",
+            "Fix one thing in your own writing. Show your teacher the fix.",
+          ],
+          prompts: ["You are a champion at ___.", "Next time, try ___.", "I fixed ___."],
+          teacherNote: "Success criteria in child language. A child fixing their own sentence after a peer check is the point: look for the fix, not for perfect pages.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Speaking",
+          mode: "groups",
+          minutes: 5,
+          steps: [
+            "Put three cards on the board. 1. 'At nine o'clock this morning we ___ a song. (sing)' It is the afternoon now. 2. 'Did you sing last night? Or: Did you sang last night?' 3. 'Sing becomes sang, but play becomes played. Is there a reason, or do we learn the special verbs as a list?'",
+            "In groups: card 1, which verb goes in the gap? Is this morning finished or not? Card 2, which one is right? Where does the past show: in did, in the verb, or in both?",
+            "Card 3 is a thinking question. Is there a reason you can find? If not, how can a champion remember the special verbs?",
+            "Each group tells the class: 'I think ___ because ___.' The class says if it agrees.",
+          ],
+          prompts: ["Does the rule work for ___, too?", "I think ___ because ___.", "Is the time finished?"],
+          frames: ["The verb is ___ because ___.", "I remember it with ___."],
+          teacherNote: "Transfer. Card 1: sang, because the morning is over when we are speaking in the afternoon (if the lesson is in the morning, say 'an hour ago' and use the same idea). Card 2: 'Did you sing', because did already shows the past and we show it one time. Card 3: be honest: there is no tidy reason, so these verbs are a list we learn whole. Children may suggest a chant, a picture or a list on the wall; praise any good memory trick. Link to the Big Question: with the right verb, a friend knows WHEN the music made you feel something.",
+        },
+        odL2U14Creative["od2e-l2-u14-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Complete the grammar pages on time words and past verbs.", book: { book: "WB", pages: "121-123" } },
+            { label: "Creative grammar", detail: "Your creative task, My music diary, is on the slide before this one. Your teacher will tell you which version is yours." },
+            { label: "Challenge: the rule teacher", detail: "Teach someone at home the rule for finished time words and past verbs. Make a tiny poster with one time word, one verb that adds -ed, one special verb and one mistake that a champion would fix." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words.",
+            "I used to think ___ about talking about yesterday. Now I think ___.",
+            "Say two sentences that help answer the Big Question, 'How does music make us feel?' Use a finished time word in one of them.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL2U14Worksheets,
+  worksheets: [...odL2U14Worksheets, odL2U14ChampionWorksheet],
 };

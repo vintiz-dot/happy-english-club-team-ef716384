@@ -176,4 +176,46 @@ export const odL1U3Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 5: Grammar Champions, There is / There are
+  "od2e-l1-u03-l5": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["red", "blue", "yellow", "green", "orange", "pink"],
+      grammar: ["There is a ___ ___.", "There are ___ ___s.", "one and more than one"],
+    },
+    base: {
+      title: "My magic garden",
+      task: "Invent a magic garden. Draw it with one special thing and many of another thing. Write what is there.",
+      steps: [
+        "Draw a garden with a path and a pond.",
+        "Add one magic thing, for example a pink tree.",
+        "Add many of another thing, for example three blue butterflies.",
+        "Write one sentence with There is and one with There are. Choose your favorite part and say why.",
+      ],
+      frames: ["There is a ___ ___.", "There are ___ ___s.", "My favorite part is ___ because ___."],
+      success: ["I can write There is for one thing.", "I can write There are and add -s for more than one.", "I can say why I like one part."],
+      challenge: "Write two more sentences about the sky above your garden. Use There's once.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "My magic football stadium",
+          task: "Invent a magic stadium. Draw it with one special thing and many of another thing. Write what is there.",
+          steps: [
+            "Draw a stadium with a pitch and the stands.",
+            "Add one magic thing, for example a gold ball.",
+            "Add many of another thing, for example five green flags.",
+            "Write one sentence with There is and one with There are. Choose your favorite part and say why.",
+          ],
+          frames: ["There is a ___ ___.", "There are ___ ___s.", "My favorite part is ___ because ___."],
+          success: ["I can write There is for one thing.", "I can write There are and add -s for more than one.", "I can say why I like one part."],
+          challenge: "Write two more sentences about the fans in the stands. Use There's once.",
+        },
+      },
+    ],
+  },
 };

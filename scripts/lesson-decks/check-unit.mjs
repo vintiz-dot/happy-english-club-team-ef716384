@@ -117,7 +117,7 @@ unit.decks.forEach((d, i) => {
     if (s.kind === "vlog") ok(`${tag} slide ${j + 1}: vlog tiers have level, who, frames, tips`, s.tiers.every((t) => Object.keys(t).every((k) => ["level", "who", "frames", "tips"].includes(k)) && t.who && Array.isArray(t.frames) && Array.isArray(t.tips)));
     if (s.kind === "grammar") ok(`${tag} slide ${j + 1}: grammar form/examples/pitfalls shapes`, s.form.every((f) => f.label && f.pattern) && s.examples.every((e) => e.text) && (s.pitfalls ?? []).every((p) => p.wrong && p.right && p.why));
     const books = [s.book, s.ref].filter(Boolean);
-    ok(`${tag} slide ${j + 1}: book refs are {book: SB|WB, pages, activities?, note?}`, books.every((b) => ["SB", "WB"].includes(b.book) && typeof b.pages === "string" && Object.keys(b).every((k) => ["book", "pages", "activities", "note"].includes(k))));
+    ok(`${tag} slide ${j + 1}: book refs are {book: SB|WB, pages, activities?, note?, track?}`, books.every((b) => ["SB", "WB"].includes(b.book) && typeof b.pages === "string" && Object.keys(b).every((k) => ["book", "pages", "activities", "note", "track"].includes(k))));
     if (s.kind === "grammar") { grammar++; ok(`${tag} slide ${j + 1}: grammar has hook, form, examples, pitfalls`, !!s.hook && s.form.length > 0 && s.examples.length >= 3 && (s.pitfalls ?? []).length > 0); }
     if (s.kind === "vlog") { vlog++; ok(`${tag} slide ${j + 1}: vlog has Support, Core and Stretch`, ["Support", "Core", "Stretch"].every((l) => s.tiers.some((t) => t.level === l))); }
     if (typeof s.minutes === "number") ok(`${tag} slide ${j + 1}: 3-20 minutes`, s.minutes >= 3 && s.minutes <= 20, `${s.minutes}`);

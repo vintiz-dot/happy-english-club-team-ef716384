@@ -6,9 +6,66 @@
 // Everything here is the school's own; nothing from the book or Teacher's Guide is reproduced.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U05Creative } from "./od2e-l2-u05/homework";
 import { odL2U05Worksheets } from "./od2e-l2-u05/assessments";
+
+// The Grammar Champions worksheet (Lesson 5): the school's own sentences, with answers.
+const odL2U05ChampionWorksheet: Worksheet = {
+  id: "od2e-l2-u05-ws-champions",
+  title: "Grammar Champions: What happened long ago?",
+  grammar: "simple past: -ed and didn't + plain verb",
+  deckId: "od2e-l2-u05-l5",
+  slide: "Say it, then write: long ago and now",
+  intro:
+    "It happened? Add -ed (or only -d if the verb ends in e): walked, lived. It didn't happen? Say didn't and keep the verb plain: didn't walk. One past word only: -ed OR didn't, never both.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right answer. Then read the sentence aloud to a partner.",
+      example: "Yesterday we ___ at the park. (played / play)  ->  played",
+      items: [
+        { q: "We ___ the dishes last night.", options: ["washed", "wash"], answer: "washed" },
+        { q: "My grandma ___ in a small town long ago.", options: ["lived", "live"], answer: "lived" },
+        { q: "They ___ to a new school last year.", options: ["moved", "move"], answer: "moved" },
+        { q: "She didn't ___ her homework in the car.", options: ["finish", "finished"], answer: "finish" },
+        { q: "We didn't ___ at the museum.", options: ["stay", "stayed"], answer: "stay" },
+        { q: "Which sentence is right?", options: ["Dad didn't cook last night.", "Dad didn't cooked last night."], answer: "Dad didn't cook last night." },
+        { q: "Which sentence is about long ago?", options: ["People washed clothes in the river.", "People wash clothes in a machine."], answer: "People washed clothes in the river." },
+        { q: "Which word tells us it is finished?", options: ["yesterday", "tomorrow"], answer: "yesterday" },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the verb in the past. After didn't, write the plain verb. Then fix the two mistakes.",
+      example: "Last week my class (visit) ___ a farm.  ->  visited",
+      items: [
+        { q: "Yesterday my class (visit) ___ the library.", answer: "visited" },
+        { q: "Long ago, people (cook) ___ on a fire.", answer: "cooked" },
+        { q: "My brother (want) ___ a new bike.", answer: "wanted" },
+        { q: "We (dance) ___ at the party last night.", answer: "danced" },
+        { q: "I didn't (clean) ___ my desk.", answer: "clean" },
+        { q: "Mom didn't (call) ___ Grandpa on Monday.", answer: "call" },
+        { q: "Correct the mistake: Long ago, people didn't watched TV.", answer: "Long ago, people didn't watch TV." },
+        { q: "Correct the mistake: Yesterday I walk to the park.", answer: "Yesterday I walked to the park." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Join the ideas or write your own. Check your verbs: -ed, or didn't + plain.",
+      example: "People walked. They didn't ride. (but)  ->  People walked, but they didn't ride.",
+      items: [
+        { q: "Join with but: Long ago, people listened to the radio. Now, we watch videos.", answer: "Long ago, people listened to the radio, but now we watch videos." },
+        { q: "Join with because: My grandpa didn't text. He didn't have a phone.", answer: "My grandpa didn't text because he didn't have a phone." },
+        { q: "Join with and: We cleaned the room. We painted the wall.", answer: "We cleaned the room, and we painted the wall." },
+        { q: "Write one true sentence about last night with -ed.", answer: "e.g. I played with my cat last night." },
+        { q: "Write one true sentence about last weekend with didn't.", answer: "e.g. I didn't clean my room last weekend." },
+        { q: "Explain: why is 'I didn't played' wrong?", answer: "e.g. Didn't already shows the past, so the verb stays plain: I didn't play." },
+        { q: "Write two sentences, one about long ago and one about now, about news or travel.", answer: "e.g. Long ago, people traveled by horse. Now, we travel by airplane." },
+      ],
+    },
+  ],
+};
 
 export const odL2U5: Unit = {
   curriculum: "oxford-discover-2e",
@@ -24,7 +81,7 @@ export const odL2U5: Unit = {
     "To talk about a finished time in the past we add -ed to most verbs (listened, traveled); after didn't the verb stays plain (didn't watch).",
     "Speakers keep a conversation going by asking politely when they did not hear, and writers who compare long ago with now say clearly what changed.",
   ],
-  worksheets: odL2U05Worksheets,
+  worksheets: [...odL2U05Worksheets, odL2U05ChampionWorksheet],
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -1003,6 +1060,260 @@ export const odL2U5: Unit = {
             { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish Unit 5 Communicate, including the writing task.", book: { book: "WB", pages: "44-45" } },
             { label: "At home", detail: "Interview an adult at home: What did they do long ago that we don't do now? Write four sentences with -ed and didn't. Read them to the class." },
+          ],
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------ Lesson 5: Grammar Champions
+    {
+      id: "od2e-l2-u05-l5",
+      resources: [
+        { title: "Past Tense Pairs Matching Cards Game for K-2nd Grade", url: "https://www.twinkl.com/resource/past-tense-pairs-matching-game-us-e-1760565439", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: It happened (-ed) or it didn't (didn't + plain verb)\"", slide: "Grammar: It happened (-ed) or it didn't (didn't + plain verb)" },
+      ],
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 5,
+      lesson: 5,
+      covers: { unitFrom: 5, lesson: "Understand" },
+      title: "Grammar Champions: What happened long ago? (-ed and didn't)",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "53", activities: ["D", "E", "F"], note: "Song, Track 1•34; Learn Grammar: Simple Past Regular Verbs" },
+        { book: "WB", pages: "41-43" },
+      ],
+      slides: [
+        { kind: "title", title: "Unit 5: Then and Now", subtitle: "Lesson 5 · Grammar Champions", bigQuestion: "How are things different now from long ago?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can say what people did and didn't do long ago, using -ed and didn't.",
+            "I can ask and answer with a partner: Did Max ...? Yes, he did. / No, he didn't.",
+            "I can write 3 or more sentences about long ago and now.",
+            "I can explain the rule in my own words and link it to the Big Question.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "pairs",
+          minutes: 7,
+          steps: [
+            "Whole class: the teacher holds up a picture card (letter, radio, airplane, news, Internet, horse and cart, boat, bus). Everybody shouts the word and says LONG AGO, NOW or BOTH with a hand signal.",
+            "Pairs: Partner A mimes a verb card (walk, talk, play, clean, listen, cook). Partner B says: \"You ___ed!\" Swap after every turn.",
+            "Round 2: A mimes a verb and B says: \"You didn't ___.\" B points to something A did NOT do. Swap.",
+            "Quick quiz: \"What happens to the verb after didn't?\" Collect two or three guesses on the board. Do not say the answer yet.",
+          ],
+          prompts: ["You walked!", "You didn't clean.", "Long ago, people used ... Now, we use ...", "{s1}, tell us one thing from the last lesson."],
+          teacherNote:
+            "Retrieval: children pull back the unit words and the pattern from Lesson 3 before they meet anything new. Keep it fast and cheerful. Listen to which form children use for the negative (didn't walk? didn't walked? no walk?) and note it for the Focus slide; do not correct yet.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: Max's long-ago village",
+          tag: "Game",
+          mode: "whole",
+          minutes: 7,
+          steps: [
+            "Tell the children: \"Listen to my story about a boy called Max, long ago. Clap when you hear an -ed word. Stamp when you hear didn't.\"",
+            "Tell the story slowly, with actions: \"Long ago, a boy called Max lived in a small village. Every morning Max walked to school. He didn't ride a bus. He didn't ride a bike. At school he listened to his teacher. He practiced counting and he painted a picture. Max wanted a phone, but his village didn't have phones. He didn't text his friends. He visited them! In the evening his family cooked dinner and listened to the radio. They didn't watch TV. One day Max traveled to a big city by train. He looked at the tall buildings and he shouted, 'Wow!' He didn't want to leave, but he waved goodbye. Then he returned to his village.\"",
+            "Tell it a second time, faster. Third time: the children say the -ed words and didn't with you.",
+            "In pairs: \"What did you notice?\" Take two or three ideas. Do not give the rule.",
+          ],
+          prompts: ["I heard -ed ___ times.", "I noticed ___.", "{s2}, what did you clap for? {s3}, what did you stamp for?"],
+          teacherNote:
+            "Input flood: the same two patterns come back many times (regular verbs only, plus the plain have after didn't), so children hear the pattern before they are asked to say it. Mime each verb. Stress -ed and didn't a little, but keep your voice natural. If children ask about the sound at the end of walked, listened and wanted, say 'good ear, we will listen for it later'.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group of 4 gets a set of sentence cards (the teacher prepares them) and two mats: Is a good sentence and Is not a good sentence.",
+            "Sort. Good: \"Long ago, people walked to school.\" \"People didn't ride a bus.\" \"We listened to the radio yesterday.\" \"She didn't watch TV.\" \"They lived in a small house.\" \"I didn't clean my room.\" Not good: \"People didn't walked to school.\" \"She didn't watched TV.\" \"Yesterday I listen to the radio.\" \"They live in a small house long ago.\" \"I no clean my room.\" \"They didn't lived here.\"",
+            "Round 2: take the good cards only. Underline the verb. Sort again: Form A is a verb with -ed (or -d). Form B is didn't + a verb with nothing added. Stick them on a T-chart.",
+            "Say what you notice: \"I notice that ___.\" Then: \"I think the rule is ___ because ___.\" One child writes the group's idea on a big card.",
+          ],
+          frames: ["I notice that ___.", "In Form A, the verb ___.", "After didn't, the verb ___.", "I think the rule is ___ because ___."],
+          prompts: ["Is this a good sentence? Why not?", "What is the same in all the Form A cards?", "Is the verb the same or different after didn't?"],
+          teacherNote:
+            "Concept formation: good and not-good cards side by side show what the rule is NOT as well as what it is. Walk around and collect the children's own words on the board (\"the verb changes\", \"didn't takes the -ed\", \"only one past word\") and do not tell the rule yet. Children may say their idea in Vietnamese first; help them say it in English. Support: give the cards with the verbs already underlined.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: It happened (-ed) or it didn't (didn't + plain verb)",
+          hook: "It happened? Add -ed. It didn't? Say didn't and let the verb stay plain!",
+          form: [
+            { label: "It happened", pattern: "Subject + verb-ed:  listened, played, cleaned" },
+            { label: "Verb ends in e", pattern: "Add only -d:  lived, danced, used" },
+            { label: "It didn't happen", pattern: "Subject + didn't + PLAIN verb:  didn't walk, didn't watch" },
+            { label: "Question", pattern: "Did + subject + PLAIN verb?  Did Max walk?  Yes, he did. / No, he didn't." },
+            { label: "Time words", pattern: "long ago, yesterday, last night, last week, a hundred years ago" },
+            { label: "One past word only", pattern: "-ed OR didn't. Never both on one verb." },
+          ],
+          explanation: [
+            "We use the simple past for things that started and finished before now. When we say how life was different long ago, we use it: People walked to school. They didn't watch TV. It tells the story of what happened, or what did not happen.",
+            "Is it always -ed? Mostly yes: listen > listened, play > played. If the verb ends in e, we add only -d: live > lived. Sometimes the sound changes too: talked ends with /t/, played with /d/, wanted with /id/. After didn't the verb is always plain: no -ed, no -s. The past is marked once, and didn't has already done that job.",
+            "Vietnamese tip: Vietnamese verbs do not change for past time; a word like \"đã\" or a time word tells us when, and \"không\" makes it negative. English marks the past on the verb itself (walk > walked), or with didn't. Think of didn't as \"không\" in the past: after it the verb stays the same.",
+            "Why it matters: this is how we answer the Big Question. Long ago, people walked and didn't text. Now, we text. Putting the two time words side by side (long ago ... but now ...) shows exactly what changed.",
+          ],
+          examples: [
+            { text: "Long ago, people listened to the radio.", note: "Positive: listen + ed" },
+            { text: "{s1} played a game yesterday.", note: "Positive: play + ed" },
+            { text: "{s2} and {s3} danced at the party.", note: "Ends in e: dance + d" },
+            { text: "People didn't text their friends long ago. They visited them.", note: "Negative, then what happened instead" },
+            { text: "{s4} didn't paint a picture, but {s5} painted one.", note: "didn't + plain verb, then -ed" },
+            { text: "My grandpa lived in a village. He didn't use a phone.", note: "-d, then didn't + plain verb" },
+          ],
+          pitfalls: [
+            { wrong: "Long ago, people walk to school.", right: "Long ago, people walked to school.", why: "Vietnamese verbs do not change for past time. In English a finished action needs -ed." },
+            { wrong: "People didn't walked to school.", right: "People didn't walk to school.", why: "Didn't already shows past time, so the verb stays plain: no -ed, no -s. Only one past word!" },
+            { wrong: "Did you watched TV last night?", right: "Did you watch TV last night?", why: "Did already shows the past in a question too, so the verb stays plain." },
+            { wrong: "I no watch TV yesterday.", right: "I didn't watch TV yesterday.", why: "Use didn't to say what did not happen. 'No' does not make a past sentence." },
+          ],
+          book: { book: "SB", pages: "53", activities: ["E"] },
+        },
+        {
+          kind: "activity",
+          title: "Time machine hop: did or didn't?",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Put two mats on the floor: THEY DID and THEY DIDN'T. Make two teams. Today we travel in a time machine to a hundred years ago.",
+            "The teacher reads a card: \"cook on a fire.\" The first player thinks: did people do this long ago, or not? The player hops to a mat and says the whole sentence: \"Long ago, people cooked on a fire.\" or \"Long ago, people didn't ...\"",
+            "The team gets a point if the hop is sensible AND the sentence is correct. If not, the other team can fix it and steal the point.",
+            "Change the player every card. After eight cards, the winning team is the one with the fewest sentence mistakes, not the fastest hops.",
+          ],
+          prompts: [
+            "cook on a fire (did)",
+            "walk to school (did)",
+            "talk to the neighbors (did)",
+            "watch TV (didn't)",
+            "text a friend (didn't)",
+            "use a computer (didn't)",
+            "travel by airplane (didn't, a hundred years ago it was very rare)",
+            "wash clothes in the river (did)",
+          ],
+          teacherNote:
+            "Prompt before you recast. 1) Elicit: say the start and wait: \"People didn't ...?\" 2) Repeat the mistake with a rising voice: \"Didn't walked?\" 3) Hand signal: tap your wrist for the time word, then hold up ONE finger for 'one past word only'. 4) Only then recast: \"People didn't WALK.\" If children disagree about a card (for example the radio), ask them to say why: \"It depends: a hundred years ago or fifty years ago?\" The rule is the winning move, not the guess.",
+        },
+        {
+          kind: "speaking",
+          title: "Then and now: the information gap",
+          mode: "pairs",
+          minutes: 12,
+          frames: ["Did Max ___?", "Yes, he did. He ___ed.", "No, he didn't. He didn't ___.", "Did you ___ last night?", "Yes, I did. / No, I didn't."],
+          prompts: ["Say it again with -ed.", "Is it didn't + a plain verb?", "Tell me both: what did he do, and what didn't he do?"],
+          fluencyTip: "Ask the whole question, then answer with a whole sentence. If you do not hear it, say \"Would you repeat that, please?\"",
+          steps: [
+            "Partner A has Max's card with 4 rows filled in: listen to the radio (tick), watch TV (cross), walk to school (tick), text a friend (cross). Partner B has the other 4 rows: cook on a fire (tick), use a computer (cross), visit a friend (tick), travel by airplane (cross). The empty rows are blank on each card.",
+            "A asks about a row B knows: \"Did Max cook on a fire?\" B looks and answers: \"Yes, he did. He cooked on a fire.\" or \"No, he didn't. He didn't use a computer.\" A writes a tick or a cross in the blank row.",
+            "Swap until both cards are full. Then compare: Are your cards the same? Tell the pair next to you three sentences about Max, two with -ed and one with didn't.",
+            "Round 2: change partners. Ask each other about last night with the same frames: \"Did you watch TV last night?\" \"Yes, I did. I watched TV.\" / \"No, I didn't. I didn't watch TV.\"",
+          ],
+          teacherNote:
+            "Information gap: neither child can finish alone, so they really have to ask and listen. Prepare the two cards before class (a table of 8 rows with a picture for each verb, half the ticks and crosses on each card). Listen for the two typical errors, 'No, he didn't cooked' and 'Yes, he cook', and use prompts first: rising voice, one finger for 'one past word only', then recast. Support: let the child point to the picture while saying the verb.",
+        },
+        {
+          kind: "activity",
+          title: "Movement break: Max says!",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Play it like Simon Says. The teacher says: \"Max walked!\" Everybody walks on the spot. \"Max jumped!\" Everybody jumps.",
+            "The teacher says: \"Max didn't jump!\" Everybody freezes and says: \"Max didn't jump!\" If you move, you sit down for one round.",
+            "Give the calling job to a child: {s6} is Max today. The class does what Max says, or freezes.",
+          ],
+          prompts: ["Max walked!", "Max didn't jump!", "{s6}, call the next one."],
+          teacherNote: "Keep it fast and silly. Children move when it happened (-ed) and freeze when it didn't (didn't), so the pattern is the move. Use regular verbs only: walk, jump, clap, wave, clean, paint, dance, wash.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          frames: ["Long ago, people ___ed.", "They didn't ___.", "Now, we ___.", "It is different because ___."],
+          prompts: ["What did people do long ago?", "What didn't they do?", "What do we do now?", "Why is it different?"],
+          fluencyTip: "Say it three times to three friends. Each time you can say it faster and with more ease. Look at your partner, not at your paper.",
+          steps: [
+            "Choose one thing: communication, news or travel. Plan four ideas with the frames, not a script: what people did, what they didn't do, what we do now, why it is different.",
+            "Round 1 (90 seconds): talk to partner 1. Round 2 (60 seconds): move to a new partner and tell it again, shorter. Round 3 (45 seconds): a new partner, shorter again.",
+            "Between round 1 and round 2 the teacher gives one feedback moment to the whole class: one thing you did well, one thing to fix (-ed or didn't + plain verb).",
+            "Listeners: after each round say \"I liked ___.\" and ask one question.",
+          ],
+          teacherNote:
+            "Task repetition builds fluency: same message, shorter time, new listener. Take the single feedback moment after round 1 and use a prompt first (\"People didn't ...?\") before the right answer, so mistakes do not set before the next round. Do not stop children during the rounds. Stretch children add a because sentence in round 1 and keep it in round 3.",
+        },
+        {
+          kind: "activity",
+          title: "Say it, then write: long ago and now",
+          tag: "Writing",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Say your four sentences to a partner first. Sentence 1: what people did long ago (-ed). Sentence 2: what they didn't do (didn't + plain verb). Sentence 3: what we do now. Sentence 4: join two ideas with and, but or because.",
+            "The teacher models a shared sentence with the class: \"Long ago, people walked to school, but now many children ride a bus.\" Children say which verb has -ed and which word shows 'now'. Write one more together about news or travel.",
+            "Now write 3 or 4 sentences about your own idea. Use the frames. Read each sentence quietly and check it.",
+            "Swap papers with your partner. Underline one great sentence and say: \"I like this sentence because ___.\"",
+          ],
+          frames: ["Long ago, people ___ed.", "They didn't ___.", "Now, we ___.", "___, but ___.", "___, because ___."],
+          prompts: ["Is it finished? Then which ending?", "What comes after didn't?", "Can you join these two ideas with but?"],
+          teacherNote:
+            "Oral rehearsal first, then writing: children who said it can write it. Support: give a gapped version of the model (\"Long ago, people ___ed. They didn't ___.\"). Stretch: add a fifth sentence with because. The printed worksheet \"Grammar Champions: What happened long ago?\" follows this slide, in three levels (Support, Core, Challenge).",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Write the four checks on the board. Read your own writing. Tick each one in pencil.",
+            "1. I used -ed (or -d) for what happened. 2. After didn't my verb is plain: no -ed, no -s. 3. I used only one past word on each verb: -ed OR didn't, never both. 4. I joined two ideas with and, but or because, and I have a capital letter and a period.",
+            "Swap with your partner. Tick again with a different color. Say: \"You are a champion at ___. Next time, try ___.\"",
+            "Fix one thing in your own writing. Show your teacher the fix.",
+          ],
+          prompts: ["You are a champion at ___.", "Next time, try ___.", "I fixed ___."],
+          teacherNote: "Success criteria in child language. A child fixing their own sentence after a peer check is the point: look for the fix, not for perfect pages.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Speaking",
+          mode: "groups",
+          minutes: 5,
+          steps: [
+            "Put three cards on the board: 1. \"Dinosaurs ___ (not use) phones.\" 2. \"Last night {s7} and {s8} ___ (wash) the cups.\" 3. \"Long ago, people ___ (go) by boat. They ___ (not go) by airplane.\"",
+            "In groups: Does our rule work for dinosaurs and for children, too? What goes in each gap? Say why.",
+            "Tricky case, card 3: some verbs are rebels in the -ed sentence. Which one? Does didn't + plain verb still work for it?",
+            "Each group tells the class: \"I think ___ because ___.\" The class says if it agrees.",
+          ],
+          prompts: ["Does the rule work for ___, too?", "I think ___ because ___.", "Which word is the rebel?"],
+          frames: ["The rule works for ___ because ___.", "___ is a rebel because ___.", "After didn't, the verb is always ___."],
+          teacherNote:
+            "Transfer: the rule is about the TIME (finished), not about who does it, so it works for dinosaurs, children and things. Answers: didn't use; washed; went (a rebel: it does not take -ed, and we will meet more of them later) and didn't go. Conceptual point to draw out: didn't + plain verb works for EVERY verb, even the rebels, so it is the safe friend. Do not teach a list of irregular verbs today.",
+        },
+        odL2U05Creative["od2e-l2-u05-l5"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Complete the grammar pages on the simple past (-ed and didn't).", book: { book: "WB", pages: "41-43" } },
+            { label: "Creative grammar", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
+            { label: "Challenge: the rule teacher", detail: "Teach someone at home the rule for -ed and didn't. Make a tiny poster with two examples of your own, and one mistake that a grammar champion would fix." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words.",
+            "I used to think ___ about didn't. Now I think ___.",
+            "Say two sentences that help answer the Big Question, \"How are things different now from long ago?\" Use -ed in one and didn't in the other.",
           ],
         },
       ],

@@ -1,5 +1,5 @@
 // Oxford Discover 2nd edition, Level 3, Unit 18 (Big Question: Why do we explore?)
-// Five 90-minute lessons that follow the Student Book (SB pp. 176-185) and Workbook
+// Five 90-minute lessons (plus a sixth, Grammar Champions, on want to / need to / have to) that follow the Student Book (SB pp. 176-185) and Workbook
 // (WB pp. 162-172) page by page. Unit 18 is the second unit of the pair 17-18, so the
 // fifth lesson is the Wrap Up for both units. Activities are the school's own, written
 // around the book's activity letters so the children always know which page they are
@@ -7,10 +7,75 @@
 // and confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s6} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL3U18Creative } from "./od2e-l3-u18/homework";
 import { odL3U18Assessments, odL3U18Worksheets } from "./od2e-l3-u18/assessments";
 import { odL3U18FirstEdition } from "./od2e-l3-u18/firstEdition";
+
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l3-u18-ws-champions",
+  title: "Grammar Champions: want to, need to, have to",
+  grammar: "want to / need to / have to; because and so",
+  deckId: "od2e-l3-u18-l6",
+  slide: "Write it: my exploration plan",
+  intro:
+    "want to = my wish, my choice. need to = it is necessary. have to = a rule or no choice. After to, the verb stays plain: she wants to go, he needs to wait. With do or does, the verb stays plain too. Add because (the reason) or so (the result, with a comma before it).",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Choose the right answer. Then read the whole sentence aloud and check the little word to.",
+      example: "My brother ___ to climb a mountain.  (want / wants)  ->  wants",
+      items: [
+        { q: "A space explorer ___ wear a space suit outside the ship. There is no air.", options: ["needs to", "wants to"], answer: "needs to" },
+        { q: "I ___ ride a camel in the desert. It looks like fun!", options: ["want to", "have to"], answer: "want to" },
+        { q: "Our guide ___ to show us the jungle.", options: ["wants", "want"], answer: "wants" },
+        { q: "The climber has to ___ a helmet.", options: ["wear", "wears"], answer: "wear" },
+        { q: "___ the diver need to check her tank?", options: ["Does", "Do"], answer: "Does" },
+        { q: "Which sentence is right?", options: ["They want to see a volcano.", "They want see to a volcano."], answer: "They want to see a volcano." },
+        { q: "It is a warm day. You ___ wear a thick coat.", options: ["don't have to", "have to"], answer: "don't have to" },
+        { q: "We want to explore the cave, ___ we need to take a flashlight.", options: ["so", "because"], answer: "so" },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing words, or change the sentence as it asks. For the join and write questions, write the whole sentence.",
+      example: "The jungle guide ___ ___ carry water. (it is necessary)  ->  needs to",
+      items: [
+        { q: "The jungle guide ___ ___ carry water. (it is necessary)", answer: "needs to" },
+        { q: "We ___ ___ wear helmets on the bike path. (it is a rule)", answer: "have to" },
+        { q: "Make it negative: The astronaut wants to stay on the ship.", answer: "The astronaut doesn't want to stay on the ship." },
+        { q: "Make it a question: The climbers have to carry ropes.", answer: "Do the climbers have to carry ropes?" },
+        { q: "Correct the mistake: My cousin need to learn to swim.", answer: "My cousin needs to learn to swim." },
+        { q: "Join with because: The diver checks her air. She needs to breathe.", answer: "The diver checks her air because she needs to breathe." },
+        { q: "Join with so: We want to see the stars. We have to stay up late.", answer: "We want to see the stars, so we have to stay up late." },
+        { q: "Write your own sentence about a place you want to explore. Use want to and because.", answer: "e.g. I want to explore a rainforest because I love colorful birds." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Think carefully. Check every to, every -s, every do or does and every comma before so.",
+      example: "I want to see a polar bear, but I have to wait for the holidays.",
+      items: [
+        {
+          q: "Find and fix three mistakes: 'The explorer want to climb the mountain. She need to take a rope. Does she has to wear a helmet?'",
+          answer: "The explorer wants to climb the mountain. She needs to take a rope. Does she have to wear a helmet?",
+        },
+        {
+          q: "A friend says 'You don't have to bring a snack' means 'Do not bring a snack.' Is your friend right? Explain in one or two sentences.",
+          answer: "e.g. No. don't have to means it is not necessary, so you can choose. It is not a rule against it.",
+        },
+        { q: "Write one sentence that has a wish and a must in it. Join them with but.", answer: "e.g. I want to stay in bed, but I have to get up for school." },
+        {
+          q: "Write a four-sentence paragraph about an explorer: a topic sentence, what she wants to do, what she needs to take, and an ending with so.",
+          answer: "e.g. Captain Reef is an explorer. She wants to find a hidden waterfall. She needs to take a map and a rope. The path is steep, so she has to walk slowly.",
+        },
+        { q: "Why do explorers need to prepare before a trip? Answer in two sentences with because.", answer: "e.g. Explorers need to prepare because places can be dangerous. They need to take water because there may be no shops." },
+        { q: "Write the rule in your own words. Use the words wish, must, to and plain verb.", answer: "e.g. We use want to for a wish and need to or have to for a must. After to we always keep the verb plain, and only the first word takes -s for he and she." },
+      ],
+    },
+  ],
+};
 
 export const odL3U18: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1278,8 +1343,315 @@ export const odL3U18: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l3-u18-l6",
+      resources: [
+        { title: "ESL in the Classroom: Modal Verbs of Obligation Powerpoint [Kids, A1]", url: "https://www.twinkl.com/resource/esl-in-the-classroom-modal-verbs-of-obligation-powerpoint-kids-a1-t-1700121403", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: want to, need to, have to\"", slide: "Grammar: want to, need to, have to" },
+        { title: "ESL Obligations and Prohibitions Board Game", url: "https://www.twinkl.com/resource/obligations-and-prohibitions-board-game-t-eal-1643058232", source: "Twinkl", use: "Extra practice after the grammar slide \"Grammar: want to, need to, have to\"", slide: "Grammar: want to, need to, have to" },
+      ],
+      curriculum: "oxford-discover-2e",
+      level: 3,
+      unit: 18,
+      lesson: 6,
+      covers: { unitFrom: 18, lesson: "Understand" },
+      title: "Grammar Champions: want to, need to, have to",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "181", activities: ["D", "E", "F", "G"], track: "3.12", note: "Grammar in Use: the song, the Learn Grammar box and the want and need chart" },
+        { book: "WB", pages: "165-167", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: want to, need to, have to", subtitle: "Lesson 6 · Grammar and speaking", bigQuestion: "Why do we explore?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can say what I want to do, what I need to do and what I have to do when I speak, and give a reason with because or so.",
+            "I can ask and answer: What do you want to ...? Do you have to ...? Yes, I do. / No, I don't.",
+            "I can write a short paragraph of five or more sentences and edit it with the Grammar Champion checklist.",
+            "I can explain the rule in my own words, test it on a new case and connect it to why people explore.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 6,
+          book: { book: "SB", pages: "181", activities: ["D"], track: "3.12", note: "The Unit 18 song" },
+          steps: [
+            "Sea-word relay. Teacher mimes an animal or a thing from the unit (octopus, kelp, goggles, coral, a diver with a hose). Say the word fast and copy the mime. No repeats: keep a quick circle going.",
+            "Play Track 3.12 from your own copy. Stand up each time you hear what the girl would like to do, and sit down when you hear what she must do. Listen for the two kinds of sentence.",
+            "Pairs, 60 seconds: tell your partner one thing a diver wants to do and one thing a diver needs to do. Your partner holds up one finger for each correct sentence.",
+            "Big Question, pair share: Why do we explore? Answer in one sentence with because.",
+          ],
+          prompts: ["A diver wants to ___.", "A diver needs to ___.", "People explore because ___.", "{s1}, which animal did you mime? {s2}, what does that animal need to do?"],
+          teacherNote:
+            "Retrieval and spacing: pull back the sea words, the song and the pattern from Lesson 3 before today's work. Keep it fast. If a child says 'She want to swim', do not correct yet: repeat up to the mistake in a rising voice ('She ...?') and let the child fix it.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: Pip and the Deep Blue Cave",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Books closed. Teacher is the storyteller: listen to the story of Pip the otter (on the right).",
+            "First listening: clap every time you hear want to or wants to.",
+            "Second listening: stand up every time you hear need to, needs to, have to or has to, and sit down at the next clap sentence.",
+            "Detective talk with a partner: What is different about the clap sentences and the stand-up sentences? Which sentences does Pip enjoy? Which does Pip not choose? Do not say the rule yet.",
+          ],
+          prompts: [
+            "Part 1: 'Pip is a small sea otter who lives in a kelp forest. Pip wants to explore the Deep Blue Cave. Nobody has ever been inside. Pip wants to find a glowing pearl.'",
+            "Part 2: 'Pip asks the old captain, a calm green turtle, for help. \"You can go,\" says the captain, \"but you need to be ready. You need to take a rope, and you have to hold it tight, so the tide cannot take you.\" Pip does not want to wait, but Pip has to wait for the tide.'",
+            "Part 3: 'At last, the tide is right. Pip wants to dive at once. \"Wait,\" says the turtle. \"A good explorer needs to check the rope and the shell lamp first.\" {s1} wants to carry the lamp, so {s1} holds it high. {s2} needs to hold the rope, so {s2} keeps it tight.'",
+            "Part 4: 'Pip swims down. It is dark, so Pip needs to switch on the lamp. Now Pip wants to swim faster, but a long rope has to stay tight, so Pip goes slowly. The turtle does not have to watch Pip all the time, but she wants to.'",
+            "Part 5: 'In the cave Pip sees blue stones, tiny silver fish and a glowing pearl. Pip wants to take the pearl home. But a good explorer does not have to take everything. Pip wants to look, and Pip needs to leave the pearl where it is. \"We have to protect it,\" says the turtle. \"Then other explorers can find it too.\"'",
+            "Part 6: 'Pip swims up. Pip needs to breathe! {s3} and {s4} have to pull the rope, so they pull together. At the top, Pip smiles. \"I wanted to explore, and I needed to be careful. Now I want to tell everyone!\"'",
+          ],
+          teacherNote:
+            "Input flood: the pattern comes many times in one invented story. Read slowly and lean on to. Write the children's own words on the board exactly as they say them and do NOT explain the grammar yet. The story links to the Big Question: explorers want to find new things and need to prepare. Name slots only do kind, ordinary things. Part 5 plants 'does not have to' on purpose: some children will notice that it does not mean 'must not'.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group of four gets 16 sentence cards and two mats: RIGHT and NOT RIGHT. Read each card aloud and decide where it goes. Argue politely: 'I think this is not right because ...'",
+            "Look at the RIGHT mat. Sort the cards again into two or three piles: the person CHOOSES, the person MUST, and (if you find some) NOT NECESSARY. Give each pile a name of your own.",
+            "Look at the NOT RIGHT mat. What is wrong in each card? Fix three cards with a pencil and say why your fix works. Is there one kind of mistake or more than one?",
+            "Swap test: take a MUST card and say it with he or she instead of I. What changes? Take a question card and say it with Do, then with Does. What happens to the verb?",
+            "Your group says to the class: 'I think the rule is ___ because ___.' The teacher writes your words on the board and does not tell the rule yet.",
+          ],
+          frames: [
+            "In the CHOOSE sentences, the person ___.",
+            "In the MUST sentences, ___ decides.",
+            "After to, the verb is always ___.",
+            "With he or she, the first word ends in ___.",
+            "In questions, does or do takes the ___, so the verb stays ___.",
+            "I think the rule is ___ because ___.",
+          ],
+          prompts: [
+            "RIGHT, choose: 'Pip wants to swim with a dolphin.' 'We want to find a shipwreck.' 'Does the diver want to film the coral? Yes, she does.'",
+            "RIGHT, must: 'A diver needs to check her tank.' 'The boat has to wait for the tide.' 'Do the divers have to wear suits? Yes, they do.' 'We need to take a map.'",
+            "RIGHT, not necessary: 'She doesn't have to wear a coat. It is hot.' 'We don't need to take a tent. We will sleep on the boat.'",
+            "NOT RIGHT: 'Pip want to swim.' 'The diver needs to goes up.' 'I have to wearing goggles.' 'Does she has to go?' 'We need go to the boat.' 'He wants swim to the reef.'",
+          ],
+          teacherNote:
+            "Print the cards in big letters, one sentence per card, with the wrong ones in the same style as the right ones. Concept formation: comparing examples and non-examples is the point, so give the sorting and the talk their time. Listen for: 'choose or must', 'the verb after to stays the same', 's with he and she', 'does takes the s'. Ask 'How do you know?' Early finishers write one right and one not right card for another group. Do NOT give the rule: the next slide puts their words into the form.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: want to, need to, have to",
+          hook: "want to is a wish you choose. need to and have to are musts: the sea, a rule or safety decides.",
+          form: [
+            { label: "Want", pattern: "I / you / we / they + want to + plain verb      he / she / it + wants to + plain verb" },
+            { label: "Need", pattern: "I / you / we / they + need to + plain verb      he / she / it + needs to + plain verb" },
+            { label: "Have", pattern: "I / you / we / they + have to + plain verb      he / she / it + has to + plain verb" },
+            { label: "Not necessary", pattern: "don't / doesn't + need to / have to + plain verb" },
+            { label: "Question", pattern: "Do / Does + subject + want to / need to / have to + plain verb?" },
+            { label: "Answers", pattern: "Yes, I do. / No, she doesn't." },
+            { label: "Reasons", pattern: "..., because ...   (the reason)    ..., so ...   (the result)" },
+          ],
+          explanation: [
+            "What it means: want to says what you would like. It is your own wish, so you could change your mind and nothing bad happens. need to says that something is necessary: without it there is a problem, like no air for a diver. have to says that there is no choice, often because of a rule or a plan.",
+            "When we use it: when we plan an exploration, a trip or a school day. First say what you want to do, then what you need to do to get ready, then what you have to do because of the rules. 'I want to see a whale, so I need to learn to swim well, and I have to go with a guide.'",
+            "The rule in three checks: (1) After to we always use the plain verb: want to go, never want to goes or want go. (2) Only the first word changes for he, she and it: wants, needs, has. (3) In questions and with not, do or does takes the -s, so the verb stays plain: Does she have to wear goggles?",
+            "The not-necessary trap: don't have to and don't need to mean you can choose. 'You don't have to bring a snack' does not mean 'Don't bring a snack'. It means it is fine if you do not.",
+            "Reasons: because tells why ('Divers need to check the air because they cannot breathe underwater'). so tells what follows ('The cave is dark, so we need to take a lamp'). Put a comma before so.",
+            "Vietnamese tip: muốn is want to, cần is need to and phải is have to. Vietnamese verbs never change, but English adds -s for he or she: 'Bạn ấy muốn đi' is 'She wants to go'. Also, English needs the little word to, which Vietnamese often leaves out. And 'không cần phải' means 'don't need to' or 'don't have to'. It is not a rule against it.",
+            "Why it matters for talking: when you say what you want and what you need, people understand your plan and can help you. It is how explorers ask for help, share a goal and prepare safely. It also helps you answer the Big Question: people explore because they want to find new things, and they need to prepare so they can do it.",
+          ],
+          examples: [
+            { text: "{s1} wants to find a new kind of fish.", note: "want to: a wish" },
+            { text: "Divers need to check their air, because they cannot breathe underwater.", note: "need to + because" },
+            { text: "We have to wear life jackets on the boat, so we are safe.", note: "have to: a rule + so" },
+            { text: "I don't want to get up early, but I have to.", note: "a wish and a must in one sentence" },
+            { text: "Does {s2} have to carry the rope? No, {s2} doesn't.", note: "question and short answer" },
+            { text: "{s3} doesn't need to take a coat. The water is warm.", note: "not necessary" },
+          ],
+          pitfalls: [
+            { wrong: "She want to see a coral reef.", right: "She wants to see a coral reef.", why: "he, she and it add -s to want." },
+            { wrong: "He needs to goes up.", right: "He needs to go up.", why: "After to the verb is always plain: the -s belongs only on needs." },
+            { wrong: "We have go to the boat.", right: "We have to go to the boat.", why: "You need the little word to, which Vietnamese often leaves out." },
+            { wrong: "Does she has to wear goggles?", right: "Does she have to wear goggles?", why: "After does the verb goes back to plain: the -s is already in does." },
+          ],
+          book: { book: "SB", pages: "181", activities: ["F"], note: "Learn Grammar" },
+        },
+        {
+          kind: "activity",
+          title: "Pack the submarine",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Two teams stand in two lines facing the board. On the board is a hoop or a drawing of a small submarine. Item cards lie face down on a table: oxygen tank, camera, sandwich, toy shark, map, warm suit, rope, flashlight, diary, sunscreen.",
+            "The first child in each line takes a card and says a full sentence about it with the pattern: 'We need to take the oxygen tank because we have to breathe.' or 'We want to take the toy shark, but we don't need to.'",
+            "A correct sentence means the card goes into the submarine. The sentence needs to + the plain verb, the right -s for he or she (the captain needs to ...), and a reason with because or so.",
+            "The other team can call 'Prove it!' and the speaker explains in one more sentence whether it is a wish or a must. A good explanation wins a bonus card.",
+            "After each round the line turns: the speaker goes to the back and the next child comes up. The submarine has room for only six cards, so teams must choose well! First team to fill the submarine wins.",
+          ],
+          prompts: [
+            "We need to take ___ because ___.",
+            "We have to take ___ because ___.",
+            "We want to take ___, but we don't need to.",
+            "The captain needs to ___, so ___.",
+            "Prove it! ... because ...",
+          ],
+          teacherNote:
+            "The pattern is the winning move: no card goes in without to + a plain verb and a reason. Correct with PROMPTS before you recast: repeat the sentence up to the mistake in a rising voice ('The captain needs to ...?'), hold up one finger for the little word to, tap your ear and say 'plain!' for needs to goes, or make an s with your fingers for he and she. Say the full correct sentence yourself only if the child is stuck. A toy shark is a want, not a need: let teams argue about the cards that are both. For a quick extra round, give the cards to the teams and let a child be the judge.",
+        },
+        {
+          kind: "speaking",
+          title: "Explorer cards: ask and fill in",
+          mode: "pairs",
+          minutes: 12,
+          book: { book: "SB", pages: "181", activities: ["G"], note: "Want and need chart, as a model" },
+          steps: [
+            "Partner A holds Sheet A: four explorers with a picture of what each WANTS to do. The NEEDS column is empty. Partner B holds Sheet B: the same four explorers with what each NEEDS or HAS to do. The WANTS column is empty. Do not look at each other's sheet.",
+            "Ask about the empty boxes with a full question: 'What does the diver want to do?' or 'What does the climber need to do?' Your partner looks at the sheet and answers in a full sentence: 'The diver wants to film a leafy sea dragon.'",
+            "Write the answer in your own empty box. Then ask one yes / no question for each explorer: 'Does the climber have to wear a swimsuit?' 'No, she doesn't.'",
+            "Put the sheets together and check. Then write two sentences each on a sticky note: one with wants to ..., so ... needs to ..., and one with doesn't have to. Tell the class one.",
+            "Finished early? Make a fifth explorer of your own (a firefighter, a bird watcher, a baker who explores new foods) and ask your partner about it.",
+          ],
+          frames: [
+            "What does the ___ want to do?",
+            "The ___ wants to ___, so the ___ needs to ___.",
+            "Does the ___ have to ___? Yes, she / he does. / No, she / he doesn't.",
+            "The ___ doesn't have to ___ because ___.",
+            "That's a good plan, because ___.",
+          ],
+          prompts: ["What does the astronaut need to wear?", "Who has to carry water?", "Which explorer wants to see something new?", "Why does the diver need to check the tank?"],
+          fluencyTip: "Ask the whole question and answer with a whole sentence, then add 'because' or 'so'. Look at your partner, not only at your sheet.",
+          teacherNote:
+            "Make two sheets before the lesson. Each sheet lists the same four explorers: the diver, the mountain climber, the astronaut and the jungle guide. Sheet A (WANTS): the diver wants to film a leafy sea dragon; the climber wants to reach a snowy top; the astronaut wants to walk on a new planet; the jungle guide wants to find a rare butterfly. Sheet B (NEEDS / HAS TO): the diver needs to check her air tank; the climber has to wear warm boots; the astronaut needs to wear a space suit; the jungle guide has to carry fresh water. The answers to the yes / no questions come from the sheets. Walk round with prompts first: 'To?', 'Plain verb?', 'Say that again with because.' Keep the talk about the explorers only.",
+        },
+        {
+          kind: "activity",
+          title: "Choice, must, rope: explorer moves",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Music on: walk around the room like explorers. Music off: freeze.",
+            "Teacher calls a sentence. Show it with your whole body. 'I want to climb a mountain!': reach up high with a big smile. 'I need to breathe!': hands on your chest and take a deep breath. 'I have to hold the rope!': hold an imaginary rope in both hands, like a tethered diver. 'I don't have to hurry!': stretch out and relax.",
+            "Say the sentence aloud together before you move again.",
+          ],
+          prompts: ["I want to explore a cave!", "I need to switch on my lamp!", "I have to hold the rope!", "I don't have to hurry!", "She wants to dive, but she has to wait."],
+          teacherNote: "A movement break that keeps the pattern in the body. Everyone moves at the same time, so nobody is on show.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "181", activities: ["G"], note: "Talk about what you want and need with a partner" },
+          steps: [
+            "Plan a talk with five sentences on the topic: My dream exploration. 1. I want to explore ___ because ... 2. I need to take ___ so ... 3. I have to ___ before I go, because ... 4. A question for your partner: Do you want to ...? / What do you need to take? 5. An ending: Exploring is important because ...",
+            "Round 1 (90 seconds): tell your talk to partner 1. Your partner holds up one finger for each want to / need to / have to sentence and listens for to + a plain verb in every one.",
+            "Stop. The teacher shares ONE champion tip from the mistakes heard. Say it together once.",
+            "Round 2 (60 seconds): a new partner, the same talk, a little faster and smoother. Round 3 (45 seconds): another new partner, as clear as you can.",
+            "Last: one sentence to your partner: 'The best thing about talking three times is ...'",
+          ],
+          frames: [
+            "I want to explore ___ because ___.",
+            "I need to take ___, so ___.",
+            "I have to ___ before I go, because ___.",
+            "Do you want to ___? What do you need to take?",
+            "Exploring is important because ___.",
+          ],
+          prompts: ["Why do you want to go there?", "Do you really need that?", "Is that a want or a must?", "Can you give an example?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and shorter. If you forget a word, say 'Let me think ...' and keep going.",
+          teacherNote:
+            "Use a timer everyone can see. Between rounds 1 and 2, give ONE feedback moment: choose the most common error you heard and prompt it first (rising voice, one finger for to, ear tap for plain verb, an s sign for he or she). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support point to a card for each sentence. Keep the topic on places and plans, not on who is brave or best.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: my exploration plan",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          steps: [
+            "Say it first: tell your partner your exploration plan in 30 seconds, using your Champion talk.",
+            "Watch: teacher and class write the first two sentences together on the board: 'I want to explore a kelp forest because I love ocean animals. I need to take a camera, so I can show my friends.' Where is the to? Where is the comma before so?",
+            "Write a paragraph of five to seven sentences: a topic sentence, one sentence with want to, one with need to, one with have to, one sentence with because, one with so, and an ending sentence.",
+            "Read your paragraph to a partner. Put a finger on every to and every verb after it. The next slide is your checklist.",
+            "Finished early? Write a second paragraph about a different exploration, or write the rule in your own words.",
+          ],
+          frames: [
+            "I want to explore ___ because ___.",
+            "I need to take ___, so ___.",
+            "I have to ___ before I go, because ___.",
+            "My friend doesn't need to ___, because ___.",
+            "Exploring is important because ___.",
+          ],
+          prompts: ["Where would you like to go?", "Is that a want, a need or a must?", "What do you need to take?", "Can you join two sentences with because or so?"],
+          tiers: [
+            { level: "Support", task: "Write four sentences with the frames. Use one want to, one need to and one have to. Then do the worksheet's Support part.", frames: ["I want to explore ___.", "I need to take ___.", "I have to ___ before I go."] },
+            { level: "Core", task: "Write a paragraph of five or six sentences with all three patterns and because and so. Then do the worksheet's Core part.", frames: ["I need to take ___, so ___."] },
+            { level: "Stretch", task: "Write a paragraph of seven sentences. Add a sentence with although and one that says what a friend does not have to do. Then do the worksheet's Challenge part.", frames: ["Although I want to ___, I have to ___.", "My friend doesn't have to ___ because ___."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model the first two sentences on the board with gaps for the place and the thing to take, then release. Praise the to first, then the plain verb, then the comma before so. The printed worksheet 'Grammar Champions: want to, need to, have to' follows this slide in three levels (Support, Core, Challenge). Stretch children can reuse although from Lesson 4. Check that no sentence compares a child with another: the explorations are the topic.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your own paragraph. Check each point and give yourself a tick.",
+            "1. Every want to, need to and have to is followed by a PLAIN verb. 2. With he, she or it I wrote wants, needs or has, and with does I kept the verb plain. 3. My wishes are wants and my musts are needs or have to: the word matches the meaning. 4. Because and so are in the right place, with a comma before so, and I have capital letters and full stops.",
+            "Swap papers. Check your partner's paragraph and give one star and one step: 'Your wants and needs are clear!' and 'Check the verb here.'",
+            "Edit one thing in your own paragraph with a pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["To and a plain verb. Great!", "She wants, he needs: the -s is here. Great!", "Is that a wish or a must?", "Add a comma before so.", "Four ticks: champion!"],
+          teacherNote: "Draw the four checks on the board with small pictures (to + plain verb, an s sign, a heart for want and an anchor for have to, a comma). Children give a star for each tick on their partner's page. Collect one or two sentences without names to read to the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "Teacher shows three tricky cases. Thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then explain why with a partner.",
+            "Case 1, a thing: 'A coral reef needs clean water.' Is there a to here? What follows need: a verb or a noun? Can we also say 'The reef needs to stay clean'?",
+            "Case 2, yesterday: 'Long ago, explorers wanted to find a new sea.' Does the pattern still work? What changed, and what stayed the same after to?",
+            "Case 3, an invitation: 'You don't have to come, but I would like you to.' Does don't have to mean you are not allowed?",
+            "Think: how does knowing what we want and what we need help a person explore well?",
+          ],
+          frames: ["The rule works because ___.", "The rule does not work because ___.", "Knowing what I need helps an explorer ___."],
+          prompts: ["Is there still a to?", "Is the verb after it plain?", "Is it a wish, a must or not necessary?", "Can you think of another case?"],
+          teacherNote:
+            "Transfer to new cases, then link to the Big Question. Case 1: need can take a noun (needs water) or to + a plain verb (needs to stay clean): both are right. Case 2: wanted and needed are the past forms; the verb after to is still plain. Case 3: don't have to means it is not necessary, so nobody is forbidden. Let children's words stand, and write the best one on the class Big Ideas chart.",
+        },
+        odL3U18Creative["od2e-l3-u18-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: want to, need to and have to.", book: { book: "WB", pages: "165-167", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Imagine you are going on a secret exploration to a place nobody has been. Choose where, and say why. Draw your bag. Write five sentences with want to, need to and have to, for example: 'I want to explore a hidden cave because I love mysteries.'" },
+            { label: "Challenge", detail: "Ask someone at home what they want to explore one day. Write a paragraph of six sentences about their plan with want to, need to and have to, with because and so. Edit it with the four-point Grammar Champion checklist and mark your ticks." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words: what do we use for a wish, what for a must, and what comes after to?",
+            "I used to think ___, now I think ___. (About want to, need to, have to, because or so.)",
+            "How does the rule help you explain your plan to someone else? Show me with your hands how sure you are.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL3U18Worksheets,
+  worksheets: [...odL3U18Worksheets, championsWorksheet],
   assessments: odL3U18Assessments,
   firstEdition: odL3U18FirstEdition,
 };

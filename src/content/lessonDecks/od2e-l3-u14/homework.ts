@@ -328,4 +328,70 @@ export const odL3U14Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 6: Grammar Champions, comparative and superlative adverbs
+  "od2e-l3-u14-l6": {
+    kind: "creative",
+    thinking: "Compare and justify",
+    uses: {
+      words: ["invention", "faster", "carefully", "quietly", "delicate", "useful"],
+      grammar: ["comparative adverbs with than", "superlative adverbs with the", "because and so"],
+    },
+    base: {
+      title: "Which invention helps the most?",
+      task: "Choose three inventions that do the same job in different ways, such as ways to travel, ways to send a message or ways to make light. Compare them, decide which one helps people the most and explain why.",
+      steps: [
+        "Draw your three inventions in a row and label each one.",
+        "Write two sentences that compare two of them with an adverb and than.",
+        "Write one sentence that names the top one with the + a superlative adverb.",
+        "Add because to give a reason and so to say what the result is for people.",
+        "Finish with your opinion: which invention changed life the most, and why?",
+      ],
+      frames: [
+        "A ___ works faster / more ___ly than a ___ because ___.",
+        "The ___ works the fastest / the most ___ly of the three, so ___.",
+        "Before the ___, people used to ___.",
+        "In my opinion, the ___ helps people the most because ___.",
+      ],
+      success: [
+        "I used than after a comparative adverb at least twice.",
+        "I used the before a superlative adverb.",
+        "I used because for a reason and so for a result.",
+        "I gave my own opinion with a reason.",
+      ],
+      challenge:
+        "Add a fourth, older invention and tell one thing it does better than the newer ones, so the ranking is not so simple.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "Which match-day invention helps fans the most?",
+          task: "Choose three inventions that help fans follow a match, such as a stadium scoreboard, a radio and a phone app. Compare them, decide which one helps the Gunners' fans the most and explain why.",
+          steps: [
+            "Draw your three inventions in a row and label each one.",
+            "Write two sentences that compare two of them with an adverb and than.",
+            "Write one sentence that names the top one with the + a superlative adverb.",
+            "Add because to give a reason and so to say what the result is for the fans.",
+            "Finish with your opinion: which invention helps the fans the most, and why?",
+          ],
+          frames: [
+            "A ___ tells fans the score faster / more ___ly than a ___ because ___.",
+            "The ___ works the fastest / the most ___ly of the three, so fans can ___.",
+            "Before the ___, fans used to ___.",
+            "In my opinion, the ___ helps the Gunners' fans the most because ___.",
+          ],
+          success: [
+            "I used than after a comparative adverb at least twice.",
+            "I used the before a superlative adverb.",
+            "I used because for a reason and so for a result.",
+            "I gave my own opinion with a reason.",
+          ],
+          challenge:
+            "Add a fourth, older way to follow a match, such as a newspaper, and tell one thing it does better than the newer ones.",
+        },
+      },
+    ],
+  },
 };

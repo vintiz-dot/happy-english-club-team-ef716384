@@ -271,4 +271,59 @@ export const odL2U18Creative: Record<string, Creative> = {
       challenge: "Invent a new kind of football art with a name. Say what tools it needs and ask a friend: Would you like to make this?",
     },
   ),
+
+  // Lesson 6: Grammar Champions, how many, how much, some and any
+  "od2e-l2-u18-l6": creative(
+    "Design",
+    ["markers", "glue", "chalk", "scissors", "watercolors", "colored pencils"],
+    ["How many ___ are there?", "How much ___ is there?", "some, any, a lot of"],
+    {
+      title: "My dream art cupboard",
+      task: "Design an art cupboard for a new class. Draw it, choose what is inside, say how many and how much, and say why you chose it.",
+      steps: [
+        "Draw a big cupboard with three shelves.",
+        "Put five things on the shelves. Some you can count and some you can not count.",
+        "Write one sentence for each shelf with There are or There is.",
+        "Write one question a friend could ask, with How many or How much, and the answer.",
+        "Say why this cupboard is a good one for making art.",
+      ],
+      frames: [
+        "There are ___ on the top shelf.",
+        "There is a lot of ___.",
+        "There isn't any ___, but there is some ___.",
+        "How many ___ are there? How much ___ is there?",
+        "It is a good cupboard because ___.",
+      ],
+      success: [
+        "I used There are with things I can count and There is with things I can not count.",
+        "I wrote one question with How many or How much.",
+        "I gave a reason with because.",
+      ],
+      challenge: "Your cupboard is almost empty! Write what is missing, with There isn't any ... and how many or how much you need.",
+    },
+    {
+      title: "The Gunners poster table",
+      task: "Design a poster table where fans make posters before a Gunners match. Draw it, choose what is on the table, say how many and how much, and say why.",
+      steps: [
+        "Draw a long table with red and white things on it.",
+        "Put five things on the table. Some you can count and some you can not count.",
+        "Write one sentence for each part of the table with There are or There is.",
+        "Write one question a fan could ask, with How many or How much, and the answer.",
+        "Say why this is a good table for making posters.",
+      ],
+      frames: [
+        "There are ___ on the table.",
+        "There is a lot of ___.",
+        "There isn't any ___, but there is some ___.",
+        "How many ___ are there? How much ___ is there?",
+        "It is a good table because ___.",
+      ],
+      success: [
+        "I used There are with things I can count and There is with things I can not count.",
+        "I wrote one question with How many or How much.",
+        "I gave a reason with because.",
+      ],
+      challenge: "The match starts in ten minutes and the paint is almost finished! Write what is missing, with There isn't any ... and how many or how much the fans need.",
+    },
+  ),
 };
