@@ -11,7 +11,7 @@
  * Custom Search fetches 2-3 images per word → new words land in the
  * student's personal word bank with points auto-awarded.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { files as fileStore } from "@/lib/files";
@@ -34,6 +34,10 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { InkCheck } from "@/components/fx/InkCheck";
+import { LiveDot } from "@/components/fx/LiveDot";
+import { showSeal } from "@/components/fx/showSeal";
+import { dur, ease, useMotionLevel } from "@/components/fx/motion";
 import {
   ScanText, BookMarked, UploadCloud, Loader2, CheckCircle2, XCircle,
   Sparkles, User, ImageIcon, AlertTriangle, Eye, Check, ChevronsUpDown,
@@ -220,6 +224,10 @@ function useUploadClasses(userId?: string, role?: string | null) {
 
 export default function TeacherSmartUpload() {
   const { user, role } = useAuth();
+  // Phase 3 effects only: nothing below reads these for a save or a query.
+  const level = useMotionLevel();
+  const pendingSeal = useRef<{ id: string; at: number } | null>(null);
+  const prevQueueLen = useRef<number | null>(null);
   const queryClient = useQueryClient();
   const [classId, setClassId] = useState<string>("");
   const [studentId, setStudentId] = useState<string>("");
@@ -580,6 +588,8 @@ export default function TeacherSmartUpload() {
     },
     onSuccess: (decision, { work }) => {
       toast.success(decision === "approved" ? "Approved — now visible on the student's profile" : "Rejected");
+      // effects only: a rejection never asks for a Seal
+      if (decision === "approved") pendingSeal.current = { id: work.id, at: Date.now() };
       refetchQueue();
       // Approved work is new journey evidence — refresh the living profile
       // in the background (fire-and-forget).
@@ -612,10 +622,11 @@ export default function TeacherSmartUpload() {
       if (data?.success === false) throw new Error(data.error || "approval failed");
       return data as { points_awarded: number; entry_ids: string[] };
     },
-    onSuccess: (data) => {
+    onSuccess: (data, work) => {
       toast.success(`${data.entry_ids?.length ?? 0} word(s) added to the word bank`, {
         description: data.points_awarded ? `+${data.points_awarded} points` : undefined,
       });
+      pendingSeal.current = { id: work.id, at: Date.now() };
       refetchQueue();
     },
     onError: (e: any) => toast.error("Couldn't approve the words", { description: e.message }),
@@ -642,6 +653,20 @@ export default function TeacherSmartUpload() {
   });
 
   const activeJobs = useMemo(() => jobs.slice(-8).reverse(), [jobs]);
+
+  useEffect(() => {
+    const before = prevQueueLen.current;
+    prevQueueLen.current = reviewQueue.length;
+    const pending = pendingSeal.current;
+    if (!pending) return;
+    if (reviewQueue.some((w) => w.id === pending.id)) {
+      // not refreshed yet; give up on a stale wait after 20 s
+      if (Date.now() - pending.at > 20_000) pendingSeal.current = null;
+      return;
+    }
+    pendingSeal.current = null;
+    if (before !== null && before >= 1 && reviewQueue.length === 0) showSeal("All reviewed");
+  }, [reviewQueue]);
 
   return (
     <Layout title="Smart Upload">
@@ -899,7 +924,12 @@ export default function TeacherSmartUpload() {
         {/* Live pipeline progress */}
         <AnimatePresence>
           {activeJobs.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <motion.div
+              initial={level === "off" ? false : { opacity: 0, y: level === "full" ? 8 : 0 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={level === "off" ? undefined : { opacity: 0, transition: { duration: dur.press, ease } }}
+              transition={level === "off" ? { duration: 0 } : { duration: dur.reveal, ease }}
+            >
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
@@ -910,11 +940,12 @@ export default function TeacherSmartUpload() {
                   {activeJobs.map((j, i) => (
                     <div key={`${j.fileName}-${i}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-hec-small">
                       {j.status === "done" ? (
-                        <CheckCircle2 className="h-4 w-4 text-hec-leaf shrink-0" />
+                        <InkCheck size={16} className="text-hec-leaf" />
                       ) : j.status === "failed" ? (
                         <XCircle className="h-4 w-4 text-hec-danger shrink-0" />
                       ) : (
-                        <Loader2 className="h-4 w-4 animate-spin text-hec-ink-soft shrink-0" />
+                        // a job still running: the brass dot beside its real stage message
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center"><LiveDot /></span>
                       )}
                       <span className="font-medium text-hec-ink truncate max-w-[180px]">{j.fileName}</span>
                       <span className="min-w-0 break-words text-hec-ink-soft">{j.message}</span>
@@ -1036,8 +1067,13 @@ export default function TeacherSmartUpload() {
               </p>
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
+                <AnimatePresence initial={false}>
                 {reviewQueue.map((w) => (
-                  <div key={w.id} className="min-w-0 rounded-hec-lg border border-hec-line bg-hec-surface p-4 space-y-3">
+                  <motion.div
+                    key={w.id}
+                    exit={level === "off" ? undefined : { opacity: 0, transition: { duration: 0.14, ease } }}
+                    className="min-w-0 rounded-hec-lg border border-hec-line bg-hec-surface p-4 space-y-3"
+                  >
                     <div className="flex items-start gap-3">
                       {signedUrls.data?.[w.id] ? (
                         <a href={signedUrls.data[w.id]} target="_blank" rel="noreferrer" className="shrink-0 rounded-hec-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
@@ -1246,8 +1282,9 @@ export default function TeacherSmartUpload() {
                         </div>
                       </>
                     )}
-                  </div>
+                  </motion.div>
                 ))}
+                </AnimatePresence>
               </div>
             )}
           </CardContent>
