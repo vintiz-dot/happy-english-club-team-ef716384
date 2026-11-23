@@ -6,6 +6,7 @@ import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
 import { monthPayable } from "../_lib/invoice-status.ts";
 import { classNetAmounts } from "../_lib/class-net.ts";
+import { findRegisterHoles, hanoiToday, heldSentence, mustHold } from "../_lib/register-holes.ts";
 import { classFeeOn, indexClassFees, isMissingFeeHistory, type ClassFeeHistory } from "../_lib/class-fee.ts";
 
 const corsHeaders = {
@@ -390,6 +391,21 @@ Deno.serve(async (req) => {
           }
         }
 
+        // Lessons held, inside the enrolment, with no attendance row: holes in the
+        // register (_lib/register-holes.ts), judged by the same enrolment, weekday
+        // and rate rules as the loop above - and as calculate-tuition does.
+        const registerHoles = findRegisterHoles(
+          studentSessions,
+          { has: (sessionId: string) => attendanceMap.has(attendanceKey(sessionId, sid)) },
+          hanoiToday(),
+          {
+            enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
+            onAllowedDay: (s: any, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
+            rateOf: (s: any, e: any) =>
+              e.rate_override_vnd ?? classFeeOn(feeHistory, s.class_id, s.date, Number(classMap.get(s.class_id)?.session_rate_vnd ?? 0)),
+          },
+        );
+
         // The month's cancelled lessons in this student's classes, on the
         // student's enrolled dates and weekdays - the same two tests a charged
         // lesson passes above. Null when they could not be read.
@@ -474,13 +490,40 @@ Deno.serve(async (req) => {
           totalDiscount = Number(frozenInv.discount_amount ?? 0);
           totalAmount = Number(frozenInv.total_amount ?? 0);
         }
+        // So does a bill the register would only lower because lessons have no
+        // row: calculate-tuition holds it (same rule, same helper), and this
+        // reports what it will keep, never a lower figure than the bill.
+        const heldBill = mustHold({
+          holeCount: registerHoles.length,
+          savedBase: frozenInv ? Number(frozenInv.base_amount ?? 0) : null,
+          tuitionFrozen: !!frozenInv?.tuition_frozen,
+          registerBase: baseAmount,
+          forced: false,
+        });
+        const heldInfo = heldBill
+          ? {
+              reason: "register_missing_marks",
+              message: heldSentence(registerHoles.length, month),
+              lessons: registerHoles.map((h) => ({
+                date: h.date,
+                class_name: classMap.get(h.class_id)?.name || "Unknown",
+              })),
+              register_base: baseAmount,
+              saved_base: Number(frozenInv.base_amount ?? 0),
+            }
+          : null;
+        if (heldBill) {
+          baseAmount = Number(frozenInv.base_amount ?? 0);
+          totalDiscount = Number(frozenInv.discount_amount ?? 0);
+          totalAmount = Number(frozenInv.total_amount ?? 0);
+        }
 
         // The charge split by class, after EVERY discount (student, referral
         // and sibling included), summing to totalAmount exactly. For the
         // per-class report; see _lib/class-net.ts. A frozen bill is split
         // along the class breakdown it was saved with, not today's register.
         let classNet;
-        if (frozenInv?.tuition_frozen) {
+        if (frozenInv?.tuition_frozen || heldBill) {
           const savedBases = new Map<string, number>();
           const savedClassDiscounts = new Map<string, number>();
           for (const c of (Array.isArray(frozenInv.class_breakdown) ? frozenInv.class_breakdown : []) as any[]) {
@@ -555,6 +598,7 @@ Deno.serve(async (req) => {
           siblingUnresolved: family?.id ? siblingStateMap.get(family.id)?.status === "unresolved" : false,
           breakdown: { classes: classBreakdown },
           classNet,
+          ...(heldInfo ? { held: heldInfo } : {}),
           invoiceId: currentInvoice?.id || null,
           invoiceStatus: currentInvoice?.status || null,
           confirmationStatus: currentInvoice?.confirmation_status || null,

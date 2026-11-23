@@ -86,8 +86,16 @@ Deno.serve(async (req) => {
       const pending = await pendingFor(supabase, month, new Set(listed.map((g) => g.student_id)));
       listed.push(...pending);
       const failed: Array<{ student_id: string; name: string; error: string }> = [];
+      // Bills calculate-tuition kept as charged because lessons have no mark:
+      // their own outcome, neither saved nor failed (see readRecalc).
+      const held = new Map<string, { lessons: number; message: string }>();
       const saved = new Set<string>();
       let notReached = 0;
+
+      // A bill already known to be held goes last: it cannot be fixed from here,
+      // so it must not use the run's calls before a bill that can.
+      const knownHeld = await heldStudents(supabase, listed.map((g) => g.student_id), month);
+      listed.sort((a, b) => Number(knownHeld.has(a.student_id)) - Number(knownHeld.has(b.student_id)));
 
       for (const g of listed) {
         if (calls >= MAX_PER_RUN || Date.now() - started > TIME_BUDGET_MS) { notReached++; continue; }
@@ -100,6 +108,7 @@ Deno.serve(async (req) => {
           outcome = await recalc(url, serviceKey, g.student_id, month);
         }
         if (outcome.ok) saved.add(g.student_id);
+        else if (outcome.held) held.set(g.student_id, outcome.held);
         else failed.push({ student_id: g.student_id, name: g.full_name, error: outcome.error ?? "not saved" });
       }
 
@@ -108,7 +117,10 @@ Deno.serve(async (req) => {
       // a bill to retry quietly.
       const { data: after, error: afterErr } = await supabase.rpc("tuition_bill_gaps", { p_month: month });
       if (afterErr) throw new Error(`The bill check for ${month} could not run after the refresh: ${afterErr.message}`);
-      const stillOpen: any[] = after ?? [];
+      // A held child stays listed (the bill differs from the register until
+      // someone fixes the register); the row says so, in the same json.
+      const stillOpen: any[] = (after ?? []).map((g: any) =>
+        held.has(g.student_id) ? { ...g, held: held.get(g.student_id) } : g);
       for (const g of stillOpen) {
         if (saved.has(g.student_id)) {
           saved.delete(g.student_id);
@@ -119,6 +131,7 @@ Deno.serve(async (req) => {
         }
       }
 
+      const listedName = new Map<string, string>(listed.map((g) => [g.student_id, g.full_name]));
       const run = {
         month,
         started_by: isTimer ? "timer" : "admin",
@@ -130,11 +143,20 @@ Deno.serve(async (req) => {
       };
       const { error: logErr } = await supabase.from("tuition_bill_check_runs").insert(run);
       if (logErr) console.error("refresh-month-bills: run not recorded", logErr.message);
-      results.push({ ...run, notReached, recorded: !logErr });
+      results.push({
+        ...run,
+        notReached,
+        recorded: !logErr,
+        held: [...held].map(([student_id, h]) => ({ student_id, name: listedName.get(student_id) ?? "", ...h })),
+      });
     }
 
-    const anyOpen = results.some((r) => r.still_open.length > 0 || r.failed.length > 0);
-    if (anyOpen) console.error("refresh-month-bills: bills still wrong", JSON.stringify(results.map((r) => ({ month: r.month, open: r.still_open.length, failed: r.failed }))));
+    // A held bill is reported, but it is not "still wrong" for this run's answer:
+    // the refresh did what it can and says so.
+    const openNotHeld = (r: any) => r.still_open.filter((o: any) => !o.held).length;
+    const anyOpen = results.some((r) => openNotHeld(r) > 0 || r.failed.length > 0);
+    for (const r of results) for (const h of r.held) console.warn("refresh-month-bills:", h.name || h.student_id, h.message);
+    if (anyOpen) console.error("refresh-month-bills: bills still wrong", JSON.stringify(results.map((r) => ({ month: r.month, open: openNotHeld(r), failed: r.failed }))));
     return json({ ok: !anyOpen, months: results });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
@@ -155,6 +177,25 @@ async function pendingFor(supabase: any, month: string, skip: Set<string>): Prom
   const { data: kids } = await supabase.from("students").select("id, full_name").in("id", ids);
   const name = new Map((kids ?? []).map((k: any) => [k.id, k.full_name]));
   return ids.map((id) => ({ student_id: id, full_name: name.get(id) ?? id, problem: "change_pending" }));
+}
+
+// The children whose saved bill already carries the register_missing_marks flag.
+// Best effort: when it cannot be read, nobody is moved to the back.
+async function heldStudents(supabase: any, studentIds: string[], month: string): Promise<Set<string>> {
+  const out = new Set<string>();
+  if (studentIds.length === 0) return out;
+  try {
+    const { data } = await supabase
+      .from("invoices")
+      .select("student_id, review_flags")
+      .eq("month", month)
+      .in("student_id", studentIds);
+    for (const row of data ?? []) {
+      const flags = Array.isArray(row.review_flags) ? row.review_flags : [];
+      if (flags.some((f: any) => f?.type === "register_missing_marks")) out.add(row.student_id);
+    }
+  } catch { /* keep the order as listed */ }
+  return out;
 }
 
 async function recalc(url: string, serviceKey: string, studentId: string, month: string): Promise<RecalcOutcome> {
