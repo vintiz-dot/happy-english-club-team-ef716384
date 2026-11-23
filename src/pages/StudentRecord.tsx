@@ -10,6 +10,15 @@ import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import VideoHomeworkSubmission from "@/components/video-homework/VideoHomeworkSubmission";
 import { videoDb } from "@/lib/video/recorder";
 import { dayjs } from "@/lib/date";
+import { useAuth } from "@/hooks/useAuth";
+import { Arrive, ArriveItem } from "@/components/fx/Arrive";
+import { pressable } from "@/components/fx/PaperPress";
+import { BiText } from "@/components/student/walls/BiText";
+import { Emoji } from "@/components/student/walls/Emoji";
+import { WallHeader, WallNote } from "@/components/student/walls/WallHeader";
+import { useWallBand } from "@/components/student/walls/useWallBand";
+import { wallsCopy } from "@/lib/copy/studentWalls";
+import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
@@ -25,6 +34,7 @@ interface Task {
  */
 export default function StudentRecord() {
   const { studentId } = useStudentProfile();
+  const { user } = useAuth();
   const [openId, setOpenId] = useState<string | null>(null);
 
   const { data: homeworks = [], isLoading } = useQuery({
@@ -74,76 +84,74 @@ export default function StudentRecord() {
   const open = tasks.find((t) => t.id === openId) ?? null;
 
   return (
-    <Layout title="Record my video">
-      <div className="max-w-2xl mx-auto space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-hec-md border border-hec-line bg-hec-sunken text-3xl">🎥</div>
-          <div className="min-w-0">
-            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Record my video</h1>
-            <p className="text-hec-small text-hec-ink-soft">Quay video của em</p>
-          </div>
-        </div>
+    <Layout title={wallsCopy["record.title"].en}>
+      <Arrive scope="student-record" userId={user?.id} className="mx-auto max-w-2xl space-y-5">
+        <ArriveItem index={0}>
+          <WallHeader icon={Video} title={<BiText entry={wallsCopy["record.title"]} />} sub={<BiText entry={wallsCopy["record.foot"]} />} />
+        </ArriveItem>
 
-        {open ? (
-          <div className="space-y-3">
-            {tasks.length > 1 && (
-              <Button variant="quiet" onClick={() => setOpenId(null)}><ChevronLeft className="h-4 w-4 mr-1" /> All my videos</Button>
-            )}
-            <h2 className="break-words font-display text-hec-h2 font-medium text-hec-ink">{open.title}</h2>
-            {studentId && <VideoHomeworkSubmission homeworkId={open.id} studentId={studentId} kid />}
-          </div>
-        ) : isLoading || waiting ? (
-          <p className="text-hec-body text-hec-ink-soft">Looking for your videos…</p>
-        ) : tasks.length === 0 ? (
-          <div className="rounded-hec-lg border border-dashed border-hec-line-strong bg-hec-surface p-10 text-center">
-            <div className="text-5xl mb-2">🎉</div>
-            <p className="text-hec-h3 font-medium text-hec-ink">No videos to record right now!</p>
-            <p className="text-hec-small text-hec-ink-soft">Chưa có video nào cần quay.</p>
-            <Button asChild variant="outline" className="mt-4"><Link to="/student/videos">See my videos</Link></Button>
-          </div>
-        ) : (
-          <>
-            {todo.length > 0 && (
-              <section className="space-y-3">
-                <h2 className="text-hec-body font-medium text-hec-ink">To record · Cần quay</h2>
-                {todo.map((t) => <TaskButton key={t.id} task={t} onOpen={() => setOpenId(t.id)} />)}
-              </section>
-            )}
-            {rest.length > 0 && (
-              <section className="space-y-3">
-                <h2 className="text-hec-body font-medium text-hec-ink-soft">Sent · Đã gửi</h2>
-                {rest.map((t) => <TaskButton key={t.id} task={t} onOpen={() => setOpenId(t.id)} />)}
-              </section>
-            )}
-          </>
-        )}
-        <p className="text-center text-hec-caption text-hec-ink-soft">
-          Your teacher watches every video first. Cô giáo sẽ xem video trước khi ai khác nhìn thấy.
-        </p>
-      </div>
+        <ArriveItem index={1}>
+          {open ? (
+            <div className="space-y-3">
+              {tasks.length > 1 && (
+                <Button variant="quiet" className="h-auto min-h-hec-target whitespace-normal" onClick={() => setOpenId(null)}><ChevronLeft className="mr-1 h-4 w-4 shrink-0" /> <BiText entry={wallsCopy["record.all"]} /></Button>
+              )}
+              <h2 className="break-words font-display text-hec-h2 font-medium text-hec-ink">{open.title}</h2>
+              {studentId && <VideoHomeworkSubmission homeworkId={open.id} studentId={studentId} kid />}
+            </div>
+          ) : isLoading || waiting ? (
+            <p className="text-hec-body text-hec-ink-soft"><BiText entry={wallsCopy["record.loading"]} />…</p>
+          ) : tasks.length === 0 ? (
+            <div className="rounded-hec-lg border border-dashed border-hec-line-strong bg-hec-surface p-10 text-center">
+              <p className="break-words text-hec-h3 font-medium text-hec-ink"><Emoji>🎬 </Emoji><BiText entry={wallsCopy["record.empty"]} /></p>
+              <Button asChild variant="outline" className="mt-4 h-auto min-h-hec-target whitespace-normal"><Link to="/student/videos"><BiText entry={wallsCopy["record.seeVideos"]} /></Link></Button>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {todo.length > 0 && (
+                <section className="space-y-3">
+                  <h2 className="text-hec-body font-medium text-hec-ink"><BiText entry={wallsCopy["record.todo"]} /></h2>
+                  {todo.map((t) => <TaskButton key={t.id} task={t} onOpen={() => setOpenId(t.id)} />)}
+                </section>
+              )}
+              {rest.length > 0 && (
+                <section className="space-y-3">
+                  <h2 className="text-hec-body font-medium text-hec-ink-soft"><BiText entry={wallsCopy["record.sent"]} /></h2>
+                  {rest.map((t) => <TaskButton key={t.id} task={t} onOpen={() => setOpenId(t.id)} />)}
+                </section>
+              )}
+            </div>
+          )}
+        </ArriveItem>
+      </Arrive>
     </Layout>
   );
 }
 
 function TaskButton({ task, onOpen }: { task: Task; onOpen: () => void }) {
+  const { kid } = useWallBand();
   const done = task.status === "sent" || task.status === "approved";
+  const overdue = !kid && !done && !!task.due && dayjs(task.due).isBefore(dayjs(), "day");
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="flex min-h-[5.5rem] w-full items-center gap-4 rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-left shadow-hec-1 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+      className={cn(
+        "flex min-h-[5.5rem] w-full items-center gap-4 rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-left shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+        pressable,
+      )}
     >
-      <span className="shrink-0 text-4xl">{task.status === "approved" ? "⭐" : done ? "📬" : task.status === "returned" ? "🔁" : "🎬"}</span>
-      <span className="flex-1 min-w-0">
+      <span className="shrink-0 text-4xl empty:hidden"><Emoji>{task.status === "approved" ? "⭐" : done ? "📬" : task.status === "returned" ? "🔁" : "🎬"}</Emoji></span>
+      <span className="min-w-0 flex-1">
         <span className="block break-words text-hec-h3 font-medium text-hec-ink">{task.title}</span>
-        <span className="block text-hec-small text-hec-ink-soft">
-          {task.status === "approved" && "Your teacher watched it · Cô đã xem"}
-          {task.status === "sent" && "With your teacher · Đã gửi cô giáo"}
-          {task.status === "returned" && "Please record again · Hãy quay lại nhé"}
-          {task.status === "todo" && (task.due ? `Due ${dayjs(task.due).format("ddd D MMM")}` : "Ready when you are")}
+        <span className="block break-words text-hec-small text-hec-ink-soft">
+          {task.status === "approved" && <BiText entry={wallsCopy["record.approved"]} />}
+          {task.status === "sent" && <BiText entry={wallsCopy["record.withTeacher"]} />}
+          {task.status === "returned" && <BiText entry={wallsCopy["record.again"]} />}
+          {task.status === "todo" && (task.due ? `Due ${dayjs(task.due).format("ddd D MMM")}` : <BiText entry={wallsCopy["record.ready"]} />)}
         </span>
       </span>
-      {done ? <CheckCircle2 className="h-6 w-6 shrink-0 text-hec-leaf" /> : task.due && dayjs(task.due).isBefore(dayjs(), "day") ? <Clock className="h-6 w-6 shrink-0 text-hec-warn" /> : <Video className="h-6 w-6 shrink-0 text-hec-ink-soft" />}
+      {done ? <CheckCircle2 className="h-6 w-6 shrink-0 text-hec-leaf" /> : overdue ? <Clock className="h-6 w-6 shrink-0 text-hec-warn" /> : <Video className="h-6 w-6 shrink-0 text-hec-ink-soft" />}
     </button>
   );
 }

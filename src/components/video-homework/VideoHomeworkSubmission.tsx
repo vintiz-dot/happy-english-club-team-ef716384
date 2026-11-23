@@ -21,6 +21,8 @@ import { ShareVideoButton } from "./ShareVideoButton";
 import { VIDEO_BUCKET, extFor, videoDb, type RecordedTake } from "@/lib/video/recorder";
 import { withRetry } from "@/lib/video/kidVideo";
 import { useIvory } from "@/hooks/useIvory";
+import { useAgeBand } from "@/hooks/useAgeBand";
+import { showSeal } from "@/components/fx/showSeal";
 import { cn } from "@/lib/utils";
 
 interface VideoHomeworkState {
@@ -66,10 +68,13 @@ export default function VideoHomeworkSubmission({
   homeworkId,
   studentId,
   onSuccess,
-  kid = false,
+  kid: kidProp = false,
 }: { homeworkId: string; studentId: string; onSuccess?: () => void; kid?: boolean }) {
   const qc = useQueryClient();
   const ivory = useIvory();
+  // The two youngest bands always get the easy recorder, whatever the caller passed (brief G6).
+  const { band } = useAgeBand();
+  const kid = kidProp || band === "early" || band === "young";
   const { data: state, isLoading } = useVideoHomework(homeworkId, studentId);
   const [recording, setRecording] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -177,6 +182,7 @@ export default function VideoHomeworkSubmission({
     onSuccess: () => {
       soundManager.play("questComplete");
       toast.success(kid ? "🎉 Great job! Your video is on its way to your teacher! · Video đã được gửi cho cô giáo!" : "🎉 Your video is on its way to your teacher!");
+      showSeal("Sent to your teacher");
       setRecording(false);
       qc.invalidateQueries({ queryKey: ["video-homework", homeworkId, studentId] });
       qc.invalidateQueries({ queryKey: ["student-assignments"] });
