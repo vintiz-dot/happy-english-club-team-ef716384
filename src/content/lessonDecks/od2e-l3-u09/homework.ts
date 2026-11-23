@@ -268,7 +268,7 @@ export const odL3U9Creative: Record<string, Creative> = {
   // Lesson 5 (Grammar Champions): a weather forecast for a made-up island with will, may and might
   "od2e-l3-u09-l5": {
     kind: "creative",
-    thinking: "Imagine and justify",
+    thinking: "Create",
     uses: {
       words: ["wind turbine", "solar panel", "electricity", "renewable", "pollution", "power plant"],
       grammar: ["will for sure things", "may / might + plain verb", "because and so"],
