@@ -333,9 +333,11 @@ for (const { f, u } of units) {
 }
 const u12 = units.find((x) => x.u.unit === 12 && x.u.level === 3)?.u;
 if (u12) {
-  eq("Unit 12: grammar on its own for Lessons 3 and 4", u12.decks.filter((d) => V.grammarDeck(d)).map((d) => d.lesson), [3, 4]);
-  eq("Unit 12: a quick check mid-unit (in Lesson 4) and the test after Wrap Up",
-    [V.checksIn(u12.decks[3]), V.unitPlan(u12).map((p) => (p.kind === "test" ? "test" : p.deck.lesson))], [["od2e-l3-u12-check"], [1, 2, 3, 4, 5, "test"]]);
+  // A Grammar Champions extension lesson may follow Wrap Up; it is grammar too, and the test then comes after it.
+  const champ12 = u12.decks.filter((d) => /^Grammar Champions/.test(d.title)).map((d) => d.lesson);
+  eq("Unit 12: grammar on its own for Lessons 3 and 4 (and any Grammar Champions lesson)", u12.decks.filter((d) => V.grammarDeck(d)).map((d) => d.lesson), [3, 4, ...champ12]);
+  eq("Unit 12: a quick check mid-unit (in Lesson 4) and the test after the last lesson",
+    [V.checksIn(u12.decks[3]), V.unitPlan(u12).map((p) => (p.kind === "test" ? "test" : p.deck.lesson))], [["od2e-l3-u12-check"], [...u12.decks.map((d) => d.lesson), "test"]]);
   ok("Unit 12: every homework has a football edition", u12.decks.every((d) => d.slides.some((s) => s.kind === "creative" && s.variants?.some((v) => v.interest === "football"))));
   eq("Unit 12: the book's audio is a track number, never a file", [...new Set(JSON.stringify(u12).match(/"track":"[^"]+"/g))].sort(),
     ['"track":"2.23"', '"track":"2.24"', '"track":"2.25"', '"track":"2.26"', '"track":"2.27"', '"track":"2.28"', '"track":"2.29"']);
