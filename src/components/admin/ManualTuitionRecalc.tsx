@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Calculator } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatVND } from "@/lib/money";
+import type { Json } from "@/integrations/supabase/types";
 
 interface Student {
   id: string;
@@ -141,11 +142,15 @@ export function ManualTuitionRecalc() {
       // Log audit: the old figures, the new figures, why, and who.
       const { data: userData } = await supabase.auth.getUser();
       const actor = userData?.user?.id ?? null;
-      const newFigures = {
-        base_amount: data.baseAmount,
-        total_discount: data.totalDiscount,
-        total_amount: data.totalAmount,
+      // Plain JSON values, so the audit row's diff type-checks without a cast.
+      const newFigures: { [key: string]: Json } = {
+        base_amount: Number(data.baseAmount ?? 0),
+        total_discount: Number(data.totalDiscount ?? 0),
+        total_amount: Number(data.totalAmount ?? 0),
       };
+      const oldJson: { [key: string]: Json } | null = oldFigures
+        ? { base_amount: oldFigures.base_amount, total_discount: oldFigures.total_discount, total_amount: oldFigures.total_amount }
+        : null;
       await supabase.from("audit_log").insert({
         action: reallyForced ? "manual_tuition_recalc_forced_lower" : "manual_tuition_recalc",
         entity: "invoice",
@@ -156,7 +161,7 @@ export function ManualTuitionRecalc() {
           month,
           actor_user_id: actor,
           reason: reallyForced ? reason.trim() : null,
-          old: oldFigures,
+          old: oldJson,
           new: newFigures,
           // Kept under the old key too, for anything that already reads it.
           result: newFigures,
