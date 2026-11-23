@@ -16,7 +16,13 @@
 --                   have changed, or the bill was changed since.
 --   no bill         there is no bill for that month.
 -- The last row ("TOTAL") adds the holes, their worth, bills and payments up and
--- counts the children. Expected on production: 123 holes, 7 children.
+-- counts the children. Expected on production: 123 holes, 6 children, 17 child-months.
+--
+-- An empty list of allowed days means no day, as billing reads it (NULL = every day).
+-- The cutoff (6 Nov 2026 12:00 UTC) is when the fixed transfer function was written;
+-- if the fix was pasted later, change it in the two places that say 2026-11-06 12:00.
+-- The TOTAL row also says how many logged transfers could not be followed
+-- (their old enrolment is gone), which this list cannot show.
 --
 -- The week of a lesson is not looked at; the month is the month of the lesson.
 
@@ -40,6 +46,18 @@ tr AS (
     FROM transfers t JOIN enrollments en ON en.id = t.old_enrollment_id
    WHERE t.class_id IS NOT NULL AND t.eff IS NOT NULL
 ),
+skipped AS (
+  SELECT count(*) AS n
+    FROM audit_log l
+    LEFT JOIN enrollments en
+      ON l.entity_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' AND en.id::text = l.entity_id
+   WHERE l.entity = 'enrollment' AND l.action = 'transfer'
+     AND l.occurred_at < timestamptz '2026-11-06 12:00+00'
+     AND CASE WHEN l.diff ->> 'deleted_attendance' ~ '^\d{1,9}$' THEN (l.diff ->> 'deleted_attendance')::integer ELSE 0 END > 0
+     AND (en.id IS NULL
+          OR NOT (l.diff ->> 'old_class_id' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+                  AND l.diff ->> 'effective_date' ~ '^\d{4}-\d{2}-\d{2}'))
+),
 holes AS (
   SELECT DISTINCT ON (tr.student_id, s.id)
          tr.student_id, s.id AS session_id, s.class_id, s.date,
@@ -54,8 +72,7 @@ holes AS (
        SELECT 1 FROM enrollments e
         WHERE e.student_id = tr.student_id AND e.class_id = s.class_id
           AND e.start_date <= s.date AND (e.end_date IS NULL OR e.end_date >= s.date)
-          AND (e.allowed_days IS NULL OR cardinality(e.allowed_days) = 0
-               OR extract(dow FROM s.date)::integer = ANY (e.allowed_days)))
+          AND (e.allowed_days IS NULL OR extract(dow FROM s.date)::integer = ANY (e.allowed_days)))
    ORDER BY tr.student_id, s.id, tr.eff
 ),
 hole_months AS (
@@ -99,7 +116,8 @@ SELECT student, class_name, month, holes, holes_worth, saved_base, recorded_paym
            sum(holes), sum(holes_worth), sum(saved_base), sum(recorded_payment), NULL, sum(sum_if_restored),
            count(*) FILTER (WHERE first_guess = 'likely restore') || ' likely restore, '
            || count(*) FILTER (WHERE first_guess = 'decide') || ' decide, '
-           || count(*) FILTER (WHERE first_guess = 'no bill') || ' no bill'
+           || count(*) FILTER (WHERE first_guess = 'no bill') || ' no bill; '
+           || (SELECT n FROM skipped) || ' transfers skipped (old enrolment gone)'
       FROM result_rows
   ) u
  ORDER BY part, student, month;

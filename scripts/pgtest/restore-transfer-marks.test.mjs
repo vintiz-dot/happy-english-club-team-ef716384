@@ -47,7 +47,7 @@ const tryIt = async (fn) => { try { await fn(); return null; } catch (e) { retur
 const U = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const ADMIN = U(1);
 const CA = U(31), CB = U(32);
-const S = Object.fromEntries(Array.from({ length: 13 }, (_, i) => [`S${i + 1}`, U(101 + i)]));
+const S = Object.fromEntries(Array.from({ length: 16 }, (_, i) => [`S${i + 1}`, U(101 + i)]));
 const FUNC = 'public.admin_restore_transfer_deleted_marks';
 
 // ----------------------------------------------------------------- schema
@@ -133,7 +133,7 @@ const bill = (k, month, base, paid = 0, frozen = false) => db.query(
 
 await db.query(`INSERT INTO public.classes VALUES ($1, 'Old Class', 210000), ($2, 'New Class', 260000)`, [CA, CB]);
 const names = { S1: 'Right Bill', S2: 'One Excused', S3: 'Bill Went To Zero', S4: 'Frozen At Zero', S5: 'No Bill', S6: 'Spare', S7: 'Teacher Absent',
-  S8: 'Mondays Only', S9: 'Future Transfer', S10: 'Never Transferred', S11: 'Transferred After Fix', S12: 'Deleted Nothing', S13: 'Transferred Twice' };
+  S8: 'Mondays Only', S9: 'Future Transfer', S10: 'Never Transferred', S11: 'Transferred After Fix', S12: 'Deleted Nothing', S13: 'Transferred Twice', S14: 'Empty Days', S15: 'Spare Two', S16: 'Racing Mark' };
 for (const [k, n] of Object.entries(names)) await db.query(`INSERT INTO public.students(id, full_name) VALUES ($1, $2)`, [S[k], n]);
 
 // Old Class lessons. 3 and 10 August 2026 are Mondays, 5 and 12 Wednesdays.
@@ -207,7 +207,7 @@ const snapshot = async () => ({
   invoices: (await db.query(`SELECT md5(string_agg(i.id::text || i.base_amount::text || i.total_amount::text || i.recorded_payment::text || i.updated_at::text, ',' ORDER BY i.id)) h FROM public.invoices i`)).rows[0].h,
   side: [await count(`SELECT count(*) n FROM public.student_attendance_streaks`), await count(`SELECT count(*) n FROM public.point_transactions`), await count(`SELECT count(*) n FROM public.notifications`)],
 });
-const run = async (dry, force = []) => (await db.query(`SELECT ${FUNC}($1, $2::jsonb) AS r`, [dry, JSON.stringify(force)])).rows[0].r;
+const run = async (dry, force = [], before = null) => (await db.query(`SELECT ${FUNC}($1, $2::jsonb${before ? ", $3::timestamptz" : ""}) AS r`, before ? [dry, JSON.stringify(force), before] : [dry, JSON.stringify(force)])).rows[0].r;
 const cm = (res, k, month) => res.child_months.find((x) => x.student_id === S[k] && x.month === month);
 const verdicts = (res) => res.child_months.map((x) => `${x.student_id}|${x.month}|${x.verdict}|${x.holes}`).sort();
 
@@ -329,16 +329,16 @@ console.log('\nR8. who may run it, and what is logged');
   }
   const dry = await (async () => { const before = await count(`SELECT count(*) n FROM public.audit_log WHERE action = 'restore_transfer_deleted_marks'`); await run(true); return (await count(`SELECT count(*) n FROM public.audit_log WHERE action = 'restore_transfer_deleted_marks'`)) - before; })();
   ok('a dry run adds no audit row', dry === 0);
-  const helper = await tryIt(async () => { await db.exec('SET ROLE authenticated'); try { await db.query(`SELECT * FROM public._restore_marks_holes()`); } finally { await db.exec('RESET ROLE'); } });
+  const helper = await tryIt(async () => { await db.exec('SET ROLE authenticated'); try { await db.query(`SELECT * FROM public._restore_marks_holes(now())`); } finally { await db.exec('RESET ROLE'); } });
   ok('the helper is closed to the app too', !!helper && /permission denied/i.test(helper.message), helper);
   // An app account that somehow held EXECUTE is still refused unless an admin.
-  await db.exec(`GRANT EXECUTE ON FUNCTION ${FUNC}(boolean, jsonb) TO authenticated`);
+  await db.exec(`GRANT EXECUTE ON FUNCTION ${FUNC}(boolean, jsonb, timestamptz) TO authenticated`);
   await db.query(`SELECT set_config('test.uid', $1, false)`, [U(9)]);
   await db.exec('SET ROLE authenticated');
   const nonAdmin = await tryIt(() => db.query(`SELECT ${FUNC}(true)`));
   await db.exec('RESET ROLE');
   await db.query(`SELECT set_config('test.uid', '', false)`);
-  await db.exec(`REVOKE EXECUTE ON FUNCTION ${FUNC}(boolean, jsonb) FROM authenticated`);
+  await db.exec(`REVOKE EXECUTE ON FUNCTION ${FUNC}(boolean, jsonb, timestamptz) FROM authenticated`);
   ok('a signed-in non-admin is refused by the function itself', !!nonAdmin && nonAdmin.code === '42501', nonAdmin);
 }
 
@@ -354,6 +354,61 @@ console.log('\nR9. nothing is awarded, counted or sent');
   ok('every trigger any migration puts on attendance is a BEFORE trigger (none can award or notify afterwards)', found.length >= 5 && found.every((t) => t.timing === 'BEFORE'), found.filter((t) => t.timing !== 'BEFORE'));
   const live = (await db.query(`SELECT tgname FROM pg_trigger WHERE tgrelid = 'public.attendance'::regclass AND NOT tgisinternal ORDER BY 1`)).rows.map((r) => r.tgname);
   ok('the triggers loaded into this test database all let the restored rows in', live.length >= 1, live);
+}
+
+console.log('\nR10. review fixes: empty allowed days, skipped transfers and the cutoff, ON CONFLICT');
+{
+  const CHK = readFileSync(join(repo, 'scripts', 'CHECK-transfer-deleted-attendance.sql'), 'utf8');
+  // (1) an empty list of allowed days means no day, as billing reads it.
+  await enrol('S14', CA, '2026-01-01', '2026-08-31', []);
+  await logTransfer('S14', CA, '2026-09-01', 4, '2026-10-01T00:00:00Z');
+  const d1 = await run(true);
+  ok('(1) an empty allowed_days gives no hole (tuition_bill_expected would bill none of it)', !d1.child_months.some((x) => x.student_id === S.S14), d1.child_months.filter((x) => x.student_id === S.S14));
+  ok('(1) billing agrees: nothing is billed for that child even with marks',
+    await (async () => {
+      await db.query(`INSERT INTO public.attendance(session_id, student_id, status, marked_by) VALUES ($1, $2, 'Present', $3)`, [A('2026-08-03'), S.S14, ADMIN]);
+      const n = Number((await db.query(`SELECT count(*) n FROM public.tuition_bill_expected('2026-08') WHERE student_id = $1`, [S.S14])).rows[0].n);
+      await db.query(`DELETE FROM public.attendance WHERE student_id = $1`, [S.S14]);
+      return n === 0;
+    })());
+  const chk = (await db.query(CHK)).rows;
+  ok('(1) the CHECK script lists no row for it either', !chk.some((x) => x.student === names.S14));
+
+  // (2) a logged transfer whose old enrolment is gone is listed, not dropped silently.
+  await db.query(`INSERT INTO public.audit_log(action, entity, entity_id, diff, occurred_at) VALUES ('transfer', 'enrollment', $1, $2::jsonb, '2026-10-01T00:00:00Z')`,
+    [U(900), JSON.stringify({ old_class_id: CA, new_class_id: CB, effective_date: '2026-09-01', deleted_attendance: 6, seeded_attendance: 0 })]);
+  const d2 = await run(true);
+  ok('(2) transfers_skipped names it with the reason', d2.transfers_skipped.length === 1 && d2.transfers_skipped[0].entity_id === U(900) && /no longer exists/.test(d2.transfers_skipped[0].reason), d2.transfers_skipped);
+  ok('(2) next_steps tell the owner', d2.next_steps.some((st) => /could not be followed/.test(st)));
+  const chk2 = (await db.query(CHK)).rows;
+  ok('(2) the CHECK script total row counts it', /1 transfers skipped/.test(chk2[chk2.length - 1].first_guess), chk2[chk2.length - 1]);
+  ok('(2) the default cutoff leaves S11 (transferred 7 Nov) alone and is reported', !d2.child_months.some((x) => x.student_id === S.S11) && new Date(d2.cutoff).toISOString() === '2026-11-06T12:00:00.000Z', d2.cutoff);
+  const d3 = await run(true, [], '2026-12-01T00:00:00Z');
+  const s11 = cm(d3, 'S11', '2026-08');
+  ok('(2) a later cutoff brings in S11\'s transfer: 4 holes', !!s11 && s11.holes === 4 && d3.transfers === d2.transfers + 1, [s11, d3.transfers, d2.transfers]);
+  ok('(2) the dry run with a cutoff wrote nothing', (await marksOf('S11')) === 0);
+
+  // (3) ON CONFLICT DO NOTHING: a mark that appears while the restore runs is left alone and not counted.
+  await enrol('S16', CA, '2026-01-01', '2026-08-31');
+  await logTransfer('S16', CA, '2026-09-01', 4, '2026-10-01T00:00:00Z');
+  await bill('S16', '2026-08', 840000);
+  await db.exec(`
+    CREATE FUNCTION public.test_racing_mark() RETURNS trigger LANGUAGE plpgsql AS $t$
+    BEGIN
+      IF NEW.notes LIKE 'Restored%' AND NEW.student_id = '${S.S16}' AND NEW.session_id = '${A('2026-08-03')}'
+         AND NOT EXISTS (SELECT 1 FROM public.attendance WHERE session_id = NEW.session_id AND student_id = NEW.student_id) THEN
+        INSERT INTO public.attendance(session_id, student_id, status, marked_by) VALUES (NEW.session_id, NEW.student_id, 'Absent', '${ADMIN}');
+      END IF;
+      RETURN NEW;
+    END $t$;
+    CREATE TRIGGER aa_test_racing_mark BEFORE INSERT ON public.attendance FOR EACH ROW EXECUTE FUNCTION public.test_racing_mark();`);
+  const before16 = await run(true);
+  ok('(3) the dry run sees 4 to restore for S16', cm(before16, 'S16', '2026-08')?.holes === 4 && cm(before16, 'S16', '2026-08').verdict === 'restore');
+  const raced = await run(false);
+  await db.exec(`DROP TRIGGER aa_test_racing_mark ON public.attendance; DROP FUNCTION public.test_racing_mark();`);
+  const rows16 = (await db.query(`SELECT s.date::text d, a.status::text st, a.marked_by FROM public.attendance a JOIN public.sessions s ON s.id = a.session_id WHERE a.student_id = $1 ORDER BY s.date`, [S.S16])).rows;
+  ok('(3) the racing Absent stands, the other 3 lessons came back', rows16.length === 4 && rows16[0].st === 'Absent' && rows16[0].marked_by === ADMIN && rows16.slice(1).every((x) => x.st === 'Present'), rows16);
+  ok('(3) restored counts only rows really inserted (3, not 4)', raced.restored === 3 && raced.child_months_restored === 1, raced.restored);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
