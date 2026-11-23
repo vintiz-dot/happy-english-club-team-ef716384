@@ -329,10 +329,10 @@ Deno.serve(async (req) => {
     // sibling preview prices nothing that is saved, so it looks for none.
     let registerHoles = siblingPreview
       ? []
-      : findRegisterHoles(sessions ?? [], attendanceMap, hanoiToday(), {
-          enrollmentFor: (s) => enrollmentOn(enrollments, s.class_id, s.date),
-          onAllowedDay: (s, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
-          rateOf: (s, e: any) => {
+      : findRegisterHoles<any, any>(sessions ?? [], attendanceMap, hanoiToday(), {
+          enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
+          onAllowedDay: (s: any, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
+          rateOf: (s: any, e: any) => {
             const cd: any = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
             return e.rate_override_vnd ?? classFeeOn(feeHistory, s.class_id, s.date, Number(cd?.session_rate_vnd ?? 0));
           },
