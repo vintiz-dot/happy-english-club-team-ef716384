@@ -84,7 +84,7 @@ export function EarlyHomework({
               onClick={() => onOpen(card)}
               className={cn(BUTTON, pressable, "min-h-[4.5rem] w-full bg-hec-action text-hec-h3 text-hec-on-action shadow-hec-1 hover:bg-hec-action/90")}
             >
-              <Bi k="next.open" />
+              <Bi k="next.open" viClassName="text-hec-on-action/80" />
               <ChevronRight className="h-5 w-5" aria-hidden />
             </button>
             <Listen text={card.title || "Homework"} />
