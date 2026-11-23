@@ -13,6 +13,17 @@ import {
   monthPayable,
   paidLabel,
 } from "../_lib/invoice-status.ts";
+import {
+  findRegisterHoles,
+  hanoiToday,
+  heldSentence,
+  loweredDespiteFlag,
+  LOWERED_DESPITE_MISSING_MARKS,
+  missingMarksFlag,
+  mustHold,
+  REGISTER_MISSING_MARKS,
+  sameFlags,
+} from "../_lib/register-holes.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,9 +100,13 @@ Deno.serve(async (req) => {
       month: z.string().regex(/^\d{4}-\d{2}$/, "Invalid month format. Expected YYYY-MM"),
       // Internal preview used by the sibling calculator to avoid recursion/writes.
       siblingPreview: z.boolean().optional().default(false),
+      // An admin may save a lower figure although lessons have no mark in the
+      // register, with a reason. Ignored for anyone else.
+      force: z.boolean().optional().default(false),
+      reason: z.string().max(500).optional(),
     });
 
-    const { studentId, month, siblingPreview } = InputSchema.parse(await req.json());
+    const { studentId, month, siblingPreview, force, reason } = InputSchema.parse(await req.json());
     if (siblingPreview && !gate.isServiceRole) {
       return new Response(JSON.stringify({ error: "Internal preview only" }), { status: 403, headers: corsHeaders });
     }
@@ -146,7 +161,7 @@ Deno.serve(async (req) => {
       supabase
         .from("invoices")
         .select(
-          "recorded_payment, tuition_frozen, base_amount, discount_amount, total_amount, status, confirmation_status, review_flags, confirmed_at, confirmed_by",
+          "recorded_payment, tuition_frozen, base_amount, discount_amount, total_amount, status, confirmation_status, review_flags, confirmed_at, confirmed_by, paid_amount, carry_in_credit, carry_in_debt, carry_out_credit, carry_out_debt",
         )
         .eq("student_id", studentId)
         .eq("month", month)
@@ -308,6 +323,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Lessons that were held, inside the enrolment, with no attendance row at
+    // all: holes in the register, not decisions (_lib/register-holes.ts). The
+    // same enrolment, weekday and rate rules as the loop above. The internal
+    // sibling preview prices nothing that is saved, so it looks for none.
+    let registerHoles = siblingPreview
+      ? []
+      : findRegisterHoles(sessions ?? [], attendanceMap, hanoiToday(), {
+          enrollmentFor: (s) => enrollmentOn(enrollments, s.class_id, s.date),
+          onAllowedDay: (s, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
+          rateOf: (s, e: any) => {
+            const cd: any = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
+            return e.rate_override_vnd ?? classFeeOn(feeHistory, s.class_id, s.date, Number(cd?.session_rate_vnd ?? 0));
+          },
+        });
+
     // Discounts bucket
     const discounts: Array<{
       name: string;
@@ -403,6 +433,7 @@ Deno.serve(async (req) => {
     }
 
     let totalAmount = Math.max(0, baseAmount - totalDiscount);
+    const registerBaseBeforeFreeze = baseAmount; // what the register prices
     // A frozen bill keeps its saved figures whatever the enrollment says now.
     const frozenInvoice: any = currentInvoiceRes.data;
     const tuitionFrozen = frozenInvoice?.tuition_frozen === true;
@@ -411,6 +442,34 @@ Deno.serve(async (req) => {
       totalDiscount = Number(frozenInvoice.discount_amount ?? 0);
       totalAmount = Number(frozenInvoice.total_amount ?? 0);
     }
+
+    // A hole must never lower a bill that is already saved. When the register
+    // prices the month lower only because lessons have no row, the saved
+    // figures stand (as for a frozen bill) and the holes are flagged. An admin
+    // may save the lower figure anyway, with a reason.
+    if (tuitionFrozen) registerHoles = []; // a frozen bill is left as it is
+    const registerBase = registerBaseBeforeFreeze;
+    const savedBase = frozenInvoice ? Number(frozenInvoice.base_amount ?? 0) : null;
+    const wouldLower = mustHold({
+      holeCount: registerHoles.length,
+      savedBase,
+      tuitionFrozen,
+      registerBase,
+      forced: false,
+    });
+    const mayForce = force === true && gate.roles.has("admin") && !gate.isServiceRole;
+    const heldBill = wouldLower && !mayForce;
+    const forcedLower = wouldLower && mayForce;
+    if (forcedLower && !(reason ?? "").trim()) throw new Error("Give a reason to save the lower figure.");
+    if (heldBill) {
+      baseAmount = Number(frozenInvoice.base_amount ?? 0);
+      totalDiscount = Number(frozenInvoice.discount_amount ?? 0);
+      totalAmount = Number(frozenInvoice.total_amount ?? 0);
+    }
+    const holeLessons = registerHoles.map((h) => ({
+      date: h.date,
+      class_name: (classNameMap.get(h.class_id) as string | undefined) || "Unknown",
+    }));
 
     // ---------- Payments and carryovers ----------
     // Prior charges and current month invoice already fetched in Wave 1
@@ -590,8 +649,15 @@ Deno.serve(async (req) => {
     // Generate review flags - SIMPLIFIED: Only flag if final payable differs from expected
     const reviewFlags: any[] = [];
 
+    const storedFlags: any[] = Array.isArray(frozenInvoice?.review_flags) ? frozenInvoice.review_flags : [];
+    if (heldBill) {
+      // The bill stands as it was: keep what it already says, add the holes.
+      for (const f of storedFlags) {
+        if (f?.type !== REGISTER_MISSING_MARKS && f?.type !== "changed_after_confirmation") reviewFlags.push(f);
+      }
+    }
     // Only flag if there's a difference between expected and final
-    if (totalAmount !== expectedClassTuition) {
+    else if (totalAmount !== expectedClassTuition) {
       const discountReasons = discounts.map((d) => d.name).filter((v, i, a) => a.indexOf(v) === i);
       reviewFlags.push({
         type: "tuition_adjustment",
@@ -605,9 +671,28 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (!heldBill) {
+      // What an admin recorded when forcing a lower figure stays on the bill.
+      for (const f of storedFlags) if (f?.type === LOWERED_DESPITE_MISSING_MARKS) reviewFlags.push(f);
+    }
+    const savedAt = new Date().toISOString();
+    if (forcedLower) {
+      reviewFlags.push(loweredDespiteFlag({
+        savedBase: savedBase ?? 0,
+        newBase: registerBase,
+        count: registerHoles.length,
+        actorUserId: gate.userId || null,
+        actorEmail: gate.email ?? null,
+        reason: (reason ?? "").trim(),
+        at: savedAt,
+      }));
+    }
+    if (registerHoles.length > 0) {
+      reviewFlags.push(missingMarksFlag(registerHoles, savedBase, registerBase));
+    }
+
     // Which labels this save may write. A recalculation must not un-confirm
     // or un-pay a bill: see _lib/invoice-status.ts. No figure is decided here.
-    const savedAt = new Date().toISOString();
     const labelFields = invoiceLabelFields(
       currentInvoiceRes.data ?? null,
       { base_amount: baseAmount, discount_amount: totalDiscount, total_amount: totalAmount },
@@ -644,7 +729,35 @@ Deno.serve(async (req) => {
     const writeInvoice = !siblingPreview && !siblingUnresolved;
     let invoiceUpsertOk = true;
     let invoiceErrorMsg = "";
-    if (writeInvoice)
+    // A held bill is not repriced: only what changed in its labels, flags and
+    // balances is written, and nothing at all when nothing changed.
+    if (heldBill && writeInvoice) {
+      const stored: any = frozenInvoice;
+      const patch: Record<string, unknown> = {};
+      if (!sameFlags(stored.review_flags, labelFields.review_flags)) patch.review_flags = labelFields.review_flags;
+      if (labelFields.status && labelFields.status !== stored.status) patch.status = labelFields.status;
+      if (labelFields.confirmation_status && labelFields.confirmation_status !== stored.confirmation_status) {
+        patch.confirmation_status = labelFields.confirmation_status;
+      }
+      const balances: Record<string, number> = {
+        paid_amount: cumulativePaidAmount,
+        carry_in_credit: carryInCredit,
+        carry_in_debt: carryInDebt,
+        carry_out_credit: carryOutCredit,
+        carry_out_debt: carryOutDebt,
+      };
+      for (const [k, v] of Object.entries(balances)) if (Number(stored[k] ?? 0) !== v) patch[k] = v;
+      if (Object.keys(patch).length > 0) {
+        const { error: heldErr } = await supabase
+          .from("invoices")
+          .upsert({ student_id: studentId, month, ...patch, updated_at: savedAt }, { onConflict: "student_id,month" });
+        if (heldErr) {
+          console.error("Held invoice flags not saved:", heldErr.message);
+          throw new Error("Unable to refresh tuition invoice");
+        }
+      }
+    }
+    if (writeInvoice && !heldBill)
       try {
         const { error: invoiceErr1 } = await supabase
           .from("invoices")
@@ -658,7 +771,7 @@ Deno.serve(async (req) => {
         invoiceErrorMsg = e?.message ?? String(e);
       }
 
-    if (writeInvoice && !invoiceUpsertOk) {
+    if (writeInvoice && !heldBill && !invoiceUpsertOk) {
       // fallback minimal upsert (existing schema in your earlier code)
       const { error: invoiceErr2 } = await supabase.from("invoices").upsert(
         {
@@ -706,6 +819,20 @@ Deno.serve(async (req) => {
       siblingUnresolved,
       invoiceSaved: writeInvoice,
       tuitionFrozen,
+      ...(heldBill
+        ? {
+            held: {
+              reason: "register_missing_marks",
+              message: heldSentence(holeLessons.length, month),
+              lessons: holeLessons,
+              register_base: registerBase,
+              saved_base: savedBase,
+            },
+          }
+        : {}),
+      ...(registerHoles.length > 0 && !heldBill
+        ? { missingMarks: { lessons: holeLessons, register_base: registerBase, saved_base: savedBase, forcedLower } }
+        : {}),
       breakdown: {
         classes: classBreakdown,
       },
