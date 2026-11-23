@@ -6,7 +6,7 @@ import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
 import { monthPayable } from "../_lib/invoice-status.ts";
 import { classNetAmounts } from "../_lib/class-net.ts";
-import { findRegisterHoles, hanoiToday, heldSentence, mustHold } from "../_lib/register-holes.ts";
+import { decideHoles, findRegisterHoles, hanoiToday, heldSentence } from "../_lib/register-holes.ts";
 import { classFeeOn, indexClassFees, isMissingFeeHistory, type ClassFeeHistory } from "../_lib/class-fee.ts";
 
 const corsHeaders = {
@@ -351,60 +351,92 @@ Deno.serve(async (req) => {
           studentSessions.push(...classSessions);
         }
 
-        // Calculate tuition
-        let baseAmount = 0;
-        const enrollmentBaseAmounts = new Map<string, number>();
-        const datedEnrollmentBases = new Map<any, number>();
-        const rateAdjustmentSavings = new Map<string, number>();
-        // Lessons this student is not charged for, each with what it would
-        // have added to the month: see lessonCharge. Display figures only.
-        const excusedLessons: LessonForgone[] = [];
-
-        for (const s of studentSessions) {
-          const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
-          if (!enrollment) continue;
-
-          const sessionDayOfWeek = getDayOfWeek(s.date);
-          if (enrollment.allowed_days && !enrollment.allowed_days.includes(sessionDayOfWeek)) continue;
-
-          const att = attendanceMap.get(attendanceKey(s.id, sid)) as AttendanceStatus | undefined;
-          const classInfo = classMap.get(s.class_id);
-          const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classInfo?.session_rate_vnd ?? 0));
-          const overrideRate = enrollment.rate_override_vnd;
-          const actualRate = overrideRate ?? defaultRate;
-          // Late students attended, so they are billed like Present. Only
-          // Excused (forgiven) absences are non-billable.
-          const billable = isBillableTuitionSession(s.status, att);
-
-          if (billable && actualRate > 0) {
-            baseAmount += defaultRate;
-            enrollmentBaseAmounts.set(s.class_id, (enrollmentBaseAmounts.get(s.class_id) || 0) + defaultRate);
-            datedEnrollmentBases.set(enrollment, (datedEnrollmentBases.get(enrollment) || 0) + defaultRate);
-
-            if (overrideRate && overrideRate < defaultRate) {
-              const savings = defaultRate - overrideRate;
-              rateAdjustmentSavings.set(s.class_id, (rateAdjustmentSavings.get(s.class_id) || 0) + savings);
-            }
-          } else if (att === "Excused") {
-            excusedLessons.push({ session_id: s.id, date: s.date, class_id: s.class_id,
-              rate_vnd: lessonCharge(defaultRate, overrideRate) });
-          }
-        }
-
         // Lessons held, inside the enrolment, with no attendance row: holes in the
         // register (_lib/register-holes.ts), judged by the same enrolment, weekday
-        // and rate rules as the loop above - and as calculate-tuition does.
-        const registerHoles = findRegisterHoles(
-          studentSessions,
-          { has: (sessionId: string) => attendanceMap.has(attendanceKey(sessionId, sid)) },
-          hanoiToday(),
-          {
-            enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
-            onAllowedDay: (s: any, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
-            rateOf: (s: any, e: any) =>
-              e.rate_override_vnd ?? classFeeOn(feeHistory, s.class_id, s.date, Number(classMap.get(s.class_id)?.session_rate_vnd ?? 0)),
-          },
-        );
+        // and rate rules as the pricing below - and as calculate-tuition does.
+        // A frozen bill is left as it is and looks for none.
+        const savedInv = currentInvoiceMap.get(sid);
+        const registerHoles = savedInv?.tuition_frozen
+          ? []
+          : findRegisterHoles(
+              studentSessions,
+              { has: (sessionId: string) => attendanceMap.has(attendanceKey(sessionId, sid)) },
+              hanoiToday(),
+              {
+                enrollmentFor: (s: any) => enrollmentOn(enrollments, s.class_id, s.date),
+                onAllowedDay: (s: any, e: any) => !e.allowed_days || e.allowed_days.includes(getDayOfWeek(s.date)),
+                rateOf: (s: any, e: any) =>
+                  e.rate_override_vnd ?? classFeeOn(feeHistory, s.class_id, s.date, Number(classMap.get(s.class_id)?.session_rate_vnd ?? 0)),
+              },
+            );
+        const holeIds = new Set(registerHoles.map((h) => h.session_id));
+
+        // The month's lessons priced one way (the loop of calculate-tuition): with
+        // countHoles the lessons that have no row at all are billed too.
+        const lessonPass = (countHoles: boolean) => {
+          let baseAmount = 0;
+          const enrollmentBaseAmounts = new Map<string, number>();
+          const datedEnrollmentBases = new Map<any, number>();
+          const rateAdjustmentSavings = new Map<string, number>();
+          // Lessons this student is not charged for, each with what it would
+          // have added to the month: see lessonCharge. Display figures only.
+          const excusedLessons: LessonForgone[] = [];
+
+          for (const s of studentSessions) {
+            const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
+            if (!enrollment) continue;
+
+            const sessionDayOfWeek = getDayOfWeek(s.date);
+            if (enrollment.allowed_days && !enrollment.allowed_days.includes(sessionDayOfWeek)) continue;
+
+            const att = attendanceMap.get(attendanceKey(s.id, sid)) as AttendanceStatus | undefined;
+            const classInfo = classMap.get(s.class_id);
+            const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classInfo?.session_rate_vnd ?? 0));
+            const overrideRate = enrollment.rate_override_vnd;
+            const actualRate = overrideRate ?? defaultRate;
+            // Late students attended, so they are billed like Present. Only
+            // Excused (forgiven) absences are non-billable.
+            const billable = isBillableTuitionSession(s.status, att) || (countHoles && holeIds.has(s.id));
+
+            if (billable && actualRate > 0) {
+              baseAmount += defaultRate;
+              enrollmentBaseAmounts.set(s.class_id, (enrollmentBaseAmounts.get(s.class_id) || 0) + defaultRate);
+              datedEnrollmentBases.set(enrollment, (datedEnrollmentBases.get(enrollment) || 0) + defaultRate);
+
+              if (overrideRate && overrideRate < defaultRate) {
+                const savings = defaultRate - overrideRate;
+                rateAdjustmentSavings.set(s.class_id, (rateAdjustmentSavings.get(s.class_id) || 0) + savings);
+              }
+            } else if (att === "Excused") {
+              excusedLessons.push({ session_id: s.id, date: s.date, class_id: s.class_id,
+                rate_vnd: lessonCharge(defaultRate, overrideRate) });
+            }
+          }
+          return { baseAmount, enrollmentBaseAmounts, datedEnrollmentBases, rateAdjustmentSavings, excusedLessons };
+        };
+
+        // N: today's rule; W: holes counted - the same decision, by the same
+        // helper, as calculate-tuition (a lesson with no mark is priced as it was
+        // charged, never beyond the saved bill).
+        const passN = lessonPass(false);
+        const savedBaseNow = savedInv ? Number(savedInv.base_amount ?? 0) : null;
+        const passW = registerHoles.length > 0 && savedBaseNow !== null && passN.baseAmount < savedBaseNow ? lessonPass(true) : null;
+        const holeMode = decideHoles({
+          holeCount: registerHoles.length,
+          savedBase: savedBaseNow,
+          frozen: !!savedInv?.tuition_frozen,
+          nBase: passN.baseAmount,
+          wBase: passW ? passW.baseAmount : null,
+          forced: false,
+        });
+        const pricedAsCharged = holeMode === "priced_as_charged";
+        const heldBill = holeMode === "held";
+        const pass = pricedAsCharged ? passW! : passN;
+        let baseAmount = pass.baseAmount;
+        const enrollmentBaseAmounts = pass.enrollmentBaseAmounts;
+        const datedEnrollmentBases = pass.datedEnrollmentBases;
+        const rateAdjustmentSavings = pass.rateAdjustmentSavings;
+        const excusedLessons = pass.excusedLessons;
 
         // The month's cancelled lessons in this student's classes, on the
         // student's enrolled dates and weekdays - the same two tests a charged
@@ -491,24 +523,18 @@ Deno.serve(async (req) => {
           totalAmount = Number(frozenInv.total_amount ?? 0);
         }
         // So does a bill the register would only lower because lessons have no
-        // row: calculate-tuition holds it (same rule, same helper), and this
-        // reports what it will keep, never a lower figure than the bill.
-        const heldBill = mustHold({
-          holeCount: registerHoles.length,
-          savedBase: frozenInv ? Number(frozenInv.base_amount ?? 0) : null,
-          tuitionFrozen: !!frozenInv?.tuition_frozen,
-          registerBase: baseAmount,
-          forced: false,
-        });
-        const heldInfo = heldBill
+        // row, when nobody can tell which marks were Excused (held): calculate-tuition
+        // keeps it, and this reports what it will keep, never a lower figure.
+        const heldInfo = holeMode === "held" || pricedAsCharged
           ? {
               reason: "register_missing_marks",
+              priced_as_charged: pricedAsCharged,
               message: heldSentence(registerHoles.length, month),
               lessons: registerHoles.map((h) => ({
                 date: h.date,
                 class_name: classMap.get(h.class_id)?.name || "Unknown",
               })),
-              register_base: baseAmount,
+              register_base: passN.baseAmount,
               saved_base: Number(frozenInv.base_amount ?? 0),
             }
           : null;
@@ -532,6 +558,16 @@ Deno.serve(async (req) => {
             savedBases.set(c.class_id, (savedBases.get(c.class_id) || 0) + amount);
             const own = amount - Number(c.net_amount_vnd ?? amount);
             savedClassDiscounts.set(c.class_id, (savedClassDiscounts.get(c.class_id) || 0) + Math.max(0, own));
+          }
+          // A bill saved with no breakdown (older bills) still has to be carried by
+          // some class: split by the classes of the month's lessons, holes
+          // included, else the child's first class - never [] against a charge.
+          if ([...savedBases.values()].reduce((n, v) => n + v, 0) <= 0 && totalAmount > 0) {
+            savedBases.clear();
+            savedClassDiscounts.clear();
+            const weights = (passW ?? lessonPass(true)).enrollmentBaseAmounts;
+            for (const [cid, v] of weights) if (v > 0) savedBases.set(cid, v);
+            if (savedBases.size === 0 && activeClassIds.length > 0) savedBases.set(activeClassIds[0], 1);
           }
           classNet = classNetAmounts(savedBases, savedClassDiscounts, totalAmount);
         } else {

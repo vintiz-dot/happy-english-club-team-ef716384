@@ -70,30 +70,50 @@ export function findRegisterHoles<S extends HoleSession, E>(
 }
 
 /**
- * Must the saved bill stand? Only when there are holes, a saved bill exists,
- * it is not frozen (a frozen bill already stands), its base is higher than the
- * register's and nobody with the right has forced the lower figure.
+ * What a month with holes does to its bill: "a lesson with no mark is priced as
+ * it was charged, never beyond the saved bill". Two bases come from the normal
+ * pricing loop: N (today's rule, holes not billed) and W (holes counted as
+ * billable lessons at their normal rate).
+ *
+ *   normal             no holes, no saved bill, a frozen bill, or N is not below
+ *                      the saved base: save as always (holes, if any, are flagged);
+ *   forced             N is below the saved base and an admin forced it: save N;
+ *   priced_as_charged  N is below the saved base but W is not above it: price the
+ *                      month WITH the holes, so the bill moves only by a real change
+ *                      (a lesson since cancelled or excused);
+ *   held               N < saved < W: some deleted marks must have been Excused and
+ *                      nobody can tell which, so the saved figures stand.
  */
-export function mustHold(opts: {
+export type HoleMode = "normal" | "forced" | "priced_as_charged" | "held";
+
+export function decideHoles(opts: {
   holeCount: number;
   savedBase: number | null; // null when there is no saved bill
-  tuitionFrozen: boolean;
-  registerBase: number;
+  frozen: boolean;
+  nBase: number;
+  wBase: number | null; // null when it was not needed (see above)
   forced: boolean;
-}): boolean {
-  if (opts.holeCount === 0 || opts.savedBase === null || opts.tuitionFrozen || opts.forced) return false;
-  return opts.registerBase < opts.savedBase;
+}): HoleMode {
+  if (opts.holeCount === 0 || opts.savedBase === null || opts.frozen || opts.nBase >= opts.savedBase) return "normal";
+  if (opts.forced) return "forced";
+  if (opts.wBase !== null && opts.wBase <= opts.savedBase) return "priced_as_charged";
+  return "held";
 }
 
 export const REGISTER_MISSING_MARKS = "register_missing_marks";
 export const LOWERED_DESPITE_MISSING_MARKS = "lowered_despite_missing_marks";
 
 /** The review flag that records the holes found for a bill. */
-export function missingMarksFlag(holes: Hole[], savedBase: number | null, registerBase: number) {
+export function missingMarksFlag(
+  holes: Hole[],
+  savedBase: number | null,
+  registerBase: number,
+  mode: HoleMode = "normal",
+) {
   return {
     type: REGISTER_MISSING_MARKS,
     label: `${holes.length} ${holes.length === 1 ? "lesson has" : "lessons have"} no mark in the register`,
-    details: { count: holes.length, dates: holes.map((h) => h.date), savedBase, registerBase },
+    details: { count: holes.length, dates: holes.map((h) => h.date), savedBase, registerBase, mode },
   };
 }
 
