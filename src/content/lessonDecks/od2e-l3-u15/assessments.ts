@@ -123,6 +123,61 @@ export const odL3U15Worksheets: Worksheet[] = [
       },
     ],
   },
+
+  // ------------------------------------------------------------------ Grammar Champions
+  {
+    id: "od2e-l3-u15-ws-champions",
+    title: "Measure words: Grammar Champions",
+    grammar: "number + measure word + of + food",
+    deckId: "od2e-l3-u15-l5",
+    slide: "Writing: A shopping paragraph",
+    intro:
+      "Grammar champions count the container when they cannot count the food: a bag of rice, two bottles of water. Check three things: of is always in the middle, the container gets the -s (boxes, bottles), and the food stays the same.",
+    tiers: [
+      {
+        level: "Support",
+        instructions: "Circle the right answer. Then read the whole phrase or sentence aloud.",
+        example: "I have two ___ of rice.  (bag / bags)  ->  bags",
+        items: [
+          { q: "I have two ___ of rice.", options: ["bag", "bags"], answer: "bags" },
+          { q: "She has a jar ___ honey.", options: ["of", "with"], answer: "of" },
+          { q: "Which one is right?", options: ["two rices", "two bags of rice"], answer: "two bags of rice" },
+          { q: "He bought a bunch ___ bananas.", options: ["for", "of"], answer: "of" },
+          { q: "There are three ___ of cookies on the table.", options: ["box", "boxes"], answer: "boxes" },
+          { q: "Which one is right?", options: ["a bag rice", "a bag of rice"], answer: "a bag of rice" },
+          { q: "Which food can you NOT count one by one?", options: ["rice", "egg"], answer: "rice" },
+          { q: "I need a ___ of bread for the sandwiches.", options: ["loaf", "bunch"], answer: "loaf" },
+        ],
+      },
+      {
+        level: "Core",
+        instructions: "Write the missing word or fix the sentence.",
+        example: "We bought a loaf ___ bread.  ->  of",
+        items: [
+          { q: "We bought a loaf ___ bread.", answer: "of" },
+          { q: "The cook needs two ___ of juice. (bottle)", answer: "bottles" },
+          { q: "Correct the mistake: I need three rices for the soup.", answer: "I need three bags of rice for the soup." },
+          { q: "Correct the mistake: There are two box of cookies on the shelf.", answer: "There are two boxes of cookies on the shelf." },
+          { q: "Join with because: We buy a bag of soil. We want to plant seeds.", answer: "We buy a bag of soil because we want to plant seeds." },
+          { q: "Join with so: We have a carton of milk. We can make pancakes.", answer: "We have a carton of milk, so we can make pancakes." },
+          { q: "Write the question: ___ bags of rice do we need?", answer: "How many" },
+        ],
+      },
+      {
+        level: "Challenge",
+        instructions: "Write full sentences. Check of, the plural container and the food.",
+        example: "(a jar)  ->  There is a jar of honey on the shelf.",
+        items: [
+          { q: "Write two sentences about a kitchen. Use a different measure word in each.", answer: "e.g. There is a bottle of oil on the shelf. There are two bags of rice under the table." },
+          { q: "Find and fix two mistakes: I bought a bags rice and two bottle of waters.", answer: "I bought a bag of rice and two bottles of water." },
+          { q: "Write a sentence with because about a shopping list for a class garden.", answer: "e.g. We need a bag of soil because the seeds need a home to grow in." },
+          { q: "Write a sentence with so and a measure word.", answer: "e.g. We have two cartons of milk, so we can make pancakes for everyone." },
+          { q: "Explain the rule in your own words: Why do we say two bags of rice and not two rices?", answer: "e.g. Because we cannot count rice one by one, so we count the bag, and of joins the bag to the rice." },
+          { q: "Write three sentences about the shopping for a plant party, with a measure word, because and so.", answer: "e.g. For our plant party, we need three bags of soil because we have many seeds. We will buy a bottle of water, so every plant can drink. Plants give us food, so we want to say thank you." },
+        ],
+      },
+    ],
+  },
 ];
 
 export const odL3U15Assessments: Assessment[] = [
@@ -167,7 +222,7 @@ export const odL3U15Assessments: Assessment[] = [
     id: "od2e-l3-u15-test",
     title: "Unit 15 test",
     kind: "summative",
-    afterLesson: 4,
+    afterLesson: 5,
     minutes: 45,
     covers: [
       "The 10 plant words and the parts of a plant",

@@ -282,5 +282,74 @@ export const odL2U9Creative: Record<string, Creative> = {
         }
       }
     ]
-  }
+  },
+
+  // Lesson 5: Grammar Champions, my / mine and Whose
+  "od2e-l2-u09-l5": {
+    "kind": "creative",
+    "thinking": "Design",
+    "uses": {
+      "words": [
+        "take turns",
+        "polite",
+        "clean up",
+        "classroom",
+        "crosswalk"
+      ],
+      "grammar": [
+        "my + thing / mine alone",
+        "Whose ___ is this?"
+      ]
+    },
+    "base": {
+      "title": "Design a Sharing Corner",
+      "task": "Design a Sharing Corner for your classroom. Draw four things in it. Say what belongs to everybody and what stays yours.",
+      "steps": [
+        "Draw your Sharing Corner and four things in it.",
+        "Write one sentence for each thing: The ___ is ours.",
+        "Draw one thing that stays yours only. Write: This is my ___. It's mine.",
+        "Write one rule for the corner and say why it helps people get along."
+      ],
+      "frames": [
+        "The ___ is ours.",
+        "This is my ___. It's mine.",
+        "Whose ___ is this?",
+        "The rule is ___ because ___."
+      ],
+      "success": [
+        "I used ours for the things we share.",
+        "I used my + thing and mine alone in the right places.",
+        "I gave a reason for my rule with because."
+      ],
+      "challenge": "Add a Whose question and answer for a thing in your corner. Say who the owner is with hers, his or theirs."
+    },
+    "variants": [
+      {
+        "interest": "football",
+        "label": "Football edition",
+        "task": {
+          "title": "Design a team kit room",
+          "task": "Design a kit room for a football team. Draw four things in it. Say what belongs to the whole team and what belongs to one player.",
+          "steps": [
+            "Draw the kit room and four things in it, like balls, cones and water bottles.",
+            "Write one sentence for each team thing: The ___ is ours.",
+            "Draw one thing that belongs to one player. Write: This is my ___. It's mine.",
+            "Write one rule for the kit room and say why it helps the team get along."
+          ],
+          "frames": [
+            "The ___ is ours.",
+            "This is my ___. It's mine.",
+            "Whose ___ is this?",
+            "The rule is ___ because ___."
+          ],
+          "success": [
+            "I used ours for the things the team shares.",
+            "I used my + thing and mine alone in the right places.",
+            "I gave a reason for my rule with because."
+          ],
+          "challenge": "Add a Whose question and answer for a thing in the kit room. Say who the owner is with hers, his or theirs."
+        }
+      }
+    ]
+  },
 };

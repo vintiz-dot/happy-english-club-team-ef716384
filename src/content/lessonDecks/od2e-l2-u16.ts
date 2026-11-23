@@ -1,5 +1,5 @@
 // Oxford Discover 2nd edition, Level 2, Unit 16 (Big Question 8: What makes things move?)
-// Five 90-minute lessons that follow the Student Book (SB pp. 156-165, the unit plus the Units 15 and 16
+// Five 90-minute lessons (plus a sixth, Grammar Champions, on the -est words) that follow the Student Book (SB pp. 156-165, the unit plus the Units 15 and 16
 // Wrap Up) and Workbook (WB pp. 136-145) page by page. Activities are the school's own, written around
 // the book's activity letters so the children always know which page they are on; nothing from the
 // book is reproduced. Play-based learning (songs, TPR, games, role play) is blended with
@@ -7,9 +7,63 @@
 // The class's main aim is speaking fluently and confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U16Creative } from "./od2e-l2-u16/homework";
 import { odL2U16Worksheets } from "./od2e-l2-u16/assessments";
+
+// The Grammar Champions worksheet (Lesson 6): the school's own sentences, with answers.
+const odL2U16ChampionWorksheet: Worksheet = {
+  id: "od2e-l2-u16-ws-champions",
+  title: "Grammar Champions: The strongest, the fastest, the best",
+  grammar: "superlatives: who wins the group? the + -est / -iest, the best",
+  deckId: "od2e-l2-u16-l6",
+  slide: "Say it, then write: the Goat Games report",
+  intro:
+    "One thing wins a group of three or more: Zog is the strongest goat. Always say the. Ends in y? Change y to iest: the happiest. One vowel and one letter? Double it: the biggest. Good is special: the best. Only two things? Use -er: stronger. If two pushes are the same, nobody is the strongest!",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right words. Then read the whole sentence aloud to a partner.",
+      example: "Zig is ___ goat on the hill. (the tallest / tallest)  ->  the tallest",
+      items: [
+        { q: "Zog is ___ goat on East Mountain.", options: ["the strongest", "strongest"], answer: "the strongest" },
+        { q: "The red box is ___ box of the three.", options: ["the heaviest", "the heavyest"], answer: "the heaviest" },
+        { q: "Which is correct?", options: ["the biggest ball", "the bigest ball"], answer: "the biggest ball" },
+        { q: "Zoe is a good jumper. Zig is better. Zag is ___.", options: ["the best", "the goodest"], answer: "the best" },
+        { q: "There are two goats. Zig is ___ than Zag.", options: ["stronger", "the strongest"], answer: "stronger" },
+        { q: "Monday is wet. Tuesday is wetter. Friday is ___ day of the week.", options: ["the wettest", "the wetest"], answer: "the wettest" },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the -est word with the. Then fix the mistakes. Say each answer aloud.",
+      example: "tall: Zig is ___ goat.  ->  the tallest",
+      items: [
+        { q: "fast: The cheetah is ___ animal at the zoo.", answer: "the fastest" },
+        { q: "funny: That is ___ story in our class book.", answer: "the funniest" },
+        { q: "hot: July is ___ month of the year.", answer: "the hottest" },
+        { q: "Fix it: Zog is strongest goat.", answer: "Zog is the strongest goat." },
+        { q: "Fix it: This is the goodest game.", answer: "This is the best game." },
+        { q: "Fix it: The box is the heavyest.", answer: "The box is the heaviest." },
+        { q: "Three boxes weigh 2 kg, 5 kg and 9 kg. Write one sentence about the 9 kg box. Use heavy.", answer: "The 9 kg box is the heaviest." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Join the two sentences, or write your own. Use and, but, so or because.",
+      example: "Zig is the fastest goat. Zoe has the highest jump.  ->  Zig is the fastest goat, and Zoe has the highest jump.",
+      items: [
+        { q: "Join with but: Zoe is the loudest goat. She is not the strongest goat.", answer: "Zoe is the loudest goat, but she is not the strongest goat." },
+        { q: "Join with so: The box is the heaviest. It is the hardest to push.", answer: "The box is the heaviest, so it is the hardest to push." },
+        { q: "Join with because: We pushed the lightest box first. It was the easiest to move.", answer: "We pushed the lightest box first because it was the easiest to move." },
+        { q: "Two goats push a box from opposite sides with the same push. Is one of them the strongest? Write one sentence and say why.", answer: "e.g. No. They push the same, so neither goat is the strongest, and the box does not move." },
+        { q: "Write one sentence about the best thing in your school bag. Use an -est word.", answer: "e.g. The best thing in my bag is my new notebook, and the heaviest thing is my water bottle." },
+        { q: "Why do we say stronger for two goats, but the strongest for three or more? Write the rule in your own words.", answer: "e.g. For two things we compare with -er. For a group of three or more, one thing wins, so we use the and -est." },
+      ],
+    },
+  ],
+};
 
 export const odL2U16: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1223,6 +1277,246 @@ export const odL2U16: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l2-u16-l6",
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 16,
+      lesson: 6,
+      covers: { unitFrom: 16, lesson: "Understand" },
+      title: "Grammar Champions: The strongest, the fastest, the best",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "161", activities: ["D", "E", "F"], note: "Song, Track 3•19; Learn Grammar: Superlative Adjectives" },
+        { book: "WB", pages: "139-141" },
+      ],
+      slides: [
+        { kind: "title", title: "Unit 16: Stubborn Goats", subtitle: "Lesson 6 · Grammar Champions", bigQuestion: "What makes things move?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can say which thing wins a group with the + an -est word: the strongest, the fastest, the best.",
+            "I can ask and answer \"Who is the fastest?\" and \"Is the red box the heaviest?\" with a partner.",
+            "I can write four or more sentences about a group, and join two with and, but or so.",
+            "I can explain the -est rule in my own words and link it to the Big Question.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "pairs",
+          minutes: 7,
+          steps: [
+            "Whole class: the teacher holds up a picture or does an action and everybody shouts the word as fast as they can: goat, horns, mountain, stubborn, angry, wet, east, west, forward, push, pull.",
+            "Stand up. Do the chant from Lesson 3 with the actions: Big, bigger, biggest! Small, smaller, smallest! Tall, taller, tallest! Which word is the winner of each line? Say it with a big voice.",
+            "Pairs: Partner A shows a push or a pull with the body. Partner B says what it is and a word for it: \"You push. It is hard!\" Then swap.",
+            "Say the Big Question together: \"What makes things move?\" Each pair gives one idea with one unit word.",
+          ],
+          prompts: ["What is this word?", "Big, bigger, ...?", "Things move when ...", "{s1}, say a unit word and an action."],
+          teacherNote:
+            "Retrieval and spacing: children pull back the Lesson 1 and 2 words and the Lesson 3 chant before anything new appears. Keep it quick and happy. Listen to which children say biggest without the and note it for the Focus slide. Do not correct yet.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: Zig, Zag and Zog",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 7,
+          steps: [
+            "Tell the children: \"Listen to the story. Stand up when you hear a word that ends in -est. Sit down for any other word. Clap when you hear the little word before it.\"",
+            "Read it slowly with actions, then again faster: \"Three goats live on East Mountain: Zig, Zag and Zog. Today they push boxes up the hill. Zig is strong. He pushes the smallest box. Zag is stronger than Zig. She pushes the middle box. Zog is the strongest goat on the mountain! He pushes the biggest box, the heaviest box of all. Who is the fastest goat down the hill? Zog is the fastest, too! Then Zag and Zog push one box from opposite sides. They push with the same push. Now nobody is the strongest. The box does not move! Zig has the best idea: 'Push together!' It is the happiest day on the mountain, and the box goes to the top.\"",
+            "Third time: children say the -est words with you and show each one with an action (strongest: flex; heaviest: lift a big box; fastest: run on the spot). Then ask in pairs: \"What did you notice?\" Take two or three ideas. Do not give the rule.",
+          ],
+          prompts: ["I heard ___ -est words.", "I noticed ___.", "Who is the strongest?", "{s2}, what did you do when you heard the heaviest?"],
+          teacherNote:
+            "Input flood: strongest, heaviest, fastest, biggest, smallest, best, happiest all come back in the same pattern (the + -est), with one -er word (stronger) and one moment where there is NO winner (the equal push). Put three paper boxes on the board, small, middle and big, and point as you tell. Keep your voice the same on the and the -est word: the words are the clue, not your voice.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "The teacher draws three boxes on the board with weights: 2 kg, 5 kg and 9 kg. Each group of 4 gets a set of sentence cards (the teacher prepares them) and two mats: FORM A and FORM B.",
+            "Round 1 (two things or a group?): sort the cards. Form A compares two things: \"The 5 kg box is heavier than the 2 kg box.\" \"Zag is stronger than Zig.\" \"The mountain is higher than the hill.\" Form B names the winner of a group: \"The 9 kg box is the heaviest.\" \"Zog is the strongest goat.\" \"Everest is the highest mountain.\" What is the same in every B card? What is different from A?",
+            "Round 2 (right or not right): sort again. Is: \"She is the happiest goat.\" \"This is the biggest box.\" \"That is the best song.\" \"The wettest day is Friday.\" Is not: \"She is happiest goat.\" \"This is the bigest box.\" \"That is the goodest song.\" \"He is the most tall goat.\" \"The happyest day is Friday.\"",
+            "Round 3 (the picture puzzle): two goats push the same box with the same push, and the box does not move. Is one of them the strongest? Say what you think. Then: \"I notice that ___.\" and \"I think the rule is ___ because ___.\" One child writes the group's idea on a big card.",
+          ],
+          frames: ["I notice that ___.", "We use the ___ words when ___.", "Before an -est word we always say ___.", "If the word ends in y, we ___.", "I think the rule is ___ because ___."],
+          prompts: ["Is this card Form A or Form B? Why?", "What is the same in these cards?", "Is there a winner here? Why not?", "What happens to the y?"],
+          teacherNote:
+            "Concept formation with non-examples: cards that are not right, and an equal push with no winner, show what the rule is NOT as well as what it is. Walk around and collect the children's own words (\"the winner\", \"more than two\", \"the little word the\", \"y turns into i\") on the board. Do not tell the rule yet. Support: give those groups the cards with the ending underlined. Stretch: ask them to write one new Form B card and one new Is not card for the class to sort.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: the strongest, the fastest, the best",
+          hook: "One thing wins the group, so we give it a crown: the + -est!",
+          form: [
+            { label: "Short word", pattern: "the + word + est:  strong, the strongest;  fast, the fastest" },
+            { label: "Ends in y", pattern: "the + (y becomes iest):  happy, the happiest;  heavy, the heaviest" },
+            { label: "One vowel + one letter", pattern: "double the letter:  big, the biggest;  wet, the wettest" },
+            { label: "Special word", pattern: "good, the best" },
+            { label: "Where is the group?", pattern: "the + -est + thing + in / of + the group:  the strongest goat in the family;  the heaviest box of all" },
+          ],
+          explanation: [
+            "A superlative says that one thing wins a group. Two things? We use -er and than: Zag is stronger than Zig. Three or more things? One thing can be the number one, and we use the + -est: Zog is the strongest goat.",
+            "We always say the before the -est word, and then the thing: the heaviest box. After it we can say where the group is: in my bag, in our class, on the mountain, or of all.",
+            "If two things are exactly the same, nobody wins. Two goats pushing with the same push: neither is the strongest, and the box does not move. A bigger push is the winner, and then the box moves the way that push goes. That is why the strongest push helps answer the Big Question: What makes things move?",
+            "Vietnamese tip: Vietnamese puts nhất after the word: mạnh nhất. English changes the END of the word (-est) and adds the BEFORE it. Say them as one chunk: the strongest, the heaviest. Good is special: good becomes best, not goodest.",
+          ],
+          examples: [
+            { text: "Zog is the strongest goat on East Mountain." },
+            { text: "The heaviest box is the hardest to push.", note: "two -est words: heavy, hard" },
+            { text: "{s1} has the longest rope in our group.", note: "an object, not a person's looks" },
+            { text: "{s2} and {s3} made the fastest paper car." },
+            { text: "Which ball goes the highest? The red ball goes the highest." },
+            { text: "Today is the wettest day of the week, and this is the best song of all." },
+          ],
+          pitfalls: [
+            { wrong: "Zog is strongest goat.", right: "Zog is the strongest goat.", why: "Vietnamese has no the. In English we always say the before an -est word." },
+            { wrong: "the happyest, the bigest", right: "the happiest, the biggest", why: "A word ending in y changes y to i. A short word with one vowel and one letter doubles the last letter." },
+            { wrong: "I am the goodest at jumping.", right: "I am the best at jumping.", why: "Good is a special word: good, better, the best." },
+            { wrong: "He is the most tall goat. / Zag is the strongest of the two goats.", right: "He is the tallest goat. / Zag is stronger than the other goat.", why: "Short words take -est, not most. For two things we use -er, not -est." },
+          ],
+          book: { book: "SB", pages: "161", activities: ["E"], note: "Learn Grammar: Superlative Adjectives" },
+        },
+        {
+          kind: "activity",
+          title: "Race to the winner",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Before class the teacher puts four picture posters on four walls, each with three things: a snail, a horse and a cat (fastest); three boxes (heaviest); three mountains (highest); three goats pushing, one with a big arrow (strongest). Make four teams.",
+            "The teacher calls a clue and an action: \"Fast!\" (run on the spot) \"Heavy!\" (lift a big box) \"High!\" (reach up) \"Strong!\" (flex). Each team runs to the right wall, together.",
+            "At the wall the team says ONE full sentence for the picture: \"The horse is the fastest.\" The team scores only if the sentence has the and the right ending. Then the teacher says a new clue.",
+            "Final round: the teacher calls two words at once: \"Big and happy!\" The team makes two sentences: \"The biggest ___. The happiest ___.\" The team with the most correct sentences wins, not the team with the fastest feet.",
+          ],
+          prompts: ["The ___ is the ___est.", "Which one is the ___est?", "Is it the ___est or the ___er?", "{s4}, make the sentence. {s5}, check the ending."],
+          teacherNote:
+            "The pattern is the winning move: no full sentence, no point. Correct with PROMPTS before you recast. 1) Elicit: say the start and wait: \"The horse is ... ?\" 2) Repeat the mistake with a rising voice: \"Horse is fastest?\" 3) Hand signal: tap your open hand for the, and draw -est in the air. 4) Only then recast: \"The horse is the fastest.\" Keep it safe: walking speed to the walls, one team at a time at each poster. Give the Vietnamese once if a child is lost, then English only.",
+        },
+        {
+          kind: "speaking",
+          title: "The Goat Games scoreboard",
+          mode: "pairs",
+          minutes: 12,
+          frames: ["Who has the ___est ___?", "Zog / Zag / Zig / Zoe has the ___est ___.", "Is Zoe the ___est goat? Yes, she is. / No, she isn't.", "___ is the ___est goat in the ___.", "The champion is ___ because ___."],
+          prompts: ["Who is the fastest goat?", "Who pushed the heaviest box?", "Is Zog the loudest goat?", "Can you say it again?"],
+          fluencyTip: "Ask the whole question, then answer with a whole sentence with the. Do not look at your partner's card: use words.",
+          steps: [
+            "Partner A has Card A (the highest jump and the fastest run). Partner B has Card B (the heaviest box and the loudest yodel). Do not show your card.",
+            "Take turns to ask: \"Who has the highest jump?\" Your partner looks at the numbers and answers with a whole sentence. Write the winner of each of the four games in a chart with two columns: Game and Winner.",
+            "Check at the end: put the cards side by side. Did you find all four winners? Say each one in one sentence: \"Zoe has the highest jump.\"",
+            "Talk about it: Which goat wins the most games? Who is the champion? Is it the strongest goat, or can the champion be a different goat? Why?",
+          ],
+          teacherNote:
+            "Information gap: neither child can finish alone. Make two cards with the same four goats. Card A: highest jump (cm): Zig 80, Zag 110, Zog 95, Zoe 120. Fastest run (km/h): Zig 30, Zag 25, Zog 35, Zoe 28. Card B: heaviest box pushed (kg): Zig 20, Zag 30, Zog 45, Zoe 35. Loudest yodel (1 to 10): Zig 9, Zag 6, Zog 5, Zoe 8. Winners: Zoe jump, Zog run, Zog box, Zig yodel. Zog wins two games. Prompt-style corrections: ask \"Is it the ... ?\" and wait, show two fingers for \"two things: use -er\" or three fingers for a group, or ask \"What goes before the -est word?\" before you give the right sentence. Ask the quietest goat too (Zog: 5).",
+        },
+        {
+          kind: "activity",
+          title: "Movement break: Be the -est",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Stand up. The teacher calls: \"Be the biggest tree on the mountain!\" Everybody makes a huge tree and freezes.",
+            "Next: \"Be the smallest seed! The fastest goat! The quietest mouse! The strongest goat!\" Each time children freeze and say: \"I am the ___est ___.\"",
+            "Now the teacher says an equal one: \"Two strong goats, the same push!\" Make a pair, push palm to palm, and freeze. Is one the strongest? Whisper: \"Nobody.\"",
+          ],
+          prompts: ["I am the ___est ___.", "Be the quietest mouse!", "Same push, no winner!"],
+          teacherNote: "Keep it fast and silly. Children feel that -est names one winner and that an equal push has none. Pairs push gently, feet apart, away from desks. Everyone is the biggest tree and the quietest mouse in turn.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          frames: ["The heaviest thing in my school bag is ___.", "The fastest animal I know is ___.", "The best game is ___ because ___.", "To move the heaviest box, we need ___ because ___."],
+          prompts: ["What is the heaviest thing in your bag?", "Which animal is the fastest?", "Which game is the best? Why?", "Is it the same for you?"],
+          fluencyTip: "Say it three times to three friends. Each time you can say it faster and with more ease. Look at your partner, not at your paper.",
+          steps: [
+            "Plan three -est ideas about your own life: something in your bag, an animal, and a game or a sport. Add one reason with because. Use the frames, not a script.",
+            "Round 1 (90 seconds): talk to partner 1. Round 2 (60 seconds): move to a new partner and tell it again, shorter. Round 3 (45 seconds): a new partner and tell it again, even shorter.",
+            "Between round 1 and round 2 the teacher gives one feedback moment to the whole class: one thing you did well, one thing to fix (the before -est, the ending, good and best).",
+            "Listeners: after each round say \"I liked ___.\" and ask one question: \"Which is the ___est?\"",
+          ],
+          teacherNote:
+            "Task repetition builds fluency: same message, shorter time, new listener. Give the single feedback moment after round 1 and use a prompt first (\"The best game is ...?\") before the right answer, so mistakes do not set. Do not stop children during the rounds. Link to the Big Question: to move the heaviest box we need a bigger push, so the heaviest thing needs the strongest push.",
+        },
+        {
+          kind: "activity",
+          title: "Say it, then write: the Goat Games report",
+          tag: "Writing",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Look at your Goat Games chart from the information-gap game. Say five sentences about it to a partner first, one for each result.",
+            "The teacher models with the class: \"Zoe has the highest jump, but Zog is the fastest goat.\" Children say which words are the -est words and which little word comes before them. Write another one together with so: \"Zog pushed the heaviest box, so he is the strongest goat.\"",
+            "Now write four or five sentences for your report. Two sentences name a winner. One joins two ideas with and or but. One uses so or because. Read each sentence quietly and check it.",
+            "Swap papers with your partner. Underline one great sentence and say: \"I like this sentence because ___.\"",
+          ],
+          frames: ["___ is the ___est goat.", "___ has the ___est ___, and ___ has the ___est ___.", "___ has the ___est ___, but ___.", "___ pushed the heaviest box, so ___.", "I think ___ is the champion because ___."],
+          prompts: ["Who is the winner?", "Does it have the?", "Can you join these two ideas?"],
+          teacherNote:
+            "Oral rehearsal first, then writing: children who said it can write it. Support: give a gapped version of the model (\"___ is the ___est goat, and ___.\"). Stretch: add a fifth sentence with because, or a sentence about the quietest goat. The printed worksheet \"Grammar Champions: The strongest, the fastest, the best\" follows this slide, in three levels (Support, Core, Challenge).",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Write the four checks on the board. Read your own writing. Tick each one in pencil.",
+            "1. Every -est word has the before it. 2. I checked the ending: y to iest, double the letter, good to best. 3. I used -est for three or more things, and -er for two. 4. I have a capital letter and a period in each sentence, and one and, but or so.",
+            "Swap with your partner. Tick again with a different color. Say: \"You are a champion at ___. Next time, try ___.\"",
+            "Fix one thing in your own writing. Show your teacher the fix.",
+          ],
+          prompts: ["You are a champion at ___.", "Next time, try ___.", "I fixed ___."],
+          teacherNote: "Success criteria written in child language. A child fixing their own sentence after a peer check is the point: look for the fix, not for perfect pages.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Speaking",
+          mode: "groups",
+          minutes: 6,
+          steps: [
+            "Put three cards on the board: 1. \"Two boxes, one red and one blue. The red box is heavier. Is it the heaviest box?\" 2. \"Two goats push the same box with the same push. The box does not move. Who is the strongest goat?\" 3. \"Three stories: one is interesting, one is more interesting, and one is the best of all. How do we say the winner for a long word like interesting?\"",
+            "In groups: Does our rule work for these, too? Say why. Test card 2 with two children pushing palm to palm.",
+            "Think about card 1: why is heaviest not right for two things? Say: \"I think ___ because ___.\"",
+            "Each group tells the class: \"I think ___ because ___.\" The class says if it agrees.",
+          ],
+          prompts: ["Does the rule work for ___, too?", "I think ___ because ___.", "Is there a winner?", "How many things are there?"],
+          frames: ["The rule works for ___ because ___.", "It does not work for ___ because ___.", "I think ___ is the ___est because ___."],
+          teacherNote:
+            "Transfer: children find that -est needs a group of three or more and one winner. Card 1: two things need -er (heavier). Card 2: equal pushes, no strongest, so nothing moves: this is the Big Question. Card 3: a long word like interesting does not add -est; give the chunk as a gift: the most interesting. Children do not need to agree: they need a reason.",
+        },
+        odL2U16Creative["od2e-l2-u16-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Complete the grammar pages on the -est words.", book: { book: "WB", pages: "139-141" } },
+            { label: "Creative grammar", detail: "Your creative task, Goat Games champion, is on the slide before this one. Your teacher will tell you which version is yours." },
+            { label: "Challenge: the rule teacher", detail: "Teach someone at home the -est rule. Draw three animals or three boxes. Ask them three questions: Who is the fastest? Who is the heaviest? Who is the best at something? Write what they say. Then tell them why we say stronger for two things and the strongest for three or more." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words.",
+            "I used to think ___ about the -est words. Now I think ___.",
+            "Say two sentences that help answer the Big Question, \"What makes things move?\" Use an -est word in one of them.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL2U16Worksheets,
+  worksheets: [...odL2U16Worksheets, odL2U16ChampionWorksheet],
 };

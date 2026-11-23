@@ -220,4 +220,55 @@ export const odL2U15Creative: Record<string, Creative> = {
       challenge: "Write a four-line talk between two people at the stadium: one has a heavy bag and the other offers to help.",
     },
   ),
+
+  // Lesson 5: Grammar Champions (comparing two things with -er than)
+  "od2e-l2-u15-l5": creative(
+    "Evaluate",
+    ["push", "pull", "heavy", "light", "speed", "movement"],
+    ["A ___ is ___er than a ___.", "I choose ___ because ___."],
+    {
+      title: "Which machine would you choose?",
+      task: "Two machines can move a heavy box. Draw them, compare them and choose one. Say why it is the best one.",
+      steps: [
+        "Draw Machine A and Machine B. Give each one a name and label one part.",
+        "Write two sentences that compare them: bigger, faster, heavier or stronger than.",
+        "Choose the machine you want to use. Write why.",
+        "Say your idea about forces: which machine uses a bigger force?",
+      ],
+      frames: [
+        "___ is bigger / faster than ___.",
+        "___ pushes a heavier box than ___.",
+        "I choose ___ because ___.",
+        "A bigger force makes ___.",
+      ],
+      success: [
+        "I drew two machines and gave each a name.",
+        "I used -er and than in two sentences.",
+        "I chose one machine and gave a reason with because.",
+      ],
+      challenge: "Add a third machine and write one sentence that compares all three, then say which one needs the smallest force.",
+    },
+    {
+      title: "Which kit trolley would you choose?",
+      task: "Two trolleys can carry the football kit bags at the Emirates Stadium. Draw them, compare them and choose one for the Gunners. Say why it is the best one.",
+      steps: [
+        "Draw Trolley A and Trolley B. Give each one a name and label one part.",
+        "Write two sentences that compare them: bigger, faster, heavier or stronger than.",
+        "Choose the trolley you want the team to use. Write why.",
+        "Say your idea about forces: which trolley needs a bigger push?",
+      ],
+      frames: [
+        "___ is bigger / faster than ___.",
+        "___ carries a heavier bag than ___.",
+        "I choose ___ because ___.",
+        "A bigger push makes ___.",
+      ],
+      success: [
+        "I drew two trolleys and gave each a name.",
+        "I used -er and than in two sentences.",
+        "I chose one trolley and gave a reason with because.",
+      ],
+      challenge: "Add a third trolley and write one sentence that compares all three, then say which one needs the smallest push.",
+    },
+  ),
 };

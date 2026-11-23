@@ -353,5 +353,75 @@ export const odL2U12Creative: Record<string, Creative> = {
         }
       }
     ]
+  },
+
+  // Lesson 6: Grammar Champions (place words, Where's ...? and Is there ...?)
+  "od2e-l2-u12-l6": {
+    "kind": "creative",
+    "thinking": "Create",
+    "uses": {
+      "words": [
+        "carton",
+        "paper",
+        "shelf",
+        "recycling plant",
+        "machine",
+        "rescue"
+      ],
+      "grammar": [
+        "Where's the ___? It's ___ the ___.",
+        "Is there a ___ ___ the ___? Yes, there is. / No, there isn't."
+      ]
+    },
+    "base": {
+      "title": "The case of the lost carton",
+      "task": "A carton is lost at your school! Write a short detective story. The detective asks three questions to find it: two with Is there and one with Where. At the end the detective finds the carton and puts it in the right bin.",
+      "steps": [
+        "Draw the detective and the place where the carton is lost.",
+        "Write two questions with Is there and say Yes or No for each.",
+        "Write one question with Where and an answer with a place word.",
+        "Write the ending: the detective finds the carton and puts it in the bin."
+      ],
+      "frames": [
+        "Is there a carton ___ the ___?",
+        "Yes, there is. / No, there isn't.",
+        "Where's the carton? It's ___ the ___.",
+        "The detective puts it in the ___."
+      ],
+      "success": [
+        "I wrote two Is there questions with a place word inside.",
+        "My Where question has no place word, and the answer has one.",
+        "My ending says what the detective does for the Earth."
+      ],
+      "challenge": "Add a second lost thing. Write where each one is and use between for the second thing."
+    },
+    "variants": [
+      {
+        "interest": "football",
+        "label": "Football edition",
+        "task": {
+          "title": "The case of the lost football boot",
+          "task": "A football boot is lost at the Emirates Stadium! Write a short detective story. The detective asks three questions to find it: two with Is there and one with Where. At the end the detective finds the boot and puts the paper cups in the recycling bin.",
+          "steps": [
+            "Draw the detective and the place at the stadium where the boot is lost.",
+            "Write two questions with Is there and say Yes or No for each.",
+            "Write one question with Where and an answer with a place word.",
+            "Write the ending: the detective finds the boot and puts the paper cups in the bin."
+          ],
+          "frames": [
+            "Is there a boot ___ the ___?",
+            "Yes, there is. / No, there isn't.",
+            "Where's the boot? It's ___ the ___.",
+            "The detective puts the cups in the ___."
+          ],
+          "success": [
+            "I wrote two Is there questions with a place word inside.",
+            "My Where question has no place word, and the answer has one.",
+            "My ending says what the detective does for the Earth."
+          ],
+          "challenge": "Add a second lost thing, a scarf. Write where each one is and use between for the second thing."
+        }
+      }
+    ]
   }
 };

@@ -272,4 +272,37 @@ export const odL2U14Creative: Record<string, Creative> = {
       challenge: "Say why someone else's picture could also be good, then say why yours is better.",
     },
   ),
+
+  // Lesson 6 (Grammar Champions): yesterday, last night, last week
+  "od2e-l2-u14-l6": creative(
+    "Create",
+    ["musician", "concert", "notes", "solo", "worried", "sleepy"],
+    ["yesterday / last night / last week + a past verb", "When did you ...? Did you ...? Yes, I did."],
+    {
+      title: "My music diary",
+      task: "Invent a musician and make the musician's diary with three boxes: last week, yesterday and last night. Draw what the musician did in each box and a face for the feeling. Then write one sentence for each box.",
+      steps: [
+        "Invent a musician and draw them at the top of your page.",
+        "Make three boxes: last week, yesterday, last night.",
+        "In each box draw what the musician did and a face that shows the feeling the music gave.",
+        "Write one sentence for each box. Use a verb in the past, for example played, sang or went.",
+      ],
+      frames: ["Last week my musician ___.", "Yesterday my musician ___.", "Last night my musician ___. It made him / her feel ___.", "When did your musician ___?"],
+      success: ["I used three different finished time words.", "Every verb matches its time word.", "I said how the music made the musician feel."],
+      challenge: "Add a fourth box: this morning. Then write a question for a friend with When did your musician ...? and write the answer.",
+    },
+    {
+      title: "My match-day diary",
+      task: "Invent a musician who played at the Emirates Stadium. Make a diary with three boxes: last week, yesterday and last night. Draw what the musician did in each box and a face for how the Arsenal fans felt. Then write one sentence for each box.",
+      steps: [
+        "Invent a musician for the Emirates Stadium and draw them at the top of your page.",
+        "Make three boxes: last week, yesterday, last night.",
+        "In each box draw what the musician did and a face that shows how the fans felt.",
+        "Write one sentence for each box. Use a verb in the past, for example played, sang or went.",
+      ],
+      frames: ["Last week the musician ___.", "Yesterday the Gunners ___.", "Last night the fans ___. The music made them feel ___.", "When did the musician ___?"],
+      success: ["I used three different finished time words.", "Every verb matches its time word.", "I said how the music made the fans feel."],
+      challenge: "Add a fourth box: this morning. Then write a question for a friend with When did the musician ...? and write the answer.",
+    },
+  ),
 };

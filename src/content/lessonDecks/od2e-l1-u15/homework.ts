@@ -64,4 +64,16 @@ export const odL1U15Creative: Record<string, Creative> = {
       ["It's loud.", "It's soft.", "I like the ___."],
       ["I drew four instruments.", "I wrote loud or soft under each.", "I put a star on the best one."],
       "Write: The ___ is best because it is ___.")),
+
+  "od2e-l1-u15-l5": make("Create", ["drum", "tambourine", "triangle", "cymbals", "shake", "strike"], ["I'm ___ing the ___.", "___ is ___ing the ___.", "I'm not ___ing the ___."],
+    task("My noisy band", "Draw a band of three toys or animals playing. Write what each one is doing right now.",
+      ["Draw three players with an instrument each.", "Write the name under each player.", "Write: ___ is ___ing the ___. for each player.", "Circle the player you like best and say why."],
+      ["___ is shaking the ___.", "___ is striking the ___.", "I like ___ because ___."],
+      ["I drew three players.", "I wrote am, is or are and an -ing word.", "I said why I like one player."],
+      "Add one player who is not playing. Write: ___ isn't playing. ___ is listening."),
+    task("The match day band", "Draw a band of three Arsenal fans playing at a football match. Write what each one is doing right now.",
+      ["Draw three fans in red scarves with an instrument each.", "Write the name under each fan.", "Write: ___ is ___ing the ___. for each fan.", "Circle the fan who is playing the loudest and say why."],
+      ["___ is shaking the ___.", "___ is striking the ___.", "I like ___ because ___."],
+      ["I drew three fans.", "I wrote am, is or are and an -ing word.", "I said why I like one fan."],
+      "Add one fan who is not playing. Write: ___ isn't playing. ___ is clapping.")),
 };

@@ -76,4 +76,16 @@ export const odL1U16Creative: Record<string, Creative> = {
       ["It's a ___.", "It sounds ___.", "You shake it. / You strike it."],
       ["I drew and named my instrument.", "I wrote two sentences.", "I played it for a grown-up."],
       "Write one more sentence: I made it from ___.")),
+
+  "od2e-l1-u16-l6": make("Create", ["sing", "dance", "clap", "shake", "drum"], ["Is ___ ___ing?", "Are ___ and ___ ___ing?", "Yes, she is. / No, they aren't."],
+    task("My jungle band", "Make up a band of three animals. Draw them making music and write two questions about your band.",
+      ["Draw three animals in a band. Give each one a name.", "Draw what each animal is doing: drumming, singing, dancing or clapping.", "Write one question with Is: Is ___ ___ing?", "Write one question with Are: Are ___ and ___ ___ing? Write the answers."],
+      ["Is ___ ___ing?", "Are ___ and ___ ___ing?", "Yes, he / she is. / No, they aren't."],
+      ["I drew a band of three animals.", "I wrote one question with Is and one with Are.", "I wrote the short answers."],
+      "Ask a grown-up: Are you singing? Write their answer."),
+    task("My football band", "Make up a band of three animals that plays before a football match. Draw them and write two questions about your band.",
+      ["Draw three animals in a band at a football match. Give each one a name.", "Draw what each animal is doing: drumming, singing, dancing or clapping.", "Write one question with Is: Is ___ ___ing?", "Write one question with Are: Are ___ and ___ ___ing? Write the answers."],
+      ["Is ___ ___ing?", "Are ___ and ___ ___ing?", "Yes, he / she is. / No, they aren't."],
+      ["I drew a band at a match.", "I wrote one question with Is and one with Are.", "I wrote the short answers."],
+      "Ask a grown-up: Are you singing? Write their answer.")),
 };

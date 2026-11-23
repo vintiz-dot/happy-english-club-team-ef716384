@@ -362,5 +362,49 @@ export const odL1U12Creative: Record<string, Creative> = {
         }
       }
     ]
-  }
+  },
+
+  // Lesson 6: Grammar Champions (Does she have it? What does he want?)
+  "od2e-l1-u12-l6": {
+    kind: "creative",
+    thinking: "Evaluate",
+    uses: {
+      words: ["need", "want", "water", "money", "clothes", "help"],
+      grammar: ["She has ___. He wants ___.", "Does she have ___? Yes, she does."],
+    },
+    base: {
+      title: "My story friend's pocket",
+      task: "Make up a story friend. Draw them with something they have and something they want. Write two sentences. Then say if the thing they want is a need or a want, and why.",
+      steps: [
+        "Make up a story friend, a boy or a girl or an animal. Give them a name.",
+        "Draw your friend with one thing they have and one thing they want.",
+        "Copy and finish: She has ___. He wants ___. (use she or he)",
+        "Ask someone at home: Does she have ___? Hear the answer: Yes, she does.",
+        "Say: is the thing a need or a want? Why?",
+      ],
+      frames: ["She / He has ___.", "She / He wants ___.", "Does she / he have ___?", "It is a need / want because ___."],
+      success: ["I can draw a story friend with a thing they have and a thing they want.", "I can write has and wants with an s.", "I can say if it is a need or a want."],
+      challenge: "Write one more friend who needs something. Ask: Does he need ___? Write the answer and say who can help.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "A young player's pocket",
+          task: "Make up a young football player for a story. Draw them with something they have and something they want. Write two sentences. Then say if the thing they want is a need or a want, and why.",
+          steps: [
+            "Make up a young player. Give them a name.",
+            "Draw the player in red and white with one thing they have and one thing they want.",
+            "Copy and finish: She has ___. He wants ___. (use she or he)",
+            "Ask someone at home: Does she have ___? Hear the answer: Yes, she does.",
+            "Say: is the thing a need or a want? Why?",
+          ],
+          frames: ["She / He has ___.", "She / He wants ___.", "Does she / he have ___?", "It is a need / want because ___."],
+          success: ["I can draw a young player with a thing they have and a thing they want.", "I can write has and wants with an s.", "I can say if it is a need or a want."],
+          challenge: "Write one more player who needs something. Ask: Does he need ___? Write the answer and say who can help.",
+        },
+      },
+    ],
+  },
 };

@@ -355,5 +355,57 @@ export const odL2U8Creative: Record<string, Creative> = {
         }
       }
     ]
-  }
+  },
+
+  // Lesson 6: Grammar Champions (yesterday words, and Did + the plain verb)
+  "od2e-l2-u08-l6": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["baker", "cook", "hide", "jar", "steal", "dig up", "let go"],
+      grammar: ["yesterday words: took, ate, sold, made, had", "Did + person + plain verb?", "Yes, he did. / No, she didn't."],
+    },
+    base: {
+      title: "The case of the missing things",
+      task: "Invent a mystery for someone at home to solve. A stall or a kitchen had some things, and now some are gone. Draw it before and after, then write the clues.",
+      steps: [
+        "Choose a stall, a kitchen or a garden. Choose what it had: muffins, apples, eggs or something else. Pick a number.",
+        "Draw the picture before and the picture after. Show how many are left.",
+        "Write the story in three sentences with a yesterday word, for example: The baker had 20 muffins. A raccoon took 4. Now she has 16.",
+        "Write two questions with Did and their answers, for example: Did the raccoon eat the muffins? No, he didn't. He hid them in a jar.",
+        "Say who or what you think took the things, and why.",
+      ],
+      frames: ["The ___ had ___ ___.", "The ___ ___ (yesterday word) ___ ___.", "Did the ___ ___ ? Yes, it did. / No, it didn't.", "Now there are ___ . ___ minus ___ is ___.", "I think the ___ took them because ___."],
+      success: [
+        "After Did, my verb is plain.",
+        "My yesterday words are right (took, not taked).",
+        "My numbers make sense: the take-away number and the number left.",
+      ],
+      challenge: "Write a second mystery where the number goes UP (something was made or bought). Which yesterday words fit it? Ask someone at home which mystery was easier, and why.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "The case of the missing match-day snacks",
+          task: "Invent a mystery for someone at home to solve. A snack stall at the Emirates Stadium had some things, and now some are gone. Draw it before and after, then write the clues.",
+          steps: [
+            "Choose a snack stall at the stadium. Choose what it had: pies, scarves, flags or something else. Pick a number.",
+            "Draw the picture before the match and the picture after. Show how many are left.",
+            "Write the story in three sentences with a yesterday word, for example: The stall had 30 pies. The fans bought 18. Now there are 12.",
+            "Write two questions with Did and their answers, for example: Did the fans buy the scarves? No, they didn't. They bought flags.",
+            "Say who or what you think took the things, and why.",
+          ],
+          frames: ["The stall had ___ ___.", "The fans ___ (yesterday word) ___ ___.", "Did the ___ ___ ? Yes, they did. / No, they didn't.", "Now there are ___ . ___ minus ___ is ___.", "I think the ___ took them because ___."],
+          success: [
+            "After Did, my verb is plain.",
+            "My yesterday words are right (bought, not buyed).",
+            "My numbers make sense: the take-away number and the number left.",
+          ],
+          challenge: "Write a second mystery where the number goes UP (the stall made or bought more). Which yesterday words fit it? Ask someone at home which mystery was easier, and why.",
+        },
+      },
+    ],
+  },
 };

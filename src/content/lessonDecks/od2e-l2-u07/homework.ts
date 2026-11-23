@@ -248,4 +248,66 @@ export const odL2U7Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 5: Grammar Champions, yesterday words and didn't
+  "od2e-l2-u07-l5": {
+    kind: "creative",
+    thinking: "Evaluate",
+    uses: {
+      words: ["take away", "left", "subtraction", "row", "column", "hungry"],
+      grammar: ["ate / gave / bought", "didn't + plain verb", "___ take away ___ is ___"],
+    },
+    base: {
+      title: "The plate I would share",
+      task: "Draw a plate with twelve treats. Choose how many to give away and how many to keep, then write what you gave, what you didn't give, and why you chose that.",
+      steps: [
+        "Draw a plate with twelve treats and give each treat a name.",
+        "Cross out the treats you gave away. Write the subtraction.",
+        "Write one sentence with gave and one sentence with didn't.",
+        "Write why you chose to give those ones away and keep the others.",
+      ],
+      frames: [
+        "There were twelve ___ on my plate.",
+        "I gave ___ to a friend.",
+        "I didn't give ___.",
+        "Twelve take away ___ is ___.",
+        "I chose that because ___.",
+      ],
+      success: [
+        "My subtraction is right and I can read it aloud.",
+        "I used gave and didn't + the plain verb correctly.",
+        "I gave a reason with because.",
+      ],
+      challenge: "Tell a family member the rule for yes and no about yesterday. Then say what a champion would fix in this sentence: \"Yesterday I didn't ate my soup.\"",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "The half-time snack box",
+          task: "Imagine a football team has twelve oranges at half time. Draw the box, choose how many the team eats and how many it saves for the fans, then write what happened and why you chose that.",
+          steps: [
+            "Draw a snack box with twelve oranges and a football pitch behind it.",
+            "Cross out the oranges the team ate. Write the subtraction.",
+            "Write one sentence with ate and one sentence with didn't.",
+            "Write why you chose to share them this way.",
+          ],
+          frames: [
+            "There were twelve oranges in the box.",
+            "The team ate ___ and gave ___ to the fans.",
+            "The team didn't eat ___.",
+            "Twelve take away ___ is ___.",
+            "I chose that because ___.",
+          ],
+          success: [
+            "My subtraction is right and I can read it aloud.",
+            "I used ate, gave and didn't + the plain verb correctly.",
+            "I gave a reason with because.",
+          ],
+          challenge: "Tell a family member the rule for yes and no about yesterday. Then say what a champion would fix in this sentence: \"Yesterday the team didn't ate the oranges.\"",
+        },
+      },
+    ],
+  },
 };

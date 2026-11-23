@@ -1,5 +1,5 @@
 // Oxford Discover 2nd edition, Level 2, Unit 10 (Big Question 5: How do people get along with each other?)
-// Five 90-minute lessons that follow the Student Book (SB pp. 96-105, the unit plus the Units 9 and 10
+// Five 90-minute lessons (plus a sixth, Grammar Champions, on Can I? May I?) that follow the Student Book (SB pp. 96-105, the unit plus the Units 9 and 10
 // Wrap Up) and Workbook (WB pp. 82-91) page by page. Activities are the school's own, written around
 // the book's activity letters so the children always know which page they are on; nothing from the
 // book is reproduced. Play-based learning (songs, TPR, games, role play) is blended with
@@ -7,9 +7,67 @@
 // The class's main aim is speaking fluently and confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U10Creative } from "./od2e-l2-u10/homework";
 import { odL2U10Worksheets } from "./od2e-l2-u10/assessments";
+
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l2-u10-ws-champions",
+  title: "Grammar Champions: Can I? May I? Asking first",
+  grammar: "Can I / May I + plain verb; the answer says you; may not stays two words; a reason for no",
+  deckId: "od2e-l2-u10-l6",
+  slide: "Write it: asking first",
+  intro:
+    "To ask, put Can or May first, then I, then the plain action word: May I go out? The answer talks to the person who asked, so it says you: Yes, you may. No, you may not. A good no gives a reason.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right answer. Then read the whole sentence aloud.",
+      example: "___ I open the window? (Can / Is)  ->  Can",
+      items: [
+        { q: "May I ___ some water, please?", options: ["have", "has"], answer: "have" },
+        { q: "Can I ___ your kite?", options: ["hold", "holding"], answer: "hold" },
+        { q: "Which one is a question?", options: ["I can go out.", "Can I go out?"], answer: "Can I go out?" },
+        { q: "Can I use your eraser? Yes, ___ can.", options: ["you", "I"], answer: "you" },
+        { q: "May I sit here? No, you may ___.", options: ["not", "n't"], answer: "not" },
+        { q: "May I leave the room?", options: ["Yes, you may.", "Yes, I may."], answer: "Yes, you may." },
+        { q: "Ask your teacher for a pencil. Which is best?", options: ["May I have a pencil, please?", "I have a pencil?"], answer: "May I have a pencil, please?" },
+        { q: "Can I join the game? ___. It is only for two players.", options: ["No, you can't", "No, you can"], answer: "No, you can't" },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing word, put the words in order, or fix the mistake.",
+      example: "Can I hold the baby bird? Yes, ___ can.  ->  you",
+      items: [
+        { q: "May I wear your hat? No, you may ___.", answer: "not" },
+        { q: "Can I share your umbrella? Yes, ___ can.", answer: "you" },
+        { q: "Put the words in order: I / Can / the ball / have / ?", answer: "Can I have the ball?" },
+        { q: "Put the words in order: go / May / I / out / ?", answer: "May I go out?" },
+        { q: "Fix the mistake: I can borrow your pen?", answer: "Can I borrow your pen?" },
+        { q: "Fix the mistake: Can I having a turn?", answer: "Can I have a turn?" },
+        { q: "Fix the mistake: Yes, I can. (the answer to: Can I sit by you?)", answer: "Yes, you can." },
+        { q: "Join with because: No, you may not go out. It is dark.", answer: "No, you may not go out because it is dark." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Write full sentences, or fix the mistakes. Check your word order and your you.",
+      example: "(ask a friend for a turn)  ->  Can I have a turn, please?",
+      items: [
+        { q: "Ask your teacher for a pencil. Use May I and please.", answer: "e.g. May I have a pencil, please?" },
+        { q: "Ask a friend for a turn on the swing. Use Can I.", answer: "e.g. Can I have a turn on the swing?" },
+        { q: "Write a no answer with a reason: May I use your tablet? (the battery is empty)", answer: "e.g. No, you may not. The battery is empty." },
+        { q: "Fix two mistakes: Can I to sit here? No, you mayn't.", answer: "Can I sit here? No, you may not." },
+        { q: "Join with but: Yes, you may have a cookie. You may not have two.", answer: "Yes, you may have a cookie, but you may not have two." },
+        { q: "Your friend asks, 'Can you help me?' Write a yes answer. What changed from the question?", answer: "Yes, I can. The word you changed to I, because the answer talks to the asker." },
+        { q: "Write four lines: you ask to borrow a book, your friend says yes, and you say thank you.", answer: "e.g. Can I borrow your book? / Yes, you can. / Thank you! / You're welcome." },
+        { q: "Write the rule in your own words: what does the answer to Can I...? say, and why?", answer: "e.g. The answer says you, because the answer talks to the person who asked." },
+      ],
+    },
+  ],
+};
 
 export const odL2U10: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1138,6 +1196,275 @@ export const odL2U10: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l2-u10-l6",
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 10,
+      lesson: 6,
+      covers: { unitFrom: 10, lesson: "Understand" },
+      title: "Grammar Champions: Can I? May I? Asking first, and answering with you",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "101", activities: ["D", "E", "F"], note: "Grammar in Use: song, Learn Grammar (Can and May), role play and the home-rules talk" },
+        { book: "WB", pages: "85-87", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: Can I? May I?", subtitle: "Lesson 6 · Grammar and speaking", bigQuestion: "How do people get along with each other?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can ask for something with Can I...? and May I...? and answer with Yes, you can / Yes, you may / No, you may not.",
+            "I can ask and answer in a pair, with please, thank you and a reason for no.",
+            "I can write four or more sentences about asking, and join two of them with and, but or because.",
+            "I can explain, in my own words, why the answer says you, and why asking first helps people get along.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 7,
+          steps: [
+            "Stand up. The teacher mimes a word from this unit: knock, wash, share, pass, grab, invite, put away. Say the word, then say: polite or rude?",
+            "Now the asking chant, with actions: Please! (hands together) / Thank you! (small bow) / Can I help? (hand out) / Yes, you can! (point to a friend). Say it three times: slow, fast, whisper.",
+            "The teacher holds up a picture: a cookie, a ball, a window, a drum, a book. Everybody asks together: 'Can I have the ___, please?' Then try 'May I ___?' for the window and the door.",
+            "Pairs: Partner A says a thing to ask for. Partner B says yes and gives it: 'Yes, you can. Here you are.' Partner A says: 'Thank you!' Swap after one minute. {s1} is the teacher for one round.",
+          ],
+          prompts: ["Can I have the ___, please?", "Yes, you can. Here you are.", "Thank you!", "Is it polite or rude?"],
+          teacherNote:
+            "Retrieval: pull back Lesson 1's manners words and Lesson 3's question pattern before today's work, quickly, about 20 seconds a round. Do not correct yet. If a sentence has an error, repeat it up to the error with a rising voice and wait. Picture cards or quick drawings are enough; no real children or families in any example.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: Milo at Grandma Goose's house",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Sit down and close your books. The teacher is the storyteller. Listen to the story about Milo the mouse (in the prompts).",
+            "First listening: clap once every time you hear someone ASK for something (a question that begins with Can or May).",
+            "Second listening: stand up when you hear an ANSWER, and sit down when you hear a question. Say the first word of each answer with the teacher: Yes... No...",
+            "Ask: 'What is the mystery? What do the questions have in common? What do the answers have in common?' Tell a partner your idea. Do not say the rule yet.",
+          ],
+          prompts: [
+            "Story 1: 'Milo the mouse knocks on Grandma Goose's door. \"May I come in?\" he asks. \"Yes, you may!\" says Grandma Goose. \"Thank you,\" says Milo. He is very polite.'",
+            "Story 2: 'Milo is hungry. \"Can I have some juice, please?\" \"Yes, you can.\" \"Can I have a big, big cake?\" \"No, you can't. It is too big for one mouse. But you can have a small piece.\" \"Thank you!\" says Milo.'",
+            "Story 3: 'Milo sees a drum. \"May I play the drum?\" \"No, you may not. The baby ducks are sleeping.\" \"Oh, okay. Can I play it later?\" \"Yes, you can!\" says Grandma Goose.'",
+            "Story 4: 'Pip the duck wakes up. \"Can I have a turn with the blocks?\" asks Pip. \"Yes, you can,\" says Milo. \"Can I sit next to you?\" \"Yes, you can. And you can share my blanket!\"'",
+            "Story 5: 'At six o'clock Milo asks, \"May I go home now?\" \"Yes, you may,\" says Grandma Goose. \"Thank you for asking nicely, Milo. Please come again!\" Milo smiles. \"Can I come on Saturday?\" \"Yes, you can!\"'",
+            "Story 6: 'Who asked first? Who said yes? Who said no? What did Milo say every time? Why did Grandma Goose like Milo?'",
+          ],
+          teacherNote:
+            "Input flood: the two questions and the answers come many times, in the same shape, in an invented story, so no child is talked about. Read slowly and lean on Can, May, you. Do NOT explain the grammar. Start the Big Question at the end of the story: why do Milo and Grandma Goose get along so well? Write the children's ideas on the board exactly as they say them (for example 'He asks first'). Children may clap on 'Can you...' too; there is none here, which is on purpose: it comes back in Transfer.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group gets 14 cards and three mats: RIGHT QUESTION, RIGHT ANSWER and NOT RIGHT.",
+            "Read each card out loud. Decide: is it a question or an answer? Is it right or not right? Put it on a mat.",
+            "Look at the RIGHT ANSWER mat. Which word comes after Yes, or after No,? Look at the RIGHT QUESTION mat: what comes after Can I and May I? Say what you notice with the frames.",
+            "Look at the NOT RIGHT mat. What is wrong with each card? Fix two with your pencil and say why.",
+            "Tell the class: 'I think the rule is ___ because ___.' The teacher writes your words on the board.",
+          ],
+          frames: ["On both mats I see ___.", "After Can I or May I comes ___.", "In every answer the word is ___.", "I think the rule is ___ because ___."],
+          prompts: [
+            "Right questions: 'Can I play with the kite?' 'May I sit here?' 'Can I have a turn?' 'May I open the window?'",
+            "Right answers: 'Yes, you can.' 'Yes, you may.' 'No, you can't.' 'No, you may not.' 'No, you can't. It is too cold.'",
+            "Not right: 'Can I to play?' 'May I sitting here?' 'I can go out?' 'Yes, I can.' (the answer to Can I sit here?) 'No, you mayn't.'",
+          ],
+          teacherNote:
+            "Print the cards in big letters, one sentence a card. The sorting is the point, so give the children time. Walk round and listen; write their own words on the board exactly (for example 'the answer always has you', 'may not is two words', 'the action word has no s'). Ask 'How do you know?' and 'Show me with your hands.' Do NOT give the rule yet: the next slide puts their words into the form. Early finishers: write one more right card and one not right card for a neighbor group to sort. If a group asks about 'I can go out?' say 'It is a question, but does it sound like one?' and let them find the word order.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: Can I...? May I...? Ask first, answer with YOU",
+          hook: "Ask first! Can I? May I? Then listen: the answer says YOU.",
+          form: [
+            { label: "Ask with can (friends)", pattern: "Can + I + action word? Can I play?" },
+            { label: "Ask with may (teachers, grown-ups)", pattern: "May + I + action word? May I come in?" },
+            { label: "Say yes", pattern: "Yes, + YOU + can / may." },
+            { label: "Say no", pattern: "No, + YOU + can't / may not. (+ because ...)" },
+          ],
+          explanation: [
+            "What it means: Can I...? and May I...? ask if something is allowed. We ask BEFORE we do it: before we take something, sit down, go in or go out. The words after I are the plain action word, with no -s, no -ing and no to: Can I play? May I go?",
+            "When we use it: with a friend, Can I...? is easy and friendly. With a teacher, a grown-up or when we want to be extra kind, May I...? sounds a little more polite. Add please at the end, and say thank you after the answer. If the answer is no, a good answer gives a reason: No, you may not. It is too dark.",
+            "Why the answer says YOU: the person who asks says I, but the person who answers is talking TO the asker, so the answer says you: Can I sit here? Yes, you can. We can shorten can not to can't, but may not stays as two words.",
+            "Vietnamese tip: In Vietnamese we show respect with little words like 'ạ' and 'dạ', and the answer can be just 'Được.' In English the respect is in the words: please, may, thank you. The answer needs a whole short sentence with you: 'Yes, you can.' Not 'Yes, I can.'",
+            "Why it matters for talking and for getting along: when you ask first, you show that you think about the other person's feelings and things. Asking is how people get along: it shows I care about you.",
+          ],
+          examples: [
+            { text: "{s1} asks, \"May I have a turn, please?\" {s2} says, \"Yes, you may.\"" },
+            { text: "{s3} asks, \"Can I sit next to you?\" {s4} says, \"Yes, you can.\"", note: "Can I = friendly, to a friend" },
+            { text: "Can I open the window, please? No, you may not. It is cold today.", note: "no + reason" },
+            { text: "{s5} asks the teacher, \"May I get some water?\" The teacher says, \"Yes, you may.\"", note: "May I = polite, to a teacher" },
+            { text: "Can I borrow your ruler? Yes, you can. Thank you!", note: "the answer says you" },
+            { text: "May I go out? No, you may not.", note: "may not = two words" },
+          ],
+          pitfalls: [
+            { wrong: "I can go out?", right: "Can I go out?", why: "To ask, the question word goes FIRST: Can I... or May I..., not I can." },
+            { wrong: "Can I plays? / May I playing?", right: "Can I play? / May I play?", why: "After can and may use the plain action word, with no -s and no -ing." },
+            { wrong: "Yes, I can. (to Can I sit here?)", right: "Yes, you can.", why: "The answer talks to the person who asked, so it says you." },
+            { wrong: "No, you mayn't.", right: "No, you may not.", why: "We do not shorten may not. It stays as two words." },
+          ],
+          book: { book: "SB", pages: "101", activities: ["E"], note: "Learn Grammar: Can and May" },
+        },
+        {
+          kind: "activity",
+          title: "The Gatekeeper's steps: ask and move",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Make teams of five or six. The Gatekeeper (the teacher first, then a child) stands at one end of the room by a paper gate. The teams line up at the other end.",
+            "A player asks: 'May I take two big steps, please?' The Gatekeeper answers: 'Yes, you may.' or 'No, you may not. Take one small step.' The player does what the Gatekeeper says.",
+            "Round two: a friend is the Gatekeeper, so ask with Can: 'Can I hop three times?' 'Yes, you can.' / 'No, you can't. Hop once.' Add please and thank you for a bonus star.",
+            "If you forget to ask, or the answer says I instead of you, take one step back and ask again. No problem: everybody does it!",
+            "The first player to touch the gate gets the key and becomes the next Gatekeeper. Play until every child has asked three times.",
+          ],
+          prompts: [
+            "Ask: 'May I take ___ steps, please?' 'Can I ___ ?' (hop, spin, jump, march, tiptoe)",
+            "Answer: 'Yes, you may.' 'No, you may not. Take ___ instead.' 'Yes, you can.' 'No, you can't.'",
+            "'Thank you, Gatekeeper!'",
+          ],
+          teacherNote:
+            "The winning move is the pattern said correctly, so the Gatekeeper must listen for it. Correct with PROMPTS before you recast: repeat the error with a rising voice ('I can take... ?'), point to the asker and say 'you?' for the answer that says I, flat hand moving forward for the plain action word (no -s, no -ing), two hands apart for may / not. Say the correct sentence only if the child is stuck. A player who goes back one step is never out of the game. Keep every step silly and safe; children take small steps in a clear space.",
+        },
+        {
+          kind: "speaking",
+          title: "The Rainbow House rules: ask and fill in",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Partner A is the child and has a CHILD card with six pictures and empty tick boxes. Partner B is the grown-up and has a GROWN-UP card with the house rules. Do not show each other your cards.",
+            "The child asks about each picture: 'May I ___, please?' The grown-up looks at the card and answers: 'Yes, you may.' or 'No, you may not. ___ because ___.'",
+            "The child ticks yes or crosses no, and writes the reason in one or two words. Say thank you every time.",
+            "Swap roles with a new card. Then put the cards together. Which rules are the same in both houses? Which are different? Say why.",
+            "Tell the next pair: 'In the Rainbow House, you may ___, but you may not ___.'",
+          ],
+          frames: ["May I ___, please?", "Yes, you may.", "No, you may not. It is ___.", "In this house you may ___, but you may not ___."],
+          prompts: ["May I use the tablet, please?", "Can I feed the fish?", "Why not?", "What is the same in both houses?", "What is different?"],
+          fluencyTip: "Ask in a whole question. Look at your partner, not the card, and say thank you with a smile.",
+          teacherNote:
+            "Make four cards before the lesson (two GROWN-UP, two CHILD with the same six pictures). Pictures: use the tablet, jump on the sofa, feed the fish, borrow a book, open the window, have a snack. Grown-up card 1: tablet yes (after homework), sofa no (not safe), fish yes, book yes, window no (cold), snack no (soon time for dinner). Grown-up card 2: tablet no (battery is empty), sofa yes (it is a soft sofa and you sit), fish no (already fed), book yes, window yes, snack yes (a small one). The information gap is real: the child does not know the answers. Walk round and use prompts first: 'Does the answer say I or you?' 'Is it one word or a whole sentence?' When the cards come together ask: 'Is polite the same in every house?'",
+        },
+        {
+          kind: "activity",
+          title: "Knock, freeze and ask",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Music on: tiptoe around the room like a quiet mouse. Music off: freeze.",
+            "The teacher holds up a picture: a door, a cookie, a drum, a swing. Make the action in the air and whisper to the child next to you: 'May I ___?'",
+            "Your neighbor answers with a thumb and a whisper: 'Yes, you may.' or 'No, you may not.' Then music on again.",
+          ],
+          prompts: ["May I open the door?", "Can I have a cookie?", "Yes, you may.", "No, you may not."],
+          teacherNote: "A movement break that keeps the pattern in the body. Everyone moves and whispers at once, so no child is on show. Use things, never children or families, as the pictures.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "101", activities: ["F"], note: "Things I need to ask at home or at school" },
+          steps: [
+            "Plan your talk: three things you ask for. One at school with May I (to a teacher), one at home with Can I or May I (to a grown-up), one with a friend with Can I. Then say one answer you get, with a reason if it is no.",
+            "Round 1 (90 seconds): tell partner 1. Your partner shows one finger for each question that starts with Can I or May I, and a thumb if the answer says you.",
+            "Stop. The teacher shares ONE champion tip from the errors heard. Say it together once.",
+            "Round 2 (60 seconds): a new partner, the same talk, a little faster. Round 3 (45 seconds): another new partner, smooth and clear.",
+            "Last: 'Why is it good to ask first?' Say one sentence with because.",
+          ],
+          frames: ["At school I say, 'May I ___?' to my teacher.", "At home I say, '___ I ___?' to my ___.", "With a friend I say, 'Can I ___?'", "I ask first because ___."],
+          prompts: ["Who do you ask?", "Do you say please?", "What do they say?", "Why is it good to ask first?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and faster. Keep going if one word is not perfect.",
+          teacherNote:
+            "Use a timer everybody can see. Between rounds 1 and 2, give ONE feedback moment only: the most common error you heard (prompt it first: rising voice, point to the asker for you, flat hand for the plain action word). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support keep three pictures in front of them (a door, a cookie, a swing) and point to one for each sentence. Differences at home are fine: some families have many asking-rules and some have few, and that is not good or bad.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: asking first",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          book: { book: "WB", pages: "85-87", note: "Grammar practice; the writing task follows the speaking" },
+          steps: [
+            "Say your sentences to a partner first: 'May I ___? Yes, you may.' Use your Champion talk.",
+            "Watch: the teacher and the class write one asking sentence together on the board: 'May I have a turn, please?' Where does the question mark go? Now write the answer: 'Yes, you may.' Which word comes after Yes,?",
+            "Write a mini-dialogue with four lines (ask, answer, ask, answer) and then three or four sentences about it. Join two sentences with and, but or because.",
+            "Read your writing to a partner. Put a finger on each Can I or May I, and on each you.",
+            "Finished early? Write the rule: 'When someone asks Can I...?, the answer says ...'",
+          ],
+          frames: ["At school I say, 'May I ___?'", "'Yes, you ___.' / 'No, you ___ not.'", "I say 'Can I ___?' to my friend, and my friend says ___.", "I ask first because ___.", "I can ask my teacher, but I ___ ask my friend."],
+          prompts: ["Can I...? / May I...?", "Yes, you ___. / No, you ___.", "because ...", "Where is you?"],
+          tiers: [
+            { level: "Support", task: "Copy the class sentences and change one word. Write two asking lines and two answers with the frames. Then do the worksheet's Support part.", frames: ["May I ___, please?", "Yes, you may."] },
+            { level: "Core", task: "Write a four-line dialogue and two sentences. Join two with and or but. Then do the worksheet's Core part.", frames: ["Can I ___? Yes, you can, but ___."] },
+            { level: "Stretch", task: "Write a dialogue and a short paragraph of four or more sentences about why asking first helps people get along. Add because. Then do the worksheet's Challenge part.", frames: ["I ask first because ___, so ___."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model one asking line and one answer on the board with a gap for the action word, then release. Praise the right word order first (Can I..., not I can), then you in the answer, then the plain action word, then the capital letter and the question mark. Hand out the worksheet after the sentences (the Support, Core or Challenge part). Keep every example about invented people or things, not real children.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your writing. Check each point and give yourself a tick.",
+            "1. My question starts with Can I or May I, with a question mark at the end. 2. After I there is only the plain action word (no -s, no -ing, no to). 3. My answer says you, and may not is two words. 4. I wrote please or thank you, and a reason when the answer is no.",
+            "Swap papers. Check your partner's writing. Say one star: 'Your question is a real question!' and one step: 'Check the word after Yes, here.'",
+            "Fix one thing with your pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["Your question starts with Can I. Great!", "Your answer says you. Great!", "Check the action word here.", "Four ticks: champion!"],
+          teacherNote: "Draw the four checks on the board with small pictures (a question mark, an action word, the word you, a heart for please). Children give a star for every tick on their partner's page. Collect one or two sentences without names to read to the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "Teacher shows three tricky cases. Thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then say why.",
+            "Case 1, flip it: 'Can you help me?' asks a friend. What does the answer say? Why does the answer say I this time?",
+            "Case 2, a new meaning: 'I can swim.' Is this asking? Is it the same word as in Can I...? What does it tell us here?",
+            "Case 3, who do I ask? You want a turn on your friend's scooter, and you want to leave the classroom. Which question do you use for each? Why?",
+            "Think: how does asking first help people get along with each other?",
+          ],
+          frames: ["The answer says ___ because ___.", "In this sentence can means ___.", "I use May I with ___ because ___.", "Asking first helps people get along because ___."],
+          prompts: ["Who is the answer talking to?", "Is it a question or a fact?", "Which word is more polite?"],
+          teacherNote:
+            "Transfer to new cases, and a link to the Big Question. Case 1: the answer flips both ways: the answer talks TO the asker, so Can I leads to you and Can you leads to I (Yes, I can). Case 2: 'I can swim' is a fact about what a person is able to do, not a question, so there is no answer to give. Case 3: both are fine; May I is a little more polite for the teacher. Let the children's words stand and write the best one on the class chart. A generalization they might say: 'The answer talks to the person who asked.' Keep names out of the cases.",
+        },
+        odL2U10Creative["od2e-l2-u10-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: Can and May.", book: { book: "WB", pages: "85-87", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Invent a magic door. Draw it with a sign that says who may come in. Write four questions that people ask to come through (use Can I and May I) and the answers. Then choose which door you would like to open, and say why." },
+            { label: "Challenge", detail: "Ask a grown-up at home: 'What did you ask your grown-ups for when you were little?' Write three sentences with Can I or May I. Then say what is the same as you, and what is different." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words: what does the answer say, and why?",
+            "I used to think ___, now I think ___. (About Can I and May I, or about asking.)",
+            "How does asking first help people get along with each other? Show me with your hands how sure you are.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL2U10Worksheets,
+  worksheets: [...odL2U10Worksheets, championsWorksheet],
 };

@@ -64,4 +64,16 @@ export const odL1U17Creative: Record<string, Creative> = {
       ["A ___ is living.", "A ___ is nonliving.", "It is ___."],
       ["My park has living and nonliving things.", "I wrote two sentences.", "I told a grown-up which thing I like best."],
       "Write a describing word for each thing: It is old. It is lovely.")),
+
+  "od2e-l1-u17-l5": make("Compare and justify", ["living", "nonliving", "breathe", "move", "change"], ["A ___ can ___.", "A ___ can't ___.", "It's ___ because it can't ___."],
+    task("My robot: living or nonliving?", "Invent a robot. Draw it. Say what it can do and what it can't do, then decide if it is living or nonliving and say why.",
+      ["Draw your robot.", "Write one thing it can do: My robot can ___.", "Write one thing it can't do: My robot can't ___.", "Write: It's living. Or: It's nonliving. Tell a grown-up why."],
+      ["My robot can ___.", "My robot can't ___.", "It's nonliving because it can't ___."],
+      ["I drew a robot.", "I wrote can and can't.", "I said if it is living or nonliving and why."],
+      "Imagine your robot can grow and breathe. Write: Now it is ___ because it can ___."),
+    task("My robot footballer: living or nonliving?", "Invent a robot footballer. Draw it. Say what it can do and what it can't do, then decide if it is living or nonliving and say why.",
+      ["Draw your robot footballer in a red-and-white shirt.", "Write one thing it can do: My robot can ___, for example kick or run.", "Write one thing it can't do: My robot can't ___.", "Write: It's living. Or: It's nonliving. Tell a grown-up why."],
+      ["My robot can ___.", "My robot can't ___.", "It's nonliving because it can't ___."],
+      ["I drew a robot footballer.", "I wrote can and can't.", "I said if it is living or nonliving and why."],
+      "Imagine your robot can grow and breathe. Write: Now it is ___ because it can ___.")),
 };

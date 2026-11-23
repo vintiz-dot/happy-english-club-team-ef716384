@@ -1,14 +1,71 @@
 // Oxford Discover 2nd edition, Level 2, Unit 6 (Big Question 3: How are things different now from long ago?)
-// Five 90-minute lessons that follow the Student Book (SB pp. 56-65, with the Units 5 and 6 Wrap Up)
+// Five 90-minute lessons (plus a sixth, Grammar Champions, on finished actions: -ed and Did + the plain verb) that follow the Student Book (SB pp. 56-65, with the Units 5 and 6 Wrap Up)
 // and Workbook (WB pp. 46-55) page by page. The children are 7-8, so guided play (chants, mime,
 // games, role play) is blended with simple inquiry: mess about, sort, read for evidence, organize on
 // a chart, say a generalization in your own words, test it on a new case, reflect.
 // Everything here is the school's own; nothing from the book or Teacher's Guide is reproduced.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U06Creative } from "./od2e-l2-u06/homework";
 import { odL2U06Worksheets } from "./od2e-l2-u06/assessments";
+
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l2-u06-ws-champions",
+  title: "Grammar Champions: finished actions",
+  grammar: "finished actions: verb + -ed; Did + plain verb; didn't + plain verb",
+  deckId: "od2e-l2-u06-l6",
+  slide: "Write it: then and now",
+  intro:
+    "A finished action needs ONE sign for the past. In a statement the sign is -ed: Ben visited a friend. In a question or with didn't, the sign is did, and the verb stays plain: Did Ben visit a friend? Ben didn't visit a friend. Never write did and -ed together.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right one. Then read the sentence aloud.",
+      example: "Yesterday, Pip ___ a song. (listened / listen)  ->  listened",
+      items: [
+        { q: "Yesterday, Mia ___ in the park.", options: ["played", "play"], answer: "played" },
+        { q: "Did Ben ___ to the market?", options: ["walk", "walked"], answer: "walk" },
+        { q: "Long ago, the family ___ to the city by boat.", options: ["traveled", "travel"], answer: "traveled" },
+        { q: "Did the clerk ___ the shelf?", options: ["check", "checked"], answer: "check" },
+        { q: "Did you listen to music? Yes, I ___.", options: ["did", "do"], answer: "did" },
+        { q: "Did Pip clean the boat? No, he ___.", options: ["didn't", "doesn't"], answer: "didn't" },
+        { q: "Which question is right?", options: ["Did the bus arrive?", "Did the bus arrived?"], answer: "Did the bus arrive?" },
+        { q: "Which sentence is right?", options: ["The ship arrived at night.", "The ship arrive at night."], answer: "The ship arrived at night." },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing word. For the last two, write the whole sentence.",
+      example: "Yesterday, we (visit) ___ a museum.  ->  visited",
+      items: [
+        { q: "Last week, the ship (arrive) ___ in the city.", answer: "arrived" },
+        { q: "Long ago, Ben (wash) ___ his clothes in the river.", answer: "washed" },
+        { q: "___ the children play outside? Yes, they did.", answer: "Did" },
+        { q: "Did Pip ___ a question? (ask) No, he didn't.", answer: "ask" },
+        { q: "Where ___ you travel last summer?", answer: "did" },
+        { q: "Mia ___ play football yesterday. She was busy. (did not)", answer: "didn't" },
+        { q: "Correct the mistake: Did Pip visited the market?", answer: "Did Pip visit the market?" },
+        { q: "Join with but: Long ago, people traveled by ship. Now people travel by plane.", answer: "Long ago, people traveled by ship, but now people travel by plane." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Write a full sentence for each one, or fix the mistake. Check which verb needs -ed and which stays plain.",
+      example: "(Ben / listen / radio)  ->  Did Ben listen to the radio?",
+      items: [
+        { q: "Write a Did question: (Mia / watch / a film)", answer: "Did Mia watch a film?" },
+        { q: "Write a question with How: (they / arrive)", answer: "How did they arrive?" },
+        { q: "Fix the mistake: Yes, I did visited my aunt.", answer: "Yes, I did. I visited my aunt." },
+        { q: "Join with and: Pip entered the room. Pip asked a question.", answer: "Pip entered the room and asked a question." },
+        { q: "Join with but: Ben walked to school long ago. Mia traveled by bus yesterday.", answer: "Ben walked to school long ago, but Mia traveled by bus yesterday." },
+        { q: "Write one Did question for an older person about long ago, and one full answer they might give.", answer: "e.g. Did you play outside when you were young? Yes, I did. I played marbles with my friends." },
+        { q: "Write the rule in your own words: what happens to the verb after Did, and why?", answer: "e.g. It stays plain, because did already shows the past, so we need only one sign." },
+      ],
+    },
+  ],
+};
 
 export const odL2U6: Unit = {
   curriculum: "oxford-discover-2e",
@@ -24,7 +81,7 @@ export const odL2U6: Unit = {
     "When something is finished, we add -ed to a regular verb, and in a question did does the work, so the verb stays plain (Did they travel?).",
     "Good speakers ask a question that gets more than 'yes' or 'no', and good writers say what it was like then and what it is like now.",
   ],
-  worksheets: odL2U06Worksheets,
+  worksheets: [...odL2U06Worksheets, championsWorksheet],
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -1240,6 +1297,275 @@ export const odL2U6: Unit = {
             { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Finish the Review pages for Units 5 and 6.", book: { book: "WB", pages: "54-55", note: "Review" } },
             { label: "At home", detail: "Interview a second adult with the same three questions. Write both answers side by side and say one thing that is the same and one thing that is different." },
+          ],
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l2-u06-l6",
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 6,
+      lesson: 6,
+      covers: { unitFrom: 6, lesson: "Understand" },
+      title: "Grammar Champions: Finished actions (-ed, and Did + the plain verb)",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "61", activities: ["D", "E", "F"], note: "Grammar in Use: song, Learn Grammar and the partner talk" },
+        { book: "WB", pages: "49-51", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: Finished actions", subtitle: "Lesson 6 · Grammar and speaking", bigQuestion: "How are things different now from long ago?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can say what I did and what people did long ago, with -ed verbs.",
+            "I can ask and answer: Did you ___? Yes, I did. / No, I didn't.",
+            "I can write four or more sentences and join two with and or but.",
+            "I can explain, in my own words, what happens to the verb after Did.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 6,
+          steps: [
+            "Teacher says a plain verb from the unit: visit, arrive, enter, ask, check, travel. Shout the finished word and do the action: 'Visited!' (wave) 'Arrived!' (arms wide).",
+            "Teacher says a Big Question word: long ago or now. Show it with your body: long ago = look back over your shoulder, now = point to the floor. Then say one thing that is old and one thing that is new.",
+            "Pairs: Partner A mimes one of the verbs. Partner B asks 'Did you ___?' and A answers 'Yes, I did.' or 'No, I didn't.' Swap after one minute.",
+            "Teacher asks the class 'What did you do yesterday?' Three children answer with one short sentence each.",
+          ],
+          prompts: ["Visit... Visited!", "Did you arrive?", "Yes, I did. / No, I didn't.", "Long ago ... now ...", "Yesterday I ___ed."],
+          teacherNote:
+            "Retrieval and spacing: pull back the Lesson 1 and Lesson 3 words and Did you ...? before today's rule. Keep it quick and bouncy. If a child says 'Did you visited?' do not correct: repeat the question up to the mistake with a rising voice ('Did you ...?') and let the child fix it. Mimes stay kind: nobody acts as a classmate who is sick or sad.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: Pip's big day",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Close your books. Teacher is the storyteller. Listen to the story of Pip the puppet (on the right).",
+            "First listening: clap every time you hear a finished action (an -ed word).",
+            "Second listening: stand up every time you hear the little word Did, and answer the question with a loud 'Yes, he did!' or 'No, he didn't!'",
+            "Ask: 'What is the mystery? What is the same about the words you clapped? What do you notice about the word after Did?' Tell a partner. Do not give the rule yet.",
+          ],
+          prompts: [
+            "Part 1: 'Meet Pip the puppet. Yesterday, Pip visited a crowded market. He walked past the stalls and asked a clerk a question.'",
+            "Part 2: 'Did Pip buy a hat? No, he didn't! Pip wanted a kite. Did the clerk help him? Yes, she did! She checked the shelf and showed him a red kite.'",
+            "Part 3: 'Long ago, Pip's great-great-grandpuppet traveled to the same market by boat. He arrived in the morning and entered the gate. Did he travel by plane? No, he didn't! There were no planes then.'",
+            "Part 4: 'Today Pip traveled by bus. The bus arrived at nine. Did the bus arrive late? No, it didn't! Pip listened to a song and watched the rain.'",
+            "Part 5: 'Pip's friends {s1} and {s2} cleaned the stall and played with the kite. Did {s1} climb a tree? No, {s1} didn't. Did {s2} laugh? Yes, {s2} did!'",
+            "Part 6: 'Pip jumped, danced and waved goodbye. What did Pip do yesterday? Say it!'",
+          ],
+          teacherNote:
+            "Input flood: the same pattern many times in one invented story, so no child is talked about. Read slowly and lean on the -ed endings and on Did. Do NOT explain the grammar. Write the children's own ideas on the board exactly as they say them. The mystery connects to the Big Question: Pip's great-great-grandpuppet and Pip did the same job (traveled) in different ways, and the grammar lets us say it. Kind name-slot lines only; the children in them do ordinary happy things.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group gets 14 sentence cards and two mats: RIGHT and NOT RIGHT.",
+            "Read each card aloud. Decide: is it right or not right? Put it on a mat.",
+            "Look at the RIGHT mat. Sort the cards again into two piles: QUESTIONS with Did, and FINISHED ACTIONS without Did. What is the same in each pile? What is different?",
+            "Look at the NOT RIGHT mat. What is wrong with each card? Fix two cards with a pencil and say why.",
+            "Tell the class: 'I think the rule is ___ because ___.' Teacher writes your words on the board.",
+          ],
+          frames: ["In the questions with Did, the verb is ___.", "In the finished actions, the verb ends with ___.", "The wrong cards have ___ two times.", "I think the rule is ___ because ___."],
+          prompts: [
+            "Right cards (finished actions): 'Pip visited a market.' 'Zoe arrived at noon.' 'We entered the room and asked a question.' 'The children played in the yard.'",
+            "Right cards (questions and answers): 'Did Pip visit a market?' 'Did Zoe arrive at noon?' 'Yes, she did.' 'No, they didn't.' 'Where did the children play?'",
+            "Not right cards: 'Did Pip visited a market?' 'Zoe arrive at noon yesterday.' 'The children didn't played.' 'Yes, I did visited.' 'Where did the children played?'",
+          ],
+          teacherNote:
+            "Print the cards in big letters, one sentence per card. The sorting and the talk are the point, so give time. Listen for what they notice: 'there are two marks for past', 'did and -ed never come together', 'after did the word is short'. Write their words on the board as they say them. Ask 'How do you know?' and 'Show me with your hands.' Do NOT tell the rule; the next slide puts their words into the form. Early finishers: write one right card and one not right card for another group to sort.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: Finished actions (-ed, and Did + the plain verb)",
+          hook: "A finished action needs ONE sign for the past. In a statement the sign is -ed. In a question the sign is DID, and the verb stays plain!",
+          form: [
+            { label: "Statement (finished action)", pattern: "person + verb + ED (verb ends in e: just add D). Clues: yesterday, last week, long ago." },
+            { label: "Yes / No question", pattern: "DID + person + PLAIN verb ...?" },
+            { label: "Short answers", pattern: "Yes, person DID. / No, person DIDN'T." },
+            { label: "Question word", pattern: "WHERE / HOW / WHAT + DID + person + PLAIN verb ...?" },
+            { label: "Not", pattern: "person + DIDN'T + PLAIN verb" },
+          ],
+          explanation: [
+            "What it means: a finished action is over. It happened yesterday, last week or a long time ago, and it is not happening now. We use this to tell what people did, so we can compare it with now.",
+            "When we use it: for stories, for news about yesterday, and every time we say how things were long ago. Long ago people traveled by ship. Now they travel by airplane. The time word tells you the action is finished, so the verb must show it.",
+            "The big idea: a sentence needs only ONE sign for the past. In a statement the verb carries it: visited. In a question or with didn't, the word did carries it, so the verb goes back to plain: Did you visit? She didn't visit. We never use did and -ed together.",
+            "Vietnamese tip: Vietnamese keeps the verb the same and adds a time word (hôm qua, đã). In English the verb itself changes (visit becomes visited), and with did it goes back to plain. So there are two places to check: the end of the verb in a statement, and the word after did in a question.",
+            "Why it matters for talking: with Did you ...? you can ask a friend what they did and find out about long ago too. Your questions sound clear, and you can answer with a short Yes, I did or a full sentence.",
+          ],
+          examples: [
+            { text: "Long ago, people traveled by ship.", note: "finished action: travel + ed" },
+            { text: "{s1} played in the park yesterday.", note: "finished action: play + ed" },
+            { text: "{s2}, did you walk to school? Yes, I did.", note: "Did + plain verb, short answer" },
+            { text: "Did the ship arrive late? No, it didn't.", note: "arrive stays plain after did" },
+            { text: "Where did {s3} and {s4} play? They played in the yard.", note: "question word + did + plain verb; the answer has -ed" },
+            { text: "We didn't visit the museum last week.", note: "didn't + plain verb" },
+          ],
+          pitfalls: [
+            { wrong: "Did you played football yesterday?", right: "Did you play football yesterday?", why: "Did already shows the past, so the verb stays plain." },
+            { wrong: "Yesterday I walk to school.", right: "Yesterday I walked to school.", why: "A finished action in a statement needs -ed." },
+            { wrong: "Yes, I did visited my aunt.", right: "Yes, I did. I visited my aunt.", why: "A short answer is just Yes, I did. For more, make a new sentence with -ed." },
+            { wrong: "She didn't arrived on time.", right: "She didn't arrive on time.", why: "After didn't the verb stays plain too." },
+          ],
+          book: { book: "SB", pages: "61", activities: ["E"], note: "Learn Grammar" },
+        },
+        {
+          kind: "activity",
+          title: "Pip's secret day: ask and win",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Teams of four. Each team gets five action cards for Pip's secret day yesterday. Keep them face down.",
+            "Team 1 asks Team 2: 'Did Pip ___?' Team 2 looks at its cards and answers: 'Yes, he did.' or 'No, he didn't.'",
+            "A good question (Did + plain verb) wins a point. A wrong question gets a prompt: the team hears the mistake in a rising voice and may try once more.",
+            "When a team knows all five actions, it says the whole day with -ed: 'Pip visited a market, played football, ...' Right = five points!",
+            "Swap roles. Play until every team has guessed.",
+          ],
+          prompts: [
+            "Cards to choose from: visit a market, play football, climb a hill, clean the boat, listen to music, watch a film, talk to a clerk, walk to the lake, check a map, ask a question.",
+            "Did Pip ___?", "Yes, he did.", "No, he didn't.", "I think Pip ___ed ...",
+          ],
+          teacherNote:
+            "The pattern is the winning move: you only earn the point if you say Did + the plain verb. Correct with PROMPTS before a recast: repeat the error with a rising voice ('Did Pip visited...?'), hold up one finger for 'one sign only', or tap your ear and say 'did'. Say the correct sentence yourself only if a team is stuck. Pip is a puppet, so nobody talks about a real child's day. Keep the cards the same ten for every team, so the game moves fast.",
+        },
+        {
+          kind: "speaking",
+          title: "Then and now: Ben and Mia",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Partner A and Partner B each hold a sheet. Do not look at each other's sheet. The sheet shows two children: Ben, who lived a hundred years ago, and Mia, who lives now. Each sheet has six rows.",
+            "Some boxes show a picture and some are empty. Ask your partner about the empty boxes: 'Did Ben ___?' or 'How did Mia ___?' or 'What did Ben ___?'",
+            "Your partner looks at the picture and answers with a whole sentence: 'Yes, he did. He walked to school.' Write a word or draw a picture in your empty box.",
+            "Put the sheets together. Are they the same? Fix any box that is different and say why.",
+            "Say two sentences that compare: 'Ben ___ed, but Mia ___ed.' Then say what is the same: 'They both ___ed.'",
+          ],
+          frames: ["Did Ben / Mia ___ ?", "Yes, he / she did. He / She ___ed ___.", "No, he / she didn't. He / She ___ed ___.", "How / What did ___ ___ ?", "Ben ___ed, but Mia ___ed."],
+          prompts: ["How did Mia travel to school?", "What did Ben use at night?", "Did Ben wash his clothes in a machine?", "What is the same? What is different?"],
+          fluencyTip: "Ask the whole question, then look at your partner. Answer with a whole sentence, not one word.",
+          teacherNote:
+            "Make two sheets before the lesson. Each has six rows with Ben (long ago) and Mia (now): 1 how the child got to school (Ben walked, Mia traveled by bus); 2 how the child washed clothes (Ben washed them in a river, Mia washed them in a machine); 3 what the child played (Ben played marbles, Mia played a game on a tablet); 4 what the child listened to (Ben listened to the radio, Mia listened to a song on a phone); 5 what the child used at night (Ben used a candle, Mia used a lamp); 6 how the child met a friend (Ben visited a friend in the next village, Mia talked to a friend on a phone). Sheet A: Ben rows 1-3 and Mia rows 4-6 are filled in with pictures and one word. Sheet B: Mia rows 1-3 and Ben rows 4-6. Ben and Mia are invented. The same jobs (travel, wash, play, listen, light, talk) are done with different things: let children notice this before you say it. Walk round and use prompts first: 'Did and the plain verb?' 'One sign for the past!'",
+        },
+        {
+          kind: "activity",
+          title: "Three sounds, one spelling: freeze dance",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Music on: dance! Music off: freeze.",
+            "Teacher says a plain verb. Say it finished and show the ending sound: /t/ = tap a foot (walked, asked), /d/ = nod your head (played, traveled), /id/ = jump (visited, wanted).",
+            "Teacher says 'Did you ___?' and a verb. Freeze, show the plain verb with a mime and whisper 'Yes, I did.'",
+          ],
+          prompts: ["walk, walked (tap)", "play, played (nod)", "visit, visited (jump)", "Did you ask? Yes, I did."],
+          teacherNote: "A movement break that keeps the pattern in the body. We write all three sounds with -ed, so the spelling stays the same. Everyone moves at once, so no child is on show.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "61", activities: ["F"], note: "Ask a partner how they traveled" },
+          steps: [
+            "Plan four sentences: 1. Long ago, people ___ed ... (choose travel, washing or talking to a friend). 2. Yesterday, I ___ed ... 3. Join with but: 'Long ago ..., but yesterday ...' 4. A question for your partner: 'Did you ___ yesterday?'",
+            "Round 1 (90 seconds): tell partner 1. Your partner shows a thumb for each -ed verb and answers your Did question.",
+            "Stop. Teacher shares ONE champion tip from the mistakes heard. Say it together once.",
+            "Round 2 (60 seconds): new partner, the same talk, a little faster. Round 3 (45 seconds): another new partner, smooth and clear.",
+            "Last: say one sentence about what changed between long ago and now.",
+          ],
+          frames: ["Long ago, people ___ed ___.", "Yesterday, I ___ed ___.", "Long ago people ___ed ___, but yesterday I ___ed ___.", "Did you ___ yesterday?", "Things are different now because ___."],
+          prompts: ["Did you ___ yesterday?", "What did people do long ago?", "How is it different now?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and shorter. Keep going, even if one word is not perfect.",
+          teacherNote:
+            "Use a timer everyone can see. Between rounds 1 and 2, give ONE feedback moment only: the most common error you heard (prompt it first: rising voice, one finger for 'one sign', ear tap for did). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support keep three picture cards in front of them and point to the card for each sentence. Yesterday sentences are about ordinary things (we walked, we played); nobody has to say anything about money, family or feelings.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: then and now",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          book: { book: "SB", pages: "61", activities: ["E"], note: "Learn Grammar" },
+          steps: [
+            "Say your sentences to a partner first. Use your Champion talk.",
+            "Watch: teacher and class write one sentence together: 'Long ago, Ben walked to school, but yesterday Mia traveled by bus.' Where is the -ed? Where is the comma? Now write a question: 'Did Ben use a lamp?'",
+            "Write four or five sentences: two about long ago, two about yesterday. Join two with and or but. Add one question with Did and its short answer.",
+            "Read your writing to a partner. Put a finger on each -ed verb and on each plain verb after Did.",
+            "Finished early? Write the rule: 'After Did, the verb ...'",
+          ],
+          frames: ["Long ago, people ___ed ___.", "Yesterday, I ___ed ___.", "Long ago ___ed ___, but yesterday ___ed ___.", "Did you ___ ? Yes, I did. / No, I didn't."],
+          prompts: ["Long ago ... but ...", "Did you ___?", "Which verb needs -ed?", "Which verb stays plain?"],
+          tiers: [
+            { level: "Support", task: "Copy the shared sentence and change one word. Write three sentences with the frames. Then do the worksheet's Support part.", frames: ["Long ago, people ___ed.", "Yesterday, I ___ed.", "Did you ___?"] },
+            { level: "Core", task: "Write four or five sentences. Join two with and or but. Then do the worksheet's Core part.", frames: ["Long ago ___ed ___, but yesterday ___ed ___."] },
+            { level: "Stretch", task: "Write a short paragraph of five or more sentences. Add one because. Then do the worksheet's Challenge part.", frames: ["Things are different now because ___."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model one sentence on the board with a gap for the verb, then release. Praise the -ed first, then the plain verb after Did, then the capital letter and the full stop or question mark. Hand out the worksheet after the sentences (Support, Core or Challenge part). The printed worksheet \"Grammar Champions: finished actions\" follows this slide in three levels. Check that no sentence teases a child: Ben and Mia are invented and children write about ordinary things.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your writing. Check each point and give yourself a tick.",
+            "1. Finished actions have -ed (and just d if the verb ends in e). 2. After Did and didn't the verb is plain. 3. A short answer is Yes, I did. or No, I didn't. 4. I have a capital letter and a full stop or a question mark.",
+            "Swap papers. Check your partner's writing. Say one star: 'Great -ed word!' and one step: 'Check the verb after Did.'",
+            "Fix one thing with your pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["Your verb has -ed. Great!", "After Did the verb is plain. Great!", "Check the verb here.", "Four ticks: champion!"],
+          teacherNote: "Draw the four checks on the board with small pictures (an -ed, a Did with a plain verb, a speech bubble, a capital letter and a dot). Children give a star for every tick on their partner's page. Collect one or two sentences without names to share with the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "Teacher shows three tricky cases. Thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then say why.",
+            "Case 1, a special verb: 'Where did they go?' (They went to the market.) Go does not take -ed in a statement. But after did, what happens to go? Is the verb plain?",
+            "Case 2, a thing, not a person: 'Did the old clock work?' (The clock worked slowly.) Does did work with things too?",
+            "Case 3, a long-ago fact: 'Ben didn't have a phone.' What happens to have after didn't?",
+            "Think: why does the word did help us when we talk about long ago and now?",
+          ],
+          frames: ["The rule works because ___.", "The rule does not work because ___.", "Did helps us talk about long ago because ___."],
+          prompts: ["Is the verb plain after did?", "Is there only one sign for the past?", "Which word shows the past here?"],
+          teacherNote:
+            "Transfer to new cases and link to the Big Question. Case 1: some verbs change in a different way in a statement (go becomes went), but after did, every verb stays plain, so the rule works: the idea is 'one sign for the past'. Let children's own words stand and write the best one on the class chart. Keep names out of the cases.",
+        },
+        odL2U06Creative["od2e-l2-u06-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: finished actions and Did questions.", book: { book: "WB", pages: "49-51", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Imagine a time machine. Choose a time long ago and a place. Draw it. Write four sentences about what people did there (with -ed verbs) and two questions you would ask them with Did or Where. Then say which time you like better, now or long ago, and why." },
+            { label: "Challenge", detail: "Ask an older person at home three questions about when they were young, for example 'Did you ... when you were young?' Write their answers in full sentences with -ed verbs. Then write one thing that is the same today and one thing that is different." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say what happens to the verb after Did, in your own words.",
+            "I used to think ___, now I think ___. (About -ed and Did, or about long ago and now.)",
+            "How do these words help us tell what changed since long ago? Show me with your hands how sure you are.",
           ],
         },
       ],

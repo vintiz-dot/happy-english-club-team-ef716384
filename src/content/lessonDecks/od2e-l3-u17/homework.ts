@@ -264,4 +264,67 @@ export const odL3U17Creative: Record<string, Creative> = {
       },
     ],
   },
+  // Lesson 5: Grammar Champions, route words
+  "od2e-l3-u17-l5": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["through", "around", "across", "along", "past", "up", "down", "waterfall"],
+      grammar: ["prepositions of movement", "First, Then, Finally", "because and so"],
+    },
+    base: {
+      title: "The explorer's route book",
+      task: "Imagine you are the first explorer to cross a hidden land. Write a route note that tells the next explorer how to get to a secret place, with a safety rule and a reason for every turn.",
+      steps: [
+        "Draw a small map of the hidden land with a start, a secret place and at least four things on the way (for example a hill, a lake, a tunnel, a bridge).",
+        "Write the route in three or more steps with First, Then and Finally and a different route word for each step.",
+        "Add a safety rule with Don't and because, and one place where you go around something and say why.",
+        "Finish with a sentence with so that tells the next explorer what they will find.",
+      ],
+      frames: [
+        "First, go ___ the ___. Then walk ___ the ___. Finally, go ___ the ___.",
+        "Don't go ___ the ___ because ___.",
+        "We go around the ___ because ___.",
+        "The path is ___, so you will find ___.",
+        "Be careful near the ___ because ___.",
+      ],
+      success: [
+        "My route has three steps, each with a different route word and no to in front of it.",
+        "I chose each route word to fit the place, and I explained one choice with because.",
+        "My note has a safety rule with Don't and a last sentence with so.",
+      ],
+      challenge:
+        "Write a second route for the same land that goes a different way, and say which route is safer and why.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "The fan's route to the stadium",
+          task: "Imagine you are guiding a visiting Arsenal fan from the station to the stadium on match day. Write a route note with a safety rule and a reason for every turn.",
+          steps: [
+            "Draw a small map of the streets with a station, the stadium and at least four things on the way (for example a bridge, a park, a shop, a tunnel).",
+            "Write the route in three or more steps with First, Then and Finally and a different route word for each step.",
+            "Add a safety rule with Don't and because, and one place where fans go around something and say why.",
+            "Finish with a sentence with so that tells the fan what they will see when they arrive.",
+          ],
+          frames: [
+            "First, go ___ the ___. Then walk ___ the ___. Finally, go ___ the ___.",
+            "Don't go ___ the ___ because ___.",
+            "Fans go around the ___ because ___.",
+            "The street is ___, so you will see ___.",
+            "Be careful near the ___ because ___.",
+          ],
+          success: [
+            "My route has three steps, each with a different route word and no to in front of it.",
+            "I chose each route word to fit the place, and I explained one choice with because.",
+            "My note has a safety rule with Don't and a last sentence with so.",
+          ],
+          challenge:
+            "Write a second route that fans can use when the main street is closed, and say which route is better and why.",
+        },
+      },
+    ],
+  },
 };

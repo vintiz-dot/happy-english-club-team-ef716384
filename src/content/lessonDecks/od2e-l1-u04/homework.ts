@@ -218,4 +218,46 @@ export const odL1U4Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 6: Grammar Champions
+  "od2e-l1-u04-l6": {
+    kind: "creative",
+    thinking: "Design",
+    uses: {
+      words: ["mural", "ocean", "sand", "seaweed", "seashell", "paint"],
+      grammar: ["The ___ ___ is in / on / under / next to the ___.", "Where is the ___?"],
+    },
+    base: {
+      title: "My mural map",
+      task: "Design a mural for a wall. Draw four colorful things. Write where each one is, then choose the best place for one thing and say why.",
+      steps: [
+        "Draw a big wall. Draw four things on it in four different colors.",
+        "Write where each thing is: in, on, under or next to.",
+        "Check each sentence. Did you write is or are?",
+        "Choose one thing. Say why that place is the best place for it.",
+      ],
+      frames: ["The ___ ___ is on the ___.", "The ___ ___ is next to the ___.", "The ___ are in the ___.", "It is the best place because ___."],
+      success: ["I can write four sentences with a place word and is or are.", "I can say why I chose one place."],
+      challenge: "Ask a friend to draw your mural from your words only. Then compare: is it the same or different?",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "My football wall",
+          task: "Design a football mural for the school wall. Draw four colorful things. Write where each one is, then choose the best place for one thing and say why.",
+          steps: [
+            "Draw a big wall. Draw a ball, boots, a shirt and a trophy in four different colors.",
+            "Write where each thing is: in, on, under or next to.",
+            "Check each sentence. Did you write is or are?",
+            "Choose one thing. Say why that place is the best place for it.",
+          ],
+          frames: ["The ___ ___ is in the ___.", "The ___ ___ is next to the ___.", "The ___ are under the ___.", "It is the best place because ___."],
+          success: ["I can write four sentences with a place word and is or are.", "I can say why I chose one place."],
+          challenge: "Ask a friend to draw your mural from your words only. Then compare: is it the same or different?",
+        },
+      },
+    ],
+  },
 };

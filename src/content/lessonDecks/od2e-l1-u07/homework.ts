@@ -287,5 +287,67 @@ export const odL1U7Creative: Record<string, Creative> = {
         }
       }
     ]
+  },
+
+  // Lesson 5: Grammar Champions (It gets, it snows, it doesn't)
+  "od2e-l1-u07-l5": {
+    kind: "creative",
+    thinking: "Compare and justify",
+    uses: {
+      words: ["summer", "winter", "hot", "cold", "rain", "snow"],
+      grammar: ["It + action word with s", "It doesn't + short action word", "In the ___ it gets ___."],
+    },
+    base: {
+      title: "Same place, two seasons",
+      task: "Fold a paper in two. Draw one place in the summer on the left and in the winter on the right. Write what happens and what doesn't. Then choose the season you like more and say why.",
+      steps: [
+        "Choose a place: a park, a beach, a hill or a place you make up.",
+        "Draw it in the summer on the left and in the winter on the right.",
+        "Under the summer, copy and finish: It gets ___ in the summer. It doesn't ___ in the summer.",
+        "Under the winter, copy and finish: It gets ___ in the winter. It ___s in the winter.",
+        "Choose the season you like more and tell someone at home why."
+      ],
+      frames: [
+        "It gets ___ in the summer.",
+        "It doesn't ___ in the summer.",
+        "It ___s in the winter.",
+        "I like the ___ because ___."
+      ],
+      success: [
+        "I can draw one place in two seasons.",
+        "I can write a yes sentence with an s and a no sentence with doesn't.",
+        "I can say which season I like more and why."
+      ],
+      challenge: "Add the spring and the fall too. Write one sentence for each season, and check every s."
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "The same pitch, two seasons",
+          task: "Fold a paper in two. Draw a football pitch in the summer on the left and in the winter on the right. Write what happens and what doesn't. Then choose the season you like more for a match and say why.",
+          steps: [
+            "Draw the pitch with the goals and a ball.",
+            "Draw it in the summer on the left and in the winter on the right.",
+            "Under the summer, copy and finish: It gets ___ in the summer. It doesn't ___ in the summer.",
+            "Under the winter, copy and finish: It gets ___ in the winter. It ___s in the winter.",
+            "Choose the best season for a match and tell someone at home why."
+          ],
+          frames: [
+            "It gets ___ in the summer.",
+            "It doesn't ___ in the summer.",
+            "It ___s in the winter.",
+            "I like the ___ for a match because ___."
+          ],
+          success: [
+            "I can draw one pitch in two seasons.",
+            "I can write a yes sentence with an s and a no sentence with doesn't.",
+            "I can say which season I like more for a match and why."
+          ],
+          challenge: "Add the spring and the fall too. Write one sentence for each season, and check every s."
+        }
+      }
+    ]
   }
 };

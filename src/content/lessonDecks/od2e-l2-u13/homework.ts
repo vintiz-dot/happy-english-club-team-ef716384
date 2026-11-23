@@ -165,4 +165,37 @@ export const odL2U13Creative: Record<string, Creative> = {
       challenge: "Write a second poster for a different feeling. Say why the same music would not work for it.",
     },
   ),
+
+  // Lesson 5 (Grammar Champions): in the morning, at night, on Saturday
+  "od2e-l2-u13-l5": creative(
+    "Design",
+    ["morning", "afternoon", "evening", "night", "fast", "slow", "excited", "sleepy"],
+    ["in the morning / at night / on Saturday", "When do you ...?"],
+    {
+      title: "My music clock",
+      task: "Design a music clock: a circle with four parts for the morning, the afternoon, the evening and the night. In each part draw the music you choose and a face that shows the feeling. Then write one sentence for each part and say why.",
+      steps: [
+        "Draw a big circle and cut it into four parts: morning, afternoon, evening, night.",
+        "In each part, draw the music you want to hear then: fast or slow, high or low.",
+        "Draw a face for the feeling the music gives you.",
+        "Write one sentence for each part. Use in for three parts and at for night.",
+      ],
+      frames: ["In the morning I listen to ___ music.", "In the afternoon I ___.", "At night I listen to ___ music because ___.", "It makes me feel ___."],
+      success: ["I used in for the morning, the afternoon and the evening.", "I used at before night.", "I said how each piece of music makes me feel."],
+      challenge: "Add a fifth part: On Saturday. Say what is different on Saturday and why. Use because.",
+    },
+    {
+      title: "My match-day music clock",
+      task: "Design a music clock for a match day at the Emirates Stadium. Draw four parts: the morning, the afternoon, the evening and the night. Choose the music for each part and the feeling it gives the Arsenal fans. Write one sentence for each part and say why.",
+      steps: [
+        "Draw a big circle and cut it into four parts: morning, afternoon, evening, night.",
+        "Choose the music for each part of match day: fast and loud for the walk to the stadium? Slow and soft for the night at home?",
+        "Draw a face for how the fans feel in each part.",
+        "Write one sentence for each part. Use in for three parts and at for night.",
+      ],
+      frames: ["In the morning the fans listen to ___ music.", "In the afternoon the Gunners ___.", "At night the fans ___ because ___.", "It makes them feel ___."],
+      success: ["I used in for the morning, the afternoon and the evening.", "I used at before night.", "I said how the music makes the fans feel."],
+      challenge: "Add a fifth part: On Saturday, the match day. Say why the music is different from a school day. Use because.",
+    },
+  ),
 };

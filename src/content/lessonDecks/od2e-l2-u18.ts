@@ -8,9 +8,66 @@
 // The class's main aim is speaking fluently and confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U18Creative } from "./od2e-l2-u18/homework";
 import { odL2U18Worksheets } from "./od2e-l2-u18/assessments";
+
+// The Grammar Champions worksheet (Lesson 6): the school's own sentences, with answers.
+const odL2U18ChampionWorksheet: Worksheet = {
+  id: "od2e-l2-u18-ws-champions",
+  title: "Grammar Champions: Count it or not?",
+  grammar: "How many / How much; there is / there are; some and any",
+  deckId: "od2e-l2-u18-l6",
+  slide: "Say it, then write: my art box",
+  intro:
+    "Can you count it one by one? Then ask How many and say there are: How many stickers are there? Can't count it? Ask How much and say there is: How much glitter is there? Use some in a yes sentence and any in a no sentence or a question.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right word. Then read the sentence aloud to a partner.",
+      example: "How ___ clay is there? (many / much)  ->  much",
+      items: [
+        { q: "How ___ shells are there in the box?", options: ["many", "much"], answer: "many" },
+        { q: "How ___ sand is there in the tray?", options: ["much", "many"], answer: "much" },
+        { q: "There ___ some paint on my hands.", options: ["is", "are"], answer: "is" },
+        { q: "There ___ four balloons on the wall.", options: ["are", "is"], answer: "are" },
+        { q: "Is there ___ clay? No, there isn't.", options: ["any", "some"], answer: "any" },
+        { q: "Which sentence is right?", options: ["There are a lot of stickers on the wall.", "There is a lot of stickers on the wall."], answer: "There are a lot of stickers on the wall." },
+        { q: "Which question is right?", options: ["How many balloons are there?", "How much balloons are there?"], answer: "How many balloons are there?" },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing words. Count it first!",
+      example: "___ water is there in the jar?  ->  How much",
+      items: [
+        { q: "___ stickers are there on the sheet?", answer: "How many" },
+        { q: "___ ribbon is there in the box?", answer: "How much" },
+        { q: "There ___ a lot of sand in the tray.", answer: "is" },
+        { q: "There ___ five balloons on the wall.", answer: "are" },
+        { q: "Are there ___ stars on the wall? No, there aren't.", answer: "any" },
+        { q: "I have ___ clay, but I don't have any paint.", answer: "some" },
+        { q: "Answer the question: How many balloons are there? (four)", answer: "There are four balloons." },
+        { q: "Answer the question: How much clay is there? (a lot)", answer: "There is a lot of clay." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Correct, join or write. Check every word.",
+      example: "Correct: How many glue is there?  ->  How much glue is there?",
+      items: [
+        { q: "Correct the mistake: How many glitter is there in the jar?", answer: "How much glitter is there in the jar?" },
+        { q: "Correct the mistake: There are a lot of rice on the plate.", answer: "There is a lot of rice on the plate." },
+        { q: "Correct the mistake: I don't have some ribbon.", answer: "I don't have any ribbon." },
+        { q: "Correct the mistake: Is there any balloons on the table?", answer: "Are there any balloons on the table?" },
+        { q: "Join with and: There are ten stickers. There is some glitter.", answer: "There are ten stickers, and there is some glitter." },
+        { q: "Join with but: There is a lot of clay. There isn't any paint.", answer: "There is a lot of clay, but there isn't any paint." },
+        { q: "Write your own: one question with How many and one with How much about your classroom, and answer them.", answer: "e.g. How many windows are there? There are four windows. How much space is there? There is a lot of space." },
+        { q: "Write your own: one sentence that says how you know when to use How many and when to use How much.", answer: "e.g. If I can count the things one by one, I use How many. If I can't, I use How much." },
+      ],
+    },
+  ],
+};
 
 export const odL2U18: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1304,6 +1361,248 @@ export const odL2U18: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l2-u18-l6",
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 18,
+      lesson: 6,
+      covers: { unitFrom: 18, lesson: "Understand" },
+      title: "Grammar Champions: Can we count it? How many, how much, some and any",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "181", activities: ["D", "E", "F"], note: "Song, Track 3•34; Learn Grammar: Quantifiers" },
+        { book: "WB", pages: "157-159" },
+      ],
+      slides: [
+        { kind: "title", title: "Unit 18: Origami and Art Tools", subtitle: "Lesson 6 · Grammar Champions", bigQuestion: "How do we make art?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can ask and answer with How many and How much when I talk about art things.",
+            "I can say there is, there are, some, any and a lot of in the right place.",
+            "I can write three or more sentences about my own art box.",
+            "I can explain the rule in my own words: when do we say How many, and when How much?",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "pairs",
+          minutes: 7,
+          steps: [
+            "Whole class: the teacher holds up a picture card or a real tool: markers, scissors, glue, chalk, watercolors, colored pencils. Everybody shouts the word and does its action from Lesson 4.",
+            "Pairs: Partner A says a word from Unit 18 (shiny, fold, crumple, golden, collage, mosaic, mobile, sculpture). Partner B says a whole sentence with it: I can fold paper. Swap after each turn.",
+            "Quick look: the teacher holds up a cup of buttons and a cup of water and asks: What can we ask about these? Collect ideas. Do not say the rule yet.",
+            "Finish with the Big Question: How do we make art? Each pair gives one tool and one thing it makes.",
+          ],
+          prompts: ["I use ___ to ___.", "I can fold / crumple ___.", "{s1}, tell us one tool and what it does."],
+          teacherNote:
+            "Retrieval: children pull back the words from this unit before they meet the pattern again. Keep it quick. Listen for how children ask about amounts now (do they say How many for everything?) and note it for the Focus slide. Do not correct yet; this is only listening.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: Art Fair Day",
+          tag: "Game",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Tell the children: Listen to my Art Fair story. Clap when you hear How many. Stamp when you hear How much. Tap your head when you hear any.",
+            "Read slowly with actions, then again faster: It is Art Fair Day! Look at the big table. How many brushes are there? There are six. How much blue paint is there? There is a lot! Is there any green paint? No, there isn't any green paint, but there is some yellow. How many stars are on the wall? There are ten. How much glitter is there? There is some. {s2} has a few markers, and {s3} has some glue. How many children come to the fair? There are twelve! Everybody paints, cuts and sticks. At the end: How many pictures are there? There are twelve. How much paint is there now? There isn't any! Oh dear. But there is a lot of art!",
+            "Third time: children say How many and How much with you and do the actions. Then in pairs: What did you notice? Take two or three ideas. Do not give the rule.",
+          ],
+          prompts: ["I heard How many ___ times.", "I noticed that ...", "{s4}, what did you stamp for?"],
+          teacherNote:
+            "Input flood: the same question words come back again and again, so children hear the pattern before they are asked to say it. Mime painting, cutting and sticking. Keep your voice the same on both questions: the words are the clue, not your voice. Write the questions on the board after the third reading so children can look at them.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group of 4 gets sentence cards (the teacher prepares them) and two mats: Is a good sentence and Is not a good sentence.",
+            "Sort. Good: How many brushes are there? / How much glue is there? / There are a few stars. / There is some clay. / Are there any markers? / There isn't any paint. Not good: How many glue is there? / How much brushes are there? / There are some clay. / There is a few stars. / Is there any markers? / There aren't any paint.",
+            "Round 2: take the good cards only. Underline the thing (brushes, glue, stars, clay). Sort again on a T-chart: things we can count one by one, and things we can't count.",
+            "Say what you notice: I notice that ___. Then: I think the rule is ___ because ___. One child writes the group's idea on a big card.",
+          ],
+          frames: ["I notice that ___.", "How many goes with ___.", "How much goes with ___.", "I think the rule is ___ because ___."],
+          prompts: ["Is this a good sentence? Why?", "Can you count it one by one?", "What is the same in these cards?"],
+          teacherNote:
+            "Concept formation: a good sentence beside a not-good one shows what the rule is NOT, as well as what it is. Walk round and write the children's own words on the board (one by one, we can count it, there are lots of little pieces) and do not tell the rule yet. Support: give those children the cards with the thing already underlined. Listen for children who notice that is and are change too.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: Count it or not? How many, how much, some, any",
+          hook: "Can you count it one by one? Ask How many! If you can't, ask How much!",
+          form: [
+            { label: "Count it (more than one)", pattern: "How many + things + are there? → There are + a number / a few / a lot of + things." },
+            { label: "Can't count it", pattern: "How much + paint / glue / sand + is there? → There is + some / a lot of + paint / glue / sand." },
+            { label: "Yes sentence", pattern: "There is some glue. / There are some markers." },
+            { label: "No sentence or question", pattern: "There isn't any paint. / Are there any markers? / Is there any clay?" },
+          ],
+          explanation: [
+            "Look at the thing, then choose the question. If you can count it one by one (one brush, two brushes), ask How many and say are. If you can't count it that way (paint, glue, sand, water), ask How much and say is. A lot of works with both: a lot of stars, a lot of paint.",
+            "Some goes in a Yes sentence: There is some clay. Any goes in a No sentence and in a question: There isn't any clay. Is there any clay? A few is only for a small number of things we can count: a few stars.",
+            "Vietnamese tip: Vietnamese says bao nhiêu for both How many and How much, and does not add -s to show more than one. English chooses: How many stars? How much glue? And more than one thing needs -s: ten stars.",
+            "Why it matters: artists need to know how many brushes and how much paint they have before they start. With the right question you can ask a friend for exactly what you need, and you can tell your story with clear numbers. That helps us answer the Big Question: we make art with tools, materials and ideas, and we plan them.",
+          ],
+          examples: [
+            { text: "How many brushes are there on the table? There are six brushes.", note: "Brushes: we can count them, so How many and are." },
+            { text: "How much glitter is there? There is some glitter.", note: "Glitter: tiny pieces we don't count, so How much and is." },
+            { text: "{s1} has a few markers, and {s2} has a lot of chalk." },
+            { text: "Is there any green paint? No, there isn't any green paint." },
+            { text: "{s3} wants some blue paint. {s4} has a lot of blue paint." },
+            { text: "Are there any scissors on the shelf? Yes, there are some scissors." },
+            { text: "How many children are at the art fair? There are twelve children.", note: "Children is more than one, so we say are." },
+          ],
+          pitfalls: [
+            { wrong: "How many glue do you need?", right: "How much glue do you need?", why: "We can't count glue one by one, so we use How much." },
+            { wrong: "There is five stars on the wall.", right: "There are five stars on the wall.", why: "More than one thing: use are and the -s ending." },
+            { wrong: "Is there any markers?", right: "Are there any markers?", why: "Markers is more than one, so we say are there." },
+            { wrong: "I have a few paint.", right: "I have some paint.", why: "A few is only for things we can count." },
+          ],
+          book: { book: "SB", pages: "181", activities: ["E"] },
+        },
+        {
+          kind: "activity",
+          title: "Art table race: run to the wall",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Put two signs on opposite walls: HOW MANY (with a picture of five stars) and HOW MUCH (with a picture of a paint pot). Make two teams. Put a tray of things in the middle: brushes, crayons, buttons, glue, rice, water, clay, paper.",
+            "The teacher (or a team captain) holds up one thing or a picture card. The first player runs to the right wall, then says the whole question and the answer: How many brushes are there? There are four.",
+            "A point for the team if the player runs to the right wall AND says the question and the answer correctly. If not, the other team can steal the point.",
+            "Change the player every turn. For round 2 the player first says if the answer is some, a few or a lot of: Is there any glue? Yes, there is some glue.",
+          ],
+          prompts: ["brushes (4)", "glue (some)", "buttons (a lot of)", "rice (a lot of)", "crayons (a few)", "water (some)", "stars on the wall (ten)", "clay (none: There isn't any)"],
+          teacherNote:
+            "The winning move is the right wall plus the right sentence. Correct with prompts before you recast: 1) Elicit: say the start and wait: How much ... ? 2) Repeat the mistake with a rising voice: Many glue? 3) Hand signal: show a count on your fingers for How many, spread your hands wide for How much. 4) Only then recast: How MUCH glue is there? Do it straight after the error, kindly. Do not let the fastest runner win by speed alone: give the point for the correct sentence.",
+        },
+        {
+          kind: "speaking",
+          title: "Two art cupboards: find the differences",
+          mode: "pairs",
+          minutes: 12,
+          frames: ["How many ___ are there in your cupboard?", "There are ___.", "How much ___ is there?", "There is ___.", "Are there any ___? Yes, there are some. / No, there aren't any.", "The same: ___. Different: ___."],
+          prompts: ["Is it one by one, or not?", "Can you say it with How many?", "Can you say it with How much?"],
+          fluencyTip: "Ask the whole question and give a whole answer. If you do not understand, say: Can you say it again? A pause is fine. Look at your partner.",
+          steps: [
+            "Partner A has the red cupboard card. Partner B has the blue cupboard card. Do not show your card!",
+            "Ask about each thing in turn: brushes, crayons, paint, glue, chalk, scissors. Write your partner's answers on your card.",
+            "Find the same and the different. Say: The same: brushes and scissors. Different: crayons, paint, glue and chalk.",
+            "Change partners and make your own cupboard cards. Draw five things on each card and write how many or how much.",
+          ],
+          teacherNote:
+            "Prepare two cards before class. Red cupboard: 4 brushes, 10 crayons, a lot of paint, some glue, no chalk, 2 pairs of scissors. Blue cupboard: 4 brushes, 6 crayons, some paint, a lot of glue, a few pieces of chalk, 2 pairs of scissors. The information gap is real: neither child can finish alone. Listen for How many / How much and is / are. Use prompt-style correction: ask One by one or not? or show the finger count / wide hands before you say the answer. Write two or three common errors on the board for the end.",
+        },
+        {
+          kind: "activity",
+          title: "Movement break: jump and wave",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "The teacher calls an art word. If we can count it, jump and count: Brushes! One, two, three! If we can't count it, make a big wave with your arms: Glue! Some!",
+            "Call fast: crayons, paint, stars, water, markers, sand, buttons, glitter. The class says: How many? or How much? as they move.",
+            "{s5} calls the next ten words. Can you find a word where the class does not agree? Say it and say why.",
+          ],
+          prompts: ["Brushes! How many?", "Paint! How much?", "Some paint!", "A lot of stars!"],
+          teacherNote:
+            "Keep it fast and silly; children move and say the pattern at the same time. If the class does not agree about a word (paper? chalk?), stop and say: Good thinking. Put it on the board for the Transfer slide.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          frames: ["In my art box there are ___ and ___.", "There is some ___, but there isn't any ___.", "I have a few ___ and a lot of ___.", "How many ___ do you have? How much ___ do you have?"],
+          prompts: ["What is in your art box?", "Do you have any ___?", "How many / How much do you have?"],
+          fluencyTip: "Say it three times to three friends. Each time it can be faster and easier. Look at your partner, not at your paper.",
+          steps: [
+            "Plan your art box: choose five things (some you can count, some you can't). Draw them on a card. Do not write a script.",
+            "Round 1 (90 seconds): tell partner 1 what is in your art box, and answer two questions. Round 2 (60 seconds): move to a new partner and tell it again, shorter. Round 3 (45 seconds): a new partner, even shorter.",
+            "Between round 1 and round 2 the teacher gives one feedback moment to the whole class: one thing you did well, one thing to fix (How many / How much, is / are).",
+            "Listeners: after each round say: I liked ___. And ask one question.",
+          ],
+          teacherNote:
+            "Task repetition builds fluency: the same message, shorter time, new listener. Take the single feedback moment after round 1 and use a prompt first (How ... paint do you have?) before the right answer, so mistakes do not set before the next round. Do not stop children during the rounds. Quiet children can show the card while they speak.",
+        },
+        {
+          kind: "activity",
+          title: "Say it, then write: my art box",
+          tag: "Writing",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Say your sentences to a partner first. Sentence 1: In my art box there are ___ and ___. Sentence 2: There is some ___. Sentence 3: There isn't any ___. Sentence 4: a question for a friend with How many or How much.",
+            "The teacher models one shared sentence with the class: In my art box there are six brushes, and there is a lot of glue. Children say which words changed with brushes and glue, and why.",
+            "Write four or five sentences about your own art box. Join two ideas with and or but: There are four brushes, but there isn't any paint. Check is and are.",
+            "Swap papers with your partner. Underline one great sentence and say: I like this sentence because ___.",
+          ],
+          frames: ["In my art box there are ___.", "There is some ___.", "There isn't any ___.", "___, and ___.", "___, but ___.", "How many / How much ___ do you have?"],
+          prompts: ["Can you count it one by one?", "Is it is or are?", "Can you join these two ideas with and or but?"],
+          teacherNote:
+            "Oral rehearsal first, then writing: children who said it can write it. Support: give a gapped model (In my art box there are ___ and there is some ___.). Stretch: add a sentence with because (I need more glue because ...). Check for capital letters, full stops and question marks. The printed worksheet Grammar Champions: Count it or not? follows this slide, in three levels (Support, Core, Challenge).",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Write the four checks on the board. Read your own writing. Tick each one in pencil.",
+            "1. I used How many for things I can count and How much for things I can't. 2. I said there are with more than one thing and there is with one thing or things I can't count. 3. I used some in Yes sentences and any in No sentences and questions. 4. I have a capital letter, a full stop or a question mark, and one and or but.",
+            "Swap with your partner. Tick again with a different color. Say: You are a champion at ___. Next time, try ___.",
+            "Fix one thing in your own writing. Show your teacher the fix.",
+          ],
+          prompts: ["You are a champion at ___.", "Next time, try ___.", "I fixed ___."],
+          teacherNote:
+            "Success criteria in child language. A child fixing their own sentence after a peer check is the point: look for the fix, not for perfect pages. Praise a kind, specific comment.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Speaking",
+          mode: "groups",
+          minutes: 6,
+          steps: [
+            "Put three cards on the board: 1. The beach: ___ shells are there? ___ sand is there? 2. The kitchen: ___ rice is there? ___ apples are there? 3. The tricky one: paper and water. Can we say How many paper? How many water?",
+            "In groups: Does our rule work at the beach and in the kitchen, too? What goes in each gap? Say why.",
+            "Tricky case: we can say How many sheets of paper and How many bottles of water. Why can we count the sheets and the bottles, but not the paper and the water? Say it in your own words.",
+            "Each group tells the class: I think ___ because ___. The class says if it agrees.",
+          ],
+          prompts: ["Does the rule work for ___, too?", "I think ___ because ___.", "Can we count it one by one?"],
+          frames: ["The rule works for ___ because ___.", "We can count ___, but we can't count ___."],
+          teacherNote:
+            "Transfer: children find that the rule is about counting, not only about art things. Answers: How many shells, How much sand; How much rice, How many apples; paper and water are not counted, but sheets and bottles are, so we say How many sheets of paper and How much paper. Link back to the Big Question: artists use both, they count the brushes and measure the paint.",
+        },
+        odL2U18Creative["od2e-l2-u18-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Unit 18 grammar pages. Say each sentence aloud first.", book: { book: "WB", pages: "157-159" } },
+            { label: "Creative grammar", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
+            { label: "Challenge: the question detective", detail: "Find five things at home or at school. Write a How many or How much question for each one and answer it. Which one was hardest to decide? Tell your teacher why." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words.",
+            "I used to think ___ about How many and How much. Now I think ___.",
+            "Why does it help an artist to know how many and how much? Say it in one sentence. Show me with your thumbs how sure you are.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL2U18Worksheets,
+  worksheets: [...odL2U18Worksheets, odL2U18ChampionWorksheet],
 };

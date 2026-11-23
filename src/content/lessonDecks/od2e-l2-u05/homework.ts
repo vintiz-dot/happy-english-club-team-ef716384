@@ -159,6 +159,56 @@ export const odL2U05Creative: Record<string, Creative> = {
     ],
   },
 
+  // Lesson 5: Grammar Champions, -ed and didn't
+  "od2e-l2-u05-l5": {
+    kind: "creative",
+    thinking: "Compare and justify",
+    uses: {
+      words: ["travel", "news", "letter", "radio", "airplane", "Internet"],
+      grammar: ["Long ago, people ___ed.", "They didn't ___.", "I think ___ is better because ___."],
+    },
+    base: {
+      title: "A postcard from long ago",
+      task: "Imagine you traveled back a hundred years. Draw a postcard and write what you did and what you didn't do. Say what you miss from now.",
+      steps: [
+        "Draw a picture of the place on the front of your postcard.",
+        "Write two sentences with -ed: what you did there.",
+        "Write one sentence with didn't: something you could not do, like text a friend.",
+        "Say if you like long ago or now better, and why.",
+      ],
+      frames: ["Long ago, I ___ed.", "I didn't ___.", "I missed ___.", "I think ___ is better because ___."],
+      success: [
+        "I used -ed for things that happened.",
+        "I used didn't with a plain verb.",
+        "I gave a reason with because.",
+      ],
+      challenge: "Add a sentence with but: one thing was good long ago, but one thing is better now.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "A postcard from the first match",
+          task: "Imagine you watched a football match a hundred years ago. Draw a postcard and write what the fans did and didn't do. Say what you miss from now.",
+          steps: [
+            "Draw the field and the fans on the front of your postcard.",
+            "Write two sentences with -ed: what the fans did at the match.",
+            "Write one sentence with didn't: something the fans could not do, like watch on TV.",
+            "Say if you like matches long ago or now better, and why.",
+          ],
+          frames: ["Long ago, fans ___ed.", "They didn't ___.", "I missed ___.", "I think ___ is better because ___."],
+          success: [
+            "I used -ed for things that happened.",
+            "I used didn't with a plain verb.",
+            "I gave a reason with because.",
+          ],
+          challenge: "Add a sentence with but: one thing was good about long-ago matches, but one thing is better now.",
+        },
+      },
+    ],
+  },
+
   // Lesson 4: transport, asking to repeat
   "od2e-l2-u05-l4": {
     kind: "creative",

@@ -210,4 +210,56 @@ export const odL2U01Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 5: Grammar Champions, they, it and them
+  "od2e-l2-u01-l5": {
+    kind: "creative",
+    thinking: "Evaluate",
+    uses: {
+      words: ["wings", "fur", "scales", "feathers", "gills", "legs"],
+      grammar: ["They have ...", "... help them ...", "It has ..."],
+    },
+    base: {
+      title: "The most helpful body part",
+      task: "Choose the body part that you think helps animals the most. Draw two animals that have it and write why you chose it.",
+      steps: [
+        "Think about wings, fur, scales, feathers, gills and legs. Choose the one you think helps the most.",
+        "Draw two animals that have it, one animal on each side.",
+        "Write one sentence about each animal. Use It or They, and say the animal name only once.",
+        "Write one sentence with them to say how the body part helps.",
+        "Write why you chose it. Tell your family and ask: do you agree?",
+      ],
+      frames: ["I think ___ help animals the most.", "A ___ has ___. It ___.", "Ducks have ___. They ___.", "___ help them ___.", "I chose ___ because ___."],
+      success: [
+        "I can use It for one animal and They for many.",
+        "I can write one sentence with them after a verb.",
+        "I can give a reason with because.",
+      ],
+      challenge: "Say what an animal without this body part would find hard, and how it could still live. Use them or it.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "The best body part for a football team",
+          task: "Choose the animal body part that would help a football team the most. Draw two animals that have it and write why you chose it.",
+          steps: [
+            "Think about wings, fur, scales, feathers, gills and legs. Choose the one you think would help a football team the most.",
+            "Draw two animals that have it, one animal on each side.",
+            "Write one sentence about each animal. Use It or They, and say the animal name only once.",
+            "Write one sentence with them to say how the body part helps on the football field.",
+            "Write why you chose it. Tell your family and ask: do you agree?",
+          ],
+          frames: ["I think ___ would help a team the most.", "A ___ has ___. It ___.", "Frogs have ___. They ___.", "___ help them ___.", "I chose ___ because ___."],
+          success: [
+            "I can use It for one animal and They for many.",
+            "I can write one sentence with them after a verb.",
+            "I can give a reason with because.",
+          ],
+          challenge: "Say what an animal without this body part would find hard on the field, and how it could still play. Use them or it.",
+        },
+      },
+    ],
+  },
 };

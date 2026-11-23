@@ -1,5 +1,5 @@
 // Oxford Discover 2nd edition, Level 2, Unit 8 (Big Question 4: When do we use subtraction?)
-// Five 90-minute lessons that follow the Student Book (SB pp. 76-85, with the Units 7 and 8 Wrap Up)
+// Five 90-minute lessons (plus a sixth, Grammar Champions, on yesterday words and Did + the plain verb) that follow the Student Book (SB pp. 76-85, with the Units 7 and 8 Wrap Up)
 // and Workbook (WB pp. 64-73) page by page. The children are 7-8, so guided play (chants, mime,
 // games, role play) is blended with simple inquiry: mess about, sort, read for evidence, organize
 // on a chart, say a generalization in your own words, test it on a new case, reflect.
@@ -8,9 +8,66 @@
 // never about a child in the class.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U8Creative } from "./od2e-l2-u08/homework";
 import { odL2U8Worksheets } from "./od2e-l2-u08/assessments";
+
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l2-u08-ws-champions",
+  title: "Grammar Champions: what happened?",
+  grammar: "yesterday words (took, ate, sold, had); Did + plain verb; didn't + plain verb",
+  deckId: "od2e-l2-u08-l6",
+  slide: "Write it: take-away story",
+  intro:
+    "A sentence about yesterday needs only ONE sign. In a statement the verb shows it: Rocco took a muffin. In a question or with didn't, the word did shows it, and the verb stays plain: Did Rocco take a muffin? Rocco didn't take a muffin. Never use did and a yesterday word together.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right one. Then read the sentence aloud.",
+      example: "Yesterday, Moko ___ a banana. (ate / eat)  ->  ate",
+      items: [
+        { q: "Yesterday, Tilly ___ twenty muffins.", options: ["made", "make"], answer: "made" },
+        { q: "Did Rocco ___ a muffin?", options: ["take", "took"], answer: "take" },
+        { q: "Tilly ___ six muffins to a family.", options: ["sold", "sell"], answer: "sold" },
+        { q: "Did Tilly sell the muffins? Yes, she ___.", options: ["did", "does"], answer: "did" },
+        { q: "Did Rocco eat a muffin? No, he ___.", options: ["didn't", "doesn't"], answer: "didn't" },
+        { q: "Which question is right?", options: ["Did Rocco hide the muffins?", "Did Rocco hid the muffins?"], answer: "Did Rocco hide the muffins?" },
+        { q: "Which sentence is right?", options: ["Rocco ate one muffin.", "Rocco eated one muffin."], answer: "Rocco ate one muffin." },
+        { q: "Which sentence is right?", options: ["Tilly didn't sell the cake.", "Tilly didn't sold the cake."], answer: "Tilly didn't sell the cake." },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing word. For the last three, write the whole sentence.",
+      example: "Yesterday, the squirrel (hide) ___ ten nuts.  ->  hid",
+      items: [
+        { q: "Yesterday, Moko the monkey (eat) ___ nine bananas.", answer: "ate" },
+        { q: "Tilly (have) ___ twenty muffins in the morning. Now she has nine.", answer: "had" },
+        { q: "Did the squirrel (hide) ___ the nuts? Yes, she did.", answer: "hide" },
+        { q: "How many eggs did the farmer ___ to the market? (take)", answer: "take" },
+        { q: "Tilly had 20 muffins. She sold 11. How many muffins does she have now? Write the sentence.", answer: "She has nine muffins now. (20 - 11 = 9)" },
+        { q: "Correct the mistake: Did the farmer took the eggs?", answer: "Did the farmer take the eggs?" },
+        { q: "Correct the mistake: Yesterday I buyed a kite.", answer: "Yesterday I bought a kite." },
+        { q: "Join with but: Tilly made twenty muffins. She sold only eleven.", answer: "Tilly made twenty muffins, but she sold only eleven." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Write a full sentence for each one, or fix the mistake. Check which verb has a yesterday word and which stays plain.",
+      example: "(the squirrel / hide / the nuts)  ->  Did the squirrel hide the nuts?",
+      items: [
+        { q: "Write a Did question: (the farmer / sell / the eggs)", answer: "Did the farmer sell the eggs?" },
+        { q: "Write a question with How many: (the boy / let go of / balloons)", answer: "How many balloons did the boy let go of?" },
+        { q: "Moko had 15 bananas. Now he has 6. How many did he eat? Answer in a full sentence.", answer: "He ate nine bananas. (15 - 6 = 9)" },
+        { q: "Fix the mistake: Yes, he did sold six.", answer: "Yes, he did. He sold six." },
+        { q: "Join with and: The farmer took eight eggs to the market. The farmer sold them all.", answer: "The farmer took eight eggs to the market and sold them all." },
+        { q: "Write a take-away story of three sentences about a stall. Use had, a yesterday word and now.", answer: "e.g. The fruit seller had 24 apples. She sold 10 apples. Now she has 14 apples." },
+        { q: "Write the rule in your own words: why do we say Did he take ...? and not Did he took ...?", answer: "e.g. Did already shows yesterday, so the verb stays plain. We need only one sign." },
+      ],
+    },
+  ],
+};
 
 export const odL2U8: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1319,6 +1376,274 @@ export const odL2U8: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l2-u08-l6",
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 8,
+      lesson: 6,
+      covers: { unitFrom: 8, lesson: "Understand" },
+      title: "Grammar Champions: What happened? (yesterday words, and Did + the plain verb)",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "80-81", activities: ["C", "D", "E"], note: "Subtraction problems, the song and Learn Grammar" },
+        { book: "WB", pages: "67-69", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: What Happened?", subtitle: "Lesson 6 · Grammar and speaking", bigQuestion: "When do we use subtraction?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can say what happened with yesterday words like took, ate, went and sold.",
+            "I can ask and answer: Did she ___? Yes, she did. / How many ___ did she ___?",
+            "I can write three or more sentences about what happened and join two with and or but.",
+            "I can explain, in my own words, what happens to the verb after Did.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 6,
+          steps: [
+            "Teacher holds up a picture card or mimes a word from the unit: baker, cook, jar, hide, dig up, let go. Shout the word and do the action.",
+            "Teacher says a plain verb from last lesson: eat, go, take, make, buy, sell. Shout the yesterday word and jump: 'Ate!' 'Went!' 'Took!'",
+            "Quick count: teacher puts ten counters on the desk and takes some away. 'There were ten. Now there are seven. What is the take-away number?' Say it and show it with your fingers.",
+            "Pairs: Partner A mimes one yesterday word. Partner B asks 'Did you ___?' and A answers 'Yes, I did.' or 'No, I didn't.' Swap after one minute.",
+            "Teacher asks the class: 'When do we use subtraction?' Two or three children answer with their own idea.",
+          ],
+          prompts: ["Eat ... ate!", "Take ... took!", "Ten take away three is seven.", "Did you ___?", "Yes, I did. / No, I didn't."],
+          teacherNote:
+            "Retrieval and spacing: pull back Lesson 1 and Lesson 3 words and the Did question before today's rule. Keep it bouncy and short. If a child says 'Did you ate?' do not correct yet: repeat the question up to the mistake with a rising voice ('Did you ...?') and let the child fix it. Mimes are about animals and ordinary jobs, so nobody is on show.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: the missing muffins",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 7,
+          steps: [
+            "Close your books. Teacher is the storyteller. Listen to the story of Tilly the baker and Rocco the raccoon (on the right).",
+            "First listening: clap every time you hear a yesterday word that is NOT an -ed word (made, sold, took, ...).",
+            "Second listening: stand up every time you hear the little word Did, and answer the question with a loud 'Yes, she did!' or 'No, he didn't!'",
+            "Ask: 'What is the mystery? What do you notice about the word right after Did? What do you notice about the words in the answers?' Tell a partner. Do not give the rule yet.",
+          ],
+          prompts: [
+            "Part 1: 'Yesterday Tilly the baker got up very early. She made twenty muffins and put them on a big tray. Did she make cookies too? No, she didn't! She made only muffins.'",
+            "Part 2: 'Then Tilly went to the market. She sold six muffins to a family and five muffins to a man in a red hat. How many muffins did she sell? Eleven! How many muffins did she have then? Nine!'",
+            "Part 3: 'Rocco the raccoon came by. Did he buy a muffin? No, he didn't! He took three muffins and hid them under his hat. Did Tilly see him? Yes, she did! She saw a muffin on his hat.'",
+            "Part 4: 'Tilly said, Please give them back. Did Rocco give them back? Yes, he did! He gave back two muffins. What did he do with the other muffin? He ate it, and then he said sorry.'",
+            "Part 5: '{s1} and {s2} went to the market too. Did {s1} buy a roll? Yes, {s1} did! {s2} bought a juice. They both ate their snacks under a tree.'",
+            "Part 6: 'At the end of the day Tilly had a little tray. What happened to the muffins? Say it: she sold ... Rocco took ... He ate ...'",
+          ],
+          teacherNote:
+            "Input flood: one pattern many times in an invented story, so no child is talked about. Read slowly and lean on the yesterday words and on Did. Do NOT explain the grammar. Write the children's ideas on the board exactly as they say them: 'the word after Did is the short one', 'the answers have different words'. Tilly and Rocco are story characters, so 'took' and 'hid' are fine here; the named children do only kind, ordinary things. The story already holds a subtraction problem (twenty, eleven, nine): ask afterward which numbers were the take-away story.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group gets 16 sentence cards and two mats: RIGHT and NOT RIGHT.",
+            "Read each card aloud. Decide: is it right or not right? Put it on a mat.",
+            "Look at the RIGHT mat. Sort the cards again into two piles: QUESTIONS and ANSWERS. Underline the verb on each card. Which verbs are always the same shape? Which verbs change?",
+            "Look at the NOT RIGHT mat. What is wrong with each card? Fix two cards with a pencil and say why.",
+            "Tell the class: 'I think the rule is ___ because ___.' Teacher writes your words on the board.",
+          ],
+          frames: ["In the questions with Did, the verb is always ___.", "In the answers, some verbs ___ and some verbs ___.", "Some wrong cards have two signs for yesterday: ___ and ___.", "I think the rule is ___ because ___."],
+          prompts: [
+            "Right cards (answers): 'Tilly sold six muffins.' 'Rocco took three muffins.' 'The monkey ate nine bananas.' 'The farmer went to the market.' 'She had twenty eggs.'",
+            "Right cards (questions): 'Did Tilly make a cake?' 'Did Rocco take a muffin?' 'What did the farmer sell?' 'How many eggs did she have?' 'No, she didn't.' 'Yes, he did.'",
+            "Not right cards: 'Rocco taked a muffin.' 'Did Tilly made a cake?' 'The farmer didn't went.' 'What did she sold?' 'Yesterday I eat an apple.'",
+          ],
+          teacherNote:
+            "Print the cards in big letters, one sentence per card. Mix the cards before each group starts. The sorting and talking are the point, so give time. Listen for ideas like: 'after Did the word is short', 'two words show yesterday, that is too many', 'take, took: it changes'. Write their ideas on the board as they say them and ask 'How do you know?' Use the concept words always / sometimes / different / same. Do NOT tell the rule; the next slide puts their words into the form. Early finishers: write one right card and one not right card for another group.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: Yesterday words and Did + the plain verb",
+          hook: "Only ONE sign for yesterday! Say took, ate or went, or say Did and keep the verb plain. Never both!",
+          form: [
+            { label: "Statement (it happened)", pattern: "person + YESTERDAY WORD (took, ate, went, made, sold, bought, hid, had, gave) ..." },
+            { label: "Yes / No question", pattern: "DID + person + PLAIN verb ...?" },
+            { label: "Short answers", pattern: "Yes, person DID. / No, person DIDN'T." },
+            { label: "Question word", pattern: "WHAT / WHERE / HOW MANY things + DID + person + PLAIN verb ...?" },
+            { label: "Not", pattern: "person + DIDN'T + PLAIN verb" },
+          ],
+          explanation: [
+            "What it means: the action is finished. It happened yesterday, last week or a long time ago. Some verbs add -ed (walk, walked). Many very common verbs have their own yesterday word: take, took; eat, ate; go, went; make, made; sell, sold. These are irregular. We learn each one, like a new friend.",
+            "When we use it: to tell what happened. We use it in stories and news, and in take-away stories too. A subtraction story always has a before, something that happened and an after: Tilly had twenty muffins. She sold eleven. Now she has nine. The yesterday word (sold) is the thing that made the number go down, and the question How many did she sell? asks for the take-away number. That is how this grammar helps us with the Big Question: we use subtraction to find out what happened to things.",
+            "The big idea: a sentence needs only ONE sign for yesterday. In a statement the verb shows it: She sold six muffins. In a question or with didn't, the word did shows it, so the verb goes back to plain: Did she sell six muffins? She didn't sell six muffins. We never write did and a yesterday word together.",
+            "Vietnamese tip: in Vietnamese the verb stays the same and you add 'đã' or 'hôm qua'. In English the yesterday word already has 'đã' inside it: ate is 'ăn' plus 'đã'. So after did (which is the 'đã' word) we use the plain verb. It would be like saying 'đã' twice if we said did ate.",
+            "Why it matters for talking: with Did you ...? and What did you do? you can ask a friend about yesterday, tell a story in the right order and solve a take-away story aloud. Your sentences sound clear and clever.",
+          ],
+          examples: [
+            { text: "Tilly the baker made twenty muffins and sold eleven of them.", note: "made / sold: two yesterday words" },
+            { text: "Did {s1} buy a roll? Yes, {s1} did.", note: "Did + plain verb (buy), short answer" },
+            { text: "{s2} took two cards and gave one to {s3}.", note: "took / gave: no did, so yesterday words" },
+            { text: "What did the raccoon do with the muffin? He ate it.", note: "question word + did + plain verb; the answer has ate" },
+            { text: "How many muffins did Tilly have? She had twenty.", note: "How many + did + plain verb (have), answer had" },
+            { text: "{s4} didn't go to the market. {s4} went to the park.", note: "didn't + plain verb; then a new sentence with went" },
+          ],
+          pitfalls: [
+            { wrong: "He taked a muffin.", right: "He took a muffin.", why: "Take has its own yesterday word, took. We do not add -ed." },
+            { wrong: "Did he took a muffin?", right: "Did he take a muffin?", why: "Did already shows yesterday, so the verb stays plain." },
+            { wrong: "What did she sold?", right: "What did she sell?", why: "Only the answer has the yesterday word: She sold muffins." },
+            { wrong: "Yesterday I eat a banana.", right: "Yesterday I ate a banana.", why: "A time word is not enough in English: the verb must change too." },
+          ],
+          book: { book: "SB", pages: "81", activities: ["E"], note: "Learn Grammar" },
+        },
+        {
+          kind: "activity",
+          title: "Muffin stall: eyes shut, eyes open",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Teams of four. One child is Tilly and has a plate with twelve counters (muffins), a pile of action cards (sell, eat, give, take, hide) and a pile of number cards (1 to 5). The board shows the five verbs with a picture each.",
+            "The others turn round or close their eyes. Tilly draws an action card and a number card and moves that many counters off the plate in secret, for example sell + 4.",
+            "Eyes open! The team counts the plate: 'There were twelve. Now there are eight.' They ask Did questions to find the verb: 'Did Tilly eat some?' Tilly answers 'Yes, she did.' or 'No, she didn't.'",
+            "When they find the verb, they ask 'How many did she sell?' Tilly answers with the yesterday word: 'She sold four.' The team says the subtraction: 'Twelve minus four is eight.'",
+            "Scoring: one point for a right Did question (Did + plain verb), one point for the yesterday word, one point for the subtraction. A wrong question gets a prompt: the team hears the mistake and may try once more. Swap Tilly every round.",
+          ],
+          prompts: ["Did Tilly ___ some?", "Yes, she did. / No, she didn't.", "How many did she ___?", "She ___ (yesterday word) ___.", "___ minus ___ is ___."],
+          teacherNote:
+            "The pattern is the winning move: no point without Did + plain verb. Correct with PROMPTS before a recast: repeat the error with a rising voice ('Did Tilly sold ...?'), hold up one finger for 'one sign only', or tap your ear and say 'did'. Say the whole sentence yourself only if a team is stuck. Prepare counters (beans, buttons) and the two small card piles before class. Use only verbs that make the number go down; the next activity adds more. Tilly is a made-up baker, so nobody is teased about winning or losing.",
+        },
+        {
+          kind: "speaking",
+          title: "Before and after: the market stalls",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Partner A and Partner B each get a sheet. Do not look at each other's sheet. Each sheet shows six little stories at the market. The pictures and numbers are shared out between you: you each know a different part.",
+            "If your picture shows the verb, your partner must find it. They ask 'Did the baker sell the muffins?' and you answer 'Yes, she did.' or 'No, she didn't.'",
+            "If your sheet shows the numbers, your partner asks you: 'How many muffins did the baker have?' and 'How many does she have now?' You answer: 'She had twenty.' 'Now she has nine.'",
+            "Put the numbers and the verb together. Say the whole story: 'The baker sold eleven muffins. Twenty minus eleven is nine.' Write the take-away number in the box.",
+            "Swap roles for the last three rows. Then put the sheets together and check: do both sheets say the same? Fix any box that is different and say why.",
+          ],
+          frames: ["How many ___ did the ___ have?", "How many ___ does the ___ have now?", "Did the ___ ___ the ___?", "Yes, he / she did. / No, he / she didn't.", "The ___ ___ (yesterday word) ___ ___.", "___ minus ___ is ___."],
+          prompts: ["What did the farmer do with the eggs?", "How many did he take?", "Did the monkey eat them?", "Which verbs make the number go down?"],
+          fluencyTip: "Ask the whole question and look at your partner. Answer with a whole sentence, not one word.",
+          teacherNote:
+            "Make two sheets before the lesson, each with six rows (a picture of the character and the thing, and a box for the answer). The six stories: 1 Tilly the baker, muffins, she sold them, had 20, now 9 (11). 2 Moko the monkey, bananas, he ate them, had 15, now 6 (9). 3 a girl, stickers, she gave them to friends, had 18, now 12 (6). 4 a farmer, eggs, he took them to the market, had 30, now 22 (8). 5 a squirrel, nuts, she hid them, had 16, now 10 (6). 6 a boy, balloons, he let go of them, had 12, now 8 (4). Sheet A shows the verb pictures for rows 1-3 and the numbers for rows 4-6; Sheet B the numbers for rows 1-3 and the verb pictures for rows 4-6. Put the six verbs (sell, eat, give, take, hide, let go) on the board. The characters are invented. Let go does not change (let go, let go): let children notice this and ask why they think so. Walk round and use prompts first: 'Did and the plain verb?' 'One sign for yesterday!'",
+        },
+        {
+          kind: "activity",
+          title: "Plain side, yesterday side: the jump",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Make a line on the floor with tape. The left side is PLAIN and the right side is YESTERDAY. Everyone stands on the line.",
+            "Teacher says a question: 'Did she take it?' Jump to PLAIN and say the verb: 'take!'",
+            "Teacher says a statement with a gap: 'She ___ a muffin.' Jump to YESTERDAY and say the yesterday word: 'took!'",
+            "Go faster. Try: Did he eat it? (plain) / He ___ it. (yesterday) / Did they go? / They ___ home. / Did you make it?",
+          ],
+          prompts: ["Did she take it? ... take!", "She ___ a muffin. ... took!", "Did he eat it? ... eat!", "He ___ it. ... ate!"],
+          teacherNote: "A movement break that keeps the rule in the body: after Did you stay on the plain side. Everyone moves at once, so no child is on show. If a child jumps the wrong way, say 'Did? Stay plain!' and let them try again.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "81", activities: ["E"], note: "Ask and answer with Did and How many" },
+          steps: [
+            "Plan four sentences. A real or made-up story is fine. 1. Yesterday I ___ (yesterday word) ... 2. I didn't ___ ... (plain verb). 3. A take-away story: 'I had ___ ___. I ___ ___. Now I have ___.' 4. A question: 'Did you ___ yesterday?'",
+            "Round 1 (90 seconds): tell partner 1. Your partner shows a thumb for each yesterday word and answers your Did question.",
+            "Stop. Teacher shares ONE champion tip from the mistakes heard. Say it together once.",
+            "Round 2 (60 seconds): a new partner, the same talk, a little faster. Round 3 (45 seconds): another new partner, smooth and clear.",
+            "Last: say one sentence that tells what you learned about the word after Did.",
+          ],
+          frames: ["Yesterday I ___ (yesterday word) ___.", "I didn't ___ ___.", "I had ___ ___. I ___ ___. Now I have ___.", "Did you ___ yesterday?", "After Did, the verb is ___."],
+          prompts: ["Did you ___ yesterday?", "What did you do?", "How many ___ did you have?", "Is the verb plain after Did?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and shorter. Keep going, even if one word is not perfect.",
+          teacherNote:
+            "Use a timer everyone can see. Between rounds 1 and 2 give ONE feedback moment only: the most common error you heard, prompted first (rising voice, one finger for 'one sign', ear tap for did). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support keep three picture cards in front of them and point to the card for each sentence. The take-away story can be made up: stickers, toy cars, or apples. Nobody has to say anything about family, money or feelings.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: take-away story",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          book: { book: "SB", pages: "80", activities: ["C"], note: "Subtraction problems about the story" },
+          steps: [
+            "Say your story to a partner first. Use your Champion talk.",
+            "Watch: teacher and class write one story together: 'Tilly had twenty muffins. She sold eleven, but she didn't sell the rest. Now she has nine.' Where is the yesterday word? Where is the plain verb after didn't? Now write a question: 'Did Tilly sell all the muffins?'",
+            "Write four or five sentences about a stall, a nest or a shop. Say what you had, what happened (use two yesterday words), and what is left. Join two sentences with and or but. Add one question with Did and its short answer.",
+            "Read your writing to a partner. Put a finger on each yesterday word and on each plain verb after Did or didn't.",
+            "Finished early? Write the rule: 'After Did, the verb ...'",
+          ],
+          frames: ["The ___ had ___ ___.", "It ___ (yesterday word) ___ and ___ (yesterday word) ___.", "It ___ ___, but it didn't ___ ___.", "Now it has ___.", "Did the ___ ___ ? Yes, it did. / No, it didn't."],
+          prompts: ["How many did it have?", "What happened?", "Which verb has a yesterday word?", "Which verb stays plain?"],
+          tiers: [
+            { level: "Support", task: "Copy the shared story and change the animal and the numbers. Write three sentences with the frames. Then do the worksheet's Support part.", frames: ["The ___ had ___.", "It ___ ___.", "Now it has ___."] },
+            { level: "Core", task: "Write four or five sentences. Join two with and or but. Add one Did question. Then do the worksheet's Core part.", frames: ["It ___ ___, but it didn't ___ ___."] },
+            { level: "Stretch", task: "Write a short paragraph of five or more sentences with two numbers and a subtraction sentence. Add one because. Then do the worksheet's Challenge part.", frames: ["Now it has ___ because it ___ ___."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model one sentence on the board with a gap for the verb, then release. Praise the yesterday word first, then the plain verb after Did or didn't, then the numbers, then the capital letter and the full stop or question mark. Hand out the worksheet after the sentences (Support, Core or Challenge part). The printed worksheet \"Grammar Champions: what happened?\" follows this slide in three levels. Check that no sentence teases a child: use animals, a stall or a shop, not classmates.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your writing. Check each point and give yourself a tick.",
+            "1. Yesterday words are right (took, ate, sold: not taked). 2. After Did and didn't the verb is plain. 3. The numbers make sense: the take-away number and the number left. 4. I have a capital letter and a full stop or a question mark.",
+            "Swap papers. Check your partner's writing. Say one star: 'Great yesterday word!' and one step: 'Check the verb after Did.'",
+            "Fix one thing with your pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["Your verb is right. Great!", "After Did the verb is plain. Great!", "Check the number here.", "Four ticks: champion!"],
+          teacherNote: "Draw the four checks on the board with small pictures (a took, a Did with a plain verb, a minus sign, a capital letter and a dot). Children give a star for every tick on their partner's page. Collect one or two sentences without names to read to the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "Teacher shows three tricky cases. Thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then say why.",
+            "Case 1, a yesterday word you know well: 'Did Tilly have a tray?' (She had a big tray.) What happens to had after Did? Which is the plain verb?",
+            "Case 2, a verb that does not change: 'Did he let go of the string? Yes, he did. He let go of the string.' The yesterday word looks like the plain verb. Does the rule still work?",
+            "Case 3, numbers going UP: 'Did Tilly make five more muffins? Yes, she did. She made five more.' Is the rule the same when the number goes up?",
+            "Think: which yesterday words make a number go down (sold, ate, gave, took)? Which make it go up (made, bought)? When do we use subtraction?",
+          ],
+          frames: ["The rule works because ___.", "The rule does not work because ___.", "Sold, ate and took make the number go ___.", "We use subtraction when ___."],
+          prompts: ["Is the verb plain after Did?", "Is there only one sign for yesterday?", "Does the number go up or down?"],
+          teacherNote:
+            "Transfer to new cases and link to the Big Question. Case 2 is subtle: let go has the same shape for yesterday and for today, so the rule still works: Did he let go? (plain) / He let go (yesterday word). Case 3 shows the grammar works for adding stories too; only subtraction stories use the verbs that take things away. Let children's own words stand and write the best one on the class chart. Keep names out of the cases.",
+        },
+        odL2U8Creative["od2e-l2-u08-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: yesterday words and Did questions.", book: { book: "WB", pages: "67-69", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Your creative task, \"The case of the missing things\", is on the slide before this one. Your teacher will tell you which version is yours." },
+            { label: "Challenge", detail: "Ask a person at home three questions with Did about what they did yesterday. Write their answers in full sentences with yesterday words. Then write one take-away story about something they bought, made or ate." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say what happens to the verb after Did, in your own words.",
+            "I used to think ___, now I think ___. (About yesterday words and Did, or about subtraction.)",
+            "How does this grammar help us tell a subtraction story? Show me with your hands how sure you are.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL2U8Worksheets,
+  worksheets: [...odL2U8Worksheets, championsWorksheet],
 };

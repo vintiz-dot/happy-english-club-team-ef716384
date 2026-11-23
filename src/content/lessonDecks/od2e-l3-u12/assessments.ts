@@ -183,7 +183,7 @@ export const odL3U12Assessments: Assessment[] = [
     id: "od2e-l3-u12-test",
     title: "Unit 12 test",
     kind: "summative",
-    afterLesson: 5,
+    afterLesson: 6,
     minutes: 45,
     covers: [
       "The 10 instrument words and how instruments make sound: blow, hit, pluck, bow",

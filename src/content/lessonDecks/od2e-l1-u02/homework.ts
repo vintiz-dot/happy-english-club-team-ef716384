@@ -217,4 +217,54 @@ export const odL1U2Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 6: Grammar Champions, this, that, these, those
+  "od2e-l1-u02-l6": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["friend", "family", "rabbit", "kitten", "bird"],
+      grammar: ["This is ___. That is ___.", "These are ___s. Those are ___s."],
+    },
+    base: {
+      title: "My near and far picnic",
+      task: "Draw a picnic with your friends and pets. Put some things near you and some far away. Write about them and choose your favorite part.",
+      steps: [
+        "Draw yourself in the middle of a picnic. Draw friends and pets around you.",
+        "Put one friend or pet near you and one far away. Write: This is ___. That is ___.",
+        "Put two pets near you and two far away. Write: These are ___. Those are ___.",
+        "Choose your favorite part and tell someone why.",
+      ],
+      frames: ["This is ___.", "That is ___.", "These are ___s.", "Those are ___s."],
+      success: [
+        "I can write this or that for one thing.",
+        "I can write these or those with -s for more than one.",
+        "I can say why I like one part.",
+      ],
+      challenge: "Move yourself to the far side of the picnic. Write what changes: That is my ___ now becomes This is my ___.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "My near and far match day",
+          task: "Draw a match day at the Emirates Stadium with your friends and pets. Put some things near you and some far away. Write about them and choose your favorite part.",
+          steps: [
+            "Draw yourself in the stand in a red and white scarf. Draw friends and pets around you.",
+            "Put one friend or pet near you and one far away. Write: This is ___. That is ___.",
+            "Put two balls near you and two on the pitch far away. Write: These are ___. Those are ___.",
+            "Choose your favorite part of the match day and tell someone why.",
+          ],
+          frames: ["This is ___.", "That is ___.", "These are ___s.", "Those are ___s."],
+          success: [
+            "I can write this or that for one thing.",
+            "I can write these or those with -s for more than one.",
+            "I can say why I like one part.",
+          ],
+          challenge: "Run to the pitch. Write what changes: That is the ball now becomes This is the ball.",
+        },
+      },
+    ],
+  },
 };

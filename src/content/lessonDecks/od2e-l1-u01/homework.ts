@@ -176,4 +176,46 @@ export const odL1U1Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 5: Grammar Champions (I'm, he's, she's, is and are)
+  "od2e-l1-u01-l5": {
+    kind: "creative",
+    thinking: "Create",
+    uses: {
+      words: ["family", "friend", "brother", "sister", "big", "small"],
+      grammar: ["I'm / he's / she's", "is and are", "This family is ___."],
+    },
+    base: {
+      title: "My made-up family",
+      task: "Draw an animal family or a space family. Tell who they are and how old they are, then choose your favorite one and say why.",
+      steps: [
+        "Draw three or four animals or aliens in one family.",
+        "Write: This is ___. He's / She's ___ years old.",
+        "Write about the whole family: This family is big. Or: This family is small.",
+        "Choose your favorite one and say why: I like ___ because ___.",
+      ],
+      frames: ["This is ___.", "He's / She's ___ years old.", "This family is ___.", "I like ___ because ___."],
+      success: ["I can write He's or She's and an age.", "I can write is for one family.", "I can say why I like one of them."],
+      challenge: "Add two friends to your picture and write: ___ and ___ are friends.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "My football team family",
+          task: "Draw a team of animal footballers who are also a family. Tell who they are and how old they are, then choose your favorite player and say why.",
+          steps: [
+            "Draw three or four animal footballers in team shirts.",
+            "Write: This is ___. He's / She's ___ years old.",
+            "Write about the team: This family is big. Or: This family is small.",
+            "Choose your favorite player and say why: I like ___ because ___.",
+          ],
+          frames: ["This is ___.", "He's / She's ___ years old.", "This team is ___.", "I like ___ because ___."],
+          success: ["I can write He's or She's and an age.", "I can write is for one team.", "I can say why I like one player."],
+          challenge: "Add two fans in the stands and write: ___ and ___ are fans.",
+        },
+      },
+    ],
+  },
 };

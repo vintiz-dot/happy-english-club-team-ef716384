@@ -1,5 +1,5 @@
 // Oxford Discover 2nd edition, Level 2, Unit 12 (Big Question 6: Why should we take care of the Earth?)
-// Five 90-minute lessons that follow the Student Book (SB pp. 116-125, the unit plus the Units 11 and 12
+// Five 90-minute lessons (plus a sixth, Grammar Champions, on place words: Where's ...? and Is there ...?) that follow the Student Book (SB pp. 116-125, the unit plus the Units 11 and 12
 // Wrap Up) and Workbook (WB pp. 100-109) page by page. Activities are the school's own, written around
 // the book's activity letters so the children always know which page they are on; nothing from the
 // book is reproduced. Play-based learning (songs, TPR, games, role play) is blended with
@@ -7,9 +7,66 @@
 // The class's main aim is speaking fluently and confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U12Creative } from "./od2e-l2-u12/homework";
 import { odL2U12Worksheets } from "./od2e-l2-u12/assessments";
+
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l2-u12-ws-champions",
+  title: "Grammar Champions: place words",
+  grammar: "Where's ...? / Is there ...? with place words",
+  deckId: "od2e-l2-u12-l6",
+  slide: "Write it: where things are",
+  intro:
+    "A Where question asks for a place, and the place word is in the answer: Where's the bin? It's next to the tree. An Is there question asks Yes or No, and the place word is inside it: Is there a bin next to the tree? Yes, there is.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right one. Then read the whole sentence aloud.",
+      example: "The bottle is on the floor and the chair is over it. The bottle is ___ the chair. (under / on)  ->  under",
+      items: [
+        { q: "The bin is close to the tree, at its side. The bin is ___ the tree.", options: ["next to", "in"], answer: "next to" },
+        { q: "You cannot see Zed because the door is in front. Zed is ___ the door.", options: ["behind", "on"], answer: "behind" },
+        { q: "The paper is inside the bin. The paper is ___ the bin.", options: ["in", "between"], answer: "in" },
+        { q: "Which question asks for a place?", options: ["Where's the bin?", "Is there a bin?"], answer: "Where's the bin?" },
+        { q: "Is there a can under the bench? Yes, ___.", options: ["there is", "it is"], answer: "there is" },
+        { q: "Is there a carton behind the door? No, ___.", options: ["there isn't", "there don't"], answer: "there isn't" },
+        { q: "Which sentence is right?", options: ["The ball is in front of the box.", "The ball is in front the box."], answer: "The ball is in front of the box." },
+        { q: "Which sentence is right?", options: ["The cat is behind the tree.", "The cat is behind of the tree."], answer: "The cat is behind the tree." },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing word or words. For the last two, write the whole sentence.",
+      example: "The book is on top of the shelf. The book is ___ the shelf.  ->  on",
+      items: [
+        { q: "The ball is below the seat of the chair. The ball is ___ the chair.", answer: "under" },
+        { q: "Zed is in the middle of two friends, Pip and Sam. Zed is ___ Pip and Sam.", answer: "between" },
+        { q: "Where's the bin? ___ next to the tree.", answer: "It's" },
+        { q: "___ there a bottle under the bench? Yes, there is.", answer: "Is" },
+        { q: "Is there a can behind the door? No, ___ ___. There's a can in front of the door.", answer: "there isn't" },
+        { q: "Correct the mistake: Where the paper bin is?", answer: "Where's the paper bin?" },
+        { q: "Correct the mistake: The cat is behind of the tree.", answer: "The cat is behind the tree." },
+        { q: "Join with but: The paper bin is next to the tree. The can bin is behind the tree.", answer: "The paper bin is next to the tree, but the can bin is behind the tree." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Write a full sentence for each one, or fix the mistake. Check the place word and the answer.",
+      example: "(the carton / the desk / on)  ->  Where's the carton? It's on the desk.",
+      items: [
+        { q: "Write a Where question and its answer: (the bag / the shelf / under)", answer: "Where's the bag? It's under the shelf." },
+        { q: "Write an Is there question with a No answer: (a bottle / the bench / behind)", answer: "Is there a bottle behind the bench? No, there isn't." },
+        { q: "Fix the mistake: Is there a bin next the tree? Yes, it is.", answer: "Is there a bin next to the tree? Yes, there is." },
+        { q: "Join with and: The paper is in the bin. The bottle is next to the bin.", answer: "The paper is in the bin, and the bottle is next to the bin." },
+        { q: "Join with but: There isn't a bin in the classroom. There's a box next to the door.", answer: "There isn't a bin in the classroom, but there's a box next to the door." },
+        { q: "Write a true sentence about your classroom with between and two real things.", answer: "e.g. The window is between the door and the board." },
+        { q: "Write the rule in your own words: how is a Where question different from an Is there question?", answer: "e.g. A Where question asks for a place and the place word is in the answer, but an Is there question has the place word inside and the answer is Yes, there is or No, there isn't." },
+      ],
+    },
+  ],
+};
 
 export const odL2U12: Unit = {
   curriculum: "oxford-discover-2e",
@@ -1241,6 +1298,271 @@ export const odL2U12: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l2-u12-l6",
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 12,
+      lesson: 6,
+      covers: { unitFrom: 12, lesson: "Understand" },
+      title: "Grammar Champions: Where is it? Place words, Where's ...? and Is there ...?",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "121", activities: ["D", "E", "F"], note: "Grammar in Use: song, Learn Grammar (Prepositions of Place) and the partner talk" },
+        { book: "WB", pages: "103-105", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: Where is it?", subtitle: "Lesson 6 · Grammar and speaking", bigQuestion: "Why should we take care of the Earth?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can say where things are with place words like under, behind, next to and between.",
+            "I can ask and answer: Where's the ___? and Is there a ___ ___ the ___? Yes, there is. / No, there isn't.",
+            "I can write four or more sentences and join two with and or but.",
+            "I can explain, in my own words, how a Where question is different from an Is there question.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 6,
+          steps: [
+            "Teacher says a word from the unit: carton, shelf, machine, recycling plant, stationery store, rescue. Shout it and do the action from Lesson 1.",
+            "Teacher puts a school bag in different places and the class shouts the place word: on, under, next to, behind, in front of, between. Then say it in a whole sentence: 'It's under the chair.'",
+            "Pairs: Partner A hides a pencil case behind a book, under a bag or next to a bottle. Partner B asks: 'Is it under the bag?' A answers 'Yes, it is.' or 'No, it isn't.' Swap after one minute.",
+            "Big Question: Why should we take care of the Earth? Whisper one reason to your partner with because. Then three children tell the class.",
+          ],
+          prompts: ["Carton! Shelf! Machine!", "It's under the chair.", "Is it behind the book? Yes, it is. / No, it isn't.", "We should take care of the Earth because ..."],
+          teacherNote:
+            "Retrieval and spacing: pull back the Lesson 1 words and the place words from Lesson 3 before today's rule. Keep it quick and bouncy. If a child says 'Is it under of the bag?' do not correct: say 'Is it under ...?' with a rising voice and wait. Use your own objects for hiding, or the child's own, and only with the child's permission.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: Zed and the lost bin",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Close your books. Teacher is the storyteller. Listen to the story of Zed, the park robot.",
+            "First listening: clap every time you hear a place word (under, behind, next to ...).",
+            "Second listening: stand up every time you hear a question that begins with Is there, and shout 'Yes, there is!' or 'No, there isn't!'",
+            "Ask: 'What is the mystery? What is the same in the questions that begin with Where? What do the answers have inside them?' Tell a partner. Do not give the rule yet.",
+          ],
+          prompts: [
+            "Part 1: 'Meet Zed, the park robot. Zed has a big job. The park is dirty! Is there a bottle on the grass? Yes, there is! Is there a carton in the pond? No, there isn't. There's a carton under the bench.'",
+            "Part 2: 'Zed wants to find the recycling box. Where's the recycling box? asks Zed. It's behind the big tree, says a duck. And where's the paper bin? It's next to the slide. And where's the can bin? It's in front of the pond.'",
+            "Part 3: 'Zed puts the bottle in the recycling box. Is there a plastic bag in the box? Yes, there is. Is there a banana peel in the box? No, there isn't! That is good. Zed is happy.'",
+            "Part 4: 'Look! A box is between the bench and the tree. Is there a toy in the box? Yes, there is! The toy is next to a book. Zed rescues the toy and the book. {s1} and {s2} help Zed. {s1} is next to the fountain. {s2} is in front of the slide. Where's {s3}? {s3} is between {s1} and {s2}!'",
+            "Part 5: 'Is the park clean now? Yes, it is! Is there a bottle on the grass? No, there isn't. Where's Zed? Zed is behind the big tree. Zed is tired but happy.'",
+          ],
+          teacherNote:
+            "Input flood: the same patterns again and again in one invented story, so no child is talked about. Draw a simple park on the board (a tree, a bench, a pond, a slide, a fountain) and point to each place as you read. Read slowly. Do NOT explain the grammar. Write the children's own ideas on the board exactly as they say them. The mystery links to the Big Question: Zed takes care of the park because Zed can say where things are. The children in the name-slot lines only do ordinary, happy things.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group gets 12 sentence cards and two mats: RIGHT and NOT RIGHT.",
+            "Read each card aloud. Decide: is it right or not right? Put it on a mat.",
+            "Look at the RIGHT mat. Sort the cards again into piles: WHERE questions with their answers, IS THERE questions with their answers, and plain sentences. What is the same in each pile? What is different?",
+            "Look at the NOT RIGHT mat. What is wrong with each card? Fix two cards with a pencil and say why.",
+            "Tell the class: 'I think the rule is ___ because ___.' Teacher writes your words on the board.",
+          ],
+          frames: ["A Where question asks for ___.", "An Is there question starts with ___ and the answer is ___.", "The place word comes ___ the thing.", "I think the rule is ___ because ___."],
+          prompts: [
+            "Right cards: 'Where's the bin? It's next to the tree.' 'Where's the bag? It's on the shelf.' 'Is there a bottle under the bench? Yes, there is.' 'Is there a can in front of the slide? No, there isn't.' 'The paper is behind the door.' 'The carton is in the bin.' '{s1} is between {s2} and {s3}.'",
+            "Not right cards: 'Where the bin is?' 'The bottle is behind of the tree.' 'Is there a can next the bin?' 'Is there a bag under the bench? Yes, it is.' 'Where's the paper? Yes, there is.'",
+          ],
+          teacherNote:
+            "Print or write the cards in big letters, one sentence or one question with its answer per card. The sorting and the talk are the point, so give time. Listen for what they notice: 'Where has no place word, the answer has', 'Is there is answered with there is', 'behind has no of', 'the place word comes after is'. Write their words on the board exactly as they say them. Ask 'How do you know?' and 'Show me with your hands.' Do NOT tell the rule; the next slide puts their words into the form. Early finishers: write one right card and one not right card for another group.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: Place words, Where's ...? and Is there ...?",
+          hook: "A Where question asks for a place. An Is there question asks Yes or No, and the place word is inside it!",
+          form: [
+            { label: "Where question", pattern: "Where's + the thing? → It's + PLACE WORD + the other thing." },
+            { label: "Is there question", pattern: "Is there + a thing + PLACE WORD + the other thing?" },
+            { label: "Yes answer", pattern: "Yes, there is." },
+            { label: "No answer", pattern: "No, there isn't. + There's a ___ + PLACE WORD + the ___." },
+            { label: "Telling where", pattern: "The thing + is + PLACE WORD + the other thing." },
+          ],
+          explanation: [
+            "What it means: a place word shows how two things are connected. The bottle and the bench are two things, and under says how they are connected. The words we know: in, on, under, behind, in front of, next to, between, across from.",
+            "When we use it: when someone asks where something is, when we look for something, and when we describe a picture, a room or a park. Two questions help us: Where's the bin? asks for information, so the place word is in the ANSWER. Is there a bin next to the tree? has the place word inside the question, so the answer is Yes or No.",
+            "The big idea: always two things and one place word between them. After Is there ...? the answer is there is or there isn't, never it is.",
+            "Vietnamese tip: Vietnamese asks 'Có ... không?' and answers 'Có' or 'Không', and often says the place first. English says the thing first: The bottle is under the bench. And the answer needs the little words: Yes, there is. / No, there isn't.",
+            "Why it matters for talking: if you can say where things are, you can find the recycling bin, ask a friend for help, and tell a visitor where to put the trash. Clear place words help us take care of the Earth.",
+          ],
+          examples: [
+            { text: "Where's the recycling box? It's behind the tree.", note: "Where asks for a place; the answer has the place word." },
+            { text: "Is there a bottle under the bench? Yes, there is.", note: "Is there has the place word inside; the answer is Yes or No." },
+            { text: "{s1}, is there a carton next to the bin? No, there isn't. There's a carton in front of the bin.", note: "After No, we can say where it really is." },
+            { text: "{s2} is between {s3} and {s4}.", note: "between needs two things, joined with and." },
+            { text: "The paper bin is across from the door." },
+            { text: "Where's {s5}'s bag? It's on the shelf." },
+          ],
+          pitfalls: [
+            { wrong: "The bottle is behind of the tree.", right: "The bottle is behind the tree.", why: "Only in front of has of. Behind, under and next to do not." },
+            { wrong: "Is there a can next the bin?", right: "Is there a can next to the bin?", why: "Say next to with to." },
+            { wrong: "Is there a bag under the bench? Yes, it is.", right: "Is there a bag under the bench? Yes, there is.", why: "Is there ...? is answered with there is or there isn't." },
+            { wrong: "Where the bin is?", right: "Where's the bin?", why: "The question word comes first, then is, then the thing." },
+          ],
+          book: { book: "SB", pages: "121", activities: ["E"], note: "Learn Grammar: Prepositions of Place" },
+        },
+        {
+          kind: "activity",
+          title: "Zed's clean-up relay: ask to win",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Make teams of four. Each team has a park picture (a tree, a bench, a pond and a slide) and three small bin cards: paper, plastic and cans. Zed's helper (the teacher) sits at the far side of the room with a secret map.",
+            "Round 1: one runner from each team goes to Zed's helper and asks: 'Where's the plastic bin?' The helper answers only a question that is built the right way: 'It's behind the bench.'",
+            "The runner runs back and tells the team in a whole sentence: 'The plastic bin is behind the bench.' The team puts the bin card on its picture. Next runner, next bin.",
+            "Round 2: the helper changes the secret map. The team asks three Yes / No questions to find the can bin: 'Is there a can bin next to the slide?' The helper says 'Yes, there is.' or 'No, there isn't.'",
+            "Check the pictures at the end. A team whose picture matches the secret map, and who used the right question every time, wins!",
+          ],
+          prompts: ["Where's the ___ bin?", "It's ___ the ___.", "The ___ bin is ___ the ___.", "Is there a ___ bin ___ the ___?", "Yes, there is. / No, there isn't."],
+          teacherNote:
+            "The pattern is the winning move: the helper answers only a question that is built the right way. Correct with PROMPTS before a recast: repeat the error with a rising voice ('Where the bin ...?'), hold up one finger for 'question word first', or tap the place word on the board and wait. Say the correct sentence yourself only if a team is stuck. Prepare a park picture for each team, nine small bin cards and two secret maps (one for each round). Keep the pace fast and cheerful.",
+        },
+        {
+          kind: "speaking",
+          title: "Litter hunt: the secret park",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Each partner has the same empty park picture (a tree, a bench, a pond, a slide and a bin) and three small drawings of litter: a bottle, a carton and a can. Keep your picture hidden from your partner.",
+            "Secretly put your three bits of litter in three different places in your park.",
+            "Partner B asks Is there questions to find the litter: 'Is there a bottle under the bench?' Partner A answers 'Yes, there is.' or 'No, there isn't.' After a No, A says where something else is: 'There's a can in front of the bin.'",
+            "When B has found all three, put the pictures together. Are they the same? Then swap roles. Use six different place words in all.",
+            "Last: together, put all the litter in the bin and say: 'The bottle is ___ the ___, and the can is ___ the ___. Now the park is clean!'",
+          ],
+          frames: ["Is there a ___ + place word + the ___?", "Yes, there is.", "No, there isn't. There's a ___ + place word + the ___.", "Where's the ___?", "The ___ is ___ the ___."],
+          prompts: ["Is there a bottle under the bench?", "Is there a carton next to the pond?", "Where's the can?", "What is the same in our parks? What is different?"],
+          fluencyTip: "Ask the whole question, then look at your partner and wait. Answer with the whole short answer: Yes, there is. Do not stop at Yes.",
+          teacherNote:
+            "Make a park picture for each child before the lesson, or let children draw the five things in two minutes. Five places is enough to hide the litter, but the guesses must all be questions. Listen for both Yes and No answers: children need to say No, there isn't. There's a ... Use prompts first (a rising voice on 'Is there ...?', one finger for the place word). Write two or three errors on the board without names and fix them together at the end. The litter always goes into the bin: that is the Earth link.",
+        },
+        {
+          kind: "activity",
+          title: "Zed says: place words",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Stand up. Do what Zed says, but only when you hear 'Zed says'.",
+            "Zed says: stand behind your chair. Zed says: stand next to a friend. Zed says: put your hand in front of your face. Zed says: put your book under your chair.",
+            "Now make a gate with a partner and a third friend stands between you. Say where you are: 'I'm between {s1} and {s2}.' Freeze!",
+            "Pairs: say where your partner is: 'You're next to the door.' Swap.",
+          ],
+          prompts: ["behind", "next to", "in front of", "under", "between"],
+          teacherNote: "A movement break that keeps the pattern in the body. Everyone moves at once, so no child is on show. Nobody is out: a mistake just means try again. Use the place words in the same order first, then change the order.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "121", activities: ["F"], note: "Where are the three things? Ask your partner" },
+          steps: [
+            "Plan: draw a quick map of your clean park or classroom with a tree, a bench, a bin, a recycling box and one more thing. Plan four sentences: 1. 'This is my clean park.' 2. 'The recycling box is ___ the ___.' 3. Join two places with and or but: 'The bin is next to the bench, but the recycling box is behind the tree.' 4. A question for your partner: 'Is there a ___ ___ the ___?'",
+            "Round 1 (90 seconds): tell your talk to partner 1. Your partner points to the place on your map and answers your Is there question.",
+            "Stop. Teacher shares ONE champion tip from the mistakes heard. Say it together once.",
+            "Round 2 (60 seconds): new partner, the same talk, a little faster. Round 3 (45 seconds): another new partner, smooth and clear.",
+            "Last: say one sentence about why a clean park is good for the Earth.",
+          ],
+          frames: ["This is my clean park.", "The ___ is ___ the ___.", "The ___ is ___ the ___, but the ___ is ___ the ___.", "Is there a ___ ___ the ___?", "A clean park is good because ___."],
+          prompts: ["Where's the recycling box?", "Is there a bench next to the tree?", "What is the same in our parks? What is different?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and shorter. Keep going, even if one word is not perfect.",
+          teacherNote:
+            "Use a timer everyone can see. Between rounds 1 and 2, give ONE feedback moment only: the most common error you heard (prompt it first: a rising voice, one finger for the place word, a tap on the board). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support keep their map in front of them and point to each place as they speak. The maps show ordinary things in a park; nobody has to say anything about their home or family.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: where things are",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          book: { book: "SB", pages: "121", activities: ["E"], note: "Learn Grammar: Prepositions of Place" },
+          steps: [
+            "Say your sentences to a partner first. Use your Champion talk.",
+            "Watch: teacher and class write one sentence together: 'The paper bin is next to the tree, but the can bin is behind the bench.' Where are the place words? Where is the comma? Now write a question: 'Is there a bottle under the bench?'",
+            "Write four or five sentences about your clean park map: two that say where things are, one joined with and or but, and one Is there question with its short answer.",
+            "Read your writing to a partner. Put a finger on each place word and on each Is there question.",
+            "Finished early? Write the rule: 'A Where question ...'",
+          ],
+          frames: ["The ___ is ___ the ___.", "The ___ is ___ the ___, but the ___ is ___ the ___.", "Is there a ___ ___ the ___? Yes, there is. / No, there isn't."],
+          prompts: ["Where's the ___?", "Is there a ___ ___ the ___?", "Which place word? Behind or next to?", "Capital letter, period or question mark?"],
+          tiers: [
+            { level: "Support", task: "Copy the shared sentence and change two words. Write three sentences with the frames. Then do the worksheet's Support part.", frames: ["The ___ is ___ the ___.", "Is there a ___ ___ the ___?"] },
+            { level: "Core", task: "Write four or five sentences. Join two with and or but. Then do the worksheet's Core part.", frames: ["The ___ is ___ the ___, but the ___ is ___ the ___."] },
+            { level: "Stretch", task: "Write a short paragraph of five or more sentences. Add one because. Then do the worksheet's Challenge part.", frames: ["A clean park is good because ___."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model one sentence on the board with gaps for the place words, then release. Praise the place word first, then the Is there question, then the capital letter and the period or question mark. Hand out the worksheet after the sentences (Support, Core or Challenge part). The printed worksheet \"Grammar Champions: place words\" follows this slide in three levels. Children write about ordinary things in a park; no sentence is about a child.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your writing. Check each point and give yourself a tick.",
+            "1. Each place word is right (no extra of after behind, no missing to after next). 2. A Where question has no place word; the answer starts It's and has one. 3. An Is there question has the place word inside; the short answer is Yes, there is. or No, there isn't. 4. I have a capital letter and a period or question mark.",
+            "Swap papers. Check your partner's writing. Say one star: 'Great place word!' and one step: 'Check the answer to Is there.'",
+            "Fix one thing with your pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["Your place word is right. Great!", "Where has no place word. Great!", "Is there is answered with there is. Great!", "Check the word here."],
+          teacherNote: "Draw the four checks on the board with small pictures (a tree with an arrow, a Where bubble, an Is there bubble, a capital letter and a dot). Children give a star for every tick on their partner's page. Collect one or two sentences without names to share with the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "Teacher shows three tricky cases. Thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then say why.",
+            "Case 1: 'The bin is between the tree.' Is that right? What does between need? Fix it.",
+            "Case 2, a new place: a map of the school. 'Where's the library? It's across from the gym.' Does the same rule work for buildings? Is there a place word in the question?",
+            "Case 3, a No answer: 'Is there a bin in the classroom?' (There is no bin.) What do we say? 'No, there isn't, but there's a box next to the door.' Why is it helpful to say more?",
+            "Think: why does it help the Earth when we can say where things are?",
+          ],
+          frames: ["The rule works because ___.", "The rule does not work because ___.", "Knowing where things are helps the Earth because ___."],
+          prompts: ["How many things does between need?", "Does the Where question have a place word?", "What is the answer to Is there?"],
+          teacherNote:
+            "Transfer to new cases and link to the Big Question. Case 1: between needs two things, so the rule about two things and one place word holds. Case 2: the same rule works for any places, big or small. Case 3: Is there is answered with there is or there isn't, and a No can be followed by a true place. Let children's own words stand and write the best one on the class chart. Keep names out of the cases.",
+        },
+        odL2U12Creative["od2e-l2-u12-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: place words, Where's ...? and Is there ...?", book: { book: "WB", pages: "103-105", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Design a clean park for your town. Draw it with six things: a bin, a recycling box, a bench, a tree and two more. Write four sentences that say where things are, with four different place words. Write two questions: one with Where's and one with Is there. Then say why you put the recycling box in that place." },
+            { label: "Challenge", detail: "Make a clue game for someone at home. Draw your room or a park and hide a small paper star. Write four Is there questions. Your helper answers with Yes, there is. or No, there isn't. and says a place. Write what they said. Then write the rule in your own words: how is a Where question different from an Is there question?" },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words: how is a Where question different from an Is there question?",
+            "I used to think ___, now I think ___. (About place words, or about why we should take care of the Earth.)",
+            "How do place words help us take care of the Earth? Show me with your hands how sure you are.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL2U12Worksheets,
+  worksheets: [...odL2U12Worksheets, championsWorksheet],
 };

@@ -76,4 +76,16 @@ export const odL1U18Creative: Record<string, Creative> = {
       ["A player can ___.", "A ball can't ___.", "Both are ___."],
       ["I drew a player and a ball.", "I wrote one difference and one same.", "I told a grown-up why."],
       "Write: A player is living because he ___.")),
+
+  "od2e-l1-u18-l6": make("Design", ["healthy food", "play outside", "go to bed", "stop"], ["A ___ should ___.", "A ___ shouldn't ___.", "It is a good idea because ___."],
+    task("A care sign", "Design a care sign for a pet or a plant. Write what it should have and what it shouldn't have.",
+      ["Choose a pet or a plant and draw it.", "Write: It should ___.", "Write: It shouldn't ___.", "Tell a grown-up why one piece of advice is a good idea."],
+      ["It should ___.", "It shouldn't ___.", "It is a good idea because ___."],
+      ["I drew a pet or a plant.", "I wrote one sentence with should and one with shouldn't.", "I told a grown-up why."],
+      "Write: A ___ should ___ because ___."),
+    task("A care sign for the team dog", "Design a care sign for a football team's pet dog in an Arsenal scarf. Write what it should have and what it shouldn't have.",
+      ["Draw the team dog with a scarf and a ball.", "Write: It should ___.", "Write: It shouldn't ___.", "Tell a grown-up why one piece of advice is a good idea."],
+      ["It should ___.", "It shouldn't ___.", "It is a good idea because ___."],
+      ["I drew the team dog.", "I wrote one sentence with should and one with shouldn't.", "I told a grown-up why."],
+      "Write: A dog should ___ because ___.")),
 };

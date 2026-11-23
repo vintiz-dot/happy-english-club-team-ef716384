@@ -77,4 +77,16 @@ export const odL1U14Creative: Record<string, Creative> = {
       ["There is a ___.", "I like the ___.", "A visitor will like it because ___."],
       ["My map has three places with labels.", "I wrote one sentence about my best place.", "I told a grown-up why it is best."],
       "Write: There is a ___ and a ___. It is ___.")),
+
+  "od2e-l1-u14-l6": make("Create", ["city", "country", "orchard", "cornfield", "park", "bakery"], ["His ___ is ___.", "Her ___ is ___.", "Is your ___ ___?"],
+    task("A new neighbor on Bear Street", "Make up a new neighbor for Bear Street. Draw the neighbor's home and say if it is a boy or a girl.",
+      ["Draw your new neighbor, a bear, a mouse or any animal you like.", "Draw its home in the city or in the country.", "Write: His home is ___. or Her home is ___.", "Write a question for your neighbor: Is your ___ ___?"],
+      ["His home is ___.", "Her home is ___.", "Is your ___ ___?"],
+      ["I drew a neighbor and its home.", "I used his or her in a sentence.", "I wrote a question with your."],
+      "Write: I like his / her ___ because ___."),
+    task("A football neighbor on Bear Street", "Make up a new neighbor for Bear Street who loves football. Draw the home and the football things. Say if the neighbor is a boy or a girl.",
+      ["Draw a football-loving bear, a mouse or any animal you like.", "Draw its home with a ball and a scarf.", "Write: His ___ is ___. or Her ___ is ___.", "Write a question for your neighbor: Is your ___ ___?"],
+      ["His scarf is ___.", "Her ball is ___.", "Is your ___ ___?"],
+      ["I drew a neighbor and its home.", "I used his or her in a sentence.", "I wrote a question with your."],
+      "Write: I like his / her ___ because ___.")),
 };

@@ -1,15 +1,77 @@
 // Oxford Discover 2nd edition, Level 3, Unit 12 (Big Question: How do people make music?)
-// Five 90-minute lessons that follow the Student Book (SB pp. 116-125) and Workbook
+// Five 90-minute lessons (plus a sixth, Grammar Champions, on as ... as and not as ... as) that follow the Student Book (SB pp. 116-125) and Workbook
 // (WB pp. 105-115) page by page. Activities are the school's own, written around the
 // book's activity letters so the children always know which page they are on; nothing
 // from the book is reproduced. The class's main aim is speaking fluently and
 // confidently, so every lesson spends most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL3U12Creative } from "./od2e-l3-u12/homework";
 import { odL3U12Assessments, odL3U12Worksheets } from "./od2e-l3-u12/assessments";
 import { odL3U12FirstEdition } from "./od2e-l3-u12/firstEdition";
+
+// Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
+const championsWorksheet: Worksheet = {
+  id: "od2e-l3-u12-ws-champions",
+  title: "Grammar Champions: as ... as and not as ... as",
+  grammar: "as + plain adjective + as; not as + plain adjective + as; because and so",
+  deckId: "od2e-l3-u12-l6",
+  slide: "Write it: our class band",
+  intro:
+    "as ... as means the same amount: The red drum is as loud as the blue drum. not as ... as means less: The flute isn't as heavy as the tuba. Two as, a plain adjective in the middle, never than. Add because (the reason) or so (the result).",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Choose the right answer. Then read the whole sentence aloud and check that it has two as.",
+      example: "The cat is as quiet ___ a mouse.  (as / than)  ->  as",
+      items: [
+        { q: "The red drum and the blue drum are both very loud. The red drum is ___ the blue drum.", options: ["as loud as", "not as loud as"], answer: "as loud as" },
+        { q: "The flute is small. The tuba is big. The flute is ___ the tuba.", options: ["as big as", "not as big as"], answer: "not as big as" },
+        { q: "The two scarves are both long. The red scarf is as ___ as the blue scarf.", options: ["long", "longer"], answer: "long" },
+        { q: "Which sentence is right?", options: ["The drum is as loud as the tuba.", "The drum is as louder as the tuba."], answer: "The drum is as loud as the tuba." },
+        { q: "The panpipes ___ as short as a ruler.", options: ["are", "is"], answer: "are" },
+        { q: "The flute isn't as heavy as the tuba, ___ it is easy to carry.", options: ["because", "so"], answer: "so" },
+        { q: "We chose the flute ___ it is as light as a feather.", options: ["because", "so"], answer: "because" },
+        { q: "The clarinet is not as ___ as the tuba.", options: ["loud", "louder"], answer: "loud" },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the missing words. For the correct and join questions, write the whole sentence.",
+      example: "The bus and the train are both fast. The bus is ___ ___ ___ the train. (fast)  ->  as fast as",
+      items: [
+        { q: "The bus and the train are both fast. The bus is ___ ___ ___ the train. (fast)", answer: "as fast as" },
+        { q: "The school bag is heavy. The pencil case is light. The pencil case is ___ ___ ___ ___ the school bag. (heavy)", answer: "not as heavy as" },
+        { q: "Correct the mistake: The red drum is as louder as the blue drum.", answer: "The red drum is as loud as the blue drum." },
+        { q: "Correct the mistake: My bag is not as heavy than yours.", answer: "My bag is not as heavy as yours." },
+        { q: "Correct the mistake: The snare drum is as big the djembe.", answer: "The snare drum is as big as the djembe." },
+        { q: "Join with because: We chose the flute. It is not as heavy as the tuba.", answer: "We chose the flute because it is not as heavy as the tuba." },
+        { q: "Join with so: The violin is not as loud as the drum. We play it in the library.", answer: "The violin is not as loud as the drum, so we play it in the library." },
+        { q: "Write your own sentence about two things in your bag. Use not as ... as.", answer: "e.g. My ruler is not as long as my umbrella." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Think carefully. Check every as, every adjective, every verb and every comma before so.",
+      example: "The tuba is louder than the flute.  ->  The flute isn't as loud as the tuba.",
+      items: [
+        { q: "Say the same thing with the two instruments swapped. Start with The flute: The tuba is longer than the flute.", answer: "The flute isn't as long as the tuba. (The adjective goes back to plain: long.)" },
+        {
+          q: "Find and fix three mistakes: 'The panpipes is as light as a feather. My flute is as long the panpipes. The tuba is not as small than the flute.'",
+          answer: "The panpipes are as light as a feather. My flute is as long as the panpipes. The tuba is not as small as the flute.",
+        },
+        { q: "Write two sentences about two instruments or sounds. The first uses as ... as and because. The second uses not as ... as and so.", answer: "e.g. The djembe is as loud as the snare drum because both have tight skins. The flute isn't as loud as the tuba, so we play it indoors." },
+        {
+          q: "Write a four-sentence paragraph for the school band: a topic sentence, one as ... as, one not as ... as with so, and an ending.",
+          answer: "e.g. Our band needs an instrument that is easy to carry. The recorder is as light as a pencil. It isn't as big as a tuba, so every child can carry it. That is why I choose the recorder.",
+        },
+        { q: "A friend says 'The tuba isn't as small as the flute' means the tuba is small. Is your friend right? Explain in one or two sentences.", answer: "e.g. No. not as small as means the tuba has less of small, so the tuba is bigger than the flute." },
+        { q: "Write the rule in your own words. Use the words two as, plain adjective and not.", answer: "e.g. We need two as, and the adjective between them stays plain. When we add not, the first thing has less of the quality." },
+      ],
+    },
+  ],
+};
 
 export const odL3U12: Unit = {
   curriculum: "oxford-discover-2e",
@@ -963,8 +1025,279 @@ export const odL3U12: Unit = {
         },
       ],
     },
+
+    // ------------------------------------------------------------------ Lesson 6: Grammar Champions
+    {
+      id: "od2e-l3-u12-l6",
+      curriculum: "oxford-discover-2e",
+      level: 3,
+      unit: 12,
+      lesson: 6,
+      covers: { unitFrom: 12, lesson: "Understand" },
+      title: "Grammar Champions: as ... as and not as ... as",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "120-121", activities: ["D", "E", "F", "G"], note: "Grammar in Use: the song, the Learn Grammar box and the practice" },
+        { book: "WB", pages: "108-110", note: "Grammar practice" },
+      ],
+      slides: [
+        { kind: "title", title: "Grammar Champions: as ... as and not as ... as", subtitle: "Lesson 6 · Grammar and speaking", bigQuestion: "How do people make music?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can compare two things with as ... as and not as ... as when I speak, and give a reason with because or so.",
+            "I can ask and answer: Is the ___ as ___ as the ___? Yes, it is. / No, it isn't.",
+            "I can write a short paragraph of five or more sentences and edit it with the Grammar Champion checklist.",
+            "I can explain the rule in my own words, test it on a new case and connect it to how people make music.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "whole",
+          minutes: 6,
+          book: { book: "SB", pages: "121", activities: ["D"], note: "The Unit 12 song" },
+          steps: [
+            "Instrument relay. Teacher calls Blow! Hit! Pluck! or Bow! Say an instrument that fits and mime playing it. No repeats: keep a fast circle going.",
+            "Play Track 2.25 from your own copy. Stand up each time you hear two things being compared, and sit down when it ends. How many comparisons did you catch?",
+            "Pairs, 60 seconds: look at the things on your desks. Say as many comparisons as you can, with -er than from Unit 11 or as ... as from Lesson 3. Your partner counts them on their fingers.",
+            "Big Question, pair share: How do people make music? Answer in one sentence with because.",
+          ],
+          prompts: ["The ___ is louder than the ___.", "The ___ is as ___ as the ___.", "People make music by ___ because ___.", "{s1}, which instrument did you mime? {s2}, how do you play it?"],
+          teacherNote:
+            "Retrieval and spacing: pull back the instrument words, how a sound is made (blow, hit, pluck, bow), vibrate and pitch, then the patterns from Unit 11 and Lesson 3, before today's rule. Keep it fast. If a child says 'as louder as', do not correct yet: repeat the sentence up to the mistake in a rising voice ('The tuba is as ...?') and let the child fix it.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: The Big Sound Contest",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Books closed. Teacher is the storyteller: listen to the contest in Maple Hill (on the right).",
+            "First listening: clap twice every time you hear as ... as, one clap for each as.",
+            "Second listening: stand up every time you hear not as, and sit down at the next as ... as.",
+            "Detective talk with a partner: What is the same in every sentence you clapped? What changes when the word not comes in? Which instrument would you give a prize to, and why? Do not say the rule yet.",
+          ],
+          prompts: [
+            "Part 1: 'Every spring, the town of Maple Hill has a Big Sound Contest. The judge is a small green parrot called Pico. Pico squawks, \"The winner must be as loud as thunder and as sweet as honey!\"'",
+            "Part 2: 'Tilly the tuba puffs out her cheeks. \"I am as loud as thunder!\" she booms. Dodo the djembe taps a fast rhythm. \"I am as loud as Tilly!\" he laughs. Fiona the flute plays one soft note. \"I am not as loud as Tilly, but I am as sweet as honey.\"'",
+            "Part 3: 'Pico asks, \"Is the djembe as loud as the tuba?\" The crowd shouts, \"Yes, it is!\" \"Is the flute as loud as the tuba?\" The crowd whispers, \"No, it isn't!\" Pico nods. \"The flute is not as loud as the tuba, but it is as high as a bird.\"'",
+            "Part 4: 'Now the instruments must go up on the stage. {s1} lifts the flute. \"It is as light as a feather!\" {s2} helps to lift the tuba. \"It is not as light as the flute. It is as heavy as a big sack of rice, so we carry it together!\"'",
+            "Part 5: 'Pico claps his wings. \"Tilly is as loud as thunder, so she wins the loud prize. Fiona is not as heavy as Tilly, so she wins the easy-to-carry prize. Dodo is as quick as rain on a roof, so he wins the fast-rhythm prize. And {s3} and {s4} are as kind as anyone in Maple Hill, so they win the helper prize!\"'",
+            "Part 6: 'Then all three instruments play together. Pico smiles. \"Alone, you are not the same. Together, you are as beautiful as a rainbow!\"'",
+          ],
+          teacherNote:
+            "Input flood: the pattern comes many times in one invented story, and no real child is compared with another. Read slowly and lean on both as. Write the children's own words on the board exactly as they say them and do NOT explain the grammar yet. The story links to the Big Question: three instruments make music in different ways, and comparing them is how we explain a sound to someone who cannot hear it. Name slots only do kind, ordinary things.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group of four gets 11 sentence cards and two mats: RIGHT and NOT RIGHT. Read each card aloud and decide where it goes. Argue politely: 'I think this is not right because ...'",
+            "Look at the RIGHT mat. Sort the cards again into two piles: SAME (the two things are equal) and NOT THE SAME (one has less). Give each pile a name of your own.",
+            "Look at the NOT RIGHT mat. What is wrong in each card? Fix two cards with a pencil and say why your fix works. Is there one kind of mistake or more than one?",
+            "Swap tests: take a NOT THE SAME card and say it again with the two instruments in the other order and the word louder or heavier. Does the meaning stay the same? Tell your group what you noticed.",
+            "Your group says to the class: 'I think the rule is ___ because ___.' The teacher writes your words on the board and does not tell the rule yet.",
+          ],
+          frames: ["In the SAME sentences, the middle word is ___.", "Every sentence has two ___.", "When we add not, the first thing is ___ the second.", "The wrong cards have ___.", "I think the rule is ___ because ___."],
+          prompts: [
+            "RIGHT, same: 'The djembe is as loud as the snare drum.' 'The panpipes are as short as a ruler.' 'Is the clarinet as long as the flute? Yes, it is.'",
+            "RIGHT, not the same: 'The flute is not as heavy as the tuba.' 'The erhu isn't as big as the cello.' 'No, the violin isn't as loud as a drum.'",
+            "NOT RIGHT: 'The tuba is as louder as the drum.' 'The flute is as long than the clarinet.' 'The violin is as small the flute.' 'The panpipes is as light as a feather.' 'The flute is not as louder as the tuba.'",
+          ],
+          teacherNote:
+            "Print the cards in big letters, one sentence per card, with the wrong ones in the same style as the right ones. Concept formation: comparing examples and non-examples is the point, so give the sorting and the talk their time. Listen for: 'two as', 'the word in the middle is short', 'not means less', 'no -er or than'. Ask 'How do you know?' and 'Show me with your hands.' Early finishers write one right and one not right card for another group. Do NOT give the rule: the next slide puts their words into the form.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: as ... as and not as ... as",
+          hook: "as ... as is a balance: both sides weigh the same. Add not and one side goes up!",
+          form: [
+            { label: "The same", pattern: "A + is / are + as + plain adjective + as + B" },
+            { label: "Not the same", pattern: "A + isn't / aren't + as + plain adjective + as + B" },
+            { label: "Question", pattern: "Is / Are + A + as + plain adjective + as + B?" },
+            { label: "Short answers", pattern: "Yes, it is. / No, it isn't." },
+            { label: "Reasons", pattern: "..., because ...   (the reason)    ..., so ...   (the result)" },
+          ],
+          explanation: [
+            "What it means: as ... as says two things have the same amount of one quality. 'The djembe is as loud as the snare drum' means they are equally loud. Put not before the first as and the balance tips: the first thing has LESS. 'The flute isn't as heavy as the tuba' means the tuba is heavier.",
+            "When we use it: to explain a sound, a size or a weight to someone who cannot see or hear it. 'As loud as thunder' makes a picture in the listener's head. We also use it to choose, and then we add a reason: 'I chose the flute because it isn't as heavy as the tuba.'",
+            "The rule in three checks: (1) There are always two as, one before the adjective and one before the thing you compare with. (2) The adjective in the middle stays plain: loud, never louder. (3) Never use than here: the second word is always as.",
+            "The swap test: 'The flute isn't as loud as the tuba' = 'The tuba is louder than the flute.' Same idea, but the two instruments change places, and the plain adjective turns into -er.",
+            "Reasons: because tells why ('... because it is as light as a feather'). so tells what follows ('... so we can carry it'). Put a comma before so.",
+            "Vietnamese tip: Vietnamese uses one word, bằng, for 'the same as' (to bằng, không to bằng). English needs two: as before the adjective and as before the thing. We never say 'same loud'. We also keep the adjective plain, like the Vietnamese adjective, even for 'not as'.",
+            "Why it matters for talking: with as ... as you can describe a sound so well that a friend in another country can imagine it. This is how people share music across the world: they compare what they hear with things everyone knows.",
+          ],
+          examples: [
+            { text: "The djembe is as loud as the snare drum, so we put them at the back.", note: "the same + so (the result)" },
+            { text: "{s1}'s recorder is as long as {s2}'s ruler.", note: "the same, with a name slot" },
+            { text: "The flute isn't as heavy as the tuba, so it is easier to carry.", note: "not the same + so" },
+            { text: "Are the panpipes as long as the didgeridoo? No, they aren't.", note: "question + short answer; panpipes are plural" },
+            { text: "I chose the clarinet because it isn't as big as the tuba.", note: "not the same + because (the reason)" },
+            { text: "{s3} and {s4} are as happy as two birds when they play together.", note: "works for people, too" },
+          ],
+          pitfalls: [
+            { wrong: "The tuba is as louder as the drum.", right: "The tuba is as loud as the drum.", why: "The adjective between the two as stays plain." },
+            { wrong: "The flute is same long as the clarinet.", right: "The flute is as long as the clarinet.", why: "English has no 'same' here: use as ... as, which is like bằng." },
+            { wrong: "The flute is not as heavy than the tuba.", right: "The flute is not as heavy as the tuba.", why: "The second word is always as, never than." },
+            { wrong: "The drum is as loud the tuba.", right: "The drum is as loud as the tuba.", why: "You need both as: one before the adjective and one before the thing." },
+          ],
+          book: { book: "SB", pages: "121", activities: ["F", "G"], note: "Learn Grammar" },
+        },
+        {
+          kind: "activity",
+          title: "Balance game: arms level or tip!",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Two teams stand in two lines facing the board. The teacher holds up two picture cards (for example a tuba and a flute) and one adjective card (for example HEAVY).",
+            "Think for three seconds. If the two things have the same amount, hold your arms out level like a balance. If the first one has less, tip your arms so that the first thing's side goes up.",
+            "The first child in each line says the sentence aloud with the balance still showing: 'The flute isn't as heavy as the tuba.' The sentence must have both as and a plain adjective, with arms and words matching.",
+            "A correct sentence with correct arms is one step toward the finish line. The other team can call 'Prove it!' and the speaker gives a reason with because. A good reason wins a bonus step.",
+            "After each round the line turns: the speaker goes to the back and the next child comes up. First team to the finish line wins.",
+          ],
+          prompts: [
+            "Picture pairs: tuba and flute (HEAVY), two snare drums (LOUD), didgeridoo and panpipes (LONG), djembe and erhu (OLD), a feather and a drum (LIGHT), clarinet and clarinet (BLACK).",
+            "The ___ is as ___ as the ___.", "The ___ isn't as ___ as the ___.", "Prove it! ... because ...",
+          ],
+          teacherNote:
+            "The pattern is the winning move: no step without two as and a plain adjective. Correct with PROMPTS before you recast: repeat the sentence up to the mistake in a rising voice ('The flute is as ...?'), hold up two fingers for 'two as', or tap your ear and say 'plain!' for as louder as. Say the full correct sentence yourself only if the child is stuck. Tell children before the round that the pictures are only objects, so nobody is compared with a person. For a quick extra round, give the cards to the teams and let a child be the judge.",
+        },
+        {
+          kind: "speaking",
+          title: "Pretend sound scores: ask and fill in",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Partner A holds Sheet A: six instruments, each with a LOUD score in stars. The HEAVY column is empty. Partner B holds Sheet B: the same six instruments with a HEAVY score. The LOUD column is empty. Do not look at each other's sheet.",
+            "Ask about the empty boxes with a full question: 'Is the clarinet as loud as the flute?' Your partner looks at the stars and answers: 'Yes, it is. They both have three stars.' or 'No, it isn't. The clarinet is louder.'",
+            "Draw the right number of stars in your empty box when you know. Ask six questions each, so each instrument is covered.",
+            "Put the sheets together and check. Then write two sentences each on a sticky note: one with as ... as, one with not as ... as and so. Tell the class one.",
+            "Finished early? Choose your own three instruments and make the stars for the other partner to find out.",
+          ],
+          frames: ["Is the ___ as ___ as the ___?", "Yes, it is. They both have ___ stars.", "No, it isn't. The ___ has more / fewer stars.", "The ___ isn't as ___ as the ___, so ...", "That's different from what I thought, because ..."],
+          prompts: ["How many stars has the tuba?", "Is the flute as heavy as the clarinet?", "Which two are the same?", "Which one is the loudest, and how do you know?"],
+          fluencyTip: "Ask the whole question and answer with a whole sentence, then add 'because' or 'so'. Look at your partner, not only at your sheet.",
+          teacherNote:
+            "Make two sheets before the lesson. Each sheet lists tuba, snare drum, djembe, clarinet, flute and panpipes. Pretend scores (they are for the game; real instruments vary): LOUD stars on Sheet A: tuba 5, snare drum 5, djembe 4, clarinet 3, flute 3, panpipes 2. HEAVY stars on Sheet B: tuba 5, djembe 4, snare drum 4, clarinet 2, flute 1, panpipes 1. Walk round with prompts first: 'Two as?', 'Plain adjective?', 'Say that again with because.' Keep the talk about instruments only.",
+        },
+        {
+          kind: "activity",
+          title: "Sound statues",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Music on: walk around the room. Music off: freeze in a statue.",
+            "Teacher calls a comparison. Show it with your whole body. 'As loud as a tuba!': stand tall and play a giant tuba. 'Not as loud as a tuba!': play a tiny flute very softly. 'As low as a didgeridoo!': crouch. 'Not as high as a flute!': reach up halfway.",
+            "Say the comparison aloud together before you move again.",
+          ],
+          prompts: ["as loud as a tuba", "not as loud as a tuba", "as low as a didgeridoo", "not as high as a flute", "as fast as a drum roll"],
+          teacherNote: "A movement break that keeps the pattern in the body. Everyone moves at the same time, so nobody is on show.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          book: { book: "SB", pages: "121", activities: ["G"], note: "Compare things with a partner" },
+          steps: [
+            "Plan a talk with five sentences on the topic: Which instrument should our class band choose? 1. I would choose the ___ because ... 2. It is as ___ as a ___. 3. Another good one is the ___, but it isn't as ___ as the ___, so ... 4. A question for your partner: Is the ___ as ___ as the ___? 5. An ending: Together our band is as ___ as ___.",
+            "Round 1 (90 seconds): tell your talk to partner 1. Your partner holds up one finger for each as ... as sentence and listens for two as in every one.",
+            "Stop. The teacher shares ONE champion tip from the mistakes heard. Say it together once.",
+            "Round 2 (60 seconds): a new partner, the same talk, a little faster and smoother. Round 3 (45 seconds): another new partner, as clear as you can.",
+            "Last: one sentence to your partner: 'The best thing about talking three times is ...'",
+          ],
+          frames: ["I would choose the ___ because ___.", "It is as ___ as ___.", "The ___ isn't as ___ as the ___, so ___.", "Is the ___ as ___ as the ___?", "Together our band is as ___ as ___."],
+          prompts: ["Why that one?", "Is it as loud as a drum?", "Is the flute as easy to carry as the tuba?", "Can you give an example?"],
+          fluencyTip: "Same talk, three partners. Each time say it smoother and shorter. If you forget a word, say 'Let me think ...' and keep going.",
+          teacherNote:
+            "Use a timer everyone can see. Between rounds 1 and 2, give ONE feedback moment: choose the most common error you heard and prompt it first (rising voice, two fingers for two as, ear tap for plain). Do not stop the talk for other errors, so mistakes do not set while fluency grows. Children who need support point to a card for each sentence. Keep the topic on instruments, not on who plays well.",
+        },
+        {
+          kind: "activity",
+          title: "Write it: our class band",
+          tag: "Writing",
+          mode: "solo",
+          minutes: 12,
+          steps: [
+            "Say it first: tell your partner your band paragraph in 30 seconds, using your Champion talk.",
+            "Watch: teacher and class write the first two sentences together on the board: 'Our class band needs one instrument that is easy to carry. The clarinet isn't as big as the tuba, so every child can carry it.' Where are the two as? Where is the comma before so?",
+            "Write a paragraph of five to seven sentences: a topic sentence, one sentence with as ... as, one with not as ... as, one sentence with because, one with so, and an ending sentence.",
+            "Read your paragraph to a partner. Put a finger on every as and every plain adjective. The next slide is your checklist.",
+            "Finished early? Write a second paragraph about a different band, or write the rule in your own words.",
+          ],
+          frames: ["Our class band needs ___.", "The ___ is as ___ as the ___.", "The ___ isn't as ___ as the ___, so ___.", "I chose the ___ because ___.", "Together our band is ___."],
+          prompts: ["Which instrument would help our band most?", "Where do you need two as?", "Can you join two sentences with because or so?"],
+          tiers: [
+            { level: "Support", task: "Write four sentences with the frames. Use one as ... as and one not as ... as. Then do the worksheet's Support part.", frames: ["The ___ is as ___ as the ___.", "The ___ isn't as ___ as the ___.", "I chose the ___ because ___."] },
+            { level: "Core", task: "Write a paragraph of five or six sentences with both patterns and because and so. Then do the worksheet's Core part.", frames: ["The ___ isn't as ___ as the ___, so ___."] },
+            { level: "Stretch", task: "Write a paragraph of seven sentences. Add a sentence that compares three instruments and one that answers someone who disagrees. Then do the worksheet's Challenge part.", frames: ["Some people think ___, but ___.", "The ___ is as ___ as the ___, and it isn't as ___ as the ___."] },
+          ],
+          teacherNote:
+            "Say it, then write it. Model the first two sentences on the board with gaps for the verb and the adjective, then release. Praise the two as first, then the plain adjective, then the comma before so. The printed worksheet 'Grammar Champions: as ... as and not as ... as' follows this slide in three levels (Support, Core, Challenge). Check that no sentence compares a child with another: the instruments are the topic.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Look at your own paragraph. Check each point and give yourself a tick.",
+            "1. Every as ... as sentence has TWO as. 2. The adjective in the middle is plain (loud, not louder). 3. My not as ... as sentence says the first thing has LESS: I tested it by swapping the instruments. 4. Because and so are in the right place, with a comma before so, and I have capital letters and full stops.",
+            "Swap papers. Check your partner's paragraph and give one star and one step: 'Your two as are great!' and 'Check the adjective here.'",
+            "Edit one thing in your own paragraph with a pencil. Four ticks: you are a Grammar Champion!",
+          ],
+          prompts: ["Both as are here. Great!", "The adjective is plain. Great!", "Let's test it: swap the two instruments.", "Add a comma before so.", "Four ticks: champion!"],
+          teacherNote: "Draw the four checks on the board with small pictures (two as, a plain adjective, a balance, a comma). Children give a star for each tick on their partner's page. Collect one or two sentences without names to read to the class.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Grammar",
+          mode: "whole",
+          minutes: 5,
+          steps: [
+            "Teacher shows three tricky cases. Thumbs up (the rule works), sideways (not sure) or down (the rule breaks). Then explain why with a partner.",
+            "Case 1, not an instrument: 'The rain on the roof is as loud as a drum.' Does the pattern work for sounds that are not instruments?",
+            "Case 2, opposites: 'The tuba isn't as small as the flute.' Who is bigger? Does not as small as mean small?",
+            "Case 3, a way of doing something: 'The flute can play as softly as a whisper.' Does the pattern work for how we do things? What stays plain in the middle?",
+            "Think: how does comparing help people share music with others who cannot hear it?",
+          ],
+          frames: ["The rule works because ___.", "The rule does not work because ___.", "Comparing helps people share music because ___."],
+          prompts: ["Is there still two as?", "Is the middle word still plain?", "Who has more of the quality?", "Can you think of another sound to compare?"],
+          teacherNote:
+            "Transfer to new cases, then link to the Big Question. Case 2: 'not as small as' means the tuba is bigger, since the first thing has less of the quality small. Case 3: the same pattern works with adverbs (softly), and the word in the middle still has no -er. Let children's words stand, and write the best one on the class Big Ideas chart.",
+        },
+        odL3U12Creative["od2e-l3-u12-l6"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Do the Understand grammar pages: as ... as and not as ... as.", book: { book: "WB", pages: "108-110", note: "Grammar practice" } },
+            { label: "Creative grammar", detail: "Imagine a band of five animals. Choose which animal plays which instrument and say why. Draw the band. Write five sentences with as ... as, not as ... as and because or so, for example: 'The mouse plays the flute because it is as small as the flute.'" },
+            { label: "Challenge", detail: "Ask someone at home to name two instruments or two songs. Write a paragraph of six sentences that compares them with as ... as and not as ... as, with because and so. Edit it with the four-point Grammar Champion checklist and mark your ticks." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words: what must be in every as ... as sentence, and what changes when we add not?",
+            "I used to think ___, now I think ___. (About as ... as, not as ... as, because or so.)",
+            "How does the rule help you explain a sound to a friend? Show me with your hands how sure you are.",
+          ],
+        },
+      ],
+    },
   ],
-  worksheets: odL3U12Worksheets,
+  worksheets: [...odL3U12Worksheets, championsWorksheet],
   assessments: odL3U12Assessments,
   firstEdition: odL3U12FirstEdition,
 };

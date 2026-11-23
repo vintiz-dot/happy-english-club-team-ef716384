@@ -264,4 +264,68 @@ export const odL3U15Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 5 (Grammar Champions): measure words
+  "od2e-l3-u15-l5": {
+    kind: "creative",
+    thinking: "Evaluate",
+    uses: {
+      words: ["bag", "jar", "box", "bottle", "carton", "bunch", "loaf"],
+      grammar: ["measure word + of + food", "because", "so"],
+    },
+    base: {
+      title: "The plant-power lunch box",
+      task: "Plan a lunch box for a hungry gardener. All six foods must come from plants. Write the list with measure words and say why you chose each one.",
+      steps: [
+        "Choose six foods or drinks that come from plants.",
+        "Write each one with a number and a measure word, for example two bunches of grapes.",
+        "For each food write one sentence with because or so to say why it is a good choice for a gardener.",
+        "Tell which food gives the gardener the most energy, and say why you think so.",
+      ],
+      frames: [
+        "In the lunch box there is a ___ of ___ and two ___ of ___.",
+        "I chose ___ because it ...",
+        "The gardener is hungry, so ...",
+        "This comes from a plant. The plant gives us ...",
+        "I think the best choice is ___ because ...",
+      ],
+      success: [
+        "Every measure word has of after it, and the container is plural when there is more than one.",
+        "My writing gives a reason for each choice with because or so.",
+        "All six foods come from plants, and I say which part of the plant they come from if I can.",
+      ],
+      challenge:
+        "Add a seventh food that does NOT come from plants, and explain how you can tell the difference between the foods that come from plants and the foods that do not.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "The training-day lunch box",
+          task: "Plan a lunch box for a football team on a training day. All six foods must come from plants. Write the list with measure words and say why you chose each one.",
+          steps: [
+            "Choose six foods or drinks from plants that give players energy.",
+            "Write each one with a number and a measure word, for example two bunches of grapes.",
+            "For each food write one sentence with because or so to say why it is good for a player.",
+            "Tell which food you would give the team before a big match, and say why.",
+          ],
+          frames: [
+            "In the team lunch box there is a ___ of ___ and two ___ of ___.",
+            "I chose ___ because it ...",
+            "The players are hungry, so ...",
+            "This comes from a plant. The plant gives us ...",
+            "Before a big match I would give the team ___ because ...",
+          ],
+          success: [
+            "Every measure word has of after it, and the container is plural when there is more than one.",
+            "My writing gives a reason for each choice with because or so.",
+            "All six foods come from plants, and I say which part of the plant they come from if I can.",
+          ],
+          challenge:
+            "Add a seventh food that does NOT come from plants, and explain how you can tell the difference between the foods that come from plants and the foods that do not.",
+        },
+      },
+    ],
+  },
 };

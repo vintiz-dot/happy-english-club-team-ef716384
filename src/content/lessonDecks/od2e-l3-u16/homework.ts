@@ -328,4 +328,68 @@ export const odL3U16Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 6 (Grammar Champions): design a garden that makes visitors curious, happy and surprised
+  "od2e-l3-u16-l6": {
+    kind: "creative",
+    thinking: "Design",
+    uses: {
+      words: ["garden", "gardener", "community", "vines", "beans", "sweet potato", "crowd"],
+      grammar: ["curious about", "happy with", "surprised at", "because and so"],
+    },
+    base: {
+      title: "A garden with three special corners",
+      task: "Design a small garden for your community with three special corners: one that makes visitors curious, one that makes them happy and one that surprises them. Draw it and write sentences that explain each corner.",
+      steps: [
+        "Draw the garden from above and name it. Mark three corners and label them Curious, Happy and Surprise.",
+        "In each corner, draw the plants, the things to see and a place to sit.",
+        "Write one sentence for each corner with the right feeling pair (curious about, happy with, surprised at).",
+        "Add because to explain why visitors will feel that way and so to say what they will do.",
+        "Finish with one sentence that answers: Why does a community need this garden?",
+      ],
+      frames: [
+        "Visitors will be curious about ___ because ___.",
+        "Visitors will be happy with ___, so ___.",
+        "They will be surprised at how ___, so ___.",
+        "A community needs this garden because ___.",
+      ],
+      success: [
+        "I used curious about, happy with and surprised at with the right small word.",
+        "I used because for a reason and so for a result.",
+        "I explained why the garden is good for a community.",
+      ],
+      challenge:
+        "Add a fourth corner for a feeling of your own (for example proud of or interested in) and explain what the partner word is.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "A fan garden with three special corners",
+          task: "Design a small fan garden beside the Emirates Stadium with three special corners: one that makes the Arsenal fans curious, one that makes them happy and one that surprises them. Draw it and write sentences that explain each corner.",
+          steps: [
+            "Draw the fan garden from above and name it. Mark three corners and label them Curious, Happy and Surprise.",
+            "In each corner, draw the plants, the things to see and a place for the crowd to sit before a match.",
+            "Write one sentence for each corner with the right feeling pair (curious about, happy with, surprised at).",
+            "Add because to explain why the Gunners' fans will feel that way and so to say what they will do.",
+            "Finish with one sentence that answers: Why does a stadium need this garden?",
+          ],
+          frames: [
+            "The fans will be curious about ___ because ___.",
+            "The fans will be happy with ___, so ___.",
+            "They will be surprised at how ___, so ___.",
+            "A stadium needs this garden because ___.",
+          ],
+          success: [
+            "I used curious about, happy with and surprised at with the right small word.",
+            "I used because for a reason and so for a result.",
+            "I explained why the garden is good for the fans and the neighbors.",
+          ],
+          challenge:
+            "Add a fourth corner for a feeling of your own (for example proud of or interested in) and explain what the partner word is.",
+        },
+      },
+    ],
+  },
 };

@@ -6,9 +6,65 @@
 // Everything here is the school's own; nothing from the book or Teacher's Guide is reproduced.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U9Creative } from "./od2e-l2-u09/homework";
 import { odL2U9Worksheets } from "./od2e-l2-u09/assessments";
+
+// The Grammar Champions worksheet (Lesson 5): the school's own sentences, with answers.
+const odL2U9ChampionWorksheet: Worksheet = {
+  id: "od2e-l2-u09-ws-champions",
+  title: "Grammar Champions: mine and ours",
+  grammar: "my + thing / mine alone; Whose + thing + is this?",
+  deckId: "od2e-l2-u09-l5",
+  slide: "Say it, then write: mine and ours",
+  intro:
+    "A thing after it? Say my, your, her, his, our, their (my kite). Nothing after it? Say mine, yours, hers, his, ours, theirs (the kite is mine). Ask: Whose kite is this? The thing comes right after Whose.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right word. Then read the whole sentence aloud to a partner.",
+      example: "This is my kite. The kite is ___. (mine / my)  ->  mine",
+      items: [
+        { q: "These are my crayons. The crayons are ___.", options: ["mine", "my"], answer: "mine" },
+        { q: "That is your lunch box. That lunch box is ___.", options: ["yours", "your"], answer: "yours" },
+        { q: "Pip has a red scarf. The red scarf is ___.", options: ["hers", "her"], answer: "hers" },
+        { q: "Max has a new cap. The new cap is ___.", options: ["his", "him"], answer: "his" },
+        { q: "We made this poster. This poster is ___.", options: ["ours", "our"], answer: "ours" },
+        { q: "Tom and Lila have a pet fish. The fish is ___.", options: ["theirs", "their"], answer: "theirs" },
+        { q: "Which question is right?", options: ["Whose bag is this?", "Whose is bag this?"], answer: "Whose bag is this?" },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write the right words in the gaps. Then correct each mistake.",
+      example: "This is ___ ball. The ball is ___. (I)  ->  my, mine",
+      items: [
+        { q: "This is ___ pencil case. The pencil case is ___. (I)", answer: "my, mine" },
+        { q: "That is ___ ball. The ball is ___. (you)", answer: "your, yours" },
+        { q: "Kiki has a kite. It is ___ kite. The kite is ___. (she)", answer: "her, hers" },
+        { q: "Max and Kiki painted a picture. It is ___ picture. The picture is ___. (they)", answer: "their, theirs" },
+        { q: "Correct it: This bag is my.", answer: "This bag is mine." },
+        { q: "Correct it: This book is whose?", answer: "Whose book is this?" },
+        { q: "Correct it: These crayons are our.", answer: "These crayons are ours." },
+        { q: "Correct it: Whose pencils are these? It's hers.", answer: "Whose pencils are these? They're hers." },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Join the sentences, or write your own. Say each sentence aloud first.",
+      example: "The bag is mine. The ball is ours.  ->  The bag is mine, but the ball is ours.",
+      items: [
+        { q: "Join with and: The red bag is mine. The blue bag is yours.", answer: "The red bag is mine, and the blue bag is yours." },
+        { q: "Join with but: The pencil case is mine. The playground is ours.", answer: "The pencil case is mine, but the playground is ours." },
+        { q: "Join with because: I share my crayons. Sharing helps us get along.", answer: "I share my crayons because sharing helps us get along." },
+        { q: "Write a Whose question about something in your bag. Then answer it with mine.", answer: "e.g. Whose eraser is this? It's mine." },
+        { q: "Write two sentences: one thing that is only yours and one thing that is ours.", answer: "e.g. This scooter is mine. The garden is ours." },
+        { q: "Explain: why is 'The book is my' wrong?", answer: "e.g. My needs a thing after it. At the end of the sentence we say mine." },
+        { q: "Explain: why is it kind to ask 'Whose is this?' before you take something?", answer: "e.g. It shows respect, so nobody feels upset, and it helps people get along." },
+      ],
+    },
+  ],
+};
 
 export const odL2U9: Unit = {
   curriculum: "oxford-discover-2e",
@@ -973,6 +1029,247 @@ export const odL2U9: Unit = {
         },
       ],
     },
-  ],
-  worksheets: odL2U9Worksheets,
+
+    // ------------------------------------------------------------------ Lesson 5: Grammar Champions
+    {
+      id: "od2e-l2-u09-l5",
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 9,
+      lesson: 5,
+      covers: { unitFrom: 9, lesson: "Understand" },
+      title: "Grammar Champions: my + thing, but the thing is mine",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "93", activities: ["D", "E", "F"], note: "Song, Track 2•12; Learn Grammar: Possessive Pronouns" },
+        { book: "WB", pages: "77-79" },
+      ],
+      slides: [
+        { kind: "title", title: "Unit 9: Following Rules", subtitle: "Lesson 5 · Grammar Champions", bigQuestion: "How do people get along with each other?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can use mine, yours, hers, his, ours and theirs when I speak.",
+            "I can ask and answer: Whose bag is this? It's mine.",
+            "I can write 3 or more sentences about what is mine and what is ours.",
+            "I can explain the rule in my own words and say how it helps people get along.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "pairs",
+          minutes: 6,
+          steps: [
+            "Whole class: the teacher mimes a word from this unit (librarian, lifeguard, crossing guard, principal, polite, take turns, clean up, litter, traffic light). Everybody shouts the word and says one rule or one job that goes with it.",
+            "Pairs: Partner A holds up a thing (a pencil, a book, a bag) and says: \"This is my ___.\" Partner B points to it and says: \"That is your ___.\" Swap after every thing.",
+            "Round 2: A says: \"This is my pencil.\" B changes it: \"The pencil is ___.\" Let the pairs try. Do not say the word yet if they do not know it.",
+            "Quick question for the whole class: \"What is the same and what is different about my and mine?\" Collect two or three guesses on the board. Do not say the answer yet.",
+          ],
+          prompts: ["A librarian helps ___.", "This is my ___.", "That is your ___.", "{s1}, tell us one rule from this unit."],
+          teacherNote:
+            "Retrieval: children pull back the unit words and the my / your pattern from the song and the last lesson before they meet anything new. Keep it fast and cheerful. Listen to how pairs finish 'The pencil is ___': my? mine? my pencil? Note it for the Focus slide; do not correct yet.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: the lost-and-found basket",
+          tag: "Listening",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Tell the children: \"Listen to a story about Pip the puppet. Clap every time you hear Whose. Stand up every time you hear a little word that has NOTHING after it, like 'mine'.\"",
+            "Tell the story slowly, with a basket of things: \"At the end of the day, Pip opened the big lost-and-found basket. 'Whose red hat is this?' asked Pip. 'It's mine!' said Max. 'That is my hat. The hat is mine.' Kiki smiled. 'Yes, it's his. It's Max's hat.' Pip lifted a blue scarf. 'Whose scarf is this?' 'It's hers,' said Max. 'It's Kiki's. The scarf is hers.' 'Thank you!' said Kiki. 'It's my scarf. It's mine!' Pip found two pencils. 'Are these pencils yours, Kiki?' 'No,' said Kiki, 'they're not mine. Those pencils are theirs. Tom and Lila have green pencils.' 'They're ours!' said Tom and Lila. 'Those are our pencils. The pencils are ours.' Then Pip found a yellow ball at the bottom. 'Whose ball is this?' Nobody said 'mine.' 'It's not mine,' said Max. 'It's not ours,' said Tom and Lila. Pip smiled. 'Then it is OURS,' she said. 'It belongs to all of us. Let's take turns!' And nobody grabbed.\"",
+            "Tell it a second time, faster, and let children stand for the stand-alone words. Third time: the children say those words with you (mine, his, hers, yours, theirs, ours).",
+            "In pairs: \"What did you notice about the words that made you stand?\" Take two or three ideas. Do not give the rule.",
+          ],
+          prompts: ["I stood up ___ times.", "I noticed ___.", "{s2}, which word did you stand for? {s3}, what did Pip say about the ball?"],
+          teacherNote:
+            "Input flood: all six stand-alone words, 'Whose', and my / our + thing come back many times, so children hear the pattern before they have to say it. Put a hat, a scarf, two pencils and a ball in a real basket and hold each up. The story is the school's own: do not read it from the book. Max is a boy and Kiki and Pip are girls, so his and hers are always about an invented character. If children ask 'why does Pip say Whose first?', say 'good question, we will find out'.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group of 4 gets a set of sentence cards (the teacher prepares them) and two mats: Is a good sentence and Is not a good sentence.",
+            "Sort. Good: \"This is my notebook.\" \"This notebook is mine.\" \"The red bag is hers.\" \"That is their kite.\" \"The kite is theirs.\" \"Whose pencil is this?\" \"These crayons are ours.\" \"Is this pen yours?\" Not good: \"This is mine notebook.\" \"This notebook is my.\" \"The red bag is her.\" \"This bag is whose?\" \"These crayons are our.\" \"That is theirs kite.\" \"It is yours pen.\"",
+            "Round 2: take the good cards only. Circle the owner word (my, mine, hers ...). Sort again into a T-chart. Form A: the owner word has a THING after it (my notebook, their kite). Form B: the owner word has NOTHING after it (is mine, is hers). Stick the cards on the chart.",
+            "Say what you notice: \"I notice that ___.\" Then: \"I think the rule is ___ because ___.\" One child writes the group's idea on a big card.",
+          ],
+          frames: ["I notice that ___.", "In Form A, a ___ comes after the word.", "In Form B, the word has ___ after it.", "I think the rule is ___ because ___."],
+          prompts: ["Is this a good sentence? Why not?", "What is the same in all the Form A cards?", "What is different in Form B?"],
+          teacherNote:
+            "Concept formation: good and not-good cards side by side show what the rule is NOT as well as what it is. Walk around and collect the children's own words on the board (\"mine has no thing after it\", \"my needs a friend\") and do not tell the rule yet. Children may say their idea in Vietnamese first; help them say it in English. Support: give the cards with the owner words already circled.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: my + thing, but the thing is mine",
+          hook: "my needs a friend (my book), but mine walks alone (the book is mine)!",
+          form: [
+            { label: "Before a thing", pattern: "my / your / her / his / our / their + thing:  my book, their kite" },
+            { label: "On its own", pattern: "thing + is / are + mine / yours / hers / his / ours / theirs:  The book is mine." },
+            { label: "Asking", pattern: "Whose + thing + is this?   Whose + things + are these?" },
+            { label: "Answering", pattern: "It's mine / yours / hers / his / ours / theirs.   They're ..." },
+            { label: "Names", pattern: "A name never changes: Tom's book. The book is Tom's." },
+          ],
+          explanation: [
+            "Mine, yours, hers, his, ours and theirs tell us who owns something, and they stand ALONE: nothing comes after them. my, your, her, his, our and their need a thing after them (my book). We use the stand-alone words when we already said the thing, so we do not say it again: 'I like your bag. Mine is old.'",
+            "We ask Whose ...? when we want to know the owner. The thing comes right after Whose: 'Whose bag is this?' One thing: It's ... . More than one thing: They're ... .",
+            "Vietnamese tip: Vietnamese says 'của tôi' both times: 'sách của tôi' (my book) and 'cuốn sách này của tôi' (this book is mine). English chooses a different word. Ask: is there a thing after it? Yes: my. No: mine. Also, Vietnamese puts 'của ai' at the end, but English starts the question with Whose.",
+            "Why it matters: this is how people get along. Asking 'Whose is this?' before you take something is polite. Saying 'mine' kindly keeps your things safe, and saying 'ours' shows what we share, like the class, the playground and the ball. Getting along means knowing what is mine, what is yours and what is ours.",
+          ],
+          examples: [
+            { text: "This is my notebook. The notebook is mine.", note: "my + thing, mine alone" },
+            { text: "{s1}, is that pencil case yours?", note: "yours: the person I am talking to" },
+            { text: "Whose bag is this? It's {s2}'s.", note: "a name + 's tells the owner" },
+            { text: "{s3} and {s4} made this poster. The poster is theirs.", note: "theirs: two or more other people" },
+            { text: "This classroom is ours. We share it.", note: "ours: all of us together" },
+            { text: "Pip's kite is red. Hers is red. Max's kite is blue. His is blue.", note: "hers and his can start a sentence, still alone" },
+          ],
+          pitfalls: [
+            { wrong: "This is mine book.", right: "This is my book. / This book is mine.", why: "Mine stands alone. If a thing comes after it, say my." },
+            { wrong: "The red scarf is her.", right: "The red scarf is hers.", why: "At the end we need the stand-alone word: her + s." },
+            { wrong: "This bag is whose?", right: "Whose bag is this?", why: "Vietnamese puts the question word at the end. English begins with Whose, then the thing." },
+            { wrong: "Whose pencils are these? It's mine.", right: "Whose pencils are these? They're mine.", why: "More than one thing: They're. One thing: It's." },
+            { wrong: "These crayons are our.", right: "These crayons are ours.", why: "Our needs a thing after it (our crayons). Alone we say ours." },
+          ],
+          book: { book: "SB", pages: "93", activities: ["E"] },
+        },
+        {
+          kind: "activity",
+          title: "Point and say: mine, yours, ours!",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Make teams of 4 (two pairs). Each team has a bag with six things (pencils, erasers, a book, a ball). Pip and Max picture cards are on the wall.",
+            "The teacher calls a word and shows its hand signal. MINE: both hands on your chest. YOURS: point to your partner. HERS: point to Pip's picture. HIS: point to Max's picture. OURS: make a circle with your partner. THEIRS: point to the other pair.",
+            "Each team must do the signal AND say two sentences with the thing in their hands: \"This is my ___. It's mine.\" \"That is your ___. It's yours.\" \"That is her kite. It's hers.\" \"That is our ___. It's ours.\" \"That is their ___. It's theirs.\"",
+            "A team scores a point when both sentences are right. If one is wrong, the teacher gives a prompt (see the note) and the team tries again. Change the caller every round: {s4}, {s5} and {s6} each call one word.",
+          ],
+          prompts: ["Is there a thing after it?", "My + thing, or mine alone?", "Say it with your empty hand: It's mine.", "Whose is it? Show me."],
+          teacherNote:
+            "The pattern is the winning move: you cannot score without both sentences. Prompt before you recast. 1) Elicit: say the start and wait: \"This book is ...?\" 2) Repeat the error with a rising voice: \"The book is MY?\" 3) Hand signal: one finger for 'a thing comes after' (my + thing) and an EMPTY open hand for 'nothing after' (mine). 4) Only then recast: \"The book is MINE.\" Keep praise on the pair that corrects themselves.",
+        },
+        {
+          kind: "speaking",
+          title: "The lost-property gap: whose is it?",
+          mode: "pairs",
+          minutes: 12,
+          frames: ["Whose ___ is this?", "It's ___'s. It's hers / his.", "Whose ___ are these?", "They're ___'s. They're theirs.", "Is this ___ yours?", "Yes, it's mine. / No, it's not mine."],
+          prompts: ["Say it again with the owner word.", "Is it one thing or two things?", "Is a thing after it? Then say my. If not, say mine."],
+          fluencyTip: "Ask the whole question, then answer with a whole sentence. If you do not hear, say \"Would you repeat that, please?\"",
+          steps: [
+            "Partner A has the lost-property picture with six things and the owners for three of them (the other three owners are missing). Partner B has the same six things with the owners for the OTHER three. The owners are Pip, Max, Kiki, Tom and Lila, the teacher and \"all of us.\"",
+            "A asks about a thing whose owner A does not know: \"Whose hat is this?\" B looks at the card and answers: \"It's Max's. It's his.\" A writes the owner. For two things: \"Whose pencils are these?\" \"They're Tom and Lila's. They're theirs.\"",
+            "Swap until both cards are full. Then check: A says each owner sentence and B listens for the right word: \"The hat is his.\" \"The ball is ours.\"",
+            "Round 2: change partners. Each child puts three real things on the desk. Your partner asks about each: \"Is this pencil yours?\" Answer: \"Yes, it's mine.\" or \"No, it's not mine. It's {s7}'s.\"",
+          ],
+          teacherNote:
+            "Information gap: neither card is complete, so children really have to ask and listen. Prepare the two cards before class (six pictures, a name under three of them on each card). Listen for 'It's mine' when there are two things (should be They're) and for 'This is whose?' and use prompts first: rising voice, empty hand, then recast. Support: let the child point to the picture while saying the sentence. Round 2 is kind: always ask before you pick something up, and say thank you.",
+        },
+        {
+          kind: "activity",
+          title: "Movement break: freeze and point",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "Play music and dance around the room. When the music stops, freeze next to someone.",
+            "The teacher calls a word: \"Mine!\" Everybody puts hands on chest and says \"It's mine!\" \"Yours!\" Point to your partner and say \"It's yours!\" \"Ours!\" Make a circle with your partner and say \"It's ours!\"",
+            "{s8} is the music master for one round. Then {s9} is the caller.",
+          ],
+          prompts: ["It's mine!", "It's yours!", "It's ours!", "{s8}, press stop!"],
+          teacherNote: "Keep it fast and silly. Children move to the music and use the stand-alone word with the gesture when it stops, so the pattern is the move. Walk, don't run, and say why: it keeps everybody safe.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          frames: ["This is my ___. It's mine.", "I don't share it because ___.", "But the ___ is ours. We share it.", "Sharing helps because ___."],
+          prompts: ["What is yours only?", "What is ours?", "Who shares it with you?", "How does sharing help people get along?"],
+          fluencyTip: "Say it three times to three friends. Each time you can say it faster and with more ease. Look at your partner, not at your paper.",
+          steps: [
+            "Choose one thing that is only yours and one thing that is ours (you share it with family, friends or the class). Plan four ideas with the frames, not a script: what is mine, why, what is ours, how sharing helps.",
+            "Round 1 (90 seconds): talk to partner 1. Round 2 (60 seconds): move to a new partner and tell it again, shorter. Round 3 (45 seconds): a new partner, shorter again.",
+            "Between round 1 and round 2 the teacher gives one feedback moment to the whole class: one thing you did well, one thing to fix (my + thing, or mine alone).",
+            "Listeners: after each round say \"I liked ___.\" and ask one question.",
+          ],
+          teacherNote:
+            "Task repetition builds fluency: same message, shorter time, new listener. Take the single feedback moment after round 1 and use a prompt first (\"The bike is MY?\" with a rising voice, then the empty open hand), and only then the right sentence, so mistakes do not set before round 2. Do not stop children during the rounds. Stretch children add 'but' or 'because' in round 1 and keep it in round 3.",
+        },
+        {
+          kind: "activity",
+          title: "Say it, then write: mine and ours",
+          tag: "Writing",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Say your four sentences to a partner first. Sentence 1: one thing that is mine (This is my ___. It's mine.). Sentence 2: one thing that is ours (The ___ is ours.). Sentence 3: a Whose question and its answer. Sentence 4: join two ideas with but or because.",
+            "The teacher models a shared sentence with the class: \"This bag is mine, but the ball is ours.\" Children say which word stands alone and which word has a thing after it. Write one more together: \"I share my crayons because sharing helps us get along.\"",
+            "Now write 3 or 4 sentences about your own things. Use the frames. Read each sentence quietly and check it.",
+            "Swap papers with your partner. Underline one great sentence and say: \"I like this sentence because ___.\"",
+          ],
+          frames: ["This is my ___. It's mine.", "The ___ is ours.", "Whose ___ is this? It's ___'s.", "___, but ___.", "___, because ___."],
+          prompts: ["Is a thing after it?", "Is it one thing or more than one?", "Can you join these two ideas with but?"],
+          teacherNote:
+            "Oral rehearsal first, then writing: children who said it can write it. Support: give a gapped version of the model (\"This is my ___. It's ___.\"). Stretch: add a fifth sentence with because. The printed worksheet \"Grammar Champions: mine and ours\" follows this slide, in three levels (Support, Core, Challenge).",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Write the four checks on the board. Read your own writing. Tick each one in pencil.",
+            "1. I used my / your / her / his / our / their with a thing after it. 2. I used mine / yours / hers / his / ours / theirs alone, with nothing after it. 3. My Whose question starts with Whose, then the thing, then is this? / are these? 4. I joined two ideas with and, but or because, and I have a capital letter and a period.",
+            "Swap with your partner. Tick again with a different color. Say: \"You are a champion at ___. Next time, try ___.\"",
+            "Fix one thing in your own writing. Show your teacher the fix.",
+          ],
+          prompts: ["You are a champion at ___.", "Next time, try ___.", "I fixed ___."],
+          teacherNote: "Success criteria in child language. A child fixing their own sentence after a peer check is the point: look for the fix, not for perfect pages.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Speaking",
+          mode: "groups",
+          minutes: 5,
+          steps: [
+            "Put three cards on the board. 1. \"The book is Tom's.\" Does a name change like my > mine? 2. \"His book is old. The old book is his.\" Does his change? 3. \"Whose playground is this? It's ___.\" Is it mine, yours or ours?",
+            "In groups: does our rule work for names, for his and for a playground? What goes in the gap? Say why.",
+            "Tricky case, card 2: one owner word is a rebel. Which one? Why?",
+            "Each group tells the class: \"I think ___ because ___.\" The class says if it agrees. For card 3, say one rule that helps us get along in a place that is ours.",
+          ],
+          prompts: ["Does the rule work for ___, too?", "I think ___ because ___.", "Which word is the rebel?", "How do we get along in a place that is ours?"],
+          frames: ["The rule works for ___ because ___.", "___ is a rebel because ___.", "In a place that is ours, we ___."],
+          teacherNote:
+            "Transfer. Answers: 1) names do not change: Tom's book, the book is Tom's; the pronouns are the ones that change. 2) his is the rebel: it is the same before a thing and alone, so only the word position changes the job. 3) ours: a playground belongs to everybody, and so we take turns, clean up and follow the rules there (link back to Lessons 1 and 2). Conceptual point to draw out: the rule is about whether a thing comes after the word, not about who the owner is.",
+        },
+        odL2U9Creative["od2e-l2-u09-l5"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Complete the grammar pages on possessive pronouns (my / mine, your / yours, her / hers, our / ours, their / theirs).", book: { book: "WB", pages: "77-79" } },
+            { label: "Creative grammar", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
+            { label: "Challenge: the rule teacher", detail: "Teach someone at home the rule for my and mine. Make a tiny poster with two examples of your own and one mistake that a grammar champion would fix." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words.",
+            "I used to think ___ about my and mine. Now I think ___.",
+            "How does saying \"Whose is this?\" or \"It's ours\" help people get along? Say one sentence with mine and one with ours.",
+          ],
+        },
+      ],
+    },  ],
+  worksheets: [...odL2U9Worksheets, odL2U9ChampionWorksheet],
 };

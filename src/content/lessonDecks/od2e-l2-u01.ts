@@ -7,9 +7,62 @@
 // most of its time on talk.
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
-import type { Unit } from "@/lib/lessonDecks/types";
+import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { odL2U01Creative } from "./od2e-l2-u01/homework";
 import { odL2U01Worksheets } from "./od2e-l2-u01/assessments";
+
+
+// The Grammar Champions worksheet (Lesson 5): the school's own sentences, with answers.
+const odL2U01ChampionWorksheet: Worksheet = {
+  id: "od2e-l2-u01-ws-champions",
+  title: "Grammar Champions: They, it and them",
+  grammar: "they / it / them: before and after the verb",
+  deckId: "od2e-l2-u01-l5",
+  slide: "Say it, then write: my animal in four sentences",
+  intro:
+    "Count first: one animal is it, more than one is they or them. They comes before the verb: They swim. Them comes after the verb: Fins help them swim. Say the animal name one time, then use the small word.",
+  tiers: [
+    {
+      level: "Support",
+      instructions: "Circle the right word. Then read the sentence aloud to a partner.",
+      example: "Ducks like water. ___ swim every day. (They / Them)  ->  They",
+      items: [
+        { q: "Owls have big eyes. ___ see at night.", options: ["They", "Them"], answer: "They" },
+        { q: "Big eyes help ___ see.", options: ["they", "them"], answer: "them" },
+        { q: "A camel has a hump. ___ stores fat.", options: ["It", "They"], answer: "It" },
+        { q: "Bees make honey. We watch ___.", options: ["them", "they"], answer: "them" },
+        { q: "A snail has a shell. The shell keeps ___ safe.", options: ["it", "they"], answer: "it" },
+        { q: "Which sentence is correct?", options: ["Fins help them swim.", "Fins help they swim."], answer: "Fins help them swim." },
+      ],
+    },
+    {
+      level: "Core",
+      instructions: "Write It, They or them in each gap. Count the animals first.",
+      example: "Frogs live near water. ___ have wet skin.  ->  They",
+      items: [
+        { q: "Penguins live in cold places. ___ have thick feathers.", answer: "They" },
+        { q: "Thick feathers keep ___ warm.", answer: "them" },
+        { q: "A bat sleeps in the day. ___ flies at night.", answer: "It" },
+        { q: "A shark has sharp teeth. Sharp teeth help ___ catch fish.", answer: "it" },
+        { q: "Pandas eat bamboo. ___ eat for many hours.", answer: "They" },
+        { q: "I saw two rabbits. I gave ___ a carrot.", answer: "them" },
+      ],
+    },
+    {
+      level: "Challenge",
+      instructions: "Join, correct or write. Use and, but, they, it or them. Check every word.",
+      example: "Owls have big eyes. Big eyes help them see.  ->  Owls have big eyes, and big eyes help them see.",
+      items: [
+        { q: "Join with and: Frogs have long legs. Long legs help them jump.", answer: "Frogs have long legs, and long legs help them jump." },
+        { q: "Join with but: A bat has wings. It is not a bird.", answer: "A bat has wings, but it is not a bird." },
+        { q: "Correct the mistake: Turtles are slow. Shells keep it safe.", answer: "Turtles are slow. Shells keep them safe." },
+        { q: "Correct the mistake: Dolphins are mammals. Them breathe air.", answer: "Dolphins are mammals. They breathe air." },
+        { q: "Write your own: two sentences about a body part that helps many animals. Use them.", answer: "e.g. Ducks have webbed feet. Webbed feet help them swim fast." },
+        { q: "Write your own: two sentences about one animal and its body part. Use it.", answer: "e.g. A giraffe has a long neck. A long neck helps it reach tall trees." },
+      ],
+    },
+  ],
+};
 
 export const odL2U1: Unit = {
   curriculum: "oxford-discover-2e",
@@ -25,7 +78,7 @@ export const odL2U1: Unit = {
     "We use they, it and them instead of saying the animal's name again: they does the action, them receives it.",
     "Speakers and writers say one clear fact about an animal, add what its body part does, and say it kindly and confidently to a partner.",
   ],
-  worksheets: odL2U01Worksheets,
+  worksheets: [...odL2U01Worksheets, odL2U01ChampionWorksheet],
   decks: [
     // ------------------------------------------------------------------ Lesson 1
     {
@@ -970,6 +1023,245 @@ export const odL2U1: Unit = {
           items: [
             { label: "Creative writing", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
             { label: "Workbook", detail: "Complete the Communicate pages, including the writing task.", book: { book: "WB", pages: "8-9" } },
+          ],
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------ Lesson 5: Grammar Champions
+    {
+      id: "od2e-l2-u01-l5",
+      curriculum: "oxford-discover-2e",
+      level: 2,
+      unit: 1,
+      lesson: 5,
+      covers: { unitFrom: 1, lesson: "Understand" },
+      title: "Grammar Champions: They do it, we help them (they, it, them)",
+      minutes: 90,
+      inquiryPhases: ["Engage", "Focus", "Investigate", "Organize", "Generalize", "Transfer", "Reflect"],
+      book: [
+        { book: "SB", pages: "13", activities: ["D", "E"], note: "Song, Track 1•04; Learn Grammar: Pronouns" },
+        { book: "WB", pages: "5-7" },
+      ],
+      slides: [
+        { kind: "title", title: "Unit 1: Amazing Animals", subtitle: "Lesson 5 · Grammar Champions", bigQuestion: "How are animals different from one another?" },
+        {
+          kind: "objectives",
+          items: [
+            "I can use they, it and them when I talk about animals.",
+            "I can ask and answer questions about animals with a partner.",
+            "I can write three or more sentences and not say the animal name again and again.",
+            "I can explain the rule in my own words.",
+          ],
+        },
+        {
+          kind: "activity",
+          title: "Remember it!",
+          tag: "Warm-up",
+          mode: "pairs",
+          minutes: 6,
+          steps: [
+            "Whole class: the teacher holds up a picture card (feathers, scales, fur, gills, wings, eggs, skin). Everybody shouts the word and one animal that has it, fast.",
+            "Pairs: Partner A says: \"Birds have ___.\" Partner B says one thing it helps the animal do. Swap after each turn.",
+            "Quick quiz: \"Which small word can I use so I do not say 'birds' again?\" Collect guesses. Do not say the answer yet.",
+            "Finish with the Big Question: \"How are animals different from one another?\" Each pair gives one different body part and one animal.",
+          ],
+          prompts: ["Frogs have ___.", "It helps them ___.", "{s1}, tell us one animal and one body part."],
+          teacherNote: "Retrieval: children pull back the words from Lessons 1 to 4 before they meet anything new. Keep it quick and cheerful. Listen to which small word children already use when they say the second sentence (they? them? the animal name again?) and note it for the Focus slide.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar mystery: the pond story",
+          tag: "Game",
+          mode: "whole",
+          minutes: 8,
+          steps: [
+            "Tell the children: \"Listen to my pond story. Clap when you hear THEY. Stamp when you hear THEM. Tap your head when you hear IT.\"",
+            "Read the story slowly with actions, then again faster: \"Look at the ducks on the pond. They have soft feathers. The feathers keep them dry. Look at the turtle on the rock. It has a hard shell. The shell keeps it safe. The ducks see the turtle. They like it. The turtle sees the ducks. It likes them. The ducks swim to the turtle. Big webbed feet help them swim fast. The turtle waves. It says hello to them!\"",
+            "Third time: children say the small words with you. Then ask in pairs: \"What did you notice?\" Take two or three ideas. Do not give the rule.",
+          ],
+          prompts: ["I heard they ___ times.", "I noticed ___.", "{s2}, what did you clap for?"],
+          teacherNote: "Input flood: the same three small words come back again and again, so children hear the pattern before they are asked to say it. Mime the ducks and the turtle (flap, tuck in your head). Point to a duck picture on THEY and THEM and to the turtle on IT, but keep your voice the same: the words are the clue, not your voice.",
+        },
+        {
+          kind: "activity",
+          title: "Grammar detectives: Is / Is Not",
+          tag: "Grammar",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Each group of 4 gets a set of sentence cards (the teacher prepares them) and two mats: Is a good sentence and Is not a good sentence.",
+            "Sort. Good: \"Owls have big eyes. They see at night.\" \"Big eyes help them see.\" \"A camel has a hump. It stores fat.\" \"Ants are small, but I can see them.\" Not good: \"Big eyes help they see.\" \"Them have big eyes.\" \"A camel has a hump. They store fat.\" \"I can see they.\"",
+            "Round 2: take the good cards only. Underline the small word. Sort again: the small word comes BEFORE the verb, or AFTER the verb. Stick them on a T-chart.",
+            "Say what you notice: \"I notice that ___.\" Then: \"I think the rule is ___ because ___.\" One child writes the group's idea on a big card.",
+          ],
+          frames: ["I notice that ___.", "They / it is always ___ the verb.", "Them is always ___ the verb.", "I think the rule is ___ because ___."],
+          prompts: ["Is this a good sentence? Why?", "Where is the small word?", "What is the same in these cards?"],
+          teacherNote: "Concept formation: a good sentence and a not-good sentence side by side show what the rule is NOT, as well as what it is. Walk around, collect the children's own words on the board (\"before the verb\", \"the one who does it\", \"the one who gets it\") and do not tell the rule yet. Support: give those children the cards with the verbs already underlined.",
+        },
+        {
+          kind: "grammar",
+          title: "Grammar: They, it and them",
+          hook: "THEY is the animal that does it. THEM is the animal that gets it. IT is one animal, and it never changes!",
+          form: [
+            { label: "Many animals, the doer", pattern: "They + verb:  Owls hunt at night.  →  They hunt at night." },
+            { label: "Many animals, the receiver", pattern: "verb + them:  Big eyes help owls.  →  Big eyes help them." },
+            { label: "One animal", pattern: "It + verb  /  verb + it:  A turtle is slow, but its shell keeps it safe." },
+            { label: "Questions", pattern: "Do big ears help rabbits? Yes, big ears help them hear." },
+            { label: "Many or one?", pattern: "many animals → they / them        one animal → it" },
+          ],
+          explanation: [
+            "A pronoun is a short word that takes the place of a name. We say the animal name one time. After that, we use a pronoun, so our talking is smooth and fast, not slow and repeating.",
+            "Count first: one animal is it. More than one animal is they or them. Then look at where the word goes. THEY comes before the verb and does the action: They swim. THEM comes after a verb and gets the action: Fins help them swim.",
+            "Vietnamese tip: Vietnamese can use the same word (chúng) both before and after the verb, or say the animal name again. English changes the word: THEY before the verb, THEM after it. The word for one animal, it, stays the same.",
+            "Why it matters: when you say \"They have ___. ___ help them ___.\", you can explain how animals are different in two quick sentences. That is how you answer the Big Question.",
+          ],
+          examples: [
+            { text: "{s1} has two goldfish. They swim in a bowl, and {s1} watches them." },
+            { text: "Owls have big eyes. They see well at night. Big eyes help them find food." },
+            { text: "{s2} saw a turtle. It has a hard shell, and the shell keeps it safe." },
+            { text: "{s3} and {s4} like penguins. They draw them in art class." },
+            { text: "Bees make honey. We watch them, but we do not touch them." },
+            { text: "{s5} asked, \"Do wings help ducks?\" {s6} said, \"Yes, wings help them fly.\"" },
+          ],
+          pitfalls: [
+            { wrong: "Wings help they fly.", right: "Wings help them fly.", why: "After the verb (help) we use them. They is for the animal that does the action, at the start." },
+            { wrong: "Them have long tails.", right: "They have long tails.", why: "The animals do the action, so use they before the verb." },
+            { wrong: "A turtle has a hard shell. They are green.", right: "A turtle has a hard shell. It is green.", why: "One animal is it. Count first!" },
+            { wrong: "The ducks are loud. I can hear it.", right: "The ducks are loud. I can hear them.", why: "Ducks is more than one, so use them after the verb." },
+          ],
+          book: { book: "SB", pages: "13", activities: ["E"] },
+        },
+        {
+          kind: "activity",
+          title: "Pond hop: They, it or them?",
+          tag: "Game",
+          mode: "groups",
+          minutes: 10,
+          steps: [
+            "Put three mats on the floor: THEY, IT and THEM. Make two teams.",
+            "The teacher (or a team captain) reads a sentence and hums at the gap: \"Owls have big eyes. Mmm see in the dark.\" The first player hops to the right mat and says the whole sentence.",
+            "The team scores a point if the player hops to the right mat AND says the sentence correctly. If not, the other team can steal it.",
+            "Change the player every sentence. After six sentences, the captain reads the rest. Winning team: the one who made the fewest mistakes, not the fastest hops.",
+          ],
+          prompts: [
+            "Owls have big eyes. Mmm see in the dark. (they)",
+            "Big eyes help mmm see. (them)",
+            "A camel has a hump. Mmm stores fat. (it)",
+            "Ants are small, but I can see mmm. (them)",
+            "Bees fly from flower to flower. Mmm make honey. (they)",
+            "A snail has a shell. The shell keeps mmm safe. (it)",
+          ],
+          teacherNote: "Prompt before you recast. 1) Elicit: say the start and wait: \"Big eyes help ...?\" 2) Repeat the mistake with a rising voice: \"Help they?\" 3) Hand signal: point to the left of your body for 'before the verb' and to the right for 'after the verb'. 4) Only then recast: \"Big eyes help THEM see.\" Children need the correction right after the error, so do it straight away, kindly. Tell them the rule is the winning move.",
+        },
+        {
+          kind: "speaking",
+          title: "Zoo helpers: the information gap",
+          mode: "pairs",
+          minutes: 12,
+          frames: ["What do ___ have?", "They have ___.", "What do ___ help them do?", "___ help them ___.", "Does it / Do they have ___ too?"],
+          prompts: ["Say it again with they.", "Is it one animal or many?", "Can you say it with them?"],
+          fluencyTip: "Ask the whole question, then answer with a whole sentence. If you are not sure, say \"Can you say it again?\"",
+          steps: [
+            "Partner A has the \"What they have\" card: owls: big eyes; camels: humps; ducks: webbed feet; a snail: a shell. Partner B has the \"What it helps them do\" card: see at night; store fat; swim fast; stay safe.",
+            "B asks A: \"What do owls have?\" A answers from the card: \"They have big eyes.\" Then A asks B: \"What do big eyes help them do?\" B answers from the card: \"Big eyes help them see at night.\" Each partner writes the answer they hear in their chart. Do the same for the camels, the ducks and the snail (one animal: \"What does a snail have?\" \"It has a shell.\").",
+            "Use they, it and them in every answer. When you finish, compare cards: Did you both write the same?",
+            "Change partners and make up your own animals and body parts for round 2.",
+          ],
+          teacherNote: "Information gap: neither child can finish alone, so they really have to ask and listen. Prepare the two cards before class (four animals in a table, one column filled in on each card). The answers are in the steps. Listen for they / them / it and use the prompt-style corrections: ask \"One animal or many?\" or point left/right before you give the answer.",
+        },
+        {
+          kind: "activity",
+          title: "Movement break: Look at them!",
+          tag: "Game",
+          mode: "whole",
+          minutes: 3,
+          steps: [
+            "The teacher calls an animal: \"Ducks!\" Everybody moves like ducks (waddle, flap).",
+            "The teacher calls: \"Freeze! Look at them!\" Everybody freezes and says: \"They are ducks!\" Next: \"A turtle!\" Everybody moves slowly. \"Freeze! Look at it!\" Everybody says: \"It is a turtle!\"",
+            "Give the calling job to a child. {s7} calls the next animal.",
+          ],
+          prompts: ["Look at them! They are ___.", "Look at it! It is a ___."],
+          teacherNote: "Keep it fast and silly. It lets children move and say the three words in a new place: \"Look at them\" puts them after the verb look.",
+        },
+        {
+          kind: "speaking",
+          title: "Champion talk: 3 rounds",
+          mode: "pairs",
+          minutes: 10,
+          frames: ["My animal is the ___.", "It has ___. / They have ___.", "___ help(s) it / them ___.", "It / They is / are different from ___ because ___."],
+          prompts: ["What is your animal?", "What helps it / them?", "How is it different from another animal?"],
+          fluencyTip: "Say it three times to three friends. Each time you can say it faster and with more ease. Look at your partner, not at your paper.",
+          steps: [
+            "Choose one animal. Plan three ideas: what it has, what that part helps it do, and one way it is different from another animal. Use the frames, not a script.",
+            "Round 1 (90 seconds): talk to partner 1. Round 2 (60 seconds): move to a new partner and tell it again, shorter. Round 3 (45 seconds): a new partner and tell it again, even shorter.",
+            "Between round 1 and round 2 the teacher gives one feedback moment to the whole class: one thing you did well, one thing to fix (they / them / it).",
+            "Listeners: after each round say \"I liked ___.\" and ask one question.",
+          ],
+          teacherNote: "Task repetition builds fluency: same message, shorter time, new listener. Take the single feedback moment after round 1 and use a prompt first (\"Big eyes help ...?\") before the right answer, so mistakes do not set before the next round. Do not stop children during the rounds.",
+        },
+        {
+          kind: "activity",
+          title: "Say it, then write: my animal in four sentences",
+          tag: "Writing",
+          mode: "pairs",
+          minutes: 12,
+          steps: [
+            "Say your four sentences to a partner first. Sentence 1: name the animal and what it has. Sentence 2: use it or they. Sentence 3: say what the body part helps them or it do. Sentence 4: join two ideas with and or but.",
+            "The teacher models with the class: \"Ducks have webbed feet, and webbed feet help them swim.\" Children say which words changed and why they changed. Write another one together about a different animal.",
+            "Now write four sentences about your own animal. Use the frames. Say the animal name only one time. Read each sentence quietly and check it.",
+            "Swap papers with your partner. Underline one great sentence and say: \"I like this sentence because ___.\"",
+          ],
+          frames: ["The ___ has ___.", "It / They ___.", "___ help it / them ___.", "___, and ___.", "___, but ___."],
+          prompts: ["Is it one animal or many?", "Where does the small word go?", "Can you join these two ideas?"],
+          teacherNote: "Oral rehearsal first, then writing: children who said it can write it. Support: give a gapped version of the model (\"___ have ___, and ___ help ___ swim.\"). Stretch: add a fifth sentence with because. The printed worksheet \"Grammar Champions: They, it and them\" follows this slide, in three levels (Support, Core, Challenge).",
+        },
+        {
+          kind: "activity",
+          title: "Grammar Champion check",
+          tag: "Review",
+          mode: "pairs",
+          minutes: 5,
+          steps: [
+            "Write the four checks on the board. Read your own writing. Tick each one in pencil.",
+            "1. I said the animal name only one time, then I used it or they. 2. One animal is it. More than one is they or them. 3. They is before the verb. Them is after the verb. 4. I have a capital letter, a period and one and or but.",
+            "Swap with your partner. Tick again with a different color. Say: \"You are a champion at ___. Next time, try ___.\"",
+            "Fix one thing in your own writing. Show your teacher the fix.",
+          ],
+          prompts: ["You are a champion at ___.", "Next time, try ___.", "I fixed ___."],
+          teacherNote: "Success criteria written in child language. A child fixing their own sentence after a peer check is the point: look for the fix, not for perfect pages.",
+        },
+        {
+          kind: "activity",
+          title: "Does the rule work here too?",
+          tag: "Speaking",
+          mode: "groups",
+          minutes: 6,
+          steps: [
+            "Put three cards on the board: 1. \"{s8} and {s9} are my friends. I like ___.\" 2. \"The shoes are new. I can see ___.\" 3. \"I saw a fish. ___ was red. Then I saw two fish. ___ were blue.\"",
+            "In groups: Does our rule work for friends and shoes, too? What word goes in each gap? Say why.",
+            "Tricky case: the word fish can be one or many. How do we know which word to use?",
+            "Each group tells the class: \"I think ___ because ___.\" The class says if it agrees.",
+          ],
+          prompts: ["Does the rule work for ___, too?", "I think ___ because ___.", "How many is it? One or more than one?"],
+          frames: ["The rule works for ___ because ___.", "Fish can be ___ or ___, so we look at ___."],
+          teacherNote: "Transfer: children find that the rule is about counting and about the place of the word, not only about animals. Answers: them (friends are many, after the verb like); them (the shoes are many, after the verb see); it, they (the sentence tells us: a fish is one, two fish are two). The same small words work for people and things.",
+        },
+        odL2U01Creative["od2e-l2-u01-l5"],
+        {
+          kind: "homework",
+          items: [
+            { label: "Workbook", detail: "Complete the grammar pages on they, it and them.", book: { book: "WB", pages: "5-7" } },
+            { label: "Creative grammar", detail: "Your creative task is on the slide before this one. Your teacher will tell you which version is yours." },
+            { label: "Challenge: the rule teacher", detail: "Teach someone at home the rule for they, it and them. Make a tiny poster with two examples of your own and one mistake that a champion would fix." },
+          ],
+        },
+        {
+          kind: "reflect",
+          prompts: [
+            "What is our rule? Say it in your own words.",
+            "I used to think ___ about they and them. Now I think ___.",
+            "Say two sentences that help answer the Big Question, \"How are animals different from one another?\" Use they or them in one of them.",
           ],
         },
       ],

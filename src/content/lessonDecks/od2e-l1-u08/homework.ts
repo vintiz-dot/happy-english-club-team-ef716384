@@ -358,5 +358,67 @@ export const odL1U8Creative: Record<string, Creative> = {
         }
       }
     ]
+  },
+
+  // Lesson 6: Grammar Champions (I do, you do, I don't, Do you?)
+  "od2e-l1-u08-l6": {
+    kind: "creative",
+    thinking: "Design",
+    uses: {
+      words: ["fly a kite", "plant flowers", "eat ice cream", "drink hot chocolate", "build a snowman", "ride a bicycle"],
+      grammar: ["I ___ in the ___.", "I don't ___.", "Do you ___?"]
+    },
+    base: {
+      title: "Do and don't poster",
+      task: "Make a poster for one season. Draw two things you do and one thing you don't do. Choose the season and say why.",
+      steps: [
+        "Choose one season. Write its name at the top of your paper.",
+        "Draw two things you do in that season. Write: I ___.",
+        "Draw one thing you don't do. Cross it out and write: I don't ___.",
+        "Write a question for a friend: Do you ___?",
+        "Tell someone at home why you chose this season."
+      ],
+      frames: [
+        "In ___, I ___.",
+        "I don't ___.",
+        "Do you ___?",
+        "I chose ___ because ___."
+      ],
+      success: [
+        "I can write what I do and one thing I don't do.",
+        "I can write a question with Do you.",
+        "I can say why I chose my season."
+      ],
+      challenge: "Make a second poster for a different season. Write one thing you do in both seasons."
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "Match day do and don't poster",
+          task: "Make a match day poster for one season. Draw two things you do and one thing you don't do. Choose the season and say why.",
+          steps: [
+            "Choose one season for a match day. Write its name at the top of your paper.",
+            "Draw two things you do at the match. Write: I ___.",
+            "Draw one thing you don't do. Cross it out and write: I don't ___.",
+            "Write a question for a friend: Do you ___?",
+            "Tell someone at home why you chose this season."
+          ],
+          frames: [
+            "In ___, I ___ at the match.",
+            "I don't ___.",
+            "Do you ___?",
+            "I chose ___ because ___."
+          ],
+          success: [
+            "I can write what I do and one thing I don't do.",
+            "I can write a question with Do you.",
+            "I can say why I chose my season."
+          ],
+          challenge: "Make a second poster for a different season. Write one thing you do at both matches."
+        }
+      }
+    ]
   }
 };

@@ -258,4 +258,58 @@ export const odL2U02Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 6: Grammar Champions, how often? always, usually, sometimes, hardly ever, never
+  "od2e-l2-u02-l6": {
+    kind: "creative",
+    thinking: "Compare and justify",
+    uses: {
+      words: ["always", "usually", "sometimes", "hardly ever", "never", "different"],
+      grammar: ["always / usually / sometimes / hardly ever / never + verb", "is / are + always / usually + word", "but"],
+    },
+    base: {
+      title: "Two different animals, one week",
+      task: "Make a poster about two animals that are different. Show what each one does in a week and say how often. Then say which animal you would like to be, and why.",
+      steps: [
+        "Draw two different animals, one on each side of your page.",
+        "Under each animal, draw or write three things it does in a week.",
+        "Write one sentence for each thing with always, usually, sometimes, hardly ever or never.",
+        "Join two sentences with but to say how the animals are different.",
+        "Choose your favorite animal and write why.",
+      ],
+      frames: ["A ___ always ___.", "A ___ is usually ___.", "A ___ and a ___ are different: a ___ ___, but a ___ ___.", "I would like to be a ___ because ___."],
+      success: [
+        "I used at least three of the five words.",
+        "My word is next to the verb.",
+        "I used but to show a difference.",
+        "I gave a reason with because.",
+      ],
+      challenge: "Add a third animal that is a bit the same as both, and say how it is the same as each one.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "Two mascots on match day",
+          task: "Make a poster about two mascots for a football team. One is an animal that is always calm and one is an animal that is usually loud. Show their match day and say how often they do things. Then say which mascot you would choose, and why.",
+          steps: [
+            "Draw two different animal mascots, one on each side of your page, in the team colors.",
+            "Under each mascot, draw or write three things it does on match day.",
+            "Write one sentence for each thing with always, usually, sometimes, hardly ever or never.",
+            "Join two sentences with but to say how the mascots are different.",
+            "Choose the best mascot for your team and write why.",
+          ],
+          frames: ["The ___ always ___ on match day.", "The ___ is usually ___.", "The ___ and the ___ are different: the ___ ___, but the ___ ___.", "I would choose the ___ because ___."],
+          success: [
+            "I used at least three of the five words.",
+            "My word is next to the verb.",
+            "I used but to show a difference.",
+            "I gave a reason with because.",
+          ],
+          challenge: "Add a third mascot that is a bit the same as both, and say how it is the same as each one.",
+        },
+      },
+    ],
+  },
 };

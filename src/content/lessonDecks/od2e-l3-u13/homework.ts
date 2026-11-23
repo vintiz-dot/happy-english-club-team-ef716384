@@ -264,4 +264,68 @@ export const odL3U13Creative: Record<string, Creative> = {
       },
     ],
   },
+
+  // Lesson 5 (Grammar Champions): compare two inventions with too and either, and justify a choice
+  "od2e-l3-u13-l5": {
+    kind: "creative",
+    thinking: "Compare and justify",
+    uses: {
+      words: ["lever", "ramp", "wheel and axle", "wedge", "screw", "light bulb", "doorknob"],
+      grammar: ["too", "either", "because / so"],
+    },
+    base: {
+      title: "Twin inventions",
+      task: "Choose two inventions that are alike in some ways and different in others. Write what both of them do, what neither of them does, and which one you would keep if you could only keep one, and why.",
+      steps: [
+        "Choose two inventions, for example a bicycle and a scooter, or a ramp and a flight of stairs.",
+        "Write two sentences about what both of them do or have. Use too in each sentence, with the same helper word as the first part.",
+        "Write two sentences about what neither of them does or has. Use either in each sentence.",
+        "Choose the one you would keep. Give two reasons with because and so, and say who else would agree with you.",
+      ],
+      frames: [
+        "A ___ can ___, and a ___ can, too.",
+        "A ___ doesn't ___, and a ___ doesn't, either.",
+        "I would keep the ___ because ___.",
+        "The ___ is more useful for me, so ___.",
+        "My ___ would agree with me, too, because ___.",
+      ],
+      success: [
+        "My writing uses too after a positive sentence and either after a negative sentence, with the same helper word each time.",
+        "My writing says what both inventions share and what neither of them has.",
+        "My writing gives two reasons for my choice, with because and so.",
+      ],
+      challenge:
+        "Add a third invention that is the odd one out. Say what the first two share, what the odd one out does not share, and why it still matters, using one sentence with too, one with either and one with but.",
+    },
+    variants: [
+      {
+        interest: "football",
+        label: "Football edition",
+        task: {
+          title: "Twin helpers at the stadium",
+          task: "Choose two inventions that help on a match day at the Emirates Stadium, for example the floodlights and the big screen, or a ramp and a lift. Write what both of them do, what neither of them does, and which one the Arsenal fans would keep if they could only keep one.",
+          steps: [
+            "Choose two helpers at the stadium, for example the floodlights and the big screen.",
+            "Write two sentences about what both of them do or have. Use too in each sentence, with the same helper word as the first part.",
+            "Write two sentences about what neither of them does or has. Use either in each sentence.",
+            "Choose the one the fans would keep. Give two reasons with because and so.",
+          ],
+          frames: [
+            "The ___ can ___, and the ___ can, too.",
+            "The ___ doesn't ___, and the ___ doesn't, either.",
+            "The fans would keep the ___ because ___.",
+            "The ___ is more useful on match day, so ___.",
+            "The team would agree, too, because ___.",
+          ],
+          success: [
+            "My writing uses too after a positive sentence and either after a negative sentence, with the same helper word each time.",
+            "My writing says what both helpers share and what neither of them has.",
+            "My writing gives two reasons for the choice, with because and so.",
+          ],
+          challenge:
+            "Add a third helper that is the odd one out. Say what the first two share, what the odd one out does not share, and why it still matters on match day, using one sentence with too, one with either and one with but.",
+        },
+      },
+    ],
+  },
 };
