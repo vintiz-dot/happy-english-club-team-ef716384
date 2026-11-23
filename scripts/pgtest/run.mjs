@@ -86,6 +86,9 @@ const SUITES = [
   { name: "merge students", file: "merge-students.test.mjs", migrations: ["20261121120000_admin_merge_students.sql"] },
   { name: "student homework", file: "student-homework.test.mjs", migrations: [] },
   { name: "leftover dong", file: "leftover-dong.test.mjs", migrations: ["20261117121000_record_admin_payment.sql", "20261113090000_invoice_paid_label.sql", "20261121090000_recorded_payment_guard.sql"] },
+  // The one place a month is priced (the owner's tuition rules, 23 Nov 2026): lessons, the custom
+  // rate as the price, the discount order, the sibling class. Both calculators call it.
+  { name: "tuition pricing", file: "tuition-pricing.test.mjs", migrations: [] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   { name: "class finance tuition", file: "class-tuition.test.mjs", migrations: [] },
   // Two overlapping enrollments of one class: the one created first prices
@@ -347,6 +350,7 @@ const SUITES = [
   { name: "homework for present", file: "homework-for-present.test.mjs", migrations: ["20261122150000_homework_for_present.sql"] },
   // A lesson with no mark never lowers a saved bill; marks deleted by old transfers go back (23 Nov 2026).
   { name: "attendance proof", file: "attendance-proof.test.mjs", migrations: ["20261123100000_attendance_proof.sql"] },
+  // An unmarked lesson is billed and flagged; a closed month's bill is held until an admin approves.
   { name: "register holes", file: "register-holes.test.mjs", migrations: [] },
   { name: "restore transfer marks", file: "restore-transfer-marks.test.mjs", migrations: [] },
   { name: "uncancel restores marks", file: "uncancel-restores-marks.test.mjs", migrations: [] },

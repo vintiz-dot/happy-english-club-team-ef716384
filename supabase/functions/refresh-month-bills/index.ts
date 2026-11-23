@@ -185,7 +185,8 @@ async function pendingFor(supabase: any, month: string, skip: Set<string>): Prom
   return ids.map((id) => ({ student_id: id, full_name: name.get(id) ?? id, problem: "change_pending" }));
 }
 
-// The children whose saved bill already carries the register_missing_marks flag.
+// The children whose saved bill is already flagged as held (past_month_differs,
+// _lib/past-month-hold.ts): calculate-tuition will keep it whatever is asked here.
 // Best effort: when it cannot be read, nobody is moved to the back.
 async function heldStudents(supabase: any, studentIds: string[], month: string): Promise<Set<string>> {
   const out = new Set<string>();
@@ -198,7 +199,7 @@ async function heldStudents(supabase: any, studentIds: string[], month: string):
       .in("student_id", studentIds);
     for (const row of data ?? []) {
       const flags = Array.isArray(row.review_flags) ? row.review_flags : [];
-      if (flags.some((f: any) => f?.type === "register_missing_marks")) out.add(row.student_id);
+      if (flags.some((f: any) => f?.type === "past_month_differs")) out.add(row.student_id);
     }
   } catch { /* keep the order as listed */ }
   return out;
