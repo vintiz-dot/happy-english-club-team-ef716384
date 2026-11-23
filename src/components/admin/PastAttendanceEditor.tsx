@@ -16,7 +16,7 @@ import { useMoneyChange } from "@/components/admin/money-guard/useMoneyChange";
 import { MoneyGuardDialog } from "@/components/admin/money-guard/MoneyGuardDialog";
 import { useAttendanceProof } from "@/hooks/useAttendanceProof";
 import { ProofLock } from "@/components/attendance/ProofLock";
-import { nextStatus, proofRefusalFromBody, refusedBatchText } from "@/lib/attendanceProof";
+import { nextStatus, proofRefusalFromBody, refusedBatchText, refusedStudentIds } from "@/lib/attendanceProof";
 
 interface PastAttendanceEditorProps {
   classId: string;
@@ -139,11 +139,14 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
       }
       const body = await readBody(error);
       const proofText = proofRefusalFromBody(body);
-      if (proofText) throw new Error(proofText);
+      if (proofText) throw Object.assign(new Error(proofText), { proofRefusal: true });
       if (needsMoneyDialog(body)) {
+        // Children the function left out because of proof are not sent again through the reason dialog.
+        const left = new Set(refusedStudentIds(body));
+        const sent = marks.filter((m) => !left.has(m.studentId));
         guard.open(
           { entity: "attendance", op: "set_marks",
-            args: { session_id: sessionId, marks: marks.map((m) => ({ student_id: m.studentId, status: m.status })) } },
+            args: { session_id: sessionId, marks: sent.map((m) => ({ student_id: m.studentId, status: m.status })) } },
           body.preview,
         );
         return { saved: false, dialog: true };
@@ -155,10 +158,10 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
         queryClient.invalidateQueries({ queryKey: ["past-attendance-sessions", classId, selectedMonth] });
       }
     },
-    onError: (error: any) => {
+    onError: (error: any, vars) => {
       toast.error(error.message || "Failed to update attendance");
-      // Show the marks the register really holds, not the ones that were refused.
-      setAttendance({});
+      // A proof refusal: that lesson's unsaved edits go, so it shows the saved marks. Any other error keeps every edit.
+      if (error?.proofRefusal) setAttendance((prev) => editsAfterSave(prev, [vars.sessionId]));
       queryClient.invalidateQueries({ queryKey: ["past-attendance-sessions", classId, selectedMonth] });
       queryClient.invalidateQueries({ queryKey: ["attendance-proof"] });
     },

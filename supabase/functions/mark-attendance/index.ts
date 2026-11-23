@@ -165,21 +165,43 @@ Deno.serve(async (req) => {
     // the old mark silently for the service key, so this check is what tells the
     // teacher. Asked through the caller's own client (the RPC checks the caller).
     // If the function is missing or fails, behave exactly as before.
-    const proofSentence = (name: string, summary: string) =>
-      `${name} was in this lesson: ${summary}. If that is a mistake, remove it first, then change the mark.`;
-    const refusedForProof: Array<{ student_id: string; summary: string }> = [];
+    // Mirrored in src/lib/attendanceProof.ts (removalAdvice): where to remove the proof.
+    const removalAdvice = (kinds: string[]) => {
+      const parts: string[] = [];
+      if (kinds.includes('individual_points')) parts.push("delete it in the child's point history");
+      if (kinds.includes('speaker_mark')) parts.push("use Undo on the lesson's speakers page");
+      return parts.length ? parts.join(' or ') : 'remove it first';
+    };
+    const proofSentence = (name: string, summary: string, kinds: string[]) =>
+      `${name} was in this lesson: ${summary}. If that is a mistake, ${removalAdvice(kinds)}, then change the mark.`;
+    const refusedForProof: Array<{ student_id: string; summary: string; kinds: string[] }> = [];
+    // Only a request that would CHANGE the stored mark to Absent or Excused is refused (no row,
+    // or a different stored status): the same condition the database trigger uses. A child
+    // already stored as Absent/Excused and re-sent unchanged (or with a note change) is saved as before.
     if (entries.some((e) => e.status === 'Absent' || e.status === 'Excused')) {
       try {
-        const asCaller = callerClient(createClient, Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', authHeader);
-        const { data: proofRows, error: proofError } = await asCaller.rpc('attendance_proof_for_session', { p_session_id: sessionId });
-        if (!proofError && Array.isArray(proofRows)) {
-          const proven = new Map<string, string>();
-          for (const r of proofRows as any[]) {
-            if (r?.strength === 'proof' && typeof r.student_id === 'string') proven.set(r.student_id, String(r.summary ?? ''));
-          }
-          for (const e of entries) {
-            if ((e.status === 'Absent' || e.status === 'Excused') && proven.has(e.studentId)) {
-              refusedForProof.push({ student_id: e.studentId, summary: proven.get(e.studentId) ?? '' });
+        const { data: storedRows, error: storedErr } = await supabase
+          .from('attendance').select('student_id, status').eq('session_id', sessionId);
+        const storedBy = new Map<string, string>((storedErr ? [] : (storedRows ?? [])).map((a: any) => [a.student_id, a.status]));
+        const candidates = entries.filter((e) =>
+          (e.status === 'Absent' || e.status === 'Excused') && storedBy.get(e.studentId) !== e.status);
+        if (candidates.length > 0) {
+          const asCaller = callerClient(createClient, Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', authHeader);
+          // A short timeout: after it, behave as if the function were missing.
+          const answer: any = await Promise.race([
+            asCaller.rpc('attendance_proof_for_session', { p_session_id: sessionId }),
+            new Promise((resolve) => setTimeout(() => resolve(null), 4000)),
+          ]);
+          if (answer && !answer.error && Array.isArray(answer.data)) {
+            const proven = new Map<string, { summary: string; kinds: string[] }>();
+            for (const r of answer.data as any[]) {
+              if (r?.strength === 'proof' && typeof r.student_id === 'string') {
+                proven.set(r.student_id, { summary: String(r.summary ?? ''), kinds: Array.isArray(r.kinds) ? r.kinds.map(String) : [] });
+              }
+            }
+            for (const e of candidates) {
+              const hit = proven.get(e.studentId);
+              if (hit) refusedForProof.push({ student_id: e.studentId, summary: hit.summary, kinds: hit.kinds });
             }
           }
         }
@@ -188,15 +210,15 @@ Deno.serve(async (req) => {
       }
     }
     const refusedIds = new Set(refusedForProof.map((r) => r.student_id));
-    const proofRefusal = async (students: Array<{ student_id: string; summary: string }>) => {
+    const proofRefusal = async (students: Array<{ student_id: string; summary: string; kinds: string[] }>) => {
       let name = 'This child';
       if (students.length === 1) {
         const { data: st } = await supabase.from('students').select('full_name').eq('id', students[0].student_id).maybeSingle();
         if (st?.full_name) name = st.full_name;
       }
       const message = students.length === 1
-        ? proofSentence(name, students[0].summary)
-        : 'These children were in this lesson, so their mark was not changed. If that is a mistake, remove the proof first, then change the mark.';
+        ? proofSentence(name, students[0].summary, students[0].kinds)
+        : `These children were in this lesson, so their mark was not changed. If that is a mistake, ${removalAdvice([...new Set(students.flatMap((x) => x.kinds))])}, then change the mark.`;
       return new Response(JSON.stringify({ error: 'attendance_proof', message, students }), {
         status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -277,6 +299,8 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({
           error: m.message, code: m.code, kind: attendanceRefusalKind((attendanceError as any).details ?? (attendanceError as any).detail),
           preview: p && 'data' in p ? p.data : null,
+          // children left out of this change because of proof: the reason dialog must not send them again
+          ...(refusedForProof.length > 0 ? { refused: refusedForProof } : {}),
         }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       throw new Error(`Failed to mark attendance: ${attendanceError.message}`);

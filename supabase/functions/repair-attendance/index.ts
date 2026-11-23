@@ -77,26 +77,46 @@ Deno.serve(async (req) => {
       return fail(guardError(409, plan?.refuse_code ?? "refused", `Refused: ${plan?.refuse_code ?? "refused"}.`), { preview: plan });
     }
     // Absent or Excused is not written for a lesson where there is proof the child
-    // was in the room (attendance_proof_for_session). A missing or failing RPC
-    // changes nothing: the repair goes ahead as before.
-    if (defaultStatus !== "Present" && sessions.length > 0) {
+    // was in the room (attendance_proof_for_session). A missing RPC changes nothing:
+    // the repair goes ahead as before. No lesson is left silently unchecked: too long a
+    // range is refused, and so is a check that fails part-way. A preview does not run
+    // the check (it would not show the result); the real run does.
+    const MAX_CHECKED = 60;
+    if (defaultStatus !== "Present" && !parsed.data.preview && sessions.length > 0) {
+      if (sessions.length > MAX_CHECKED) {
+        return json({
+          error: `That range has ${sessions.length} lessons. Choose a shorter range (up to ${MAX_CHECKED} lessons) to repair with Absent or Excused.`,
+          code: "range_too_long",
+        }, 400);
+      }
+      let checked = 0;
       try {
         const proven: Array<{ student_id: string; summary: string }> = [];
-        for (const l of sessions.slice(0, 80)) {
+        for (const l of sessions) {
           const { data: rows, error: proofError } = await asCaller.rpc("attendance_proof_for_session", { p_session_id: l.id });
-          if (proofError || !Array.isArray(rows)) continue;
+          if (proofError || !Array.isArray(rows)) {
+            if (checked === 0) break;   // the function is not there: behave as before
+            return json({
+              error: "The check for proof in class stopped part-way, so nothing was repaired. Try again.",
+              code: "proof_check_failed",
+            }, 409);
+          }
+          checked++;
           const hit = (rows as any[]).find((r) => r?.strength === "proof" && r.student_id === studentId);
           if (hit) proven.push({ student_id: studentId, summary: `${l.date}: ${String(hit.summary ?? "")}` });
         }
         if (proven.length > 0) {
           return json({
             error: "attendance_proof",
-            message: `This child was in the lesson on ${proven.map((p) => p.summary).join("; ")}. If that is a mistake, remove it first, then repair with Absent or Excused.`,
+            message: `This child was in the lesson on ${proven.map((p) => p.summary).join("; ")}. If that is a mistake, remove the proof first, then repair with Absent or Excused.`,
             students: proven,
           }, 409);
         }
       } catch (e) {
-        console.warn("attendance proof check skipped:", e);
+        console.warn("attendance proof check failed:", e);
+        if (checked > 0) {
+          return json({ error: "The check for proof in class stopped part-way, so nothing was repaired. Try again.", code: "proof_check_failed" }, 409);
+        }
       }
     }
     if (parsed.data.preview) {

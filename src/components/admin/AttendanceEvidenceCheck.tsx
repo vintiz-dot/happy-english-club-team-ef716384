@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { functionRefusalText } from "@/lib/moneyGuard";
 import {
-  GAP_KINDS, GAP_LABEL, GAP_NEEDS_PERSON, groupGaps, isNotInstalled, monthsOf, parseApplyResult, parseGapRows,
+  GAP_KINDS, GAP_LABEL, GAP_NEEDS_PERSON, firstRows, groupGaps, isNotInstalled, monthsOf, parseApplyResult, parseGapRows,
   type ApplyResult, type GapRow,
 } from "@/lib/attendanceProof";
 
@@ -24,6 +24,10 @@ export function AttendanceEvidenceCheck() {
   const [plan, setPlan] = useState<ApplyResult | null>(null);
   const [done, setDone] = useState<ApplyResult | null>(null);
   const [showNoProof, setShowNoProof] = useState(false);
+  const [shownPeople, setShownPeople] = useState(50);
+  const [shownNoProof, setShownNoProof] = useState(50);
+  // What happened to the bill after "Mark present" on an Excused mark, by row.
+  const [billNote, setBillNote] = useState<Record<string, string>>({});
 
   const to = dayjs().tz().format("YYYY-MM-DD");
   const from = sinceStart ? "2020-01-01" : dayjs().tz().subtract(60, "day").format("YYYY-MM-DD");
@@ -49,6 +53,25 @@ export function AttendanceEvidenceCheck() {
       if (error) throw new Error(await functionRefusalText(error, "The mark could not be saved"));
       if (data?.error) throw new Error(data.error);
       toast.success(`${g.student_name} marked present`);
+      // An Excused lesson was not billed; Present is. Refresh that child's bill for that month, as the admin.
+      if (g.current_status === "Excused" && g.lesson_date) {
+        const key = g.session_id + g.student_id;
+        const month = g.lesson_date.slice(0, 7);
+        try {
+          const { data: bill, error: billError } = await supabase.functions.invoke("calculate-tuition", {
+            body: { studentId: g.student_id, month },
+          });
+          if (billError || bill?.error) throw new Error(billError?.message || bill?.error);
+          setBillNote((p) => ({
+            ...p,
+            [key]: bill?.tuitionFrozen === true || bill?.held
+              ? `${g.student_name}: the ${month} bill is held or frozen, so it was left as it is.`
+              : `${g.student_name}: the ${month} bill was refreshed.`,
+          }));
+        } catch {
+          setBillNote((p) => ({ ...p, [key]: `${g.student_name}: the ${month} bill could not be refreshed. Use the bill check to refresh it.` }));
+        }
+      }
     } catch (e: any) {
       toast.error(e?.message || "The mark could not be saved");
     } finally {
@@ -110,7 +133,7 @@ export function AttendanceEvidenceCheck() {
 
   if (gaps.isError) {
     const err = gaps.error as any;
-    if (isNotInstalled(err)) {
+    if (isNotInstalled(err, "attendance_evidence_gaps")) {
       return (
         <Card>
           <CardContent className="py-4 text-hec-small text-hec-ink-soft">This check is not installed yet.</CardContent>
@@ -188,6 +211,12 @@ export function AttendanceEvidenceCheck() {
           ))}
         </ul>
 
+        {Object.keys(billNote).length > 0 && (
+          <ul className="space-y-1 text-hec-small text-hec-ink-soft">
+            {Object.values(billNote).map((t) => <li key={t}>{t}</li>)}
+          </ul>
+        )}
+
         {needPerson.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[40rem] text-hec-small">
@@ -202,7 +231,7 @@ export function AttendanceEvidenceCheck() {
                 </tr>
               </thead>
               <tbody>
-                {needPerson.map((g) => (
+                {firstRows(needPerson, shownPeople).map((g) => (
                   <tr key={g.kind + g.session_id + g.student_id} className="border-b border-hec-line/60 align-top">
                     <td className="py-2 pr-3">{g.student_name}</td>
                     <td className="py-2 pr-3">{g.class_name ?? "-"}</td>
@@ -226,6 +255,12 @@ export function AttendanceEvidenceCheck() {
           </div>
         )}
 
+        {needPerson.length > shownPeople && (
+          <Button variant="ghost" size="sm" onClick={() => setShownPeople((n) => n + 50)}>
+            Show more ({needPerson.length - shownPeople} left)
+          </Button>
+        )}
+
         {grouped.no_mark_no_proof.length > 0 && (
           <div className="text-hec-small">
             <Button variant="ghost" size="sm" onClick={() => setShowNoProof((v) => !v)}>
@@ -233,11 +268,18 @@ export function AttendanceEvidenceCheck() {
             </Button>
             {showNoProof && (
               <ul className="mt-2 space-y-1 text-hec-ink-soft">
-                {grouped.no_mark_no_proof.map((g) => (
+                {firstRows(grouped.no_mark_no_proof, shownNoProof).map((g) => (
                   <li key={g.session_id + g.student_id}>
                     {g.student_name}, {g.class_name ?? "class"}, {g.lesson_date}
                   </li>
                 ))}
+                {grouped.no_mark_no_proof.length > shownNoProof && (
+                  <li>
+                    <Button variant="ghost" size="sm" onClick={() => setShownNoProof((n) => n + 50)}>
+                      Show more ({grouped.no_mark_no_proof.length - shownNoProof} left)
+                    </Button>
+                  </li>
+                )}
               </ul>
             )}
           </div>

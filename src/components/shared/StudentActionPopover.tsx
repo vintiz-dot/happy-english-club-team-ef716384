@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { heldRefusedText } from "@/lib/lessonPayGuard";
 import { functionRefusalText } from "@/lib/moneyGuard";
 import { useAttendanceProof } from "@/hooks/useAttendanceProof";
+import { ProofLock } from "@/components/attendance/ProofLock";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { awardPoints, getTodaySession } from "@/lib/pointsHelper";
@@ -295,6 +296,12 @@ export function StudentActionPopover({
           {panel === "main" && (
             <motion.div key="main" {...panelMotion} className="p-3 space-y-3">
               {/* Attendance micro-actions */}
+              {canManagePoints && live?.sessionId && absentLocked && proofReason && (
+                <div className="flex items-center gap-1 text-hec-small text-hec-ink-soft">
+                  <ProofLock reason={proofReason} />
+                  <span>Absent is locked: there is proof in class.</span>
+                </div>
+              )}
               {canManagePoints && live?.sessionId && (
                 <div className="grid grid-cols-3 gap-2">
                   <button
@@ -313,7 +320,6 @@ export function StudentActionPopover({
                   </button>
                   <button
                     disabled={isBusy || absentLocked}
-                    title={absentLocked ? proofReason ?? undefined : undefined}
                     onClick={() => attendanceMutation.mutate("Absent")}
                     className={cn(SAP_STATE_BUTTON, "border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:border-hec-danger")}
                   >
