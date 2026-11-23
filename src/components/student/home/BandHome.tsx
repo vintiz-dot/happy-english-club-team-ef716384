@@ -12,6 +12,7 @@ import { JuniorHome } from "@/components/student/home/JuniorHome";
 import { TeenHome } from "@/components/student/home/TeenHome";
 import { MeLinks } from "@/components/student/home/MeLinks";
 import { LevelGate } from "@/components/student/home/LevelGate";
+import { BirthdayGate } from "@/components/student/home/BirthdayGate";
 import { MonitorStatusCard } from "@/components/student/MonitorStatusCard";
 import { BUTTON_QUIET } from "@/components/student/nova/ivory";
 import { useAgeBand } from "@/hooks/useAgeBand";
@@ -28,6 +29,7 @@ export function BandHome({ data, monitorClassNames }: { data: HomeData; monitorC
     <>
       {/* Moments (brief I3): each asks momentGate first, so at most one plays per visit */}
       <LevelGate studentId={data.studentId} level={data.level} ready={!!data.levelReady} title={data.levelTitle} />
+      <BirthdayGate firstName={data.firstName} />
       {band === "early" ? (
         <EarlyHome data={data} />
       ) : band === "young" ? (
