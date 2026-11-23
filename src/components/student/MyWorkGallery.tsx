@@ -1,10 +1,13 @@
 /**
- * MyWorkGallery — teacher-approved work belonging to the student.
+ * MyWorkGallery — teacher-approved work belonging to the student, as a wall of paper cards.
  *
  * Shows approved `student_work` rows where the student is either the
  * individual owner OR a member of the team the work was attributed to.
  * Photos render from a signed URL (private bucket); link submissions render
  * as an "Open link" tile.
+ *
+ * Presentation by age band (brief G4-G6): early and young get 56 px targets and short words with the Vietnamese
+ * beneath; a teenager reads it as a portfolio, newest first, grouped by month with the date up front.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -12,16 +15,24 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { files as fileStore } from "@/lib/files";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, FileImage, MessageSquareHeart, Link2, Users, ExternalLink, Share2, Check, Clock } from "lucide-react";
 import { safeHttpUrl } from "@/lib/safeUrl";
+import { dayjs } from "@/lib/date";
+import { cn } from "@/lib/utils";
+import { ArriveItem } from "@/components/fx/Arrive";
+import { PaperCard, PaperMedia } from "@/components/student/walls/PaperCard";
+import { WallNote } from "@/components/student/walls/WallHeader";
+import { BiText } from "@/components/student/walls/BiText";
+import { useWallBand } from "@/components/student/walls/useWallBand";
+import { wallsCopy } from "@/lib/copy/studentWalls";
 
 type Share = { id: string; source: string; source_id: string; status: "pending" | "approved" | "declined" };
 
 /** Ask to put one piece of work in the class gallery; a teacher approves first. */
 function ShareControl({ source, sourceId, share }: { source: "student_work" | "homework"; sourceId: string; share?: Share }) {
   const qc = useQueryClient();
+  const { kid } = useWallBand();
   const done = () => qc.invalidateQueries({ queryKey: ["my-work"] });
   const ask = useMutation({
     mutationFn: async () => {
@@ -39,35 +50,120 @@ function ShareControl({ source, sourceId, share }: { source: "student_work" | "h
     onSuccess: done,
     onError: (e: any) => toast.error("Could not take it back", { description: e.message }),
   });
+  const btn = cn("h-auto min-h-hec-target whitespace-normal text-left", kid && "px-4");
 
   if (share?.status === "approved") {
     return (
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1 text-hec-caption text-hec-ink-soft"><Check className="h-3.5 w-3.5" />Shared with your class</span>
-        <Button size="sm" variant="ghost" disabled={withdraw.isPending} onClick={() => withdraw.mutate()}>Stop sharing</Button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex min-w-0 items-start gap-1 text-hec-caption text-hec-ink-soft"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0" /><BiText entry={wallsCopy["card.shared"]} viClassName="text-hec-caption" /></span>
+        <Button size="sm" variant="ghost" className={btn} disabled={withdraw.isPending} onClick={() => withdraw.mutate()}><BiText entry={wallsCopy["card.stopSharing"]} /></Button>
       </div>
     );
   }
   if (share?.status === "pending") {
     return (
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1 text-hec-caption text-hec-ink-soft"><Clock className="h-3.5 w-3.5" />Waiting for your teacher</span>
-        <Button size="sm" variant="ghost" disabled={withdraw.isPending} onClick={() => withdraw.mutate()}>Cancel</Button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex min-w-0 items-start gap-1 text-hec-caption text-hec-ink-soft"><Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" /><BiText entry={wallsCopy["card.waiting"]} viClassName="text-hec-caption" /></span>
+        <Button size="sm" variant="ghost" className={btn} disabled={withdraw.isPending} onClick={() => withdraw.mutate()}><BiText entry={wallsCopy["card.cancel"]} /></Button>
       </div>
     );
   }
   return (
-    <div className="flex items-center justify-between gap-2">
-      {share?.status === "declined" && <span className="text-hec-caption text-hec-ink-soft">Your teacher chose not to share this</span>}
-      <Button size="sm" variant="outline" className="ml-auto" disabled={ask.isPending} onClick={() => ask.mutate()}>
-        <Share2 className="mr-1 h-3.5 w-3.5" />Share with my class
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      {share?.status === "declined" && <span className="text-hec-caption text-hec-ink-soft"><BiText entry={wallsCopy["card.declined"]} viClassName="text-hec-caption" /></span>}
+      <Button size="sm" variant="outline" className={cn(btn, "ml-auto")} disabled={ask.isPending} onClick={() => ask.mutate()}>
+        <Share2 className="mr-1 h-3.5 w-3.5 shrink-0" /><BiText entry={wallsCopy["card.share"]} />
       </Button>
     </div>
   );
 }
 
+/** The date of a card: small on the right for children, the lead line of a portfolio entry for a teenager. */
+const dateOf = (iso: string) => dayjs(iso).format("D MMM YYYY");
+
+function WorkCard({ w, share }: { w: any; share?: Share }) {
+  const { teen } = useWallBand();
+  const when = w.approved_at || w.created_at;
+  return (
+    <PaperCard className="flex h-full flex-col">
+      <PaperMedia>
+        {w.url ? (
+          <a href={w.url} target="_blank" rel="noreferrer" className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-hec-ring">
+            <img src={w.url} alt="My work" loading="lazy" className="h-44 w-full object-cover" />
+          </a>
+        ) : w.external_url ? (
+          <a
+            href={safeHttpUrl(w.external_url)}
+            target="_blank"
+            rel="noreferrer"
+            className="flex h-44 min-h-hec-target w-full flex-col items-center justify-center gap-2 bg-hec-sunken hover:bg-hec-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-hec-ring"
+          >
+            <Link2 className="h-9 w-9 text-hec-ink-soft" />
+            <span className="flex items-center gap-1 text-hec-small font-medium text-hec-brass">
+              <BiText entry={wallsCopy["card.openLink"]} className="text-center" /> <ExternalLink className="h-3 w-3 shrink-0" />
+            </span>
+          </a>
+        ) : (
+          <div className="flex h-44 w-full items-center justify-center bg-hec-sunken">
+            <FileImage className="h-8 w-8 text-hec-ink-faint" />
+          </div>
+        )}
+      </PaperMedia>
+      <div className="space-y-2 p-3">
+        {teen && <p className="text-hec-body font-medium tabular-nums text-hec-ink">{dateOf(when)}</p>}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="outline" className="uppercase">{w.workflow}</Badge>
+            {w.is_teamwork && (
+              <Badge variant="secondary">
+                <Users className="h-3 w-3" /><BiText entry={wallsCopy["card.team"]} viClassName="text-hec-caption" />
+              </Badge>
+            )}
+          </div>
+          {!teen && <span className="shrink-0 text-hec-caption tabular-nums text-hec-ink-soft">{dateOf(when)}</span>}
+        </div>
+        {w.teacher_notes && (
+          <p className="flex gap-1.5 break-words text-hec-small text-hec-ink-soft">
+            <MessageSquareHeart className="mt-0.5 h-3.5 w-3.5 shrink-0 text-hec-ink-soft" />
+            <span className="min-w-0">{w.teacher_notes}</span>
+          </p>
+        )}
+        {w.class_id !== null && (w.storage_path || w.external_url) && (
+          <ShareControl source="student_work" sourceId={w.id} share={share} />
+        )}
+      </div>
+    </PaperCard>
+  );
+}
+
+function HomeworkCard({ h, share }: { h: any; share?: Share }) {
+  const { teen } = useWallBand();
+  const when = h.submitted_at || h.created_at;
+  return (
+    <PaperCard className="flex h-full flex-col">
+      <PaperMedia>
+        {h.url ? (
+          <img src={h.url} alt={h.homeworks?.title ?? "Homework"} loading="lazy" className="h-44 w-full object-cover" />
+        ) : (
+          <div className="flex h-44 w-full items-center justify-center bg-hec-sunken"><FileImage className="h-8 w-8 text-hec-ink-faint" /></div>
+        )}
+      </PaperMedia>
+      <div className="space-y-2 p-3">
+        {teen && <p className="text-hec-body font-medium tabular-nums text-hec-ink">{dateOf(when)}</p>}
+        <div className="flex items-center justify-between gap-2">
+          <Badge variant="outline"><BiText entry={wallsCopy["card.homework"]} viClassName="text-hec-caption" /></Badge>
+          {!teen && <span className="text-hec-caption tabular-nums text-hec-ink-soft">{dateOf(when)}</span>}
+        </div>
+        <p className="break-words text-hec-small text-hec-ink">{h.homeworks?.title ?? h.file_name}</p>
+        <ShareControl source="homework" sourceId={h.id} share={share} />
+      </div>
+    </PaperCard>
+  );
+}
+
 export function MyWorkGallery() {
   const { user } = useAuth();
+  const { teen } = useWallBand();
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-work", user?.id],
@@ -125,85 +221,49 @@ export function MyWorkGallery() {
 
   if (!data?.work.length && !data?.homework.length) {
     return (
-      <div className="text-center py-12 space-y-2">
-        <FileImage className="h-10 w-10 mx-auto text-hec-ink-faint" />
-        <p className="text-hec-body font-medium text-hec-ink">No work published yet</p>
-        <p className="text-hec-small text-hec-ink-soft max-w-sm mx-auto">
-          When your teacher shares your classwork — yours or your team's — it appears here with their notes.
-        </p>
+      <ArriveItem index={1}>
+        <WallNote><BiText entry={wallsCopy["myWork.empty"]} /></WallNote>
+      </ArriveItem>
+    );
+  }
+
+  const grid = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3";
+
+  if (teen) {
+    // A portfolio: newest first, a month at a time. Same items, same data; only the order and the grouping differ.
+    const entries = [
+      ...data!.work.map((w: any) => ({ key: `w-${w.id}`, at: w.approved_at || w.created_at, node: <WorkCard w={w} share={shareOf("student_work", w.id)} /> })),
+      ...data!.homework.map((h: any) => ({ key: `h-${h.id}`, at: h.submitted_at || h.created_at, node: <HomeworkCard h={h} share={shareOf("homework", h.id)} /> })),
+    ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    const months: { label: string; items: typeof entries }[] = [];
+    for (const e of entries) {
+      const label = dayjs(e.at).format("MMMM YYYY");
+      const last = months[months.length - 1];
+      if (last && last.label === label) last.items.push(e);
+      else months.push({ label, items: [e] });
+    }
+    let n = 0;
+    return (
+      <div className="space-y-8">
+        {months.map((m) => (
+          <section key={m.label} aria-label={m.label} className="space-y-3">
+            <h2 className="border-b border-hec-line pb-2 font-display text-hec-h3 font-medium text-hec-ink">{m.label}</h2>
+            <div className={grid}>
+              {m.items.map((e) => <ArriveItem key={e.key} index={n++} className="h-full">{e.node}</ArriveItem>)}
+            </div>
+          </section>
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {data!.work.map((w: any) => (
-        <Card key={w.id} className="overflow-hidden">
-          {w.url ? (
-            <a href={w.url} target="_blank" rel="noreferrer">
-              <img src={w.url} alt="My work" loading="lazy" className="h-44 w-full object-cover" />
-            </a>
-          ) : w.external_url ? (
-            <a
-              href={safeHttpUrl(w.external_url)}
-              target="_blank"
-              rel="noreferrer"
-              className="flex h-44 min-h-hec-target w-full flex-col items-center justify-center gap-2 bg-hec-sunken hover:bg-hec-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
-            >
-              <Link2 className="h-9 w-9 text-hec-ink-soft" />
-              <span className="flex items-center gap-1 text-hec-small font-medium text-hec-brass">
-                Open link <ExternalLink className="h-3 w-3" />
-              </span>
-            </a>
-          ) : (
-            <div className="flex h-44 w-full items-center justify-center bg-hec-sunken">
-              <FileImage className="h-8 w-8 text-hec-ink-faint" />
-            </div>
-          )}
-          <CardContent className="space-y-2 p-3 pt-3 sm:p-3 sm:pt-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Badge variant="outline" className="uppercase">{w.workflow}</Badge>
-                {w.is_teamwork && (
-                  <Badge variant="secondary">
-                    <Users className="h-3 w-3" />team
-                  </Badge>
-                )}
-              </div>
-              <span className="shrink-0 text-hec-caption tabular-nums text-hec-ink-soft">
-                {new Date(w.approved_at || w.created_at).toLocaleDateString()}
-              </span>
-            </div>
-            {w.teacher_notes && (
-              <p className="flex gap-1.5 text-hec-small text-hec-ink-soft">
-                <MessageSquareHeart className="h-3.5 w-3.5 text-hec-ink-soft shrink-0 mt-0.5" />
-                {w.teacher_notes}
-              </p>
-            )}
-            {w.class_id !== null && (w.storage_path || w.external_url) && (
-              <ShareControl source="student_work" sourceId={w.id} share={shareOf("student_work", w.id)} />
-            )}
-          </CardContent>
-        </Card>
+    <div className={grid}>
+      {data!.work.map((w: any, i: number) => (
+        <ArriveItem key={w.id} index={i} className="h-full"><WorkCard w={w} share={shareOf("student_work", w.id)} /></ArriveItem>
       ))}
-      {data!.homework.map((h: any) => (
-        <Card key={h.id} className="overflow-hidden">
-          {h.url ? (
-            <img src={h.url} alt={h.homeworks?.title ?? "Homework"} loading="lazy" className="h-44 w-full object-cover" />
-          ) : (
-            <div className="flex h-44 w-full items-center justify-center bg-hec-sunken"><FileImage className="h-8 w-8 text-hec-ink-faint" /></div>
-          )}
-          <CardContent className="space-y-2 p-3 pt-3 sm:p-3 sm:pt-3">
-            <div className="flex items-center justify-between gap-2">
-              <Badge variant="outline">Homework</Badge>
-              <span className="text-hec-caption tabular-nums text-hec-ink-soft">
-                {new Date(h.submitted_at || h.created_at).toLocaleDateString()}
-              </span>
-            </div>
-            <p className="text-hec-small text-hec-ink">{h.homeworks?.title ?? h.file_name}</p>
-            <ShareControl source="homework" sourceId={h.id} share={shareOf("homework", h.id)} />
-          </CardContent>
-        </Card>
+      {data!.homework.map((h: any, i: number) => (
+        <ArriveItem key={h.id} index={data!.work.length + i} className="h-full"><HomeworkCard h={h} share={shareOf("homework", h.id)} /></ArriveItem>
       ))}
     </div>
   );

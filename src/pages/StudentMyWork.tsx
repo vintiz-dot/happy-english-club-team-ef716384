@@ -1,24 +1,26 @@
 import Layout from "@/components/Layout";
 import { MyWorkGallery } from "@/components/student/MyWorkGallery";
+import { Arrive, ArriveItem } from "@/components/fx/Arrive";
+import { WallHeader } from "@/components/student/walls/WallHeader";
+import { BiText } from "@/components/student/walls/BiText";
+import { useWallBand } from "@/components/student/walls/useWallBand";
+import { useAuth } from "@/hooks/useAuth";
+import { wallsCopy } from "@/lib/copy/studentWalls";
 import { FileImage } from "lucide-react";
 
 export default function StudentMyWork() {
+  const { user } = useAuth();
+  const { kid } = useWallBand();
+  const title = kid ? wallsCopy["myWork.title.kid"] : wallsCopy["myWork.title"];
+  const sub = kid ? wallsCopy["myWork.sub.kid"] : wallsCopy["myWork.sub"];
   return (
-    <Layout title="My Work">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-md border border-hec-line bg-hec-sunken">
-            <FileImage className="h-6 w-6 text-hec-ink-soft" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">My Work</h1>
-            <p className="text-hec-small text-hec-ink-soft">
-              Classwork your teacher scanned and shared with you — with their notes.
-            </p>
-          </div>
-        </div>
+    <Layout title={title.en}>
+      <Arrive scope="student-my-work" userId={user?.id} className="mx-auto max-w-5xl space-y-6">
+        <ArriveItem index={0}>
+          <WallHeader icon={FileImage} title={<BiText entry={title} />} sub={<BiText entry={sub} />} />
+        </ArriveItem>
         <MyWorkGallery />
-      </div>
+      </Arrive>
     </Layout>
   );
 }
