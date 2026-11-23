@@ -6,14 +6,8 @@ import { PointsResetControl } from "@/components/admin/PointsResetControl";
 import { PointsCentre } from "@/components/admin/PointsCentre";
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
-import { motion } from "framer-motion";
 import { Trophy, Star } from "lucide-react";
 import { useMemo } from "react";
-
-const fadeUp = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-};
 
 function useGreeting() {
   return useMemo(() => {
@@ -48,12 +42,12 @@ const OverviewTab = () => {
       </section>
 
       <section className="grid gap-6 md:grid-cols-2">
-        <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.05 }}>
+        <div>
           <TodayAgenda />
-        </motion.div>
-        <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.1 }}>
+        </div>
+        <div>
           <AdminAlerts />
-        </motion.div>
+        </div>
       </section>
 
       <section>
@@ -111,7 +105,7 @@ function ControlPanel({ icon: Icon, title, description, tone, delay = 0, childre
   // Trophy is a reward (brass); the points star is plain information.
   const toneIcon = tone === "amber" ? "text-hec-brass" : "text-hec-ink-soft";
   return (
-    <motion.div {...fadeUp} transition={{ duration: 0.3, delay }} className="min-w-0">
+    <div className="min-w-0">
       <div className="min-w-0 rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:p-6">
         <div className="mb-4 flex items-center gap-3">
           <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken ${toneIcon}`}>
@@ -124,7 +118,7 @@ function ControlPanel({ icon: Icon, title, description, tone, delay = 0, childre
         </div>
         {children}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

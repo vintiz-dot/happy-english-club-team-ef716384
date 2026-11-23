@@ -4,7 +4,6 @@ import { dayjs } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock } from "lucide-react";
-import { motion } from "framer-motion";
 
 export function TodayAgenda() {
   const today = dayjs().format("YYYY-MM-DD");
@@ -124,11 +123,8 @@ export function TodayAgenda() {
             const isFullyMarked = enrolledCount > 0 && markedCount >= enrolledCount;
             
             return (
-              <motion.div
+              <div
                 key={s.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
                 className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 rounded-hec-md border border-hec-line bg-hec-surface p-3"
               >
                 <div className="flex min-w-0 flex-1 basis-56 items-start gap-3">
@@ -159,7 +155,7 @@ export function TodayAgenda() {
                     </span>
                   )}
                 </div>
-              </motion.div>
+              </div>
             );
           })
         )}

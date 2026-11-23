@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, UserCog, BookOpen, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { Tick } from "@/components/fx/Tick";
 import { dayjs } from "@/lib/date";
 import { useFinanceSummary } from "@/hooks/useFinanceSummary";
 
@@ -149,13 +149,7 @@ export function OverviewStats() {
       {statCards.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, delay: index * 0.05 }}
-            className="h-full"
-          >
+          <div key={stat.title} className="h-full">
             <Card className="h-full">
               <CardContent className="p-4 sm:p-6">
                 <div className="mb-4 flex items-start justify-between gap-3">
@@ -163,7 +157,7 @@ export function OverviewStats() {
                     <p className="text-hec-small font-medium text-hec-ink-soft">{stat.title}</p>
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       <span className="whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">
-                        {stat.displayValue || stat.value.toLocaleString()}
+                        {stat.displayValue ? stat.displayValue : <Tick value={stat.value} />}
                       </span>
                       {stat.trend && stat.trendUp !== null && (
                         <span className={cn(
@@ -183,7 +177,7 @@ export function OverviewStats() {
                 <p className="text-hec-caption text-hec-ink-soft">{stat.description}</p>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         );
       })}
     </div>
