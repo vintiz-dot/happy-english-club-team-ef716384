@@ -8,6 +8,8 @@ import { format, isPast, addHours } from "date-fns";
 import { Clock, Users, Award } from "lucide-react";
 import { ParticipationPoints } from "@/components/admin/ParticipationPoints";
 import { useAuth } from "@/hooks/useAuth";
+import { InkCheck } from "@/components/fx/InkCheck";
+import { Seal } from "@/components/fx/Seal";
 
 interface Session {
   id: string;
@@ -37,6 +39,9 @@ export function AttendanceMarking() {
   const [attendance, setAttendance] = useState<Record<string, 'Present' | 'Absent' | 'Excused'>>({});
   const [loading, setLoading] = useState(false);
   const [showParticipationPoints, setShowParticipationPoints] = useState(false);
+  // Drawn after a save that SUCCEEDED, on the sessions list the page returns to (docs/EXPERIENCE_DESIGN_BRIEF.md C3).
+  // Never set on a failed save; it is state for the picture only and changes nothing that is saved.
+  const [registerSealed, setRegisterSealed] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -166,6 +171,7 @@ export function AttendanceMarking() {
   };
 
   const handleSessionSelect = async (session: Session) => {
+    setRegisterSealed(false);
     setSelectedSession(session);
     await loadStudentsAndAttendance(session.id);
   };
@@ -224,6 +230,7 @@ export function AttendanceMarking() {
         description: "Attendance saved successfully",
       });
 
+      setRegisterSealed(true);
       setSelectedSession(null);
       loadTodaySessions();
     } catch (error: any) {
@@ -260,7 +267,7 @@ export function AttendanceMarking() {
   const getStatusBadge = (status: 'Present' | 'Absent' | 'Excused') => {
     const ivoryColors = {
       Present: "border border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:bg-hec-leaf-tint",
-      Absent: "border border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:bg-hec-danger-tint",
+      Absent: "border border-hec-line-strong bg-hec-surface text-hec-ink hover:bg-hec-surface",
       Excused: "border border-hec-warn/30 bg-hec-warn-tint text-hec-warn hover:bg-hec-warn-tint"
     };
     return `${ivoryColors[status]} min-h-hec-target shrink-0 px-4`;
@@ -304,9 +311,15 @@ export function AttendanceMarking() {
             <div key={student.id} className="flex items-center justify-between gap-3 p-4 border border-hec-line rounded-hec-md bg-hec-surface">
               <span className="min-w-0 whitespace-normal break-words hyphens-none text-balance font-medium text-hec-ink">{student.full_name}</span>
               <Badge
-                className={`cursor-pointer ${getStatusBadge(attendance[student.id])}`}
+                className={`cursor-pointer gap-2 ${getStatusBadge(attendance[student.id])}`}
                 onClick={() => canEdit && toggleAttendance(student.id)}
               >
+                {/* The state is a mark AND a word: a tick drawn in leaf for Present; an ink dash for Absent and Excused (no red). */}
+                {attendance[student.id] === "Present" ? (
+                  <InkCheck size={18} />
+                ) : (
+                  <span aria-hidden className="h-0.5 w-3.5 shrink-0 rounded-full bg-current" />
+                )}
                 {attendance[student.id]}
               </Badge>
             </div>
@@ -353,6 +366,7 @@ export function AttendanceMarking() {
           Today's Sessions
         </CardTitle>
         <CardDescription>Select a session to mark attendance</CardDescription>
+        <Seal show={registerSealed} label="Register complete" visibleLabel size={36} className="pt-2" />
       </CardHeader>
       <CardContent className="space-y-3">
         {sessions.length === 0 ? (

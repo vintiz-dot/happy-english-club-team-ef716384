@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LucideIcon } from "lucide-react";
@@ -54,7 +54,8 @@ function Token({ feedback, onComplete }: { feedback: FeedbackItem; onComplete: (
     onComplete(feedback.id);
   };
 
-  useEffect(() => {
+  // A layout effect: the token's place is worked out before the first paint, so it appears on the very next frame.
+  useLayoutEffect(() => {
     // Rapid awards never queue: a token that cannot be drawn at once is simply not drawn (the totals still update).
     if (level === "off" || !claimToken()) {
       finish();
