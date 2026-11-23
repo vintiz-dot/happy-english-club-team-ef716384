@@ -75,7 +75,7 @@ export function NextThing({ data, band }: { data: HomeData; band: AgeBand }) {
             onClick={() => data.onOpenHomework(next)}
             className={cn(BUTTON, "bg-hec-action text-hec-on-action hover:bg-hec-action/90", big && "min-h-[4.5rem] w-full text-hec-h3")}
           >
-            <Bi k="next.open" />
+            <Bi k="next.open" viClassName="text-hec-on-action/80" />
             <ChevronRight className="h-5 w-5" aria-hidden />
           </button>
           {(band === "early" || band === "young") && <ListenButton text={title} />}
