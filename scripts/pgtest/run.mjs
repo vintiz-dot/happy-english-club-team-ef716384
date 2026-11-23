@@ -388,6 +388,8 @@ const SUITES = [
   { name: "closed month changes", file: "closed-month-changes.test.mjs", migrations: [] },
   // "What changed since you paid": the sentence families and admins read (the pricing is in tuition pricing).
   { name: "since paid line", file: "since-paid-line.test.mjs", migrations: [] },
+  // Who belongs to a month: enrolled on a day of it. A child who left stays in their last month only.
+  { name: "month roster", file: "month-roster.test.mjs", migrations: [] },
   { name: "restore transfer marks", file: "restore-transfer-marks.test.mjs", migrations: [] },
   { name: "uncancel restores marks", file: "uncancel-restores-marks.test.mjs", migrations: [] },
   // Stage A without a database: the AI reply checked against the records, and what approval sends.

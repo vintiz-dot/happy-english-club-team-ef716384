@@ -23,6 +23,8 @@ import { CHECK_INFO, type Finding } from "@/lib/finance/paymentChecks";
 import { usePaymentChecks } from "@/hooks/usePaymentChecks";
 import { PaymentChecksPanel, SEVERITY_BADGE } from "@/components/admin/finance/PaymentChecksPanel";
 import { MonthMoneyTiles } from "@/components/admin/finance/MonthMoneyTiles";
+import { fetchEnrolledStudentIds } from "@/lib/finance/studentsInMonth";
+import { billShownInMonth } from "@/lib/finance/monthRoster";
 
 type RowFilter = "all" | "flagged" | "owing" | "partial" | "paid";
 
@@ -118,7 +120,11 @@ export function RecordedPaymentManager() {
         .order("students(full_name)");
 
       if (error) throw error;
-      setInvoices(data as Invoice[]);
+      // A child who left stays in their last month and is not listed in the
+      // next one: an empty bill saved for a month they were not enrolled in
+      // is left out. A bill holding a charge or a payment is always shown.
+      const enrolled = await fetchEnrolledStudentIds(selectedMonth);
+      setInvoices((data as Invoice[]).filter((bill) => billShownInMonth(bill, enrolled)));
     } catch (error: any) {
       toast.error(error.message);
     } finally {

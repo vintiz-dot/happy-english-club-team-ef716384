@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { studentsInMonthOrClause } from "@/lib/finance/studentsInMonth";
+import { fetchEnrolledStudentIds } from "@/lib/finance/studentsInMonth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -47,14 +47,18 @@ export function StudentTuitionOverview() {
   const [sortBy, setSortBy] = useState<"name" | "class" | "balance" | "total">("name");
 
   const { data: students, isLoading: studentsLoading } = useQuery({
-    // Month-scoped: the roster depends on which month is selected, so a
-    // student deactivated later still appears in their earlier months.
+    // Month-scoped: a child is listed in the months an enrolment of theirs
+    // covers (src/lib/finance/monthRoster.ts). A child who left stays in
+    // their last month and is not listed in the next one, and nothing asks
+    // calculate-tuition to save a bill for a month they were not enrolled in.
     queryKey: ["students-in-month", selectedMonth],
     queryFn: async () => {
+      const ids = [...(await fetchEnrolledStudentIds(selectedMonth))];
+      if (ids.length === 0) return [];
       const { data, error } = await supabase
         .from("students")
         .select("id, full_name, family:families(name)")
-        .or(studentsInMonthOrClause(selectedMonth))
+        .in("id", ids)
         .order("full_name");
 
       if (error) throw error;
