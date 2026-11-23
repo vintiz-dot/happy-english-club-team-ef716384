@@ -18,9 +18,9 @@
 --     (attendance_cancel_snapshots). Un-cancelling, by any route, puts each mark
 --     back from that note and then deletes the note.
 --     A lesson cancelled BEFORE this file has no note. For it, an Excused mark
---     that nobody made (marked_by empty) goes back to Present when the child was
---     enrolled that day (the register seeder's own rule), and a mark a person made
---     is left alone. An un-cancel is never blocked by any of this: if a mark cannot
+--     that nobody signed (marked_by empty) goes back to Present when the child was
+--     enrolled that day and the cancel itself changed the row (or nobody ever touched
+--     it); a mark a person made is left alone (use the admin function for those). An un-cancel is never blocked by any of this: if a mark cannot
 --     be put back it stays as it is and the database logs a WARNING.
 --  B. The past. admin_restore_uncancelled_marks() finds the marks that are still
 --     Excused on lessons that were un-cancelled, and per child and month puts them
@@ -96,15 +96,19 @@ END
 $pre$;
 
 -- ----------------------------------------------------------- A1. the note
+-- Keyed by the attendance row, with NO student_id column on purpose: admin_merge_students
+-- (20261121120000) finds every student_id column at run time and would refuse a merge on a
+-- unique clash. This shape is invisible to it, and its delete + re-insert of the dropped
+-- child's marks simply drops their snapshots (ON DELETE CASCADE).
 CREATE TABLE IF NOT EXISTS public.attendance_cancel_snapshots (
-  session_id uuid NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
-  student_id uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
-  status     text NOT NULL,
-  taken_at   timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (session_id, student_id)
+  attendance_id uuid PRIMARY KEY REFERENCES public.attendance(id) ON DELETE CASCADE,
+  session_id    uuid NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
+  status        text NOT NULL,
+  taken_at      timestamptz NOT NULL DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS attendance_cancel_snapshots_session ON public.attendance_cancel_snapshots (session_id);
 COMMENT ON TABLE public.attendance_cancel_snapshots IS
-  'Every child''s mark as it stood when the lesson was cancelled. Used to put the marks back when the lesson is un-cancelled, then deleted. A row left here means a mark could not be put back.';
+  'Every mark of a lesson as it stood when the lesson was cancelled. A snapshot exists for every lesson that is cancelled now; un-cancelling the lesson puts the marks back and deletes it. A row left on a lesson that is not cancelled means that mark could not be put back.';
 
 ALTER TABLE public.attendance_cancel_snapshots ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Admins read cancel snapshots" ON public.attendance_cancel_snapshots;
@@ -126,12 +130,15 @@ SET search_path TO 'public'
 AS $function$
 BEGIN
   BEGIN
-    INSERT INTO public.attendance_cancel_snapshots (session_id, student_id, status, taken_at)
-    SELECT a.session_id, a.student_id, a.status::text, now()
+    -- A note left by a failed restore holds the truth: it is replaced only by a mark
+    -- that is not Excused now (an all-Excused overwrite would destroy it).
+    INSERT INTO public.attendance_cancel_snapshots (attendance_id, session_id, status, taken_at)
+    SELECT a.id, a.session_id, a.status::text, now()
       FROM public.attendance a
      WHERE a.session_id = NEW.id
-    ON CONFLICT (session_id, student_id)
-    DO UPDATE SET status = EXCLUDED.status, taken_at = EXCLUDED.taken_at;
+    ON CONFLICT (attendance_id)
+    DO UPDATE SET status = EXCLUDED.status, taken_at = EXCLUDED.taken_at
+      WHERE EXCLUDED.status <> 'Excused';
   EXCEPTION WHEN OTHERS THEN
     RAISE WARNING 'Could not write down the marks of lesson % before cancelling it (%). They will not be put back automatically.', NEW.id, SQLERRM;
   END;
@@ -145,6 +152,27 @@ END $function$;
 REVOKE ALL ON FUNCTION public.set_attendance_excused_on_cancel() FROM PUBLIC, anon, authenticated;
 -- The trigger trg_cancel_session_excused is NOT touched: same firing condition.
 
+-- ------------------------------- A3a. who put an Excused mark there (one rule)
+-- candidate              the cancel changed it (updated_at within a minute of the cancel and
+--                        later than the row's creation), or nobody ever touched a row that
+--                        nobody signed (a seeded placeholder).
+-- remarked_since         changed after the cancel.
+-- excused_before_cancel  already Excused before the cancel (the cancel did not touch it).
+-- Used by the un-cancel trigger (no-snapshot branch) and by the admin function; scripts/
+-- CHECK-uncancelled-lessons-marks.sql repeats it (it may call no function of ours).
+CREATE OR REPLACE FUNCTION public._uncancel_mark_origin(
+  p_canceled_at timestamptz, p_created_at timestamptz, p_updated_at timestamptz, p_marked_by uuid)
+RETURNS text LANGUAGE sql STABLE SET search_path = public AS $fn$
+  SELECT CASE
+    WHEN p_updated_at BETWEEN p_canceled_at - interval '1 minute' AND p_canceled_at + interval '1 minute'
+         AND (p_created_at IS NULL OR p_updated_at > p_created_at + interval '1 second') THEN 'candidate'
+    WHEN p_marked_by IS NULL AND p_updated_at <= coalesce(p_created_at, p_updated_at) + interval '1 second' THEN 'candidate'
+    WHEN p_updated_at > p_canceled_at + interval '1 minute' THEN 'remarked_since'
+    ELSE 'excused_before_cancel'
+  END
+$fn$;
+REVOKE ALL ON FUNCTION public._uncancel_mark_origin(timestamptz, timestamptz, timestamptz, uuid) FROM PUBLIC, anon, authenticated, service_role;
+
 -- --------------------------------------- A3. un-cancelling puts the marks back
 CREATE OR REPLACE FUNCTION public.restore_attendance_on_uncancel()
 RETURNS trigger
@@ -155,11 +183,13 @@ AS $function$
 DECLARE
   r record;
   v_target text;
-  v_failed integer := 0;
+  v_n integer;
+  v_kept uuid[] := ARRAY[]::uuid[];
 BEGIN
   BEGIN
     FOR r IN
       SELECT a.id, a.student_id, a.marked_by, sn.status AS snap_status,
+             public._uncancel_mark_origin(NEW.canceled_at, a.created_at, a.updated_at, a.marked_by) AS origin,
              EXISTS (
                SELECT 1 FROM public.enrollments e
                 WHERE e.student_id = a.student_id AND e.class_id = NEW.class_id
@@ -168,32 +198,36 @@ BEGIN
                   AND (e.allowed_days IS NULL OR extract(dow FROM NEW.date)::integer = ANY (e.allowed_days))
              ) AS enrolled
         FROM public.attendance a
-        LEFT JOIN public.attendance_cancel_snapshots sn
-               ON sn.session_id = a.session_id AND sn.student_id = a.student_id
+        LEFT JOIN public.attendance_cancel_snapshots sn ON sn.attendance_id = a.id
        WHERE a.session_id = NEW.id AND a.status = 'Excused'
     LOOP
       v_target := CASE
         WHEN r.snap_status IS NOT NULL THEN r.snap_status          -- as it was before the cancel
-        WHEN r.marked_by IS NULL AND r.enrolled THEN 'Present'     -- cancelled before the notes existed: a placeholder
-        ELSE NULL                                                  -- a person's mark with no note: leave it
+        WHEN r.marked_by IS NULL AND r.enrolled AND r.origin = 'candidate' THEN 'Present'  -- cancelled before the notes existed: a placeholder the cancel changed (or nobody ever touched)
+        ELSE NULL                                                  -- a person's mark with no note: its old status is unknown, leave it
       END;
       IF v_target IS NULL OR v_target = 'Excused' THEN CONTINUE; END IF;
       BEGIN
         UPDATE public.attendance SET status = v_target WHERE id = r.id AND status = 'Excused';
+        GET DIAGNOSTICS v_n = ROW_COUNT;
+        IF v_n = 0 THEN
+          -- A guard kept the row as it was, without an error.
+          v_kept := v_kept || r.id;
+          RAISE WARNING 'A rule kept the mark of child % on lesson % as Excused (it could not be put back to %).', r.student_id, NEW.id, v_target;
+        END IF;
       EXCEPTION WHEN OTHERS THEN
-        v_failed := v_failed + 1;
+        v_kept := v_kept || r.id;
         RAISE WARNING 'Could not put back the mark of child % on lesson % (%). It stays Excused.', r.student_id, NEW.id, SQLERRM;
       END;
     END LOOP;
 
-    -- Keep the notes when anything could not be put back, so it can be looked at.
-    IF v_failed = 0 THEN
-      BEGIN
-        DELETE FROM public.attendance_cancel_snapshots WHERE session_id = NEW.id;
-      EXCEPTION WHEN OTHERS THEN
-        RAISE WARNING 'Could not clear the notes of lesson % (%). The marks were put back.', NEW.id, SQLERRM;
-      END;
-    END IF;
+    -- A note is deleted only for a mark that really changed or already holds the note's status.
+    BEGIN
+      DELETE FROM public.attendance_cancel_snapshots
+       WHERE session_id = NEW.id AND NOT (attendance_id = ANY (v_kept));
+    EXCEPTION WHEN OTHERS THEN
+      RAISE WARNING 'Could not clear the notes of lesson % (%). The marks were put back.', NEW.id, SQLERRM;
+    END;
   EXCEPTION WHEN OTHERS THEN
     RAISE WARNING 'Could not put back the marks of lesson % (%). The lesson was un-cancelled; its marks were left as they are.', NEW.id, SQLERRM;
   END;
@@ -225,13 +259,7 @@ RETURNS TABLE (attendance_id uuid, student_id uuid, session_id uuid, class_id uu
                month text, session_status text, canceled_at timestamptz, marked_by uuid, kind text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$
   SELECT a.id, a.student_id, s.id, s.class_id, s.date, to_char(s.date, 'YYYY-MM'), s.status::text, s.canceled_at, a.marked_by,
-         CASE
-           WHEN a.updated_at BETWEEN s.canceled_at - interval '1 minute' AND s.canceled_at + interval '1 minute'
-                AND (a.created_at IS NULL OR a.updated_at > a.created_at + interval '1 second') THEN 'candidate'
-           WHEN a.marked_by IS NULL AND a.updated_at <= coalesce(a.created_at, a.updated_at) + interval '1 second' THEN 'candidate'
-           WHEN a.updated_at > s.canceled_at + interval '1 minute' THEN 'remarked_since'
-           ELSE 'excused_before_cancel'
-         END
+         public._uncancel_mark_origin(s.canceled_at, a.created_at, a.updated_at, a.marked_by)
     FROM public.attendance a
     JOIN public.sessions s ON s.id = a.session_id
    WHERE a.status = 'Excused'
