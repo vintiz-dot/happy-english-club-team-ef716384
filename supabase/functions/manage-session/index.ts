@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
       if (oldSession.status === 'Canceled' && status !== 'Canceled') {
         if (status !== 'Scheduled') {
           return fail(guardError(409, 'uncancel_to_scheduled_only',
-            'A cancelled lesson comes back as Scheduled only; mark the register afterwards.'));
+            'A cancelled lesson comes back as Scheduled only. Its marks are put back as they were before the cancellation; any the app could not put back are listed in the attendance check in Finance > Tuition.'));
         }
         const ack = readAck(); if (ack instanceof Response) return ack;
         return confirmed('uncancel', id, 'uncancel_session_checked', {
