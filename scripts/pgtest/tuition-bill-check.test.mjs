@@ -160,6 +160,10 @@ for (const d of [4, 6]) await mark('K7', CB, d, 'Excused');
 // K8: bill priced for three lessons; one has since been excused.
 await enrol('K8', CB, '2026-01-01');
 await mark('K8', CB, 4, 'Present'); await mark('K8', CB, 6, 'Present'); await mark('K8', CB, 11, 'Excused');
+// The later lessons carry a mark too. A held lesson with NO mark is a hole in
+// the register, and calculate-tuition holds a saved bill rather than lower it
+// for one (register-holes.test.mjs); this child's bill moved by a decision.
+await mark('K8', CB, 13, 'Excused'); await mark('K8', CB, 18, 'Excused');
 await db.query(`INSERT INTO public.invoices(student_id, month, base_amount, total_amount) VALUES ($1, $2, 780000, 780000)`, [K.K8, MONTH]);
 // K9: left CA on the 10th; later marks do not count. No bill.
 await enrol('K9', CA, '2026-01-01', day(10));

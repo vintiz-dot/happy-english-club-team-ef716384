@@ -345,6 +345,9 @@ const SUITES = [
   { name: "class access request", file: "class-access-request.test.mjs", migrations: ["20261122140000_class_access_request.sql"] },
   { name: "class deck state", file: "class-deck-state.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20260521230000_add_teacher_flipbooks.sql", "20261122092000_class_deck_state.sql"] },
   { name: "homework for present", file: "homework-for-present.test.mjs", migrations: ["20261122150000_homework_for_present.sql"] },
+  // A lesson with no mark never lowers a saved bill; marks deleted by old transfers go back (23 Nov 2026).
+  { name: "register holes", file: "register-holes.test.mjs", migrations: [] },
+  { name: "restore transfer marks", file: "restore-transfer-marks.test.mjs", migrations: [] },
   // Stage A without a database: the AI reply checked against the records, and what approval sends.
   { name: "lesson report approval", file: "lesson-report-approval.test.mjs", migrations: [] },
   {
