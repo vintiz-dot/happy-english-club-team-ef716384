@@ -19,6 +19,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: "@/integrations/supabase/client", replacement: path.resolve(here, "fakeSupabase.ts") },
+      { find: "@/lib/files", replacement: path.resolve(here, "fakeFiles.ts") },
       { find: "@", replacement: path.resolve(root, "src") },
     ],
   },

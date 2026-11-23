@@ -4,6 +4,7 @@ import { adminDb } from "./adminFixtures";
 
 export type Screen =
   | "student-home" | "student-homework" | "family" | "teacher" | "teacher-grid" | "teacher-attendance" | "teacher-drawer"
+  | "teacher-grading" | "teacher-video" | "teacher-smart" | "teacher-payroll"
   | "admin-overview" | "admin-tuition" | "admin-payroll" | "admin-dialogs";
 export type State = "ok" | "error" | "empty";
 
@@ -39,6 +40,10 @@ export const ROLE_OF: Record<Screen, "student" | "family" | "teacher" | "admin">
   "teacher-grid": "teacher",
   "teacher-attendance": "teacher",
   "teacher-drawer": "teacher",
+  "teacher-grading": "teacher",
+  "teacher-video": "teacher",
+  "teacher-smart": "teacher",
+  "teacher-payroll": "teacher",
   "admin-overview": "admin",
   "admin-tuition": "admin",
   "admin-payroll": "admin",
@@ -52,6 +57,10 @@ export const PATH_OF: Record<Screen, string> = {
   "teacher-grid": "/teacher/grid",
   "teacher-attendance": "/teacher/attendance-hub",
   "teacher-drawer": "/teacher/drawer",
+  "teacher-grading": "/teacher/assignments",
+  "teacher-video": "/teacher/video",
+  "teacher-smart": "/teacher/smart-upload",
+  "teacher-payroll": "/teacher/payroll",
   "admin-overview": "/admin",
   "admin-tuition": "/tuition",
   "admin-payroll": "/admin",
@@ -61,7 +70,7 @@ export const PATH_OF: Record<Screen, string> = {
 export const STUDENT_ID = "stu-quynh-tram-anh";
 export const ME = {
   userId: "user-preview-1",
-  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà", "teacher-grid": "Cô Trần Thu Hà", "teacher-attendance": "Cô Trần Thu Hà", "teacher-drawer": "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
+  name: ({ "student-home": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", "student-homework": "Nguyễn Hoàng Phương Quỳnh Trâm Anh", family: "Phụ huynh Lê", teacher: "Cô Trần Thu Hà", "teacher-grid": "Cô Trần Thu Hà", "teacher-attendance": "Cô Trần Thu Hà", "teacher-drawer": "Cô Trần Thu Hà", "teacher-grading": "Cô Trần Thu Hà", "teacher-video": "Cô Trần Thu Hà", "teacher-smart": "Cô Trần Thu Hà", "teacher-payroll": "Cô Trần Thu Hà" } as Record<string, string>)[SCREEN] ?? "Cô Nguyễn Thị Lan (admin)",
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -166,7 +175,7 @@ export function buildDb() {
     emptyOn = ["students"];
   }
 
-  if (SCREEN === "teacher" || SCREEN === "teacher-grid" || SCREEN === "teacher-attendance" || SCREEN === "teacher-drawer") {
+  if (SCREEN === "teacher" || SCREEN === "teacher-grid" || SCREEN === "teacher-attendance" || SCREEN === "teacher-drawer" || SCREEN === "teacher-grading" || SCREEN === "teacher-video" || SCREEN === "teacher-smart" || SCREEN === "teacher-payroll") {
     const teacherId = "teacher-ha";
     tables.teachers = [{ id: teacherId, user_id: ME.userId, full_name: ME.name, email: null, phone: null, avatar_url: null, is_active: true }];
     tables.teaching_assistants = [];
@@ -223,6 +232,69 @@ export function buildDb() {
     emptyOn = admin.emptyOn;
     functions = admin.functions;
     rpcs = admin.rpcs;
+  }
+
+  // ---- Phase 3 screens (made-up names) ----
+  const nowIso = new Date().toISOString();
+  if (SCREEN === "teacher-grading") {
+    const hw = { id: "hw-g1", title: "Unit 6 reading log", class_id: "cls-t1", classes: { name: "Movers Sparks (Tue/Thu)" } };
+    const sub = (id: string, student: string, name: string, extra: Record<string, unknown>) => ({
+      id, homework_id: hw.id, student_id: student, submitted_at: nowIso, grade: null, teacher_feedback: null, graded_at: null, submission_text: "I read the story and drew the ending.",
+      storage_key: null, file_name: null, status: "submitted", students: { full_name: name }, homeworks: hw, ...extra,
+    });
+    // &waiting=1 leaves one handed in and ungraded, so the last-one Seal is one grade away
+    const WAITING = Number(params.get("waiting") ?? 3);
+    const waiting = [["kid-an", "Nguyễn Minh Anh"], ["kid-binh", "Trần Gia Bình"], ["kid-chi", "Lê Bảo Chi"]].slice(0, WAITING);
+    tables.homework_submissions = [
+      ...waiting.map(([id, name], i) => sub("sub-w" + i, id, name, {})),
+      sub("sub-g1", "kid-dung", "Phạm Hoàng Dũng", { grade: "A", graded_at: nowIso, status: "graded", teacher_feedback: "Well read." }),
+      sub("sub-g2", "kid-giang", "Vũ Hương Giang", { grade: "B+", graded_at: nowIso, status: "graded" }),
+      sub("sub-n1", "kid-hai", "Đỗ Quang Hải", { submitted_at: null, submission_text: null, status: "not_submitted" }),
+    ];
+  }
+  if (SCREEN === "teacher-video") {
+    tables.video_submissions = [{
+      id: "vs-1", homework_id: "hw-v1", student_id: "kid-an", status: "ready", attempt: 1, video_path: "incoming/preview.mp4", frame_paths: [], duration_seconds: 48,
+      video_mime: "video/mp4", submitted_at: nowIso, updated_at: nowIso, pronunciation: null,
+      students: { full_name: "Nguyễn Minh Anh" }, homeworks: { id: "hw-v1", title: "My family video", body: null, due_date: null },
+    }];
+    tables.video_analyses = [{
+      id: "va-1", video_submission_id: "vs-1", criteria_scores: [], suggested_grade: "B", feedback_student: "You spoke clearly and told us about your family. Try to add one more detail next time.",
+      feedback_parent: "Minh Anh spoke clearly about her family.", gaps: [], updated_at: nowIso, approved_at: null, transcript_segments: [], visual_notes: null, teacher_attention: [],
+    }];
+    tables.video_homework_rubrics = [];
+  }
+  if (SCREEN === "teacher-smart") {
+    tables.classes = [{ id: "cls-t1", name: "Movers Sparks (Tue/Thu)", default_teacher_id: "teacher-ha", schedule_template: null, is_active: true }, { id: "cls-t2", name: "Flyers Comets", default_teacher_id: "teacher-ha", schedule_template: null, is_active: true }];
+    // &queue=N review items waiting (default 2)
+    const N = Number(params.get("queue") ?? 2);
+    tables.student_work = Array.from({ length: N }, (_, i) => ({
+      id: "sw-" + i, uploaded_by: ME.userId, class_id: "cls-t1", student_id: i === 0 ? "kid-an" : "kid-binh", workflow: "general", status: "needs_review",
+      storage_path: "incoming/p" + i + ".jpg", original_filename: "page-" + (i + 1) + ".jpg", mime_type: "image/jpeg", created_at: nowIso, teacher_notes: null, is_teamwork: false, member_student_ids: [],
+    }));
+  }
+  if (SCREEN === "teacher-payroll") {
+    // The open month is the current one; any earlier month answers as closed.
+    const mk = (month: string, closed: boolean) => {
+      const start = new Date(month + "-01T12:00:00");
+      const days = [2, 4, 9, 11, 16, 18, 23, 25];
+      const mkDay = (d: number) => month + "-" + String(d).padStart(2, "0");
+      const sessions = days.map((d, i) => ({
+        id: "ps-" + month + "-" + i, date: mkDay(d), start_time: "17:30:00", end_time: "19:00:00", status: "Held", class_id: "cls-t1", classes: { name: i % 2 ? "Flyers Comets" : "Movers Sparks (Tue/Thu)" },
+        minutes: 90, amount: 270_000, payRateType: "hourly", rateVnd: 180_000,
+      }));
+      const total = sessions.length * 270_000;
+      const row: any = {
+        teacherId: "teacher-ha", staffType: "teacher", payRateType: "hourly", hourlyRate: 180_000, sessionsCountActual: sessions.length, sessionsCountProjected: sessions.length + 2,
+        totalHoursActual: sessions.length * 1.5, totalMinutesActual: sessions.length * 90, totalAmountActual: total, totalAmountProjected: total + 540_000,
+        sessionDetailsActual: sessions, sessionDetailsProjected: [], lostIncome: { sessionsCount: 1, totalMinutes: 90, totalAmount: 270_000, quantityLabel: "1.5 h" },
+        ...(closed ? { live: { totalAmountActual: total, sessionsCountActual: sessions.length }, liveTotalAmountActual: total } : {}),
+      };
+      void start;
+      return { locked: closed, payrollData: [row] };
+    };
+    const current = new Date().toISOString().slice(0, 7);
+    functions["calculate-payroll"] = (body: any) => ({ data: mk(body?.month ?? current, (body?.month ?? current) < current), error: null });
   }
 
   return { tables, errorOn, emptyOn, homeworkRpc, points, functions, rpcs };
