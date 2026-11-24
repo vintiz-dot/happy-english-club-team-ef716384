@@ -11,10 +11,12 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { odL1U13Lab } from "./od2e-l1-u13/lab";
 import { odL1U13Creative } from "./od2e-l1-u13/homework";
 import { odL1U13Worksheets } from "./od2e-l1-u13/assessments";
 
-export const odL1U13: Unit = {
+export const odL1U13: Unit = withLab(odL1U13Lab, {
   curriculum: "oxford-discover-2e",
   level: 1,
   unit: 13,
@@ -1330,4 +1332,4 @@ export const odL1U13: Unit = {
       ],
     },
   ],
-};
+});

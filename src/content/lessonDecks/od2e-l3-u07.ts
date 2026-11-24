@@ -13,6 +13,8 @@
 // the arithmetic on the slides stays true in every season. {s1} .. {s9} are filled on
 // screen with children from the class roster.
 import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { odL3U7Lab } from "./od2e-l3-u07/lab";
 import { odL3U7Creative } from "./od2e-l3-u07/homework";
 import { odL3U7Assessments, odL3U7Worksheets } from "./od2e-l3-u07/assessments";
 import { odL3U7FirstEdition } from "./od2e-l3-u07/firstEdition";
@@ -79,7 +81,7 @@ const championsWorksheet: Worksheet = {
   ],
 };
 
-export const odL3U7: Unit = {
+export const odL3U7: Unit = withLab(odL3U7Lab, {
   curriculum: "oxford-discover-2e",
   level: 3,
   unit: 7,
@@ -1425,4 +1427,4 @@ export const odL3U7: Unit = {
   worksheets: [...odL3U7Worksheets, championsWorksheet],
   assessments: odL3U7Assessments,
   firstEdition: odL3U7FirstEdition,
-};
+});

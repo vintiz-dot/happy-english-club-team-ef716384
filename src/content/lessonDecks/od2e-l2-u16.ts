@@ -9,6 +9,8 @@
 // {s1} .. {s9} are filled on screen with children from the class roster.
 // Grammar Champions (Lesson 6): the printable worksheet that follows the writing slide. The school's own sentences.
 import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { odL2U16Lab } from "./od2e-l2-u16/lab";
 import { odL2U16Creative } from "./od2e-l2-u16/homework";
 import { odL2U16Worksheets } from "./od2e-l2-u16/assessments";
 
@@ -65,7 +67,7 @@ const odL2U16ChampionWorksheet: Worksheet = {
   ],
 };
 
-export const odL2U16: Unit = {
+export const odL2U16: Unit = withLab(odL2U16Lab, {
   curriculum: "oxford-discover-2e",
   level: 2,
   unit: 16,
@@ -1522,4 +1524,4 @@ export const odL2U16: Unit = {
     },
   ],
   worksheets: [...odL2U16Worksheets, odL2U16ChampionWorksheet],
-};
+});

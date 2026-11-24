@@ -9,6 +9,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { odL2U8Lab } from "./od2e-l2-u08/lab";
 import { odL2U8Creative } from "./od2e-l2-u08/homework";
 import { odL2U8Worksheets } from "./od2e-l2-u08/assessments";
 
@@ -69,7 +71,7 @@ const championsWorksheet: Worksheet = {
   ],
 };
 
-export const odL2U8: Unit = {
+export const odL2U8: Unit = withLab(odL2U8Lab, {
   curriculum: "oxford-discover-2e",
   level: 2,
   unit: 8,
@@ -1650,4 +1652,4 @@ export const odL2U8: Unit = {
     },
   ],
   worksheets: [...odL2U8Worksheets, championsWorksheet],
-};
+});

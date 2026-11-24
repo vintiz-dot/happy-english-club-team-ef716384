@@ -8,6 +8,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { rhL3U5Lab } from "./rh-l3-u5/lab";
 import { rhL3U5Assessments } from "./rh-l3-u5/assessments";
 import { rhL3U5Football } from "./rh-l3-u5/football";
 import { rhL3U5Worksheets } from "./rh-l3-u5/worksheets";
@@ -1573,7 +1575,7 @@ const withCreative = (d: Deck): Deck => {
   return at < 0 || !c ? d : { ...d, slides: [...d.slides.slice(0, at), c, ...d.slides.slice(at)] };
 };
 
-export const rhL3U5: Unit = {
+export const rhL3U5: Unit = withLab(rhL3U5Lab, {
   curriculum: "reach-higher",
   level: 3,
   book: "3B",
@@ -1605,4 +1607,4 @@ export const rhL3U5: Unit = {
   decks: lessons.map(withCreative),
   assessments: rhL3U5Assessments,
   worksheets: rhL3U5Worksheets,
-};
+});

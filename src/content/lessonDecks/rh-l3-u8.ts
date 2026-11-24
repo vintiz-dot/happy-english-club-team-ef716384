@@ -22,6 +22,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { rhL3U8Lab } from "./rh-l3-u8/lab";
 import { keyWordAudio, phonicsAudio, readingAudio, talkAudio, unitVideo } from "./rh-l3/media";
 
 // The Unit 8 video from the school's Drive (3B videos uploaded 22 Nov 2026).
@@ -1587,7 +1589,7 @@ const withCreative = (d: Deck): Deck => {
   return at < 0 || !c ? d : { ...d, slides: [...d.slides.slice(0, at), c, ...d.slides.slice(at)] };
 };
 
-export const rhL3U8: Unit = {
+export const rhL3U8: Unit = withLab(rhL3U8Lab, {
   curriculum: "reach-higher",
   level: 3,
   book: "3B",
@@ -1621,4 +1623,4 @@ export const rhL3U8: Unit = {
   decks: lessons.map(withCreative),
   assessments: rhL3U8Assessments,
   worksheets: rhL3U8Worksheets,
-};
+});

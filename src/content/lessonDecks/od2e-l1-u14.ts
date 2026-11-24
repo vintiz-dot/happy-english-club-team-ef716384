@@ -10,10 +10,12 @@
 // carries his / her: the roster does not say who is a boy or a girl, so the his / her
 // examples use invented characters (Boy Bear, Girl Bear, the mice, Grandma).
 import type { Unit } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { odL1U14Lab } from "./od2e-l1-u14/lab";
 import { odL1U14Creative } from "./od2e-l1-u14/homework";
 import { odL1U14Worksheets } from "./od2e-l1-u14/assessments";
 
-export const odL1U14: Unit = {
+export const odL1U14: Unit = withLab(odL1U14Lab, {
   curriculum: "oxford-discover-2e",
   level: 1,
   unit: 14,
@@ -1538,4 +1540,4 @@ export const odL1U14: Unit = {
       ],
     },
   ],
-};
+});

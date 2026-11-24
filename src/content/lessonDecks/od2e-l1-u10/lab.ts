@@ -138,7 +138,7 @@ export const odL1U10Lab: UnitLab = {
             ],
             checklist: ["Every sentence starts with a capital letter", "A full stop or a question mark at the end", "More than one: add -s"],
             sayIt: "Read your fixed sentences to the class in a story voice.",
-            teacherNote: "Vietnamese has no plural -s and no capital rule at the start of a sentence in the same way, so these are the mistakes this class makes. Fix one together first. 'an onion' is a bonus: praise it if a child sees it, but do not teach the rule today.",
+            teacherNote: "Vietnamese nouns have no plural ending, so a missing -s is this class's most common slip; capital letters and full stops are every young writer's. Fix one together first. 'an onion' is a bonus: praise it if a child sees it, but do not teach the rule today.",
             tiers: [
               { level: "Support", task: "Fix sentences 1 and 4 (capital letters and full stops)." },
               { level: "Core", task: "Fix all four sentences." },

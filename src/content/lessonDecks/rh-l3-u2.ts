@@ -27,6 +27,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Deck, MediaLink, Slide, Unit } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { rhL3U2Lab } from "./rh-l3-u2/lab";
 import { rhL3U2Assessments } from "./rh-l3-u2/assessments";
 import { rhL3U2Football } from "./rh-l3-u2/football";
 import { rhL3U2Worksheets } from "./rh-l3-u2/worksheets";
@@ -1648,7 +1650,7 @@ const withCreative = (d: Deck): Deck => {
 };
 const decks = lessons.map(withCreative);
 
-export const rhL3U2: Unit = {
+export const rhL3U2: Unit = withLab(rhL3U2Lab, {
   curriculum: "reach-higher",
   level: 3,
   book: "3A",
@@ -1680,4 +1682,4 @@ export const rhL3U2: Unit = {
   decks,
   assessments: rhL3U2Assessments,
   worksheets: rhL3U2Worksheets,
-};
+});

@@ -10,6 +10,8 @@
 // not cheerful (nervous, unhappy, crying) are always given to invented characters, never to
 // a named child.
 import type { Unit, Worksheet } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { odL2U13Lab } from "./od2e-l2-u13/lab";
 import { odL2U13Creative } from "./od2e-l2-u13/homework";
 import { odL2U13Worksheets } from "./od2e-l2-u13/assessments";
 
@@ -68,7 +70,7 @@ const odL2U13ChampionWorksheet: Worksheet = {
   ],
 };
 
-export const odL2U13: Unit = {
+export const odL2U13: Unit = withLab(odL2U13Lab, {
   curriculum: "oxford-discover-2e",
   level: 2,
   unit: 13,
@@ -1312,4 +1314,4 @@ export const odL2U13: Unit = {
     },
   ],
   worksheets: [...odL2U13Worksheets, odL2U13ChampionWorksheet],
-};
+});

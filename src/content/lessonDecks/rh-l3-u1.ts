@@ -23,6 +23,8 @@
 //
 // {s1} .. {s9} are filled on screen with children from the class roster.
 import type { Deck, Unit } from "@/lib/lessonDecks/types";
+import { withLab } from "@/lib/lessonDecks/lab";
+import { rhL3U1Lab } from "./rh-l3-u1/lab";
 import { rhL3U1Assessments } from "./rh-l3-u1/assessments";
 import { keyWordAudio, talkAudio, unitVideo } from "./rh-l3/media";
 
@@ -366,7 +368,7 @@ const lessons: Deck[] = [
   },
 ];
 
-export const rhL3U1: Unit = {
+export const rhL3U1: Unit = withLab(rhL3U1Lab, {
   curriculum: "reach-higher",
   level: 3,
   book: "3A",
@@ -391,4 +393,4 @@ export const rhL3U1: Unit = {
   ],
   decks: lessons,
   assessments: rhL3U1Assessments,
-};
+});
