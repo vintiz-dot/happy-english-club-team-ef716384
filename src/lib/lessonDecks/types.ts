@@ -69,7 +69,10 @@ export type Thinking = "Create" | "Design" | "Evaluate" | "Argue" | "Compare and
 //   chunk sprint: a cue, then the whole phrase, fast: chorus, then pairs, then alone.
 //   question chain: ask, answer, turn and ask the next child, round the circle.
 //   retell: retell the story or text again, shorter each time, from key-word cards.
-export type FluencyRoutine = "4-3-2" | "task repeat" | "chunk sprint" | "question chain" | "retell";
+//   grammar drill: a cue sentence changed fast (to a question, a negative, another
+//     person or time), first in chorus, then in pairs, and last used in a real
+//     exchange about the children themselves (Venus, grades 2-4, 24 Nov 2026).
+export type FluencyRoutine = "4-3-2" | "task repeat" | "chunk sprint" | "question chain" | "retell" | "grammar drill";
 //   dictogloss: the teacher reads a short ORIGINAL text twice; groups rebuild it.
 //   sentence combining: two or three short sentences become one with a joining word.
 //   expand it: a bare sentence grows (who, where, when, why, a describing word).

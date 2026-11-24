@@ -195,8 +195,48 @@ export const odL1U10Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l1-u10-l3": {
       objectives: ["I can ask 'Do you have ___?' and answer fast, round the circle."],
-      trim: { "Pass the bag: Do you have ___?": 4, "Find someone who has": 6 },
+      trim: { "Find someone who has": 6 },
+      drop: ["Pass the bag: Do you have ___?", "Quiet circle"],
       add: [
+        {
+          after: "Say the pattern (SB 101 E)",
+          slide: {
+            kind: "fluency",
+            title: "Grammar drill: say it, ask it, say no",
+            routine: "grammar drill",
+            mode: "pairs",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it with Do, answer it, say it with don't. Then ask about real things.",
+            chunks: [
+              "I have a red pencil.",
+              "Do you have a red pencil?",
+              "Yes, I do. / No, I don't.",
+              "I don't have a red pencil, but I have a blue one.",
+              "We have three carrots and two onions.",
+              "Do they have a big pot? No, they don't.",
+            ],
+            recycle: ["I like soup, but I don't like onions.", "Two plus three equals five."],
+            rounds: [
+              { seconds: 60, say: "Whole class: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = add a thing). The class says the new sentence together." },
+              { seconds: 90, say: "Pairs: A says a sentence and shows a sign card, B changes it. Swap at the clap. Change the person too: I, you, we, they." },
+              { seconds: 90, say: "Real talk: ask your partner about their pencil case and bag. Answer with the full short answer and one more sentence." },
+            ],
+            steps: [
+              "Listen to the sentence. Look at the sign. Change it: ? = make a question with Do, X = say it with don't, + = add 'but I have ___'.",
+              "Say the WHOLE new sentence, with -s on things when there are more than one.",
+              "Teacher: after round 1, stop for one minute: put two mistakes you heard on the board (often 'Do you has' or 'Yes, I have'), fix them together, then go on.",
+              "In round 3 the drill becomes real: ask about what your partner really has, and remember one answer to tell the class.",
+            ],
+            prompts: ["I have a pot. (?)", "You have a stone. (X)", "We have carrots. (?)", "They have a bag. (X +)", "I have two pencils. (+ an eraser)"],
+            feedback: "Prompt, do not tell: for 'You have a pot?' hold up one finger and say 'D...?'; for 'Yes, I have.' repeat it with a rising voice and let the child fix it; for a missing -s, tap your wrist. Say the -s and the n't clearly yourself.",
+            teacherNote: "A drill only helps when the last step is real: round 3 has children ask about things they really have, so the form is used for meaning. Grades 2-4 can take the full set: questions, short answers, negatives, 'but' and a change of person. Keep it brisk; a drill that drags loses its point.",
+            tiers: [
+              { level: "Support", task: "Use only ? and X with I and you, with the frames on the board.", frames: ["Do you have a ___?", "No, I don't have a ___."] },
+              { level: "Core", task: "Change every sentence, with I, you, we and they." },
+              { level: "Stretch", task: "Use he and she too: 'She has a pot. Does she have a pot? No, she doesn't.'" },
+            ],
+          },
+        },
         {
           after: "Ask and answer (SB 101 F)",
           slide: {

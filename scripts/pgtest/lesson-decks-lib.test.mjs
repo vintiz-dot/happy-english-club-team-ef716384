@@ -202,7 +202,8 @@ for (const { f, u } of units) {
       ok(`${d.id} / ${s.title}: a writing routine has steps and a checklist`, s.steps.length > 0 && s.checklist.length >= 2);
       if (s.routine === "paragraph") {
         // Model length and time by age: Level 1 (6-7) a three- or four-sentence mini paragraph, Level 2 (7-8) a short one, Level 3 and Reach Higher a full one.
-        const [lo, hi, minMin] = d.level === 1 ? [20, 50, 6] : d.level === 2 ? [30, 80, 7] : [40, 120, 8];
+        // Venus, the Level 1 class, is grades 2-4 (owner, 24 Nov 2026): its paragraphs are sized like Level 2.
+        const [lo, hi, minMin] = d.level <= 2 ? [30, 80, 7] : [40, 120, 8];
         const words = s.text ? s.text.text.split(/\s+/).length : 0;
         ok(`${d.id} / ${s.title}: a paragraph has its genre, an original model paragraph (${lo}-${hi} words), a 3-5 box organiser, 3+ checks and a spoken step`,
           !!s.genre && words >= lo && words <= hi && (s.organiser ?? []).length >= 3 && s.organiser.length <= 5
@@ -243,6 +244,11 @@ for (const { f, u } of units) {
       u.decks.filter((d) => !(d.slides.some((s) => s.kind === "fluency") && d.slides.some((s) => s.kind === "writing"))).map((d) => d.id).join(", "));
     const talks = u.decks.filter((d) => d.slides.some((s) => s.kind === "vlog" && s.rubric)).length;
     ok(`${f}: a recorded talk about every other lesson (${talks} for ${u.decks.length} lessons)`, talks >= Math.max(1, Math.floor(u.decks.length / 2)));
+    // Venus (Oxford Discover 1, grades 2-4) drills the lesson's grammar in every lesson, besides its fluency routine.
+    if (u.curriculum === "oxford-discover-2e" && u.level === 1) {
+      const missing = u.decks.filter((d) => !d.slides.some((s) => s.kind === "fluency" && s.routine === "grammar drill") || !d.slides.some((s) => s.kind === "fluency" && s.routine !== "grammar drill")).map((d) => d.id);
+      ok(`${f}: every lesson has a grammar drill and another fluency routine`, missing.length === 0, missing.join(", "));
+    }
     // Every Lab class writes paragraphs (SKY 1 and Jupiter first, then Venus and Oxford Discover 2, 24 Nov 2026): plan, write, check in at least half the lessons.
     if (u.decks.length > 1) {
       const paras = u.decks.filter((d) => d.slides.some((s) => s.kind === "writing" && s.routine === "paragraph")).length;
