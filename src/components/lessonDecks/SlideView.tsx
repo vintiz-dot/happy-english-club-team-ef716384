@@ -296,7 +296,7 @@ export function SlideView({ slide }: { slide: Slide }) {
 }
 
 function SlideBody({ slide }: { slide: Slide }) {
-  const { unit, deck, audience } = useContext(SlideContext);
+  const { unit, deck, audience, speakScript } = useContext(SlideContext);
   switch (slide.kind) {
     case "title":
       return (
