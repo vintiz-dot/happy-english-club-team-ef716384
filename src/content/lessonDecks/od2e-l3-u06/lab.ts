@@ -1,5 +1,554 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
 
-// Speaking & Writing Lab for this unit (src/lib/lessonDecks/lab.ts puts it into the decks).
-// Empty until it is written.
-export const odL3U6Lab: UnitLab = { decks: {} };
+// Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 6 "Seeing Like a
+// Poet" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
+// Every lesson gets one fluency routine (the unit's grammar, was / were + -ing with when,
+// and action verbs with -s, said again and again as whole sentences, with Unit 5's phrases
+// mixed back in) and one writing routine (plan, write, check, then say it). Every other
+// lesson ends with a recorded talk for home. Time comes from games and repeats, never from
+// the book pages or the grammar. All text is original.
+
+const correctGrammar =
+  "Listen and do not stop the talk. Note two or three grammar mistakes (no names). Between round 1 and round 2, fix two of them on the board in one minute; children who then say it again use the fixed form. For grammar, prompt the child to fix it: start the phrase and pause ('I was ... ?'), point to the frame, hold up a finger for the missing word (was / were, or the -s on 'dances'), or repeat the error with a rising voice ('We was playing?'). For a sound, just say it right and let the child echo it. Say every final -s and -ed clearly yourself: Vietnamese speakers often drop them, and children copy what they hear.";
+
+const correctWas =
+  "Watch for 'We was playing', 'I playing' (no was), 'I was see' (no -ing) and 'the phone ring' (no -ed on the short action). Prompt, do not tell: start 'We ... ?' and pause, point to the frame, or hold up a finger for the missing word. Between round 1 and round 2, put two of these on the board for a one-minute fix. Say 'rang', 'started' and 'played' with a clear final sound, and let the children echo.";
+
+const correctVerbs =
+  "Watch for 'The wind dance', 'The sun is shine' and 'The waves crashes'. Prompt the child to fix it: say 'The wind ...' and pause, hold up a finger for the -s, or repeat the error with a rising voice ('The wind dance?'). For a sound, say it right and let the child echo. After round 1, take one minute to put two mistakes on the board and fix them, then go on. Say the final -s of 'dances', 'whispers' and 'smiles' clearly yourself.";
+
+export const odL3U6Lab: UnitLab = {
+  decks: {
+    // ------------------------------------------------------------------ Lesson 1
+    "od2e-l3-u06-l1": {
+      objectives: ["I can say 'I can see ___ in my mind.' fast, with a poet word, without stopping."],
+      trim: { "Noun, verb or adjective? Stand, act, wave": 5, "Poem or not a poem?": 6 },
+      add: [
+        {
+          after: "Listen, point, say (SB 56 A)",
+          slide: {
+            kind: "fluency",
+            title: "Picture sprint: I can see it in my mind",
+            routine: "chunk sprint",
+            mode: "whole",
+            minutes: 6,
+            goal: "Say the whole sentence about a picture in your mind, fast and smooth, with no stops.",
+            chunks: [
+              "I can see a bright moon in my mind.",
+              "I can hear the rain on the roof.",
+              "I can smell the sweet flowers.",
+              "The poet makes a picture with words.",
+              "What can you see in your mind?",
+            ],
+            recycle: ["A big brown kangaroo was hopping across the picture.", "Were you watching the shooting star? Yes, I was."],
+            rounds: [
+              { seconds: 60, say: "Everyone together: the teacher shows a word card and the class says the whole sentence." },
+              { seconds: 60, say: "Pairs: one shows a word card, the other says a whole sentence. Swap when you hear the clap." },
+              { seconds: 45, say: "New partner. Faster! How many whole sentences can you say?" },
+            ],
+            steps: [
+              "Look at the word card. Close your eyes for two seconds, then say a WHOLE sentence about the picture you see.",
+              "Listen for the clap: it means change partners.",
+              "In round 3, count your sentences on your fingers.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names), fix them together, then go on. After round 3, say the best sentence once more as a class.",
+            ],
+            prompts: ["(card: moon)", "(card: rain)", "(card: flowers)", "(card: wind)", "(card: river)"],
+            feedback: correctGrammar,
+            teacherNote: "Whole sentences only, never single words: the aim is to say 'I can see a bright moon in my mind' as one smooth piece. The unit's poet words go inside the sentences, so children practise vocabulary and sentence at the same time. Mix in a recycled phrase from Unit 5 every few cards so last unit's grammar stays fast. Listen for the final -s in 'flowers' and the 'the' before 'roof'.",
+            tiers: [
+              { level: "Support", task: "Point to the frame on the board and say it with a friend.", frames: ["I can see ___ in my mind.", "I can hear ___."] },
+              { level: "Core", task: "Say the sentence alone, without looking at the board." },
+              { level: "Stretch", task: "Add a feeling: 'I can see a bright moon. It makes me feel calm.'", frames: ["I can see ___. It makes me feel ___."] },
+            ],
+          },
+        },
+        {
+          after: "What else is in nature? (SB 56 C)",
+          slide: {
+            kind: "writing",
+            title: "Grow my poet sentence",
+            routine: "expand it",
+            mode: "solo",
+            minutes: 6,
+            steps: [
+              "Plan: look at the small sentence and think of one exact word to add.",
+              "Write: make the sentence bigger with a describing word and a place.",
+              "Check: look at the checklist. Is everything there?",
+              "Read your big sentence to a partner. Does it make a picture?",
+            ],
+            items: [
+              { q: "I see a moon. (add: bright, in the sky)", answer: "I see a bright moon in the sky." },
+              { q: "The rain falls. (add: soft, on the roof)", answer: "The soft rain falls on the roof." },
+              { q: "A bird sings. (add: tiny, in the tall tree)", answer: "A tiny bird sings in the tall tree." },
+              { q: "The river runs. (add: cold, through the forest)", answer: "The cold river runs through the forest." },
+            ],
+            frames: ["I see a ___ ___ in the ___.", "The ___ ___ falls on the ___."],
+            checklist: ["A capital letter at the start and a full stop at the end", "A describing word before the noun", "A place: in, on or through the ___"],
+            sayIt: "Read your big sentence to your partner, then close your eyes and say it again without looking.",
+            teacherNote: "Expanding a short sentence is a gentle way into 'exact words', which is the poet's skill in this unit. Model the first item aloud, adding one piece at a time. Listen for a missing 'the' or 'a' (Vietnamese has no articles) and prompt with a finger.",
+            tiers: [
+              { level: "Support", task: "Do items 1 and 2 with the frames on the board." },
+              { level: "Core", task: "Expand all four sentences." },
+              { level: "Stretch", task: "Expand one sentence twice, then write three sentences of your own about one place, as a tiny poem." },
+            ],
+          },
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------ Lesson 2
+    "od2e-l3-u06-l2": {
+      objectives: ["I can tell my partner how to write a haiku, three times, faster each time."],
+      trim: { "Draw what you hear": 5, "Poem forms chart": 10, "Do rules help a poet?": 5, "Culture note: counting poems": 3 },
+      add: [
+        {
+          after: "Expert groups: teach the rules",
+          slide: {
+            kind: "fluency",
+            title: "Teach the haiku: tell it again, faster",
+            routine: "retell",
+            mode: "pairs",
+            minutes: 7,
+            goal: "Tell the same how-to-write-a-haiku talk three times. Each time it is shorter, smoother and faster.",
+            chunks: [
+              "To write a haiku, first you look at something closely.",
+              "Then you count the syllables: five, seven, five.",
+              "Next you choose exact words for a picture.",
+              "Last, you read it and see it in your mind.",
+            ],
+            recycle: ["A tiny green grasshopper was leaping across the path.", "What were you doing at seven o'clock?"],
+            rounds: [
+              { seconds: 90, say: "Tell your partner how to write a haiku. Use the four picture cards: first, then, next, last." },
+              { seconds: 60, say: "New partner. Tell it again in less time." },
+              { seconds: 40, say: "New partner. Tell it fast and smooth! Thumbs up if you did not stop." },
+            ],
+            steps: [
+              "Hold up one finger for 'first', two for 'then', three for 'next' and four for 'last'.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (often a missing -s in 'syllables'), fix them together, then go on.",
+              "When the bell rings, find a new partner.",
+              "The listener has a job: tick one box for every step the speaker says, and ask one question at the end.",
+            ],
+            prompts: ["(card 1: look closely)", "(card 2: count syllables)", "(card 3: choose exact words)", "(card 4: read and picture it)"],
+            feedback: correctGrammar,
+            teacherNote: "The same talk three times, with a one-minute fix between the first and second telling, helps the later tellings become faster and more accurate. The new partner keeps each repeat meaningful. Keep the four step cards on the board for Support children. Do not add new content between rounds; the gain comes from saying the same thing more smoothly.",
+            tiers: [
+              { level: "Support", task: "Point to each card and say one sentence for it.", frames: ["First, you ___.", "Then you ___.", "Next you ___.", "Last, you ___."] },
+              { level: "Core", task: "Tell all four steps without the frames." },
+              { level: "Stretch", task: "Add why each step helps: 'First, you look closely because you need a picture.'" },
+            ],
+          },
+        },
+        {
+          after: "Culture note: counting poems",
+          slide: {
+            kind: "writing",
+            title: "Dictogloss: the haiku helper",
+            routine: "dictogloss",
+            mode: "groups",
+            minutes: 6,
+            steps: [
+              "Listen to the short text. Do not write yet.",
+              "Listen again. Write the key words you hear.",
+              "In your group, rebuild the text. Use the key words and the rule you just learned.",
+              "Compare it with the folded text. Which sentences are the same?",
+            ],
+            text: {
+              title: "Mina writes a haiku",
+              text: "Mina looks at the moon from her window. She counts the syllables on her fingers: five, seven, five. Then she chooses exact words, and she writes three short lines. When she reads it, she can see a bright silver moon in her mind.",
+            },
+            frames: ["Mina looks at ___.", "She counts ___.", "When she reads it, she can see ___."],
+            checklist: ["Every sentence starts with a capital letter and ends with a full stop", "She looks / counts / chooses: the -s is there", "Linking words: then, when"],
+            sayIt: "Read your group's text aloud, then say it again in your own words without looking.",
+            teacherNote: "Dictogloss works best after a short rule reminder: ask 'What does he / she / it need on the end of the verb?' before reading. The talk in the group about 'looks or look?' is where the learning happens. Accept different words if the meaning is the same. Read at natural speed both times.",
+            tiers: [
+              { level: "Support", task: "Write the key words and rebuild the first two sentences with the frames." },
+              { level: "Core", task: "Rebuild all of the text with your group." },
+              { level: "Stretch", task: "Rebuild the text, then change Mina into 'I' and rewrite it." },
+            ],
+          },
+        },
+      ],
+      talk: {
+        kind: "vlog",
+        title: "How to write a haiku",
+        prompt: "Show a grown-up how to write a haiku. Say the steps, then read your own haiku and tell what you see in your mind.",
+        length: "60-90 seconds",
+        steps: [
+          "Look at your haiku from class.",
+          "Say the how-to-write steps three times to a grown-up or a toy: first, then, next, last.",
+          "Record it once. Read your haiku slowly and tell what you see in your mind.",
+          "Look at the camera, speak clearly and do not stop for a long time. (Grown-up: just hold the phone and listen.)",
+        ],
+        maxSeconds: 180,
+        kidSummary: "Tell the steps to write a haiku, read yours, and keep talking without long stops.",
+        words: ["haiku", "syllable", "observe", "imagine", "describe", "exact"],
+        grammar: ["To write a haiku, first you ___.", "he / she / it + verb with -s"],
+        rubric: [
+          { label: "The steps", description: "Says at least three steps in order: first, then, next, last.", weight: 3 },
+          { label: "Poet words", description: "Uses unit words such as haiku, syllable, observe, imagine, exact.", weight: 2 },
+          { label: "Keeps going", description: "Talks without long stops; whole sentences, not single words.", weight: 3 },
+          { label: "Clear endings", description: "The -s on words like syllables and the verb endings can be heard.", weight: 1 },
+        ],
+        tiers: [
+          { level: "Support", who: "Children who need the frames", frames: ["First, you ___.", "Then you ___.", "My haiku is about ___."], tips: ["Point to your haiku as you speak."] },
+          { level: "Core", who: "Most children", frames: ["To write a haiku, first you ___. Then you ___.", "Next you ___. Last, you ___.", "In my mind, I can see ___."], tips: ["Say all four steps, then read your haiku."] },
+          { level: "Stretch", who: "Children who are ready for more", frames: ["Rules help a poet because ___.", "My favorite word in my haiku is ___ because ___."], tips: ["Explain why one rule helps, and why you chose one exact word."] },
+        ],
+      },
+    },
+
+    // ------------------------------------------------------------------ Lesson 3
+    "od2e-l3-u06-l3": {
+      objectives: ["I can say what I was doing when something happened, fast and with was / were."],
+      trim: { "Favorite poem vote": 3, "Interrupt! Mime and say": 5, "Could you be a poet?": 4, "Words in context (SB 60 C)": 4 },
+      add: [
+        {
+          after: "Match the sentence parts (SB 61 F)",
+          slide: {
+            kind: "fluency",
+            title: "What was happening? Three partners",
+            routine: "4-3-2",
+            mode: "pairs",
+            minutes: 7,
+            goal: "Give the same 'what was happening' talk to three friends. Each talk is shorter and smoother.",
+            chunks: [
+              "I was reading a poem when the lights went out.",
+              "My brother was drawing when the bell rang.",
+              "We were playing football when it started to rain.",
+              "I wasn't sleeping when the phone rang.",
+              "What were you doing when the lights went out?",
+            ],
+            recycle: ["Were you eating breakfast at seven? Yes, I was.", "A tiny green grasshopper was leaping across the path."],
+            rounds: [
+              { seconds: 120, say: "Partner 1: tell your 'what was happening' talk. The listener counts the long actions on their fingers." },
+              { seconds: 90, say: "New partner: the same talk in less time." },
+              { seconds: 60, say: "New partner: fast and smooth! The listener asks 'What did you do next?'" },
+            ],
+            steps: [
+              "Choose a moment: what were you doing when something happened? Plan it with a picture on your paper.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names), fix them together, then go on.",
+              "When the bell rings, line B moves one step to the left: a new partner.",
+              "The listener has a job: count the 'was / were' sentences and ask one follow-up question.",
+            ],
+            feedback: correctWas,
+            teacherNote: "The same talk, less time, new listener: this is the 4-3-2 activity, which builds fluency but not accuracy by itself. The one-minute fix between rounds 1 and 2 is what raises accuracy. Expect long and short action to be mixed up; prompt with 'the long action: was + -ing; the short action: simple past'.",
+            tiers: [
+              { level: "Support", task: "Say two sentences with the frames.", frames: ["I was ___ when ___.", "I wasn't ___ when ___."] },
+              { level: "Core", task: "Say four sentences without the board." },
+              { level: "Stretch", task: "Add a reason and a feeling: 'I was reading when the lights went out, so I lit a candle. I felt surprised.'" },
+            ],
+          },
+        },
+        {
+          after: "My list: what was happening when ... (SB 61 G)",
+          slide: {
+            kind: "writing",
+            title: "Join the moments with when",
+            routine: "sentence combining",
+            mode: "pairs",
+            minutes: 6,
+            steps: [
+              "Read the two short sentences. Find the long action and the short action.",
+              "Plan: say the joined sentence aloud first.",
+              "Write ONE sentence with 'when'. Use was / were + -ing for the long action.",
+              "Check the checklist, then read your sentence to your partner.",
+            ],
+            items: [
+              { q: "I was drawing. The bell rang. (when)", answer: "I was drawing when the bell rang." },
+              { q: "They were playing football. It started to rain. (when)", answer: "They were playing football when it started to rain." },
+              { q: "She was cooking dinner. The lights went out. (when)", answer: "She was cooking dinner when the lights went out." },
+              { q: "He wasn't sleeping. The phone rang. (when)", answer: "He wasn't sleeping when the phone rang." },
+            ],
+            frames: ["I was ___-ing when ___.", "We were ___-ing when ___."],
+            checklist: ["was / were + a verb ending in -ing for the long action", "The short action is in the past: rang, started, went", "when joins the two parts"],
+            sayIt: "Read your joined sentences to your partner, then say the first two without looking.",
+            teacherNote: "Sentence combining teaches the 'when' pattern through use. Do the first item with the class: cross out the full stop between the two sentences and write 'when'. Listen for 'We was' and for a missing -ed (the phone ring); prompt with a finger, do not just correct.",
+            tiers: [
+              { level: "Support", task: "Do items 1 and 2 with the frames on the board." },
+              { level: "Core", task: "Do all four items." },
+              { level: "Stretch", task: "Join them with 'when' and then flip: 'When the bell rang, I was drawing.'" },
+            ],
+          },
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------ Lesson 4
+    "od2e-l3-u06-l4": {
+      objectives: ["I can ask 'What do you think of ___?' and answer with a reason, round the circle."],
+      trim: { "Rhyme chain": 3, "Syllable cards": 4, "How many syllables? (SB 63 D)": 7, "Match the rhymes (SB 62 A)": 6 },
+      add: [
+        {
+          after: "Asking for opinions (SB 63 C)",
+          slide: {
+            kind: "fluency",
+            title: "Opinion chain: What do you think?",
+            routine: "question chain",
+            mode: "whole",
+            minutes: 7,
+            goal: "Ask, answer with a reason, turn and ask the next friend. Keep the chain going with no long stops!",
+            chunks: [
+              "What do you think of this poem?",
+              "I think it is beautiful because the wind dances.",
+              "In my opinion, the rain is quiet.",
+              "Do you agree? Yes, I do. / No, I don't, because ...",
+              "The moon smiles over the quiet river.",
+            ],
+            recycle: ["I was reading a poem when the lights went out.", "What were you doing when the bell rang?"],
+            rounds: [
+              { seconds: 90, say: "Slow chain round the circle. Everyone holds a poem line card." },
+              { seconds: 60, say: "Swap cards. Go faster!" },
+              { seconds: 45, say: "Swap again. Can the chain go all the way round before the bell?" },
+            ],
+            steps: [
+              "Sit in a circle. Read your poem line card silently.",
+              "Ask the friend on your left: 'What do you think of this poem?'",
+              "They answer with an opinion and a reason, then turn and ask the next friend.",
+              "The listener has a job: say 'Do you agree?' and tick yes or no.",
+              "Teacher: after round 1, stop for one minute: fix two mistakes (for example 'the wind dance') on the board, then go on to round 2.",
+            ],
+            prompts: ["(card: The wind whispers in the tall trees.)", "(card: The rain taps on the roof.)", "(card: The waves crash on the sand.)"],
+            feedback: correctVerbs,
+            teacherNote: "The chain makes every child ask AND answer many times in a few minutes, which makes the question and the 'because' reason automatic. Time the whole circle and tell them; children love beating their own time. Listen for the -s on action verbs with one subject: 'the wind dances', but 'the waves crash'.",
+            tiers: [
+              { level: "Support", task: "Answer with the frame on the board and pass the question on.", frames: ["I think it is ___ because ___.", "I agree."] },
+              { level: "Core", task: "Ask and answer without looking at the board." },
+              { level: "Stretch", task: "Give two reasons and disagree politely: 'No, I don't, because the line is too long.'" },
+            ],
+          },
+        },
+        {
+          after: "Make sentences come alive (SB 63 E)",
+          slide: {
+            kind: "writing",
+            title: "Fix the poem lines",
+            routine: "fix it",
+            mode: "pairs",
+            minutes: 6,
+            steps: [
+              "Read each line with your partner. Something is wrong!",
+              "Find the mistake: a missing -s on the verb, a wrong word, or an extra word.",
+              "Write the line the right way. Read it aloud with feeling.",
+            ],
+            items: [
+              { q: "The wind dance on the lake.", answer: "The wind dances on the lake." },
+              { q: "The sun is shine in the morning.", answer: "The sun shines in the morning." },
+              { q: "The waves crashes on the sand.", answer: "The waves crash on the sand." },
+              { q: "The rain it falls on the roof.", answer: "The rain falls on the roof." },
+            ],
+            checklist: ["One thing + action verb: add -s (wind dances)", "More than one thing: no -s on the verb (waves crash)", "Do not add 'it' or 'is' before the action verb"],
+            sayIt: "Read your fixed lines aloud in your best poet voice, then say two of them without looking.",
+            teacherNote: "This targets the most common slips here: the missing -s on the verb (Vietnamese verbs do not change), 'is' + a verb, and a repeated subject ('the rain it'). Fix one together first. Only two or three error types, so the checklist stays checkable.",
+            tiers: [
+              { level: "Support", task: "Fix lines 1 and 2 with the checklist." },
+              { level: "Core", task: "Fix all four lines." },
+              { level: "Stretch", task: "Write one new line with a mistake for your partner to fix." },
+            ],
+          },
+        },
+      ],
+      talk: {
+        kind: "vlog",
+        title: "The poem that talks",
+        prompt: "Tell about something in nature that has a surprising action, like a wind that whispers. Say two or three action sentences and tell what you think of your idea.",
+        length: "60-90 seconds",
+        steps: [
+          "Look outside or at a picture of nature. Find three things.",
+          "Say a sentence for each thing with an action verb, like 'The wind whispers.' Practise three times.",
+          "Record it once. Tell what you think of your poem and why.",
+          "Look at the camera, speak clearly and keep going. (Grown-up: just hold the phone and listen.)",
+        ],
+        maxSeconds: 180,
+        kidSummary: "Say action sentences about nature, say what you think, and keep talking without long stops.",
+        words: ["whisper", "dance", "crash", "tap", "smile", "quiet"],
+        grammar: ["He / she / it + action verb with -s: The wind whispers.", "I think ___ because ___."],
+        rubric: [
+          { label: "Action sentences", description: "Says at least three sentences with an action verb about nature.", weight: 3 },
+          { label: "Verb -s", description: "Uses -s for one thing (the moon smiles) and no -s for many (the waves crash).", weight: 3 },
+          { label: "Keeps going", description: "Talks without long stops in whole sentences.", weight: 2 },
+          { label: "Opinion", description: "Says what they think and gives a reason with because.", weight: 1 },
+        ],
+        tiers: [
+          { level: "Support", who: "Children who need the frames", frames: ["The ___ ___s.", "I think it is ___."], tips: ["Point to each thing as you say it."] },
+          { level: "Core", who: "Most children", frames: ["The ___ ___s on the ___.", "I think my poem is ___ because ___."], tips: ["Say three action sentences, then an opinion."] },
+          { level: "Stretch", who: "Children who are ready for more", frames: ["The ___ ___s and the ___ ___.", "In my opinion, ___ because ___. Do you agree?"], tips: ["Join two actions and ask the viewer a question."] },
+        ],
+      },
+    },
+
+    // ------------------------------------------------------------------ Lesson 5
+    "od2e-l3-u06-l5": {
+      objectives: ["I can say my poem and why I wrote it three times, smoother each time."],
+      trim: { "60-second recall": 3, "Test our big ideas": 3 },
+      add: [
+        {
+          after: "Illustrate and rehearse your poem (SB 65 C)",
+          slide: {
+            kind: "fluency",
+            title: "Poem showtime: say it again, smooth",
+            routine: "task repeat",
+            mode: "pairs",
+            minutes: 6,
+            goal: "Say your poem and why you wrote it to three listeners. Each time it is smoother, with no long stops.",
+            chunks: [
+              "My poem is about the quiet moon.",
+              "I chose this topic because it makes me feel calm.",
+              "The action verb 'whispers' makes the night seem soft.",
+              "When you hear it, I want you to see a silver river in your mind.",
+            ],
+            recycle: ["I was reading a poem when the lights went out.", "What do you think of this poem?"],
+            rounds: [
+              { seconds: 75, say: "Say your poem and why you wrote it to partner 1. The listener has a job: say one line you can picture." },
+              { seconds: 60, say: "New partner. Say it again, a little faster and clearer." },
+              { seconds: 45, say: "New partner. Smooth and with feeling! Look up at your listener." },
+            ],
+            steps: [
+              "Look at your own poem and the sentence 'I chose this topic because ...'.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (for example a missing -s on 'whispers'), fix them together, then go on.",
+              "When the bell rings, find a new partner.",
+              "The listener asks one follow-up question: 'Why did you choose ___?'",
+            ],
+            feedback: correctVerbs,
+            teacherNote: "This is a task repeat: the same job three times, a little faster each time, with a new listener. Do not change the poem between rounds; the gain comes from the speaker meeting the same language again with less effort. Listen for a flat voice (ask for feeling) and for a dropped -s on action verbs.",
+            tiers: [
+              { level: "Support", task: "Read your poem aloud, then say one sentence about why.", frames: ["I chose this topic because ___.", "I want you to see ___."] },
+              { level: "Core", task: "Say your poem, why you wrote it and what you want people to see, looking up." },
+              { level: "Stretch", task: "Say it from memory and add how the action verb makes the topic seem." },
+            ],
+          },
+        },
+        {
+          after: "Write it (Workbook)",
+          slide: {
+            kind: "writing",
+            title: "Model paragraph: why I wrote my poem",
+            routine: "model, then write",
+            mode: "solo",
+            minutes: 6,
+            steps: [
+              "Read the model. Find the topic sentence, the reasons and the closing sentence.",
+              "Plan: fill in a quick organiser: topic, two reasons, how I feel.",
+              "Write your own paragraph about your poem, with the frames if you need them.",
+              "Check the checklist, then read your paragraph aloud to your partner.",
+            ],
+            text: {
+              title: "Why I wrote about the moon",
+              text: "I wrote my poem about the moon. I chose this topic because the moon makes me feel calm. First, it is bright and quiet in the dark sky. Then it shines on the river, so I can see silver light in my mind. The action verb 'whispers' makes the night seem soft. That is why I wrote about the moon.",
+            },
+            frames: ["I wrote my poem about ___.", "I chose this topic because ___.", "The action verb ___ makes ___ seem ___.", "That is why ___."],
+            checklist: ["A topic sentence at the start and a closing sentence at the end", "At least two linking words: because, so, first, then", "Verbs with one thing have -s: it shines, it makes"],
+            sayIt: "Read your paragraph to your partner, then say it again without looking at the page.",
+            teacherNote: "Modelled writing plus a quick plan (organiser: topic, two reasons, feeling) is one of the best-evidenced routines for writers this age. Keep the model on screen while the children write. Listen when they read aloud for the -s on 'makes' and 'shines'.",
+            tiers: [
+              { level: "Support", task: "Copy the frames and fill in the blanks for your poem." },
+              { level: "Core", task: "Write a paragraph of four to five sentences with because and so." },
+              { level: "Stretch", task: "Write a paragraph of six sentences and add what you want your reader to see." },
+            ],
+          },
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------ Lesson 6
+    "od2e-l3-u06-l6": {
+      objectives: ["I can say what I was doing when something happened, with was / were, without stopping."],
+      trim: { "Freeze and tell: the interrupt game": 6, "Remember it!": 5, "Does the rule work here too?": 3 },
+      add: [
+        {
+          after: "The power cut mystery: ask and answer",
+          slide: {
+            kind: "fluency",
+            title: "Champion sprint: when the lights went out",
+            routine: "chunk sprint",
+            mode: "whole",
+            minutes: 7,
+            goal: "Say every champion sentence fast and right: this unit's, last unit's and the question.",
+            chunks: [
+              "What were you doing when the lights went out?",
+              "I was drawing a robin when the brush fell.",
+              "We were singing when the rain began.",
+              "While I was cooking, my cousin was setting the table.",
+              "I wasn't sleeping when you called.",
+            ],
+            recycle: ["A tiny green grasshopper was leaping across the path.", "Were you watching the shooting star? Yes, I was."],
+            rounds: [
+              { seconds: 60, say: "Together: the teacher flashes a card and the class says the sentence." },
+              { seconds: 60, say: "Pairs: one asks the question, the other answers with a whole sentence. Swap." },
+              { seconds: 45, say: "Champion round: new partner, as fast as you can!" },
+            ],
+            steps: [
+              "Watch the card. Say the whole sentence when it flips.",
+              "If you hear a mistake, show a thumbs down and say it the right way.",
+              "In round 3, count your sentences on your fingers.",
+              "Teacher: after round 1, stop for one minute. Put the two mistakes you heard most on the board (no names), fix them together, then go on.",
+            ],
+            prompts: ["(card: draw)", "(card: sing)", "(card: cook)", "(card: sleep)", "(card: read)"],
+            feedback: correctWas,
+            teacherNote: "A quick, high-energy recall of the unit's grammar: was / were + -ing for the long action, the simple past for the interruption. Mixing old and new phrases (spaced retrieval) keeps last unit's grammar from fading. The 'While ... , ... was' sentence is the hardest: keep it for Stretch if the class is not ready.",
+            tiers: [
+              { level: "Support", task: "Use the frames on the board with a friend.", frames: ["I was ___-ing when ___.", "We were ___-ing when ___."] },
+              { level: "Core", task: "Say the sentences without the board." },
+              { level: "Stretch", task: "Say a 'while' sentence: 'While I was drawing, my friend was reading.'" },
+            ],
+          },
+        },
+        {
+          after: "Write a moment paragraph",
+          slide: {
+            kind: "writing",
+            title: "Fix the moment paragraph",
+            routine: "fix it",
+            mode: "pairs",
+            minutes: 6,
+            steps: [
+              "Read each sentence with your partner. Something is wrong!",
+              "Find the mistake: a missing was / were, a wrong was / were, a wrong -ing, or a missing -ed.",
+              "Write the sentence the right way. Read all four aloud as a little story.",
+            ],
+            items: [
+              { q: "I painting a robin when the brush fell.", answer: "I was painting a robin when the brush fell." },
+              { q: "We was singing when it rained.", answer: "We were singing when it rained." },
+              { q: "I was walking when I was seeing a rainbow.", answer: "I was walking when I saw a rainbow." },
+              { q: "She was runing when her friend call.", answer: "She was running when her friend called." },
+            ],
+            checklist: ["was / were is there, and it matches (I was, we were)", "The long action ends in -ing (running: double the n)", "The short action is past: saw, called"],
+            sayIt: "Read your four fixed sentences as a little story, then say two of them without looking.",
+            teacherNote: "These are four common slips for Vietnamese learners: the missing 'was', 'we was', the -ing on the short action, and the missing -ed. Pick two or three to teach; do not explain them all today. Fix item 1 together first.",
+            tiers: [
+              { level: "Support", task: "Fix items 1 and 2 with the checklist." },
+              { level: "Core", task: "Fix all four items." },
+              { level: "Stretch", task: "Write a fifth sentence with a mistake for your partner to fix." },
+            ],
+          },
+        },
+      ],
+      talk: {
+        kind: "vlog",
+        title: "What was I doing when ...?",
+        prompt: "Tell a short story about a surprising moment. Say what you were doing when something happened, and what you did next.",
+        length: "60-90 seconds",
+        steps: [
+          "Think of a moment: what were you doing when something surprising happened?",
+          "Say your story three times to a grown-up or a toy: what you were doing, what happened, what you did next.",
+          "Record it once. Say how you felt and why.",
+          "Look at the camera, speak clearly and keep going. (Grown-up: just hold the phone and listen.)",
+        ],
+        maxSeconds: 180,
+        kidSummary: "Tell what you were doing when something happened, what you did next, and keep talking without long stops.",
+        words: ["suddenly", "surprised", "lights", "rain", "bell", "phone"],
+        grammar: ["I was ___-ing when ___.", "We were ___-ing when ___.", "While I was ___, my ___ was ___."],
+        rubric: [
+          { label: "Was / were + -ing", description: "Says what they were doing with was / were and a verb ending in -ing.", weight: 3 },
+          { label: "The short action", description: "Says what happened with the simple past: rang, fell, went.", weight: 2 },
+          { label: "Keeps going", description: "Talks without long stops; whole sentences, not single words.", weight: 3 },
+          { label: "Feelings and reasons", description: "Says how they felt and why, with because or so.", weight: 1 },
+        ],
+        tiers: [
+          { level: "Support", who: "Children who need the frames", frames: ["I was ___-ing when ___.", "Then I ___."], tips: ["Draw two pictures first: the long action and the surprise."] },
+          { level: "Core", who: "Most children", frames: ["I was ___-ing when ___.", "I felt ___ because ___, so I ___."], tips: ["Say what you did next and how you felt."] },
+          { level: "Stretch", who: "Children who are ready for more", frames: ["While I was ___, my ___ was ___.", "I wasn't ___-ing when ___."], tips: ["Add a second person and a negative sentence."] },
+        ],
+      },
+    },
+  },
+};

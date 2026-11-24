@@ -100,7 +100,7 @@ for (const u of UNITS) {
       // Lab slides: how the teacher corrects, a dictogloss text (the children rebuild it) and the model answers stay off the student copy.
       if (s.kind === "fluency" && distinctive(s.feedback) && st.includes(s.feedback.slice(0, 40))) leaks.push(`correction move: ${s.feedback.slice(0, 40)}`);
       if (s.kind === "writing" && s.routine === "dictogloss" && s.text && st.includes(s.text.text.slice(0, 40))) leaks.push(`dictogloss text: ${s.text.text.slice(0, 40)}`);
-      if (s.kind === "writing") { const v = shown(s.steps, s.frames, s.checklist, s.sayIt, s.tiers, s.routine === "dictogloss" ? null : s.text, (s.items ?? []).map((i) => i.q)); const one = text(P.deckMarkup({ ...d, slides: [s] }, roster, u, "student")); for (const it of s.items ?? []) if (leaked(it, v, one)) leaks.push(`model answer: ${it.answer}`); }
+      if (s.kind === "writing") { const v = shown(d.title, s.title, s.steps, s.frames, s.checklist, s.sayIt, s.tiers, s.routine === "dictogloss" ? null : s.text, (s.items ?? []).map((i) => i.q)); const one = text(P.deckMarkup({ ...d, slides: [s] }, roster, u, "student")); for (const it of s.items ?? []) if (leaked(it, v, one)) leaks.push(`model answer: ${it.answer}`); }
       if ((s.kind === "fluency" || s.kind === "writing") && distinctive(s.teacherNote)) ok(`${d.id}: the teacher copy keeps the note on "${s.title}"`, te.includes(s.teacherNote.slice(0, 40)));
       if ((s.kind === "activity" || s.kind === "speaking") && distinctive(s.teacherNote)) ok(`${d.id}: the teacher copy keeps the note on "${s.title}"`, te.includes(s.teacherNote.slice(0, 40)));
     }
