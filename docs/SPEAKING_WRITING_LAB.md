@@ -104,13 +104,19 @@ Most verified studies are with adults or children of 10-12. Evidence for 6-8-yea
 4. Rounds 2 and 3 with new partners, less time. The listener has a job (count, tick, "Wow!").
 5. Prompt, don't tell: start the phrase and pause; point to the frame; a finger for the missing -s.
 
+**Grammar drill (Venus, every lesson)**
+1. Say a sentence and show a sign: ? (ask it), X (say it with not), + (add and / but / because ...).
+2. The class says the new sentence together; then pairs with sign cards; swap at the clap.
+3. One-minute fix after round 1, as in every routine.
+4. Round 3 is real: the children ask about their own things and lives with the form they just drilled.
+
 **Writing**
 - Dictogloss: press "Read it aloud" twice (or read it yourself); groups rebuild the text; open "Show the text" only at the end.
 - Combine / expand / fix: the model answers are folded under "Model answers (teacher)".
 - Finish with the "Say it" step: the sentence aloud, then without looking.
 
 **Paragraphs (every class, at least half the lessons)**
-Venus (Level 1) writes a mini paragraph of three or four sentences, planned by drawing in three boxes; Level 2 writes four or five sentences with joining words; SKY 1 and Jupiter write a full paragraph.
+Venus (Level 1, grades 2-4) and Level 2 write four to six sentences with joining words, planned with key words; SKY 1 and Jupiter write a full paragraph.
 1. Read the model paragraph together; children point to the topic sentence, the details and the closing.
 2. Plan in the boxes with a few words each (not sentences).
 3. Write the paragraph from the plan, with the frames for Support.

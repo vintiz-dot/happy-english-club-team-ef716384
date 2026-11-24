@@ -50,12 +50,14 @@ export function applyDeckLab(deck: Deck, lab: DeckLab): { deck: Deck; issues: st
   const issues: string[] = [];
   const where = (m: string) => issues.push(`${deck.id}: ${m}`);
   let slides = [...deck.slides];
+  const dropped: string[] = [];
 
   for (const t of lab.drop ?? []) {
     const i = slides.findIndex((s) => titleOf(s) === t);
     if (i < 0) { where(`drop "${t}": no slide with that title`); continue; }
     if (KEPT.has(slides[i].kind) || (slides[i] as { book?: unknown }).book) { where(`drop "${t}": a ${slides[i].kind} slide${(slides[i] as { book?: unknown }).book ? " with book pages" : ""} is kept`); continue; }
     slides.splice(i, 1);
+    dropped.push(t);
   }
   for (const [t, m] of Object.entries(lab.trim ?? {})) {
     const i = slides.findIndex((s) => titleOf(s) === t);
@@ -85,7 +87,9 @@ export function applyDeckLab(deck: Deck, lab: DeckLab): { deck: Deck; issues: st
   }
   const timed = slides.reduce((n, s) => n + (minutesOf(s) ?? 0), 0);
   if (timed > deck.minutes) where(`with the Lab the timed slides add up to ${timed} of ${deck.minutes} minutes`);
-  return { deck: { ...deck, slides }, issues, added };
+  // A supplementary link tied to a slide the Lab left out goes with it.
+  const resources = deck.resources?.filter((r) => !r.slide || !dropped.includes(r.slide));
+  return { deck: { ...deck, slides, ...(resources ? { resources } : {}) }, issues, added };
 }
 
 /** The unit with its Lab in every deck the Lab names. */

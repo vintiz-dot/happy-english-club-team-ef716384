@@ -51,6 +51,9 @@ ok("the unit as written is untouched", unit.decks[0].slides.length === base.leng
 ok("no Lab, same unit", L.withLab(undefined, unit) === unit);
 eq("an anchor by kind", L.withLab({ decks: { "x-l1": { add: [{ after: "@speaking", slide: wri }] } } }, unit).decks[0].slides[7].title, "Fix it");
 
+const linked = L.withLab({ decks: { "x-l1": { drop: ["Run and touch"] } } }, { ...unit, decks: [{ ...deck(base), resources: [{ title: "Game", url: "https://www.twinkl.com/resource/x", source: "Twinkl", use: "g", slide: "Run and touch" }, { title: "Song", url: "https://www.twinkl.com/resource/y", source: "Twinkl", use: "s", slide: "Song" }] }] });
+eq("a dropped slide takes its supplementary link with it", linked.decks[0].resources.map((r) => r.slide), ["Song"]);
+
 console.log("what a Lab may not do");
 const bad = L.withLab({ decks: {
   "x-l1": { add: [{ after: "Nope", slide: flu }], trim: { "Book page": 30, "It is red": 3, "Song": 2, "Gone": 4 }, drop: ["Book page", "It is red", "Missing"] },
