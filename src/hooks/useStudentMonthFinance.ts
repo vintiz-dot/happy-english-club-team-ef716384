@@ -102,6 +102,19 @@ export interface StudentMonthFinanceData {
     rate: number;
     status: string;
   }>;
+
+  // Every lesson of the month with its state (billed, excused, cancelled, free,
+  // trial), as calculate-tuition lists them. Absent from an older function.
+  lessons?: Array<{
+    session_id: string;
+    date: string;
+    class_id?: string;
+    class_name?: string;
+    price_vnd: number;
+    mark?: string | null;
+    held?: boolean;
+    state: string;
+  }>;
   
   // Raw invoice data for download
   invoice?: {
@@ -197,6 +210,7 @@ export function useStudentMonthFinance(
         
         // Session details
         sessionDetails: data.sessionDetails ?? [],
+        lessons: Array.isArray(data.lessons) ? data.lessons : undefined,
         
         // Raw invoice
         invoice: data.invoice,

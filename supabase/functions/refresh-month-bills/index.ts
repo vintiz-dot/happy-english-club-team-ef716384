@@ -136,6 +136,11 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Sibling discounts the family paid for on another child (owner, 24 Nov
+      // 2026): moved, and the bills saved, by compute-sibling-discounts, which
+      // lists what it did in audit_log. Best effort: it never fails this run.
+      const siblingSwaps = Date.now() - started < TIME_BUDGET_MS ? await swapSiblings(url, serviceKey, month) : null;
+
       const listedName = new Map<string, string>(listed.map((g) => [g.student_id, g.full_name]));
       const run = {
         month,
@@ -152,6 +157,7 @@ Deno.serve(async (req) => {
         ...run,
         notReached,
         recorded: !logErr,
+        siblingSwaps,
         priced: [...noted].map(([student_id, n]) => ({ student_id, name: listedName.get(student_id) ?? "", ...n })),
         held: [...held].map(([student_id, h]) => ({ student_id, name: listedName.get(student_id) ?? "", ...h })),
       });
@@ -203,6 +209,32 @@ async function heldStudents(supabase: any, studentIds: string[], month: string):
     }
   } catch { /* keep the order as listed */ }
   return out;
+}
+
+/** What compute-sibling-discounts moved for the month, or why it could not be asked. */
+async function swapSiblings(url: string, serviceKey: string, month: string): Promise<unknown> {
+  try {
+    const res = await fetch(`${url}/functions/v1/compute-sibling-discounts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
+      body: JSON.stringify({ month, swapByPayments: true }),
+      // It spaces its own pricing calls and can take a while; this run does not
+      // wait for all of it. What it moves is in audit_log either way.
+      signal: AbortSignal.timeout(45_000),
+    });
+    let payload: any = null;
+    try { payload = await res.json(); } catch { payload = null; }
+    if (res.status !== 200 || payload?.success !== true) {
+      console.error("refresh-month-bills: sibling swap check not run", res.status, payload?.reason ?? payload?.error ?? "");
+      return { error: String(payload?.reason ?? payload?.error ?? `compute-sibling-discounts answered ${res.status}`) };
+    }
+    const moved = (payload.results ?? []).filter((r: any) => String(r?.status ?? "").startsWith("swapped"));
+    for (const r of moved) console.warn("refresh-month-bills: sibling discount moved", r.family_name, month, r.status);
+    return { moved: moved.length, results: payload.results ?? [] };
+  } catch (e) {
+    console.error("refresh-month-bills: sibling swap check unreachable", e instanceof Error ? e.message : String(e));
+    return { error: "compute-sibling-discounts unreachable" };
+  }
 }
 
 async function recalc(url: string, serviceKey: string, studentId: string, month: string): Promise<RecalcOutcome> {

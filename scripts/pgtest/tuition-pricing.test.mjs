@@ -12,7 +12,7 @@ assert.ok(!/^\s*import\s/m.test(src), 'tuition-pricing.ts imports nothing');
 const { code } = await transform(src, { loader: 'ts', format: 'esm' });
 const dir = mkdtempSync(join(tmpdir(), 'tuition-pricing-'));
 writeFileSync(join(dir, 'pricing.mjs'), code);
-const { priceStudentMonth, chooseSiblingClass, weekdayOf, explainPayment } = await import(pathToFileURL(join(dir, 'pricing.mjs')).href);
+const { priceStudentMonth, chooseSiblingClass, weekdayOf, explainPayment, siblingFitByPayments } = await import(pathToFileURL(join(dir, 'pricing.mjs')).href);
 
 let passed = 0, failed = 0;
 function test(name, fn) {
@@ -274,6 +274,132 @@ test('paid: debt carried in is part of what was paid against', () => {
   const e = explain({ enrollments: [enrol('A')], sess: sessions('A', { 6: 'Canceled' }, seven) }, 1470000 + 300000, 300000);
   assert.deepEqual([e.kind, e.carryCounted, e.payable, e.difference], ['explained', true, 1560000, 210000]);
   assert.equal(e.lessons.length, 1);
+});
+
+// ---------------------------------------------------------- free trial lessons
+// Owner, 24 Nov 2026: a lesson given to a child as a free trial is not billed.
+
+test('free trial: the lessons ticked are not billed, whatever their mark', () => {
+  const trial = new Set(['A-0', 'A-1']);
+  const r = priceStudentMonth({
+    enrollments: [enrol('A')], sessions: sessions('A', { 0: 'Held', 1: 'Held', 2: 'Held' }),
+    markOf: (id) => ({ 'A-0': 'Present', 'A-2': 'Present' })[id], classFeeOn: () => 200000, monthDiscounts: [], sibling: null,
+    isFreeTrial: (id) => trial.has(id),
+  });
+  assert.equal(r.projected.lessons, 6);
+  assert.equal(r.projected.totalAmount, 6 * 200000);
+  // Held and already past: the two trial lessons are not in "actual" either.
+  assert.equal(r.actual.totalAmount, 200000);
+  assert.deepEqual(r.lessons.filter((l) => l.state === 'trial').map((l) => [l.session_id, l.mark, l.price_vnd]), [['A-0', 'Present', 200000], ['A-1', null, 200000]]);
+});
+
+test('free trial: no list given means none; cancelled stays cancelled and a free place stays free', () => {
+  const none = price({ enrollments: [enrol('A')], sess: sessions('A') });
+  assert.equal(none.lessons.filter((l) => l.state === 'trial').length, 0);
+  const r = priceStudentMonth({
+    enrollments: [enrol('A'), enrol('B', { rate_override_vnd: 0 })],
+    sessions: [...sessions('A', { 0: 'Canceled' }), ...sessions('B')],
+    markOf: () => undefined, classFeeOn: (c) => ({ A: 200000, B: 260000 })[c], monthDiscounts: [], sibling: null,
+    isFreeTrial: () => true,
+  });
+  assert.equal(r.projected.totalAmount, 0);
+  assert.equal(r.lessons.find((l) => l.session_id === 'A-0').state, 'cancelled');
+  assert.equal(r.lessons.filter((l) => l.class_id === 'B').every((l) => l.state === 'free'), true);
+  assert.equal(r.lessons.filter((l) => l.class_id === 'A' && l.state === 'trial').length, 7);
+});
+
+test('free trial: an excused lesson that is also a trial is a trial, and discounts are taken from what is left', () => {
+  const r = priceStudentMonth({
+    enrollments: [enrol('A', { discount_type: 'percent', discount_value: 10, discount_cadence: 'monthly' })],
+    sessions: sessions('A'), markOf: (id) => (id === 'A-0' ? 'Excused' : undefined), classFeeOn: () => 200000,
+    monthDiscounts: [], sibling: null, isFreeTrial: (id) => id === 'A-0' || id === 'A-1',
+  });
+  assert.equal(r.lessons.find((l) => l.session_id === 'A-0').state, 'trial');
+  assert.equal(r.projected.baseAmount, 6 * 200000);
+  assert.equal(r.projected.totalAmount, 1080000); // 1,200,000 less 10%
+});
+
+test('free trial: a payment made before the lesson was made free is explained by it', () => {
+  // Paid for 8 lessons; the first was made a free trial afterwards.
+  const input = {
+    enrollments: [enrol('A')], sessions: sessions('A'), markOf: () => undefined, classFeeOn: () => 200000,
+    monthDiscounts: [], sibling: null, isFreeTrial: (id) => id === 'A-0',
+  };
+  const e = explainPayment(input, 1600000, 0);
+  assert.deepEqual([e.kind, e.payable, e.difference, e.lessons.map((l) => l.session_id)], ['explained', 1400000, 200000, ['A-0']]);
+});
+
+// ------------------------------------------ the sibling discount, as the family paid
+// Owner, 24 Nov 2026: when every child's payment is, to the dong, their bill
+// with the discount on another child, the discount goes there.
+
+const noSibling = (classId, fee, extra = {}) =>
+  priceStudentMonth({ enrollments: [enrol(classId)], sessions: sessions(classId), markOf: () => undefined, classFeeOn: () => fee, monthDiscounts: [], sibling: null, ...extra }).projected;
+
+test('sibling fit: the family paid with the 5% on the other child', () => {
+  // The rule gives it to An (80,000 costs the school least). The family paid Binh's 104,000 instead.
+  const children = [
+    { studentId: 'an', month: noSibling('A', 200000), paid: 1600000 },
+    { studentId: 'binh', month: noSibling('B', 260000), paid: 2080000 - 104000 },
+  ];
+  const fit = siblingFitByPayments(children, 5, { studentId: 'an', classId: 'A' });
+  assert.deepEqual([fit.studentId, fit.classId, fit.amount], ['binh', 'B', 104000]);
+  assert.deepEqual(fit.totals, [{ studentId: 'an', total: 1600000 }, { studentId: 'binh', total: 1976000 }]);
+});
+
+test('sibling fit: paid as billed, nothing moves', () => {
+  const children = [
+    { studentId: 'an', month: noSibling('A', 200000), paid: 1520000 },
+    { studentId: 'binh', month: noSibling('B', 260000), paid: 2080000 },
+  ];
+  assert.equal(siblingFitByPayments(children, 5, { studentId: 'an', classId: 'A' }), null);
+});
+
+test('sibling fit: one dong off, a child who paid nothing, or a family with the discount off: nothing moves', () => {
+  const an = noSibling('A', 200000), binh = noSibling('B', 260000);
+  const cur = { studentId: 'an', classId: 'A' };
+  assert.equal(siblingFitByPayments([{ studentId: 'an', month: an, paid: 1600000 }, { studentId: 'binh', month: binh, paid: 1976001 }], 5, cur), null);
+  assert.equal(siblingFitByPayments([{ studentId: 'an', month: an, paid: 0 }, { studentId: 'binh', month: binh, paid: 1976000 }], 5, cur), null);
+  assert.equal(siblingFitByPayments([{ studentId: 'an', month: an, paid: 1600000 }, { studentId: 'binh', month: binh, paid: 1976000 }], 0, cur), null);
+  // Both paid in full: no placing of the discount fits that.
+  assert.equal(siblingFitByPayments([{ studentId: 'an', month: an, paid: 1600000 }, { studentId: 'binh', month: binh, paid: 2080000 }], 5, cur), null);
+  // One child alone has no sibling discount to move.
+  assert.equal(siblingFitByPayments([{ studentId: 'binh', month: binh, paid: 1976000 }], 5, null), null);
+});
+
+test('sibling fit: nobody holds it yet and the payments say who should', () => {
+  const children = [
+    { studentId: 'an', month: noSibling('A', 200000), paid: 1520000 },
+    { studentId: 'binh', month: noSibling('B', 260000), paid: 2080000 },
+  ];
+  const fit = siblingFitByPayments(children, 5, null);
+  assert.deepEqual([fit.studentId, fit.classId, fit.amount], ['an', 'A', 80000]);
+});
+
+test('sibling fit: the percentage is taken after the child\'s own discounts, as on the bill', () => {
+  // Binh has a 10% student discount: 2,080,000 -> 1,872,000, and 5% of that is 93,600.
+  const binh = noSibling('B', 260000, { monthDiscounts: [{ name: 'Staff child', type: 'percent', value: 10 }] });
+  assert.equal(binh.totalAmount, 1872000);
+  const children = [
+    { studentId: 'an', month: noSibling('A', 200000), paid: 1600000 },
+    { studentId: 'binh', month: binh, paid: 1872000 - 93600 },
+  ];
+  const fit = siblingFitByPayments(children, 5, { studentId: 'an', classId: 'A' });
+  assert.deepEqual([fit.studentId, fit.amount, fit.totals[1].total], ['binh', 93600, 1778400]);
+  // And it is what the pricing itself gives Binh with the discount there.
+  const priced = priceStudentMonth({
+    enrollments: [enrol('B')], sessions: sessions('B'), markOf: () => undefined, classFeeOn: () => 260000,
+    monthDiscounts: [{ name: 'Staff child', type: 'percent', value: 10 }], sibling: { percent: 5, classId: 'B' },
+  }).projected.totalAmount;
+  assert.equal(priced, 1778400);
+});
+
+test('sibling fit: three children, every payment must fit', () => {
+  const an = noSibling('A', 200000), binh = noSibling('B', 260000), chi = noSibling('A', 200000);
+  const cur = { studentId: 'an', classId: 'A' };
+  const paid = (c) => [{ studentId: 'an', month: an, paid: 1600000 }, { studentId: 'binh', month: binh, paid: 1976000 }, { studentId: 'chi', month: chi, paid: c }];
+  assert.equal(siblingFitByPayments(paid(1600000), 5, cur).studentId, 'binh');
+  assert.equal(siblingFitByPayments(paid(1500000), 5, cur), null);
 });
 
 console.log(`${passed} passed, ${failed} failed`);

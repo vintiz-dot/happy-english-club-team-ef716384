@@ -119,6 +119,9 @@ const PINNED = {
   'supabase/functions/close-payroll-month/index.ts payroll_periods update': 1,
   // One call site since 23 Nov 2026: every state the function saves goes through saveState.
   'supabase/functions/compute-sibling-discounts/index.ts sibling_discount_state upsert': 1,
+  // 24 Nov 2026 (owner): the month's decision moved to the child the family paid for, when every
+  // payment fits it to the dong (swapByPayments). Conditional on the decision that was judged.
+  'supabase/functions/compute-sibling-discounts/index.ts sibling_discount_state update': 1,
   'supabase/functions/confirm-tuition/index.ts invoices update': 2,
   'supabase/functions/delete-payment/index.ts ledger_entries insert': 1,
   'supabase/functions/delete-payment/index.ts payment_deletions insert': 1,

@@ -355,3 +355,9 @@ Tested by `d4-functions-inputs.test.mjs` (62), now in `run.mjs`. `money-write-pa
 - The finance hooks sum saved or returned figures.
 
 What section 6 still flagged was `splitPayrollByClass` in OperationalReports. It groups calculate-payroll's own per-session amounts by class and rounds them to whole dong that sum to the function's total, which is mapping and not pricing. It is no longer listed as a pricer, and the ratchet now allows no importer outside `src/lib` besides the two rate-form previews.
+
+## 24 Nov 2026: one new write path (money gate session, owner's rule of that day)
+
+`supabase/functions/compute-sibling-discounts/index.ts sibling_discount_state update` x1. The automatic sibling swap (`swapByPayments`): when every billable child's recorded payment for a month equals, to the dong, that child's bill with the family's sibling discount on another child (`siblingFitByPayments` in `_lib/tuition-pricing.ts`), the month's decision is moved there. The update is conditional on the winner that was judged, the table's audit trigger records it, and the function adds one `audit_log` row (action `sibling_swap_by_payments`) with both bills before and after. The bills are saved by calculate-tuition (`settleToPayment`), which saves a closed month only when the new total is exactly the payment recorded on the bill. Pinned in `money-write-paths.test.mjs`; `sibling-swap.test.mjs` runs both functions.
+
+Not a pinned money table, noted here for the next audit: `free_trial_lessons` (migration `20261124090000`) is written by admins from `src/components/student/FreeTrialPanel.tsx` (insert, delete; RLS admin only; audit trigger). A row takes one lesson off one child's bill.

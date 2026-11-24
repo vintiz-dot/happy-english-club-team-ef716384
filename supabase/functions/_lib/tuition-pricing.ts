@@ -7,7 +7,9 @@
  *     class on that date (and that weekday, if the enrollment names days),
  *     the lesson is not cancelled, and the child is not Excused. Present,
  *     Late, Absent and NO MARK AT ALL are all billed: a missing register
- *     mark can never shrink a bill.
+ *     mark can never shrink a bill. A lesson an admin gave this child as a
+ *     FREE TRIAL (owner, 24 Nov 2026; free_trial_lessons) is not billed,
+ *     whatever its mark.
  *  2. PRICE. The enrollment's custom rate when it has one, higher or lower
  *     than the class fee; otherwise the class fee in force on the lesson's
  *     date. A price of 0 is a free lesson.
@@ -24,7 +26,10 @@
  *     children with billable lessons. It goes to the one class, among all
  *     those children's classes, where it costs the school the least money.
  *     Chosen once per month (the caller stores it; this module only says
- *     which class it would be).
+ *     which class it would be). One thing moves it afterwards (owner, 24 Nov
+ *     2026): the family paid as if the discount were on another child. When
+ *     every child's payment for the month is, to the dong, their bill with
+ *     the discount there, it goes there (siblingFitByPayments).
  *
  * "projected" is the whole month as the timetable stands; "actual" is the
  * lessons already held. Same rules, same discounts, fewer lessons.
@@ -65,7 +70,8 @@ export interface SiblingAward {
   classId: string;
 }
 
-export type LessonState = "billed" | "excused" | "cancelled" | "free";
+/** "free": the price is 0 (a free place). "trial": a free trial lesson given to this child. */
+export type LessonState = "billed" | "excused" | "cancelled" | "free" | "trial";
 
 export interface PricedLesson {
   session_id: string;
@@ -154,6 +160,7 @@ export function monthLessons(
   sessions: PricingSession[],
   markOf: (sessionId: string) => string | null | undefined,
   classFeeOn: (classId: string, date: string) => number,
+  isFreeTrial: (sessionId: string) => boolean = () => false,
 ): LessonWithEnrollment[] {
   const out: LessonWithEnrollment[] = [];
   const seen = new Set<string>();
@@ -169,7 +176,15 @@ export function monthLessons(
     const custom = customRate(enrollment);
     const price = custom ?? classFee;
     const mark = markOf(s.id) ?? null;
-    const state: LessonState = cancelled ? "cancelled" : !(price > 0) ? "free" : mark === "Excused" ? "excused" : "billed";
+    const state: LessonState = cancelled
+      ? "cancelled"
+      : !(price > 0)
+        ? "free"
+        : isFreeTrial(s.id) === true
+          ? "trial"
+          : mark === "Excused"
+            ? "excused"
+            : "billed";
     out.push({
       session_id: s.id,
       date: s.date,
@@ -293,6 +308,8 @@ export interface StudentMonthInput {
   classFeeOn: (classId: string, date: string) => number;
   monthDiscounts: MonthDiscount[];
   sibling: SiblingAward | null;
+  /** The lessons given to this child as a free trial (never billed). Absent: none. */
+  isFreeTrial?: (sessionId: string) => boolean;
 }
 
 export interface StudentMonth {
@@ -304,7 +321,7 @@ export interface StudentMonth {
 }
 
 export function priceStudentMonth(input: StudentMonthInput): StudentMonth {
-  const all = monthLessons(input.enrollments, input.sessions, input.markOf, input.classFeeOn);
+  const all = monthLessons(input.enrollments, input.sessions, input.markOf, input.classFeeOn, input.isFreeTrial);
   const billed = all.filter((l) => l.state === "billed");
   return {
     projected: priceLessons(billed, input.monthDiscounts, input.sibling),
@@ -320,7 +337,7 @@ export interface PaymentExplained {
    *   none       nothing is recorded as paid on the month;
    *   exact      what was paid is what the month asks for now;
    *   explained  what was paid is the month WITH `lessons` still billed: they
-   *              were cancelled or excused after the family paid;
+   *              were cancelled, excused or made a free trial after the family paid;
    *   over       more was paid than is asked, and those lessons do not explain it;
    *   under      less was paid than is asked.
    */
@@ -354,7 +371,7 @@ function* subsets(n: number, k: number, from = n - 1): Generator<number[]> {
  * alone" count as what a family may have paid against.
  */
 export function explainPayment(input: StudentMonthInput, paid: number, carryIn: number): PaymentExplained {
-  const all = monthLessons(input.enrollments, input.sessions, input.markOf, input.classFeeOn);
+  const all = monthLessons(input.enrollments, input.sessions, input.markOf, input.classFeeOn, input.isFreeTrial);
   const billed = all.filter((l) => l.state === "billed");
   const charge = priceLessons(billed, input.monthDiscounts, input.sibling).totalAmount;
   const carry = Math.round(num(carryIn));
@@ -369,8 +386,8 @@ export function explainPayment(input: StudentMonthInput, paid: number, carryIn: 
   if (carry !== 0 && amount === charge) return answer("exact", false);
   if (amount < payable && amount < charge) return answer("under", true);
 
-  // Lessons that would have been billed: cancelled or excused, with a price.
-  const gone = all.filter((l) => (l.state === "cancelled" || l.state === "excused") && l.price_vnd > 0);
+  // Lessons that would have been billed: cancelled, excused or a free trial, with a price.
+  const gone = all.filter((l) => (l.state === "cancelled" || l.state === "excused" || l.state === "trial") && l.price_vnd > 0);
   if (gone.length > 0 && gone.length <= 12) {
     for (let k = 1; k <= gone.length; k++) {
       for (const pick of subsets(gone.length, k)) {
@@ -438,4 +455,77 @@ export function chooseSiblingClass(
   );
   const w = candidates[0];
   return { ...w, status: "assigned", reason: `Cheapest class for the school: ${num(percent)}% of ${w.basis} = ${w.amount}` };
+}
+
+// ------------------------------------- the sibling discount, as the family paid
+
+export interface SiblingPaidChild {
+  studentId: string;
+  /** The child's month priced WITHOUT a sibling discount (sibling: null). */
+  month: PricedMonth;
+  /** What is recorded as paid on the child's bill for the month. */
+  paid: number;
+}
+
+export interface SiblingFit {
+  studentId: string;
+  classId: string;
+  /** The sibling discount there. */
+  amount: number;
+  /** Every billable child's bill with the discount there; each equals what that child paid. */
+  totals: Array<{ studentId: string; total: number }>;
+}
+
+/** A child's month with the family's percentage taken on one class (the same sum as rule 3d). */
+function totalWithSiblingOn(month: PricedMonth, classId: string | null, percent: number): { total: number; amount: number } {
+  const k = classId ? month.classes.find((c) => c.class_id === classId) : undefined;
+  const amount = k ? clamp((k.sibling_basis_vnd * num(percent)) / 100, month.totalAmount) : 0;
+  return { total: Math.max(0, month.totalAmount - amount), amount };
+}
+
+/**
+ * Sometimes a family puts the sibling discount on another child than the one
+ * the school's rule chose, and pays that way. Owner, 24 Nov 2026: then the
+ * discount goes where the family put it, for that month.
+ *
+ * Returns where the discount must sit for EVERY billable child's payment to
+ * equal, to the dong, that child's bill for the month - or null when the
+ * payments do not say so: they already fit where the discount is, a child has
+ * paid nothing, no placing fits, or placings on two different children fit.
+ * `current` is where the discount is now (null: nowhere).
+ */
+export function siblingFitByPayments(
+  children: SiblingPaidChild[],
+  percent: number,
+  current: { studentId: string; classId: string } | null,
+): SiblingFit | null {
+  if (!(num(percent) > 0)) return null;
+  const billable = (children ?? []).filter((c) => c.month.baseAmount > 0);
+  if (billable.length < 2) return null;
+  if (billable.some((c) => !(Math.round(num(c.paid)) > 0))) return null;
+  const totalsWith = (studentId: string | null, classId: string | null) =>
+    billable.map((c) => ({
+      studentId: c.studentId,
+      total: totalWithSiblingOn(c.month, c.studentId === studentId ? classId : null, percent).total,
+    }));
+  const fits = (totals: Array<{ studentId: string; total: number }>) =>
+    totals.every((t) => t.total === Math.round(num(billable.find((c) => c.studentId === t.studentId)!.paid)));
+  // Already paid as billed: nothing to move.
+  if (fits(totalsWith(current?.studentId ?? null, current?.classId ?? null))) return null;
+  const found: SiblingFit[] = [];
+  for (const c of billable) {
+    for (const k of c.month.classes) {
+      if (!(k.sibling_basis_vnd > 0)) continue;
+      if (current && current.studentId === c.studentId && current.classId === k.class_id) continue;
+      const amount = totalWithSiblingOn(c.month, k.class_id, percent).amount;
+      if (!(amount > 0)) continue;
+      const totals = totalsWith(c.studentId, k.class_id);
+      if (fits(totals)) found.push({ studentId: c.studentId, classId: k.class_id, amount, totals });
+    }
+  }
+  if (found.length === 0) return null;
+  // Two classes of ONE child can come to the same money; two children cannot both be right.
+  if (found.some((f) => f.studentId !== found[0].studentId)) return null;
+  found.sort((a, b) => (a.classId < b.classId ? -1 : a.classId > b.classId ? 1 : 0));
+  return found[0];
 }

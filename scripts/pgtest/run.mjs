@@ -390,6 +390,8 @@ const SUITES = [
   { name: "since paid line", file: "since-paid-line.test.mjs", migrations: [] },
   // Who belongs to a month: enrolled on a day of it. A child who left stays in their last month only.
   { name: "month roster", file: "month-roster.test.mjs", migrations: [] },
+  // The sibling discount moved to the child the family paid for, and free trial lessons (owner, 24 Nov 2026).
+  { name: "sibling swap by payments", file: "sibling-swap.test.mjs", migrations: [] },
   { name: "restore transfer marks", file: "restore-transfer-marks.test.mjs", migrations: [] },
   { name: "uncancel restores marks", file: "uncancel-restores-marks.test.mjs", migrations: [] },
   // Stage A without a database: the AI reply checked against the records, and what approval sends.

@@ -15,6 +15,7 @@ import { useIvory } from "@/hooks/useIvory";
 import { cn } from "@/lib/utils";
 import { PriorBalanceBreakdown } from "./PriorBalanceBreakdown";
 import { BillFreezePanel, useBillFreeze } from "./BillFreezePanel";
+import { FreeTrialPanel } from "./FreeTrialPanel";
 import { Lock } from "lucide-react";
 import { siblingDiscountFor } from "@/lib/tuitionFigures";
 import { sincePaidLine } from "@/lib/sincePaidLine";
@@ -543,6 +544,10 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {role === "admin" && (
+        <FreeTrialPanel studentId={studentId} month={selectedMonth} lessons={tuitionData.lessons} canEdit={role === "admin"} />
       )}
 
       {role === "admin" && (

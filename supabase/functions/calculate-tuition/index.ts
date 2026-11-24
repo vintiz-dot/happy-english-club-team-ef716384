@@ -11,6 +11,7 @@ import { refreshableMonths } from "../_lib/bill-refresh.ts";
 import { clockNow } from "../_lib/clock.ts";
 import { enrolledInMonth, noBillAnswer, withoutBill } from "../_lib/month-enrolment.ts";
 import { heldBillChanges } from "../_lib/held-bill-changes.ts";
+import { freeTrialKey, readFreeTrials } from "../_lib/free-trial.ts";
 import {
   decidePastMonth,
   figuresOf,
@@ -118,9 +119,14 @@ Deno.serve(async (req) => {
       // A payment path needs a bill to put money on, for a child who is not
       // enrolled in the month (_lib/month-enrolment.ts). Service role or admin only.
       createBill: z.boolean().optional().default(false),
+      // The automatic sibling swap (compute-sibling-discounts, swapByPayments) moves
+      // the discount to the child the family paid for. It may save a closed month's
+      // new figures on ONE condition, checked below and nowhere else: they come to
+      // exactly what is recorded as paid on the bill. Service role only.
+      settleToPayment: z.boolean().optional().default(false),
     });
 
-    const { studentId, month, siblingPreview, force, reason, createBill } = InputSchema.parse(await req.json());
+    const { studentId, month, siblingPreview, force, reason, createBill, settleToPayment } = InputSchema.parse(await req.json());
     if (siblingPreview && !gate.isServiceRole) {
       return new Response(JSON.stringify({ error: "Internal preview only" }), { status: 403, headers: corsHeaders });
     }
@@ -249,7 +255,7 @@ Deno.serve(async (req) => {
     // ----- Wave 3: attendance + class names (depend on Wave 2) -----
     const sessionIds = (sessions ?? []).map((s) => s.id);
     const classIdsForNames = [...new Set((sessions ?? []).map((s) => s.class_id))];
-    const [attendanceRes, classesNamesRes] = await Promise.all([
+    const [attendanceRes, classesNamesRes, freeTrials] = await Promise.all([
       sessionIds.length
         ? supabase
             .from("attendance")
@@ -260,6 +266,8 @@ Deno.serve(async (req) => {
       classIdsForNames.length
         ? supabase.from("classes").select("id, name").in("id", classIdsForNames)
         : Promise.resolve({ data: [] as any[] }),
+      // Lessons given to this child as a free trial (_lib/free-trial.ts): never billed.
+      readFreeTrials(supabase, [studentId], sessionIds),
     ]);
     if ((attendanceRes as any).error) throw (attendanceRes as any).error;
     const attendanceMap = new Map<string, AttendanceStatus>();
@@ -321,6 +329,7 @@ Deno.serve(async (req) => {
       classFeeOn: feeOn,
       monthDiscounts,
       sibling: siblingAward,
+      isFreeTrial: (sessionId: string) => freeTrials.has(freeTrialKey(sessionId, studentId)),
     };
     const pricedMonth = priceStudentMonth(pricingInput);
     // projected: the whole month as the timetable stands - the bill.
@@ -364,7 +373,7 @@ Deno.serve(async (req) => {
       price_vnd: l.price_vnd,
       mark: l.mark,
       held: l.held,
-      state: l.state, // billed | excused | cancelled | free
+      state: l.state, // billed | excused | cancelled | free (price 0) | trial (a free trial lesson)
       ...(l.state === "billed" && holeIds.has(l.session_id) ? { unmarked: true } : {}),
     }));
     // The lines the screens have always read: the billed lessons, and the
@@ -414,6 +423,9 @@ Deno.serve(async (req) => {
     const siblingUnresolved = siblingState?.status === "unresolved";
     const savedFigures = savedInvoice ? figuresOf(savedInvoice) : null;
     const mayForce = force === true && gate.roles.has("admin") && !gate.isServiceRole;
+    // The automatic sibling swap: the new figures are exactly what was paid on the bill.
+    const paidOnBill = Number(savedInvoice?.recorded_payment ?? 0);
+    const settlesToPayment = settleToPayment === true && gate.isServiceRole && paidOnBill > 0 && computed.total === paidOnBill;
     const pastMode =
       siblingPreview || siblingUnresolved
         ? "normal"
@@ -422,7 +434,7 @@ Deno.serve(async (req) => {
             saved: savedFigures,
             frozen: tuitionFrozen,
             next: computed,
-            approved: mayForce,
+            approved: mayForce || settlesToPayment,
           });
     const heldBill = pastMode === "held";
     // Same total, split differently between base and discount: kept as saved, silently.
@@ -651,7 +663,8 @@ Deno.serve(async (req) => {
           saved: savedFigures!,
           next: computed,
           actorUserId: gate.userId || null,
-          actorEmail: gate.email ?? null,
+          // Nobody clicked when the sibling swap saved it: say so where the name would be.
+          actorEmail: mayForce ? gate.email ?? null : "automatic (the bill now equals what was paid)",
           reason: (reason ?? "").trim(),
           at: savedAt,
         }));

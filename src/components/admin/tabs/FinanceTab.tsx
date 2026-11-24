@@ -6,6 +6,7 @@ import { TuitionBillCheck } from "@/components/admin/TuitionBillCheck";
 import { PendingChangeBills } from "@/components/admin/PendingChangeBills";
 import { AttendanceEvidenceCheck } from "@/components/admin/AttendanceEvidenceCheck";
 import { ClosedMonthChanges } from "@/components/admin/ClosedMonthChanges";
+import { SiblingSwaps } from "@/components/admin/SiblingSwaps";
 import { TuitionBulkDownload } from "@/components/admin/TuitionBulkDownload";
 import { DiscountManager } from "@/components/admin/DiscountManager";
 import { SiblingDiscountCompute } from "@/components/admin/SiblingDiscountCompute";
@@ -95,6 +96,7 @@ const FinanceTab = () => {
         <TuitionBillCheck month={currentMonth} />
         <AttendanceEvidenceCheck />
         <ClosedMonthChanges />
+        <SiblingSwaps />
         <AdminTuitionListEnhanced month={currentMonth} />
       </TabsContent>
 

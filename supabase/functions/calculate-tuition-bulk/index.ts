@@ -10,6 +10,7 @@ import { refreshableMonths } from "../_lib/bill-refresh.ts";
 import { clockNow } from "../_lib/clock.ts";
 import { decidePastMonth, figuresOf, isClosedMonth, pastMonthHeld } from "../_lib/past-month-hold.ts";
 import { heldBillChanges } from "../_lib/held-bill-changes.ts";
+import { freeTrialKey, readFreeTrials } from "../_lib/free-trial.ts";
 import { classFeeOn, indexClassFees, isMissingFeeHistory, type ClassFeeHistory } from "../_lib/class-fee.ts";
 
 const corsHeaders = {
@@ -254,6 +255,9 @@ Deno.serve(async (req) => {
       attendanceMap.set(attendanceKey(a.session_id, a.student_id), a.status);
     }
 
+    // 6b. Lessons given to a child as a free trial (_lib/free-trial.ts): never billed.
+    const freeTrials = await readFreeTrials(supabase, studentIds, allSessionIds);
+
     // 7. Discount assignments
     const allDiscountAssignments: any[] = await fetchChunked(
       supabase, "discount_assignments",
@@ -380,6 +384,7 @@ Deno.serve(async (req) => {
           classFeeOn: feeOn,
           monthDiscounts,
           sibling: siblingAward,
+          isFreeTrial: (sessionId: string) => freeTrials.has(freeTrialKey(sessionId, sid)),
         });
         const projected = pricedMonth.projected;
         const actual = pricedMonth.actual;

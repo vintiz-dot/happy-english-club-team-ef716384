@@ -50,6 +50,7 @@ const read = (...p) => readFileSync(join(repo, ...p), 'utf8');
 const MIG = read('supabase', 'migrations', '20261123090000_tuition_bill_check.sql');
 // tuition_bill_expected under the rules calculate-tuition prices by now.
 const MIG_RULES = read('supabase', 'migrations', '20261123150000_tuition_bill_expected_new_rules.sql');
+const MIG_TRIAL = read('supabase', 'migrations', '20261124090000_free_trial_lessons.sql');
 
 let pass = 0, fail = 0;
 const ok = (name, value, extra) => {
@@ -116,6 +117,10 @@ ok('installs', (await tryIt(() => db.exec(MIG))) === null);
 ok('installs twice', (await tryIt(() => db.exec(MIG))) === null);
 ok('the new lesson rule installs over it', (await tryIt(() => db.exec(MIG_RULES))) === null);
 ok('and installs twice', (await tryIt(() => db.exec(MIG_RULES))) === null);
+// Free trial lessons (20261124090000): its table, and the lesson rule with them left out.
+const trialInstall = await tryIt(() => db.exec(MIG_TRIAL));
+ok('the free trial migration installs over that', trialInstall === null, trialInstall);
+ok('and installs twice', (await tryIt(() => db.exec(MIG_TRIAL))) === null);
 
 // --------------------------------------------------------------- fixtures
 // CA: mirror 210,000 but the fee history says 250,000 from the 1st (baseline 200,000).
@@ -187,7 +192,7 @@ await enrol('K12', CA, day(26), day(26)); await mark('K12', CA, 26, 'Present');
 // ------------------------------------------------- PostgREST stand-in (SQL)
 // Reads and writes the same database as the SQL check. Rows come back as JSON
 // (dates as 'YYYY-MM-DD' text, as PostgREST sends them).
-const IN_DB = new Set(['students', 'classes', 'sessions', 'attendance', 'enrollments', 'class_fee_history', 'invoices', 'schedule_runner', 'tuition_bill_check_runs']);
+const IN_DB = new Set(['students', 'classes', 'sessions', 'attendance', 'enrollments', 'class_fee_history', 'invoices', 'schedule_runner', 'tuition_bill_check_runs', 'free_trial_lessons']);
 let invoiceWritesFor = new Set(); // children calculate-tuition saved a bill for
 function sqlQuery(table, role = 'service_role') {
   const where = [], params = [];
@@ -540,6 +545,51 @@ console.log('\n6. a child with no enrolment in the month gets no new bill');
   ok('readRecalc: not saved for any other reason still is', m.readRecalc(200, { invoiceSaved: false, siblingUnresolved: true }).ok === false);
   const rp = read('supabase', 'functions', 'record-payment', 'index.ts').replace(/\/\/[^\n]*/g, '');
   ok('record-payment asks for the missing bill', /recalc\("price the missing bill", true\)/.test(rp) && /createBill: true/.test(rp));
+}
+
+// ------------------------------------------------------ 7. free trial lessons
+// Owner, 24 Nov 2026: a lesson given to a child as a free trial is not billed.
+// calculate-tuition and the SQL check must both leave it out.
+console.log('\n7. free trial lessons: calculate-tuition and the check agree');
+{
+  const T = U(301);
+  await db.query(`INSERT INTO public.students(id, full_name) VALUES ($1, 'Trial Child')`, [T]);
+  await db.query(`INSERT INTO public.enrollments(student_id, class_id, start_date, created_at) VALUES ($1, $2, '2026-01-01', '2026-01-01T00:00:00Z')`, [T, CB]);
+  await db.query(`INSERT INTO public.attendance(session_id, student_id, status) VALUES ($1, $2, 'Present')`, [sessions[`${CB}|4`], T]);
+  const expectedFor = async () => Number((await asRole('service_role', null, () => db.query(`SELECT expected_base FROM public.tuition_bill_expected($1) WHERE student_id = $2`, [MONTH, T]))).rows[0]?.expected_base ?? 0);
+  let r = await calc(T, true);
+  ok('before: six lessons at 260,000, in both', r.body.baseAmount === 1560000 && (await expectedFor()) === 1560000, r.body.baseAmount);
+
+  // The admin ticks the first two lessons (one of them marked Present).
+  const give = (d, reason = 'Trial before enrolling') => asRole('authenticated', ADMIN, () =>
+    db.query(`INSERT INTO public.free_trial_lessons(student_id, session_id, reason) VALUES ($1, $2, $3)`, [T, sessions[`${CB}|${d}`], reason]));
+  await give(4); await give(6);
+  r = await calc(T, true);
+  const states = (r.body.lessons ?? []).map((l) => l.state);
+  ok('two free trial lessons: four billed, 1,040,000, in calculate-tuition', r.status === 200 && r.body.baseAmount === 1040000 && r.body.totalAmount === 1040000, r.body.baseAmount);
+  ok('the answer lists them as trial lessons, with their price and mark', states.filter((s) => s === 'trial').length === 2
+    && (r.body.lessons ?? []).some((l) => l.state === 'trial' && l.mark === 'Present' && l.price_vnd === 260000), states);
+  ok('and the check prices the same', (await expectedFor()) === 1040000, await expectedFor());
+  const saved = await calc(T, false);
+  const bill = (await db.query(`SELECT base_amount, total_amount FROM public.invoices WHERE student_id = $1 AND month = $2`, [T, MONTH])).rows[0];
+  ok('the saved bill leaves them out, and the check does not list the child', saved.body.invoiceSaved === true && bill?.base_amount === 1040000
+    && !(await gapsNow()).some((g) => g.student_id === T), bill);
+
+  ok('one free trial per child and lesson', (await tryIt(() => give(4)))?.code === '23505');
+  ok('a reason is required', (await tryIt(() => asRole('authenticated', ADMIN, () =>
+    db.query(`INSERT INTO public.free_trial_lessons(student_id, session_id, reason) VALUES ($1, $2, '  ')`, [T, sessions[`${CB}|11`]]))))?.code === '23514');
+  const asParent = await tryIt(() => asRole('authenticated', PARENT, () =>
+    db.query(`INSERT INTO public.free_trial_lessons(student_id, session_id, reason) VALUES ($1, $2, 'mine')`, [T, sessions[`${CB}|11`]])));
+  ok('a family cannot give one', asParent?.code === '42501', asParent);
+  ok('nor read them', (await asRole('authenticated', PARENT, () => db.query(`SELECT count(*)::int n FROM public.free_trial_lessons`))).rows[0].n === 0);
+  ok('an admin reads them', (await asRole('authenticated', ADMIN, () => db.query(`SELECT count(*)::int n FROM public.free_trial_lessons`))).rows[0].n === 2);
+
+  // Taken back: charged again, in both.
+  await asRole('authenticated', ADMIN, () => db.query(`DELETE FROM public.free_trial_lessons WHERE student_id = $1 AND session_id = $2`, [T, sessions[`${CB}|6`]]));
+  r = await calc(T, true);
+  ok('charge one again: five billed, in both', r.body.baseAmount === 1300000 && (await expectedFor()) === 1300000, r.body.baseAmount);
+  // Another child's free trial on the same lesson is theirs alone.
+  ok('a free trial is the child\'s own: a classmate still pays for that lesson', (await calc(K.K3, true)).body.baseAmount === 1800000);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
