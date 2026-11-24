@@ -1,55 +1,103 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 2, Unit 11 "Natural
-// Resources" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 7-8.
-// Every lesson gets one fluency routine (the lesson's sentences said again and again as
-// whole phrases, a little faster each round, with Unit 10's phrases mixed back in) and one
-// writing routine (say it, write it, read it back). Two lessons end with a recorded talk
-// for home, built on the routine the class just did. Time comes from games and warm-ups,
-// never from the book pages or the grammar. All text is original.
+// Resources" (src/lib/lessonDecks/lab.ts puts it into the decks). The class is Sanrio
+// Grade 6: students in grades 6-7 (ages 11-13), working on a book written for younger
+// children, so every Lab slide is pitched up: longer chunks with reasons and examples,
+// topics from their own lives (school, phones, their city, sport, plans), a grammar drill
+// in every lesson, full paragraphs in three lessons and sentence work with harder items in
+// the others. Two lessons end with a recorded talk of 90-120 seconds, made on their own.
+// Time comes from games and young-learner warm-ups, never from the book pages or the
+// grammar. All text is original.
 
 const correctPlace =
-  "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). Between rounds 1 and 2, write them on the board and let the class fix them in one minute: children who then say the same thing again use the fixed form. For grammar, prompt the child to fix it rather than saying it for them: point to the frame, start the phrase and pause ('Where ... the bin?'), hold up a finger for the missing 'is', or repeat the error with a rising voice ('behind of?'). Example: a child says 'The bin behind the tree.' Point to the frame and say 'The bin ... ?' and wait. For a sound, just say it right and let them echo it. Say every final -s clearly yourself (trees, bottles, resources): children copy what they hear.";
+  "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). Between rounds 1 and 2, write them on the board and let the class fix them in one minute: students who then say the same thing again use the fixed form. For grammar, prompt the student to fix it rather than saying it for them: point to the frame, start the phrase and pause ('Where ... the bin?'), hold up a finger for the missing 'is', or repeat the error with a rising voice ('behind of?'). Example: a student says 'The bin behind the tree.' Point to the frame and say 'The bin ... ?' and wait. For a sound, just say it right and let them echo it. Say every final -s clearly yourself (trees, bottles, resources): students copy what they hear.";
 
 const correctNeed =
-  "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). Between rounds 1 and 2, write them on the board and let the class fix them in one minute: children who then say the same thing again use the fixed form. For grammar, prompt the child to fix it rather than saying it for them: start the phrase and pause ('Plants ... water.'), hold up a finger for a missing -s, or repeat the error with a rising voice ('Two tree?'). Example: a child says 'We reduce trash with box.' Hold up a finger and say 'With ... box?' For a sound, just say it right and let them echo it. Say every final -s clearly yourself (resources, bottles, boxes): children copy what they hear.";
+  "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). Between rounds 1 and 2, write them on the board and let the class fix them in one minute: students who then say the same thing again use the fixed form. For grammar, prompt the student to fix it rather than saying it for them: start the phrase and pause ('Plants ... water.'), hold up a finger for a missing -s, or repeat the error with a rising voice ('Two tree?'). Example: a student says 'We reduce trash with box.' Hold up a finger and say 'With ... box?' For a sound, just say it right and let them echo it. Say every final -s clearly yourself (resources, bottles, boxes): students copy what they hear.";
 
 export const odL2U11Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l2-u11-l1": {
-      objectives: ["I can say what we need to live, fast and without stopping."],
+      objectives: ["I can explain what people and plants really need, give a reason, and say it fast and without stopping."],
       trim: { "The mystery bag": 4 },
+      drop: ["Earth friends chant", "Run and touch"],
       add: [
         {
           after: "What do we need? (SB 109 Think)",
           slide: {
             kind: "fluency",
+            title: "Grammar drill: need, want and because",
+            routine: "grammar drill",
+            mode: "pairs",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it with because, move it to the past or change the person. Then talk about your own needs and wants.",
+            chunks: [
+              "People need clean water to live, but they don't need a new phone every year.",
+              "Do you need your phone to live? No, I don't, but I want it because it is useful.",
+              "Plants need sunlight and water because they can't move to find food.",
+              "My family needs water every day, so we try not to waste it.",
+              "Last year our school needed more recycling bins, and the students didn't know where to put their bottles.",
+              "Does your town need more green space? Yes, it does, because many people live in small flats.",
+            ],
+            recycle: ["Can I play, please?", "Yes, you can. Thank you!"],
+            rounds: [
+              { seconds: 60, say: "Whole class: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join it with because / although / so / when, T = change the time, P = change the person). The class says the new sentence together." },
+              { seconds: 90, say: "Pairs: A says a sentence and shows a sign card, B changes it. Swap at the signal. Use the cards for T and P too." },
+              { seconds: 90, say: "Real talk: tell your partner what you need and what you only want, with a reason. Your partner asks one follow-up question." },
+            ],
+            steps: [
+              "Listen to the sentence. Look at the sign. Change it: ? = a question with do / does, X = a negative with don't / doesn't, + = add because, although, so or when, T = last year (needed, didn't need), P = a new person (I, my brother, they).",
+              "Say the WHOLE new sentence, with the -s for he, she and it and for plural nouns.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (often 'He need', 'Do she needs' or a missing 'to'), fix them together, then go on.",
+              "In round 3 the drill becomes real: say what you really need and what you only want, give a reason and listen for your partner's answer.",
+            ],
+            prompts: ["I need a bag. (?)", "My brother needs a new bike. (X)", "Plants need sunlight. (+ because)", "We need more bins. (T)", "Students need a quiet place to study. (P: she)"],
+            feedback: "Prompt, do not tell: for 'He need water' hold up one finger and say 'He ...?'; for 'Do she need ...?' repeat it with a rising voice and let the student fix it; for a missing 'to' pause before the verb ('Plants need ... grow'). Say the -s and the n't clearly yourself.",
+            teacherNote: "A drill only helps when the last step is real: round 3 has students talk about what they really need and want, so the form is used for meaning. Grades 6-7 can take the whole set at speed: questions with do / does, negatives, joining words, the past and a change of person. Keep it brisk; a drill that drags loses its point.",
+            tiers: [
+              { level: "Support", task: "Use only ? and X, with frames on the board and one new person at a time.", frames: ["Do you need ___? Yes, I do. / No, I don't.", "I don't need ___, but I want ___."] },
+              { level: "Core", task: "Change every sentence with all five signs, without the frames." },
+              { level: "Stretch", task: "Use two signs at once and add a follow-up question: 'Last year my brother didn't need a bike, although he wanted one. Why do people want things they don't need?'" },
+            ],
+          },
+        },
+        {
+          after: "Grammar drill: need, want and because",
+          slide: {
+            kind: "fluency",
             title: "Need sprint: we need it to live",
             routine: "chunk sprint",
             mode: "whole",
-            minutes: 6,
+            minutes: 7,
             goal: "Say the whole sentence, fast and smooth, with no stops.",
-            chunks: ["We need water to live.", "Plants need sunlight to grow.", "A plant needs water, too.", "I want a toy, but I don't need it.", "I put the trash in the trash can."],
+            chunks: [
+              "People need clean water to live, and plants need sunlight to grow.",
+              "I want a new phone, but I don't need it because my old one still works.",
+              "Wood comes from trees, so it is a natural resource.",
+              "We need food, water and air; however, we don't need most of the things we buy.",
+              "When we waste water, there is less for everyone.",
+            ],
             recycle: ["Can I play, please?", "Yes, you can. Thank you!"],
             rounds: [
-              { seconds: 60, say: "Everyone together: the teacher shows a picture card, the class says the whole sentence." },
-              { seconds: 50, say: "Pairs: one shows a card, the other says the sentence. Swap at the clap." },
-              { seconds: 40, say: "Faster! New partner. How many sentences can you say?" },
+              { seconds: 75, say: "Everyone together: the teacher shows a picture card, the class says the whole sentence." },
+              { seconds: 70, say: "Pairs: one shows a card, the other says the sentence and adds one reason of their own. Swap at the signal." },
+              { seconds: 65, say: "Faster! New partner. How many sentences can you say with a reason?" },
             ],
             steps: [
-              "Look at the picture card. Say a WHOLE sentence: 'We need water to live.'",
-              "Listen for the clap: it means swap.",
+              "Look at the picture card. Say a WHOLE sentence: 'People need clean water to live.'",
+              "Listen for the signal: it means swap.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together; then go on.",
-              "In round 3, count your sentences on your fingers.",
+              "In round 3, count your sentences with a reason on your fingers.",
             ],
-            prompts: ["(card: water)", "(card: sun and plant)", "(card: a toy)", "(card: a trash can)", "(card: a girl asking to play)"],
+            prompts: ["(card: water in a city)", "(card: sun and plant)", "(card: a new phone)", "(card: a tree and a table)", "(card: a dripping tap)"],
             feedback: correctNeed,
-            teacherNote: "Whole sentences only, never single words: 'We need water to live' should come out as one smooth piece. Listen for 'needs' with plural plants and for a missing 'to'. Mix in Unit 10's 'Can I ...?' cards every few turns so last unit's polite words stay fast.",
+            teacherNote: "Whole sentences only, never single words: 'People need clean water to live' should come out as one smooth piece. Listen for 'needs' with a singular subject, a missing 'to' and the final -s in plurals. Mix in Unit 10's polite requests every few turns so last unit's phrases stay fast.",
             tiers: [
-              { level: "Support", task: "Point to the frame on the board and say it with a friend.", frames: ["We need ___ to live.", "Plants need ___."] },
-              { level: "Core", task: "Say the sentence alone, without looking at the board." },
-              { level: "Stretch", task: "Add a because: 'We need water because we drink it every day.'", frames: ["We need ___ because ___."] },
+              { level: "Support", task: "Point to the frame on the board and say it with a friend.", frames: ["People need ___ to live.", "I want ___, but I don't need it."] },
+              { level: "Core", task: "Say the sentence alone, without looking at the board, and add a reason." },
+              { level: "Stretch", task: "Add an example and a contrast: 'We need water because we drink it every day; for example, I drink two bottles at school, although some people have none.'", frames: ["We need ___ because ___; for example, ___."] },
             ],
           },
         },
@@ -57,65 +105,42 @@ export const odL2U11Lab: UnitLab = {
           after: "Main idea umbrella (SB 109 C)",
           slide: {
             kind: "writing",
-            title: "What we need to live: plan, write, check",
+            title: "What we really need: plan, write, check",
             routine: "paragraph",
-            genre: "description",
+            genre: "explanation",
             mode: "solo",
-            minutes: 8,
+            minutes: 10,
             steps: [
-              "Read the model with the teacher. Point to each sentence and to the joining words.",
-              "Plan: use the four boxes. Draw or write a few words in each box.",
-              "Write: one sentence for each box, in order. Join the ideas with and, but and then.",
-              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
-              "Teacher: look only at capital letters and the verb -s (Plants need, a plant needs). Put a dot next to a line with a mistake; the child finds it and fixes it."
+              "Read the model with the teacher. Find the topic sentence, the examples and the closing sentence, and circle the linking words.",
+              "Plan: fill the five boxes with a few words each, not whole sentences.",
+              "Write: turn your notes into one paragraph of six to eight sentences. Use first, also, however, because, for example and in conclusion at least once each.",
+              "Check: tick the checklist. Your partner underlines one linking word and tells you one example they liked.",
+              "Teacher: look only at need / needs and the negative (don't / doesn't need). Put a dot next to a line with a mistake; the student finds it and fixes it.",
             ],
             text: {
-              title: "Model: What we need",
-              text: "We need many things to live. First, we need water and food every day. Plants need sunlight and water, too. I want a new toy, but I don't need it. Then I say thank you to the Earth!",
+              title: "Model: What we really need",
+              text: "People need many things to live, but they do not need everything they want. First, we need clean water, healthy food and fresh air every day. Plants also need sunlight and water, because they cannot move to find food. However, I want a new phone, although my old one still works. For example, my cousin buys a new one every year, and the old ones go to the landfill. In conclusion, needs keep us alive, but wants only make life more fun, so we should think before we buy.",
             },
             organiser: [
-              {
-                "label": "We need",
-                "prompt": "Draw water and food. What do you need every day?"
-              },
-              {
-                "label": "Plants need",
-                "prompt": "Draw a plant. What does it need to grow?"
-              },
-              {
-                "label": "I want",
-                "prompt": "Draw a toy you want, but do not need."
-              },
-              {
-                "label": "Thank you",
-                "prompt": "Draw the Earth. Who do you thank?"
-              }
+              { label: "Topic sentence", prompt: "What do people really need, and how is that different from what they want?" },
+              { label: "Detail 1: needs of people", prompt: "Name two or three things people need every day. Why?" },
+              { label: "Detail 2: needs of plants or animals", prompt: "What do plants or animals need? Give a reason with because." },
+              { label: "Detail 3: a want that is not a need", prompt: "Give one example from your own life. Use although or but." },
+              { label: "Closing", prompt: "In conclusion, what should we think about before we buy something?" },
             ],
-            frames: ["We need many things to live.","First, we need ___ and ___ every day.","Plants need ___ and ___, too.","I want ___, but I don't need it.","Then I say thank you to the ___!"],
+            frames: ["People need ___, but they do not need ___.", "First, we need ___ every day.", "Plants also need ___ because ___.", "However, I want ___, although ___.", "For example, ___.", "In conclusion, ___."],
             checklist: [
+              "A topic sentence first and a closing sentence with in conclusion",
+              "At least four linking words: first, also, however, because, for example",
+              "need / needs: plants need, a plant needs; and the negative: don't / doesn't need",
               "A capital letter at the start and a full stop at the end of every sentence",
-              "Plants need, a plant needs: check the verb ending",
-              "At least one joining word: and, but or then"
             ],
-            sayIt: "Read your paragraph to your partner. Then tell it again without looking.",
-            teacherNote: "A first paragraph for seven-year-olds: four or five sentences, planned in four boxes with drawings or a few words. It replaces the one-sentence 'grow my sentence' task, and the best sentence from that task ('I want a toy, but I don't need it') is now the fourth sentence. Mark only two things (capital letters, the verb -s) and let the child find the mistake from your dot.",
+            sayIt: "Read your paragraph to your partner. Then tell it again in one minute, looking only at your five boxes.",
+            teacherNote: "A full paragraph for grades 6-7: six to eight sentences, planned in five boxes with words, not sentences. The unit's grammar is need / want, because and although, so those are the two things to mark: need / needs with a negative, and the linking words. Mark only those two with a dot beside the line; the student finds and fixes the mistake.",
             tiers: [
-              {
-                "level": "Support",
-                "task": "Copy two frames and fill in one word in each. Use the drawings to help.",
-                "frames": [
-                  "We need ___ to live.",
-                  "I want ___, but I don't need it."
-                ]
-              },
-              {
-                "level": "Core",
-                "task": "Write four sentences, one for each box, with one joining word."
-              },
-              {
-                "level": "Stretch",
-                "task": "Write five sentences and use and, but and because: 'We need water because we drink it every day.'"
-              }
+              { level: "Support", task: "Use the frames: one sentence for each box, six sentences in all.", frames: ["People need ___, but they do not need ___.", "However, I want ___, although ___."] },
+              { level: "Core", task: "Write six or seven sentences with all the linking words in the checklist." },
+              { level: "Stretch", task: "Write eight sentences and add a contrast with although and a second example: 'Although water looks free, it costs money to clean it.'" },
             ],
           },
         },
@@ -124,8 +149,9 @@ export const odL2U11Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l2-u11-l2": {
-      objectives: ["I can tell about resources three times, faster each time."],
-      trim: { "Word slap": 4, "Earth says": 3 },
+      objectives: ["I can explain where resources come from and what happens to them, with reasons, three times, faster each time."],
+      drop: ["Word slap", "Earth says"],
+      trim: { "Expert groups: four parts (SB 110-111)": 10, "Reuse workshop: junk models (SB 111)": 12, "Hurts or helps? Chart it": 6 },
       add: [
         {
           after: "Expert groups: four parts (SB 110-111)",
@@ -134,57 +160,105 @@ export const odL2U11Lab: UnitLab = {
             title: "Resources: tell it again, faster",
             routine: "retell",
             mode: "pairs",
-            minutes: 7,
-            goal: "Tell the same ideas three times. Each time is shorter, smoother and faster.",
-            chunks: ["Wood comes from trees.", "People make paper and tables from wood.", "Trash goes to the landfill.", "Smoke makes the air dirty.", "We can reduce trash and reuse boxes."],
+            minutes: 8,
+            goal: "Tell the same ideas three times. Each time is shorter, smoother and faster, and keeps the reasons.",
+            chunks: [
+              "People get wood from trees and use it to make paper, tables and houses.",
+              "Most of our trash goes to a landfill, where it stays for many years.",
+              "Smoke from cars and factories pollutes the air, so it is bad for our health.",
+              "We can reduce trash and reuse boxes, which saves resources and money.",
+              "Although recycling helps, it is better to use less in the first place.",
+            ],
             recycle: ["May I have a turn, please?", "Yes, you may."],
             rounds: [
-              { seconds: 60, say: "Tell your partner about the resources. Use the four key-word cards: wood, landfill, smoke, reuse." },
-              { seconds: 45, say: "New partner. Tell it again in less time." },
-              { seconds: 30, say: "New partner. Tell it fast! Thumbs up if you didn't stop." },
+              { seconds: 70, say: "Tell your partner about the resources. Use the four key-word cards: wood, landfill, smoke, reuse. Give one reason for each." },
+              { seconds: 60, say: "New partner. Tell it again in less time." },
+              { seconds: 50, say: "New partner. Tell it fast, with the reasons. Thumbs up if you didn't stop." },
             ],
             steps: [
               "Put the four key-word cards on the board: wood, landfill, smoke, reuse.",
-              "Tell your partner what you know about each card, in your own words.",
+              "Tell your partner what you know about each card, with a reason or an example, in your own words.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (often a missing -s or 'Trash go') and fix them together; then go on.",
-              "When the bell rings, find a new partner. The listener says 'Wow!' at the end.",
+              "When the signal comes, find a new partner. The listener says one thing that was new to them.",
             ],
             prompts: ["(card: wood)", "(card: landfill)", "(card: smoke)", "(card: reuse)"],
             feedback: correctNeed,
-            teacherNote: "The same ideas three times on purpose: the second and third tellings free the children to speak faster because they are not searching for words. Use what the expert groups found, not the book's sentences. Listen for 'Trash goes' (third person -s) and for the -s of trees, tables and boxes.",
+            teacherNote: "The same ideas three times on purpose: the second and third tellings free students to speak faster and add reasons because they are not searching for words. Use what the expert groups found, not the book's sentences. Listen for 'Trash goes' (third person -s) and for the -s of trees, tables and boxes.",
             tiers: [
-              { level: "Support", task: "Point to each card and say one sentence for it.", frames: ["Wood comes from ___.", "Trash goes to ___.", "We can ___."] },
-              { level: "Core", task: "Tell all four ideas without the frames." },
-              { level: "Stretch", task: "Add why: 'Smoke is bad because we breathe it.'", frames: ["___ is bad / good because ___."] },
+              { level: "Support", task: "Point to each card and say one sentence for it.", frames: ["Wood comes from ___.", "Trash goes to ___.", "We can ___ because ___."] },
+              { level: "Core", task: "Tell all four ideas with a reason for each, without the frames." },
+              { level: "Stretch", task: "Add an example from your own city and a contrast: 'Smoke is bad because we breathe it; for example, the air in big cities is dirty, although many people don't notice.'", frames: ["___ is bad / good because ___; for example, ___."] },
             ],
           },
         },
         {
           after: "Hurts or helps? Chart it",
           slide: {
-            kind: "writing",
-            title: "Listen and rebuild: the clean Earth",
-            routine: "dictogloss",
-            mode: "groups",
-            minutes: 5,
-            steps: [
-              "Listen to the teacher read the text. Do not write yet.",
-              "Listen again. Write key words only: wood, landfill, smoke, reduce, reuse.",
-              "With your group, rebuild the text. It does not need the same words, but it needs the same ideas.",
-              "Read your text. Compare it with the real one.",
+            kind: "fluency",
+            title: "Grammar drill: where resources come from",
+            routine: "grammar drill",
+            mode: "pairs",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it, move it to the past or change the thing. Then talk about your own habits.",
+            chunks: [
+              "Wood comes from trees, and people use it to make paper and furniture.",
+              "Where does wood come from? It comes from trees, but it takes years to grow.",
+              "Trash doesn't disappear when we throw it away; it goes to the landfill.",
+              "Smoke from cars makes the air dirty, although we can't always see it.",
+              "Last year our school reused old boxes, and it reduced its trash by half.",
+              "Do factories pollute the air? Some do, but many are cleaner now.",
             ],
-            text: {
-              title: "Help the Earth",
-              text: "People use wood to make tables and paper. Trash goes to the landfill, and smoke goes into the air. But we can help. We reduce trash, and we reuse boxes and bottles. Then the Earth stays clean.",
-            },
-            frames: ["People use ___ to make ___.", "We reduce ___, and we reuse ___."],
-            checklist: ["Many things? The -s is there: tables, boxes, bottles", "A capital letter and a full stop in every sentence"],
-            sayIt: "Read your group's text aloud, then say it again without looking.",
-            teacherNote: "Read it at normal speed twice, with a short pause between sentences. Before reading, remind the class in one sentence: more than one thing, add -s. Then compare the group texts with the model by ideas first, spelling second.",
+            recycle: ["Excuse me, may I come in?", "Yes, of course."],
+            rounds: [
+              { seconds: 60, say: "Whole class: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when, T = change the time, P = change the thing or person). The class says the new sentence together." },
+              { seconds: 90, say: "Pairs: A says a sentence and shows a sign card, B changes it. Swap at the signal." },
+              { seconds: 90, say: "Real talk: tell your partner what your family throws away, reuses or reduces. Give one reason and one example." },
+            ],
+            steps: [
+              "Listen to the sentence. Look at the sign. Change it: ? = a question with does / do, X = don't / doesn't, + = add because, although, so or when, T = last year, P = a new thing (cars, a factory, plastic bottles).",
+              "Say the WHOLE new sentence. Check the -s: wood comes, trees grow, factories pollute.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (often 'Wood come', 'Does it comes' or 'goes to landfill') and fix them together; then go on.",
+              "In round 3 the drill becomes real: say what happens to the things in your own home.",
+            ],
+            prompts: ["Wood comes from trees. (?)", "Trash goes to the sea. (X)", "Smoke is bad for us. (+ because)", "Our school reuses boxes. (T)", "Cars make smoke. (P: a factory)"],
+            feedback: "Prompt, do not tell: for 'Wood come from trees' hold up a finger for the -s; for 'Does it comes?' repeat it with a rising voice; for 'goes to landfill' point to the frame 'the landfill'. Say the -s and the final sounds clearly yourself.",
+            teacherNote: "There is no grammar slide in this lesson, so the drill takes the key structure of the reading: present simple facts about where things come from and where they go (-s for it / he / she, doesn't, does ...?). The last round is real: students talk about what their own family does with trash. Keep it brisk.",
             tiers: [
-              { level: "Support", task: "Write the key words and one sentence with the frames." },
-              { level: "Core", task: "Rebuild the whole text with your group." },
-              { level: "Stretch", task: "Rebuild it and add one more sentence about what you can reuse." },
+              { level: "Support", task: "Use only ? and X, with frames on the board.", frames: ["Where does ___ come from? It comes from ___.", "___ doesn't ___."] },
+              { level: "Core", task: "Change every sentence with all five signs, without the frames." },
+              { level: "Stretch", task: "Use two signs at once and add a follow-up question: 'Last year our school didn't reuse boxes, although it threw away a lot. Why do schools waste so much?'" },
+            ],
+          },
+        },
+        {
+          after: "Grammar drill: where resources come from",
+          slide: {
+            kind: "writing",
+            title: "Join it: resources and the Earth",
+            routine: "sentence combining",
+            mode: "pairs",
+            minutes: 7,
+            steps: [
+              "Read the two short sentences. Join them into ONE longer sentence with the joining word in brackets.",
+              "Write your sentence. Check the verb -s and the commas.",
+              "Compare with your partner. Whose sentence gives the clearest reason?",
+              "Then write one more sentence of your own about a resource in your city, with because or although.",
+            ],
+            items: [
+              { q: "People cut down trees. They make paper and furniture. (to make / and)", answer: "People cut down trees to make paper and furniture." },
+              { q: "Trash goes to the landfill. It stays there for many years. (where)", answer: "Trash goes to the landfill, where it stays for many years." },
+              { q: "Recycling helps the Earth. It is better to use less. (although)", answer: "Although recycling helps the Earth, it is better to use less." },
+              { q: "Cars make smoke. The air in big cities is dirty. (so)", answer: "Cars make smoke, so the air in big cities is dirty." },
+              { q: "We reuse old boxes. We save money and resources. (which)", answer: "We reuse old boxes, which saves money and resources." },
+            ],
+            frames: ["___, so ___.", "Although ___, ___.", "___, where / which ___."],
+            checklist: ["The verb has its -s: trash goes, smoke makes, it saves", "A comma before so, where and which, and after although-parts", "Capital letter and full stop"],
+            sayIt: "Read your best sentence to your partner. Then say it again with a different joining word.",
+            teacherNote: "Five harder items: relative clauses (where, which), a contrast (although), a result (so) and an infinitive of purpose. Accept any correct joining; the model answers are one way. Mark the verb -s and the commas, not the vocabulary.",
+            tiers: [
+              { level: "Support", task: "Do items 1, 2 and 4 with the frames." },
+              { level: "Core", task: "Do all five items." },
+              { level: "Stretch", task: "Do all five, then join three sentences into one: 'Although recycling helps, we should reduce trash, which saves resources.'" },
             ],
           },
         },
@@ -192,37 +266,78 @@ export const odL2U11Lab: UnitLab = {
       talk: {
         kind: "vlog",
         title: "My Earth helper talk",
-        prompt: "Tell what you can do every day to take care of the Earth. Show something you can reuse, like a box or a bottle!",
-        length: "45-90 seconds",
+        prompt: "Explain what you can do every day to take care of the Earth. Give two or three actions, a reason for each and an example from your own life, such as your school, your street or your city.",
+        length: "90-120 seconds",
         steps: [
-          "Think of three things you can do: reduce trash, reuse something and keep a place clean.",
-          "Say your talk three times to a grown-up or a toy. Each time a little faster, like in class.",
-          "Record it once. Smile and look at the camera.",
-          "Grown-up: hold the phone and let your child speak; do not say the words for them. Bố mẹ: hãy giữ điện thoại và để con tự nói, đừng nhắc từng chữ.",
+          "Plan: choose three actions (reduce trash, reuse something, save water or energy). Write a reason and an example for each in a few words.",
+          "Practise your talk three times, in front of a mirror or to a friend on a call. Each time speak a little faster and with fewer stops.",
+          "Record it once. Look at the camera, speak clearly and use linking words: first, also, however, because, for example.",
+          "Watch it once. Listen for the -s endings (boxes, bottles, resources) and tell yourself one thing you did well.",
         ],
-        maxSeconds: 150,
-        kidSummary: "Say three things you can do for the Earth, with a because, and keep talking without long stops.",
+        maxSeconds: 180,
+        kidSummary: "Explain three things you can do for the Earth. Give a reason and an example for each one, and keep talking without long stops.",
         words: ["reduce", "reuse", "trash", "resources", "landfill", "wood"],
-        grammar: ["I can ___ every day.", "We reduce / reuse ___ because ___."],
+        grammar: ["I can ___ every day because ___.", "For example, ___.", "Although ___, ___."],
         rubric: [
-          { label: "Three things", description: "Says three things they can do for the Earth.", weight: 3 },
+          { label: "Three actions", description: "Explains three things they can do for the Earth.", weight: 2 },
+          { label: "Reasons and examples", description: "Gives a reason (because, so) and an example (for example) for each action.", weight: 3 },
           { label: "Unit words", description: "Uses words from the unit: reduce, reuse, trash, resources, landfill.", weight: 2 },
-          { label: "Keeps going", description: "Talks without long stops; whole sentences, not single words.", weight: 3 },
+          { label: "Keeps going", description: "Talks without long stops; whole, connected sentences, not single words.", weight: 3 },
           { label: "Clear endings", description: "The -s at the end of boxes, bottles and resources can be heard.", weight: 1 },
         ],
         tiers: [
-          { level: "Support", who: "Children who need the frames", frames: ["I can ___ every day.", "I reuse ___."], tips: ["Hold up one finger for each thing."] },
-          { level: "Core", who: "Most children", frames: ["I can reduce ___ every day.", "I reuse ___ because ___."], tips: ["Say what you do and why."] },
-          { level: "Stretch", who: "Children who are ready for more", frames: ["I think it is important to ___ because ___.", "If we ___, the Earth ___."], tips: ["Give a reason for each thing."] },
+          { level: "Support", who: "Students who need the frames", frames: ["I can ___ every day because ___.", "For example, I reuse ___."], tips: ["Write one reason for each action before you record."] },
+          { level: "Core", who: "Most students", frames: ["First, I reduce ___ because ___. For example, ___.", "Also, I reuse ___, which ___."], tips: ["Give a reason and an example for each action."] },
+          { level: "Stretch", who: "Students who are ready for more", frames: ["Although ___, I think it is important to ___ because ___.", "If everyone ___, our city ___."], tips: ["Add a contrast and say what would change if everyone did it."] },
         ],
       },
     },
 
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l2-u11-l3": {
-      objectives: ["I can ask and say where things are, round the circle, without stopping."],
-      trim: { "Teddy says: place game": 5, "Where is the bear? Chant": 4 },
+      objectives: ["I can ask and say where things are in my school and my city, with reasons, round the circle, without stopping."],
+      drop: ["Teddy says: place game", "Where is the bear? Chant"],
+      trim: { "Build my park: listen and draw": 9, "Listen and sing: The Tree (SB 113 D)": 6 },
       add: [
+        {
+          after: "Our rule, our words",
+          slide: {
+            kind: "fluency",
+            title: "Grammar drill: where is it, where are they",
+            routine: "grammar drill",
+            mode: "pairs",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it, move it to the past or change the thing. Then describe places you really know.",
+            chunks: [
+              "The recycling bin is behind the school gate, and the bike park is across from it.",
+              "Where is the library? It is across from the sports field, next to the canteen.",
+              "Is the canteen in front of the gym? No, it isn't. It is behind the library.",
+              "Where are the students? They are above us, on the second floor, because it is lunch time.",
+              "The bench is in front of the tree, so the tree is behind the bench.",
+              "Last year the bin was behind the tree, but now it is in front of the bench, so more people use it.",
+            ],
+            recycle: ["We reduce trash and reuse boxes.", "We need water because we drink it every day."],
+            rounds: [
+              { seconds: 60, say: "Whole class: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when, T = change the time, P = change the thing: singular or plural). The class says the new sentence together." },
+              { seconds: 90, say: "Pairs: A says a sentence and shows a sign card, B changes it. Swap at the signal." },
+              { seconds: 90, say: "Real talk: describe where things are in your school, your street or your favorite park. Your partner asks one question about it." },
+            ],
+            steps: [
+              "Listen to the sentence. Look at the sign. Change it: ? = Is / Are ...? or Where is / are ...?, X = isn't / aren't, + = add because, although, so or when, T = was / were (last year), P = singular or plural (the bin / the bins).",
+              "Say the WHOLE new sentence. Check is / are with the thing, and never 'behind of' or 'in front the'.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (often 'Where the bin is?', 'The bins is' or 'behind of') and fix them together; then go on.",
+              "In round 3 the drill becomes real: say where things really are, and ask your partner one question about a place they know.",
+            ],
+            prompts: ["The bin is behind the tree. (?)", "The shop is across from the park. (X)", "The bench is in front of the pond. (+ so)", "The bottles are behind the bench. (T)", "The bin is above the gate. (P: the bins)"],
+            feedback: correctPlace,
+            teacherNote: "This is the lesson's grammar at speed: place words with is / are, questions and short answers, with was / were for the T sign. Round 3 uses places the students know (school, street, favorite park), so the language carries real meaning. Keep it brisk.",
+            tiers: [
+              { level: "Support", task: "Use only ? and X, with the frames on the board.", frames: ["Where is the ___? It is ___ the ___.", "Is it ___ the ___? No, it isn't."] },
+              { level: "Core", task: "Change every sentence with all five signs, without the frames." },
+              { level: "Stretch", task: "Use two signs at once and add a pair and a follow-up: 'Last year the bin wasn't behind the tree, so the tree wasn't in front of it. Why did they move it?'" },
+            ],
+          },
+        },
         {
           after: "Park picture talk (SB 113 E)",
           slide: {
@@ -230,29 +345,35 @@ export const odL2U11Lab: UnitLab = {
             title: "Question chain: where is it?",
             routine: "question chain",
             mode: "whole",
-            minutes: 7,
-            goal: "Ask, answer, turn and ask the next friend. Keep the chain going with no stops!",
-            chunks: ["Where is the bin?", "It is behind the tree.", "Is it above the pond?", "No, it isn't. It is in front of the bench.", "Where are the bottles? They are across from the park."],
+            minutes: 8,
+            goal: "Ask, answer with a reason, turn and ask the next student. Keep the chain going with no stops!",
+            chunks: [
+              "Where is the bin in your park? It is behind the big tree, because people can't see it from the gate.",
+              "Is it above the pond? No, it isn't. It is in front of the bench, so everyone uses it.",
+              "Where are the bottles? They are across from the park, although they should be in the recycling bin.",
+              "Why did you put the bench behind the tree? Because I wanted more shade.",
+              "Where is the sports field in your city? It is across from the river, near the market.",
+            ],
             recycle: ["Can I sit here, please?", "Yes, you can."],
             rounds: [
               { seconds: 75, say: "Slow chain round the circle. Everyone holds a park picture card." },
-              { seconds: 60, say: "Swap cards. Go faster!" },
-              { seconds: 45, say: "Swap again. Can the chain go all the way round before the bell?" },
+              { seconds: 60, say: "Swap cards. Go faster, and always give a reason." },
+              { seconds: 60, say: "Swap again. Can the chain go all the way round before the signal?" },
             ],
             steps: [
               "Sit in a circle. Hold your picture card so only you can see it.",
-              "Ask the friend on your left: 'Where is the ___?' They answer with a place word.",
-              "Then ask 'Is it ___ the ___?' They say 'Yes, it is.' or 'No, it isn't.'",
-              "They turn and ask the next friend.",
+              "Ask the student on your left: 'Where is the ___?' They answer with a place word and a reason.",
+              "Then ask 'Is it ___ the ___?' They say 'Yes, it is.' or 'No, it isn't.' and add a short reason.",
+              "They turn and ask the next student.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together; then go on.",
             ],
-            prompts: ["Where is the ___?", "Is it ___ the ___?", "Where are the ___?"],
+            prompts: ["Where is the ___?", "Is it ___ the ___?", "Where are the ___?", "Why did you put it there?"],
             feedback: correctPlace,
-            teacherNote: "The chain makes every child ask AND answer many times in a few minutes, which is what makes 'Where is ...?' and 'Is it ...?' automatic. Time the whole circle and tell them: children love beating their own time. Listen for 'Where the bin is?', 'behind of' and 'Yes, it behind.'",
+            teacherNote: "The chain makes every student ask AND answer many times in a few minutes, which is what makes 'Where is ...?' and 'Is it ...?' automatic. Time the whole circle and tell them to beat their own time. Listen for 'Where the bin is?', 'behind of' and 'Yes, it behind.' The reason after each answer is what moves it from Year 2 level to theirs.",
             tiers: [
               { level: "Support", task: "Answer with the frame on the board and pass the question on.", frames: ["It is ___ the ___.", "Yes, it is. / No, it isn't."] },
-              { level: "Core", task: "Ask and answer without looking at the board." },
-              { level: "Stretch", task: "Add the pair: 'It is behind the tree, so the tree is in front of it.'" },
+              { level: "Core", task: "Ask and answer with a reason, without looking at the board." },
+              { level: "Stretch", task: "Add the pair and a contrast: 'It is behind the tree, so the tree is in front of it, although you can still see it from the gate.'" },
             ],
           },
         },
@@ -260,65 +381,42 @@ export const odL2U11Lab: UnitLab = {
           after: "Look around the classroom (SB 113 F)",
           slide: {
             kind: "writing",
-            title: "My park: plan, write, check",
+            title: "My ideal park: plan, write, check",
             routine: "paragraph",
             genre: "description",
             mode: "solo",
-            minutes: 8,
+            minutes: 10,
             steps: [
-              "Read the model with the teacher. Point to each sentence and to the joining words.",
-              "Plan: use the four boxes. Draw or write a few words in each box.",
-              "Write: one sentence for each box. Say where each thing is. Use and and because.",
-              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
-              "Teacher: look only at capital letters and is / are in every place sentence. Put a dot next to a line with a mistake; the child finds it and fixes it."
+              "Read the model with the teacher. Find the topic sentence, the examples and the closing sentence, and circle the place words.",
+              "Plan: fill the five boxes with a few words each, not whole sentences.",
+              "Write: turn your notes into one paragraph of six to eight sentences. Say where each thing is and why. Use first, also, however, because, for example and in conclusion.",
+              "Check: tick the checklist. Your partner draws a quick map from your paragraph. Is it the park you described?",
+              "Teacher: look only at is / are in every place sentence and at the place words (no 'behind of'). Put a dot next to a line with a mistake; the student finds it and fixes it.",
             ],
             text: {
-              title: "Model: My park",
-              text: "This is my park. The pond is in front of the big tree, and the bench is behind the tree. Two birds are above the pond. The bin is across from the bench because people eat lunch there. I like my park!",
+              title: "Model: My ideal park",
+              text: "In my ideal park, a big pond is in front of the main gate, and a bench is behind it. First, two trees are across from the bench, so people can sit in the shade. Also, the sports field is across from the pond because many students play football after school. However, the bins are behind the bench, although some people think that is too far. For example, a bin near the gate gets used all day, but a hidden one stays empty. In conclusion, a clean park with places to rest is the best place to relax after school.",
             },
             organiser: [
-              {
-                "label": "My park",
-                "prompt": "Draw your park. What do you like in it?"
-              },
-              {
-                "label": "Pond, tree, bench",
-                "prompt": "Draw the pond, the tree and the bench. Where is each one?"
-              },
-              {
-                "label": "Birds",
-                "prompt": "Draw the birds. Where are they?"
-              },
-              {
-                "label": "Bin",
-                "prompt": "Draw the bin. Where is it? Why is it there?"
-              }
+              { label: "Topic sentence", prompt: "What park do you describe, and what is special about it?" },
+              { label: "Detail 1: pond, trees or bench", prompt: "Say where two things are. Use in front of, behind or above." },
+              { label: "Detail 2: sports or play area", prompt: "Where is it? Why is it there? Use across from and because." },
+              { label: "Detail 3: the bins", prompt: "Where are they? Give an example of why that place is good or bad." },
+              { label: "Closing", prompt: "In conclusion, why is your park a good place for students?" },
             ],
-            frames: ["This is my park.","The ___ is in front of the ___, and the ___ is behind the ___.","Two ___ are above the ___.","The bin is across from the ___ because ___.","I like my park!"],
+            frames: ["In my ideal park, ___ is ___ the ___.", "First, ___ are ___ the ___, so ___.", "Also, the ___ is across from the ___ because ___.", "However, the ___ is ___, although ___.", "For example, ___.", "In conclusion, ___."],
             checklist: [
-              "Every place sentence has is or are",
-              "No extra 'of' after behind or above",
-              "A capital letter at the start and a full stop at the end of every sentence"
+              "Every place sentence has is or are with the right thing (a bench is, two trees are)",
+              "No extra 'of' after behind or above; in front of and across from keep their of / from",
+              "At least four linking words: first, also, however, because, for example",
+              "A capital letter at the start and a full stop at the end of every sentence",
             ],
-            sayIt: "Read your paragraph to your partner. Then tell it again without looking at the page.",
-            teacherNote: "The park paragraph uses the place words of the lesson in real sentences. It replaces the 'fix the park sentences' task: the common mistakes (a missing is / are, 'behind of', 'Where the bin is?') are now the checklist, so the child checks for them in their own writing. Mark only is / are and capital letters, with a dot beside the line.",
+            sayIt: "Read your paragraph to your partner. Then describe your park again without looking, while your partner draws it.",
+            teacherNote: "The park paragraph uses the place words of the lesson in real sentences with reasons and examples. The common mistakes (a missing is / are, 'behind of', 'Where the bin is?') are the checklist, so the student checks for them in their own writing. Mark only is / are and the place words, with a dot beside the line.",
             tiers: [
-              {
-                "level": "Support",
-                "task": "Copy two frames and fill in one word in each. Point to your drawing.",
-                "frames": [
-                  "The ___ is behind the ___.",
-                  "Two ___ are above the ___."
-                ]
-              },
-              {
-                "level": "Core",
-                "task": "Write four sentences, one for each box."
-              },
-              {
-                "level": "Stretch",
-                "task": "Write five sentences with and, but and because. Write two sentences about the same two things: 'The bin is behind the tree. The tree is in front of the bin.'"
-              }
+              { level: "Support", task: "Use the frames: one sentence for each box, six sentences in all.", frames: ["The ___ is behind the ___.", "Two ___ are above the ___."] },
+              { level: "Core", task: "Write six or seven sentences with the linking words in the checklist." },
+              { level: "Stretch", task: "Write eight sentences and add a pair and a contrast: 'The bin is behind the tree, so the tree is in front of the bin. Although it is far, people still use it.'" },
             ],
           },
         },
@@ -327,8 +425,87 @@ export const odL2U11Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l2-u11-l4": {
-      objectives: ["I can talk about three resources I see every day, three times, faster each time."],
+      objectives: ["I can talk about three resources I see every day, with reasons and examples, three times, faster each time."],
+      drop: ["Outdoor freeze mime"],
+      trim: {
+        "Can you ___ in the ___? Mingle": 4,
+        "Rehearse: three resources I see every day": 4,
+        "Which one is wrong? (SB 114 B)": 5,
+        "Number the activities, circle can or can't (SB 114 D)": 6,
+        "Where is the pollution? (SB 114 Think, C)": 6,
+      },
       add: [
+        {
+          after: "Word sort: verb, noun, adjective, pronoun (SB 115 F)",
+          slide: {
+            kind: "fluency",
+            title: "Grammar drill: verbs, nouns, adjectives and pronouns",
+            routine: "grammar drill",
+            mode: "pairs",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it, move it to the past or change the person. Say which word is the verb, the noun, the adjective and the pronoun.",
+            chunks: [
+              "The tall students clean the park, and they pick up the trash every week.",
+              "We reduce plastic because it is bad for the environment.",
+              "Do you reuse old notebooks? Yes, I do, and my friends reuse them, too.",
+              "The clean park is popular, although it is small.",
+              "My cousin and I walked to the park, and we picked up three bags of trash.",
+              "Does your school have a green garden? No, it doesn't, but we want one because it is healthy.",
+            ],
+            recycle: ["Where is the bin? It is behind the tree.", "People need water because they drink it every day."],
+            rounds: [
+              { seconds: 60, say: "Whole class: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when, or add an adjective, T = change the time, P = change the person and the pronoun). The class says the new sentence together and names the verb." },
+              { seconds: 90, say: "Pairs: A says a sentence and shows a sign card, B changes it and says which word is the noun and which is the pronoun. Swap at the signal." },
+              { seconds: 90, say: "Real talk: describe what you and your friends do for the Earth, using at least two adjectives and one pronoun. Your partner asks one follow-up question." },
+            ],
+            steps: [
+              "Listen to the sentence. Look at the sign. Change it: ? = a question with do / does / did, X = don't / doesn't / didn't, + = add because, although, so or an adjective, T = last week, P = a new person (and the right pronoun: he, she, they, we).",
+              "Say the WHOLE new sentence. Replace a noun with a pronoun in your second sentence: the park -> it.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (often 'park clean', 'The students cleans' or 'They like the park' repeated) and fix them together; then go on.",
+              "In round 3 the drill becomes real: say what you really do for the Earth, with adjectives and pronouns, and answer your partner's question.",
+            ],
+            prompts: ["The students clean the park. (?)", "We reuse boxes. (X)", "The park is clean. (+ adjective: big)", "My friend picks up trash. (T)", "My brother and I reduce trash. (P: she)"],
+            feedback: "Prompt, do not tell: for 'park clean' point to the adjective frame and say 'the ... park'; for 'The students cleans' hold up a finger for the -s that should not be there; for a repeated noun say 'it?' and point to the second sentence. Say the -s, the -ed and the n't clearly yourself.",
+            teacherNote: "The lesson's grammar is the four kinds of words, so the drill makes them work in sentences: verbs change with the sign, adjectives go before the noun, pronouns replace repeated nouns. Round 3 uses these in real talk about the Earth. Keep it brisk.",
+            tiers: [
+              { level: "Support", task: "Use only ? and X, with frames on the board.", frames: ["Do you ___? Yes, I do. / No, I don't.", "The ___ park is ___."] },
+              { level: "Core", task: "Change every sentence with all five signs, and name the verb, noun, adjective and pronoun." },
+              { level: "Stretch", task: "Use two signs at once and give two pronouns: 'My friends and I didn't clean the park last week, although we wanted to, because it rained.'" },
+            ],
+          },
+        },
+        {
+          after: "Grammar drill: verbs, nouns, adjectives and pronouns",
+          slide: {
+            kind: "writing",
+            title: "Expand it: from a short sentence to a clear one",
+            routine: "expand it",
+            mode: "pairs",
+            minutes: 6,
+            steps: [
+              "Read the short sentence and the instruction in brackets.",
+              "Write a longer sentence that does what the instruction says. Keep the verb right.",
+              "Compare with your partner. Whose sentence is clearest? Underline the verb, one adjective and one pronoun.",
+              "Then expand one more sentence of your own about your park or your school.",
+            ],
+            items: [
+              { q: "We reduce trash. (add a reason and an example)", answer: "We reduce trash because landfills are almost full; for example, I bring my own bottle to school." },
+              { q: "Students clean the park. (add two adjectives and a time phrase)", answer: "Many enthusiastic students clean the large green park every Saturday morning." },
+              { q: "The park is clean. (add although and a pronoun)", answer: "Although the park is small, it is clean." },
+              { q: "My friends and I reuse boxes. (replace the repeated nouns in a second sentence with pronouns)", answer: "My friends and I reuse boxes. We use them for storage, and they last for years." },
+              { q: "We take care of the Earth. (add a time phrase and a because clause)", answer: "Every day, my friends and I take care of the Earth because we want a clean city." },
+            ],
+            frames: ["___ because ___; for example, ___.", "Although ___, it ___.", "Every ___, we ___ because ___."],
+            checklist: ["An adjective before the noun: a green park", "A pronoun for a repeated noun: it, they, we", "The verb agrees: the park is, the students clean", "Capital letter and full stop"],
+            sayIt: "Read your longest sentence to your partner. Then say it again without looking.",
+            teacherNote: "Five harder items: a reason with an example, two adjectives and a time phrase, a contrast, pronouns replacing nouns, and a because clause. Accept any correct expansion; the model answers are one way. Mark the verb, the adjective position and the pronouns.",
+            tiers: [
+              { level: "Support", task: "Do items 1, 3 and 5 with the frames." },
+              { level: "Core", task: "Do all five items." },
+              { level: "Stretch", task: "Do all five, then write one sentence with an adjective, a pronoun, a because clause and an example." },
+            ],
+          },
+        },
         {
           after: "Rehearse: three resources I see every day",
           slide: {
@@ -336,56 +513,33 @@ export const odL2U11Lab: UnitLab = {
             title: "Resource talk 4-3-2: three partners",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 7,
-            goal: "Give the same talk about three resources to three friends. Each talk is shorter and smoother.",
-            chunks: ["I see trees in the park.", "We need water because we drink it every day.", "All living things need sunlight.", "I can take care of the park if I put trash in the bin."],
-            recycle: ["May I go first, please?", "Yes, you may. Thank you!"],
+            minutes: 9,
+            goal: "Give the same talk about three resources to three partners. Each talk is shorter and smoother, and keeps the reasons and examples.",
+            chunks: [
+              "Every day I see trees in the park near my school, and they give us shade and fresh air.",
+              "We need water because we drink it, wash with it and grow food with it.",
+              "All living things need sunlight, although some, like fungi, grow in the dark.",
+              "I can take care of the park if I put trash in the bin and ask my friends to do the same.",
+            ],
+            recycle: ["May I go first, please?", "Where is the bin? It is behind the tree."],
             rounds: [
-              { seconds: 60, say: "Give your talk to your first listener. The listener counts the resources on their fingers." },
-              { seconds: 45, say: "Move to a new listener. Give the same talk in less time." },
-              { seconds: 30, say: "Move to a third listener. The same talk again, as smooth as you can." },
+              { seconds: 80, say: "Give your talk to your first listener. The listener counts the resources on their fingers and the reasons." },
+              { seconds: 70, say: "Move to a new listener. Give the same talk in less time." },
+              { seconds: 60, say: "Move to a third listener. The same talk again, as smooth as you can." },
             ],
             steps: [
               "Stand in two lines facing each other. Line A talks first.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (often a missing -s or a forgotten 'because') and fix them together; then go on.",
-              "The listener has a job: count the resources on your fingers, then ask one question, 'Why?'",
+              "The listener has a job: count the resources on your fingers, then ask one question: 'Why?' or 'Can you give an example?'",
               "Line B talks next with the same three rounds.",
             ],
             prompts: ["(picture: tree)", "(picture: water)", "(picture: sunlight)"],
             feedback: correctNeed,
-            teacherNote: "Same talk, less time, new listener: the 4/3/2 activity scaled for seven-year-olds. The new partner keeps the repetition real. Do not add new language between rounds; the gain comes from saying the same thing more fluently, and the one-minute fix is where accuracy comes from.",
+            teacherNote: "Same talk, less time, new listener: the 4/3/2 activity at the pace of grades 6-7. The new partner keeps the repetition real. Do not add new language between rounds; the gain comes from saying the same thing more fluently, and the one-minute fix is where accuracy comes from. Both partners speak in every round.",
             tiers: [
-              { level: "Support", task: "Say three short sentences, with a friend's help if you need it.", frames: ["I see ___ in ___.", "We need ___."] },
-              { level: "Core", task: "Say all four sentences without looking at the board." },
-              { level: "Stretch", task: "Add a because to every resource.", frames: ["We need ___ because ___."] },
-            ],
-          },
-        },
-        {
-          after: "Word sort: verb, noun, adjective, pronoun (SB 115 F)",
-          slide: {
-            kind: "writing",
-            title: "Read the model, write my park",
-            routine: "model, then write",
-            mode: "solo",
-            minutes: 5,
-            steps: [
-              "Read the model with the teacher. Find a noun, an adjective and the pronoun They.",
-              "Write three sentences about a place you like. Use one adjective and one pronoun.",
-              "Read your sentences to your partner.",
-            ],
-            text: {
-              title: "My green park",
-              text: "I see trees and a pond in my park. They are tall and green. We need them because they give us shade. I keep my park clean.",
-            },
-            frames: ["I see ___ in my ___.", "They are ___ and ___.", "We need them because ___."],
-            checklist: ["An adjective before the noun: a green park", "They takes the place of more than one thing", "A capital letter and a full stop"],
-            sayIt: "Read your sentences to your partner, then say them again without looking.",
-            teacherNote: "This is a short model to copy the pattern from, not a text to learn. Point out how They saves saying 'the trees and the pond' again. A child who says 'park green' needs the adjective-before-noun pattern shown on the model.",
-            tiers: [
-              { level: "Support", task: "Copy the frames and fill them in with words from the model." },
-              { level: "Core", task: "Write three sentences about a place you like." },
-              { level: "Stretch", task: "Write four sentences and use 'because' and 'and'." },
+              { level: "Support", task: "Say three short sentences with a reason each, with a friend's help if you need it.", frames: ["I see ___ in ___.", "We need ___ because ___."] },
+              { level: "Core", task: "Say all four sentences without looking at the board, with an example." },
+              { level: "Stretch", task: "Add a contrast and a follow-up answer: 'We need trees, although some people cut them down; for example, ...'", frames: ["We need ___ because ___, although ___."] },
             ],
           },
         },
@@ -394,9 +548,49 @@ export const odL2U11Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l2-u11-l5": {
-      objectives: ["I can say where things are in my park, again and again, faster each time."],
-      trim: { "Trash hunt: ask, find, say": 8, "Remember it!": 4, "Grammar mystery: Pip and the trash": 4 },
+      objectives: ["I can say where things are in my park and explain why, again and again, faster each time."],
+      drop: ["Remember it!", "Grammar mystery: Pip and the trash", "Movement break: Be the picture"],
+      trim: { "Trash hunt: ask, find, say": 8 },
       add: [
+        {
+          after: "Grammar: Where is it? Is it behind the tree?",
+          slide: {
+            kind: "fluency",
+            title: "Grammar drill: place words, questions and short answers",
+            routine: "grammar drill",
+            mode: "pairs",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it, move it to the past or change the thing. Then describe places you really know.",
+            chunks: [
+              "The landfill is behind the factory, and the park is across from the landfill.",
+              "Is the bin behind the tree? No, it isn't. It is in front of the bench.",
+              "Where are the bottles? They are behind the bench, but they should be in the recycling bin.",
+              "A is behind B, so B is in front of A.",
+              "Last year the bin was behind the tree, but now it is in front of the bench, so more students use it.",
+              "Are the bikes across from the gate? Yes, they are, because the bike park is there.",
+            ],
+            recycle: ["People need clean water because they drink it every day.", "We reduce trash and reuse boxes."],
+            rounds: [
+              { seconds: 60, say: "Whole class: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when, T = change the time, P = change the thing: singular or plural). The class says the new sentence together." },
+              { seconds: 90, say: "Pairs: A says a sentence and shows a sign card, B changes it. Swap at the signal." },
+              { seconds: 90, say: "Real talk: describe where things are in your own home, school or neighborhood. Your partner asks two questions with Is / Are or Where." },
+            ],
+            steps: [
+              "Listen to the sentence. Look at the sign. Change it: ? = Is / Are ...? or Where is / are ...?, X = isn't / aren't, + = add because, although, so or when, T = was / were (last year), P = singular or plural (the bin / the bottles).",
+              "Say the WHOLE new sentence, with the short answer when it is a question: Yes, it is. / No, they aren't.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (often 'Where the bin is?', 'Yes, it behind' or 'The bottles is') and fix them together; then go on.",
+              "In round 3 the drill becomes real: describe places you know, answer with short answers and ask a follow-up question.",
+            ],
+            prompts: ["The bin is behind the tree. (?)", "The shop is across from the park. (X)", "The bench is in front of the bin. (+ so)", "The bottles are behind the bench. (T)", "The bin is above the gate. (P: the bins)"],
+            feedback: correctPlace,
+            teacherNote: "This is the grammar page at speed: place words, questions, short answers and the pair (A is behind B, so B is in front of A). The T sign uses was / were for last year. Round 3 uses places the students know, so the form is used for meaning. Keep it brisk.",
+            tiers: [
+              { level: "Support", task: "Use only ? and X, with the frames on the board.", frames: ["Is the ___ ___ the ___? Yes, it is. / No, it isn't.", "The ___ is ___ the ___."] },
+              { level: "Core", task: "Change every sentence with all five signs, without the frames." },
+              { level: "Stretch", task: "Use two signs at once and add a follow-up: 'Last year the bins weren't in front of the benches, so people didn't use them. Why do you think that was?'" },
+            ],
+          },
+        },
         {
           after: "Two parks, five differences",
           slide: {
@@ -404,28 +598,33 @@ export const odL2U11Lab: UnitLab = {
             title: "Two parks again: new partner",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 7,
-            goal: "Do the same difference game again with a new partner. Say it faster and with no stops.",
-            chunks: ["Where is the bin in your park?", "In my park, the bin is behind the tree.", "Is it across from the pond? No, it isn't.", "The bench is in front of the bin, so the bin is behind the bench."],
-            recycle: ["We need water to live.", "Can I have a turn, please?"],
+            minutes: 8,
+            goal: "Do the same difference game again with a new partner. Say it faster, with reasons and no stops.",
+            chunks: [
+              "Where is the bin in your park? In my park, the bin is behind the tree because it is quiet there.",
+              "Is it across from the pond? No, it isn't. It is in front of the bench, so more people see it.",
+              "The bench is in front of the bin, so the bin is behind the bench, although you can still reach it.",
+              "In my park the pond is across from the gate, but in yours it is behind the trees.",
+            ],
+            recycle: ["We need water to live, because we drink it every day.", "Can I have a turn, please?"],
             rounds: [
-              { seconds: 60, say: "Plan for a minute with your first partner. Then play the difference game." },
-              { seconds: 50, say: "New partner. The same game, with no planning. Say it faster." },
-              { seconds: 40, say: "New partner again. Find all the differences before the bell!" },
+              { seconds: 70, say: "Plan for a minute with your first partner. Then play the difference game, giving a reason for each place." },
+              { seconds: 60, say: "New partner. The same game, with no planning. Say it faster." },
+              { seconds: 50, say: "New partner again. Find all the differences before the signal!" },
             ],
             steps: [
-              "Look at your park picture. Plan three sentences in your head.",
-              "Play the difference game: ask 'Where is the ___ in your park?' and answer with a place word.",
+              "Look at your park picture. Plan three sentences in your head, with a reason for each.",
+              "Play the difference game: ask 'Where is the ___ in your park?' and answer with a place word and a reason.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
-              "The listener has a job: tick each difference you hear.",
+              "The listener has a job: tick each difference you hear. Both partners speak in every round.",
             ],
-            prompts: ["Where is the ___ in your park?", "Is the ___ ___ the ___?"],
+            prompts: ["Where is the ___ in your park?", "Is the ___ ___ the ___?", "Why is it there?"],
             feedback: correctPlace,
-            teacherNote: "The same task with new partners, as in the book game: the repetition frees attention for speed. Do not change the picture between rounds. Listen for the pair: the bin is behind the tree, so the tree is in front of the bin.",
+            teacherNote: "The same task with new partners, as in the book game: the repetition frees attention for speed and for the reasons. Do not change the picture between rounds. Listen for the pair: the bin is behind the tree, so the tree is in front of the bin. Both partners speak in every round, so the timing counts them twice.",
             tiers: [
               { level: "Support", task: "Use the frames on the board and point to the picture.", frames: ["In my park, the ___ is ___ the ___.", "Yes, it is. / No, it isn't."] },
-              { level: "Core", task: "Ask and answer without looking at the frames." },
-              { level: "Stretch", task: "Give the pair for every answer: 'The bin is behind the tree, so the tree is in front of the bin.'" },
+              { level: "Core", task: "Ask and answer with a reason, without looking at the frames." },
+              { level: "Stretch", task: "Give the pair and a contrast for every answer: 'The bin is behind the tree, so the tree is in front of it, although in your park it is different.'" },
             ],
           },
         },
@@ -435,63 +634,40 @@ export const odL2U11Lab: UnitLab = {
             kind: "writing",
             title: "My clean park plan: plan, write, check",
             routine: "paragraph",
-            genre: "description",
+            genre: "proposal",
             mode: "solo",
-            minutes: 8,
+            minutes: 10,
             steps: [
-              "Read the model with the teacher. Point to each sentence and to the joining words.",
-              "Plan: use the four boxes. Draw or write a few words in each box.",
-              "Write: one sentence for each box. Use First, Then and At the end, and one because.",
-              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
-              "Teacher: look only at capital letters and is / are and the place words. Put a dot next to a line with a mistake; the child finds it and fixes it."
+              "Read the model with the teacher. Find the topic sentence, the reasons and the closing sentence, and circle the place words.",
+              "Plan: use your clean park map and fill the five boxes with a few words each.",
+              "Write: turn your notes into one paragraph of six to eight sentences. Say where each thing goes and why. Use first, also, however, because, for example and in conclusion.",
+              "Check: tick the checklist. Your partner follows your paragraph on your map and tells you if a place word is wrong.",
+              "Teacher: look only at is / are and the place words, and at the linking words. Put a dot next to a line with a mistake; the student finds it and fixes it.",
             ],
             text: {
-              title: "Model: My clean park",
-              text: "I put the recycling bin in front of the bench because people can see it. First, people sit on the bench and drink water. Then they put the bottles in the bin. The trash can is behind the tree, but the bin is easy to see. At the end, our park is clean!",
+              title: "Model: A cleaner school park",
+              text: "Our school park needs a better plan. First, I would put the recycling bin in front of the bench, because people can see it easily. Also, the bike stand should be behind the gate, so bikes do not block the path. However, the trash can is across from the pond, although some students think that is too far. For example, a bin near the entrance gets used all day, but a hidden one stays empty. In conclusion, a clear plan keeps the park clean, and everyone enjoys it more.",
             },
             organiser: [
-              {
-                "label": "Where",
-                "prompt": "Draw the bin on your map. Where is it? Why?"
-              },
-              {
-                "label": "First",
-                "prompt": "Draw the people. What do they do first?"
-              },
-              {
-                "label": "Then",
-                "prompt": "Draw the bottles going in the bin. Where is the trash can?"
-              },
-              {
-                "label": "At the end",
-                "prompt": "Draw the clean park. How is it?"
-              }
+              { label: "Topic sentence", prompt: "What does your park need, and what does your plan do?" },
+              { label: "Detail 1: the recycling bin", prompt: "Where does it go? Give a reason with because." },
+              { label: "Detail 2: another thing on your map", prompt: "Where does it go? Use behind, in front of, above or across from, and so." },
+              { label: "Detail 3: a problem and an example", prompt: "Use however or although, and give an example." },
+              { label: "Closing", prompt: "In conclusion, how does your plan keep the park clean?" },
             ],
-            frames: ["I put the recycling bin ___ the ___ because ___.","First, people ___.","Then they put the ___ in the bin.","The trash can is ___ the ___, but the bin is ___.","At the end, our park is ___!"],
+            frames: ["Our park needs ___.", "First, I would put the ___ ___ the ___, because ___.", "Also, the ___ should be ___ the ___, so ___.", "However, the ___ is ___, although ___.", "For example, ___.", "In conclusion, ___."],
             checklist: [
-              "Every place sentence has is or are",
-              "A comma after First and after At the end",
-              "A capital letter at the start and a full stop at the end of every sentence"
+              "Every place sentence has is / are or should be, with the right thing",
+              "No extra 'of' after behind or above; in front of and across from are complete",
+              "At least four linking words: first, also, however, because, for example",
+              "A capital letter at the start and a full stop at the end of every sentence",
             ],
-            sayIt: "Read your paragraph to your partner. Then tell it again, pointing to your map.",
-            teacherNote: "This paragraph turns the clean park map the children just made and talked about into writing; the map is the plan. It replaces the sentence-combining task, whose and / but / because are now used inside the paragraph. If the class records the clean park talk at home, this paragraph is its script. Mark only is / are and capital letters.",
+            sayIt: "Read your paragraph to your partner. Then tell it again, pointing to your map, in one minute.",
+            teacherNote: "This paragraph turns the clean park map the students just made and talked about into writing; the map is the plan. Place words and is / are are the grammar to mark, with the linking words. If the class records the clean park talk at home, this paragraph is its script. Mark only those two with a dot beside the line.",
             tiers: [
-              {
-                "level": "Support",
-                "task": "Copy two frames and fill in one word in each. Use your map.",
-                "frames": [
-                  "I put the bin ___ the ___.",
-                  "At the end, our park is ___!"
-                ]
-              },
-              {
-                "level": "Core",
-                "task": "Write four sentences, one for each box."
-              },
-              {
-                "level": "Stretch",
-                "task": "Write five sentences and write two sentences about the same two things: 'The bin is behind the tree. The tree is in front of the bin.'"
-              }
+              { level: "Support", task: "Use the frames: one sentence for each box, six sentences in all.", frames: ["I would put the bin ___ the ___.", "In conclusion, ___."] },
+              { level: "Core", task: "Write six or seven sentences with the linking words in the checklist." },
+              { level: "Stretch", task: "Write eight sentences and add a pair and a contrast: 'The bin is behind the tree, so the tree is in front of the bin. Although it is far, it is clean.'" },
             ],
           },
         },
@@ -499,28 +675,28 @@ export const odL2U11Lab: UnitLab = {
       talk: {
         kind: "vlog",
         title: "My clean park talk",
-        prompt: "Show your clean park map at home and say where the bin and the other things are. Say why you put the recycling bin there.",
-        length: "45-90 seconds",
+        prompt: "Use your clean park map and explain where the bin and the other things go. Give a reason for each place and an example of why it works.",
+        length: "90-120 seconds",
         steps: [
-          "Look at your clean park map from class.",
-          "Say your talk three times to a grown-up or a toy. Each time a little faster.",
-          "Record it once. Smile and look at the camera.",
-          "Grown-up: hold the phone and let your child speak; do not say the words for them. Bố mẹ: hãy giữ điện thoại và để con tự nói, đừng nhắc từng chữ.",
+          "Look at your clean park map and your paragraph from class. Choose four things and note a reason and an example for each.",
+          "Practise your talk three times, in front of a mirror or to a friend on a call. Each time speak a little faster and with fewer stops.",
+          "Record it once. Hold up or point to your map, speak clearly and use linking words: first, also, however, because, for example.",
+          "Watch it once. Check every place sentence: is / are, and no 'behind of'. Tell yourself one thing you did well.",
         ],
-        maxSeconds: 150,
-        kidSummary: "Say where four things are in your park, with a because, and keep talking without long stops.",
+        maxSeconds: 180,
+        kidSummary: "Say where four things go in your park. Give a reason and an example for each one, and keep talking without long stops.",
         words: ["behind", "in front of", "above", "across from", "recycling bin", "trash"],
-        grammar: ["The ___ is behind / in front of / above / across from the ___.", "Where is the ___? Is it ___ the ___?"],
+        grammar: ["The ___ is behind / in front of / above / across from the ___.", "Where is the ___? Is it ___ the ___?", "I put it there because ___."],
         rubric: [
-          { label: "Four places", description: "Says where four things are in the park.", weight: 3 },
+          { label: "Four places", description: "Says where four things are or should go in the park.", weight: 2 },
           { label: "Place words", description: "Uses behind, in front of, above or across from correctly, with is / are.", weight: 3 },
-          { label: "Keeps going", description: "Talks without long stops; whole sentences, not single words.", weight: 3 },
-          { label: "Because", description: "Gives a reason for where the bin goes.", weight: 1 },
+          { label: "Reasons and examples", description: "Gives a reason (because, so) and an example (for example) for the places.", weight: 3 },
+          { label: "Keeps going", description: "Talks without long stops; whole, connected sentences, not single words.", weight: 3 },
         ],
         tiers: [
-          { level: "Support", who: "Children who need the frames", frames: ["The ___ is ___ the ___.", "Yes, it is. / No, it isn't."], tips: ["Point to each thing on your map."] },
-          { level: "Core", who: "Most children", frames: ["The ___ is ___ the ___, and the ___ is ___ the ___.", "I put the bin ___ the ___ because ___."], tips: ["Say two things in one sentence."] },
-          { level: "Stretch", who: "Children who are ready for more", frames: ["The bin is behind the tree, so the tree is in front of the bin.", "Is the ___ ___ the ___? No, it isn't."], tips: ["Give the pair, and ask a question too."] },
+          { level: "Support", who: "Students who need the frames", frames: ["The ___ is ___ the ___.", "I put it there because ___."], tips: ["Point to each thing on your map."] },
+          { level: "Core", who: "Most students", frames: ["The ___ is ___ the ___, and the ___ is ___ the ___.", "I put the bin ___ the ___ because ___. For example, ___."], tips: ["Say two things in one sentence and give an example."] },
+          { level: "Stretch", who: "Students who are ready for more", frames: ["The bin is behind the tree, so the tree is in front of the bin, although ___.", "If I put it ___, people ___."], tips: ["Give the pair, a contrast and what would change."] },
         ],
       },
     },
