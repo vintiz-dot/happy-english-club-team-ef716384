@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 18 "Exploring the
 // Ocean" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (SKY 1).
@@ -31,15 +32,99 @@ const feedbackTalk =
   "During a round, listen and do not stop the talk. Note two or three mistakes (no names). Between round 1 and round 2, stop for one minute: put two mistakes on the board ('Our group want to explore the deep sea.' 'We need take a camera.') and let the class fix them; children then say the fixed form in rounds 2 and 3. Prompt, do not tell: start the phrase and pause ('Our group wants ...?'), point to the word to on the frame, or hold up a finger for the missing -s. For a sound, say it right and let the child echo it. " +
   fixTip;
 
+
+const drillFeedback =
+  "Prompt, do not tell: for 'She want to swim' hold up a finger for the -s; for 'She wants swim' point to the word to on the frame card; for 'Does she has to go?' say 'Does she ...?' and pause for 'have'; for 'If I will live under the sea' or 'If I would live under the sea' cover the word will / would and say 'If I ...?' with a rising voice until the child says 'lived'; for 'I would goes' say 'I would ...?' and pause for the plain verb. For 'Although it was cold, but we swam' cover the word but. Say the final -s, -ed and the n't of wouldn't clearly yourself and let the child echo: Vietnamese learners often drop final sounds. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+  signNote?: string;
+  extra?: string;
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person). The class says the new sentence together." + (o.signNote ? " " + o.signNote : "") },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with the -s and the -ed where they belong.",
+      "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often " + o.slips + "), fix them together, then go on.",
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedback,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. Keep it brisk (about two seconds a sentence in chorus) and use the signs one at a time first, then two together. Mark nothing in writing: this is about speed and accuracy in speech." + (o.extra ? " " + o.extra : ""),
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
+// The unit's one Level 4 step (Oxford Discover 4 grammar): the second conditional.
+const stepTitle = "Level 4 step: The second conditional (If ... would)";
+const step: Slide = {
+  kind: "grammar",
+  title: stepTitle,
+  hook: "Dreaming? Put If + past simple in the first part and would + verb in the second.",
+  form: [
+    { label: "If part", pattern: "If + past simple: If I lived under the sea, ..." },
+    { label: "Result part", pattern: "would + plain verb: ... I would ride a dolphin to school." },
+    { label: "Either order", pattern: "I would ride a dolphin to school if I lived under the sea. (no comma in the middle)" },
+    { label: "Question and answer", pattern: "What would you do if you saw a shark? Would you swim away? Yes, I would. / No, I wouldn't." },
+    { label: "Rules with must", pattern: "must / mustn't / don't have to + plain verb: A diver must check the air. You mustn't touch the coral. You don't have to wear a coat." },
+  ],
+  explanation: [
+    "We use the second conditional to talk about things that are not true now, or that probably will not happen: dreams, wishes and 'what if' ideas. I do not live under the sea, but I can imagine it: 'If I lived under the sea, I would ride a dolphin to school.'",
+    "It grows out of this unit's grammar. You already say 'I want to see a whale.' Now you can say 'If I saw a whale, I would take a photo.' Look at the verb after If: it is in the past (lived, had, saw), but the meaning is NOT about the past. It is a dream about now. The second part always has would and then the plain verb, with no -s and no to. With the verb be we say were for every person: 'If I were a diver, I would check my air every time.'",
+    "Do not mix this up with the first conditional from Unit 4. 'If it rains, we will stay home' is a real plan. 'If I had a submarine, I would explore the deep sea' is a dream. You will meet this grammar again in Oxford Discover 4. Also remember the unit's rules: have to is a rule, must is a strong rule, mustn't means 'do not' and don't have to means 'you can choose'.",
+  ],
+  examples: [
+    { text: "If I lived under the sea, I would ride a dolphin to school.", note: "A dream: the If part is past simple." },
+    { text: "If I had a submarine, I would explore the deep sea.", note: "had + would explore." },
+    { text: "She would take a camera if she went to the coral reef.", note: "The two parts can change places; no comma." },
+    { text: "What would you do if you saw a shark? I would swim away.", note: "A question with would." },
+    { text: "Would you dive in the dark? No, I wouldn't. I would be scared.", note: "Short answer with wouldn't." },
+    { text: "A diver must check the air, but he doesn't have to wear a coat. He mustn't touch the coral.", note: "Rules: must, don't have to and mustn't." },
+  ],
+  pitfalls: [
+    { wrong: "If I will live under the sea, I would ride a dolphin.", right: "If I lived under the sea, I would ride a dolphin.", why: "After If we use the past simple for a dream, not will." },
+    { wrong: "If I would have a submarine, I would explore.", right: "If I had a submarine, I would explore.", why: "would belongs only in the result part. The If part has the past simple." },
+    { wrong: "She would goes to the reef.", right: "She would go to the reef.", why: "After would the verb is always plain: no -s, no -ed, no to." },
+  ],
+};
+
 export const odL3U18Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u18-l1": {
       objectives: ["I can say why people use goggles and what sea animals do, fast and without stopping."],
       trim: {
-        "Dive into what we know": 5,
-        "Stand on the line": 5,
-        "Sea sort: animal or plant? Group, describe, name": 6,
+        "Dive into what we know": 3,
+        "Stand on the line": 3,
+        "Sea sort: animal or plant? Group, describe, name": 4,
         "Have you seen it? (SB 176 B)": 8,
         "Where in the world? (SB 177 Think)": 3,
         "Who am I? Clue game": 3,
@@ -52,7 +137,7 @@ export const odL3U18Lab: UnitLab = {
             title: "Goggles sprint: say it all in one breath",
             routine: "chunk sprint",
             mode: "whole",
-            minutes: 7,
+            minutes: 6,
             goal: "Say the whole sentence, fast and smooth, with no stops.",
             chunks: [
               "People use goggles because the water hurts their eyes.",
@@ -84,6 +169,29 @@ export const odL3U18Lab: UnitLab = {
           },
         },
         {
+          after: "Goggles sprint: say it all in one breath",
+          slide: drill({
+            title: "Grammar drill: want to, need to, ask it, say no",
+            goal: "Say a want to or need to sentence about the sea, then change it fast with a sign.",
+            chunks: [
+              "I want to see a whale.",
+              "Divers need to wear goggles because the water hurts their eyes.",
+              "My sister wants to swim in the sea.",
+              "Does he need to take a boat? No, he doesn't.",
+              "We don't have to wear coats because the water is warm.",
+              "I want to dive, but I have to wait for my teacher.",
+            ],
+            recycle: ["By the time the explorers arrived, the ship had left.", "If we move to the city, I will go to a new school.", "Have you watered them yet?"],
+            prompts: ["I want to see a whale.  (sign: ?)", "Divers need to wear goggles.  (sign: X)", "She wants to swim.  (sign: +)", "He needs a boat.  (sign: T)", "I have to wait.  (sign: P)"],
+            real: "Real talk with a new partner: What do you want to do at the sea? What do you have to do before school? Answer in whole sentences. Then tell the class one thing your partner wants to do.",
+            slips: "'She want to swim', 'She wants swim', 'Does she has to'",
+            support: ["I want to ___.", "Do you want to ___? Yes, I do. / No, I don't."],
+            stretch: "Use T to say what you wanted, and then say what you would like: 'I wanted to see a whale, but I had to wait. I would like to see a whale one day.'",
+            stretchFrames: ["I wanted to ___, but I had to ___.", "I would like to ___ one day."],
+            extra: "The Stretch gives a first taste of would, which grows into the second conditional in lesson 3.",
+          }),
+        },
+        {
           after: "Sea sort: animal or plant? Group, describe, name",
           slide: {
             kind: "writing",
@@ -91,7 +199,7 @@ export const odL3U18Lab: UnitLab = {
             routine: "paragraph",
             genre: "description",
             mode: "solo",
-            minutes: 9,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the topic sentence, the details and the closing sentence.",
               "Plan: pick one sea animal. Fill the four boxes with a few words each, not whole sentences. Ask yourself: where, what, why?",
@@ -137,8 +245,9 @@ export const odL3U18Lab: UnitLab = {
         "Monitor and clarify: question-mark notes": 6,
         "Read it in different ways": 6,
         "Gist talk": 4,
-        "Organize: problem, idea, result": 8,
-        "Poster talks": 10,
+        "Organize: problem, idea, result": 6,
+        "Poster talks": 8,
+        "A short biography": 6,
       },
       add: [
         {
@@ -178,6 +287,29 @@ export const odL3U18Lab: UnitLab = {
               { level: "Stretch", task: "Add why it matters: 'I think it is important because ...'", frames: ["I think exploring is important because ___."] },
             ],
           },
+        },
+        {
+          after: "Explorer story: tell it again, faster",
+          slide: drill({
+            title: "Grammar drill: wanted to, had to, ask it, say no",
+            goal: "Say a want to or have to sentence about the explorer, then change the time with the T sign.",
+            chunks: [
+              "The explorer wanted to see the deep ocean.",
+              "She needed to carry air, so she wore a tank.",
+              "Divers had to learn the rules before they dived.",
+              "Did she want to go alone? No, she didn't.",
+              "She didn't have to go, but she wanted to.",
+              "I want to explore, although it is dangerous.",
+            ],
+            recycle: ["We have grown tomatoes since May.", "By the time the explorers arrived, the ship had left."],
+            prompts: ["The explorer wants to dive.  (sign: T)", "Divers need to check the air.  (sign: ?)", "She has to wear a tank.  (sign: X)", "He wants to go.  (sign: +)", "They want to swim.  (sign: P)"],
+            real: "Real talk with a new partner: What did you want to do last weekend? What did you have to do? Use wanted to and had to. Then tell the class one thing your partner wanted to do.",
+            slips: "'She wanted to saw', 'Did she wanted', the dropped -ed on wanted",
+            support: ["She wanted to ___.", "Did she want to ___? Yes, she did. / No, she didn't."],
+            stretch: "Say what would change the story: 'She wanted to stay longer. If she had more air, she would stay down longer.'",
+            stretchFrames: ["If she had ___, she would ___."],
+            extra: "The Stretch previews if + past simple, would + verb; the full step comes in lesson 3.",
+          }),
         },
         {
           after: "Organize: problem, idea, result",
@@ -246,13 +378,43 @@ export const odL3U18Lab: UnitLab = {
       objectives: ["I can ask and answer questions with want to, need to and have to, fast and without stopping."],
       trim: {
         "Which ocean animal? (SB 180 Think)": 3,
-        "A floating research lab (SB 180 B)": 6,
+        "A floating research lab (SB 180 B)": 4,
         "Song time (SB 181 D)": 5,
         "Choice or must? Traffic lights": 3,
-        "Pack for an exploration": 9,
+        "Pack for an exploration": 7,
+        "Discover the rule": 8,
         "Our big idea": 3,
       },
       add: [
+        {
+          after: "want to, need to, have to",
+          slide: step,
+        },
+        {
+          after: stepTitle,
+          slide: drill({
+            title: "Grammar drill: want to, need to, then If ... would",
+            goal: "Say want to, need to and have to sentences fast, then make a dream sentence with If ... would.",
+            chunks: [
+              "She wants to swim with a dolphin.",
+              "Divers need to check their air.",
+              "Does he have to wear a life jacket? Yes, he does.",
+              "We don't have to hurry, but we must be careful.",
+              "If I lived under the sea, I would ride a dolphin to school.",
+              "If I had a submarine, I would explore the deep sea.",
+              "What would you do if you saw a shark?",
+            ],
+            recycle: ["If we move to the city, I will go to a new school.", "By the time the explorers arrived, the ship had left.", "First the seeds are planted. Then they are watered."],
+            prompts: ["She wants to swim.  (sign: ?)", "Divers need to check the air.  (sign: X)", "We have to wear jackets.  (sign: P)", "I live under the sea.  (sign: If)", "I have a submarine.  (sign: If)"],
+            signNote: "In the last part of the round use the new sign If: say a sentence and the class turns it into a dream (I live ... -> If I lived ..., I would ...).",
+            real: "Real talk, the Level 4 step: ask your partner 'What would you do if you lived under the sea?' and answer 'If I lived under the sea, I would ...'. Then ask 'What would you take if you explored the ocean?' Tell the class one thing your partner would do.",
+            slips: "'If I will live', 'If I would live', 'I would goes', the missing -s on wants and needs",
+            support: ["I want to ___.", "If I ___, I would ___."],
+            stretch: "Join the step with rules: 'If I were a diver, I would check my air every time, because a diver must be careful. I mustn't touch the coral, but I don't have to wear a coat.'",
+            stretchFrames: ["If I ___, I would ___, because I must ___.", "I mustn't ___, but I don't have to ___."],
+            extra: "The first lesson with the step: do rounds 1 and 2 on the unit's want / need / have to, and keep the If ... would for round 3 and the Stretch so that nobody is lost.",
+          }),
+        },
         {
           after: "Want and need chart (SB 181 G)",
           slide: {
@@ -300,7 +462,7 @@ export const odL3U18Lab: UnitLab = {
             routine: "paragraph",
             genre: "explanation",
             mode: "solo",
-            minutes: 9,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the topic sentence, the needs and the closing sentence.",
               "Plan: think of an explorer or a diver. Fill the four boxes with a few words each, not whole sentences.",
@@ -340,14 +502,14 @@ export const odL3U18Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u18-l4": {
       objectives: ["I can join ideas with although and say it fast, with no stops."],
+      drop: ["Adventure chain"],
       trim: {
-        "Adventure chain": 3,
         "Think: adventures (SB 182 Think)": 3,
         "Listening for detail (SB 182 A)": 6,
         "Compound nouns (SB 183 D)": 8,
         "Underline the two parts (SB 183 F)": 3,
         "Although chain": 3,
-        "Pick your place": 4,
+        "Pick your place": 3,
       },
       add: [
         {
@@ -388,6 +550,28 @@ export const odL3U18Lab: UnitLab = {
           },
         },
         {
+          after: "Joining ideas with although",
+          slide: drill({
+            title: "Grammar drill: although, ask it, say no, then If ... would",
+            goal: "Join two ideas with although, change the sentence fast with a sign, then use If ... would in real talk.",
+            chunks: [
+              "Although the water was cold, we swam.",
+              "We swam although the water was cold.",
+              "Although she felt nervous, she wanted to dive.",
+              "Did you swim although it was cold? Yes, I did.",
+              "Although it is dangerous, explorers must wear a tank.",
+              "If I met a shark, I would feel nervous, although I would stay calm.",
+            ],
+            recycle: ["I was reading when a beetle landed on my book.", "By the time the explorers arrived, the ship had left."],
+            prompts: ["Although it was cold, we swam.  (sign: P)", "We swam although it was cold.  (sign: ?)", "She felt nervous, but she dived.  (sign: +)", "I like octopuses.  (sign: X)", "If I met a shark, I would swim away.  (sign: X)"],
+            real: "Real talk, the Level 4 step: ask your partner 'If you met a shark, what would you do?' and answer 'If I met a shark, I would ... although I would feel ...'. Tell the class one thing your partner would do.",
+            slips: "'Although it was cold, but we swam', 'If I will meet', 'I would goes'",
+            support: ["Although ___, I ___.", "If I ___, I would ___."],
+            stretch: "Join although with the step: 'If I swam with a shark, I would feel nervous, although I would stay still.'",
+            stretchFrames: ["If I ___, I would ___, although ___."],
+          }),
+        },
+        {
           after: "Underline the two parts (SB 183 F)",
           slide: {
             kind: "writing",
@@ -395,7 +579,7 @@ export const odL3U18Lab: UnitLab = {
             routine: "paragraph",
             genre: "personal recount",
             mode: "solo",
-            minutes: 9,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the where and when, the feeling, the although sentence and the closing sentence.",
               "Plan: think of one adventure you tried. Fill the four boxes with a few words each, not whole sentences.",
@@ -438,13 +622,13 @@ export const odL3U18Lab: UnitLab = {
         steps: [
           "Choose one adventure. Write three key words, not sentences.",
           "Say your talk three times to a grown-up or a toy. Each time, a little faster and smoother, like in class.",
-          "Record it once. Use although at least two times.",
+          "Record it once. Use although at least two times, and say one dream sentence: 'If I ..., I would ...'.",
           "The last time, say it without looking at your key words.",
         ],
         maxSeconds: 180,
         kidSummary: "Tell about an adventure with although, and keep talking without long stops.",
         words: ["adventure", "freezing", "nervous", "dangerous", "explore", "ocean"],
-        grammar: ["Although + idea 1, idea 2.", "Idea 2 although idea 1."],
+        grammar: ["Although + idea 1, idea 2.", "Idea 2 although idea 1.", "If + past simple, would + verb"],
         rubric: [
           { label: "Although sentences", description: "Uses although to join two ideas at least twice, with no but in the same sentence.", weight: 3 },
           { label: "Keeps going", description: "Talks without long stops, in whole sentences.", weight: 3 },
@@ -465,8 +649,9 @@ export const odL3U18Lab: UnitLab = {
       trim: {
         "Two units in 60 seconds": 3,
         "Read the interview (SB 184 A)": 6,
-        "Answer and trace the route (SB 184 B)": 5,
-        "Interview role play": 6,
+        "Answer and trace the route (SB 184 B)": 4,
+        "Interview role play": 4,
+        "Group presentations: Planning an Exploration": 12,
         "Project: plan an exploration (SB 185 C)": 6,
         "Big Question review (SB 185 A-C)": 8,
         "Test our big ideas": 3,
@@ -510,13 +695,37 @@ export const odL3U18Lab: UnitLab = {
           },
         },
         {
+          after: "Exploration talk 4-3-2: three partners",
+          slide: drill({
+            title: "Grammar drill: our plan, ask it, say no, If we explored",
+            goal: "Say plan sentences with want to, need to and have to, change them fast, then dream with If we explored ... we would ...",
+            chunks: [
+              "Our group wants to explore the deep sea.",
+              "We need to take a camera because we want to show everyone.",
+              "We have to be careful, although it is exciting.",
+              "Do you want to go to the Arctic? No, I don't.",
+              "If we explored the deep sea, we would take a strong light.",
+              "If we found a new fish, we would give it a name.",
+              "What would you take if you explored the ocean?",
+            ],
+            recycle: ["By the time the explorers arrived, the ship had left.", "We are flying to Tokyo on Monday.", "It must be solar power."],
+            prompts: ["Our group wants to explore.  (sign: ?)", "We need a camera.  (sign: X)", "We have to be careful.  (sign: +)", "He wants to dive.  (sign: P)", "We explore the sea.  (sign: If)"],
+            signNote: "Add the sign If: the class turns a plan into a dream (We explore ... -> If we explored ..., we would ...).",
+            real: "Real talk, the Level 4 step: ask your partner 'If you explored a new place, where would you go and what would you take?' and answer 'If I explored ..., I would take ...'. Tell the class one thing your partner would take.",
+            slips: "'If we will explore', 'we would takes', 'Our group want'",
+            support: ["We want to ___.", "If we ___, we would ___."],
+            stretch: "Add a rule with must: 'If we explored the deep sea, we would take a strong light, because we must see in the dark. We mustn't touch the animals.'",
+            stretchFrames: ["If we ___, we would ___, because we must ___.", "We mustn't ___."],
+          }),
+        },
+        {
           after: "How to write an interview (Learn box)",
           slide: {
             kind: "writing",
             title: "Write three interview questions",
             routine: "model, then write",
             mode: "solo",
-            minutes: 5,
+            minutes: 4,
             steps: [
               "Read the model. Find the three question words and the question marks.",
               "Plan: think of an explorer and write one key word for each question.",
@@ -547,8 +756,32 @@ export const odL3U18Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "od2e-l3-u18-l6": {
       objectives: ["I can say sentences with want to, need to and have to, fast and right."],
-      trim: { "Remember it!": 3, "Pack the submarine": 8 },
+      trim: { "Remember it!": 3, "Pack the submarine": 6, "Grammar detectives: Is / Is Not": 8, "Write it: my exploration plan": 10 },
       add: [
+        {
+          after: "Grammar: want to, need to, have to",
+          slide: drill({
+            title: "Grammar drill: champions, want to, need to, If ... would",
+            goal: "Say want, need and have to sentences fast and right, then dream with If ... would and rules with must.",
+            chunks: [
+              "The explorer wants to find a new kind of fish.",
+              "Does she have to carry the rope? Yes, she does.",
+              "He doesn't need to take a coat because the water is warm.",
+              "We must wear life jackets, and we mustn't touch the coral.",
+              "If I found a treasure chest, I would give it to a museum.",
+              "If the sea were warm all year, we would swim every day.",
+              "Would you go down in a submarine? Yes, I would. / No, I wouldn't.",
+            ],
+            recycle: ["If we move to the city, I will go to a new school.", "Have you watered them yet?", "By the time the explorers arrived, the ship had left."],
+            prompts: ["She wants to find a fish.  (sign: ?)", "He needs a coat.  (sign: X)", "We have to wear jackets.  (sign: T)", "I find a treasure chest.  (sign: If)", "You touch the coral.  (sign: mustn't)"],
+            signNote: "Use the two new signs: If (make a dream sentence) and mustn't (make a rule).",
+            real: "Real talk, both grammars: tell your partner what you want to do and have to do this week, then ask 'If you found a treasure chest, what would you do?' and answer 'If I found a treasure chest, I would ...'. Tell the class one thing your partner would do.",
+            slips: "'She want to', 'does she has to', 'If I will find', 'I would giving'",
+            support: ["I want to ___.", "If I ___, I would ___."],
+            stretch: "Make a long champion sentence: 'If I explored the deep sea, I would take a light because I need to see in the dark, but I wouldn't touch the coral, and I don't have to take a coat.'",
+            stretchFrames: ["If I ___, I would ___ because I need to ___.", "I wouldn't ___, and I don't have to ___."],
+          }),
+        },
         {
           after: "Pack the submarine",
           slide: {
@@ -617,7 +850,7 @@ export const odL3U18Lab: UnitLab = {
             tiers: [
               { level: "Support", task: "Expand items 1 and 2 with the frames on the board." },
               { level: "Core", task: "Expand all four items." },
-              { level: "Stretch", task: "Write two more sentences about your own exploration with because and so." },
+              { level: "Stretch", task: "Write two more sentences about your own exploration with because and so, and one dream sentence: 'If I explored the deep sea, I would ...'." },
             ],
           },
         },
@@ -630,13 +863,13 @@ export const odL3U18Lab: UnitLab = {
         steps: [
           "Pack your bag or draw it. Choose three things for your exploration.",
           "Say your talk three times to a grown-up or a toy. Each time, a little faster and smoother, like in class.",
-          "Record it once. Show each thing as you talk.",
+          "Record it once. Show each thing as you talk, and say one dream sentence: 'If I explored the deep sea, I would ...'.",
           "The last time, say it without looking at your drawing.",
         ],
         maxSeconds: 180,
         kidSummary: "Say what you want to do, what you need to take and what you have to do, and keep talking without long stops.",
         words: ["explore", "goggles", "camera", "rope", "life jacket", "dangerous"],
-        grammar: ["want to + verb", "need to + verb", "have to + verb", "because / so"],
+        grammar: ["want to + verb", "need to + verb", "have to + verb", "because / so", "If + past simple, would + verb"],
         rubric: [
           { label: "want, need, have to", description: "Uses want to, need to and have to with the little word to and a plain verb.", weight: 3 },
           { label: "Keeps going", description: "Talks without long stops, in whole sentences, not single words.", weight: 3 },

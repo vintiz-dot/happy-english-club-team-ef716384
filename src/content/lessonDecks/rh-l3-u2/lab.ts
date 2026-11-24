@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Reach Higher Level 3, Unit 2 "Nature's Balance"
 // (src/lib/lessonDecks/lab.ts puts it into the decks). Jupiter, ages 9-10, preparing for
@@ -15,12 +16,104 @@ const sound =
 const fixMinute =
   "During a round, listen and do not stop the talk. Note two or three grammar mistakes (no names). Between rounds 1 and 2, write them on the board and let the class fix them in one minute: children who then say it again use the fixed form. For grammar, prompt the child to fix it rather than saying it for them: ";
 
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk
+// (Jupiter, ages 9-10 at B1, toward the Level 4 grammar of SKY 1). Lesson-specific text comes
+// from each lesson; the shape, the rounds and the tiers are the same.
+const drillFeedback =
+  "Prompt, do not tell: hold up a finger for the missing word, start the phrase and pause, or repeat the slip with a rising voice and let the child fix it. For a sound, recast: say it right and the child echoes. Say every final -s, -d and -ed clearly yourself. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson. ";
+
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fb: string;
+  note: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when / unless, T = change the time or the tense, or rewrite it with the same meaning, P = change the person). The class says the new sentence together." },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Try two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change it and say the WHOLE new sentence.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them with the class, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about you, and remember one thing your partner said.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedback + o.fb,
+    teacherNote: o.note,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const rhL3U2Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "rh-l3-u2-l1": {
       objectives: ["I can ask a Wh- or How question quickly and correctly, without stopping."],
+      trim: { "Four corners: how much should people change nature?": 8, "Is it balance? Sort the cards (concept formation)": 11 },
       add: [
+        {
+          after: "Wh- and How questions",
+          slide: drill({
+            "title": "Grammar drill: ask it, answer it, ask more",
+            "goal": "Change the sentence fast and right: ask about it, say no, join it with a reason, change the time or the person. Then ask real questions about your own week.",
+            "chunks": [
+              "What do snakes eat, and how often do they eat?",
+              "Where does a camel live, and how long can it go without water?",
+              "How many eggs did the bird lay, and how long did it sit on them?",
+              "Why did the frogs leave the pond? Because the water was dirty.",
+              "What ate the roots? A gopher ate them.",
+              "How much water does a camel drink, and how many humps does it have?"
+            ],
+            "recycle": [
+              "She helps her neighbours every Sunday.",
+              "My friends and I carry the bags."
+            ],
+            "prompts": [
+              "Snakes eat rats. (? what)",
+              "The tortoise lived for 150 years. (? how long)",
+              "She waters the plants twice a week. (T: last week)",
+              "The bird laid four eggs. (? how many)",
+              "A gopher ate the roots. (? what ate)",
+              "The frogs left the pond. (+ because the water was dirty)"
+            ],
+            "real": "Real talk: ask your partner four questions about their week or their favourite animal (What, Where, How often, How long or How many). Answer in whole sentences, then say what you think and why.",
+            "slips": "'Where does the bird lives?', a missing do / does / did, or 'How many water'",
+            "fb": "For a missing helper hold up a finger and say 'What ... the frog eat?'; for 'does she waters' repeat it with a rising voice ('She waters?') so the child takes off the extra -s; for 'How many water' ask 'Can you count water?'. Common Vietnamese-learner slips here: no helper at all (Vietnamese questions do not need one), -s or -ed after do / does / did, and the wrong word order after the Wh- word.",
+            "note": "Round 1 is the exam move 'ask about the underlined part': say the statement, point to the underlined words, and the class asks the question. Say the helper (do / does / did) clearly and keep the verb after it plain. Round 3 must be real: children ask questions they do not know the answer to.",
+            "support": [
+              "What do / does ___ ___?",
+              "How often / How long ___?"
+            ],
+            "stretch": "Use two signs at once and turn it into an exam rewrite: 'The tortoise lived for 150 years.' becomes 'How long did the tortoise live?' Then ask a follow-up question.",
+            "stretchFrames": [
+              "How long did ___ ___?",
+              "How often does ___ ___?"
+            ]
+          }),
+        },
         {
           after: "Exam practice: ask about the underlined part",
           slide: {
@@ -129,8 +222,50 @@ export const rhL3U2Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u2-l2": {
       objectives: ["I can tell a cause-and-effect chain with 'so' and 'because', smoothly, three times."],
-      trim: { "Chain reaction: one small change": 7 },
+      trim: { "Chain reaction: one small change": 5, "Chain-talk in threes": 9, "Write: a chain-reaction story start": 11 },
       add: [
+        {
+          after: "Four kinds of sentence, and cause with because / so",
+          slide: drill({
+            "title": "Grammar drill: so, because, what a!",
+            "goal": "Change the sentence fast and right: ask why, join with so or because, turn it into a command or an exclamation. Then explain a real cause and effect.",
+            "chunks": [
+              "The river dried up, so the fish died.",
+              "The fish died because the river dried up.",
+              "Why did the fish die? Because the river dried up.",
+              "Plant more trees, because the birds need homes!",
+              "What a sad garden it was!",
+              "How quickly the flowers died!",
+              "Because it rained, we stayed in."
+            ],
+            "recycle": [
+              "What do snakes eat?",
+              "How long did the tortoise live?",
+              "She helps her neighbours every Sunday."
+            ],
+            "prompts": [
+              "The flowers died. The bees left. (+ so)",
+              "The flowers died. The bees left. (+ because)",
+              "The bees left. (? why)",
+              "It was a beautiful day. (! What a)",
+              "The river is flowing fast. (! How)",
+              "The bees left because the flowers died. (T: say it with so)"
+            ],
+            "real": "Real talk: tell your partner about something that happened to you or in your street this week, and what it caused. Use so and because. Your partner asks 'Why?' once.",
+            "slips": "'Because it rained. We stayed in.' (half a sentence), 'What beautiful garden', or so and because the wrong way round",
+            "fb": "For a half sentence put one finger on each part and ask 'Is that one idea?'; for 'What beautiful garden' hold up a finger for the missing 'a'; for so / because the wrong way round ask 'What happened first?' and point to the cause. Vietnamese has no a / an, so the missing 'a' after What is the most common slip.",
+            "note": "'Rewrite without changing the meaning' is the exam's own format: so and because are two ways to say the same cause and effect, and the T sign switches between them. Keep the exclamations short and loud: they are fun, and they stay in memory.",
+            "support": [
+              "___, so ___.",
+              "___ because ___."
+            ],
+            "stretch": "Use two signs at once and rewrite in both orders: 'The bees left because the flowers died.' = 'The flowers died, so the bees left.' Then add 'Because ..., ...' at the start.",
+            "stretchFrames": [
+              "Because ___, ___.",
+              "___, so ___. What a ___!"
+            ]
+          }),
+        },
         {
           after: "Exam practice: rewrite without changing the meaning",
           slide: {
@@ -211,8 +346,120 @@ export const rhL3U2Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u2-l3": {
       objectives: ["I can describe a before and after with 'fewer', 'less', 'a few' and 'a little' for two minutes."],
-      trim: { "Before and after: what changed in the garden?": 9 },
+      trim: { "Before and after: what changed in the garden?": 7, "Write: a food-chain riddle": 11 },
       add: [
+        {
+          after: "Quantifiers: countable and uncountable",
+          slide: {
+            "kind": "grammar",
+            "title": "Level 4 step: too many, too much, not enough",
+            "hook": "Too many and too much say there is more than we need; not enough says there is less than we need.",
+            "form": [
+              {
+                "label": "too many + plural noun",
+                "pattern": "There are too many deer in the park."
+              },
+              {
+                "label": "too much + uncountable noun",
+                "pattern": "There is too much rubbish in the pond."
+              },
+              {
+                "label": "(not) enough + noun",
+                "pattern": "There isn't enough water. / There are enough plants."
+              },
+              {
+                "label": "adjective + enough (+ to + verb)",
+                "pattern": "The pond is warm enough to swim in. / The river isn't clean enough for fish."
+              },
+              {
+                "label": "too + adjective",
+                "pattern": "The river is too dirty for fish to live in."
+              }
+            ],
+            "explanation": [
+              "Too many and too much tell us that a number or an amount is more than we want, and it causes a problem. Use too many with things we can count (deer, cars, bottles) and too much with things we cannot count (rubbish, noise, water). It is the same split as many and much in this unit.",
+              "Enough tells us that something is as much as we need. With a noun, enough comes before it (enough food). With an adjective, enough comes after it (warm enough). 'Not enough' is the problem word, like 'too many': both name a balance that has gone wrong.",
+              "This links to Nature's Balance: when there are too many deer and not enough plants, the balance breaks. It also links to 'too ... to' and 'adjective + enough to' in this unit's last lesson, which the entrance exam asks you to rewrite."
+            ],
+            "examples": [
+              {
+                "text": "There are too many deer, so the young trees don't grow."
+              },
+              {
+                "text": "There is too much rubbish in the pond, and the fish can't breathe."
+              },
+              {
+                "text": "There isn't enough water for all the plants."
+              },
+              {
+                "text": "The lake is clean enough for ducks to live in."
+              },
+              {
+                "text": "The pond isn't big enough for so many fish, so some have to leave."
+              },
+              {
+                "text": "If there are not enough wolves, the elk will eat too many young trees."
+              }
+            ],
+            "pitfalls": [
+              {
+                "wrong": "There are too much deer in the park.",
+                "right": "There are too many deer in the park.",
+                "why": "Deer can be counted, so we use too many, not too much."
+              },
+              {
+                "wrong": "The pond isn't enough big for the ducks.",
+                "right": "The pond isn't big enough for the ducks.",
+                "why": "With an adjective, enough comes after it. With a noun, enough comes before it (enough water)."
+              },
+              {
+                "wrong": "The water is too much dirty.",
+                "right": "The water is too dirty.",
+                "why": "Before an adjective we say too, not too much."
+              }
+            ]
+          },
+        },
+        {
+          after: "Level 4 step: too many, too much, not enough",
+          slide: drill({
+            "title": "Grammar drill: many, much, fewer, less",
+            "goal": "Change the sentence fast and right: ask how many or how much, say no, join it with a reason, choose fewer or less. Then compare a real place now and before.",
+            "chunks": [
+              "There were fewer caterpillars and less colour in the garden.",
+              "How many birds can you see, and how much water is there?",
+              "There isn't much water, but there are a few fish.",
+              "There are fewer trees than last year, so there is less shade.",
+              "Is there any water in the pond? No, but there are some puddles.",
+              "There are too many deer, and there aren't enough plants."
+            ],
+            "recycle": [
+              "What does a camel eat?",
+              "The bees left because the flowers died."
+            ],
+            "prompts": [
+              "There are many birds. (X)",
+              "There is a lot of water. (? how much)",
+              "There were many fish last year. (T: now, fewer)",
+              "There is little water. (+ so the plants are dry)",
+              "There are a few trees. (P: in my street)",
+              "There are too many cars here. (+ because)"
+            ],
+            "real": "Real talk: compare your street or your school now and before (or your street and your grandparents' village). Use fewer and less, and say what is too many or not enough. Your partner asks 'How many ...?' or 'How much ...?' once.",
+            "slips": "'less people', 'many water' or 'I have many homeworks'",
+            "fb": "For 'less people' ask 'Can you count people?'; for 'many water' hold up a finger and ask 'Water: many or much?'; for 'many homeworks' say 'Homework ... a lot of?' with a rising voice. Common Vietnamese-learner slips: treating every noun as countable, because Vietnamese has no plural -s; and 'How many money'.",
+            "note": "Today's step (too many / too much / not enough) goes into the last chunk, round 3 and Stretch. The exam format here is 'choose the quantity word' and 'rewrite with fewer / less'; the T sign practises 'There were more fish last year.' = 'There are fewer fish now.' Say the -s on plurals clearly yourself.",
+            "support": [
+              "How many ___ are there?",
+              "There is / There are ___."
+            ],
+            "stretch": "Use two signs at once and the step: 'There were more fish last year than now.' = 'There are fewer fish now than last year.' Then say what there are too many of and not enough of.",
+            "stretchFrames": [
+              "There are too many ___ and not enough ___.",
+              "There is too much ___."
+            ]
+          }),
+        },
         {
           after: "Exam practice: choose the quantity word",
           slide: {
@@ -310,7 +557,7 @@ export const rhL3U2Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Say what the place was like, what changed, and use fewer and less in the right places. Keep going without long stops.",
         words: ["fewer", "less", "a few", "a little", "a lot of", "change"],
-        grammar: ["Countable: many, a few, fewer", "Uncountable: much, a little, less", "a lot of"],
+        grammar: ["Countable: many, a few, fewer", "Uncountable: much, a little, less", "a lot of", "too many / too much / not enough"],
         rubric: [
           { label: "Before and after", description: "Says clearly what the place was like before and what is different now.", weight: 2 },
           { label: "Quantity words", description: "Uses fewer with things you can count and less with things you can't.", weight: 3 },
@@ -328,8 +575,49 @@ export const rhL3U2Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "rh-l3-u2-l4": {
       objectives: ["I can say what will happen if something changes, using 'if' and 'will', fast and right."],
-      trim: { "Generalize: what happens when one thing changes?": 10, "Story or riddle? Compare the genres": 4 },
+      trim: { "Generalize: what happens when one thing changes?": 7, "Story or riddle? Compare the genres": 3, "Write: advice for the villagers": 13 },
       add: [
+        {
+          after: "The first conditional",
+          slide: drill({
+            "title": "Grammar drill: if, will, unless",
+            "goal": "Change the sentence fast and right: ask what will happen, say no, join with if or unless, change the person. Then predict real things.",
+            "chunks": [
+              "If we cut down the trees, the soil will wash away.",
+              "What will happen if the rain doesn't come? The plants will die.",
+              "The plants won't grow unless we water them.",
+              "If there are too many deer, the young trees won't have enough space.",
+              "If it rains tomorrow, we won't go to the park.",
+              "Will the birds come back if we plant more flowers? Yes, they will."
+            ],
+            "recycle": [
+              "There were fewer birds and less water.",
+              "There are too many cars and not enough trees.",
+              "The bees left because the flowers died."
+            ],
+            "prompts": [
+              "We plant trees. The air gets cleaner. (+ if)",
+              "If it rains, the pond fills. (X: both parts)",
+              "If the rain doesn't come, the plants die. (? what will happen)",
+              "If you don't water them, the plants will die. (T: say it with unless)",
+              "If I am late, I will miss the bus. (P: she)",
+              "There are too many cars. (+ the air will get dirty)"
+            ],
+            "real": "Real talk: tell your partner what will happen in your street, your school or the sea if people do not change one thing (for example, too much rubbish or too many cars). Use if and unless. Your partner asks 'What will happen if ...?' once.",
+            "slips": "'If it will rain', a missing comma after the if part, or 'Unless you don't study'",
+            "fb": "For 'If it will rain' repeat it with a rising voice ('If it will rain?') so the child hears it and says 'If it rains'; for a missing comma pause with your hand where the comma goes; for 'Unless you don't' ask 'Unless means if ... what?' and point to the frame. Common Vietnamese-learner slips: will in the if part, and a double negative with unless.",
+            "note": "The exam format is 'rewrite with unless / if': 'If you don't hurry, you will miss the bus.' = 'Unless you hurry, you will miss the bus.' The T sign practises it. Round 3 uses the step from Lesson 3 (too many, not enough) as the cause. Listen for the present simple after if and the plain verb after will.",
+            "support": [
+              "If ___, ___ will ___.",
+              "What will happen if ___?"
+            ],
+            "stretch": "Use two signs at once and the exam rewrite: 'If you don't water the plants, they will die.' = 'Unless you water the plants, they will die.' Add a second result with 'so' and the step.",
+            "stretchFrames": [
+              "Unless ___, ___ will ___.",
+              "If there are too many ___, ___ will ___."
+            ]
+          }),
+        },
         {
           after: "Exam practice: conditional rewrites",
           slide: {
@@ -419,8 +707,49 @@ export const rhL3U2Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u2-l5": {
       objectives: ["I can talk about how things used to be and what changed, with 'used to' and the past simple."],
-      trim: { "Commands in the wild (Part 2 Language Focus)": 8, "Write: the diary of an old tree": 11 },
+      trim: { "Commands in the wild (Part 2 Language Focus)": 5, "Write: the diary of an old tree": 8, "4/3/2: how my neighbourhood used to be": 9 },
       add: [
+        {
+          after: "Past simple and used to",
+          slide: drill({
+            "title": "Grammar drill: used to, didn't use to, did you use to",
+            "goal": "Change the sentence fast and right: ask with did, say no with didn't use to, join it, change the person. Then talk about how things used to be where you live.",
+            "chunks": [
+              "Wolves used to hunt in the park, but the farmers killed them.",
+              "Did the elk use to eat young trees? Yes, they did.",
+              "I didn't use to like spiders, but now I do.",
+              "There used to be too many deer, so there weren't enough young trees.",
+              "We helped, we played and we wanted to stay.",
+              "When I was small, I used to live near a lake."
+            ],
+            "recycle": [
+              "If we cut down the trees, the soil will wash away.",
+              "How long did the tortoise live?",
+              "There were fewer fish and less water."
+            ],
+            "prompts": [
+              "Wolves used to hunt in the park. (?)",
+              "Wolves used to hunt in the park. (X)",
+              "The farmers killed the wolves. The elk ate the young trees. (+ so)",
+              "I live in Hanoi now. (T: when I was small)",
+              "She used to live in Huế. (P: they)",
+              "There used to be enough water. (+ but now)"
+            ],
+            "real": "Real talk: tell your partner how your street, your school or your own habits used to be, and what changed. Use used to, didn't use to and a past-simple sentence for what happened. Your partner asks 'Did you use to ...?' once.",
+            "slips": "'use to' in a statement, 'Did you used to', or the -ed dropped in helped and wanted",
+            "fb": "For 'Did they used to' repeat it with a rising voice ('Did they used?') and let the child take the -d off; for a missing -d in 'used to' say the -d loudly and ask the child to echo it; for -ed endings recast and exaggerate /t/, /d/ and /ɪd/. Common Vietnamese-learner slips: no -d in 'used to' (it sounds the same in fast speech) and -ed missing from past verbs.",
+            "note": "The exam format is 'rewrite with used to': 'My grandfather lived in a village, but now he lives in town.' = 'My grandfather used to live in a village.' The T sign practises it. Say the -d in 'used to' clearly yourself. The step comes back in the fourth chunk and in Stretch (too many, not enough).",
+            "support": [
+              "___ used to ___.",
+              "Did you use to ___?"
+            ],
+            "stretch": "Use two signs at once and the exam rewrite: 'He doesn't play outside as much as before.' = 'He used to play outside more.' Add 'There used to be enough ___, but now there is too much ___.'",
+            "stretchFrames": [
+              "I didn't use to ___, but now ___.",
+              "There used to be enough ___, but now ___."
+            ]
+          }),
+        },
         {
           after: "Sound spot and rewrites",
           slide: {
@@ -537,8 +866,49 @@ export const rhL3U2Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "rh-l3-u2-l6": {
       objectives: ["I can retell how the park changed, with 'for' and 'since', smoothly and fast."],
-      trim: { "Video case: a reef out of balance": 8, "Write: a newspaper report, 30 years later": 11, "Connect two cases: wolves and giant fish": 10 },
+      trim: { "Video case: a reef out of balance": 5, "Write: a newspaper report, 30 years later": 8, "Connect two cases: wolves and giant fish": 7 },
       add: [
+        {
+          after: "Present perfect with for and since",
+          slide: drill({
+            "title": "Grammar drill: have, for, since",
+            "goal": "Change the sentence fast and right: ask how long, say no with haven't, choose for or since, change the person. Then talk about things you have done for a long time.",
+            "chunks": [
+              "Since the wolves returned, more young trees have grown.",
+              "How long have you lived here? I've lived here for five years.",
+              "She has collected shells since 2023.",
+              "The river has changed a lot since the beavers came.",
+              "I haven't seen my cousin since last summer.",
+              "My cousin lived in Huế in 2020, but he has lived in Hanoi since 2021."
+            ],
+            "recycle": [
+              "Wolves used to hunt in the park.",
+              "If the rain doesn't come, the plants will die.",
+              "There are too many deer and not enough wolves."
+            ],
+            "prompts": [
+              "The trees have grown. (+ since the wolves returned)",
+              "I have lived here. (? how long)",
+              "I have seen the wolves. (X + since last year)",
+              "I started English in 2021. (T: I have learned it ... since)",
+              "He has collected shells for two years. (P: they)",
+              "I saw him last June. (T: I haven't seen him since)"
+            ],
+            "real": "Real talk: tell your partner something you have done, owned or known for a long time. Use for and since, and ask 'How long have you ...?' once. Say how you feel about it and why.",
+            "slips": "'since three years', 'have grow', or the past simple with since",
+            "fb": "For 'since three years' repeat it with a rising voice ('since three years?') and ask 'A length or a starting point?'; for 'have grow' point to the third column of the verb; for 'I have seen him yesterday' ask 'Is yesterday finished?'. Common Vietnamese-learner slips: for / since mixed up, and no have / has because Vietnamese verbs do not change.",
+            "note": "The exam format is 'rewrite with for or since': 'She started learning English in 2021.' = 'She has learned English since 2021.' The T sign practises it. Keep two groups of time words on the board: lengths (for) and starting points (since). The last chunk puts past simple and present perfect side by side.",
+            "support": [
+              "I've ___ for ___.",
+              "I've ___ since ___."
+            ],
+            "stretch": "Use two signs at once and the exam rewrite: 'The last time I saw him was in June.' = 'I haven't seen him since June.' Then ask a 'How long ...?' question about the answer.",
+            "stretchFrames": [
+              "I haven't ___ since ___.",
+              "How long have you ___?"
+            ]
+          }),
+        },
         {
           after: "Exam practice: compare and rewrite",
           slide: {
@@ -619,7 +989,49 @@ export const rhL3U2Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 7
     "rh-l3-u2-l7": {
       objectives: ["I can say and write a summary that joins ideas with 'so', 'although' and 'however'."],
+      trim: { "Two stars and a wish": 3, "Say it before you write it": 7, "Write and edit the summary": 21 },
       add: [
+        {
+          after: "Compound sentences and contrast",
+          slide: drill({
+            "title": "Grammar drill: but, although, however, both ... and",
+            "goal": "Change the sentence fast and right: join with but or although, start a new sentence with however, use both ... and. Then give your own opinion with a contrast.",
+            "chunks": [
+              "Wolves are dangerous, but they help the park.",
+              "Although wolves are dangerous, they help the park stay healthy.",
+              "The river was muddy. However, we saw a giant fish.",
+              "Both the wolves and the beavers help the river.",
+              "We can protect the river, or we can lose the fish forever.",
+              "There are too many deer. However, there aren't enough wolves."
+            ],
+            "recycle": [
+              "Since the wolves returned, more trees have grown.",
+              "Wolves used to hunt in the park.",
+              "The bees left because the flowers died."
+            ],
+            "prompts": [
+              "Wolves are dangerous. They help the park. (+ although)",
+              "Wolves are dangerous, but they help the park. (T: say it with however)",
+              "The river was muddy. We saw a fish. (+ although)",
+              "The wolves help the river. The beavers help the river. (+ both ... and)",
+              "We can protect the river. We can lose the fish. (+ or)",
+              "Although it was cold, we swam. (T: say it with but)"
+            ],
+            "real": "Real talk: give your opinion about an animal, a place or a sport. Say one good thing and one bad thing with although or however. Your partner agrees or disagrees with 'I agree because ...' or 'However, I think ...'.",
+            "slips": "'Although ..., but ...', however joined with a comma, or a missing comma before but",
+            "fb": "For 'Although ..., but ...' repeat it with a rising voice ('although, but?') and let the child cross out the but; for 'however' with only a comma hold up a finger and say 'However starts a ... ?' so the child makes a new sentence; for a missing comma show a pause with your hand. Common Vietnamese-learner slips: Vietnamese uses both words in 'mặc dù ... nhưng ...', so the double joining word feels natural.",
+            "note": "The exam format is 'combine the sentences / rewrite with although': 'Although it was cold, we swam.' = 'It was cold, but we swam.' The T sign practises it. Say the pause at each comma and full stop clearly yourself. The step comes back in the last chunk and in Stretch (too many, not enough).",
+            "support": [
+              "___, but ___.",
+              "Although ___, ___."
+            ],
+            "stretch": "Use two signs at once and the exam rewrite: 'Although the pond was small, many ducks lived there.' = 'The pond was small, but many ducks lived there.' Add 'However, ...' with too many or not enough.",
+            "stretchFrames": [
+              "Although ___, ___.",
+              "However, there aren't enough ___."
+            ]
+          }),
+        },
         {
           after: "Exam practice: combine the sentences",
           slide: {
@@ -727,8 +1139,49 @@ export const rhL3U2Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u2-l8": {
       objectives: ["I can say 'the more ..., the more ...' and 'too' and 'enough' sentences fast and right."],
-      trim: { "Mock review: explain the answers": 9, "Transfer: test our big idea on a new case": 11, "Wonder Wall: which questions can we answer now?": 4 },
+      trim: { "Mock review: explain the answers": 6, "Transfer: test our big idea on a new case": 8, "Wonder Wall: which questions can we answer now?": 3, "Rehearse the self-introduction": 5 },
       add: [
+        {
+          after: "Change together: the more ..., the more; too, enough, so ... that",
+          slide: drill({
+            "title": "Grammar drill: the more ..., too, enough, so ... that",
+            "goal": "Change the sentence fast and right: use the more ..., the ..., too, enough and so ... that, and rewrite one with another. Then talk about a real problem and how to fix it.",
+            "chunks": [
+              "The more trees we plant, the cleaner the air becomes.",
+              "The water was too dirty for the fish to live in.",
+              "The pond isn't big enough for the ducks.",
+              "The drought was so long that the river dried up.",
+              "The more people throw rubbish, the dirtier the river gets.",
+              "There isn't enough water, so the plants are too weak to grow."
+            ],
+            "recycle": [
+              "If we cut down the trees, the soil will wash away.",
+              "There are too many deer and not enough wolves.",
+              "Although wolves are dangerous, they help the park."
+            ],
+            "prompts": [
+              "We plant trees. The air gets cleaner. (+ the more ..., the ...)",
+              "The water was dirty. The fish couldn't live in it. (+ too)",
+              "The pond is small. The ducks can't live in it. (+ enough)",
+              "The drought was long. The river dried up. (+ so ... that)",
+              "The pond is big enough. (X)",
+              "The soup was so hot that I couldn't eat it. (T: too ... to)"
+            ],
+            "real": "Real talk: tell your partner about a real problem in your street or school (too much noise, too many cars, not enough trees). Use the more ..., the ..., too and enough. Say what we can do about it.",
+            "slips": "'More we plant, more birds come', 'enough tall', or 'too cold that'",
+            "fb": "For a missing 'the' hold up a finger and say 'The more trees we plant, ... more birds?'; for 'enough tall' repeat it with a rising voice so the child puts enough after the adjective; for 'too cold that' ask 'Too or so?'. Common Vietnamese-learner slips: no 'the' in the double comparative, and enough before the adjective.",
+            "note": "This is the unit in one drill and the exam format in the T sign: 'The soup was so hot that I couldn't eat it.' = 'The soup was too hot for me to eat.' / 'He is too short to reach the shelf.' = 'He isn't tall enough to reach the shelf.' The step (too many, too much, not enough) comes back in round 3 and Stretch. Mock-test errors from this lesson make a good one-minute fix.",
+            "support": [
+              "The more ___, the ___.",
+              "It was too ___ to ___."
+            ],
+            "stretch": "Use two signs at once and the exam rewrite: 'He is too short to reach the shelf.' = 'He isn't tall enough to reach the shelf.' Add one sentence with too many, too much or not enough.",
+            "stretchFrames": [
+              "___ isn't ___ enough to ___.",
+              "There is too much ___, so ___."
+            ]
+          }),
+        },
         {
           after: "Exam practice: change together, too and enough",
           slide: {

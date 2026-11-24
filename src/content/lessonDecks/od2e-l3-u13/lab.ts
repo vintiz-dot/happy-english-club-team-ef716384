@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 13 "Simple Machines
 // and Inventions" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10.
@@ -17,12 +18,73 @@ const fixAgree =
 const fixPlural =
   "Listen for the verb after two things joined with 'and'. Between rounds 1 and 2, stop for one minute and put two mistakes on the board (no names). The class fixes them. Prompt, do not tell: say 'A ramp and a lever ... ?' and pause, or hold up two fingers for the two things. Typical slips: 'A ramp and a lever is', 'We was', a missing -s on 'inventions', 'People use it for make work easy' (it is 'to make'). Say your own plural endings and 'are' / 'were' clearly, and let a child echo the sound if they miss it.";
 
+const drillFeedback =
+  "Prompt, do not tell: for 'I don't, too' hold up the X card and say 'I don't, ...?' so the child hears 'either'; for 'My dad use' tap your wrist for the -s; for 'I can swim, and I do, too' point to the helper in the first sentence ('I can ...' needs 'can'). Vietnamese has no helper word and no -s, so these slips are natural: say your own -s and n't clearly. For a sound (either, uses, doesn't) recast: say it right and let the child echo. In round 3 do not stop for every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+const drillFeedbackStep =
+  "Prompt, do not tell: for 'I don't, too' hold up the X card and say 'I don't, ...?' so the child hears 'either'; for 'My dad use' tap your wrist for the -s; for 'I can swim, and I do, too' point to the helper in the first sentence. For 'So I do' say 'So ...?' and wait: the helper comes BEFORE 'I' (So do I). For 'Neither don't I' say 'Neither ... I?' and tap the n't: 'neither' already says no, so the helper has no n't. For 'used for move' hold up the -ing card: after 'for' the verb ends in -ing. Vietnamese has no helper word and no -s, so these slips are natural: say your own -s and n't clearly, and recast a sound (either, neither) quickly. In round 3 do not stop for every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+const chorus =
+  "Chorus: the teacher says a sentence and shows a sign card (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person). The class says the new sentence together.";
+
+const chorusStep =
+  "Chorus: the teacher says a sentence and shows a sign card (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person, S = answer it with too, either, So do I or Neither do I). The class says the new sentence together.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  chorus: string;
+  pairs: string;
+  real: string;
+  slips: string;
+  feedback: string;
+  push: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 6,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: o.chorus },
+      { seconds: 75, say: o.pairs },
+      { seconds: 75, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with the -s and the helper word where they belong.",
+      "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often " + o.slips + "), fix them together, then go on.",
+      "In round 2 swap roles at the clap: the child with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say what is true for you, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: o.feedback,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has children talk about their own lives, so the form is used for meaning. For ages 8-10 keep the pace brisk and the signs few: one sign at a time in round 1, two together in round 2 only for children who are ready. Mark nothing in writing: this is about speed and accuracy in speech. " + o.push,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U13Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u13-l1": {
       objectives: ["I can say 'I use a ___ to ...' about the machines around me, fast and smooth."],
-      trim: { "Machine mime": 3, "Mystery bag of helpers": 3, "Sort the words (SB 128 B)": 6 },
+      trim: { "Machine mime": 3, "Mystery bag of helpers": 3, "Sort the words (SB 128 B)": 4, "Big Question Chart: know and want to know (SB 126 D)": 4, "Listen, point, say (SB 128 A)": 6, "Think and answer (SB 126 C)": 5 },
       add: [
         {
           after: "Classify and categorize (SB 129 D)",
@@ -73,7 +135,7 @@ export const odL3U13Lab: UnitLab = {
             title: "Machine sprint: I use it to ...",
             routine: "chunk sprint",
             mode: "pairs",
-            minutes: 7,
+            minutes: 6,
             goal: "Say each whole sentence about a machine, fast and smooth, with no long stops.",
             chunks: [
               "I use a lever to lift heavy things.",
@@ -104,6 +166,32 @@ export const odL3U13Lab: UnitLab = {
             ],
           },
         },
+        {
+          after: "Machine sprint: I use it to ...",
+          slide: drill({
+            title: "Grammar drill: I use it to ... me, too",
+            goal: "Change the sentence fast and right: ask it, say no, join it with a reason, change the time or the person, and agree with a friend. Then talk about the machines you really use.",
+            chunks: [
+              "I use a lever to lift heavy things, and my dad does, too.",
+              "Do you use a ramp at school? Yes, I do. / No, I don't.",
+              "I don't use an axe, and my sister doesn't, either.",
+              "We use a light bulb at night because it is dark.",
+              "Yesterday I used a seesaw, and my friend did, too.",
+              "A ramp is used for moving heavy things.",
+            ],
+            recycle: ["It was so loud that I covered my ears.", "There are too many cars and not enough buses."],
+            prompts: ["A seesaw goes up and down. (?)", "I use a lever. (X)", "I use a light bulb. (+ because)", "I use a ramp. (T: yesterday)", "My dad uses an axe. (P: we)"],
+            chorus,
+            pairs: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. When B's new sentence is true for A, A agrees with 'I do, too.' or 'I don't, either.' When you can, use two signs together (X + or T P).",
+            real: "Real talk: tell your partner two machines you use at home or at school and what you use them to do. Your partner agrees with 'I do, too.' or 'I don't, either.' or says 'Really? I do.' Fast finishers: say what one machine is used for.",
+            slips: "'I don't, too', 'My dad use' or 'I can, either'",
+            feedback: drillFeedback,
+            push: "The last chunk and the Stretch tier give the children 'is used for + verb-ing', a Level 4 pattern, a few days before lesson 3 teaches it.",
+            support: ["Do you use a ___? Yes, I do.", "I don't use a ___, and my ___ doesn't, either."],
+            stretch: "Use two signs at once, then say what the machine is used for: 'A ramp is used for moving heavy things, so I use it to ...'",
+            stretchFrames: ["A ___ is used for ___ing.", "I use it to ___, and my ___ does, too."],
+          }),
+        },
       ],
     },
 
@@ -112,6 +200,10 @@ export const odL3U13Lab: UnitLab = {
       objectives: ["I can retell how a simple machine works, faster and smoother each time."],
       trim: {
         "Which group?": 3,
+        "Before we read: predict (SB 130)": 6,
+        "Reading circle: the Think boxes (SB 130-131)": 10,
+        "Which machine is best?": 6,
+        "Draw it, explain it": 10,
         "Who am I? Back-card game": 5,
         "Classify what we read": 8,
         "A famous inventor": 3,
@@ -197,6 +289,32 @@ export const odL3U13Lab: UnitLab = {
             ],
           },
         },
+        {
+          after: "Machine retell: faster and smoother",
+          slide: drill({
+            title: "Grammar drill: machines, ask it, say no, agree",
+            goal: "Change the sentence about a machine fast and right: ask it, say no, join it with a reason, change the time or the person, and agree about a thing with too and either. Then talk about a machine you know.",
+            chunks: [
+              "A lever helps us lift heavy things, and a ramp does, too.",
+              "A ramp doesn't have wheels, and a lever doesn't, either.",
+              "Does a wedge cut things? Yes, it does, because it is thin and sharp.",
+              "First you push the box, and next it goes up the ramp, so the work is easier.",
+              "I can't lift this box, and my friend can't, either.",
+              "A screw is used for holding things together.",
+            ],
+            recycle: ["It must be solar power. It can't be wind.", "We are flying to Tokyo on Monday."],
+            prompts: ["A lever helps us lift. (?)", "A ramp has wheels. (X)", "A wedge cuts things. (+ because)", "I use a lever. (T: tomorrow)", "My brother lifts boxes. (P: they)"],
+            chorus,
+            pairs: "Pairs: A holds up a sign card and says a sentence about a machine, B changes it. Swap at the clap. If the new sentence is true for another machine too, say 'does, too' or 'doesn't, either'. When you can, use two signs together.",
+            real: "Real talk: tell your partner how a machine at home or at school helps you, with First, Next and So. Your partner says if another machine does the same, with 'too' or 'either'. Fast finishers: say what the machine is used for.",
+            slips: "'A ramp don't', 'It help us' or 'a lever does, either'",
+            feedback: drillFeedback,
+            push: "The last chunk and the Stretch tier give the children 'is used for + verb-ing', a Level 4 pattern, before lesson 3 teaches it.",
+            support: ["Does a ___ ___? Yes, it does.", "A ___ doesn't ___, and a ___ doesn't, either."],
+            stretch: "Use two signs at once, then say what the machine is used for: 'A wedge is used for cutting things, so I ...'",
+            stretchFrames: ["A ___ is used for ___ing.", "A ___ helps us ___, and a ___ does, too."],
+          }),
+        },
       ],
       talk: {
         kind: "vlog",
@@ -229,15 +347,75 @@ export const odL3U13Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u13-l3": {
-      objectives: ["I can agree with a friend fast: 'I do, too.' and 'I don't, either.'"],
+      objectives: ["I can agree with a friend fast: 'I do, too.' and 'I don't, either.'", "I can say 'So do I' and 'Neither can I', and say what a thing is used for."],
       trim: {
         "Stand up if ...": 3,
-        "Agreement chain": 5,
         "Fix the sentence": 3,
         "Our big idea": 6,
         "Group the inventions (SB 132 A)": 6,
       },
+      drop: ["Agreement chain"],
       add: [
+        {
+          after: "Agreeing with too and either",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: So do I and used for",
+            hook: "At Level 4 you do not only say 'too' and 'either'. You can start with 'So' or 'Neither', and you can say what a thing is used for.",
+            form: [
+              { label: "Agree with a positive", pattern: "A: I + verb. B: So + helper + I. (I like ramps. So do I. / I can swim. So can I.)" },
+              { label: "Agree with a negative", pattern: "A: I don't / can't ... B: Neither + helper + I. (I don't like noise. Neither do I. / I can't fix it. Neither can I.)" },
+              { label: "Do not agree", pattern: "A: I like ramps. B: I don't. / A: I don't like noise. B: I do." },
+              { label: "Used for", pattern: "A thing + is used for + verb-ing. Things + are used for + verb-ing. (A ramp is used for moving heavy things.)" },
+              { label: "Ask", pattern: "What is a ___ used for? It is used for ___ing." },
+            ],
+            explanation: [
+              "In this unit you say 'I do, too' and 'I don't, either'. 'So do I' and 'Neither do I' mean the same, but the little word comes first. After 'So' or 'Neither' the helper word comes BEFORE 'I': So do I, So can I, Neither do I, Neither can I. Use the same helper as your friend: 'I can swim' needs 'So can I', and 'I like ramps' needs 'So do I'.",
+              "'Neither' already means no, so the helper has no n't: 'I don't like noise. Neither do I.' If you do not agree, use a short answer: 'I do.' or 'I don't.' When we say what a thing is for, we use 'used for' and a verb with -ing: 'A ramp is used for moving heavy things.' It grows out of 'I use a ramp to move things': the same idea, said about the thing.",
+              "These patterns come back in Oxford Discover 4, where children agree and disagree in longer talks and say how things are used. If you practise them now, they will feel easy then.",
+            ],
+            examples: [
+              { text: "A: I use a lever to lift boxes. B: So do I.", note: "positive: So + do + I" },
+              { text: "A: I can't fix a bike. B: Neither can I.", note: "negative: Neither + can + I" },
+              { text: "A: I don't like loud machines. B: Neither do I.", note: "the helper matches: don't, so do" },
+              { text: "A: I like slides. B: I don't. They are too fast for me.", note: "we do not agree, so a short answer" },
+              { text: "A ramp is used for moving heavy things.", note: "used for + verb-ing" },
+              { text: "Scissors are used for cutting paper.", note: "two things or a plural: are used for" },
+            ],
+            pitfalls: [
+              { wrong: "I like ramps. So I do.", right: "I like ramps. So do I.", why: "After 'So' the helper word comes before 'I'." },
+              { wrong: "I don't like noise. Neither don't I.", right: "I don't like noise. Neither do I.", why: "'Neither' already means no, so the helper has no n't." },
+              { wrong: "A ramp is used for move heavy things.", right: "A ramp is used for moving heavy things.", why: "After 'for', the verb ends in -ing." },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: So do I and used for",
+          slide: drill({
+            title: "Grammar drill: too, either, then So do I",
+            goal: "Agree fast with too and either in rounds 1 and 2. Then say it the Level 4 way: So do I, Neither can I. In round 3, use them with a real friend.",
+            chunks: [
+              "My dad uses a ramp every day, and I do, too.",
+              "I don't like loud machines, and my friend doesn't, either.",
+              "I can ride a bike, and my cousin can, too.",
+              "A: I use a lever to lift boxes. B: So do I.",
+              "A: I can't fix a bike. B: Neither can I.",
+              "A: I like loud machines. B: I don't. I think they are too noisy.",
+              "A ramp is used for moving heavy things.",
+            ],
+            recycle: ["The drum was much louder than the flute.", "I will call you as soon as I get home."],
+            prompts: ["My dad uses a ramp. (S: too)", "I don't like loud machines. (S: either)", "I can ride a bike. (S: So can I)", "I can't fix a bike. (S: Neither can I)", "I like inventions. (X: I don't.)", "A ramp moves heavy things. (used for)"],
+            chorus: chorusStep,
+            pairs: "Pairs: A holds up a sign card and says a sentence, B changes it or answers it with 'too', 'either', 'So do I' or 'Neither do I'. Swap at the clap. In rounds 1 and 2 the children use the unit's too and either; the S sign with So and Neither is the Level 4 step.",
+            real: "Real talk: say two true things about you, one with 'I like' or 'I use' and one with 'I can't' or 'I don't'. Your partner answers with So do I, Neither do I, So can I or Neither can I, or says 'I do.' / 'I don't.' Then each of you says what one machine is used for.",
+            slips: "'I do, either', 'So I do' or 'Neither don't I'",
+            feedback: drillFeedbackStep,
+            push: "Rounds 1 and 2 hold the unit's too and either; round 3 and the Stretch tier use the Level 4 step (So do I, Neither can I, is used for + verb-ing), so the new form is spoken before the lesson ends.",
+            support: ["I use a ___, and my ___ does, too.", "A: I ___. B: So do I."],
+            stretch: "Use two signs at once and add a reason: 'A: I can't live without a phone. B: Neither can I, because ... It is used for ___ing.'",
+            stretchFrames: ["A: I ___. B: So / Neither ___ I.", "It is used for ___ing."],
+          }),
+        },
         {
           after: "Finish with too or either (SB 133 F)",
           slide: {
@@ -333,9 +511,37 @@ export const odL3U13Lab: UnitLab = {
         "Sentence builder": 3,
         "Writing practice (Workbook)": 8,
         "Plan and pitch your invention": 10,
-        "Big Question Review (SB 134-135)": 6,
+        "Big Question Review (SB 134-135)": 5,
+        "Something I made (SB 134 Think)": 8,
       },
       add: [
+        {
+          after: "Two subjects with and: use a plural verb",
+          slide: drill({
+            title: "Grammar drill: two things, are, and So do I",
+            goal: "Change sentences with two things joined by and (they take are or were). Then agree with So do I and Neither do I, and say what the things are used for.",
+            chunks: [
+              "A ramp and a lever are simple machines.",
+              "Are a ramp and a lever simple machines? Yes, they are.",
+              "A seesaw and a slide aren't in my house, and a ramp isn't, either.",
+              "My brother and I were at the science fair, so we saw a robot.",
+              "A: I think the wheel and the lever are great. B: So do I.",
+              "A: I can't live without a phone. B: Neither can I.",
+              "A lever and a wedge are used for lifting and cutting.",
+            ],
+            recycle: ["I was reading when a beetle landed on my book.", "A ramp is a machine that helps people go up."],
+            prompts: ["A ramp and a lever are machines. (?)", "A pen and a ruler are on the desk. (X)", "The seesaw and the slide are fun. (+ because)", "My brother and I are at the fair. (T: yesterday)", "A ramp and a lever help us. (P: only a ramp)", "I can't live without a phone. (S: Neither can I)"],
+            chorus: chorusStep,
+            pairs: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. When you can, use two signs together, and answer a sentence about you with 'So do I' or 'Neither do I'.",
+            real: "Real talk: choose two inventions. Say what they are used for and if you could live without them. Your partner says So do I or Neither do I, or does not agree and gives a reason.",
+            slips: "'A ramp and a lever is', 'We was' or 'So I do'",
+            feedback: drillFeedbackStep,
+            push: "Rounds 1 and 2 hold this lesson's two-subjects grammar; round 3 and the Stretch tier bring back the Level 4 step (So do I, Neither do I, is used for + verb-ing).",
+            support: ["A ___ and a ___ are ___.", "A: I think ___. B: So do I."],
+            stretch: "Use two signs at once, then ask: 'The wheel and the lever are used for ___ing. Could you live without them?'",
+            stretchFrames: ["A ___ and a ___ are used for ___ing.", "I could not live without them, and neither could my ___."],
+          }),
+        },
         {
           after: "How inventions make our lives better (SB 135 C)",
           slide: {
@@ -409,8 +615,35 @@ export const odL3U13Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u13-l5": {
       objectives: ["I can say 'I do, too' and 'I don't, either' about inventions without stopping."],
-      trim: { "Agree and run: the invention race": 7, "Remember it!": 4, "Grammar detectives: Is / Is Not": 8 },
+      trim: { "Agree and run: the invention race": 7, "Remember it!": 4, "Grammar detectives: Is / Is Not": 8, "Same or different? The invention match": 10, "Champion talk: 3 rounds": 9, "Grammar mystery: Pip and Bolt": 6 },
       add: [
+        {
+          after: "Grammar: too and either",
+          slide: drill({
+            title: "Grammar drill: too, either, So do I, used for",
+            goal: "Say it all: agree with too and either, answer with So do I and Neither do I, and say what things are used for. The last round is real talk.",
+            chunks: [
+              "I use a bike every day, and my dad does, too.",
+              "I don't use a microwave, and my friend doesn't, either.",
+              "A: I think the light bulb is great. B: So do I.",
+              "A: I can't cook. B: Neither can I.",
+              "A ramp is used for moving heavy things, and a lever is used for lifting them.",
+              "What is a light bulb used for? It is used for making light.",
+              "A: I use a phone every day. B: I don't. I prefer books.",
+            ],
+            recycle: ["It was so loud that I covered my ears.", "If we move to the city, I will go to a new school.", "I used to be afraid of the dark, but now I can sleep with the light off."],
+            prompts: ["I use a bike every day. (S: So do I)", "I don't use a microwave. (S: Neither do I)", "I can't cook. (S: Neither can I)", "A ramp is used for moving things. (?)", "A ramp moves heavy things. (say it with used for)", "I like robots. (X: I don't.)"],
+            chorus: chorusStep,
+            pairs: "Pairs: A holds up a sign card and says a sentence, B changes it or answers it with too, either, So do I or Neither do I. Swap at the clap. Use two signs together when you can.",
+            real: "Real talk, like the champion talk: say three true things about the inventions you use and do not use. Your partner answers with So do I, Neither do I, or 'I do.' / 'I don't.', and each of you says what one invention is used for.",
+            slips: "'I don't, too', 'So I do' or 'used for move'",
+            feedback: drillFeedbackStep,
+            push: "This is the last lesson of the unit, so the drill holds both the unit's too and either and the Level 4 step (So do I, Neither do I, is used for + verb-ing) in one talk.",
+            support: ["I use a ___, and my ___ does, too.", "A: I ___. B: So do I."],
+            stretch: "Use two signs at once, then say what the thing is used for and why you need it: 'A: I could not live without a phone. B: Neither could I. It is used for ___ing, so ...'",
+            stretchFrames: ["A: I ___. B: So / Neither ___ I.", "It is used for ___ing, so ___."],
+          }),
+        },
         {
           after: "Same or different? The invention match",
           slide: {
@@ -465,8 +698,8 @@ export const odL3U13Lab: UnitLab = {
               title: "Me and my cousin",
               text: "My cousin and I use a bike every day, and my dad does, too. My mom doesn't ride a bike, and my brother doesn't, either. We all use a light bulb at night because we like to read. We both think the wheel is a great invention.",
             },
-            frames: ["My ___ uses ___, and I do, too.", "My ___ doesn't ___, and I don't, either.", "We both ___."],
-            checklist: ["Positive first: too. Negative first: either", "The helper matches the first sentence", "A capital letter and a full stop in every sentence"],
+            frames: ["My ___ uses ___, and I do, too.", "My ___ doesn't ___, and I don't, either.", "We both ___.", "A ___ is used for ___ing."],
+            checklist: ["Positive first: too. Negative first: either", "The helper matches the first sentence", "One sentence with the Level 4 step: 'So do I' / 'Neither do I', or 'A ___ is used for ___ing.'", "A capital letter and a full stop in every sentence"],
             sayIt: "Read your three sentences to your partner. Then say them without looking.",
             teacherNote: "A short model, then a short piece of writing in the same pattern: children copy a pattern they have just read. This is a warm-up for the longer champion paragraph that follows, so keep it to four sentences. Praise the helper match ('does' after 'dad') and listen for a clear spoken 'either'.",
             tiers: [
@@ -487,11 +720,12 @@ export const odL3U13Lab: UnitLab = {
           "Practise three times with someone at home: they agree with 'too' or 'either', or say they are different.",
           "Record it once. Keep going. If you cannot find a word, use other words and do not stop.",
           "Say one sentence about what you have in common: 'We both ...'.",
+          "Ask the grown-up to answer one of your sentences with 'So do I' or 'Neither do I'. Then say what one invention is used for: 'A ___ is used for ___ing.'",
         ],
         maxSeconds: 180,
         kidSummary: "Say what you use and don't use. Use too and either correctly, and keep talking without long stops.",
         words: ["lever", "ramp", "light bulb", "wheel and axle", "invention", "useful"],
-        grammar: ["___, and I do, too.", "___ doesn't ___, and I don't, either.", "We both ___."],
+        grammar: ["___, and I do, too.", "___ doesn't ___, and I don't, either.", "We both ___.", "A: I ___. B: So do I. / Neither do I.", "A ___ is used for ___ing."],
         rubric: [
           { label: "Too and either", description: "Uses 'too' after a positive sentence and 'either' after a negative one, with the right helper.", weight: 3 },
           { label: "Inventions and reasons", description: "Talks about three inventions with at least one reason.", weight: 2 },

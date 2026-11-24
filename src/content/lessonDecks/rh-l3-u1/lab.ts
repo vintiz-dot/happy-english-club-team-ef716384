@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Reach Higher Level 3, Unit 1 "Happy to Help" (src/lib/lessonDecks/lab.ts
 // puts it into the deck). The unit is one wrap-up lesson, so it carries one retell routine that says
@@ -9,15 +10,63 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 const correct =
   "During a round, listen and do not stop the talk. Note two or three grammar mistakes you hear (no names), most likely a missing -s on he / she / it verbs ('She help me'), 'The volunteers is', or a sentence with no subject. Between rounds 1 and 2, stop for one minute, write them on the board and let the class fix them: children who then tell it again use the fixed form. For grammar, prompt the child to fix it rather than saying it for them: start the phrase and pause ('My neighbor ...?'), point to the frame, hold up a finger for the missing -s, or repeat the error with a rising voice ('Henry write books?'). For a sound, just say it right and let the child echo it. Say every final -s and -ed clearly yourself: children copy what they hear.";
 
+const drillFeedback =
+  "Prompt, do not tell: for 'She help me' hold up one finger and say 'She ...?'; for 'The volunteers is' repeat it with a rising voice and let the child fix it; for a missing -s, tap your wrist. Common slips: no -s on he / she / it, 'is' after a plural subject, a sentence with no subject, and a missing -ed in the past. For a sound, just say it right and let the child echo. In round 3 do not correct every slip: note the two that matter for the next one-minute fix.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when / unless, T = change the time or tense, P = change the person). The class says the new sentence together." },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with the -s where it belongs.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: give your own opinion or experience, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedback,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives and opinions, so the form is used for meaning. Ages 9-10 can take the full set of signs: a question, a negative, a join, a change of time and a change of person. The T sign and the Stretch task also practise the exam format 'rewrite the sentence so that it means the same'. Keep it brisk; a drill that drags loses its point. Mark nothing in writing: this is about speed and accuracy in speech.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const rhL3U1Lab: UnitLab = {
   decks: {
     "rh-l3-u1-l1": {
       objectives: ["I can retell how someone helped another person, faster each time, and write complete sentences that agree."],
       trim: {
-        "Story relay: retell it in order": 8,
-        "Key word challenge: define, sort, build": 7,
-        "Case files: who helped whom?": 10,
-        "Video case: Saving Stranded Whales": 7,
+        "Story relay: retell it in order": 6,
+        "Key word challenge: define, sort, build": 5,
+        "Case files: who helped whom?": 8,
+        "Video case: Saving Stranded Whales": 5,
         "Pattern hunt: complete or not?": 4,
       },
       add: [
@@ -62,6 +111,28 @@ export const rhL3U1Lab: UnitLab = {
         },
         {
           after: "Subjects and verbs that agree",
+          slide: drill({
+            title: "Grammar drill: agree, ask, say no, join",
+            goal: "Change the sentence fast and right: ask it, say no, join it with a reason, change the time or the person. Then talk about people who help you.",
+            chunks: [
+              "My neighbor helps me carry the heavy bags every morning.",
+              "Does she help you, too? Yes, she does, and everyone in our building likes her.",
+              "The volunteers don't clean the beach on Sundays, although they work hard on Saturdays.",
+              "Everyone in our class has a reading buddy, so nobody reads alone.",
+              "Last week my cousins helped our teacher because she was very busy.",
+              "Unless we help each other, the neighborhood is not a happy place.",
+            ],
+            recycle: ["First, ___ needed ___. Next, ___ helped ___.", "Before, ___. Now, ___.", "The boy with the red bag helped me."],
+            prompts: ["My uncle helps the old man. (?)", "The volunteers are tired. (X)", "A child helps the teacher. (+ because)", "She carries the boxes. (T: yesterday)", "Everyone has a job. (P: we / they)"],
+            real: "Real talk: tell your partner who helps you at home, at school or in your building, and how. Say what you think about it and why. Your partner asks one question.",
+            slips: "'She help me', 'The volunteers is' or a sentence with no subject",
+            support: ["Does ___ help ___? Yes, ___ does.", "___ doesn't help ___."],
+            stretch: "Use two signs at once, then rewrite it with the same meaning: 'My cousin helps because he is kind.' becomes 'My cousin is kind, so he helps.'",
+            stretchFrames: ["___ helps ___ because ___. = ___, so ___.", "Unless ___, ___."],
+          }),
+        },
+        {
+          after: "Grammar drill: agree, ask, say no, join",
           slide: {
             kind: "writing",
             title: "Fix the helping notes",

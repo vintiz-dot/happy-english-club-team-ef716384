@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Reach Higher Level 3, Unit 4 "Let's Work Together"
 // (src/lib/lessonDecks/lab.ts puts it into the decks). Class Jupiter, ages 9-10,
@@ -16,13 +17,89 @@ const base =
 const grownUp =
   "Grown-up: hold the phone and let your child speak; do not say the words for them. Bố mẹ: hãy giữ điện thoại và để con tự nói, đừng nhắc từng chữ.";
 
+const drillFeedback =
+  "Prompt, do not tell: for a missing -s or -ed hold up a finger and say the phrase up to the gap with a rising voice; for a wrong pattern point to the frame on the board; for a sound, a quick recast is fine and the child echoes it. Say every final -s, -ed and n't clearly yourself. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+const STEP = "Level 4 step: Agreeing and disagreeing (So do I, Neither do I)";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+// Pitched for ages 9-10 working at B1, with the entrance exam's rewrite format in the T sign and Stretch.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fb: string;
+  note: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when / unless, T = change the time or tense, P = change the person). The class says the new sentence together." },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Try two signs together when you can: X + or T P. B also says it another way with the same meaning when the card shows R (like a rewrite in the exam)." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change it and say the WHOLE new sentence.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them with the class, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about you or give your own opinion, and remember one thing your partner said.",
+    ],
+    prompts: o.prompts,
+    feedback: o.fb + " " + drillFeedback,
+    teacherNote: o.note,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const rhL3U4Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "rh-l3-u4-l1": {
       objectives: ["I can say sentences with want to, enjoy -ing and let me fast, without stopping."],
-      trim: { "The paper tower challenge": 9 },
+      trim: { "The paper tower challenge": 9, "Is it cooperation? (concept formation)": 9, "Write: a 'help wanted' advert": 13 },
       add: [
+        {
+          after: "Verb patterns: to + verb, verb-ing, bare verb",
+          slide: drill({
+            title: "Grammar drill: to, -ing or no to",
+            goal: "Change the sentence fast and right: pick to + verb, verb + -ing or the bare verb. In round 3, talk about what you really want, enjoy and are good at.",
+            chunks: [
+              "I want to join the club because I enjoy working with other people.",
+              "She hopes to win, but she doesn't mind losing.",
+              "Our coach let us choose the team, so we felt proud.",
+              "Do you like cooking? Yes, I do, and I'm good at making soup.",
+              "They finished building the bridge without asking for help.",
+              "He agreed to share his notes, although he was tired.",
+            ],
+            recycle: ["Seeds need water, light and warm soil.", "A gardener is a person who looks after plants.", "The school garden is watered every morning."],
+            prompts: ["? I want to join the club.", "X She hopes to win.", "+ (because) I enjoy working with other people.", "T They finished building the bridge. (last week)", "P I'm good at making soup. (he)", "R 'Swimming is fun for me.' = I ___ swimming."],
+            real: "Real talk: use the signs to tell your partner true things: what you want to do this year, what you enjoy, what you are good at and what you don't mind. Ask two questions and give a reason for each answer.",
+            slips: "'I enjoy to play', 'She wants playing', 'My mum let me to go'",
+            fb: "For 'I enjoy to play' say 'I enjoy ...?' and draw a small circle in the air for -ing; for 'She wants playing' hold up two fingers for 'to'; for 'let me to go' hold up a hand like a stop sign for the extra 'to'.",
+            note: "The Unit 4 verb patterns have to be automatic by the end of the lesson, because the exam punishes the wrong pattern and nobody has time to think in a paper. Vietnamese has no 'to' or '-ing' after the verb, so children need many repeats to hear the difference. The R sign is the exam's rewrite format: say the same meaning in other words ('Swimming is fun for me' = 'I enjoy swimming'; 'My teacher allowed us to choose' = 'My teacher let us choose'). Round 3 must be real: true wants and true opinions.",
+            support: ["I want to ___.", "I enjoy ___ing.", "I'm good at ___ing."],
+            stretch: "Join with because or although and rewrite one sentence with the same meaning: 'It is fun for me to cook' = 'I enjoy cooking.'",
+            stretchFrames: ["I enjoy ___ing because ___.", "I want to ___, although ___."],
+          }),
+        },
         {
           after: "Exam practice: verb patterns",
           slide: {
@@ -112,7 +189,32 @@ export const rhL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u4-l2": {
       objectives: ["I can tell what people usually do and what they are doing right now, with no long stops."],
+      trim: { "Write: a day in a family business": 11, "Market reporter": 9 },
       add: [
+        {
+          after: "Present simple or present continuous?",
+          slide: drill({
+            title: "Grammar drill: every day or right now?",
+            goal: "Change the sentence fast and right: ask it, say no, join it, change the time or the person. In round 3, tell your partner what you usually do and what is different this week.",
+            chunks: [
+              "My dad usually cooks dinner, but tonight he is cooking noodles for us.",
+              "Do you walk to school every day? No, I don't. I go by bike.",
+              "Right now, the students are working in groups, and they are not talking about the weekend.",
+              "She knows the answer, so she isn't looking at her notes.",
+              "We are having a class party on Friday, because it is the end of the unit.",
+              "I don't like crowded markets, but I love this one.",
+            ],
+            recycle: ["I enjoy working in a team.", "We decided to build a tall tower.", "Our teacher let us choose our groups."],
+            prompts: ["? My dad usually cooks dinner.", "X She is looking at her notes.", "+ (but) I love this market.", "T We are having a party on Friday. (every Friday)", "P I go by bike. (she)", "R 'It is my cousin's habit to sleep late.' = My cousin usually ___."],
+            real: "Real talk: tell your partner what you usually do on a school day and what you are doing differently this week. Ask 'Do you ...?' and 'Are you ...ing ...?' and answer in whole sentences.",
+            slips: "'She is knowing', 'Look! The baby sleeps', 'He go to market', a missing is / are",
+            fb: "For 'She is knowing' say 'She ... the answer?' and shake your head at 'is knowing' so they find 'knows'; for 'Look! He sleeps' point to 'Look!' on the board so they find 'is sleeping'; for 'He go' hold up one finger for -es.",
+            note: "Two tense choices decide many exam items: a habit or a fact is present simple, something happening now or this week is present continuous, and state verbs (know, like, want, need) never take -ing. Vietnamese has no be verb here, so 'She working' is common: listen for the missing is / are and for the -s on he, she, it. The T sign flips a habit into 'now' and back, which is exactly the contrast the exam tests. Round 3 must be true.",
+            support: ["Every day I ___.", "Right now I am ___ing.", "I like ___."],
+            stretch: "Join a habit with something different today, and rewrite one sentence with the same meaning: 'It is my cousin's habit to sleep late' = 'My cousin usually sleeps late.'",
+            stretchFrames: ["Usually ___, but today ___ is ___ing.", "At the moment ___, so ___."],
+          }),
+        },
         {
           after: "Market reporter",
           slide: {
@@ -216,7 +318,64 @@ export const rhL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u4-l3": {
       objectives: ["I can suggest an idea, agree or say no politely, and keep a conversation going."],
+      trim: { "Write: the story from a sibling's view": 12, "Plan a surprise in threes": 9 },
       add: [
+        {
+          after: "Suggestions and teamwork phrasal verbs",
+          slide: {
+            kind: "grammar",
+            title: STEP,
+            hook: "Your friend says something about themselves. In three or four short words you can say 'me too', or 'not me', like a grown-up speaker.",
+            form: [
+              { label: "Same, positive: So + helper + I", pattern: "So + the same helper verb as your friend + I.  (I like markets. So do I.)" },
+              { label: "Same, negative: Neither + helper + I", pattern: "Neither + the same helper verb + I.  (I don't like crowds. Neither do I. / I can't swim. Neither can I.)" },
+              { label: "Different: I don't / I do", pattern: "I don't. / I do. / I can't. / I am.  (I like crowds. I don't. / I don't like waiting. I do.)" },
+              { label: "The helper must match", pattern: "do / does / did · am / is / are · can · will · would · have  (She likes it. So does he. / I'd rather ask. So would I.)" },
+            ],
+            explanation: [
+              "When a friend says something about themselves, we often say in a few words that we are the same, or different. If it is the same and positive, we say 'So do I.' If it is the same and negative, we say 'Neither do I.' If it is different, we say 'I don't' or 'I do'. The answer uses the same helper verb as the speaker: do after 'like', am after 'I'm', can after 'can', would after 'I'd'.",
+              "It keeps a talk going, and it sounds natural. 'Me too' is fine, but 'So do I' shows more control, and it often appears in dialogues. The word order is the surprise: after So or Neither the helper verb comes first, then I. The word Neither is already a 'no', so you do not add another one.",
+              "This lesson is about suggestions and agreeing in a team: 'Why don't we set up a stall?' 'Sure, why not?' Now you can also share an opinion with a teammate: 'I'd rather ask Dad.' 'So would I.' This is grammar you will meet again at the next level, so every time you practise it now, that level gets easier.",
+            ],
+            examples: [
+              { text: "I like working in a team. So do I.", note: "same, positive: do" },
+              { text: "I don't enjoy waiting for others. Neither do I.", note: "same, negative: Neither" },
+              { text: "I'm good at drawing posters. So am I.", note: "be: am" },
+              { text: "I can't carry this box alone. Neither can I.", note: "can" },
+              { text: "I'd rather work in a small group. So would I.", note: "would" },
+              { text: "I love crowded markets. I don't. I prefer quiet ones.", note: "different: I don't" },
+            ],
+            pitfalls: [
+              { wrong: "I like markets. So I do.", right: "I like markets. So do I.", why: "After So the helper verb comes first, then I." },
+              { wrong: "I don't like crowds. So do I.", right: "I don't like crowds. Neither do I.", why: "The same negative needs Neither. So is only for a positive sentence." },
+              { wrong: "I can't swim. Neither don't I.", right: "I can't swim. Neither can I.", why: "Neither already means no, so do not add n't. Use the same helper as your friend." },
+            ],
+          },
+        },
+        {
+          after: STEP,
+          slide: drill({
+            title: "Grammar drill: suggest, agree, So do I",
+            goal: "Change the sentence fast and right with suggestions and phrasal verbs. In round 3, agree or disagree with your partner using So do I, Neither do I or I don't.",
+            chunks: [
+              "Why don't we set up a stall? Sure, why not?",
+              "How about asking Mum? I'd rather ask Dad, because he is better at maths.",
+              "Let's work it out together. Good idea! I don't want to give up.",
+              "I like this idea. So do I. I don't mind setting it up.",
+              "I can't carry it alone. Neither can I. Let's ask for help.",
+              "We turned the offer down because it was too expensive.",
+            ],
+            recycle: ["Right now, a woman is weighing some mangoes.", "Usually the buyers bargain, but today they are in a hurry.", "I enjoy working in a team."],
+            prompts: ["? Why don't we set up a stall?", "X Let's give up.", "+ (because) I'd rather ask Dad.", "T We turned the offer down. (tomorrow: We will ...)", "P I can't carry it alone. (she)", "R 'Let's set up a stall.' = Why don't we ___?"],
+            real: "Real talk: plan a surprise for the class with your partner. Make a suggestion, agree or politely say no with a reason. Then the new reply: when your partner says what they like or don't like, answer 'So do I', 'Neither do I', 'I don't' or 'I do'.",
+            slips: "'How about go', 'Let's to play', 'turned down it', 'So I do', 'Neither don't I'",
+            fb: "For 'How about go' say 'How about ...?' and make a small circle for -ing; for 'Let's to play' hold up a stop hand for 'to'; for 'turned down it' say 'turned it ...?' and point to the gap; for 'So I do' say 'So ... I?' and let them find the helper first.",
+            note: "Rounds 1 and 2 practise the lesson's grammar: suggestions, agreeing, refusing politely and where the object goes in a phrasal verb (turned it down, but turned down the offer). Round 3 and Stretch bring in the Level 4 step: So do I / Neither do I. Keep a small table on the board: the speaker's helper (do, am, can, would) and the answer. The R sign is the exam's rewrite format: 'Let's set up a stall' = 'Why don't we set up a stall?' Round 3 must be real: true likes and dislikes.",
+            support: ["Why don't we ___?", "I like ___. So do I.", "I don't. I'd rather ___."],
+            stretch: "Agree or disagree with a reason, then rewrite one sentence with the same meaning: 'I like it. So do I, because ___.' / 'I don't. I'd rather ___ because ___.'",
+            stretchFrames: ["So do I, because ___.", "Neither do I, because ___.", "I don't. I'd rather ___."],
+          }),
+        },
         {
           after: "Plan a surprise in threes",
           slide: {
@@ -294,8 +453,32 @@ export const rhL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "rh-l3-u4-l4": {
       objectives: ["I can retell a story with everyone, each and both, and tell it faster each time."],
-      trim: { "Generalize: the best way to get things done": 11 },
+      trim: { "Generalize: the best way to get things done": 8, "Write: a team contract": 11, "Word work: super-, pre-, re-": 4 },
       add: [
+        {
+          after: "Subject-verb agreement with tricky subjects",
+          slide: drill({
+            title: "Grammar drill: everyone, both, each",
+            goal: "Change the sentence fast and right, with the verb that fits the subject. In round 3, describe your class and your family, and agree or disagree with So do I, Neither do I or I don't.",
+            chunks: [
+              "Everyone in our team has a job, and each of us does it well.",
+              "Both of my brothers are good at football, but neither of them is on the school team.",
+              "The children play together, but the team captain decides the order.",
+              "The price of the mangoes is high, so people are buying fewer.",
+              "Nobody likes losing, so everyone tries hard.",
+              "Many people think teamwork is easy, but a team needs patience.",
+            ],
+            recycle: ["Why don't we set up a lemonade stall?", "Right now, a woman is weighing some mangoes.", "We decided to build a tall tower."],
+            prompts: ["? Everyone in our team has a job.", "X Both of my brothers are on the team.", "+ (so) Nobody likes losing.", "T The children play together. (yesterday)", "P Each of us does it well. (each of them)", "R 'Every student in the class has a book.' = All the students ___."],
+            real: "Real talk: describe your class and your family with everyone, each, both and nobody. After each sentence your partner agrees or disagrees: 'So does my brother', 'So do I', 'Neither do I', 'I don't'.",
+            slips: "'Everyone have a book', 'The children plays', 'The box of toys are heavy'",
+            fb: "For 'Everyone have' hold up one finger and say 'Everyone ...?' so they find 'has'; for 'The children plays' point to the plural word 'children'; for 'The box of toys are' cover 'of toys' with your hand and ask 'The box ...?'.",
+            note: "The rule is simple and the errors are quick, so the drill must be quick. Everyone, each and nobody take the -s verb; both and the children take the plain verb; the verb agrees with the head of the phrase (the price OF the mangoes IS). The R sign is the exam's rewrite format, here between 'every student has' and 'all the students have'. The Level 4 step comes back in round 3: note that the helper changes with the subject (So does my brother, So do I). Round 3 must be real.",
+            support: ["Everyone ___s.", "Both ___ are ___.", "Nobody ___s."],
+            stretch: "Use neither / either or 'the price of', and agree with So does ...: 'Everyone in my family likes noodles. So does my brother.' Rewrite one sentence with the same meaning: 'Every student has a book' = 'All the students have books.'",
+            stretchFrames: ["Neither of ___ is ___.", "Everyone ___s. So does ___.", "None of ___ ___."],
+          }),
+        },
         {
           after: "Read: \"Ba's Business\" and compare",
           slide: {
@@ -394,7 +577,7 @@ export const rhL3U4Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Say what makes a good team, with an example, and keep talking without long stops.",
         words: ["team", "everyone", "each", "both", "share", "help", "together"],
-        grammar: ["Everyone / each + verb-s", "Both + verb (no -s)", "People get things done best when ___"],
+        grammar: ["Everyone / each + verb-s", "Both + verb (no -s)", "People get things done best when ___", "So do I / Neither do I / I don't"],
         rubric: [
           { label: "Clear idea", description: "Says what a good team does and gives an example.", weight: 3 },
           { label: "Agreement", description: "Uses everyone / each + verb-s and both + verb with no -s correctly.", weight: 3 },
@@ -412,8 +595,32 @@ export const rhL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u4-l5": {
       objectives: ["I can say rules and advice with must, mustn't, have to and should, fast and right."],
-      trim: { "Rules for a school farm": 12 },
+      trim: { "Rules for a school farm": 9, "Write: advice from a grandparent farmer": 11 },
       add: [
+        {
+          after: "Helping (modal) verbs",
+          slide: drill({
+            title: "Grammar drill: must, should, have to",
+            goal: "Change the sentence fast and right with a modal verb: ask it, say no, join it, change the time. In round 3, make rules and give advice, and agree with So do I or Neither do I.",
+            chunks: [
+              "You must wear a hat in the sun, so you should bring one.",
+              "We don't have to pay, but we mustn't forget to register.",
+              "Farmers have to get up early because the animals need food.",
+              "She can't come today, so she might join us tomorrow.",
+              "You should drink more water, and you could carry a bottle.",
+              "Do we have to wear uniforms? No, we don't, but we should look neat.",
+            ],
+            recycle: ["Everyone in our class wants to help.", "Why don't we set up a stall?", "I can't carry it alone. Neither can I."],
+            prompts: ["? You must wear a hat.", "X We have to pay.", "+ (because) Farmers have to get up early.", "T She can't come today. (yesterday: couldn't)", "P You should drink more water. (he)", "R 'It is necessary to wear a helmet.' = You ___ wear a helmet."],
+            real: "Real talk: make rules and give advice for your school and your home with must, mustn't, have to, don't have to and should. Start some of your sentences with 'I think we should ...' or 'I don't have to ...'. Your partner agrees or disagrees: 'So do I', 'Neither do I', 'I don't', 'I do'.",
+            slips: "'She cans swim', 'You should to rest', 'You mustn't pay' for 'You don't have to pay'",
+            fb: "For 'cans' tap your wrist for the extra -s and say 'She ...?'; for 'should to rest' hold up a stop hand for 'to'; for 'mustn't pay' (it is free) write 'not allowed' and 'not necessary' on the board and let the child choose.",
+            note: "Mustn't means not allowed; don't have to means not necessary; this one pair costs marks in every entrance paper, so give it extra repeats. The T sign gives had to / will have to, since must has no past. The R sign is the exam's rewrite: 'It is necessary to wear a helmet' = 'You must / have to wear a helmet'; 'It is not necessary to pay' = 'You don't have to pay'. In round 3 the Level 4 step comes back: 'I think we should recycle more.' 'So do I.' Round 3 must be real.",
+            support: ["You must ___.", "You mustn't ___.", "You should ___."],
+            stretch: "Use the contrast mustn't / don't have to, and agree with Neither do I: 'I don't have to wear a uniform on Friday. Neither do I.' Rewrite one sentence with the same meaning: 'It is not necessary to bring a pen' = 'You don't have to bring a pen.'",
+            stretchFrames: ["You don't have to ___, but you should ___.", "You mustn't ___ because ___.", "So do I / Neither do I."],
+          }),
+        },
         {
           after: "Exam practice: modals and rewrites",
           slide: {
@@ -503,8 +710,32 @@ export const rhL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "rh-l3-u4-l6": {
       objectives: ["I can say what I would do if things were different, three times, faster each time."],
-      trim: { "If I were the farmer: a debate": 9 },
+      trim: { "If I were the farmer: a debate": 6, "Write: if I ran the school": 11 },
       add: [
+        {
+          after: "The second conditional",
+          slide: drill({
+            title: "Grammar drill: if I were, I would",
+            goal: "Change the sentence fast and right: ask it, say no, join it, change the person. In round 3, share your own 'if' ideas and agree with So would I, Neither would I or I wouldn't.",
+            chunks: [
+              "If I were a farmer, I would grow rice and keep ducks.",
+              "What would you do if you had a free day? I would visit my cousins.",
+              "If everyone helped, the job would take one hour.",
+              "If it snowed in Hanoi, people would be surprised, and the children would play outside.",
+              "If I were you, I wouldn't give up, because the team needs you.",
+              "I would help more if I had time, but I have a lot of homework.",
+            ],
+            recycle: ["You must wear a hat in the sun.", "Everyone in our class wants to help.", "I can't carry it alone. Neither can I."],
+            prompts: ["? If I were a farmer, I would grow rice.", "X If everyone helped, the job would take one hour.", "+ (but) I would help more if I had time.", "T If it snows, people will be surprised. (second conditional: if it snowed)", "P If I were you, I wouldn't give up. (she)", "R 'I don't have time, so I can't help.' = If I ___, I ___."],
+            real: "Real talk: tell your partner what you would do if you had a free day, a lot of money or one wish for your school. Your partner agrees or disagrees: 'So would I', 'Neither would I', 'I wouldn't', 'I would'.",
+            slips: "'If I would have time', 'If I am rich, I would buy', 'If I was' where the book teaches 'If I were'",
+            fb: "For 'If I would have time' say 'If I ... time?' and hold up a stop hand for the extra 'would'; for 'If I am rich, I would' point to 'would' on the board and say 'then the first part is in the past'; for 'If I was' say 'If I ...?' with your hand on 'were'.",
+            note: "The second conditional asks for two pasts of different jobs: 'if' + past simple, then 'would' + plain verb. Children say 'would' in the wrong half, so the drill keeps both halves in one breath. The T sign turns a first-conditional sentence into an imagined one, and the R sign is the exam's favourite rewrite: 'I don't have time, so I can't help' = 'If I had time, I would help.' Round 3 uses the Level 4 step with the helper 'would': 'I'd travel to space if I could.' 'So would I.' Round 3 must be true.",
+            support: ["If I were ___, I would ___.", "So would I.", "I wouldn't."],
+            stretch: "Use two ideas and a reason, agree with So would I or Neither would I, and rewrite one sentence with the same meaning: 'I don't have money, so I can't buy it' = 'If I had money, I would buy it.'",
+            stretchFrames: ["If I were ___, I would ___ because ___.", "Neither would I, because ___.", "If I had ___, I would ___."],
+          }),
+        },
         {
           after: "Exam practice: first or second?",
           slide: {
@@ -602,7 +833,7 @@ export const rhL3U4Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Say two things you would change with 'If I ... , I would ...', give a reason, and keep going without long stops.",
         words: ["principal", "farmer", "change", "idea", "if", "would"],
-        grammar: ["If + past simple, would + verb", "If I were ___", "What would you do if ___?"],
+        grammar: ["If + past simple, would + verb", "If I were ___", "What would you do if ___?", "So would I / Neither would I"],
         rubric: [
           { label: "If and would", description: "Uses 'if' + past simple and 'would' + plain verb correctly, with 'if I were'.", weight: 3 },
           { label: "Ideas and reasons", description: "Gives two ideas and a reason for each.", weight: 2 },
@@ -620,8 +851,32 @@ export const rhL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 7
     "rh-l3-u4-l7": {
       objectives: ["I can say 'He should have ...' and 'If he had ..., he would have ...' fast, and fix mistakes in my essay."],
-      trim: { "Read: \"The Ant and the Grasshopper\"": 10 },
+      trim: { "Read: \"The Ant and the Grasshopper\"": 10, "Draft and edit the essay": 21, "Say it before you write it: the 60-second argument": 8, "Plan the persuasive essay (writing project)": 10 },
       add: [
+        {
+          after: "Regrets: should have and the third conditional (stretch)",
+          slide: drill({
+            title: "Grammar drill: should have, if I had",
+            goal: "Change the sentence fast and right: ask it, say no, join it, change the person. In round 3, share things you wish you had done, and agree with So do I or So should I.",
+            chunks: [
+              "The grasshopper should have worked in the summer.",
+              "If he had listened to the ant, he would have had food in the winter.",
+              "I wish I had started my project earlier.",
+              "We shouldn't have waited until the last day.",
+              "If we had planned better, we would have finished in time.",
+              "I wish I hadn't forgotten my notebook.",
+            ],
+            recycle: ["If I were a farmer, I would keep ducks.", "You mustn't swim in the canal.", "I enjoy working in a team."],
+            prompts: ["? The grasshopper should have worked in the summer.", "X We should have waited until the last day.", "+ (because) We should have planned better.", "T If we plan better, we will finish. (third conditional: if we had planned)", "P I wish I had started earlier. (she)", "R 'He didn't study, so he failed.' = If he ___, he ___."],
+            real: "Real talk: tell your partner about a small mistake you made and what you should have done, or what you wish you had done. Say 'I wish I had ...' or 'I should have ...'. Your partner answers with the same helper: after 'I wish', 'So do I' or 'I don't'; after 'I should have', 'So should I' or 'I shouldn't'.",
+            slips: "'should worked', 'would have went', 'If he would have worked'",
+            fb: "For 'should worked' say 'should ...?' and hold up your hand at 'have'; for 'would have went' point to the third column of the verb list and say 'have ...?'; for 'If he would have worked' hold up a stop hand for the extra 'would'.",
+            note: "This is stretch grammar, so the aim is a few automatic chunks, not a rule lesson: 'should have' + the past participle for a regret, and 'if + had + participle, would have + participle' for what did not happen. The chunks double as essay language for the persuasive essay. The R sign is the exam's rewrite: 'He didn't study, so he failed' = 'If he had studied, he wouldn't have failed.' Give the participle on a card for irregular verbs. The Level 4 step comes back with wish and should have: 'I wish I had started earlier.' 'So do I.' / 'I should have started earlier.' 'So should I.' The helper matches the first sentence, so 'So do I' after a should-have sentence is wrong. Round 3 must be true.",
+            support: ["I should have ___.", "I wish I had ___.", "So do I. / So should I."],
+            stretch: "Say what would have happened, agree with So do I or So should I, and rewrite one sentence with the same meaning: 'He didn't study, so he failed' = 'If he had studied, he wouldn't have failed.'",
+            stretchFrames: ["If I had ___, I would have ___.", "I wish I had ___. So do I, because ___.", "I shouldn't have ___."],
+          }),
+        },
         {
           after: "Exam practice: looking back",
           slide: {
@@ -697,8 +952,32 @@ export const rhL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u4-l8": {
       objectives: ["I can tell what someone said with 'said that', and say what I learned about teamwork."],
-      trim: { "Transfer: test our big idea": 13 },
+      trim: { "Transfer: test our big idea": 10, "Mock review: explain the answers": 9, "Video case: cleaning up the coasts": 8 },
       add: [
+        {
+          after: "Reported statements (stretch)",
+          slide: drill({
+            title: "Grammar drill: he said that ...",
+            goal: "Change the sentence fast and right: report what someone said, change the tense and the person. In round 3, answer what your partner says with So do I or Neither do I, then report it to another pair.",
+            chunks: [
+              "My friend said that she was tired, so we sat down.",
+              "The volunteers said they would clean the beach on Saturday.",
+              "My teacher told us that we could leave early.",
+              "He said he didn't need any help, but he looked busy.",
+              "They told me that the bags were not heavy.",
+              "She said that she was reading a book, so I didn't talk.",
+            ],
+            recycle: ["If I were you, I wouldn't give up.", "The grasshopper should have worked in the summer.", "Everyone in our class wants to help."],
+            prompts: ["? My friend said that she was tired.", "X The volunteers said they would clean the beach.", "+ (because) He said he didn't need help.", "T 'I am tired,' she said. = She said she ___.", "P 'I will help,' he said. = He said he ___.", "R 'We will clean the beach,' the volunteers said. = The volunteers said they ___."],
+            real: "Real talk: A tells B one true thing about themselves, like 'I like noodles' or 'I can't swim'. B answers first: 'So do I', 'Neither can I', 'I don't', 'I do'. Then B tells the pair next to you: 'She said that she liked noodles.' Swap.",
+            slips: "'She said me', 'He said he is hungry' (said earlier), 'I' or 'my' not changed to he / she or his / her",
+            fb: "For 'She said me' say 'She told ...?' and point to 'me'; for 'He said he is hungry' point to the time line on the board (said = past) and say 'he ...?'; for a pronoun not changed, ask 'Who is 'I' now?' and point to the speaker.",
+            note: "Reported statements are stretch grammar here, so accept 'said that' with was, could and would and do not push the rest. The R sign is the exam's rewrite format: direct speech to reported speech with the same meaning. The shift is one step back (am to was, will to would, can to could) and the pronoun changes with the speaker. The Level 4 step returns in round 3: B first answers A with 'So do I' or 'Neither can I' (the helper matches A's sentence), then reports A's words to the next pair in the past ('She said that she liked noodles'), so children use both in real talk. Round 3 must be true.",
+            support: ["She said (that) ___.", "He told me ___.", "So do I."],
+            stretch: "Report two things someone said, with their reasons, and agree with So do I or Neither do I; rewrite one sentence with the same meaning: 'I will help,' he said = He said he would help.",
+            stretchFrames: ["She said (that) ___ because ___.", "He told me (that) ___.", "Neither do I, because ___."],
+          }),
+        },
         {
           after: "Exam practice: report it",
           slide: {

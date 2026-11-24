@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 8 "Travel and Time
 // Zones" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
@@ -11,13 +12,124 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 const goingTo =
   "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). Between round 1 and round 2, stop for one minute: write them on the board and let the class fix them; children who then say it again use the fixed form. For grammar, prompt the child to fix it rather than saying it for them: start the phrase and pause ('I am ...?'), point to the frame on the board, hold up a finger for the missing word, or repeat the error with a rising voice ('She is going to buys?'). Typical slips: 'I going to fly' (missing am), 'She is going to buys' (verb after to must stay plain), 'Yes, I going' (the short answer is 'Yes, I am.'). For a sound, just say it right and let the child echo it. Say every final -s and -ed clearly yourself: children copy what they hear.";
 
+// ---- Level 4 raise: a grammar drill in every lesson and one Level 4 step -------------------
+// The step (present continuous for fixed plans, present simple for timetables) is taught in
+// lesson 3, where the unit's going to grammar is taught; every later drill uses it again.
+
+const drillBase =
+  "Prompt, do not tell: hold up one finger for a missing word, start the phrase and pause, or repeat the slip with a rising voice and let the child fix it. Say every final -s and the contractions clearly yourself. For a sound, recast: say it right once and let the child echo it. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson. Vietnamese verbs do not change with the person or the time, so ";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fix: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 6,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or the way we say it, P = change the person). The class says the new sentence together." },
+      { seconds: 75, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P." },
+      { seconds: 75, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk about your own life. Remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillBase + o.fix,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. Ages 8-10 can take the full set of signs, one at a time at first (show the ? card, practise, then add X, then +). Keep it brisk: six minutes, no more. Mark nothing in writing: this is about speed and accuracy in speech.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
+const STEP = "Level 4 step: Fixed plans and timetables";
+
+// Oxford Discover 4 grammar, B1: a plan we have fixed is the present continuous; a timetable is the present simple.
+const level4Step: Slide = {
+  kind: "grammar",
+  title: STEP,
+  hook: "Going to says what we plan. When a plan is fixed, with tickets and a time, we say it with -ing: We are flying on Monday.",
+  form: [
+    { label: "Fixed plan (+)", pattern: "I am (I'm) / He, She, It is / We, You, They are + verb-ing + a time   (We are flying to Tokyo on Monday.)" },
+    { label: "Fixed plan (-) and question", pattern: "We aren't flying on Tuesday.   Are you flying on Monday?   Yes, I am. / No, I'm not." },
+    { label: "Timetable", pattern: "present simple: it, he, she + -s   (The plane leaves at six. The shop opens at eight.)" },
+    { label: "Timetable question", pattern: "What time does the plane leave?   Does it leave at six?   Yes, it does. / No, it doesn't." },
+    { label: "Time words", pattern: "tomorrow, tonight, on Monday, next week, at six o'clock" },
+  ],
+  explanation: [
+    "In this unit you learned going to for plans: I'm going to visit my aunt. Now there is a second way to talk about the future. When a plan is fixed (we have the tickets, we told our aunt, we know the day), we can use am / is / are + a verb with -ing and a time word: We are flying to Tokyo on Monday. It sounds more sure than going to. It is the same be verb (am, is, are) that you already use with going to, so the shape is easy.",
+    "Trains, planes, buses and shops follow a timetable, and a timetable is not our own plan: it is the same every week. For a timetable we use the simple present, with the -s for it, he and she: The plane leaves at six. The shop opens at eight. We use it for times that are printed on a ticket or a sign.",
+    "These two ways of talking about the future are a big step in your English. Many sentences use both together: The plane leaves at six, so we are leaving home at four. Next time you plan a trip, say what is fixed (with -ing) and what is on the timetable (the simple present).",
+  ],
+  examples: [
+    { text: "We are flying to Tokyo on Monday.", note: "A fixed plan: the tickets are bought." },
+    { text: "My aunt is meeting us at the airport at nine.", note: "A fixed plan with another person." },
+    { text: "I'm not taking a taxi; we're taking the bus tomorrow.", note: "A fixed plan, with a negative." },
+    { text: "The plane leaves at six, and it arrives at noon.", note: "A timetable: present simple." },
+    { text: "What time does the train to Hai Phong leave?", note: "A timetable question: does + plain verb." },
+    { text: "The plane leaves at six, so we are leaving home at four.", note: "Both together: the timetable and our fixed plan." },
+  ],
+  pitfalls: [
+    { wrong: "We are fly to Tokyo on Monday.", right: "We are flying to Tokyo on Monday.", why: "After am / is / are the verb needs -ing. (After going to it stays plain: We are going to fly.)" },
+    { wrong: "The plane leave at six.", right: "The plane leaves at six.", why: "A timetable uses the simple present, and it, he and she need the -s. Vietnamese verbs never change, so say the -s out loud." },
+    { wrong: "What time does the plane leaves?", right: "What time does the plane leave?", why: "After does, the verb stays plain: the -s is already in does." },
+  ],
+};
+
 export const odL3U8Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u08-l1": {
       objectives: ["I can say doctor and patient sentences fast, without stopping.", "I can write a long, clear sentence about a health problem."],
-      trim: { "Ache charades": 3, "Airport or doctor? Four corners": 4, "What is a problem? Is / Is not sort": 6, "Dictionary duo": 3 },
+      trim: { "Airport or doctor? Four corners": 4, "What is a problem? Is / Is not sort": 6, "Dictionary duo": 3 },
+      drop: ["Ache charades"],
       add: [
+        {
+          after: "Doctor, doctor! Role-play",
+          slide: drill({
+            title: "Grammar drill: I'm going to see the doctor",
+            goal: "Change the going to sentence fast and right: ask it, say no, join it with a reason, change the time or the person. Then talk about your own plans.",
+            chunks: [
+              "I have a headache, so I'm going to see the doctor.",
+              "Is she going to take some medicine? Yes, she is.",
+              "We aren't going to fly today because my brother is sick.",
+              "He's going to feel better when he rests.",
+              "What are you going to do after school?",
+              "I'm going to ask the doctor what to do.",
+            ],
+            recycle: ["The doctor who helped me was very kind.", "If I have a fever, I will stay in bed.", "I was reading when my head started to hurt."],
+            prompts: ["My sister is going to see a doctor. (?)", "We are going to fly today. (X)", "I'm going to rest. (+ because I'm tired)", "She is going to eat lunch. (T: tomorrow)", "He is going to buy medicine. (P: they)"],
+            real: "Real talk: tell your partner what you are going to do the next time you feel sick, and one plan for this weekend. Say why. Your partner asks one question with going to.",
+            slips: "'I going to see the doctor' or 'She is going to sees'",
+            fix: "a missing am / is / are and an extra -s after to are the usual slips. For 'I going to rest' hold up a finger and say 'I ... going to rest?'; for 'She is going to sees' repeat it with a rising voice ('going to sees?'); for 'Yes, she going' say 'Yes, she ...?' and wait for is.",
+            support: ["Is she going to ___? Yes, she is.", "I'm going to ___ because ___."],
+            stretch: "Use two signs at once, then look ahead to Level 4: a plan we have fixed: 'We're flying to Tokyo on Monday, so I'm not going to school.'",
+            stretchFrames: ["We're ___ing to ___ on ___.", "I'm going to ___ because ___."],
+          }),
+        },
         {
           after: "Doctor, doctor! Role-play",
           slide: {
@@ -95,8 +207,32 @@ export const odL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u08-l2": {
       objectives: ["I can retell Molly's story three times, faster each time.", "I can plan and write a short paragraph that explains why a message is better than a call."],
-      trim: { "Gist check": 3, "Pass the passport": 3, "Who looks after the home?": 3, "Text-message detectives": 6, "The story in fives": 11, "Look first, then predict": 7 },
+      trim: { "Gist check": 3, "Text-message detectives": 6, "The story in fives": 11, "Look first, then predict": 7 },
+      drop: ["Pass the passport", "Who looks after the home?"],
       add: [
+        {
+          after: "Day here, night there",
+          slide: drill({
+            title: "Grammar drill: day here, night there, going to",
+            goal: "Change the going to sentence fast and right: ask it, say no, join it with a reason, change the time or the person. Then talk about someone who lives far away.",
+            chunks: [
+              "It's night in Tokyo, so Molly is going to send a message.",
+              "Is her aunt going to be awake? No, she isn't, because it's late there.",
+              "My cousin isn't going to answer now, so I'm going to write to him.",
+              "When it's noon here, it's two o'clock there.",
+              "What are you going to say in your message?",
+              "Molly is going to call her father when it's morning there.",
+            ],
+            recycle: ["If it is night there, I will send a message.", "I was talking to my friend when the phone rang.", "My aunt, who lives in Tokyo, is two hours ahead."],
+            prompts: ["My aunt is going to call us. (?)", "I am going to phone her now. (X)", "I'm going to send a message. (+ because it's night there)", "My uncle is going to wake up. (T: tomorrow morning)", "My cousin is going to send a photo. (P: we)"],
+            real: "Real talk: tell your partner about one person who lives far away. Say what time it is there, what you are going to say, and why. Your partner asks one question.",
+            slips: "'It night there' (missing is) or 'She going to calls'",
+            fix: "the be verb is often missing ('It night there', 'She going to call') and an -s sneaks in after to ('going to calls'). For 'It night there' point to the board and say 'It ... night there?'; for 'going to calls' repeat it with a rising voice and let the child fix it.",
+            support: ["Is she going to ___? Yes, she is.", "It's ___ there, so I'm going to ___."],
+            stretch: "Use two signs at once, then look ahead to Level 4: a plan that is fixed: 'My aunt is flying to Hanoi on Friday, so we're meeting her at the airport.'",
+            stretchFrames: ["My ___ is ___ing to ___ on ___.", "We're ___ing her at ___."],
+          }),
+        },
         {
           after: "The story in fives",
           slide: {
@@ -210,8 +346,34 @@ export const odL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u08-l3": {
       objectives: ["I can ask and answer 'What are you going to do?' quickly, without looking.", "I can join two ideas with because or so in a sentence."],
-      trim: { "Mime my plan": 3, "Guess my plan": 3, "Our big idea": 4, "How have you helped? (SB 80 Think)": 4 },
+      trim: { "Guess my plan": 3, "Our big idea": 3, "How have you helped? (SB 80 Think)": 3, "Plan detectives": 6 },
+      drop: ["Mime my plan"],
       add: [
+        { after: "Future plans with going to", slide: level4Step },
+        {
+          after: STEP,
+          slide: drill({
+            title: "Grammar drill: plans, then fixed plans",
+            goal: "Change the going to sentence fast and right: ask it, say no, join it with a reason, change the time or the person. Then, in round 3, say a fixed plan with -ing and a time from a timetable.",
+            chunks: [
+              "I'm going to visit my cousin next summer.",
+              "Are you going to take the train? Yes, I am.",
+              "We aren't going to fly because the tickets are expensive.",
+              "She's going to stay with her aunt when she gets there.",
+              "We're flying to Tokyo on Monday.",
+              "The plane leaves at six, so we're leaving home at four.",
+              "What time does the bus leave?",
+            ],
+            recycle: ["I think it will be sunny tomorrow.", "If we miss the bus, we will walk.", "The airport where we meet is very big."],
+            prompts: ["My family is going to travel. (?)", "I am going to take a taxi. (X)", "We are going to take the bus. (+ because it is cheap)", "She is going to visit her aunt. (T: next summer)", "He is going to meet us. (P: they)"],
+            real: "Real talk, Level 4 step: tell your partner about a plan you have really fixed (a trip, a visit, a party) with -ing and a time: 'We are visiting my aunt on Sunday.' Then say one time from a timetable you know: 'My bus leaves at ...'. Your partner asks one question.",
+            slips: "'I going to visit' or 'She is going to visits' and, in round 3, 'We are fly' or 'The plane leave'",
+            fix: "round 3 brings two new slips: 'We are fly to Tokyo' (after am / is / are the verb needs -ing) and 'The plane leave at six' (a timetable needs the -s). For 'We are fly' hold up a finger and say 'We are fly...ing?'; for 'The plane leave' tap your wrist for the missing -s. In rounds 1 and 2 the usual slips are a missing be verb ('I going to') and 'going to visits'.",
+            support: ["Are you going to ___? Yes, I am.", "I'm going to ___ because ___."],
+            stretch: "Use two signs at once, then use the Level 4 step: 'The plane leaves at six, so we're leaving home at four. Are you coming with us?'",
+            stretchFrames: ["The ___ leaves at ___, so we're ___ing at ___.", "We're ___ing on ___."],
+          }),
+        },
         {
           after: "Guess my plan",
           slide: {
@@ -300,8 +462,33 @@ export const odL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u08-l4": {
       objectives: ["I can tell my trip plan three times, faster each time.", "I can find and fix mistakes with capital letters and contractions."],
-      trim: { "Contraction chain": 4, "Announcements everywhere (SB 82 Think)": 4 },
+      trim: { "Announcements everywhere (SB 82 Think)": 3 },
+      drop: ["Contraction chain"],
       add: [
+        {
+          after: "Contractions: I'm, she's, we'll",
+          slide: drill({
+            title: "Grammar drill: short forms in plans",
+            goal: "Change the plan sentence fast and right with short forms (I'm, we're, she'll): ask it, say no, join it with a reason, change the time or the person. Then use the Level 4 step in real talk.",
+            chunks: [
+              "I'm going to visit my aunt, and she'll meet us at the airport.",
+              "We're going to fly on Saturday, so we'll leave home early.",
+              "She isn't going to take a taxi; she's going to take the bus.",
+              "They aren't coming to the airport because they're busy.",
+              "You're going to love it, and it'll be a great trip.",
+              "We're flying to Singapore on Friday. The plane leaves at nine.",
+              "What time does the plane leave? It leaves at nine o'clock.",
+            ],
+            recycle: ["I was reading when a beetle landed on my book.", "I have never been to Tokyo.", "The man who works at the airport is kind."],
+            prompts: ["I am going to fly tomorrow. (say it with I'm)", "They are going to come. (X: they aren't)", "We will leave early. (+ because it's far; say we'll)", "She is going to travel. (P: we, with a short form)", "Are you going to take a taxi? (answer: Yes, I am. or No, I'm not.)"],
+            real: "Real talk, Level 4 step: tell your partner two plans for next week with short forms. Make one a fixed plan with -ing and a time ('I'm visiting my cousin on Sunday') and one about a timetable ('My bus leaves at seven'). Your partner asks one question.",
+            slips: "'Im going' (no apostrophe in writing), 'Your going to love it', 'She'll goes', 'The plane leave'",
+            fix: "children say 'I going' for I'm, and 'she'll goes' with an extra -s. For 'I going' point to the board and say 'I'... going?'; say the short forms very clearly yourself (I'm, we're, she'll, it'll). In round 3 listen for 'We're fly' and 'The plane leave': the -ing after we're and the -s on leaves.",
+            support: ["I'm going to ___. She'll ___.", "We're going to ___, so we'll ___."],
+            stretch: "Use two signs at once, then use the Level 4 step with short forms: 'We're flying on Monday, and the plane leaves at six, so we'll be at the airport at four.'",
+            stretchFrames: ["We're ___ing on ___, and the ___ leaves at ___.", "We'll ___ at ___."],
+          }),
+        },
         {
           after: "Say your trip first",
           slide: {
@@ -347,7 +534,7 @@ export const odL3U8Lab: UnitLab = {
             title: "Fix the postcard",
             routine: "fix it",
             mode: "pairs",
-            minutes: 5,
+            minutes: 4,
             steps: [
               "Read each sentence with your partner. Something is wrong!",
               "Find the mistake: a capital letter, a contraction or a plain verb.",
@@ -381,12 +568,13 @@ export const odL3U8Lab: UnitLab = {
           "Choose your place. Draw a very small map with two or three things on the way.",
           "Say your directions three times: each time a little faster, like in class.",
           "Record it once. Point to your map as you talk.",
+          "Say one fixed plan with -ing and one timetable time with the present simple: 'We are visiting my aunt on Sunday. The bus leaves at eight.'",
           "Look at the camera and keep going, without long stops.",
         ],
         maxSeconds: 180,
         kidSummary: "Say where the place is, how to get there and what you're going to do there, without long stops.",
         words: ["next to", "across from", "near", "far", "airport", "bus", "train"],
-        grammar: ["Excuse me, where's the ___?", "It's next to / across from the ___.", "I'm going to ___ when I get there."],
+        grammar: ["Excuse me, where's the ___?", "It's next to / across from the ___.", "I'm going to ___ when I get there.", "We're ___ing on ___. The ___ leaves at ___."],
         rubric: [
           { label: "Clear directions", description: "Says where the place is using next to, across from, near or far.", weight: 3 },
           { label: "Keeps going", description: "Talks without long stops, in whole sentences and not single words.", weight: 3 },
@@ -404,8 +592,33 @@ export const odL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u08-l5": {
       objectives: ["I can sell a trip in a short ad and say it again with a new partner.", "I can write a short travel ad with a plan, a check and a say-it step."],
-      trim: { "Sixty-second recall": 3, "Test our big ideas": 3, "Ad showtime": 9 },
+      trim: { "Ad showtime": 9 },
+      drop: ["Sixty-second recall", "Test our big ideas"],
       add: [
+        {
+          after: "Ad showtime",
+          slide: drill({
+            title: "Grammar drill: ad plans and timetables",
+            goal: "Change the plan sentence fast and right: ask it, say no, join it with a reason, change the time or the person. Then sell your trip with fixed plans and a timetable.",
+            chunks: [
+              "Come with us! We're flying to Tokyo on Monday.",
+              "The plane leaves at six, and it arrives at noon.",
+              "We're going to see a big museum, so bring your camera.",
+              "When it's noon here, it's two o'clock there.",
+              "Are you coming with us? What time does the bus leave?",
+              "We aren't staying in a hotel; we're staying with my aunt.",
+              "My cousin is meeting us at the airport at one o'clock.",
+            ],
+            recycle: ["I enjoy travelling, and I want to learn some Japanese.", "If you come with us, you will love it.", "I think it will be a great trip."],
+            prompts: ["We are going to fly on Monday. (?)", "We are going to take a taxi. (X)", "We are going to see a museum. (+ because it's famous)", "My aunt is going to meet us. (T: at one o'clock, a fixed plan with -ing)", "He is going to come. (P: they)"],
+            real: "Real talk, Level 4 step: sell your trip to your partner! Say two fixed plans with -ing and a time, and one time from the timetable. Your partner says yes or no and gives a reason.",
+            slips: "'We are fly on Monday', 'The plane leave at six' or 'What time does the plane leaves?'",
+            fix: "the new slips are 'We are fly' (needs -ing after am / is / are), 'The plane leave' (a timetable needs the -s) and 'does the plane leaves' (after does the verb stays plain). For the last one hold up a finger on does and say 'Does ... leave?'. Say 'leaves' with a clear -s yourself.",
+            support: ["We're ___ing to ___ on ___.", "The ___ leaves at ___."],
+            stretch: "Use two signs at once, then add a fixed plan, a timetable and a reason in one go: 'The plane leaves at six, so we're leaving home at four because the airport is far.'",
+            stretchFrames: ["The ___ leaves at ___, so we're ___ing at ___.", "We're ___ing on ___ because ___."],
+          }),
+        },
         {
           after: "Ad showtime",
           slide: {
@@ -491,8 +704,32 @@ export const odL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "od2e-l3-u08-l6": {
       objectives: ["I can say am, is and are with going to fast and right.", "I can join plans with because and so and say them out loud."],
-      trim: { "Gates game: am, is or are?": 6, "Remember it!": 5 },
+      trim: { "Gates game: am, is or are?": 3, "Remember it!": 3 },
       add: [
+        {
+          after: "Grammar: plans with going to",
+          slide: drill({
+            title: "Grammar drill: going to and fixed plans together",
+            goal: "Change the sentence fast and right with both ways to talk about the future: going to for plans, -ing for fixed plans and the simple present for timetables. Then talk about your own next holiday.",
+            chunks: [
+              "I am going to wake up at six tomorrow.",
+              "Is she going to take the train? Yes, she is.",
+              "They aren't going to stay at home because it's a holiday.",
+              "We're flying to Seoul on Friday; we have the tickets.",
+              "The plane leaves at eight, so we're leaving home at six.",
+              "What time does the train leave? Are you leaving early?",
+              "I'm going to take a jacket because it will be cold there.",
+            ],
+            recycle: ["Look at the clouds! It is going to rain.", "While we were waiting, the plane landed.", "If it rains, we will stay in."],
+            prompts: ["She is going to take the train. (?)", "We are flying on Friday. (X)", "They are going to stay at home. (+ because it's a holiday)", "We are going to fly. (T: on Friday, a fixed plan with -ing)", "The plane leaves at eight. (?: What time ...?)"],
+            real: "Real talk: tell your partner about your next holiday. Say what you are going to do, one fixed plan with -ing and a time, one time from a timetable, and why. Your partner asks one question.",
+            slips: "'I going to wake up', 'She is going to takes', 'We are fly on Friday' or 'The plane leave'",
+            fix: "going to keeps the plain verb ('We are going to fly'), the fixed plan needs -ing ('We are flying'), and a timetable needs the -s ('The plane leaves'). Children mix these up, so write the three shapes on the board in three colours and point to the one they need: be + going to + plain verb, be + verb-ing, it + verb-s. For 'The plane leave' tap your wrist for the missing -s.",
+            support: ["I'm going to ___ because ___.", "We're ___ing on ___."],
+            stretch: "Use two signs at once, then use all three: 'We're flying on Friday, the plane leaves at eight, and I'm going to take a jacket because it will be cold.'",
+            stretchFrames: ["We're ___ing on ___, the ___ leaves at ___.", "I'm going to ___ because ___."],
+          }),
+        },
         {
           after: "Gates game: am, is or are?",
           slide: {
@@ -572,12 +809,13 @@ export const odL3U8Lab: UnitLab = {
           "Plan four sentences on paper: where, who, how and why.",
           "Say your plan three times: each time a little faster and smoother, like in class.",
           "Record it once. Look at the camera, not at the paper.",
+          "Say one fixed plan with -ing and a time, and one time from a timetable: 'We are flying on Friday. The plane leaves at eight.'",
           "Keep going, even if you make a small mistake. Do not stop to start again.",
         ],
         maxSeconds: 180,
         kidSummary: "Tell your weekend plan with going to, say why with because or so, and keep talking without long stops.",
         words: ["airport", "passenger", "passport", "destination", "doctor", "medicine"],
-        grammar: ["am / is / are + going to + plain verb", "because / so", "First, next, then"],
+        grammar: ["am / is / are + going to + plain verb", "because / so", "First, next, then", "We are flying on ___. The plane leaves at ___."],
         rubric: [
           { label: "Going to plan", description: "Says at least three plans with am / is / are + going to + a plain verb.", weight: 3 },
           { label: "Keeps going", description: "Talks without long stops, in whole sentences and not single words.", weight: 3 },

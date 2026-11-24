@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 4 "Why People
 // Move" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
@@ -21,12 +22,65 @@ const fixMoved =
 const fixBecause =
   "Listen and do not stop the talk. Note two or three mistakes (no names). Between rounds 1 and 2, write them on the board and let the class fix them in one minute. For grammar, prompt the child: point to the frame, start the phrase and pause ('They moved because ...?'), or hold up a finger when a whole 'because' part is missing its verb ('because a new job' -> 'because they got a new job'). For 'Why you like it?' repeat it with a rising voice and 'Why ...?' and wait for 'do'. For a sound, say it right and let the child echo. Say every final -s and -ed clearly yourself: 'moved', 'likes', 'jobs'.";
 
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+// Pitched for ages 8-10. Signs: ? ask it, X say no, + join it, T change the time, P change the person.
+function drill(o: {
+  title: string;
+  minutes?: number;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  join: string;
+  t: string;
+  real: string;
+  slips: string;
+  fix: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+  note: string;
+}): Slide {
+  const minutes = o.minutes ?? 7;
+  const secs = minutes >= 7 ? [60, 90, 90] : [60, 75, 75];
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: secs[0], say: `Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join it with ${o.join}, T = ${o.t}, P = change the person). The class says the new sentence together.` },
+      { seconds: secs[1], say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Try two signs together when you can, like X + or T P." },
+      { seconds: secs[2], say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the child with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said.",
+    ],
+    prompts: o.prompts,
+    feedback: `Prompt, do not tell. ${o.fix} For a sound, say it right yourself and let the child echo it (a recast). Say every -s, -ed and n't clearly yourself: children copy what they hear. In round 3 do not stop to correct every slip: note the two that matter and use them in the one-minute fix next time.`,
+    teacherNote: `${o.note} A drill only helps when the last round is real: the children use the form for their own meaning, so it is not just a game with signs. Keep it brisk; a drill that drags loses its point. Mark nothing in writing: this is about speed and accuracy in speech.`,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say each new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence with all the signs, and join two signs together when you can." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U4Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u04-l1": {
       objectives: ["I can describe rural, urban and suburban places in whole sentences, without long stops."],
-      trim: { "Four corners: where am I?": 4, "Stand on the line": 5, "Guess my place": 5 },
+      trim: { "Four corners: where am I?": 3, "Stand on the line": 3 },
+      drop: ["Guess my place"],
       add: [
         {
           after: "Live or work? (SB 36 B)",
@@ -66,6 +120,32 @@ export const odL3U4Lab: UnitLab = {
               { level: "Stretch", task: "Add a reason: 'In an urban area there are tall buildings, so many people work there.'" },
             ],
           },
+        },
+        {
+          after: "Place sprint: what is there?",
+          slide: drill({
+            title: "Grammar drill: a place has, people go",
+            goal: "Change the sentence about a place fast and right: ask it, say no, join it with because, change the time or the person. Then talk about the place where you live.",
+            chunks: [
+              "In a rural area there are farms, and in an urban area there are tall buildings.",
+              "If a place has a big park, children play there after school.",
+              "Does a rural area have tall buildings? No, it doesn't, but it has big fields.",
+              "Many families live in the suburb because it is quiet.",
+              "Last year my cousin lived in a village, but now he lives in a city.",
+              "Which place do you like better, and why do you like it?",
+            ],
+            recycle: ["Have you ever lived in a big city?", "We used to live in a small village."],
+            prompts: ["A city has busy streets. (?)", "A village has a metro. (X)", "A suburb is quiet. (+ because)", "We live in a city. (T: last year)", "A town has a park. (P: they)"],
+            join: "because / so / if",
+            t: "change the time: now, last year",
+            real: "Real talk: tell your partner about the place where you live. Say what it has, what you like and what you would change. Your partner asks one question.",
+            slips: "'There have a park', 'in urban area' or 'Does it has'",
+            fix: "For 'There have a park' say 'There ...?' with a rising voice and wait for 'is'; for 'in urban area' hold up one finger for 'an'; for 'Does a village has' say 'Does a village ...?' and wait for 'have'; for a missing -s tap your wrist.",
+            support: ["Does a ___ have ___? Yes, it does.", "A ___ doesn't have ___."],
+            stretch: "Look ahead with will: 'If a place has a hospital, more families will come.' Then join two signs and add a question.",
+            stretchFrames: ["If a place has ___, ___ will ___.", "___, so ___. Do you think ___?"],
+            note: "Children who have never met if in this unit can still do it as a whole phrase: 'If a place has a park, ...' is a chunk to repeat, not a rule to explain. The T sign uses the past (last year) here; the future with will appears only in the Stretch, as a first peek at Level 4. Vietnamese has no verb endings, so listen for 'There have', 'does ... has' and the missing -s on farms and fields.",
+          }),
         },
         {
           after: "My favorite place",
@@ -115,7 +195,7 @@ export const odL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u04-l2": {
       objectives: ["I can tell why a family moved, three times, faster each time."],
-      trim: { "Class word web": 7, "Look first, then predict": 6, "Word detectives: belongings, immigrant, move abroad, experiences": 4, "Home talk: favorite places": 4, "Moving-day interview": 7 },
+      trim: { "Class word web": 4, "Look first, then predict": 6, "Word detectives: belongings, immigrant, move abroad, experiences": 3, "Home talk: favorite places": 3, "Moving-day interview": 5 },
       add: [
         {
           after: "Where from, where to, why?",
@@ -153,6 +233,32 @@ export const odL3U4Lab: UnitLab = {
               { level: "Stretch", task: "Add how the family feels: 'They miss ___, but they look forward to ___.'" },
             ],
           },
+        },
+        {
+          after: "The moving story: tell it again",
+          slide: drill({
+            title: "Grammar drill: why a family moved",
+            goal: "Change the sentence about a family that moved fast and right: ask it, say no, join it with because or if, change the time or the person. Then talk about someone you know who moved.",
+            chunks: [
+              "The family moved from a village to a city because the father got a new job.",
+              "Did the family move because of the school? No, they didn't, but the new school is good.",
+              "If a family moves to a city, the children go to a new school.",
+              "When children miss their friends, they call them.",
+              "The mother got a job, so they moved in the summer.",
+              "Why did your family move here, and how do you feel about it?",
+            ],
+            recycle: ["We used to live in a small village.", "I have never seen a really big city."],
+            prompts: ["The family moved to a city. (?)", "They moved because of the school. (X)", "The mother got a job. (+ so)", "The children go to a new school. (T: yesterday)", "She misses her friends. (P: they)"],
+            join: "because / so / if / when",
+            t: "change the time: now, yesterday",
+            real: "Real talk: tell your partner about someone you know who moved, or a place you would like to move to. Say where from, where to and why. Your partner asks one question.",
+            slips: "'The father get a new job', 'because a new job' or 'They miss'",
+            fix: "For 'get a new job' say 'The father ...?' and hold up a finger for -ed or the past form 'got'; for 'because a new job' repeat it with a rising voice and 'because who ...?'; for 'Did they moved' tap the word 'Did' and wait for 'move'.",
+            support: ["Did the family ___? Yes, they did.", "They moved because ___."],
+            stretch: "Look ahead with will: 'If the family moves, the children will make new friends.' Join two signs and ask your partner what they would do.",
+            stretchFrames: ["If a family moves, ___ will ___.", "___ because ___. What will you ___?"],
+            note: "This lesson is before the unit's if and when rule, so the if and when sentences are chunks the children say as whole phrases; do not stop to explain them. The reasons with because and so are the main work, in the past tense of the moving story. The will in the Stretch tier is a first peek at the first conditional that Lesson 3 names. Listen for the final -ed in 'moved' and for 'got'.",
+          }),
         },
         {
           after: "Moving-day interview",
@@ -228,9 +334,68 @@ export const odL3U4Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u04-l3": {
-      objectives: ["I can ask and answer 'What do you do when ...?' fast, with if and when."],
-      trim: { "If I clap, you ...": 4, "Listen and read (SB 41 D)": 8, "Discover the rule (SB 41 E)": 8, "If-chain": 5, "Our big idea": 6 },
+      objectives: ["I can ask and answer 'What do you do when ...?' fast, with if and when.", "I can say what will happen next: If it rains tomorrow, I will take an umbrella."],
+      trim: { "If I clap, you ...": 4, "Listen and read (SB 41 D)": 8, "Discover the rule (SB 41 E)": 8, "Our big idea": 4 },
+      drop: ["If-chain"],
       add: [
+        {
+          after: "Present real conditional: if and when",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: the first conditional with will",
+            hook: "The first conditional: If + present, will / won't + verb (If we move to the city, I will go to a new school.). Look into the future: if one thing happens, another thing will happen.",
+            form: [
+              { label: "If first", pattern: "If + subject + present, + subject + will + verb   (If we move to the city, I will go to a new school.)" },
+              { label: "Result first (no comma)", pattern: "Subject + will + verb + if + subject + present   (I will go to a new school if we move to the city.)" },
+              { label: "Negative", pattern: "If + subject + present, + subject + won't + verb   (If it is too far, I won't walk.)" },
+              { label: "Question", pattern: "What will + subject + do + if + subject + present?   (What will you do if you miss your friends?)" },
+            ],
+            explanation: [
+              "In this unit you said what always happens: 'If I am thirsty, I drink water.' Now we look at something that may happen in the future. The if part says the thing that may happen. The will part says the result.",
+              "We use it for plans, warnings and promises: 'If we move to the city, I will go to a new school.' Look at the if part: it stays in the present, just like the rule you learned today. Only the result part gets will (or won't). So it grows out of the same sentence you already know, with one new word.",
+              "This is grammar you will meet again in Oxford Discover 4, where you will use it to talk about choices and about what will happen next. Practise saying it as one whole piece: 'If ..., I will ...'.",
+            ],
+            examples: [
+              { text: "If we move to the city, I will go to a new school." },
+              { text: "If my friends visit, we will play in the park." },
+              { text: "If I miss my old home, I will call my grandmother.", note: "The if part is present: miss, not will miss." },
+              { text: "My family will be happy if the new job is good.", note: "Result first: no comma." },
+              { text: "If the apartment is too small, we won't stay there.", note: "won't = will not." },
+              { text: "What will you do if you feel lonely in a new place?" },
+            ],
+            pitfalls: [
+              { wrong: "If we will move to the city, I will go to a new school.", right: "If we move to the city, I will go to a new school.", why: "After if we use the present. Will goes only in the result part." },
+              { wrong: "If we move to the city, I will goes to a new school.", right: "If we move to the city, I will go to a new school.", why: "After will the verb has no -s, no -ed and no 'to'." },
+              { wrong: "If it is too far, I will don't walk.", right: "If it is too far, I won't walk.", why: "won't already means will not, so do not add don't." },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: the first conditional with will",
+          slide: drill({
+            title: "Grammar drill: if, when and will",
+            goal: "Change the if and when sentence fast and right: ask it, say no, join it, change the person. Then look ahead and say what will happen.",
+            chunks: [
+              "If I am thirsty, I drink water.",
+              "When it rains, we stay inside.",
+              "What do you do when you are nervous?",
+              "If it is cold tomorrow, I will wear a coat.",
+              "If we move to the city, I will go to a new school.",
+              "What will you do if you miss your friends?",
+            ],
+            recycle: ["We used to live in a small village.", "I am good at making new friends."],
+            prompts: ["If she is tired, she goes to bed early. (?)", "When it rains, we play outside. (X)", "I am hungry. I eat a snack. (+ if)", "If it is cold, he wears a coat. (P: they)", "Round 3, T: If it rains tomorrow, ... (will)"],
+            join: "if / when",
+            t: "in round 3 only: look at tomorrow and use will",
+            real: "Real talk with will: tell your partner two things you will do if something happens to you this week (If it rains on Saturday, I will ...). Your partner asks 'What will you do if ...?' and says 'Me too!' or 'Not me.'",
+            slips: "'If he hungry', 'she sleep' or 'If it will rain'",
+            fix: "For 'If he hungry' start 'If he ...?' and wait for 'is'; for 'she sleep' hold up a finger for the -s; for 'If it will rain' raise your voice on 'will?' and let the child say 'rains', because after if we use the present; for 'I will goes' tap your wrist and wait for 'go'.",
+            support: ["If I am ___, I ___.", "If it ___ tomorrow, I will ___."],
+            stretch: "Use two signs at once, then add a negative and a question: 'If it rains tomorrow, I won't go to the park. What will you do?'",
+            stretchFrames: ["If ___, I won't ___.", "What will you do if ___?"],
+            note: "Rounds 1 and 2 are the unit's own rule: if and when with the present in both parts. The Level 4 step enters at the T sign in round 3 and in the Stretch tier: the if part stays in the present, and only the result gets will. Keep the contrast alive by saying both: 'If it rains, I stay inside' and 'If it rains tomorrow, I will stay inside'.",
+          }),
+        },
         {
           after: "What do you do when ...? (SB 41 G)",
           slide: {
@@ -307,8 +472,36 @@ export const odL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u04-l4": {
       objectives: ["I can give reasons with 'because' for my favorite place, again and again, more smoothly each time."],
-      trim: { "Reason relay": 4, "Where does my family come from? (SB 42 Think)": 4, "Suffixes for countries (SB 43 D)": 8 },
+      trim: { "Where does my family come from? (SB 42 Think)": 3, "Suffixes for countries (SB 43 D)": 8 },
+      drop: ["Reason relay"],
       add: [
+        {
+          after: "Why and because: giving reasons",
+          slide: drill({
+            title: "Grammar drill: because, so and will",
+            minutes: 6,
+            goal: "Change the sentence with because fast and right: ask it, say no, join it with so or if, change the time or the person. Then use if and will for your own plans.",
+            chunks: [
+              "Why did they move? Because the mother got a new job.",
+              "They moved because the mother got a new job, so the children changed schools.",
+              "Why do you like the suburb? Because it is quiet and it has a big park.",
+              "They didn't move because of the school.",
+              "If the city is too busy, we will live in the suburb because it is quieter.",
+              "If you move to a new place, what will you miss, and why?",
+            ],
+            recycle: ["I enjoy living near a park.", "We used to live in a village."],
+            prompts: ["The family moved. (? Why?)", "They moved because of the school. (X)", "I like the park. (+ because)", "We moved last year. (T: next year, will)", "She likes the village. (P: they)"],
+            join: "because / so / if",
+            t: "change the time: last year, next year with will",
+            real: "Real talk: tell your partner one thing you will do if you move to a new place, and why. Use If ... will ... because ... Your partner asks 'Why?' and you answer with because.",
+            slips: "'Why you like it?', 'because a new job' or 'so' with because",
+            fix: "For 'Why you like it?' repeat it with a rising voice, start 'Why ...?' and wait for 'do'; for 'because a new job' hold up one finger and ask 'because who ...?'; for 'Because it is quiet, so I like it' cross out the 'so' with a finger; for 'I will to go' tap your wrist and wait for 'go'.",
+            support: ["Why do you ___? Because ___.", "If ___, I will ___."],
+            stretch: "Use two signs at once and stack a reason on a plan: 'If the city is busy, we will move to the suburb because it is quieter, so ...'",
+            stretchFrames: ["If ___, we will ___ because ___.", "___, so ___."],
+            note: "The unit grammar is why and because; round 3 and the Stretch tier use the Level 4 step again: if in the present, will in the result, and because still needs who + did what. Keep this one at six minutes. Do not teach new words: the children say the sentences they already know with a new sign.",
+          }),
+        },
         {
           after: "My favorite kind of community (SB 43 C)",
           slide: {
@@ -399,13 +592,14 @@ export const odL3U4Lab: UnitLab = {
         steps: [
           "Choose your community and two reasons. Write three key words on a card.",
           "Say your talk three times to a grown-up or a toy. Each time a little smoother, like in class.",
+          "Add one sentence with if and will, like: If I live there, I will play in the park every day.",
           "Record it once. Look at the camera and keep going without long stops.",
           "Grown-up: hold the phone and let your child speak; do not say the words for them.",
         ],
         maxSeconds: 180,
         kidSummary: "Say which community you like, give two reasons with because, and keep talking.",
         words: ["rural area", "urban area", "suburb", "quiet", "busy", "park", "because", "also"],
-        grammar: ["I like ___ the most because ...", "Also, ...", "Why do you like ___? Because ..."],
+        grammar: ["I like ___ the most because ...", "Also, ...", "Why do you like ___? Because ...", "If I live there, I will ___."],
         rubric: [
           { label: "Two reasons", description: "Gives two reasons for the choice, one with 'because' and one with 'also'.", weight: 3 },
           { label: "Because clauses", description: "After because, says who and what happens: because it has a big park.", weight: 3 },
@@ -423,7 +617,8 @@ export const odL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u04-l5": {
       objectives: ["I can talk about why we are moving to a new place, three times, faster each time."],
-      trim: { "60-second recall": 3, "Test our big ideas": 4, "Poster gallery": 9 },
+      trim: { "60-second recall": 3, "Poster gallery": 5 },
+      drop: ["Test our big ideas"],
       add: [
         {
           after: "Make the poster (SB 45 C)",
@@ -462,6 +657,32 @@ export const odL3U4Lab: UnitLab = {
           },
         },
         {
+          after: "Poster talk 4-3-2",
+          slide: drill({
+            title: "Grammar drill: moving plans with if and will",
+            goal: "Change the sentence about moving plans fast and right: ask it, say no, join it, change the time or the person. Then promise something to a friend.",
+            chunks: [
+              "We are moving to a new city because my father got a new job.",
+              "If we move to the city, I will go to a new school.",
+              "Will you miss your friends? Yes, I will, but I will call them every week.",
+              "I won't forget my old friends if I make new ones.",
+              "If my friends visit, we will play in the park.",
+              "What will you do if you feel lonely in the new place?",
+            ],
+            recycle: ["I used to live in a small village.", "I enjoy meeting new people.", "Have you ever lived in a big city?"],
+            prompts: ["I will miss my friends. (?)", "I will forget my old home. (X: won't)", "I will call you. (+ if you ...)", "We move in June. (T: next summer, will)", "She will go to a new school. (P: they)"],
+            join: "if / when / because",
+            t: "put it in the future with will or won't",
+            real: "Real talk: make a promise or a plan for a friend who is moving away. Say two sentences with If ... I will ... Your partner answers 'Thank you!' and asks one question.",
+            slips: "'If we will move', 'I will goes' or 'I will to call'",
+            fix: "For 'If we will move' raise your voice on 'will?' and let the child say 'move'; for 'I will goes' hold up a finger and wait for 'go'; for 'Will you to miss' tap the word 'to' and wait for 'miss'; for a sound, say 'won't' yourself and let the child echo it.",
+            support: ["Will you ___? Yes, I will. / No, I won't.", "If ___, I will ___."],
+            stretch: "Use two signs at once and add when: 'When we move, I will pack my books, and if I feel lonely, I will write to you.'",
+            stretchFrames: ["When ___, I will ___.", "If ___, I will ___, and if ___, I will ___."],
+            note: "The poster talk just before this lesson's drill used the same moving plans; now the children change the sentences by sign so that 'if + present, will + verb' comes out without thinking. The will sentences are the Level 4 step from Lesson 3. Listen for 'will' said clearly and for the verb after it with no -s and no 'to'.",
+          }),
+        },
+        {
           after: "How to write a letter (SB 44 Learn)",
           slide: {
             kind: "writing",
@@ -497,8 +718,35 @@ export const odL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "od2e-l3-u04-l6": {
       objectives: ["I can say 'If / When ..., ...' and 'so' and 'because' sentences fast and right, with the comma pause."],
-      trim: { "Remember it!": 5, "Town builders: build it and say it": 7 },
+      trim: { "Remember it!": 3, "Town builders: build it and say it": 5 },
+      drop: ["Statue town: freeze and say"],
       add: [
+        {
+          after: "Grammar: if and when, with the comma that waits",
+          slide: drill({
+            title: "Grammar drill: champions, if, when and will",
+            goal: "Change the town sentence fast and right: ask it, say no, join it, change the person. Then use both rules: if and when for what always happens, and if and will for what will happen.",
+            chunks: [
+              "If a town has a clinic, families feel safe.",
+              "When a factory opens, the town has more jobs.",
+              "If a town has a park, families will stay there.",
+              "Families won't come if the town has no jobs.",
+              "What will happen if a factory closes?",
+              "A town has jobs, so families come.",
+            ],
+            recycle: ["I have never lived in a big city.", "We used to live in a small town.", "I want to live near my friends."],
+            prompts: ["If a town has a school, families stay. (?)", "When a factory opens, the town has more jobs. (X)", "A town has a park. Families come. (+ if)", "If a town has a clinic, families feel safe. (P: towns)", "T: If a town builds a clinic, ... (will)"],
+            join: "if / when / so / because",
+            t: "look ahead: use will or won't in the result",
+            real: "Real talk: you are the mayor of a new town. Tell your partner two things your town has and what will happen if families come. Use If ... will ... once and When ... once. Your partner asks 'What will happen if ...?'",
+            slips: "'The town have more jobs', 'If it will' or a comma missing after the if part",
+            fix: "For 'The town have' start 'The town ...?' and wait for 'has'; for 'If a town will have' raise your voice on 'will?' and let the child say 'has'; for a missing comma tap the board at the pause and have the child take a tiny breath; for 'will' + -s tap your wrist.",
+            support: ["If a town has ___, families ___.", "If ___, families will ___."],
+            stretch: "Make a warning and a promise: 'If a town has no jobs, families won't stay. If you build a clinic, families will feel safe.' Join two signs and say what the mayor should do.",
+            stretchFrames: ["If a town has no ___, families won't ___.", "If you build ___, ___ will ___."],
+            note: "The last lesson of the unit: the drill covers the unit's rule (if and when with the present, the comma that waits) and the Level 4 step (will in the result). Keep the two sounds apart by saying them side by side. Listen for the present after if, 'has' with a town, and the comma pause before the result.",
+          }),
+        },
         {
           after: "Maple Hill: ask and fill in",
           slide: {
@@ -575,13 +823,14 @@ export const odL3U4Lab: UnitLab = {
         steps: [
           "Plan three things your town has. Write them as key words on a card.",
           "Say your talk three times to a grown-up or a toy. Each time a little faster and smoother.",
+          "Add one sentence with if and will, like: If a town builds a school, more families will come.",
           "Record it once. Take a tiny breath where the comma is, and keep going.",
           "Grown-up: hold the phone and let your child speak; do not say the words for them.",
         ],
         maxSeconds: 180,
         kidSummary: "Say what the town has, use if or when and because, and keep talking without long stops.",
         words: ["clinic", "factory", "jobs", "families", "park", "safe", "grow", "so"],
-        grammar: ["If / When ___, ___.", "___ so ___. / ___ because ___.", "The town has ___."],
+        grammar: ["If / When ___, ___.", "___ so ___. / ___ because ___.", "The town has ___.", "If ___, ___ will ___."],
         rubric: [
           { label: "If or when", description: "Uses if or when with the comma pause: If a town has a clinic, families feel safe.", weight: 3 },
           { label: "So and because", description: "Gives a reason with so or because and a full clause.", weight: 2 },

@@ -104,11 +104,39 @@ Most verified studies are with adults or children of 10-12. Evidence for 6-8-yea
 4. Rounds 2 and 3 with new partners, less time. The listener has a job (count, tick, "Wow!").
 5. Prompt, don't tell: start the phrase and pause; point to the frame; a finger for the missing -s.
 
-**Grammar drill (Venus and Sanrio Grade 6, every lesson)**
-1. Say a sentence and show a sign: ? (ask it), X (say it with not), + (add and / but / because ...).
+**Grammar drill (every class, every lesson)**
+Venus and Sanrio Grade 6 first; SKY 1 and Jupiter since 24 Nov 2026, with the Level 4 steps below.
+1. Say a sentence and show a sign: ? (ask it), X (say it with not), + (add and / but / because ...), T (change the time), P (change the person).
 2. The class says the new sentence together; then pairs with sign cards; swap at the clap.
 3. One-minute fix after round 1, as in every routine.
 4. Round 3 is real: the children ask about their own things and lives with the form they just drilled.
+
+**Level 4 steps (SKY 1 and Jupiter, owner, 24 Nov 2026)**
+The owner asked for SKY 1 (Oxford Discover 3) to be ready for Oxford Discover 4's grammar, and for Jupiter (Reach Higher 3) to match SKY 1. Oxford Discover 4 is pitched at B1 (OUP's Level 4 Grammar Book says so). Its unit-by-unit grammar list could not be read from a public source, so the ladder below is the B1 core that Level 4 and its Grammar Book work on (the present perfect with ever / never, already / just / yet and for / since among them), each step built on the grammar SKY 1's unit already teaches. Check it against the Level 4 Teacher's Guide when the school has one.
+Each unit adds one grammar slide titled "Level 4 step: ..." right after the unit's grammar, and the lesson's grammar drill practises it in round 3 and the Stretch tier. Later lessons, and later units, bring it back.
+
+| Unit | SKY 1 step | Jupiter |
+|---|---|---|
+| 1 | Present perfect with ever / never, against the past simple | in its book (Units 5, 8) |
+| 2 | Gerund or infinitive (enjoy -ing, want to) | in its book (Unit 4) |
+| 3 | used to, be able to | used to in its book (Unit 2) |
+| 4 | First conditional | in its book (Unit 2) |
+| 5 | Past continuous with while and when | in its book (Unit 5) |
+| 6 | Relative clauses: who, which, that, where | in its book (Unit 3) |
+| 7 | will or going to; when / as soon as + present | in its book (Units 3, 5, 8) |
+| 8 | Present continuous for plans, present simple for timetables | in its book (Unit 8) |
+| 9 | Modals of deduction: must be / might be / can't be | step in Unit 5 |
+| 10 | too much / too many / (not) enough | step in Unit 2 |
+| 11 | much / a bit / far + comparative; the best ... I have ever ... | steps in Units 6 and 3 |
+| 12 | so ... that, such a ... that, too ... to | in its book (Units 2, 5, 6) |
+| 13 | So do I / Neither do I; used for + -ing | step in Unit 4 |
+| 14 | The past passive | in its book (Units 5, 6) |
+| 15 | The present passive in a process | in its book (Unit 3) |
+| 16 | Present perfect with for / since, already / yet / just | in its book (Units 2, 5) |
+| 17 | The past perfect with before / after / by the time | in its book (Unit 7) |
+| 18 | The second conditional; must / mustn't / don't have to | in its book (Unit 4) |
+
+Jupiter also has "managed to / was able to" (Unit 7). Its Unit 8 review drill brings the whole ladder back.
 
 **Writing**
 - Dictogloss: press "Read it aloud" twice (or read it yourself); groups rebuild the text; open "Show the text" only at the end.

@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 10 "Energy Savers on
 // the Move" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
@@ -11,12 +12,62 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 
 const sayItem = "Read it aloud, then say it again without looking.";
 
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+// Pitched at ages 8-10 (Sky 1): two or three signs first, whole sentences always, round 3 is
+// the children's own lives. Each lesson's drill is built from this one shape.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  signNote?: string;
+  real: string;
+  slips: string;
+  feedback: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 6,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: `Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person${o.signNote ?? ""}). The class says the new sentence together.` },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. When it is easy, use two signs together: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with the -s where it belongs.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on with round 2.`,
+      "In round 2 swap roles at the clap: the child with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: o.feedback,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. At ages 8-10 start with the ? and X signs, add + and T when those are smooth, and P last. Keep it brisk: a drill that drags loses its point. Mark nothing in writing; this is about speed and accuracy in speech, and the Stretch tier takes the sentence one step toward the grammar of Oxford Discover 4.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, use the + sign with a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U10Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u10-l1": {
       objectives: ["I can say sentences about how we travel, fast and smooth, without long stops."],
-      trim: { "Energy detectives": 3, "Stand on the line": 6 },
+      trim: { "Stand on the line": 4 },
+      drop: ["Energy detectives"],
       add: [
         {
           after: "Think about it (SB 97 Think)",
@@ -57,6 +108,40 @@ export const odL3U10Lab: UnitLab = {
               { level: "Stretch", task: "Add a reason: 'I never use a taxi because it is expensive.'", frames: ["I never use a ___ because ___."] },
             ],
           },
+        },
+        {
+          after: "Travel sprint: how do you go?",
+          slide: drill({
+            title: "Grammar drill: lots, a few and a little on the move",
+            goal: "Change the sentence fast and right: ask it, say no, join it with a reason, change the time or the person. Then talk about how you travel.",
+            chunks: [
+              "There are a lot of cars in the city, so the road is busy.",
+              "Do a lot of people take the subway? Yes, they do.",
+              "There are only a few helicopters because they are expensive.",
+              "A bicycle uses a little energy, but a car uses a lot of fuel.",
+              "How many buses are there? How much fuel does a car use?",
+              "Yesterday we took a lot of photos from the train.",
+            ],
+            recycle: [
+              "Have you ever been on a train? I have never ridden a helicopter.",
+              "I enjoy riding my bicycle, and I want to learn to drive a bus one day.",
+              "If we take the subway, we will save energy.",
+            ],
+            prompts: [
+              "There are a lot of cars. (?)",
+              "A bicycle uses a lot of energy. (X)",
+              "I take the subway. (+ because)",
+              "We took a train. (T: every week)",
+              "I use a little energy. (P: he)",
+            ],
+            real: "Real talk: tell your partner how you really travel. Say what you use a lot, what you use a few times and what you never use. Your partner asks one question, 'How many ...?' or 'How much ...?', and you answer.",
+            slips: "'a lot cars', 'a few bus' or 'There is a lot of cars'",
+            feedback:
+              "Prompt, do not tell. For 'a lot cars', say 'a lot ...?' and tap the word of. For 'a few bus', hold up a finger for the plural -s and say 'a few ...?'. For 'There is a lot of cars', point to the cars picture and say 'There ...?' and let the child find 'are'. For a sound, say it right once and let the child echo it. Say the final -s of buses and cars yourself. In round 3 do not correct every slip: note the two that matter for the next lesson's one-minute fix.",
+            support: ["There are a lot of ___.", "There is a little ___."],
+            stretch: "Use two signs at once and ask about experience: 'Have you ever ridden a helicopter? No, I have never ridden one, because there are only a few.'",
+            stretchFrames: ["Have you ever ___? I have never ___.", "___ because ___, so ___."],
+          }),
         },
         {
           after: "Words in context (SB 97 E)",
@@ -107,11 +192,11 @@ export const odL3U10Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u10-l2": {
       objectives: ["I can tell a new ending for Hector's story three times, faster each time."],
+      drop: ["Question toss"],
       trim: {
-        "Question toss": 3,
         "Culture note: solar panels": 3,
         "Word detectives: mask, button, pedal, blades": 3,
-        "Question and answer chart": 8,
+        "Question and answer chart": 6,
         "Act it out: Hector and friends": 10,
       },
       add: [
@@ -154,6 +239,40 @@ export const odL3U10Lab: UnitLab = {
               { level: "Stretch", task: "Add why and a feeling: 'Everybody felt proud because ...'", frames: ["Everybody felt ___ because ___."] },
             ],
           },
+        },
+        {
+          after: "Hector's new ending: tell it again",
+          slide: drill({
+            title: "Grammar drill: Hector's lots, few and little",
+            goal: "Change the sentence fast and right about Hector: ask it, say no, join it with a reason, change the time or the person. Then talk about what you have.",
+            chunks: [
+              "Hector uses a lot of energy from the sun, so his bicycle goes far.",
+              "Does Hector have a lot of friends? Yes, he does.",
+              "There are a few clouds, but there is a lot of sun.",
+              "Hector does not have much time, so he works fast.",
+              "A little oil helps the bicycle chain turn.",
+              "Last week Hector saved a lot of energy at school.",
+            ],
+            recycle: [
+              "Hector enjoys fixing things, and he wants to help his town.",
+              "While Hector was riding, he saw a broken light.",
+              "If Hector fixes the light, the street will be safe.",
+            ],
+            prompts: [
+              "Hector has a lot of friends. (?)",
+              "There is a lot of sun. (X)",
+              "Hector rides a bicycle. (+ because)",
+              "Hector saves a lot of energy. (T: last week)",
+              "Hector uses a little oil. (P: they)",
+            ],
+            real: "Real talk: tell your partner what you have a lot of, a few of and a little of (in your bag, in your room or in your day). Then say what Hector would do with it. Your partner asks one question.",
+            slips: "'Hector use', 'a lot energy' or 'a few friend'",
+            feedback:
+              "Prompt, do not tell. For 'Hector use', start 'Hector ...?' and hold up a finger for the -s on the verb. For 'a lot energy', say 'a lot ...?' and tap the word of. For 'a few friend', hold up a finger for the plural -s. For 'Does Hector has', say 'Does Hector ...?' and let the child drop the -s. For a sound, say it right once and let the child echo it. Say every final -s yourself (uses, saves, friends).",
+            support: ["Does Hector have ___? Yes, he does.", "Hector uses a lot of ___."],
+            stretch: "Use two signs at once and add an if-sentence: 'If Hector saves a little energy every day, his town will have a lot more.'",
+            stretchFrames: ["If Hector ___, ___ will ___.", "___ because ___, so ___."],
+          }),
         },
         {
           after: "Why does Hector do that?",
@@ -230,8 +349,76 @@ export const odL3U10Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u10-l3": {
       objectives: ["I can ask and answer 'How many?' and 'How much?' quickly with a lot of, a few and a little."],
-      trim: { "Can you count it?": 3, "Snack shop game": 3, "Our big idea": 3 },
+      trim: { "Can you count it?": 3 },
+      drop: ["Snack shop game", "Our big idea"],
       add: [
+        {
+          after: "Quantifiers: a lot of, lots of, a few, a little",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: too much, too many, enough",
+            hook: "Too many is a problem, not enough is a problem, and enough is just right.",
+            form: [
+              { label: "Too many + plural noun", pattern: "too many cars, too many lights" },
+              { label: "Too much + noncount noun", pattern: "too much smoke, too much noise" },
+              { label: "(not) enough + noun", pattern: "enough buses, not enough water" },
+              { label: "adjective + enough", pattern: "warm enough, not big enough, hot enough to make power" },
+            ],
+            explanation: [
+              "A lot of, a few and a little tell us how many or how much there is. Too many, too much and enough tell us something more: whether the amount is a problem. Too many and too much mean 'more than we want', so there is a problem. Not enough means 'less than we need', so there is a problem too. Enough means 'just right'.",
+              "We use the same rule as in this unit. Too many goes with things you can count (cars, lights, buses). Too much goes with things you cannot count (smoke, noise, energy). Enough can go with both: enough buses, enough water. With an adjective, enough comes AFTER it: warm enough, big enough.",
+              "This is how the grammar of this unit grows: a lot of becomes too many or too much when there is a problem. You will meet too much, too many and enough again in Oxford Discover 4, so it is good to say them now, fast and smooth.",
+            ],
+            examples: [
+              { text: "There are too many cars on the road, so the air is dirty." },
+              { text: "We use too much electricity at night." },
+              { text: "The town does not have enough buses, so people drive." },
+              { text: "Is the wind strong enough to turn the turbine?" },
+              { text: "The bicycle lane is wide enough for two bicycles." },
+              { text: "It is not sunny enough today, so the solar panel makes only a little power." },
+            ],
+            pitfalls: [
+              { wrong: "There are too much cars.", right: "There are too many cars.", why: "You can count cars, so we say too many. We say too much for things we cannot count, like smoke." },
+              { wrong: "The bus is enough big.", right: "The bus is big enough.", why: "With an adjective, enough comes after it. In Vietnamese the word comes before, so this is easy to mix up." },
+              { wrong: "We need enough of buses.", right: "We need enough buses.", why: "There is no 'of' after enough here. We say a lot of, but not 'enough of' before a noun." },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: too much, too many, enough",
+          slide: drill({
+            title: "Grammar drill: how many, how much, too many, enough",
+            goal: "Change the sentence fast and right with a lot of, a few and a little. In round 3, say what is too much, too many or not enough in your own life.",
+            chunks: [
+              "There are a lot of pencils in my desk, and there is a little glue.",
+              "How many pencils do you have? How much glue is there?",
+              "There are a few buses, so we need more.",
+              "There are too many cars, so the air is dirty.",
+              "We do not have enough buses, so people use cars.",
+              "There is a lot of paper, but there is not enough glue.",
+            ],
+            recycle: [
+              "I used to ride a bicycle, but now I take the bus.",
+              "It's the bus that goes to the museum.",
+              "It must be the wind, because the sky is cloudy.",
+            ],
+            prompts: [
+              "I have a lot of pencils. (?)",
+              "There are a lot of buses. (X)",
+              "There are a lot of cars. (+ so)",
+              "We use a little water. (T: yesterday)",
+              "I have a lot of paper. (P: they)",
+            ],
+            signNote: ", E = say too many / too much / not enough",
+            real: "Real talk: talk about your school or your town. What is too much? What is too many? What is not enough? Give a reason with so. Your partner asks 'Why?' and says if they agree.",
+            slips: "'a lot energy', 'too much cars' or 'enough big'",
+            feedback:
+              "Prompt, do not tell. For 'a lot energy', say 'a lot ...?' and tap the word of. For 'too much cars', hold up a finger and ask 'Can you count it?' and let the child say 'many'. For 'enough big', say 'big ...?' and let the child add 'enough' after it. For 'a few water', point to the water card and say 'a ...?'. For a sound, say it right once and let the child echo it. Say the final -s of buses and pencils yourself.",
+            support: ["There are a lot of ___.", "There are too many ___.", "There is not enough ___."],
+            stretch: "Say why it is a problem with enough + to: 'The bus is big enough to carry forty children, so there are not too many cars on the road.' Use two signs at once.",
+            stretchFrames: ["The ___ is ___ enough to ___.", "There are too many ___ because ___."],
+          }),
+        },
         {
           after: "What is in my desk? (SB 101 G)",
           slide: {
@@ -322,8 +509,44 @@ export const odL3U10Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u10-l4": {
       objectives: ["I can talk about saving energy for 75 seconds, then 60 and 45 seconds, with a, an and the in the right places."],
-      trim: { "Say it twice": 3, "Find your group of four": 6, "Rehearse your paragraph": 3, "True or false? (SB 102 B)": 4 },
+      trim: { "Find your group of four": 3, "Rehearse your paragraph": 3, "True or false? (SB 102 B)": 4 },
+      drop: ["Say it twice"],
       add: [
+        {
+          after: "a, an and the",
+          slide: drill({
+            title: "Grammar drill: a, an, the and too many",
+            goal: "Change the sentence fast and right with a, an and the. In round 3, add what is too much, too many or not enough on your way to school.",
+            chunks: [
+              "I saw a bus. The bus was too full.",
+              "She has an electric bicycle, and the battery is big enough.",
+              "Do you have a bicycle? Yes, I do, and the bicycle is blue.",
+              "The sun gives us energy, but a cloud can stop it.",
+              "There are too many cars on the road, and there are not enough buses.",
+              "We do not use too much electricity because we switch off the lights.",
+            ],
+            recycle: [
+              "I think the bus will be late, because the road is full.",
+              "While I was waiting, a bus passed.",
+              "We are visiting the energy museum on Friday.",
+            ],
+            prompts: [
+              "I have a bicycle. (?)",
+              "She rides an electric bus. (X)",
+              "I saw a turbine. (+ so)",
+              "I see a solar panel. (T: yesterday)",
+              "He has an energy bar. (P: we)",
+            ],
+            signNote: ", E = add too many / too much / enough",
+            real: "Real talk: tell your partner about your way to school. Say a, an, then the (first time, then next time). Say if there is too much or too many of something (traffic, noise, people) or not enough of something (time, space), and give a reason.",
+            slips: "'I ride bicycle', 'a energy bar' or 'enough big'",
+            feedback:
+              "Prompt, do not tell. For a missing article ('I ride bicycle'), say 'I ride ...?' and hold up a finger for the small word. For 'a energy bar', repeat it with a rising voice and say the pair 'an energy' slowly for the child to echo. For 'A sun gives us light', say 'There is only one ...?'. For 'enough big', say 'big ...?' and let the child add enough after it. For a sound, say it right once and let the child echo it. Say the final -s of buses and cars yourself.",
+            support: ["I see a ___. The ___ is ___.", "There are too many ___."],
+            stretch: "Use two signs at once and add enough + to: 'The bus was not big enough to carry everybody, so we waited for a second bus.'",
+            stretchFrames: ["The ___ is not ___ enough to ___.", "There are too many ___, so ___."],
+          }),
+        },
         {
           after: "Transportation that saves energy (SB 102 C)",
           slide: {
@@ -401,14 +624,14 @@ export const odL3U10Lab: UnitLab = {
         prompt: "Choose one way to travel or one thing at home that saves energy. Show it or draw it. Say what it is, why it saves energy and why you like it.",
         length: "60-120 seconds",
         steps: [
-          "Plan your talk with three ideas: what it is, why it saves energy, why you like it.",
+          "Plan your talk with three ideas: what it is, why it saves energy, why you like it. Add one sentence with too many, too much or enough, for example 'There are too many cars, so a bicycle is better.'",
           "Say the talk three times to a grown-up or a toy, each time a little faster: 75 seconds, then 60 seconds, then 45 seconds, like in class.",
           "Record it once. Look at the camera and keep going, even if you make a small mistake.",
         ],
         maxSeconds: 180,
         kidSummary: "Say what it is, why it saves energy, and use a, an and the; keep talking without long stops.",
         words: ["bicycle", "solar panel", "electric bus", "energy", "fuel", "save"],
-        grammar: ["a / an for the first time, the for the next time", "The sun gives us ___.", "a lot of / a few / a little"],
+        grammar: ["a / an for the first time, the for the next time", "The sun gives us ___.", "a lot of / a few / a little", "too many / too much / (not) enough: There are too many cars. The bus is big enough."],
         rubric: [
           { label: "Reasons", description: "Says what it is and gives at least one reason it saves energy.", weight: 3 },
           { label: "a, an and the", description: "Uses a or an the first time and the the next time; says 'the sun'.", weight: 2 },
@@ -426,13 +649,12 @@ export const odL3U10Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u10-l5": {
       objectives: ["I can give my panel idea three times, smoothly, with clear reasons."],
+      drop: ["60-second recall", "Test our big ideas"],
       trim: {
-        "60-second recall": 3,
         "Answer and discuss (SB 104 B)": 6,
         "How to write a speech (SB 104 Learn)": 4,
         "Write it (Workbook)": 13,
         "Speech in groups": 5,
-        "Test our big ideas": 3,
       },
       add: [
         {
@@ -476,6 +698,41 @@ export const odL3U10Lab: UnitLab = {
           },
         },
         {
+          after: "Panel pitch: say it three times",
+          slide: drill({
+            title: "Grammar drill: panel lots, few and enough",
+            goal: "Change the sentence fast and right about energy: ask it, say no, join it with a reason, change the time or the person. In round 3, plan an idea with too much, too many and enough.",
+            chunks: [
+              "There is a lot of wind on the hill, so the turbines turn fast.",
+              "Do we have enough sunlight? Yes, we do, but not on rainy days.",
+              "We have a few panels, but we need more.",
+              "Too much oil makes the air dirty.",
+              "The wind is strong enough to turn a turbine.",
+              "How many panels do we need, and how much will they cost?",
+            ],
+            recycle: [
+              "If we use the wind, we will save a lot of fuel.",
+              "I think the sun will make more power than the wind.",
+              "It can't be the wind, because the air is still.",
+            ],
+            prompts: [
+              "We have a lot of sun. (?)",
+              "We have a lot of oil. (X)",
+              "The wind is strong. (+ so)",
+              "We use a lot of oil. (T: last year)",
+              "She uses a little oil. (P: they)",
+            ],
+            signNote: ", E = say too much / too many / enough",
+            real: "Real talk: plan an energy idea for your school with your partner. Say what we have a lot of, what we have only a few of, what is too much or too many, and what is not enough. Your partner says 'I agree because ...' or 'I do not agree because ...'.",
+            slips: "'a lot wind', 'too much panels' or 'not enough of panels'",
+            feedback:
+              "Prompt, do not tell. For 'a lot wind', say 'a lot ...?' and tap the word of. For 'too much panels', hold up a finger and ask 'Can you count it?' so the child says 'many'. For 'wind are good', say 'Wind ...?' and let the child say 'is'. For 'not enough of panels', say 'enough ...?' and let the child drop 'of'. For a sound, say it right once and let the child echo it. Say the final -s of panels and turbines yourself.",
+            support: ["We have a lot of ___.", "We have only a few ___.", "There is not enough ___."],
+            stretch: "Use two signs at once and add an if-sentence with enough: 'If the roof is big enough, we will put panels on it, so we will not use too much oil.'",
+            stretchFrames: ["If the ___ is ___ enough, we will ___.", "There is too much ___, so ___."],
+          }),
+        },
+        {
           after: "Speech in groups",
           slide: {
             kind: "writing",
@@ -509,8 +766,44 @@ export const odL3U10Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "od2e-l3-u10-l6": {
       objectives: ["I can say sentences with a lot of, a few and a little fast, without long stops."],
-      trim: { "Zone jump: lots, few, little": 8, "Remember it!": 4 },
+      trim: { "Zone jump: lots, few, little": 6, "Remember it!": 4 },
+      drop: ["Turbine spin"],
       add: [
+        {
+          after: "Grammar: a lot of, lots of, a few and a little",
+          slide: drill({
+            title: "Grammar drill: lots, few, little, too much, enough",
+            goal: "Change the sentence fast and right with a lot of, a few and a little. In round 3, make an energy plan with too much, too many and enough.",
+            chunks: [
+              "There are a lot of turbines, so we have enough power.",
+              "There is too much smoke, and there are not enough trees.",
+              "How many lights are there? How much oil is there?",
+              "The battery is not big enough, so the lamp stops.",
+              "We have only a little water, so we must not use too much.",
+              "There are a few batteries, but they are not full enough.",
+            ],
+            recycle: [
+              "I used to leave the lights on, but now I switch them off.",
+              "The turbine that makes power is on the hill.",
+              "It must be a solar panel, because it is on the roof.",
+            ],
+            prompts: [
+              "There is a lot of wind. (?)",
+              "There are a lot of turbines. (X)",
+              "We use a little oil. (+ because)",
+              "There is a lot of sun. (T: last summer)",
+              "I have a few batteries. (P: she)",
+            ],
+            signNote: ", E = say too much / too many / enough",
+            real: "Real talk: make an energy plan for your school or town with your partner. Say what there is a lot of, a few of and a little of, what is too much or too many, and what is not enough. Give a reason with because or so. Your partner asks one question.",
+            slips: "'a lot energy', 'too much lights' or 'enough big'",
+            feedback:
+              "Prompt, do not tell. For 'a lot energy', say 'a lot ...?' and tap the word of. For 'There is a few batteries', start 'There ... a few batteries' and let the child find 'are'. For 'too much lights', hold up a finger and ask 'Can you count it?' so the child says 'many'. For 'not enough big', say 'big ...?' and let the child add enough after it. For a sound, say it right once and let the child echo it. Say the final -s of batteries and lights yourself.",
+            support: ["There are a lot of ___.", "There is too much ___.", "There are not enough ___."],
+            stretch: "Use two signs at once and join the grammar of the unit with enough + to: 'There are a few batteries, but they are not full enough to work the lamp, so we need more.'",
+            stretchFrames: ["There are a few ___, but they are not ___ enough to ___.", "There is too much ___, so ___."],
+          }),
+        },
         {
           after: "Two towns, one energy question: ask and fill in",
           slide: {
@@ -586,14 +879,14 @@ export const odL3U10Lab: UnitLab = {
         prompt: "Walk round your home and find things to count or measure. Say how many or how much you see, and one way to save energy there.",
         length: "60-120 seconds",
         steps: [
-          "Choose three places: the kitchen, your room, the hall. Find things to talk about.",
+          "Choose three places: the kitchen, your room, the hall. Find things to talk about. Say one thing that is too much or too many, and one thing that is not enough or big enough.",
           "Say your talk three times to a grown-up or a toy, each time a little faster, like in class.",
           "Record it once. Look at the camera and keep going, even if you make a small mistake.",
         ],
         maxSeconds: 180,
         kidSummary: "Say how many and how much with a lot of, a few and a little, and keep talking without long stops.",
         words: ["energy", "lights", "batteries", "water", "oil", "save"],
-        grammar: ["a lot of / a few / a little", "How many ___ are there? How much ___ is there?", "There is ... / There are ..."],
+        grammar: ["a lot of / a few / a little", "How many ___ are there? How much ___ is there?", "There is ... / There are ...", "too many / too much / (not) enough: There are too many lights. The battery is not big enough."],
         rubric: [
           { label: "Quantifiers", description: "Uses a lot of, a few and a little correctly: a few with plural nouns, a little with noncount nouns.", weight: 3 },
           { label: "Keeps going", description: "Talks without long stops, in whole sentences, even after a small mistake.", weight: 3 },

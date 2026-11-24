@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 14 "Glass and
 // Clever Ideas" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10.
@@ -16,11 +17,101 @@ const fixAfter =
 
 const talkNote = "Grown-up: hold the phone and let your child speak; do not say the words for them.";
 
+const drillFeedback =
+  "Prompt, do not tell: for 'A jet flies more fast' start the phrase and pause ('A jet flies ...?'); for a missing 'than' hold up a finger and point to the frame; for 'The telephone invented' repeat it with a rising voice ('The telephone invented?') and let the child add 'was'. Watch the small words Vietnamese learners drop: than, the, was / were, and the final -s and -ed. For a sound, a quick recast is fine: say it right and the child echoes. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  minutes?: 6 | 7;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  note1?: string;
+  real: string;
+  slips: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+  extra?: string;
+}): Slide {
+  const six = o.minutes === 6;
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: six ? 6 : 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      {
+        seconds: 60,
+        say:
+          "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or the tense, P = change the person). The class says the new sentence together." +
+          (o.note1 ? " " + o.note1 : ""),
+      },
+      { seconds: six ? 75 : 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can, for example X and P." },
+      { seconds: six ? 75 : 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with every small word (than, the, was, were) and the -s or -ed where it belongs.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedback,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. Draw the five signs big on cards and keep the pace brisk; a drill that drags loses its point. Children aged 8-10 enjoy the sign cards, so let them hold the cards in round 2. Mark nothing in writing: this is about speed and accuracy in speech. The Stretch tier and round 3 take the grammar one step toward Oxford Discover 4." +
+      (o.extra ? " " + o.extra : ""),
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence with the signs, add a reason with because, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
+// The unit's one Level 4 step: where the grammar of this unit grows next.
+const step: Slide = {
+  kind: "grammar",
+  title: "Level 4 step: the past passive",
+  hook: "Put the thing first: 'The telephone was invented in 1876.'",
+  form: [
+    { label: "One thing", pattern: "thing + was + past participle (+ by + person)   (The vase was made by a glassblower.)" },
+    { label: "More than one thing", pattern: "things + were + past participle (+ by + person)   (Windows were made of glass.)" },
+    { label: "Question", pattern: "Was / Were + thing + past participle ...?   (Was the telephone invented in 1876?)" },
+    { label: "No", pattern: "thing + wasn't / weren't + past participle   (The first car wasn't made of plastic.)" },
+  ],
+  explanation: [
+    "Until now you said who did something: 'A glassblower made the vase.' In the past passive the thing comes first, because the thing is the star of the sentence: 'The vase was made by a glassblower.' We use was or were, and then the past participle, the verb's third form: made, built, invented, broken.",
+    "We use it when the thing matters more than the person, when we do not know who did it, or when the person is not important: 'The window was broken last night.' We only add by + a person when that is interesting. We often add a time too: in 1876, long ago, in ancient times.",
+    "You have already met it in this unit: 'Before lamps were invented ...' is a past passive! Now you can build your own. It grows out of the past tense and was / were, and it is grammar you will meet again in Oxford Discover 4, where books tell the stories of inventions and history.",
+  ],
+  examples: [
+    { text: "Glass was made by people in ancient times." },
+    { text: "The telephone was invented in 1876.", note: "No 'by' here: we do not need to say who." },
+    { text: "The first windows were made of small pieces of glass." },
+    { text: "The vases were made by a glassblower in Venice." },
+    { text: "Was the lamp invented before the telephone?  No, it wasn't." },
+    { text: "Windows weren't made of plastic long ago." },
+  ],
+  pitfalls: [
+    { wrong: "The telephone invented in 1876.", right: "The telephone was invented in 1876.", why: "English needs was or were before the past participle. In Vietnamese the meaning can be carried by 'được' or 'bị', but English always says the verb be." },
+    { wrong: "The windows was made of glass.", right: "The windows were made of glass.", why: "More than one thing needs were, as in 'the windows were' and 'the vases were'." },
+    { wrong: "The vase was maked by a glassblower.", right: "The vase was made by a glassblower.", why: "Many past participles are irregular: made, built, written, broken. Learn them as whole chunks, like 'was made by'." },
+  ],
+};
+
 export const odL3U14Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u14-l1": {
       objectives: ["I can say sentences about glass fast and smoothly, without long stops."],
+      trim: { "Glass spotting": 4, "Stand on the line": 5, "Two word webs": 6 },
       add: [
         {
           after: "Think about it (SB 137 Think)",
@@ -61,6 +152,34 @@ export const odL3U14Lab: UnitLab = {
           },
         },
         {
+          after: "Glass sentence sprint",
+          slide: drill({
+            title: "Grammar drill: glass is harder than ..., ask it, say no",
+            goal: "Compare glass things in whole sentences, and change each sentence fast with a sign.",
+            chunks: [
+              "Glass is harder than paper.",
+              "A glass cup is heavier than a paper cup.",
+              "A window is clearer than a wall.",
+              "Glass breaks more easily than wood.",
+              "A glassblower works more carefully than a beginner.",
+              "Long ago, glass was more expensive than it is today.",
+            ],
+            recycle: [
+              "Have you ever seen a glassblower at work? No, I have never seen one.",
+              "I like clear glass. So do I.",
+              "The workshop was so hot that we opened the door.",
+            ],
+            prompts: ["(picture: glass and paper)", "(picture: a glass cup and a paper cup)", "(picture: a window and a wall)", "(picture: glass and wood)", "(picture: a glassblower and a beginner)", "(picture: a glass factory long ago and today)"],
+            note1: "Use the first four sentences. The unit's new grammar (more carefully than, the fastest) comes in lesson 3, so today only listen to it in sentence 5.",
+            real: "Real talk: compare two things you have at home or at school (your cup and your bottle, your bag and your friend's bag). Say two sentences, then ask 'Which do you like more, and why?' Remember one answer to tell the class.",
+            slips: "'more hard', a missing 'than', 'breaks easy', and a missing -s on 'works' and 'breaks'",
+            support: ["___ is harder / heavier / clearer than ___.", "Is ___ harder than ___?  Yes, it is. / No, it isn't."],
+            stretch: "Make the comparison stronger with much or a bit (Level 4 grammar): 'Glass is much harder than paper. A glass cup is a bit heavier than a paper cup.'",
+            stretchFrames: ["___ is much / a bit ___er than ___.", "___ is far more ___ than ___."],
+            extra: "In this lesson the sentences are comparisons of things; the same shape grows into adverbs ('more carefully than') in lesson 3.",
+          }),
+        },
+        {
           after: "Summarize it (SB 137 D)",
           slide: {
             kind: "writing",
@@ -96,7 +215,7 @@ export const odL3U14Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u14-l2": {
       objectives: ["I can retell Clara's story in three parts, faster each time."],
-      trim: { "Home talk: glass things": 3, "Expressive reading": 6, "Skits: Clara, her father and Mr. Lombardi": 8, "A new ending": 8 },
+      trim: { "Home talk: glass things": 3, "Expressive reading": 4, "Skits: Clara, her father and Mr. Lombardi": 6, "A new ending": 6, "Culture note: glass from Venice": 3 },
       add: [
         {
           after: "Story map: beginning, middle, end",
@@ -134,6 +253,33 @@ export const odL3U14Lab: UnitLab = {
               { level: "Stretch", task: "Add how people felt and why: 'Her father was upset because ...'", frames: ["He felt ___ because ___."] },
             ],
           },
+        },
+        {
+          after: "Retell Clara's story: three tellings",
+          slide: drill({
+            title: "Grammar drill: Clara ran faster than ..., ask it, say no",
+            goal: "Compare the people in Clara's story with whole sentences, and change each sentence fast with a sign.",
+            chunks: [
+              "Clara ran faster than her father.",
+              "Her father worked more carefully than Clara.",
+              "Clara spoke more quietly than Mr. Lombardi.",
+              "The workers carried the vases more slowly than the children.",
+              "Clara listened more carefully than before.",
+              "Of all the workers, her father worked the hardest.",
+            ],
+            recycle: [
+              "While Clara was walking, she bumped a vase.",
+              "If the glass breaks, we will help her.",
+              "I don't like broken glass. Neither do I.",
+            ],
+            prompts: ["(picture: Clara and her father running)", "(picture: her father at work)", "(picture: Clara and Mr. Lombardi talking)", "(picture: workers and children with vases)", "(picture: Clara listening)", "(picture: the workshop)"],
+            note1: "Keep the sentences in the past tense for the story. Use the T sign to jump to today: 'Clara ran faster than her father' becomes 'I run faster than my father.'",
+            real: "Real talk: talk about your own family or class. Who walks faster, you or a friend? Who speaks more quietly? Who works the most carefully? Give a reason with because. Remember one thing your partner said.",
+            slips: "'more fast', 'carefullier', a missing 'than', and no -ed on 'walked' or 'listened'",
+            support: ["___ ran / worked / spoke faster / more ___ly than ___.", "Did ___ run faster than ___?  Yes, ___ did. / No, ___ didn't."],
+            stretch: "Add much, a bit or far to the comparison (Level 4 grammar): 'Her father worked far more carefully than Clara.' Then say why with so ... that: 'He worked so carefully that nothing broke.'",
+            stretchFrames: ["___ worked much / a bit / far more ___ly than ___.", "___ worked so ___ly that ___."],
+          }),
         },
         {
           after: "Word detectives: delicate, bumped, pounded, footsteps",
@@ -205,8 +351,38 @@ export const odL3U14Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u14-l3": {
       objectives: ["I can compare people with 'faster than' and 'the fastest' quickly, without stopping."],
-      trim: { "Action race": 3, "Family race game": 3, "Our big idea": 3, "Compare yourself with two classmates (SB 141 G)": 10 },
+      trim: { "Action race": 3, "Family race game": 3, "Our big idea": 3, "Compare yourself with two classmates (SB 141 G)": 8, "Discover the rule": 7 },
       add: [
+        { after: "Comparative and superlative adverbs", slide: step },
+        {
+          after: "Level 4 step: the past passive",
+          slide: drill({
+            title: "Grammar drill: faster than, the fastest, and was made by",
+            goal: "Say and change sentences with faster than and the fastest, then use the new past passive in real talk.",
+            chunks: [
+              "A jet flies faster than a train.",
+              "A glassblower works more carefully than a beginner.",
+              "A cheetah runs the fastest of all land animals.",
+              "The telephone was invented in 1876.",
+              "Glass was made by people in ancient times.",
+              "The first windows were made of small pieces of glass.",
+              "Was the lamp invented before the telephone?",
+            ],
+            recycle: [
+              "Have you ever tried to blow glass? No, I have never tried.",
+              "I enjoy making things, and I want to learn glassblowing.",
+              "A phone is much faster than a letter.",
+            ],
+            prompts: ["(picture: a jet and a train)", "(picture: a glassblower and a beginner)", "(picture: a cheetah)", "(picture: an old telephone)", "(picture: ancient glass)", "(picture: a window made of small pieces)", "(picture: a lamp and a telephone)"],
+            note1: "Rounds 1 and 2 use sentences 1 to 3 (the unit's grammar). Sentences 4 to 7 are the new step, the past passive: they come in round 3. Today the T sign in round 2 can also mean 'say it the passive way': 'A glassblower made it.' becomes 'It was made by a glassblower.'",
+            real: "Round 3, the new step: tell your partner two true sentences with was or were + a past participle ('My bowl was made by my grandmother. The windows at school were cleaned last week.'). Then compare two things with faster than or more carefully than. Remember one thing your partner said.",
+            slips: "'more fast', a missing 'than', 'the telephone invented' with no was, and 'the windows was made'",
+            support: ["A ___ works faster than a ___.", "The ___ was invented in ___."],
+            stretch: "Join the two grammars in one sentence: 'The telephone was invented in 1876, and it sends messages more quickly than a letter.' Then ask a question: 'Was it made by hand?'",
+            stretchFrames: ["The ___ was invented ___, and it ___ more ___ly than ___.", "Was / Were ___ made by ___?  Yes, it was. / No, it wasn't."],
+            extra: "Rounds 1 and 2 practise the unit's comparative and superlative adverbs; round 3 and the Stretch tier practise the Level 4 past passive. Say 'was' and 'were' clearly yourself and let the children echo them.",
+          }),
+        },
         {
           after: "Circle the correct words (SB 141 F)",
           slide: {
@@ -215,7 +391,7 @@ export const odL3U14Lab: UnitLab = {
             routine: "paragraph",
             genre: "comparison",
             mode: "solo",
-            minutes: 10,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the three helpers, the two comparisons and the closing sentence.",
               "Plan: fill the boxes with a few words each, not whole sentences.",
@@ -251,7 +427,7 @@ export const odL3U14Lab: UnitLab = {
             title: "Who does it best? Question chain",
             routine: "question chain",
             mode: "groups",
-            minutes: 7,
+            minutes: 6,
             goal: "Ask, answer and pass the question on. Keep the chain going with no stops.",
             chunks: [
               "Who runs faster, you or me?",
@@ -262,7 +438,7 @@ export const odL3U14Lab: UnitLab = {
             ],
             recycle: ["Two subjects: {s2} and {s3} are good inventors.", "I like glass, and my friend does, too."],
             rounds: [
-              { seconds: 90, say: "Slow chain round the group. Do the action, then ask the question." },
+              { seconds: 75, say: "Slow chain round the group. Do the action, then ask the question." },
               { seconds: 60, say: "New group. Faster! Use a different action each turn." },
               { seconds: 60, say: "New group. Can the chain go all the way round before the bell?" },
             ],
@@ -288,16 +464,45 @@ export const odL3U14Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u14-l4": {
       objectives: ["I can talk about life before and after an invention three times, faster each time."],
+      drop: ["Before and after board game"],
       trim: {
-        "How the invention changed life": 5,
-        "Before and after board game": 3,
-        "My favourite invention (SB 142 Think)": 4,
+        "How the invention changed life": 3,
+        "My favourite invention (SB 142 Think)": 3,
         "Who likes which invention? (SB 142 A)": 7,
         "Listen again for the reason (SB 142 B)": 7,
         "Suffixes -ful and -less (SB 143 D)": 9,
         "Writing practice: an invention that changed our lives (Workbook)": 11,
       },
       add: [
+        {
+          after: "before and after",
+          slide: drill({
+            title: "Grammar drill: before and after, was invented, ask it, say no",
+            goal: "Say and change before-and-after sentences about inventions, and use the past passive (was / were invented) in real talk.",
+            chunks: [
+              "Before lamps were invented, people used candles.",
+              "After the telephone was invented, people could talk from far away.",
+              "Before cars were invented, people travelled more slowly than we do.",
+              "The first glass was made by people in ancient times.",
+              "Glass windows were made for rich people long ago.",
+              "Was the lamp invented before the telephone?",
+              "Eyeglasses were invented a very long time ago.",
+            ],
+            recycle: [
+              "Before the lamp, people used to read by candles.",
+              "A phone is used for sending messages.",
+              "A jet flies faster than a train.",
+            ],
+            prompts: ["(picture: a candle and a lamp)", "(picture: an old telephone)", "(picture: a horse and a car)", "(picture: ancient glass)", "(picture: an old glass window)", "(picture: a lamp and a telephone)", "(picture: eyeglasses)"],
+            note1: "Rounds 1 and 2: the unit's before / after sentences, with the comma after the Before part. The T sign can also mean 'say it the passive way': 'People invented the lamp.' becomes 'The lamp was invented.'",
+            real: "Round 3: use the Level 4 step. Choose something in your home (a lamp, a phone, a cup) and say when or by whom it was made, and what people used before it: 'My lamp was made in a factory. Before lamps were invented, people used candles.' Remember one thing your partner said.",
+            slips: "'before cars invented' with no were, 'the lamp invented' with no was, 'were' and 'was' mixed up, and no comma pause after the Before part",
+            support: ["Before ___ were invented, people ___ed.", "The ___ was invented ___."],
+            stretch: "Ask and answer with was and were, and add because: 'Were windows made of glass long ago? Yes, they were, because glass lets in light.'",
+            stretchFrames: ["Was / Were ___ made of / by ___?  Yes, it was. / No, it wasn't.", "___ was invented because ___."],
+            extra: "Rounds 1 and 2 practise before and after; round 3 and the Stretch tier use the past passive, taught in lesson 3. Make sure every child says 'was' or 'were' before the past participle.",
+          }),
+        },
         {
           after: "Before or after? (SB 143 E)",
           slide: {
@@ -306,7 +511,7 @@ export const odL3U14Lab: UnitLab = {
             routine: "paragraph",
             genre: "explanation",
             mode: "solo",
-            minutes: 10,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the Before part, the After part and the closing sentence.",
               "Plan: fill the boxes with a few words each, not whole sentences.",
@@ -379,16 +584,17 @@ export const odL3U14Lab: UnitLab = {
         steps: [
           "Choose one invention at home (a lamp, a phone, a fridge, eyeglasses).",
           "Say your talk three times to a grown-up or a toy. Each time a little faster, like the 4-3-2 in class.",
+          "Say one sentence with was or were and a past participle, such as 'My lamp was made in a factory.'",
           "Record it once. Show the invention and keep going.",
           talkNote,
         ],
         maxSeconds: 180,
         kidSummary: "Say what life was like before the invention and what changed after it, and keep talking without long stops.",
         words: ["invented", "before", "after", "candle", "easier", "without"],
-        grammar: ["Before ___ was / were invented, people ___ed.", "After ___ was invented, people could ___."],
+        grammar: ["Before ___ was / were invented, people ___ed.", "After ___ was invented, people could ___.", "The past passive: The ___ was / were made / invented (by ___)."],
         rubric: [
           { label: "Before and after", description: "Says what life was like before the invention and what changed after it.", weight: 3 },
-          { label: "Grammar: before and after", description: "Uses Before / After with the past tense and a clear -ed (used, walked, could).", weight: 3 },
+          { label: "Grammar: before and after", description: "Uses Before / After with the past tense and a clear -ed (used, walked, could), and says one passive sentence with was or were.", weight: 3 },
           { label: "Keeps going", description: "Talks without long stops, in whole sentences, for most of the time.", weight: 3 },
           { label: "Reason", description: "Gives a reason with because or so.", weight: 1 },
         ],
@@ -403,7 +609,7 @@ export const odL3U14Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u14-l5": {
       objectives: ["I can give my opinion about an invention in one minute, and say it better the second time."],
-      trim: { "60-second recall": 3, "Test our big ideas": 3 },
+      trim: { "60-second recall": 3, "Test our big ideas": 3, "Answer and discuss (SB 144 B)": 5, "The Commercial Showtime": 9 },
       add: [
         {
           after: "Answer and discuss (SB 144 B)",
@@ -442,13 +648,41 @@ export const odL3U14Lab: UnitLab = {
           },
         },
         {
+          after: "My opinion in one minute: three tellings",
+          slide: drill({
+            title: "Grammar drill: which works best? was invented, ask it, say no",
+            goal: "Say and change opinion sentences with faster than and the most, and use the past passive about inventions.",
+            chunks: [
+              "A phone sends a message more quickly than a letter.",
+              "A robot cleans more quietly than a person.",
+              "Which invention works the hardest for us?",
+              "The lamp was invented before the telephone.",
+              "Glass was made by people in ancient times, and it is still used today.",
+              "Which was invented first, the lamp or the telephone?",
+            ],
+            recycle: [
+              "My phone is a bit smaller than yours.",
+              "If we use less plastic, the sea will be cleaner.",
+              "A phone is used for sending messages.",
+            ],
+            prompts: ["(picture: a phone and a letter)", "(picture: a robot cleaning)", "(picture: three inventions)", "(picture: a lamp and a telephone)", "(picture: ancient glass)", "(picture: a lamp and a telephone with dates)"],
+            note1: "Rounds 1 and 2 use sentences 1 to 3. The T sign can also mean 'say it the passive way'. Sentences 4 to 6 are the past passive, and they are for round 3.",
+            real: "Round 3: give your opinion in two sentences: which invention was invented first, and which works the best for you? Use one passive sentence ('The lamp was invented ...') and one comparison. Remember one thing your partner said.",
+            slips: "'more quick' for 'more quickly', a missing 'the' before 'most', and 'was invented' said without 'was'",
+            support: ["A ___ works faster than a ___.", "The ___ was invented ___."],
+            stretch: "Put the passive and the comparison in one sentence with although: 'Although the lamp was invented long ago, it is still the most useful invention in my house.'",
+            stretchFrames: ["Although the ___ was invented ___, it ___ more ___ly than ___.", "In my opinion, the ___ is the most useful because ___."],
+            extra: "Use today's opinion talk as the rehearsal for the opinion paragraph: the same sentences go into the writing next.",
+          }),
+        },
+        {
           after: "How to write an opinion essay (SB 144 Learn)",
           slide: {
             kind: "writing",
             title: "Plan, write, check: an opinion paragraph",
             routine: "model, then write",
             mode: "solo",
-            minutes: 6,
+            minutes: 4,
             steps: [
               "Read the model with the teacher. Find the opinion, the two reasons and the closing sentence.",
               "Plan first: fill a quick box with your invention, your opinion and two reasons.",
@@ -476,7 +710,8 @@ export const odL3U14Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "od2e-l3-u14-l6": {
       objectives: ["I can say 'faster than', 'the fastest' and 'more carefully than' fast and right."],
-      trim: { "Invention race: run and say": 7 },
+      drop: ["Body ladder: freeze and show"],
+      trim: { "Invention race: run and say": 5, "Remember it!": 4 },
       add: [
         {
           after: "@grammar",
@@ -514,6 +749,35 @@ export const odL3U14Lab: UnitLab = {
               { level: "Stretch", task: "Make your own sentence about two machines and say it as fast as you can." },
             ],
           },
+        },
+        {
+          after: "@grammar",
+          slide: drill({
+            title: "Grammar drill: champion sentences, was invented, ask it, say no",
+            goal: "Say and change champion sentences with faster than, the fastest and more carefully than, and join them with the past passive.",
+            chunks: [
+              "A jet flies faster than a car.",
+              "A glassblower works more carefully than a beginner.",
+              "A cheetah runs the fastest of all land animals.",
+              "Who works the most carefully of the three?",
+              "The first telephone was invented in 1876.",
+              "Glass windows were made by hand long ago.",
+              "Which was invented first, the lamp or the telephone?",
+            ],
+            recycle: [
+              "That is the cleverest idea I have ever heard.",
+              "We are visiting a glass museum on Saturday.",
+              "The robot worked so quickly that nobody saw it move.",
+            ],
+            prompts: ["(picture: a jet and a car)", "(picture: a glassblower and a beginner)", "(picture: a cheetah)", "(picture: three robots)", "(picture: an old telephone)", "(picture: a glass window)", "(picture: a lamp and a telephone)"],
+            note1: "Both grammars today: sentences 1 to 4 (the unit's grammar) in rounds 1 and 2, and the past passive in sentences 5 to 7 with the T sign. Say 'was' and 'were' clearly.",
+            real: "Round 3, both grammars: tell your partner about two inventions in four sentences. Say which works faster or more carefully (comparison), and when or by whom each was invented (past passive). Remember one thing your partner said.",
+            slips: "'more fast', a missing 'than' or 'the', 'the telephone invented' with no was, and 'were' and 'was' mixed up",
+            support: ["A ___ works faster than a ___.", "The ___ was invented ___."],
+            stretch: "Join both grammars in one sentence: 'Although the telephone was invented long ago, it sends messages more quickly than a letter.' Then ask a partner a question with Which was invented first ...?",
+            stretchFrames: ["Although the ___ was invented ___, it ___ more ___ly than ___.", "Which was invented first, the ___ or the ___?"],
+            extra: "This is the last lesson of the unit: listen for both grammars together and note which children still drop 'than' or 'was'.",
+          }),
         },
         {
           after: "Champion talk: 3 rounds",
@@ -554,13 +818,14 @@ export const odL3U14Lab: UnitLab = {
         steps: [
           "Choose two helpers or two machines and look at them.",
           "Say your comparison three times to a grown-up or a toy. Each time a little faster.",
+          "Say one sentence with was or were and a past participle about one of them, such as 'The phone was invented in 1876.'",
           "Record it once. Say which one works the best and why.",
           talkNote,
         ],
         maxSeconds: 180,
         kidSummary: "Compare two helpers with 'faster than' and 'more carefully than', say which works the best, and keep talking without long stops.",
         words: ["faster", "more carefully", "the fastest", "the most carefully", "better", "invention"],
-        grammar: ["A ___ works faster / more ___ly than a ___.", "A ___ works the fastest / the most ___ly of the two (three)."],
+        grammar: ["A ___ works faster / more ___ly than a ___.", "A ___ works the fastest / the most ___ly of the two (three).", "The past passive: The ___ was / were made / invented (by ___)."],
         rubric: [
           { label: "Comparison grammar", description: "Uses faster than or more carefully than correctly, with 'than'.", weight: 3 },
           { label: "The best one", description: "Says which one works the fastest or the most carefully, with 'the'.", weight: 2 },

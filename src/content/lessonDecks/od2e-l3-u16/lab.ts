@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 16 "Gardens in
 // Our Community" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10.
@@ -22,12 +23,96 @@ const correctRetell =
 
 const talkLast = "Grown-up: hold the phone and let your child speak; do not say the words for them.";
 
+// SKY 1 is raised toward Oxford Discover 4 grammar (B1): one "Level 4 step" slide for the unit,
+// and a grammar drill in every lesson that practises the lesson's own grammar and then the step.
+const STEP = "Level 4 step: Present perfect with for, since and yet";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  r2?: string;
+  real: string;
+  slips: string;
+  fix: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 6,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person). The class says the new sentence together." },
+      { seconds: 75, say: o.r2 ?? "Pairs: A holds up a sign card and says a sentence, B changes it and says the WHOLE new sentence. Swap at the clap. Use two signs together when you can: X + or T P." },
+      { seconds: 75, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with the little words and the endings where they belong.",
+      "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together; then go on.",
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk about your own life. Remember one thing your partner said, to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback:
+      `Prompt the child to fix it instead of saying it for them: ${o.fix}. Likely slips for this grammar: ${o.slips}. For a sound, a quick recast is fine: say it right and the child echoes it; say every final -s, -ed and the 've clearly yourself. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.`,
+    teacherNote:
+      "A drill only helps when its last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. Keep it brisk (one sentence, one sign, one change) and let the signs do the work, not your explanations. The sign cards are the same in every lesson, so by the second lesson the children run the drill themselves. Mark nothing in writing: this is about speed and accuracy in speech.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, use the + sign with a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
+// The Level 4 step of this unit: grows out of "be + adjective" into "have + past participle".
+const stepSlide: Slide = {
+  kind: "grammar",
+  title: STEP,
+  hook: "In this unit we say how we feel about a garden. Now we can also say how long: 'We have grown tomatoes since May.'",
+  form: [
+    { label: "Statement", pattern: "Subject + have / has + past participle (+ for / since ...)  (We have grown tomatoes since May.)" },
+    { label: "For and since", pattern: "for + how long (for three months)      since + when it began (since May, since Monday)" },
+    { label: "Already and just", pattern: "Subject + have / has + already / just + past participle  (I've already watered them. She has just picked one.)" },
+    { label: "Question and yet", pattern: "Have / Has + subject + past participle ... yet?  (Have you watered the beans yet?)" },
+    { label: "Negative", pattern: "Subject + haven't / hasn't + past participle (+ yet)  (We haven't planted the carrots yet.)" },
+  ],
+  explanation: [
+    "'I'm happy with my garden' tells how you feel now. With have + the past participle we can also tell how long it has been true, or what is finished by now. 'We have had the garden for three months' started in the past and is still true today.",
+    "Use for with a length of time (for two weeks) and since with the moment it began (since May, since Monday). Already means 'done, even sooner than you thought'. Just means 'a moment ago'. Yet is for questions and for 'not done'. The verb is the past participle: grown, planted, picked, watered, had, been.",
+    "This grows out of our unit: have is a helper, like be in 'I am curious about bees'. Put the two together and you can say 'I have been curious about bees since I was six'. You will meet this grammar again in Oxford Discover 4.",
+  ],
+  examples: [
+    { text: "We have grown tomatoes since May.", note: "since + the moment it began" },
+    { text: "Our class has had the garden for three months.", note: "for + how long; has with a group of one class" },
+    { text: "I have already watered the beans, so you can rest.", note: "already: between have and the verb" },
+    { text: "Have you picked the pumpkins yet?", note: "yet at the end of a question" },
+    { text: "We haven't planted the carrots yet because the soil is too dry.", note: "negative with yet" },
+    { text: "I have just seen a bee on the sunflower, and I'm curious about where it lives.", note: "just: a moment ago; joined with the unit's grammar" },
+  ],
+  pitfalls: [
+    { wrong: "We have a garden since May.", right: "We have had a garden since May.", why: "for and since with a time that is still going need have + past participle, not the plain present" },
+    { wrong: "We have grown tomatoes for May.", right: "We have grown tomatoes since May.", why: "for is for how long (for three months); since is for when it began" },
+    { wrong: "We have planted the seeds yesterday.", right: "We planted the seeds yesterday.", why: "a finished time like yesterday or last week needs the past simple" },
+  ],
+};
+
 export const odL3U16Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u16-l1": {
       objectives: ["I can say sentences about gardens and gardeners smoothly, without long stops."],
-      trim: { "Match-up memory": 5 },
+      trim: { "Match-up memory": 3, "What grows near us?": 5 },
       add: [
         {
           after: "Talk about your choices (SB 157 C)",
@@ -68,6 +153,29 @@ export const odL3U16Lab: UnitLab = {
           },
         },
         {
+          after: "Garden sentence sprint",
+          slide: drill({
+            title: "Grammar drill: curious about, happy with, surprised at",
+            goal: "Change the feeling sentence fast and right: ask it, say no, join it with a reason, change the time or the person. Then talk about plants you know.",
+            chunks: [
+              "I'm curious about the new vegetable garden.",
+              "Are you happy with your garden box? Yes, I am.",
+              "I'm not happy with the empty pots, so I plant more beans.",
+              "We were surprised at the big crowd in the community garden.",
+              "I was surprised at the sweet potatoes because they grow under the ground.",
+              "Which plant are you curious about, and why?",
+            ],
+            recycle: ["Have you ever visited a community garden? I have never seen a sweet potato flower.", "First, the seeds are planted. Then they are watered."],
+            prompts: ["I'm curious about seeds. (?)", "She is happy with her garden. (X)", "I'm curious about bees. (+ because)", "We are happy with the garden. (T: last year)", "He is surprised at the vines. (P: they)"],
+            real: "Real talk: tell your partner about a plant or a garden you know. Say what you are curious about, what you are happy with and why. Your partner asks one question.",
+            slips: "'curious for' or 'curious of', 'happy of', 'surprised on', a missing be ('I curious about') and a missing -s on beans and vines",
+            fix: "point to the pair on the board and pause ('I'm curious a...?'), or hold up a finger for the missing small word",
+            support: ["Are you ___ with ___? Yes, I am.", "I'm ___ about ___."],
+            stretch: "Go one step toward Level 4 and use the T sign for 'ever': 'Have you ever been surprised at a plant? Yes, I have. I have never been curious about worms.'",
+            stretchFrames: ["Have you ever been ___ at ___?", "I have never been ___ about ___."],
+          }),
+        },
+        {
           after: "Words in context (SB 157 E)",
           slide: {
             kind: "writing",
@@ -103,7 +211,7 @@ export const odL3U16Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u16-l2": {
       objectives: ["I can retell the story in three parts, smoother and faster each time."],
-      trim: { "Home talk: a plant I know": 3, "Talk about it: agree or disagree": 5 },
+      trim: { "Home talk: a plant I know": 3, "Talk about it: agree or disagree": 3, "Plan our community garden": 11, "Retell the plot": 8 },
       add: [
         {
           after: "Retell the plot",
@@ -142,6 +250,29 @@ export const odL3U16Lab: UnitLab = {
               { level: "Stretch", task: "Add a feeling and a reason: 'The story made me feel hopeful because ...'", frames: ["The story made me feel ___ because ___."] },
             ],
           },
+        },
+        {
+          after: "Garden story: tell it again, faster",
+          slide: drill({
+            title: "Grammar drill: how the characters feel",
+            goal: "Change the sentence about how a character feels: ask it, say no, join it with a reason, change the time or the person. Then say how you feel about the story.",
+            chunks: [
+              "Marisol was curious about the empty garden.",
+              "Was she happy with the first flowers? Yes, she was.",
+              "Marisol wasn't happy with the dry soil because the plants were thirsty.",
+              "The neighbors were surprised at the beautiful garden, so they joined her.",
+              "Are you curious about what happens next? I'm curious about how the story ends.",
+              "Marisol was so happy with the garden that she smiled all day.",
+            ],
+            recycle: ["Have you ever been to a garden like that? I have never seen one.", "It was so quiet that I could hear the bees."],
+            prompts: ["Marisol was curious about the seeds. (?)", "The neighbors were happy with the garden. (X)", "Marisol was surprised at the flowers. (+ so)", "I'm curious about the story. (T: yesterday)", "She was happy with her garden. (P: they)"],
+            real: "Real talk: tell your partner how you felt at each part of the story. Use curious about, happy with and surprised at, and give a reason. Your partner asks one question.",
+            slips: "'was happy of', 'surprised on', a missing be ('She curious about'), 'were' and 'was' mixed up, and a missing -ed ('She plant the seeds')",
+            fix: "start the phrase and pause ('The neighbors were surprised a...?'), or hold up a finger for the missing word",
+            support: ["Was ___ happy with ___? Yes, ___ was.", "___ was curious about ___."],
+            stretch: "Go one step toward Level 4 with 'so ... that': 'Marisol was so happy with the garden that she smiled all day. I was so curious about the story that I read it twice.'",
+            stretchFrames: ["___ was so ___ that ___.", "I was so curious about ___ that ___."],
+          }),
         },
         {
           after: "Talk about it: agree or disagree",
@@ -218,8 +349,34 @@ export const odL3U16Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u16-l3": {
       objectives: ["I can say 'I'm curious about ...', 'I'm happy with ...' and 'I was surprised at ...' fast and right."],
-      trim: { "Mime the feeling": 3, "Class survey": 4, "What does the story teach us?": 3 },
+      trim: { "Mime the feeling": 3, "Class survey": 3, "What does the story teach us?": 3, "What are you curious about? (SB 161 G)": 7, "Our big idea": 4 },
       add: [
+        { after: "Adjectives with prepositions", slide: stepSlide },
+        {
+          after: STEP,
+          slide: drill({
+            title: "Grammar drill: feelings, then how long",
+            goal: "Change the feeling sentence fast and right in rounds 1 and 2. In round 3 say how long and what is done: for, since, already, yet.",
+            chunks: [
+              "I'm happy with my tomato plants.",
+              "Are you curious about how seeds grow? Yes, I am.",
+              "We weren't surprised at the rain because the sky was grey.",
+              "We have grown tomatoes since May, and I'm happy with them.",
+              "Our class has had the garden for three months.",
+              "Have you watered the beans yet? Yes, I've already watered them.",
+              "I've just picked three tomatoes.",
+            ],
+            recycle: ["I have never seen a sweet potato flower.", "First, the seeds are planted. Then they are watered.", "It was so hot that we watered the plants twice."],
+            prompts: ["Rosa is curious about bees. (?)", "We are happy with the garden. (X)", "I'm surprised at the pumpkin. (+ because)", "We grow tomatoes. (T: since May)", "I have watered the beans. (P: she)"],
+            r2: "Pairs: A holds up a sign card and says a sentence, B changes it and says the WHOLE new sentence. Rounds 1 and 2 use the feeling pairs: curious about, happy with, surprised at. Swap at the clap. Use two signs together when you can: X + or T P.",
+            real: "Round 3, the Level 4 step: tell your partner how long you have had something you like (a toy, a pet, a plant, a friend) and one thing you have not done yet. Use for or since, and yet. Your partner asks one question.",
+            slips: "'curious for', 'happy of', a plain present with since ('We have a garden since May'), have + the plain verb ('I have plant'), a missing -ed or irregular participle ('We have grow'), and for and since mixed up",
+            fix: "hold up a finger for the missing participle ('We have grow...?'), or point to the line on the board: for = how long, since = when it began",
+            support: ["I'm ___ about / with ___.", "We have ___ for ___. / We have ___ since ___."],
+            stretch: "Use the step with a feeling and two signs: 'We have had the garden since May, but we haven't picked the pumpkins yet. I'm curious about when they will be ready.'",
+            stretchFrames: ["We have ___ since ___, but we haven't ___ yet.", "I've already ___, and I've just ___."],
+          }),
+        },
         {
           after: "What are you curious about? (SB 161 G)",
           slide: {
@@ -309,8 +466,32 @@ export const odL3U16Lab: UnitLab = {
     "od2e-l3-u16-l4": {
       objectives: ["I can give a reason and say where, in a talk of two minutes, without long stops."],
       drop: ["Synonym snap"],
-      trim: { "Things we get from plants": 5, "Listen for details (SB 162 B)": 4, "Where does it happen? (SB 163 E)": 7, "Reasons ladder: Why do we need plants?": 7 },
+      trim: { "Things we get from plants": 3, "Listen for details (SB 162 B)": 3, "Where does it happen? (SB 163 E)": 7, "Reasons ladder: Why do we need plants?": 5, "Say it another way: synonyms (SB 163 D)": 8 },
       add: [
+        {
+          after: "Place words: in, on, off ...",
+          slide: drill({
+            title: "Grammar drill: in, on, off, then how long",
+            goal: "Change the sentence about where things are: ask it, say no, join it with a reason, change the time or the person. Then say how long things have been there, and what is done.",
+            chunks: [
+              "We keep the watering cans in the shed.",
+              "Is the pot on the shelf? No, it's on the floor.",
+              "I lifted the pot off the floor because it was in the way.",
+              "The beans have been in the box since April.",
+              "The tomatoes have been on the shelf for two weeks, so they're red.",
+              "Have you put the seeds in the soil yet? Yes, I've already put them in.",
+              "The bee has just flown off the flower.",
+            ],
+            recycle: ["If it rains, we will keep the cans in the shed.", "There are too many pots and not enough shelves."],
+            prompts: ["The cans are in the shed. (?)", "The pot is on the table. (X)", "We keep the pots in the shed. (+ because)", "The beans are in the box. (T: since April)", "I lift the pot off the floor. (P: she)"],
+            real: "Real talk: tell your partner where you keep something you like at home and how long it has been there. Say one thing you have already done and one you haven't done yet. Your partner asks one question.",
+            slips: "'on the garden' for 'in the garden', 'in the table' for 'on the table', a missing 'the', a missing participle ('The beans have in the box'), and for and since mixed up",
+            fix: "point to the picture of the place and pause ('The cans are ... the shed?'), or hold up a finger for the missing word",
+            support: ["Is the ___ in / on the ___? Yes, it is.", "It's in / on the ___."],
+            stretch: "Use the step with a place and two signs: 'The beans have been in the box since April, and I've already watered them. Have you planted yours yet?'",
+            stretchFrames: ["The ___ has been in / on the ___ since ___.", "I've already ___. Have you ___ yet?"],
+          }),
+        },
         {
           after: "Three important plants (SB 163 C)",
           slide: {
@@ -400,12 +581,13 @@ export const odL3U16Lab: UnitLab = {
           "Choose your plant and draw it or find it at home.",
           "Give your talk three times, each time a little faster, like our 4-3-2 in class.",
           "Record it once. Show your plant to the camera.",
+          "Level 4 step: say how long you have known or had your plant, with for or since: 'I have had it for two years.'",
           talkLast,
         ],
         maxSeconds: 180,
         kidSummary: "Say what your plant is, where it is, and give two reasons. Keep talking without long stops.",
         words: ["plant", "garden", "shelf", "shed", "important", "because"],
-        grammar: ["___ is important to me because ...", "in the ___ / on the ___", "My family uses it to ..."],
+        grammar: ["___ is important to me because ...", "in the ___ / on the ___", "My family uses it to ...", "I have had it for ___ / since ___."],
         rubric: [
           { label: "Reasons", description: "Gives at least two reasons with because or another reason is that.", weight: 3 },
           { label: "Where", description: "Says where the plant is or grows, with the right place word: in or on.", weight: 2 },
@@ -425,11 +607,13 @@ export const odL3U16Lab: UnitLab = {
       objectives: ["I can tell my partner about my plant plate three times, clearer and faster each time."],
       trim: {
         "60-second recall": 3,
-        "Big Question video and chart": 6,
+        "Big Question video and chart": 4,
         "Test our big ideas": 3,
         "Two circles: talk about your plate": 10,
         "How to write steps in a process": 4,
         "Draw your plant plate (SB 165 C)": 13,
+        "Plan and write your steps (Workbook)": 12,
+        "Can your partner follow it?": 6,
       },
       add: [
         {
@@ -470,6 +654,30 @@ export const odL3U16Lab: UnitLab = {
           },
         },
         {
+          after: "Plant plate: tell it three times",
+          slide: drill({
+            title: "Grammar drill: plate feelings and how long",
+            goal: "Change the plate sentence fast and right: ask it, say no, join it with a reason, change the time or the person. Then use for, since, already and yet about food you eat.",
+            chunks: [
+              "I'm happy with my plant plate because it has many colors.",
+              "Are you curious about where carrots come from? Yes, I am.",
+              "We were surprised at how many plants we eat.",
+              "I've eaten sweet potatoes since I was five.",
+              "My family has grown herbs for two years.",
+              "Have you tried the purple carrot yet? Yes, I've already tried it.",
+              "I've just finished my plate, so I'm full.",
+            ],
+            recycle: ["I have never eaten a purple potato.", "Rice is grown in wet fields, and then it is cooked."],
+            prompts: ["You are curious about carrots. (?)", "I'm happy with my plate. (X)", "We were surprised at the pumpkin. (+ so)", "I eat rice. (T: since I was five)", "I have tried the carrot. (P: he)"],
+            real: "Real talk: tell your partner about a food from your plate. Say how long you have eaten it (for or since), and one food you haven't tried yet. Your partner asks one question with yet or ever.",
+            slips: "'happy of', 'surprised on', 'I have ate' for 'I have eaten', 'since five years' for 'for five years', and 'I haven't tried it already' for 'yet'",
+            fix: "hold up a finger and say 'I have ...?' for the missing participle, or point to the line on the board: for = how long, since = when it began",
+            support: ["I'm ___ with ___.", "I've eaten ___ since ___."],
+            stretch: "Use the step with a feeling and two signs: 'I've eaten sweet potatoes since I was five, but I haven't tried the purple ones yet. I'm curious about how they taste.'",
+            stretchFrames: ["I've ___ since ___, but I haven't ___ yet.", "I've already ___, and I've just ___."],
+          }),
+        },
+        {
           after: "Plan and write your steps (Workbook)",
           slide: {
             kind: "writing",
@@ -504,8 +712,33 @@ export const odL3U16Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "od2e-l3-u16-l6": {
       objectives: ["I can say what I am curious about, happy with and surprised at, with a reason, without stopping."],
-      trim: { "Remember it!": 5, "Pair hunt relay": 7 },
+      trim: { "Remember it!": 3, "Pair hunt relay": 5, "Grammar mystery: the school garden": 6 },
       add: [
+        {
+          after: "Grammar: curious about, happy with, surprised at",
+          slide: drill({
+            title: "Grammar drill: champions, feelings and how long",
+            goal: "Change the sentence fast and right with the feeling pairs AND the Level 4 step: ask it, say no, join it with a reason, change the time or the person.",
+            chunks: [
+              "Rosa is curious about the seeds.",
+              "Are you happy with your garden? Yes, we are, because it gives us food.",
+              "I was surprised at the giant pumpkin, so I took a photo.",
+              "We have been happy with our garden since May.",
+              "Have you picked the pumpkins yet? No, we haven't picked them yet.",
+              "I've already watered the beans, and I've just planted the carrots.",
+              "Rosa has been curious about bees for a long time.",
+            ],
+            recycle: ["I have never seen a pumpkin that big.", "If we water them, the beans will grow.", "The seeds are planted first, then they are watered."],
+            prompts: ["Rosa is curious about the seeds. (?)", "We are happy with the pumpkins. (X)", "I'm surprised at the vines. (+ because)", "We are happy with the garden. (T: since May)", "I have already watered the beans. (P: they)"],
+            r2: "Pairs: A holds up a sign card and says a sentence, B changes it and says the WHOLE new sentence. Use the feeling pairs and the step (for, since, already, yet, just). Swap at the clap. Use two signs together when you can: X + or T P.",
+            real: "Real talk, both together: tell your partner about a feeling you have had about something for a long time (curious about, happy with) and one thing you haven't done yet. Use for or since, and yet. Your partner asks one question.",
+            slips: "'curious for', 'happy of', 'surprised on', a missing be, a plain present with since, a missing participle ('We have plant'), and 'yet' in a statement ('I have watered yet')",
+            fix: "point to the pair or to the for / since line on the board and pause ('We have been happy ... May?'), or hold up a finger for the missing word",
+            support: ["I'm curious about / happy with ___.", "We have ___ for ___ / since ___."],
+            stretch: "Use both and two signs at once: 'We have been happy with the garden since May, but I'm surprised at how many beans we haven't picked yet, so I have just asked my friends to help.'",
+            stretchFrames: ["I have been ___ about / with ___ since ___.", "I haven't ___ yet, but I've already ___."],
+          }),
+        },
         {
           after: "Garden club: ask and fill in",
           slide: {
@@ -582,12 +815,13 @@ export const odL3U16Lab: UnitLab = {
           "Choose your plant or garden, or draw one.",
           "Say your talk three times, each time a little faster, like our champion rounds in class.",
           "Record it once. Say all three feelings with a reason.",
+          "Level 4 step: say how long you have had your plant or garden (for or since), and one thing you haven't done yet.",
           talkLast,
         ],
         maxSeconds: 180,
         kidSummary: "Say what you are curious about, happy with and surprised at, with a reason each time. Keep going without long stops.",
         words: ["curious", "happy", "surprised", "garden", "plants", "because"],
-        grammar: ["I'm curious about ___ because ...", "I'm happy with ___ because ..., so ...", "I was surprised at ___, so ..."],
+        grammar: ["I'm curious about ___ because ...", "I'm happy with ___ because ..., so ...", "I was surprised at ___, so ...", "I have had it for ___ / since ___. I haven't ___ yet."],
         rubric: [
           { label: "Three feelings", description: "Uses curious about, happy with and surprised at, each with the right small word.", weight: 3 },
           { label: "Reasons", description: "Gives a reason with because or a result with so for each feeling.", weight: 2 },

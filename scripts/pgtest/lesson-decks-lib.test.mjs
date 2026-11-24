@@ -244,10 +244,19 @@ for (const { f, u } of units) {
       u.decks.filter((d) => !(d.slides.some((s) => s.kind === "fluency") && d.slides.some((s) => s.kind === "writing"))).map((d) => d.id).join(", "));
     const talks = u.decks.filter((d) => d.slides.some((s) => s.kind === "vlog" && s.rubric)).length;
     ok(`${f}: a recorded talk about every other lesson (${talks} for ${u.decks.length} lessons)`, talks >= Math.max(1, Math.floor(u.decks.length / 2)));
-    // Venus (Oxford Discover 1, grades 2-4) and Sanrio Grade 6 (Oxford Discover 2, grades 6-7) drill the lesson's grammar in every lesson, besides the fluency routine.
-    if (u.curriculum === "oxford-discover-2e" && u.level <= 2) {
+    // Every Lab class drills the lesson's grammar in every lesson, besides the fluency routine: Venus (Oxford Discover 1, grades 2-4)
+    // and Sanrio Grade 6 (Oxford Discover 2, grades 6-7) first, then SKY 1 (Level 3) and Jupiter (Reach Higher 3), raised to be ready
+    // for Oxford Discover 4's grammar (owner, 24 Nov 2026).
+    {
       const missing = u.decks.filter((d) => !d.slides.some((s) => s.kind === "fluency" && s.routine === "grammar drill") || !d.slides.some((s) => s.kind === "fluency" && s.routine !== "grammar drill")).map((d) => d.id);
       ok(`${f}: every lesson has a grammar drill and another fluency routine`, missing.length === 0, missing.join(", "));
+    }
+    // The Level 4 steps: SKY 1 meets one Oxford Discover 4 (B1) structure in every unit, Jupiter the ones its own book does not
+    // teach (Units 2-7), each as a grammar slide "Level 4 step: ..." the Lab adds, then drilled. docs/SPEAKING_WRITING_LAB.md lists them.
+    if ((u.curriculum === "oxford-discover-2e" && u.level === 3) || (u.curriculum === "reach-higher" && u.unit >= 2 && u.unit <= 7)) {
+      const steps = u.decks.flatMap((d) => d.slides.filter((s) => s.kind === "grammar" && /^Level 4 step: /.test(s.title)));
+      ok(`${f}: a Level 4 step with its form, 4+ examples and a pitfall`, steps.length >= 1 && steps.every((s) => s.form.length >= 2 && s.examples.length >= 4 && (s.pitfalls ?? []).length >= 1 && s.explanation.length >= 1),
+        steps.map((s) => s.title).join(" | "));
     }
     // Every Lab class writes paragraphs (SKY 1 and Jupiter first, then Venus and Oxford Discover 2, 24 Nov 2026): plan, write, check in at least half the lessons.
     if (u.decks.length > 1) {
@@ -429,8 +438,9 @@ for (const n of [13, 14, 15, 16, 17, 18]) {
   ok(`Unit ${n}: every homework has a football edition`, u.decks.every((d) => d.slides.some((s) => s.kind === "creative" && s.variants?.some((v) => v.interest === "football"))));
   eq(`Unit ${n}: a quick check in Lesson 4 and the test after the last lesson`,
     [V.checksIn(u.decks.find((d) => d.lesson === 4)), V.unitPlan(u).at(-1).kind, V.unitPlan(u).at(-2).deck?.lesson], [[`od2e-l3-u${n}-check`], "test", last]);
+  // The worksheets follow the book's grammar; a Lab's "Level 4 step" slide is practised in its drills, not on a worksheet.
   ok(`Unit ${n}: a worksheet per grammar slide, a 1st-edition map and audio tracks`,
-    (u.worksheets ?? []).length >= u.decks.flatMap((d) => d.slides).filter((s) => s.kind === "grammar").length && !!u.firstEdition && /"track":"\d\.\d\d"/.test(JSON.stringify(u)));
+    (u.worksheets ?? []).length >= u.decks.flatMap((d) => d.slides).filter((s) => s.kind === "grammar" && !/^Level 4 step: /.test(s.title)).length && !!u.firstEdition && /"track":"\d\.\d\d"/.test(JSON.stringify(u)));
   ok(`Unit ${n}: no audio, image or book files referenced`, !/\.(mp3|wav|m4a|pdf|jpg|png)"/i.test(JSON.stringify(u)));
 }
 

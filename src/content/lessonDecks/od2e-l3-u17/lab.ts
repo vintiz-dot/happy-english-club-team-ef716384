@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 17 "Journeys and
 // Explorers" (src/lib/lessonDecks/lab.ts puts it into the decks). Class Sky 1, ages 8-10.
@@ -17,12 +18,94 @@ const correctRoute =
 const correctTime =
   "During a round, do not stop the talk. Listen for the past -ed ending (we crossed, we packed), the subject after before / after ('Before arrive at the coast' should be 'Before we arrived'), and the comma when the sentence starts with Before or After. Between rounds 1 and 2, stop for one minute and put two of these on the board; the class fixes them. Prompt the child to self-correct: start the phrase and pause ('After we cross... ?'), hold up a finger for the missing -ed, or repeat the error with a rising voice and wait. For a sound, say it right and let the child echo it. Say every final -ed and -s clearly yourself.";
 
+const drillFeedback =
+  "Prompt, do not tell. For a missing -ed, hold up one finger and say the start of the sentence ('Before we ...?'); for a wrong verb, repeat the error with a rising voice and let the child fix it; for a sound, say it right and let the child echo it. Say every final -ed and -s clearly yourself. In round 3 do not correct every slip: note two and use them in the one-minute fix next lesson.";
+
+// One grammar drill (ages 8-10): a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  minutes: 6 | 7;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  slipAdvice: string;
+  support: string[];
+  core: string;
+  stretch: string;
+  stretchFrames: string[];
+  note: string;
+}): Slide {
+  const long = o.minutes === 7 ? 90 : 75;
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: o.minutes,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign card (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person). The class says the new sentence together." },
+      { seconds: long, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P." },
+      { seconds: long, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the child with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said.",
+    ],
+    prompts: o.prompts,
+    feedback: `${drillFeedback} Likely slips for Vietnamese learners here: ${o.slipAdvice}`,
+    teacherNote: o.note,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: o.core },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
+const stepSlide: Slide = {
+  kind: "grammar",
+  title: "Level 4 step: had + past participle (the earlier past)",
+  hook: "Two things happened in the past. Which one was first? Had + past participle shows it.",
+  form: [
+    { label: "Earlier past", pattern: "had + past participle   (The ship had left.)" },
+    { label: "By the time", pattern: "By the time + past simple, + had + past participle   (By the time the explorers arrived, the ship had left.)" },
+    { label: "Before / after", pattern: "The first event: had + past participle   (The sailors had eaten before the storm began. After the storm had passed, we sailed on.)" },
+    { label: "Negative and question", pattern: "hadn't + past participle   /   Had + subject + past participle?   (They hadn't seen land. Had they seen land?)" },
+  ],
+  explanation: [
+    "In this unit you say two past events with before and after: 'We packed before we left.' The word before or after already tells us the order. Sometimes the order is not clear, or the first event is the important one. Then we show the first event with had + the past participle (the third form: left, seen, gone, eaten).",
+    "We use it for the event that was already finished when the other past event happened. 'By the time we arrived, the shop had closed' means the shop closed first, and then we arrived. The event in the by the time part uses the simple past (arrived), and the earlier one uses had + participle (had closed).",
+    "It grows out of before and after: you still use the simple past for the story, and now you add had for the part that came first. You will meet the past perfect again in Oxford Discover 4, so you are getting ready for it now.",
+  ],
+  examples: [
+    { text: "By the time the explorers arrived, the ship had left." },
+    { text: "The sailors had eaten before the storm began." },
+    { text: "After the captain had checked the map, he turned the ship." },
+    { text: "We hadn't seen land for ten days, so everyone was excited." },
+    { text: "Had the explorers crossed the mountains before the snow came? Yes, they had." },
+    { text: "By the time we reached the coast, the fog had gone.", note: "The fog went first, then we reached the coast." },
+  ],
+  pitfalls: [
+    { wrong: "By the time we arrived, the ship left.", right: "By the time we arrived, the ship had left.", why: "The ship left first. Use had + the past participle for the earlier event." },
+    { wrong: "The sailors had went home.", right: "The sailors had gone home.", why: "After had we use the past participle (gone, seen, eaten), not the simple past (went, saw, ate)." },
+    { wrong: "They hadn't eat, so they were hungry.", right: "They hadn't eaten, so they were hungry.", why: "hadn't is followed by the past participle, with the -en or -ed ending." },
+  ],
+};
+
 export const odL3U17Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u17-l1": {
       objectives: ["I can say sentences about weather and places fast and smoothly, and write a longer sentence about a trip."],
-      trim: { "Explorer or not?": 3, "Word and meaning cards (SB 168 A)": 6 },
+      trim: { "Explorer or not?": 3, "Word and meaning cards (SB 168 A)": 6, "Talk about the big picture (SB 166 B)": 5, "My long trip (SB 169 F)": 6 },
       drop: ["Weather mime and guess"],
       add: [
         {
@@ -32,7 +115,7 @@ export const odL3U17Lab: UnitLab = {
             title: "Weather sprint: say the whole sentence",
             routine: "chunk sprint",
             mode: "whole",
-            minutes: 6,
+            minutes: 5,
             goal: "Say the whole sentence, fast and smooth, with no long stops.",
             chunks: [
               "It is windy on the coast.",
@@ -62,6 +145,32 @@ export const odL3U17Lab: UnitLab = {
               { level: "Stretch", task: "Add a reason or a feeling: 'It is windy, so we stay inside.'", frames: ["It is ___, so we ___."] },
             ],
           },
+        },
+        {
+          after: "Weather sprint: say the whole sentence",
+          slide: drill({
+            title: "Grammar drill: before, after and the past",
+            minutes: 6,
+            goal: "Change the sentence fast and right: ask it, say no, join it with before, after or because, change the time or the person. Then tell your partner about a real trip.",
+            chunks: [
+              "We packed our bags before we went to the coast.",
+              "After the storm stopped, we walked on the beach.",
+              "Did you see a waterfall? No, we didn't, but we saw a river.",
+              "It was foggy, so we stayed inside until lunch.",
+              "Before it got dark, we sat around the fire.",
+              "I felt happy because the sea was calm.",
+            ],
+            recycle: ["Have you ever been to a festival?", "We have grown tomatoes since May."],
+            prompts: ["We saw an island. (?)", "We sailed in the storm. (X)", "We packed a map. (+ before we left)", "We sail to the island. (T: last summer)", "I looked at the sea. (P: they)"],
+            real: "Real talk: tell your partner about a trip you took. Say one thing you did BEFORE something and one thing you did AFTER something. Your partner asks: 'Which happened first?'",
+            slips: "'We pack before we go' for a past trip, 'Did you saw' or 'We didn't saw'",
+            slipAdvice: "the past -ed is dropped ('We pack our bags'), the verb after did / didn't is put in the past ('Did you saw'), and the subject is left out after before or after ('Before arrive'). Hold up a finger for the ending, or point to 'did' and say 'Did you ...?' and wait.",
+            support: ["Did you see ___? Yes, we did. / No, we didn't.", "We ___ before we ___."],
+            core: "Change every sentence, join it with before or after, and change the person too.",
+            stretch: "Say which thing happened first and put both in one sentence: 'The storm started before we arrived at the coast.' Then ask your partner: 'Which was first, the storm or the arrival?'",
+            stretchFrames: ["___ before ___.", "Which was first, ___ or ___?"],
+            note: "A drill only helps when the last step is real: round 3 has the children talk about a true trip, so before and after carry meaning. The small push toward Level 4 is 'Which happened first?': children learn to name the first event, which is the idea behind the had + past participle step in Lesson 4. Do not teach had here. Keep it brisk and only note speech, not writing.",
+          }),
         },
         {
           after: "My long trip (SB 169 F)",
@@ -111,9 +220,36 @@ export const odL3U17Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u17-l2": {
       objectives: ["I can retell a journey in three parts, faster each time, and write what the weather was like."],
-      trim: { "Why does weather matter?": 3, "Weather chart: Date and Weather": 7, "Our own journal entries": 9 },
+      trim: { "Why does weather matter?": 3, "Weather chart: Date and Weather": 7, "Our own journal entries": 5, "Read your journal aloud": 6 },
       drop: ["Home talk and journals"],
       add: [
+        {
+          // Anchored on the book's slide: the retell below is added after it later, so it lands in front of this drill.
+          after: "Retell the journey",
+          slide: drill({
+            title: "Grammar drill: before, after and the voyage",
+            minutes: 6,
+            goal: "Change the sentence about the voyage fast and right: ask it, say no, join it with before, after or so, change the time or the person. Then tell your partner about yesterday.",
+            chunks: [
+              "The sailors checked the ship before they left the port.",
+              "After the storm came, the sky turned dark.",
+              "Did the ship arrive in the morning? No, it didn't. It arrived at night.",
+              "The sea was calm, so we looked at the stars.",
+              "We were tired, but we kept sailing because we wanted to arrive.",
+              "Before we ate dinner, we wrote in the journal.",
+            ],
+            recycle: ["While the bee was flying, it saw a flower.", "The telephone was invented in 1876."],
+            prompts: ["The ship left the port. (?)", "The sailors sailed in the dark. (X)", "We wrote in the journal. (+ after we ate)", "The ship sails past the island. (T: yesterday)", "The sailor looked at the map. (P: we)"],
+            real: "Real talk: tell your partner two things you did yesterday, one before something and one after something. Your partner asks one question with 'Did you ...?'",
+            slips: "'The ship arrive' or 'Did the ship arrived'",
+            slipAdvice: "the -ed is dropped on a past verb ('The ship arrive'), -ed is added after did ('Did the ship arrived'), and the final -ed is not pronounced (sailed, looked). Hold up a finger, or say 'Did the ship ...?' and wait; say the -ed sound clearly yourself.",
+            support: ["Did the ___ ___? Yes, it did.", "The ___ didn't ___."],
+            core: "Change every sentence, join it with before or after, and change the person too.",
+            stretch: "Use By the time to show which thing came first: 'By the time we ate dinner, it was dark.' Then say a second sentence about the same day.",
+            stretchFrames: ["By the time ___, it was ___.", "___ before ___."],
+            note: "Round 3 is real talk about yesterday, so before and after are used for meaning. The push toward Level 4 is By the time + past simple, a pattern the children will use again with had in Lesson 4 (By the time we arrived, the ship had left). Only the simple past here: children who can say 'By the time we ate, it was dark' are ready for the next step. Note speech only; do not mark writing.",
+          }),
+        },
         {
           after: "Retell the journey",
           slide: {
@@ -159,7 +295,7 @@ export const odL3U17Lab: UnitLab = {
             routine: "paragraph",
             genre: "journal entry",
             mode: "solo",
-            minutes: 9,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the three parts of the day and the feeling at the end.",
               "Plan: fill the boxes with a few words each, not whole sentences. Think about a day on a ship: morning, after lunch, night.",
@@ -226,9 +362,35 @@ export const odL3U17Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u17-l3": {
       objectives: ["I can ask for and give directions fast with down, through and around, and write them correctly."],
-      trim: { "Teacher says: directions game": 3, "Our big idea": 3 },
+      trim: { "Teacher says: directions game": 3, "Our big idea": 3, "What was most interesting? (Think)": 6, "Back-to-back map game": 9 },
       drop: ["The lost visitor"],
       add: [
+        {
+          after: "Prepositions of movement: down, through, around",
+          slide: drill({
+            title: "Grammar drill: down, through, around",
+            minutes: 6,
+            goal: "Change the route sentence fast and right: ask it, say no, join it with because or after, change the time or the person. Then give real directions in your school.",
+            chunks: [
+              "Go down the corridor and through the big door.",
+              "Don't walk across the road without looking!",
+              "Which way is the library? Go up the stairs and along the hall.",
+              "We walked around the pond because the grass was wet.",
+              "After we went through the park, we walked around the pond.",
+              "Before we arrived at the gate, we ran past the shop.",
+            ],
+            recycle: ["We are flying to Tokyo on Monday.", "If we move to the city, I will go to a new school."],
+            prompts: ["We walk through the park. (?)", "Go across the road. (X)", "Walk around the pond. (+ because it is wet)", "We walk past the shop. (T: yesterday)", "I go down the stairs. (P: they)"],
+            real: "Real talk: give your partner real directions in your school or on your street, with two route words and a warning. Your partner says the route back with 'After ... and before ...'.",
+            slips: "'Walk in the park' for through, 'Go to across the road', 'We walk' for a past trip",
+            slipAdvice: "in is used for through ('Walk in the park'), an extra to comes before across or around ('Go to across'), the word order is wrong ('Walk the park through'), and the past -ed is dropped when the route is told as a story. Point to the route-word card and pause ('Walk ___ the park.'), or repeat the error with a rising voice.",
+            support: ["How do I get to the ___? Go ___ the ___.", "Don't ___ the ___."],
+            core: "Change every sentence, join it with because or after, and change the person too.",
+            stretch: "Tell the route as a story and name the first thing that happened: 'By the time we reached the gate, the bell rang.' Then give your partner the story of a real walk.",
+            stretchFrames: ["After we went ___ the ___, we ___.", "By the time we ___, ___."],
+            note: "Round 3 is real talk: a true route in the school or the street, so down, through and around carry meaning. The push toward Level 4 is the T sign told as a story, first with After and then with By the time + past simple; Lesson 4 adds had to the first event. Only note speech: 'through' for inside and 'around' for outside are the main traps.",
+          }),
+        },
         {
           after: "Act it out (SB 172 C)",
           slide: {
@@ -275,7 +437,7 @@ export const odL3U17Lab: UnitLab = {
             routine: "paragraph",
             genre: "route description",
             mode: "solo",
-            minutes: 9,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Underline the route words with your finger. Find the order words.",
               "Plan: fill the boxes with a few words each, not whole sentences. Draw your way to school or home on a small map first, then write the stops.",
@@ -316,15 +478,45 @@ export const odL3U17Lab: UnitLab = {
     "od2e-l3-u17-l4": {
       objectives: ["I can tell about a trip with before and after, three times, smoothly, and join two sentences with before or after."],
       trim: {
-        "Guess the date": 3,
         "Congratulations and compliments (SB 175 D)": 9,
-        "Say it, then swap it (SB 175 E)": 10,
-        "Write about a trip (Workbook)": 10,
+        "Say it, then swap it (SB 175 E)": 9,
+        "Write about a trip (Workbook)": 9,
         "Big Question video and chart (SB 174-175)": 6,
         "Discover: first or second?": 5,
-        "Plan and pitch your exploration": 5,
+        "Plan and pitch your exploration": 4,
       },
+      drop: ["Guess the date"],
       add: [
+        {
+          after: "Complex sentences with before and after",
+          slide: stepSlide,
+        },
+        {
+          after: "Level 4 step: had + past participle (the earlier past)",
+          slide: drill({
+            title: "Grammar drill: before, after and had",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it with before or after, change the person. In round 3, say which thing happened FIRST with had and by the time.",
+            chunks: [
+              "We packed our bags before we left home.",
+              "After we crossed the river, we had lunch.",
+              "By the time we reached the coast, the ship had left.",
+              "Had the explorers seen land before the storm began? No, they hadn't.",
+              "The sailors hadn't eaten, so they were very hungry.",
+              "After the captain had checked the map, he turned the ship.",
+            ],
+            recycle: ["Have you ever been to a festival?", "I like maps. So do I.", "While the bee was flying, it saw a flower."],
+            prompts: ["We crossed the river. (?)", "We saw the waterfall. (X)", "We packed. We left. (+ before)", "We reached the coast. The ship left first. (+ by the time)", "I looked at the map. (P: they)"],
+            real: "Real talk: tell your partner about a time when you were late: 'By the time I arrived, the film had started.' Use 'By the time I ..., ... had ...'. Your partner asks 'Had you ...?' and you answer 'Yes, I had.' or 'No, I hadn't.'",
+            slips: "'By the time we arrived, the ship left', 'had went' or 'hadn't eat'",
+            slipAdvice: "had is left out ('the ship left' for the earlier event), the simple past is used after had ('had went', 'had saw') instead of the past participle (gone, seen), and the -en / -ed ending is dropped ('hadn't eat'). Hold up a finger and say 'the ship had ...?' and wait; for an irregular word show the third-form card (gone, seen, eaten).",
+            support: ["We ___ before we ___.", "By the time we ___, the ___ had ___."],
+            core: "Rounds 1 and 2: change every sentence with before or after and the other signs. Round 3: say two true past events and put had on the one that came first.",
+            stretch: "Use two signs at once, with had in the question and the answer: 'Had the shop closed by the time you arrived? Yes, it had, so I bought nothing.'",
+            stretchFrames: ["Had ___ ___ by the time ___? Yes, ___ had. / No, ___ hadn't.", "By the time ___, ___ had ___, so ___."],
+            note: "Rounds 1 and 2 drill before and after as in the book; round 3 and the Stretch tier bring in the step you taught on the slide above (had + past participle). Keep the participle card (gone, seen, eaten, left, closed) on the board: the main trap is 'had went'. Children at this level need to hear had in your own speech first, so recast every earlier-past slip with 'the ship had left', stress had a little, and let them echo. Keep it brisk and note speech only.",
+          }),
+        },
         {
           after: "Circle before or after (SB 175 F)",
           slide: {
@@ -332,7 +524,7 @@ export const odL3U17Lab: UnitLab = {
             title: "Join it with before or after",
             routine: "sentence combining",
             mode: "pairs",
-            minutes: 5,
+            minutes: 4,
             steps: [
               "Read the two short sentences. Which happened first?",
               "Join them with before or after into one sentence.",
@@ -367,8 +559,8 @@ export const odL3U17Lab: UnitLab = {
             title: "4-3-2: my trip with before and after",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 8,
-            goal: "Tell about your trip three times: 75, 60 and 45 seconds each. Each time the time is shorter, so you speak smoother and faster.",
+            minutes: 7,
+            goal: "Tell about your trip three times: 60, 50 and 40 seconds each. Each time the time is shorter, so you speak smoother and faster.",
             chunks: [
               "Before we left, we packed a map and a big bag.",
               "After we crossed the river, we had lunch.",
@@ -378,9 +570,9 @@ export const odL3U17Lab: UnitLab = {
             ],
             recycle: ["We need plants because they give us food.", "I'm curious about ___ because ..."],
             rounds: [
-              { seconds: 75, say: "Round 1: Partner A tells about the trip, then Partner B. Use before and after. The listener does not speak. Then change partners." },
-              { seconds: 60, say: "Round 2: Partner A tells the same trip again in less time, then Partner B. Then change partners." },
-              { seconds: 45, say: "Round 3: Partner A tells it a third time, faster and smoother, then Partner B!" },
+              { seconds: 60, say: "Round 1: Partner A tells about the trip, then Partner B. Use before and after. The listener does not speak. Then change partners." },
+              { seconds: 50, say: "Round 2: Partner A tells the same trip again in less time, then Partner B. Then change partners." },
+              { seconds: 40, say: "Round 3: Partner A tells it a third time, faster and smoother, then Partner B!" },
             ],
             steps: [
               "Plan quickly: draw three small pictures of your trip, in order. Say one before or after sentence for each.",
@@ -404,8 +596,35 @@ export const odL3U17Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u17-l5": {
       objectives: ["I can give a route with route words, again and again, without stopping, and write a clear route."],
-      trim: { "Write it: a route note for a new explorer": 10 },
+      trim: { "Write it: a route note for a new explorer": 8, "Remember it!": 4 },
+      drop: ["Freeze and travel: movement break"],
       add: [
+        {
+          after: "Grammar: route words (down, through, around, across, along, past)",
+          slide: drill({
+            title: "Grammar drill: routes and had",
+            minutes: 7,
+            goal: "Change the route sentence fast and right with the unit's route words, then with had and by the time. Then tell a real story about an earlier past.",
+            chunks: [
+              "First, go along the river. Then walk through the forest.",
+              "Don't walk across the ice because it is thin!",
+              "We sailed around the island because the rocks were dangerous.",
+              "By the time we reached the lighthouse, the sun had set.",
+              "After we had walked along the beach, we climbed up the hill.",
+              "Had the explorers crossed the mountains before the snow came? Yes, they had.",
+            ],
+            recycle: ["It must be solar power. It can't be wind.", "We have grown tomatoes since May.", "The telephone was invented in 1876."],
+            prompts: ["We walk through the forest. (?)", "Sail across the lake. (X)", "Walk around the lake. (+ because it is deep)", "We reached the beach. The sun set first. (+ by the time)", "I walked along the river. (P: they)"],
+            real: "Real talk: tell your partner about a trip or a time when you were late. Use route words and 'By the time we ..., ... had ...'. Your partner asks 'Had ...?' and you answer 'Yes, ... had.' or 'No, ... hadn't.'",
+            slips: "'Walk in the tunnel' for through, 'By the time we arrived, the sun set', 'had went'",
+            slipAdvice: "in is used for through ('Walk in the tunnel'), had is left out for the earlier event ('the sun set'), the simple past is put after had ('had went', 'had saw') instead of the past participle, and the -en / -ed ending is dropped ('hadn't eat'). Point to the route-word card, or hold up a finger and say 'the sun had ...?' and wait.",
+            support: ["First, go ___ the ___. Then walk ___ the ___.", "By the time we ___, the ___ had ___."],
+            core: "Rounds 1 and 2: change every sentence with the route words and the other signs. Round 3: tell a true story with a route word and one sentence with had.",
+            stretch: "Join a route and an earlier past in one story: 'We walked around the lake, but by the time we arrived, the boat had gone.' Then say what you did next.",
+            stretchFrames: ["We walked ___ the ___ because ___.", "By the time ___, ___ had ___, so ___."],
+            note: "The last drill of the unit covers both grammars: rounds 1 and 2 use the route words from the Grammar Champions slide, round 3 and the Stretch tier use the Level 4 step (had + past participle) again. Keep the participle card (gone, seen, eaten, left, set) on the board. Note speech only and keep it brisk; the one-minute fix is for the route words and the 'had went' trap.",
+          }),
+        },
         {
           after: "Two maps, one route: ask and answer",
           slide: {
@@ -450,7 +669,7 @@ export const odL3U17Lab: UnitLab = {
             title: "Model route note, then your own",
             routine: "model, then write",
             mode: "solo",
-            minutes: 6,
+            minutes: 5,
             steps: [
               "Read the model route note. Underline the route words with your finger.",
               "What does the note do? Say: it gives steps in order, and it warns about danger.",
@@ -488,12 +707,13 @@ export const odL3U17Lab: UnitLab = {
           "Look at your map and the route note from class.",
           "Say your route three times to a grown-up or a toy. Each time a little smoother and faster.",
           "Record it once. Point to your map as you speak.",
+          "Add one sentence about an earlier past with had: 'By the time we arrived, the shop had closed.'",
           "Grown-up: hold the phone and let your child speak; do not say the words for them. If your child stops for a long time, wait, then ask 'What comes next?'",
         ],
         maxSeconds: 180,
         kidSummary: "Give a route with at least three route words, say first, then and finally, and keep talking without long stops.",
         words: ["down", "through", "around", "across", "along", "past", "first", "then", "finally"],
-        grammar: ["Go / Walk + route word + the place", "First, ... Then ... Finally, ...", "Don't + go / walk + route word + the place"],
+        grammar: ["Go / Walk + route word + the place", "First, ... Then ... Finally, ...", "Don't + go / walk + route word + the place", "By the time + past simple, + had + past participle"],
         rubric: [
           { label: "Clear route", description: "Gives the route in order with First, Then and Finally, so a friend could follow it.", weight: 3 },
           { label: "Route words", description: "Uses at least three route words correctly: down, through, around, across, along, past.", weight: 3 },
@@ -503,7 +723,7 @@ export const odL3U17Lab: UnitLab = {
         tiers: [
           { level: "Support", who: "Children who need the frames", frames: ["First, go ___ the ___.", "Then walk ___ the ___.", "Finally, ___."], tips: ["Point to the map as you speak."] },
           { level: "Core", who: "Most children", frames: ["First, go ___ the ___ and ___ the ___.", "Then walk ___ the ___ because ___.", "Finally, you arrive at the ___."], tips: ["Use at least three different route words."] },
-          { level: "Stretch", who: "Children who are ready for more", frames: ["Don't go ___ the ___ because ___.", "The route is easy / hard because ___, so you should ___."], tips: ["Add a warning, a reason and your advice."] },
+          { level: "Stretch", who: "Children who are ready for more", frames: ["Don't go ___ the ___ because ___.", "The route is easy / hard because ___, so you should ___.", "By the time ___, ___ had ___."], tips: ["Add a warning, a reason, your advice and a sentence with had."] },
         ],
       },
     },

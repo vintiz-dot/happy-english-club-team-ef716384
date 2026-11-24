@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 6 "Seeing Like a
 // Poet" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
@@ -17,13 +18,90 @@ const correctWas =
 const correctVerbs =
   "Watch for 'The wind dance', 'The sun is shine' and 'The waves crashes'. Prompt the child to fix it: say 'The wind ...' and pause, hold up a finger for the -s, or repeat the error with a rising voice ('The wind dance?'). For a sound, say it right and let the child echo. After round 1, take one minute to put two mistakes on the board and fix them, then go on. Say the final -s of 'dances', 'whispers' and 'smiles' clearly yourself.";
 
+// One grammar drill (Level 4 raise): a sentence changed fast by a sign, in chorus, then
+// pairs, then used in real talk about the children's own lives. Ages 8-10.
+function drill(o: {
+  title: string;
+  minutes: 6 | 7;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  r1?: string;
+  r2?: string;
+  real: string;
+  slips: string;
+  fix: string;
+  note: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  const s = o.minutes === 6 ? 75 : 90;
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: o.minutes,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and holds up a sign card (? = ask it, X = say no, + = join with because, so or when, T = change the time, P = change the person). The class says the new sentence together." + (o.r1 ? " " + o.r1 : "") },
+      { seconds: s, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap." + (o.r2 ? " " + o.r2 : "") },
+      { seconds: s, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence.",
+      "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often " + o.slips + "), fix them together, then go on.",
+      "In round 2 swap roles at the clap: the child with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: "Prompt, do not tell. " + o.fix + " In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next time.",
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the sentence is used for meaning. For ages 8-10 start with the ? and X signs, then add + with because and so, and bring in T and P when the class is quick. Keep it brisk and cheerful; a drill that drags loses its point. Nothing is written: this is about speed and accuracy in speech. " + o.note,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, join it with because or so, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U6Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u06-l1": {
       objectives: ["I can say 'I can see ___ in my mind.' fast, with a poet word, without stopping."],
-      trim: { "Noun, verb or adjective? Stand, act, wave": 5, "Poem or not a poem?": 6 },
+      trim: { "Stand on the line: what is a poem?": 5, "Poem or not a poem?": 4, "Noun, verb or adjective? Stand, act, wave": 4 },
       add: [
+        {
+          after: "Think back to the poems (SB 57 Think)",
+          slide: drill({
+            title: "Grammar drill: I was looking at the moon when ...",
+            minutes: 6,
+            goal: "Change the sentence fast and right: ask it, say no, join it, change the time or the person. Then tell your partner what you were doing at a real moment.",
+            chunks: [
+              "I was looking at the moon when the bell rang.",
+              "Were you listening to the rain? Yes, I was.",
+              "We were watching the river when a bird flew by.",
+              "I wasn't sleeping when the wind started to whisper.",
+              "The poet was walking by the lake when she saw a bright star.",
+              "What were you doing when it began to rain?",
+            ],
+            recycle: ["While the bee was flying, it saw a flower.", "I enjoy drawing pictures of nature.", "I have never seen a shooting star."],
+            prompts: ["I was looking at the moon. (?)", "We were watching the river. (X)", "I was drawing a tree. (+ when the bell rang)", "I was looking at the moon. (T: now)", "I was singing. (P: they)"],
+            real: "Real talk: tell your partner what you were doing at a special moment, like seven o'clock last night. Say what happened too: 'I was ___-ing when ___.' Your partner asks one question: 'What were you doing when ___?'",
+            slips: "'We was' or 'I looking' with no was",
+            fix: "For 'We was watching', say 'We ...?' and pause, hold up a finger for the missing word, or repeat it with a rising voice. For 'I looking at the moon', point to the frame and show two fingers: was + -ing. Say 'rang', 'flew' and 'started' with a clear final sound and let the class echo.",
+            note: "Today the children meet the poet words, so keep the sentences about nature. This keeps Unit 5's was / were + -ing alive before the unit's grammar page in Lesson 3. The Stretch tier uses while with two people, one step toward Level 4's longer sentences.",
+            support: ["I was ___-ing when ___.", "Were you ___-ing? Yes, I was."],
+            stretch: "Use two signs at once and add a second person: 'While I was looking at the moon, my brother was drawing it, so I looked at his picture.'",
+            stretchFrames: ["While I was ___-ing, my ___ was ___-ing.", "___, so ___."],
+          }),
+        },
         {
           after: "Listen, point, say (SB 56 A)",
           slide: {
@@ -99,8 +177,33 @@ export const odL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u06-l2": {
       objectives: ["I can tell my partner how to write a haiku, three times, faster each time."],
-      trim: { "Draw what you hear": 3, "Poem forms chart": 10, "Do rules help a poet?": 3, "Culture note: counting poems": 3 },
+      trim: { "Draw what you hear": 3, "Poem forms chart": 10, "Do rules help a poet?": 3, "Culture note: counting poems": 3, "Gallery talk: how to write this poem": 7, "Word detectives: observe, imagine, describe, exact": 3 },
       add: [
+        {
+          after: "Do rules help a poet?",
+          slide: drill({
+            title: "Grammar drill: counting syllables when ...",
+            minutes: 6,
+            goal: "Change the sentence fast and right: ask it, say no, join it, change the time or the person. Then tell your partner about a real time you wrote or drew something.",
+            chunks: [
+              "I was counting syllables when my friend asked a question.",
+              "The poet was watching the rain when she thought of a haiku.",
+              "Were you reading the poem when the bell rang? No, I wasn't.",
+              "We were drawing what we heard while the teacher was reading.",
+              "What was the poet looking at when she wrote it?",
+              "I was thinking about the lake when I wrote the first line.",
+            ],
+            recycle: ["I enjoy writing short poems.", "I decided to write about the sea.", "If we write a haiku, we will read it aloud."],
+            prompts: ["I was counting syllables. (?)", "The poet was watching the rain. (X)", "We were drawing. (+ while the teacher was reading)", "I was counting syllables. (T: now)", "She was thinking of a haiku. (P: we)"],
+            real: "Real talk: tell your partner what you were doing the last time you wrote or drew something. Say what happened, then say why: 'I was ___-ing when ___, so ___.' Your partner asks one question and tells the class one thing they remember.",
+            slips: "'The poet was watch' or 'We was drawing'",
+            fix: "For 'The poet was watch', say 'The poet was ...?' and tap your wrist for the -ing ending. For 'We was drawing', repeat it with a rising voice ('We was?') and point to were. Say 'syllables' with the final -s clearly yourself.",
+            note: "The sentences are about the haiku the class has just read. Recycled phrases come from Units 2 and 4, so the grammar stays spaced. The Stretch tier joins two ideas with so or because, one step toward Level 4's longer sentences.",
+            support: ["I was ___-ing when ___.", "The poet was ___-ing when ___."],
+            stretch: "Join with so or because and add a feeling: 'I was counting syllables when my friend asked a question, so I started again. I felt silly because I lost count.'",
+            stretchFrames: ["___ when ___, so ___.", "I felt ___ because ___."],
+          }),
+        },
         {
           after: "Expert groups: teach the rules",
           slide: {
@@ -146,7 +249,7 @@ export const odL3U6Lab: UnitLab = {
             routine: "paragraph",
             genre: "instructions",
             mode: "solo",
-            minutes: 10,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the topic sentence, the four steps (First, Next, Then, Last) and the closing sentence.",
               "Plan: fill the boxes with a few words each, not whole sentences.",
@@ -212,9 +315,69 @@ export const odL3U6Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u06-l3": {
-      objectives: ["I can say what I was doing when something happened, fast and with was / were."],
-      trim: { "Favorite poem vote": 3, "Interrupt! Mime and say": 3, "Could you be a poet?": 4, "Words in context (SB 60 C)": 4 },
+      objectives: ["I can say what I was doing when something happened, fast and with was / were.", "I can say more about a person, a thing or a place with who, that and where."],
+      trim: { "Favorite poem vote": 3, "Interrupt! Mime and say": 3, "Could you be a poet?": 3, "Words in context (SB 60 C)": 4, "Discover the rule": 7, "Our big idea": 5 },
       add: [
+        {
+          after: "Past continuous and simple past",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: who, which, that and where",
+            hook: "One small word, who, which, that or where, lets you say exactly which person, thing or place you mean.",
+            form: [
+              { label: "Person: noun + who + verb", pattern: "the poet who wrote it" },
+              { label: "Thing: noun + which / that + verb", pattern: "a poem that rhymes / a poem which rhymes" },
+              { label: "Place: noun + where + subject + verb", pattern: "the place where we sat" },
+              { label: "The new part comes right after the noun it tells about", pattern: "The girl who was singing stopped." },
+              { label: "Do not say he, she, it or there again", pattern: "the poem that makes me smile (not: that it makes me smile)" },
+            ],
+            explanation: [
+              "A relative clause tells us more about a noun. It answers the question: which one? 'The poet who wrote it' tells us which poet. 'A poem that rhymes' tells us which kind of poem. 'The place where we sat' tells us which place.",
+              "We use who for people, which or that for things, and where for places. The new part comes straight after the noun, and the little word takes the place of he, she, it or there, so we do not say that word again. In this unit you say what was happening with was / were + -ing and when. Now the same sentences can say who or what: 'The girl who was reading the poem stopped when the lights went out.'",
+              "This is grammar you will meet in Oxford Discover 4. The readings and the grammar pages there use these clauses all the time, so every time you say one now, Level 4 gets a little easier.",
+            ],
+            examples: [
+              { text: "A poet is a person who sees pictures in words." },
+              { text: "A haiku is a short poem that has three lines." },
+              { text: "The poem which I read today made me feel calm." },
+              { text: "The garden where we were sitting was full of birds." },
+              { text: "I know a boy who was drawing the moon when the bell rang." },
+              { text: "A syllable is a part of a word that you can clap." },
+            ],
+            pitfalls: [
+              { wrong: "The poet who he wrote this poem is famous.", right: "The poet who wrote this poem is famous.", why: "Who already stands for the poet, so do not add he or she. English does not say the person twice." },
+              { wrong: "A poem who rhymes is fun.", right: "A poem that rhymes is fun.", why: "Who is for people. For things and animals use that or which." },
+              { wrong: "This is the park where we sat there.", right: "This is the park where we sat.", why: "Where already means 'in that place', so do not say there again." },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: who, which, that and where",
+          slide: drill({
+            title: "Grammar drill: was / were + -ing, then who and which",
+            minutes: 6,
+            goal: "Change the sentence fast and right, then say more about a person, a thing or a place with who, that or where.",
+            chunks: [
+              "I was reading a poem when the lights went out.",
+              "What were you doing when the bell rang?",
+              "We weren't playing when it started to rain.",
+              "The girl who was reading the poem stood up.",
+              "I like the poem that makes me think of the sea.",
+              "That is the room where we were singing when the lights went out.",
+            ],
+            recycle: ["If it rains, we will stay inside.", "I used to be afraid of the dark.", "While the bee was flying, it saw a flower."],
+            prompts: ["I was reading a poem when the lights went out. (?)", "We were playing football when it rained. (X)", "I like the poem. It rhymes. (+ that)", "I know a girl. She was singing. (+ who)", "This is the room. We sat there. (+ where)"],
+            r1: "Rounds 1 and 2 are the unit grammar, was / were + -ing and when (chunks 1 to 3). Round 3 and Stretch use who, that and where (chunks 4 to 6).",
+            r2: "Say the signs ? X + T P with the first three sentences.",
+            real: "Real talk: tell your partner about a person who ..., a thing that ... and a place where ... in your own life: 'My favorite poem is the one that ...' 'The place where I was sitting when ...' Then ask 'What were you doing when ...?' and answer.",
+            slips: "'The girl who she was singing' or 'a poem who rhymes'",
+            fix: "For 'the girl who she was singing', repeat it with a rising voice and cover 'she' with one finger: who already means she. For 'a poem who rhymes', point to the who / that card: who is for people. For 'the park where we sat there', say 'the park where we sat ...?' and wait. Say 'rang', 'sat' and 'started' with a clear final sound.",
+            note: "This is the first lesson of the Level 4 step, who / which / that / where. Keep round 2 on was / were + -ing and when so the book's grammar is secure, and give the new clauses only in round 3. Do not teach the clauses with non-defining commas; that is Level 4's job.",
+            support: ["I was ___-ing when ___.", "I like the ___ that ___.", "A ___ is a person who ___."],
+            stretch: "Put both in one sentence: 'I was reading the poem that my friend wrote when the lights went out.'",
+            stretchFrames: ["I was ___-ing the ___ that ___ when ___.", "The ___ who ___ was ___-ing when ___."],
+          }),
+        },
         {
           after: "Match the sentence parts (SB 61 F)",
           slide: {
@@ -300,8 +463,34 @@ export const odL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u06-l4": {
       objectives: ["I can ask 'What do you think of ___?' and answer with a reason, round the circle."],
-      trim: { "Rhyme chain": 3, "Syllable cards": 4, "How many syllables? (SB 63 D)": 7, "Match the rhymes (SB 62 A)": 6 },
+      trim: { "Rhyme chain": 3, "Syllable cards": 3, "How many syllables? (SB 63 D)": 7, "Match the rhymes (SB 62 A)": 6, "Describe it, draw it, guess it": 5 },
       add: [
+        {
+          after: "Action verbs",
+          slide: drill({
+            title: "Grammar drill: the wind whispers",
+            minutes: 6,
+            goal: "Change the action sentence fast and right: ask it, say no, join it, change the time or the person. Then tell your partner about a poem, a song or a place you like.",
+            chunks: [
+              "The wind whispers in the tall trees.",
+              "The waves crash on the sand.",
+              "Does the moon smile over the river? Yes, it does.",
+              "The rain doesn't sing, but it taps on the roof.",
+              "A poem that rhymes sounds like a song.",
+              "I like the poet who writes about the rain.",
+            ],
+            recycle: ["I enjoy listening to the rain.", "I was reading when a beetle landed on my book.", "If it rains, I will read a poem."],
+            prompts: ["The wind whispers. (?)", "The waves crash. (X)", "The moon smiles. (+ because it is bright)", "The rain taps on the roof. (T: last night)", "The river runs. (P: the rivers)"],
+            r1: "Say the -s on whispers, taps and smiles loudly: he / she / it needs it, 'they' does not.",
+            real: "Real talk: tell your partner about a poem, a song or a place you like. Use who, that or where: 'I like the song that ...' 'My favorite place is the park where ...' Your partner asks one question: 'Why do you like it?'",
+            slips: "'The wind dance' or 'The waves crashes'",
+            fix: "For 'The wind dance', say 'The wind ...?' and hold up a finger for the -s. For 'The waves crashes', make a wave with your hand to show many and say 'The waves ...?'. For 'a poem who rhymes', point to the thing card: that or which. Say the final -s of 'whispers' and 'taps' clearly yourself.",
+            note: "The lesson's grammar, action verbs with -s, is in rounds 1 and 2; round 3 and Stretch use the Level 4 step (who, which, that, where) again, so the clauses come back a day after Lesson 3 and grow. Vietnamese verbs do not change, so the -s is the slip to listen for.",
+            support: ["The ___ ___s on the ___.", "I like the ___ that ___."],
+            stretch: "Join an action sentence to a who / that / where sentence: 'The wind that whispers in the trees sounds like a friend who tells a secret.'",
+            stretchFrames: ["The ___ that ___s ___.", "I like the poet who ___s about ___."],
+          }),
+        },
         {
           after: "Asking for opinions (SB 63 C)",
           slide: {
@@ -348,7 +537,7 @@ export const odL3U6Lab: UnitLab = {
             title: "Fix the poem lines",
             routine: "fix it",
             mode: "pairs",
-            minutes: 6,
+            minutes: 4,
             steps: [
               "Read each line with your partner. Something is wrong!",
               "Find the mistake: a missing -s on the verb, a wrong word, or an extra word.",
@@ -380,12 +569,13 @@ export const odL3U6Lab: UnitLab = {
           "Look outside or at a picture of nature. Find three things.",
           "Say a sentence for each thing with an action verb, like 'The wind whispers.' Practise three times.",
           "Record it once. Tell what you think of your poem and why.",
+          "Say one sentence with who, that or where, like 'I like the poem that ...' or 'My favorite place is the park where ...'.",
           "Look at the camera, speak clearly and keep going. (Grown-up: just hold the phone and listen.)",
         ],
         maxSeconds: 180,
         kidSummary: "Say action sentences about nature, say what you think, and keep talking without long stops.",
         words: ["whisper", "dance", "crash", "tap", "smile", "quiet"],
-        grammar: ["He / she / it + action verb with -s: The wind whispers.", "I think ___ because ___."],
+        grammar: ["He / she / it + action verb with -s: The wind whispers.", "I think ___ because ___.", "A poem that rhymes / a poet who writes ...: who, that, which"],
         rubric: [
           { label: "Action sentences", description: "Says at least three sentences with an action verb about nature.", weight: 3 },
           { label: "Verb -s", description: "Uses -s for one thing (the moon smiles) and no -s for many (the waves crash).", weight: 3 },
@@ -403,8 +593,33 @@ export const odL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u06-l5": {
       objectives: ["I can say my poem and why I wrote it three times, smoother each time."],
-      trim: { "60-second recall": 3, "Test our big ideas": 3 },
+      drop: ["60-second recall", "Test our big ideas"],
       add: [
+        {
+          after: "Answer and discuss (SB 64 B)",
+          slide: drill({
+            title: "Grammar drill: my poem, who, that and where",
+            minutes: 6,
+            goal: "Change the sentence fast and right, then say more about your own poem with who, that and where.",
+            chunks: [
+              "I was writing my poem when I saw a silver bird.",
+              "I chose the moon because it makes me feel calm.",
+              "The poem that I wrote is about the quiet river.",
+              "The poet who wrote it was sitting by the lake.",
+              "This is the place where I was sitting when I thought of the first line.",
+              "What were you thinking when you chose this topic?",
+            ],
+            recycle: ["I'm good at drawing pictures with words.", "I didn't use to like poems, but now I do.", "If I read it slowly, I will remember it."],
+            prompts: ["I was writing my poem. (?)", "I chose the moon. (X)", "I like the poem. It makes me calm. (+ that)", "The poet was sitting by the lake. (T: now)", "I chose the topic. (P: she)"],
+            real: "Real talk: tell your partner about your own poem. Use who, that and where: 'My poem is about a bird that ...' 'I thought of it in the place where ...' Your partner asks 'Why did you choose ___?' and says one line they can picture.",
+            slips: "'The poem that I wrote it' or 'the place where I sat there'",
+            fix: "For 'the poem that I wrote it', repeat it with a rising voice and put a finger over 'it': that already means it. For 'the place where I sat there', say 'the place where I sat ...?' and wait. Say 'chose' and 'wrote' with a clear sound and let the class echo.",
+            note: "This lesson has no grammar page, so the drill keeps the unit grammar (was / were + -ing, when) and the Level 4 step alive in the children's own poem talk. The Stretch tier puts two clauses in one sentence, which is how Level 4 readings sound.",
+            support: ["My poem is about ___.", "I chose ___ because ___.", "I like the ___ that ___."],
+            stretch: "Say two clauses in one sentence: 'The poem that I wrote is about a river that runs through the place where I was sitting.'",
+            stretchFrames: ["The poem that ___ is about ___.", "I was ___-ing in the place where ___."],
+          }),
+        },
         {
           after: "Illustrate and rehearse your poem (SB 65 C)",
           slide: {
@@ -448,7 +663,7 @@ export const odL3U6Lab: UnitLab = {
             title: "Model paragraph: why I wrote my poem",
             routine: "model, then write",
             mode: "solo",
-            minutes: 6,
+            minutes: 5,
             steps: [
               "Read the model. Find the topic sentence, the reasons and the closing sentence.",
               "Plan: fill in a quick organiser: topic, two reasons, how I feel.",
@@ -476,8 +691,35 @@ export const odL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "od2e-l3-u06-l6": {
       objectives: ["I can say what I was doing when something happened, with was / were, without stopping."],
-      trim: { "Freeze and tell: the interrupt game": 4, "Remember it!": 5, "Does the rule work here too?": 3 },
+      trim: { "Freeze and tell: the interrupt game": 3, "Remember it!": 5, "Does the rule work here too?": 3, "Grammar mystery: Ollie and the strange night": 5, "Grammar detectives: Is / Is Not": 8, "Champion talk: 3 rounds": 9 },
       add: [
+        {
+          after: "Grammar: was / were + -ing, and when",
+          slide: drill({
+            title: "Grammar drill: champions with when, who and that",
+            minutes: 7,
+            goal: "Change the sentence fast and right with both champion grammars: was / were + -ing with when, and who, that and where. Then tell your partner about a surprising moment.",
+            chunks: [
+              "I was drawing a robin when the brush fell.",
+              "While I was cooking, my cousin was setting the table.",
+              "What were you doing when the lights went out?",
+              "The girl who was singing stopped when the rain began.",
+              "The poem that I was reading made me feel calm.",
+              "The kitchen is the place where we were sitting when the lights went out.",
+            ],
+            recycle: ["If the lights go out, I will light a candle.", "I used to be afraid of the dark.", "I have never seen a power cut at night."],
+            prompts: ["I was drawing a robin when the brush fell. (?)", "We were singing when the rain began. (X)", "I met a boy. He was cooking. (+ who)", "She was reading a poem. It rhymed. (+ that)", "This is the kitchen. We sat there. (+ where)"],
+            r1: "Use both grammars: sentences 1 to 3 are the unit grammar, sentences 4 to 6 are the Level 4 step.",
+            r2: "Try two signs at once, like X + who.",
+            real: "Real talk, champion round: tell your partner about a surprising moment. Use was / were + -ing and when, and also a person who ..., a thing that ... or a place where ... Your partner asks 'What were you doing when ...?'",
+            slips: "'We was singing' or 'the boy who he was cooking'",
+            fix: "For 'We was singing', say 'We ...?' and hold up two fingers for were. For 'the boy who he was cooking', cover 'he' with a finger: who already means he. For 'the kitchen where we sat there', say 'where we sat ...?' and wait. Say the past endings, rang, sat and began, with a clear final sound.",
+            note: "The unit's last lesson covers both: the book's was / were + -ing and when, and the Level 4 step, who / which / that / where. If the class is not ready for two signs at once, keep to one sign per sentence. In the paragraph that follows, children are asked for one sentence with who, which, that or where.",
+            support: ["I was ___-ing when ___.", "I met a ___ who ___.", "I like the ___ that ___."],
+            stretch: "Put the unit grammar and the step in one sentence and add a reason: 'I was reading the poem that my friend wrote when the lights went out, so I lit a candle.'",
+            stretchFrames: ["I was ___-ing the ___ that ___ when ___, so ___."],
+          }),
+        },
         {
           after: "The power cut mystery: ask and answer",
           slide: {
@@ -548,6 +790,7 @@ export const odL3U6Lab: UnitLab = {
               "was / were matches: I was, it was, the dog was, we were",
               "The short action is past: saw, ran, called, stopped",
               "At least one when or while sentence, and Then or Next",
+              "One sentence with who, which, that or where: a person who ..., a thing that ..., a place where ...",
             ],
             sayIt: "Read your story to your partner. Then tell it again without looking, in one minute.",
             teacherNote: "Today's paragraph is a short story, so it is a different genre from the recount in Lesson 3: it needs a surprise and an ending. It replaces the fix-it slide; the four common slips from that slide (a missing was, 'we was', -ing on the short action, a missing -ed) are now the checklist items. Plan, write, check: the boxes take words, not sentences. Mark only two targets (was / were and the past form of the short action) with a dot on the line; the child finds and fixes the mistake.",
@@ -568,12 +811,13 @@ export const odL3U6Lab: UnitLab = {
           "Think of a moment: what were you doing when something surprising happened?",
           "Say your story three times to a grown-up or a toy: what you were doing, what happened, what you did next.",
           "Record it once. Say how you felt and why.",
+          "Say one sentence with who, that or where, like 'The boy who was cooking dropped the plate' or 'I was in the room where we eat'.",
           "Look at the camera, speak clearly and keep going. (Grown-up: just hold the phone and listen.)",
         ],
         maxSeconds: 180,
         kidSummary: "Tell what you were doing when something happened, what you did next, and keep talking without long stops.",
         words: ["suddenly", "surprised", "lights", "rain", "bell", "phone"],
-        grammar: ["I was ___-ing when ___.", "We were ___-ing when ___.", "While I was ___, my ___ was ___."],
+        grammar: ["I was ___-ing when ___.", "We were ___-ing when ___.", "While I was ___, my ___ was ___.", "The ___ who / that ___ was ___-ing when ___."],
         rubric: [
           { label: "Was / were + -ing", description: "Says what they were doing with was / were and a verb ending in -ing.", weight: 3 },
           { label: "The short action", description: "Says what happened with the simple past: rang, fell, went.", weight: 2 },

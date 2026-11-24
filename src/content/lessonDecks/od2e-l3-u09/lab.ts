@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 9 "Sources of
 // Energy" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
@@ -11,13 +12,84 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 const fixSteps =
   "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). Between rounds 1 and 2, stop for one minute: write them on the board and let the class fix them. Children who then say the same thing again use the fixed form. For grammar, prompt the child to fix it (start the phrase and pause, point to the frame, hold up a finger for the missing word, or repeat the error with a rising voice) rather than saying it for them. For a sound, just say it right and let them echo it. Say every final -s and -ed clearly yourself: children copy what they hear.";
 
+const drillFeedback =
+  "Prompt, do not tell: for 'It mights rain' or 'It may to rain' start 'It may ...' and pause, or point to the rule on the board (no -s, no to); for 'It must is solar power' hold up one finger for 'be' ('It must ... be?'); for a missing -s on uses or makes, tap your wrist; for a wrong sound, say it right and let the child echo it. Say the final /t/ of might and must, and the -s, clearly yourself. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person). The class says the new sentence together." },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with the -s where it belongs.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedback,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. Ages 8-10 can take the signs one at a time: start with ? and X, add + and T when the class is quick, and P last. Keep it brisk; a drill that drags loses its point. Each unit's drill also reaches one step toward Oxford Discover 4 (the Level 4 step), so the children meet next level's grammar in small, safe pieces. Mark nothing in writing: this is about speed and accuracy in speech.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U9Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u09-l1": {
       objectives: ["I can say 'The ___ uses energy.' and 'The ___ is a source of energy.' fast, in whole sentences."],
-      trim: { "Energy detectives": 4, "Power sort relay": 5, "Wind power or other power? (SB 88 B)": 6 },
+      trim: { "Energy detectives": 4, "Wind power or other power? (SB 88 B)": 6 },
+      drop: ["Power sort relay"],
       add: [
+        {
+          after: "Talk about the big picture (SB 86 B)",
+          slide: drill({
+            title: "Grammar drill: sure or maybe about energy",
+            goal: "Change the sentence fast and right: ask it, say no, join it with a reason, change the time. Say what will happen and what may or might happen. Then guess about a picture.",
+            chunks: [
+              "The wind turbine will make power today.",
+              "It may be windy, so the turbine might spin fast.",
+              "Will the sun shine? It might, but I am not sure.",
+              "The sailboat may not move because there is no wind.",
+              "Coal makes pollution, so we may use less coal.",
+              "This might be a wind farm because I can see tall turbines.",
+            ],
+            recycle: ["We are flying to Tokyo on Monday.", "The plane leaves at six.", "I think it will rain, because the clouds are dark."],
+            prompts: ["The turbine will spin. (?)", "The sun will shine. (X)", "It may be windy. (+ so)", "The sailboat moves. (T: tomorrow, may)", "I may use the fan. (P: she)"],
+            real: "Real talk: tell your partner what energy your home may or might use today (a fan, a heater, the lights, a stove) and why. Then guess about the picture card: 'It might be a ... because ...'. Your partner says if they agree.",
+            slips: "'It mights rain' or 'The turbine may to spin'",
+            support: ["Will the ___ ___? Yes, it will.", "It may / might ___."],
+            stretch: "Guess about a picture with two reasons and say what it can't be: 'It might be a wind farm because I can see turbines. It can't be a city, because there are no buildings.'",
+            stretchFrames: ["It might be ___ because ___.", "It can't be ___, because ___."],
+          }),
+        },
         {
           after: "Talk about the big picture (SB 86 B)",
           slide: {
@@ -93,12 +165,12 @@ export const odL3U9Lab: UnitLab = {
     "od2e-l3-u09-l2": {
       objectives: ["I can explain how a water turbine makes electricity: First, Next, Then, So."],
       trim: {
-        "Energy word chain": 4,
-        "Quiz show: what do we know now?": 4,
-        "Draw the energy's journey": 5,
-        "Green energy or fossil fuel? Sort what we read": 6,
+        "Energy word chain": 3,
+        "Draw the energy's journey": 4,
+        "Green energy or fossil fuel? Sort what we read": 4,
         "Home talk: where does our electricity come from?": 5,
       },
+      drop: ["Quiz show: what do we know now?"],
       add: [
         {
           after: "Explain the diagram: how a water turbine works",
@@ -137,6 +209,28 @@ export const odL3U9Lab: UnitLab = {
               { level: "Stretch", task: "Add why it is good: 'Water is renewable, so we can use it again and again.'", frames: ["It is good because ___.", "___ is renewable, so ___."] },
             ],
           },
+        },
+        {
+          after: "Turbine story: tell it three times",
+          slide: drill({
+            title: "Grammar drill: how green energy works",
+            goal: "Change the sentence fast and right: ask it, say no, join it with because or so, change the time. Say what is sure and what is only a maybe. Then guess which energy it is.",
+            chunks: [
+              "The wind turns the blades, so the turbine makes electricity.",
+              "Does the turbine use wind? Yes, it does.",
+              "Solar panels don't make power at night, although they work well in the day.",
+              "Water may turn the turbine, but it might not turn it fast.",
+              "Last year the town built a wind farm because the hill is windy.",
+              "Which green energy do you like best, and why?",
+            ],
+            recycle: ["A turbine is a machine that makes electricity.", "While the water was falling, the turbine was turning.", "We are visiting the power plant on Friday."],
+            prompts: ["The turbine turns. (?)", "Coal is green energy. (X)", "Wind is clean. (+ because)", "The water hits the turbine. (T: yesterday)", "A solar panel makes power. (P: solar panels)"],
+            real: "Real talk: tell your partner which green energy your town may or might use in the future, and why. Then try a guess about a clue: 'It makes power with the sun, so it might be a ...'. Your partner says if they agree.",
+            slips: "'The turbine turn', 'Solar panels makes' or 'It mights'",
+            support: ["Does the ___ use ___? Yes, it does.", "The ___ makes ___ from ___."],
+            stretch: "Guess the energy from a clue with a reason: 'It makes no noise, so it might be solar power. It can't be a wind turbine, because a turbine makes a sound.'",
+            stretchFrames: ["It might be ___, so ___.", "It can't be ___, because ___."],
+          }),
         },
         {
           after: "Green energy or fossil fuel? Sort what we read",
@@ -215,12 +309,67 @@ export const odL3U9Lab: UnitLab = {
       objectives: ["I can say what I may or might do, fast and without adding -s or to."],
       trim: {
         "Sure or not sure? The line game": 3,
-        "Mystery bag guessing game": 6,
-        "The future of energy: what might happen?": 4,
+        "Mystery bag guessing game": 4,
+        "The future of energy: what might happen?": 3,
         "Our big idea": 3,
-        "Song time (SB 93 D)": 6,
+        "Song time (SB 93 D)": 4,
+        "Think about wind power (SB 92 Think)": 3,
       },
       add: [
+        {
+          after: "May and might: not sure yet",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: must be, might be, can't be",
+            hook: "When we can see clues, we can guess what something is: it must be, it might be, it can't be.",
+            form: [
+              { label: "Nearly sure it is", pattern: "It must be + noun or adjective." },
+              { label: "Not sure", pattern: "It might be / may be + noun or adjective." },
+              { label: "Nearly sure it is not", pattern: "It can't be + noun or adjective." },
+              { label: "Never add", pattern: "No -s after must or can't. Always the plain verb be." },
+            ],
+            explanation: [
+              "Earlier in the unit you used may and might for the future: 'It might rain tomorrow.' We can also use might for a guess about NOW. 'That might be a wind farm.' We do not know, but it is possible.",
+              "When we have strong clues, we can be nearly sure. We say must be when the clues say yes: 'I can see tall blades on a hill, so it must be a wind farm.' We say can't be when the clues say no: 'The air is still, so it can't be wind that moves the boat.'",
+              "So there is a ladder of guesses: must be (nearly sure it is), might be (maybe), can't be (nearly sure it is not). It grows from this unit's might and may, and it is grammar you will meet again in Oxford Discover 4. Good guessers always give the clue: because ... or so ...",
+            ],
+            examples: [
+              { text: "I can see a lot of solar panels on the roof, so it must be solar power.", note: "strong clue: must be" },
+              { text: "The flag is not moving, so it can't be a windy day.", note: "clue says no: can't be" },
+              { text: "That building might be a power plant, but I am not sure.", note: "maybe: might be" },
+              { text: "It makes a lot of smoke, so it must be a coal power plant.", note: "strong clue" },
+              { text: "The sky is full of dark clouds, so it can't be a good day for solar power.", note: "clue says no" },
+              { text: "It might be a hydro dam, because I can see a lot of water.", note: "a guess with a reason" },
+            ],
+            pitfalls: [
+              { wrong: "It must is solar power.", right: "It must be solar power.", why: "after must we use the plain verb be" },
+              { wrong: "It mustn't be wind.", right: "It can't be wind.", why: "for 'nearly sure it is not' we say can't be; mustn't is for rules" },
+              { wrong: "It might be to a wind farm.", right: "It might be a wind farm.", why: "no to after might be" },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: must be, might be, can't be",
+          slide: drill({
+            title: "Grammar drill: may, might and must be",
+            goal: "Change the sentence fast and right: ask it, say no, join it with a reason, change the person. Rounds 1 and 2 use may and might. In round 3 make a guess from clues with must be, might be and can't be.",
+            chunks: [
+              "It may rain this weekend, so I might take an umbrella.",
+              "She may not go to the museum because it might be closed.",
+              "We will have power tonight, but the wind might stop.",
+              "I can see a lot of solar panels, so it must be a solar farm.",
+              "It can't be wind power, because the air is still.",
+              "That might be a power plant, but I am not sure.",
+            ],
+            recycle: ["If it rains, we will stay home.", "Look at the flags! The wind is going to get stronger.", "We are flying to Tokyo on Monday."],
+            prompts: ["It may rain. (?)", "We might go out. (X)", "I may use the fan. (+ because)", "He may help. (P: they)", "(clue card: smoke) It must be ___."],
+            real: "Real talk: your partner shows a clue card (smoke, solar panels, a still flag, a lot of water, a long wire). Say a guess with must be, might be or can't be and give the clue: 'There is smoke, so it must be ...'. Then tell your partner what you may or might do tomorrow.",
+            slips: "'It mights', 'It may to rain' or 'It must is'",
+            support: ["It may / might ___.", "It must be ___, because ___."],
+            stretch: "Make a guess and argue against another: 'It must be solar power because of the panels. It can't be wind, because the air is still.'",
+            stretchFrames: ["It must be ___ because ___.", "It can't be ___, because ___."],
+          }),
+        },
         {
           after: "What may or might I do this weekend? (SB 93 G)",
           slide: {
@@ -313,8 +462,33 @@ export const odL3U9Lab: UnitLab = {
         "Big Question Review (SB 94-95)": 6,
         "Electric things at home (SB 94 Think)": 5,
         "Plan and test your panel": 8,
+        "Underline the subject, circle the verb (SB 95 E)": 4,
+        "Writing practice (Workbook)": 8,
+        "Listen again: missing words (SB 94 B)": 4,
       },
       add: [
+        {
+          after: "Count and noncount nouns: choose the verb",
+          slide: drill({
+            title: "Grammar drill: is, are, was and were",
+            goal: "Change the sentence fast and right: ask it, say no, join it with a reason, change the time. Choose is, are, was or were, and the -s on the verb. In round 3 guess what is at home with must be and can't be.",
+            chunks: [
+              "Electricity is very useful, and it makes our homes work.",
+              "Are the lights on? Yes, they are.",
+              "Windmills were common long ago, but now we use wind turbines.",
+              "Pollution is a problem, so we are using more green energy.",
+              "Oil makes pollution, although it is a strong energy.",
+              "That must be the fridge, because it is making a noise.",
+            ],
+            recycle: ["Will you turn off the lights? Yes, I will.", "If we save energy, the air will be cleaner.", "We might use more solar power."],
+            prompts: ["Electricity is useful. (?)", "Coal is clean. (X)", "Oil makes pollution. (+ so)", "The windmills are on the hill. (T: long ago)", "Electricity is important. (P: batteries)"],
+            real: "Real talk: tell your partner two electric things in your home and say if they are old or new, loud or quiet. Then play a sound game: your partner makes a sound and you guess: 'It must be the ... because ...' or 'It can't be the ..., because ...'.",
+            slips: "'Electricity are', 'Windmills was' or 'Oil make pollution'",
+            support: ["___ is / are ___.", "It must be the ___."],
+            stretch: "Guess with a reason, then change the time: 'It must be the fan, because I can feel wind. It can't be the heater. Long ago, there were no fans.'",
+            stretchFrames: ["It must be ___ because ___.", "It can't be ___, because ___.", "Long ago, there ___ no ___."],
+          }),
+        },
         {
           after: "Ask about the future with will (SB 95 C)",
           slide: {
@@ -394,8 +568,34 @@ export const odL3U9Lab: UnitLab = {
         "Two energy towns: ask and fill in the forecast": 10,
         "Write it: our energy forecast": 8,
         "Champion talk: 3 rounds": 8,
+        "Grammar mystery: The Day of the Windy Hill Fair": 6,
+        "Remember it!": 4,
+        "Grammar detectives: Is / Is Not": 8,
       },
       add: [
+        {
+          after: "Grammar: will, may and might",
+          slide: drill({
+            title: "Grammar drill: will, may, might and must be",
+            goal: "Change the sentence fast and right: ask it, say no, join it with a reason, change the time or the person. Use will for sure, may and might for maybe, and must be and can't be for a guess from clues.",
+            chunks: [
+              "The sun will shine tomorrow, so the solar panels will make power.",
+              "It may rain on Saturday, but we might still go to the fair.",
+              "Will the turbines spin tonight? They might, but I am not sure.",
+              "We might not use coal because it makes pollution.",
+              "The panels are very hot, so it must be a sunny day.",
+              "The turbines are not moving, so it can't be a windy day.",
+              "It must be wind power, but it might be water power too.",
+            ],
+            recycle: ["A turbine is a machine that makes electricity.", "If we use green energy, the air will be cleaner.", "The plane leaves at six, but we are taking the train on Friday."],
+            prompts: ["The sun will shine. (?)", "It may rain. (X)", "The wind might blow. (+ so)", "The wind will blow. (T: last week)", "She might use solar power. (P: they)"],
+            real: "Real talk: say what will happen in your town tomorrow and what may or might happen. Then your partner gives a clue (a still flag, hot panels, dark clouds, smoke) and you guess with must be, might be or can't be: 'The flag is not moving, so it can't be ...'.",
+            slips: "'It mights', 'It must is', 'It might will' or 'It may to rain'",
+            support: ["It will / may / might ___.", "It must be ___, because ___."],
+            stretch: "Give a forecast and then a guess from a clue, using must be and can't be in one turn: 'It will be sunny, so it must be a good day for solar power. It can't be a good day for wind power.'",
+            stretchFrames: ["It will ___, so it must be ___.", "It can't be ___, because ___.", "It might be ___ if ___."],
+          }),
+        },
         {
           after: "Two energy towns: ask and fill in the forecast",
           slide: {
@@ -465,6 +665,7 @@ export const odL3U9Lab: UnitLab = {
               "Sure things use will; maybes use may or might",
               "After will, may and might: the plain verb (no -s, no to)",
               "A comma before so, and a full stop at the end",
+              "One sentence with must be, might be or can't be and a clue (Level 4 step)",
             ],
             sayIt: "Read your forecast to your partner, then tell it again without looking.",
             teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph itself, and the child decides what is sure and what is only a maybe before writing. Point to each part on the model (topic sentence, details, closing opinion). Mark only two targets (will against may or might, and the plain verb after them) with a dot on the line; the child finds and fixes the mistake. The paragraph is a good script for this lesson's recorded talk.",
@@ -485,12 +686,13 @@ export const odL3U9Lab: UnitLab = {
           "Look at the forecast you wrote in class.",
           "Practise three times: each time a little faster, like the 4-3-2 in class.",
           "Record it once. Look at the camera and say one 'will' sentence and two 'may' or 'might' sentences.",
+          "Finish with one guess from a clue: 'The flag is not moving, so it can't be a windy day.' or 'It must be ...'.",
           "Grown-up: hold the phone and let your child speak; do not say the words for them.",
         ],
         maxSeconds: 180,
         kidSummary: "Say what will happen and what may or might happen, and keep talking without long stops.",
         words: ["solar panel", "wind turbine", "electricity", "pollution", "renewable", "weather"],
-        grammar: ["will + plain verb (sure)", "may / might + plain verb (not sure)"],
+        grammar: ["will + plain verb (sure)", "may / might + plain verb (not sure)", "must be / might be / can't be (a guess from clues)"],
         rubric: [
           { label: "Sure and maybe", description: "Uses will for a sure thing and may or might for a maybe.", weight: 3 },
           { label: "Plain verb", description: "No -s and no 'to' after will, may or might (not 'mights', not 'may to go').", weight: 2 },

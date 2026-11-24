@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 7 "Time and the
 // Earth" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
@@ -12,12 +13,63 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 const correct =
   "During a round, listen and do not stop the talk. Note two or three grammar mistakes you hear (no names). Between rounds 1 and 2, stop for one minute, write them on the board and let the class fix them: children who then say it again use the fixed form. For grammar, prompt the child to fix it rather than saying it for them: start the phrase and pause ('In two hours, it will ...'), point to the frame, hold up a finger for the missing word, or repeat the error with a rising voice ('It will rains?'). Typical slips here: 'it will five o'clock' (be is missing), 'will rises' (no -s after will), 'it will don't', and a dropped final -s on minutes, hours and seconds. For a sound, just say it right and let the child echo it. Say every final -s and -t clearly yourself (minutes, hours, won't): children copy what they hear.";
 
+const drillFeedback =
+  "Prompt, do not tell: for 'It will rains' hold up one finger and say 'It will ...?' and let the child fix it; for 'It going to rain' point to your wrist and say 'It ... going to?' (be is missing); for 'When the sun will rise' repeat it with a rising voice and point to the present-tense card. For a sound, just say it right and let the child echo it. Say every final -s, -t and the 'll in 'it'll' clearly yourself. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+  minutes?: number;
+}): Slide {
+  const six = o.minutes === 6;
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: o.minutes ?? 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or the tense, P = change the person). The class says the new sentence together." },
+      { seconds: six ? 75 : 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Try two signs together when you can: X + or T P." },
+      { seconds: six ? 75 : 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedback,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. Ages 8-10 can take the full set of signs, but teach them one at a time in the first lesson and keep it brisk; a drill that drags loses its point. The T sign and the last round push the grammar one step toward Level 4 (will or going to, and when / as soon as with the present). Mark nothing in writing: this is about speed and accuracy in speech.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, add a reason with + because or so, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U7Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u07-l1": {
       objectives: ["I can say how long things take, fast and smooth, without stopping."],
-      trim: { "Time tools table": 3, "Word and meaning pairs": 4, "Day and night with a flashlight": 5 },
+      trim: { "Time tools table": 3, "Word and meaning pairs": 4 },
+      drop: ["Day and night with a flashlight"],
       add: [
         {
           after: "How much time does it take? (SB 68 B)",
@@ -26,7 +78,7 @@ export const odL3U7Lab: UnitLab = {
             title: "Time sprint: it takes me ...",
             routine: "chunk sprint",
             mode: "whole",
-            minutes: 6,
+            minutes: 5,
             goal: "Say the whole sentence, fast and smooth, with no stops.",
             chunks: [
               "It takes me five minutes to brush my teeth.",
@@ -56,6 +108,29 @@ export const odL3U7Lab: UnitLab = {
               { level: "Stretch", task: "Agree or disagree with your partner: 'That's true. It takes me ___, too.' or 'I'm not so sure. It takes me ___.'", frames: ["That's true. It takes me ___, too.", "I'm not so sure. It takes me ___."] },
             ],
           },
+        },
+        {
+          after: "Time sprint: it takes me ...",
+          slide: drill({
+            title: "Grammar drill: it takes, it will take",
+            minutes: 6,
+            goal: "Change the sentence fast and right: ask it, say no, join it with a reason, change the time. Then say how long things will take tomorrow.",
+            chunks: [
+              "It takes me ten minutes to walk to school.",
+              "Does it take you an hour to do your homework? No, it doesn't.",
+              "It will take me ten minutes to walk to school tomorrow.",
+              "It won't take long, because the school is near.",
+              "It will take longer when it rains, so I will leave early.",
+              "I think it will take about twenty minutes, so I will leave at seven.",
+            ],
+            recycle: ["I was reading when the lights went out.", "The poet who wrote it is famous.", "If it rains, I will take an umbrella."],
+            prompts: ["It takes me five minutes to eat. (?)", "It takes an hour to cook. (X)", "It takes me ten minutes. (+ because)", "It takes me ten minutes. (T: tomorrow)", "It takes me ten minutes. (P: it takes her)"],
+            real: "Real talk: tell your partner how long three things will take you tomorrow. Then guess one thing that will take longer than usual, and say why. Your partner asks one question.",
+            slips: "'It will takes' or 'It take me'",
+            support: ["Does it take you ___? Yes, it does.", "It will take me ___."],
+            stretch: "Use two signs at once and add 'when': 'When it rains, it will take me longer, so I will ...'",
+            stretchFrames: ["When ___, it will take me ___.", "I think it will take ___, but I am not sure."],
+          }),
         },
         {
           after: "Match the sentence to the word (SB 69 C)",
@@ -105,7 +180,8 @@ export const odL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u07-l2": {
       objectives: ["I can explain how the Earth makes day and night, again and again, a little faster each time."],
-      trim: { "Time zone quiz": 4, "Human time ladder": 4, "Multiplying time: a challenge": 5 },
+      trim: { "Multiplying time: a challenge": 5 },
+      drop: ["Time zone quiz", "Human time ladder"],
       add: [
         {
           after: "Explain a diagram",
@@ -144,6 +220,28 @@ export const odL3U7Lab: UnitLab = {
               { level: "Stretch", task: "Add a reason or an example: 'It is important because ...', or say what it is like in Tokyo at the same time.", frames: ["It is important because ...", "At the same time in Tokyo, ..."] },
             ],
           },
+        },
+        {
+          after: "Day and night: tell it again, faster",
+          slide: drill({
+            title: "Grammar drill: the Earth will keep spinning",
+            goal: "Change the sentence about the Earth fast and right: ask it, say no, join it with a reason, change the time. Then guess what will happen tonight and tomorrow.",
+            chunks: [
+              "The Earth spins once every day.",
+              "In twelve hours, our side of the Earth will face away from the sun.",
+              "Will it be night in Tokyo? No, it won't. It will be afternoon there.",
+              "It will be dark soon, because the Earth will keep spinning.",
+              "I think it will be cold tonight, so I will wear a jacket.",
+              "Tomorrow the Earth will spin again, and the sun will rise.",
+            ],
+            recycle: ["I have never seen a lion dance.", "While the bee was flying, it saw a flower.", "This is the place where we sat."],
+            prompts: ["The Earth spins every day. (T: tomorrow)", "The sun will rise at six. (?)", "It will be dark at noon. (X)", "It will be night here. (+ because)", "We will see the sun. (P: she)"],
+            real: "Real talk: tell your partner what the sky will look like tonight and tomorrow morning where you live. Say what you think will happen and why. Your partner asks one question.",
+            slips: "'The Earth spin' or 'it will night'",
+            support: ["Will it be ___? Yes, it will.", "It won't be ___."],
+            stretch: "Use two signs at once and add 'when' with a present verb: 'When the Earth turns away from the sun, it will be night here.'",
+            stretchFrames: ["When the Earth ___, it will be ___.", "I think it will be ___ because ___."],
+          }),
         },
         {
           after: "Read the diagram: close to the sun, far from the sun",
@@ -193,8 +291,63 @@ export const odL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u07-l3": {
       objectives: ["I can say what will happen tomorrow, in one smooth talk, three times."],
-      trim: { "Will and won't ping-pong": 3, "True or false time facts": 4 },
+      drop: ["Will and won't ping-pong", "True or false time facts"],
       add: [
+        {
+          after: "Future facts with will",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: will or going to",
+            hook: "Will is what we think. Going to is what we can see.",
+            form: [
+              { label: "will: what we know or think", pattern: "I think / I'm sure + it will + plain verb (I think it will be cold tonight.)" },
+              { label: "going to: what we can see now", pattern: "am / is / are + going to + plain verb (Look at the clouds! It is going to rain.)" },
+              { label: "Questions and no", pattern: "Will it ...? No, it won't.  /  Is it going to ...? No, it isn't." },
+              { label: "when / as soon as + present", pattern: "When / As soon as + present verb, ... will + plain verb (When the sun rises, it will be day.)" },
+            ],
+            explanation: [
+              "Two small words help us talk about the future. We use 'will' for an idea or a guess: we know something or we think something, but we cannot see it yet. We use 'going to' for something we can see right now: dark clouds, a red sky, a clock that is nearly at twelve. The sentence says what comes next.",
+              "You already know the first part. In this unit you said 'it will be noon' and 'it won't be dark'. 'Going to' grows out of it: we put am, is or are before it, and the verb after 'to' stays plain, just like after will. There is one more small step. After 'when' and 'as soon as' we use the present verb, even when we talk about the future: 'When the sun rises, it will be day.' Only the second part has 'will'.",
+              "This is grammar you will meet again in Oxford Discover 4. If you say it fast and smooth now, it will feel easy there.",
+            ],
+            examples: [
+              { text: "I think the Earth will spin for a very long time.", note: "will: an idea, nothing to see now" },
+              { text: "Look! The sun is going to set. The sky is red.", note: "going to: we can see it now" },
+              { text: "I think it will be cold at night, but I am not sure.", note: "will after 'I think'" },
+              { text: "When the sun rises, it will be day in Hanoi.", note: "when + present verb, then will" },
+              { text: "As soon as the clock strikes twelve, we will eat lunch.", note: "as soon as + present verb" },
+              { text: "Is it going to be dark soon? Yes, it is. The sun is very low.", note: "question and short answer with going to" },
+            ],
+            pitfalls: [
+              { wrong: "When the sun will rise, it will be day.", right: "When the sun rises, it will be day.", why: "After 'when' and 'as soon as' we use the present verb. Only the second part has 'will'." },
+              { wrong: "It is going to rains.", right: "It is going to rain.", why: "After 'going to' the verb stays plain, with no -s." },
+              { wrong: "Look at the clouds! It going to rain.", right: "Look at the clouds! It is going to rain.", why: "We need am, is or are before 'going to'." },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: will or going to",
+          slide: drill({
+            title: "Grammar drill: will, going to, when",
+            goal: "Change the sentence fast and right: ask it, say no, join it with a reason, change the time. Then use 'going to' for what you can see and 'when' with the present.",
+            chunks: [
+              "In one hour, it will be noon, so we will eat lunch.",
+              "Will it be dark at noon? No, it won't.",
+              "I think it will rain tomorrow, but I am not sure.",
+              "Look at those black clouds! It is going to rain.",
+              "Is the sun going to rise soon? Yes, it is, because the sky is getting light.",
+              "When the bell rings, we will go home.",
+              "As soon as I get home, I will do my homework.",
+            ],
+            recycle: ["If we move to the city, I will go to a new school.", "I was reading when a beetle landed on my book.", "I enjoy swimming, and I want to learn to dive."],
+            prompts: ["It will be noon in an hour. (?)", "It will be dark at noon. (X)", "I will take an umbrella. (+ because)", "The sky is dark. (T: it is going to rain)", "I will eat lunch. (P: she)"],
+            real: "Real talk, the Level 4 step: look out of the window and say one thing that is going to happen (what you can see). Then guess what will happen tomorrow, and say what you will do as soon as school finishes. Your partner asks one question.",
+            slips: "'it will rains', 'it going to rain' or 'when it will rain'",
+            support: ["Will it ___? Yes, it will.", "Look! It is going to ___."],
+            stretch: "Use two signs at once and a follow-up question: 'When the bell rings, I will ... because ... Is it going to rain?'",
+            stretchFrames: ["When / As soon as ___ (present), I will ___.", "Is it going to ___? I think it will ___."],
+          }),
+        },
         {
           after: "Now and later chart (SB 73 G)",
           slide: {
@@ -284,13 +437,14 @@ export const odL3U7Lab: UnitLab = {
         steps: [
           "Look at the four little clocks you drew in class. Say your plan out loud.",
           "Say it three times to a grown-up or a toy. Each time a little faster and smoother.",
+          "Add one sentence with 'when' or 'as soon as' and a present verb: 'As soon as I get up, I will ...'",
           "Record it once. Look at the camera and keep going, even if you make a small mistake.",
           "Grown-up: hold the phone and let your child speak; do not say the words for them.",
         ],
         maxSeconds: 180,
         kidSummary: "Say what you will do tomorrow, with the time for each, and keep talking without long stops.",
         words: ["tomorrow", "noon", "hour", "minute", "will", "won't"],
-        grammar: ["Tomorrow, I will ___ at ___ o'clock.", "In ___ hours, it will be ___.", "I won't ___ because ___."],
+        grammar: ["Tomorrow, I will ___ at ___ o'clock.", "In ___ hours, it will be ___.", "I won't ___ because ___.", "When / As soon as ___ (present), I will ___."],
         rubric: [
           { label: "Four plans", description: "Says four things for tomorrow, each with a time.", weight: 2 },
           { label: "Will and won't", description: "Uses 'will' with the plain verb and 'it will be' before a time, and says at least one 'won't'.", weight: 3 },
@@ -308,8 +462,31 @@ export const odL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u07-l4": {
       objectives: ["I can ask and answer about tomorrow's weather and time, round the circle, without stopping."],
-      trim: { "Weather forecast show": 5, "Plan and practice your call": 5, "Word families with -tion (SB 75 D)": 4 },
+      trim: { "Plan and practice your call": 3, "Word families with -tion (SB 75 D)": 4 },
+      drop: ["Weather forecast show"],
       add: [
+        {
+          after: "Using the with country names",
+          slide: drill({
+            title: "Grammar drill: the or no the? Where will we go?",
+            goal: "Change the sentence about places fast and right: ask it, say no, join it with a reason, change the time. Then say what is going to happen on a trip.",
+            chunks: [
+              "My aunt lives in the United States, and she will visit Japan next year.",
+              "Will you visit the Netherlands? No, I won't. I will visit Turkey.",
+              "The sun will rise at six in the United Kingdom.",
+              "Look at the sky over Japan! It is going to rain.",
+              "When we arrive in the Philippines, we will swim in the sea.",
+              "My cousin lives in Chile, but he is going to visit the United Arab Emirates.",
+            ],
+            recycle: ["Have you ever been to a festival?", "While the bee was flying, it saw a flower.", "She is the girl who sits next to me."],
+            prompts: ["My aunt lives in the Netherlands. (?)", "We will fly to the Japan. (fix it, then X)", "We will go to Turkey. (+ because)", "We will visit Chile. (T: we are going to)", "I will visit the Philippines. (P: she)"],
+            real: "Real talk, going one step further: tell your partner about a place you will visit one day, or a place you can see on the map now. Say where it is and what is going to happen when you get there. Your partner asks one question.",
+            slips: "'in the Japan', 'in Philippines' or 'it will to be'",
+            support: ["Will you visit ___? Yes, I will.", "I won't go to ___."],
+            stretch: "Use two signs at once and 'when': 'When we arrive in the United Kingdom, we will ... because ... Are you going to visit the Netherlands?'",
+            stretchFrames: ["When we arrive in ___, we will ___.", "Are you going to visit ___? I think I will."],
+          }),
+        },
         {
           after: "Pick a city and talk about tomorrow (SB 75 C)",
           slide: {
@@ -384,8 +561,32 @@ export const odL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u07-l5": {
       objectives: ["I can talk about the day camp and the time zones with 'will', again and again, without stopping."],
-      trim: { "Clock hop": 6, "Grammar mystery: The Clock Keeper of Sun Hill": 6 },
+      trim: { "Grammar mystery: The Clock Keeper of Sun Hill": 6 },
+      drop: ["Clock hop"],
       add: [
+        {
+          after: "Grammar: future facts with will and won't",
+          slide: drill({
+            title: "Grammar drill: will, going to, when, as soon as",
+            goal: "Change the sentence fast and right with will and with the Level 4 step: ask it, say no, join it with a reason, change the time. Then say what is going to happen and what will happen when it does.",
+            chunks: [
+              "In two hours, it will be five o'clock, so we will go home.",
+              "Look! The clock keeper is running. He is going to be late.",
+              "It won't be dark at noon, because the sun will be high.",
+              "Is it going to be sunny? Yes, I think it will be.",
+              "When it is noon in Hanoi, it will be two o'clock in Tokyo.",
+              "As soon as the bell rings, we are going to run to the yard.",
+              "I will call my friend as soon as I get home.",
+            ],
+            recycle: ["The poet who wrote it is famous.", "It must be solar power.", "If I lived under the sea, I would ride a dolphin to school."],
+            prompts: ["It will be five o'clock soon. (?)", "It will be dark at noon. (X)", "I will go to bed. (+ as soon as I finish my homework)", "It is noon in Hanoi. (+ when: it will be two o'clock in Tokyo)", "I am going to run. (P: they)"],
+            real: "Real talk, both parts of the lesson: say what you can see that is going to happen (going to). Then say two things you will do tomorrow with 'when' or 'as soon as' and the present. Your partner asks one question and then gives you their best sentence.",
+            slips: "'will rises', 'it will five o'clock' or 'when it will be noon'",
+            support: ["Will it be ___? Yes, it will.", "Look! It is going to ___.", "As soon as ___, I will ___."],
+            stretch: "Use two signs at once and a reason: 'When it is noon in Hanoi, it will be two o'clock in Tokyo, so my friend is going to eat lunch.'",
+            stretchFrames: ["When it is ___ in Hanoi, it will be ___ in ___.", "As soon as ___, I will ___ because ___."],
+          }),
+        },
         {
           after: "The Moon Bay day camp: ask and fill in",
           slide: {
@@ -438,10 +639,10 @@ export const odL3U7Lab: UnitLab = {
             ],
             text: {
               title: "A day in two cities",
-              text: "Tomorrow, I will wake up at six o'clock in Hanoi. In one hour, it will be seven o'clock, so I will eat breakfast. At that time in Tokyo, it will be nine o'clock. My friend will be at school! I won't call her then, because she will be busy. I will call her at noon. Then it will be two o'clock in Tokyo, and she will eat lunch.",
+              text: "Tomorrow, I will wake up at six o'clock in Hanoi. In one hour, it will be seven o'clock, so I will eat breakfast. At that time in Tokyo, it will be nine o'clock. My friend will be at school! I won't call her then, because she will be busy. As soon as it is noon in Hanoi, I will call her. Then it will be two o'clock in Tokyo, and she will eat lunch.",
             },
             frames: ["Tomorrow, I will ___ at ___ o'clock in Hanoi.", "At that time in ___, it will be ___.", "I won't ___ because ___.", "I will ___ at ___.", "So tomorrow will be a ___ day!"],
-            checklist: ["A first sentence that says what the paragraph is about, and a last sentence that ends it", "'will be' before a clock time", "The plain verb after will and won't", "A capital letter at the start and a full stop at the end of each sentence"],
+            checklist: ["A first sentence that says what the paragraph is about, and a last sentence that ends it", "'will be' before a clock time", "The plain verb after will and won't", "A capital letter at the start and a full stop at the end of each sentence", "One sentence with 'when' or 'as soon as' and a present verb, and one with 'going to' for something I can see"],
             sayIt: "Read your sentences aloud to a partner, then tell them again without looking.",
             teacherNote: "Reading a short model first, then writing a text like it, helps children see how a paragraph is built. Read the model aloud together once, then let the children underline the 'will' phrases. It is the lead-in to the longer message later in the lesson, so keep it to one short paragraph.",
             tiers: [
@@ -459,6 +660,7 @@ export const odL3U7Lab: UnitLab = {
         length: "60-90 seconds",
         steps: [
           "Look at your time zone card from class: Tokyo is two hours ahead, Dubai is three hours behind.",
+          "Add one sentence with 'as soon as' or 'when' and a present verb ('As soon as it is noon, I will call ...') and one with 'going to' about what you can see.",
           "Say your talk three times to a grown-up or a toy. Each time a little faster and smoother.",
           "Record it once. Look at the camera and keep going, even if you make a small mistake.",
           "Grown-up: hold the phone and let your child speak; do not say the words for them.",
@@ -466,7 +668,7 @@ export const odL3U7Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Say what time it will be in two cities when it is noon in Hanoi, with a reason, and keep going without long stops.",
         words: ["noon", "time zone", "spin", "orbit", "hour", "will"],
-        grammar: ["When it is ___ in Hanoi, it will be ___ in ___.", "They will ___ because ___.", "It won't be ___ ."],
+        grammar: ["When it is ___ in Hanoi, it will be ___ in ___.", "They will ___ because ___.", "It won't be ___ .", "As soon as / When ___ (present), I will ___."],
         rubric: [
           { label: "Two cities", description: "Gives the time for two cities, correct for the time zone card.", weight: 2 },
           { label: "Will and be", description: "Uses 'it will be' before a time and the plain verb after will, and says one 'won't'.", weight: 3 },

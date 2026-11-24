@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 3 "Moving to a New
 // Place" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (class Sky 1).
@@ -16,16 +17,64 @@ const correct =
 const correctCanCould =
   "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). The common ones for this unit: 'Yesterday I can ride', 'She can swims', 'I didn't could', 'He can to dance', and a dropped -s or -ed. Between round 1 and round 2, stop for one minute and fix two of them on the board together. Prompt, do not tell: point to the time word and ask 'Now or before?'; hold up one finger for can (now) or two for could (before); repeat the error with a rising voice ('didn't could?'); start the phrase and pause ('Last year she c...?'). The verb after can and could never changes: tap the table once and say it plain, 'can swim'. For a sound, say it right and let the child echo it. Say every final -s and -ed clearly yourself.";
 
+// One grammar drill (ages 8-10): a sentence changed fast by a sign, in chorus, then pairs
+// with sign cards, then real talk. The drill practises the lesson's grammar; the Level 4
+// step of this unit (used to, be able to) joins it from the lesson that teaches it.
+function drill(o: {
+  title: string;
+  minutes: 6 | 7;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  const long = o.minutes === 7;
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: o.minutes,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time, P = change the person). The class says the new sentence together." },
+      { seconds: long ? 90 : 75, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. When you can, use two signs together: X + or T P." },
+      { seconds: long ? 90 : 75, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with the -s and the -ed where they belong.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the child with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: tell about your own life, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: `Likely slips for Vietnamese learners here: ${o.slips}. Prompt, do not tell: start the phrase and pause ('Last year I c...?'), hold up a finger for the missing word, point to the sign card, or repeat the error with a rising voice ('She can swims?'). The verb after can, could, used to and able to never changes: tap the table once and say it plain. For a sound, a quick recast is fine: say it right and the child echoes. Say every final -s, -ed and n't clearly yourself: Vietnamese has no such endings, so children copy what they hear. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.`,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. Keep it brisk with eight- to ten-year-olds: bring the sign cards, stand up for the chorus, and stop while they still want more. The change of sign (time, person, question, no) is what makes the grammar automatic rather than copied. Nothing is written: this is about speed and accuracy in speech, one step further toward the grammar of Oxford Discover 4.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U3Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u03-l1": {
       objectives: ["I can talk about why a family moves and how they feel, in whole sentences, without long stops."],
-      drop: ["Moving-day relay"],
+      drop: ["Moving-day relay", "Pack the suitcase"],
       trim: {
-        "Pack the suitcase": 3,
         "Moving words I already know (SB 29 C)": 3,
-        "Indoors, outdoors or both? (SB 28 B)": 6,
+        "Indoors, outdoors or both? (SB 28 B)": 4,
       },
       add: [
         {
@@ -35,7 +84,7 @@ export const odL3U3Lab: UnitLab = {
             title: "Moving sprint: say the whole idea",
             routine: "chunk sprint",
             mode: "whole",
-            minutes: 6,
+            minutes: 5,
             goal: "Say the whole sentence about a family that is moving, fast and smooth, with no stops.",
             chunks: [
               "The family is packing the boxes.",
@@ -65,6 +114,29 @@ export const odL3U3Lab: UnitLab = {
               { level: "Stretch", task: "Say two sentences in one breath: 'They are moving because Dad has a new job, so they are packing the boxes.'", frames: ["They are moving because ___, so ___."] },
             ],
           },
+        },
+        {
+          after: "Moving sprint: say the whole idea",
+          slide: drill({
+            title: "Grammar drill: move, because, can and could",
+            minutes: 6,
+            goal: "Change the sentence fast and right: ask it, say no, join it with because, change the time or the person. Then talk about a place you know.",
+            chunks: [
+              "They are moving because the new school is bigger, so the children can learn more.",
+              "In the old town we couldn't walk to school, but in the new town we can.",
+              "Maybe they are moving because Dad has a new job.",
+              "Can you ride a bike? Yes, I can. Could you ride one last year? No, I couldn't.",
+              "She might feel nervous because everything is new, but she can make friends.",
+              "Why are you moving? Because my mother has a new job.",
+            ],
+            recycle: ["Have you ever moved to a new town?", "I have never seen a lion dance.", "I enjoy dancing, and I want to learn to swim."],
+            prompts: ["The family is moving. (+ because)", "They can see the sea from the new house. (?)", "She might feel happy. (X)", "In the old town I couldn't walk to school. (T: now)", "Dad has a new job. (P: my mother)"],
+            real: "Real talk: tell your partner about a place you know or would like to live in. Say one thing you can do there, one thing you couldn't do before, and why, with because. Your partner asks one question.",
+            slips: "'They can to ride', 'She can swims', 'Dad have a new job' or a dropped -s on 'neighbors'",
+            support: ["Can ___? Yes, I can.", "In the old town ___ couldn't ___."],
+            stretch: "Join two ideas with because and but: 'We are moving because the school is bigger, but I can't take my dog.'",
+            stretchFrames: ["We are moving because ___, but ___."],
+          }),
         },
         {
           after: "Letters to a friend (SB 29 F)",
@@ -115,10 +187,10 @@ export const odL3U3Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u03-l2": {
       objectives: ["I can retell the story of the letters in order, three times, a little faster each time."],
-      drop: ["Letter or message?"],
+      drop: ["Letter or message?", "Two very different places"],
       trim: {
-        "Two very different places": 3,
-        "The feelings line": 5,
+        "Home talk: what we like about where we live": 5,
+        "The feelings line": 4,
       },
       add: [
         {
@@ -157,6 +229,29 @@ export const odL3U3Lab: UnitLab = {
               { level: "Stretch", task: "Add why the feelings changed: 'At first she felt shy, but after a few months she felt happy because she had friends.'" },
             ],
           },
+        },
+        {
+          after: "Letters retell: shorter each time",
+          slide: drill({
+            title: "Grammar drill: the letters story in the past",
+            minutes: 6,
+            goal: "Change the sentence fast and right: ask it with Did, say no with didn't, join it with because or when, change the person. Then tell your own first day.",
+            chunks: [
+              "She moved to a new town and she felt shy.",
+              "Did she write to her friend? Yes, she did, because she missed her.",
+              "She didn't have any friends at first, but after a few months she had three.",
+              "At first she couldn't speak much English, but after a few months she could.",
+              "When the girl opened the letter, she smiled.",
+              "Did you feel shy on your first day? Yes, I did.",
+            ],
+            recycle: ["Have you ever moved to a new town? No, I have never moved.", "I moved last year.", "I am good at making friends."],
+            prompts: ["She moved to a new town. (?)", "She wrote a letter. (X)", "She missed her friend. (+ because)", "She couldn't make friends. (T: after a few months)", "She felt shy. (P: we)"],
+            real: "Real talk: tell your partner about a first day somewhere new (school, camp, a club). Say how you felt, what you couldn't do at first and what you could do after a few days. Your partner asks one 'Did you ...?' question.",
+            slips: "'She move', 'Did she wrote?', 'I didn't went' or a dropped -ed",
+            support: ["Did ___ ___? Yes, ___ did.", "___ didn't ___."],
+            stretch: "Join the ideas with when or after: 'When she opened the letter, she felt happy, so she wrote back.'",
+            stretchFrames: ["When ___, ___.", "After ___, ___."],
+          }),
         },
         {
           after: "The feelings line",
@@ -233,11 +328,69 @@ export const odL3U3Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u03-l3": {
       objectives: ["I can say what I could and couldn't do before, and what I can do now, fast and without stopping."],
-      drop: ["Find someone who ..."],
+      drop: ["Find someone who ...", "Baby, now, baby, now"],
       trim: {
-        "Baby, now, baby, now": 3,
+        "Discover the rule: can and could": 9,
+        "Our big idea": 5,
       },
       add: [
+        {
+          after: "Can for now, could for before",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: used to and be able to",
+            hook: "Could tells us what we were able to do. Used to tells us what we did again and again, long ago.",
+            form: [
+              { label: "Past habit", pattern: "Subject + used to + plain verb: We used to live in a small village." },
+              { label: "Past habit, no", pattern: "Subject + didn't use to + plain verb: I didn't use to have a bike." },
+              { label: "Question", pattern: "Did + subject + use to + plain verb? Yes, I did. / No, I didn't." },
+              { label: "Now: be able to", pattern: "Subject + am / is / are able to + plain verb: I am able to skate now." },
+              { label: "Before: not able", pattern: "Subject + wasn't / weren't able to + plain verb: I wasn't able to skate last year." },
+            ],
+            explanation: [
+              "We use used to for something that happened again and again in the past but is not true now. 'We used to live in a village' means we lived there for a long time, and now we do not. It is a good way to talk about life before a move.",
+              "Be able to means almost the same as can. You already know can for now and could for before. Be able to grows out of them: 'I wasn't able to skate' is like 'I couldn't skate', and 'I am able to skate' is like 'I can skate'. We use it when can is too small a word, for example in longer sentences about change.",
+              "After used to, didn't use to and able to, the verb is always the plain verb: no -s, no -ing. These two patterns come back in Oxford Discover 4, where the sentences get longer. Practice them now and you will be ready.",
+            ],
+            examples: [
+              { text: "We used to live in a small village, but now we live in a big city.", note: "an old habit that has stopped" },
+              { text: "I didn't use to have a library near my house, but now I have one.", note: "no d on use after didn't" },
+              { text: "Did you use to walk to school? Yes, I did.", note: "question with did + use to" },
+              { text: "My grandmother used to cook on a wood fire.", note: "a habit long ago" },
+              { text: "Last year I wasn't able to read long stories, but now I am able to read them.", note: "before and now" },
+              { text: "She is able to ride the bus alone now.", note: "is able to + plain verb" },
+            ],
+            pitfalls: [
+              { wrong: "I didn't used to live here.", right: "I didn't use to live here.", why: "After didn't the verb is plain, so use has no -d." },
+              { wrong: "She used to walks to school.", right: "She used to walk to school.", why: "After used to the verb never changes: no -s." },
+              { wrong: "I wasn't able skate last year.", right: "I wasn't able to skate last year.", why: "Able is always followed by to and then the plain verb." },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: used to and be able to",
+          slide: drill({
+            title: "Grammar drill: could, can and used to",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it, change the time or the person. Rounds 1 and 2 are can and could; round 3 is the Level 4 step, used to and able to, for your own life.",
+            chunks: [
+              "When I was little, I couldn't ride a bike, but now I can.",
+              "Could you swim last year? No, I couldn't, but now I can.",
+              "My grandfather could run very fast when he was young.",
+              "We used to live in a small village, but now we live in a city.",
+              "I didn't use to like fish, but now I like it.",
+              "Did you use to walk to school? Yes, I did.",
+              "I wasn't able to skate last winter, but now I am able to skate.",
+            ],
+            recycle: ["Have you ever moved to a new town? No, I have never moved.", "I enjoy swimming, and I want to swim faster."],
+            prompts: ["My sister can swim. (X: last year)", "I could read long stories. (?)", "We live in a city. (T: used to + village)", "He can ride a bike now. (+ because)", "I can skate now. (P: my cousin)"],
+            real: "Real talk (the Level 4 step): tell your partner about your life before and now. Say two things with used to or didn't use to, and one thing with wasn't able to ... but now I am able to. Your partner asks one 'Did you use to ...?' question.",
+            slips: "'I didn't used to', 'I used to walks', 'She can swims', 'I didn't could' or 'wasn't able swim'",
+            support: ["I couldn't ___, but now I can.", "I used to ___, but now ___."],
+            stretch: "Use two signs at once: 'When I was little, I didn't use to like fish because it smelled strong, but now I am able to eat it every day.'",
+            stretchFrames: ["I didn't use to ___ because ___, but now ___.", "I wasn't able to ___, but now I am able to ___."],
+          }),
+        },
         {
           after: "My then-and-now chart (SB 33 G)",
           slide: {
@@ -323,11 +476,11 @@ export const odL3U3Lab: UnitLab = {
     "od2e-l3-u03-l4": {
       objectives: ["I can ask for help politely and say why people move to a town, with and without notes."],
       trim: {
-        "Un- mime and guess (SB 35 D)": 6,
+        "Un- mime and guess (SB 35 D)": 4,
         "Big Question Review (SB 35)": 6,
-        "Home talk: then and now": 5,
-        "Oral rehearsal: why people move to our town": 6,
-        "Plan and try out your welcome talk": 8,
+        "Home talk: then and now": 3,
+        "Oral rehearsal: why people move to our town": 5,
+        "Plan and try out your welcome talk": 6,
       },
       add: [
         {
@@ -337,7 +490,7 @@ export const odL3U3Lab: UnitLab = {
             title: "Help chain: could you help me?",
             routine: "question chain",
             mode: "whole",
-            minutes: 6,
+            minutes: 5,
             goal: "Ask for help, answer and pass it on. Keep the chain going, polite and smooth, with no stops!",
             chunks: [
               "Excuse me, could you help me, please?",
@@ -348,9 +501,9 @@ export const odL3U3Lab: UnitLab = {
             ],
             recycle: ["I couldn't ___, but now I can.", "People move to new places because ___."],
             rounds: [
-              { seconds: 90, say: "Slow chain round the circle. Everyone holds a help card (a place or a thing to find)." },
+              { seconds: 75, say: "Slow chain round the circle. Everyone holds a help card (a place or a thing to find)." },
               { seconds: 60, say: "Swap cards. Go faster! Pass the question on right away." },
-              { seconds: 60, say: "Swap again. Can the chain go all the way round before the bell?" },
+              { seconds: 45, say: "Swap again. Can the chain go all the way round before the bell?" },
             ],
             steps: [
               "Sit or stand in a circle. Hold your help card so only you can see it.",
@@ -368,6 +521,30 @@ export const odL3U3Lab: UnitLab = {
               { level: "Stretch", task: "Give directions with First and then: 'First you go straight, then you turn left at the shop.'", frames: ["First you ___, then you ___."] },
             ],
           },
+        },
+        {
+          after: "Joining different ideas with but",
+          slide: drill({
+            title: "Grammar drill: but, could and used to",
+            minutes: 6,
+            goal: "Change the sentence fast and right: ask it, say no, join two different ideas with but, change the time or the person. Then talk about your own town, and about what used to be different.",
+            chunks: [
+              "I like the new town, but I don't like the cold wind.",
+              "In the old town the shops were far, but in the new town they are near.",
+              "I couldn't ride the bus alone, but now I can.",
+              "We used to live near the sea, but now we live in the mountains.",
+              "I didn't use to have a library card, but now I borrow books every week.",
+              "Did you use to play outside every day? Yes, I did, but now I have less time.",
+              "People move to big cities because there are more jobs, but the houses are small.",
+            ],
+            recycle: ["I have never seen snow.", "I'm good at swimming, but I don't want to enter a race.", "I want to learn to cook."],
+            prompts: ["The park is big. (+ but it is far)", "We used to live in a village. (?)", "I could climb trees. (X)", "I like the new school. (T: when we first moved)", "He can ride the bus alone. (P: they)"],
+            real: "Real talk: tell your partner about your town. Say one good thing and one not-so-good thing with but, and one thing that used to be different. Your partner asks one question.",
+            slips: "a missing comma pause before but, 'and but', 'I used to lived' or 'I didn't used to'",
+            support: ["I like ___, but I don't like ___.", "I used to ___, but now ___."],
+            stretch: "Use but, because and used to in one answer: 'We used to live in a village, but we moved because my mother has a new job.'",
+            stretchFrames: ["We used to ___, but ___ because ___."],
+          }),
         },
         {
           after: "Oral rehearsal: why people move to our town",
@@ -404,11 +581,36 @@ export const odL3U3Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u03-l5": {
       objectives: ["I can say what a family could do before and can do now in a new place, again and again, in whole sentences."],
+      drop: ["Remember it!"],
       trim: {
-        "Remember it!": 3,
-        "Time machine: now or before?": 8,
+        "Time machine: now or before?": 5,
+        "Find the match: the six movers": 10,
       },
       add: [
+        {
+          after: "Grammar: can, can't, could and couldn't: now and before",
+          slide: drill({
+            title: "Grammar drill: champions of can, could and used to",
+            minutes: 6,
+            goal: "Change the sentence fast and right: ask it, say no, join it, change the time or the person. Rounds 1 and 2 are can and could; round 3 puts them together with the Level 4 step, used to and able to.",
+            chunks: [
+              "Last year I couldn't read a long story, but now I can read one every week.",
+              "Could the girl swim in the sea? Yes, she could, but she can't swim in the city.",
+              "The family moved because the children can go to a bigger school there.",
+              "We used to live in a village, so we didn't use to take the bus.",
+              "Did you use to walk to school? No, I didn't, but now I do.",
+              "She wasn't able to use a library in the old town, but now she is able to borrow ten books.",
+              "My cousin used to play outside every day, but now he can't because it is cold.",
+            ],
+            recycle: ["I have never lived in another town.", "I enjoy meeting new people, and I hope to visit that town."],
+            prompts: ["I can read a long story now. (T: last year)", "She could swim in the sea. (X)", "The family moved to a new town. (?)", "He used to live in a village. (P: they)", "I wasn't able to ride a bike. (+ but now)"],
+            real: "Real talk (both grammar points): tell your partner about a family that moved, or about your own family. Use could and can for what changed, and used to and wasn't able to / am able to for before and now. Your partner asks one question.",
+            slips: "'She can swims', 'I didn't could', 'I didn't used to', 'used to walks' or 'wasn't able swim'",
+            support: ["Last year ___ couldn't ___, but now ___ can.", "We used to ___, but now ___."],
+            stretch: "Use two signs and two grammar points: 'We used to live in a village, so I wasn't able to take the bus, but now I am able to go to a bigger school because we moved.'",
+            stretchFrames: ["We used to ___, so I wasn't able to ___, but now ___."],
+          }),
+        },
         {
           after: "Champion talk: 3 rounds",
           slide: {
@@ -487,12 +689,13 @@ export const odL3U3Lab: UnitLab = {
           "Look at your notes from the champion talk and think of a family that moved.",
           "Say your talk three times to a grown-up or a toy. Each time a little faster and smoother, like in class.",
           "Use because to say why they moved and but to join then and now.",
+          "Say one thing with used to: 'In the old place we used to ...'. Say the plain verb after it.",
           "Record it once. Then tell a grown-up one thing you did well.",
         ],
         maxSeconds: 180,
         kidSummary: "Tell about a family that moved: why, what they couldn't do before, what they can do now, with because and but, and keep talking.",
         words: ["moved", "neighbors", "library", "hospital", "city", "village"],
-        grammar: ["I couldn't ___, but now I can ___", "can / could + plain verb", "because"],
+        grammar: ["I couldn't ___, but now I can ___", "can / could + plain verb", "because", "used to / didn't use to + plain verb", "wasn't able to ... but now I am able to ..."],
         rubric: [
           { label: "Then and now", description: "Says what the family couldn't do before and can do now.", weight: 3 },
           { label: "Can and could", description: "Uses can, couldn't and could correctly, with a plain verb after them.", weight: 3 },
@@ -502,7 +705,7 @@ export const odL3U3Lab: UnitLab = {
         tiers: [
           { level: "Support", who: "Children who need the frames", frames: ["The family moved to ___.", "Before, they couldn't ___.", "Now they can ___."], tips: ["Point to your notes as you speak."] },
           { level: "Core", who: "Most children", frames: ["The family moved because ___.", "In the old place they couldn't ___, but in the new place they can ___.", "They feel ___ because ___."], tips: ["Say a reason for the move and a reason for how they feel."] },
-          { level: "Stretch", who: "Children who are ready for more", frames: ["They can ___ now, so ___.", "I think the move changed ___ the most because ___."], tips: ["Say what they miss and what the best change is."] },
+          { level: "Stretch", who: "Children who are ready for more", frames: ["They can ___ now, so ___.", "They used to ___, but now they are able to ___.", "I think the move changed ___ the most because ___."], tips: ["Say what they miss and what the best change is."] },
         ],
       },
     },

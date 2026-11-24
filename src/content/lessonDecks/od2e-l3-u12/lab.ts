@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 12 "Instruments
 // Around the World" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are
@@ -14,12 +15,107 @@ const fixBase =
 const asAs =
   " For this unit's grammar: if a child says 'as louder as', hold up a finger at the adjective and pause ('as loud ...?'); for 'as big than', point to the frame and say 'as big ... ?' and wait for 'as'. For 'The panpipes is', say 'The panpipes ...?' and let the child finish with 'are'.";
 
+// Level 4 raise (24 Nov 2026): SKY 1 finishes Oxford Discover 3 ready for Oxford Discover 4
+// grammar (B1). Every lesson has a grammar drill, and the unit carries one "Level 4 step":
+// so + adjective + that, such a + adjective + noun + that, and too + adjective + to. It sits
+// after the unit's main grammar slide in Lesson 3; the drills of Lessons 3 to 6, the talks of
+// Lesson 4 and 6 and the paragraph of Lesson 6 use it again. Lessons 1 and 2 come before the
+// step, so their drills stay with as ... as and give a taste of ever / never (Unit 1).
+
+const STEP = "Level 4 step: so ... that, such a ... that, too ... to";
+
+const drillFeedback =
+  "Prompt, do not tell: for 'It is so loud for hear' hold up one finger and say 'so loud ... ?'; for 'such loud drum' repeat it with a rising voice and let the child fix it; for a missing -s or 'is' tap your wrist. Say the final -s, -d and -t clearly yourself. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fb: string;
+  note: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+  step?: boolean;
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      {
+        seconds: 60,
+        say:
+          "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person" +
+          (o.step ? ", S = make it bigger with so ... that, such a ... that or too ... to" : "") +
+          "). The class says the new sentence together.",
+      },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Try two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change it and say the WHOLE new sentence.",
+      "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often " + o.slips + "), fix them with the class, then go on.",
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about you, and remember one thing your partner said.",
+    ],
+    prompts: o.prompts,
+    feedback: o.fb + " " + drillFeedback,
+    teacherNote: o.note,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
+const levelFourStep: Slide = {
+  kind: "grammar",
+  title: STEP,
+  hook: "Three small patterns make a sound HUGE: so loud that, such a loud drum that, too loud to ignore.",
+  form: [
+    { label: "so ... that", pattern: "so + adjective + that + what happened  (The drum was so loud that I covered my ears.)" },
+    { label: "such a ... that", pattern: "such a / an + adjective + noun + that + what happened  (It was such a loud drum that I covered my ears.)" },
+    { label: "plural with such", pattern: "such + adjective + plural noun + that ...  (They were such loud drums that we covered our ears.)" },
+    { label: "too ... to", pattern: "too + adjective + to + verb  (The tuba is too heavy to carry upstairs.)" },
+  ],
+  explanation: [
+    "These patterns tell us HOW MUCH: how loud, how heavy, how big. With so ... that and such a ... that, the first part says how strong the thing is, and the part after 'that' says the result. With too ... to, the thing is MORE than we can manage, so we can't do something.",
+    "We use so with an adjective on its own (so loud) and such a with an adjective AND a noun (such a loud drum). You know 'The drum is as loud as a trumpet', which compares two things; 'The drum is so loud that we cover our ears' tells what the loudness does. It is a step from comparing toward telling what happens because of it.",
+    "You will meet these patterns again in Oxford Discover 4, with longer sentences and more kinds of result. Start now: say one sentence about a sound or an instrument every lesson.",
+  ],
+  examples: [
+    { text: "The drum was so loud that I covered my ears.", note: "so + adjective + that + result" },
+    { text: "It was such a loud drum that I covered my ears.", note: "such a + adjective + noun + that" },
+    { text: "The flute is so light that a small child can carry it.", note: "a good result, not only a bad one" },
+    { text: "They were such beautiful panpipes that the whole class stopped to listen.", note: "such + adjective + plural noun" },
+    { text: "The tuba is too heavy to carry upstairs.", note: "too + adjective + to + verb: we can't do it" },
+    { text: "The room was too noisy to talk in, so we went outside.", note: "too ... to, then a result with so" },
+  ],
+  pitfalls: [
+    { wrong: "It was so a loud drum that I covered my ears.", right: "It was such a loud drum that I covered my ears.", why: "so goes before an adjective on its own; before a / an + noun we need such" },
+    { wrong: "The drum was too loud that I covered my ears.", right: "The drum was so loud that I covered my ears.", why: "too is followed by to + verb; the result with 'that' needs so (Vietnamese 'quá ... đến nỗi' is so ... that)" },
+    { wrong: "The tuba is too heavy for carry.", right: "The tuba is too heavy to carry.", why: "after too + adjective we say to + the plain verb, not for" },
+  ],
+};
+
 export const odL3U12Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u12-l1": {
       objectives: ["I can say why two instruments might sound the same, smoothly and without long stops."],
-      trim: { "Sound detectives": 5, "Stand on the line": 7, "Mime and guess": 4 },
+      trim: { "Sound detectives": 3, "Stand on the line": 4, "Find someone who ...": 5, "Mime and guess": 3 },
       add: [
         {
           after: "Which two might sound the same? (SB 116 C)",
@@ -61,6 +157,36 @@ export const odL3U12Lab: UnitLab = {
               { level: "Stretch", task: "Add a second reason: 'They both have strings, and you play both of them with a bow.'", frames: ["They might sound the same because both ___ and both ___."] },
             ],
           },
+        },
+        {
+          after: "Instrument sprint: might sound the same",
+          slide: drill({
+            title: "Grammar drill: as ... as, might sound the same",
+            goal: "Change the sentence fast and right: ask it, say no, join it with so, change the time. Then compare two real sounds or things from your own life.",
+            chunks: [
+              "The flute is as light as a feather.",
+              "Is the flute as heavy as the tuba? No, it isn't.",
+              "The erhu isn't as big as the cello, but it sounds just as sweet.",
+              "The djembe is as loud as the snare drum, so they might sound the same.",
+              "Yesterday the drum was as loud as thunder.",
+              "Have you ever heard an instrument as loud as a drum?",
+            ],
+            recycle: ["Have you ever played a drum? I have never played the tuba.", "I enjoy playing the recorder, and I want to learn the violin."],
+            prompts: [
+              "The flute is as light as a feather. (?)",
+              "The drum is as loud as the trumpet. (X)",
+              "The violin and the erhu both have strings. (+ so they might sound the same)",
+              "The tuba is as heavy as a bike. (T: yesterday)",
+              "My drum is as heavy as your drum. (P: their)",
+            ],
+            real: "Real talk: compare two sounds or things from your own life (a motorbike and a thunderstorm, your voice and your teacher's voice). Use as ... as or not as ... as and say why you think so. Your partner asks one question.",
+            slips: "'as louder as', 'as big than' or 'The panpipes is'",
+            fb: "For this lesson: if a child says 'as louder as', hold up a finger at the adjective and pause ('as loud ...?'); for 'as big than', point to the frame and say 'as big ... ?' and wait for 'as'; for 'The panpipes is', say 'The panpipes ...?' and let the child finish with 'are'; for 'It isn't as loud the drum', hold up a finger for the second 'as'.",
+            note: "Today as ... as is only a taste: the rule comes in Lesson 3, so children copy the chunks as whole sentences, and Unit 11's comparing phrases are the base. The chunk 'Have you ever heard an instrument as loud as a drum?' is a sneak peek at a Level 4 pattern (ever and never, from Unit 1 of Oxford Discover 4 grammar): children copy it in round 3 or Stretch, nothing more. Round 3 must be real. Keep it brisk; a drill that drags loses its point.",
+            support: ["The ___ is as ___ as the ___.", "The ___ isn't as ___ as the ___."],
+            stretch: "Use two signs at once and add a question with ever: 'The tuba isn't as light as the flute. Have you ever carried a tuba?'",
+            stretchFrames: ["___ isn't as ___ as ___. Have you ever ___?", "Yes, I have. / No, I have never ___."],
+          }),
         },
         {
           after: "Compare and contrast (SB 117 D)",
@@ -110,7 +236,7 @@ export const odL3U12Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u12-l2": {
       objectives: ["I can tell my group about an instrument three times, faster and clearer each time."],
-      trim: { "Home talk: two sentences each": 5, "Class comparison chart": 9, "Mystery instrument riddles": 8 },
+      trim: { "Home talk: two sentences each": 3, "Class comparison chart": 6, "Mystery instrument riddles": 5 },
       add: [
         {
           after: "Expert groups",
@@ -152,6 +278,36 @@ export const odL3U12Lab: UnitLab = {
               { level: "Stretch", task: "Add a comparison: 'It isn't as big as a cello, but it's as beautiful.'", frames: ["It isn't as ___ as ___, but ..."] },
             ],
           },
+        },
+        {
+          after: "Expert retell: three partners",
+          slide: drill({
+            title: "Grammar drill: as ... as, ask it and say no",
+            goal: "Change the sentence fast and right: ask it, say no, join it with so, change the time. Then compare two instruments from the reading or from your life.",
+            chunks: [
+              "The erhu isn't as big as the cello.",
+              "Is the erhu as long as the violin? No, it isn't.",
+              "The djembe is as loud as the snare drum, so it can be heard at the back.",
+              "The panpipes are as light as a feather, so you can carry them anywhere.",
+              "Last week I heard a band, and the drums were as loud as thunder.",
+              "I have never seen an instrument as strange as the didgeridoo.",
+            ],
+            recycle: ["If we practice every day, we will play well.", "The man who plays the erhu is my uncle."],
+            prompts: [
+              "The erhu is as sweet as a violin. (?)",
+              "The cello is as small as the erhu. (X)",
+              "The flute is light. (+ so it is easy to carry)",
+              "The djembe is as loud as a snare drum. (T: last week)",
+              "The panpipes are as light as a feather. (P: my recorder)",
+            ],
+            real: "Real talk: choose two instruments from the reading or from your life and compare them with as ... as or not as ... as. Say what is the same, what is different and which one you like more. Your partner asks one question.",
+            slips: "'The erhu isn't as big the cello' or 'It come from China'",
+            fb: "For this lesson: if a child says 'The erhu isn't as big the cello', hold up a finger for the second 'as'; if they say 'as bigger as', pause at the adjective ('as big ...?'); if they drop the -s ('It come from China'), hold a finger at the verb and wait for 'comes'.",
+            note: "The drill uses the facts from today's reading, so children say as ... as about instruments they have just met. The rule is taught in Lesson 3, so today they copy the chunks as whole sentences. 'I have never seen an instrument as strange as ...' is a taste of a Level 4 pattern (never, from Unit 1 of Oxford Discover 4 grammar): copy it in round 3 or Stretch. Keep it brisk.",
+            support: ["The ___ is as ___ as the ___.", "The ___ isn't as ___ as the ___."],
+            stretch: "Use two signs at once and finish with a Level 4 sentence: 'I have never heard an instrument as sweet as the erhu, so I want to learn it.'",
+            stretchFrames: ["I have never ___ as ___ as ___.", "___, so I want to ___."],
+          }),
         },
         {
           after: "Class comparison chart",
@@ -216,7 +372,7 @@ export const odL3U12Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u12-l3": {
       objectives: ["I can use 'as ... as' and 'not as ... as' in fast, correct sentences."],
-      trim: { "Object face-off": 3, "Song time (SB 121 D)": 4, "Prove it!": 5, "Our big idea": 6 },
+      trim: { "Object face-off": 3, "Song time (SB 121 D)": 4, "As ... as battle": 9, "Prove it!": 3, "Our big idea": 3 },
       add: [
         {
           after: "As ... as battle",
@@ -254,6 +410,42 @@ export const odL3U12Lab: UnitLab = {
               { level: "Stretch", task: "Say four sentences and give a reason: 'The flute isn't as heavy as the tuba, so it is easier to carry.'", frames: ["..., so ...", "..., because ..."] },
             ],
           },
+        },
+        {
+          after: "Comparing with as ... as",
+          slide: levelFourStep,
+        },
+        {
+          after: "Level 4 step: so ... that, such a ... that, too ... to",
+          slide: drill({
+            title: "Grammar drill: as ... as, then so ... that",
+            goal: "Rounds 1 and 2: change the as ... as sentence fast and right. Round 3: say how loud, big or heavy a real thing is with so ... that, such a ... that or too ... to.",
+            chunks: [
+              "The djembe is as loud as the snare drum.",
+              "The flute isn't as heavy as the tuba, so it's easier to carry.",
+              "Is the violin as long as the didgeridoo? No, it isn't.",
+              "The drum was so loud that I covered my ears.",
+              "It was such a loud drum that I couldn't hear my friend.",
+              "The tuba is too heavy to carry upstairs.",
+            ],
+            recycle: ["While I was practicing, one string broke.", "A drum is an instrument that you hit.", "It must be a drum, because it can't be a flute."],
+            prompts: [
+              "The drum is as loud as the trumpet. (?)",
+              "The flute is as heavy as the tuba. (X)",
+              "The tuba is heavy. (+ so that: so heavy that I could not lift it)",
+              "The drum is as loud as a trumpet. (T: yesterday)",
+              "The panpipes are as light as a feather. (P: my recorder)",
+              "The music was loud. (S: so loud that ...)",
+            ],
+            real: "Round 3 is the Level 4 step: tell your partner about the loudest, biggest, heaviest or quietest thing you know. Use so ... that, such a ... that or too ... to once or twice. Your partner asks one question.",
+            slips: "'so a loud drum', 'too loud that' or 'as louder as'",
+            fb: "For this lesson: if a child says 'as louder as', pause at the adjective ('as loud ...?'); for 'It was so a loud drum', hold up a finger at 'so' and say 'such ... ?'; for 'too loud that I covered', say 'so loud ... that ...' slowly; for 'too heavy for carry', point to the frame and wait for 'to carry'.",
+            note: "The first two rounds drill the unit's own grammar; round 3 and the Stretch tier use today's Level 4 step, which grows out of it: comparing two things becomes telling what happens because of a thing. Do not drill the step in rounds 1 and 2: the S sign is for round 3. Round 3 must be real: a true sound, a true heavy bag. Keep it brisk.",
+            support: ["The ___ is as ___ as the ___.", "It was so ___ that I ___."],
+            stretch: "Use two signs at once and all three step patterns: 'It was such a heavy tuba that I couldn't lift it. It was too heavy to carry alone, so we asked a teacher.'",
+            stretchFrames: ["It was so ___ that ___.", "It was such a ___ ___ that ___.", "It was too ___ to ___."],
+            step: true,
+          }),
         },
         {
           after: "Is as or is not as? (SB 121 F-G)",
@@ -303,7 +495,7 @@ export const odL3U12Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u12-l4": {
       objectives: ["I can describe my instrument for two minutes, a little better each time."],
-      trim: { "-dge tongue twister": 3, "Homemade instruments (SB 122 A)": 6, "Listen for the missing words (SB 122 B)": 6, "Instrument maker interviews": 9, "Plan and pitch your instrument": 7 },
+      trim: { "-dge tongue twister": 3, "Homemade instruments (SB 122 A)": 6, "Listen for the missing words (SB 122 B)": 6, "Instrument maker interviews": 5, "Plan and pitch your instrument": 4 },
       add: [
         {
           after: "Describe it, guess it (SB 122 C)",
@@ -346,6 +538,38 @@ export const odL3U12Lab: UnitLab = {
           },
         },
         {
+          after: "its or it's?",
+          slide: drill({
+            title: "Grammar drill: it's, its and so ... that",
+            goal: "Change the sentence fast and right: ask it, say no, join it, change the time. Then describe a real instrument or sound with it's, its and so ... that.",
+            chunks: [
+              "It's a djembe, and its skin is made of goat leather.",
+              "It's got four strings, and its sound is high and sweet.",
+              "Is it as loud as a drum? No, it isn't, but it's so sweet that everyone listens.",
+              "Its case is too heavy to carry alone.",
+              "It was such a lovely sound that we stopped to listen.",
+              "Its best part is the bridge, because it's so strong that it never breaks.",
+            ],
+            recycle: ["If you practice every day, you will be able to play a song soon.", "We are playing at the Instrument Expo on Friday."],
+            prompts: [
+              "It's a loud drum. (?)",
+              "It's got a long neck. (X)",
+              "Its sound is sweet. (+ so that: so sweet that everyone listens)",
+              "It's a lovely song. (T: yesterday)",
+              "My violin is old and its case is broken. (P: their)",
+              "It's a heavy case. (S: too heavy to carry)",
+            ],
+            real: "Real talk: describe a real instrument or sound you know, with it's and its, and say how loud, sweet or big it is with so ... that or too ... to. Your partner asks one question.",
+            slips: "'It have four strings', 'it's skin' for 'its skin' or 'too heavy for carry'",
+            fb: "Its and it's sound the same, so you cannot catch that slip by ear: ask 'Can I say it is here?' and show the spelling on the board in the writing step. For 'It have four strings', hold up a finger at 'have' and wait for 'has' or 'it's got'; for 'so a lovely sound', say 'such ... ?'; for 'too heavy for carry', point to the frame and wait for 'to carry'.",
+            note: "Today's grammar slide is its and it's, which cannot be told apart by ear, so the drill uses them in whole sentences about a real instrument and puts the Level 4 step on top: describing how strong a sound is. The S sign is for round 3. Keep it brisk; a drill that drags loses its point.",
+            support: ["It's ___. Its ___ is ___.", "It's so ___ that ___."],
+            stretch: "Use two signs at once, with a result: 'Its case was too heavy to carry alone, so I asked a friend to help.'",
+            stretchFrames: ["Its ___ was too ___ to ___.", "It was such a ___ ___ that ___."],
+            step: true,
+          }),
+        },
+        {
           after: "its or it's? (SB 123 E)",
           slide: {
             kind: "writing",
@@ -386,12 +610,13 @@ export const odL3U12Lab: UnitLab = {
           "Draw your instrument or find a real one at home.",
           "Practise your talk three times to a grown-up or a toy, each time a little faster and smoother, like in class.",
           "Record it once. Hold up your picture and speak without reading.",
+          "Add one sentence with so ... that, such a ... that or too ... to: 'It's so light that I can carry it.'",
           "Grown-up: hold the phone and let your child speak; please do not say the words for them.",
         ],
         maxSeconds: 180,
         kidSummary: "Describe your instrument with 'as ... as', say how you play it, and keep talking without long stops.",
         words: ["instrument", "made of", "strings", "sounds", "looks like", "plays", "vibrates"],
-        grammar: ["It's made of ___.", "It's as ___ as ___. It isn't as ___ as ___.", "its / it's"],
+        grammar: ["It's made of ___.", "It's as ___ as ___. It isn't as ___ as ___.", "its / it's", "It's so ___ that ___. / It's such a ___ ___ that ___. / It's too ___ to ___."],
         rubric: [
           { label: "Description", description: "Says what it is made of, what it looks like, how it sounds and how you play it.", weight: 3 },
           { label: "As ... as", description: "Uses 'as ... as' or 'not as ... as' correctly with a plain adjective.", weight: 3 },
@@ -409,7 +634,7 @@ export const odL3U12Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u12-l5": {
       objectives: ["I can present my instrument and answer questions without long stops."],
-      trim: { "60-second recall": 3, "Test our big ideas": 4 },
+      trim: { "60-second recall": 3, "Test our big ideas": 3, "The Instrument Expo: present and visit": 11 },
       add: [
         {
           after: "Build it (SB 125 C)",
@@ -453,13 +678,45 @@ export const odL3U12Lab: UnitLab = {
           },
         },
         {
+          after: "Expo question chain",
+          slide: drill({
+            title: "Grammar drill: so ... that, too ... to",
+            goal: "Change the sentence fast and right: ask it, say no, join it, change the time. Then say what you built or tried, and how hard or big it was, with so ... that, such a ... that and too ... to.",
+            chunks: [
+              "My instrument is as long as my arm, but it isn't as heavy as a drum.",
+              "The box was so strong that it didn't break when I hit it.",
+              "It was such a hard job that we needed two days to build it.",
+              "The string was too thin to make a loud sound, so I used two.",
+              "When I hit it, it makes such a deep sound that everyone turns round.",
+              "Is your instrument as easy to play as a recorder? Yes, it is.",
+            ],
+            recycle: ["A drum is an instrument that you hit.", "While we were building it, the glue was drying on the table.", "We are showing our instruments to the visitors on Friday."],
+            prompts: [
+              "The box was so strong that it didn't break. (?)",
+              "The job was too hard to finish. (X)",
+              "The string was thin. (+ so that: so thin that it broke)",
+              "The sound is so deep that we feel it. (T: yesterday)",
+              "The drum was so loud that I covered my ears. (P: they)",
+              "The stick was long. (S: so long that ...)",
+            ],
+            real: "Real talk: tell your partner about something you built, made or tried (an instrument, a model, a school project). Say how hard, big or heavy it was with so ... that, such a ... that or too ... to, and what you did next. Your partner asks one question.",
+            slips: "'so a hard job', 'too thin for make' or 'too loud that'",
+            fb: "For this lesson: if a child says 'It was so a hard job', hold up a finger at 'so' and say 'such ... ?'; for 'too thin for make', point to the frame and wait for 'to make'; for 'The box was too strong that it did not break', say 'so strong ... that ...' slowly; for a missing -s ('It make a deep sound'), hold a finger at the verb.",
+            note: "The Expo comes straight after, so the drill gives them the sentences for how hard, big or strong their instrument was, using the Level 4 step again. The S sign is for round 3. Listen for 'too' used where 'so' is needed: Vietnamese 'quá ... đến nỗi' is so ... that, and too ... to means we cannot do it.",
+            support: ["The ___ was so ___ that ___.", "The ___ was too ___ to ___."],
+            stretch: "Use two signs at once and two step patterns in one story: 'It was such a big box that it was too heavy to carry, so we pushed it.'",
+            stretchFrames: ["It was such a ___ ___ that ___.", "It was too ___ to ___, so ___."],
+            step: true,
+          }),
+        },
+        {
           after: "Talk about the model (SB 124 B)",
           slide: {
             kind: "writing",
             title: "Plan my paragraph",
             routine: "model, then write",
             mode: "solo",
-            minutes: 6,
+            minutes: 4,
             steps: [
               "Read the model with the teacher. Find the topic sentence, the facts and the closing sentence.",
               "Plan: fill in a quick organiser with five boxes: instrument, fact 1, fact 2, fact 3 and closing idea.",
@@ -487,7 +744,7 @@ export const odL3U12Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "od2e-l3-u12-l6": {
       objectives: ["I can say and write 'as ... as' sentences with a reason, smoothly and correctly."],
-      trim: { "Remember it!": 4, "Balance game: arms level or tip!": 7, "Pretend sound scores: ask and fill in": 10 },
+      trim: { "Remember it!": 3, "Balance game: arms level or tip!": 4, "Pretend sound scores: ask and fill in": 7 },
       add: [
         {
           after: "Balance game: arms level or tip!",
@@ -527,6 +784,38 @@ export const odL3U12Lab: UnitLab = {
           },
         },
         {
+          after: "Grammar: as ... as and not as ... as",
+          slide: drill({
+            title: "Grammar drill: champions with as ... as and so ... that",
+            goal: "Say everything the champions know, fast and right: as ... as, not as ... as, a reason, and then so ... that, such a ... that and too ... to.",
+            chunks: [
+              "The djembe is as loud as the snare drum, so we put them at the back.",
+              "The flute isn't as heavy as the tuba, so it is easier to carry.",
+              "Are the panpipes as long as the didgeridoo? No, they aren't.",
+              "The tuba was so loud that the whole room shook.",
+              "It was such a good band that everyone clapped.",
+              "The stage was too small to fit the whole band.",
+            ],
+            recycle: ["It must be a drum, because it can't be a flute.", "There are too many drums and not enough chairs.", "That drum is the loudest one I have ever heard."],
+            prompts: [
+              "The panpipes are as long as the flute. (?)",
+              "The drum is as loud as the tuba. (X)",
+              "The tuba is heavy. (+ so that: so heavy that we need two people)",
+              "The band was so good that everyone clapped. (T: last week)",
+              "The stage was too small to fit the band. (P: our stage)",
+              "The sound was loud. (S: such a loud sound that ...)",
+            ],
+            real: "Real talk: your class band. Say why you choose one instrument with as ... as or not as ... as, and then say how loud, big or strong it is with so ... that, such a ... that or too ... to. Your partner asks one question.",
+            slips: "'as louder as', 'The panpipes is', 'so a good band' or 'too small for fit'",
+            fb: "For this lesson: if a child says 'as louder as' or 'as big than', pause at the adjective ('as big ...?') and wait for 'as'; for 'The panpipes is', say 'The panpipes ...?' and let the child finish with 'are'; for 'so a good band', hold up a finger at 'so' and say 'such ... ?'; for 'too small for fit', point to the frame and wait for 'to fit'.",
+            note: "This is the last lesson of the unit, so the drill covers both: the unit's own as ... as in rounds 1 and 2, and the Level 4 step in round 3 and the Stretch tier. The Level 4 step will return in Oxford Discover 4 with longer sentences, so aim for correct, whole sentences. Round 3 must be real: the class band is a true choice. Keep it brisk.",
+            support: ["The ___ is as ___ as the ___.", "It was so ___ that ___."],
+            stretch: "Use two signs at once and both parts: 'The tuba wasn't as light as the flute, so it was too heavy to carry, but it made such a deep sound that we chose it.'",
+            stretchFrames: ["The ___ isn't as ___ as the ___, so ___.", "It was so ___ that ___. It was too ___ to ___."],
+            step: true,
+          }),
+        },
+        {
           after: "Pretend sound scores: ask and fill in",
           slide: {
             kind: "writing",
@@ -557,6 +846,7 @@ export const odL3U12Lab: UnitLab = {
               "My first sentence says which instrument I choose",
               "Two reasons with First and Second",
               "'so' and 'because' are in the right places, and the adjective stays plain (loud, not louder)",
+              "One sentence with so ... that, such a ... that or too ... to: 'It is so loud that everyone can hear it.'",
               "A capital letter at the start and a full stop at the end of every sentence",
             ],
             sayIt: "Read your paragraph to your partner. Then tell it again without looking, in one minute.",
@@ -578,12 +868,13 @@ export const odL3U12Lab: UnitLab = {
           "Choose two instruments and draw or find pictures of them.",
           "Practise your talk three times to a grown-up or a toy, each time a little faster and smoother.",
           "Record it once. Say your reason with 'because' or 'so'.",
+          "Add one sentence with so ... that, such a ... that or too ... to: 'The drum is so loud that everyone can hear it.'",
           "Grown-up: hold the phone and let your child speak; please do not say the words for them.",
         ],
         maxSeconds: 180,
         kidSummary: "Compare two instruments with 'as ... as', choose one with a reason, and keep talking without long stops.",
         words: ["instrument", "band", "loud", "heavy", "easy", "choose", "because"],
-        grammar: ["A is as ___ as B.", "A isn't as ___ as B.", "I choose ___ because ___."],
+        grammar: ["A is as ___ as B.", "A isn't as ___ as B.", "I choose ___ because ___.", "It is so ___ that ___. / It is such a ___ ___ that ___. / It is too ___ to ___."],
         rubric: [
           { label: "Comparisons", description: "Compares the two instruments with 'as ... as' and 'not as ... as', with a plain adjective.", weight: 3 },
           { label: "Choice and reason", description: "Chooses one instrument and gives a reason with 'because' or 'so'.", weight: 3 },

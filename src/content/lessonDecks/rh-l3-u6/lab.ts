@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Reach Higher Level 3, Unit 6 "From Past to Present"
 // (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 9-10 and preparing
@@ -19,15 +20,88 @@ const fixMove =
 const homeNote =
   "Grown-up: hold the phone and let your child speak; do not say the words for them. Bố mẹ: hãy giữ điện thoại và để con tự nói, đừng nhắc từng chữ.";
 
+const drillFeedback =
+  "Prompt, do not tell: start the phrase and pause, hold up a finger for the missing word, or repeat the error with a rising voice and let the child fix it. For a sound, say it right and let them echo it. Say every final -s, -ed and n't clearly yourself. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  signs?: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fix: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (" + (o.signs ?? "? = ask it, X = say no, + = join with because / although / so / when / unless, T = change the time or tense, P = change the person") + "). The class says the new sentence together." },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with every ending.",
+      "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often " + o.slips + "), fix them together, then go on.",
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: give your own opinion or experience, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedback + " " + o.fix,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has children talk about their own lives and opinions, so the form is used for meaning. Ages 9-10 working at B1 can take the full set of signs, but go slowly at first and let the chorus carry the shy ones. The entrance exams ask for rewriting a sentence with the same meaning, so the T sign and the Stretch task practise that format by mouth first. Mark nothing in writing: this is about speed and accuracy in speech.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const rhL3U6Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "rh-l3-u6-l1": {
       objectives: ["I can use I / me / myself and he / him / himself correctly, fast, in whole sentences."],
-      trim: { "The mystery box of the past": 9 },
+      trim: { "The mystery box of the past": 6, "Write: a tradition card": 13 },
       add: [
         {
           after: "Subject, object and reflexive pronouns",
+          slide: drill({
+            title: "Grammar drill: who did it, to whom, by themselves?",
+            goal: "Change the sentence fast and right with the correct pronoun: ask it, say no, join it with a reason, change the person. Then talk about things you made yourself.",
+            chunks: [
+              "My grandmother taught us an old song, and we sang it for her.",
+              "My cousin and I wrapped the cakes ourselves.",
+              "He made the kite by himself, and he gave it to me.",
+              "Did they paint the lanterns themselves? Yes, they did it by themselves.",
+              "She doesn't need help because she can do it herself.",
+              "Listen to him, because he learned the story from his father.",
+            ],
+            recycle: ["It was so cold that the water froze.", "While I was cooking, Dad was washing up.", "The bone was found by a young girl."],
+            prompts: ["(card: my cousin and I / make lanterns / give one to Grandma)", "(card: she / teach / us a song)", "(card: he / make a kite / alone)", "(card: they / paint / the gate)"],
+            real: "Real talk: tell your partner about something you made or did by yourself, and something someone taught you. Use one object pronoun (me, him, her, us, them) and one -self word. Your partner tells the class one thing you said.",
+            slips: "'me and my cousin', 'by hisself', 'themself', 'for she'",
+            fix: "Vietnamese has no case marking on pronouns, so children mix I and me. For 'Me and my cousin made it' say 'My cousin and ...?' and pause. For 'by hisself' point to himself on the board and let the child say it again. For 'themself' tap two fingers for selves.",
+            support: ["___ taught ___ a song.", "He made it by ___."],
+            stretch: "Say it again with the same meaning: 'Nobody helped him to make the kite.' becomes 'He made the kite by himself.' Then make two of your own.",
+            stretchFrames: ["Nobody helped ___, so ___ by ___.", "___ did it ___self because ___."],
+          }),
+        },
+        {
+          after: "Grammar drill: who did it, to whom, by themselves?",
           slide: {
             kind: "writing",
             title: "A tradition in my family: plan, write, check",
@@ -122,10 +196,34 @@ export const rhL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u6-l2": {
       objectives: ["I can check facts with a tag question and ask politely: 'Can you tell me where it is?'"],
-      trim: { "Interview a musician from a region": 9 },
+      trim: { "Interview a musician from a region": 6, "Write: questions for a heritage interview": 12 },
       add: [
         {
           after: "Question tags and indirect questions",
+          slide: drill({
+            title: "Grammar drill: tag it, ask it politely",
+            goal: "Turn a statement into a tag question or a polite question fast and right, with the right word order. Then ask real polite questions about a place you want to visit.",
+            signs: "T = add a tag to the sentence, W = turn it into a polite question (Can you tell me ... / Do you know ...), X = make it negative and change the tag, P = change the person",
+            chunks: [
+              "Water puppetry is very old, isn't it?",
+              "She plays the drum, doesn't she?",
+              "You weren't at the festival, were you?",
+              "Can you tell me where the market is?",
+              "Do you know if it is open today?",
+              "Could you tell me what time the show starts?",
+            ],
+            recycle: ["My cousin and I made lanterns, and we gave one to her.", "He made the kite by himself.", "The bone was found by a young girl."],
+            prompts: ["(card: the water puppet show / very old)", "(card: your friend / play the drum)", "(card: the museum / where)", "(card: the festival / what time it starts)"],
+            real: "Real talk: you are a visitor to a town. Ask your partner two tag questions to check facts and two polite questions with Can you tell me / Do you know. Your partner answers, then you swap.",
+            slips: "'She likes music, isn't she?', 'Can you tell me where is the museum?', 'Do you know what time does it start?'",
+            fix: "Vietnamese children copy the question word order into the polite sentence. For 'where is the museum' point to the frame and say 'where the museum ...?'. For a wrong tag hold up two fingers for does + n't. Say the n't and the -s clearly yourself.",
+            support: ["___ is old, isn't it?", "Can you tell me where ___ is?"],
+            stretch: "Say it another way: 'Where is the museum?' becomes 'Can you tell me where the museum is?' and 'What time does it start?' becomes 'Do you know what time it starts?' Make two of your own.",
+            stretchFrames: ["Can you tell me where ___?", "Do you know what time ___?"],
+          }),
+        },
+        {
+          after: "Grammar drill: tag it, ask it politely",
           slide: {
             kind: "writing",
             title: "A polite letter to a guide: plan, write, check",
@@ -242,10 +340,66 @@ export const rhL3U6Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u6-l3": {
-      objectives: ["I can tell how a tradition changed with 'used to', the past and 'has / have'."],
+      objectives: ["I can tell how a tradition changed with 'used to', the past and 'has / have', and say how much it changed."],
+      trim: { "Write: then and now": 12, "Then and now: an interview with a grandparent": 9 },
       add: [
         {
           after: "used to, past simple and present perfect for traditions",
+          slide: {
+          kind: "grammar",
+          title: "Level 4 step: much / a bit / far + comparative",
+          hook: "Then and now: it is not only 'harder' or 'easier', it is HOW MUCH harder or easier.",
+          form: [
+            { label: "Big difference", pattern: "much / far / a lot + comparative (+ than): Life was much harder then. Phones are far smaller now." },
+            { label: "Small difference", pattern: "a bit / a little / slightly + comparative: The new road is a bit shorter." },
+            { label: "Long adjectives", pattern: "much / far + more + adjective: Travelling is far more comfortable today." },
+            { label: "Not with 'very'", pattern: "very + adjective (very hard) but much + comparative (much harder), never 'very harder'." },
+          ],
+          explanation: [
+            "A comparative tells us that two things are different. The little words much, far and a lot say the difference is big; a bit, a little and slightly say it is small. They go BEFORE the comparative and make a comparison easy to picture.",
+            "We use them when we talk about change over time, which is exactly what used to, the past simple and the present perfect do in this unit. 'Grandma used to cook on a wood fire; now cooking is far faster' joins the two ideas in one sentence.",
+            "This is also an entrance-exam shape: 'Life now is much easier than life in the past' can be rewritten with the same meaning, and the exam often asks for it. Remember to put the small word before more: much more famous, not more much famous.",
+          ],
+          examples: [
+            { text: "Making bánh chưng by hand is much slower than buying it, but it is far tastier." },
+            { text: "Life in the village was much harder than life in the city is today." },
+            { text: "The old puppets are a bit bigger than the new ones." },
+            { text: "Water puppetry is far more popular now than it was fifty years ago." },
+            { text: "The festival has become a lot more crowded since then." },
+            { text: "Today's bamboo flutes sound slightly louder than the old ones." },
+          ],
+          pitfalls: [
+            { wrong: "Life was very harder then.", right: "Life was much harder then.", why: "'Very' goes with the plain adjective (very hard). With a comparative we use much, far or a lot." },
+            { wrong: "It is more much expensive now.", right: "It is much more expensive now.", why: "The small word goes first: much more, far more, a bit more." },
+            { wrong: "The pole was far more bigger than the house.", right: "The pole was far bigger than the house.", why: "Bigger is already a comparative, so do not add more: one comparative form only." },
+          ],
+        },
+        },
+        {
+          after: "Level 4 step: much / a bit / far + comparative",
+          slide: drill({
+            title: "Grammar drill: used to, since then, much changed",
+            goal: "Say what a tradition used to be, what happened, and what has happened since, in whole sentences. Then use the Level 4 step to say how much things changed.",
+            chunks: [
+              "Long ago, puppeteers used to perform only in village ponds.",
+              "Did people use to wear áo dài every day? Yes, many did.",
+              "She didn't use to like ca trù, but she has loved it since 2010.",
+              "We learned the song in 2018, and we have sung it ever since.",
+              "Water puppetry has travelled all over the world since then.",
+              "My grandfather has lived in this village for seventy years.",
+            ],
+            recycle: ["Can you tell me where the market is?", "She plays the drum, doesn't she?", "My cousin and I wrapped the cakes ourselves."],
+            prompts: ["(card: puppeteers / perform / only in ponds)", "(card: we / learn the song / 2018 / sing it since)", "(card: grandfather / live here / seventy years)", "(card: people / wear áo dài / every day?)"],
+            real: "Real talk and the Level 4 step: tell your partner how something in your family or town is different from long ago. Use used to or didn't use to, then say how much it changed: 'Life was much easier / a bit harder / far more comfortable than it used to be.'",
+            slips: "'I have seen it last Sunday', 'she didn't used to', 'since 1990' with the wrong tense, 'very easier'",
+            fix: "For 'I have seen it last Sunday' point to the time word and say 'last Sunday is finished: ...?'. For 'didn't used to' hold up one finger for the single past marker. For 'very easier' say 'very ... or much ...?' and let the child choose much.",
+            support: ["Long ago, we used to ___.", "It is much ___ now."],
+            stretch: "Rewrite with the same meaning: 'Life in the village was harder than life now.' becomes 'Life now is much easier than life in the village was.' Make two of your own with far or a bit.",
+            stretchFrames: ["___ used to ___, but now ___.", "Life is much / far / a bit ___ than ___."],
+          }),
+        },
+        {
+          after: "Grammar drill: used to, since then, much changed",
           slide: {
             kind: "writing",
             title: "Dictogloss: the river and the rice",
@@ -329,9 +483,34 @@ export const rhL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "rh-l3-u6-l4": {
       objectives: ["I can say who made it and where it was born with 'was / were + made by'."],
+      trim: { "Generalize: how traditions survive": 11, "Write: a short biography": 11 },
       add: [
         {
           after: "The past passive and non-defining relative clauses",
+          slide: drill({
+            title: "Grammar drill: was made, was born, which is old",
+            goal: "Say who made it, who was taught, and where it was born with was / were, and add a short extra clause with which or who. Then talk about a famous person or old thing, and how much it changed.",
+            signs: "? = ask it with was / were, X = say no, + = add an extra clause with who or which, T = make an active sentence passive or a passive active, P = change the person",
+            chunks: [
+              "Water puppetry was born in the rice fields of the Red River Delta.",
+              "The young singers were taught by the oldest woman in the village.",
+              "Was the song written by a famous musician? No, it wasn't.",
+              "The masks weren't made in a factory; they were made by hand.",
+              "My aunt, who lives in Đà Lạt, was given a prize for her embroidery.",
+              "Ca trù, which is very old, was added to a heritage list in 2009.",
+            ],
+            recycle: ["Long ago, puppeteers used to perform only in village ponds.", "Water puppetry has travelled all over the world since then.", "Do you know if it is open today?"],
+            prompts: ["(card: the masks / make by hand)", "(card: the singers / teach / the oldest woman)", "(card: ca trù / add to the list / 2009)", "(card: my aunt / give a prize)"],
+            real: "Real talk and the Level 4 step: tell your partner about a famous person or an old thing in Vietnam: where it was born or made, who it was made by, and how much it has changed. Use one was / were + participle and one much / a bit / far + comparative.",
+            slips: "'My father born in 1985', 'The masks was made', 'that' after a comma, 'more much'",
+            fix: "For 'born in' show the card with was / were on the board and say 'He ... born?'. For 'The masks was' tap two fingers for plural: were. For 'Huế, that was' say 'after a comma we say which or who'. For 'more much' write much more.",
+            support: ["It was ___ by ___.", "___ was born in ___."],
+            stretch: "Rewrite with the same meaning: 'A famous singer taught the children.' becomes 'The children were taught by a famous singer.' Add: 'It was far more ___ than ___.'",
+            stretchFrames: ["___ was ___ by ___.", "It is much / far / a bit ___ than it was."],
+          }),
+        },
+        {
+          after: "Grammar drill: was made, was born, which is old",
           slide: {
             kind: "writing",
             title: "Model: a keeper of tradition",
@@ -423,7 +602,7 @@ export const rhL3U6Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Say who or what it is, where it was born or made and by whom, and keep talking without long stops.",
         words: ["tradition", "heritage", "craft", "village", "recorded", "taught"],
-        grammar: ["was / were + past participle", "She was born in ___.", "The ___, which ___, was ___."],
+        grammar: ["was / were + past participle", "She was born in ___.", "The ___, which ___, was ___.", "much / a bit / far + comparative: Life was much harder then."],
         rubric: [
           { label: "Past passive", description: "Uses was / were + past participle correctly: was born, were made by hand.", weight: 3 },
           { label: "Facts in order", description: "Says where, when and by whom, in an order the listener can follow.", weight: 2 },
@@ -441,10 +620,34 @@ export const rhL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u6-l5": {
       objectives: ["I can teach a craft with First, Next, Don't and Finally, in a clear, steady voice."],
-      trim: { "How to make bánh chưng: teach the class": 12 },
+      trim: { "How to make bánh chưng: teach the class": 9, "Write: instructions for a craft": 11 },
       add: [
         {
           after: "Imperatives, sequencing and word-building prefixes",
+          slide: drill({
+            title: "Grammar drill: first, don't, make sure",
+            goal: "Give instructions with First, Then, Don't and Make sure, in the right order and with the right words. Then teach your partner a short how-to and say what is much easier with practice.",
+            signs: "X = turn it into a warning with Don't or Never, + = join with because / or / so / when, T = tell it as a past story (First we washed ...), P = give the instruction to a different person (Tell them to ...), R = change the word with a prefix (un- re- mis- dis-)",
+            chunks: [
+              "First, wash the leaves, and then dry them carefully.",
+              "Don't touch the knife while it is hot.",
+              "Make sure you rewrap the leaves if they tear.",
+              "Remember to cook it slowly, or the rice will not be soft.",
+              "Be careful not to misspell the name on the card.",
+              "After that, tie the cake tightly, and finally put it in the pot.",
+            ],
+            recycle: ["The masks were made by hand.", "We cooked the sticky rice ourselves.", "Did people use to wear áo dài every day?"],
+            prompts: ["(card: wash the leaves / dry them)", "(card: touch the knife / hot)", "(card: rewrap / the leaves tear)", "(card: tie the cake / put it in the pot)"],
+            real: "Real talk and the Level 4 step: teach your partner how to make or do something in three steps. Use First, Then and Finally, one Don't or Make sure, and say one thing that is much easier or far better with practice.",
+            slips: "'You don't touch it!', 'Finally, first fold', 'I unagree', 'make sure to you'",
+            fix: "For 'You don't touch the pot' point to the sign and say 'No you: Don't ...'. For wrong order words write First, Next, Finally on the board and let the child pick. For 'unagree' say 'dis-agree' and let the child echo it.",
+            support: ["First, ___. Then ___.", "Don't ___ because ___."],
+            stretch: "Rewrite with the same meaning: 'He did not like waiting.' becomes 'He disliked waiting.' and 'You must not touch the pot.' becomes 'Don't touch the pot.' Make two of your own.",
+            stretchFrames: ["Don't ___, or ___.", "Make sure you ___."],
+          }),
+        },
+        {
+          after: "Grammar drill: first, don't, make sure",
           slide: {
             kind: "writing",
             title: "Grow the instruction",
@@ -526,17 +729,41 @@ export const rhL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "rh-l3-u6-l6": {
       objectives: ["I can say 'These are mine, those are hers' and 'It was so tall that ...' fast and right."],
-      trim: { "Museum guides: our class totem": 7 },
+      trim: { "Museum guides: our class totem": 5, "Write: a legend for a Vietnamese place": 10 },
       add: [
         {
           after: "Demonstratives, possessive pronouns and so / such ... that",
+          slide: drill({
+            title: "Grammar drill: this, that, mine, so tall that",
+            goal: "Say this and that, mine and yours, and so / such ... that fast and right. Then compare two things with much / a bit / far in a real conversation.",
+            signs: "? = ask it with Whose, X = say no (Those aren't ours), + = join with because / although, T = change so to such (or such to so), P = change the owner (mine, yours, his, hers, ours, theirs)",
+            chunks: [
+              "Those carvings are ours, and these are theirs.",
+              "Whose áo dài is this? It's hers.",
+              "The pole was so tall that we had to look straight up.",
+              "It was such a tall pole that we could see it from the road.",
+              "These drums aren't mine; they're my brother's, and that one is yours.",
+              "The story was so interesting that nobody wanted to go home.",
+            ],
+            recycle: ["First, wash the leaves, and then dry them carefully.", "Ca trù, which is very old, was added to a heritage list in 2009.", "She plays the drum, doesn't she?"],
+            prompts: ["(card: those carvings / ours)", "(card: whose / áo dài / hers)", "(card: the pole / tall / look up)", "(card: a long story / nobody went home)"],
+            real: "Real talk and the Level 4 step: compare two things in your room or bag: this one and that one, mine and yours. Say which is much / a bit / far bigger, older or better, and use so ... that for one result.",
+            slips: "'This books', 'her's', 'It was so a long story', 'so ... that' with a wrong verb",
+            fix: "For 'this books' hold up two fingers and say 'these ...?'. For 'her's' say 'no apostrophe: hers' and point at the chart. For 'so a long story' say 'so long, or such a long ...?' and show the two frames side by side.",
+            support: ["___ is mine; ___ is yours.", "It was so ___ that ___."],
+            stretch: "Rewrite with the same meaning: 'The pole was so tall that we could not see the top.' becomes 'It was such a tall pole that we could not see the top.' Then use far or much to compare two poles.",
+            stretchFrames: ["It was such a ___ that ___.", "This one is far / much ___ than that one."],
+          }),
+        },
+        {
+          after: "Grammar drill: this, that, mine, so tall that",
           slide: {
             kind: "writing",
             title: "My favorite thing at home: plan, write, check",
             routine: "paragraph",
             genre: "description",
             mode: "solo",
-            minutes: 10,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the topic sentence, the details and the closing sentence. Circle so ... that, such ... that, mine and hers.",
               "Plan: fill the four boxes with a few words each, not whole sentences. Choose one special thing at home.",
@@ -647,10 +874,34 @@ export const rhL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 7
     "rh-l3-u6-l7": {
       objectives: ["I can report what someone asked or told me: 'She asked me where I lived.'"],
-      trim: { "Hold the interview": 8, "Draft and edit the interview": 23 },
+      trim: { "Hold the interview": 6, "Draft and edit the interview": 19, "Pattern hunt: what did the interviewer ask?": 5 },
       add: [
         {
           after: "Reported questions and commands (stretch)",
+          slide: drill({
+            title: "Grammar drill: she asked me where",
+            goal: "Report what someone asked or told you, with the right word order and a step back in the tense. Then interview a partner and report, saying how much life has changed.",
+            signs: "? = ask it as a question the person said, X = report a no or a command not to, T = report it a step back in time, P = say it about a different person, + = join the report with because",
+            chunks: [
+              "She asked me where I lived.",
+              "He asked if I liked ca trù.",
+              "I asked my grandmother when she had first heard the tale.",
+              "The puppet master told us not to touch the puppets.",
+              "She asked us to listen carefully.",
+              "They asked whether the show had started.",
+            ],
+            recycle: ["Those carvings are ours, and these are theirs.", "The pole was so tall that we had to look straight up.", "Make sure you rewrap the leaves if they tear."],
+            prompts: ["(card: 'Where do you live?' she asked me)", "(card: 'Do you like ca trù?' he asked me)", "(card: 'Don't touch the puppets!' the master told us)", "(card: 'Please listen,' she asked us)"],
+            real: "Real talk and the Level 4 step: interview your partner with three questions about the past or about their family. Then report one of them: 'I asked her ..., and she said life was much / a bit / far ... than before.'",
+            slips: "'She asked me where did I live', 'He asked me do I like music', 'told us don't talk', no tense step back",
+            fix: "For 'where did I live' point to the frame and say 'where I ...?' and wait. For 'told us don't' show a finger across the mouth and say 'told us not ... to?'. For a missing tense step back, write the direct words on the left and the reported words on the right and let the child find the change.",
+            support: ["She asked me ___.", "He told us ___."],
+            stretch: "Rewrite with the same meaning: 'Do you play the drum?' she asked me. becomes 'She asked me if I played the drum.' Then report an answer with far or much: 'She said life was far easier now.'",
+            stretchFrames: ["She asked me if / whether ___.", "I asked her how ___, and she said ___."],
+          }),
+        },
+        {
+          after: "Grammar drill: she asked me where",
           slide: {
             kind: "writing",
             title: "Fix the reported sentences",
@@ -730,10 +981,34 @@ export const rhL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u6-l8": {
       objectives: ["I can say why a tradition is worth keeping, with 'It's important to ...' and '-ing' as a subject."],
-      trim: { "Video case: Traditions of Japan": 7, "Transfer: test our big idea": 10 },
+      trim: { "Video case: Traditions of Japan": 5, "Transfer: test our big idea": 7, "Mock review: explain the answers": 7 },
       add: [
         {
           after: "-ing as a subject, It's important to ..., It's worth -ing",
+          slide: drill({
+            title: "Grammar drill: worth doing, important to do",
+            goal: "Use -ing as a subject, It's important to, and It's worth -ing in whole sentences, fast and right. Then say what is worth keeping and what is much better now.",
+            signs: "? = ask it (Is it worth ...?), X = say no (It's not worth ...), + = join with because / although / so, T = rewrite with the same meaning (Learning is important -> It's important to learn), P = change the person",
+            chunks: [
+              "Preserving old songs takes time.",
+              "It's important to ask older people about the past.",
+              "It's worth watching a water puppet show at least once.",
+              "Collecting old photos is my hobby.",
+              "It's not worth waiting if the show is full.",
+              "Telling stories keeps a family close.",
+            ],
+            recycle: ["She asked me where I lived.", "The masks were made by hand.", "Life was much harder then, and phones are far smaller now."],
+            prompts: ["(card: preserve old songs / take time)", "(card: ask older people / important)", "(card: watch a puppet show / worth)", "(card: collect old photos / my hobby)"],
+            real: "Real talk and the Level 4 step: tell your partner what from the past is worth keeping and what is much better now, with a reason. Use It's worth -ing or It's important to, and one much / a bit / far + comparative.",
+            slips: "'Make bánh chưng takes ten hours', 'collecting ... are', 'It's worth to visit'",
+            fix: "For 'Make bánh chưng takes' say 'Making ...?' and tap the -ing. For 'are my hobby' hold up one finger for singular. For 'worth to visit' say 'worth visiting' and cross out the to on the board.",
+            support: ["___ing ___ takes ___.", "It's worth ___ing because ___."],
+            stretch: "Rewrite with the same meaning: 'Learning English is important.' becomes 'It's important to learn English.' and 'I think visiting Huế is good value.' becomes 'It's worth visiting Huế.' Then use far or much to compare the old way with the new.",
+            stretchFrames: ["It's important to ___.", "It's worth ___ing because ___."],
+          }),
+        },
+        {
+          after: "Grammar drill: worth doing, important to do",
           slide: {
             kind: "writing",
             title: "Why it is worth keeping: plan, write, check",

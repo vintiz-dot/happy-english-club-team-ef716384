@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Reach Higher Level 3, Unit 7 "Blast! Crash! Splash!"
 // (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 9-10 (Jupiter).
@@ -15,11 +16,70 @@ const base =
 const grownUp =
   "Grown-up: hold the phone and let your child speak; do not say the words for them. Bố mẹ: hãy giữ điện thoại và để con tự nói, đừng nhắc từng chữ.";
 
+// Level 4 raise (24 Nov 2026): Jupiter's grammar now matches SKY 1's ladder toward Oxford
+// Discover 4 (B1). Every lesson carries a grammar drill on that lesson's own grammar slide,
+// and the unit carries one "Level 4 step" (be able to / managed to, Lesson 2), which the
+// drills of Lessons 3 to 8 bring back in round 3 or Stretch. The exam strand is untouched.
+
+const STEP = "Level 4 step: managed to and was able to";
+
+const drillFeedback =
+  "Prompt, do not tell: hold up a finger for the missing word, start the phrase and pause, or repeat the slip with a rising voice and let the child fix it. For a sound, say it right and let the child echo. Say every final -s, -ed and -d clearly yourself. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  minutes: 6 | 7;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fb: string;
+  note: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  const long = o.minutes === 7;
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: o.minutes,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when / unless, T = change the time or tense, P = change the person, R = rewrite it with the same meaning, like the exam). The class says the new sentence together." },
+      { seconds: long ? 90 : 75, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Try two signs together when you can: X + or T P." },
+      { seconds: long ? 90 : 75, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change it and say the WHOLE new sentence.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them with the class, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about you, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: o.fb + " " + drillFeedback,
+    teacherNote: o.note,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const rhL3U7Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "rh-l3-u7-l1": {
       objectives: ["I can say how, where and when things happen, in smooth sentences, without stopping."],
+      trim: { "Mystery photos: how fast did it change?": 8, "Is it a force? (concept formation)": 9 },
       add: [
         {
           after: "Exam practice: adjective or adverb?",
@@ -92,14 +152,110 @@ export const rhL3U7Lab: UnitLab = {
             ],
           },
         },
+        {
+          after: "Adverbs: how, where, when, how often, how much",
+          slide: drill({
+            title: "Grammar drill: adverbs, ask it, rewrite it",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it with so or although, rewrite it with the same meaning. Then talk about how you really do things.",
+            chunks: [
+              "The lava moved slowly, but the smoke rose very quickly.",
+              "We often watch the sea from the hill, although it is rarely calm in October.",
+              "Does the volcano rumble loudly? Yes, it does, and it rumbles almost every night.",
+              "Luckily, the fishermen came home early, so nobody was hurt.",
+              "She is a careful driver, so she drives carefully when the road is wet.",
+              "I never go near the beach when the waves are extremely high.",
+            ],
+            recycle: ["Water puppetry is very old, isn't it?", "It's worth watching a water puppet show at least once."],
+            prompts: [
+              "The lava moved slowly. (?)",
+              "The waves crashed loudly. (X)",
+              "The siren sounded suddenly. (+ so)",
+              "We often swim here. (T: last summer)",
+              "She speaks clearly. (P: they)",
+              "He is a fast runner. (R: He runs ...)",
+            ],
+            real: "Real talk: tell your partner how you usually get to a place you love, how often you go and how you feel there. Use at least two adverbs (how, how often, how much). Your partner asks one question.",
+            slips: "'moved slow', 'We go often', 'She never is late'",
+            fb: "For adverbs, prompt for the ending: say 'The lava moved ...?' and hold up a finger for -ly, then point to the frame for the place of the word: 'We often ...?'. Vietnamese has no -ly ending and no fixed place before the verb, so 'moved slow' and 'go often' are the usual slips. For the R sign, the adjective becomes an adverb: 'He is a fast runner' becomes 'He runs fast' (fast stays fast), 'a good singer' becomes 'sings well' (never 'goodly').",
+            note: "This drill practises the lesson's adverbs of manner, place, time, frequency and degree as speech, fast and exact. The R sign is the entrance exam's 'rewrite with the same meaning' (a slow walker / walks slowly), said aloud first so the written version is easy later. Round 3 must be real, with a true place and a true feeling. Keep it brisk; a drill that drags loses its point. Mark nothing in writing.",
+            support: ["Does the ___ ___ly? Yes, it does.", "I often ___."],
+            stretch: "Use two signs at once, and give an exam rewrite: 'She is a loud talker.' becomes 'She talks loudly.'",
+            stretchFrames: ["___, although ___.", "She is a ___ ___er. = She ___s ___ly."],
+          }),
+        },
       ],
     },
 
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u7-l2": {
       objectives: ["I can retell a story three times, faster each time, with was / were doing and sequence words."],
-      trim: { "Eyewitness interview: the new island": 8 },
+      trim: { "Eyewitness interview: the new island": 5, "Write: the island's diary": 11 },
       add: [
+        {
+          after: "Telling a story: past simple, past continuous and sequence words",
+          slide: {
+            kind: "grammar",
+            title: STEP,
+            hook: "Could says you had the skill; managed to says it worked, this one time.",
+            form: [
+              { label: "General ability", pattern: "could + verb: She could swim when she was five. (a skill, again and again)" },
+              { label: "One success", pattern: "managed to / was able to + verb: The boat managed to reach the shore. (one time, and it was hard)" },
+              { label: "Negative", pattern: "couldn't / wasn't able to + verb: We couldn't land because the waves were too big. (both uses)" },
+              { label: "After didn't", pattern: "didn't manage to + verb: We didn't manage to catch the last boat." },
+            ],
+            explanation: [
+              "Today's grammar tells a story: the background in was / were + -ing, and the event in the past simple. Level 4 adds one more tool for the event: 'managed to' (or 'was able to') says that someone succeeded in doing something difficult, once, in the past.",
+              "Use 'could' for a skill or a possibility in general: 'My grandfather could swim across the bay.' That is something he could do many times. Use 'managed to' for one particular success: 'The boat was sinking, but the fishermen managed to reach the shore.' It is a good partner for 'but' and 'although', because the story first says it was hard, and then says it worked.",
+              "In the exam you may meet it as a rewrite: 'He succeeded in opening the door' means 'He managed to open the door'. After 'managed to' and 'was able to' the verb is always the plain verb, because the past is already in managed or was. The negative is easy: couldn't works for both uses.",
+            ],
+            examples: [
+              { text: "The sea was rough, but the fishermen managed to pull their nets in before the wave hit." },
+              { text: "Although the ash was thick, the pilot was able to land the plane safely." },
+              { text: "My grandfather could swim across the bay when he was young.", note: "general ability: could" },
+              { text: "The boat couldn't reach the island because the sea was too rough." },
+              { text: "While the village was sleeping, one man managed to ring the warning bell." },
+              { text: "In the end, the rescue team managed to find everyone, but the first boat wasn't able to leave the harbor." },
+            ],
+            pitfalls: [
+              { wrong: "The fishermen could reach the shore yesterday.", right: "The fishermen managed to reach the shore yesterday.", why: "could is for a general skill; for one success in the past use managed to or was able to." },
+              { wrong: "She managed to reached the shore.", right: "She managed to reach the shore.", why: "after to the verb is plain; the past is already in managed." },
+              { wrong: "We didn't managed to land.", right: "We didn't manage to land. / We couldn't land.", why: "after didn't the verb is plain: didn't manage, or just couldn't." },
+            ],
+          },
+        },
+        {
+          after: STEP,
+          slide: drill({
+            title: "Grammar drill: was doing, when it happened",
+            minutes: 7,
+            goal: "Change the story sentence fast and right: ask it, say no, join it, rewrite it. Then tell a true story with one thing you managed to do.",
+            chunks: [
+              "We were eating dinner when the ground began to shake.",
+              "While Dad was driving, I was watching the clouds.",
+              "Were the boats moving when the wave hit? No, they weren't; they were tied to the dock.",
+              "First the sea bubbled, then a cloud of ash rose, and in the end a new island appeared.",
+              "Nobody was watching the sky because it was a calm morning.",
+              "The boat was sinking, but the fishermen managed to reach the shore.",
+            ],
+            recycle: ["The lava moved slowly down the hill.", "Luckily, nobody was hurt.", "Long ago, puppeteers used to perform only in village ponds."],
+            prompts: [
+              "We were eating dinner when the ground shook. (?)",
+              "The boats were moving. (X)",
+              "The sea was bubbling. (+ when the island appeared)",
+              "She was walking home. (P: they)",
+              "The ground shook while we were eating. (R: start with We were)",
+              "The fishermen reached the shore. (+ although it was hard: managed to)",
+            ],
+            real: "Real talk: tell your partner a true story about a time something happened while you were doing something else. Then say one hard thing you managed to do (a puzzle, a climb, a long walk in the rain). Use was / were + -ing once and managed to once. Your partner asks one question.",
+            slips: "'were going out' after when, 'was' with a plural subject, 'managed to reached'",
+            fb: "For the story tenses, prompt for the background: start 'We were eating when the lights ...?' and let the child choose 'went out'; for 'The boats was' repeat it with a rising voice. Vietnamese does not change the verb for tense, so a long action often loses was / were, and the sudden event may come out in the continuous ('the lights were going out'). For the step, 'managed to reached?' with a finger on the plain verb; 'could reach yesterday?' and let the child try 'managed to' or 'was able to'.",
+            note: "Rounds 1 and 2 practise today's story tenses; round 3 and the Stretch tier use the Level 4 step (managed to / was able to) so it becomes part of telling a story: a hard background, then one success. The R sign (while / when swapped, same meaning) is an exam format said aloud first. Do not teach the step again here: the grammar slide did that. Keep it brisk.",
+            support: ["Were you ___ing when ___? Yes, I was.", "I was ___ing when ___."],
+            stretch: "Use two signs at once and add a hard success: 'The rain was heavy, but we managed to reach the school before the bell.'",
+            stretchFrames: ["I was ___ing when ___, but I managed to ___.", "___ couldn't ___, but ___ managed to ___."],
+          }),
+        },
         {
           after: "Exam practice: story cloze",
           slide: {
@@ -202,7 +358,7 @@ export const rhL3U7Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Tell the island story with was / were + -ing and sequence words, and keep going without long stops.",
         words: ["island", "erupt", "ash", "lava", "suddenly", "meanwhile"],
-        grammar: ["was / were + -ing when + past simple", "First, After that, In the end"],
+        grammar: ["was / were + -ing when + past simple", "First, After that, In the end", "managed to / was able to for one success"],
         rubric: [
           { label: "Story order", description: "Uses sequence words (First, After that, In the end) to tell the story in order.", weight: 2 },
           { label: "Narrative tenses", description: "Uses was / were + -ing for what was happening and past simple for the sudden event.", weight: 3 },
@@ -220,8 +376,40 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u7-l3": {
       objectives: ["I can say what had already happened before another event, in a smooth sentence."],
-      trim: { "Hot seat: the island remembers": 7 },
+      trim: { "Hot seat: the island remembers": 4, "Write: a narrative poem of change": 12 },
       add: [
+        {
+          after: "The past perfect (stretch): the earlier past",
+          slide: drill({
+            title: "Grammar drill: had done, by the time",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it, rewrite it. Then say what had already happened before something real, and one thing you managed to do.",
+            chunks: [
+              "By the time we arrived, the boat had already left.",
+              "The birds had flown away before the island erupted.",
+              "Had the villagers left before the lava arrived? Yes, they had.",
+              "The scientists hadn't seen an island like that before, so they were very excited.",
+              "After the lava had cooled, small plants began to grow.",
+              "The rescuers had no map, but they managed to find the lost boat before dark.",
+            ],
+            recycle: ["We were eating dinner when the ground began to shake.", "Luckily, nobody was hurt.", "The lava moved slowly down the hill."],
+            prompts: [
+              "The boat had left. (?)",
+              "The villagers had left. (X)",
+              "The boat left. We arrived. (+ By the time ...)",
+              "I had never seen a volcano. (P: she)",
+              "The show started before we arrived. (R: When we arrived, the show ...)",
+              "The rescuers were tired. (+ although: they managed to ...)",
+            ],
+            real: "Real talk: tell your partner about a day when something had already happened by the time you got somewhere (a film that had started, a friend who had left). Then say one hard thing you managed to do that day or this week. Your partner asks one question.",
+            slips: "'had went', 'already started' with no had, had used for a finished-yesterday action",
+            fb: "For the past perfect, prompt for the missing had: say 'By the time we arrived, the show ...?' and hold up a finger. For 'had went' repeat it with a rising voice, 'had went?', and let the child change it to 'had gone'. Vietnamese marks the order of events with words (already, before) and not with the verb, so the child often leaves out 'had'. Listen for the 'd in I'd and the -n't in hadn't.",
+            note: "The past perfect is a stretch point, so keep it light: accept the past simple in Support and aim for had + participle in Core. Rounds 1 and 2 are today's grammar; round 3 and Stretch bring back the Level 4 step (managed to), so the child tells the earlier things in had and the one success in managed to. The R sign (before / when swapped) is the exam's rewrite format. Mark nothing in writing.",
+            support: ["By the time ___, ___ had ___.", "Had ___ ___? Yes, ___ had."],
+            stretch: "Rewrite in exam style, then add one success: 'The lava arrived after the villagers left.' becomes 'The villagers had left before the lava arrived, but one man managed to save his boat.'",
+            stretchFrames: ["___ had ___ before ___.", "___ had ___, but ___ managed to ___."],
+          }),
+        },
         {
           after: "Exam practice: join with the past perfect",
           slide: {
@@ -316,7 +504,40 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "rh-l3-u7-l4": {
       objectives: ["I can compare how fast or how well things happen, in whole sentences, without stopping."],
+      trim: { "Generalize: what forces change Earth?": 11, "Write: a photo essay page": 12 },
       add: [
+        {
+          after: "Adverbs that compare; adverbs of time; -tion, -sion, -ous",
+          slide: drill({
+            title: "Grammar drill: faster than, already, yet",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it, rewrite it. Then compare real people and places, and say what you have already done and not yet done.",
+            chunks: [
+              "The second eruption ended more suddenly than the first.",
+              "Of all the islands, this one is changing the most quickly.",
+              "The scientists have already made a prediction, but the volcano hasn't erupted yet.",
+              "Does the volcano still smoke? Yes, it does, and it is more dangerous than it looks.",
+              "She runs faster than I do, but I swim better than she does.",
+              "The rescuers worked more carefully than before, and they managed to save every boat.",
+            ],
+            recycle: ["By the time we arrived, the boat had left.", "Luckily, nobody was hurt.", "We were eating dinner when the ground began to shake."],
+            prompts: [
+              "The volcano is still smoking. (?)",
+              "The volcano has erupted. (X, with yet)",
+              "This island changes quickly. (+ because)",
+              "She runs fast. (+ than her brother)",
+              "We left early. (P: they)",
+              "No other island is changing as quickly as this one. (R: This island is changing the ...)",
+            ],
+            real: "Real talk: compare two people, two places or two sports you know (who is faster, better, more careful?). Say one thing you have already done this week and one thing you have not done yet. End with one hard thing you managed to do. Your partner asks one question.",
+            slips: "'more faster', 'quicklier', 'yet' in an affirmative sentence",
+            fb: "For comparing, prompt for the form: 'She runs more fast?' with a rising voice, finger on the word, and let the child say 'faster'. For -ly adverbs the child needs 'more quickly', not 'quicklier'. For 'yet', say 'I have finished it ...?' and let the child choose already; yet belongs to questions and negatives. Check the -er and the -ly clearly yourself.",
+            note: "Rounds 1 and 2 drill today's comparing adverbs and already / still / yet; round 3 and Stretch bring back the Level 4 step (managed to). The R sign here is the exam's 'as ... as' to superlative rewrite. The mid-unit check is today, so keep the drill brisk and calm and mark nothing in writing.",
+            support: ["___ runs faster than ___.", "I have already ___, but I haven't ___ yet."],
+            stretch: "Give an exam rewrite: 'Nobody in my class runs as fast as my friend.' becomes 'My friend runs the fastest in my class.' Then add: 'He managed to ...'",
+            stretchFrames: ["Nobody ___ as ___ as ___. = ___ the ___est.", "___, but he managed to ___."],
+          }),
+        },
         {
           after: "Exam practice: word formation",
           slide: {
@@ -422,8 +643,40 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u7-l5": {
       objectives: ["I can give my opinion and advice for the storm season, in one smooth talk, three times."],
-      trim: { "Expert panel: getting ready for the storm season": 8 },
+      trim: { "Expert panel: getting ready for the storm season": 5, "Write: a storm-safety leaflet": 12 },
       add: [
+        {
+          after: "Opinions and advice: I believe, should, ought to, had better; despite (stretch)",
+          slide: drill({
+            title: "Grammar drill: should, ought to, had better",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it with or or although, rewrite it with despite. Then give real advice with a reason.",
+            chunks: [
+              "In my opinion, families should keep a torch and water ready.",
+              "We ought to plant trees on the hills, because roots hold the soil.",
+              "Should we swim today? No, we shouldn't, and you'd better stay out of the water.",
+              "You had better not go near the river, or you could get hurt.",
+              "Despite the strong wind, the fishers brought their boats in safely.",
+              "Although the sea looked calm, the rescuers managed to warn everyone in time.",
+            ],
+            recycle: ["The lava moved more slowly than the water.", "By the time we arrived, the boat had left."],
+            prompts: [
+              "Families should keep a torch. (?)",
+              "We ought to swim today. (X: ought not to)",
+              "You had better stay inside. (+ or)",
+              "She should leave now. (P: they)",
+              "Although the wind was strong, we went out. (R: Despite ...)",
+              "The fishers were tired. (+ although: managed to bring the boats in)",
+            ],
+            real: "Real talk: your partner has a problem (a storm is coming, a test is tomorrow, a long trip). Give two pieces of advice, each with a reason, and use despite or although once. Swap, then say one hard thing you managed to do last month.",
+            slips: "'had better to', 'ought go', 'despite it rained', 'In spite the rain'",
+            fb: "For advice, prompt for the plain verb: 'You had better ...?' with a hand held up for no 'to', and 'We ought ...?' pointing to the frame for 'to'. For despite, say 'Despite it rained?' with a rising voice and give the choice: 'Despite the rain' or 'Although it rained'. Vietnamese has one word for all of should / ought to / had better, so the child needs the different strengths of advice modelled, not explained.",
+            note: "Rounds 1 and 2 drill today's opinion and advice language; round 3 is real advice, so the form is used for meaning. The R sign (although to despite) is a very common entrance-exam rewrite and is said aloud before it is written. The Level 4 step (managed to) returns in the last chunk, round 3 and Stretch.",
+            support: ["In my opinion, we should ___.", "You had better ___, or ___."],
+            stretch: "Give exam rewrites: 'Although it rained, we went out.' becomes 'Despite the rain, we went out.' Then: 'The fishers were tired, but they managed to bring the boats in.'",
+            stretchFrames: ["Although ___, ___. = Despite ___, ___.", "___, but ___ managed to ___."],
+          }),
+        },
         {
           after: "Exam practice: rewrite the advice",
           slide: {
@@ -515,7 +768,40 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "rh-l3-u7-l6": {
       objectives: ["I can pass on a warning, saying who told whom to do what, fast and without stopping."],
+      trim: { "Pass the warning on": 10, "Write: a thank-you letter to a hero": 11 },
       add: [
+        {
+          after: "Reported commands and requests; as soon as and until",
+          slide: drill({
+            title: "Grammar drill: told us to, asked us not to",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it with as soon as or until, rewrite it as a report. Then say what people told you to do this week.",
+            chunks: [
+              "The teacher told us to walk to the stairs, and she asked us not to run.",
+              "As soon as the siren sounded, the volunteers told everyone to leave.",
+              "Did the rescuer tell you to stay inside? Yes, he did, and he asked us not to open the door.",
+              "She told me to bring the radio because the power might go out.",
+              "The police told the families to stay on high ground until the water went down.",
+              "We couldn't go out, but as soon as the rain stopped, we managed to reach the shop.",
+            ],
+            recycle: ["In my opinion, families should keep a torch ready.", "You'd better not swim today.", "The lava moved more slowly than the water."],
+            prompts: [
+              "The teacher told us to walk. (?)",
+              "She asked us to run. (X)",
+              "The siren sounded. (+ as soon as: we left)",
+              "He tells us to wait. (T: yesterday)",
+              "The police told us to stay. (P: me)",
+              "'Don't touch the wires,' he said. (R: He told us ...)",
+            ],
+            real: "Real talk: tell your partner what a parent, a teacher or a coach told you or asked you to do this week, and what you did as soon as you could. Include one thing you managed to do although it was hard. Your partner asks one question.",
+            slips: "'told us don't', 'said me to', 'as soon as it will sound'",
+            fb: "For reported commands, prompt for the pattern: 'He told us ...?' and point to the frame for 'not to' or 'to'. For 'said me to' say 'She told ...?' with a finger on told. For 'as soon as it will', repeat with a rising voice and let the child take out will: the present is used for the future after as soon as and until. Vietnamese children often copy the direct speech word for word ('told us don't go').",
+            note: "Rounds 1 and 2 drill told / asked + person + (not) to, as soon as and until; round 3 is real: the commands are ones the child really heard. The R sign turns a direct command into a report, the exam's own format, said aloud before it is written. The Level 4 step (managed to) returns in the last chunk and in round 3.",
+            support: ["___ told us to ___.", "___ asked us not to ___."],
+            stretch: "Give exam rewrites: 'Please close the window,' she said to him. becomes 'She asked him to close the window.' Then: 'We didn't give up, and we managed to finish.'",
+            stretchFrames: ["'___,' she said. = She told us ___.", "As soon as ___, we ___."],
+          }),
+        },
         {
           after: "Exam practice: report the warnings",
           slide: {
@@ -621,8 +907,40 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 7
     "rh-l3-u7-l7": {
       objectives: ["I can explain how and when something happens or was done, in a clear expert minute."],
-      trim: { "Expert minute: say it before you write it": 5, 'Read: "Tsunami" and synthesize': 14 },
+      trim: { 'Read: "Tsunami" and synthesize': 14, "Expert minute: say it before you write it": 3, "Draft and edit the report": 22 },
       add: [
+        {
+          after: "The passive in a report (present and past)",
+          slide: drill({
+            title: "Grammar drill: on, in, at, and was done by",
+            minutes: 6,
+            goal: "Change the report sentence fast and right: ask it, say no, join it, rewrite it in the passive. Then tell two real facts.",
+            chunks: [
+              "The earthquake happened on Monday night, at about ten o'clock.",
+              "Tsunamis are caused by earthquakes under the sea.",
+              "The wave moved across the ocean towards the coast, and it reached the shore at noon.",
+              "Was the village warned by radio? Yes, it was, and the families were told to leave.",
+              "It rained for three hours, so the road was closed during the afternoon.",
+              "The bridge was damaged, but the workers managed to repair it in two days.",
+            ],
+            recycle: ["The teacher told us to walk, not run.", "As soon as the siren sounds, we leave."],
+            prompts: [
+              "A tsunami is caused by an earthquake. (?)",
+              "The village was warned. (X)",
+              "The road was closed. (+ because it rained for three hours)",
+              "Tsunamis are caused by earthquakes. (T: the 2004 tsunami)",
+              "The boat was damaged. (P: the boats)",
+              "An earthquake caused the tsunami. (R: The tsunami ...)",
+            ],
+            real: "Real talk: tell your partner two true facts about something that was built, made or found in Vietnam, with is / was + the -ed form and a day, a year or a place (in, on, at). Add one hard thing someone managed to do.",
+            slips: "'cause' for caused, 'in Monday', 'reached to', 'during three hours'",
+            fb: "For the passive, prompt for the ending: 'Tsunamis are ...?' with a finger on the missing -ed; for 'in Monday' say 'happened ... Monday?' and let the child choose on. Vietnamese does not change the verb for the passive, so 'is cause' and 'was build' are the usual slips: say the final /d/ and the irregular forms (built, given) clearly. The R sign is the exam's active-to-passive rewrite: the object comes to the front.",
+            note: "This drill is six minutes because the lesson's own task repeat and the research report need the time. Rounds 1 and 2 drill prepositions of place, direction and time and the present and past passive in report sentences; round 3 is real facts. The R sign (active to passive, same meaning) is a standard exam format, said aloud before the writing. The Level 4 step (managed to) returns in the last chunk and in round 3.",
+            support: ["The ___ was ___ed on ___.", "___ are ___ed by ___."],
+            stretch: "Give exam rewrites and join them: 'People built the bridge in 1902.' becomes 'The bridge was built in 1902.' Then add: '..., but the workers managed to ...'",
+            stretchFrames: ["People ___ed the ___. = The ___ was ___ed.", "___, but ___ managed to ___."],
+          }),
+        },
         {
           after: "Exam practice: prepositions and the passive",
           slide: {
@@ -653,7 +971,7 @@ export const rhL3U7Lab: UnitLab = {
           },
         },
         {
-          after: "Expert minute: say it before you write it",
+          after: "Plan the research report (writing project)",
           slide: {
             kind: "fluency",
             title: "Expert minute, three times",
@@ -698,8 +1016,40 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u7-l8": {
       objectives: ["I can retell a chain of causes and results in whole sentences, faster each time."],
-      trim: { "Transfer: test our big idea": 7 },
+      trim: { "Transfer: test our big idea": 7, "Mock review: explain the answers": 8, "Video case: amazing volcanoes": 7 },
       add: [
+        {
+          after: "Cause and effect language",
+          slide: drill({
+            title: "Grammar drill: caused by, led to, because of",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it, rewrite it with the same meaning. Then tell a real chain of three links.",
+            chunks: [
+              "Heavy rain led to flooding in the town.",
+              "The road closed because of the landslide, so the trucks couldn't come.",
+              "Floods are caused by heavy rain, and heavy rain is often caused by a typhoon.",
+              "Did the storm cause the power cut? Yes, it did, and as a result, the school closed.",
+              "Due to the damage, the villagers planted new trees on the hill.",
+              "The river rose quickly, but the villagers managed to move their animals in time.",
+            ],
+            recycle: ["Earthquakes are measured with a seismometer.", "The teacher asked us not to run."],
+            prompts: [
+              "Heavy rain led to flooding. (?)",
+              "The landslide caused the problem. (X)",
+              "The road closed. (+ because of the landslide)",
+              "Floods are caused by rain. (T: last year)",
+              "The storm caused a power cut. (P: storms)",
+              "The rain caused the flood. (R: The flood was ...)",
+            ],
+            real: "Real talk: tell your partner a chain of three links about something real (a late bus, a cancelled match, a power cut): what caused it, what it led to and what people did. Include one thing someone managed to do. Your partner asks one question.",
+            slips: "'because the typhoon', 'resulted to', 'due to it rained'",
+            fb: "For cause and effect, prompt for the missing word: 'The school closed because ...?' and hold up a finger for 'of'; for 'resulted to' say 'resulted ...?' and point to the frame for 'in'. Check that because is followed by a whole clause and because of / due to by a noun. Vietnamese uses one word (vì) for all of them, so the child needs the choice shown by the frame, not a rule. Say the -ed in caused clearly.",
+            note: "Rounds 1 and 2 drill cause and result language and the passive of caused; round 3 is a real chain, which is the spoken version of the unit's paragraph and talk. The R sign (active to passive, or led to to caused by) is the exam's 'same meaning' rewrite. The Level 4 step (managed to) returns in the last chunk and in round 3. Today's mock test is the exam strand: keep the drill calm and brisk.",
+            support: ["___ led to ___.", "Because of ___, ___."],
+            stretch: "Give exam rewrites: 'The floods happened because of heavy rain.' becomes 'Heavy rain led to floods.' Then add a success: '..., but the villagers managed to ...'",
+            stretchFrames: ["___ happened because of ___. = ___ led to ___.", "___, but ___ managed to ___."],
+          }),
+        },
         {
           after: "Exam practice: rewrite the cause",
           slide: {
@@ -803,7 +1153,7 @@ export const rhL3U7Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Explain a chain of causes and results with led to, because of and as a result, and keep going without long stops.",
         words: ["cause", "result", "flood", "landslide", "led to", "because of"],
-        grammar: ["X causes Y / Y is caused by X", "led to, because of, due to, as a result"],
+        grammar: ["X causes Y / Y is caused by X", "led to, because of, due to, as a result", "managed to for one success"],
         rubric: [
           { label: "Cause chain", description: "Explains at least three linked causes and results in order.", weight: 3 },
           { label: "Cause language", description: "Uses at least three different cause words correctly (led to, because of, due to, as a result).", weight: 3 },

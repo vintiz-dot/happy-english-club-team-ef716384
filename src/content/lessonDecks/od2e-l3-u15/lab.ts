@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 15 "Plants and
 // People" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
@@ -11,6 +12,56 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 const correct =
   "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). Between rounds 1 and 2, stop for one minute: write them on the board and let the class fix them. Children who then say the same thing again use the fixed form. For grammar, prompt the child to fix it themselves: start the phrase and pause ('a bag ... ?'), point to the frame, hold up a finger for the missing 'of' or the missing -s, or repeat the error with a rising voice ('two bag of rice?'). For a sound, just say it right and let them echo it. Say every final -s and -es clearly yourself ('boxes', 'bottles', 'plants'): Vietnamese speakers often drop final sounds, and children copy what they hear.";
 
+// One grammar drill (ages 8-10): a sentence changed fast by a sign, in chorus, then pairs,
+// then real talk. The unit's grammar is drilled; the Level 4 step (the present passive in
+// a process) joins in round 3 and the Stretch tier once it has been taught.
+function drill(o: {
+  title: string;
+  minutes?: number;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fix: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+  step?: boolean;
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: o.minutes ?? 6,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: `Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person${o.step ? ", S = say it the Level 4 way, with is / are + a past-participle verb" : ""}). The class says the new sentence together.` },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with the -s and the little words where they belong.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: `Prompt, do not tell: ${o.fix} For a sound, say it right and let the child echo it. Say every final -s, -es and -ed clearly yourself: Vietnamese has no word endings, so children often leave them off. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.`,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. Keep it brisk and playful (a sign card is a game piece), and stop before it drags. Mark nothing in writing: this is about speed and accuracy in speech. The Stretch tier takes one step toward Oxford Discover 4, where these sentences grow longer.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U15Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
@@ -18,9 +69,9 @@ export const odL3U15Lab: UnitLab = {
       objectives: ["I can say 'If a plant has no water, it dies' and 'Because ..., the plant ...' fast and clearly."],
       trim: {
         "Can see, cannot see": 3,
-        "Draw it, label it, tell it": 5,
-        "Which grows faster? (Before You Read, SB 149)": 6,
-        "Cause and effect with plants": 5,
+        "Draw it, label it, tell it": 3,
+        "Which grows faster? (Before You Read, SB 149)": 4,
+        "Cause and effect with plants": 3,
       },
       add: [
         {
@@ -60,6 +111,29 @@ export const odL3U15Lab: UnitLab = {
               { level: "Stretch", task: "Add a second reason: 'If a plant has no sun, its leaves turn yellow, so it cannot make food.'", frames: ["If a plant has no ___, then ___, so ___."] },
             ],
           },
+        },
+        {
+          after: "Plant sprint: if and because",
+          slide: drill({
+            title: "Grammar drill: if, because, so with plants",
+            goal: "Change the plant sentence fast and right: ask it, say no, join it with if, because or so, change the time or the person. Then talk about plants you know.",
+            chunks: [
+              "If a plant has no water, it dies.",
+              "Do plants need sun? Yes, they do, because the leaves make food with sunlight.",
+              "The roots take in water, so the plant grows.",
+              "A plant does not grow well if it has no light.",
+              "When the sun comes up, the sunflower turns to it.",
+              "If we forget the water, the plant will die, so we must water it every day.",
+            ],
+            recycle: ["I have never seen a lion dance.", "If we move to the city, I will go to a new school.", "While the bee was flying, it saw a flower."],
+            prompts: ["Plants need water. (?)", "A plant grows in the dark. (X)", "The plant has no water. (+ if ... it dies)", "The roots take in water. (T: tomorrow, use will)", "The leaf makes food. (P: the leaves)"],
+            real: "Real talk: tell your partner what happens to a plant at home or at school if nobody looks after it. Use if or because. Your partner asks one question.",
+            slips: "'the plant no water', 'the roots takes' or 'Do plants needs water'",
+            fix: "for 'The plant no water' say 'If a plant has ...?' and point to the frame; for 'The roots takes' repeat it with a rising voice and let the child fix it; for a missing -s tap your wrist.",
+            support: ["Do plants need ___? Yes, they do.", "If a plant has no ___, it ___."],
+            stretch: "Use if with will, and add a second reason: 'If we do not water it, the plant will die, so we must water it every day.'",
+            stretchFrames: ["If we do not ___, the plant will ___.", "___, so we must ___."],
+          }),
         },
         {
           after: "Cause and effect with plants",
@@ -110,7 +184,7 @@ export const odL3U15Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u15-l2": {
       objectives: ["I can tell the life of a sunflower in order, shorter and faster each time."],
-      trim: { "Tell the story of a seed": 9, "Home talk: show and tell": 4, "I am a sunflower seed (interview)": 6 },
+      trim: { "Tell the story of a seed": 6, "Home talk: show and tell": 3, "I am a sunflower seed (interview)": 4 },
       add: [
         {
           after: "Tell the story of a seed",
@@ -149,6 +223,29 @@ export const odL3U15Lab: UnitLab = {
               { level: "Stretch", task: "Add the reason: 'Because the sunflower gets water and sun, it grows tall.'", frames: ["Because ___, the sunflower ___."] },
             ],
           },
+        },
+        {
+          after: "Sunflower story: tell it again, faster",
+          slide: drill({
+            title: "Grammar drill: First, Then, After, In the end",
+            goal: "Change the sunflower sentence fast and right: ask it, say no, join it with because, so or when, change the time or the person. Then talk about something you grew or watched grow.",
+            chunks: [
+              "First, a seed goes into the soil.",
+              "Then the roots grow down, and the stem grows up.",
+              "Does the flower open after a few weeks? Yes, it does.",
+              "Because the sunflower gets water and sun, it grows tall.",
+              "The seeds do not grow if the soil is too dry.",
+              "In the end, the seeds fall down, so new sunflowers can grow.",
+            ],
+            recycle: ["I used to be shy, but now I am able to speak.", "I was reading when a beetle landed on my book.", "It must be solar power."],
+            prompts: ["The seed goes into the soil. (?)", "The stem grows down. (X)", "The flower opens. (+ when the sun comes up)", "The roots grow. (T: last week)", "The stem grows up. (P: the roots)"],
+            real: "Real talk: tell your partner about a plant or a pet that grew at your home or school. Say what happened first, then next, and what it is like now. Your partner asks one question.",
+            slips: "'the roots grows', 'the stem grow' or a missing comma after 'First'",
+            fix: "for 'The roots grows' hold up two fingers and say 'The roots ...?'; for 'the stem grow' hold up one finger; for the pause after First, show a comma with your hand.",
+            support: ["Does the ___ ___? Yes, it does.", "First, ___. Then ___."],
+            stretch: "Use T and a long sentence with after or before: 'After the roots grew down, the stem grew up, and before the flower opened, the leaves turned to the sun.'",
+            stretchFrames: ["After the ___ grew, the ___ ___.", "Before the ___ opened, the ___ ___."],
+          }),
         },
         {
           after: "Why does it turn to the sun?",
@@ -227,11 +324,72 @@ export const odL3U15Lab: UnitLab = {
       objectives: ["I can ask and answer with 'a bag of ...' and 'two boxes of ...' fast, round the circle."],
       trim: {
         "Count it or cannot count it?": 3,
-        "At the market (role play)": 8,
-        "Make a shopping list (SB 153 G)": 8,
+        "At the market (role play)": 6,
+        "Make a shopping list (SB 153 G)": 6,
+        "Song time (SB 153 D)": 4,
+        "Words in context (SB 152 C)": 4,
         "Cause and effect game": 3,
       },
       add: [
+        {
+          after: "Measure words: a jar of, a bag of, a box of",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: how things are made (is / are + past participle)",
+            hook: "Rice does not jump into the bag by itself. People do things to it, and 'is' and 'are' tell that story.",
+            form: [
+              { label: "One thing", pattern: "The + noun + is + past participle   (The seed is planted.)" },
+              { label: "More than one", pattern: "The + nouns + are + past participle   (The seeds are watered.)" },
+              { label: "In order", pattern: "First, / Then, / Next, / Finally, + passive   (First, the seeds are planted.)" },
+              { label: "No", pattern: "is not / are not + past participle   (The seeds are not watered at night.)" },
+              { label: "Question", pattern: "Is / Are + noun + past participle?   (Are the seeds watered every day?)" },
+            ],
+            explanation: [
+              "Sometimes we care more about the thing than about the person who does the job. 'The farmer plants the seeds' tells us about the farmer. 'The seeds are planted' tells us about the seeds, and that is just what we want when we explain how rice, bread or a bean plant gets to us.",
+              "We use it to explain a process, one step after another: First, the seeds are planted. Then they are watered. Finally, the rice is cut and put into bags. We take is or are (the same is / are you know from 'There is a bag' and 'There are two bags') and add the verb in its past-participle form: planted, watered, washed, packed, sold. You do not need to say who did it.",
+              "This grows out of this unit: the bags and boxes of food you counted today all started somewhere and were made or grown in steps. It is also grammar you will meet again in Oxford Discover 4, where you will use it to explain how things are made and how nature works.",
+            ],
+            examples: [
+              { text: "First, the seeds are planted in the soil." },
+              { text: "Then they are watered every day.", note: "'They' means the seeds, so we use are." },
+              { text: "The rice plants are cut when the grains are ready." },
+              { text: "The rice is washed, and then it is packed into bags.", note: "Rice is one thing, so we use is." },
+              { text: "Two boxes of cookies are put on the party table." },
+              { text: "Are the bags of rice carried to the market by truck?", note: "The question starts with Are." },
+            ],
+            pitfalls: [
+              { wrong: "The seeds planted in the soil.", right: "The seeds are planted in the soil.", why: "English needs is or are before the past-participle verb. Do not leave it out." },
+              { wrong: "The plant is water every day.", right: "The plant is watered every day.", why: "After is / are the verb takes its past-participle ending (-ed for most verbs)." },
+              { wrong: "The seeds is planted first.", right: "The seeds are planted first.", why: "Many seeds, so are; one seed, so is. The -s on 'seeds' tells you." },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: how things are made (is / are + past participle)",
+          slide: drill({
+            title: "Grammar drill: a bag of, two boxes of, and how it is made",
+            minutes: 7,
+            goal: "Change the shopping sentence fast and right: ask it, say no, join it, change the person. Then say how a food is made with is / are, in order.",
+            chunks: [
+              "I need two bags of rice for the party.",
+              "Do you have a loaf of bread? No, I don't, so I will buy one.",
+              "How many bottles of water do you need?",
+              "She has a jar of honey because her bees made it.",
+              "First, the rice is planted, and then it is cut.",
+              "The bags of rice are packed and carried to the market.",
+              "Is the honey made by bees? Yes, it is.",
+            ],
+            recycle: ["The loudest drum I have ever heard was in the parade.", "It was so loud that I covered my ears.", "Glass was made by people in ancient times."],
+            prompts: ["We have a bag of rice. (?)", "He needs a jar of honey. (X)", "She buys two boxes of cookies. (+ because)", "I buy a loaf of bread. (T: yesterday)", "The farmer waters the plants. (S: the plants are ...)"],
+            real: "Real talk: choose a food you like and tell your partner how it is made or grown, step by step, with First, Then and is / are (for example rice, bread or a banana). Say how many bags or boxes you would buy. Your partner asks one question.",
+            slips: "'two bag of rice', 'a bag rice', 'the seeds planted' or 'the plant is water'",
+            fix: "for 'two bag of rice' hold up two fingers and say 'two bag...s?'; for 'a bag rice' tap the word of in the frame; for 'the seeds planted' say 'The seeds ... planted?' and let the child add are; for 'is water' say 'is wateRED?' stressing the ending.",
+            support: ["Do you have a ___ of ___? Yes, I do.", "The ___ is / are ___ed."],
+            stretch: "Use S in the pairs round too and add a reason: 'First, the rice is planted, then it is cut, and finally two bags of rice are sold because many people eat it.'",
+            stretchFrames: ["First, the ___ is / are ___ed.", "Then ___, and finally ___."],
+            step: true,
+          }),
+        },
         {
           after: "Make a shopping list (SB 153 G)",
           slide: {
@@ -319,7 +477,7 @@ export const odL3U15Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u15-l4": {
       objectives: ["I can explain how to grow a plant with First, Second, Then and Finally, three times, faster each time."],
-      trim: { "May I borrow ...? (SB 155 C)": 10, "Explain it to a visitor": 5, "Word families: strong, strength (SB 155 D)": 4 },
+      trim: { "Bees and flowers: think and share (Listening, Think)": 3, "May I borrow ...? (SB 155 C)": 7, "Explain it to a visitor": 3, "Word families: strong, strength (SB 155 D)": 3 },
       add: [
         {
           after: "Explain it to a visitor",
@@ -359,6 +517,30 @@ export const odL3U15Lab: UnitLab = {
           },
         },
         {
+          after: "Sequence adverbs: First, Second, Finally",
+          slide: drill({
+            title: "Grammar drill: First, Second, Finally, and the is / are way",
+            goal: "Change the plant-steps sentence fast and right: ask it, say no, join it, change the person. Then say the same steps the Level 4 way, with is / are.",
+            chunks: [
+              "First, fill a small pot with soil.",
+              "Second, push a seed into the soil and give it a little water.",
+              "Finally, put the pot near a sunny window.",
+              "Do we water the seed every day? Yes, we do, because it needs water to grow.",
+              "First, the pot is filled with soil, and then the seed is pushed in.",
+              "Next, the seed is watered, and finally the pot is put near a window.",
+            ],
+            recycle: ["A ramp is used for moving heavy things.", "We are flying to Tokyo on Monday.", "There are too many cars and not enough buses."],
+            prompts: ["You water the seed every day. (?)", "Put the pot in the dark. (X)", "Water the seed. (+ because it needs water)", "Fill the pot with soil. (S: The pot is ...)", "We put the pot near a window. (P: she)"],
+            real: "Real talk: tell your partner how you make something at home (a cup of tea, an egg, a sandwich). Use First, Then and Finally. Say it once with 'you' and once with is / are. Your partner asks one question.",
+            slips: "'First put soil' with no pause, 'the seed is water' or 'the pot fill with soil'",
+            fix: "for the missing comma after First, pause and show a comma with your hand; for 'the seed is water' say 'is wateRED?' and stress the ending; for 'the pot fill' say 'the pot ... is ...?' and point to the frame.",
+            support: ["First, ___. Second, ___. Finally, ___.", "The ___ is ___ed."],
+            stretch: "Say all the steps with is / are and add a reason: 'First, the pot is filled with soil because seeds need it. Then the seed is watered, so it can grow.'",
+            stretchFrames: ["First, the ___ is ___ed because ___.", "Then ___ is / are ___ed, so ___."],
+            step: true,
+          }),
+        },
+        {
           after: "Human sentence (SB 155 E)",
           slide: {
             kind: "writing",
@@ -393,7 +575,7 @@ export const odL3U15Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u15-l5": {
       objectives: ["I can say what I need for a plant party with 'a bag of', 'two boxes of' and 'because'."],
-      trim: { "Market run": 5, "Remember it!": 5 },
+      trim: { "Market run": 3, "Remember it!": 3, "Grammar Champion check": 3 },
       add: [
         {
           after: "Two kitchens: find the differences",
@@ -434,6 +616,31 @@ export const odL3U15Lab: UnitLab = {
           },
         },
         {
+          after: "Grammar: measure word + of + food",
+          slide: drill({
+            title: "Grammar drill: both rules, bags of food and how it is made",
+            goal: "Change the sentence fast and right with both of this unit's rules: a bag of / two boxes of, and how things are made with is / are. Ask it, say no, join it, change the time or the person.",
+            chunks: [
+              "I need three boxes of cookies because many friends are coming.",
+              "How many bottles of water do you need?",
+              "We don't have any bread, so I will buy a loaf of bread.",
+              "First, a bag of rice is bought at the market.",
+              "The rice is washed, and then it is cooked in a pot.",
+              "Two jars of honey are put on the party table.",
+              "Are the cookies made at home, or are they bought at the shop?",
+            ],
+            recycle: ["The telephone was invented in 1876.", "So do I. / Neither do I.", "By the time the explorers arrived, the ship had left."],
+            prompts: ["He has a bag of soil. (?)", "She needs two boxes of cookies. (X)", "I buy a jar of honey. (+ so)", "We bought three bottles of water. (T: tomorrow, use will)", "The farmer cuts the rice. (S: The rice is ...)"],
+            real: "Real talk: plan a plant party with your partner. Say what you will buy, how many bags, boxes or bottles, and tell how one of the foods is made, in order, with is / are. Your partner asks one question.",
+            slips: "'two box of cookies', 'a bag rice', 'the rice cook' or 'the cookies is made'",
+            fix: "for 'two box of' hold up two fingers and say 'two box...?'; for 'a bag rice' tap the word of in the frame; for 'the rice cook' say 'the rice is ...?' and let the child add is cooked; for 'cookies is' hold up two fingers and say 'cookies ...?'.",
+            support: ["I need a ___ of ___.", "The ___ is / are ___ed."],
+            stretch: "Use two signs together and S: 'Many friends are coming, so two boxes of cookies are bought, and then they are put on the table.'",
+            stretchFrames: ["___, so ___ are ___ed.", "Then ___ is / are ___ed."],
+            step: true,
+          }),
+        },
+        {
           after: "Writing: A shopping paragraph",
           slide: {
             kind: "writing",
@@ -454,7 +661,7 @@ export const odL3U15Lab: UnitLab = {
               { q: "There are two loaf of bread on the table.", answer: "There are two loaves of bread on the table." },
               { q: "He needs a bag of soil because he want to plant a seed.", answer: "He needs a bag of soil because he wants to plant a seed." },
             ],
-            checklist: ["Every container has 'of' after it", "The container has -s or -es for more than one (the food stays the same)", "He / she / it + a verb: -s (wants)", "My paragraph has a first sentence and a last sentence"],
+            checklist: ["Every container has 'of' after it", "The container has -s or -es for more than one (the food stays the same)", "He / she / it + a verb: -s (wants)", "My paragraph has a first sentence and a last sentence", "One sentence tells how a food is made, with is / are (the rice is washed)"],
             sayIt: "Say all your fixed sentences to your partner, fast.",
             teacherNote: "Written correction works best when it focuses on two or three error types with a short explanation, so the checklist has three: 'of', the plural on the container, and the verb -s. Fix item 1 together first. 'Loaves' is a bonus: praise it if a child sees it, but do not make it the lesson.",
             tiers: [
@@ -474,12 +681,13 @@ export const odL3U15Lab: UnitLab = {
           "Make a short shopping list of four things: a bag of ___, two boxes of ___ ...",
           "Say your talk three times to a grown-up or a toy. Each time a little faster, like in class.",
           "Record it once. Use 'because' or 'so' to give a reason.",
+          "Add one sentence about how a party food is made, with is / are: 'The cookies are baked in an oven.'",
           "Grown-up: hold the phone and let your child speak; do not say the words for them.",
         ],
         maxSeconds: 180,
         kidSummary: "Say what you will buy with 'a bag of' and 'two boxes of', give a reason, and keep talking without long stops.",
         words: ["bag", "box", "bottle", "jar", "bunch", "loaf", "soil", "seeds"],
-        grammar: ["a / one + measure word + of + food", "two bags of rice, three boxes of cookies", "I need ___ because ___."],
+        grammar: ["a / one + measure word + of + food", "two bags of rice, three boxes of cookies", "I need ___ because ___.", "First, the ___ is / are ___ed. (how it is made)"],
         rubric: [
           { label: "Measure words with of", description: "Says a bag of rice, a jar of honey: the container, then 'of', then the food.", weight: 3 },
           { label: "Plural on the container", description: "Says two bags, three boxes (not two bag, three box); the food does not change.", weight: 2 },

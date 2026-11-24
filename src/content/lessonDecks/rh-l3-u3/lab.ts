@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Reach Higher Level 3, Unit 3 "Life in the Soil"
 // (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 9-10 and preparing
@@ -16,12 +17,303 @@ const base =
 const grownUp =
   "Grown-up: hold the phone and let your child speak; do not say the words for them. Bố mẹ: hãy giữ điện thoại và để con tự nói, đừng nhắc từng chữ.";
 
+// One grammar drill (ages 9-10, working at B1): the lesson's grammar said as whole sentences,
+// changed fast by a sign, in chorus, then pairs, then real talk about their own lives.
+function drill(o: {
+  after: string;
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  feedback: string;
+  note: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): { after: string; slide: Slide } {
+  return {
+    after: o.after,
+    slide: {
+      kind: "fluency",
+      title: o.title,
+      routine: "grammar drill",
+      mode: "pairs",
+      minutes: 7,
+      goal: o.goal,
+      chunks: o.chunks,
+      recycle: o.recycle,
+      rounds: [
+        { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when / unless, T = change the time or tense, or say it another way with the same meaning, P = change the person). The class says the new sentence together." },
+        { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P." },
+        { seconds: 90, say: o.real },
+      ],
+      steps: [
+        "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with every ending (-s, -ed, -est) said clearly.",
+        `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+        "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+        "In round 3 the drill becomes real talk: give your own opinion or experience, and remember one thing your partner said to tell the class.",
+      ],
+      prompts: o.prompts,
+      feedback: o.feedback,
+      teacherNote:
+        o.note +
+        " A drill only helps when the last step is real: round 3 has the children talk about their own lives and opinions, so the form is used for meaning. Keep it brisk; a drill that drags loses its point. Mark nothing in writing: this is about speed and accuracy in speech. The T sign is also the exam's 'rewrite the sentence so that it means the same' task, so the children practise that format by ear.",
+      tiers: [
+        { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+        { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+        { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+      ],
+    },
+  };
+}
+
+const d1 = drill({
+  after: "Prepositions of place",
+  title: "Grammar drill: where is it? Ask it, say no",
+  goal: "Change a sentence about where things are, fast and correct, with the right small word.",
+  chunks: [
+    "The seeds are in the soil, and the sprouts are above it.",
+    "The pot is on the windowsill, next to the fish tank.",
+    "The lotus grows in the pond, among the reeds.",
+    "The school is opposite the flower market.",
+    "The path runs between the pond and the vegetable beds.",
+    "My bike is behind the gate, in front of the shop.",
+  ],
+  recycle: ["If it doesn't rain, the plants will die.", "A frog lives in the pond."],
+  prompts: ["(picture: a garden)", "(picture: a street)", "(picture: a classroom)", "(picture: a pond)", "(picture: a kitchen)"],
+  real: "Real talk: tell your partner where three things are in your own room or on your street. Say one thing you like because of where it is. Your partner draws it quickly and checks.",
+  slips: "'on my pocket', 'at Hanoi', 'between the oak' with one thing, and a missing -s on seeds",
+  feedback:
+    "Prompt, do not tell: for 'The keys are on my pocket' hold up one finger and say 'The keys are ... my pocket?' and let the child choose in or on. For 'between the pond' say 'between the pond and ...?' and wait. For 'I live at Hanoi' repeat it with a rising voice. A missing -s on seeds or reeds gets a tap on the wrist. For a sound, a quick recast: say it right and the child echoes it. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.",
+  note:
+    "Vietnamese uses one word ('ở', 'trong', 'trên') for several English place words, so in / on / at is the commonest slip. The ? and X signs give 'Where is the pot?' and 'The pot isn't on the table'; T makes it a past sentence ('The pot was on the windowsill'); P changes who owns it.",
+  support: ["The ___ is in / on / next to the ___.", "Where is the ___? It's ___ the ___."],
+  stretch: "Say it another way with the same meaning: 'The school is opposite the market' becomes 'The market is opposite the school'. Then add a reason with because.",
+  stretchFrames: ["The ___ is opposite the ___, so ___.", "___, because it is next to ___."],
+});
+
+const d2 = drill({
+  after: "Articles: a, an, the, or nothing",
+  title: "Grammar drill: a, an, the, ask it, say no",
+  goal: "Choose a, an, the or nothing without thinking, in whole sentences, fast.",
+  chunks: [
+    "A farmer planted a seed, and the seed grew into an enormous sunflower.",
+    "It took an hour to plant a hundred trees.",
+    "The Mekong is the longest river in Southeast Asia.",
+    "Seeds need water, light and warm soil.",
+    "She has a cactus and an orchid, and the cactus is easy to look after.",
+    "He goes to a university in the city.",
+  ],
+  recycle: ["The seeds are in the soil, and the sprouts are above it.", "The pot is on the windowsill, next to the fish tank."],
+  prompts: ["(picture: a farm)", "(picture: a market)", "(picture: a river)", "(picture: a school)", "(picture: a kitchen)"],
+  real: "Real talk: tell your partner about a pet, a plant or a place you know. First say 'I have a ...', then talk about 'the ...' you just mentioned, and say why you like it.",
+  slips: "'a hour', 'an university', 'The plants need the water', and no article at all",
+  feedback:
+    "Prompt, do not tell: for 'a hour' say 'a ... or an ... hour?' and let the child listen for the sound. For 'an university' say it back with a rising voice and hold up the sound card (you-). For 'The plants need the water' repeat with the article missing and a pause: 'Plants need ... water?' Say every article clearly and short yourself: children copy what they hear. For a sound, a quick recast is fine. In round 3 note two slips and keep them for the one-minute fix next lesson.",
+  note:
+    "Vietnamese has no articles, so the whole choice is new: a for a first mention, the for the one we know, nothing for plurals and uncountable nouns in general. The sound rule (an hour, a university) is about the first SOUND, not the letter. The ? sign gives 'Is there a seed?'; X gives 'There isn't a seed'; + joins two sentences so that the second one needs 'the'.",
+  support: ["I have a ___. The ___ is ___.", "It's an ___ / a ___."],
+  stretch: "Join two sentences and choose the article: 'There is a bird in the tree. The bird is singing' becomes 'There is a bird in the tree which is singing'. Say it another way with the same meaning.",
+  stretchFrames: ["There is a ___ which ___.", "___ is the ___ in ___."],
+});
+
+const d3 = drill({
+  after: "Prepositions of time",
+  title: "Grammar drill: when? Ask it, say no",
+  goal: "Choose at, on, in, for, during, until or by in a whole sentence, fast and correct.",
+  chunks: [
+    "The seeds sprouted on Tuesday, at about seven in the morning.",
+    "We waited for three weeks until the first blossom opened.",
+    "The flowers open in May, and they last until the end of June.",
+    "Farmers plant rice in spring and harvest it in autumn.",
+    "Hand in your diary by Friday.",
+    "We water the plants every day during the holiday.",
+  ],
+  recycle: ["A farmer planted a seed, and the seed grew into an enormous sunflower.", "The school is opposite the flower market."],
+  prompts: ["(card: Monday)", "(card: May)", "(card: 6:30)", "(card: three weeks)", "(card: the holiday)"],
+  real: "Real talk: tell your partner when you do three things in your week: a day, a time and a month. Say one thing you do for a long time, and one thing you have to finish by a day.",
+  slips: "'in Monday', 'on next week', 'during three weeks', and 'until' for 'by'",
+  feedback:
+    "Prompt, do not tell: for 'in Monday' hold up a finger and say '... Monday: in or on?' and let the child pick. For 'during three weeks' say 'for three weeks? or during ...?' with a pause. For 'by' and 'until' draw the line on the board: a line with a dot means by, a long line means until. For 'on next week' repeat with a rising voice. For a sound, a quick recast is fine. Say every small word clearly yourself.",
+  note:
+    "In Vietnamese a single word ('vào') covers every time word, so at / on / in is learned by size: at is the smallest (a clock time), on is a day, in is a long period. The T sign here includes the exam's 'say it another way': 'Don't hand it in after Friday' becomes 'Hand it in by Friday'. The ? and X signs give 'When did the seeds sprout?' and 'The seeds didn't sprout on Tuesday'.",
+  support: ["I ___ at / on / in ___.", "It lasts for ___ until ___."],
+  stretch: "Say it another way with the same meaning: 'Don't hand it in after Friday' becomes 'Hand it in by Friday'. Then give one reason with because.",
+  stretchFrames: ["Hand it in by ___.", "It lasts for ___, until ___."],
+});
+
+const d4 = drill({
+  after: "Plural nouns",
+  title: "Grammar drill: plurals, ask it, say no",
+  goal: "Say regular and special plurals correctly inside whole sentences, with every ending clear.",
+  chunks: [
+    "The leaves on the bushes turned red in autumn.",
+    "The children planted tomatoes and sweet peppers in boxes.",
+    "Many cities now have rooftop gardens.",
+    "Two sheep and three geese are eating the grass.",
+    "My little brother has lost two teeth this month.",
+    "These berries grow on bushes, and those mice live under them.",
+    "There are two boxes of tomatoes and three bags of rice.",
+  ],
+  recycle: ["We waited for three weeks until the first blossom opened.", "The seeds sprouted on Tuesday, at about seven in the morning."],
+  prompts: ["(card: one leaf)", "(card: a child)", "(card: a tomato)", "(card: a sheep)", "(card: a city)"],
+  real: "Real talk: tell your partner what you saw or bought at a market or in a garden. Say how many of each, and which one you liked the most because of its colour or taste.",
+  slips: "'leafs', 'childrens', 'two informations', and a missing -es on boxes or tomatoes",
+  feedback:
+    "Prompt, do not tell: for 'leafs' say 'one leaf, two ...?' and wait; for 'childrens' hold up a finger and say 'child, ... ?'. For a missing -es on boxes, tap your wrist and say 'boxes' slowly, with the extra sound. For 'two informations' say 'two pieces of ...?'. For a sound, a quick recast is fine: say 'leaves' right and the child echoes it. Say every -s and -es clearly yourself.",
+  note:
+    "Vietnamese has no plural ending, so the -s is the first thing to drop in fast speech. The -ies and -ves forms and the special plurals (children, teeth, feet, mice) are the ones the exam's sound-spot and spelling items check. The T sign changes one into many: 'A child picked a berry' becomes 'The children picked berries'. The P sign changes 'my' into 'our' or 'their'.",
+  support: ["One ___, two ___.", "The ___ are in the ___."],
+  stretch: "Change a whole sentence from one to many, and say it another way with the same meaning: 'A child picked a berry from the bush' becomes 'Some children picked berries from the bushes.'",
+  stretchFrames: ["Some ___ picked ___ from the ___.", "There are ___, so ___."],
+});
+
+const d5 = drill({
+  after: "Defining relative clauses",
+  title: "Grammar drill: who, which, where, join it",
+  goal: "Join two sentences into one with who, which or where, in a smooth whole sentence.",
+  chunks: [
+    "A botanist is a scientist who studies plants.",
+    "My neighbour has a plant which closes its leaves when you touch it.",
+    "Cà Mau has mangrove forests where crabs and birds live.",
+    "The okapi is an animal whose stripes help it hide.",
+    "I like a teacher who explains things slowly.",
+    "This is the park that we visit every Sunday.",
+  ],
+  recycle: ["The leaves on the bushes turned red in autumn.", "Farmers plant rice in spring and harvest it in autumn."],
+  prompts: ["(picture: a scientist)", "(picture: a plant)", "(picture: a forest)", "(picture: a teacher)", "(picture: a park)"],
+  real: "Real talk: describe a person you like, a thing you use every day and a place you love, each in ONE sentence with who, which or where. Your partner guesses what or who it is.",
+  slips: "'a man which grows rice', 'a plant which it climbs', 'a park where has many trees'",
+  feedback:
+    "Prompt, do not tell: for 'a man which grows rice' say 'a man ... grows rice? a person: who or which?' and let the child fix it. For 'a plant which it climbs' repeat it with a rising voice and cross out the extra 'it' with a finger. For 'a park where has many trees' say 'a park ... has many trees?' and wait. For a sound, a quick recast is fine. In round 3 do not correct every slip: note two for the one-minute fix next lesson.",
+  note:
+    "The + sign here is the whole point: two short sentences become one with who / which / where, the exam's combine-the-sentences task. The T sign says it another way with the same meaning ('The park is where we play' becomes 'We play in the park'). Vietnamese puts 'mà / nơi' between the clauses and often keeps the pronoun, which gives 'a plant which it climbs'.",
+  support: ["It's a person who ___.", "It's a thing which ___.", "It's a place where ___."],
+  stretch: "Join three sentences into one, with who and where: 'This is my aunt. She grows herbs. She lives in a village. Herbs grow there well' becomes 'My aunt, who grows herbs, lives in a village where herbs grow well.'",
+  stretchFrames: ["My ___, who ___, lives in ___ where ___.", "It's a ___ which ___, so ___."],
+});
+
+const d6 = drill({
+  after: "The present passive",
+  title: "Grammar drill: the passive, ask it, say no",
+  goal: "Say what is done with is / are and a past participle, in whole sentences, fast and correct.",
+  chunks: [
+    "The forest is protected by law.",
+    "Many medicines are made from rainforest plants.",
+    "Our school garden is watered every morning.",
+    "Hunting is not allowed in the reserve.",
+    "Is coffee grown in Đắk Lắk? Yes, it is.",
+    "Rice is planted by hand in many villages, and it is harvested in summer.",
+  ],
+  recycle: ["A botanist is a scientist who studies plants.", "Cà Mau has mangrove forests where crabs and birds live."],
+  prompts: ["(picture: a forest)", "(picture: a garden)", "(picture: a factory)", "(picture: a market)", "(picture: a rice field)"],
+  real: "Real talk: tell your partner how three things at your home or school are looked after: what is done, when, and by whom. Say one rule that is not allowed there, and why.",
+  slips: "'The forest is protect', 'Coffee grown in Đắk Lắk', 'Trees is cut down'",
+  feedback:
+    "Prompt, do not tell: for 'The forest is protect' say 'The forest is protect ... ?' and tap your wrist for the -ed. For 'Coffee grown in Đắk Lắk' say 'Coffee ... grown?' and hold up a finger for is. For 'Trees is cut down' repeat it with a rising voice and hold up two fingers for are. For a sound, a quick recast is fine. In round 3 note the two slips that matter for the one-minute fix next lesson.",
+  note:
+    "Vietnamese marks the passive with 'được / bị', not with a form of be, so is / are is the word that goes missing. The T sign is the exam's active-to-passive task: 'People protect the forest' becomes 'The forest is protected by people', and back again. The ? and X signs give 'Is the forest protected?' and 'The forest isn't protected'.",
+  support: ["The ___ is / are ___ (by ___).", "Is / Are the ___ ___?"],
+  stretch: "Say it another way with the same meaning, both ways: 'People cut down the trees' and 'The trees are cut down'. Then join two with who or which: 'It is a forest which is protected by law.'",
+  stretchFrames: ["It's a ___ which is ___ by ___.", "___ is not allowed because ___."],
+});
+
+const d7 = drill({
+  after: "Count and noncount nouns",
+  title: "Grammar drill: how much, how many, ask it",
+  goal: "Choose much, many, a few, a little and a lot of, in whole sentences, fast and correct.",
+  chunks: [
+    "There isn't much sunlight under the tall trees, so only a few small plants grow there.",
+    "We need some soil, two pots and a few seeds.",
+    "How much water does a cactus need? Not much.",
+    "How many seeds are in the packet? About twenty.",
+    "There is a lot of rice in the shop, and there are a lot of mangoes too.",
+    "We bought three bags of rice and two bottles of water.",
+  ],
+  recycle: ["Coffee is grown in Đắk Lắk.", "The children planted tomatoes and sweet peppers in boxes."],
+  prompts: ["(card: water)", "(card: seeds)", "(card: rice)", "(card: pots)", "(card: sunlight)"],
+  real: "Real talk: tell your partner what is in your fridge, your bag and your garden or balcony. Say what there is a lot of, what there is not much of, and what you need to buy.",
+  slips: "'three rices', 'many sunlight', 'two foots', 'much seeds'",
+  feedback:
+    "Prompt, do not tell: for 'three rices' say 'three ... of rice?' and let the child add bags or bowls. For 'many sunlight' hold up a finger and say 'can you count sunlight? much or many?'. For 'much seeds' say 'seeds: one, two ... much or many?'. For a sound, a quick recast is fine. In round 3 note two slips for the one-minute fix next lesson.",
+  note:
+    "Vietnamese counts uncountable things with classifiers (một bát cơm), and English count versus noncount is the new split. Keep two lists on the board (seeds, pots, leaves / water, soil, sunlight, rice) for Support children. The T sign is the exam's 'say it another way': 'There aren't many seeds' becomes 'There are only a few seeds'. The ? sign gives 'How much?' or 'How many?'.",
+  support: ["How much ___? A little. / Not much.", "How many ___? A few. / A lot."],
+  stretch: "Say it another way with the same meaning: 'There aren't many seeds' becomes 'There are only a few seeds'. Then add a reason with so.",
+  stretchFrames: ["There isn't much ___, so ___.", "There are only a few ___, so ___."],
+});
+
+const d8 = drill({
+  after: "Level 4 step: the most ... I have ever seen",
+  title: "Grammar drill: the most, the future, I have ever",
+  goal: "Say a superlative, a will or going to sentence, and an 'I have ever' sentence, fast and correct.",
+  chunks: [
+    "The rafflesia has the biggest flower in the world.",
+    "I think bamboo is the most useful plant of all.",
+    "We're going to plant sunflowers on the balcony next week.",
+    "If we protect the forests, our grandchildren will see okapis.",
+    "Look at those clouds: it's going to rain.",
+    "The rafflesia is the biggest flower I have ever seen.",
+    "This is the most delicious fruit I have ever eaten.",
+  ],
+  recycle: ["Coffee is grown in Đắk Lắk.", "A botanist is a scientist who studies plants.", "There isn't much sunlight under the tall trees."],
+  prompts: ["(picture: a tall tree)", "(picture: a big flower)", "(picture: a storm cloud)", "(picture: a fruit)", "(picture: a forest)"],
+  real: "Real talk (the Level 4 step): ask your partner 'What is the most amazing plant, animal or place you have ever seen?' Answer with 'It's the most amazing ... I have ever seen' (or a -est word: 'the tallest ... I have ever seen'), and add where and why.",
+  slips: "'the most tall', 'the goodest', 'We going to plant', and 'I have ever see'",
+  feedback:
+    "Prompt, do not tell: for 'the most tall' say 'tall: short word, so the tall...?' and let the child say tallest. For 'the goodest' say 'good, better, ...?'. For 'We going to plant' hold up a finger for the missing are. For 'I have ever see' tap your wrist and say 'have ever ... seen?' for the participle. For a sound, a quick recast is fine. In round 3 do not correct every slip: note the two that matter and keep them for the unit review.",
+  note:
+    "Rounds 1 and 2 drill this lesson's grammar (superlatives, will, going to); round 3 and the Stretch tier use the Level 4 step, 'the most amazing ... I have ever seen'. The step is present perfect with ever: it talks about all of life up to now, so no finished-time word (not 'yesterday', not 'last year'). The T sign swaps going to and will, and also sets the exam's 'say it another way': 'No other flower is bigger' becomes 'It is the biggest flower'.",
+  support: ["It's the most ___ ___ I have ever seen.", "It's the tallest ___ I have ever seen."],
+  stretch: "Say it another way with the same meaning, then add the step: 'No other flower is bigger than this one' becomes 'This is the biggest flower', and then 'This is the biggest flower I have ever seen'. Ask your partner a question with 'Have you ever ...?' and answer in a whole sentence.",
+  stretchFrames: ["Have you ever ___?", "It's the most ___ ___ I have ever ___."],
+});
+
+const levelStep: { after: string; slide: Slide } = {
+  after: "The most amazing: superlatives; will and going to",
+  slide: {
+    kind: "grammar",
+    title: "Level 4 step: the most ... I have ever seen",
+    hook: "One sentence can say: out of everything in my whole life up to now, this is the best, the biggest or the strangest.",
+    form: [
+      { label: "Pattern", pattern: "the + superlative + noun + I have ever + past participle" },
+      { label: "Short adjective", pattern: "the tallest tree I have ever seen · the biggest flower I have ever seen" },
+      { label: "Long adjective", pattern: "the most amazing insect I have ever seen · the most delicious fruit I have ever eaten" },
+      { label: "Question and answer", pattern: "Have you ever ___? Yes, I have. / No, I haven't. / Never." },
+      { label: "Past participles to know", pattern: "see → seen · eat → eaten · meet → met · read → read · hear → heard · be → been · go → gone" },
+    ],
+    explanation: [
+      "Have / has + past participle (the present perfect) talks about your life up to now without saying when. 'Ever' means 'at any time in your life so far'. So 'the most amazing insect I have ever seen' compares this insect with every insect you have met in your whole life, and it is still true today.",
+      "We use this pattern to give a strong opinion about our own experience: a tree, a meal, a film, a place. It builds on this unit's superlative ('the biggest flower in the world'): the part 'I have ever seen' says whose experience it is, and it takes the place of 'in the world' when we speak about ourselves.",
+      "Do not add a finished time (not 'yesterday', not 'last year', not 'in 2022'): for a finished time we use the past simple, 'I saw the tallest tree last summer'. After 'ever', the second verb is always the past participle, and 'ever' goes between have and the participle.",
+    ],
+    examples: [
+      { text: "The rafflesia is the biggest flower I have ever seen." },
+      { text: "This is the most delicious fruit I have ever eaten.", note: "Participle of eat: eaten." },
+      { text: "Is this the most amazing insect you have ever seen?", note: "A question: the same pattern, you have ever." },
+      { text: "That was the worst storm we have ever had in our village.", note: "Irregular superlative: bad, worse, the worst." },
+      { text: "She is the best gardener I have ever met.", note: "Irregular superlative: good, better, the best." },
+      { text: "A bamboo forest is the quietest place I have ever visited." },
+    ],
+    pitfalls: [
+      { wrong: "It is the most tall plant I have ever seen.", right: "It is the tallest plant I have ever seen.", why: "A short adjective takes -est, not 'the most'." },
+      { wrong: "It is the biggest flower I have ever see.", right: "It is the biggest flower I have ever seen.", why: "After have + ever the verb is the past participle: seen, not see or saw." },
+      { wrong: "It is the most amazing plant I ever have seen.", right: "It is the most amazing plant I have ever seen.", why: "Ever goes after have, before the participle." },
+    ],
+  },
+};
+
 export const rhL3U3Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "rh-l3-u3-l1": {
+      trim: { "Living or not? A mystery bag": 8, "What makes a plant a plant? (concept formation)": 8 },
       objectives: ["I can say where things are, fast and without stopping: in, on, next to, among."],
       add: [
+        d1,
         {
           after: "Exam practice: prepositions",
           slide: {
@@ -113,9 +405,10 @@ export const rhL3U3Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u3-l2": {
-      trim: { "Tell the life cycle, story-style": 9 },
+      trim: { "Tell the life cycle, story-style": 7, "Life cycle in four objects (thinking map)": 8 },
       objectives: ["I can tell the life of a seed in order, using a, an and the, three times, faster each time."],
       add: [
+        d2,
         {
           after: "Exam practice: open cloze (articles)",
           slide: {
@@ -226,9 +519,10 @@ export const rhL3U3Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u3-l3": {
-      trim: { "When does it happen? Seasons in Vietnam": 10 },
+      trim: { "When does it happen? Seasons in Vietnam": 7, "Think and respond": 7, "Write: my growing diary": 12 },
       objectives: ["I can ask and answer 'When ...?' questions quickly, with at, on, in, for and by."],
       add: [
+        d3,
         {
           after: "Exam practice: choose and correct",
           slide: {
@@ -320,8 +614,10 @@ export const rhL3U3Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 4
     "rh-l3-u3-l4": {
+      trim: { "Read the haiku: \"Gifts from the Earth\"": 13, "Write: a haiku sequence": 13, "Generalize: what is so amazing about plants?": 12 },
       objectives: ["I can say plural nouns correctly and quickly: leaves, tomatoes, children, berries."],
       add: [
+        d4,
         {
           after: "Sound spot: plural endings",
           slide: {
@@ -432,9 +728,10 @@ export const rhL3U3Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u3-l5": {
-      trim: { "Desert or rainforest? Odd one out": 9 },
+      trim: { "Desert or rainforest? Odd one out": 6, "Thinking map and sound spot": 9, "Write: a book of riddles": 12 },
       objectives: ["I can define a person, a thing and a place in one smooth sentence with who, which and where."],
       add: [
+        d5,
         {
           after: "Exam practice: combine with who, which, where",
           slide: {
@@ -519,9 +816,10 @@ export const rhL3U3Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 6
     "rh-l3-u3-l6": {
-      trim: { "Guided tour: present the reserve": 10 },
+      trim: { "Guided tour: present the reserve": 8, "Read: \"A Protected Place\"": 14, "Think and respond": 6 },
       objectives: ["I can say what is done and who it is done by, fast, with is / are and a past participle."],
       add: [
+        d6,
         {
           after: "Exam practice: active to passive",
           slide: {
@@ -641,8 +939,9 @@ export const rhL3U3Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 7
     "rh-l3-u3-l7": {
       objectives: ["I can ask 'How much?' and 'How many?' and answer with a few, a little and a lot of."],
-      trim: { "Read: \"Rosie's Reports\" (blog) and compare": 10, "Plan the article (writing project)": 10, "Draft, then edit like an examiner": 22 },
+      trim: { "Read: \"Rosie's Reports\" (blog) and compare": 8, "Plan the article (writing project)": 8, "Draft, then edit like an examiner": 20, "Word work: suffixes": 4 },
       add: [
+        d7,
         {
           after: "Exam practice: word formation",
           slide: {
@@ -726,9 +1025,11 @@ export const rhL3U3Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u3-l8": {
-      trim: { "Transfer: the Most Amazing Plant award": 13 },
+      trim: { "Transfer: the Most Amazing Plant award": 11, "Mock review: explain the answers": 8, "Video case: rainforests around the world": 7 },
       objectives: ["I can give a short speech: 'the most ... plant because ...', in three tellings, faster each time."],
       add: [
+        levelStep,
+        d8,
         {
           after: "Exam practice: superlatives and the future",
           slide: {
@@ -830,7 +1131,7 @@ export const rhL3U3Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Say why your plant is the most amazing, use will and going to, and keep going without long stops.",
         words: ["amazing", "useful", "protect", "forests", "grandchildren", "award"],
-        grammar: ["the most + adjective / adjective + -est", "will / going to"],
+        grammar: ["the most + adjective / adjective + -est", "will / going to", "the most ... I have ever seen"],
         rubric: [
           { label: "Reasons", description: "Gives at least two reasons why the plant is the most amazing.", weight: 2 },
           { label: "Superlatives and future", description: "Uses a correct superlative and 'will' or 'going to' at least once each.", weight: 3 },

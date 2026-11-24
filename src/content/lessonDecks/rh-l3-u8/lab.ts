@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Reach Higher Level 3, Unit 8 "Getting There"
 // (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 9-10 and prepare
@@ -13,13 +14,105 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 const fix =
   "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). Between rounds 1 and 2, stop for one minute: write them on the board and let the class fix them. Children who then speak again use the fixed form. For grammar, make the child fix it themselves (start the phrase and pause, point to the frame, hold up a finger for the missing word, or repeat the error with a rising voice) rather than saying it for them; for a sound, just say it right and let them echo it. Say every final -s, -ed and -t clearly yourself: children copy what they hear. ";
 
+const drillFeedback =
+  "Prompt, do not tell: start the sentence and pause ('You should ...?'), point to the frame, hold up a finger for the missing word, or repeat the slip with a rising voice and let the child fix it. For a sound, a quick recast is enough: say it right and the child echoes. Say every final -s, -ed and -t clearly yourself. In round 3 do not correct every slip: note the two that matter for next lesson's one-minute fix. ";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fix: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when / unless, T = change the time or the tense, P = change the person). The class says the new sentence together." },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with every ending where it belongs.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: give your own opinion or experience, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedback + o.fix,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives and opinions, so the form is used for meaning. Children of 9-10 can take the full set of signs, but go brisk and keep every answer a whole sentence. The Stretch task is the exam's rewrite-with-the-same-meaning format, said aloud first. Mark nothing in writing: this is about speed and accuracy in speech.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const rhL3U8Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "rh-l3-u8-l1": {
       objectives: ["I can give advice with should, ought to, had better and If I were you, fast and without stopping."],
-      trim: { "Four corners: what gets you to a goal?": 7, "Is it a tool for a goal? (concept formation)": 8 },
+      trim: {
+        "Four corners: what gets you to a goal?": 5,
+        "Is it a tool for a goal? (concept formation)": 5,
+        "Pattern hunt: how do we give advice?": 4,
+      },
       add: [
+        {
+          after: "Giving advice: should, ought to, had better, If I were you",
+          slide: drill({
+            "title": "Grammar drill: advice, ask it, say no",
+            "goal": "Change the advice sentence fast and right: ask it, say no, join it with a reason, change the person. Then give real advice for real problems.",
+            "chunks": [
+              "You should ask your teacher, because she knows the exam well.",
+              "You shouldn't stay up late, or you'll be tired tomorrow.",
+              "You ought to read a little every day, although it isn't easy.",
+              "You'd better not forget your ID card, or they won't let you in.",
+              "If I were you, I would practise speaking with a friend.",
+              "What should I do if I feel nervous before a test?"
+            ],
+            "recycle": [
+              "Luckily, nobody was hurt.",
+              "She was walking home when the rain started.",
+              "He always works extremely carefully."
+            ],
+            "prompts": [
+              "You should rest. (?)",
+              "You ought to hurry. (X)",
+              "You should practise every day. (+ because)",
+              "You should sleep early. (T: If I were you ...)",
+              "You'd better ask her. (P: he)"
+            ],
+            "real": "Real talk: tell your partner a real problem you have (a test, a sport, a hard word). Your partner gives you advice with two different phrases. Remember the best advice you heard.",
+            "slips": "'You should to rest', 'You ought study', 'You had better to go' or 'She should goes'",
+            "fix": "Vietnamese has no 'to' or -s ending to copy here, so children add 'to' after should and had better, drop it after ought, and add -s after should. Hold up a finger over the extra word, or pause after the modal and let the child give the plain verb.",
+            "support": [
+              "You should ___.",
+              "You shouldn't ___."
+            ],
+            "stretch": "Say it again with the same meaning, as in the exam: 'You'd better hurry, or you'll be late.' -> 'If you don't hurry, you'll be late.' And 'You should talk to him.' -> 'If I were you, I would talk to him.'",
+            "stretchFrames": [
+              "If I were you, I would ___.",
+              "If you don't ___, you will ___."
+            ]
+          }),
+        },
         {
           after: "The advice clinic",
           slide: {
@@ -102,8 +195,52 @@ export const rhL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u8-l2": {
       objectives: ["I can tell about something I have achieved, and say when I did it, three times, faster each time."],
-      trim: { "Thinking map and reading strategies": 5, "Phonics: suffixes -ant and -ent": 4, "Achievement interviews": 11 },
+      trim: {
+        "Thinking map and reading strategies": 3,
+        "Phonics: suffixes -ant and -ent": 3,
+        "Achievement interviews": 9,
+        "Pattern hunt: when did it happen?": 4,
+      },
       add: [
+        {
+          after: "Present perfect or past simple? Achievements",
+          slide: drill({
+            "title": "Grammar drill: have done or did, ask it, say no",
+            "goal": "Change the sentence fast and right: ask it, say no, join it, choose have done or did, change the person. Then talk about what you have and have not done.",
+            "chunks": [
+              "Have you ever climbed a mountain? Yes, I have, but only a small one.",
+              "I haven't won a medal yet, although I have trained for two years.",
+              "She has lived in Hanoi since 2019, so she knows the city well.",
+              "I went to Sa Pa last winter, and it was freezing.",
+              "When did you start learning English? I started when I was six.",
+              "We have already finished three units this term."
+            ],
+            "recycle": [
+              "You should talk to your teacher about it.",
+              "If I were you, I would make a plan.",
+              "You'd better hurry, or you'll miss the bus."
+            ],
+            "prompts": [
+              "She has visited Hue. (?)",
+              "They have finished. (X)",
+              "He has trained hard. (+ so)",
+              "We went to Hue last year. (T: up to now)",
+              "She has won a prize. (P: they)"
+            ],
+            "real": "Real talk: tell your partner one thing you have done and one thing you have never done. Your partner asks 'When did you ...?' about the first one.",
+            "slips": "'I have won it last year', 'She has went', 'Did you ever climbed' or 'I have live here since 2019'",
+            "fix": "Vietnamese verbs do not change for time, so the choice between have done and did is the big slip. Point to the time word: 'last year' is finished (did), 'since' and 'ever' reach up to now (have done). For 'has went', hold up three fingers for the third form.",
+            "support": [
+              "Have you ever ___?",
+              "I have never ___."
+            ],
+            "stretch": "Say it again with the same meaning, as in the exam: 'I started English in 2020 and I still learn it.' -> 'I have learned English since 2020.' And 'The last time I ate pho was in May.' -> 'I haven't eaten pho since May.'",
+            "stretchFrames": [
+              "I have ___ since ___.",
+              "I haven't ___ since ___."
+            ]
+          }),
+        },
         {
           after: "Achievement interviews",
           slide: {
@@ -250,8 +387,51 @@ export const rhL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u8-l3": {
       objectives: ["I can ask and answer about distance and time (How far? How long does it take?) quickly and clearly."],
-      trim: { "Estimate, then check": 12 },
+      trim: {
+        "Estimate, then check": 9,
+        "Pattern hunt: measuring a journey": 4,
+        "Write: design a fun-run route": 14,
+      },
       add: [
+        {
+          after: "Distance, time and size: How far, How long, It takes",
+          slide: drill({
+            "title": "Grammar drill: how far, how long, twice as",
+            "goal": "Change the sentence fast and right: ask about the number, say no, join it, change the time, change the person. Then measure real journeys you know.",
+            "chunks": [
+              "How far is it from your house to school? It's about two kilometers.",
+              "It takes me ten minutes to cycle to school, although it's quite far.",
+              "How long did it take you to finish the homework? It took me an hour.",
+              "How tall is the tower? It's about a hundred meters tall.",
+              "The lake is twice as long as our school playground.",
+              "The park is half as far as the lake, so we can walk there."
+            ],
+            "recycle": [
+              "She has already tried very hard, but she hasn't won yet.",
+              "Have you ever climbed a mountain? Yes, I have.",
+              "She has lived in Hanoi since 2019, so she knows the city well."
+            ],
+            "prompts": [
+              "It's about two kilometers. (?)",
+              "It takes me an hour. (X)",
+              "It takes me ten minutes to walk. (+ so: I usually go by bike)",
+              "It takes me ten minutes. (T: yesterday)",
+              "It takes me an hour. (P: him)"
+            ],
+            "real": "Real talk: tell your partner how you come to school: how far it is, how long it takes you, and what it is twice as far as, or half as far as. Your partner asks one more question.",
+            "slips": "'It takes me 20 minutes go to school', 'How long does it take to you', 'twice as far than' or 'It takes 20 minutes' with no person",
+            "fix": "Vietnamese says 'mất 20 phút' with no person, so children drop 'me' or put 'to' in the wrong place: write 'It takes + person + time + to + verb' on the board and point to each box. For 'than', say 'as ... as' with a rising voice.",
+            "support": [
+              "How far is it from ___ to ___?",
+              "It takes me ___ to ___."
+            ],
+            "stretch": "Say it again with the same meaning, as in the exam: 'I walk to school in 20 minutes.' -> 'It takes me 20 minutes to walk to school.' And 'The lake is 700 meters long.' -> 'How long is the lake?' for a partner to answer.",
+            "stretchFrames": [
+              "It takes me ___ to ___.",
+              "___ is twice as ___ as ___."
+            ]
+          }),
+        },
         {
           after: "Estimate, then check",
           slide: {
@@ -374,10 +554,51 @@ export const rhL3U8Lab: UnitLab = {
       trim: {
         "Word work: word categories": 3,
         "Read: a myth and a folk tale": 14,
-        "Compare settings and book grammar: past tense": 4,
-        "Write: my goal toolkit": 12,
+        "Compare settings and book grammar: past tense": 3,
+        "Write: my goal toolkit": 10,
+        "Generalize: what tools help us get there?": 12,
+        "Pattern hunt: why did they do it?": 4,
       },
       add: [
+        {
+          after: "Purpose clauses: to, in order to, so that",
+          slide: drill({
+            "title": "Grammar drill: to, in order to, so that",
+            "goal": "Change the sentence fast and right: ask why, say no, join it, change the time, change the person. Then tell your partner why you do real things.",
+            "chunks": [
+              "She saved money to buy new running shoes.",
+              "He left early in order to catch the first bus.",
+              "We made a plan so that everyone could help.",
+              "I wrote the words down in order not to forget them.",
+              "Why did you get up early? I got up early to practise speaking.",
+              "By the time we arrived, the race had already started."
+            ],
+            "recycle": [
+              "How far is it from your house to school?",
+              "It takes me ten minutes to cycle to school.",
+              "If I were you, I would make a plan."
+            ],
+            "prompts": [
+              "She studied hard to pass the test. (?)",
+              "He ran to catch the bus. (X)",
+              "We trained hard to win. (+ although)",
+              "I use a timer so that I can focus. (T: yesterday)",
+              "She wrote it down in order to remember. (P: they)"
+            ],
+            "real": "Real talk: tell your partner one goal you have and what you do to reach it, with 'to', 'in order to' or 'so that'. Your partner asks 'Why?' once.",
+            "slips": "'I went to the shop for buy bread', 'so that pass the test', 'in order to not miss it' or 'so that I can't forget'",
+            "fix": "Vietnamese uses 'để' for all three, so children say 'for buy' and drop the subject after 'so that'. Pause after 'so that' and ask 'Who?' (so that she ...). Point to the frame 'to + verb' for the first two, and note that the negative is 'in order not to'.",
+            "support": [
+              "I ___ to ___.",
+              "We ___ so that we could ___."
+            ],
+            "stretch": "Say it again with the same meaning, as in the exam: 'He took a map. He wanted to find the way.' -> 'He took a map to find the way.' And 'I wrote it down because I didn't want to forget.' -> 'I wrote it down in order not to forget.'",
+            "stretchFrames": [
+              "___ in order to ___.",
+              "___ so that ___ could ___."
+            ]
+          }),
+        },
         {
           after: "Generalize: what tools help us get there?",
           slide: {
@@ -487,7 +708,52 @@ export const rhL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u8-l5": {
       objectives: ["I can talk about plans and arrangements with will, going to and I'm meeting, and keep going."],
+      trim: {
+        "Pattern hunt: three ways to the future": 4,
+        "Intentions: what are you going to do? (Language Focus)": 10,
+        "Thinking map and reading strategies (Part 2)": 3,
+        "Phonics: syllables, then stress": 5,
+      },
       add: [
+        {
+          after: "The future: will, going to, present continuous",
+          slide: drill({
+            "title": "Grammar drill: will, going to, I'm meeting",
+            "goal": "Change the sentence fast and right: ask it, say no, join it with when or because, choose the right future, change the person. Then talk about your real plans.",
+            "chunks": [
+              "I'm going to climb Fansipan next summer, so I'm training every weekend.",
+              "Don't worry, I'll carry your bag if it's too heavy.",
+              "We're meeting at the gate at six, so please don't be late.",
+              "When I get home, I'll do my homework, and then I'll call my cousin.",
+              "Look at those clouds! It's going to rain.",
+              "As soon as the bell rings, we'll go outside."
+            ],
+            "recycle": [
+              "She saved money to buy new running shoes.",
+              "We made a plan so that everyone could help.",
+              "She has lived in Hanoi since 2019, so she knows the city well."
+            ],
+            "prompts": [
+              "She is going to travel. (?)",
+              "I'll help you. (X)",
+              "We're going to leave early. (+ because)",
+              "I'll call you when I get home. (T: yesterday)",
+              "I'm going to climb it. (P: they)"
+            ],
+            "real": "Real talk: tell your partner your real plans for the weekend and for the summer, and one thing you will do when you get home today. Your partner asks one question.",
+            "slips": "'When I will get home', 'I'm going to visiting', 'It will rain' when you can see the clouds, or 'I will to help'",
+            "fix": "Vietnamese uses 'sẽ' for every future, so children say 'will' for all of them and put 'will' after 'when'. Ask 'Plan, decision or something you can see?' and point to the frame. After 'when', 'before' and 'as soon as' hold up a finger: present, not will.",
+            "support": [
+              "I'm going to ___.",
+              "I'll ___ when I ___."
+            ],
+            "stretch": "Say it again with the same meaning, as in the exam: 'My plan is to learn the guitar.' -> 'I'm going to learn the guitar.' And 'I will phone you after I finish dinner.' -> 'After I finish dinner, I will phone you.'",
+            "stretchFrames": [
+              "After I ___, I will ___.",
+              "I'm going to ___."
+            ]
+          }),
+        },
         {
           after: "Diary clash: find a time to train",
           slide: {
@@ -569,8 +835,51 @@ export const rhL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "rh-l3-u8-l6": {
       objectives: ["I can say what I wish and what I would do, and use unless, fast and clearly."],
-      trim: { "Hot seat: Erden Eruç": 10 },
+      trim: {
+        "Hot seat: Erden Eruç": 8,
+        "Pattern hunt: wishes and imagined worlds": 4,
+        "Write: which tool matters most?": 13,
+      },
       add: [
+        {
+          after: "Wishes, imagined situations and unless",
+          slide: drill({
+            "title": "Grammar drill: I wish, if I, unless",
+            "goal": "Change the sentence fast and right: ask it, say no, join it, say it with unless, change the person. Then talk about your real wishes and what you would do.",
+            "chunks": [
+              "I wish I could speak English faster, because I want to talk to everyone.",
+              "If I had more time, I would learn the guitar.",
+              "I wish I were taller, but I'm still growing.",
+              "Unless you practise, you won't get better.",
+              "What would you do if you won a trip anywhere?",
+              "If I were the teacher, I would give less homework."
+            ],
+            "recycle": [
+              "When I get home, I'll do my homework.",
+              "I'm going to climb Fansipan next summer.",
+              "If I were you, I would make a plan."
+            ],
+            "prompts": [
+              "If I won, I would travel. (?)",
+              "If I were rich, I would buy a car. (X)",
+              "I wish I could swim. (+ because)",
+              "Unless you hurry, you'll miss it. (T: say it with If ... don't)",
+              "I wish I had a dog. (P: he)"
+            ],
+            "real": "Real talk: tell your partner three real wishes (I wish I ...) and one thing you would do if one of them came true. Your partner asks 'What would you do if ...?'",
+            "slips": "'I wish I can', 'I wish I have', 'If I will have' or 'Unless you don't practise'",
+            "fix": "Vietnamese says 'ước gì tôi có' with no change of tense, so children keep the present after 'wish' and 'if'. Point to the word 'now' and say 'Not real: one step back', and ask 'Can you say unless with don't?' for the double negative.",
+            "support": [
+              "I wish I ___.",
+              "If I ___, I would ___."
+            ],
+            "stretch": "Say it again with the same meaning, as in the exam: 'If you don't train, you won't win.' -> 'Unless you train, you won't win.' And 'I can't swim, and I want to.' -> 'I wish I could swim.'",
+            "stretchFrames": [
+              "Unless ___, ___ won't ___.",
+              "I wish I could ___."
+            ]
+          }),
+        },
         {
           after: "Hot seat: Erden Eruç",
           slide: {
@@ -719,11 +1028,51 @@ export const rhL3U8Lab: UnitLab = {
       objectives: ["I can tell my story three times, smoother each time, and write speech with the right punctuation."],
       trim: {
         "Read: \"Climbing Toward Her Goal\"": 10,
-        "Compare causes and book grammar: will and going to": 4,
+        "Compare causes and book grammar: will and going to": 3,
         "Plan the story (writing project)": 10,
-        "Tell it before you write it": 7,
+        "Tell it before you write it": 5,
+        "Pattern hunt: how stories speak": 4,
       },
       add: [
+        {
+          after: "Story grammar: speech, -ing openings, -ant and -ent",
+          slide: drill({
+            "title": "Grammar drill: speech, -ing opening, one more detail",
+            "goal": "Change the story sentence fast and right: ask it, say no, join it, move the speech, change the opening or the person. Then tell a real mini-story with one spoken line.",
+            "chunks": [
+              "\"We're nearly there,\" said the guide, smiling at us.",
+              "Holding the map tightly, she chose the left path.",
+              "\"Are you tired?\" asked her brother. \"A little,\" she answered.",
+              "He felt more confident, because he had practised every day.",
+              "Opening the door slowly, I saw a small light.",
+              "It was an important day, so everyone was patient."
+            ],
+            "recycle": [
+              "I wish I could speak English faster.",
+              "Unless you practise, you won't get better.",
+              "She saved money to buy new running shoes."
+            ],
+            "prompts": [
+              "\"I'm ready,\" she said. (?: ask it, \"Are you ready?\" asked ...)",
+              "\"I'm tired,\" he said. (X)",
+              "He opened the box. He smiled. (+ join: start with an -ing word)",
+              "She said, \"I'm ready.\" (T: speech first)",
+              "\"We're nearly there,\" said Dad. (P: she)"
+            ],
+            "real": "Real talk: tell your partner a short story from your own life, with one spoken line and one sentence that starts with an -ing word. Your partner says the spoken line back.",
+            "slips": "'\"I'm tired\" she said' with no comma, 'Running to school, the rain started', 'importent' or 'He said me'",
+            "fix": "Children often skip the comma before the closing marks in speech: tap the board where it goes. For an -ing opening, ask 'Who is running?' so the child puts the right person after the comma. Say '-ant' and '-ent' endings clearly for the spelling.",
+            "support": [
+              "\"___,\" said ___.",
+              "___ing ___, I ___."
+            ],
+            "stretch": "Say it again with the same meaning, as in the exam: 'He picked up the bag. He ran to the gate.' -> 'Picking up the bag, he ran to the gate.' And 'He is patient.' -> 'He has a lot of patience.'",
+            "stretchFrames": [
+              "___ing ___, he ___.",
+              "He has a lot of ___."
+            ]
+          }),
+        },
         {
           after: "Tell it before you write it",
           slide: {
@@ -807,12 +1156,55 @@ export const rhL3U8Lab: UnitLab = {
     "rh-l3-u8-l8": {
       objectives: ["I can tell my journey in the past, present and future in one talk, three times, faster each time."],
       trim: {
-        "Mock review: explain the answers": 8,
-        "Video case: never give up": 8,
-        "Unit wrap-up: fill the toolbox": 4,
+        "Mock review: explain the answers": 6,
+        "Video case: never give up": 6,
+        "Unit wrap-up: fill the toolbox": 3,
         "Transfer: test our big idea": 9,
+        "Pattern hunt: read the tense clues": 4,
       },
       add: [
+        {
+          after: "End-of-level review: all the tenses in one story",
+          slide: drill({
+            "title": "Grammar drill: the whole ladder in one story",
+            "goal": "Change every sentence of the whole year fast and right: ask it, say no, join it, change the time, change the person. Then tell your real story with five different grammar patterns.",
+            "chunks": [
+              "I have never been to Da Nang, although I've wanted to go for three years.",
+              "I used to be afraid of dogs, but now I enjoy playing with them, and I want to learn to train one.",
+              "While we were walking up the hill, it started to rain, so we ran.",
+              "If you practise every day, you'll improve, and if I were you, I would start today.",
+              "The girl who sits next to me has the book that I need.",
+              "By the time we arrived, the match had already started, so we missed the beginning.",
+              "There are too many books in my bag, so it's much heavier than yours, and I have too much to carry.",
+              "It was so hot that I wasn't strong enough to walk far, but next week we're going to swim."
+            ],
+            "recycle": [
+              "The bridge was built in 1998, and it is used by thousands of people.",
+              "The lights are off, so they must be asleep.",
+              "I love pho. So do I.",
+              "I don't like waiting. Neither do I."
+            ],
+            "prompts": [
+              "I have been to Hue. (?)",
+              "I used to live in a village. (X)",
+              "We were walking home. (+ when it started to rain)",
+              "She has lived here since 2019. (T: last year)",
+              "I'm going to swim. (P: they)"
+            ],
+            "real": "Real talk: tell your partner your English journey and your plans, using five different patterns from the whole year, for example used to, have done, while, if and going to. Your partner counts them on their fingers.",
+            "slips": "'I have seen her yesterday', 'When I will finish', 'She is knowing the way', 'I used to went' or 'too much books'",
+            "fix": "This is the whole year at once, so go slowly in round 1. Keep one question for each slip: 'Finished time or up to now?', 'Plan or something you can see?', 'Many (too many) or not many (too much)?'. Say the final -s, -ed and 'd of 'used to' and 'had' clearly yourself.",
+            "support": [
+              "I have never ___.",
+              "I used to ___, but now ___."
+            ],
+            "stretch": "Say it again with the same meaning, as in the exam: 'It was very cold, so we stayed inside.' -> 'It was so cold that we stayed inside.' And 'I started learning English three years ago, and I still learn it.' -> 'I have learned English for three years.'",
+            "stretchFrames": [
+              "It was so ___ that ___.",
+              "I have ___ for ___."
+            ]
+          }),
+        },
         {
           after: "Transfer: test our big idea",
           slide: {

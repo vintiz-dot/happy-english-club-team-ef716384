@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 1 "Festivals
 // and Fun" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10.
@@ -7,16 +8,82 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 // and one short writing routine (plan, write, check, then say it). Three lessons end
 // with a recorded talk for home, built on the routine the class just did. Time comes
 // from games and repeats, never from the book pages or the grammar. All text is original.
+//
+// Level 4 raise (24 Nov 2026): SKY 1 finishes Oxford Discover 3 ready for Oxford Discover 4
+// grammar (B1). Every lesson has a grammar drill, and the unit carries one "Level 4 step":
+// the present perfect with ever and never, against the past simple for a finished time. It
+// sits after the unit's main grammar slide in Lesson 3; the drills of Lessons 4 and 5 use it
+// again, and the talks and the note after it ask for it.
 
 const fix =
   "During a round, listen and do not stop the talk. Note two or three mistakes you hear (no names). Between rounds 1 and 2, write them on the board and let the class fix them in one minute; children who then say it again use the fixed form. For grammar, prompt the child to fix it themselves rather than saying it for them: start the phrase and pause, point to the frame, hold up a finger for the missing word, or repeat the mistake with a rising voice. For a sound, just say it right and let the child echo it. Say every final -s and -ed clearly yourself: children copy what they hear.";
+
+const STEP = "Level 4 step: Have you ever ...? I have never ...";
+
+const drillFeedback =
+  "Prompt, do not tell: for 'I am like swimming' hold up a finger and say 'I ... swimming?'; for a missing 'is' say 'It ... fun?' with a rising voice; for 'Have you ever went' repeat it and say 'Have you ever ... ?' with a finger pointing to the third column of the verb. Say every final -ed, -s and -d clearly yourself. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  minutes: 6 | 7;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fb: string;
+  note: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  const long = o.minutes === 7;
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: o.minutes,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or tense, P = change the person). The class says the new sentence together." },
+      { seconds: long ? 90 : 75, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Try two signs together when you can: X + or T P." },
+      { seconds: long ? 90 : 75, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change it and say the WHOLE new sentence.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them with the class, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about you, and remember one thing your partner said.",
+    ],
+    prompts: o.prompts,
+    feedback: o.fb + " " + drillFeedback,
+    teacherNote: o.note,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
 
 export const odL3U1Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u01-l1": {
       objectives: ["I can say what my favorite sport is and why, smoothly and without long stops."],
-      trim: { "The fun bag": 3, "Two word webs: events and sports": 3, "Fun through the year (SB 6 C)": 5 },
+      trim: {
+        "The fun bag": 3,
+        "Two word webs: events and sports": 3,
+        "Fun through the year (SB 6 C)": 5,
+        "Big Question Chart: know and want to know (SB 6 D)": 3,
+        "Words in context: scan first (SB 9 E)": 3,
+        "Answer before you read (SB 9 F)": 3,
+      },
       drop: ["Festival charades"],
       add: [
         {
@@ -26,7 +93,7 @@ export const odL3U1Lab: UnitLab = {
             title: "Favorite sport sprint",
             routine: "chunk sprint",
             mode: "whole",
-            minutes: 6,
+            minutes: 5,
             goal: "Say the whole sentence, fast and smooth, with no long stops.",
             chunks: [
               "My favorite sport is swimming.",
@@ -60,6 +127,31 @@ export const odL3U1Lab: UnitLab = {
           },
         },
         {
+          after: "Favorite sport sprint",
+          slide: drill({
+            title: "Grammar drill: my sport, ask it, say no",
+            minutes: 7,
+            goal: "Change the sentence fast and right: ask it, say no, join it with because, change the time. Then say something true about you.",
+            chunks: [
+              "My favorite sport is swimming because it is exciting.",
+              "Do you like swimming? Yes, I do. No, I don't.",
+              "I don't like running because it is tiring.",
+              "Last Sunday, I played football with my cousins.",
+              "We were excited because the game was exciting.",
+              "Have you ever been to a lantern festival? No, I have never been to one.",
+            ],
+            recycle: ["How many crayons are there?", "I have glue, chalk and markers.", "There are a lot of markers."],
+            prompts: ["Swimming is fun. (?)", "I like running. (X)", "I like kites. (+ because)", "We watch a race. (T: last Sunday)", "My friend plays chess. (P: we)"],
+            real: "Real talk: tell your partner about a sport or a festival you know. Say how you feel about it and why. Then ask 'Have you ever ...?' and listen to the answer.",
+            slips: "'I am like swimming', 'It fun' (no 'is') or 'Do you likes'",
+            fb: "If a child says 'I am like football', hold up a finger and say 'I ... football?'. If 'It fun', say 'It ... fun?' and wait for 'is'. If 'Do you likes', tap your wrist for the extra -s and say 'Do you ... ?'. For 'Have you ever ...?' in Stretch the child only copies the model: do not teach the rule today.",
+            note: "Today's drill uses the sentences the class already has: favorite sport, because, and the first -ing and -ed words as whole chunks (the rule comes in Lesson 3). The 'Have you ever ...? No, I have never ...' chunk is a taste of the Level 4 step: children copy it and use it in round 3 or Stretch, nothing more. Round 3 must be real: a true opinion about a real sport. Keep it brisk; a drill that drags loses its point.",
+            support: ["Do you like ___? Yes, I do. / No, I don't.", "I like ___ because it is ___."],
+            stretch: "Use two signs at once and ask the taster question: 'Last Sunday I played football because it is exciting. Have you ever played it?'",
+            stretchFrames: ["Have you ever ___? Yes, I have. / No, I have never ___.", "___ because ___."],
+          }),
+        },
+        {
           after: "Think and talk before you read (SB 9 Think)",
           slide: {
             kind: "writing",
@@ -67,7 +159,7 @@ export const odL3U1Lab: UnitLab = {
             routine: "paragraph",
             genre: "opinion",
             mode: "solo",
-            minutes: 9,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the opinion sentence, the two reasons and the closing sentence.",
               "Plan: fill the four boxes with a few words each, not whole sentences. Ask yourself: who, where, when, why?",
@@ -134,7 +226,13 @@ export const odL3U1Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u01-l2": {
       objectives: ["I can tell a partner about an event around the world three times, faster each time."],
-      trim: { "Fact or opinion fingers": 3, "Our festivals and the ones we read about": 3, "Chart: events around the world": 5 },
+      trim: {
+        "Fact or opinion fingers": 3,
+        "Our festivals and the ones we read about": 3,
+        "Chart: events around the world": 3,
+        "Look and predict (SB 10)": 4,
+        "Fact hunt": 6,
+      },
       add: [
         {
           after: "Chart: events around the world",
@@ -174,6 +272,31 @@ export const odL3U1Lab: UnitLab = {
               { level: "Stretch", task: "Add your own opinion and a reason: 'I think it is great because ...'", frames: ["I think it is ___ because ___."] },
             ],
           },
+        },
+        {
+          after: "Event retell: again, faster",
+          slide: drill({
+            title: "Grammar drill: events and feelings",
+            minutes: 6,
+            goal: "Change the event sentence fast and right: ask it, say no, join it with so, change the time or the person. Then talk about a real event.",
+            chunks: [
+              "The festival is exciting, so people feel excited.",
+              "Do people feel bored at the festival? No, they don't.",
+              "In this event, people watch the race because it is exciting.",
+              "Last year, we went to a lantern night, and it was amazing.",
+              "Have you ever seen a boat race? No, I have never seen one.",
+              "I have never been to a lantern night, but I would love to go.",
+            ],
+            recycle: ["My favorite sport is ___. What's yours?", "I like it because it is fun.", "Last Sunday, I played football with my cousins."],
+            prompts: ["The race is exciting. (?)", "People feel bored. (X)", "The show is amazing. (+ so)", "People watch the boats. (T: last year)", "A child feels surprised. (P: we)"],
+            real: "Real talk: tell your partner about an event from the reading or one you know. Say what people do, how it feels, and ask 'Have you ever ...?' Your partner answers.",
+            slips: "'People dances', 'I would love go' or 'The show is amazed'",
+            fb: "If a child says 'People dances', hold up a finger and say 'People ... ?' and wait for 'dance'. If 'I would love go', hold up a finger for the missing word and say 'I would love ... go?'. If 'The show is amazed', point to the thing and pause: 'The show is ... ?'. The sentences with -ed and -ing are chunks today; the rule comes in Lesson 3.",
+            note: "This drill gives the unit's -ed / -ing sentences about events a first run as whole chunks, so the rule in Lesson 3 lands on sentences the children can already say. Do not explain the rule here. The T sign (last year) is the bridge toward the Level 4 step: the 'Have you ever ...?' chunk is copied and used in round 3 or Stretch, and only in Lesson 3 do we say why. Round 3 must be true: a real event, a real opinion.",
+            support: ["Do people ___? Yes, they do. / No, they don't.", "The ___ is ___, so people feel ___."],
+            stretch: "Use two signs at once and ask the taster question: 'Last year we went to a lantern night because it is exciting. Have you ever been to one?'",
+            stretchFrames: ["Have you ever ___? Yes, I have. / No, I have never ___.", "___, so ___."],
+          }),
         },
         {
           after: "Fact hunt",
@@ -224,8 +347,74 @@ export const odL3U1Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u01-l3": {
       objectives: ["I can say how I felt and what a thing was like, fast: 'The race was exciting, so I felt excited.'"],
-      trim: { "Freeze faces": 3, "Class survey: how do you feel about ...?": 5, "Our big idea": 5, "Feelings charades: Are you ...?": 5 },
+      trim: {
+        "Freeze faces": 3,
+        "Class survey: how do you feel about ...?": 5,
+        "Our big idea": 5,
+        "Feelings charades: Are you ...?": 5,
+        "Match the word to the sentence (SB 12 A)": 4,
+        "Five facts, one fact of your own (SB 12 B)": 6,
+        "Circle the word (SB 13 F)": 3,
+      },
       add: [
+        {
+          after: "Excited or exciting? Adjectives with -ed and -ing",
+          slide: {
+            kind: "grammar",
+            title: STEP,
+            hook: "One small word, have, lets you talk about your life so far, without saying when.",
+            form: [
+              { label: "Ask: Have you ever ...?", pattern: "Have + you / we / they + ever + past participle ...?  (Have you ever been to a festival?)" },
+              { label: "Yes: say when with the past", pattern: "Yes, I have. + past simple + a finished time.  (Yes, I have. I went last year.)" },
+              { label: "No: never", pattern: "No, I have never + past participle ...  (No, I have never seen a lion dance.)" },
+              { label: "He / she / it", pattern: "has never + past participle  (My cousin has never felt bored at a race.)" },
+              { label: "Finished time: past simple", pattern: "yesterday, last year, on Saturday, in 2024: past simple only  (I went last year.)" },
+            ],
+            explanation: [
+              "We use have + the past participle to talk about our life so far: things we did at some time, we do not say when. 'Have you ever been to a festival?' asks about your whole life. 'Ever' means 'at any time in your life'. 'Never' means 'not once in your life'.",
+              "When we say exactly WHEN, the time is finished (last year, yesterday, on Saturday), and we use the past simple: 'I went to a lantern night last year.' So the answer to a 'Have you ever ...?' question often has two parts: 'Yes, I have' (life so far), then one past simple sentence (the day it happened).",
+              "It grows out of this unit: you can already say how you felt at an event, with -ed words, and what an event was like, with -ing words. Now you can ask a friend 'Have you ever felt amazed at a magic show?' This is grammar you will meet again in Oxford Discover 4, so every time you practise it now, Level 4 gets easier.",
+            ],
+            examples: [
+              { text: "Have you ever been to a festival at night?", note: "life so far, no time word" },
+              { text: "Yes, I have. I went to a lantern night last year.", note: "'last year' is finished, so past simple" },
+              { text: "I have never seen a lion dance, but I would love to.", note: "never = not once in my life" },
+              { text: "My cousin has never felt bored at a race, because races are exciting.", note: "he / she / it: has" },
+              { text: "Have you ever felt amazed by a magic show? Yes, I have. I was amazed last Saturday." },
+              { text: "We have never won a prize, but we had a lot of fun yesterday.", note: "have never, then past simple with yesterday" },
+            ],
+            pitfalls: [
+              { wrong: "Have you ever went to a festival?", right: "Have you ever been to a festival?", why: "After have we use the past participle (been, seen, eaten), not the past simple (went, saw, ate)." },
+              { wrong: "I have seen it last year.", right: "I saw it last year.", why: "A finished time such as last year needs the past simple. Have + past participle has no finished time." },
+              { wrong: "I have ever been to a race. (meaning no)", right: "I have never been to a race.", why: "Use ever in questions. In a 'no' answer, use never." },
+            ],
+          },
+        },
+        {
+          after: STEP,
+          slide: drill({
+            title: "Grammar drill: -ed, -ing and Have you ever",
+            minutes: 6,
+            goal: "Change the sentence fast and right with -ed and -ing. In round 3, ask and answer 'Have you ever ...?' about real events.",
+            chunks: [
+              "The race was tiring, so I felt tired.",
+              "Are you bored? No, I'm not. I'm interested in dances.",
+              "I was amazed because the show was amazing.",
+              "Have you ever felt bored at a festival? No, I have never felt bored.",
+              "Have you ever been to a lion dance? Yes, I have. I went last year.",
+              "I have never seen a dragon boat race, but I would love to.",
+            ],
+            recycle: ["Last year, we went to a lantern night, and it was amazing.", "In this event, people watch the race because it is exciting.", "I like it because it is fun."],
+            prompts: ["The parade is exciting. (?)", "I felt bored. (X)", "The game was tiring. (+ so)", "We feel excited. (T: yesterday)", "My cousin was surprised. (P: they)"],
+            real: "Real talk: ask your partner 'Have you ever ...?' about a festival, a race or a show. Answer 'Yes, I have. I ... last ...' or 'No, I have never ...'. Then say how it felt, with an -ed or -ing word.",
+            slips: "'I felt exciting', 'Have you ever went' or 'I have seen it last year'",
+            fb: "If a child says 'I felt exciting', point to yourself and pause: 'I felt ... ?' for 'excited', then point to the thing for 'exciting'. If 'Have you ever went', say 'Have you ever ... ?' and point to the new verb card (been / seen / eaten). If 'I have seen it last year', point back over your shoulder for the finished time and say 'Last year, I ... ?' for 'saw'. For the final -d in 'tired' and 'bored', say it right and let the child echo.",
+            note: "Rounds 1 and 2 are the unit grammar (-ed for me, -ing for the thing). Round 3 and Stretch use the Level 4 step: ever / never for life so far, past simple for the day it happened. Keep two columns on the board: 'life so far: have + been / seen' and 'finished time: went / saw'. Do not drill the third column of irregular verbs yet; give the child the participle on a card (been, seen, eaten, won). The more true, personal questions, the better.",
+            support: ["Have you ever ___? Yes, I have. / No, I have never ___.", "The ___ was ___, so I felt ___."],
+            stretch: "Answer with all three parts: 'Yes, I have. I went last year, and it was exciting, so I felt excited.'",
+            stretchFrames: ["Yes, I have. I ___ last ___.", "It was ___, so I felt ___."],
+          }),
+        },
         {
           after: "Feelings charades: Are you ...?",
           slide: {
@@ -317,6 +506,7 @@ export const odL3U1Lab: UnitLab = {
         length: "60-90 seconds",
         steps: [
           "Pick one event. Think of two words: one for the event (-ing) and one for you (-ed).",
+          "Add one sentence like this: 'I have never ___' or 'Have you ever ___?' (and a past simple sentence if you did it).",
           "Say your talk three times to a family member, a toy or the mirror. Each time try to say it a little faster and with fewer stops.",
           "Record it once. Look at the camera and smile.",
           "Watch it once. Listen for the end of the feeling words (-ed and -ing). Tell someone what you did well.",
@@ -324,7 +514,7 @@ export const odL3U1Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Say what the event was like and how you felt. Use -ing for the event and -ed for you. Keep talking without long stops.",
         words: ["excited", "exciting", "boring", "bored", "tired", "tiring"],
-        grammar: ["The ___ was ___ (-ing).", "I felt ___ (-ed).", "The ___ was ___, so I felt ___."],
+        grammar: ["The ___ was ___ (-ing).", "I felt ___ (-ed).", "The ___ was ___, so I felt ___.", "I have never ___. / Have you ever ___?"],
         rubric: [
           { label: "-ed and -ing", description: "Uses -ing for the event and -ed for the person correctly.", weight: 3 },
           { label: "Keeps going", description: "Keeps talking without long stops; whole sentences, not single words.", weight: 3 },
@@ -343,6 +533,9 @@ export const odL3U1Lab: UnitLab = {
     "od2e-l3-u01-l4": {
       objectives: ["I can tell about a day I had fun, with time words, and say it smoother each time I tell it."],
       trim: {
+        "Writing practice (Workbook)": 8,
+        "Listen for the details (SB 14 A)": 5,
+        "Nouns and verbs: one word, two jobs (SB 15 D)": 5,
         "Plan and try your stall": 8,
         "A party I remember (SB 14 Think)": 8,
         "Same and different (SB 15 C)": 8,
@@ -350,6 +543,31 @@ export const odL3U1Lab: UnitLab = {
         "Big Question Review (SB 14-15)": 6,
       },
       add: [
+        {
+          after: "Time words and the past simple",
+          slide: drill({
+            title: "Grammar drill: time words, past, Have you ever",
+            minutes: 6,
+            goal: "Change the past sentence fast and right with time words. In round 3, choose: 'Have you ever ...?' for life so far, past simple for a finished time.",
+            chunks: [
+              "Last weekend, we went to a festival.",
+              "Did you eat noodles at 12:00? Yes, I did. / No, I didn't.",
+              "I didn't go to the fair on Saturday.",
+              "On Saturday, my cousins arrived, and we played football.",
+              "Have you ever won a prize? Yes, I have. I won one last year.",
+              "I have never been to a lion dance, but my cousin went last Tuesday.",
+            ],
+            recycle: ["The race was tiring, so I felt tired.", "Have you ever felt bored at a festival? No, I have never felt bored.", "Have you ever been to a lion dance? Yes, I have. I went last year."],
+            prompts: ["We went to the fair. (?)", "I ate noodles. (X)", "I was tired. (+ because)", "We play football on Saturday. (T: last Saturday)", "My cousin arrived. (P: we)"],
+            real: "Real talk: ask 'Have you ever ...?' about something at a festival. If the answer is yes, ask 'When?' and answer with a time word and the past simple. Then swap.",
+            slips: "'I go to the fair yesterday', 'Did you went' or 'I have went'",
+            fb: "If a child says 'I go to the fair yesterday', point back over your shoulder and say 'Yesterday, I ... ?' and wait for 'went'. If 'Did you went', hold up one finger and say 'Did you ... ?'. If 'We danced in Saturday', point to the frame 'on + day' and pause. For the step: 'I have seen it last year' means a finished time, so say 'Last year, I ... ?' for 'saw'.",
+            note: "Rounds 1 and 2 are the unit grammar: the past simple with time words. Round 3 and Stretch put the two side by side: no time word = 'Have you ever ...?' (life so far); a finished time word = past simple. Ask the class to hold up a 'have' card or a 'did' card when you say a sentence: it makes the choice visible. Past participles go on cards (been, seen, won, eaten); do not make children recite the whole list.",
+            support: ["Did you ___ last ___? Yes, I did. / No, I didn't.", "Have you ever ___? Yes, I have. / No, I have never ___."],
+            stretch: "Answer a 'Have you ever ...?' question in two parts: 'Yes, I have. I saw one on Saturday, and it was exciting.' Then ask your partner a new question.",
+            stretchFrames: ["Yes, I have. I ___ on / last ___.", "No, I have never ___, but I ___ last ___."],
+          }),
+        },
         {
           after: "Timeline talk and shared sentences",
           slide: {
@@ -425,8 +643,34 @@ export const odL3U1Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u01-l5": {
       objectives: ["I can tell the same event story to three friends, with 'so' and 'because', and write a note about it."],
-      trim: { "Remember it!": 3, "Does the rule work here too?": 3 },
+      trim: { "Remember it!": 3, "Does the rule work here too?": 3, "Grammar mystery: the Lantern Night": 5, "Grammar detectives: Is / Is Not": 8, "Festival stamp rally": 7 },
+      drop: ["Me and the thing"],
       add: [
+        {
+          after: "Grammar: -ed and -ing adjectives",
+          slide: drill({
+            title: "Grammar drill: champion round",
+            minutes: 6,
+            goal: "Change the sentence fast and right with -ed and -ing, and with 'Have you ever ...?' and 'I have never ...'. Then talk about real events from your life.",
+            chunks: [
+              "The magic show was amazing, so we felt amazed.",
+              "I felt tired because the walk was tiring.",
+              "Have you ever felt surprised at a festival? Yes, I have.",
+              "I have never felt bored at a fair, but I felt bored in a long queue last week.",
+              "Have you ever seen a lion dance? Yes, I have. I saw one last Saturday.",
+              "I have never seen a lion dance, so I would love to go.",
+            ],
+            recycle: ["Have you ever won a prize? Yes, I have. I won one last year.", "I didn't go to the fair on Saturday.", "Have you ever been to a lion dance? Yes, I have. I went last year."],
+            prompts: ["The show was amazing. (?)", "I felt excited. (X)", "The queue was boring. (+ so)", "We feel tired. (T: last weekend)", "My cousin has never been to a race. (P: I)"],
+            real: "Real talk, champion round: ask 'Have you ever ...?' about a festival, a race or a show. Answer with ever / never, add a past simple sentence with a finished time, and say how it felt with an -ed and an -ing word.",
+            slips: "'The show was amazed', 'Have you ever went' or 'I have ever seen it'",
+            fb: "If a child says 'The show was amazed', point to the thing and pause: 'The show was ... ?' for 'amazing'. If 'Have you ever went', say 'Have you ever ... ?' and point to the participle card. If 'I have ever seen it', hold up a finger for 'never' in a no answer. If 'I have seen it last year', point back over your shoulder: 'Last year, I ... ?' for 'saw'.",
+            note: "The last drill of the unit covers both grammars: -ed / -ing in rounds 1 and 2, the Level 4 step in round 3 and Stretch. Praise a child who uses the three parts together: 'Yes, I have. I went last Saturday, and it was exciting, so I felt excited.' That one sentence has the unit grammar, the step and a finished time. Children who need a model hear it from you first.",
+            support: ["Have you ever ___? Yes, I have. / No, I have never ___.", "The ___ was ___, so I felt ___."],
+            stretch: "Say the three-part answer in one go, then ask your partner a new 'Have you ever ...?' question with an -ed word: 'Have you ever felt amazed at a show?'",
+            stretchFrames: ["Yes, I have. I ___ last ___, and it was ___, so I felt ___.", "Have you ever felt ___ at ___?"],
+          }),
+        },
         {
           after: "Robin's fun diary: who knows what?",
           slide: {
@@ -482,10 +726,10 @@ export const odL3U1Lab: UnitLab = {
             ],
             text: {
               title: "A note about Lantern Night",
-              text: "Hi! Last Saturday, I went to a lantern night with my family. The lanterns were beautiful, and the music was relaxing, so I felt relaxed. My little brother was surprised because a big lantern moved! It was a great night. Come with us next year!",
+              text: "Hi! Last Saturday, I went to a lantern night with my family. The lanterns were beautiful, and the music was relaxing, so I felt relaxed. My little brother was surprised because a big lantern moved! I have never seen a lantern move before. It was a great night. Come with us next year!",
             },
             frames: ["Last ___, I went to ___.", "The ___ was ___, so I felt ___.", "It was a ___ day!"],
-            checklist: ["-ed for how I feel (relaxed, surprised)", "-ing for the thing (relaxing)", "Past verbs: went, was, were"],
+            checklist: ["-ed for how I feel (relaxed, surprised)", "-ing for the thing (relaxing)", "Past verbs: went, was, were", "One sentence with ever or never: I have never ___ / Have you ever ___?"],
             sayIt: "Read your note to a partner, then say it to another friend without looking.",
             teacherNote: "A model first, then the child's own text, helps children see what a good note looks like before they write. Point out the three parts of the model: where, how it was, how I felt. The model is original and made up. Keep the correction to the two or three things on the checklist.",
             tiers: [
@@ -503,6 +747,7 @@ export const odL3U1Lab: UnitLab = {
         length: "60-90 seconds",
         steps: [
           "Look at your note and your timeline from class.",
+          "Add one sentence like this: 'I have never ___' or 'Have you ever ___?'",
           "Say your talk three times to a family member, a toy or the mirror. Each time try to say it a little faster and with fewer stops.",
           "Record it once. Look at the camera and smile.",
           "Watch it once. Tell someone one thing you did well and one thing to do better next time.",
@@ -510,7 +755,7 @@ export const odL3U1Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Tell what the event was like and how you felt, with -ing and -ed, and keep talking without long stops.",
         words: ["excited", "exciting", "amazed", "amazing", "relaxed", "relaxing"],
-        grammar: ["The ___ was ___, so I felt ___.", "I felt ___ because the ___ was ___.", "Last ___, I went to ..."],
+        grammar: ["The ___ was ___, so I felt ___.", "I felt ___ because the ___ was ___.", "Last ___, I went to ...", "I have never ___, but last ___, I ___."],
         rubric: [
           { label: "-ed and -ing", description: "Uses -ing for the thing and -ed for the person correctly.", weight: 3 },
           { label: "Keeps going", description: "Keeps talking without long stops; whole sentences, not single words.", weight: 3 },

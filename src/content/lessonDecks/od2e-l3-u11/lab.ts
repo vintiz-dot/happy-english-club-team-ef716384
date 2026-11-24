@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 11 "Orchestras and
 // Mystery Sounds" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10
@@ -18,12 +19,61 @@ const fixCompare =
 const fixPossessive =
   "Listen for a dropped 's ('the conductor baton'), the apostrophe in the wrong place ('the conductors baton', 'the childrens' songs'), and a possessive 's turned into a plural -s. Prompt the fix: start 'The conductor ...' and pause, point to the owner on the board, or hold up a finger for the missing 's. Do not say the sentence for them. Say it clearly yourself: 'the conductor's baton' has an extra s sound that children often do not hear. Sounds can be recast: say the word right and let them echo it.";
 
+const drillFeedback =
+  "Prompt, do not tell: for 'more louder' hold up one finger and say 'A drum is loud ...?'; for a missing 'the' before -est, hold up one finger; for 'bigger that' tap your ear and say 'than'. Say your own -er, -est, 's and final sounds clearly. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then in pairs, then real talk (ages 8-10).
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+  note: string;
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or the tense, P = change the person). The class says the new sentence together." },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Try two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the child with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say your own idea or story, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedback + " Likely slips here: " + o.slips + ".",
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. " + o.note + " Keep it brisk; a drill that drags loses its point. Mark nothing in writing: this is about speed and accuracy in speech.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U11Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u11-l1": {
       objectives: ["I can say what a musician or a worker is and does, in whole sentences, without stopping."],
-      trim: { "Mystery sound box": 3, "Music or noise?": 3, "Word webs: instruments and people (SB 108 B)": 6, "Other instruments we know (SB 108 C)": 4 },
+      trim: { "Mystery sound box": 3, "Music or noise?": 3, "Word webs: instruments and people (SB 108 B)": 4, "Other instruments we know (SB 108 C)": 3, "Think and answer (SB 106 C)": 4, "Big Question Chart: know and want to know (SB 106 D)": 4, "Making inferences (SB 109 D)": 8, "Words in context: scan first (SB 109 E)": 4 },
       add: [
         {
           after: "Would you like this job?",
@@ -62,6 +112,29 @@ export const odL3U11Lab: UnitLab = {
               { level: "Stretch", task: "Add a reason: 'I would like this job because ... but I wouldn't like ...'", frames: ["I would like this job because ___."] },
             ],
           },
+        },
+        {
+          after: "Job sprint: who is it?",
+          slide: drill({
+            title: "Grammar drill: compare jobs and sounds",
+            goal: "Change the sentence fast and right: ask it, say no, join it with because, change the time or the person. Then talk about the sounds and jobs you like.",
+            chunks: [
+              "A drum is louder than a flute.",
+              "Is a conductor more important than a drummer? Yes, he is.",
+              "A flute isn't louder than a drum, so I can hear it less.",
+              "The drum is the loudest instrument because it is the biggest.",
+              "A scientist is more interesting than a cook, so I like that job more.",
+              "Yesterday the music was louder than the traffic.",
+            ],
+            recycle: ["There are too many cars and not enough buses.", "It must be a drum; it can't be a flute.", "Have you ever heard a live orchestra?"],
+            prompts: ["A violin is quieter than a drum. (?)", "A cello is louder than a drum. (X)", "A conductor is a good job. (+ because)", "The music is loud today. (T: yesterday)", "She is the best player. (P: they)"],
+            real: "Real talk: tell your partner which job or sound you like best and which one is the loudest or the quietest. Compare it with one more and say why with because. Your partner says if they agree.",
+            slips: "'more louder', 'bigger that' for 'bigger than' and a missing 'the' before -est",
+            support: ["A ___ is ___er than a ___.", "Is a ___ ___er than a ___? Yes, it is."],
+            stretch: "A small step toward Level 4: say HOW MUCH. 'A drum is much louder than a flute, but a bit quieter than a trumpet.'",
+            stretchFrames: ["A ___ is much ___er than a ___.", "It is a bit ___er than a ___."],
+            note: "This lesson comes before the unit's comparing grammar, so keep to the easy adjectives (loud, quiet, big, small, good) and the frame on the board. Stretch gives a first taste of much and a bit, which Lesson 3 teaches properly.",
+          }),
         },
         {
           after: "Other instruments we know (SB 108 C)",
@@ -112,7 +185,7 @@ export const odL3U11Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u11-l2": {
       objectives: ["I can tell a mystery story in order, again and again, a little faster each time."],
-      trim: { "Instrument families": 3, "Home talk: favorite instruments": 3, "Invent a mystery guest": 8 },
+      trim: { "Instrument families": 3, "Home talk: favorite instruments": 3, "Invent a mystery guest": 7, "Reading circle: the Think boxes (SB 110-111)": 10, "Inference chart: sound, clue, guess, truth": 8, "Two emails (writing from a character's view)": 8 },
       add: [
         {
           after: "Retell it in 60 seconds",
@@ -151,6 +224,29 @@ export const odL3U11Lab: UnitLab = {
               { level: "Stretch", task: "Add a feeling and a reason: 'They felt scared because the sound was deafening.'" },
             ],
           },
+        },
+        {
+          after: "Mystery retell: shorter each time",
+          slide: drill({
+            title: "Grammar drill: compare the mystery sounds",
+            goal: "Change the sentence fast and right: ask it, say no, join it with because or so, change the time or the person. Then talk about a strange sound you have heard.",
+            chunks: [
+              "The second sound was louder than the first sound.",
+              "Was the sound quieter than the rain? No, it wasn't.",
+              "It was the strangest sound in the hall.",
+              "The story was more exciting than the film because the sound was a surprise.",
+              "Which clue was easier, the sound or the smell?",
+              "The hall was quieter than the street, so we heard every sound.",
+            ],
+            recycle: ["While we were listening, we heard a strange sound.", "I was reading when I heard a noise.", "The hall was big enough for the whole school."],
+            prompts: ["The sound was louder than the wind. (?)", "The second clue was easier. (X)", "The sound was strange. (+ so)", "The door is loud now. (T: yesterday)", "I was scared. (P: they)"],
+            real: "Real talk: tell your partner about a strange or loud sound you heard at home or on the street. Was it louder or quieter than another sound? What did you think it was?",
+            slips: "'more loud', 'It was loud than' and a present verb for the past ('hear' for 'heard')",
+            support: ["The sound was ___er than ___.", "Was it ___er than ___? Yes, it was."],
+            stretch: "A small step toward Level 4: say HOW MUCH. 'It was much louder than the fan, but a bit quieter than the thunder.'",
+            stretchFrames: ["It was much ___er than ___.", "It was a bit ___er than ___, but ___."],
+            note: "The story lesson uses the past: was / were with a comparing word. Keep 'than' on the board. Stretch gives a first taste of much and a bit, which Lesson 3 teaches properly.",
+          }),
         },
         {
           after: "Two emails (writing from a character's view)",
@@ -228,7 +324,7 @@ export const odL3U11Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u11-l3": {
       objectives: ["I can ask and answer 'Which is louder?' and 'Which is the loudest?' fast, without stopping."],
-      trim: { "Loud, louder, loudest": 4, "Compliment your partner! (SB 113 G)": 7, "Our big idea": 6, "Fix the sentence": 3 },
+      trim: { "Loud, louder, loudest": 4, "Compliment your partner! (SB 113 G)": 7, "Our big idea": 6, "Fix the sentence": 3, "Rank it: three things": 8, "Discover the rule: card sort": 9 },
       add: [
         {
           after: "Rank it: three things",
@@ -270,6 +366,61 @@ export const odL3U11Lab: UnitLab = {
           },
         },
         {
+          after: "Comparing things: -er / -est and more / most",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: much louder, the loudest I have ever heard",
+            hook: "Is it a bit louder or much louder? And what is the loudest sound you have ever heard?",
+            form: [
+              { label: "A small difference", pattern: "a bit / a little + comparative + than (a bit quieter than)" },
+              { label: "A big difference", pattern: "much / far + comparative + than (much louder than, far more exciting than)" },
+              { label: "My best so far", pattern: "the + superlative + noun + I have ever + past participle (the loudest drum I have ever heard)" },
+              { label: "Asking", pattern: "What is the ___est ___ you have ever ___? (What is the funniest song you have ever heard?)" },
+            ],
+            explanation: [
+              "You already know that louder than compares two things. Now you can say HOW MUCH louder. A bit and a little show a small difference. Much and far show a big difference. They go in front of the comparing word: much louder, a bit quieter, far more exciting.",
+              "You also know the loudest of three. Now you can say the loudest in your whole life! After the superlative we add a short clause: I have ever heard, I have ever seen, I have ever played. Ever means in all my life until now, and we use have + the past participle (heard, seen, played), as in Unit 1.",
+              "Watch this: much, a bit, a little and far sit in front of -er or more and say how big the difference is. We never use two comparing signals together: much louder, not much more louder. You will meet this grammar again in Oxford Discover Level 4, so it is a good habit to start now.",
+            ],
+            examples: [
+              { text: "The drum is much louder than the flute." },
+              { text: "The cello is a bit quieter than the trombone." },
+              { text: "This concert was far more exciting than the last one.", note: "far + more + long adjective" },
+              { text: "That is the loudest drum I have ever heard." },
+              { text: "It was the most beautiful song I have ever listened to." },
+              { text: "What is the funniest sound you have ever heard?" },
+            ],
+            pitfalls: [
+              { wrong: "The drum is much more louder than the flute.", right: "The drum is much louder than the flute.", why: "Louder already has the comparing signal -er. Add much, not more." },
+              { wrong: "It is the loudest drum I ever hear.", right: "It is the loudest drum I have ever heard.", why: "After ever we need have + the past participle: heard." },
+              { wrong: "A drum is very louder than a flute.", right: "A drum is much louder than a flute.", why: "Very does not go with a comparing word. Use much, far, a bit or a little." },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: much louder, the loudest I have ever heard",
+          slide: drill({
+            title: "Grammar drill: much, a bit and the loudest",
+            goal: "Change the sentence fast and right. Rounds 1 and 2: comparing with -er, -est, more and most. Round 3: say HOW MUCH and say the best you have ever heard.",
+            chunks: [
+              "A trombone is louder than a violin.",
+              "Is the drum the loudest of the three? Yes, it is.",
+              "A drum is much louder than a flute.",
+              "The cello is a bit quieter than the trombone.",
+              "That is the loudest drum I have ever heard.",
+              "It was the most exciting concert I have ever seen.",
+            ],
+            recycle: ["There are too many drums and not enough chairs.", "It must be a trumpet; it can't be a violin.", "Have you ever played the cello? No, I have never played it."],
+            prompts: ["A drum is louder than a flute. (?)", "The cello is bigger than the violin. (X)", "I like the trumpet. (+ because)", "The song is a bit quieter. (T: yesterday)", "A flute is a bit quieter than a drum. (P: they)"],
+            real: "Real talk: tell your partner the loudest, funniest or best thing you have ever heard or seen. Use 'the ___est ... I have ever ...' and say how much it was better than something else, with much or a bit.",
+            slips: "'much more louder', 'the loudest drum I ever hear' and a missing 'the' before -est",
+            support: ["A ___ is much ___er than a ___.", "It is the ___est ___ I have ever ___."],
+            stretch: "Use a long adjective and a reason: 'It is far more beautiful than the piano, and it is the most relaxing sound I have ever heard.'",
+            stretchFrames: ["It is far more ___ than ___.", "It is the most ___ ___ I have ever ___."],
+            note: "Rounds 1 and 2 keep the Lesson 3 grammar fast; round 3 and Stretch carry the Level 4 step (much / a bit / far and I have ever heard). Do not teach the present perfect again here: the children know have + past participle from Unit 1.",
+          }),
+        },
+        {
           after: "Complete the chart (SB 113 F)",
           slide: {
             kind: "writing",
@@ -304,7 +455,7 @@ export const odL3U11Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u11-l4": {
       objectives: ["I can say who owns something and compare things, again and again, in one smooth quiz show."],
-      trim: { "Songs we sing (SB 114 Think)": 4, "Possessive match game": 3, "Big Question Review (SB 114-115)": 4, "Compare two things at school": 3 },
+      trim: { "Songs we sing (SB 114 Think)": 4, "Possessive match game": 3, "Big Question Review (SB 114-115)": 4, "Compare two things at school": 3, "Listen and match: names and voices (SB 114 A)": 6, "Listen again: voices and meanings (SB 114 B)": 4, "Writing practice (Workbook)": 8, "Comparative questions (SB 114 C)": 8, "From verb to adjective: suffix -ing (SB 115 D)": 6, "Choose the possessive noun (SB 115 E)": 4 },
       add: [
         {
           after: "Plan and rehearse your quiz show",
@@ -343,6 +494,29 @@ export const odL3U11Lab: UnitLab = {
               { level: "Stretch", task: "Add a because: 'The bassoon's sound is deeper than the flute's because it is longer.'" },
             ],
           },
+        },
+        {
+          after: "Possessive nouns: 's and s'",
+          slide: drill({
+            title: "Grammar drill: whose is it, which is louder",
+            goal: "Change the sentence fast and right. Rounds 1 and 2: owner words with 's and s'. Round 3: compare, say HOW MUCH, and say the best you have ever seen.",
+            chunks: [
+              "The conductor's baton is white.",
+              "The musicians' chairs are in a circle.",
+              "Is this the conductor's baton? No, it isn't. It is the drummer's stick.",
+              "The children's choir is much louder than the band.",
+              "The cello's sound is a bit deeper than the violin's.",
+              "The loudest drum I have ever heard is the school's big drum.",
+            ],
+            recycle: ["If it rains, we will practice inside.", "Look at the clouds: it is going to rain.", "The room is big enough for the whole choir."],
+            prompts: ["The conductor's baton is white. (?)", "The musicians' chairs are red. (X)", "The children's choir sings well. (+ because)", "The drummer's stick is long. (T: yesterday)", "The conductor's baton is thin. (P: the conductors')"],
+            real: "Real talk: tell your partner about something that belongs to a person in your family or class and compare it with something of someone else: 'My mother's phone is much newer than my father's.' Then say the best thing you have ever seen at school.",
+            slips: "'the conductors baton' for 'the conductor's baton', 'the childrens' songs' and 'much more louder'",
+            support: ["The ___'s ___ is ___.", "Is this the ___'s ___? Yes, it is."],
+            stretch: "Use two owners and the step: 'The conductor's baton is much longer than the drummer's stick, and it is the thinnest baton I have ever seen.'",
+            stretchFrames: ["The ___'s ___ is much ___er than the ___'s.", "It is the ___est ___ I have ever ___."],
+            note: "Rounds 1 and 2 keep the possessive 's and s' fast. In speech 's and s' sound the same, so listen for the dropped 's and check the owner by asking 'How many conductors?'. Round 3 and Stretch bring back the Level 4 step: much / a bit and I have ever seen.",
+          }),
         },
         {
           after: "Choose the possessive noun (SB 115 E)",
@@ -392,7 +566,7 @@ export const odL3U11Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u11-l5": {
       objectives: ["I can talk about my favorite instrument for a minute and compare it, three times, a little faster each time."],
-      trim: { "Remember it!": 4, "Which is it? The class survey puzzle": 10, "The Orchestra Line-up": 8 },
+      trim: { "Remember it!": 4, "Which is it? The class survey puzzle": 10, "The Orchestra Line-up": 7, "Grammar detectives: Is / Is Not": 8, "Champion talk: 3 rounds": 9, "Write a comparing paragraph": 10 },
       add: [
         {
           after: "Which is it? The class survey puzzle",
@@ -432,6 +606,29 @@ export const odL3U11Lab: UnitLab = {
           },
         },
         {
+          after: "Grammar: comparing with -er, -est, more and most",
+          slide: drill({
+            title: "Grammar drill: compare, pick the best, say how much",
+            goal: "Change the sentence fast and right. Use the whole Unit 11 grammar and the Level 4 step: -er, -est, more, most, much, a bit and 'the ___est ... I have ever ...'.",
+            chunks: [
+              "Of the three, the bassoon is the deepest.",
+              "The cello is much deeper than the violin.",
+              "The trumpet is a bit louder than the trombone.",
+              "It was the most exciting concert I have ever been to.",
+              "Is that the best song you have ever heard?",
+              "The drummer's solo was far louder than the choir's song.",
+            ],
+            recycle: ["We are playing at the festival on Saturday.", "That is the girl who plays the cello.", "It must be a flute; it can't be a drum."],
+            prompts: ["The bassoon is deeper than the flute. (?)", "The cello is the loudest. (X)", "The concert was exciting. (+ because)", "The drum is much louder than the flute. (T: last year)", "I think the drum is the best. (P: she)"],
+            real: "Champion round: choose the best sound or instrument you have ever heard. Compare it with two others, using much and a bit, and say why with because. Your partner agrees or disagrees with a reason.",
+            slips: "'much more louder', 'the most noisiest', 'I ever heard' and a missing 'the' before -est",
+            support: ["A ___ is much ___er than a ___.", "It is the ___est ___ I have ever ___."],
+            stretch: "Join it all with a long adjective and although: 'The cello is the most relaxing sound I have ever heard, although it is a bit quieter than the piano.'",
+            stretchFrames: ["It is the most ___ ___ I have ever ___, although ___.", "It is far more ___ than ___."],
+            note: "The last lesson of the unit covers both: the Unit 11 comparing grammar in rounds 1 and 2, and the Level 4 step (much / a bit / far and 'the ___est ... I have ever ...') in round 3 and Stretch. Listen for 'ever' with a past participle: 'I have ever heard', not 'I ever hear'.",
+          }),
+        },
+        {
           after: "Write a comparing paragraph",
           slide: {
             kind: "writing",
@@ -447,10 +644,10 @@ export const odL3U11Lab: UnitLab = {
             ],
             text: {
               title: "My favorite sound",
-              text: "My favorite sound is rain on the window. It is softer than a drum and more relaxing than a song. I think it is the most peaceful sound at night. It helps me sleep, so I like it better than my alarm clock. That is why rain is my favorite sound.",
+              text: "My favorite sound is rain on the window. It is much softer than a drum and more relaxing than a song. I think it is the most peaceful sound I have ever heard. It helps me sleep, so I like it better than my alarm clock. That is why rain is my favorite sound.",
             },
-            frames: ["My favorite sound is ___.", "It is ___er than ___ and more ___ than ___.", "I think it is the most ___ sound because ___.", "That is why ___ is my favorite."],
-            checklist: ["Topic sentence, three supporting sentences and a closing sentence", "Comparing words: -er + than, more ... than, the -est, the most", "A capital letter and a full stop in every sentence"],
+            frames: ["My favorite sound is ___.", "It is ___er than ___ and more ___ than ___.", "I think it is the most ___ sound because ___.", "It is the most ___ sound I have ever ___.", "That is why ___ is my favorite."],
+            checklist: ["Topic sentence, three supporting sentences and a closing sentence", "Comparing words: -er + than, more ... than, the -est, the most", "One sentence with the Level 4 step: much / a bit + -er, or 'the ___est ... I have ever heard'", "A capital letter and a full stop in every sentence"],
             sayIt: "Read your paragraph to your partner, then say it again without looking.",
             teacherNote: "Plan, write, check is the strategy children are taught step by step. After the Champion paragraph this is a shorter, more personal version, so the child writes what they already said in the 4-3-2. The model is a different topic so nobody copies it word for word.",
             tiers: [
@@ -469,23 +666,23 @@ export const odL3U11Lab: UnitLab = {
         steps: [
           "Choose three sounds at home or three instruments you know.",
           "Say your comparison three times to a grown-up or a toy. Each time a little faster.",
-          "Record it once. Look at the camera and keep going.",
+          "Record it once. Look at the camera and keep going. Say one sentence with 'the ___est ... I have ever heard'.",
           "Grown-up: hold the phone and let your child speak; please do not say the words for them.",
         ],
         maxSeconds: 180,
         kidSummary: "Compare three sounds, pick the best one, give a reason and keep talking without long stops.",
         words: ["louder", "softer", "deeper", "more relaxing", "the most exciting", "better", "the best"],
-        grammar: ["-er + than / more ... than", "the -est / the most ...", "better, the best"],
+        grammar: ["-er + than / more ... than", "much / a bit + -er than", "the -est / the most ...", "the loudest ... I have ever heard", "better, the best"],
         rubric: [
-          { label: "Comparing words", description: "Uses -er / more + than for two things and the -est / the most for three.", weight: 3 },
+          { label: "Comparing words", description: "Uses -er / more + than for two things (with much or a bit when it fits) and the -est / the most for three, and one sentence with 'I have ever ...'.", weight: 3 },
           { label: "A reason", description: "Gives at least one reason with because or so.", weight: 2 },
           { label: "Keeps going", description: "Talks without long stops; whole sentences, not single words.", weight: 3 },
           { label: "Clear endings", description: "Final sounds -er, -est and -s can be heard.", weight: 1 },
         ],
         tiers: [
           { level: "Support", who: "Children who need the frames", frames: ["The ___ is ___er than the ___.", "The ___ is the best.", "I like it because ___."], tips: ["Hold up each sound or picture as you speak."] },
-          { level: "Core", who: "Most children", frames: ["The ___ is ___er than the ___.", "The ___ is more ___ than the ___.", "Of the three, the ___ is the ___est because ___."], tips: ["Say one reason for your best sound."] },
-          { level: "Stretch", who: "Children who are ready for more", frames: ["My family's favorite sound is the ___, but mine is the ___, because ___.", "I think the best sound is ___, but you may not agree."], tips: ["Add another person's opinion and your own."] },
+          { level: "Core", who: "Most children", frames: ["The ___ is much ___er than the ___.", "The ___ is more ___ than the ___.", "Of the three, the ___ is the ___est because ___."], tips: ["Say one reason for your best sound."] },
+          { level: "Stretch", who: "Children who are ready for more", frames: ["My family's favorite sound is the ___, but mine is the ___, because ___.", "It is the ___est sound I have ever heard, but you may not agree."], tips: ["Add another person's opinion and your own."] },
         ],
       },
     },

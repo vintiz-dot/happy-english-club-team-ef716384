@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Reach Higher Level 3, Unit 5 "Mysteries of Matter"
 // (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 9-10 (Jupiter,
@@ -16,13 +17,327 @@ const fix =
 const how =
   "During a round, listen and do not stop the talk. Between rounds, fix two mistakes on the board in one minute: children who then say the same thing again use the fixed form. For grammar errors, prompt the child to correct it (start the phrase and pause, point to the frame on the board, hold up a finger for the missing word, or repeat the error with a rising voice) rather than saying it for them. For a sound, a quick recast is fine: say it right and let the child echo it. Say every final -s and -ed clearly yourself: Vietnamese speakers drop them often, and children copy what they hear. ";
 
+const drillFeedbackBase =
+  "Prompt, do not tell: start the phrase and pause, point to the frame on the board, hold up a finger for the missing word, or repeat the error with a rising voice and let the child fix it. For a sound, a quick recast is fine: say it right and the child echoes. Say every final -s, -ed and n't clearly yourself: Vietnamese has no verb endings, so children drop them and copy what they hear. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson. ";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  feedback: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and shows a sign (? = ask it, X = say no, + = join with because / although / so / when / unless, T = change the time or tense, or rewrite it with the same meaning, P = change the person). The class says the new sentence together." },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Use two signs together when you can: X + or T P. The listener checks: is the new sentence right, and does it keep the meaning?" },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with every ending (-s, -ed, n't) where it belongs.",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the person with the card checks that the new sentence is right and means the same.",
+      "In round 3 the drill becomes real talk: give your own opinion, experience or guess, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: drillFeedbackBase + o.feedback,
+    teacherNote:
+      "A drill only helps when the last step is real: round 3 has the children use the form for their own meaning (a guess, an opinion, something that happened to them). At nine and ten, working toward B1, the full set of signs is fine: a question, a short answer, a negative, a join with because / although / so / unless, a change of time and a change of person. The T sign is also the entrance papers' rewrite task (say it another way and keep the meaning), so partners check the meaning, not only the grammar. Keep it brisk: a drill that drags loses its point. Mark nothing in writing; this is about speed and accuracy in speech.",
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say each new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
+// The unit's one Level 4 step (not in the book): guessing with must / might / can't be.
+const levelStep: Slide = {
+  kind: "grammar",
+  title: "Level 4 step: must be, might be, can't be",
+  hook: "How sure are you? 'must be' means nearly certain, 'might be' means maybe, and 'can't be' means nearly impossible.",
+  form: [
+    { label: "Nearly sure it is", pattern: "must be: It is cold and hard, so it must be ice." },
+    { label: "Maybe", pattern: "might be / could be: It might be salt, or it could be sugar." },
+    { label: "Nearly sure it is not", pattern: "can't be: It can't be water, because it is solid." },
+    { label: "A guess about the past (stretch)", pattern: "must have / can't have + past participle: Someone must have left the window open." },
+  ],
+  explanation: [
+    "We use these modal verbs when we do not know the answer for certain, but we have clues. 'Must be' is a strong guess that something is true. 'Can't be' is a strong guess that it is not true. 'Might be' and 'could be' mean we are not sure: it is possible.",
+    "Scientists work this way all the time. They look at the clues (cold, hard, clear, heavy) and decide what is most likely, and then they test the idea. In this unit the clues are what we see, touch and measure: if a thing is solid, it can't be water; if it flows, it might be a liquid.",
+    "The connection with this unit's grammar: the clue is often an adjective ('It is so heavy that it must be metal') or an 'if' sentence ('If it melts in your hand, it must be ice'). After 'must', 'might', 'could' and 'can't' the verb has no 'to' and no -s: 'It must be', never 'It must to be' or 'It musts be'.",
+  ],
+  examples: [
+    { text: "It is cold, hard and clear, so it must be ice.", note: "clues + must be" },
+    { text: "It can't be water, because it is solid.", note: "the clue says no" },
+    { text: "The white powder might be salt, or it could be sugar.", note: "two possibilities" },
+    { text: "If it melts in your hand, it must be butter.", note: "with an if sentence" },
+    { text: "The cup is still hot, so the tea can't be old.", note: "can't be + clue" },
+    { text: "The box is so heavy that it must be full of stones.", note: "so ... that + must be" },
+  ],
+  pitfalls: [
+    { wrong: "It must to be ice.", right: "It must be ice.", why: "After must, might, could and can't we use the plain verb, with no 'to'." },
+    { wrong: "It mustn't be water.", right: "It can't be water.", why: "'Mustn't' means a rule (You mustn't touch it). To say 'I am sure it is not', use 'can't be'." },
+    { wrong: "It maybe be salt.", right: "It might be salt. / Maybe it is salt.", why: "'Maybe' is an adverb and sits at the start; 'might' is the modal verb that goes before 'be'." },
+  ],
+};
+
+const drill1 = drill({
+  title: "Grammar drill: amazed or amazing, must be",
+  goal: "Change the sentence fast and right: ask it, say no, join it with a reason, rewrite it. Then guess what a mystery thing is, with must be, might be and can't be.",
+  chunks: [
+    "The experiment was amazing, so we were all amazed.",
+    "Was the film boring? No, it wasn't, but I was tired.",
+    "She was surprised because the change was so surprising.",
+    "We saw a small round white stone on the tray.",
+    "Although the show was long, I wasn't bored.",
+    "It is cold, hard and clear, so it must be ice.",
+    "It can't be water, because it is solid.",
+  ],
+  recycle: ["Farmers have to harvest the rice.", "How about asking Mum to help?", "If I were a farmer, I would keep ducks."],
+  prompts: [
+    "The lesson was boring. (P: they were)",
+    "The show was exciting. (? then X)",
+    "I was interested because the story was strange. (T: rewrite with 'so')",
+    "We saw a wooden old box. (fix the order)",
+    "It is cold and hard. (+ so ... must be)",
+  ],
+  real: "Real talk: your partner holds a mystery card (a thing in a bag, or a picture of a change). Give clues with a feeling ('It is exciting to touch') and guess with must be, might be or can't be. Your partner says yes, no or nearly.",
+  slips: "'I was amazing', 'a wooden old box' or 'It must to be'",
+  feedback:
+    "For this grammar: if a child says 'I was amazing', hold up a finger and say 'I was ama...?' with a questioning face; if they say 'a plastic small cup', point along the order line on the board (size, colour, material). For the step: if a child says 'It must to be ice', hold up a finger over 'to' and repeat with a rising voice; if they say 'It mustn't be water', say 'It can't...?' and let them finish.",
+  support: ["It was ___, so I was ___.", "It must be ___, because it is ___."],
+  stretch: "Use two signs at once and rewrite it: 'The show was so exciting that we were thrilled. -> It was such an exciting show that we were thrilled.' Then guess with a reason: 'It can't be ice, because it isn't cold.'",
+  stretchFrames: ["It was such a(n) ___ ___ that ___.", "It might be ___, but it can't be ___, because ___."],
+});
+
+const drill2 = drill({
+  title: "Grammar drill: so cold that, such a day that",
+  goal: "Change the sentence fast and right: ask it, say no, join it, rewrite it with so or such. Then say what the weather must be, might be or can't be.",
+  chunks: [
+    "It was so cold that the lake froze.",
+    "It was such a cold night that nobody went out.",
+    "Was the snow so deep that you couldn't open the door? Yes, it was.",
+    "Ice melts more slowly in the shade than in the sun.",
+    "Our group worked harder than the others, so we finished first.",
+    "The wind was so strong that the umbrella broke, although we held it tightly.",
+    "It can't be summer, because the water is so cold that it has frozen.",
+  ],
+  recycle: ["The experiment was amazing, so we were all amazed.", "It must be ice, because it is cold and hard.", "We should use less water."],
+  prompts: [
+    "It was a hot day. The road felt soft. (+ so ... that)",
+    "The tea was so hot that I couldn't drink it. (T: rewrite with such)",
+    "She ran fast. (T: faster than her brother)",
+    "It was so cold that the water froze. (? then X)",
+    "We worked slowly. (T: more slowly than before)",
+  ],
+  real: "Real talk: tell your partner about the hottest, coldest or windiest day you remember, with one 'so ... that' and one 'such a ... that'. Then your partner guesses the place or the month: 'It must be January' or 'It can't be Hà Nội'.",
+  slips: "'so a hot day', 'such cold that' or 'more fast'",
+  feedback:
+    "For this grammar: if a child says 'so a hot day', point to the board where 'such a' sits before the noun and pause: 'It was such a...?'. If they say 'more fast', hold up a finger: 'It melted...?' and let them say 'faster'. Rewrite check (T): the new sentence must keep the same meaning, so ask 'Does it say the same thing?'.",
+  support: ["It was so ___ that ___.", "It was such a ___ day that ___."],
+  stretch: "Rewrite with such and with so: 'The tea was so hot that I couldn't drink it. -> It was such hot tea that I couldn't drink it.' Then add a guess: 'It must be ___ because ___.'",
+  stretchFrames: ["It was such ___ that ___.", "It must be ___, because it was so ___ that ___."],
+});
+
+const drill3 = drill({
+  title: "Grammar drill: was doing, when, while",
+  goal: "Change the sentence fast and right: ask it, say no, join it with when or while, change the person. Then tell what you were doing, and guess what happened.",
+  chunks: [
+    "I was reading when the phone rang.",
+    "While Dad was cooking, we were setting the table.",
+    "What were you doing when the lights went out?",
+    "They weren't playing outside, because it was raining.",
+    "When the water boiled, Mum added the noodles.",
+    "She was so tired that she fell asleep while she was reading.",
+    "The house is dark, so it must be a power cut.",
+  ],
+  recycle: ["It was such a hot day that the road felt soft.", "The film was boring, so I was bored.", "It can't be summer, because the lake has frozen."],
+  prompts: [
+    "I was watching TV. The phone rang. (+ when)",
+    "My brother was washing up. Mum was cooking. (+ while)",
+    "They were playing football. (? then X)",
+    "I was walking home. It started to rain. (T: join with when)",
+    "She was singing. (P: we)",
+  ],
+  real: "Real talk: tell your partner what you were doing at a special time (yesterday at seven o'clock, or when something surprising happened). Your partner asks 'What were you doing when ...?' and guesses: 'You must have been tired!' or 'It might be a good story!'",
+  slips: "'I was watch', 'They was playing' or 'while I cooked'",
+  feedback:
+    "For this grammar: if a child says 'I was watch TV', point to the frame 'was + ___ing' and pause: 'I was watch...?'. If they say 'They was playing', hold up two fingers and say 'They...?' so the child says 'were'. For the join (T): short action in the past simple, long action in -ing: 'I was walking home when it...?'.",
+  support: ["I was ___ing when ___.", "While I was ___ing, ___ was ___ing."],
+  stretch: "Rewrite with the same meaning: 'I was walking home. It started to rain. -> I was walking home when it started to rain.' Then add a guess: 'It must have been ___.'",
+  stretchFrames: ["I was ___ing when ___, so ___.", "It must be ___, because ___."],
+});
+
+const drill4 = drill({
+  title: "Grammar drill: was found, were kept",
+  goal: "Change the sentence fast and right: ask it, say no, join it, rewrite it from active to passive. Then guess how old and how special a museum object is.",
+  chunks: [
+    "The old map was found in a box in the attic.",
+    "The bones were studied by scientists for many years.",
+    "Was the ring made of gold? No, it wasn't; it was made of copper.",
+    "Where was it kept? It was kept in a cold room.",
+    "Although the vase was broken, it was repaired by a young teacher.",
+    "It must be very old, because it was found under three metres of ice.",
+    "It can't be from last year; it was made hundreds of years ago.",
+  ],
+  recycle: ["While I was cooking, he was washing up.", "It was so cold that the lake froze.", "If I were a farmer, I would keep ducks."],
+  prompts: [
+    "Scientists studied the bones. (T: rewrite in the passive)",
+    "The box was found in the attic. (? then X)",
+    "The cup was made of clay. (P: the cups)",
+    "A girl found the coin. (T: rewrite with by)",
+    "The picture was painted a long time ago. (+ so ... must be old)",
+  ],
+  real: "Real talk: choose an object from home or from a story (a coin, a ring, an old photo). Say how it was found or made, and where it was kept. Your partner guesses: 'It must be very old', 'It might be from a shop' or 'It can't be new'.",
+  slips: "'was find', 'The bones was' or 'discovered from'",
+  feedback:
+    "For this grammar: if a child says 'It was find', hold up a finger and pause: 'It was fou...?'. If they say 'The bones was studied', hold up two fingers: 'The bones...?' and let them say 'were'. If they say 'from a scientist', point to 'by' on the board. For the rewrite (T), the object goes first: 'Scientists studied the bones' becomes 'The bones were ...?'.",
+  support: ["It was ___ by ___.", "They were kept in ___."],
+  stretch: "Rewrite active to passive with the same meaning, and add a guess: 'A scientist found the bone. -> The bone was found by a scientist. It must be very old.'",
+  stretchFrames: ["___ was / were ___ by ___.", "It must be ___, because it was ___."],
+});
+
+const drill5 = drill({
+  title: "Grammar drill: it takes, spend, impossible",
+  goal: "Change the sentence fast and right: ask it, say no, join it, rewrite it with it takes or spend. Then talk about how long things take and guess about unusual places.",
+  chunks: [
+    "It takes me ten minutes to walk to school.",
+    "Does it take long to cross the wetland? Yes, it takes about an hour.",
+    "We spent the whole morning watching the birds.",
+    "It is impossible to cross the mud, so we stayed on the path.",
+    "The path is unsafe when it rains, so it isn't a good idea to walk there.",
+    "I didn't spend long doing it, because it was so easy.",
+    "That can't be a safe place, because the ground looks so soft; it might be quicksand.",
+  ],
+  recycle: ["The old map was found in a box.", "While I was walking, it started to rain.", "It was so wet that we couldn't go."],
+  prompts: [
+    "I walk to school in ten minutes. (T: rewrite with It takes)",
+    "Reading took her two hours. (T: rewrite with spent)",
+    "It is possible to cross the mud. (T: say the opposite with im-)",
+    "It takes an hour to get there. (? then X)",
+    "We spent an hour at the lake. (P: he)",
+  ],
+  real: "Real talk: ask your partner how long it takes to get somewhere, and how they spend a weekend morning. Then describe a place from a picture card and guess: 'It must be a wetland', 'It might be unsafe' or 'It can't be a city'.",
+  slips: "'spent two hours to do', 'It takes me ten minutes walk' or 'unpossible'",
+  feedback:
+    "For this grammar: if a child says 'I spent two hours to do it', hold up a finger and pause: 'I spent two hours do...?' and let them say 'doing'. If they say 'It takes me ten minutes walk', point to 'to' on the board. If they say 'unpossible', say 'im...?' and let them hear that a word starting with p takes im-. Rewrite check (T): it takes + to + verb, but spend + -ing.",
+  support: ["It takes ___ to ___.", "We spent ___ ___ing ___."],
+  stretch: "Rewrite with the same meaning: 'Reading took her two hours. -> She spent two hours reading.' Then give a reason and a guess: 'It must be unsafe, because it is impossible to ___.'",
+  stretchFrames: ["It took ___ to ___. / ___ spent ___ ___ing.", "It must be ___, because it is impossible to ___."],
+});
+
+const drill6 = drill({
+  title: "Grammar drill: if, as soon as, unless",
+  goal: "Change the sentence fast and right: ask it, say no, join it with if, as soon as or unless, rewrite it. Then say what always happens, what will happen, and what must be true.",
+  chunks: [
+    "If you heat ice, it melts.",
+    "If it rains tomorrow, we will stay at home.",
+    "What will you do if the path floods?",
+    "As soon as the water boils, I will add the rice.",
+    "Unless you stir it, the mixture won't be smooth.",
+    "If it looks like quicksand, it might be dangerous, so don't step on it.",
+    "If it flows, it can't be solid, so it must be a liquid.",
+  ],
+  recycle: ["It takes about an hour to walk there.", "The bones were studied by scientists.", "It was so hot that the road felt soft."],
+  prompts: [
+    "You heat ice. It melts. (+ if)",
+    "If you don't hurry, you will miss the bus. (T: rewrite with unless)",
+    "It will rain. We will stay at home. (+ if, then ? what will you do)",
+    "The water boils. I add the noodles. (+ as soon as, with will)",
+    "If you add salt, the ice melts faster. (P: if we)",
+  ],
+  real: "Real talk: tell your partner what you will do at the weekend if the weather is good, and what will happen unless you finish your homework. Then your partner shows a picture of a substance and you guess: 'If it flows, it must be a liquid.'",
+  slips: "'If it will rain', 'When the water will boil' or 'Unless you don't'",
+  feedback:
+    "For this grammar: if a child says 'If it will rain', point to the board and pause: 'If it ra...?'. If they say 'Unless you don't stir', raise your voice on 'don't' and let them hear 'Unless you ...?'. Missing -s on 'melts' and 'boils' is the most common slip: tap your wrist. Rewrite check (T): 'Unless you hurry' already means 'if you don't hurry', so no 'not' is left in the unless part.",
+  support: ["If you ___, it ___.", "If it ___, it will ___."],
+  stretch: "Rewrite with the same meaning: 'If you don't hurry, you will miss the bus. -> Unless you hurry, you will miss the bus.' Then add a deduction: 'If it flows, it can't be ___.'",
+  stretchFrames: ["Unless ___, ___ will ___.", "If it ___, it must be ___, because ___."],
+});
+
+const drill7 = drill({
+  title: "Grammar drill: mine, its, she asked",
+  goal: "Change the sentence fast and right: ask it, say no, join it, change a direct question into a reported one. Then talk about whose things are whose, and guess.",
+  chunks: [
+    "This book is mine, and that one is hers.",
+    "The children's experiment was better than ours.",
+    "My parents' room is next to my brother's.",
+    "The dog wagged its tail when it saw us.",
+    "She asked me where I lived.",
+    "He asked if I wanted to read it.",
+    "That bag must be hers, because her scarf is inside it.",
+  ],
+  recycle: ["If you heat ice, it melts.", "It takes about ten minutes to read a chapter.", "The bones were studied by scientists."],
+  prompts: [
+    "This is my pen. (T: rewrite with mine)",
+    "'Where do you live?' she asked me. (T: rewrite as a reported question)",
+    "The dog wagged its tail. (P: the dogs)",
+    "'Do you like science?' he asked me. (T: rewrite with if)",
+    "That scarf is hers. (? then X)",
+  ],
+  real: "Real talk: your partner puts three things from their bag on the desk and you guess whose they are, with must be, might be and can't be ('That pencil case must be yours, because it has your sticker'). Then report one question you asked: 'I asked you if ...'.",
+  slips: "'it's tail', 'my brother's bikes' for two brothers, or 'she asked me where did I live'",
+  feedback:
+    "For this grammar: if a child says 'This book is her', point to the board and pause: 'This book is her...?' and let them say 'hers'. If they say 'it's tail', say 'its' without an apostrophe and write both on the board. If they say 'She asked me where did I live', repeat it with a rising voice and then ask 'She asked me where I...?'. For the step: 'It must be hers', not 'It must be her'.",
+  support: ["This ___ is mine / hers.", "She asked me where / if I ___."],
+  stretch: "Rewrite as reported speech with the same meaning, and add a guess: '\"Do you like this book?\" she asked me. -> She asked me if I liked that book. It must be hers.'",
+  stretchFrames: ["She asked me where / if ___.", "It must be ___'s / hers / theirs, because ___."],
+});
+
+const drill8 = drill({
+  title: "Grammar drill: have you ever, already, yet",
+  goal: "Change the sentence fast and right: ask it, say no, join it, rewrite it with ever, never, already, yet or just. Then talk about real experiences, and guess what must have happened.",
+  chunks: [
+    "Have you ever touched dry ice?",
+    "No, I haven't, but I have seen it on television.",
+    "The ice has already melted, so we can't measure it.",
+    "Has the water boiled yet? No, it hasn't boiled yet.",
+    "I have just finished the mock test, and I feel tired.",
+    "I have never seen snow, but I saw hail last spring.",
+    "Someone must have opened the window, because the ice has melted.",
+  ],
+  recycle: ["If you add salt, the ice melts faster.", "The old map was found in a box.", "While I was cooking, he was washing up."],
+  prompts: [
+    "The ice melted a moment ago. (T: rewrite with just)",
+    "You saw snow. (? with ever)",
+    "I have finished my homework. (X with yet)",
+    "She has already eaten. (P: they)",
+    "I saw snow last winter. (T: keep the time, then ask ever)",
+  ],
+  real: "Real talk: ask your partner three 'Have you ever ...?' questions about food, places or science. Answer with a detail in the past simple ('Yes, I have. I saw it last summer'). Then guess: 'You must have been excited' or 'It can't have been easy'.",
+  slips: "'I have ever seen', 'I have seen it last year' or 'Have you finished already your work?'",
+  feedback:
+    "For this grammar: if a child says 'I have ever seen it', point to 'never' on the board and pause: 'I have n...?'. If they say 'I have seen snow last year', hold up a finger for the finished time and say 'Last year, I...?' so they say 'saw'. Check the participle: 'has boil' needs '...ed'. For the stretch step 'must have', the participle is the same as in the present perfect.",
+  support: ["Have you ever ___? Yes, I have. / No, I haven't.", "I have just / already ___."],
+  stretch: "Rewrite with the same meaning: 'The ice melted a moment ago. -> The ice has just melted.' Then guess about the past: 'Someone must have ___ because ___.'",
+  stretchFrames: ["___ has just / already ___.", "Someone must have ___, because ___."],
+});
+
 export const rhL3U5Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "rh-l3-u5-l1": {
-      trim: { "Describe it, guess it": 9 },
+      trim: { "Describe it, guess it": 9, "Mystery tray: before and after": 9, "Is it a change of matter? (concept formation)": 12, "Write: a 'What am I?' riddle": 12 },
       objectives: ["I can say sentences with -ed and -ing adjectives, like 'It was amazing, so I was amazed', fast and smoothly."],
       add: [
+        { after: "-ed / -ing adjectives and adjective order", slide: levelStep },
+        { after: "Level 4 step: must be, might be, can't be", slide: drill1 },
         {
           after: "Describe it, guess it",
           slide: {
@@ -112,8 +427,9 @@ export const rhL3U5Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u5-l2": {
       objectives: ["I can give a weather report with 'so ... that' and 'such a ... that' to two partners, faster the second time."],
-      trim: { "Write: which melts fastest?": 9, "Weather reporters: so cold that ...": 9 },
+      trim: { "Write: which melts fastest?": 4, "Weather reporters: so cold that ...": 6 },
       add: [
+        { after: "so / such ... that and comparative adverbs", slide: drill2 },
         {
           after: "Weather reporters: so cold that ...",
           slide: {
@@ -229,8 +545,9 @@ export const rhL3U5Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u5-l3": {
       objectives: ["I can say what I was doing when something happened, with 'while' and 'when', in a 4-3-2 talk."],
-      trim: { "Alibi game: what were you doing?": 10 },
+      trim: { "Alibi game: what were you doing?": 6, "Write: the day everything melted": 12 },
       add: [
+        { after: "Past continuous with when and while", slide: drill3 },
         {
           after: "Alibi game: what were you doing?",
           slide: {
@@ -307,8 +624,9 @@ export const rhL3U5Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "rh-l3-u5-l4": {
       objectives: ["I can retell how an object was found and kept, using the past passive, three times, faster each time."],
-      trim: { "Write: a museum label": 12, "Generalize: what causes matter to change?": 13 },
+      trim: { "Write: a museum label": 8, "Generalize: what causes matter to change?": 9 },
       add: [
+        { after: "The past passive", slide: drill4 },
         {
           after: "Generalize: what causes matter to change?",
           slide: {
@@ -396,7 +714,7 @@ export const rhL3U5Lab: UnitLab = {
         maxSeconds: 180,
         kidSummary: "Tell about an object with the past passive (was found, was kept, were studied) and keep talking without long stops.",
         words: ["museum", "ice", "bone", "scientist", "discover", "preserve"],
-        grammar: ["was / were + past participle", "by + the person who did it"],
+        grammar: ["was / were + past participle", "by + the person who did it", "must be / can't be (guessing)"],
         rubric: [
           { label: "Passive sentences", description: "Uses at least three correct passives with was or were and a past participle.", weight: 3 },
           { label: "Story order", description: "Tells where it was found, how it was kept and who studied it.", weight: 2 },
@@ -406,7 +724,7 @@ export const rhL3U5Lab: UnitLab = {
         tiers: [
           { level: "Support", who: "Children who need the frames", frames: ["It was found ___.", "It was kept ___."], tips: ["Point to your picture as you speak."] },
           { level: "Core", who: "Most children", frames: ["It was found by ___ in ___.", "It was kept in ___.", "It was studied by ___."], tips: ["Say who and where in each sentence."] },
-          { level: "Stretch", who: "Children who are ready for more", frames: ["Was it found in ___? Yes, it was.", "It was ___ years before it was ___."], tips: ["Ask your viewer a question and answer it."] },
+          { level: "Stretch", who: "Children who are ready for more", frames: ["Was it found in ___? Yes, it was.", "It must be very old, because it was ___.", "It can't be ___, because ___."], tips: ["Ask your viewer a question and answer it, then guess how old the object is."] },
         ],
       },
     },
@@ -414,8 +732,9 @@ export const rhL3U5Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u5-l5": {
       objectives: ["I can ask and answer how long things take and how people spend time, fast, in a question chain."],
-      trim: { "Write: a page for a travel guide": 11 },
+      trim: { "Write: a page for a travel guide": 7, "Wetland guide: describe, time, evaluate": 9 },
       add: [
+        { after: "Prefixes for opposites; It takes ... to / spend ... -ing", slide: drill5 },
         {
           after: "Wetland guide: describe, time, evaluate",
           slide: {
@@ -490,9 +809,10 @@ export const rhL3U5Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 6
     "rh-l3-u5-l6": {
-      trim: { "Science show hosts": 9 },
+      trim: { "Science show hosts": 5, "Write: should we build on wet ground?": 11 },
       objectives: ["I can say what always happens and what will happen with 'if', 'as soon as' and 'unless', fast and smoothly."],
       add: [
+        { after: "Zero and first conditional; when and as soon as", slide: drill6 },
         {
           after: "Science show hosts",
           slide: {
@@ -608,16 +928,17 @@ export const rhL3U5Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 7
     "rh-l3-u5-l7": {
       objectives: ["I can talk about a book I like with 'mine', 'hers' and 'the children's', three times, faster each time."],
-      trim: { "Draft and edit the literary response": 20, "Book talk: convince me to read it": 4 },
+      trim: { "Draft and edit the literary response": 18, "Book talk: convince me to read it": 3 },
       add: [
+        { after: "Reported questions (stretch)", slide: drill7 },
         {
-          after: "Book talk: convince me to read it",
+          after: "Plan the literary response (writing project)",
           slide: {
             kind: "fluency",
             title: "Book talk 4-3-2: convince three friends",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 8,
+            minutes: 7,
             goal: "Give the same book talk to three partners, in less time each time. In each round, partner A talks, then partner B.",
             chunks: [
               "This book is mine, and that one is hers.",
@@ -628,9 +949,9 @@ export const rhL3U5Lab: UnitLab = {
             ],
             recycle: ["If you heat ice, it melts.", "It takes about ten minutes to read a chapter.", "The bones were studied by scientists."],
             rounds: [
-              { seconds: 75, say: "Round 1: Partner A convinces Partner B to read their book, then Partner B does the same. The listener asks one question: 'Why do you like it?' Then change partners." },
-              { seconds: 60, say: "Round 2: new partner. Partner A gives the same book talk in less time, then Partner B. Then change partners." },
-              { seconds: 45, say: "Round 3: new partner. Fast and smooth! Partner A, then Partner B. The listener says whether they want to read it." },
+              { seconds: 60, say: "Round 1: Partner A convinces Partner B to read their book, then Partner B does the same. The listener asks one question: 'Why do you like it?' Then change partners." },
+              { seconds: 45, say: "Round 2: new partner. Partner A gives the same book talk in less time, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: new partner. Fast and smooth! Partner A, then Partner B. The listener says whether they want to read it." },
             ],
             steps: [
               "Plan: the book, the best part, and one reason.",
@@ -656,7 +977,7 @@ export const rhL3U5Lab: UnitLab = {
             title: "Fix it: whose is it?",
             routine: "fix it",
             mode: "pairs",
-            minutes: 7,
+            minutes: 4,
             steps: [
               "Each sentence has one mistake: an apostrophe, its / it's, mine / hers or a reported question.",
               "Find it, say what is wrong, and write the sentence the right way.",
@@ -687,8 +1008,9 @@ export const rhL3U5Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u5-l8": {
       objectives: ["I can ask and answer 'Have you ever ...?' and say what I have already, just or never done, fast."],
-      trim: { "Transfer: test our big idea": 14, "Video case: matter is everywhere": 8, "Mock review: explain the answers": 9 },
+      trim: { "Transfer: test our big idea": 10, "Video case: matter is everywhere": 4, "Mock review: explain the answers": 9 },
       add: [
+        { after: "Present perfect with ever, never, already, yet, just", slide: drill8 },
         {
           after: "Mock review: explain the answers",
           slide: {

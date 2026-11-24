@@ -1,4 +1,5 @@
 import type { UnitLab } from "@/lib/lessonDecks/lab";
+import type { Slide } from "@/lib/lessonDecks/types";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 5 "Poems and
 // Insects" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
@@ -23,6 +24,55 @@ const fixDescribe =
 const fixRetell =
   "Listen and note two or three mistakes (no names). After round 1, stop for one minute and fix two on the board together, then let the children tell the story again with the fixed forms. Make the child repair grammar: start 'At seven o'clock, Bo w...?' and pause; for 'The ants was carrying' ask 'was or were?' and point to the plural sign; hold up a finger for a missing -ing. Fix a sound by recasting it ('wasn't', 'weren't') and letting the child echo.";
 
+const drillFeedback =
+  "Prompt, do not tell: for 'The bee flying' start 'The bee w...?' and pause; for 'The ants was' ask 'was or were?' and point to the plural sign; for a missing -ing hold up one finger at the end of the word. Recast only sounds: say 'wasn't', 'weren't' and the -ing endings clearly and let the child echo. In round 3 do not correct every slip: note the two that matter and use them in the one-minute fix next lesson.";
+
+// One grammar drill: a sentence changed fast by a sign, in chorus, then pairs, then real talk.
+function drill(o: {
+  title: string;
+  goal: string;
+  chunks: string[];
+  recycle: string[];
+  prompts: string[];
+  real: string;
+  slips: string;
+  fix: string;
+  push: string;
+  support: string[];
+  stretch: string;
+  stretchFrames: string[];
+}): Slide {
+  return {
+    kind: "fluency",
+    title: o.title,
+    routine: "grammar drill",
+    mode: "pairs",
+    minutes: 7,
+    goal: o.goal,
+    chunks: o.chunks,
+    recycle: o.recycle,
+    rounds: [
+      { seconds: 60, say: "Chorus: the teacher says a sentence and holds up a sign card (? = ask it, X = say no, + = join with because / so / when / although, T = change the time or the tense, P = change the person). The class says the new sentence together." },
+      { seconds: 90, say: "Pairs: A holds up a sign card and says a sentence, B changes it. Swap at the clap. Try two signs together when you can: X + or T P." },
+      { seconds: 90, say: o.real },
+    ],
+    steps: [
+      "Listen to the sentence. Look at the sign. Change the sentence and say the WHOLE new sentence, with every small word in place (was / were, a / an, -ing, -s).",
+      `Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names, often ${o.slips}), fix them together, then go on.`,
+      "In round 2 swap roles at the clap: the child with the card checks that the new sentence is right.",
+      "In round 3 the drill becomes real talk: say something true about your own life, and remember one thing your partner said to tell the class.",
+    ],
+    prompts: o.prompts,
+    feedback: `${drillFeedback} ${o.fix}`,
+    teacherNote: `A drill only helps when the last step is real: round 3 has the children talk about their own lives, so the form is used for meaning. For ages 8 to 10 bring the signs in one at a time (? and X first, then +, then T and P) and keep each round brisk; two signs at once only in Stretch. Mark nothing in writing: this is about speed and accuracy in speech. Step toward Oxford Discover 4: ${o.push}`,
+    tiers: [
+      { level: "Support", task: "Use only the ? and X signs with the frames on the board, and say the new sentence once.", frames: o.support },
+      { level: "Core", task: "Change every sentence, with the + sign and a reason, and change the person too." },
+      { level: "Stretch", task: o.stretch, frames: o.stretchFrames },
+    ],
+  };
+}
+
 export const odL3U5Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
@@ -30,12 +80,10 @@ export const odL3U5Lab: UnitLab = {
       objectives: ["I can say sentences about insects fast and smooth, and write them with details."],
       trim: {
         "Poem or story? Move and decide": 3,
-        "Insect or not an insect?": 3,
-        "Discover Poster 3: what can you see?": 3,
-        "Insect mime: freeze and guess": 3,
         "Silly sentences (SB 48 C)": 5,
         "Think and answer (SB 46 C)": 5,
       },
+      drop: ["Insect or not an insect?", "Discover Poster 3: what can you see?", "Insect mime: freeze and guess"],
       add: [
         {
           after: "Describe the insects (SB 48 B)",
@@ -75,6 +123,30 @@ export const odL3U5Lab: UnitLab = {
               { level: "Stretch", task: "Add a second sentence with 'because': 'A bee is an insect because it has six legs.'", frames: ["A ___ is an insect because ___."] },
             ],
           },
+        },
+        {
+          after: "Insect sprint: say it in one breath",
+          slide: drill({
+            title: "Grammar drill: what was the insect doing?",
+            goal: "Change the sentence about an insect fast and right: ask it, say no, join it, change the time or the person. Then tell your partner about a real animal you saw.",
+            chunks: [
+              "A ladybug was crawling up the leaf.",
+              "Was the bee flying? Yes, it was.",
+              "The cricket wasn't singing, so the garden was quiet.",
+              "Two beetles were walking under the stone.",
+              "What were the ants doing? They were carrying crumbs.",
+              "The grasshopper was leaping while the ladybug was sleeping.",
+            ],
+            recycle: ["I have never seen a firefly.", "I enjoy watching insects.", "If it rains, the ants will go inside."],
+            prompts: ["A bee was flying. (?)", "The ants were sleeping. (X)", "A cricket was singing. (+ because it was night)", "A beetle was walking. (T: now)", "A ladybug was crawling. (P: two ladybugs)"],
+            real: "Real talk: tell your partner what an insect or an animal was doing the last time you saw one. Your partner asks one question: 'What was it doing?' or 'Was it ___ing?'",
+            slips: "'The bee flying' (no was) or 'Two beetles was'",
+            fix: "For 'Two beetles was' point to the plural sign and ask 'was or were?'.",
+            push: "this is a first taste of the past continuous, which the children meet in the cartoon in lesson 3. The Stretch 'while' sentence is the seed of Level 4's step (a long action with while / when), so say it slowly and let them hear the shape.",
+            support: ["Was the ___ ___ing? Yes, it was.", "The ___ wasn't ___ing."],
+            stretch: "Join two long actions with while: 'The bee was flying while the beetle was sleeping.' Then ask your partner a question about it.",
+            stretchFrames: ["The ___ was ___ing while the ___ was ___ing.", "While the ___ was ___ing, the ___ was ___ing."],
+          }),
         },
         {
           after: "Silly sentences (SB 48 C)",
@@ -124,7 +196,8 @@ export const odL3U5Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u05-l2": {
       objectives: ["I can tell a partner what a poem is about three times, longer and then shorter, and write what I hear."],
-      trim: { "Poets' lives": 3, "Meet the poets and predict (SB 50)": 5, "Home talk: a poem or song I know by heart": 3 },
+      trim: { "Meet the poets and predict (SB 50)": 5 },
+      drop: ["Poets' lives", "Home talk: a poem or song I know by heart"],
       add: [
         {
           after: "Read it aloud with rhythm and actions",
@@ -163,6 +236,30 @@ export const odL3U5Lab: UnitLab = {
               { level: "Stretch", task: "Add one more reason with also: 'Also, the poem is short and easy to remember.'", frames: ["The theme is that ___.", "For example, the poem says ___."] },
             ],
           },
+        },
+        {
+          after: "Poem talk 4-3-2: what is my poem about?",
+          slide: drill({
+            title: "Grammar drill: what was the poet doing?",
+            goal: "Change the sentence about a poet or a poem fast and right: ask it, say no, join it, change the time or the person. Then tell your partner what you were doing at a real moment.",
+            chunks: [
+              "The poet was sitting by the window.",
+              "Was the poet writing about rain? Yes, she was.",
+              "The children weren't reading, so the room was quiet.",
+              "What were the poets doing? They were writing about insects.",
+              "I wasn't listening because I was thinking about a beetle.",
+              "The rain was falling while we were reading the poem.",
+            ],
+            recycle: ["I have never written a poem about a bee.", "I am good at finding rhymes.", "I used to be shy about reading aloud."],
+            prompts: ["The poet was writing. (?)", "The class was clapping. (X)", "The children were reading. (+ because it was a good poem)", "The poets were writing. (P: I)", "We were reading. (T: now)"],
+            real: "Real talk: tell your partner what you were doing the last time you heard or read a poem or sang a song. Your partner asks one question: 'What were you doing?' or 'Were you ___ing?'",
+            slips: "'The poet writing' (no was) or 'The poets was'",
+            fix: "For 'The poet writing' start 'The poet w...?' and pause; for 'Was you' repeat it with a rising voice, 'Was you ...?', and wait.",
+            push: "the T sign changes was to is only; the Stretch 'when the bell rang' sentence previews Level 4's step (a long action cut into by a short one). Do not teach the rule yet, just let the children hear the shape.",
+            support: ["Was the poet ___ing? Yes, she was.", "The children weren't ___ing."],
+            stretch: "Say what was happening when something stopped it: 'We were reading the poem when the bell rang.' Then ask your partner what they were doing when the bell rang.",
+            stretchFrames: ["We were ___ing when ___.", "What were you doing when ___?"],
+          }),
         },
         {
           after: "Topic or theme? (Organize)",
@@ -238,15 +335,71 @@ export const odL3U5Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u05-l3": {
-      objectives: ["I can ask and answer 'What were you doing at ___?' quickly, and join two ideas in one sentence."],
+      objectives: ["I can ask and answer 'What were you doing at ___?' quickly, and join two ideas in one sentence.", "I can say what was happening when something else happened, with while and when."],
       trim: {
-        "Freeze frame!": 4,
-        "Alibi game: who ate the raisins?": 6,
-        "Our big idea": 4,
+        "Alibi game: who ate the raisins?": 4,
+        "Our big idea": 3,
         "My favorite poem (SB 52 Think)": 5,
-        "How does 'Colour' help you be creative? (SB 52 B)": 7,
+        "How does 'Colour' help you be creative? (SB 52 B)": 6,
       },
+      drop: ["Freeze frame!"],
       add: [
+        {
+          after: "Past continuous: what was happening then",
+          slide: {
+            kind: "grammar",
+            title: "Level 4 step: while and when with the past continuous",
+            hook: "A long action is going on, and a short action cuts into it: 'While the bee was flying, it saw a flower.'",
+            form: [
+              { label: "While + a long action", pattern: "While + subject + was / were + verb-ing, subject + short action (past simple)." },
+              { label: "A long action, then when", pattern: "Subject + was / were + verb-ing + when + subject + short action (past simple)." },
+              { label: "Two long actions together", pattern: "Subject + was / were + verb-ing + while + subject + was / were + verb-ing." },
+              { label: "Comma", pattern: "If the while / when part comes first, put a comma after it. If it comes second, no comma." },
+            ],
+            explanation: [
+              "The past continuous shows an action that was going on, like a film that is running. A short action can happen in the middle of it, like someone pressing the pause button. The long action uses was / were + -ing. The short action uses the past simple: saw, landed, rang, started.",
+              "We use while for the long action and when for the short one. 'While the bee was flying, it saw a flower.' and 'The bee was flying when it saw a flower.' say the same thing in a different order. You can also put two long actions side by side with while: 'I was reading while my brother was drawing.'",
+              "This grows straight out of this unit: you already say 'The bee was flying.' Now you add a second part that tells what happened in the middle of it. Later you will use this idea in longer stories, so it is a good step to practise now.",
+            ],
+            examples: [
+              { text: "While the bee was flying, it saw a flower." },
+              { text: "I was reading a poem when a beetle landed on my book." },
+              { text: "The crickets were singing when the rain started." },
+              { text: "While we were writing the poem, a ladybug walked across the page." },
+              { text: "A grasshopper was leaping across the path when I came round the corner." },
+              { text: "My sister was drawing a butterfly while I was painting the sky.", note: "two long actions at the same time" },
+            ],
+            pitfalls: [
+              { wrong: "While the bee was flying, it was seeing a flower.", right: "While the bee was flying, it saw a flower.", why: "The short action that cuts in uses the past simple (saw), not -ing." },
+              { wrong: "I was reading when a beetle was landing on my book.", right: "I was reading when a beetle landed on my book.", why: "After when, a short action uses the past simple (landed). Only the long action needs was + -ing." },
+              { wrong: "While I reading a poem, a bee came in.", right: "While I was reading a poem, a bee came in.", why: "The long action always needs was or were before the -ing word. Do not leave it out." },
+            ],
+          },
+        },
+        {
+          after: "Level 4 step: while and when with the past continuous",
+          slide: drill({
+            title: "Grammar drill: was, were, while and when",
+            goal: "Change the sentence fast and right with was and were: ask it, say no, join it, change the person. Then use while and when to say what happened in the middle of a longer action.",
+            chunks: [
+              "I was reading a poem at seven o'clock.",
+              "Were you sleeping? No, I wasn't. I was eating breakfast.",
+              "The crickets weren't singing because it was daytime.",
+              "While the bee was flying, it saw a flower.",
+              "I was reading when a beetle landed on my book.",
+              "What were you doing when the rain started?",
+            ],
+            recycle: ["She is good at drawing.", "I used to be afraid of beetles, but now I am not.", "If it is sunny tomorrow, we will go to the park."],
+            prompts: ["I was reading. (?)", "They were eating lunch. (X)", "She was drawing. (P: we)", "The bee was flying. (+ when it saw a flower)", "The beetle was walking. (T: add while: While the beetle ___)"],
+            real: "Real talk: tell your partner what you were doing when something happened yesterday (when the phone rang, when a friend came, when it started to rain). Use while or when. Your partner asks: 'What were you doing when ___?'",
+            slips: "'While I reading' (no was), 'They was' or 'when a beetle was landing'",
+            fix: "For 'when a beetle was landing' ask 'long action or short action?' and point to the pause-button picture; the short one is 'landed'.",
+            push: "rounds 1 and 2 stay on was / were + -ing; the + sign and round 3 use the Level 4 step: a long action with was / were + -ing, and a short past simple action with while or when. Keep the long action first until the children are sure.",
+            support: ["I was ___ing when ___.", "While I was ___ing, ___."],
+            stretch: "Use both words in one turn and add a reason: 'While I was reading, a beetle landed on my book, so I stopped.' Then ask your partner about their own moment.",
+            stretchFrames: ["While I was ___ing, ___ed, so ___.", "I was ___ing when ___ed because ___."],
+          }),
+        },
         {
           after: "What were you doing this morning? (SB 53 G)",
           slide: {
@@ -324,13 +477,38 @@ export const odL3U5Lab: UnitLab = {
       objectives: ["I can describe a creature with size, color and a clear picture, and fix describing-word mistakes in writing."],
       trim: {
         "A silly question: what color is the house? (SB 54 C)": 3,
-        "Build a creature": 4,
         "Big Question Review (SB 55)": 4,
-        "Words that end in -le (SB 55 E)": 6,
+        "Words that end in -le (SB 55 E)": 4,
+        "Writing practice (Workbook)": 8,
       },
+      drop: ["Build a creature"],
       add: [
         {
-          after: "Build a creature",
+          after: "Describing words in order: size before color",
+          slide: drill({
+            title: "Grammar drill: big, green and was leaping",
+            goal: "Say describing words in the right order and with a or an, and change the sentence fast: ask it, say no, join it, change the person. Then say what the creature was doing when something happened.",
+            chunks: [
+              "A tiny green grasshopper was leaping on the path.",
+              "Is it a big brown beetle? No, it isn't. It's a small black beetle.",
+              "An enormous blue butterfly landed on my book.",
+              "Two little red ladybugs were crawling up the stalk.",
+              "While the huge black beetle was walking, a tiny yellow bee flew past.",
+              "I was drawing a beautiful little orange butterfly when it flew away.",
+            ],
+            recycle: ["I enjoy drawing insects.", "I wasn't able to catch it, but now I am able to.", "If we see a ladybug, we will count its spots."],
+            prompts: ["It's a big green beetle. (?)", "It's a small red bee. (X: black)", "A tiny green cricket was singing. (+ when it got dark)", "I saw a huge black beetle. (P: we)", "It's a tiny green cricket. (T: was leaping when ...)"],
+            real: "Real talk: describe an animal or insect you saw, with size and color, and say what it was doing when something happened (use while or when). Your partner draws it and asks: 'What was it doing when ___?'",
+            slips: "'a green big grasshopper', 'a orange butterfly' or 'two greens beetles'",
+            fix: "For 'a green big grasshopper' tap the board where size comes before color and say 'a ... green ...?'; for 'a orange' say 'a... or an...?' and wait; for 'two greens beetles' shake your head at the -s on the describing word.",
+            push: "rounds 1 and 2 drill size before color with a / an; the T sign and round 3 bring back the Level 4 step: the long action is the creature moving (was + -ing), the short one is what cuts in (landed, flew away, started).",
+            support: ["It's a ___ ___ ___.", "Is it a ___ ___ ___? Yes, it is. / No, it isn't."],
+            stretch: "Use two signs at once and put the step in a long sentence: 'While the huge black beetle was walking, a tiny yellow bee flew past.' Then ask your partner a question about it.",
+            stretchFrames: ["While the ___ ___ ___ was ___ing, a ___ ___ ___ ___ed.", "A ___ ___ ___ was ___ing when ___ed."],
+          }),
+        },
+        {
+          after: "Number the adjectives (SB 55 F)",
           slide: {
             kind: "fluency",
             title: "Creature description: say it again, faster",
@@ -401,13 +579,38 @@ export const odL3U5Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u05-l5": {
-      objectives: ["I can retell a busy day with was and were, and write a snapshot after a plan."],
+      objectives: ["I can retell a busy day with was and were, and write a snapshot after a plan.", "I can say what was happening when something else happened, with while and when."],
       trim: {
-        "Snapshot statues": 5,
         "Remember it!": 4,
         "Does the rule work here too?": 4,
       },
+      drop: ["Snapshot statues", "Was and were stretch"],
       add: [
+        {
+          after: "Grammar: was and were + -ing",
+          slide: drill({
+            title: "Grammar drill: was, were, while and when together",
+            goal: "Change the sentence fast and right with was, were, while and when: ask it, say no, join it, change the person. Then tell a busy moment from your own day, with what happened in the middle of it.",
+            chunks: [
+              "At six o'clock, Bo was sleeping under a leaf.",
+              "Were the ants carrying a crumb? Yes, they were.",
+              "The bees weren't flying because it was cold.",
+              "While Bo was climbing the stalk, the ants were carrying a crumb.",
+              "Bo was eating a raisin when a drop of rain fell.",
+              "What were you doing when you heard the bell?",
+              "I wasn't sleeping when the phone rang, so I answered it.",
+            ],
+            recycle: ["I have never seen a shooting star.", "I enjoy watching insects, and I want to learn more about them.", "If it is sunny tomorrow, we will go to the park."],
+            prompts: ["Bo was sleeping. (?)", "The ants were working. (X)", "The bees were flying. (+ when it started to rain)", "I was reading. (P: they)", "Bo was eating a raisin. (T: add while: While Bo ___)"],
+            real: "Real talk: tell your partner about a busy moment yesterday. Say what you were doing and what happened in the middle of it, with while and when. Your partner asks: 'What were you doing when ___?'",
+            slips: "'While Bo climbing' (no was), 'The ants was' or 'when it was falling' for a short action",
+            fix: "For 'when a drop of rain was falling' ask 'long action or short action?' and point to the pause-button picture; for 'While Bo climbing' start 'While Bo w...?' and pause.",
+            push: "this is the last lesson, so the drill uses BOTH: rounds 1 and 2 keep was / were + -ing, and round 3 and Stretch use the Level 4 step with while and when. A child who does this smoothly is ready for the Oxford Discover 4 sentence 'I was reading when the phone rang.'",
+            support: ["Bo was ___ing when ___.", "While Bo was ___ing, ___."],
+            stretch: "Say three linked sentences about one moment, with while, when and a reason: 'While I was cooking, my brother was drawing. I was stirring when the phone rang, so I stopped.'",
+            stretchFrames: ["While I was ___ing, ___ was ___ing.", "I was ___ing when ___ed, so ___."],
+          }),
+        },
         {
           after: "Beetle Bo's busy Saturday",
           slide: {
@@ -463,7 +666,7 @@ export const odL3U5Lab: UnitLab = {
             ],
             text: {
               title: "Model paragraph: The garden at eight o'clock",
-              text: "At eight o'clock on Sunday, the garden was very quiet. A tiny green grasshopper was sitting on a leaf. A little brown cricket was singing in the grass. Two black beetles were walking under the thicket. The bees weren't flying because it was cold. I wasn't sleeping, either. I was watching the garden, so I felt calm.",
+              text: "At eight o'clock on Sunday, the garden was very quiet. A tiny green grasshopper was sitting on a leaf. A little brown cricket was singing in the grass. Two black beetles were walking under the thicket. The bees weren't flying because it was cold. I wasn't sleeping, either. While I was watching the garden, a ladybug landed on my hand, so I felt calm.",
             },
             organiser: [
               { label: "Time and place", prompt: "What time was it? Where were you? How was the place?" },
@@ -472,9 +675,9 @@ export const odL3U5Lab: UnitLab = {
               { label: "Closing: how it felt", prompt: "What were you doing? How did you feel? (so)" },
             ],
             frames: ["At ___ o'clock, the garden was very ___.", "A ___ ___ was ___ing on a ___.", "Two ___ were ___ing in the ___.", "The ___ weren't ___ing because ___.", "I was ___ing, so I felt ___."],
-            checklist: ["My first sentence says the time and the place", "was with one, were with two or more", "The -ing on the verb", "Size before color if I use two describing words", "My last sentence says how it felt"],
+            checklist: ["My first sentence says the time and the place", "was with one, were with two or more", "The -ing on the verb", "Size before color if I use two describing words", "My last sentence says how it felt", "One sentence with while or when: a long action (was / were + -ing) and a short action (past simple)"],
             sayIt: "Read your paragraph to your partner. Then tell it again without looking, in one minute.",
-            teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph itself. Mark only two targets (was / were and the -ing ending) with a dot on the line; the child finds and fixes the mistake. The model is the school's own, about 55 words: a first sentence, supporting sentences with linking words, and a closing sentence. The paragraph is also useful as notes for this lesson's recorded talk.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph itself. Mark only two targets (was / were and the -ing ending) with a dot on the line; the child finds and fixes the mistake. The model is the school's own, about 60 words: a first sentence, supporting sentences with linking words, and a closing sentence. The paragraph is also useful as notes for this lesson's recorded talk.",
             tiers: [
               { level: "Support", task: "Use the frames: one sentence for each box.", frames: ["At ___ o'clock, the garden was very ___.", "I was ___ing, so I felt ___."] },
               { level: "Core", task: "Write the whole paragraph: five or six sentences with a linking word." },
@@ -492,12 +695,13 @@ export const odL3U5Lab: UnitLab = {
           "Choose your moment and look at the clock in your mind. Say who was there and what they were doing.",
           "Practise your talk three times with a family member or a toy: each time a little faster and smoother, like in class.",
           "Use: At ___, I was ___ing. My ___ was ___ing, and we were ___ing. I wasn't ___ing because ___.",
+          "Say one thing that happened in the middle: I was ___ing when ___ed. / While I was ___ing, ___ed.",
           "Record it once. Look at the camera and keep going without long stops.",
         ],
         maxSeconds: 180,
         kidSummary: "Tell what you and your family were doing at one moment yesterday, with was, were, wasn't and weren't.",
         words: ["was", "were", "wasn't", "weren't", "yesterday", "because"],
-        grammar: ["At ___, I was ___ing.", "My ___ and I were ___ing.", "I wasn't ___ing because ___."],
+        grammar: ["At ___, I was ___ing.", "My ___ and I were ___ing.", "I wasn't ___ing because ___.", "I was ___ing when ___ed. / While I was ___ing, ___ed."],
         rubric: [
           { label: "Was and were", description: "Uses was/were + -ing correctly: I was, we were, they weren't.", weight: 3 },
           { label: "Keeps going", description: "Talks without long stops, in whole sentences.", weight: 3 },
