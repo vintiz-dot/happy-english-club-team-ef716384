@@ -108,8 +108,8 @@ export const odL3U11Lab: UnitLab = {
             title: "Mystery retell: shorter each time",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell the same mystery three times. Each telling is shorter, smoother and faster.",
+            minutes: 8,
+            goal: "Tell the same mystery three times, to three partners. Each telling is shorter (75, 60, then 45 seconds), smoother and faster.",
             chunks: [
               "First, they heard a strange sound.",
               "They thought it was ___, but it wasn't.",
@@ -119,9 +119,9 @@ export const odL3U11Lab: UnitLab = {
             ],
             recycle: ["There are a few clues.", "We used a lot of energy to look!"],
             rounds: [
-              { seconds: 90, say: "Tell your partner your group's mystery guest story. Use the sound, the guess and the truth." },
-              { seconds: 75, say: "New partner. Tell it again in less time." },
-              { seconds: 60, say: "New partner. Tell it fast and smooth! Thumbs up if you did not stop." },
+              { seconds: 75, say: "Round 1: Partner A tells your group's mystery guest story, then Partner B tells theirs. Use the sound, the guess and the truth. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A tells it fast and smooth, then Partner B. Thumbs up if you did not stop." },
             ],
             steps: [
               "Hold up one finger for First, two for Next, three for Then, four for At the end.",
@@ -286,8 +286,8 @@ export const odL3U11Lab: UnitLab = {
             title: "Quiz show again: three times, three partners",
             routine: "task repeat",
             mode: "groups",
-            minutes: 6,
-            goal: "Give the same quiz show to three groups. Each time is smoother and more exact.",
+            minutes: 7,
+            goal: "Give the same quiz show to three groups. Each time is shorter (65, 50, then 35 seconds), smoother and more exact.",
             chunks: [
               "The conductor's baton is white.",
               "The musicians' chairs are in a circle.",
@@ -297,9 +297,9 @@ export const odL3U11Lab: UnitLab = {
             ],
             recycle: ["A drum is louder than a flute.", "Of the three, the drum is the loudest."],
             rounds: [
-              { seconds: 90, say: "Group A gives its quiz show with three questions to Group B. Then swap." },
-              { seconds: 75, say: "New group. The same quiz show, a bit faster and smoother." },
-              { seconds: 60, say: "New group. Fast and smooth! Can you ask all three questions without stopping?" },
+              { seconds: 65, say: "Round 1: Group A gives its quiz show with three questions to Group B, then Group B gives theirs. Then change groups." },
+              { seconds: 50, say: "Round 2: New group. Group A gives the same quiz show, a bit faster and smoother, then Group B. Then change groups." },
+              { seconds: 35, say: "Round 3: New group. Group A goes fast and smooth, then Group B. Can you ask all three questions without stopping?" },
             ],
             steps: [
               "Choose three questions from your quiz show. Each one needs an owner or a comparison.",
@@ -358,11 +358,11 @@ export const odL3U11Lab: UnitLab = {
           after: "Which is it? The class survey puzzle",
           slide: {
             kind: "fluency",
-            title: "Instrument talk 2-1.5-1: three partners",
+            title: "Instrument talk 75-60-45: three partners",
             routine: "4-3-2",
             mode: "pairs",
             minutes: 8,
-            goal: "Give the same talk to three friends. Each talk is shorter and smoother.",
+            goal: "Give the same talk to three friends. Each talk is shorter (75, 60, then 45 seconds) and smoother.",
             chunks: [
               "My favorite instrument is the cello.",
               "It is deeper than the violin.",
@@ -372,15 +372,14 @@ export const odL3U11Lab: UnitLab = {
             ],
             recycle: ["The conductor's baton is white.", "A trombone is more exciting than a flute."],
             rounds: [
-              { seconds: 120, say: "Partner 1: give your talk. The listener counts your comparing words on their fingers." },
-              { seconds: 90, say: "Partner 2: the same talk in less time." },
-              { seconds: 60, say: "Partner 3: fast and smooth! The listener asks one follow-up question at the end." },
+              { seconds: 75, say: "Round 1: Partner A gives the talk, then Partner B gives theirs. The listener counts the comparing words on their fingers. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A gives the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A goes fast and smooth, then Partner B. The listener asks one follow-up question at the end." },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first.",
+              "Stand in two lines facing each other. In each round, Partner A (line A) talks, then Partner B (line B) talks.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
-              "When the bell rings, line B moves one step left: a new partner.",
-              "Line B talks next with the same three rounds.",
+              "When the bell rings, line B moves one step left: a new partner. Then Partner A talks first again.",
               "The listener has a job: count comparing words (-er, -est, more, most) and ask a follow-up question: 'Why do you like it?'",
             ],
             feedback: fixCompare,

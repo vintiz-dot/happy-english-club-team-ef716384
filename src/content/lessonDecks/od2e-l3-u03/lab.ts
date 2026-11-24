@@ -106,7 +106,7 @@ export const odL3U3Lab: UnitLab = {
       trim: {
         "Letter or message?": 3,
         "Two very different places": 3,
-        "The feelings line": 6,
+        "The feelings line": 5,
       },
       add: [
         {
@@ -116,8 +116,8 @@ export const odL3U3Lab: UnitLab = {
             title: "Letters retell: shorter each time",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell the story of the letters three times. Each telling is shorter, smoother and faster.",
+            minutes: 8,
+            goal: "Tell the story of the letters in three rounds. In each round you tell it, then your partner tells it. Each round is shorter, smoother and faster.",
             chunks: [
               "First, she moved to a new town and she felt shy.",
               "Next, she wrote to her friend because she missed her.",
@@ -126,15 +126,15 @@ export const odL3U3Lab: UnitLab = {
             ],
             recycle: ["Swimming is fun.", "I enjoy reading stories.", "Where do you like to play?"],
             rounds: [
-              { seconds: 90, say: "Tell your partner the whole story with the four key-word cards: first, next, after a few months, last letter." },
-              { seconds: 75, say: "New partner. Tell it again in less time. Use only two of the key-word cards." },
-              { seconds: 60, say: "New partner. Tell it fast and smooth, with no cards. The listener counts your time words on their fingers." },
+              { seconds: 75, say: "Round 1: Partner A tells the whole story with the four key-word cards (first, next, after a few months, last letter). Then Partner B tells it. Then change partners." },
+              { seconds: 60, say: "Round 2: Partner A tells it again in less time, with only two key-word cards. Then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: Partner A tells it fast and smooth, with no cards. Then Partner B. The listener counts the time words on their fingers." },
             ],
             steps: [
               "Look at the key-word cards on the board: First / Next / After a few months / In the last letter.",
-              "The listener has a job: count the time words and give one thumb up at the end.",
-              "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board (no names) and let the class fix them. Then go on to round 2.",
-              "When the bell rings, find a new partner.",
+              "In every round, both partners talk: Partner A tells the story, then Partner B. The listener has a job: count the time words and give one thumb up at the end.",
+              "Teacher: after round 1 (both partners have talked), stop for one minute. Write two mistakes you heard on the board (no names) and let the class fix them. Then go on to round 2.",
+              "When the bell rings after each round, find a new partner.",
             ],
             prompts: ["(card: First)", "(card: Next)", "(card: After a few months)", "(card: In the last letter)"],
             feedback: correct,
@@ -211,7 +211,7 @@ export const odL3U3Lab: UnitLab = {
       objectives: ["I can say what I could and couldn't do before, and what I can do now, fast and without stopping."],
       trim: {
         "Baby, now, baby, now": 3,
-        "Find someone who ...": 5,
+        "Find someone who ...": 4,
       },
       add: [
         {
@@ -221,8 +221,8 @@ export const odL3U3Lab: UnitLab = {
             title: "Then-and-now talk: 4-3-2",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 6,
-            goal: "Give the same then-and-now talk to three friends. Each talk is shorter and smoother.",
+            minutes: 8,
+            goal: "Give the same then-and-now talk to three friends. In each round both partners talk, and each talk is shorter and smoother (75, 60, 45 seconds).",
             chunks: [
               "When I was little, I couldn't ride a bike, but now I can.",
               "Last year I couldn't read long stories, but now I can.",
@@ -231,15 +231,15 @@ export const odL3U3Lab: UnitLab = {
             ],
             recycle: ["Swimming is fun.", "I enjoy dancing.", "What do you do for fun?"],
             rounds: [
-              { seconds: 120, say: "Partner 1: tell your then-and-now talk. The listener counts how many times you say can and could on their fingers." },
-              { seconds: 90, say: "New partner: the same talk in less time." },
-              { seconds: 60, say: "New partner: fast and smooth! The listener asks one follow-up question at the end: 'How did you learn it?'" },
+              { seconds: 75, say: "Round 1: Partner A tells the then-and-now talk, then Partner B. The listener counts how many times you say can and could on their fingers. Then change partners." },
+              { seconds: 60, say: "Round 2: Partner A gives the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: Partner A gives the talk fast and smooth, then Partner B. The listener asks one follow-up question at the end: 'How did you learn it?'" },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first, then line B.",
+              "Stand in two lines facing each other. In each round line A talks first, then line B.",
               "Use your then-and-now chart from SB 33 G: two things you couldn't do, two things you can do.",
-              "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board (no names) and let the class fix them. Then go on to round 2.",
-              "When the bell rings, line B moves one step to the left: a new partner.",
+              "Teacher: after round 1 (both lines have talked), stop for one minute. Write two mistakes you heard on the board (no names) and let the class fix them. Then go on to round 2.",
+              "When the bell rings after each round, line B moves one step to the left: a new partner.",
             ],
             feedback: correctCanCould,
             teacherNote: "Same talk, less time, new listener: Nation's 4/3/2 made for eight- to ten-year-olds. The repeat makes can, can't, could and couldn't automatic. The one-minute fix in the middle is what also makes the grammar more accurate. Do not add new language between rounds. Listen for 'Last year I can', 'I didn't could' and 'she can swims'. Always have the child say the plain verb after can and could.",
@@ -381,8 +381,8 @@ export const odL3U3Lab: UnitLab = {
             title: "Champion talk again: plan, then go",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 6,
-            goal: "Give the champion talk again with a new partner, with a better plan and fewer stops.",
+            minutes: 8,
+            goal: "Plan, then give the champion talk again with new partners. Both partners talk in each round, with a better plan and fewer stops.",
             chunks: [
               "When I was little, I couldn't swim, but now I can swim very well.",
               "In the old place people couldn't buy fresh bread, but in the new place they can.",
@@ -391,15 +391,15 @@ export const odL3U3Lab: UnitLab = {
             ],
             recycle: ["Excuse me, could you help me, please?", "First she moved, then she felt happy."],
             rounds: [
-              { seconds: 60, say: "Plan in silence: look at your notes and choose the four sentences you will say. Write three key words, not sentences." },
-              { seconds: 90, say: "Partner 1: give your champion talk. The listener counts your because and but sentences." },
-              { seconds: 90, say: "New partner: the same talk again with your plan and the fixes. Try fewer stops this time." },
+              { seconds: 45, say: "Round 1: plan in silence. Look at your notes and choose the four sentences you will say. Write three key words, not sentences. Partner A says the plan aloud in one sentence, then Partner B. Then change partners." },
+              { seconds: 75, say: "Round 2: Partner A gives the champion talk, then Partner B. The listener counts your because and but sentences. Then change partners." },
+              { seconds: 60, say: "Round 3: Partner A gives the same talk again with the plan and the fixes, then Partner B. Try fewer stops this time." },
             ],
             steps: [
               "Choose a family that moved (one of the six movers, or your own idea). Say why they moved and what they could and can do.",
               "Plan with three key words, not full sentences.",
-              "Talk to your partner. The listener asks one follow-up question: 'Why did they move?'",
-              "Teacher: after the first talk, stop for one minute. Write two mistakes you heard on the board (no names) and let the class fix them. Then go on to the second talk.",
+              "Talk to your partner: Partner A talks, then Partner B. The listener asks one follow-up question: 'Why did they move?'",
+              "Teacher: after round 1 (both partners have talked), stop for one minute. Write two mistakes you heard on the board (no names) and let the class fix them. Then go on to the second talk.",
             ],
             prompts: ["Why did the family move?", "What couldn't they do before?", "What can they do now?"],
             feedback: correctCanCould,

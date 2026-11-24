@@ -105,15 +105,15 @@ export const odL1U12Lab: UnitLab = {
             chunks: ["We need water.", "We need food and clothes.", "Water is a need.", "I want a toy.", "A toy is a want."],
             recycle: ["The cow needs water.", "He doesn't have a hat."],
             rounds: [
-              { seconds: 60, say: "Pick three picture cards. Say 'need' or 'want' for each one, in a whole sentence." },
-              { seconds: 45, say: "New partner. The same three cards, the same sentences, a little faster." },
-              { seconds: 45, say: "New partner. Same again! Can you say all three without stopping?" },
+              { seconds: 45, say: "Round 1: Partner A picks three picture cards and says 'need' or 'want' for each one, in a whole sentence. Then Partner B does the same. Then change partners." },
+              { seconds: 30, say: "Round 2: New partner. Partner A says the same three sentences, a little faster. Then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: New partner. Same again! Partner A, then Partner B. Can you say all three without stopping?" },
             ],
             steps: [
               "Take three cards from the pile. Look at each picture.",
-              "Say a WHOLE sentence for each card: 'Water is a need.' or 'A toy is a want.'",
+              "Say a WHOLE sentence for each card: 'Water is a need.' or 'A toy is a want.' In each round Partner A talks, then Partner B talks.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board, fix them together, then go on.",
-              "When the bell rings, find a new partner and say the same three again.",
+              "When the bell rings, change partners and say the same three again. Partner A first, then Partner B.",
             ],
             prompts: ["(card: water)", "(card: clothes)", "(card: toy)", "(card: game)", "(card: food)"],
             feedback:
@@ -279,15 +279,15 @@ export const odL1U12Lab: UnitLab = {
             chunks: ["We want juice and a sandwich.", "We need water.", "The farmer grows grapes.", "The cook makes a sandwich.", "Yes, we want cookies too!"],
             recycle: ["Can I borrow your ball, please?", "Sure! Here you are."],
             rounds: [
-              { seconds: 60, say: "Partner 1: tell your picnic talk. The listener counts the foods on their fingers." },
-              { seconds: 45, say: "Partner 2: the same talk in less time." },
-              { seconds: 30, say: "Partner 3: fast and smooth! The listener says 'Yum!' at the end." },
+              { seconds: 45, say: "Round 1: Tell your picnic talk to Partner 1. The listener counts the foods on their fingers. Then they tell you theirs. Then change partners." },
+              { seconds: 30, say: "Round 2: Partner 2. The same talk in less time. You talk, then your partner talks. Then change partners." },
+              { seconds: 20, say: "Round 3: Partner 3. Fast and smooth! You talk, then your partner talks. The listener says 'Yum!' at the end." },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first.",
+              "Stand in two lines facing each other. In each round Line A talks first, then Line B talks.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
               "When the bell rings, line B moves one step to the left: a new partner.",
-              "Line B talks next with the same three rounds.",
+              "Do the same again with the new partner: Line A talks, then Line B talks.",
             ],
             feedback:
               fixIntro +
@@ -379,14 +379,14 @@ export const odL1U12Lab: UnitLab = {
             chunks: ["I asked three friends.", "She needs water.", "He wants a game.", "We all need food.", "I think she wants a toy."],
             recycle: ["What do you need? I need ___.", "Does she have a pencil? Yes, she does."],
             rounds: [
-              { seconds: 60, say: "Tell your partner what your survey chart shows. Point to the pictures." },
-              { seconds: 45, say: "New partner. Tell it again in less time." },
-              { seconds: 30, say: "New partner. Tell it fast! Thumbs up if you didn't stop." },
+              { seconds: 45, say: "Round 1: Partner A tells what the survey chart shows and points to the pictures. Then Partner B tells theirs. Then change partners." },
+              { seconds: 30, say: "Round 2: New partner. Partner A tells it again in less time. Then Partner B. Then change partners." },
+              { seconds: 20, say: "Round 3: New partner. Tell it fast! Partner A, then Partner B. Thumbs up if you didn't stop." },
             ],
             steps: [
               "Look at your survey chart. Point to each friend as you talk.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board, fix them together, then go on.",
-              "When the bell rings, find a new partner.",
+              "When the bell rings, change partners. Partner A talks first, then Partner B.",
               "The listener says 'Wow!' at the end and asks one question: 'What does she want?'",
             ],
             prompts: ["(chart: three friends)", "(chart: needs)", "(chart: wants)"],

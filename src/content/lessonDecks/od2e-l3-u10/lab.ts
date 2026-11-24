@@ -107,8 +107,8 @@ export const odL3U10Lab: UnitLab = {
             title: "Hector's new ending: tell it again",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell your new ending to three partners. Each telling is shorter, smoother and faster.",
+            minutes: 8,
+            goal: "Tell your new ending to three partners. In each round, Partner A tells it, then Partner B tells it. Each round is shorter, so you get smoother and faster.",
             chunks: [
               "In my ending, Hector uses the sun's energy.",
               "First, he saves a little energy at school.",
@@ -117,13 +117,14 @@ export const odL3U10Lab: UnitLab = {
             ],
             recycle: ["The sun gives us a lot of energy.", "Wind might help us make power."],
             rounds: [
-              { seconds: 120, say: "Tell your new ending to your partner. Use your story notes." },
-              { seconds: 90, say: "New partner. Tell the same ending again in less time." },
-              { seconds: 60, say: "New partner. Fast and smooth! Thumbs up if you did not stop." },
+              { seconds: 75, say: "Round 1: Partner A tells the new ending, then Partner B tells theirs. Use your story notes. Then change partners." },
+              { seconds: 60, say: "Round 2: Partner A tells the same ending again in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: Fast and smooth! Partner A, then Partner B. Thumbs up if you did not stop." },
             ],
             steps: [
               "Look at your three story notes: first, then, in the end.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on with round 2.",
+              "In every round, Partner A tells the ending and Partner B listens. Then they swap: Partner B tells and Partner A listens.",
               "When the bell rings, find a new partner.",
               "The listener has a job: count how many of the four chunks you used.",
             ],
@@ -279,18 +280,18 @@ export const odL3U10Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u10-l4": {
-      objectives: ["I can talk about saving energy for 2 minutes, then 90 and 60 seconds, with a, an and the in the right places."],
-      trim: { "Say it twice": 3, "Find your group of four": 6, "Rehearse your paragraph": 5, "True or false? (SB 102 B)": 4 },
+      objectives: ["I can talk about saving energy for 75 seconds, then 60 and 45 seconds, with a, an and the in the right places."],
+      trim: { "Say it twice": 3, "Find your group of four": 6, "Rehearse your paragraph": 3, "True or false? (SB 102 B)": 4 },
       add: [
         {
           after: "Transportation that saves energy (SB 102 C)",
           slide: {
             kind: "fluency",
-            title: "Energy talk 4-3-2: the same talk, new partners",
+            title: "Energy talk 75-60-45: the same talk, new partners",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 6,
-            goal: "Give the same talk to three partners. Each time you have less time, so you talk faster and smoother.",
+            minutes: 8,
+            goal: "Give the same talk to three partners. In each round, Partner A talks, then Partner B talks. Each round has less time, so you talk faster and smoother.",
             chunks: [
               "I see a bicycle. The bicycle saves energy.",
               "A bicycle does not need fuel.",
@@ -300,20 +301,21 @@ export const odL3U10Lab: UnitLab = {
             ],
             recycle: ["The wind might help us make power.", "I use a bicycle about three times a week."],
             rounds: [
-              { seconds: 120, say: "Partner 1: give your whole talk. The listener counts how many of the five chunks you use." },
-              { seconds: 90, say: "New partner. The same talk, in less time." },
-              { seconds: 60, say: "New partner. Fast and smooth! The listener asks one question at the end." },
+              { seconds: 75, say: "Round 1: Partner A gives the whole talk, then Partner B. The listener counts how many of the five chunks you use. Then change partners." },
+              { seconds: 60, say: "Round 2: the same talk in less time. Partner A talks, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: Fast and smooth! Partner A, then Partner B. The listener asks one question at the end." },
             ],
             steps: [
               "Choose one way to travel and plan your talk: first a, an, then the.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (often a missing a or the) and fix them together; then go on with round 2.",
+              "In every round, Partner A talks and Partner B listens. Then they swap. Both partners give the talk.",
               "When the bell rings, line B moves one seat to the left: a new partner.",
               "The listener has a job: count the chunks and ask one follow-up question, for example 'Why?'",
             ],
             feedback:
               "Correct between the first and second talk. For a missing article ('I see bicycle'), say 'I see ...?' and pause, or hold up a finger for the small word. For 'a energy bar', repeat the error with a rising voice, or say the pair 'an energy' slowly and let the child echo. For 'A sun gives us light', point to the sun picture and say 'There is only one ...?' For sounds, recast quickly. Say the final -s of buses and bicycles clearly yourself.",
             teacherNote:
-              "This is the 4/3/2 routine scaled to 120/90/60 seconds: same talk, less time, new listener. Saying the same talk again in less time builds fluency, but accuracy does not come on its own, so the one-minute fix between rounds 1 and 2 matters. Do not add new language between rounds. Listen for missing articles, 'a' before a vowel, and a dropped final -s.",
+              "This is the 4/3/2 routine scaled to 75/60/45 seconds for each speaker: same talk, less time, new listener. Saying the same talk again in less time builds fluency, but accuracy does not come on its own, so the one-minute fix between rounds 1 and 2 matters. Do not add new language between rounds. Listen for missing articles, 'a' before a vowel, and a dropped final -s.",
             tiers: [
               { level: "Support", task: "Say three chunks with the frames and your picture.", frames: ["I see a ___. The ___ saves energy.", "The ___ gives us ___."] },
               { level: "Core", task: "Say four or five chunks without the board." },
@@ -359,7 +361,7 @@ export const odL3U10Lab: UnitLab = {
         length: "60-120 seconds",
         steps: [
           "Plan your talk with three ideas: what it is, why it saves energy, why you like it.",
-          "Say the talk three times to a grown-up or a toy, each time a little faster: 2 minutes, then 90 seconds, then 60 seconds, like in class.",
+          "Say the talk three times to a grown-up or a toy, each time a little faster: 75 seconds, then 60 seconds, then 45 seconds, like in class.",
           "Record it once. Look at the camera and keep going, even if you make a small mistake.",
         ],
         maxSeconds: 180,
@@ -399,8 +401,8 @@ export const odL3U10Lab: UnitLab = {
             title: "Panel pitch: say it three times",
             routine: "task repeat",
             mode: "groups",
-            minutes: 6,
-            goal: "Say your panel idea three times to three different groups. Each time it gets smoother and you look up more.",
+            minutes: 7,
+            goal: "Say your panel idea three times to three different groups. In each round, one speaker in your pair gives the pitch, then the other. Each time it gets smoother and you look up more.",
             chunks: [
               "Our panel thinks wind is a good source of energy because there is a lot of it.",
               "We have a few ideas: solar panels, wind turbines and bicycles.",
@@ -410,13 +412,14 @@ export const odL3U10Lab: UnitLab = {
             ],
             recycle: ["It may rain, so the panels might make less power.", "A bicycle does not need fuel, so it saves energy."],
             rounds: [
-              { seconds: 60, say: "Give your panel idea to Group A. The listeners tick each chunk they hear." },
-              { seconds: 60, say: "Move to Group B. The same idea, with fewer notes." },
-              { seconds: 60, say: "Move to Group C. No notes! Fast and smooth." },
+              { seconds: 60, say: "Round 1: Partner A gives the panel idea to Group A, then Partner B gives theirs. The listeners tick each chunk they hear. Then change groups." },
+              { seconds: 50, say: "Round 2: Move to Group B. The same idea, with fewer notes. Partner A, then Partner B. Then change groups." },
+              { seconds: 40, say: "Round 3: Move to Group C. No notes! Fast and smooth. Partner A, then Partner B." },
             ],
             steps: [
               "Choose one energy idea and plan three sentences: what it is, why it is good, what we need.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
+              "In every round, Partner A pitches and then Partner B pitches. Both partners give the idea.",
               "The listeners have a job: tick the chunks, then ask one question starting with How or Why.",
               "Answer the question with 'That is a great question!' and one sentence.",
             ],

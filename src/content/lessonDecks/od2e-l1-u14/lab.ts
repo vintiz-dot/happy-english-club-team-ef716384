@@ -386,7 +386,7 @@ export const odL1U14Lab: UnitLab = {
             routine: "task repeat",
             mode: "pairs",
             minutes: 7,
-            goal: "Tell your map talk to one friend, think for a minute, then tell it again to a new friend. Smoother!",
+            goal: "Tell your map talk to one friend, think for a minute, then tell it again to a new friend. Each time, both friends tell. Smoother!",
             chunks: [
               "I live in a house.",
               "My neighborhood is quiet.",
@@ -395,15 +395,14 @@ export const odL1U14Lab: UnitLab = {
             ],
             recycle: ["Is your street quiet? Yes, it is.", "The city is noisy."],
             rounds: [
-              { seconds: 60, say: "Tell your map to your first partner. Point to each place." },
-              { seconds: 45, say: "Planning minute: look at the board and whisper your talk to yourself." },
-              { seconds: 60, say: "New partner. Tell the same map again, smoother and with no long stops." },
+              { seconds: 60, say: "Round 1: Partner A tells the map, then Partner B tells it. Point to each place." },
+              { seconds: 45, say: "Round 2: Change partners. Partner A tells the same map again, then Partner B. Smoother, with no long stops." },
             ],
             steps: [
-              "Hold up your map. Tell your partner: 'I live in a ___. There is a ___.'",
+              "Round 1 (1 minute each): Partner A holds up the map and tells it: 'I live in a ___. There is a ___.' Then Partner B tells it.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (for example 'There is two shops') and fix them together; then go on.",
               "The listener has a job: ask one question, 'Is there a ___ on your map?'",
-              "Change partners when you hear the bell and tell your map again.",
+              "Round 2 (45 seconds each): change partners when you hear the bell. Partner A tells the map again, then Partner B.",
             ],
             feedback: correctMap,
             teacherNote: "Task repetition builds fluency; the planning minute in the middle lets children use the board mistakes they have just fixed, so the second telling is better in both speed and accuracy. The listener's one question gives the listener a real job. Listen for 'There is' with plural places and a missing -s.",

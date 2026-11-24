@@ -112,7 +112,7 @@ export const odL3U4Lab: UnitLab = {
             routine: "retell",
             mode: "pairs",
             minutes: 8,
-            goal: "Tell the same moving story three times. Each time is shorter, smoother and faster.",
+            goal: "Tell the same moving story three times (75, 60 and 45 seconds each). Both partners tell it in every round. Each time is shorter, smoother and faster.",
             chunks: [
               "The family moved from a village to a city.",
               "The reason was that the father got a new job.",
@@ -121,15 +121,15 @@ export const odL3U4Lab: UnitLab = {
             ],
             recycle: ["I couldn't speak English last year, but now I can.", "Could you help me, please?"],
             rounds: [
-              { seconds: 90, say: "Tell your partner the story with the four picture cards: from, to, why, now." },
-              { seconds: 75, say: "New partner. Tell the same story in less time." },
-              { seconds: 60, say: "New partner. Tell it fast and smooth! Thumbs up if you did not stop." },
+              { seconds: 75, say: "Round 1: Partner A tells the story with the four picture cards (from, to, why, now), then Partner B tells it. Then change partners." },
+              { seconds: 60, say: "Round 2: Partner A tells the same story in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: Partner A, then Partner B. Tell it fast and smooth! Thumbs up if you did not stop." },
             ],
             steps: [
               "Look at the four picture cards: the old home, the new home, the reason, now.",
-              "Tell your partner the story. The listener's job: count how many cards the speaker uses.",
+              "Partner A tells the story, then Partner B tells it. The listener's job: count how many cards the speaker uses.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board and fix them together; then go on.",
-              "When the bell rings, find a new partner and tell the story again, faster.",
+              "When the bell rings, change partners. Partner A tells the story again, then Partner B, in less time.",
             ],
             prompts: ["(card: village)", "(card: city)", "(card: job)", "(card: new school)"],
             feedback: fixMoved,
@@ -291,7 +291,7 @@ export const odL3U4Lab: UnitLab = {
             routine: "task repeat",
             mode: "pairs",
             minutes: 7,
-            goal: "Give your reasons to a new partner each time. Say it more smoothly every time.",
+            goal: "Give your reasons to a new partner two times (90 and 60 seconds each). Both partners talk in each round. Say it more smoothly the second time.",
             chunks: [
               "I like a suburb the most because it has a big park.",
               "Why do you like the city? Because there are many things to do.",
@@ -301,15 +301,14 @@ export const odL3U4Lab: UnitLab = {
             ],
             recycle: ["If I'm nervous, I take a deep breath.", "When it rains, we stay inside."],
             rounds: [
-              { seconds: 90, say: "Tell partner 1 your favorite kind of community and two reasons." },
-              { seconds: 75, say: "Partner 2: the same talk again, a little smoother." },
-              { seconds: 60, say: "Partner 3: the same talk once more. Keep going without stopping!" },
+              { seconds: 90, say: "Round 1: Partner A tells your favorite kind of community and two reasons, then Partner B does. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A says the same talk again, a little smoother, then Partner B. Keep going without stopping!" },
             ],
             steps: [
               "Choose your favorite kind of community: rural, urban or suburb. Think of two reasons.",
-              "Tell your partner: 'I like ___ the most because ... Also, ...'",
+              "Partner A tells: 'I like ___ the most because ... Also, ...' Then Partner B tells.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
-              "When the bell rings, change partners and say the same talk again.",
+              "When the bell rings, change partners. Partner A says the same talk again, then Partner B.",
               "Listener's job: ask one follow-up question: 'Why do you like that?'",
             ],
             prompts: ["Why do you like ___?", "(cards: rural, urban, suburb)"],
@@ -385,7 +384,7 @@ export const odL3U4Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u04-l5": {
       objectives: ["I can talk about why we are moving to a new place, three times, faster each time."],
-      trim: { "60-second recall": 3, "Test our big ideas": 4, "Poster gallery": 10 },
+      trim: { "60-second recall": 3, "Test our big ideas": 4, "Poster gallery": 9 },
       add: [
         {
           after: "Make the poster (SB 45 C)",
@@ -394,8 +393,8 @@ export const odL3U4Lab: UnitLab = {
             title: "Poster talk 4-3-2",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 7,
-            goal: "Give your poster talk to three friends. Each talk is shorter and smoother.",
+            minutes: 8,
+            goal: "Give your poster talk to three friends (75, 60 and 45 seconds each). Both partners talk in every round. Each talk is shorter and smoother.",
             chunks: [
               "Our poster shows a family moving to a new place.",
               "We are moving because the father got a new job.",
@@ -404,15 +403,15 @@ export const odL3U4Lab: UnitLab = {
             ],
             recycle: ["If a place has a park, families come.", "When it rains, we stay inside."],
             rounds: [
-              { seconds: 120, say: "Partner 1: give your poster talk. The listener counts the reasons on their fingers." },
-              { seconds: 90, say: "Partner 2: the same talk in less time." },
-              { seconds: 60, say: "Partner 3: fast and smooth! The listener asks one follow-up question at the end." },
+              { seconds: 75, say: "Round 1: Partner A gives the poster talk, then Partner B. The listener counts the reasons on their fingers. Then change partners." },
+              { seconds: 60, say: "Round 2: Partner A gives the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: Partner A, then Partner B. Fast and smooth! The listener asks one follow-up question at the end." },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first.",
+              "Stand in two lines facing each other. In each round, Line A talks first, then Line B talks.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
               "When the bell rings, line B moves one step to the left: a new partner.",
-              "Line B listens in all three rounds and asks the follow-up question. Line B gives its talk first in the Poster gallery.",
+              "The listener asks the follow-up question after each talk. In the Poster gallery, Line B gives its talk first.",
             ],
             feedback: fixBecause,
             teacherNote: "4/3/2: the same talk, less time, new listener each round. The shrinking time pushes automaticity, and the one-minute fix between rounds 1 and 2 gives the children a chance to improve accuracy as well as speed. Do not add new language between rounds. Listen for 'We are moving' (be + -ing), the final -s in 'friends', and a full clause after because.",

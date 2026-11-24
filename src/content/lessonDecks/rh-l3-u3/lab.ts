@@ -106,6 +106,7 @@ export const rhL3U3Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u3-l2": {
+      trim: { "Tell the life cycle, story-style": 9 },
       objectives: ["I can tell the life of a seed in order, using a, an and the, three times, faster each time."],
       add: [
         {
@@ -149,8 +150,8 @@ export const rhL3U3Lab: UnitLab = {
             title: "Life cycle retell: faster each time",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell the life of a seed three times. Each time is shorter, smoother and faster.",
+            minutes: 8,
+            goal: "Tell the life of a seed three times, to three partners. In each round Partner A tells it, then Partner B. Each round is shorter, smoother and faster.",
             chunks: [
               "A farmer put a seed in the soil.",
               "The rain fell, so the seed drank the water.",
@@ -162,15 +163,15 @@ export const rhL3U3Lab: UnitLab = {
               "If there are no bees, many flowers won't make seeds.",
             ],
             rounds: [
-              { seconds: 90, say: "Tell your partner the whole life cycle. Use the four picture cards." },
-              { seconds: 75, say: "New partner. The same story, in less time." },
-              { seconds: 60, say: "New partner. Fast and smooth! Thumbs up if you did not stop." },
+              { seconds: 75, say: "Round 1: Partner A tells the whole life cycle, then Partner B. Use the four picture cards. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A tells the same story, then Partner B, in less time. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Partner A, then Partner B. Fast and smooth! Thumbs up if you did not stop." },
             ],
             steps: [
               "Put the four cards in order: seed, sprout, plant, new seeds.",
               "The listener's job: count how many times you say a, an or the.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board (no names), fix them together, then go on with round 2.",
-              "When the bell rings, find a new partner.",
+              "Each round has two turns: Partner A tells the story for 75, 60 or 45 seconds, then Partner B tells it. When both have told it, find a new partner.",
             ],
             prompts: ["(card: a seed in the soil)", "(card: a sprout)", "(card: a sunflower)", "(card: new seeds)"],
             feedback:
@@ -347,7 +348,7 @@ export const rhL3U3Lab: UnitLab = {
             routine: "task repeat",
             mode: "pairs",
             minutes: 6,
-            goal: "Describe the same garden picture three times. Each time is smoother and has every plural ending.",
+            goal: "Describe the same garden picture two times, to two partners. In each round Partner A describes it, then Partner B. The second time is smoother and has every plural ending.",
             chunks: [
               "We picked ten tomatoes and five berries.",
               "The leaves fell, and the branches were bare.",
@@ -360,15 +361,14 @@ export const rhL3U3Lab: UnitLab = {
               "We plant the seeds on Monday and water them in the morning.",
             ],
             rounds: [
-              { seconds: 90, say: "Look at the busy garden picture. Tell your partner everything you can see. The listener counts the plural words." },
-              { seconds: 75, say: "New partner. The same picture, the same task, a little faster." },
-              { seconds: 60, say: "New partner. Once more: fast, smooth and every plural ending clear." },
+              { seconds: 75, say: "Round 1: Partner A looks at the busy garden picture and tells everything they can see, then Partner B. The listener counts the plural words. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. The same picture and task: Partner A, then Partner B. Fast, smooth and every plural ending clear." },
             ],
             steps: [
               "Look at the picture for ten seconds. Plan three things to say.",
               "Say full sentences with numbers: 'There are four boxes of tomatoes.'",
               "Teacher: after round 1, stop for one minute. Write two plural mistakes on the board (no names), fix them together, then go on.",
-              "When the bell rings, find a new partner. Same picture, same task.",
+              "Each round has two turns: Partner A talks for 75 or 60 seconds, then Partner B. When both have talked, find a new partner. Same picture, same task.",
             ],
             prompts: ["(picture: a busy school garden with boxes, leaves, children, berries, tomatoes)"],
             feedback:
@@ -416,6 +416,7 @@ export const rhL3U3Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u3-l5": {
+      trim: { "Desert or rainforest? Odd one out": 9 },
       objectives: ["I can define a person, a thing and a place in one smooth sentence with who, which and where."],
       add: [
         {
@@ -461,8 +462,8 @@ export const rhL3U3Lab: UnitLab = {
             title: "Define it 4-3-2",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 6,
-            goal: "Give the same mini-talk to three partners. Each talk is shorter, smoother and still has every word.",
+            minutes: 9,
+            goal: "Give the same mini-talk to three partners. In each round Partner A talks, then Partner B. Each talk is shorter (75, 60, 45 seconds), smoother and still has every word.",
             chunks: [
               "A gardener is a person who looks after plants.",
               "A cactus is a plant which stores water in its stem.",
@@ -474,15 +475,15 @@ export const rhL3U3Lab: UnitLab = {
               "We plant the seeds in spring and water them every morning.",
             ],
             rounds: [
-              { seconds: 90, say: "Partner 1: define three things: a person, a thing and a place. The listener counts the 'who / which / where'." },
-              { seconds: 75, say: "New partner: the same three definitions, in less time." },
-              { seconds: 60, say: "New partner: fast and smooth! Can you still say all three?" },
+              { seconds: 75, say: "Round 1: Partner A defines three things: a person, a thing and a place, then Partner B. The listener counts the 'who / which / where'. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A says the same three definitions, then Partner B, in less time. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Partner A, then Partner B. Fast and smooth! Can you still say all three?" },
             ],
             steps: [
               "Choose three things to define: one person, one thing, one place.",
               "Say each in one sentence: 'A ___ is a person who ___.'",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board (no names), fix them together, then go on.",
-              "When the bell rings, line B moves one step to the left: a new partner.",
+              "In each round Partner A talks, then Partner B. When both have talked, line B moves one step to the left: a new partner.",
             ],
             prompts: ["(a person: farmer, botanist, ranger)", "(a thing: cactus, seed, fern)", "(a place: pond, forest, greenhouse)"],
             feedback:
@@ -640,7 +641,7 @@ export const rhL3U3Lab: UnitLab = {
             rounds: [
               { seconds: 75, say: "Slow chain round the circle. Everyone holds a picture card: a thing you can count or a thing you cannot." },
               { seconds: 60, say: "Swap cards. Go faster!" },
-              { seconds: 60, say: "Swap again. Can the chain go all the way round before the bell?" },
+              { seconds: 45, say: "Swap again. Can the chain go all the way round before the bell?" },
             ],
             steps: [
               "Sit in a circle. Hold your card so only you can see it.",
@@ -700,6 +701,7 @@ export const rhL3U3Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u3-l8": {
+      trim: { "Transfer: the Most Amazing Plant award": 13 },
       objectives: ["I can give a short speech: 'the most ... plant because ...', in three tellings, faster each time."],
       add: [
         {
@@ -709,8 +711,8 @@ export const rhL3U3Lab: UnitLab = {
             title: "Award speech 4-3-2",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 6,
-            goal: "Give the same award speech to three partners. Each speech is shorter, smoother and still has every reason.",
+            minutes: 9,
+            goal: "Give the same award speech to three partners. In each round Partner A speaks, then Partner B. Each speech is shorter (75, 60, 45 seconds), smoother and still has every reason.",
             chunks: [
               "Bamboo is the most useful plant because we build houses and make baskets from it.",
               "A redwood is one of the tallest trees in the world.",
@@ -722,15 +724,15 @@ export const rhL3U3Lab: UnitLab = {
               "Rice is grown in the Mekong Delta.",
             ],
             rounds: [
-              { seconds: 90, say: "Partner 1: give your award speech: your plant, why it is the most amazing, and one plan. The listener counts the reasons." },
-              { seconds: 75, say: "New partner: the same speech, in less time." },
-              { seconds: 60, say: "New partner: fast and smooth! Keep every reason." },
+              { seconds: 75, say: "Round 1: Partner A gives the award speech: your plant, why it is the most amazing, and one plan. Then Partner B. The listener counts the reasons. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A gives the same speech, then Partner B, in less time. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Partner A, then Partner B. Fast and smooth! Keep every reason." },
             ],
             steps: [
               "Choose your plant. Plan three things: why it is the most ___, what will happen if we protect it, what we're going to do.",
               "Say it as a speech, standing up, with your voice up at the end of each idea.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board (no names), fix them together, then go on.",
-              "When the bell rings, line B moves one step to the left: a new partner.",
+              "In each round Partner A speaks, then Partner B. When both have spoken, line B moves one step to the left: a new partner.",
             ],
             prompts: ["(a plant: bamboo, sunflower, lotus, cactus)", "(a reason: useful, tall, fast, beautiful)"],
             feedback:

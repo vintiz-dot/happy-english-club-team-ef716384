@@ -142,8 +142,8 @@ export const odL3U13Lab: UnitLab = {
             title: "Machine retell: faster and smoother",
             routine: "retell",
             mode: "pairs",
-            minutes: 7,
-            goal: "Explain how one machine works three times. Each time is shorter, smoother and faster.",
+            minutes: 8,
+            goal: "Explain how one machine works three times, to a new partner each time. In every round, both partners tell it. Each round is shorter, smoother and faster.",
             chunks: [
               "This is a ramp. It helps us go up without stairs.",
               "First, you push the box. Next, it goes up the ramp. So the work is easier.",
@@ -152,14 +152,14 @@ export const odL3U13Lab: UnitLab = {
             ],
             recycle: ["The ___ is made of ___.", "You play it by ___ing."],
             rounds: [
-              { seconds: 90, say: "Tell your partner how your machine works. Use your drawing." },
-              { seconds: 75, say: "New partner. Tell it again in less time. Use the fixed sentences." },
-              { seconds: 60, say: "New partner. Tell it fast! The listener gives a thumbs up if you did not stop." },
+              { seconds: 75, say: "Round 1: Partner A tells how the machine works, then Partner B. Use your drawing. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A tells it again in less time, then Partner B. Use the fixed sentences. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A tells it fast, then Partner B. The listener gives a thumbs up if you did not stop." },
             ],
             steps: [
               "Look at your drawing from the last activity. Say what the machine is and what it does.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (for example 'It help us'), fix them together, then go on.",
-              "In each round the listener has a job: count how many machine words they hear.",
+              "In each round, Partner A talks, then Partner B talks. The listener has a job: count how many machine words they hear.",
               "In round 3, say it in less time. Keep the order: what it is, how it works, why it helps.",
             ],
             prompts: ["(drawing: ramp)", "(drawing: lever)", "(drawing: wheel and axle)", "First, ... Next, ... So ..."],
@@ -286,7 +286,7 @@ export const odL3U13Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u13-l4": {
-      objectives: ["I can talk about an invention for two minutes and say it better each time."],
+      objectives: ["I can talk about an invention for a minute and a half and say it better each time."],
       trim: {
         "Listen and number (SB 134 A)": 5,
         "Match the machine (SB 134 B)": 4,
@@ -306,8 +306,8 @@ export const odL3U13Lab: UnitLab = {
             title: "Invention talk 4-3-2",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 8,
-            goal: "Give the same talk about one invention to three friends. Each time it is shorter and smoother.",
+            minutes: 9,
+            goal: "Give the same talk about one invention to three friends. In every round, both partners talk. Each round is shorter and smoother.",
             chunks: [
               "I think the wheel makes our lives better because it helps us move things.",
               "A ramp and a lever are simple machines that make work easier.",
@@ -316,14 +316,14 @@ export const odL3U13Lab: UnitLab = {
             ],
             recycle: ["I use a ___ to ___.", "I do, too. / I don't, either."],
             rounds: [
-              { seconds: 120, say: "Talk to partner 1 about your invention. The listener counts the reasons." },
-              { seconds: 90, say: "New partner 2: the same talk in less time." },
-              { seconds: 60, say: "New partner 3: fast and smooth! The listener asks one follow-up question at the end." },
+              { seconds: 90, say: "Round 1: Partner A talks about an invention, then Partner B. The listener counts the reasons. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A gives the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A, then Partner B: fast and smooth! The listener asks one follow-up question at the end." },
             ],
             steps: [
               "Choose one invention. Plan: say what it is, how it helps, and what life would be like without it.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together, then go on.",
-              "When the bell rings, the listeners move one step to the left: a new partner.",
+              "When the bell rings, Partner A has finished and Partner B talks. After both have talked, change partners: move one step to the left.",
               "The listener's job: count the reasons, and ask 'Why?' or 'How does it help?' at the end.",
             ],
             prompts: ["The invention I choose is ...", "It helps us ...", "Without it, we would have to ..."],
@@ -382,7 +382,7 @@ export const odL3U13Lab: UnitLab = {
             routine: "task repeat",
             mode: "pairs",
             minutes: 8,
-            goal: "Do the same talk three times with new partners. Each time, agree faster and say it better.",
+            goal: "Do the same talk three times with new partners. In every round, both partners talk. Each time, agree faster and say it better.",
             chunks: [
               "I use a bike every day, and my dad does, too.",
               "I don't use a microwave, and my friend doesn't, either.",
@@ -391,13 +391,13 @@ export const odL3U13Lab: UnitLab = {
             ],
             recycle: ["I'd like to try the ___ because ...", "Its ___ is made of ___."],
             rounds: [
-              { seconds: 90, say: "Tell your partner two things you use and one you don't. Your partner agrees, or says 'Really? I do.'" },
-              { seconds: 75, say: "New partner. Same talk, same ideas, in less time." },
-              { seconds: 60, say: "New partner. Same talk once more, as smooth as you can!" },
+              { seconds: 75, say: "Round 1: Partner A tells two things they use and one they don't, then Partner B. The listener agrees, or says 'Really? I do.' Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Same talk, same ideas, in less time. Partner A, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Same talk once more, as smooth as you can! Partner A, then Partner B." },
             ],
             steps: [
               "Plan: choose two inventions you use and one you do not use.",
-              "Say your three sentences. Your partner agrees with 'too' or 'either', or says they are different.",
+              "Partner A says three sentences, then Partner B says three. The listener agrees with 'too' or 'either', or says they are different.",
               "Teacher: after round 1, stop for one minute. Fix two mistakes on the board (no names), then go on with round 2.",
               "In round 3, finish with a 'We both ...' sentence. How many things do you have in common?",
             ],

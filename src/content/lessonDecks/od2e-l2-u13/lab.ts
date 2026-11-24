@@ -104,7 +104,7 @@ export const odL2U13Lab: UnitLab = {
             routine: "4-3-2",
             mode: "pairs",
             minutes: 8,
-            goal: "Give the same short talk to three friends. Each talk is shorter and smoother.",
+            goal: "Give the same short talk to three friends: 60, 45, then 30 seconds each. Each talk is shorter and smoother.",
             chunks: [
               "Fast music makes me excited.",
               "Slow music makes me sleepy.",
@@ -113,15 +113,15 @@ export const odL2U13Lab: UnitLab = {
             ],
             recycle: ["The bottle is in the box.", "We can recycle paper."],
             rounds: [
-              { seconds: 90, say: "Partner 1: give your feelings talk. The listener counts your feelings on their fingers." },
-              { seconds: 60, say: "Partner 2: the same talk in less time." },
-              { seconds: 45, say: "Partner 3: fast and smooth! The listener says 'Me too!' if they feel the same." },
+              { seconds: 60, say: "Round 1: Partner A gives the feelings talk, then Partner B. The listener counts the feelings on their fingers. Then change partners." },
+              { seconds: 45, say: "Round 2: new partner. Partner A gives the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: new partner. Partner A, then Partner B: fast and smooth! The listener says 'Me too!' if they feel the same." },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first.",
+              "Stand in two lines facing each other. In each round Partner A (line A) talks first, then Partner B (line B).",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
               "When the bell rings, line B moves one step to the left: a new partner.",
-              "Line B talks next with the same three rounds.",
+              "Do three rounds: 60 seconds, 45 seconds, 30 seconds each. Both partners talk in every round.",
             ],
             feedback:
               "Typical slips: 'Fast music make me excited' (missing -s), 'I am like this music' (be for like), 'Slow music makes me sleep' (the verb instead of sleepy). Prompt with 'Fast music make...?' and a finger for the -s, or point to the frame. A sound slip, such as 'excited' without the last -d, gets a quick recast and an echo. " + fixMinute,
@@ -284,7 +284,7 @@ export const odL2U13Lab: UnitLab = {
             routine: "task repeat",
             mode: "pairs",
             minutes: 6,
-            goal: "Say the same opinion talk again with a new partner. Make it smoother each time.",
+            goal: "Say the same opinion talk two times with two partners: 60 seconds, then 45 seconds each. Make it smoother the second time.",
             chunks: [
               "Please turn down the music!",
               "I don't like it. It's too loud.",
@@ -293,13 +293,12 @@ export const odL2U13Lab: UnitLab = {
             ],
             recycle: ["Fast music makes me excited.", "I sleep at night."],
             rounds: [
-              { seconds: 75, say: "Partner 1 asks to turn the music down or up and gives a reason. Partner 2 answers." },
-              { seconds: 60, say: "New partner. The same talk again, a little faster." },
-              { seconds: 45, say: "New partner. Same talk, fast and smooth. Thumbs up if you did not stop." },
+              { seconds: 60, say: "Round 1: Partner A asks to turn the music down or up and gives a reason, then Partner B does the same. Then change partners." },
+              { seconds: 45, say: "Round 2: new partner. Partner A says the same talk again, a little faster, then Partner B. Thumbs up if you did not stop." },
             ],
             steps: [
               "Choose one piece of music from the cards. Decide: loud or quiet, like or don't like.",
-              "Say your opinion and a reason to your partner.",
+              "Say your opinion and a reason to your partner. In each round Partner A talks, then Partner B.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
               "Change partners when the bell rings.",
             ],
@@ -359,7 +358,7 @@ export const odL2U13Lab: UnitLab = {
             routine: "retell",
             mode: "pairs",
             minutes: 8,
-            goal: "Tell the same day three times. Each time is shorter, smoother and faster.",
+            goal: "Tell the same day three times: 60, 45, then 30 seconds each. Each time is shorter, smoother and faster.",
             chunks: [
               "In the morning Rolo plays fast drums.",
               "In the afternoon he sings.",
@@ -368,14 +367,14 @@ export const odL2U13Lab: UnitLab = {
             ],
             recycle: ["We can reuse old things.", "Slow music makes me sleepy."],
             rounds: [
-              { seconds: 90, say: "Tell your partner Rolo's day. Use the four picture cards." },
-              { seconds: 60, say: "New partner. Tell it again in less time." },
-              { seconds: 45, say: "New partner. Tell it fast! Thumbs up if you did not stop." },
+              { seconds: 60, say: "Round 1: Partner A tells Rolo's day with the four picture cards, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 2: new partner. Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: new partner. Partner A tells it fast, then Partner B. Thumbs up if you did not stop." },
             ],
             steps: [
               "Put the four cards in order: morning, afternoon, night, Saturday.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
-              "When the bell rings, find a new partner.",
+              "In each round Partner A tells the day, then Partner B. When the bell rings, find a new partner.",
               "The listener says 'Wow!' at the end and tells one thing they remember.",
             ],
             prompts: ["(card: sun and drum)", "(card: Rolo sings)", "(card: moon and bed)", "(card: frogs dancing)"],

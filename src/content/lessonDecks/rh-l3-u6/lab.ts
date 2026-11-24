@@ -271,7 +271,7 @@ export const rhL3U6Lab: UnitLab = {
             title: "Retell: then and now, three times",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
+            minutes: 8,
             goal: "Tell the same then-and-now story three times. Each time it is shorter, smoother and faster.",
             chunks: [
               "My grandfather used to fly kites every evening.",
@@ -282,12 +282,13 @@ export const rhL3U6Lab: UnitLab = {
             ],
             recycle: ["The bone was found by a young girl.", "While I was cooking, Dad was washing up.", "It was so hot that the butter melted."],
             rounds: [
-              { seconds: 90, say: "Tell your partner the story of a grandparent's tradition. Use the picture ladder (then, 1965, since then, now)." },
-              { seconds: 75, say: "New partner. Tell it again in less time." },
-              { seconds: 60, say: "New partner. Tell it fast and smooth! Thumbs up if you did not stop." },
+              { seconds: 75, say: "Round 1: Partner A tells the story of a grandparent's tradition, then Partner B. Use the picture ladder (then, 1965, since then, now). Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A tells it fast and smooth, then Partner B. Thumbs up if you did not stop." },
             ],
             steps: [
               "Look at the picture ladder: then (used to), a year (past simple), since then (has / have), now (still).",
+              "In each round Partner A tells the story first, then Partner B. Then you change partners.",
               "The listener has a job: tick each tense on the ladder when you hear it, then ask ONE follow-up question: 'Did he use to ...?'",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together; then go on with rounds 2 and 3.",
               "In round 3, finish with the sentence 'He still ...'.",
@@ -354,7 +355,7 @@ export const rhL3U6Lab: UnitLab = {
             title: "Museum label: say it three times",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 6,
+            minutes: 8,
             goal: "Say the same museum label three times to new partners. Each time it is smoother.",
             chunks: [
               "The drum was made by hand.",
@@ -365,12 +366,13 @@ export const rhL3U6Lab: UnitLab = {
             ],
             recycle: ["The baby mammoth was kept in ice for a very long time.", "It was such a hot day that the road felt soft.", "If you heat ice, it melts."],
             rounds: [
-              { seconds: 90, say: "Choose an object card. Tell your partner 3 label sentences about it." },
-              { seconds: 75, say: "New partner. The same label, with the same card." },
-              { seconds: 60, say: "New partner. The same label, fast and smooth! Do not stop." },
+              { seconds: 75, say: "Round 1: Choose an object card. Partner A tells 3 label sentences about it, then Partner B. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A says the same label with the same card, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A says the same label fast and smooth, then Partner B. Do not stop." },
             ],
             steps: [
               "Take an object card (a drum, a mask, a lantern). Say 3 label sentences with was / were + a past participle.",
+              "In each round Partner A says the label first, then Partner B. Then you change partners.",
               "The listener has a job: count the was / were sentences and give a thumbs up for each good one.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together; then go on with rounds 2 and 3.",
               "In round 3, add one 'which' sentence if you can.",
@@ -423,6 +425,7 @@ export const rhL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u6-l5": {
       objectives: ["I can teach a craft with First, Next, Don't and Finally, in a clear, steady voice."],
+      trim: { "How to make bánh chưng: teach the class": 12 },
       add: [
         {
           after: "Imperatives, sequencing and word-building prefixes",
@@ -467,7 +470,7 @@ export const rhL3U6Lab: UnitLab = {
             title: "Teach it 4-3-2: first, next, finally",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 6,
+            minutes: 8,
             goal: "Teach the same craft to three partners. Each time it is shorter, smoother and faster.",
             chunks: [
               "First, wash the leaves.",
@@ -478,15 +481,15 @@ export const rhL3U6Lab: UnitLab = {
             ],
             recycle: ["It took us an hour to clean up.", "If you heat ice, it melts.", "Salt water freezes more slowly than fresh water."],
             rounds: [
-              { seconds: 90, say: "Partner 1: teach your craft. The listener mimes each step and counts the sequence words." },
-              { seconds: 75, say: "New partner: the same lesson in less time." },
-              { seconds: 60, say: "New partner: fast and smooth! The listener says 'Well done!' at the end." },
+              { seconds: 75, say: "Round 1: Partner A teaches the craft, then Partner B. The listener mimes each step and counts the sequence words. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A teaches the same lesson in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A teaches it fast and smooth, then Partner B. The listener says 'Well done!' at the end." },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A teaches first.",
+              "Stand in two lines facing each other. In each round the child in line A teaches first, then the child in line B.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together; then go on.",
               "When the bell rings, line B moves one step to the left: a new partner.",
-              "Line B teaches next with the same three rounds.",
+              "Both partners teach in all three rounds.",
             ],
             feedback:
               fixMove +
@@ -673,9 +676,9 @@ export const rhL3U6Lab: UnitLab = {
             ],
             recycle: ["Can you tell me where the market is?", "Water puppetry is very old, isn't it?", "He still makes one every Tết."],
             rounds: [
-              { seconds: 75, say: "In threes: A asks B a question, B answers, C reports what A asked." },
-              { seconds: 60, say: "Swap jobs. Faster!" },
-              { seconds: 60, say: "Swap again. How many reports can your group say without a stop?" },
+              { seconds: 75, say: "Round 1: In threes: A asks B a question, B answers, C reports what A asked. Then swap jobs." },
+              { seconds: 60, say: "Round 2: Swap jobs. Faster!" },
+              { seconds: 45, say: "Round 3: Swap again. How many reports can your group say without a stop?" },
             ],
             steps: [
               "In threes. A asks B one question from the card. B answers. C says: 'A asked B ...'.",
@@ -702,6 +705,7 @@ export const rhL3U6Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u6-l8": {
       objectives: ["I can say why a tradition is worth keeping, with 'It's important to ...' and '-ing' as a subject."],
+      trim: { "Video case: Traditions of Japan": 7 },
       add: [
         {
           after: "-ing as a subject, It's important to ..., It's worth -ing",
@@ -744,7 +748,7 @@ export const rhL3U6Lab: UnitLab = {
             title: "Worth keeping 4-3-2",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 5,
+            minutes: 8,
             goal: "Give the same opinion talk to three partners. Each time it is shorter and smoother.",
             chunks: [
               "Telling stories keeps a family close.",
@@ -755,14 +759,14 @@ export const rhL3U6Lab: UnitLab = {
             ],
             recycle: ["First, wash the leaves.", "She asked me where I lived.", "The festival, which is very old, was started by farmers."],
             rounds: [
-              { seconds: 75, say: "Partner 1: say why a tradition is worth keeping. The listener counts your -ing subjects." },
-              { seconds: 65, say: "New partner: the same talk in less time." },
-              { seconds: 60, say: "New partner: fast and smooth! The listener asks one follow-up question." },
+              { seconds: 75, say: "Round 1: Partner A says why a tradition is worth keeping, then Partner B. The listener counts the -ing subjects. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A gives the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A talks fast and smooth, then Partner B. The listener asks one follow-up question." },
             ],
             steps: [
               "Choose one tradition and three reasons. Use It's important to ..., ___-ing takes ... and It's worth ___-ing.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together; then go on.",
-              "When the bell rings, find a new partner.",
+              "In each round Partner A talks first, then Partner B. When the bell rings, find a new partner.",
               "In round 3, end with 'I used to think ..., but now ...'.",
             ],
             feedback:

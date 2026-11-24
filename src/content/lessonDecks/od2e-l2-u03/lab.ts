@@ -243,12 +243,12 @@ export const odL2U3Lab: UnitLab = {
             ],
             recycle: ["The cat sometimes sleeps in the garden.", "The parrot is usually loud."],
             rounds: [
-              { seconds: 60, say: "Choose three pictures (ice, puddles, soup). Say a then-and-now sentence for each." },
-              { seconds: 50, say: "Same three pictures, new partner. Say the sentences again, faster." },
-              { seconds: 40, say: "Same three pictures, new partner. Fast and smooth, no stops!" },
+              { seconds: 50, say: "Round 1: Choose three pictures (ice, puddles, soup). Partner A says a then-and-now sentence for each, then Partner B. Then change partners." },
+              { seconds: 40, say: "Round 2: Same three pictures, new partner. Partner A says the sentences again, faster, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: Same three pictures, new partner. Partner A, then Partner B. Fast and smooth, no stops!" },
             ],
             steps: [
-              "Look at your three pictures. Say: It was ___. Now it is ___.",
+              "Look at your three pictures. In each round, Partner A talks, then Partner B talks. Say: It was ___. Now it is ___.",
               "The listener's job: tick a box each time you say was or were correctly.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
               "In round 3, count the ticks. Can you get all three?",

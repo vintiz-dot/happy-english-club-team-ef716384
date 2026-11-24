@@ -275,7 +275,7 @@ export const odL2U17Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l2-u17-l4": {
       objectives: ["I can say kind words about art, and answer kindly, without stopping."],
-      trim: { "Gallery walk: kind words": 4, "Art tools: what can I make?": 4 },
+      trim: { "Gallery walk: kind words": 3, "Art tools: what can I make?": 4 },
       add: [
         {
           after: "Kind words about art (SB 175 E)",
@@ -284,8 +284,8 @@ export const odL2U17Lab: UnitLab = {
             title: "Kind words, three new partners",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 6,
-            goal: "Say and answer kind words with three partners. Each time is smoother.",
+            minutes: 7,
+            goal: "Say and answer kind words with three partners. In each round both partners talk, and each round is shorter and smoother.",
             chunks: [
               "Wow! What a nice mosaic!",
               "Thank you! I like your drawing, too.",
@@ -294,15 +294,15 @@ export const odL2U17Lab: UnitLab = {
             ],
             recycle: ["This is the best picture.", "Who is the fastest?"],
             rounds: [
-              { seconds: 60, say: "Show your art card to partner 1. Say a kind word. They thank you." },
-              { seconds: 60, say: "New partner. The same task. Say it smoother." },
-              { seconds: 45, say: "New partner. Fast and kind! Smile and look at your partner." },
+              { seconds: 60, say: "Round 1: Partner A shows an art card and says a kind word, then Partner B does it. Then change partners." },
+              { seconds: 45, say: "Round 2: New partner. The same task. Partner A first, then Partner B. Say it smoother." },
+              { seconds: 30, say: "Round 3: New partner. Fast and kind! Partner A, then Partner B. Smile and look at your partner." },
             ],
             steps: [
               "Hold up an art card (a mosaic, an origami bird, a drawing, a photograph).",
               "Your partner says a kind word about it. You say thank you and give a kind word back.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
-              "When the bell rings, find a new partner and do the same task again.",
+              "Partner A does the task, then Partner B does it. When the bell rings, change partners and do the same task again.",
             ],
             prompts: ["(card: mosaic)", "(card: origami)", "(card: drawing)", "(card: photograph)"],
             feedback:
@@ -360,11 +360,11 @@ export const odL2U17Lab: UnitLab = {
           after: "Champion talk: 3 rounds",
           slide: {
             kind: "fluency",
-            title: "Art table talk 3-2-1",
+            title: "Art table talk 1-0.75-0.5",
             routine: "4-3-2",
             mode: "pairs",
             minutes: 7,
-            goal: "Give the same art table talk to three friends. Each talk is shorter and smoother.",
+            goal: "Give the same art table talk to three friends. Each talk is shorter and smoother: 60, 45 and 30 seconds.",
             chunks: [
               "On my art table there are a lot of beads.",
               "There is a lot of glue, but there isn't any glitter.",
@@ -373,15 +373,15 @@ export const odL2U17Lab: UnitLab = {
             ],
             recycle: ["It looks like a crescent.", "Who is the fastest?"],
             rounds: [
-              { seconds: 90, say: "Partner 1: tell your art table talk. The listener counts the things on their fingers." },
-              { seconds: 60, say: "Partner 2: the same talk in less time." },
-              { seconds: 45, say: "Partner 3: fast and smooth! The listener says 'Nice!' at the end." },
+              { seconds: 60, say: "Round 1: Partner A tells the art table talk, then Partner B. The listener counts the things on their fingers. Then change partners." },
+              { seconds: 45, say: "Round 2: New partner. Partner A tells the same talk in less time, then Partner B." },
+              { seconds: 30, say: "Round 3: New partner. Fast and smooth! Partner A, then Partner B. The listener says 'Nice!' at the end." },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first.",
+              "Stand in two lines facing each other. In each round Partner A (line A) talks first, then Partner B (line B).",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
               "When the bell rings, line B moves one step to the left: a new partner.",
-              "Line B talks next with the same three rounds.",
+              "Do the same again in rounds 2 and 3, each time a little shorter.",
             ],
             feedback: fix + grammarFix,
             teacherNote:

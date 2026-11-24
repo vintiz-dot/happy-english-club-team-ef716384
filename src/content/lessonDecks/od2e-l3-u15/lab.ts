@@ -98,7 +98,7 @@ export const odL3U15Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u15-l2": {
       objectives: ["I can tell the life of a sunflower in order, shorter and faster each time."],
-      trim: { "Tell the story of a seed": 9, "Home talk: show and tell": 6, "I am a sunflower seed (interview)": 8 },
+      trim: { "Tell the story of a seed": 9, "Home talk: show and tell": 4, "I am a sunflower seed (interview)": 8 },
       add: [
         {
           after: "Tell the story of a seed",
@@ -107,8 +107,8 @@ export const odL3U15Lab: UnitLab = {
             title: "Sunflower story: tell it again, faster",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell the same sunflower story three times. Each time is shorter, smoother and faster.",
+            minutes: 8,
+            goal: "Tell the same sunflower story three times, each round. In every round partner A tells it, then partner B. Each round is shorter, smoother and faster (75, 60, 45 seconds each).",
             chunks: [
               "First, a seed goes into the soil.",
               "Then the roots grow down and the stem grows up.",
@@ -118,15 +118,15 @@ export const odL3U15Lab: UnitLab = {
             ],
             recycle: ["Clara solved the problem by using glass in a new way.", "Before lamps were invented, people used candles."],
             rounds: [
-              { seconds: 90, say: "Tell your partner the whole life of a sunflower. Use the five picture cards." },
-              { seconds: 60, say: "New partner. Tell it again in less time. Say fewer extra words, same story." },
-              { seconds: 45, say: "New partner. Tell it fast and smooth! Thumbs up if you didn't stop." },
+              { seconds: 75, say: "Round 1: Partner A tells the whole life of a sunflower, then Partner B tells it. Use the five picture cards. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A tells it again in less time, then Partner B. Say fewer extra words, same story. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A tells it fast and smooth, then Partner B. Thumbs up if you didn't stop." },
             ],
             steps: [
               "Put the five key-picture cards in order: seed, roots and stem, flower, sun and water, new seeds.",
-              "Tell the story to your partner using the pictures. The listener has a job: count the order words (First, Then, After, In the end) on their fingers.",
+              "Partner A tells the story using the pictures, then Partner B tells it. The listener has a job: count the order words (First, Then, After, In the end) on their fingers.",
               "Teacher: after round 1, stop for one minute. Write two sentences you heard with a mistake on the board (often 'the roots grows' or a missing 'the') and let the class fix them; then start round 2.",
-              "When the bell rings, find a new partner.",
+              "When the bell rings, change partners. Each round, both partners talk.",
             ],
             prompts: ["(card: seed in soil)", "(card: roots and stem)", "(card: flower opens)", "(card: sun and water)", "(card: seeds fall down)"],
             feedback: correct,
@@ -283,7 +283,7 @@ export const odL3U15Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u15-l4": {
       objectives: ["I can explain how to grow a plant with First, Second, Then and Finally, three times, faster each time."],
-      trim: { "May I borrow ...? (SB 155 C)": 10, "Explain it to a visitor": 7, "Word families: strong, strength (SB 155 D)": 4 },
+      trim: { "May I borrow ...? (SB 155 C)": 10, "Explain it to a visitor": 5, "Word families: strong, strength (SB 155 D)": 4 },
       add: [
         {
           after: "Explain it to a visitor",
@@ -292,8 +292,8 @@ export const odL3U15Lab: UnitLab = {
             title: "Plant steps 4-3-2: explain it three times",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 6,
-            goal: "Explain how to grow a plant to three friends. Each talk is shorter and smoother.",
+            minutes: 8,
+            goal: "Explain how to grow a plant to three friends. In each round both partners explain it, one after the other. Each talk is shorter and smoother (75, 60, 45 seconds each).",
             chunks: [
               "First, fill a small pot with soil.",
               "Second, push a seed into the soil.",
@@ -303,15 +303,15 @@ export const odL3U15Lab: UnitLab = {
             ],
             recycle: ["A jet flies faster than a car.", "Because the roots take in water, the plant grows."],
             rounds: [
-              { seconds: 120, say: "Partner 1: explain how to grow a plant. The listener counts the order words on their fingers." },
-              { seconds: 90, say: "New partner: the same talk in less time." },
-              { seconds: 60, say: "New partner: fast and smooth! The listener asks one question at the end: 'Why do plants need sun?'" },
+              { seconds: 75, say: "Round 1: Partner A explains how to grow a plant, then Partner B. The listener counts the order words on their fingers. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A, then Partner B: the same talk in less time. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A, then Partner B: fast and smooth! The listener asks one question at the end: 'Why do plants need sun?'" },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first. Use the four step pictures to remember the order.",
+              "Stand in two lines facing each other. In each round Partner A (line A) talks first, then Partner B (line B). Use the four step pictures to remember the order.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board (often 'First put soil' with no comma or a missing 'the') and fix them together; then go on.",
-              "When the bell rings, line B moves one step to the left: a new partner.",
-              "Line B talks next with the same three rounds.",
+              "When both partners have talked and the bell rings, line B moves one step to the left: a new partner.",
+              "Do the same again in rounds 2 and 3, each time shorter.",
             ],
             feedback: correct,
             teacherNote: "The same talk, less time, a new listener: the 4/3/2 routine scaled for ten-year-olds. The new partner keeps the repetition real. Do not add new language between rounds: the gain comes from saying the same things more smoothly. The correction minute between round 1 and round 2 is what also raises accuracy. Listen for the pause (comma) after First, Second, Finally, and for the verb: 'give the seed' not 'gives the seed' after First and Next.",
@@ -357,7 +357,7 @@ export const odL3U15Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u15-l5": {
       objectives: ["I can say what I need for a plant party with 'a bag of', 'two boxes of' and 'because'."],
-      trim: { "Market run": 7, "Remember it!": 5 },
+      trim: { "Market run": 5, "Remember it!": 5 },
       add: [
         {
           after: "Two kitchens: find the differences",
@@ -366,8 +366,8 @@ export const odL3U15Lab: UnitLab = {
             title: "Party shopping: say it again, better",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 6,
-            goal: "Do the same shopping talk with a new partner. Say it smoother and with fewer mistakes.",
+            minutes: 8,
+            goal: "Do the same shopping talk with a new partner in each round. In every round Partner A talks, then Partner B. Say it smoother and with fewer mistakes (75, 60, 45 seconds each).",
             chunks: [
               "For my plant party, I will buy a bag of soil.",
               "I need two boxes of cookies because we are hungry.",
@@ -377,15 +377,15 @@ export const odL3U15Lab: UnitLab = {
             ],
             recycle: ["Before lamps were invented, people used candles.", "A good solution is to ask for help."],
             rounds: [
-              { seconds: 90, say: "Plan for one minute, then tell your partner what you will buy for the party and why." },
-              { seconds: 75, say: "New partner. Do the same talk again, with the fixes." },
-              { seconds: 60, say: "New partner. Once more, smooth and fast." },
+              { seconds: 75, say: "Round 1: Plan for one minute. Then Partner A tells what you will buy for the party and why, then Partner B. Then change partners." },
+              { seconds: 60, say: "Round 2: New partner. Partner A, then Partner B: do the same talk again, with the fixes. Then change partners." },
+              { seconds: 45, say: "Round 3: New partner. Partner A, then Partner B: once more, smooth and fast." },
             ],
             steps: [
               "Look at your party shopping list. Plan for one minute with your partner: what you need, how many, and why.",
-              "Tell your partner your shopping talk. The listener's job: count the containers (bag, box, bottle) and ask one follow-up question.",
+              "Partner A tells their shopping talk, then Partner B. The listener's job: count the containers (bag, box, bottle) and ask one follow-up question.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board (often 'two box of' or 'a bag rice') and fix them together; then go on.",
-              "Change partners when you hear the bell, and do it again.",
+              "Change partners when you hear the bell, and do it again: in each round both partners talk.",
             ],
             prompts: ["(list: a party for 8 children)", "(list: plants and flowers)"],
             feedback: correct,

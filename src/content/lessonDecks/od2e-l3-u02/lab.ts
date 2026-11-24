@@ -95,6 +95,7 @@ export const odL3U2Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u02-l2": {
       objectives: ["I can tell the story of the ball again, shorter and faster each time."],
+      trim: { "Pass the ball chant": 3 },
       add: [
         {
           after: "The ball's journey",
@@ -103,8 +104,8 @@ export const odL3U2Lab: UnitLab = {
             title: "Retell the ball's journey",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell the same story three times. Each time is shorter, smoother and faster.",
+            minutes: 8,
+            goal: "Tell the same story three times to three partners. Each time is shorter, smoother and faster.",
             chunks: [
               "First, the ball was with one child.",
               "Then it traveled to a new place.",
@@ -113,15 +114,15 @@ export const odL3U2Lab: UnitLab = {
             ],
             recycle: ["The fair was exciting.", "I felt excited."],
             rounds: [
-              { seconds: 90, say: "Tell your partner the whole story. Use the key-word cards on the board." },
-              { seconds: 75, say: "New partner. Tell it again in less time. Cover the cards if you can." },
-              { seconds: 60, say: "New partner. Tell it fast and smooth! The listener gives a thumbs up if you did not stop." },
+              { seconds: 75, say: "Round 1: Partner A tells the whole story, then Partner B. Use the key-word cards on the board. Then change partners." },
+              { seconds: 60, say: "Round 2: Partner A tells it again in less time, then Partner B. Cover the cards if you can. Then change partners." },
+              { seconds: 45, say: "Round 3: Partner A tells it fast and smooth, then Partner B. The listener gives a thumbs up if you did not stop." },
             ],
             steps: [
               "Look at the key-word cards for the journey: first, then, a different game, finally.",
-              "Tell the story to your partner. The listener has a job: count the places on their fingers.",
+              "Tell the story to your partner: A tells it, then B tells it. The listener has a job: count the places on their fingers.",
               "Teacher: after round 1, stop for one minute. Put two sentences you heard with a mistake on the board (no names) and the class fixes them. Then go on to round 2.",
-              "When the bell rings, find a new partner.",
+              "When the bell rings, find a new partner. Each round gets shorter: 75, 60, then 45 seconds each.",
             ],
             prompts: ["(card: first)", "(card: then)", "(card: a different game)", "(card: finally)"],
             feedback: correct,
@@ -235,7 +236,7 @@ export const odL3U2Lab: UnitLab = {
             routine: "task repeat",
             mode: "pairs",
             minutes: 6,
-            goal: "Say the same fun talk again with a new partner: better, smoother and without stops.",
+            goal: "Say the same fun talk twice, with a new partner each time: better, smoother and without stops.",
             chunks: [
               "Skipping is fun.",
               "I enjoy swimming with my friends.",
@@ -244,15 +245,14 @@ export const odL3U2Lab: UnitLab = {
             ],
             recycle: ["The fair is exciting.", "I feel tired after a race."],
             rounds: [
-              { seconds: 90, say: "Tell your partner about your fun chart: three -ing sentences." },
-              { seconds: 60, say: "New partner. The same chart, smoother. Add one reason with because." },
-              { seconds: 60, say: "New partner. Say it a third time, fast and clear. Do not look at the chart." },
+              { seconds: 75, say: "Round 1: Partner A tells about the fun chart (three -ing sentences), then Partner B. Then change partners." },
+              { seconds: 60, say: "Round 2: Partner A says it again, smoother, and adds one reason with because. Then Partner B. Do not look at the chart." },
             ],
             steps: [
               "Take one minute to plan: choose your three -ing sentences from your fun chart.",
-              "Say them to your partner. The listener has a job: tick each -ing word they hear.",
+              "Say them to your partner: A talks, then B talks. The listener has a job: tick each -ing word they hear.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and the class fixes them. Then go on.",
-              "Change partners for rounds 2 and 3. Say the same ideas again, with the corrections.",
+              "Change partners for round 2. Say the same ideas again, with the corrections.",
             ],
             feedback: correct,
             teacherNote: "Task repeat: the same task with a new listener after a planning minute. The children already did the chart in the book, so the language is ready; the repeats make it fast. Listen for 'Swim is fun' (no -ing), 'I enjoy to skip' (to instead of -ing) and 'Running and jumping is'. Do not add new vocabulary between rounds.",
@@ -394,8 +394,8 @@ export const odL3U2Lab: UnitLab = {
             title: "Fun place talk 4-3-2: three partners",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 7,
-            goal: "Give the same talk about a fun place to three friends. Each talk is shorter and smoother.",
+            minutes: 8,
+            goal: "Give the same talk about a fun place to three friends. Each talk is shorter and smoother: 75, 60, then 45 seconds.",
             chunks: [
               "My friend and I go to the lake.",
               "We play there because it is fun.",
@@ -404,15 +404,15 @@ export const odL3U2Lab: UnitLab = {
             ],
             recycle: ["Where do you play?", "I think it is fun because we play together."],
             rounds: [
-              { seconds: 120, say: "Partner 1: tell your fun place talk. The listener counts the things you do on their fingers." },
-              { seconds: 90, say: "New partner: the same talk in less time." },
-              { seconds: 60, say: "New partner: fast and smooth! The listener asks one question at the end." },
+              { seconds: 75, say: "Round 1: Partner A tells the fun place talk, then Partner B. The listener counts the things you do on their fingers. Then change partners." },
+              { seconds: 60, say: "Round 2: Partner A gives the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: Partner A, then Partner B: fast and smooth! The listener asks one question at the end." },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first, line B listens.",
+              "Stand in two lines facing each other. In each round, line A talks first, then line B talks. The listener has the other job.",
               "The listener has a job: count the things, then ask one question: 'Why do you like it?'",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together. Then go on.",
-              "When the bell rings, line B moves one step to the left: a new partner. Then swap roles.",
+              "When the bell rings, line B moves one step to the left: a new partner. Then line A talks first again.",
             ],
             feedback: correct,
             teacherNote: "This is the classic 4/3/2 activity, scaled for ten-year-olds: the same talk, less time, a new listener each time. The new partner keeps the repetition real. Do not add new language between rounds; the gain comes from saying the same thing more smoothly. The one-minute fix after round 1 is what makes it accurate as well as fast: the second telling uses the fixed form.",

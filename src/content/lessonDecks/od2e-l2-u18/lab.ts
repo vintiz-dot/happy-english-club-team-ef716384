@@ -403,12 +403,12 @@ export const odL2U18Lab: UnitLab = {
             ],
             recycle: ["How many boats are there? There are two boats.", "There is a lot of paper."],
             rounds: [
-              { seconds: 60, say: "Tell your report to partner 1. The listener ticks the three parts they hear: what it is, what it has, why you like it." },
-              { seconds: 50, say: "New partner. The same report. The listener asks one question at the end." },
-              { seconds: 40, say: "New partner. The same report, smooth and fast. The listener says one thing they like." },
+              { seconds: 50, say: "Round 1: Partner A tells the report, then Partner B. The listener ticks the three parts they hear: what it is, what it has, why you like it. Then change partners." },
+              { seconds: 40, say: "Round 2: Partner A tells it, then Partner B. The listener asks one question at the end. Then change partners." },
+              { seconds: 30, say: "Round 3: Partner A tells it, then Partner B. Smooth and fast. The listener says one thing they like." },
             ],
             steps: [
-              "Stand by your report. Tell the three parts: what it is, what it has, why you like it.",
+              "Stand by your report. In each round, Partner A tells the report, then Partner B tells it. Tell the three parts: what it is, what it has, why you like it.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together. Then go on.",
               "Listeners: tick, then ask one question, then say one thing you like.",
             ],

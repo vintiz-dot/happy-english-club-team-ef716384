@@ -385,8 +385,8 @@ export const odL2U16Lab: UnitLab = {
             title: "Poster talk: same task, three partners",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 6,
-            goal: "Do the same poster talk three times. Each time it is smoother.",
+            minutes: 7,
+            goal: "Do the same poster talk three times, with three partners. In each round partner A talks, then partner B. Each time it is smoother.",
             chunks: [
               "The ball is easy to push.",
               "The heaviest box is the hardest to push.",
@@ -395,9 +395,9 @@ export const odL2U16Lab: UnitLab = {
             ],
             recycle: ["The goats push and push.", "A jet is faster than a train."],
             rounds: [
-              { seconds: 60, say: "Tell your partner about your poster." },
-              { seconds: 50, say: "New partner. The same talk, a little faster." },
-              { seconds: 45, say: "New partner. The same talk again: smooth and clear." },
+              { seconds: 60, say: "Round 1: Partner A tells about the poster, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 2: New partner. Partner A tells the same talk, a little faster, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: New partner. Partner A tells the talk again, smooth and clear, then Partner B." },
             ],
             steps: [
               "Hold your poster so your partner can see it.",

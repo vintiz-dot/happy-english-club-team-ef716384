@@ -98,6 +98,7 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u7-l2": {
       objectives: ["I can retell a story three times, faster each time, with was / were doing and sequence words."],
+      trim: { "Eyewitness interview: the new island": 12 },
       add: [
         {
           after: "Exam practice: story cloze",
@@ -136,8 +137,8 @@ export const rhL3U7Lab: UnitLab = {
             title: "Retell it three times: the new island",
             routine: "retell",
             mode: "pairs",
-            minutes: 5,
-            goal: "Tell the same island story three times. Each time it is shorter, smoother and faster.",
+            minutes: 7,
+            goal: "Tell the same island story three times (1 minute, 45 seconds, 30 seconds each). Both partners tell it in every round. Each time it is shorter, smoother and faster.",
             chunks: [
               "The fishermen were pulling in their nets when the sea began to bubble.",
               "While the boat was rocking, a cloud of ash was rising into the sky.",
@@ -146,15 +147,15 @@ export const rhL3U7Lab: UnitLab = {
             ],
             recycle: ["Long ago, puppeteers used to perform only in village ponds.", "Water puppetry has travelled all over the world since then."],
             rounds: [
-              { seconds: 60, say: "Tell your partner the story with the four picture cards on the board." },
-              { seconds: 45, say: "New partner. Tell it again in less time." },
-              { seconds: 30, say: "New partner. Fast and smooth: the listener holds up a thumb if you did not stop." },
+              { seconds: 60, say: "Round 1: Partner A tells the story with the four picture cards on the board, then Partner B tells it. Then change partners." },
+              { seconds: 45, say: "Round 2: new partner. Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: new partner. Fast and smooth: Partner A tells it, then Partner B. The listener holds up a thumb if you did not stop." },
             ],
             steps: [
               "Look at the four pictures in order: boat, bubbles, ash, island.",
-              "Tell the story. The listener's job: count how many times you say was / were + -ing.",
+              "In each round, Partner A tells the story, then Partner B tells it. The listener's job: count how many times you say was / were + -ing.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard (no names) on the board, prompt the class to fix them, then go on with round 2.",
-              "When the bell rings, find a new partner.",
+              "When the bell rings, change partners.",
             ],
             prompts: ["(picture: boat and nets)", "(picture: bubbling sea)", "(picture: ash cloud)", "(picture: new island)"],
             feedback:
@@ -202,6 +203,7 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u7-l3": {
       objectives: ["I can say what had already happened before another event, in a smooth sentence."],
+      trim: { "Hot seat: the island remembers": 11 },
       add: [
         {
           after: "Exam practice: join with the past perfect",
@@ -240,8 +242,8 @@ export const rhL3U7Lab: UnitLab = {
             title: "Before and after: say it again",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 7,
-            goal: "Say what had already happened before the island appeared, three times, a little smoother each time.",
+            minutes: 8,
+            goal: "Say what had already happened before the island appeared, three times (75, 60 and 45 seconds each), a little smoother each time. Both partners speak in every round.",
             chunks: [
               "By the time we arrived, the boat had left.",
               "The birds had already flown away before the island erupted.",
@@ -251,16 +253,16 @@ export const rhL3U7Lab: UnitLab = {
             ],
             recycle: ["I was walking home when the first drops of rain fell.", "Luckily, nobody was hurt."],
             rounds: [
-              { seconds: 90, say: "Use the timeline on the board: what had happened before the island appeared? Tell your partner." },
-              { seconds: 75, say: "New partner. The same task, a little faster." },
-              { seconds: 60, say: "New partner. The same task once more: smooth and sure." },
+              { seconds: 75, say: "Round 1: use the timeline on the board. What had happened before the island appeared? Partner A tells it, then Partner B. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. The same task, a little faster. Partner A tells it, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. The same task once more, smooth and sure. Partner A, then Partner B." },
             ],
             steps: [
               "Look at the timeline: three things happen, then the island appears.",
-              "Tell your partner what had happened by the time the island appeared. Use at least two had sentences.",
+              "Tell your partner what had happened by the time the island appeared. Use at least two had sentences. In each round, Partner A tells it, then Partner B.",
               "The listener's job: ask one follow-up question ('What had the birds done?').",
               "Teacher: after round 1, stop for one minute. Fix two mistakes on the board (no names) with the class, then go on.",
-              "Change partners at the bell.",
+              "Change partners at the bell, after both partners have spoken.",
             ],
             prompts: ["By the time the island appeared, ...", "Before the lava arrived, ...", "(timeline: birds, boats, villagers)"],
             feedback:
@@ -386,6 +388,7 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u7-l5": {
       objectives: ["I can give my opinion and advice for the storm season, in one smooth talk, three times."],
+      trim: { "Expert panel: getting ready for the storm season": 13 },
       add: [
         {
           after: "Exam practice: rewrite the advice",
@@ -423,8 +426,8 @@ export const rhL3U7Lab: UnitLab = {
             title: "4-3-2: my storm-season advice",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 7,
-            goal: "Give the same advice talk three times. Each talk is shorter and smoother.",
+            minutes: 8,
+            goal: "Give the same advice talk three times (75, 60 and 45 seconds each). Both partners give the talk in every round. Each talk is shorter and smoother.",
             chunks: [
               "In my opinion, families should keep a torch and water ready.",
               "I believe we ought to plant trees on the hills.",
@@ -433,15 +436,15 @@ export const rhL3U7Lab: UnitLab = {
             ],
             recycle: ["The lava moved more slowly than the water.", "By the time we arrived, the boat had left."],
             rounds: [
-              { seconds: 75, say: "Listener 1: hear the advice talk. Count the pieces of advice on your fingers." },
-              { seconds: 60, say: "Listener 2: the same talk in less time." },
-              { seconds: 45, say: "Listener 3: fast and smooth! Ask one follow-up question at the end." },
+              { seconds: 75, say: "Round 1: Partner A gives the advice talk, then Partner B. Listener: count the pieces of advice on your fingers. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. The same talk in less time: Partner A, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Fast and smooth! Partner A, then Partner B. Ask one follow-up question at the end." },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first, giving the same talk to three listeners in turn.",
+              "Stand in two lines facing each other. In each round, Partner A (line A) gives the talk, then Partner B (line B) gives the same kind of talk.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard (no names) on the board, prompt the class to fix them, then go on.",
-              "When the bell rings, line B moves one step to the left: a new listener.",
-              "Line B talks next with the same three rounds.",
+              "When the bell rings, line B moves one step to the left: a new partner for every child.",
+              "Do three rounds in all, each shorter than the last.",
             ],
             feedback:
               base +
@@ -566,7 +569,7 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 7
     "rh-l3-u7-l7": {
       objectives: ["I can explain how and when something happens or was done, in a clear expert minute."],
-      trim: { "Expert minute: say it before you write it": 6, 'Read: "Tsunami" and synthesize': 14 },
+      trim: { "Expert minute: say it before you write it": 5, 'Read: "Tsunami" and synthesize': 14 },
       add: [
         {
           after: "Exam practice: prepositions and the passive",
@@ -604,8 +607,8 @@ export const rhL3U7Lab: UnitLab = {
             title: "Expert minute, three times",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 5,
-            goal: "Say the same report facts three times to new partners, smoother each time.",
+            minutes: 6,
+            goal: "Say the same report facts three times to new partners (50, 40 and 30 seconds each), smoother each time. Both partners speak in every round.",
             chunks: [
               "A tsunami is caused by an earthquake under the sea.",
               "The wave moved across the ocean towards the coast.",
@@ -615,15 +618,15 @@ export const rhL3U7Lab: UnitLab = {
             ],
             recycle: ["The teacher told us to walk, not run.", "As soon as the siren sounds, we leave."],
             rounds: [
-              { seconds: 60, say: "Tell your partner your three report facts. Use the passive at least twice." },
-              { seconds: 50, say: "New partner. The same facts, a little faster." },
-              { seconds: 40, say: "New partner. Same facts again: smooth and clear." },
+              { seconds: 50, say: "Round 1: Partner A tells your three report facts, then Partner B. Use the passive at least twice. Then change partners." },
+              { seconds: 40, say: "Round 2: new partner. The same facts, a little faster: Partner A, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: new partner. Same facts again, smooth and clear: Partner A, then Partner B." },
             ],
             steps: [
               "Choose three facts for your report. Write only key words.",
-              "Say them to your partner. The listener's job: tick each time you use is / was + the past participle.",
+              "Say them to your partner: Partner A first, then Partner B, in every round. The listener's job: tick each time you use is / was + the past participle.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard (no names) on the board, prompt the class to fix them, then go on.",
-              "Change partners at the bell.",
+              "Change partners at the bell, after both partners have spoken.",
             ],
             prompts: ["A ___ is caused by ___.", "The ___ was ___ed by ___.", "(where? which way? when?)"],
             feedback:
@@ -643,7 +646,7 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u7-l8": {
       objectives: ["I can retell a chain of causes and results in whole sentences, faster each time."],
-      trim: { "Transfer: test our big idea": 13 },
+      trim: { "Transfer: test our big idea": 12 },
       add: [
         {
           after: "Exam practice: rewrite the cause",
@@ -682,8 +685,8 @@ export const rhL3U7Lab: UnitLab = {
             title: "Retell the chain: cause and result",
             routine: "retell",
             mode: "pairs",
-            minutes: 5,
-            goal: "Retell the same cause chain three times: shorter, smoother and faster each time.",
+            minutes: 6,
+            goal: "Retell the same cause chain three times (50, 40 and 30 seconds each): shorter, smoother and faster each time. Both partners retell it in every round.",
             chunks: [
               "Heavy rain led to flooding in the town.",
               "The road closed because of the landslide.",
@@ -693,13 +696,13 @@ export const rhL3U7Lab: UnitLab = {
             ],
             recycle: ["Earthquakes are measured with a seismometer.", "The warning was sent by radio."],
             rounds: [
-              { seconds: 60, say: "Tell your partner the chain with the picture cards: rain, river, road, school." },
-              { seconds: 45, say: "New partner. Tell it again in less time." },
-              { seconds: 30, say: "New partner. Fast and smooth, with no long stops." },
+              { seconds: 50, say: "Round 1: Partner A tells the chain with the picture cards (rain, river, road, school), then Partner B. Then change partners." },
+              { seconds: 40, say: "Round 2: new partner. Tell it again in less time: Partner A, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: new partner. Fast and smooth, with no long stops: Partner A, then Partner B." },
             ],
             steps: [
               "Look at the picture chain: heavy rain, river rises, road closes, school closes.",
-              "Tell it with cause and result words: led to, because of, due to, as a result.",
+              "Tell it with cause and result words: led to, because of, due to, as a result. In each round, Partner A tells it, then Partner B.",
               "The listener's job: count how many different cause words you use.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard (no names) on the board, prompt the class to fix them, then go on.",
             ],

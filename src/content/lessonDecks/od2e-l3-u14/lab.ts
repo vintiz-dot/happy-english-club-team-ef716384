@@ -96,7 +96,7 @@ export const odL3U14Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u14-l2": {
       objectives: ["I can retell Clara's story in three parts, faster each time."],
-      trim: { "Home talk: glass things": 5, "Expressive reading": 6, "Skits: Clara, her father and Mr. Lombardi": 12 },
+      trim: { "Home talk: glass things": 3, "Expressive reading": 6, "Skits: Clara, her father and Mr. Lombardi": 12 },
       add: [
         {
           after: "Story map: beginning, middle, end",
@@ -105,8 +105,8 @@ export const odL3U14Lab: UnitLab = {
             title: "Retell Clara's story: three tellings",
             routine: "retell",
             mode: "pairs",
-            minutes: 5,
-            goal: "Tell the story three times. Each time it is shorter, smoother and faster.",
+            minutes: 8,
+            goal: "Tell the story three times, to three partners. In each round both partners tell it. Each time it is shorter, smoother and faster.",
             chunks: [
               "In the beginning, Clara bumped the delicate vases.",
               "In the middle, Clara had a clever idea.",
@@ -115,14 +115,14 @@ export const odL3U14Lab: UnitLab = {
             ],
             recycle: ["A lever and a ramp help people lift things.", "I can't ride a unicycle, and my partner can't, either."],
             rounds: [
-              { seconds: 90, say: "Tell your partner the story. Use your story map." },
-              { seconds: 60, say: "New partner. Tell it again in less time." },
-              { seconds: 45, say: "New partner. Tell it fast and smooth! Thumbs up if you didn't stop." },
+              { seconds: 75, say: "Round 1: Partner A tells the story, then Partner B. Use your story map. Then change partners." },
+              { seconds: 60, say: "Round 2: Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: Partner A tells it fast and smooth, then Partner B. Thumbs up if you didn't stop." },
             ],
             steps: [
-              "Look at your story map. Tell the beginning, the middle and the end.",
+              "Look at your story map. Tell the beginning, the middle and the end. In every round, Partner A tells it, then Partner B tells it.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard (often a missing -ed or -s) on the board and let the class fix them. Then go on to round 2.",
-              "When the bell rings, find a new partner and tell it again.",
+              "When the bell rings, find a new partner. Partner A tells it again, then Partner B.",
               "The listener has a job: count the three parts on your fingers and ask one question at the end.",
             ],
             prompts: ["(story map: beginning)", "(story map: middle)", "(story map: end)"],
@@ -272,8 +272,9 @@ export const odL3U14Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l3-u14-l4": {
-      objectives: ["I can talk about life before and after an invention for two minutes, three times, faster each time."],
+      objectives: ["I can talk about life before and after an invention three times, faster each time."],
       trim: {
+        "How the invention changed life": 9,
         "Before and after board game": 3,
         "My favourite invention (SB 142 Think)": 4,
         "Who likes which invention? (SB 142 A)": 7,
@@ -319,8 +320,8 @@ export const odL3U14Lab: UnitLab = {
             title: "Life before and after: 4-3-2 talk",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 7,
-            goal: "Give the same talk to three partners. Each talk is shorter and smoother.",
+            minutes: 8,
+            goal: "Give the same talk to three partners. In each round both partners give the talk. Each talk is shorter and smoother.",
             chunks: [
               "Before lamps were invented, people used candles.",
               "After lamps were invented, people could read at night.",
@@ -329,14 +330,14 @@ export const odL3U14Lab: UnitLab = {
             ],
             recycle: ["A jet flies faster than a car.", "{s1} can't swim, and I can't, either."],
             rounds: [
-              { seconds: 120, say: "Partner 1: give your talk about one invention. The listener counts your 'before' and 'after' sentences on their fingers." },
-              { seconds: 90, say: "Partner 2: the same talk in less time. The listener asks one question at the end." },
-              { seconds: 60, say: "Partner 3: fast and smooth! The listener says 'Wow!' at the end." },
+              { seconds: 75, say: "Round 1: Partner A gives the talk about one invention, then Partner B. The listener counts the 'before' and 'after' sentences on their fingers. Then change partners." },
+              { seconds: 60, say: "Round 2: the same talk in less time, Partner A then Partner B. The listener asks one question at the end. Then change partners." },
+              { seconds: 45, say: "Round 3: fast and smooth! Partner A then Partner B. The listener says 'Wow!' at the end." },
             ],
             steps: [
               "Choose one invention. Say what people used to do before it and what they could do after it.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board and fix them together. Then go on.",
-              "When the bell rings, the listeners move one place to the left: a new partner. Give the same talk again, shorter.",
+              "When the bell rings, change partners: one line moves one place to the left. Partner A gives the same talk again, shorter, then Partner B.",
             ],
             feedback: fixBetween + " For this lesson: listen for 'before cars invented' (needs 'were'), 'people walk' (needs 'walked'), and a missing comma pause after the Before part.",
             teacherNote: "The 4/3/2 activity scaled for 8 to 10 year olds: the same talk, less time, new listener. The new partner keeps the repetition real. 4/3/2 alone builds fluency, not accuracy, so the one-minute fix between rounds is not optional. Half the class gives the talk and half listens in each round; the listeners give their own talk in the home recording. Do not add new language between rounds. Listen for the past tense endings and say them clearly yourself.",
@@ -380,7 +381,7 @@ export const odL3U14Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u14-l5": {
       objectives: ["I can give my opinion about an invention in one minute, and say it better the second time."],
-      trim: { "Test our big ideas": 4 },
+      trim: { "60-second recall": 3, "Test our big ideas": 3 },
       add: [
         {
           after: "Answer and discuss (SB 144 B)",
@@ -389,8 +390,8 @@ export const odL3U14Lab: UnitLab = {
             title: "My opinion in one minute: three tellings",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 5,
-            goal: "Give the same opinion to three partners. Each time is clearer and faster.",
+            minutes: 8,
+            goal: "Give the same opinion to three partners. In each round both partners give their opinion. Each time is clearer and faster.",
             chunks: [
               "In my opinion, the phone is the most useful invention.",
               "Before phones were invented, people wrote letters.",
@@ -399,14 +400,14 @@ export const odL3U14Lab: UnitLab = {
             ],
             recycle: ["A good solution is to ask for help.", "I like inventions, and my partner does, too."],
             rounds: [
-              { seconds: 90, say: "Partner 1: give your opinion with a reason. The listener counts the reasons." },
-              { seconds: 60, say: "New partner. The same opinion, in less time." },
-              { seconds: 60, say: "New partner. Short, clear and fast!" },
+              { seconds: 75, say: "Round 1: Partner A gives an opinion with a reason, then Partner B. The listener counts the reasons. Then change partners." },
+              { seconds: 60, say: "Round 2: the same opinion in less time, Partner A then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: short, clear and fast! Partner A then Partner B." },
             ],
             steps: [
               "Choose an invention. Say your opinion, then one reason, then 'before and after'.",
               "Teacher: after round 1, stop for one minute. Write two mistakes you heard on the board and fix them together. Then go on.",
-              "Find a new partner when the bell rings. Say it again, a little faster.",
+              "Change partners when the bell rings. Partner A says it again, a little faster, then Partner B.",
               "The listener has a job: count your reasons and ask one follow-up question.",
             ],
             feedback: fixBetween + " Listen for 'the most useful' without 'the', 'more quick' for 'more quickly', and 'people wrote' said as 'people write'.",

@@ -100,18 +100,18 @@ export const rhL3U5Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u5-l2": {
-      objectives: ["I can give a weather report with 'so ... that' and 'such a ... that', three times, faster each time."],
+      objectives: ["I can give a weather report with 'so ... that' and 'such a ... that' to two partners, faster the second time."],
       trim: { "Write: which melts fastest?": 9 },
       add: [
         {
           after: "Weather reporters: so cold that ...",
           slide: {
             kind: "fluency",
-            title: "Weather report: say it three times",
+            title: "Weather report: say it twice",
             routine: "task repeat",
             mode: "pairs",
             minutes: 6,
-            goal: "Give the same weather report to three partners. Each report is smoother and faster.",
+            goal: "Give the same weather report to two partners. In each round, partner A reports, then partner B. The second round is smoother and faster.",
             chunks: [
               "It was so cold that the water froze.",
               "It was such a hot day that the road felt soft.",
@@ -121,14 +121,13 @@ export const rhL3U5Lab: UnitLab = {
             ],
             recycle: ["You mustn't touch the hot pot.", "We should use less water.", "Farmers have to harvest the rice."],
             rounds: [
-              { seconds: 60, say: "Partner 1: give your weather report (four sentences). The listener counts the 'that' sentences." },
-              { seconds: 45, say: "New partner: the same report in less time." },
-              { seconds: 40, say: "New partner: fast and smooth! The listener says one thing they liked." },
+              { seconds: 75, say: "Round 1: Partner A gives the weather report (four sentences), then Partner B gives theirs. The listener counts the 'that' sentences. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A gives the same report in less time, then Partner B. Fast and smooth! The listener says one thing they liked. Then change partners." },
             ],
             steps: [
               "Choose a weather card. Make a report with four sentences: a so sentence, a such a sentence, a faster / more slowly sentence, and one more.",
               fix,
-              "When the bell rings, move to a new partner. Same report, less time.",
+              "When the bell rings, change partners. Partner A gives the same report, then Partner B. Less time!",
               "The listener's job: count the 'that' sentences and give a thumbs up for each.",
             ],
             prompts: ["(card: a freezing morning in Sa Pa)", "(card: a very hot afternoon)", "(card: a heavy storm)"],
@@ -208,6 +207,7 @@ export const rhL3U5Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u5-l3": {
       objectives: ["I can say what I was doing when something happened, with 'while' and 'when', in a 4-3-2 talk."],
+      trim: { "Alibi game: what were you doing?": 10 },
       add: [
         {
           after: "Alibi game: what were you doing?",
@@ -216,8 +216,8 @@ export const rhL3U5Lab: UnitLab = {
             title: "Alibi 4-3-2: what were you doing?",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 7,
-            goal: "Tell the same story about your afternoon to three partners, in less time each time.",
+            minutes: 8,
+            goal: "Tell the same story about your afternoon to three partners, in less time each time. In each round, partner A talks, then partner B.",
             chunks: [
               "I was reading when the phone rang.",
               "While I was stirring the soup, my brother was setting the table.",
@@ -227,14 +227,14 @@ export const rhL3U5Lab: UnitLab = {
             ],
             recycle: ["How about asking Mum to help?", "Each of the sisters has a different job.", "Don't give up!"],
             rounds: [
-              { seconds: 120, say: "Partner 1: tell your alibi: what you and your friends were doing at four o'clock. The listener asks one follow-up question." },
-              { seconds: 90, say: "New partner: the same alibi in less time." },
-              { seconds: 60, say: "New partner: fast and smooth! The listener says 'Wow!' at the end." },
+              { seconds: 75, say: "Round 1: Partner A tells the alibi: what you and your friends were doing at four o'clock. Then Partner B tells theirs. The listener asks one follow-up question. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A tells the same alibi in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Fast and smooth! Partner A, then Partner B. The listener says 'Wow!' at the end." },
             ],
             steps: [
               "Plan your alibi: where you were, what you were doing, what happened.",
               fix,
-              "When the bell rings, move to a new partner and tell it again.",
+              "When the bell rings, change partners. Partner A tells the alibi again, then Partner B.",
               "The listener's job: ask ONE question: 'What were you doing when ___?'",
             ],
             feedback:
@@ -294,8 +294,8 @@ export const rhL3U5Lab: UnitLab = {
             title: "Museum story: retell it three times",
             routine: "retell",
             mode: "pairs",
-            minutes: 7,
-            goal: "Retell how a museum object was found, kept and studied. Each telling is shorter and smoother.",
+            minutes: 8,
+            goal: "Retell how a museum object was found, kept and studied. In each round, partner A tells it, then partner B. Each telling is shorter and smoother.",
             chunks: [
               "The bone was found by a young girl.",
               "It was kept in ice for many years.",
@@ -305,14 +305,14 @@ export const rhL3U5Lab: UnitLab = {
             ],
             recycle: ["If I were a farmer, I would keep ducks.", "Both of them are on the team.", "We should use less water."],
             rounds: [
-              { seconds: 90, say: "Tell your partner the story of the object from the three picture cards: found, kept, studied." },
-              { seconds: 60, say: "New partner: tell it again in less time." },
-              { seconds: 45, say: "New partner: fast and smooth! Thumbs up if you didn't stop." },
+              { seconds: 75, say: "Round 1: Partner A tells the story of the object from the three picture cards (found, kept, studied), then Partner B tells it. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Fast and smooth! Partner A, then Partner B. Thumbs up if you didn't stop." },
             ],
             steps: [
               "Hold up one finger for found, two for kept, three for studied or shown.",
               fix,
-              "When the bell rings, find a new partner and tell the story again.",
+              "When the bell rings, change partners. Partner A tells the story again, then Partner B.",
               "The listener's job: count the passive sentences ('was found', 'were studied') and ask one question: 'Where was it ...?'",
             ],
             prompts: ["(card: a young girl digging)", "(card: a block of ice)", "(card: scientists with a microscope)"],
@@ -574,7 +574,7 @@ export const rhL3U5Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 7
     "rh-l3-u5-l7": {
       objectives: ["I can talk about a book I like with 'mine', 'hers' and 'the children's', three times, faster each time."],
-      trim: { "Draft and edit the literary response": 20, "Book talk: convince me to read it": 6 },
+      trim: { "Draft and edit the literary response": 20, "Book talk: convince me to read it": 4 },
       add: [
         {
           after: "Book talk: convince me to read it",
@@ -583,8 +583,8 @@ export const rhL3U5Lab: UnitLab = {
             title: "Book talk 4-3-2: convince three friends",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 6,
-            goal: "Give the same book talk to three partners, in less time each time.",
+            minutes: 8,
+            goal: "Give the same book talk to three partners, in less time each time. In each round, partner A talks, then partner B.",
             chunks: [
               "This book is mine, and that one is hers.",
               "The story's hero is a girl who loves science.",
@@ -594,14 +594,14 @@ export const rhL3U5Lab: UnitLab = {
             ],
             recycle: ["If you heat ice, it melts.", "It takes about ten minutes to read a chapter.", "The bones were studied by scientists."],
             rounds: [
-              { seconds: 90, say: "Partner 1: convince your partner to read your book. The listener asks one question: 'Why do you like it?'" },
-              { seconds: 60, say: "New partner: the same book talk in less time." },
-              { seconds: 45, say: "New partner: fast and smooth! The listener says whether they want to read it." },
+              { seconds: 75, say: "Round 1: Partner A convinces Partner B to read their book, then Partner B does the same. The listener asks one question: 'Why do you like it?' Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A gives the same book talk in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Fast and smooth! Partner A, then Partner B. The listener says whether they want to read it." },
             ],
             steps: [
               "Plan: the book, the best part, and one reason.",
               fix,
-              "When the bell rings, move to a new partner and give the talk again.",
+              "When the bell rings, change partners. Partner A gives the book talk again, then Partner B.",
               "The listener's job: ask ONE question with 'why' and report it later: 'My partner asked me why ___.'",
             ],
             feedback:

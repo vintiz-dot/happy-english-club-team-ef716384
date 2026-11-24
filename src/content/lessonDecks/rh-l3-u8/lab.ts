@@ -111,8 +111,8 @@ export const rhL3U8Lab: UnitLab = {
             title: "Tell it three times: someone who got there",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell about a person who has achieved something, three times, shorter and smoother each time.",
+            minutes: 7,
+            goal: "Tell about a person who has achieved something, three times, shorter and smoother each time. In every round, Partner A tells it, then Partner B.",
             chunks: [
               "She has already tried very hard, but she hasn't won yet.",
               "She started when she was seven, and she has never stopped.",
@@ -122,9 +122,9 @@ export const rhL3U8Lab: UnitLab = {
             ],
             recycle: ["You should talk to your teacher about it.", "If I were you, I would make a plan.", "You'd better hurry, or you'll miss the bus."],
             rounds: [
-              { seconds: 90, say: "Tell your partner about the person in the first part of \"Running Shoes\" or about someone you know. Use the key-word cards." },
-              { seconds: 60, say: "New partner. Tell it again in less time." },
-              { seconds: 45, say: "New partner. Tell it fast. Thumbs up if you did not stop!" },
+              { seconds: 65, say: "Round 1: Partner A tells about the person in the first part of \"Running Shoes\" or about someone you know. Use the key-word cards. Then Partner B tells it. Then change partners." },
+              { seconds: 50, say: "Round 2: new partner. Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 35, say: "Round 3: new partner. Partner A tells it fast, then Partner B. Thumbs up if you did not stop!" },
             ],
             steps: [
               "Put your three key-word cards on your desk: who, what they want, what has happened so far.",
@@ -309,7 +309,7 @@ export const rhL3U8Lab: UnitLab = {
             routine: "4-3-2",
             mode: "pairs",
             minutes: 7,
-            goal: "Give the same talk to three partners. Each time you have less time, and you say it faster and smoother.",
+            goal: "Give the same talk to three partners. Each time you have less time, and you say it faster and smoother. In every round, Partner A talks, then Partner B.",
             chunks: [
               "I made a plan in order to stay on track.",
               "I write it down so that I can remember it.",
@@ -319,9 +319,9 @@ export const rhL3U8Lab: UnitLab = {
             ],
             recycle: ["If I were you, I would make a plan.", "How long does it take you to get there?", "She has already tried very hard."],
             rounds: [
-              { seconds: 90, say: "Talk to partner A about a goal you have and the tools that help you." },
-              { seconds: 70, say: "New partner B. The same talk in less time." },
-              { seconds: 50, say: "New partner C. The same talk again, faster. Keep going!" },
+              { seconds: 65, say: "Round 1: Partner A talks about a goal and the tools that help, then Partner B talks. Then change partners." },
+              { seconds: 50, say: "Round 2: new partner. Partner A gives the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 35, say: "Round 3: new partner. Partner A gives the same talk again, faster, then Partner B. Keep going!" },
             ],
             steps: [
               "Choose one goal and two tools. Write three key words only.",
@@ -419,7 +419,7 @@ export const rhL3U8Lab: UnitLab = {
             routine: "task repeat",
             mode: "pairs",
             minutes: 7,
-            goal: "Do the same task again with a new partner. Say the future phrases without stopping to build them.",
+            goal: "Do the same task again with a new partner. Say the future phrases without stopping to build them. In every round, both partners find a time together.",
             chunks: [
               "Are you free on Saturday?",
               "Sorry, I'm meeting my cousin on Saturday morning.",
@@ -429,9 +429,9 @@ export const rhL3U8Lab: UnitLab = {
             ],
             recycle: ["It takes me twenty minutes to cycle there.", "You'd better start early, or you'll be late.", "She has already run twice this week."],
             rounds: [
-              { seconds: 90, say: "Read your diary for one minute (planning time), then find a time to train together." },
-              { seconds: 70, say: "New partner, new diary. The same task, faster." },
-              { seconds: 50, say: "New partner again. Find a time in under a minute if you can!" },
+              { seconds: 65, say: "Round 1: Partner A asks and Partner B answers, then change roles (Partner B asks, Partner A answers). Use your diary card and find a time to train. Then change partners." },
+              { seconds: 50, say: "Round 2: new partner, new diary. Partner A asks first, then Partner B. The same task, faster. Then change partners." },
+              { seconds: 35, say: "Round 3: new partner again. Partner A asks first, then Partner B. Find a time fast if you can!" },
             ],
             steps: [
               "Look at your diary card: some days are full, some are free.",
@@ -616,8 +616,8 @@ export const rhL3U8Lab: UnitLab = {
             title: "Tell it again: my story, shorter each time",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell your planned story to three partners. Each telling is shorter and smoother.",
+            minutes: 7,
+            goal: "Tell your planned story to three partners. Each telling is shorter and smoother. In every round, Partner A tells the story, then Partner B.",
             chunks: [
               "This is a story about a girl who wanted to reach the top.",
               "But there was a problem: the path was icy.",
@@ -627,9 +627,9 @@ export const rhL3U8Lab: UnitLab = {
             ],
             recycle: ["While we were walking up, it started to snow.", "Suddenly, the ground started to shake.", "Holding the map, she chose the left path."],
             rounds: [
-              { seconds: 90, say: "Tell your story plan to partner A, with your key-word cards." },
-              { seconds: 60, say: "New partner B. Tell it again in less time." },
-              { seconds: 45, say: "New partner C. Tell it fast and keep going." },
+              { seconds: 65, say: "Round 1: Partner A tells the story plan with the key-word cards, then Partner B tells theirs. Then change partners." },
+              { seconds: 50, say: "Round 2: new partner. Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 35, say: "Round 3: new partner. Partner A tells it fast, then Partner B. Keep going!" },
             ],
             steps: [
               "Look at your story plan and your key-word cards: who, goal, problem, end.",
@@ -706,7 +706,7 @@ export const rhL3U8Lab: UnitLab = {
             routine: "4-3-2",
             mode: "pairs",
             minutes: 7,
-            goal: "Tell about your English journey: what you have done, what you did, and what you will do. Three partners, less time each time.",
+            goal: "Tell about your English journey: what you have done, what you did, and what you will do. Three partners, less time each time. In every round, Partner A talks, then Partner B.",
             chunks: [
               "I have learned a lot of new words this year.",
               "Last month I took a big test.",
@@ -716,9 +716,9 @@ export const rhL3U8Lab: UnitLab = {
             ],
             recycle: ["If I were you, I would make a plan.", "I wish I could run faster.", "Unless I practise, I won't get better."],
             rounds: [
-              { seconds: 90, say: "Tell partner A about your journey. Use the three key words: so far, last, next." },
-              { seconds: 70, say: "New partner B. The same talk in less time." },
-              { seconds: 50, say: "New partner C. Faster. Keep going!" },
+              { seconds: 65, say: "Round 1: Partner A tells about their journey with the three key words (so far, last, next), then Partner B tells theirs. Then change partners." },
+              { seconds: 50, say: "Round 2: new partner. Partner A gives the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 35, say: "Round 3: new partner. Partner A talks faster, then Partner B. Keep going!" },
             ],
             steps: [
               "Write three key words: one for the past, one for now, one for next year.",

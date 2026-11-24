@@ -117,12 +117,13 @@ export const odL2U4Lab: UnitLab = {
             ],
             recycle: ["When it is cold, the water freezes.", "The ice was hard. Now it is water."],
             rounds: [
-              { seconds: 75, say: "Tell your partner the play. Use the four picture cards." },
-              { seconds: 50, say: "New partner. Tell it again in less time." },
-              { seconds: 35, say: "New partner. Tell it fast! Thumbs up if you did not stop." },
+              { seconds: 60, say: "Round 1: Partner A tells the play, then Partner B. Use the four picture cards. Then change partners." },
+              { seconds: 45, say: "Round 2: Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: Partner A tells it fast, then Partner B. Thumbs up if you did not stop." },
             ],
             steps: [
               "Put the four picture cards in order. Say one sentence for each card.",
+              "In each round, Partner A tells the story, then Partner B tells it. Each child has the time on the screen.",
               "Teacher: after round 1, stop for one minute. Put two sentences you heard with a mistake on the board and let the class fix them; then go on.",
               "When the bell rings, find a new partner.",
               "The listener says 'Wow!' at the end and gives a thumbs up.",

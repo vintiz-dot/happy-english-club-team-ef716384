@@ -104,11 +104,11 @@ export const rhL3U4Lab: UnitLab = {
           after: "Market reporter",
           slide: {
             kind: "fluency",
-            title: "Market reporter: say it three times",
+            title: "Market reporter: say it twice",
             routine: "task repeat",
             mode: "pairs",
             minutes: 6,
-            goal: "Report on the same market picture three times. Each report is smoother.",
+            goal: "Report on the same market picture twice, with two different partners. Partner A reports, then Partner B. The second report is smoother.",
             chunks: [
               "Every morning, the sellers arrange their fruit.",
               "Right now, a woman is weighing some mangoes.",
@@ -118,14 +118,13 @@ export const rhL3U4Lab: UnitLab = {
             ],
             recycle: ["The school garden is watered every morning.", "Seeds need water, light and warm soil."],
             rounds: [
-              { seconds: 60, say: "Reporter A: describe the market picture to your partner. What do people do every day, and what are they doing right now?" },
-              { seconds: 45, say: "New partner. The same report, in less time." },
-              { seconds: 30, say: "New partner. Fast and smooth! Listener: tick every 'is / are + -ing' you hear." },
+              { seconds: 75, say: "Round 1: Partner A describes the market picture, then Partner B does. What do people do every day, and what are they doing right now? Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A gives the same report, then Partner B. Fast and smooth! Listener: tick every 'is / are + -ing' you hear." },
             ],
             steps: [
-              "Look at the same market picture each time. First say what people usually do, then what they are doing now.",
+              "Look at the same market picture each time. In each round, Partner A reports, then Partner B reports. First say what people usually do, then what they are doing now.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (for example 'The baby sleeps' for 'Look!') and fix them with the class; then go on.",
-              "When the bell rings, find a new partner and give the same report again.",
+              "When the bell rings, change partners and give the same report again (Partner A, then Partner B).",
               "The listener says one thing they liked, then swap.",
             ],
             prompts: ["(picture: a busy morning market)", "Every morning ___.", "Right now ___ is ___ing."],
@@ -133,7 +132,7 @@ export const rhL3U4Lab: UnitLab = {
               base +
               "Here: if a child says 'Look! The baby sleeps', say 'Look! The baby ...?' and point to 'now' on the board so they find 'is sleeping'. For 'He go to market every day', hold up one finger and wait for the -es. For 'She is knowing', say 'know ...?' with a shake of the head and let them find 'knows'.",
             teacherNote:
-              "Task repetition is a well-supported route to speed: the same picture means the second and third reports use words already found, so the child's attention goes to the verb forms. Listen for the -s on he/she/it verbs, the missing 'is' or 'are' (Vietnamese has no be here, so 'She working' is common), and -ing on state verbs like 'knowing'.",
+              "Task repetition is a well-supported route to speed: the same picture means the second report uses words already found, so the child's attention goes to the verb forms. Listen for the -s on he/she/it verbs, the missing 'is' or 'are' (Vietnamese has no be here, so 'She working' is common), and -ing on state verbs like 'knowing'.",
             tiers: [
               { level: "Support", task: "Use the frames and the picture; say one 'every day' and one 'right now' sentence.", frames: ["Every morning, the sellers ___.", "Right now, a woman is ___."] },
               { level: "Core", task: "Give a full report of four or five sentences without the board." },
@@ -291,7 +290,7 @@ export const rhL3U4Lab: UnitLab = {
             routine: "retell",
             mode: "pairs",
             minutes: 6,
-            goal: "Retell the story of Ba's booth three times. Each retelling is shorter and smoother.",
+            goal: "Retell the story of Ba's booth three times (50, 40 and 30 seconds each). Partner A retells, then Partner B. Each retelling is shorter and smoother.",
             chunks: [
               "At the fair, everyone is busy, but nobody stops at Ba's booth.",
               "Both daughters want to help their father.",
@@ -301,14 +300,14 @@ export const rhL3U4Lab: UnitLab = {
             ],
             recycle: ["Many cities have gardens on their roofs.", "The seeds are in the soil."],
             rounds: [
-              { seconds: 60, say: "Tell your partner the story with the three-part map: the problem, the idea, the end." },
-              { seconds: 45, say: "New partner. Retell it in less time." },
-              { seconds: 30, say: "New partner. Fast and smooth! Thumbs up if you did not stop." },
+              { seconds: 50, say: "Round 1: Partner A tells the story with the three-part map (the problem, the idea, the end), then Partner B. Then change partners." },
+              { seconds: 40, say: "Round 2: new partner. Partner A retells it in less time, then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 3: new partner. Partner A, then Partner B. Fast and smooth! Thumbs up if you did not stop." },
             ],
             steps: [
               "Hold up one finger for the problem, two for the idea, three for the end.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (for example 'Everyone have' or 'Both daughter wants') and fix them with the class; then go on.",
-              "When the bell rings, find a new partner and tell the story again.",
+              "When the bell rings, change partners. Partner A tells the story again, then Partner B.",
               "The listener counts how many times you say everyone, each or both, and gives a thumbs up.",
             ],
             prompts: ["(map: problem, idea, end)", "At the beginning ___.", "In the end ___."],

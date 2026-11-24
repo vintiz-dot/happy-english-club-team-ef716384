@@ -104,15 +104,15 @@ export const odL1U9Lab: UnitLab = {
             chunks: ["I have two pencils and three erasers.", "Two plus three equals five.", "The answer is five!", "What is four plus one?"],
             recycle: ["I build a snowman in winter.", "I don't build a snowman in the summer."],
             rounds: [
-              { seconds: 60, say: "Partner 1: tell your adding talk. The listener counts the things on their fingers." },
-              { seconds: 45, say: "Partner 2: the same talk in less time." },
-              { seconds: 30, say: "Partner 3: fast and smooth! The listener says 'Five!' at the end." },
+              { seconds: 45, say: "Round 1: Partner A tells the adding talk, then Partner B tells theirs. The listener counts the things on their fingers. Then change partners." },
+              { seconds: 30, say: "Round 2: Partner A tells the same talk in less time, then Partner B. Then change partners." },
+              { seconds: 20, say: "Round 3: Partner A, then Partner B: fast and smooth! The listener says 'Five!' at the end." },
             ],
             steps: [
-              "Stand in two lines facing each other. Line A talks first.", "Choose some counters or pencils. Say what you have and add them up.",
+              "Stand in two lines facing each other. In each round Partner A talks, then Partner B talks.", "Choose some counters or pencils. Say what you have and add them up.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
               "When the bell rings, line B moves one step to the left: a new partner.",
-              "Line B talks next with the same three rounds.",
+              "Do the same three rounds with each new partner: A talks, then B talks, then change partners.",
             ],
             feedback:
               correct +
@@ -202,15 +202,15 @@ export const odL1U9Lab: UnitLab = {
             chunks: ["I have a pet.", "I don't have a kite.", "You have a pencil.", "We have two hats.", "They have bicycles."],
             recycle: ["I don't build a snowman in the summer.", "Do you make apple pie? No, I don't."],
             rounds: [
-              { seconds: 60, say: "Take three picture cards. Tell your partner about each: 'I have ___.' or 'I don't have ___.'" },
-              { seconds: 45, say: "New partner. The same three cards, the same sentences, in less time." },
-              { seconds: 30, say: "New partner. Same again: smooth and fast, no stops!" },
+              { seconds: 45, say: "Round 1: Take three picture cards. Partner A tells about each card: 'I have ___.' or 'I don't have ___.' Then Partner B. Then change partners." },
+              { seconds: 30, say: "Round 2: New partner. The same three cards, the same sentences, in less time. Partner A, then Partner B. Then change partners." },
+              { seconds: 20, say: "Round 3: New partner. Same again: smooth and fast, no stops! Partner A, then Partner B." },
             ],
             steps: [
               "Pick three picture cards. Put them face up.",
               "Say a whole sentence for each card: 'I have ___.' for things you have, 'I don't have ___.' for the others.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board (no names) and fix them together; then go on.",
-              "When you hear the bell, find a new partner. Keep the same cards.",
+              "In each round Partner A talks, then Partner B talks. When you hear the bell, find a new partner. Keep the same cards.",
             ],
             prompts: ["(card: pet)", "(card: kite)", "(card: pencil)", "(card: two hats)", "(card: bicycles)"],
             feedback: correct + haveFix,
@@ -367,13 +367,13 @@ export const odL1U9Lab: UnitLab = {
             chunks: ["I have three pencils.", "I don't have a ruler.", "Do you have an eraser? Yes, I do.", "We have six things in all!"],
             recycle: ["Do you watch leaves fall? Yes, I do.", "Do you bring your friends? Yes, I do."],
             rounds: [
-              { seconds: 60, say: "Tell your partner what is in your backpack. Use your cards or things." },
-              { seconds: 45, say: "New partner. Tell it again in less time." },
-              { seconds: 30, say: "New partner. Tell it fast! Thumbs up if you didn't stop." },
+              { seconds: 45, say: "Round 1: Partner A tells what is in the backpack, then Partner B. Use your cards or things. Then change partners." },
+              { seconds: 30, say: "Round 2: New partner. Partner A tells it again in less time, then Partner B. Then change partners." },
+              { seconds: 20, say: "Round 3: New partner. Partner A tells it fast, then Partner B. Thumbs up if you didn't stop." },
             ],
             steps: [
               "Take your backpack things or three picture cards.",
-              "Tell your partner what you have and what you don't have.",
+              "Tell your partner what you have and what you don't have. In each round Partner A talks, then Partner B talks.",
               "Teacher: after round 1, stop for one minute. Write two sentences you heard with a mistake on the board; the class fixes them. Then go on to round 2.",
               "The listener says 'Wow!' at the end and gives a thumbs up.",
             ],

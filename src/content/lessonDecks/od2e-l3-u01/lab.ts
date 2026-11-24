@@ -122,7 +122,7 @@ export const odL3U1Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u01-l2": {
       objectives: ["I can tell a partner about an event around the world three times, faster each time."],
-      trim: { "Fact or opinion fingers": 4, "Our festivals and the ones we read about": 4 },
+      trim: { "Fact or opinion fingers": 3, "Our festivals and the ones we read about": 3 },
       add: [
         {
           after: "Chart: events around the world",
@@ -131,8 +131,8 @@ export const odL3U1Lab: UnitLab = {
             title: "Event retell: again, faster",
             routine: "retell",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell about the same event three times. Each time is shorter, smoother and faster.",
+            minutes: 8,
+            goal: "Tell about the same event three times. Each time is shorter, smoother and faster. In every round, both partners tell it.",
             chunks: [
               "One fact is that people ___ at this event.",
               "In this event, people ___ and ___.",
@@ -141,9 +141,9 @@ export const odL3U1Lab: UnitLab = {
             ],
             recycle: ["My favorite sport is ___. What's yours?", "I like it because it is fun.", "There are a lot of colors."],
             rounds: [
-              { seconds: 90, say: "Tell your partner about one event from the chart. Use the picture and the frames." },
-              { seconds: 60, say: "New partner. Tell about the same event again, in less time." },
-              { seconds: 45, say: "New partner. Tell it a third time, fast and smooth. Thumbs up if you did not stop." },
+              { seconds: 75, say: "Round 1: Partner A tells about one event from the chart, then Partner B. Use the picture and the frames. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A tells about the same event again in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Partner A tells it a third time, fast and smooth, then Partner B. Thumbs up if you did not stop." },
             ],
             steps: [
               "Pick one event from the chart. Look at its picture.",
@@ -307,7 +307,7 @@ export const odL3U1Lab: UnitLab = {
         "Plan and try your stall": 8,
         "A party I remember (SB 14 Think)": 8,
         "Same and different (SB 15 C)": 8,
-        "Timeline talk and shared sentences": 5,
+        "Timeline talk and shared sentences": 3,
         "Big Question Review (SB 14-15)": 6,
       },
       add: [
@@ -318,8 +318,8 @@ export const odL3U1Lab: UnitLab = {
             title: "Last weekend: tell it 4-3-2",
             routine: "4-3-2",
             mode: "pairs",
-            minutes: 6,
-            goal: "Tell the same story to three partners. You get less time each time, so say it smoother and faster.",
+            minutes: 8,
+            goal: "Tell the same story to three partners. You get less time each time (75, 60, then 45 seconds), so say it smoother and faster. In every round, both partners tell their story.",
             chunks: [
               "Last weekend, I went to a ___ with my ___.",
               "In the morning, we ___. At 12:00, I ate ___.",
@@ -328,15 +328,15 @@ export const odL3U1Lab: UnitLab = {
             ],
             recycle: ["The race was tiring, so I felt tired.", "There are a lot of ___.", "I would love to go to the ___ because ..."],
             rounds: [
-              { seconds: 120, say: "Tell your first partner about a day you had fun. Use your timeline. The listener only listens." },
-              { seconds: 90, say: "New partner. Tell the same story again in less time." },
-              { seconds: 60, say: "Last partner. Tell it a third time, fast and smooth!" },
+              { seconds: 75, say: "Round 1: Partner A tells about a day you had fun, then Partner B. Use your timeline. The listener only listens. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A tells the same story again in less time, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 3: last partner. Partner A tells it a third time, fast and smooth, then Partner B!" },
             ],
             steps: [
               "Look at your timeline: three time words, three things you did.",
-              "Round 1: tell your story. Your partner has a job: count the time words you say.",
+              "Round 1: Partner A tells the story, then Partner B. The listener has a job: count the time words you say.",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them with the class. Then go on to round 2.",
-              "Rounds 2 and 3: the same story, a new partner, less time. Cut the extra words, not the time words.",
+              "Rounds 2 and 3: the same story, a new partner, less time. Partner A tells it, then Partner B. Cut the extra words, not the time words.",
             ],
             prompts: ["(timeline: morning, noon, night)", "(picture cards: noodles, football, dance)"],
             feedback:
@@ -386,7 +386,7 @@ export const odL3U1Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u01-l5": {
       objectives: ["I can tell the same event story to three friends, with 'so' and 'because', and write a note about it."],
-      trim: { "Remember it!": 4, "Does the rule work here too?": 3 },
+      trim: { "Remember it!": 3, "Does the rule work here too?": 3 },
       add: [
         {
           after: "Robin's fun diary: who knows what?",
@@ -395,8 +395,8 @@ export const odL3U1Lab: UnitLab = {
             title: "Same event, new friend",
             routine: "task repeat",
             mode: "pairs",
-            minutes: 6,
-            goal: "Do the same talk three times with a new partner. Say it with fewer stops each time.",
+            minutes: 8,
+            goal: "Do the same talk three times with a new partner. Say it with fewer stops each time. In every round, both partners give the talk.",
             chunks: [
               "Last weekend, I went to a ___.",
               "The magic show was amazing, so I felt amazed.",
@@ -406,15 +406,15 @@ export const odL3U1Lab: UnitLab = {
             ],
             recycle: ["On Saturday, my cousins arrived.", "In the morning, we ___.", "I think it is fun because ..."],
             rounds: [
-              { seconds: 75, say: "Tell your partner about one event: what it was, how it was, how you felt." },
-              { seconds: 60, say: "New partner. Same event, same talk. Aim for no stops." },
-              { seconds: 45, say: "New partner. The same talk again, fast and smooth. Count your stops on your fingers." },
+              { seconds: 75, say: "Round 1: Partner A tells about one event (what it was, how it was, how you felt), then Partner B. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A gives the same talk, then Partner B. Aim for no stops. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Partner A gives the same talk again, fast and smooth, then Partner B. Count your stops on your fingers." },
             ],
             steps: [
               "Pick one event card. Plan three sentences: where you went, how it was, how you felt.",
-              "Tell your partner. The listener asks one follow-up question at the end: 'Why?' or 'Who went?'",
+              "Round 1: Partner A tells it, then Partner B. The listener asks one follow-up question at the end: 'Why?' or 'Who went?'",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them with the class. Then go on to round 2.",
-              "Change partner when you hear the bell. Tell the same talk.",
+              "Change partner when you hear the bell. Tell the same talk: Partner A, then Partner B.",
             ],
             prompts: ["(card: a lantern night)", "(card: a sports day)", "(card: a birthday party)"],
             feedback:

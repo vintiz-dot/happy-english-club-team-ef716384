@@ -118,9 +118,9 @@ export const odL3U12Lab: UnitLab = {
             ],
             recycle: ["The trombone is louder than the violin.", "Which is longer, a flute or a clarinet?"],
             rounds: [
-              { seconds: 90, say: "Tell your partner about your instrument using your expert card. Look at the card if you need to." },
-              { seconds: 60, say: "New partner. Tell it again in less time. Put the card face down." },
-              { seconds: 45, say: "New partner. Fast and smooth! The listener ticks every fact they hear." },
+              { seconds: 75, say: "Round 1: Partner A tells it, then Partner B. Use your expert card. Look at the card if you need to. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A tells it again in less time, then Partner B. Put the card face down. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Partner A, then Partner B. Fast and smooth! The listener ticks every fact they hear." },
             ],
             steps: [
               "Use your expert card. Say who, where it comes from, what it is made of, how you play it and what it sounds like.",
@@ -214,7 +214,7 @@ export const odL3U12Lab: UnitLab = {
             routine: "task repeat",
             mode: "pairs",
             minutes: 6,
-            goal: "Give the same comparing talk three times to three partners, with fewer stops each time.",
+            goal: "Give the same comparing talk two times to two partners, with fewer stops the second time.",
             chunks: [
               "The tuba is not as small as the flute.",
               "The panpipes are as light as a feather.",
@@ -224,15 +224,14 @@ export const odL3U12Lab: UnitLab = {
             ],
             recycle: ["Of the three drums, the big one is the loudest.", "This song is more interesting than that one."],
             rounds: [
-              { seconds: 60, say: "Plan for one minute, then tell partner A three sentences comparing two instruments." },
-              { seconds: 60, say: "New partner B. Tell the same comparison again. Fix your mistakes." },
-              { seconds: 45, say: "New partner C. The same talk, smoother and faster!" },
+              { seconds: 60, say: "Round 1: plan for one minute. Then Partner A tells three sentences comparing two instruments, then Partner B. Then change partners." },
+              { seconds: 45, say: "Round 2: new partner. Partner A tells the same comparison again, then Partner B. Fix your mistakes. Smoother and faster!" },
             ],
             steps: [
               "Choose two instruments. Plan three sentences with 'as ... as' or 'not as ... as'.",
-              "Tell partner A. The listener's job: count how many 'as ... as' sentences you hear.",
+              "Round 1: Partner A tells it, then Partner B. The listener's job: count how many 'as ... as' sentences you hear.",
               "Teacher: after round 1, stop for one minute. Fix two mistakes on the board with the class (no names), then go on.",
-              "Change partner on the bell and tell the same talk again.",
+              "Change partner on the bell. Round 2: Partner A tells the same talk again, then Partner B.",
             ],
             feedback: fixBase + asAs,
             teacherNote:
@@ -301,15 +300,15 @@ export const odL3U12Lab: UnitLab = {
             ],
             recycle: ["The trombone is louder than the violin.", "I like to sing at home with my family."],
             rounds: [
-              { seconds: 120, say: "Partner 1: give your whole talk. The listener counts the 'as ... as' sentences and nods." },
-              { seconds: 90, say: "Partner 2: the same talk in less time, with fewer stops." },
-              { seconds: 60, say: "Partner 3: fast and smooth! The listener asks one follow-up question at the end." },
+              { seconds: 90, say: "Round 1: Partner A gives the whole talk, then Partner B. The listener counts the 'as ... as' sentences and nods. Then change partners." },
+              { seconds: 60, say: "Round 2: new partner. Partner A gives the same talk in less time, then Partner B. Fewer stops. Then change partners." },
+              { seconds: 45, say: "Round 3: new partner. Partner A, then Partner B. Fast and smooth! The listener asks one follow-up question at the end." },
             ],
             steps: [
               "Plan your talk with the frames: what is it made of, what does it look like, how does it sound, how do you play it?",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them with the class, especially the -s on verbs; then go on.",
-              "On the bell, partners change: line B moves one place to the left.",
-              "Swap roles and do the three rounds again if time allows.",
+              "In each round, Partner A talks, then Partner B talks. On the bell, partners change: line B moves one place to the left.",
+              "The talks get shorter: 90, 60 and 45 seconds each.",
             ],
             feedback:
               fixBase +

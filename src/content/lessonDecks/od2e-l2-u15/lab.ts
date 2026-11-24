@@ -367,12 +367,12 @@ export const odL2U15Lab: UnitLab = {
             chunks: ["Is a truck heavier than a bike? Yes, it is.", "Is a bike faster than a snail? Yes, it is.", "No, it isn't. A bike is lighter than a truck.", "A heavier thing needs a bigger force."],
             recycle: ["Let me help you.", "We pushed it hard. It went far."],
             rounds: [
-              { seconds: 90, say: "Play the order game with your partner: find the order of four things, from lightest to heaviest." },
-              { seconds: 70, say: "New partner, new four things. Same game, faster." },
-              { seconds: 50, say: "New partner. Can you find the order in under a minute?" },
+              { seconds: 70, say: "Round 1: Partner A plays the order game, then Partner B. Find the order of four things, from lightest to heaviest. Then change partners." },
+              { seconds: 55, say: "Round 2: new partner, new four things. Partner A plays, then Partner B. Same game, faster. Then change partners." },
+              { seconds: 40, say: "Round 3: new partner. Partner A plays, then Partner B. Can you find the order in under a minute?" },
             ],
             steps: [
-              "Each partner has half of the information. Ask 'Is a ___ heavier than a ___?' and answer 'Yes, it is.' or 'No, it isn't.'",
+              "In each round, Partner A plays the game, then Partner B plays it. Each partner has half of the information. Ask 'Is a ___ heavier than a ___?' and answer 'Yes, it is.' or 'No, it isn't.'",
               "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them with prompts; then go on.",
               "When the bell rings, find a new partner and a new set of four cards.",
               "At the end, say the whole order in one sentence: 'A bike is lighter than a car, and a car is lighter than a truck.'",
