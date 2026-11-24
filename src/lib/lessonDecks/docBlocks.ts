@@ -205,10 +205,14 @@ export function deckMaterial(d: Deck, audience: Audience, courseLabel?: string, 
     subtitle: `Lesson ${d.lesson} · ${d.minutes} minutes`,
     className,
     bigQuestion: title?.bigQuestion,
-    objectives: obj?.items,
+    // What the Speaking & Writing Lab added is flagged "Grammar Lab" (Deck.lab), on both copies.
+    objectives: obj?.items.map((o) => (d.lab?.objectives.includes(o) ? `${o} (Grammar Lab)` : o)),
     nameLine: !teacher,
     blocks: [
-      ...d.slides.map((s) => slideBlock(s, teacher)).filter((b): b is DocBlock => !!b),
+      ...d.slides.map((s, i) => {
+        const b = slideBlock(s, teacher);
+        return b && d.lab?.slides.includes(i) ? { ...b, chips: ["Grammar Lab", ...(b.chips ?? [])] } : b;
+      }).filter((b): b is DocBlock => !!b),
       ...(d.curriculum === "hec-ielts-sl" && d.slides.some((s) => s.kind === "homework") ? guideBlocks() : []),
     ],
   });

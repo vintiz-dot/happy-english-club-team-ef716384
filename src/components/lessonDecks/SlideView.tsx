@@ -285,10 +285,20 @@ function CheckItems({ a }: { a: Assessment }) {
   );
 }
 
-/** One slide, names already filled in. Big type: it is read from the back of the room. */
-export function SlideView({ slide }: { slide: Slide }) {
+/** The flag on everything the Speaking & Writing Lab added to a lesson (Deck.lab). */
+export function GrammarLabFlag({ className = "" }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-900 dark:bg-violet-900/40 dark:text-violet-100 ${className}`}>
+      <Sparkles className="h-4 w-4" />Grammar Lab
+    </span>
+  );
+}
+
+/** One slide, names already filled in. Big type: it is read from the back of the room. `lab`: the Lab added it. */
+export function SlideView({ slide, lab }: { slide: Slide; lab?: boolean }) {
   return (
     <div className="space-y-6">
+      {lab && <div className="flex justify-end"><GrammarLabFlag /></div>}
       <SlideBody slide={slide} />
       <Extras slide={slide} />
     </div>
@@ -315,7 +325,9 @@ function SlideBody({ slide }: { slide: Slide }) {
       return (
         <div className="space-y-8">
           <H Icon={Target}>{slide.title ?? "Today we will…"}</H>
-          <List items={slide.items} />
+          <ul className="space-y-3 text-xl md:text-2xl text-hec-ink list-disc pl-8">
+            {slide.items.map((s, i) => <li key={i} className="leading-snug">{s}{deck?.lab?.objectives.includes(s) && <GrammarLabFlag className="ml-2 align-middle" />}</li>)}
+          </ul>
         </div>
       );
     case "activity":

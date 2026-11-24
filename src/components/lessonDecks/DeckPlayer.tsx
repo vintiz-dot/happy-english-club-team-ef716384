@@ -17,6 +17,7 @@ import { ChevronLeft, ChevronRight, Shuffle, X, Timer, Pause, Play, Printer, Vol
 
 /** What a slide is called in the pager tooltip: its title, else its kind. */
 const slideLabel = (s: Slide) => ("title" in s && s.title ? s.title : s.kind);
+const isLab = (d: Deck, k: number) => !!d.lab?.slides.includes(k);
 
 export type ClassFlipbook = FlipbookLite & { id: string; title: string };
 
@@ -61,7 +62,7 @@ export function deckMarkup(deck: Deck, roster: string[], unit: Unit | undefined,
     <SlideContext.Provider value={{ unit: u, deck: d, audience }}>
       {slides.map((s, i) => (
         <section key={i} className="deck-page bg-white p-10">
-          <SlideView slide={s} />
+          <SlideView slide={s} lab={isLab(deck, i)} />
           <p className="mt-6 text-right text-sm text-gray-500">{deck.title} · {COPY[audience]} · {i + 1}/{slides.length}</p>
         </section>
       ))}
@@ -376,7 +377,7 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
       <div className="relative flex-1 overflow-y-auto">
         <div className="mx-auto max-w-6xl p-6 md:p-12 min-h-full">
           <SlideContext.Provider value={ctx}>
-            <SlideView slide={slides[i]} />
+            <SlideView slide={slides[i]} lab={isLab(deck, i)} />
           </SlideContext.Provider>
         </div>
         {book && (
@@ -406,10 +407,10 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
             {slides.map((_, k) => (
               <Tooltip key={k}>
                 <TooltipTrigger asChild>
-                  <button type="button" data-current={k === i} onClick={() => { setI(k); timer.clear(); }} aria-label={`Slide ${k + 1}: ${slideLabel(deck.slides[k])}`} aria-current={k === i ? "step" : undefined}
-                    className={`h-3 shrink-0 rounded-full transition-all ${k === i ? "w-7 bg-amber-500" : "w-3 bg-hec-line-strong/50 hover:bg-hec-line-strong"}`} />
+                  <button type="button" data-current={k === i} onClick={() => { setI(k); timer.clear(); }} aria-label={`Slide ${k + 1}: ${slideLabel(deck.slides[k])}${isLab(deck, k) ? " (Grammar Lab)" : ""}`} aria-current={k === i ? "step" : undefined}
+                    className={`h-3 shrink-0 rounded-full transition-all ${k === i ? "w-7 bg-amber-500" : isLab(deck, k) ? "w-3 bg-violet-400 hover:bg-violet-500" : "w-3 bg-hec-line-strong/50 hover:bg-hec-line-strong"}`} />
                 </TooltipTrigger>
-                <TooltipContent side="top">{k + 1}. {slideLabel(deck.slides[k])}</TooltipContent>
+                <TooltipContent side="top">{k + 1}. {slideLabel(deck.slides[k])}{isLab(deck, k) ? " · Grammar Lab" : ""}</TooltipContent>
               </Tooltip>
             ))}
           </div>

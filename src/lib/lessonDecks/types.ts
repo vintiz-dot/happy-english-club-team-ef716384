@@ -369,6 +369,10 @@ export type Deck = {
   // (optional so units written before it keep compiling; the panel lists those under the lesson).
   resources?: { title: string; url: string; source: "Twinkl"; use: string; slide?: string }[];
   slides: Slide[];
+  // What the unit's Speaking & Writing Lab added (src/lib/lessonDecks/lab.ts): the indexes of
+  // its slides in `slides` and the objective lines, so the player and the prints flag them
+  // "Grammar Lab" (owner, 24 Nov 2026). Absent on a deck without a Lab.
+  lab?: { slides: number[]; objectives: string[] };
 };
 
 export type Unit = {

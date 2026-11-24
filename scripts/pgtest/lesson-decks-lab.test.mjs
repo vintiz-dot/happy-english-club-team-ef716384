@@ -47,6 +47,9 @@ eq("slides in order: the routine after the grammar, the writing after the routin
 eq("trimmed slides are shorter", [s[2].minutes, s[6].minutes], [6, 6]);
 eq("objective added", s[1].items, ["I can say colours.", "I can say it fast."]);
 eq("counted", good.lab.added, 3);
+eq("the Lab's slides are flagged Grammar Lab by where they ended up", good.decks[0].lab.slides.map((i) => s[i].title), ["Colour sprint", "Fix it", "My colours talk"]);
+eq("and its objective lines", good.decks[0].lab.objectives, ["I can say it fast."]);
+ok("a deck the Lab does not name carries no flag", L.withLab({ decks: {} }, unit).decks[0].lab === undefined);
 ok("the unit as written is untouched", unit.decks[0].slides.length === base.length && base[2].minutes === 10);
 ok("no Lab, same unit", L.withLab(undefined, unit) === unit);
 eq("an anchor by kind", L.withLab({ decks: { "x-l1": { add: [{ after: "@speaking", slide: wri }] } } }, unit).decks[0].slides[7].title, "Fix it");

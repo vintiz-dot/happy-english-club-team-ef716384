@@ -69,27 +69,32 @@ export function applyDeckLab(deck: Deck, lab: DeckLab): { deck: Deck; issues: st
     slides[i] = { ...s, minutes: m } as Slide;
   }
   let added = 0;
+  const mine = new Set<Slide>();
   for (const a of lab.add ?? []) {
     const i = findAnchor(slides, a.after);
     if (i < 0) { where(`add "${titleOf(a.slide) ?? a.slide.kind}": no slide "${a.after}" to put it after`); continue; }
     slides.splice(i + 1, 0, a.slide);
+    mine.add(a.slide);
     added++;
   }
   if (lab.talk) {
     const i = slides.findIndex((s) => s.kind === "homework");
     if (i < 0) where(`talk "${lab.talk.title}": the deck has no homework slide`);
-    else { slides.splice(i + 1, 0, lab.talk); added++; }
+    else { slides.splice(i + 1, 0, lab.talk); mine.add(lab.talk); added++; }
   }
+  let objectives: string[] = [];
   if (lab.objectives?.length) {
     const i = slides.findIndex((s) => s.kind === "objectives");
     if (i < 0) where("objectives: the deck has no objectives slide");
-    else { const o = slides[i] as Extract<Slide, { kind: "objectives" }>; slides[i] = { ...o, items: [...o.items, ...lab.objectives] }; }
+    else { const o = slides[i] as Extract<Slide, { kind: "objectives" }>; slides[i] = { ...o, items: [...o.items, ...lab.objectives] }; objectives = [...lab.objectives]; }
   }
+  // Where the Lab's slides ended up, so the player and the prints can flag them "Grammar Lab".
+  const flagged = { slides: slides.map((s, i) => (mine.has(s) ? i : -1)).filter((i) => i >= 0), objectives };
   const timed = slides.reduce((n, s) => n + (minutesOf(s) ?? 0), 0);
   if (timed > deck.minutes) where(`with the Lab the timed slides add up to ${timed} of ${deck.minutes} minutes`);
   // A supplementary link tied to a slide the Lab left out goes with it.
   const resources = deck.resources?.filter((r) => !r.slide || !dropped.includes(r.slide));
-  return { deck: { ...deck, slides, ...(resources ? { resources } : {}) }, issues, added };
+  return { deck: { ...deck, slides, ...(resources ? { resources } : {}), lab: flagged }, issues, added };
 }
 
 /** The unit with its Lab in every deck the Lab names. */
