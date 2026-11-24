@@ -83,7 +83,8 @@ export const odL1U10Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l1-u10-l2": {
-      objectives: ["I can tell Stone Soup in three parts, faster each time."],
+      objectives: ["I can tell Stone Soup in three parts, faster each time.", "I can write the story in three sentences: beginning, middle and end."],
+      trim: { "Act it out: our stone soup": 9 },
       add: [
         {
           after: "Tell the story with three fingers",
@@ -121,28 +122,35 @@ export const odL1U10Lab: UnitLab = {
           after: "Draw and label: three boxes",
           slide: {
             kind: "writing",
-            title: "Fix the story sentences",
-            routine: "fix it",
-            mode: "pairs",
-            minutes: 5,
+            title: "My Stone Soup story: plan, write, check",
+            routine: "paragraph",
+            genre: "story retell",
+            mode: "solo",
+            minutes: 8,
             steps: [
-              "Read each sentence with your partner. Something is wrong!",
-              "Find it: a capital letter, a full stop or a missing -s.",
-              "Write the sentence the right way. Read it aloud together.",
+              "Read the model with the teacher. Point to the beginning, the middle and the end.",
+              "Plan: look at your three drawings. Say one sentence for each box to your partner.",
+              "Write: one sentence for each box. Start with In the beginning, In the middle, At the end.",
+              "Check: tick the checklist. Your partner points to every capital letter.",
+              "Teacher: look only at capital letters and the plural -s. Put a dot next to a line with a mistake; the child finds it and fixes it.",
             ],
-            items: [
-              { q: "the man has a pot", answer: "The man has a pot." },
-              { q: "They put three carrot in the pot.", answer: "They put three carrots in the pot." },
-              { q: "Do you have a onion", answer: "Do you have an onion?" },
-              { q: "everyone has soup", answer: "Everyone has soup." },
+            text: {
+              title: "Model: Stone Soup",
+              text: "In the beginning, a man has a pot and a stone. In the middle, everyone puts food in the pot: carrots, onions and potatoes. At the end, they all have hot soup!",
+            },
+            organiser: [
+              { label: "Beginning", prompt: "Draw the man and the pot. Who is there? What does he have?" },
+              { label: "Middle", prompt: "Draw the food. What do people put in the pot?" },
+              { label: "End", prompt: "Draw everyone eating. What happens at the end?" },
             ],
-            checklist: ["Every sentence starts with a capital letter", "A full stop or a question mark at the end", "More than one: add -s"],
-            sayIt: "Read your fixed sentences to the class in a story voice.",
-            teacherNote: "Vietnamese nouns have no plural ending, so a missing -s is this class's most common slip; capital letters and full stops are every young writer's. Fix one together first. 'an onion' is a bonus: praise it if a child sees it, but do not teach the rule today.",
+            frames: ["In the beginning, a man has ___.", "In the middle, everyone puts ___ in the pot.", "At the end, they all have ___!"],
+            checklist: ["Three sentences: beginning, middle and end", "A capital letter at the start and a full stop or ! at the end", "More than one: add -s (carrots, onions)"],
+            sayIt: "Read your story to your partner. Then tell it again without looking, like a storyteller.",
+            teacherNote: "A six-year-old's first paragraph: three sentences, one for each part of the story, planned by drawing. The drawings are the plan, so no notes are needed. Mark only two things (capital letters, plural -s) and let the child find the mistake from your dot. This story is also the script for the recorded talk at home.",
             tiers: [
-              { level: "Support", task: "Fix sentences 1 and 4 (capital letters and full stops)." },
-              { level: "Core", task: "Fix all four sentences." },
-              { level: "Stretch", task: "Write one more story sentence with a mistake for your partner to fix." },
+              { level: "Support", task: "Copy the three frames and fill in one word in each.", frames: ["In the beginning, a man has ___.", "At the end, they all have ___!"] },
+              { level: "Core", task: "Write three sentences: beginning, middle and end." },
+              { level: "Stretch", task: "Add a fourth sentence with what someone says: 'Do you have a carrot?' 'Yes, I do!'" },
             ],
           },
         },

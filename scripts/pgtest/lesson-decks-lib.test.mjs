@@ -201,10 +201,13 @@ for (const { f, u } of units) {
     for (const s of d.slides.filter((x) => x.kind === "writing")) {
       ok(`${d.id} / ${s.title}: a writing routine has steps and a checklist`, s.steps.length > 0 && s.checklist.length >= 2);
       if (s.routine === "paragraph") {
-        ok(`${d.id} / ${s.title}: a paragraph has its genre, an original model paragraph (40-120 words), a 3-5 box organiser, 3+ checks and a spoken step`,
-          !!s.genre && !!s.text && s.text.text.split(/\s+/).length >= 40 && s.text.text.split(/\s+/).length <= 120 && (s.organiser ?? []).length >= 3 && s.organiser.length <= 5
-          && s.organiser.every((o) => o.label && o.prompt) && s.checklist.length >= 3 && !!s.sayIt, String(s.text?.text.split(/\s+/).length));
-        ok(`${d.id} / ${s.title}: a paragraph gets 8-15 minutes`, s.minutes >= 8 && s.minutes <= 15, String(s.minutes));
+        // Model length and time by age: Level 1 (6-7) a three- or four-sentence mini paragraph, Level 2 (7-8) a short one, Level 3 and Reach Higher a full one.
+        const [lo, hi, minMin] = d.level === 1 ? [20, 50, 6] : d.level === 2 ? [30, 80, 7] : [40, 120, 8];
+        const words = s.text ? s.text.text.split(/\s+/).length : 0;
+        ok(`${d.id} / ${s.title}: a paragraph has its genre, an original model paragraph (${lo}-${hi} words), a 3-5 box organiser, 3+ checks and a spoken step`,
+          !!s.genre && words >= lo && words <= hi && (s.organiser ?? []).length >= 3 && s.organiser.length <= 5
+          && s.organiser.every((o) => o.label && o.prompt) && s.checklist.length >= 3 && !!s.sayIt, String(words));
+        ok(`${d.id} / ${s.title}: a paragraph gets ${minMin}-15 minutes`, s.minutes >= minMin && s.minutes <= 15, String(s.minutes));
       }
       if (s.routine === "dictogloss" || s.routine === "model, then write") ok(`${d.id} / ${s.title}: ${s.routine} has its original text (15-90 words)`, !!s.text && (s.text.text.split(/\s+/).length >= 15) && s.text.text.split(/\s+/).length <= 90, String(s.text?.text.split(/\s+/).length));
       if (["sentence combining", "expand it", "fix it"].includes(s.routine)) ok(`${d.id} / ${s.title}: ${s.routine} has 3+ items, each with a model answer`, (s.items ?? []).length >= 3 && s.items.every((i) => i.q && i.answer));
@@ -240,8 +243,8 @@ for (const { f, u } of units) {
       u.decks.filter((d) => !(d.slides.some((s) => s.kind === "fluency") && d.slides.some((s) => s.kind === "writing"))).map((d) => d.id).join(", "));
     const talks = u.decks.filter((d) => d.slides.some((s) => s.kind === "vlog" && s.rubric)).length;
     ok(`${f}: a recorded talk about every other lesson (${talks} for ${u.decks.length} lessons)`, talks >= Math.max(1, Math.floor(u.decks.length / 2)));
-    // SKY 1 (Oxford Discover 3) and Jupiter (Reach Higher 3) write whole paragraphs: plan, write, check in at least half the lessons.
-    if (u.level === 3 && u.decks.length > 1) {
+    // Every Lab class writes paragraphs (SKY 1 and Jupiter first, then Venus and Oxford Discover 2, 24 Nov 2026): plan, write, check in at least half the lessons.
+    if (u.decks.length > 1) {
       const paras = u.decks.filter((d) => d.slides.some((s) => s.kind === "writing" && s.routine === "paragraph")).length;
       ok(`${f}: a planned paragraph in at least half the lessons (${paras} of ${u.decks.length})`, paras >= Math.ceil(u.decks.length / 2));
     }
