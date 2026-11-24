@@ -102,7 +102,7 @@ export const rhL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u8-l2": {
       objectives: ["I can tell about something I have achieved, and say when I did it, three times, faster each time."],
-      trim: { "Thinking map and reading strategies": 5, "Phonics: suffixes -ant and -ent": 4 },
+      trim: { "Thinking map and reading strategies": 5, "Phonics: suffixes -ant and -ent": 4, "Achievement interviews": 11 },
       add: [
         {
           after: "Achievement interviews",
@@ -148,36 +148,73 @@ export const rhL3U8Lab: UnitLab = {
         {
           after: "Exam practice: give the correct form",
           slide: {
-            kind: "writing",
-            title: "Dictogloss: the marathon neighbor",
-            routine: "dictogloss",
-            mode: "groups",
-            minutes: 5,
-            steps: [
-              "Rule reminder (one minute): 'have / has + done' for news up to now; the past for a finished time.",
-              "Listen to the text the first time. Do not write.",
-              "Listen the second time. Write key words only.",
-              "In your group, rebuild the text. Then compare it with the original.",
-              "Say it: read your group's text aloud, then say it again without looking.",
-            ],
-            text: {
-              title: "The marathon neighbor",
-              text: "My neighbor has run in three marathons. She started running when she was forty, and she has never stopped. Last year she finished a race in Da Nang in four hours. She has already chosen her next race, but she hasn't bought her new shoes yet.",
-            },
-            frames: ["has / have + done", "last year, when she was ..."],
-            checklist: [
-              "Present perfect: has / have + the 3rd form",
-              "A finished time word goes with the past (last year, when she was forty)",
-              "The -s in has and the -ed in started and finished can be seen",
-            ],
-            sayIt: "Read your group's text aloud, then say it again without looking.",
-            teacherNote:
-              "Read it twice at natural speed, folded on screen. The group has to think about which tense is needed, which is why a dictogloss works after a short rule reminder. Accept different words if the tense is right.",
-            tiers: [
-              { level: "Support", task: "Write the key words you hear and use the frames." },
-              { level: "Core", task: "Rebuild the text with your group." },
-              { level: "Stretch", task: "Add one more sentence about the neighbor's next race." },
-            ],
+      "kind": "writing",
+      "routine": "paragraph",
+      "mode": "solo",
+      "minutes": 8,
+      "title": "A person who got there: plan, write, check",
+      "genre": "description of a person",
+      "steps": [
+        "Read the model with the teacher. Find the topic sentence, the two details and the closing sentence.",
+        "Plan: fill the four boxes with a few words each, not whole sentences.",
+        "Write: turn your notes into one paragraph of six or seven sentences. Use has / have for news up to now and the past for a finished time.",
+        "Check: tick the checklist. Swap with a partner: they underline one 'has / have' and one finished time word, and tell you one thing they liked.",
+        "Teacher: while they write, look only at has / have + the 3rd form and the finished time words. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
+      ],
+      "text": {
+        "title": "Model paragraph: My aunt, the swimmer",
+        "text": "My aunt has achieved something very special: she has swum across a big lake. She started swimming when she was fifty, and she has never missed a lesson since then. Last summer she crossed the lake in two hours. She has already won a small medal, but she hasn't won a big race yet. Her next goal is to cross it in ninety minutes, so she trains every morning. I think she is a good example for me, because she never gives up."
+      },
+      "organiser": [
+        {
+          "label": "Topic sentence",
+          "prompt": "Who is the person, and what have they achieved? (has / have + done)"
+        },
+        {
+          "label": "Detail 1: the start",
+          "prompt": "When did they start? What did they do last year or when they were young? (past simple + time)"
+        },
+        {
+          "label": "Detail 2: so far",
+          "prompt": "What have they already done? What haven't they done yet? never / already / yet"
+        },
+        {
+          "label": "Closing",
+          "prompt": "What is their next goal? Why do you admire them?"
+        }
+      ],
+      "frames": [
+        "___ has ___, and she has never ___.",
+        "She started ___ when she was ___.",
+        "Last ___, she ___. She has already ___, but she hasn't ___ yet.",
+        "I think ___ is a good example, because ___."
+      ],
+      "checklist": [
+        "My first sentence says who the person is and what they have achieved",
+        "has / have + the 3rd form for news up to now (has swum, not has swam)",
+        "A finished time word goes with the past: last summer, when she was fifty",
+        "A closing sentence says why I admire the person"
+      ],
+      "sayIt": "Read your paragraph to your partner. Then tell it again without looking, in one minute.",
+      "teacherNote": "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph itself. An entrance-exam paragraph is about 80-100 words, so aim for six or seven sentences. Mark only two targets (has / have + 3rd form, and a finished time word with the past) with a dot on the line; the child finds and fixes it. This paragraph is the script for the recorded talk 'Someone who got there'.",
+      "tiers": [
+        {
+          "level": "Support",
+          "task": "Use the four frames: one sentence for each box.",
+          "frames": [
+            "___ has ___, and she has never ___.",
+            "She started ___ when she was ___."
+          ]
+        },
+        {
+          "level": "Core",
+          "task": "Write the whole paragraph: six or seven sentences."
+        },
+        {
+          "level": "Stretch",
+          "task": "Add a sentence with 'since' or 'for' and a sentence about the tool or person who helped: 'Since then, she has trained with a coach.'"
+        }
+      ]
           },
         },
       ],
@@ -213,6 +250,7 @@ export const rhL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u8-l3": {
       objectives: ["I can ask and answer about distance and time (How far? How long does it take?) quickly and clearly."],
+      trim: { "Estimate, then check": 12 },
       add: [
         {
           after: "Estimate, then check",
@@ -258,34 +296,73 @@ export const rhL3U8Lab: UnitLab = {
         {
           after: "Exam practice: ask about the words in capitals",
           slide: {
-            kind: "writing",
-            title: "Make it bigger: distance and time",
-            routine: "expand it",
-            mode: "solo",
-            minutes: 5,
-            steps: [
-              "Read the small sentence. Look at what to add.",
-              "Write the bigger sentence with a number and a unit.",
-              "Check it with the list, read it aloud, then say it again without looking.",
-            ],
-            items: [
-              { q: "The playground is long. (add: a measurement)", answer: "The playground is about forty meters long." },
-              { q: "Hạ Long is far. (add: from Hanoi, how far)", answer: "Hạ Long is about 160 kilometers from Hanoi." },
-              { q: "We went there. (add: how long it took us, and how)", answer: "It took us three hours to get there by bus." },
-              { q: "My bag is heavy. (add: compared with my friend's, twice)", answer: "My bag is twice as heavy as my friend's bag." },
-            ],
-            frames: ["It takes me ___ to ___.", "___ is about ___ kilometers from ___.", "___ is twice as ___ as ___."],
-            checklist: [
-              "It takes me + time + TO + the plain verb",
-              "twice as ... AS (not than)",
-              "A number with a unit, and the -s in kilometers and minutes",
-            ],
-            sayIt: "Read your bigger sentences aloud to a partner, then say them again without looking.",
-            tiers: [
-              { level: "Support", task: "Expand items 1 and 3 with the frames." },
-              { level: "Core", task: "Expand all four items." },
-              { level: "Stretch", task: "Write two more sentences about your own journey to school." },
-            ],
+      "kind": "writing",
+      "routine": "paragraph",
+      "mode": "solo",
+      "minutes": 8,
+      "title": "My way to school: plan, write, check",
+      "genre": "description of a journey",
+      "steps": [
+        "Read the model with the teacher. Find the topic sentence, the details with numbers and the closing sentence.",
+        "Plan: fill the four boxes with a few words and numbers each, not whole sentences.",
+        "Write: turn your notes into one paragraph. Use real numbers with units: kilometers, minutes, meters.",
+        "Check: tick the checklist. Swap with a partner: they underline one 'It takes ... to' and one 'twice as ... as', and tell you one thing they liked.",
+        "Teacher: while they write, look only at 'It takes me ... to + verb' and 'as ... as'. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
+      ],
+      "text": {
+        "title": "Model paragraph: How I get to school",
+        "text": "My school is about two kilometers from my house, so I go there by bike. It takes me ten minutes to ride to school. It takes my brother twenty minutes to walk there, so he leaves home earlier than I do. On rainy days, my mother drives me, and the trip takes fifteen minutes. The road by the lake is about one kilometer long and very pretty, and riding along it is twice as fast as walking. I like my bike best, because it is quick and I can see the lake every morning."
+      },
+      "organiser": [
+        {
+          "label": "Topic sentence",
+          "prompt": "How far is your school from your house? How do you go?"
+        },
+        {
+          "label": "Detail 1: how long",
+          "prompt": "How long does it take you? How long does it take someone else?"
+        },
+        {
+          "label": "Detail 2: the road",
+          "prompt": "How long or wide is a road or place on the way? Compare two ways with 'twice as ... as'."
+        },
+        {
+          "label": "Closing",
+          "prompt": "Which way do you like best, and why?"
+        }
+      ],
+      "frames": [
+        "My school is about ___ from my house, so I ___.",
+        "It takes me ___ to ___.",
+        "___ is about ___ long. ___ is twice as ___ as ___.",
+        "I like ___ best, because ___."
+      ],
+      "checklist": [
+        "My first sentence says the distance and how I go",
+        "It takes me + time + TO + the plain verb",
+        "twice as ... AS (not than)",
+        "Numbers have units, with the -s in kilometers and minutes"
+      ],
+      "sayIt": "Read your paragraph to your partner. Then tell it again without looking, in one minute.",
+      "teacherNote": "Plan, write, check: the boxes take words and numbers, so the time goes into the paragraph. Familiar topics such as the way to school appear in entrance-exam paragraphs of about 80-100 words. Mark only two targets ('It takes me ... to + verb' and 'as ... as') with a dot on the line; the child finds and fixes the mistake. Keep the numbers real: it is fine to estimate with 'about'.",
+      "tiers": [
+        {
+          "level": "Support",
+          "task": "Use the four frames: one sentence for each box.",
+          "frames": [
+            "My school is about ___ from my house, so I ___.",
+            "It takes me ___ to ___."
+          ]
+        },
+        {
+          "level": "Core",
+          "task": "Write the whole paragraph: six or seven sentences."
+        },
+        {
+          "level": "Stretch",
+          "task": "Add a sentence about how long it took you last year, and one with 'half as ... as': 'Last year it took me twenty minutes to get there.'"
+        }
+      ]
           },
         },
       ],
@@ -492,6 +569,7 @@ export const rhL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 6
     "rh-l3-u8-l6": {
       objectives: ["I can say what I wish and what I would do, and use unless, fast and clearly."],
+      trim: { "Hot seat: Erden Eruç": 10 },
       add: [
         {
           after: "Hot seat: Erden Eruç",
@@ -537,36 +615,73 @@ export const rhL3U8Lab: UnitLab = {
         {
           after: "Exam practice: wish, if and unless",
           slide: {
-            kind: "writing",
-            title: "Join and change: wish and unless",
-            routine: "sentence combining",
-            mode: "pairs",
-            minutes: 5,
-            steps: [
-              "Read each pair of sentences. Decide: wish, unless or if?",
-              "Write one sentence that says the same thing.",
-              "Check with the list. Read it aloud, then say it again without looking.",
-            ],
-            items: [
-              { q: "You don't hurry. You will miss the bus. (start with: Unless)", answer: "Unless you hurry, you will miss the bus." },
-              { q: "I don't have a dog. (start with: I wish)", answer: "I wish I had a dog." },
-              { q: "I can't swim. (start with: I wish)", answer: "I wish I could swim." },
-              { q: "Unless you eat breakfast, you will be hungry. (say it with: If)", answer: "If you don't eat breakfast, you will be hungry." },
-            ],
-            frames: ["Unless you ___, you will ___.", "I wish I ___.", "If you don't ___, you will ___."],
-            checklist: [
-              "wish + the past (had, were, could), not the present",
-              "unless + the present, then will (no 'don't' after unless)",
-              "A comma after the first part",
-            ],
-            sayIt: "Read your sentences aloud, then say them again without looking.",
-            teacherNote:
-              "This is the exam's transformation format with the school's own items. Do item 1 together first, then let the pairs work. Wish with the past tense is hard for Vietnamese children because Vietnamese does not change the verb; give them time and use the checklist.",
-            tiers: [
-              { level: "Support", task: "Do items 1 and 2 with the frames." },
-              { level: "Core", task: "Do all four items." },
-              { level: "Stretch", task: "Write two more wishes of your own for a partner to say with 'If'." },
-            ],
+      "kind": "writing",
+      "routine": "paragraph",
+      "mode": "solo",
+      "minutes": 8,
+      "title": "A wish and a plan: plan, write, check",
+      "genre": "personal opinion",
+      "steps": [
+        "Read the model with the teacher. Find the wish, the reason, the plan with 'if' and 'unless', and the closing sentence.",
+        "Plan: fill the four boxes with a few words each, not whole sentences.",
+        "Write: turn your notes into one paragraph. Use 'I wish' with the past, one 'If I were ...' and one 'unless'.",
+        "Check: tick the checklist. Swap with a partner: they underline your wish sentence and your 'unless' sentence, and tell you one thing they liked.",
+        "Teacher: while they write, look only at wish + the past (could, were, had) and 'unless' with the present. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
+      ],
+      "text": {
+        "title": "Model paragraph: I wish I could swim faster",
+        "text": "I wish I could swim faster, but I am not a strong swimmer yet. I think swimming is the best sport, because it keeps the whole body healthy. If I were a better swimmer, I would join the school team. Unless I practise more, I will not get better, so I go to the pool twice a week. I also wish the pool were closer to my house. Still, I believe that a clear goal and a little practice every week can take anyone far."
+      },
+      "organiser": [
+        {
+          "label": "Topic sentence",
+          "prompt": "What do you wish you could do? (I wish I could ... / I wish I had ...)"
+        },
+        {
+          "label": "Detail 1: why",
+          "prompt": "Why does it matter to you? What do you think about it?"
+        },
+        {
+          "label": "Detail 2: the plan",
+          "prompt": "What would you do if you were better? What must you do, or you will not improve? (If I were ... / unless)"
+        },
+        {
+          "label": "Closing",
+          "prompt": "What do you believe about goals and practice?"
+        }
+      ],
+      "frames": [
+        "I wish I could ___, but ___.",
+        "I think ___, because ___.",
+        "If I were ___, I would ___. Unless I ___, I will not ___.",
+        "Still, I believe that ___."
+      ],
+      "checklist": [
+        "I wish + the past (could, had, were), not the present",
+        "If I were ... I would ... (were, not was)",
+        "unless + the present, then will (no 'don't' after unless)",
+        "A closing sentence says what I believe"
+      ],
+      "sayIt": "Read your paragraph to your partner. Then tell it again without looking, in one minute.",
+      "teacherNote": "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph. An opinion paragraph of about 80-100 words is a familiar entrance-exam format. Mark only two targets (wish + the past, and unless + the present) with a dot on the line; the child finds and fixes it. Wish with the past tense is hard because Vietnamese does not change the verb: give time and point at the checklist. Choose a different topic from the book's own writing activity on tools, so the work is not done twice.",
+      "tiers": [
+        {
+          "level": "Support",
+          "task": "Use the four frames: one sentence for each box.",
+          "frames": [
+            "I wish I could ___, but ___.",
+            "If I were ___, I would ___."
+          ]
+        },
+        {
+          "level": "Core",
+          "task": "Write the whole paragraph: six or seven sentences."
+        },
+        {
+          "level": "Stretch",
+          "task": "Add a sentence with 'as long as': 'I will improve as long as I practise.'"
+        }
+      ]
           },
         },
       ],
@@ -695,7 +810,7 @@ export const rhL3U8Lab: UnitLab = {
         "Mock review: explain the answers": 8,
         "Video case: never give up": 8,
         "Unit wrap-up: fill the toolbox": 4,
-        "Transfer: test our big idea": 12,
+        "Transfer: test our big idea": 9,
       },
       add: [
         {
@@ -742,36 +857,73 @@ export const rhL3U8Lab: UnitLab = {
         {
           after: "Exam practice: a tense cloze",
           slide: {
-            kind: "writing",
-            title: "Dictogloss: the Fansipan climb",
-            routine: "dictogloss",
-            mode: "groups",
-            minutes: 5,
-            steps: [
-              "Rule reminder (one minute): the tense follows the time clue: yesterday, ever, while, by the time, next year.",
-              "Listen to the text the first time. Do not write.",
-              "Listen the second time. Write key words only.",
-              "In your group, rebuild the text. Then compare it with the original.",
-              "Say it: read it aloud, then say it again without looking.",
-            ],
-            text: {
-              title: "The Fansipan climb",
-              text: "Last summer my cousin climbed Fansipan for the first time. While she was walking up, it started to rain, but she did not stop. By the time she reached the top, the clouds had cleared. She has climbed it twice since then, and next year she's going to take her little brother. When they get there, they'll take a photo!",
-            },
-            frames: ["Last summer ...", "While ... was ...", "By the time ..., had ...", "Next year ..."],
-            checklist: [
-              "Past simple for finished events, past continuous for the action in progress",
-              "had + the 3rd form for the earlier past",
-              "After when: the present (no will)",
-            ],
-            sayIt: "Read your group's text aloud, then say it again without looking.",
-            teacherNote:
-              "Read it twice at natural speed, folded on screen. The text uses the unit's tenses in one story, so groups must think about which tense each time clue needs. Accept different words if the tense is right.",
-            tiers: [
-              { level: "Support", task: "Write key words and use the frames." },
-              { level: "Core", task: "Rebuild the text with your group." },
-              { level: "Stretch", task: "Add a sentence about what her brother will say." },
-            ],
+      "kind": "writing",
+      "routine": "paragraph",
+      "mode": "solo",
+      "minutes": 8,
+      "title": "My English journey: plan, write, check",
+      "genre": "personal recount",
+      "steps": [
+        "Read the model with the teacher. Find the three times: the past, so far, and the future.",
+        "Plan: fill the four boxes with a few words each, not whole sentences.",
+        "Write: turn your notes into one paragraph. Use the past for a finished time, has / have for 'so far', and going to or will for the future.",
+        "Check: tick the checklist. Swap with a partner: they underline one past verb, one 'have + done' and one future form, and tell you one thing they liked.",
+        "Teacher: while they write, look only at the tense that matches each time clue. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
+      ],
+      "text": {
+        "title": "Model paragraph: My English journey",
+        "text": "My English journey began three years ago, when I was seven. At first, I knew only a few words, but my teacher made every lesson fun. Last year I won a small prize in a speaking contest, and I felt very proud. So far, I have learned about six hundred words, and I have read two storybooks. Next year, I am going to join a debate club, because I want to speak with more confidence. When I am in grade six, I will keep practising every day."
+      },
+      "organiser": [
+        {
+          "label": "Topic sentence",
+          "prompt": "When did your English journey begin? (past simple + a finished time)"
+        },
+        {
+          "label": "Detail 1: one big thing",
+          "prompt": "What did you do last year or last term? How did you feel?"
+        },
+        {
+          "label": "Detail 2: so far",
+          "prompt": "What have you learned or done so far? (have + done)"
+        },
+        {
+          "label": "Closing: the future",
+          "prompt": "What are you going to do next year? What will you do when you are older?"
+        }
+      ],
+      "frames": [
+        "My English journey began ___, when ___.",
+        "Last ___, I ___, and I felt ___.",
+        "So far, I have ___ and I have ___.",
+        "Next year, I am going to ___, because ___. When ___, I will ___."
+      ],
+      "checklist": [
+        "A finished time word goes with the past (three years ago, last year)",
+        "So far / already / yet go with has / have + the 3rd form",
+        "going to or will for the future; after when, the present (no will)",
+        "One sentence for the past, one for so far and one for the future"
+      ],
+      "sayIt": "Read your paragraph to your partner. Then tell it again without looking, in one minute.",
+      "teacherNote": "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph. About 80-100 words is the entrance-exam length. Mark only two targets (the tense that matches the time clue, and the future form) with a dot on the line; the child finds and fixes it. This paragraph is the script for the recorded talk 'My journey so far': children record it after saying it three times.",
+      "tiers": [
+        {
+          "level": "Support",
+          "task": "Use the four frames: one sentence for each box.",
+          "frames": [
+            "My English journey began ___, when ___.",
+            "So far, I have ___."
+          ]
+        },
+        {
+          "level": "Core",
+          "task": "Write the whole paragraph: six or seven sentences."
+        },
+        {
+          "level": "Stretch",
+          "task": "Add a sentence with 'By the time': 'By the time I finish this level, I will have a bigger goal.' Check the tense with your partner."
+        }
+      ]
           },
         },
       ],

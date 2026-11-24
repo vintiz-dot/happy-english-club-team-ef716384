@@ -98,36 +98,53 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 2
     "rh-l3-u7-l2": {
       objectives: ["I can retell a story three times, faster each time, with was / were doing and sequence words."],
-      trim: { "Eyewitness interview: the new island": 12 },
+      trim: { "Eyewitness interview: the new island": 8 },
       add: [
         {
           after: "Exam practice: story cloze",
           slide: {
             kind: "writing",
-            title: "Dictogloss: the island appears",
-            routine: "dictogloss",
-            mode: "groups",
-            minutes: 5,
+            title: "An unusual morning: plan, write, check",
+            routine: "paragraph",
+            genre: "story",
+            mode: "solo",
+            minutes: 9,
             steps: [
-              "Rule reminder (30 seconds): was / were + -ing for the background, past simple for the event.",
-              "Listen to the text once. Do not write.",
-              "Listen again. Write key words: verbs, linking words, numbers.",
-              "In your group, build the text back. It does not have to be the same words, but it must be correct and make sense.",
-              "Compare with the model. Underline every was / were + -ing.",
+              "Read the model with the teacher. Find the topic sentence, the background (was / were + -ing), the sudden event and the ending.",
+              "Plan: fill the four boxes with a few words each, not whole sentences.",
+              "Write: turn your notes into one paragraph of about 80 words. Use at least four sequence words (Suddenly, While, First, After that, In the end).",
+              "Check: tick the checklist. Your partner underlines one was / were + -ing and one sequence word, and tells you one thing they liked.",
+              "Teacher: while they write, look only at was / were + -ing and the past simple. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
             ],
             text: {
-              title: "The island appears",
-              text: "Early one morning, a crew was fishing near a quiet bay when the water began to bubble. Suddenly, a column of steam shot into the sky. While the fishers were rowing away, black rock was rising behind them. After that, the island grew every day. In the end, birds built nests on it.",
+              title: "Model paragraph: The smoking sea",
+              text: "One misty morning, my uncle was fishing near a quiet bay when the sea began to shake. Suddenly, a cloud of black smoke rose from the water. While we were rowing away, hot rocks were falling around the boat. First, I felt afraid, but then I saw a new island growing slowly. After that, the smoke cleared and the sun came out. In the end, we sailed home safely, and I will never forget that amazing morning."
             },
-            frames: ["A crew was ___ when ___.", "While they were ___, ___ was ___.", "First, ___. After that, ___. In the end, ___."],
-            checklist: ["was / were + -ing for the long action", "Past simple for the sudden event", "A sequence word at the start of a sentence, with a comma"],
-            sayIt: "Read your group's text aloud, then tell it again to another group without looking.",
-            teacherNote: "In a dictogloss, children notice the grammar because they need it to rebuild the text. Read at natural speed, twice, with the model's -ing and -ed sounds clearly voiced. Do not show the text until groups have finished. Accept different wording if the tenses are right.",
-            tiers: [
-              { level: "Support", task: "Rebuild the first two sentences using the frames." },
-              { level: "Core", task: "Rebuild the whole text with your group." },
-              { level: "Stretch", task: "Rebuild it, then add one sentence with Meanwhile or While." },
+            organiser: [
+              { label: "Topic sentence", prompt: "When and where? What was someone doing (was / were + -ing) when something began?" },
+              { label: "The sudden event", prompt: "What happened suddenly? (past simple) What were people doing while it happened?" },
+              { label: "Then and after that", prompt: "What did you do next? Use First, Then, After that." },
+              { label: "Closing: In the end, ...", prompt: "How did it end? How did you feel?" }
             ],
+            frames: [
+              "One ___ morning, ___ was ___ when ___.",
+              "Suddenly, ___.",
+              "While we were ___, ___ was ___.",
+              "In the end, ___."
+            ],
+            checklist: [
+              "My first sentence says what was happening when something began",
+              "was / were + -ing for the background, past simple for the sudden event",
+              "A sequence word with a comma: Suddenly, First, After that, In the end",
+              "Past forms are right: rose, saw, came, began"
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell the story again without looking, in one minute.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph itself. The entrance exam asks for a short paragraph of about 80 to 100 words, and a story with a clear background, an event and an ending is a format children can control. Mark only two targets (was / were + -ing, and the past simple of the sudden event) with a dot on the line; the child finds and fixes the mistake. The paragraph is also the script for this lesson's recorded talk. The dictogloss practice is replaced because the book's own diary project already gives sentence-level story work.",
+            tiers: [
+              { level: "Support", task: "Use the four frames: one sentence for each box.", frames: ["One ___ morning, ___ was ___ when ___.", "In the end, ___."] },
+              { level: "Core", task: "Write the whole paragraph: six or seven sentences, about 80 words." },
+              { level: "Stretch", task: "Add a sentence with While and two long actions, and one with Meanwhile: 'While Dad was driving, I was watching the clouds.'" }
+            ]
           },
         },
         {
@@ -203,36 +220,53 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "rh-l3-u7-l3": {
       objectives: ["I can say what had already happened before another event, in a smooth sentence."],
-      trim: { "Hot seat: the island remembers": 11 },
+      trim: { "Hot seat: the island remembers": 7 },
       add: [
         {
           after: "Exam practice: join with the past perfect",
           slide: {
             kind: "writing",
-            title: "Fix it: had and the past participle",
-            routine: "fix it",
-            mode: "pairs",
-            minutes: 5,
+            title: "Before the storm came: plan, write, check",
+            routine: "paragraph",
+            genre: "story",
+            mode: "solo",
+            minutes: 9,
             steps: [
-              "Read each sentence with your partner. Each has one mistake.",
-              "Find it: a missing had, a wrong past participle, or a past perfect that is not needed.",
-              "Write the sentence the right way.",
-              "Read your fixed sentences aloud together.",
+              "Read the model with the teacher. Find the topic sentence, the things people had done, what happened then, and the closing sentence.",
+              "Plan: fill the four boxes with a few words each, not whole sentences.",
+              "Write: turn your notes into one paragraph of about 80 words. Use had + a past participle at least three times, and the past simple for what happened next.",
+              "Check: tick the checklist. Your partner underlines one had + participle and one past simple, and tells you which action came first.",
+              "Teacher: while they write, look only at had + past participle and the past simple. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
             ],
-            items: [
-              { q: "By the time the rescuers came, the water already rose.", answer: "By the time the rescuers came, the water had already risen." },
-              { q: "The birds had flew away before the eruption.", answer: "The birds had flown away before the eruption." },
-              { q: "Last night I had watched a film about volcanoes.", answer: "Last night I watched a film about volcanoes." },
-              { q: "The villagers had leave before the lava arrived.", answer: "The villagers had left before the lava arrived." },
+            text: {
+              title: "Model paragraph: The quiet village",
+              text: "By the time the storm reached our village, everyone had already prepared. My grandfather had tied the boats to strong posts, and my mother had packed a bag of food and water. Before the wind became strong, the children had carried their books upstairs. Then the lights went out, and we sat together and listened to the rain. By morning, the storm had passed. Luckily, nobody had been hurt, and the sea had returned to its quiet blue color."
+            },
+            organiser: [
+              { label: "Topic sentence", prompt: "By the time something happened, what had people already done?" },
+              { label: "Detail 1: before", prompt: "Two things that had happened earlier (had + participle): who did what?" },
+              { label: "Detail 2: then", prompt: "What happened next? (past simple) Use Then or Before." },
+              { label: "Closing", prompt: "How did it end? What had changed by the morning?" }
             ],
-            checklist: ["had + past participle (gone, flown, risen, left)", "Use had only for the EARLIER action", "Irregular participles: gone, flown, risen, left"],
-            sayIt: "Read your fixed sentences aloud, then say them again without looking.",
-            teacherNote: "Fix-it items hold mistakes children often make: a missing had, a past simple used for a past participle (went / gone), and over-use of had for a plain past ('Yesterday I had visited'). Correct two or three error types only, with a short reason. The past perfect is a stretch point: do not push children who still mix past simple and past continuous.",
+            frames: [
+              "By the time ___, everyone had already ___.",
+              "___ had ___ before ___.",
+              "Then ___.",
+              "By the morning, ___ had ___."
+            ],
+            checklist: [
+              "My first sentence uses By the time and had already",
+              "had + past participle only for the EARLIER action: prepared, tied, packed, carried",
+              "Past simple for what happened next: went out, sat, listened",
+              "No 'had went' or 'had flew': check the irregular participles"
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell what had happened first and what happened next, without looking.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences. The past perfect is a stretch point, so the paragraph keeps most sentences in the past simple and asks for had + participle only for what came earlier. Mark only two targets (the participle form, and had used for the earlier action) with a dot on the line; the child finds and fixes the mistake. If a child still mixes the past simple and past continuous, use the Support tier and do not push the stretch point. The fix-it practice is replaced because the paragraph asks the child to make the same choices in their own writing.",
             tiers: [
-              { level: "Support", task: "Fix items 2 and 4 with the verb list gone, flown, risen, left." },
-              { level: "Core", task: "Fix all four sentences." },
-              { level: "Stretch", task: "Write one sentence with a mistake for your partner to fix, then fix theirs." },
-            ],
+              { level: "Support", task: "Use the four frames: one sentence for each box, with the verb list gone, flown, risen, left.", frames: ["By the time ___, everyone had already ___.", "By the morning, ___ had ___."] },
+              { level: "Core", task: "Write the whole paragraph: six or seven sentences, about 80 words." },
+              { level: "Stretch", task: "Add a sentence with had just, had never ... before, or after + had: 'No one had seen such a big wave before.'" }
+            ]
           },
         },
         {
@@ -388,35 +422,53 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "rh-l3-u7-l5": {
       objectives: ["I can give my opinion and advice for the storm season, in one smooth talk, three times."],
-      trim: { "Expert panel: getting ready for the storm season": 13 },
+      trim: { "Expert panel: getting ready for the storm season": 8 },
       add: [
         {
           after: "Exam practice: rewrite the advice",
           slide: {
             kind: "writing",
-            title: "Model, then write: storm advice",
-            routine: "model, then write",
+            title: "Our town in storm season: plan, write, check",
+            routine: "paragraph",
+            genre: "opinion",
             mode: "solo",
-            minutes: 5,
+            minutes: 10,
             steps: [
-              "Read the model with the teacher. Underline each piece of advice (should, ought to, had better).",
-              "Plan: three pieces of advice for a family, in the order of the model.",
-              "Write your paragraph. Use at least two different advice phrases.",
-              "Check it, then read it aloud to your partner.",
+              "Read the model with the teacher. Find the opinion, the two pieces of advice and the closing sentence.",
+              "Plan: fill the four boxes with a few words each, not whole sentences.",
+              "Write: turn your notes into one paragraph of about 80 words. Use should, ought to and had better, each at least once.",
+              "Check: tick the checklist. Your partner underlines one should / ought to / had better and tells you which advice they would follow.",
+              "Teacher: while they write, look only at should / ought to / had better + a plain verb. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
             ],
             text: {
-              title: "A safe home in storm season",
-              text: "In my opinion, every family should prepare early. First, keep a torch, water and a radio in a bag. Second, you ought to check the roof before the storm comes. Finally, you had better stay inside when the wind is strong, or you could get hurt.",
+              title: "Model paragraph: Ready for the storms",
+              text: "In my opinion, every family in our town should prepare for the storm season. First, you ought to check the roof and the windows, because strong wind can break them. Second, you had better keep a torch, water and a radio in one bag, or you will sit in the dark. Although the sea looks calm in the morning, it can change very quickly, so families should stay inside when the storm arrives. For these reasons, I believe a little preparation keeps everyone safe."
             },
-            frames: ["In my opinion, families should ___.", "You ought to ___ before ___.", "You had better ___, or ___."],
-            checklist: ["should / ought to + a plain verb (no -s, no to after should)", "had better + a plain verb: no 'had better to'", "A comma after First, Second, Finally"],
-            sayIt: "Read your paragraph aloud, then give your advice again without looking.",
-            teacherNote: "Modelled writing works because children copy the structure of the whole paragraph, not just the sentences. The model is original and short; do not let children copy it word for word. Watch for 'ought go' and 'had better to'. Say the contracted 'd better clearly.",
-            tiers: [
-              { level: "Support", task: "Copy the model's frame and change the advice to a flood." },
-              { level: "Core", task: "Write your own three pieces of advice for the storm season." },
-              { level: "Stretch", task: "Add a despite or although sentence: 'Despite the warning, ...'" },
+            organiser: [
+              { label: "Opinion sentence", prompt: "What do you think families should do? Start with In my opinion or I believe." },
+              { label: "Advice 1: First, ...", prompt: "One piece of advice with ought to or should, and a reason with because." },
+              { label: "Advice 2: Second, ...", prompt: "Another piece of advice. Use had better and say what could happen (or ...)." },
+              { label: "Closing", prompt: "Use although or despite, then should. End with For these reasons, ..." }
             ],
+            frames: [
+              "In my opinion, families should ___.",
+              "You ought to ___, because ___.",
+              "You had better ___, or ___.",
+              "For these reasons, I believe ___."
+            ],
+            checklist: [
+              "My first sentence gives my opinion",
+              "should / ought to + plain verb; had better + plain verb (no 'had better to')",
+              "A reason with because, and a comma after First, Second",
+              "Although / Despite used correctly (although + a clause, despite + a noun)"
+            ],
+            sayIt: "Read your paragraph to your partner. Then give your two pieces of advice again, without looking.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences. An opinion paragraph with reasons is one of the commonest short-writing tasks in the entrance exam, so the model gives the whole shape: opinion, two pieces of advice with reasons, a closing line. Mark only two targets (the plain verb after should / ought to / had better, and the comma after First, Second) with a dot on the line. Watch for 'ought go' and 'had better to'. This paragraph is the script for the 4-3-2 in this lesson. It replaces the earlier model-then-write slide, whose best idea (copy the structure, not the words) is kept here.",
+            tiers: [
+              { level: "Support", task: "Use the four frames: one sentence for each box.", frames: ["In my opinion, families should ___.", "You had better ___, or ___."] },
+              { level: "Core", task: "Write the whole paragraph: six or seven sentences, about 80 words." },
+              { level: "Stretch", task: "Add a despite sentence and an although sentence: 'Despite the warning, some people stayed outside.'" }
+            ]
           },
         },
         {
@@ -646,36 +698,53 @@ export const rhL3U7Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 8
     "rh-l3-u7-l8": {
       objectives: ["I can retell a chain of causes and results in whole sentences, faster each time."],
-      trim: { "Transfer: test our big idea": 12 },
+      trim: { "Transfer: test our big idea": 7 },
       add: [
         {
           after: "Exam practice: rewrite the cause",
           slide: {
             kind: "writing",
-            title: "Dictogloss: the flood",
-            routine: "dictogloss",
-            mode: "groups",
-            minutes: 4,
+            title: "A chain of causes: plan, write, check",
+            routine: "paragraph",
+            genre: "explanation",
+            mode: "solo",
+            minutes: 9,
             steps: [
-              "Rule reminder (30 seconds): because of + noun, so + subject + verb, as a result, led to.",
-              "Listen to the text once. Do not write.",
-              "Listen again. Write key words and the linking words.",
-              "In your group, build the text back. The words may differ, but the cause and result must be right.",
-              "Compare with the model and underline the cause words.",
+              "Read the model with the teacher. Find the topic sentence, each cause and result, and the closing sentence.",
+              "Plan: fill the four boxes with a few words each, not whole sentences. Draw an arrow between a cause and its result.",
+              "Write: turn your notes into one paragraph of about 80 words. Use because of, led to, as a result and due to at least once each.",
+              "Check: tick the checklist. Your partner follows your arrows and tells you if every result has a cause.",
+              "Teacher: while they write, look only at because of / due to + a noun, and led to / resulted in. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
             ],
             text: {
-              title: "The flood",
-              text: "Last spring, heavy rain fell on the hills for three days. Because of the rain, the river rose quickly. The flood led to a blocked road, so the school closed. As a result, the children learned at home until the water went down.",
+              title: "Model paragraph: The landslide",
+              text: "Last year, a landslide changed life in a mountain village, and there were clear causes. First, heavy rain fell for four days, so the soil became very wet. Because of the wet soil, a large part of the hill slid onto the road. The landslide led to a second problem: trucks could not bring food to the shop. As a result, families waited two days for fresh vegetables. Due to the damage, the villagers also planted new trees on the hill. In the end, one week of rain caused a long chain of events."
             },
-            frames: ["Because of ___, ___.", "___ led to ___, so ___.", "As a result, ___."],
-            checklist: ["because of + a noun, because + a whole clause", "led to / resulted in + a noun", "A comma after As a result"],
-            sayIt: "Read your group's text aloud, then tell the cause chain to another group without looking.",
-            teacherNote: "Dictogloss turns the cause-and-effect words into a task children must use to rebuild the text. Read twice at natural speed with the final -ed and -s clearly voiced. Accept different words if the cause and effect are right and the linkers are correct. 'Because the rain' (no of) is the usual slip: prompt with a pause and a finger.",
-            tiers: [
-              { level: "Support", task: "Rebuild the first two sentences with the frames." },
-              { level: "Core", task: "Rebuild the whole text." },
-              { level: "Stretch", task: "Rebuild it and add one more result with As a result." },
+            organiser: [
+              { label: "Topic sentence", prompt: "What happened, and where? Say there were causes." },
+              { label: "Cause 1 and its result", prompt: "First cause, then the result: because of + noun, or so + clause." },
+              { label: "Cause 2 and its result", prompt: "A second link in the chain: led to / resulted in + noun. Then As a result, ..." },
+              { label: "Closing", prompt: "What did people do? In the end, what does the chain show?" }
             ],
+            frames: [
+              "___ changed life in ___, and there were clear causes.",
+              "Because of ___, ___.",
+              "___ led to ___. As a result, ___.",
+              "In the end, ___."
+            ],
+            checklist: [
+              "My first sentence says what happened and that it had causes",
+              "because of / due to + a noun; because + a whole clause",
+              "led to / resulted in + a noun (not 'resulted to')",
+              "A comma after As a result and In the end"
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell the chain of causes again, using your arrows, without looking.",
+            teacherNote: "Plan, write, check: the arrows in the plan turn a list of events into a chain of causes, which is what an explanation paragraph needs. Mark only two targets (because of / due to + noun, and led to / resulted in + noun) with a dot on the line; 'because the typhoon' and 'resulted to' are the usual slips. This paragraph is the script for the recorded talk 'A chain of causes'. The dictogloss is replaced because the paragraph asks children to build the same cause-and-result sentences for themselves.",
+            tiers: [
+              { level: "Support", task: "Use the four frames: one sentence for each box.", frames: ["Because of ___, ___.", "As a result, ___."] },
+              { level: "Core", task: "Write the whole paragraph: six or seven sentences, about 80 words." },
+              { level: "Stretch", task: "Add a third link to the chain with 'This means that ...' or 'X was caused by Y'." }
+            ]
           },
         },
         {

@@ -94,8 +94,8 @@ export const odL3U8Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l3-u08-l2": {
-      objectives: ["I can retell Molly's story three times, faster each time.", "I can listen and write a short text from memory."],
-      trim: { "Gist check": 3, "Pass the passport": 3, "Who looks after the home?": 3, "Text-message detectives": 6, "The story in fives": 13, "Look first, then predict": 7 },
+      objectives: ["I can retell Molly's story three times, faster each time.", "I can plan and write a short paragraph that explains why a message is better than a call."],
+      trim: { "Gist check": 3, "Pass the passport": 3, "Who looks after the home?": 3, "Text-message detectives": 6, "The story in fives": 11, "Look first, then predict": 7 },
       add: [
         {
           after: "The story in fives",
@@ -139,30 +139,41 @@ export const odL3U8Lab: UnitLab = {
           after: "Problem and solution map",
           slide: {
             kind: "writing",
-            title: "Listen and write: the night call",
-            routine: "dictogloss",
-            mode: "groups",
-            minutes: 7,
+            title: "Why send a message? Plan, write, check",
+            routine: "paragraph",
+            genre: "explanation",
+            mode: "solo",
+            minutes: 9,
             steps: [
-              "Reminder: when we say what someone does, we use is or are + going to + a plain verb.",
-              "Listen to the text once. Just listen and enjoy it.",
-              "Listen again. Write key words: nouns, verbs and numbers.",
-              "In your group, put the notes together and rebuild the text. It does not have to be the same words, but the meaning must be the same.",
-              "Teacher: show the text and compare. Find two good sentences and two to improve.",
+              "Read the model with the teacher. Find the topic sentence, the two reasons and the closing sentence.",
+              "Plan: fill the four boxes with a few words each, not whole sentences. Use your own friend or cousin and a city far away.",
+              "Write: turn your notes into one paragraph. Use so and because to join the reasons.",
+              "Check: tick the checklist. Swap with a partner: they underline one is / are + going to and tell you one thing they understood.",
+              "Teacher: while they write, look only at is / are before going to and a plain verb after it. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
             ],
             text: {
-              title: "The night call",
-              text: "Kim lives in Hanoi, and her aunt lives in Tokyo. It is noon in Hanoi, so it is two o'clock in the afternoon there. Kim is going to call her aunt now. Her aunt is going to answer, because she is awake. After the call, Kim is going to eat lunch, and her aunt is going to drink tea.",
+              title: "Model paragraph: Why Kim sends a message",
+              text: "Time zones can make a call hard. Kim lives in Hanoi, and her aunt lives in Tokyo. Tokyo is two hours ahead, so it is already late there when it is evening here. Kim is going to send a message, because her aunt is going to sleep. In the morning, her aunt is going to read it and call back. That is why a message is often better than a call.",
             },
-            frames: ["___ lives in ___.", "It is ___ here, so it is ___ there.", "___ is going to ___."],
-            checklist: ["Capital letters for names and places (Hanoi, Tokyo)", "is / are before going to", "A plain verb after going to (call, answer, eat, drink)"],
-            sayIt: "Read your group's text to another group, then say the main idea without looking.",
-            teacherNote:
-              "Dictogloss works best after a short rule reminder, as here, because children then notice the target grammar as they rebuild the text. Read the text at natural speed, twice, with clear final sounds. Accept a different wording if the meaning matches. Noon in Hanoi is two o'clock in the afternoon in Tokyo, so the numbers in the text are true.",
+            organiser: [
+              { label: "Topic sentence", prompt: "What is hard about talking to someone in a different time zone?" },
+              { label: "Who and where", prompt: "Who lives far away? Which city? How many hours ahead or behind?" },
+              { label: "Reasons: so, because", prompt: "What is the time there? What is the person going to do? (going to)" },
+              { label: "Closing: That is why ...", prompt: "What is better, a message or a call? Say why." },
+            ],
+            frames: ["___ lives in ___, and I live in ___.","___ is ___ hours ahead, so it is ___ there.","I am going to ___, because ___.","That is why ___."],
+            checklist: [
+              "A topic sentence at the start and a closing sentence at the end",
+              "am / is / are before going to",
+              "A plain verb after going to (send, sleep, read)",
+              "Capital letters for names and cities"
+            ],
+            sayIt: "Read your paragraph to your partner. Then explain it again without looking, in one minute.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph. An explanation paragraph states a point, gives reasons with so and because, and closes with the point again. Mark only two targets (is / are before going to, and a plain verb after it) with a dot on the line; the child finds and fixes the mistake. Tokyo is two hours ahead of Hanoi, so check that children's times are possible. This paragraph replaces the dictogloss, so the story work earlier in the lesson carries the listening.",
             tiers: [
-              { level: "Support", task: "Rebuild only the first three sentences with the frames on the board." },
-              { level: "Core", task: "Rebuild all of the text with your group." },
-              { level: "Stretch", task: "Rebuild it, then add one more sentence with 'because' about what Kim is going to tell her aunt." },
+              { level: "Support", task: "Use the four frames: one sentence for each box.", frames: ["___ lives in ___, and I live in ___.","That is why ___."] },
+              { level: "Core", task: "Write the whole paragraph: five or six sentences." },
+              { level: "Stretch", task: "Add a sentence with a time in two cities: 'When it is noon here, it is two o'clock there.'" },
             ],
           },
         },
@@ -199,7 +210,7 @@ export const odL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u08-l3": {
       objectives: ["I can ask and answer 'What are you going to do?' quickly, without looking.", "I can join two ideas with because or so in a sentence."],
-      trim: { "Mime my plan": 3, "Guess my plan": 5, "Our big idea": 4, "How have you helped? (SB 80 Think)": 4 },
+      trim: { "Mime my plan": 3, "Guess my plan": 3, "Our big idea": 4, "How have you helped? (SB 80 Think)": 4 },
       add: [
         {
           after: "Guess my plan",
@@ -245,30 +256,41 @@ export const odL3U8Lab: UnitLab = {
           after: "My plans chart (SB 81 G)",
           slide: {
             kind: "writing",
-            title: "Join my plans with because and so",
-            routine: "sentence combining",
-            mode: "pairs",
-            minutes: 6,
+            title: "My plans for Saturday: plan, write, check",
+            routine: "paragraph",
+            genre: "plan",
+            mode: "solo",
+            minutes: 10,
             steps: [
-              "Think and plan: what is my plan, and why?",
-              "Read the two short sentences. Join them into ONE sentence with because or so. Say it first, then write it.",
-              "Check your sentence with the checklist, then read it to your partner.",
+              "Read the model with the teacher. Find the topic sentence, the plans and the closing sentence.",
+              "Plan: fill the four boxes with a few words each, not whole sentences. Use your own plans for next Saturday.",
+              "Write: turn your notes into one paragraph. Start with your topic sentence and use First, Then and At the end.",
+              "Check: tick the checklist. Swap with a partner: they underline one going to phrase and one because or so, and tell you one plan they liked.",
+              "Teacher: while they write, look only at am / is / are before going to and a plain verb after it. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
             ],
-            items: [
-              { q: "I'm going to take a jacket. It will be cold. (because)", answer: "I'm going to take a jacket because it will be cold." },
-              { q: "It's night in Tokyo. We aren't going to call now. (so)", answer: "It's night in Tokyo, so we aren't going to call now." },
-              { q: "She is going to fly. It's faster than the train. (because)", answer: "She is going to fly because it's faster than the train." },
-              { q: "He has a fever. He isn't going to travel today. (so)", answer: "He has a fever, so he isn't going to travel today." },
+            text: {
+              title: "Model paragraph: A busy Saturday",
+              text: "Next Saturday is going to be a great day. First, my family is going to drive to Hai Phong, because I want to see my grandmother. Then my sister and I are going to play cards in the car, and my dad is going to listen to music. In the afternoon, we're going to cook dinner together. At the end of the day, I'm going to be tired, but I'm going to be very happy!",
+            },
+            organiser: [
+              { label: "Topic sentence", prompt: "Which day? What do you think it is going to be like?" },
+              { label: "First, ...", prompt: "What are you going to do first? Why? (because)" },
+              { label: "Then, ...", prompt: "What are you going to do next? Who is going with you?" },
+              { label: "Closing: At the end, ...", prompt: "How are you going to feel at the end of the day?" },
             ],
-            frames: ["I'm going to ___ because ___.", "___, so I'm going to ___."],
-            checklist: ["A comma before so (not before because)", "am / is / are before going to", "A capital letter at the start and a full stop at the end"],
-            sayIt: "Say your joined sentence to your partner without looking at the page.",
-            teacherNote:
-              "Sentence combining teaches linking words through use, not rules. Model item 1 aloud, crossing out the repeated words. Write 'because' = the reason, 'so' = the result on the board. Vietnamese learners often leave out the be verb in plans, so keep that on the checklist.",
+            frames: ["Next ___ is going to be ___.","First, I'm going to ___ because ___.","Then ___ is going to ___.","At the end of the day, I'm going to ___."],
+            checklist: [
+              "A topic sentence that names the day",
+              "am / is / are before going to",
+              "A plain verb after going to (drive, play, cook)",
+              "First, and At the end of the day, with a comma after them"
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell your plans again without looking, in one minute.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph. It joins the sentence work from earlier (because and so) into a whole text. Mark only two targets (am / is / are before going to, and a plain verb after it) with a dot on the line; the child finds and fixes the mistake. Correcting a few things with a reason works better than marking everything.",
             tiers: [
-              { level: "Support", task: "Do items 1 and 2 with the teacher, with the frames." },
-              { level: "Core", task: "Join all four pairs." },
-              { level: "Stretch", task: "Write two of your own plan sentences about this weekend, one with because and one with so." },
+              { level: "Support", task: "Use the four frames: one sentence for each box.", frames: ["Next ___ is going to be ___.","First, I'm going to ___ because ___."] },
+              { level: "Core", task: "Write the whole paragraph: five or six sentences." },
+              { level: "Stretch", task: "Add a plan that changes: 'We aren't going to take the bus, so we're going to walk.'" },
             ],
           },
         },
@@ -382,7 +404,7 @@ export const odL3U8Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l3-u08-l5": {
       objectives: ["I can sell a trip in a short ad and say it again with a new partner.", "I can write a short travel ad with a plan, a check and a say-it step."],
-      trim: { "Sixty-second recall": 3, "Test our big ideas": 3 },
+      trim: { "Sixty-second recall": 3, "Test our big ideas": 3, "Ad showtime": 9 },
       add: [
         {
           after: "Ad showtime",
@@ -426,26 +448,39 @@ export const odL3U8Lab: UnitLab = {
           slide: {
             kind: "writing",
             title: "Write my ad: model, then plan, write, check",
-            routine: "model, then write",
+            routine: "paragraph",
+            genre: "advertisement",
             mode: "solo",
-            minutes: 7,
+            minutes: 8,
             steps: [
-              "Read the model with the teacher. What does it say first, next and last?",
-              "Plan: jot a quick organiser on scrap paper: the place, how you go, what you'll do and when.",
-              "Write your ad with the frames. Check it with the checklist, then read it aloud.",
+              "Read the model with the teacher. Find the invitation at the start, the plans and the closing question.",
+              "Plan: fill the four boxes with a few words each, not whole sentences: the place, how you go, the time there and what you'll do.",
+              "Write: turn your notes into one ad paragraph with the frames. Make the reader want to come!",
+              "Check: tick the checklist. Swap with a partner: they underline one going to phrase and tell you one thing that made them want to come.",
+              "Teacher: while they write, look only at am / is / are before going to and capital letters for places. Put a dot in the margin of a line with a mistake; the child finds it and fixes it."
             ],
             text: {
-              title: "Come to Tokyo!",
-              text: "Come with us to Tokyo! We are going to fly there next summer, and the trip will take about five hours. When it is noon in Hanoi, it is two o'clock in Tokyo. We are going to visit a big museum and eat noodles. Would you like to join us?",
+              title: "Model paragraph: Come to Tokyo!",
+              text: "Come with us to Tokyo! We are going to fly there next summer, and the flight is going to take about five hours. When it is noon in Hanoi, it is two o'clock in Tokyo. We are going to visit a big museum and eat noodles. You are going to love the food and the tall buildings! Would you like to join us?",
             },
-            frames: ["Come with us to ___!", "We are going to ___ next ___.", "When it is ___ here, it is ___ there.", "Would you like to join us?"],
-            checklist: ["Capital letters for places and days", "am / is / are before going to", "A question mark and an exclamation mark in the right places"],
+            organiser: [
+              { label: "Invitation", prompt: "Which place? Who do you want to come?" },
+              { label: "How and when", prompt: "How are you going to travel? When? How long is it going to take?" },
+              { label: "Time there", prompt: "When it is ___ here, what time is it there?" },
+              { label: "Plans and question", prompt: "What are you going to do? End with a question to the reader." },
+            ],
+            frames: ["Come with us to ___!","We are going to ___ next ___.","When it is ___ here, it is ___ there.","Would you like to join us?"],
+            checklist: [
+              "Capital letters for places and days",
+              "am / is / are before going to",
+              "A question mark and an exclamation mark in the right places",
+              "The time difference is possible for the place"
+            ],
             sayIt: "Read your ad to your partner, then say it without looking at the page.",
-            teacherNote:
-              "Plan-write-check (strategy instruction) is one of the best-evidenced ways to improve young writers: the organiser is the plan, the checklist is the check. Keep it short: four or five sentences. The model is original and not from the book. Children may use a different place and different times; check that the time difference is possible for the place they choose.",
+            teacherNote: "Plan, write, check (strategy instruction) is one of the best-evidenced ways to improve young writers: the organiser is the plan, the checklist is the check. The model is original and not from the book. The paragraph is the script for the ad showtime later in the lesson. Children may use a different place; check that the time difference is possible for it. Mark only two targets (am / is / are before going to, and capital letters for places) with a dot in the margin.",
             tiers: [
-              { level: "Support", task: "Fill the organiser, then write the first and last sentence with the frames." },
-              { level: "Core", task: "Write all four or five sentences." },
+              { level: "Support", task: "Fill the organiser, then write the first and last sentence with the frames.", frames: ["Come with us to ___!","Would you like to join us?"] },
+              { level: "Core", task: "Write the whole paragraph: five or six sentences." },
               { level: "Stretch", task: "Add a problem and a solution, and one 'because' sentence." },
             ],
           },

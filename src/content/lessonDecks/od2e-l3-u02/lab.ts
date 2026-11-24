@@ -2,6 +2,7 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 
 // Speaking & Writing Lab for Oxford Discover 2nd edition, Level 3, Unit 2 "Games, Friends
 // and Fun" (src/lib/lessonDecks/lab.ts puts it into the decks). Children are 8-10 (Sky 1).
+// Lessons 1, 3 and 4 write a whole paragraph (description, opinion, recount).
 // Every lesson gets one fluency routine (the unit's grammar, gerunds and question words,
 // said again and again as whole sentences with Unit 1's phrases mixed back in) and one
 // writing routine (plan, write, check, then say it). Lessons 2, 4 and 6 end with a recorded
@@ -18,7 +19,8 @@ export const odL3U2Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l3-u02-l1": {
-      objectives: ["I can say 'My favorite game is ___. I play it with ___ at ___.' fast, without stopping."],
+      objectives: ["I can say 'My favorite game is ___. I play it with ___ at ___.' fast, and write a short paragraph about it."],
+      trim: { "Do it and guess": 3 },
       add: [
         {
           after: "What's your favorite game? (SB 16 C)",
@@ -63,29 +65,41 @@ export const odL3U2Lab: UnitLab = {
           after: "Our games chart (SB 17 Think)",
           slide: {
             kind: "writing",
-            title: "Grow my game sentence",
-            routine: "expand it",
+            title: "My favorite game: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
             mode: "solo",
-            minutes: 6,
+            minutes: 10,
             steps: [
-              "Plan: read the short sentence with the teacher. Ask: who? where? why?",
-              "Write: make it bigger by adding the new words in the brackets.",
-              "Check: use the checklist, then read your big sentence to your partner.",
+              "Read the model with the teacher. Find the topic sentence, how to play, why it is fun and the closing question.",
+              "Plan: fill the four boxes with a few words each, not whole sentences.",
+              "Write: turn your notes into one paragraph. Start with your topic sentence and use First, Then and because.",
+              "Check: tick the checklist. Swap with a partner: they underline one -s ending and one because, and tell you one thing they liked.",
+              "Teacher: while they write, look only at 'is' in 'My favorite game is ...' and plural -s (friends, cousins). Put a dot in the margin of a line with a mistake; the child finds it and fixes it.",
             ],
-            items: [
-              { q: "I play tag. (add: with my friends)", answer: "I play tag with my friends." },
-              { q: "We play football. (add: at the park)", answer: "We play football at the park." },
-              { q: "My favorite game is tag. (add: because it is fun)", answer: "My favorite game is tag because it is fun." },
-              { q: "I play. (add: tag, with my cousins, on Sunday)", answer: "I play tag with my cousins on Sunday." },
+            text: {
+              title: "Model paragraph: Tag",
+              text: "My favorite game is tag, and it is the most exciting game at our school. I play it with my friends at the park after class. First, one player is the chaser and counts to ten. Then everybody runs away, so the chaser cannot touch us. Tag is fun because we enjoy running and laughing, and it is good exercise, too. Do you like tag?",
+            },
+            organiser: [
+              { label: "Topic sentence", prompt: "What is your favorite game? What is it like? (fun, exciting, hard)" },
+              { label: "Who and where", prompt: "Who do you play it with? Where do you play it?" },
+              { label: "How to play: First, ... Then, ...", prompt: "What do you do first? What happens next?" },
+              { label: "Why it is fun: because ...", prompt: "Why do you like it? End with a question for the reader." },
             ],
-            frames: ["My favorite game is ___ because ___.", "I play it with ___ at ___."],
-            checklist: ["A capital letter at the start and a full stop at the end", "'is' in 'My favorite game is ...'", "friends, cousins: the -s is there"],
-            sayIt: "Read your big sentence to your partner, then say it again without looking.",
-            teacherNote: "Expanding a bare sentence with who, where and why is a short, safe way into longer writing. Do item 1 together on the board. Vietnamese has no plural ending, so check the -s on friends and cousins aloud: say it loudly yourself.",
+            frames: ["My favorite game is ___.", "I play it with ___ at ___.", "First, ___. Then ___.", "It is fun because ___."],
+            checklist: [
+              "My first sentence says the game and what it is like",
+              "'is' in 'My favorite game is ...'",
+              "friends, cousins: the -s is there",
+              "First, Then and because join my ideas",
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking, in one minute.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph itself. This replaces the one-sentence 'grow it' task: the same check on 'is' and the plural -s now sits in the checklist. Mark only two targets ('is' and plural -s) with a dot on the line; the child finds and fixes the mistake. Correcting a few things with a reason works better than marking everything. Keep the model on the board while the children write.",
             tiers: [
-              { level: "Support", task: "Copy the big sentence from the board and draw the game." },
-              { level: "Core", task: "Write two big sentences of your own about games you play." },
-              { level: "Stretch", task: "Write three sentences and join two of them with 'because' or 'and'." },
+              { level: "Support", task: "Use the four frames: one sentence for each box.", frames: ["My favorite game is ___.", "I play it with ___ at ___.", "It is fun because ___."] },
+              { level: "Core", task: "Write the whole paragraph: five or six sentences." },
+              { level: "Stretch", task: "Add a disagreement or a comparison: 'Some people like football, but I think tag is more fun because ...'" },
             ],
           },
         },
@@ -196,35 +210,47 @@ export const odL3U2Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u02-l3": {
       objectives: ["I can say 'Swimming is fun.' and 'I enjoy dancing.' fast and without mistakes."],
-      trim: { "Gerund charades": 4, "Rule riddles": 3, "Our big idea: what does -ing do?": 6 },
+      trim: { "Gerund charades": 3, "Rule riddles": 3, "Our big idea: what does -ing do?": 6 },
       add: [
         {
           after: "Fill in the gerund (SB 21 F)",
           slide: {
             kind: "writing",
-            title: "Join the ideas with -ing sentences",
-            routine: "sentence combining",
-            mode: "pairs",
-            minutes: 6,
+            title: "The best way to have fun: plan, write, check",
+            routine: "paragraph",
+            genre: "opinion",
+            mode: "solo",
+            minutes: 8,
             steps: [
-              "Plan: read the short sentences. Find the -ing idea and the reason.",
-              "Write: join them into ONE sentence. Say it first, then write it.",
-              "Check: -ing word, is or are, and the spelling of the -ing word.",
+              "Read the model with the teacher. Find the opinion, the two reasons and the closing sentence.",
+              "Plan: fill the four boxes with a few words each, not whole sentences.",
+              "Write: turn your notes into one paragraph. Start with 'In my opinion' and use -ing words as the subject and after enjoy or good at.",
+              "Check: tick the checklist. Swap with a partner: they underline one -ing word and tell you if they agree.",
+              "Teacher: while they write, look only at is / are with -ing subjects and at -ing after enjoy and good at. Put a dot in the margin of a line with a mistake; the child finds it and fixes it.",
             ],
-            items: [
-              { q: "I enjoy dancing. It makes me happy. (because)", answer: "I enjoy dancing because it makes me happy." },
-              { q: "Running is good for you. Jumping is good for you. (and)", answer: "Running and jumping are good for you." },
-              { q: "She is good at swimming. She swims every day. (so)", answer: "She is good at swimming, so she swims every day." },
-              { q: "Skipping is fun. We skip at break time. (so)", answer: "Skipping is fun, so we skip at break time." },
+            text: {
+              title: "Model paragraph: Swimming",
+              text: "In my opinion, swimming is the best way to have fun on a hot day. First, swimming is exciting because we jump into the cool water. Also, I enjoy swimming with my cousins, and my brother is good at diving. Running and jumping are fun, too, but they make me very tired. That is why I think swimming is better. What do you think?",
+            },
+            organiser: [
+              { label: "Opinion: In my opinion, ...", prompt: "What is the best way to have fun? Use an -ing word as the subject." },
+              { label: "Reason 1: First, ... because ...", prompt: "Why is it fun or exciting?" },
+              { label: "Reason 2: Also, I enjoy ...ing / I am good at ...ing", prompt: "Who do you do it with? What are you good at?" },
+              { label: "Closing: That is why ...", prompt: "Say your opinion again. Ask the reader a question." },
             ],
-            frames: ["___ing is ___ because ___.", "___ing and ___ing are ___.", "She is good at ___ing, so ___."],
-            checklist: ["After enjoy and good at, the verb has -ing", "One thing is, two things are", "The spelling is right: dancing (no e), running (double n), skipping (double p)"],
-            sayIt: "Read your joined sentences to your partner, then say the first one again without looking.",
-            teacherNote: "Sentence combining teaches joining words through use, not rules. Model item 2 aloud: two sentences become one, and 'is' becomes 'are'. Vietnamese learners often say 'Running and jumping is': stress 'are' and write it on the board in a different colour. Also check the -s in 'she swims' and that 'we skip' has no -s.",
+            frames: ["In my opinion, ___ing is the best way to ___.", "___ing is ___ because ___.", "I enjoy ___ing with ___.", "That is why I think ___."],
+            checklist: [
+              "My opinion is in the first sentence",
+              "-ing as the subject: one thing is, two things are",
+              "After enjoy and good at, the verb has -ing, and the spelling is right (swimming, dancing)",
+              "I gave a reason with because",
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell your opinion again without looking, in thirty seconds.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph itself. The opinion paragraph lets the children use the unit's gerunds in a real argument, and the joined sentences from the combining task and the fun chart feed its reasons. Mark only two targets (is / are with -ing subjects and -ing after enjoy / good at) with a dot on the line; the child finds and fixes the mistake. Vietnamese learners often write 'Running and jumping is' or 'I enjoy to swim': hold up fingers for these rather than telling them.",
             tiers: [
-              { level: "Support", task: "Do items 1 and 2 with the teacher, with the frames on the board." },
-              { level: "Core", task: "Join all four sentences." },
-              { level: "Stretch", task: "Write one more joined sentence of your own with 'because' and one with 'so'." },
+              { level: "Support", task: "Use the four frames: one sentence for each box.", frames: ["In my opinion, ___ing is the best way to ___.", "___ing is ___ because ___."] },
+              { level: "Core", task: "Write the whole paragraph: five or six sentences." },
+              { level: "Stretch", task: "Add a different view: 'Some people like ___ing, but I think ___ing is better because ...'" },
             ],
           },
         },
@@ -320,29 +346,41 @@ export const odL3U2Lab: UnitLab = {
           after: "Build the question",
           slide: {
             kind: "writing",
-            title: "Fix the question mistakes",
-            routine: "fix it",
-            mode: "pairs",
-            minutes: 6,
+            title: "A game someone taught me: plan, write, check",
+            routine: "paragraph",
+            genre: "personal recount",
+            mode: "solo",
+            minutes: 8,
             steps: [
-              "Plan: read each question or answer with your partner. Something is wrong!",
-              "Write: find the mistake and write the sentence the right way.",
-              "Check: read your fixed sentence aloud together.",
+              "Read the model with the teacher. Find the topic sentence, the details and the closing sentence.",
+              "Plan: fill the four boxes with a few words each, not whole sentences.",
+              "Write: turn your notes into one paragraph. Use First, Then and At the end, and put one question and its answer inside it.",
+              "Check: tick the checklist. Swap with a partner: they underline the question and one past verb and tell you one thing they liked.",
+              "Teacher: while they write, look only at question word order (do / did) and past verbs (taught, learned). Put a dot in the margin of a line with a mistake; the child finds it and fixes it.",
             ],
-            items: [
-              { q: "Where you play tag?", answer: "Where do you play tag?" },
-              { q: "What he likes?", answer: "What does he like?" },
-              { q: "Why does she likes it?", answer: "Why does she like it?" },
-              { q: "Who did teach you?", answer: "Who taught you?" },
-              { q: "I play at the lake because it fun.", answer: "I play at the lake because it is fun." },
+            text: {
+              title: "Model paragraph: Hide and seek",
+              text: "Last summer, my cousin taught me a game called hide and seek at the lake. First, I asked him, \"How do we play?\" He said, \"One player counts to twenty while the others hide.\" Then I hid behind a big tree, but he found me quickly. It was hard to learn because I laughed too much! At the end he said, \"Good try! You can do it!\" Now I play it with my friends every weekend.",
+            },
+            organiser: [
+              { label: "Topic sentence", prompt: "Who taught you a game? What game? When and where?" },
+              { label: "Detail 1: First, ...", prompt: "What question did you ask? What was the answer?" },
+              { label: "Detail 2: Then, ...", prompt: "What happened when you tried it? Was it easy or hard?" },
+              { label: "Closing: At the end, ...", prompt: "What did your cousin, friend or teacher say to you? Do you play it now?" },
             ],
-            checklist: ["A question has do or does: Where do you ...? What does he ...?", "After does, the verb has no -s: does she like", "A question mark at the end of a question"],
-            sayIt: "Say all five fixed sentences to your partner, fast.",
-            teacherNote: "These are the real slips of Vietnamese learners: no do/does, -s after does, and a missing is. Fix item 1 together first, then let pairs fix the others. Focus on two types at most: do/does and -s. 'Who taught you?' is a bonus: praise it, but 'Who' as the subject needs no do.",
+            frames: ["Last ___, my ___ taught me a game called ___.", "First, I asked, \"How do we play?\"", "Then I ___. It was hard / easy because ___.", "At the end, ___ said, \"Good try!\""],
+            checklist: [
+              "My first sentence says who taught me, what game and where",
+              "My question has do or did: 'How do we play?' 'What did you play?'",
+              "Past verbs: taught, learned, asked, hid, was",
+              "First, Then and At the end join my ideas",
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking, in one minute.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph itself. This replaces the question-fixing task: the question words now work inside a real recount, with a question and its answer in the text, and the do / did check sits in the checklist. Mark only two targets (do / did in the question and past verbs) with a dot on the line; the child finds and fixes the mistake. Correcting a few things with a reason works better than marking everything. The paragraph can also be the script for this lesson's recorded fun talk.",
             tiers: [
-              { level: "Support", task: "Fix items 1 and 2 with the do / does card." },
-              { level: "Core", task: "Fix all five." },
-              { level: "Stretch", task: "Write two new questions with mistakes for your partner to fix." },
+              { level: "Support", task: "Use the four frames: one sentence for each box.", frames: ["Last ___, my ___ taught me ___.", "First, I asked, \"How do we play?\""] },
+              { level: "Core", task: "Write the whole paragraph: five or six sentences." },
+              { level: "Stretch", task: "Add a second question and answer: 'I asked, \"Who taught you?\" He said, \"My grandfather did.\"'" },
             ],
           },
         },
