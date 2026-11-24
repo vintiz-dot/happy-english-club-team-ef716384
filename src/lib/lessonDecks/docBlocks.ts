@@ -126,10 +126,13 @@ export function slideBlock(s: Slide, teacher: boolean): DocBlock | null {
       });
     case "writing":
       return clean({
-        heading: s.title, eyebrow: `Writing · ${s.routine}`, chips: chips(s.minutes, s.mode),
+        heading: s.title, eyebrow: `Writing · ${s.routine}${s.genre ? ` · ${s.genre}` : ""}`, chips: chips(s.minutes, s.mode),
         paragraphs: nonEmpty([s.text && (teacher || s.routine !== "dictogloss") ? `${s.text.title}: ${s.text.text}` : null, s.sayIt ? `Say it: ${s.sayIt}` : null]),
         lists: nonEmpty([list("steps", s.steps), list("frames", s.frames, "Sentence frames"), list("checks", s.checklist, "Check your writing")]),
         questions: s.items?.length ? { space: "line", items: s.items.map((i) => item(i, teacher)) } : undefined,
+        // A paragraph is planned in the organiser's boxes, then written on the lines below.
+        table: s.organiser?.length ? { head: ["Plan", "Think about", "My notes"], rows: s.organiser.map((o) => [o.label, o.prompt, ""]) } : undefined,
+        writingLines: s.routine === "paragraph" && !teacher ? 10 : undefined,
         tiers: s.tiers, teacher: teacher ? nonEmpty([note("Teacher note", [s.teacherNote])]) : undefined,
       });
     case "reflect":

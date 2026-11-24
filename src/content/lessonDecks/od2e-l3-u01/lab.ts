@@ -198,7 +198,7 @@ export const odL3U1Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l3-u01-l3": {
       objectives: ["I can say how I felt and what a thing was like, fast: 'The race was exciting, so I felt excited.'"],
-      trim: { "Freeze faces": 3, "Class survey: how do you feel about ...?": 6, "Our big idea": 5 },
+      trim: { "Freeze faces": 3, "Class survey: how do you feel about ...?": 5, "Our big idea": 5, "Feelings charades: Are you ...?": 5 },
       add: [
         {
           after: "Feelings charades: Are you ...?",
@@ -245,28 +245,41 @@ export const odL3U1Lab: UnitLab = {
           after: "Circle the word (SB 13 F)",
           slide: {
             kind: "writing",
-            title: "Fix the feelings",
-            routine: "fix it",
-            mode: "pairs",
-            minutes: 6,
+            title: "My most exciting day: plan, write, check",
+            routine: "paragraph",
+            genre: "personal recount",
+            mode: "solo",
+            minutes: 10,
             steps: [
-              "Plan: read each sentence with your partner. Something is wrong with -ed or -ing, or with was / were.",
-              "Fix: ask 'Is it the person or the thing?' Person is -ed. Thing is -ing.",
-              "Check: write the sentence the right way, tick the checklist, and read it aloud together.",
+              "Read the model with the teacher. Find the topic sentence, the three details and the closing sentence.",
+              "Plan: fill the four boxes with a few words each, not whole sentences.",
+              "Write: turn your notes into one paragraph. Start with your topic sentence and use First, Then and At the end.",
+              "Check: tick the checklist. Swap with a partner: they underline one -ed word and one -ing word and tell you one thing they liked.",
+              "Teacher: while they write, look only at -ed / -ing and was / were. Put a dot in the margin of a line with a mistake; the child finds it and fixes it.",
             ],
-            items: [
-              { q: "I am boring at the party.", answer: "I am bored at the party." },
-              { q: "The magic show was excited.", answer: "The magic show was exciting." },
-              { q: "She felt tire after the race.", answer: "She felt tired after the race." },
-              { q: "We was amazed by the big cake.", answer: "We were amazed by the big cake." },
+            text: {
+              title: "Model paragraph: The lantern night",
+              text: "Last autumn, I went to the Mid-Autumn Festival with my family, and it was the most exciting night of the year. First, we bought lanterns at the market. My little brother was amazed by a big red star lantern. Then we watched a lion dance. The drums were loud and the dancers were amazing. At the end, I felt tired but very happy. I want to go again next year!",
+            },
+            organiser: [
+              { label: "Topic sentence", prompt: "What was the event, and when? What was it like? (an -ing word)" },
+              { label: "Detail 1: First, ...", prompt: "What did you do or see first?" },
+              { label: "Detail 2: Then, ...", prompt: "What happened next? How did you or someone feel? (an -ed word)" },
+              { label: "Closing: At the end, ...", prompt: "How did you feel at the end? Would you go again?" },
             ],
-            checklist: ["People feel: -ed (bored, excited, tired)", "Things and events are: -ing (boring, exciting, tiring)", "I was, he was, we were"],
-            sayIt: "Read your fixed sentences to your partner in a strong voice. Then say your favorite one without looking.",
-            teacherNote: "These are the unit's real mistakes: -ed for the person, -ing for the thing, plus the dropped final -d (tire, bore) and was/were. Fix one together first and say the rule aloud. Limit the correction to these two or three error types; do not fix everything else on the page.",
+            frames: ["Last ___, I went to ___, and it was ___.", "First, we ___.", "Then ___. I felt ___ because ___.", "At the end, I felt ___."],
+            checklist: [
+              "My first sentence says the event and what it was like",
+              "Three details with First, Then and At the end",
+              "-ed for how people felt, -ing for what the event was like",
+              "Past verbs: went, saw, bought, was / were",
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking, in one minute.",
+            teacherNote: "Plan, write, check: the boxes take words, not sentences, so the time goes into the paragraph itself. Mark only two targets (-ed / -ing and was / were) with a dot on the line; the child finds and fixes the mistake. Correcting a few things with a reason works better than marking everything. The paragraph is also the script for this lesson's recorded talk.",
             tiers: [
-              { level: "Support", task: "Fix sentences 1 and 3 with the rule on the board." },
-              { level: "Core", task: "Fix all four sentences." },
-              { level: "Stretch", task: "Write two more sentences with a mistake for your partner to fix." },
+              { level: "Support", task: "Use the four frames: one sentence for each box.", frames: ["Last ___, I went to ___, and it was ___.", "At the end, I felt ___."] },
+              { level: "Core", task: "Write the whole paragraph: five or six sentences." },
+              { level: "Stretch", task: "Add a sentence with so or because and another -ing / -ed pair: 'The parade was surprising, so I was surprised.'" },
             ],
           },
         },

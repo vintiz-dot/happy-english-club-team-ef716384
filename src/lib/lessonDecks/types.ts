@@ -75,7 +75,10 @@ export type FluencyRoutine = "4-3-2" | "task repeat" | "chunk sprint" | "questio
 //   expand it: a bare sentence grows (who, where, when, why, a describing word).
 //   fix it: sentences with the class's typical mistakes, found and fixed.
 //   model, then write: notice what a short model does, then write your own with frames.
-export type WritingRoutine = "dictogloss" | "sentence combining" | "expand it" | "fix it" | "model, then write";
+//   paragraph: plan, write, check. Read a model paragraph, plan in the organiser
+//     (topic sentence, details, closing), write the paragraph, check it with the
+//     checklist and a partner, then say it (added 24 Nov 2026 for SKY 1 and Jupiter).
+export type WritingRoutine = "dictogloss" | "sentence combining" | "expand it" | "fix it" | "model, then write" | "paragraph";
 /** A criterion a recorded talk is scored on (video_homework_rubrics.criteria). */
 export type TalkCriterion = { label: string; description: string; weight: number };
 
@@ -216,6 +219,10 @@ export type Slide =
       frames?: string[];
       checklist: string[]; // what the children check in their own writing
       sayIt?: string; // the spoken step: read it to a partner, then say it without looking
+      // A paragraph routine: the kind of text ("opinion", "description", ...) and the
+      // planning boxes the children fill before writing (printed with space to write).
+      genre?: string;
+      organiser?: { label: string; prompt: string }[];
       teacherNote?: string;
       tiers?: Tier[];
     }

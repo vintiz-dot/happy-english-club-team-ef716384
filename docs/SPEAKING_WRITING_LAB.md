@@ -109,6 +109,14 @@ Most verified studies are with adults or children of 10-12. Evidence for 6-8-yea
 - Combine / expand / fix: the model answers are folded under "Model answers (teacher)".
 - Finish with the "Say it" step: the sentence aloud, then without looking.
 
+**Paragraphs (SKY 1 and Jupiter, at least half the lessons)**
+1. Read the model paragraph together; children point to the topic sentence, the details and the closing.
+2. Plan in the boxes with a few words each (not sentences).
+3. Write the paragraph from the plan, with the frames for Support.
+4. Check with the checklist; a partner underlines two things the checklist asks for.
+5. Mark only two targets, with a dot in the margin of the line; the child finds and fixes the mistake.
+6. Say it: read it to a partner, then tell it without looking. It can become the recorded talk.
+
 **The weekly talk**
 1. In class, the talk slide (after the homework) shows the task, the practice steps and what is scored.
 2. In Lesson Decks, after taking attendance, press **Set talk in app**: the talk is posted as video homework for the children present, with its rubric already approved.

@@ -631,9 +631,22 @@ function SlideBody({ slide }: { slide: Slide }) {
       return (
         <div className="space-y-5">
           <H Icon={PenLine}>{slide.title}</H>
-          <Meta tag={`Writing · ${slide.routine}`} mode={slide.mode} minutes={slide.minutes} />
+          <Meta tag={`Writing · ${slide.routine}${slide.genre ? ` · ${slide.genre}` : ""}`} mode={slide.mode} minutes={slide.minutes} />
           <List items={slide.steps} ordered />
           {slide.text && <WritingText text={slide.text} hidden={slide.routine === "dictogloss"} audience={audience} speakScript={speakScript} />}
+          {slide.organiser?.length ? (
+            <div className="space-y-2">
+              <p className="text-sm uppercase tracking-widest text-hec-ink-soft">Plan it first</p>
+              <div className="grid gap-3 md:grid-cols-2">
+                {slide.organiser.map((o, i) => (
+                  <div key={i} className="min-h-[5.5rem] rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/60 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+                    <p className="text-lg font-semibold text-hec-ink">{i + 1}. {o.label}</p>
+                    <p className="text-base text-hec-ink-soft">{o.prompt}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {slide.items?.length ? (
             <div className="rounded-2xl border border-hec-line bg-hec-surface p-4">
               <ol className="list-decimal space-y-2 pl-6 text-xl text-hec-ink">{slide.items.map((it, i) => <li key={i}>{it.q}</li>)}</ol>
