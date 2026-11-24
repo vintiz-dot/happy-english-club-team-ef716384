@@ -226,13 +226,19 @@ You asked for this on 24 Nov 2026 ("include voice biometrics"). It changes one l
 - learns from the voices the teacher named in the app since the last run;
 - groups each lesson's children's lines by voice and guesses a name only when one child is clearly closest.
 
-It adds about 1-2 seconds per child's line (the voice model loads once, in about 40 seconds).
+It adds about 1-2 seconds per child's line for each voice model, and all the models load once per night (all six in under a minute on this laptop, 24 Nov 2026). With all the models installed, expect the voice step to take several times longer than with one model; it still runs after the report is built, so a slow night never costs the report.
 
 **Tapping during a lesson is now lighter:** a tap on a child means "this child now". The next child's tap ends the last one's turn, so nobody needs tapping off. The teacher never taps themself, because their microphone shows when they speak. A child's turn ends on its own when the teacher speaks, or after a minute. Hold a name to add a second child for a conversation.
 
 **What the teacher sees:** under the summary, **Voices in this lesson**. Each voice group shows a few of its lines (click a time to listen), the computer's guess ("Sounds like Bee?") or "not sure", and buttons: **Yes, Bee**, another child, **Several voices**, **Me (the teacher)**, **Don't know**. One answer names every line of that group in the transcript, and **Change** undoes it. A named child with voiceprint consent becomes better known to the laptop, and a changed answer takes the wrong voice samples back out.
 
-**Is it getting it right?** `voice_admin.py accuracy` counts the guesses the teacher answered: how many were the right child, another child, or not one child. If "another child" is more than about 1 in 20, raise the threshold in `scripts/lesson-monitor/voice.py` (`group_threshold`) and tell me.
+**Several voice models run side by side (decision of 24 Nov 2026).** Every night, each lesson's children's lines are measured by **every voice model installed on this laptop** (ECAPA, TitaNet, the two WeSpeaker models and the two 3D-Speaker models), not only ECAPA. The groups are made once, with ECAPA, so all models are judged on the same groups. Each model keeps its own voiceprint for each child (`<child>.vp` for ECAPA as before, `<child>.<model>.vp` for the others), and each taps and each teacher answer teaches all of them. Only **one** model's guess is shown to the teacher (ECAPA). The other models' guesses are kept hidden, encrypted, on this laptop, and are never in the report or the database.
+
+**About 1 group in 4 has no guess on purpose.** Of the groups that would have had a guess, about a quarter are shown as "not sure", chosen by a fixed rule so a rerun picks the same ones. This keeps the teacher's answers honest: without it, teachers would tend to say yes to whatever is shown, and the shown model would look better than it is. The teacher cannot tell which groups are which, and nothing else changes for them.
+
+**Is it getting it right?** `voice_admin.py accuracy` is the comparison. When the teacher answers a group, every model is scored silently against the answer. The command prints, for each model, over the groups answered as one child: how many it would have named correctly, how many it would have named as the wrong child, and how many it was not sure of, at that model's threshold. Under it is a sweep over thresholds ("named / of those the wrong child"), and for the shown model the teacher's agreement with shown guesses against blind ones. If "wrong" is more than about 1 in 20 for a model you would use, raise its threshold in `scripts/lesson-monitor/voice.py` (`SETTINGS["thresholds"]`) and tell me. The starting thresholds are B2's: ECAPA 0.66, 3D-Speaker CAM++ 0.814, WeSpeaker CAM++ 0.789, and 0.70 for the others until the sweep says otherwise.
+
+**Switching to the winner:** after about 150 to 200 answered groups, look at the table. To show another model's guesses instead, change the one line `"shown_model": "ecapa"` in `scripts/lesson-monitor/voice.py` to the winner's name (for example `"3dspeaker_campp"`). Nothing else changes. To run fewer models, set `"models"` there to a list of names (`None` means all available).
 
 **Where the voiceprints are, and deleting them:** they are only on this laptop, in `pilot\voiceprints\`, encrypted with Windows (DPAPI) for the `hec-pilot` account, so a copy is unreadable on another computer or account. They are numbers made from voices, not audio, but they are still a child's biometric data. To delete them:
 - one child: `voice_admin.py delete --student-id <id>`;
@@ -243,5 +249,5 @@ In the app, the voice groups are deleted with their report (30 days, a withdrawa
 
 **Not proven yet:**
 - How well it recognises voices on real lessons with in-class enrolment. B2 measured made-up mixes, and real lessons then named 0 of 12 groups without enrolment. The first weeks' `accuracy` will tell.
-- The thresholds are B2's, not tuned on your classes.
+- The thresholds are B2's (0.70 for models B2 did not measure), not tuned on your classes; the accuracy sweep is what tunes them.
 - DPAPI was checked on this laptop's own account, not on `hec-pilot`.

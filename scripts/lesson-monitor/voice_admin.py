@@ -3,7 +3,7 @@
   PY scripts\\lesson-monitor\\voice_admin.py consent-all --class-id <id> --note "signed voiceprint lines, office folder M"
   PY scripts\\lesson-monitor\\voice_admin.py consent --student-id <id> --withdrawn --note "parent phoned 24 Nov"
   PY scripts\\lesson-monitor\\voice_admin.py list                       # who is known by voice, and how well
-  PY scripts\\lesson-monitor\\voice_admin.py accuracy                   # the teacher's answers against the suggestions
+  PY scripts\\lesson-monitor\\voice_admin.py accuracy                   # every model scored against the teacher's answers
   PY scripts\\lesson-monitor\\voice_admin.py delete --student-id <id>   # one child's voiceprint and pending groups
   PY scripts\\lesson-monitor\\voice_admin.py delete --all --yes         # every voiceprint on this laptop
 
@@ -31,14 +31,81 @@ import voice  # noqa: E402
 import voiceprints  # noqa: E402
 
 
-def accuracy(rows: list[dict]) -> dict:
-    """Pure: of the suggestions the teacher answered, how many named the child the teacher named."""
-    answered = [r for r in rows if r.get("answer") is not None]
-    agreed = sum(1 for r in answered if r.get("agreed"))
-    wrong_child = sum(1 for r in answered if r.get("answer") == "child" and not r.get("agreed"))
-    not_one = sum(1 for r in answered if r.get("answer") in ("several", "teacher", "unknown"))
-    return {"suggestions_answered": len(answered), "agreed": agreed, "another_child": wrong_child,
-            "not_one_child": not_one, "agreed_pct": round(100 * agreed / len(answered), 1) if answered else None}
+SWEEP = (0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85)
+
+
+def _rows_by_model(rows: list[dict]) -> dict[str, list[dict]]:
+    """Calibration rows, one per (recording, group, model): a changed answer replaces the earlier one. Rows written
+    before several models ran (no "model") are the ECAPA suggestion the teacher was shown."""
+    last: dict[tuple, dict] = {}
+    for r in rows:
+        r = dict(r)
+        r.setdefault("model", "ecapa")
+        if "best" not in r:
+            r["best"], r["shown"], r["blind"], r["second"] = r.get("suggested"), True, False, None
+        last[(r.get("rid"), r.get("g"), r["model"])] = r
+    out: dict[str, list[dict]] = {}
+    for r in last.values():
+        out.setdefault(r["model"], []).append(r)
+    return out
+
+
+def _named(r: dict, thr: float, margin: float) -> bool:
+    return r.get("score") is not None and voice.would_name(float(r["score"]), r.get("second"), thr, margin)
+
+
+def _pct(n: int, total: int):
+    return round(100 * n / total, 1) if total else None
+
+
+def accuracy(rows: list[dict], s: dict = voice.SETTINGS) -> dict:
+    """Pure. Per model, over the groups the teacher answered as ONE child (and that were long enough to name):
+    at that model's threshold, how many it would have named correctly, named as the wrong child, or left unnamed,
+    plus a sweep over thresholds, and for the shown model the teacher's answers to shown guesses against blind ones.
+    {model: {"n", "named_correct", "named_wrong", "not_sure", the three as "_pct", "threshold", "sweep": [...]}}"""
+    margin = s["margin"]
+    out = {}
+    for model, rs in _rows_by_model(rows).items():
+        ones = [r for r in rs if r.get("answer") == "child" and r.get("student")
+                and r.get("score") is not None and (r.get("sec") is None or r["sec"] >= s["group_min_s"])]
+        thr = voice.threshold_for(model, s)
+        right = sum(1 for r in ones if _named(r, thr, margin) and r["best"] == r["student"])
+        wrong = sum(1 for r in ones if _named(r, thr, margin) and r["best"] != r["student"])
+        n = len(ones)
+        sweep = []
+        for t in SWEEP:
+            named = [r for r in ones if _named(r, t, margin)]
+            bad = sum(1 for r in named if r["best"] != r["student"])
+            sweep.append({"threshold": t, "named": len(named), "wrong": bad})
+        d = {"n": n, "threshold": thr, "named_correct": right, "named_wrong": wrong, "not_sure": n - right - wrong,
+             "named_correct_pct": _pct(right, n), "named_wrong_pct": _pct(wrong, n), "not_sure_pct": _pct(n - right - wrong, n),
+             "sweep": sweep}
+        if model == s["shown_model"]:
+            split = {}
+            for label, picked in (("shown", [r for r in ones if r.get("shown")]), ("blind", [r for r in ones if r.get("blind")])):
+                ok = sum(1 for r in picked if r["best"] == r["student"])
+                split[label] = {"n": len(picked), "agreed": ok, "agreed_pct": _pct(ok, len(picked))}
+            d["shown_vs_blind"] = split
+        out[model] = d
+    return out
+
+
+def format_accuracy(res: dict) -> list[str]:
+    if not res:
+        return ["no answered groups with scores yet"]
+    lines = [f"{'model':22} {'groups':>6} {'thr':>6} {'right %':>8} {'wrong %':>8} {'not sure %':>10}"]
+    for m, d in sorted(res.items()):
+        f = lambda x: "-" if x is None else f"{x:.1f}"  # noqa: E731
+        lines.append(f"{m:22} {d['n']:6d} {d['threshold']:6.3f} {f(d['named_correct_pct']):>8} {f(d['named_wrong_pct']):>8} "
+                     f"{f(d['not_sure_pct']):>10}")
+    for m, d in sorted(res.items()):
+        lines.append("")
+        lines.append(f"{m}: threshold sweep (named / of those the wrong child)" + ("  [shown model]" if "shown_vs_blind" in d else ""))
+        lines.append("  " + "   ".join(f"{x['threshold']:.2f}: {x['named']}/{x['wrong']}" for x in d["sweep"]))
+        if "shown_vs_blind" in d:
+            for label, v in d["shown_vs_blind"].items():
+                lines.append(f"  answers to {label} guesses: {v['n']} groups, teacher agreed {v['agreed']} ({f(v['agreed_pct'])} %)")
+    return lines
 
 
 def _confirm(text: str, yes: bool) -> bool:
@@ -84,9 +151,10 @@ def main(argv=None) -> int:
         pc.log(f"voices: one child's voiceprint deleted by hand ({'1' if gone else '0'} file)")
         return 0
     if a.cmd == "accuracy":
-        print(accuracy(voiceprints.read_calibration()))
-        print(f"thresholds now: group {voice.SETTINGS['group_threshold']}, margin {voice.SETTINGS['margin']}, "
-              f"at least {voice.SETTINGS['group_min_s']} s")
+        for ln in format_accuracy(accuracy(voiceprints.read_calibration())):
+            print(ln)
+        print(f"\nshown model: {voice.SETTINGS['shown_model']}; thresholds now: {voice.SETTINGS['thresholds']}, "
+              f"margin {voice.SETTINGS['margin']}, at least {voice.SETTINGS['group_min_s']} s")
         return 0
 
     import supa

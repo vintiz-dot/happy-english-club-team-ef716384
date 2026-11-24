@@ -8,9 +8,17 @@ Three sources, strongest first, none of them ever final without the teacher:
      needed). A line inside such a turn carries "m": that child. The same turns, for a
      child with voiceprint consent, are that child's voice samples (enrolment: tap each
      child once while they talk for about a minute).
-  3. Voices. Every other line of 1 s or more is embedded with ECAPA and the lines are
-     grouped by voice; a group of GROUP_MIN_S or more is compared with the children's
-     voiceprints and gets a suggestion only when it is clearly closest to one child.
+  3. Voices. Every other line of 1 s or more is embedded and the lines are grouped by
+     voice; a group of GROUP_MIN_S or more is compared with the children's voiceprints and
+     gets a suggestion only when it is clearly closest to one child.
+
+Several models side by side (owner, 24 Nov 2026): every available speaker model embeds the
+same lines and the same tapped windows. Groups are made with the SHOWN model's embeddings
+(so all models are scored on the same groups); every model compares each group with its own
+voiceprints and the guess is kept, hidden, in the lesson's encrypted pending file. Only the
+shown model's suggestion ever reaches the report or the database, and about 1 in 4 of those
+is held back on purpose ("blind") so the teacher's answers are not led by the shown model.
+Each answer then scores every model (calibration.jsonl); voice_admin.py accuracy compares them.
 
 Measured before any of this was built (docs/LESSON_MONITOR_DESIGN.md, test B2, children's
 voices through the S500): a single 2-second line is named about 1 time in 6 at about 1 %
@@ -27,11 +35,20 @@ import numpy as np
 import pilot_common as pc
 
 SR = 16000
+# Cosine thresholds per model, where the earlier test B2 found about 1 % wrong (ecapa, 3dspeaker_campp,
+# wespeaker_campp); 0.70 where nothing is known. `voice_admin.py accuracy` sweeps them; tune on that.
+THRESHOLDS = {"ecapa": 0.66, "3dspeaker_campp": 0.814, "wespeaker_campp": 0.789}
+DEFAULT_THRESHOLD = 0.70
 SETTINGS = {
     "model": "speechbrain/spkrec-ecapa-voxceleb",
+    # The model whose guess the teacher sees (the one switch after about 150-200 answered groups:
+    # change this to the winner). Groups are made with its embeddings.
+    "shown_model": "ecapa",
+    "models": None,           # None = every available model; or a list of names
+    "thresholds": THRESHOLDS,
+    "blind_fraction": 0.25,   # about 1 in 4 groups that WOULD get a suggestion get none, on purpose
     "line_min_s": 1.0,        # shorter lines carry too little voice to embed
     "group_min_s": 6.0,       # B2: below this a suggestion is mostly a guess
-    "group_threshold": 0.66,  # cosine to the child's voiceprint (B2 ECAPA, about 1-5 % wrong)
     "margin": 0.05,           # and this much closer than to the next child
     "cluster_distance": 0.45, # average-linkage cosine distance that closes a voice group
     "mark_trim_s": 0.5,       # the teacher taps a moment after the child starts
@@ -111,28 +128,67 @@ def unit(v: np.ndarray) -> np.ndarray:
     return v / n if n else v
 
 
-def suggest(vec: np.ndarray, seconds: float, prints: dict[str, np.ndarray], s: dict = SETTINGS):
+def threshold_for(model: str, s: dict = SETTINGS) -> float:
+    return float(s["thresholds"].get(model, DEFAULT_THRESHOLD))
+
+
+def would_name(best: float, second: float | None, threshold: float, margin: float) -> bool:
+    """The one naming rule: over the threshold, and clearly closer than the next child (with one known
+    child there is nobody to be closer than, so the margin is asked on top of the threshold)."""
+    if best < threshold:
+        return False
+    if second is None:
+        return best >= threshold + margin
+    return best - second >= margin
+
+
+def guess(vec: np.ndarray, prints: dict[str, np.ndarray]) -> dict | None:
+    """The model's best child, best score and second score; None when it knows nobody."""
+    if not prints:
+        return None
+    scores = sorted(((float(np.dot(vec, c)), sid) for sid, c in prints.items()), reverse=True)
+    return {"best": scores[0][1], "score": round(scores[0][0], 4),
+            "second": round(scores[1][0], 4) if len(scores) > 1 else None}
+
+
+def suggest(vec: np.ndarray, seconds: float, prints: dict[str, np.ndarray], s: dict = SETTINGS, model: str | None = None):
     """(child id, score) when the group is long enough and clearly closest to one child, else None."""
     if seconds < s["group_min_s"] or not prints:
         return None
-    scores = sorted(((float(np.dot(vec, c)), sid) for sid, c in prints.items()), reverse=True)
-    best, sid = scores[0]
-    second = scores[1][0] if len(scores) > 1 else None
-    if best < s["group_threshold"]:
+    g = guess(vec, prints)
+    if not would_name(g["score"], g["second"], threshold_for(model or s["shown_model"], s), s["margin"]):
         return None
-    # With one known child there is nobody to be "clearly closer" than: ask for the margin on top.
-    if (second is None and best < s["group_threshold"] + s["margin"]) or (second is not None and best - second < s["margin"]):
-        return None
-    return sid, round(best, 3)
+    return g["best"], round(g["score"], 3)
 
 
-def analyse(audio: np.ndarray, lines: list[dict], turns, embedder, prints: dict[str, np.ndarray],
-            labels=None, s: dict = SETTINGS) -> dict:
+def is_blind(rid: str | None, key: str, s: dict = SETTINGS) -> bool:
+    """Deterministic: the same recording and group are blind or not on every rerun."""
+    if not rid or s.get("blind_fraction", 0) <= 0:
+        return False
+    import hashlib
+    h = int.from_bytes(hashlib.sha256(f"{rid}:{key}".encode()).digest()[:8], "big")
+    return (h % 10000) < int(round(s["blind_fraction"] * 10000))
+
+
+def _code(e: Exception) -> str:
+    return f"error_{type(e).__name__.lower()}"[:40]
+
+
+def analyse(audio: np.ndarray, lines: list[dict], turns, embedders, prints, labels=None, s: dict = SETTINGS,
+            rid: str | None = None) -> dict:
     """lines: the report's lines (lesson seconds, "who": "T" for the teacher's mic).
+    embedders: {model name: embedder} (or one embedder, taken as the shown model); prints: {model: {child: vector}}
+    (or one {child: vector} for one embedder). The shown model's embeddings make the groups and the suggestion;
+    every other model is embedded on the same audio and only keeps a hidden guess. An extra model that fails is
+    left out and named in "skipped"; the shown model failing raises, as it always did.
     Returns {"tapped": {line index: child}, "group_of": {line index: key},
-             "groups": [{"key", "lines", "seconds", "vec", "suggested", "score"}],
-             "samples": {child: [(vec, seconds)]}}."""
-    tapped, cand, vecs, secs = {}, [], [], []
+             "groups": [{"key", "lines", "seconds", "vec", "vecs", "suggested", "score", "blind", "guesses"}],
+             "samples": {child: [(vec, seconds)]}, "samples_by_model": {model: {child: [...]}}, "skipped": [model]}."""
+    shown = s["shown_model"]
+    if not isinstance(embedders, dict):
+        embedders, prints = {shown: embedders}, {shown: prints}
+    prints = prints or {}
+    tapped, cand, xs, secs = {}, [], [], []
     for i, ln in enumerate(lines):
         a, b = float(ln["t"]), float(ln["e"])
         if ln.get("who") == "T":
@@ -146,27 +202,10 @@ def analyse(audio: np.ndarray, lines: list[dict], turns, embedder, prints: dict[
         if len(x) < s["line_min_s"] * SR:
             continue
         cand.append(i)
-        vecs.append(embedder.embed(x))
+        xs.append(x)
         secs.append(b - a)
 
-    groups, group_of = [], {}
-    labs = cluster(np.array(vecs), s["cluster_distance"]) if vecs else []
-    order = []
-    for lab in labs:  # G1 is the voice heard first
-        if lab not in order:
-            order.append(lab)
-    for n, lab in enumerate(order[:200], start=1):
-        idx = [j for j, l in enumerate(labs) if l == lab]
-        w = np.array([secs[j] for j in idx])
-        vec = unit((np.array([vecs[j] for j in idx]) * w[:, None]).sum(axis=0))
-        key = f"G{n}"
-        sug = suggest(vec, float(w.sum()), prints, s)
-        groups.append({"key": key, "lines": [cand[j] for j in idx], "seconds": round(float(w.sum()), 1), "vec": vec,
-                       "suggested": sug[0] if sug else None, "score": sug[1] if sug else None})
-        for j in idx:
-            group_of[cand[j]] = key
-
-    samples: dict[str, list] = {}
+    wins = []  # (child, audio, seconds): the tapped turns cut into windows
     win = s["enrol_window_s"]
     for sid, a, b in turns:
         t = a
@@ -177,14 +216,66 @@ def analyse(audio: np.ndarray, lines: list[dict], turns, embedder, prints: dict[
                 continue
             x = audio[int(t * SR): int(e * SR)]
             if len(x) >= 1.5 * SR:
-                samples.setdefault(sid, []).append((embedder.embed(x), e - t))
+                wins.append((sid, x, e - t))
             t = e
-    return {"tapped": tapped, "group_of": group_of, "groups": groups, "samples": samples}
+
+    order_models = [shown] + [m for m in embedders if m != shown]
+    vecs_by, samples_by, skipped = {}, {}, []
+    for m in order_models:
+        try:
+            emb = embedders[m]
+            vecs_by[m] = [emb.embed(x) for x in xs]
+            sm: dict[str, list] = {}
+            for sid, x, sec in wins:
+                sm.setdefault(sid, []).append((emb.embed(x), sec))
+            samples_by[m] = sm
+        except Exception as e:  # noqa: BLE001
+            if m == shown:
+                raise
+            skipped.append(m)
+            pc.log(f"voices: model {m} skipped for this lesson: {_code(e)}")
+    vecs = vecs_by[shown]
+
+    groups, group_of = [], {}
+    labs = cluster(np.array(vecs), s["cluster_distance"]) if vecs else []
+    order = []
+    for lab in labs:  # G1 is the voice heard first
+        if lab not in order:
+            order.append(lab)
+    for n, lab in enumerate(order[:200], start=1):
+        idx = [j for j, l in enumerate(labs) if l == lab]
+        w = np.array([secs[j] for j in idx])
+        gvecs = {m: unit((np.array([vs[j] for j in idx]) * w[:, None]).sum(axis=0)) for m, vs in vecs_by.items()}
+        vec = gvecs[shown]
+        key = f"G{n}"
+        seconds = float(w.sum())
+        sug = suggest(vec, seconds, prints.get(shown) or {}, s, shown)
+        blind = False
+        if sug and is_blind(rid, key, s):
+            sug, blind = None, True
+        guesses = {}
+        for m, gv in gvecs.items():
+            g = guess(gv, prints.get(m) or {})
+            if g:
+                guesses[m] = g
+        groups.append({"key": key, "lines": [cand[j] for j in idx], "seconds": round(seconds, 1), "vec": vec, "vecs": gvecs,
+                       "suggested": sug[0] if sug else None, "score": sug[1] if sug else None,
+                       "blind": blind, "guesses": guesses})
+        for j in idx:
+            group_of[cand[j]] = key
+
+    return {"tapped": tapped, "group_of": group_of, "groups": groups, "samples": samples_by[shown],
+            "samples_by_model": samples_by, "skipped": skipped}
 
 
 def body_part(result: dict) -> dict:
-    """What the report carries about voices: no embedding ever, only keys, seconds, ids and scores."""
-    return {"model": SETTINGS["model"], "settings": {k: v for k, v in SETTINGS.items() if k != "model"},
+    """What the report carries about voices: no embedding ever, only keys, seconds, ids and scores, and only
+    the shown model's suggestion. Nothing says which groups are blind, which other models ran or what they guessed."""
+    shown = SETTINGS["shown_model"]
+    hidden = {"model", "shown_model", "models", "thresholds", "blind_fraction"}
+    settings = {k: v for k, v in SETTINGS.items() if k not in hidden}
+    settings["group_threshold"] = threshold_for(shown)
+    return {"model": SETTINGS["model"] if shown == "ecapa" else shown, "settings": settings,
             "groups": [{"key": g["key"], "seconds": g["seconds"], "lines": len(g["lines"]),
                         "suggested": g["suggested"], "score": g["score"]} for g in result["groups"]],
             "samples_seconds": {sid: round(sum(sec for _, sec in v), 1) for sid, v in result["samples"].items()}}

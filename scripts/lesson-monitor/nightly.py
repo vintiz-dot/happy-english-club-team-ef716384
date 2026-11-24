@@ -326,18 +326,38 @@ def prepare_voice(api) -> dict | None:
         return None
     gone = voiceprints.sync_allowed(allowed)
     if gone:
-        pc.log(f"voices: {gone} voiceprint(s) deleted (consent withdrawn or not recorded)")
+        pc.log(f"voices: {gone} voiceprint file(s) deleted (consent withdrawn or not recorded)")
     old = voiceprints.expire_pending(date.today())
     if old:
         pc.log(f"voices: {old} unanswered lessons' voice groups past 30 days deleted")
-    ctx = {"allowed": allowed, "embedder": None}
+    ctx = {"allowed": allowed, "embedders": None}
     learn_from_answers(api, ctx)
     return ctx
 
 
+def _calibration_rows(rid: str, a: dict, g: dict | None, shown_model: str) -> list[dict]:
+    """One row per model for one answered group: numbers and ids only. Groups kept before several models ran
+    (no hidden guesses) give one ECAPA row from the suggestion the teacher was shown, as before."""
+    answered_child = a.get("answer") == "child"
+    base = {"rid": rid, "g": a["group_key"], "answer": a.get("answer"), "student": a.get("student_id")}
+    rows = []
+    guesses = (g or {}).get("guess") or {}
+    for model, gs in guesses.items():
+        shown = bool(g.get("shown")) and model == shown_model
+        rows.append(dict(base, model=model, shown=shown, blind=bool(g.get("blind")), best=gs["best"], score=gs["score"],
+                         second=gs.get("second"), sec=g.get("s"),
+                         agreed=bool(answered_child and a.get("student_id") == gs["best"])))
+    if not rows and a.get("suggested_student"):
+        rows.append(dict(base, model=voiceprints.DEFAULT_MODEL, shown=True, blind=False, best=a["suggested_student"],
+                         score=a.get("suggested_score"), second=None, sec=(g or {}).get("s"),
+                         agreed=bool(answered_child and a.get("student_id") == a["suggested_student"])))
+    return rows
+
+
 def learn_from_answers(api, ctx: dict) -> int:
-    """The teacher's answers in the app become voice samples of the child they named (only a child
-    whose voiceprint consent stands). A changed answer first takes the old samples back out."""
+    """The teacher's answers in the app become voice samples of the child they named, in every model's
+    voiceprint (only a child whose voiceprint consent stands), and score every model's hidden guess.
+    A changed answer first takes the old samples back out."""
     from supa import ApiError
     try:
         answers = api.rpc("lesson_monitor_voice_answers", {"p_limit": 500}) or []
@@ -349,24 +369,64 @@ def learn_from_answers(api, ctx: dict) -> int:
         by_rec.setdefault(a["recording_id"], []).append(a)
     learned = 0
     for rid, rows in by_rec.items():
-        pend = (voiceprints.load_pending(rid) or {}).get("groups", {})
+        pending = voiceprints.load_pending(rid) or {}
+        pend = pending.get("groups", {})
+        shown_model = pending.get("shown_model") or voiceprints.DEFAULT_MODEL
         for a in rows:
             voiceprints.remove_tag(rid, a["group_key"])
             g = pend.get(a["group_key"])
             if a.get("may_learn") and g and a.get("student_id") in ctx["allowed"]:
-                learned += voiceprints.add(a["student_id"], [(np.array(g["e"]), g["s"])], "answer", rid, a["group_key"])
-            if a.get("suggested_student"):
-                voiceprints.note_calibration({"rid": rid, "g": a["group_key"], "suggested": a["suggested_student"],
-                                              "score": a.get("suggested_score"), "answer": a.get("answer"),
-                                              "student": a.get("student_id"),
-                                              "agreed": a.get("answer") == "child" and a.get("student_id") == a["suggested_student"]})
+                taught = 0
+                for model, vec in voiceprints.group_vectors(g).items():
+                    try:
+                        taught += voiceprints.add(a["student_id"], [(np.array(vec), g["s"])], "answer", rid, a["group_key"], model)
+                    except ValueError:
+                        continue
+                learned += 1 if taught else 0
+            for row in _calibration_rows(rid, a, g, shown_model):
+                voiceprints.note_calibration(row)
         try:
             api.rpc("lesson_monitor_voice_learned", {"p_recording": rid, "p_groups": [a["group_key"] for a in rows]})
         except ApiError:
             pass
     if answers:
-        pc.log(f"voices: {len(answers)} answer(s) read, {learned} voice sample(s) learned")
+        pc.log(f"voices: {len(answers)} answer(s) read, {learned} voice group(s) learned")
     return learned
+
+
+def _voice_embedders(ctx: dict) -> dict:
+    """{model: embedder}, loaded once per run. The shown model must load (else the voice step fails and the report goes
+    without voices, as before); any other model that cannot load is skipped for the night with a log code."""
+    import voice
+    if ctx.get("embedders"):
+        return ctx["embedders"]
+    shown = voice.SETTINGS["shown_model"]
+    if ctx.get("embedder") is not None:  # one ready embedder (tests, older callers): it is the shown model
+        ctx["embedders"] = {shown: ctx["embedder"]}
+        return ctx["embedders"]
+    try:
+        import embedders
+    except ImportError:
+        embedders = None
+    out: dict = {}
+    if embedders is None:
+        if shown != "ecapa":
+            raise RuntimeError("no embedders module")
+        out[shown] = voice.Embedder()
+    else:
+        names = list(voice.SETTINGS["models"]) if voice.SETTINGS["models"] else list(embedders.available())
+        if shown not in names:
+            names.insert(0, shown)
+        for name in [shown] + [n for n in names if n != shown]:
+            try:
+                out[name] = embedders.load(name)
+            except Exception as e:  # noqa: BLE001
+                if name == shown:
+                    raise
+                pc.log(f"voices: model {name} not loaded: error_{type(e).__name__.lower()}"[:120])
+    ctx["embedders"] = out
+    pc.log(f"voices: models ready: {', '.join(out)}; shown: {shown}")
+    return out
 
 
 def run_voice(api, row, wav: Path, body: dict, lv_teacher: dict, lv_room: dict, window, duration: float, guard):
@@ -389,13 +449,17 @@ def run_voice(api, row, wav: Path, body: dict, lv_teacher: dict, lv_room: dict, 
         marks = [{"kind": m["kind"], "student_ids": m.get("student_ids") or [], "t_s": m["offset_ms"] / 1000.0 - window[0]}
                  for m in marks if m.get("offset_ms") is not None]
         turns = voice.tap_turns(marks, duration, labels)
-        if VOICE.get("embedder") is None:
-            VOICE["embedder"] = voice.Embedder()
-        prints = voiceprints.centroids(VOICE["allowed"], voice.SETTINGS["enrol_min_s"])
+        embs = _voice_embedders(VOICE)
+        prints = {m: voiceprints.centroids(VOICE["allowed"], voice.SETTINGS["enrol_min_s"], m) for m in embs}
         if guard.should_stop():
             raise transcribe.Stopped()
-        res = voice.analyse(transcribe.read_wav16k(str(wav)), body["lines"], turns, VOICE["embedder"], prints, labels)
+        res = voice.analyse(transcribe.read_wav16k(str(wav)), body["lines"], turns, embs, prints, labels, rid=rid)
         res["samples"] = {sid: v for sid, v in res["samples"].items() if sid in VOICE["allowed"]}
+        res["samples_by_model"] = {m: {sid: v for sid, v in sm.items() if sid in VOICE["allowed"]}
+                                   for m, sm in res["samples_by_model"].items()}
+        res["shown_model"] = voice.SETTINGS["shown_model"]
+        for m in res["skipped"]:  # not tried again tonight: a model that broke once is left out of the run
+            VOICE["embedders"].pop(m, None)
         for i, sid in res["tapped"].items():
             body["lines"][i]["m"] = sid
         for i, key in res["group_of"].items():
@@ -403,7 +467,7 @@ def run_voice(api, row, wav: Path, body: dict, lv_teacher: dict, lv_room: dict, 
         body["voice"] = voice.body_part(res)
         n_sug = sum(1 for g in res["groups"] if g["suggested"])
         pc.log(f"{rid} voices: {len(turns)} tapped turns, {len(res['groups'])} voice groups, {n_sug} with a suggestion, "
-               f"{len(prints)} children known by voice")
+               f"{len(prints.get(voice.SETTINGS['shown_model'], {}))} children known by voice, {len(res['samples_by_model'])} model(s)")
         return res
     except transcribe.Stopped:
         raise
@@ -417,8 +481,9 @@ def run_voice(api, row, wav: Path, body: dict, lv_teacher: dict, lv_room: dict, 
 
 
 def finish_voice(api, row: dict, res) -> None:
-    """After the report is saved: its groups to the database (for the teacher to name), the groups'
-    embeddings kept encrypted here until answered, tapped turns of children with consent into their voiceprints."""
+    """After the report is saved: its groups to the database (for the teacher to name; only the shown model's
+    suggestion, never a hidden guess or a blind flag), the groups' embeddings and every model's hidden guess kept
+    encrypted here until answered, tapped turns of children with consent into every model's voiceprints."""
     from supa import ApiError
     if not res:
         return
@@ -430,8 +495,17 @@ def finish_voice(api, row: dict, res) -> None:
     except ApiError as e:
         pc.log(f"{rid} voice groups not saved (HTTP {e.status}); the report has none to name")
         return
-    voiceprints.save_pending(rid, row["session_date"], {g["key"]: (g["vec"], g["seconds"]) for g in res["groups"]})
-    n = sum(voiceprints.add(sid, items, "tap", rid) for sid, items in res["samples"].items())
+    shown_model = res.get("shown_model") or voiceprints.DEFAULT_MODEL
+    voiceprints.save_pending(rid, row["session_date"], {
+        g["key"]: (g["vec"], g["seconds"], {"vecs": g.get("vecs"), "guess": g.get("guesses"), "blind": g.get("blind"),
+                                           "shown": g["suggested"] is not None})
+        for g in res["groups"]}, shown_model)
+    n = 0
+    for model, by_child in (res.get("samples_by_model") or {shown_model: res["samples"]}).items():
+        for sid, items in by_child.items():
+            k = voiceprints.add(sid, items, "tap", rid, None, model)
+            if model == shown_model:
+                n += k
     if n:
         pc.log(f"{rid} voices: {n} voice sample(s) of {len(res['samples'])} child(ren) learned from taps")
 

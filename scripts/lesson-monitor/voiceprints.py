@@ -17,9 +17,15 @@ voice cannot be rebuilt from them. They are still a child's biometric data, so:
 Every sample carries where it came from (recording, group, source), so a teacher's
 corrected answer takes the wrong samples back out (remove_tag).
 
-Files: pilot\\voiceprints\\<student id>.vp, pending\\<recording id>.vp (a lesson's group
-embeddings, kept until the teacher answers or 30 days), calibration.jsonl (ids, scores and
-whether the teacher agreed; no embeddings).
+Several speaker models run side by side (24 Nov 2026), so a child has one voiceprint file PER
+MODEL: ECAPA keeps the original name <student id>.vp (nothing migrated, nothing lost), every
+other model is <student id>.<model>.vp. A sample's vector only means something to its model,
+so the files never mix.
+
+Files: pilot\\voiceprints\\<student id>[.<model>].vp, pending\\<recording id>.vp (a lesson's group
+embeddings for every model, plus each model's hidden guess, kept until the teacher answers or
+30 days), calibration.jsonl (ids, scores and whether the teacher agreed, one row per model;
+no embeddings).
 """
 from __future__ import annotations
 
@@ -34,6 +40,7 @@ import numpy as np
 import pilot_common as pc
 
 MODEL = "ecapa-voxceleb"
+DEFAULT_MODEL = "ecapa"  # the file name without a model suffix
 MAGIC = b"HECVP1\n"
 MAX_SAMPLES = 120        # the newest are kept; a child's voice changes over a school year
 PENDING_DAYS = 30        # as long as a report is kept
@@ -78,17 +85,36 @@ def calibration_file() -> Path:
     return vp_dir() / "calibration.jsonl"
 
 
-def _path(student_id: str) -> Path:
+def _check_model(model: str) -> str:
+    if not model or any(ch not in "abcdefghijklmnopqrstuvwxyz0123456789_" for ch in model):
+        raise ValueError("a model name")
+    return model
+
+
+def _path(student_id: str, model: str = DEFAULT_MODEL) -> Path:
     if not student_id or any(ch not in "0123456789abcdef-" for ch in student_id.lower()):
         raise ValueError("a student id")
-    return vp_dir() / f"{student_id.lower()}.vp"
+    _check_model(model)
+    return vp_dir() / (f"{student_id.lower()}.vp" if model == DEFAULT_MODEL else f"{student_id.lower()}.{model}.vp")
+
+
+def _parse(p: Path) -> tuple[str, str]:
+    """(student id, model) of a voiceprint file name."""
+    stem = p.name[:-3] if p.name.endswith(".vp") else p.name
+    sid, _, model = stem.partition(".")
+    return sid.lower(), (model or DEFAULT_MODEL)
+
+
+def _files() -> list[Path]:
+    return sorted(vp_dir().glob("*.vp")) if vp_dir().exists() else []
 
 
 # ------------------------------------------------------------------ one child
 @dataclass
 class Voiceprint:
     student_id: str
-    samples: list = field(default_factory=list)  # {"e": [192 floats], "s": seconds, "src": "tap"|"answer", "rid", "g"}
+    samples: list = field(default_factory=list)  # {"e": [floats], "s": seconds, "src": "tap"|"answer", "rid", "g"}
+    model: str = DEFAULT_MODEL
 
     def seconds(self) -> float:
         return float(sum(x.get("s", 0) for x in self.samples))
@@ -103,34 +129,42 @@ class Voiceprint:
         return c / n if n else None
 
 
-def load(student_id: str) -> Voiceprint | None:
-    p = _path(student_id)
+def load(student_id: str, model: str = DEFAULT_MODEL) -> Voiceprint | None:
+    p = _path(student_id, model)
     if not p.exists():
         return None
     d = _read(p)
-    return Voiceprint(d["student_id"], d.get("samples", []))
+    return Voiceprint(d["student_id"], d.get("samples", []), model)
 
 
-def load_all() -> dict[str, Voiceprint]:
-    out = {}
-    for p in sorted(vp_dir().glob("*.vp")) if vp_dir().exists() else []:
+def load_every() -> list[Voiceprint]:
+    """Every child's voiceprint of every model."""
+    out = []
+    for p in _files():
         try:
             d = _read(p)
-            out[d["student_id"]] = Voiceprint(d["student_id"], d.get("samples", []))
+            out.append(Voiceprint(d["student_id"], d.get("samples", []), _parse(p)[1]))
         except (ValueError, OSError, KeyError):
             pc.log(f"voiceprints: {p.name} could not be read; left as it is")
     return out
 
 
+def load_all(model: str = DEFAULT_MODEL) -> dict[str, Voiceprint]:
+    return {vp.student_id: vp for vp in load_every() if vp.model == model}
+
+
 def save(vp: Voiceprint) -> None:
-    _write(_path(vp.student_id), {"student_id": vp.student_id, "model": MODEL, "samples": vp.samples[-MAX_SAMPLES:]})
+    _write(_path(vp.student_id, vp.model),
+           {"student_id": vp.student_id, "model": MODEL if vp.model == DEFAULT_MODEL else vp.model,
+            "samples": vp.samples[-MAX_SAMPLES:]})
 
 
-def add(student_id: str, items: list[tuple[np.ndarray, float]], src: str, rid: str, group: str | None = None) -> int:
-    """Add samples to one child's voiceprint; the same lesson's earlier samples of the same kind are replaced."""
+def add(student_id: str, items: list[tuple[np.ndarray, float]], src: str, rid: str, group: str | None = None,
+        model: str = DEFAULT_MODEL) -> int:
+    """Add samples to one child's voiceprint of one model; the same lesson's earlier samples of the same kind are replaced."""
     if not items:
         return 0
-    vp = load(student_id) or Voiceprint(student_id)
+    vp = load(student_id, model) or Voiceprint(student_id, model=model)
     vp.samples = [x for x in vp.samples if not (x.get("rid") == rid and x.get("g") == group and x.get("src") == src)]
     for vec, secs in items:
         v = np.asarray(vec, dtype=np.float64)
@@ -143,9 +177,9 @@ def add(student_id: str, items: list[tuple[np.ndarray, float]], src: str, rid: s
 
 
 def remove_tag(rid: str, group: str) -> int:
-    """Take one voice group's samples back out of every voiceprint (a teacher changed the answer)."""
+    """Take one voice group's samples back out of every voiceprint of every model (a teacher changed the answer)."""
     n = 0
-    for vp in load_all().values():
+    for vp in load_every():
         keep = [x for x in vp.samples if not (x.get("rid") == rid and x.get("g") == group)]
         if len(keep) != len(vp.samples):
             n += len(vp.samples) - len(keep)
@@ -155,11 +189,14 @@ def remove_tag(rid: str, group: str) -> int:
 
 
 def delete(student_id: str) -> bool:
-    p = _path(student_id)
-    if p.exists():
-        p.unlink()
-        return True
-    return False
+    """One child's voiceprints, every model."""
+    _path(student_id)  # validates the id
+    gone = False
+    for p in _files():
+        if _parse(p)[0] == student_id.lower():
+            p.unlink(missing_ok=True)
+            gone = True
+    return gone
 
 
 def delete_all() -> int:
@@ -172,19 +209,19 @@ def delete_all() -> int:
 
 
 def sync_allowed(allowed: set[str]) -> int:
-    """Delete the voiceprint of every child whose voiceprint consent does not stand. Returns how many."""
+    """Delete the voiceprints (every model) of every child whose voiceprint consent does not stand. Returns how many files."""
     allowed = {a.lower() for a in allowed}
     n = 0
-    for p in sorted(vp_dir().glob("*.vp")) if vp_dir().exists() else []:
-        if p.stem.lower() not in allowed:
+    for p in _files():
+        if _parse(p)[0] not in allowed:
             p.unlink(missing_ok=True)
             n += 1
     return n
 
 
-def centroids(allowed: set[str] | None = None, min_seconds: float = 0.0) -> dict[str, np.ndarray]:
+def centroids(allowed: set[str] | None = None, min_seconds: float = 0.0, model: str = DEFAULT_MODEL) -> dict[str, np.ndarray]:
     out = {}
-    for sid, vp in load_all().items():
+    for sid, vp in load_all(model).items():
         if (allowed is None or sid in allowed) and vp.seconds() >= min_seconds:
             c = vp.centroid()
             if c is not None:
@@ -193,10 +230,30 @@ def centroids(allowed: set[str] | None = None, min_seconds: float = 0.0) -> dict
 
 
 # ------------------------------------------------------------------ a lesson's groups, until answered
-def save_pending(rid: str, session_date: str, groups: dict[str, tuple[np.ndarray, float]]) -> None:
-    _write(pending_dir() / f"{rid}.vp", {"rid": rid, "session_date": session_date,
-                                          "groups": {k: {"e": [round(float(a), 5) for a in v], "s": round(float(s), 2)}
-                                                     for k, (v, s) in groups.items()}})
+def save_pending(rid: str, session_date: str, groups: dict, shown_model: str = DEFAULT_MODEL) -> None:
+    """groups: {key: (vector, seconds)} or {key: (vector, seconds, extra)}. extra holds
+    "vecs" {model: vector}, "guess" {model: {best, score, second}}, "blind" (a suggestion was held back on
+    purpose) and "shown" (a suggestion was sent to the database). A plain (vector, seconds) is one ECAPA vector."""
+    out = {}
+    for k, v in groups.items():
+        vec, secs = v[0], v[1]
+        x = v[2] if len(v) > 2 else {}
+        vecs = dict(x.get("vecs") or {DEFAULT_MODEL: vec})
+        d = {"s": round(float(secs), 2),
+             "es": {m: [round(float(a), 5) for a in e] for m, e in vecs.items()},
+             "guess": x.get("guess") or {}, "blind": bool(x.get("blind")), "shown": bool(x.get("shown"))}
+        if DEFAULT_MODEL in vecs:
+            d["e"] = d["es"][DEFAULT_MODEL]   # the pre-multi-model layout, still read by older code
+        out[k] = d
+    _write(pending_dir() / f"{rid}.vp", {"rid": rid, "session_date": session_date, "shown_model": shown_model, "groups": out})
+
+
+def group_vectors(g: dict) -> dict[str, list]:
+    """{model: vector} of one pending group, old files (one ECAPA vector "e") included."""
+    es = dict(g.get("es") or {})
+    if "e" in g and DEFAULT_MODEL not in es:
+        es[DEFAULT_MODEL] = g["e"]
+    return es
 
 
 def load_pending(rid: str) -> dict:
