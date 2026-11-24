@@ -30,6 +30,17 @@ HOW THE OPERATOR SIGNS IN (the first time, or when the remembered session is ref
   through the signed-in person's own permissions (RLS), so the recorder's and
   the monitor's checks apply to the job exactly as to that person in the app.
 
+WHERE A CHUNK LIVES (R2 move, Nov 2026): the recorder's audio is moving from Supabase Storage to the
+private Cloudflare R2 bucket `hec-files`. A `public.file_objects` row means a file is in R2, none means
+Supabase (AGENTS.md, "File storage"), so `Api.download` asks `file_objects` AS THE SIGNED-IN PERSON
+(`locate`, one request per 50 chunks) and then takes each chunk from where it is:
+  * R2: the hec-files Worker is asked for a 5-minute read link with the person's own token
+    (POST /v1/sign, op read; never `x-hec-as`, never the service key), and the link is used at once,
+    one link per chunk, never stored. HEC_FILES_URL overrides the Worker's address.
+  * Supabase: the authenticated download, as before.
+A chunk is fetched once per lesson. A file that is in neither place raises AudioGone, which the job
+records as a final "audio_gone" outcome (the server deletes the audio after the report is saved).
+
 The URL and the publishable key are public: HEC_SUPABASE_URL /
 HEC_SUPABASE_PUBLISHABLE_KEY, or else ONLY the VITE_SUPABASE_URL and
 VITE_SUPABASE_PUBLISHABLE_KEY lines of the repo's .env (nothing else in it is read).
@@ -46,6 +57,9 @@ import urllib.request
 from pathlib import Path
 
 BUCKET = "class-recorder-audio"
+FILES_WORKER = "https://hec-files.vintizfjes.workers.dev"  # same default as src/lib/files.ts
+RETRIES = 3          # a dropped line or a 5xx is tried again; a refusal is not
+LOCATE_BATCH = 50    # chunk paths per file_objects request (keeps the URL short)
 
 
 def supabase_conf() -> tuple[str, str]:
@@ -84,6 +98,15 @@ class ApiError(Exception):
         super().__init__(f"HTTP {status}: {message}")
         self.status = status
         self.message = message
+
+
+class AudioGone(ApiError):
+    """The audio file is in neither R2 nor Supabase: the server's retention removed it (or it never arrived).
+    Final for this recording: retrying cannot bring it back."""
+
+
+def files_worker() -> str:
+    return (os.environ.get("HEC_FILES_URL") or FILES_WORKER).rstrip("/")
 
 
 def _message(raw: bytes) -> str:
@@ -209,13 +232,84 @@ class Api:
             raise ApiError(st, _message(raw))
         return json.loads(raw)
 
-    def download(self, path: str) -> bytes:
+    # ---- where a chunk lives
+    def locate(self, paths: list[str]) -> dict[str, bool]:
+        """{path: True if the file is in R2}. One file_objects read per LOCATE_BATCH paths, as the signed-in
+        person (the table's read policy is the storage policy). A read that fails answers "not in R2" for
+        those paths, which sends them to Supabase: the old behaviour, never a wrong file."""
+        known = self.__dict__.setdefault("_in_r2", {})
+        todo = [p for p in dict.fromkeys(paths) if p not in known]
+        for i in range(0, len(todo), LOCATE_BATCH):
+            batch = todo[i:i + LOCATE_BATCH]
+            quoted = ",".join('"' + p.replace("\\", "\\\\").replace('"', '\\"') + '"' for p in batch)
+            try:
+                rows = self.select("file_objects", {"bucket_id": f"eq.{BUCKET}", "path": f"in.({quoted})", "select": "path"})
+            except ApiError:
+                rows = None
+            if rows is None:
+                continue  # unknown: decided per file at download time
+            here = {r["path"] for r in rows}
+            for p in batch:
+                known[p] = p in here
+        return {p: known[p] for p in paths if p in known}
+
+    def _retry(self, call):
+        """Run call() -> (status, raw); try again after a dropped line (0) or a 5xx, up to RETRIES times."""
+        for attempt in range(RETRIES):
+            st, raw = call()
+            if st != 0 and st < 500:
+                return st, raw
+            if attempt + 1 < RETRIES:
+                self.sleep(2.0 * (attempt + 1))
+        return st, raw
+
+    sleep = staticmethod(time.sleep)  # tests replace it so a retry costs no time
+
+    def _download_r2(self, path: str) -> bytes:
+        """A 5-minute read link for this one file, asked of the Worker with the person's own token, used at once."""
+        for attempt in range(2):  # a link that expired between asking and using is asked for again, once
+            st, raw = self._retry(lambda: self.s._http(
+                "POST", f"{files_worker()}/v1/sign",
+                self._h({"Content-Type": "application/json"}),
+                json.dumps({"op": "read", "bucket": BUCKET, "paths": [path]}).encode()))
+            if st // 100 != 2:
+                raise ApiError(st, _message(raw))
+            try:
+                url = (json.loads(raw).get("urls") or {}).get(path)
+            except ValueError:
+                url = None
+            if not url:
+                raise ApiError(403, "no read link (not allowed, or not a recording you may listen to)")
+            st, raw = self._retry(lambda: self.s._http("GET", url, {}, None, timeout=300))
+            if st == 200:
+                return raw
+            if st == 404:
+                raise AudioGone(404, "the file is no longer on the server")
+            if st == 403 and attempt == 0:
+                continue
+            raise ApiError(st, _message(raw))
+        raise ApiError(403, "link refused")
+
+    def _download_supabase(self, path: str) -> bytes:
         """An authenticated download (never a signed URL, C1 s.6.4)."""
         quoted = urllib.parse.quote(path, safe="/")
-        st, raw = self.s._http("GET", f"{self.s.url}/storage/v1/object/authenticated/{BUCKET}/{quoted}", self._h(), None, timeout=300)
-        if st != 200:
-            raise ApiError(st, _message(raw))
-        return raw
+        st, raw = self._retry(lambda: self.s._http(
+            "GET", f"{self.s.url}/storage/v1/object/authenticated/{BUCKET}/{quoted}", self._h(), None, timeout=300))
+        if st == 200:
+            return raw
+        msg = _message(raw)
+        # Storage says a missing object with 404 (or 400 + "not found" on older versions).
+        if st == 404 or (st == 400 and "not found" in msg.lower()):
+            raise AudioGone(st, msg)
+        raise ApiError(st, msg)
+
+    def download(self, path: str) -> bytes:
+        """One chunk's bytes, from R2 when the file is there and from Supabase otherwise. Raises AudioGone when
+        the file is in neither. The caller checks size and SHA-256 against class_recording_chunks."""
+        where = self.locate([path]).get(path)
+        if where:
+            return self._download_r2(path)
+        return self._download_supabase(path)
 
 
 # ------------------------------------------------------------------ the remembered session

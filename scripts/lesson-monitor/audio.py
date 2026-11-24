@@ -23,9 +23,39 @@ SR_OUT = 16000
 
 
 def decode(data: bytes) -> tuple[np.ndarray, int]:
+    """FLAC/WAV/Ogg through libsndfile; any other container the recorder may store in future (WebM/MP4
+    Opus or AAC, for a smaller upload) through PyAV, which faster-whisper already installs."""
     import soundfile as sf
-    x, sr = sf.read(io.BytesIO(data), dtype="float32", always_2d=True)
-    return x.mean(axis=1).astype(np.float32), int(sr)
+    try:
+        x, sr = sf.read(io.BytesIO(data), dtype="float32", always_2d=True)
+        return x.mean(axis=1).astype(np.float32), int(sr)
+    except Exception as first:  # noqa: BLE001 - libsndfile does not know the format
+        try:
+            return _decode_av(data)
+        except Exception:  # noqa: BLE001
+            raise first
+
+
+def _decode_av(data: bytes) -> tuple[np.ndarray, int]:
+    import av
+    parts: list[np.ndarray] = []
+    with av.open(io.BytesIO(data)) as c:
+        stream = c.streams.audio[0]
+        sr = int(stream.rate)
+        for frame in c.decode(stream):
+            a = frame.to_ndarray()
+            if a.dtype.kind in "iu":
+                a = a.astype(np.float32) / float(np.iinfo(a.dtype).max + 1)
+            else:
+                a = a.astype(np.float32)
+            if frame.format.is_planar:
+                a = a.mean(axis=0)                      # (channels, samples)
+            else:
+                a = a.reshape(-1, len(frame.layout.channels)).mean(axis=1)  # interleaved
+            parts.append(a)
+    if not parts:
+        raise ValueError("no audio in the chunk")
+    return np.concatenate(parts).astype(np.float32), sr
 
 
 def resample(x: np.ndarray, sr: int, sr_out: int = SR_OUT) -> np.ndarray:

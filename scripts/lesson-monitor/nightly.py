@@ -11,8 +11,13 @@ report, which goes to the database where only the lesson's teacher can read it):
   1. lesson_monitor_begin: the database checks again that the class is on, every
      child has the monitor consent, and the pilot's own teacher taught it.
   2. Download the recorder's chunks of both tracks with the signed-in person's
-     own session (authenticated download, never a signed URL) to
-     pilot\\audio\\<recording>\\, checking every chunk's SHA-256.
+     own session to pilot\\audio\\<recording>\\, checking every chunk's size and SHA-256.
+     A chunk comes from Cloudflare R2 when the file is there (a 5-minute link the Worker
+     gives the signed-in person) and from Supabase Storage otherwise (supa.Api.download);
+     each chunk is fetched ONCE. The server's copy is removed by the recorder-retention
+     function after the report is saved; this job never deletes server files and never needs
+     a recording's server audio again once its report is saved. If the audio is already gone
+     the run is recorded as refused "audio_gone" (final, never retried).
   3. Join each track, measure per-second levels, cut the scheduled lesson out,
      transcribe the room track locally with the B2b settings.
   4. Build the report (report.py).
@@ -182,7 +187,7 @@ def fetch_targets(api, row: dict) -> dict:
 # ------------------------------------------------------------------ one lesson
 def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None) -> str:
     """Returns a short outcome code. Never raises for a lesson-level problem."""
-    from supa import ApiError
+    from supa import ApiError, AudioGone
     import audio
     import transcribe
 
@@ -210,6 +215,9 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             pc.log(f"{rid} refused: {code} ({','.join(problems)})")
             return code
         use_teacher = not any(p.endswith("_teacher") for p in problems)
+        locate = getattr(api, "locate", None)
+        if locate is not None:  # where each chunk lives (R2 or Supabase): a few requests now, none per chunk
+            locate([c["storage_path"] for t in ("room", "teacher") if t == "room" or use_teacher for c in by[t]])
         window = plan.lesson_window(row)
         room = audio.TrackJoiner(window, pc.out(folder / "room16k.wav"))
         teacher = audio.TrackJoiner(window, None)
@@ -264,6 +272,17 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
         remove_draft(rid)
         pc.log(f"{rid} STOPPED ({guard.reason()}); audio copy and any draft deleted ({left} files left)")
         return "stopped"
+    except AudioGone:
+        # The server no longer has the audio (retention ran, or it never arrived): nothing to retry. A final,
+        # clean outcome, so the recording stops being offered; a lesson without a report has nothing to lose.
+        left = delete_audio_copy(folder, room)
+        remove_draft(rid)
+        try:
+            api.rpc("lesson_monitor_record_run", {"p_recording": rid, "p_outcome": "refused", "p_reason": "audio_gone"})
+        except ApiError:
+            pass  # e.g. the lesson already has its report: nothing else to record
+        pc.log(f"{rid} audio no longer on the server; recorded as refused (audio_gone); audio copy deleted ({left} files left)")
+        return "audio_gone"
     except (Exception, SystemExit) as e:  # one lesson's failure never ends the night; a code, never content, is kept
         # SystemExit too: whatever ends the job, the children's audio copy goes first.
         left = delete_audio_copy(folder, room)
