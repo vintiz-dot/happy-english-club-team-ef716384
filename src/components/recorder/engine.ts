@@ -16,6 +16,7 @@ import {
   profileRow, saveProfile, supabaseBackend, swapVerdict, watchDevices,
   type DeviceProfile, type InputDevice, type Level, type Recorder, type SupabaseLike, type SwapMeasurement, type TrackRole,
 } from "@/lib/recorder";
+import { files } from "@/lib/files";
 
 /** What the daily screen uses of a Recorder. */
 export type RecorderLike = Pick<Recorder,
@@ -111,7 +112,8 @@ async function openBrowserProbe(ids: { teacher: string; room: string }): Promise
 }
 
 export const browserEngine: EngineApi = {
-  createRecorder: (o) => createRecorder(o),
+  // Chunks and the manifest go through the one file store: R2 once the bucket is in R2_BUCKETS (src/lib/files.ts).
+  createRecorder: (o) => createRecorder({ ...o, files }),
   loadProfile,
   saveProfile,
   getInstallId,

@@ -109,9 +109,40 @@ async function unwrap<T>(p: PromiseLike<{ data: T; error: any }>, what: string):
 
 const isDuplicate = (e: any) => e && (e.code === "23505" || /duplicate key/i.test(String(e.message ?? "")));
 const isStorageDuplicate = (e: any) =>
-  e && (String(e.statusCode ?? e.status ?? "") === "409" || /already exists|duplicate/i.test(String(e.message ?? e.error ?? "")));
+  e && (String(e.statusCode ?? e.status ?? "") === "409" || /already (exists|there)|duplicate/i.test(String(e.message ?? e.error ?? "")));
 
-export function supabaseBackend(client: SupabaseLike): RecorderBackend {
+/**
+ * Where the recorder's files go. The app passes `files` from src/lib/files.ts
+ * (the one store: Supabase Storage or, once the bucket is in R2_BUCKETS, the
+ * private R2 bucket behind the hec-files Worker). This module imports nothing
+ * of the app, so the engine's tests run without it: with no `files` the
+ * injected client's own storage is used, exactly as before.
+ * Subset of FileStore (src/lib/fileStore.ts).
+ */
+export interface RecorderFiles {
+  upload(bucket: string, path: string, file: Blob, contentType?: string): Promise<void>;
+  download(bucket: string, path: string): Promise<Blob>;
+}
+
+/**
+ * The file store's errors are plain Errors with the Worker's sentences
+ * ("Upload failed (502)", "Sign in again"): give them the codes the uploader
+ * already acts on (offline / sign in again / try again), so a bad moment on
+ * the Worker is retried like a bad moment on Supabase, never dropped.
+ */
+export function fromFileStore(e: unknown, what: string): RecorderError {
+  const msg = String((e as any)?.message ?? e ?? "");
+  if (/sign in again|please sign in/i.test(msg)) {
+    return new RecorderError("not_signed_in", "Sign in again to keep uploading", { detail: msg, retryable: true });
+  }
+  if (/(5dd)|could not check access|could not record the file|file service error|cut short/i.test(msg)) {
+    return new RecorderError("server_unavailable", "The server did not answer properly: it is tried again", { detail: msg, retryable: true });
+  }
+  return toRecorderError(e, what);
+}
+
+export function supabaseBackend(client: SupabaseLike, opts: { files?: RecorderFiles } = {}): RecorderBackend {
+  const files = opts.files;
   const rec = () => client.from("class_recordings");
   return {
     async serverTime() { return String(await unwrap(client.rpc("recorder_server_time"), "server time")); },
@@ -138,6 +169,16 @@ export function supabaseBackend(client: SupabaseLike): RecorderBackend {
     async upload(path, bytes, contentType) {
       let r: { data: any; error: any };
       const body = new Blob([bytes as BlobPart], { type: contentType });
+      if (files) {
+        // R2 (or Supabase, by bucket) through the one file store. It never
+        // overwrites: a path already there answers "already there" (409).
+        try { await files.upload(BUCKET, path, body, contentType); }
+        catch (e) {
+          if (isStorageDuplicate(e)) return "already";
+          throw fromFileStore(e, "upload");
+        }
+        return "stored";
+      }
       try { r = await client.storage.from(BUCKET).upload(path, body, { upsert: false, contentType, cacheControl: "no-store" }); }
       catch (e) { throw toRecorderError(e, "upload"); }
       if (r.error) {
@@ -147,6 +188,23 @@ export function supabaseBackend(client: SupabaseLike): RecorderBackend {
       return "stored";
     },
     async download(path) {
+      if (files) {
+        let blob: Blob | null = null;
+        let first: unknown = null;
+        try { blob = await files.download(BUCKET, path); } catch (e) { first = e; }
+        if (!blob) {
+          // A chunk uploaded before the bucket moved to R2 is still in Supabase.
+          try { const r = await client.storage.from(BUCKET).download(path); if (!r.error && r.data) blob = r.data; } catch { /* keep the first error */ }
+        }
+        if (!blob) {
+          const err = fromFileStore(first ?? new Error("File not found"), "read back");
+          if (err.code === "server_refused" && (!err.refusal || err.refusal === "unknown")) {
+            throw new RecorderError("server_refused", "Storage returned nothing", { refusal: "not_in_storage", retryable: true });
+          }
+          throw err;
+        }
+        return new Uint8Array(await blob.arrayBuffer());
+      }
       const blob = await unwrap(client.storage.from(BUCKET).download(path), "read back");
       if (!blob) throw new RecorderError("server_refused", "Storage returned nothing", { refusal: "not_in_storage", retryable: true });
       return new Uint8Array(await blob.arrayBuffer());

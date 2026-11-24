@@ -1683,6 +1683,10 @@ export class Recorder {
    */
   private async resumable(rec: LocalRecording): Promise<boolean> {
     if (rec.format === "opus-webm" || !rec.startedAtServer || !rec.tracks.length) return false;
+    // A track is one sample rate from its first chunk to its last (the lesson job refuses a change).
+    // A page that now captures at another rate (the rate was changed by a release) finishes what was
+    // recorded instead of carrying on in the same recording.
+    if (rec.sampleRate !== this.o.source.sampleRate) return false;
     if (this.active && this.active.rec.phase !== "complete" && this.active.rec.phase !== "abandoned") return false;
     const now = this.serverNow();
     const stopAt = Math.min(rec.plannedStopAt ?? Infinity, ms(rec.captureClosesAt) - STOP_MARGIN_MS);

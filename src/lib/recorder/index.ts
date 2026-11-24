@@ -93,7 +93,7 @@ export * from "./nativeMic";
 export { encodePcmChunk } from "./encoders";
 export { Chunker } from "./chunker";
 export { MemoryStore, openIdbStore, type RecorderStore } from "./store";
-export { supabaseBackend, BUCKET, type RecorderBackend, type SupabaseLike } from "./backend";
+export { supabaseBackend, BUCKET, fromFileStore, type RecorderBackend, type RecorderFiles, type SupabaseLike } from "./backend";
 export { Uploader, type UploadProgress } from "./uploader";
 export { Recorder, SAID_NO_ABANDON_REASONS, FINAL_PRE_START_REFUSALS, type RecorderOptions } from "./controller";
 export { BrowserCaptureSource, type CaptureSource } from "./captureSource";
@@ -102,16 +102,31 @@ export type { RecorderEvents, HeldAudio } from "./events";
 
 import { Recorder, type RecorderOptions } from "./controller";
 import { BrowserCaptureSource } from "./captureSource";
-import { supabaseBackend, type SupabaseLike, type RecorderBackend } from "./backend";
+import { supabaseBackend, type SupabaseLike, type RecorderBackend, type RecorderFiles } from "./backend";
 import { openIdbStore, MemoryStore, type RecorderStore } from "./store";
 import { getInstallId, type DeviceProfile } from "./devices";
 import { workerEncoder, type ChunkEncoder } from "./encoderClient";
 import { RecorderError } from "./errors";
 
+/**
+ * The rate lessons are captured and STORED at (24 Nov 2026). The PC job
+ * (scripts/lesson-monitor) resamples every track to 16 kHz mono for the
+ * transcript and the voiceprints, so nothing downstream can use more than
+ * 8 kHz of bandwidth: storing 48 kHz FLAC only cost 2.8x the space (measured,
+ * docs/RECORDER_R2_AND_COMPRESSION.md). The AudioContext resamples the
+ * microphones; where a browser cannot honour it the recorder uses the rate it
+ * is given (`source.sampleRate`), so a refusal only makes bigger files.
+ * Lossless FLAC at this rate; the byte floor in recorder_settings must be
+ * lowered with it (same document).
+ */
+export const RECORDER_SAMPLE_RATE = 16000;
+
 export interface CreateRecorderOptions extends Partial<Omit<RecorderOptions, "backend" | "store" | "source" | "userId" | "installId" | "profile">> {
   /** The app's supabase client (signed in as the teacher), or a ready backend. */
   client?: SupabaseLike;
   backend?: RecorderBackend;
+  /** Where files go (src/lib/files.ts: Supabase or R2 by bucket). Without it the client's own storage is used. */
+  files?: RecorderFiles;
   userId: string;
   profile: DeviceProfile | null;
   store?: RecorderStore;
@@ -126,7 +141,7 @@ function defaultEncoder(onFallback: (why: string) => void): ChunkEncoder | undef
 
 /** Build a recorder with the browser defaults. Call inside the teacher's click. */
 export async function createRecorder(o: CreateRecorderOptions): Promise<Recorder> {
-  const backend = o.backend ?? (o.client ? supabaseBackend(o.client) : null);
+  const backend = o.backend ?? (o.client ? supabaseBackend(o.client, { files: o.files }) : null);
   if (!backend) throw new Error("createRecorder needs a client or a backend");
   let store = o.store;
   let durable = o.durable !== false;
@@ -136,7 +151,7 @@ export async function createRecorder(o: CreateRecorderOptions): Promise<Recorder
     try { store = await openIdbStore(); }
     catch { store = new MemoryStore(); durable = false; }
   }
-  const source = await BrowserCaptureSource.create(o.sampleRate ?? 48000);
+  const source = await BrowserCaptureSource.create(o.sampleRate ?? RECORDER_SAMPLE_RATE);
   let rec: Recorder | null = null;
   const encoder = o.encoder ?? defaultEncoder((why) => rec?.events.emit("error", new RecorderError("internal", `Audio is encoded on the page itself (${why}): it may slow the page`)));
   rec = new Recorder({ ...o, backend, store, source, encoder, durable, userId: o.userId, installId: getInstallId(), profile: o.profile });
